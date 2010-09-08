@@ -35,11 +35,17 @@ int main (int argc, char** argv)
 
 //	c.done();
 
+	if (argc < 2)
+	{
+		return 1;
+	}
+
+	JULEA::FileSystem::Initialize(argv[1]);
 	JULEA::Directory d("/");
 
 	d.Create();
 
-	for (int j = 0; j < 1; j++)
+	for (int j = 0; j < 10; j++)
 	{
 	for (int i = 0; i < 10000; i++)
 	{

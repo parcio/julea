@@ -2,6 +2,15 @@
 
 namespace JULEA
 {
+	class FileSystem
+	{
+		public:
+			static void Initialize (string const &host) { FileSystem::host = host; };
+			static string const& Host () { return FileSystem::host; }
+		private:
+			static string host;
+	};
+
 	class File
 	{
 		public:

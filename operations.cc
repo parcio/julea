@@ -11,6 +11,8 @@ using namespace mongo;
 
 namespace JULEA
 {
+	string FileSystem::host;
+
 	string const& File::Name ()
 	{
 		return name;
@@ -28,7 +30,7 @@ namespace JULEA
 
 	bool Directory::Create ()
 	{
-		ScopedDbConnection c("localhost");
+		ScopedDbConnection c(FileSystem::Host());
 
 		BSONObj d;
 		BSONObj e;
@@ -72,7 +74,7 @@ namespace JULEA
 
 	bool Directory::CreateFiles ()
 	{
-		ScopedDbConnection c("localhost");
+		ScopedDbConnection c(FileSystem::Host());
 
 		BSONObjBuilder u;
 		BSONObj d;
