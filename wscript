@@ -23,10 +23,19 @@ def configure (conf):
 	conf.write_config_header('config.h')
 
 def build (bld):
-	o = bld.new_task_gen(
-		features = 'cxx cprogram',
-		source = ['common.cc', 'julea.cc', 'operations.cc'],
+	bld.new_task_gen(
+		features = 'cxx cstaticlib',
+		source = ['common.cc', 'julea.cc'],
 		target = 'julea',
 		uselib = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_THREAD', 'MONGOCLIENT'],
+		includes = ['.']
+	)
+
+	bld.new_task_gen(
+		features = 'cxx cprogram',
+		source = ['test.cc'],
+		target = 'test',
+		uselib = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_THREAD', 'MONGOCLIENT'],
+		uselib_local = ['julea'],
 		includes = ['.']
 	)
