@@ -13,6 +13,16 @@ namespace JULEA
 {
 	string FileSystem::host;
 
+	string const& FileSystem::Host ()
+	{
+		if (FileSystem::host.empty())
+		{
+			throw Exception("JULEA::FileSystem not initialized.");
+		}
+
+		return FileSystem::host;
+	}
+
 	string const& File::Name ()
 	{
 		return name;

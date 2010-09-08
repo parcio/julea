@@ -1,12 +1,25 @@
+#include <exception>
 #include <list>
+
+using namespace std;
 
 namespace JULEA
 {
+	class Exception : public exception
+	{
+		public:
+			Exception (string const& description) throw() : description(description) {};
+			~Exception () throw() {};
+			const char* what () const throw() { return description.c_str(); };
+		private:
+			string description;
+	};
+
 	class FileSystem
 	{
 		public:
 			static void Initialize (string const &host) { FileSystem::host = host; };
-			static string const& Host () { return FileSystem::host; }
+			static string const& Host ();
 		private:
 			static string host;
 	};
