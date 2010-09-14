@@ -1,54 +1,89 @@
 #include <exception>
 #include <list>
+#include <memory>
 
-using namespace std;
+#include <boost/utility.hpp>
+
+#include <mongo/client/connpool.h>
+#include <mongo/db/jsobj.h>
 
 namespace JULEA
 {
-	class Exception : public exception
+	class Collection;
+	class Item;
+
+	class Exception : public std::exception
 	{
 		public:
-			Exception (string const& description) throw() : description(description) {};
-			~Exception () throw() {};
-			const char* what () const throw() { return description.c_str(); };
+			Exception (string const&) throw();
+			~Exception () throw();
+			const char* what () const throw();
 		private:
 			string description;
 	};
 
-	class FileSystem
+	class Store
 	{
 		public:
-			static void Initialize (string const &host) { FileSystem::host = host; };
+			static void Initialize (string const&);
+
 			static string const& Host ();
 		private:
-			static string host;
+			static string m_host;
 	};
 
-	class File
+	class Item /*: public boost::noncopyable*/
 	{
+		friend class Collection;
+
 		public:
-			File () {};
-			File (string const& name) : name(name) {};
-			~File () {};
-			string const& Name ();
+			Item (Collection const&, string const&);
+			~Item ();
+
+			string const& Name () const;
 		private:
-			string name;
+			mongo::BSONObj Serialize ();
+			void Deserialize (mongo::BSONObj const&);
+
+			mongo::OID m_id;
+			mongo::OID m_collectionID;
+			string m_name;
 	};
 
-	class Directory
+	class Collection
 	{
+		friend class Item;
+
 		public:
-			Directory (string const& path) : path(path) { eid.clear(); id.clear(); };
-			~Directory () {};
-			bool Create ();
-			bool CreateFiles();
-			void Add (Directory const&);
-			void Add (File const&);
+			/*
+			class Iterator
+			{
+				public:
+					Iterator (Collection const& directory) : connection(FileSystem::Host()), directory(directory) { cursor =  connection->query("JULEA.DirectoryEntries", mongo::BSONObjBuilder().append("Collection", directory.m_id).obj()); };
+					~Iterator () { connection.done(); };
+
+					bool More () { return cursor->more(); };
+					Item Next () { mongo::BSONObj f; string name; f = cursor->next(); name = f.getField("Name").String(); return Item(name); };
+				private:
+					mongo::ScopedDbConnection connection;
+					Collection const& directory;
+					std::auto_ptr<mongo::DBClientCursor> cursor;
+			};
+			*/
+
+		public:
+			Collection (string const&);
+			~Collection ();
+
+			Item Add (string const&);
 		private:
-			mongo::OID eid;
-			mongo::OID id;
-			string path;
-			std::list<Directory> newDirectories;
-			std::list<File> newFiles;
+			mongo::BSONObj Serialize ();
+			void Deserialize (mongo::BSONObj const&);
+
+			mongo::OID const& ID () const;
+
+			mongo::OID m_id;
+			string m_name;
+			std::list<Item> newItems;
 	};
 }

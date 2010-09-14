@@ -1,142 +1,233 @@
 #include <iostream>
 
+#include <boost/filesystem.hpp>
+
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
-#include "common.h"
 #include "julea.h"
 
+using namespace boost::filesystem;
 using namespace std;
 using namespace mongo;
 
 namespace JULEA
 {
-	string FileSystem::host;
-
-	string const& FileSystem::Host ()
+	Exception::Exception (string const& description) throw()
+		: description(description)
 	{
-		if (FileSystem::host.empty())
+	}
+
+	Exception::~Exception () throw()
+	{
+	}
+
+	const char* Exception::what () const throw()
+	{
+		return description.c_str();
+	}
+
+	string Store::m_host;
+
+	void Store::Initialize (string const& host)
+	{
+		m_host = host;
+
+		if (m_host.empty())
 		{
-			throw Exception("JULEA::FileSystem not initialized.");
+			throw Exception("Store not initialized.");
 		}
 
-		return FileSystem::host;
+		ScopedDbConnection c(m_host);
+
+		c.done();
 	}
 
-	string const& File::Name ()
+	string const& Store::Host ()
 	{
-		return name;
+		return m_host;
 	}
 
-	void Directory::Add (Directory const& directory)
+	BSONObj Item::Serialize ()
 	{
-		newDirectories.push_back(directory);
+		BSONObj o;
+
+		if (!m_id.isSet())
+		{
+			m_id.init();
+		}
+
+		o = BSONObjBuilder()
+			.append("_id", m_id)
+			.append("CollectionID", m_collectionID)
+			.append("Name", m_name)
+			.obj();
+
+		return o;
 	}
 
-	void Directory::Add (File const& file)
+	void Item::Deserialize (BSONObj const& o)
 	{
-		newFiles.push_back(file);
+		m_id = o.getField("_id").OID();
+		m_collectionID = o.getField("CollectionID").OID();
+		m_name = o.getField("Name").String();
 	}
 
-	bool Directory::Create ()
+	Item::Item (Collection const& coll, string const& name)
+		: m_collectionID(coll.ID()), m_name(name)
 	{
-		ScopedDbConnection c(FileSystem::Host());
+		m_id.clear();
+
+		ScopedDbConnection c(Store::Host());
+
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("CollectionID", m_collectionID).append("Name", m_name).obj(), 1);
+
+		if (cur->more())
+		{
+			Deserialize(cur->next());
+		}
+
+		c.done();
+	}
+
+	Item::~Item ()
+	{
+	}
+
+	string const& Item::Name () const
+	{
+		return m_name;
+	}
+
+	BSONObj Collection::Serialize ()
+	{
+		BSONObj o;
+
+		if (!m_id.isSet())
+		{
+			m_id.init();
+		}
+
+		o = BSONObjBuilder()
+			.append("_id", m_id)
+			.append("Name", m_name)
+			.obj();
+
+		return o;
+	}
+
+	void Collection::Deserialize (BSONObj const& o)
+	{
+		m_id = o.getField("_id").OID();
+		m_name = o.getField("Name").String();
+	}
+
+	mongo::OID const& Collection::ID () const
+	{
+		return m_id;
+	}
+
+	Collection::Collection (string const& name)
+		: m_name(name)
+	{
+		m_id.clear();
+
+		ScopedDbConnection c(Store::Host());
+
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("Name", m_name).obj(), 1);
+
+		if (cur->more())
+		{
+			Deserialize(cur->next());
+		}
+
+		c.done();
+	}
+
+	Collection::~Collection ()
+	{
+	}
+
+	Item Collection::Add (string const& name)
+	{
+		path path(m_name + "/" + name);
+		Item item(*this, path.string());
+		newItems.push_back(item);
+
+		return item;
+	}
+
+	/*
+	bool Collection::Create ()
+	{
+		if (m_id.isSet())
+		{
+			return true;
+		}
+
+		ScopedDbConnection c(Store::Host());
 
 		BSONObj d;
 		BSONObj e;
 
 		c->ensureIndex("JULEA.Directories", BSONObjBuilder().append("Path", 1).obj());
 
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Directories", BSONObjBuilder().append("Path", path).obj(), 1);
-
-		if (cur->more())
-		{
-			d = cur->next();
-			id = d.getField("_id").OID();
-			eid = d.getField("Entries").OID();
-			c.done();
-
-			return true;
-		}
-
-		e = BSONObjBuilder()
-			.genOID()
-			.obj();
-
-		c->insert("JULEA.DirectoryEntries", e);
-
-		eid = e.getField("_id").OID();
-
-		d = BSONObjBuilder()
-			.genOID()
-			.append("Path", path)
-			.append("Entries", eid)
-			.obj();
-
-		c->insert("JULEA.Directories", d);
-
-		id = d.getField("_id").OID();
+		c->insert("JULEA.Directories", Serialize());
 
 		c.done();
 
 		return true;
 	}
+	*/
 
-	bool Directory::CreateFiles ()
+	/*
+	bool Collection::CreateFiles ()
 	{
-		ScopedDbConnection c(FileSystem::Host());
+		ScopedDbConnection c(Store::Host());
 
-		BSONObjBuilder u;
 		BSONObj d;
 
 		vector<BSONObj> fv;
-		list<File>::iterator it;
+		vector<BSONObj> dev;
+		list<Item>::iterator it;
 
-		c->ensureIndex("JULEA.Directories", BSONObjBuilder().append("Path", 1).obj());
-		c->ensureIndex("JULEA.Files", BSONObjBuilder().append("Path", 1).obj());
-
-		if (!id.isSet())
+		if (!m_id.isSet())
 		{
 			Create();
 		}
 
-		for (it = this->newFiles.begin(); it != this->newFiles.end(); it++)
+		for (it = newFiles.begin(); it != newFiles.end(); ++it)
 		{
 			BSONObj f;
 			BSONElement fid;
 
-			File file = *it;
+			Item file = *it;
 
-			string name = file.Name();
-			string fpath = Common::BuildFilename(path, name);
-
-			f = BSONObjBuilder()
-				.genOID()
-				.append("Path", fpath)
-				.obj();
-
-			fv.push_back(f);
+			fv.push_back(file.Serialize());
 
 			fid = f.getField("_id");
 
-			u.append("$set", BSONObjBuilder()
-				.append(name, fid.OID())
-				.obj()
-			);
+			f = BSONObjBuilder()
+				.genOID()
+				.append("Collection", m_id)
+			//	.append("Name", name)
+				.append("ID", fid.OID())
+				.obj();
+
+			dev.push_back(f);
 		}
 
-		c->insert("JULEA.Files", fv);
+		c->ensureIndex("JULEA.Directories", BSONObjBuilder().append("Path", 1).obj());
+		c->ensureIndex("JULEA.Files", BSONObjBuilder().append("Path", 1).obj());
 
-		c->update("JULEA.DirectoryEntries",
-			BSONObjBuilder()
-				.append("_id", eid)
-				.obj(),
-			u.obj()
-		);
+		c->insert("JULEA.Files", fv);
+		c->insert("JULEA.DirectoryEntries", dev);
 
 		newFiles.clear();
 
 		c.done();
-	}
 
+		return true;
+	}
+	*/
 }

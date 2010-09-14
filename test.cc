@@ -1,65 +1,51 @@
 #include <iostream>
 
+#include <boost/lexical_cast.hpp>
+
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
 #include "test.h"
 
+using namespace boost;
 using namespace std;
 using namespace mongo;
 
 int main (int argc, char** argv)
 {
-	/*
-	BSONObj o;
-
-	c->ensureIndex("fs.files", BSONObjBuilder().append("name", 1).obj());
-
-	for (int i = 0; i < 1000000; i++)
-	{
-		o = BSONObjBuilder()
-			.genOID()
-			.append("name", i)
-			.obj();
-
-		c->insert("fs.files", o);
-	}
-
-	auto_ptr<DBClientCursor> cur = c->query("fs.files", BSONObjBuilder().append("name", 1).obj());
-
-	while (cur->more())
-	{
-		cout << cur->next().toString() << endl;
-	}
-	*/
-
-//	c.done();
-
 	if (argc < 2)
 	{
 		return 1;
 	}
 
-	JULEA::FileSystem::Initialize(argv[1]);
-	JULEA::Directory d("/");
-
-	d.Create();
+	JULEA::Store::Initialize(argv[1]);
 
 	for (int j = 0; j < 10; j++)
 	{
-	for (int i = 0; i < 10000; i++)
-	{
-		JULEA::File f;
+		string path("test-" + lexical_cast<string>(j));
+		JULEA::Collection d(path);
 
-		string name("test");
+//		d.Create();
 
-		name += JULEA::Common::ToString(i);
-		f = JULEA::File(name);
+		for (int i = 0; i < 10000; i++)
+		{
+			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
+			JULEA::Item i = d.Add(name);
+		}
 
-		d.Add(f);
+//		d.CreateFiles();
 	}
-		d.CreateFiles();
-}
+
+	/*
+	JULEA::Collection::Iterator i(JULEA::Collection("test-3"));
+
+	while (i.More())
+	{
+		JULEA::Item f = i.Next();
+
+		cout << f.Name() << endl;
+	}
+	*/
 
 	return 0;
 }
