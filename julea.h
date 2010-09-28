@@ -32,6 +32,16 @@ namespace JULEA
 			static string m_host;
 	};
 
+	class Credentials
+	{
+		public:
+			Credentials ();
+			~Credentials ();
+		private:
+			unsigned int user;
+			unsigned int group;
+	};
+
 	class Item /*: public boost::noncopyable*/
 	{
 		friend class Collection;
