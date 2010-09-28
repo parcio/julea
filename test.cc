@@ -5,7 +5,7 @@
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
-#include "test.h"
+#include "julea.h"
 
 using namespace boost;
 using namespace std;

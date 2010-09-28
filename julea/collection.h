@@ -1,67 +1,21 @@
-#include <exception>
+#ifndef H_COLLECTION
+#define H_COLLECTION
+
 #include <list>
-#include <memory>
 
 #include <boost/utility.hpp>
 
-#include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
 namespace JULEA
 {
 	class Collection;
-	class Item;
+}
 
-	class Exception : public std::exception
-	{
-		public:
-			Exception (string const&) throw();
-			~Exception () throw();
-			const char* what () const throw();
-		private:
-			string description;
-	};
+#include "item.h"
 
-	class Store
-	{
-		public:
-			static void Initialize (string const&);
-
-			static string const& Host ();
-		private:
-			static string m_host;
-	};
-
-	class Credentials
-	{
-		public:
-			Credentials ();
-			~Credentials ();
-		private:
-			unsigned int user;
-			unsigned int group;
-	};
-
-	class Item : public boost::noncopyable
-	{
-		friend class Collection;
-
-		public:
-			Item (Collection const*, string const&);
-
-			string const& Name () const;
-		private:
-			~Item ();
-
-			mongo::BSONObj Serialize ();
-			void Deserialize (mongo::BSONObj const&);
-
-			mongo::OID m_id;
-			string m_name;
-
-			Collection const* m_collection;
-	};
-
+namespace JULEA
+{
 	class Collection : public boost::noncopyable
 	{
 		friend class Item;
@@ -102,3 +56,5 @@ namespace JULEA
 			std::list<Item*> newItems;
 	};
 }
+
+#endif

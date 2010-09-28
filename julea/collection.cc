@@ -1,104 +1,17 @@
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
-#include "julea.h"
+#include "collection.h"
 
-using namespace boost::filesystem;
+#include "store.h"
+
 using namespace std;
 using namespace mongo;
 
 namespace JULEA
 {
-	Exception::Exception (string const& description) throw()
-		: description(description)
-	{
-	}
-
-	Exception::~Exception () throw()
-	{
-	}
-
-	const char* Exception::what () const throw()
-	{
-		return description.c_str();
-	}
-
-	string Store::m_host;
-
-	void Store::Initialize (string const& host)
-	{
-		m_host = host;
-
-		if (m_host.empty())
-		{
-			throw Exception("Store not initialized.");
-		}
-
-		ScopedDbConnection c(m_host);
-
-		c.done();
-	}
-
-	string const& Store::Host ()
-	{
-		return m_host;
-	}
-
-	BSONObj Item::Serialize ()
-	{
-		BSONObj o;
-
-		if (!m_id.isSet())
-		{
-			m_id.init();
-		}
-
-		o = BSONObjBuilder()
-			.append("_id", m_id)
-			.append("Collection", m_collection->ID())
-			.append("Name", m_name)
-			.obj();
-
-		return o;
-	}
-
-	void Item::Deserialize (BSONObj const& o)
-	{
-		m_id = o.getField("_id").OID();
-//		m_collectionID = o.getField("Collection").OID();
-		m_name = o.getField("Name").String();
-	}
-
-	Item::Item (Collection const* coll, string const& name)
-		: m_name(name), m_collection(coll)
-	{
-		m_id.clear();
-
-		ScopedDbConnection c(Store::Host());
-
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("Collection", m_collection->ID()).append("Name", m_name).obj(), 1);
-
-		if (cur->more())
-		{
-			Deserialize(cur->next());
-		}
-
-		c.done();
-	}
-
-	Item::~Item ()
-	{
-	}
-
-	string const& Item::Name () const
-	{
-		return m_name;
-	}
-
 	BSONObj Collection::Serialize ()
 	{
 		BSONObj o;
