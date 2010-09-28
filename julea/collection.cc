@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
@@ -40,12 +38,33 @@ namespace JULEA
 		return m_id;
 	}
 
-	Collection::Collection (string const& name)
-		: m_name(name)
+	Collection* Collection::Ref ()
+	{
+		m_refCount++;
+
+		return this;
+	}
+
+	bool Collection::Unref ()
+	{
+		m_refCount--;
+
+		if (m_refCount == 0)
+		{
+			delete this;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	Collection::Collection (Store* store, string const& name)
+		: m_name(name), m_refCount(1), m_store(store->Ref())
 	{
 		m_id.clear();
 
-		ScopedDbConnection c(Store::Host());
+		ScopedDbConnection c(m_store->Host());
 
 		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("Name", m_name).obj(), 1);
 
@@ -59,6 +78,7 @@ namespace JULEA
 
 	Collection::~Collection ()
 	{
+		m_store->Unref();
 	}
 
 	string const& Collection::Name () const
@@ -66,10 +86,10 @@ namespace JULEA
 		return m_name;
 	}
 
-	Item* Collection::Add (string const& name)
+	Item* Collection::Get (string const& name)
 	{
-		path path(m_name + "/" + name);
-		Item* item = new Item(this, path.string());
+		string path(m_name + "/" + name);
+		Item* item = new Item(this, path);
 		newItems.push_back(item);
 
 		return item;

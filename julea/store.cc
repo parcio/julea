@@ -10,12 +10,30 @@ using namespace mongo;
 
 namespace JULEA
 {
-	string Store::m_host;
-
-	void Store::Initialize (string const& host)
+	Store* Store::Ref ()
 	{
-		m_host = host;
+		m_refCount++;
 
+		return this;
+	}
+
+	bool Store::Unref ()
+	{
+		m_refCount--;
+
+		if (m_refCount == 0)
+		{
+			delete this;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	Store::Store (string const& host)
+		: m_host(host), m_refCount(1)
+	{
 		if (m_host.empty())
 		{
 			throw Exception("Store not initialized.");
@@ -26,8 +44,19 @@ namespace JULEA
 		c.done();
 	}
 
-	string const& Store::Host ()
+	Store::~Store ()
+	{
+	}
+
+	string const& Store::Host () const
 	{
 		return m_host;
+	}
+
+	Collection* Store::Get (string const& name)
+	{
+		Collection* collection = new Collection(this, name);
+
+		return collection;
 	}
 }

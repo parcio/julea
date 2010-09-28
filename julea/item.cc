@@ -37,12 +37,12 @@ namespace JULEA
 		m_name = o.getField("Name").String();
 	}
 
-	Item::Item (Collection const* coll, string const& name)
-		: m_name(name), m_collection(coll)
+	Item::Item (Collection* collection, string const& name)
+		: m_name(name), m_collection(collection->Ref())
 	{
 		m_id.clear();
 
-		ScopedDbConnection c(Store::Host());
+		ScopedDbConnection c(m_collection->m_store->Host());
 
 		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("Collection", m_collection->ID()).append("Name", m_name).obj(), 1);
 
@@ -56,6 +56,7 @@ namespace JULEA
 
 	Item::~Item ()
 	{
+		m_collection->Unref();
 	}
 
 	string const& Item::Name () const

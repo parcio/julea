@@ -10,16 +10,29 @@ namespace JULEA
 	class Store;
 }
 
+#include "collection.h"
+
 namespace JULEA
 {
 	class Store
 	{
-		public:
-			static void Initialize (string const&);
+		friend class Collection;
 
-			static string const& Host ();
+		public:
+			Store (string const&);
+
+			string const& Host () const;
+
+			Collection* Get (string const&);
 		private:
-			static string m_host;
+			~Store ();
+
+			Store* Ref ();
+			bool Unref ();
+
+			string m_host;
+
+			unsigned int m_refCount;
 	};
 }
 

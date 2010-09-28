@@ -19,7 +19,7 @@ namespace JULEA
 		friend class Collection;
 
 		public:
-			Item (Collection const*, string const&);
+			Item (Collection*, string const&);
 
 			string const& Name () const;
 		private:
@@ -31,7 +31,7 @@ namespace JULEA
 			mongo::OID m_id;
 			string m_name;
 
-			Collection const* m_collection;
+			Collection* m_collection;
 	};
 }
 

@@ -18,19 +18,19 @@ int main (int argc, char** argv)
 		return 1;
 	}
 
-	JULEA::Store::Initialize(argv[1]);
+	JULEA::Store* s = new JULEA::Store(argv[1]);
 
 	for (int j = 0; j < 10; j++)
 	{
 		string path("test-" + lexical_cast<string>(j));
-		JULEA::Collection* d = new JULEA::Collection(path);
+		JULEA::Collection* d = s->Get(path);
 
 //		d.Create();
 
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
-			JULEA::Item* i = d->Add(name);
+			JULEA::Item* i = d->Get(name);
 
 			cout << i->Name() << endl;
 		}

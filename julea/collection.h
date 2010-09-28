@@ -13,12 +13,14 @@ namespace JULEA
 }
 
 #include "item.h"
+#include "store.h"
 
 namespace JULEA
 {
 	class Collection : public boost::noncopyable
 	{
 		friend class Item;
+		friend class Store;
 
 		public:
 			/*
@@ -38,12 +40,11 @@ namespace JULEA
 			*/
 
 		public:
-			Collection (string const&);
-
 			string const& Name () const;
 
-			Item* Add (string const&);
+			Item* Get (string const&);
 		private:
+			Collection (Store*, string const&);
 			~Collection ();
 
 			mongo::BSONObj Serialize ();
@@ -51,9 +52,16 @@ namespace JULEA
 
 			mongo::OID const& ID () const;
 
+			Collection* Ref ();
+			bool Unref ();
+
 			mongo::OID m_id;
 			string m_name;
 			std::list<Item*> newItems;
+
+			unsigned int m_refCount;
+
+			Store* m_store;
 	};
 }
 
