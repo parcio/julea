@@ -42,25 +42,27 @@ namespace JULEA
 			unsigned int group;
 	};
 
-	class Item /*: public boost::noncopyable*/
+	class Item : public boost::noncopyable
 	{
 		friend class Collection;
 
 		public:
-			Item (Collection const&, string const&);
-			~Item ();
+			Item (Collection const*, string const&);
 
 			string const& Name () const;
 		private:
+			~Item ();
+
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
 
 			mongo::OID m_id;
-			mongo::OID m_collectionID;
 			string m_name;
+
+			Collection const* m_collection;
 	};
 
-	class Collection
+	class Collection : public boost::noncopyable
 	{
 		friend class Item;
 
@@ -83,10 +85,13 @@ namespace JULEA
 
 		public:
 			Collection (string const&);
+
+			string const& Name () const;
+
+			Item* Add (string const&);
+		private:
 			~Collection ();
 
-			Item Add (string const&);
-		private:
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
 
@@ -94,6 +99,6 @@ namespace JULEA
 
 			mongo::OID m_id;
 			string m_name;
-			std::list<Item> newItems;
+			std::list<Item*> newItems;
 	};
 }

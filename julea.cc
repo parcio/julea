@@ -59,7 +59,7 @@ namespace JULEA
 
 		o = BSONObjBuilder()
 			.append("_id", m_id)
-			.append("CollectionID", m_collectionID)
+			.append("Collection", m_collection->ID())
 			.append("Name", m_name)
 			.obj();
 
@@ -69,18 +69,18 @@ namespace JULEA
 	void Item::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
-		m_collectionID = o.getField("CollectionID").OID();
+//		m_collectionID = o.getField("Collection").OID();
 		m_name = o.getField("Name").String();
 	}
 
-	Item::Item (Collection const& coll, string const& name)
-		: m_collectionID(coll.ID()), m_name(name)
+	Item::Item (Collection const* coll, string const& name)
+		: m_name(name), m_collection(coll)
 	{
 		m_id.clear();
 
 		ScopedDbConnection c(Store::Host());
 
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("CollectionID", m_collectionID).append("Name", m_name).obj(), 1);
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("Collection", m_collection->ID()).append("Name", m_name).obj(), 1);
 
 		if (cur->more())
 		{
@@ -148,10 +148,15 @@ namespace JULEA
 	{
 	}
 
-	Item Collection::Add (string const& name)
+	string const& Collection::Name () const
+	{
+		return m_name;
+	}
+
+	Item* Collection::Add (string const& name)
 	{
 		path path(m_name + "/" + name);
-		Item item(*this, path.string());
+		Item* item = new Item(this, path.string());
 		newItems.push_back(item);
 
 		return item;

@@ -23,14 +23,16 @@ int main (int argc, char** argv)
 	for (int j = 0; j < 10; j++)
 	{
 		string path("test-" + lexical_cast<string>(j));
-		JULEA::Collection d(path);
+		JULEA::Collection* d = new JULEA::Collection(path);
 
 //		d.Create();
 
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
-			JULEA::Item i = d.Add(name);
+			JULEA::Item* i = d->Add(name);
+
+			cout << i->Name() << endl;
 		}
 
 //		d.CreateFiles();
