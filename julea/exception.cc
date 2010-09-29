@@ -13,7 +13,7 @@ using namespace mongo;
 namespace JULEA
 {
 	Exception::Exception (string const& description) throw()
-		: description(description)
+		: m_description(description)
 	{
 	}
 
@@ -23,6 +23,6 @@ namespace JULEA
 
 	const char* Exception::what () const throw()
 	{
-		return description.c_str();
+		return m_description.c_str();
 	}
 }

@@ -18,9 +18,10 @@ namespace JULEA
 		public:
 			Exception (string const&) throw();
 			~Exception () throw();
+
 			const char* what () const throw();
 		private:
-			string description;
+			string m_description;
 	};
 }
 

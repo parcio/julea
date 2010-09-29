@@ -2,14 +2,10 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <mongo/client/connpool.h>
-#include <mongo/db/jsobj.h>
-
 #include "julea.h"
 
 using namespace boost;
 using namespace std;
-using namespace mongo;
 
 int main (int argc, char** argv)
 {
@@ -23,14 +19,14 @@ int main (int argc, char** argv)
 	for (int j = 0; j < 10; j++)
 	{
 		string path("test-" + lexical_cast<string>(j));
-		JULEA::Collection* d = s->Get(path);
+		JULEA::Collection* c = s->Get(path);
 
 //		d.Create();
 
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
-			JULEA::Item* i = d->Get(name);
+			JULEA::Item* i = c->Get(name);
 
 			cout << i->Name() << endl;
 		}

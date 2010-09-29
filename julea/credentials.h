@@ -14,8 +14,8 @@ namespace JULEA
 			Credentials ();
 			~Credentials ();
 		private:
-			unsigned int user;
-			unsigned int group;
+			uint32_t user;
+			uint32_t group;
 	};
 }
 
