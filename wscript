@@ -36,7 +36,7 @@ def configure (conf):
 def build (bld):
 	bld.new_task_gen(
 		features = 'cxx cstaticlib',
-		source = ['julea/%s.cc' % file for file in ('collection', 'credentials', 'exception', 'item', 'store')],
+		source = ['julea/%s.cc' % file for file in ('collection', 'credentials', 'exception', 'item', 'semantics', 'store')],
 		target = 'julea',
 		uselib = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_THREAD', 'MONGOCLIENT'],
 		includes = ['.']
