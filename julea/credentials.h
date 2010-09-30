@@ -12,10 +12,11 @@ namespace JULEA
 	{
 		public:
 			Credentials ();
+			Credentials (uint32_t, uint32_t);
 			~Credentials ();
 		private:
-			uint32_t user;
-			uint32_t group;
+			uint32_t m_user;
+			uint32_t m_group;
 	};
 }
 

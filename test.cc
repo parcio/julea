@@ -6,6 +6,7 @@
 
 using namespace boost;
 using namespace std;
+using namespace JULEA;
 
 int main (int argc, char** argv)
 {
@@ -14,19 +15,19 @@ int main (int argc, char** argv)
 		return 1;
 	}
 
-	JULEA::Store* s = new JULEA::Store(argv[1]);
+	Store* s = new Store(argv[1]);
 
 	for (int j = 0; j < 10; j++)
 	{
 		string path("test-" + lexical_cast<string>(j));
-		JULEA::Collection* c = s->Get(path);
+		Collection* c = s->Get(path);
 
 //		d.Create();
 
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
-			JULEA::Item* i = c->Get(name);
+			Item* i = c->Get(name);
 
 			cout << i->Name() << endl;
 		}
@@ -35,11 +36,11 @@ int main (int argc, char** argv)
 	}
 
 	/*
-	JULEA::Collection::Iterator i(JULEA::Collection("test-3"));
+	Collection::Iterator i(Collection("test-3"));
 
 	while (i.More())
 	{
-		JULEA::Item f = i.Next();
+		Item f = i.Next();
 
 		cout << f.Name() << endl;
 	}
