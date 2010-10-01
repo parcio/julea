@@ -10,29 +10,8 @@ using namespace mongo;
 
 namespace JULEA
 {
-	Store* Store::Ref ()
-	{
-		m_refCount++;
-
-		return this;
-	}
-
-	bool Store::Unref ()
-	{
-		m_refCount--;
-
-		if (m_refCount == 0)
-		{
-			delete this;
-
-			return true;
-		}
-
-		return false;
-	}
-
 	Store::Store (string const& host)
-		: m_host(host), m_refCount(1)
+		: m_host(host)
 	{
 		if (m_host.empty())
 		{
@@ -58,5 +37,22 @@ namespace JULEA
 		Collection* collection = new Collection(this, name);
 
 		return collection;
+	}
+
+	Store* Store::GetAll ()
+	{
+		ScopedDbConnection c(Host());
+
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().obj());
+
+		while (cur->more())
+		{
+			Collection* collection = new Collection(this, cur->next());
+			m_collections[collection->Name()] = collection;
+		}
+
+		c.done();
+
+		return this;
 	}
 }

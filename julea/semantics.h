@@ -11,20 +11,16 @@ namespace JULEA
 }
 
 #include "collection.h"
+#include "ref_counted.h"
 
 namespace JULEA
 {
-	class Semantics
+	class Semantics : public RefCounted<Semantics>
 	{
 		public:
 			Semantics ();
 		private:
 			~Semantics ();
-
-			Semantics* Ref ();
-			bool Unref ();
-
-			unsigned int m_refCount;
 	};
 }
 

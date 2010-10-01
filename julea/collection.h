@@ -13,11 +13,12 @@ namespace JULEA
 }
 
 #include "item.h"
+#include "ref_counted.h"
 #include "store.h"
 
 namespace JULEA
 {
-	class Collection : public boost::noncopyable
+	class Collection : public RefCounted<Collection>
 	{
 		friend class Item;
 		friend class Store;
@@ -45,6 +46,7 @@ namespace JULEA
 			Item* Get (string const&);
 		private:
 			Collection (Store*, string const&);
+			Collection (Store*, mongo::BSONObj const&);
 			~Collection ();
 
 			mongo::BSONObj Serialize ();
@@ -52,14 +54,9 @@ namespace JULEA
 
 			mongo::OID const& ID () const;
 
-			Collection* Ref ();
-			bool Unref ();
-
 			mongo::OID m_id;
 			string m_name;
 			std::list<Item*> newItems;
-
-			unsigned int m_refCount;
 
 			Store* m_store;
 	};

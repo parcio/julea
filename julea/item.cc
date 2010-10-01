@@ -33,8 +33,8 @@ namespace JULEA
 	void Item::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
-//		m_collectionID = o.getField("Collection").OID();
-		m_name = o.getField("Name").String();
+		//m_collectionID = o.getField("Collection").OID();
+		//m_name = o.getField("Name").String();
 	}
 
 	Item::Item (Collection* collection, string const& name)

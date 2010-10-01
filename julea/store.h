@@ -11,10 +11,11 @@ namespace JULEA
 }
 
 #include "collection.h"
+#include "ref_counted.h"
 
 namespace JULEA
 {
-	class Store
+	class Store : public RefCounted<Store>
 	{
 		friend class Collection;
 
@@ -24,15 +25,12 @@ namespace JULEA
 			string const& Host () const;
 
 			Collection* Get (string const&);
+			Store* GetAll ();
 		private:
 			~Store ();
 
-			Store* Ref ();
-			bool Unref ();
-
 			string m_host;
-
-			unsigned int m_refCount;
+			std::map<string, Collection*> m_collections;
 	};
 }
 

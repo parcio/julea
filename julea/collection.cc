@@ -38,29 +38,8 @@ namespace JULEA
 		return m_id;
 	}
 
-	Collection* Collection::Ref ()
-	{
-		m_refCount++;
-
-		return this;
-	}
-
-	bool Collection::Unref ()
-	{
-		m_refCount--;
-
-		if (m_refCount == 0)
-		{
-			delete this;
-
-			return true;
-		}
-
-		return false;
-	}
-
 	Collection::Collection (Store* store, string const& name)
-		: m_name(name), m_refCount(1), m_store(store->Ref())
+		: m_name(name), m_store(store->Ref())
 	{
 		m_id.clear();
 
@@ -74,6 +53,14 @@ namespace JULEA
 		}
 
 		c.done();
+	}
+
+	Collection::Collection (Store* store, BSONObj const& obj)
+		: m_name(""), m_store(store->Ref())
+	{
+		m_id.clear();
+
+		Deserialize(obj);
 	}
 
 	Collection::~Collection ()

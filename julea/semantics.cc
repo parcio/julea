@@ -8,25 +8,4 @@ using namespace mongo;
 
 namespace JULEA
 {
-	Semantics* Semantics::Ref ()
-	{
-		m_refCount++;
-
-		return this;
-	}
-
-	bool Semantics::Unref ()
-	{
-		m_refCount--;
-
-		if (m_refCount == 0)
-		{
-			delete this;
-
-			return true;
-		}
-
-		return false;
-	}
-
 }
