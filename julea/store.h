@@ -24,8 +24,8 @@ namespace JULEA
 
 			string const& Host () const;
 
-			Collection* Get (string const&);
-			Store* GetAll ();
+			std::map<string, Collection*> Get (std::list<string>);
+			void Create (std::list<Collection*>);
 		private:
 			~Store ();
 

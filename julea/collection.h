@@ -41,6 +41,8 @@ namespace JULEA
 			*/
 
 		public:
+			Collection (string const&);
+
 			string const& Name () const;
 
 			Item* Get (string const&);

@@ -38,6 +38,12 @@ namespace JULEA
 		return m_id;
 	}
 
+	Collection::Collection (string const& name)
+		: m_name(name), m_store(0)
+	{
+		m_id.clear();
+	}
+
 	Collection::Collection (Store* store, string const& name)
 		: m_name(name), m_store(store->Ref())
 	{

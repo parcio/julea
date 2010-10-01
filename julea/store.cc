@@ -32,27 +32,77 @@ namespace JULEA
 		return m_host;
 	}
 
-	Collection* Store::Get (string const& name)
+	map<string, Collection*> Store::Get (list<string> names)
 	{
-		Collection* collection = new Collection(this, name);
+		map<string, Collection*> collections;
 
-		return collection;
-	}
-
-	Store* Store::GetAll ()
-	{
 		ScopedDbConnection c(Host());
 
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().obj());
-
-		while (cur->more())
+		if (names.size() == 0)
 		{
-			Collection* collection = new Collection(this, cur->next());
-			m_collections[collection->Name()] = collection;
+			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().obj());
+
+			while (cur->more())
+			{
+				Collection* collection = new Collection(this, cur->next());
+				collections[collection->Name()] = collection;
+			}
+		}
+		else if (names.size() == 1)
+		{
+			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("Name", names.front()).obj(), 1);
+
+			if (cur->more())
+			{
+				Collection* collection = new Collection(this, cur->next());
+				collections[collection->Name()] = collection;
+			}
+		}
+		else
+		{
+			BSONObjBuilder ob;
+			list<string>::iterator it;
+
+			for (it = names.begin(); it != names.end(); ++it)
+			{
+				ob.append("Name", *it);
+			}
+
+			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("$or", ob.obj()).obj());
+
+			while (cur->more())
+			{
+				Collection* collection = new Collection(this, cur->next());
+				collections[collection->Name()] = collection;
+			}
 		}
 
 		c.done();
 
-		return this;
+		return collections;
+	}
+
+	void Store::Create (list<Collection*> collections)
+	{
+		vector<BSONObj> obj;
+
+		if (collections.size() == 0)
+		{
+			return;
+		}
+
+		ScopedDbConnection c(Host());
+
+		list<Collection*>::iterator it;
+
+		for (it = collections.begin(); it != collections.end(); ++it)
+		{
+			(*it)->m_store = this;
+			obj.push_back((*it)->Serialize());
+		}
+
+		c->insert("JULEA.Collections", obj);
+
+		c.done();
 	}
 }

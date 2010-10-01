@@ -16,23 +16,35 @@ int main (int argc, char** argv)
 	}
 
 	Store* s = new Store(argv[1]);
+	list<Collection*> collectionsList;
+	map<string, Collection*> collections;
+	list<string> itemsList;
+	map<string, Item*> items;
 
 	for (int j = 0; j < 10; j++)
 	{
-		string path("test-" + lexical_cast<string>(j));
-		Collection* c = s->Get(path);
+		string name("test-" + lexical_cast<string>(j));
 
-//		d.Create();
+		collectionsList.push_back(new Collection(name));
+	}
 
+	for (int j = 0; j < 10; j++)
+	{
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
-			Item* i = c->Get(name);
 
-			cout << i->Name() << endl;
+			itemsList.push_back(name);
 		}
+	}
 
-//		d.CreateFiles();
+	map<string, Collection*>::iterator it;
+
+	s->Create(collectionsList);
+
+	for (it = collections.begin(); it != collections.end(); ++it)
+	{
+//		items = it->second->Create(itemsList);
 	}
 
 	/*
