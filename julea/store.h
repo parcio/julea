@@ -24,14 +24,13 @@ namespace JULEA
 		public:
 			string const& Host () const;
 
-			std::map<string, _Collection*> Get (std::list<string>);
+			std::list<Collection> Get (std::list<string>);
 			void Create (std::list<Collection>);
 		private:
 			_Store (string const&);
 			~_Store ();
 
 			string m_host;
-			std::map<string, _Collection*> m_collections;
 	};
 
 	class Store : public Public<_Store>

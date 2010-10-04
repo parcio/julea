@@ -28,17 +28,14 @@ int main (int argc, char** argv)
 		newCollections.push_back(Collection(name));
 	}
 
-	for (int j = 0; j < 10; j++)
+	for (int i = 0; i < 10000; i++)
 	{
-		for (int i = 0; i < 10000; i++)
-		{
-			string name("test-" + lexical_cast<string>(j) + "-" + lexical_cast<string>(i));
+		string name("test-" + lexical_cast<string>(i));
 
-			newItems.push_back(name);
-		}
+		newItems.push_back(name);
 	}
 
-//	map<string, Collection*>::iterator it;
+//	map<string, Collection>::iterator it;
 
 	s->Create(newCollections);
 

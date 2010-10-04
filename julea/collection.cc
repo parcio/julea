@@ -44,23 +44,6 @@ namespace JULEA
 		m_id.clear();
 	}
 
-	_Collection::_Collection (_Store* store, string const& name)
-		: m_name(name), m_store(store->Ref())
-	{
-		m_id.clear();
-
-		ScopedDbConnection c(m_store->Host());
-
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("Name", m_name).obj(), 1);
-
-		if (cur->more())
-		{
-			Deserialize(cur->next());
-		}
-
-		c.done();
-	}
-
 	_Collection::_Collection (_Store* store, BSONObj const& obj)
 		: m_name(""), m_store(store->Ref())
 	{
@@ -83,7 +66,6 @@ namespace JULEA
 	{
 		string path(m_name + "/" + name);
 		_Item* item = new _Item(this, path);
-		newItems.push_back(item);
 
 		return item;
 	}

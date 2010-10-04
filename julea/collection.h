@@ -50,7 +50,6 @@ namespace JULEA
 			_Item* Get (string const&);
 		private:
 			_Collection (string const&);
-			_Collection (_Store*, string const&);
 			_Collection (_Store*, mongo::BSONObj const&);
 			~_Collection ();
 
@@ -61,17 +60,23 @@ namespace JULEA
 
 			mongo::OID m_id;
 			string m_name;
-			std::list<_Item*> newItems;
 
 			_Store* m_store;
 	};
 
 	class Collection : public Public<_Collection>
 	{
+		friend class _Store;
+
 		public:
 			Collection (string const& name)
 			{
 				m_p = new _Collection(name);
+			}
+		private:
+			Collection (_Store* store, mongo::BSONObj const& obj)
+			{
+				m_p = new _Collection(store, obj);
 			}
 	};
 }

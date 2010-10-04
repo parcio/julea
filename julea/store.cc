@@ -18,9 +18,9 @@ namespace JULEA
 			throw Exception("Store not initialized.");
 		}
 
-		//ScopedDbConnection c(m_host);
+		ScopedDbConnection c(m_host);
 
-		//c.done();
+		c.done();
 	}
 
 	_Store::~_Store ()
@@ -32,49 +32,38 @@ namespace JULEA
 		return m_host;
 	}
 
-	map<string, _Collection*> _Store::Get (list<string> names)
+	list<Collection> _Store::Get (list<string> names)
 	{
-		map<string, _Collection*> collections;
+		BSONObjBuilder ob;
+		int n = 0;
 
-		ScopedDbConnection c(Host());
+		list<Collection> collections;
 
-		if (names.size() == 0)
+		if (names.size() == 1)
 		{
-			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().obj());
-
-			while (cur->more())
-			{
-				_Collection* collection = new _Collection(this, cur->next());
-				collections[collection->Name()] = collection;
-			}
-		}
-		else if (names.size() == 1)
-		{
-			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("Name", names.front()).obj(), 1);
-
-			if (cur->more())
-			{
-				_Collection* collection = new _Collection(this, cur->next());
-				collections[collection->Name()] = collection;
-			}
+			ob.append("Name", names.front());
+			n = 1;
 		}
 		else
 		{
-			BSONObjBuilder ob;
+			BSONObjBuilder obv;
 			list<string>::iterator it;
 
 			for (it = names.begin(); it != names.end(); ++it)
 			{
-				ob.append("Name", *it);
+				obv.append("Name", *it);
 			}
 
-			auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", BSONObjBuilder().append("$or", ob.obj()).obj());
+			ob.append("$or", obv.obj());
+		}
 
-			while (cur->more())
-			{
-				_Collection* collection = new _Collection(this, cur->next());
-				collections[collection->Name()] = collection;
-			}
+		ScopedDbConnection c(Host());
+
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", ob.obj(), n);
+
+		while (cur->more())
+		{
+			collections.push_back(Collection(this, cur->next()));
 		}
 
 		c.done();
@@ -84,15 +73,12 @@ namespace JULEA
 
 	void _Store::Create (list<Collection> collections)
 	{
-		vector<BSONObj> obj;
-
 		if (collections.size() == 0)
 		{
 			return;
 		}
 
-		//ScopedDbConnection c(Host());
-
+		vector<BSONObj> obj;
 		list<Collection>::iterator it;
 
 		for (it = collections.begin(); it != collections.end(); ++it)
@@ -101,8 +87,9 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-//		c->insert("JULEA.Collections", obj);
+		ScopedDbConnection c(Host());
 
-//		c.done();
+		c->insert("JULEA.Collections", obj);
+		c.done();
 	}
 }
