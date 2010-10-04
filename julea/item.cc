@@ -37,6 +37,12 @@ namespace JULEA
 		//m_name = o.getField("Name").String();
 	}
 
+	_Item::_Item (string const& name)
+		: m_name(name), m_collection(0)
+	{
+		m_id.clear();
+	}
+
 	_Item::_Item (_Collection* collection, string const& name)
 		: m_name(name), m_collection(collection->Ref())
 	{

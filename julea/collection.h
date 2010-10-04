@@ -14,6 +14,7 @@ namespace JULEA
 }
 
 #include "item.h"
+#include "public.h"
 #include "ref_counted.h"
 #include "store.h"
 
@@ -21,6 +22,8 @@ namespace JULEA
 {
 	class _Collection : public RefCounted<_Collection>
 	{
+		friend class Collection;
+
 		friend class _Item;
 		friend class _Store;
 
@@ -42,12 +45,11 @@ namespace JULEA
 			*/
 
 		public:
-			_Collection (string const&);
-
 			string const& Name () const;
 
 			_Item* Get (string const&);
 		private:
+			_Collection (string const&);
 			_Collection (_Store*, string const&);
 			_Collection (_Store*, mongo::BSONObj const&);
 			~_Collection ();
@@ -64,16 +66,13 @@ namespace JULEA
 			_Store* m_store;
 	};
 
-	class Collection
+	class Collection : public Public<_Collection>
 	{
 		public:
-			Collection (string const&);
-			~Collection ();
-
-			Collection& operator-> ();
-
-		private:
-			_Collection* m_p;
+			Collection (string const& name)
+			{
+				m_p = new _Collection(name);
+			}
 	};
 }
 

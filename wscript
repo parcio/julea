@@ -29,7 +29,7 @@ def configure (conf):
 		mandatory=True
 	)
 
-	conf.env.CXXFLAGS += ['-Wall', '-pedantic']
+	conf.env.CXXFLAGS += ['-Wall', '-pedantic', '-ggdb']
 
 	conf.write_config_header('config.h')
 

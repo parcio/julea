@@ -12,14 +12,17 @@ namespace JULEA
 }
 
 #include "collection.h"
+#include "public.h"
+#include "ref_counted.h"
 
 namespace JULEA
 {
-	class _Item : public boost::noncopyable
+	class _Item : public RefCounted<_Item>
 	{
 		friend class _Collection;
 
 		public:
+			_Item (string const&);
 			_Item (_Collection*, string const&);
 
 			string const& Name () const;
@@ -35,16 +38,12 @@ namespace JULEA
 			_Collection* m_collection;
 	};
 
-	class Item
+	class Item : public Public<_Item>
 	{
-		public:
-			Item (string const&);
-			~Item ();
-
-			Item& operator-> ();
-
-		private:
-			_Item* m_p;
+		Item (string const& name)
+		{
+			m_p = new _Item(name);
+		}
 	};
 }
 

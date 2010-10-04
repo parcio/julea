@@ -18,9 +18,9 @@ namespace JULEA
 			throw Exception("Store not initialized.");
 		}
 
-		ScopedDbConnection c(m_host);
+		//ScopedDbConnection c(m_host);
 
-		c.done();
+		//c.done();
 	}
 
 	_Store::~_Store ()
@@ -82,7 +82,7 @@ namespace JULEA
 		return collections;
 	}
 
-	void _Store::Create (list<_Collection*> collections)
+	void _Store::Create (list<Collection> collections)
 	{
 		vector<BSONObj> obj;
 
@@ -91,9 +91,9 @@ namespace JULEA
 			return;
 		}
 
-		ScopedDbConnection c(Host());
+		//ScopedDbConnection c(Host());
 
-		list<_Collection*>::iterator it;
+		list<Collection>::iterator it;
 
 		for (it = collections.begin(); it != collections.end(); ++it)
 		{
@@ -101,8 +101,8 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-		c->insert("JULEA.Collections", obj);
+//		c->insert("JULEA.Collections", obj);
 
-		c.done();
+//		c.done();
 	}
 }

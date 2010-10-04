@@ -12,6 +12,7 @@ namespace JULEA
 }
 
 #include "collection.h"
+#include "public.h"
 #include "ref_counted.h"
 
 namespace JULEA
@@ -20,42 +21,26 @@ namespace JULEA
 	{
 		friend class Store;
 
-		friend class _Collection;
-
 		public:
-			_Store (string const&);
-
 			string const& Host () const;
 
 			std::map<string, _Collection*> Get (std::list<string>);
-			void Create (std::list<_Collection*>);
+			void Create (std::list<Collection>);
 		private:
+			_Store (string const&);
 			~_Store ();
 
 			string m_host;
 			std::map<string, _Collection*> m_collections;
 	};
 
-	class Store
+	class Store : public Public<_Store>
 	{
 		public:
 			Store (string const& name)
 			{
 				m_p = new _Store(name);
 			}
-
-			~Store ()
-			{
-				m_p->Unref();
-			}
-
-			_Store* operator-> ()
-			{
-				return m_p;
-			}
-
-		private:
-			_Store* m_p;
 	};
 }
 

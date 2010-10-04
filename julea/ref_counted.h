@@ -8,7 +8,7 @@ namespace JULEA
 	template<typename T>
 	class RefCounted : public boost::noncopyable
 	{
-		protected:
+		public:
 			RefCounted ()
 				: m_refCount(1)
 			{
@@ -39,6 +39,7 @@ namespace JULEA
 				return false;
 			}
 
+		protected:
 			unsigned int m_refCount;
 	};
 }
