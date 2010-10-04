@@ -47,7 +47,8 @@ namespace JULEA
 		public:
 			string const& Name () const;
 
-			_Item* Get (string const&);
+			std::list<Item> Get (std::list<string>);
+			void Create (std::list<Item>);
 		private:
 			_Collection (string const&);
 			_Collection (_Store*, mongo::BSONObj const&);
@@ -73,6 +74,7 @@ namespace JULEA
 			{
 				m_p = new _Collection(name);
 			}
+
 		private:
 			Collection (_Store* store, mongo::BSONObj const& obj)
 			{

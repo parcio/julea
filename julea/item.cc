@@ -43,21 +43,12 @@ namespace JULEA
 		m_id.clear();
 	}
 
-	_Item::_Item (_Collection* collection, string const& name)
-		: m_name(name), m_collection(collection->Ref())
+	_Item::_Item (_Collection* collection, BSONObj const& obj)
+		: m_name(""), m_collection(collection->Ref())
 	{
 		m_id.clear();
 
-		ScopedDbConnection c(m_collection->m_store->Host());
-
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", BSONObjBuilder().append("Collection", m_collection->ID()).append("Name", m_name).obj(), 1);
-
-		if (cur->more())
-		{
-			Deserialize(cur->next());
-		}
-
-		c.done();
+		Deserialize(obj);
 	}
 
 	_Item::~_Item ()

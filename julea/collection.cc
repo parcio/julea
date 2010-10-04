@@ -62,12 +62,66 @@ namespace JULEA
 		return m_name;
 	}
 
-	_Item* _Collection::Get (string const& name)
+	list<Item> _Collection::Get (list<string> names)
 	{
-		string path(m_name + "/" + name);
-		_Item* item = new _Item(this, path);
+		BSONObjBuilder ob;
+		int n = 0;
 
-		return item;
+		ob.append("Collection", m_id);
+
+		if (names.size() == 1)
+		{
+			ob.append("Name", names.front());
+			n = 1;
+		}
+		else
+		{
+			BSONObjBuilder obv;
+			list<string>::iterator it;
+
+			for (it = names.begin(); it != names.end(); ++it)
+			{
+				obv.append("Name", *it);
+			}
+
+			ob.append("$or", obv.obj());
+		}
+
+		list<Item> items;
+		ScopedDbConnection c(m_store->Host());
+
+		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", ob.obj(), n);
+
+		while (cur->more())
+		{
+			items.push_back(Item(this, cur->next()));
+		}
+
+		c.done();
+
+		return items;
+	}
+
+	void _Collection::Create (list<Item> items)
+	{
+		if (items.size() == 0)
+		{
+			return;
+		}
+
+		vector<BSONObj> obj;
+		list<Item>::iterator it;
+
+		for (it = items.begin(); it != items.end(); ++it)
+		{
+			(*it)->m_collection = this;
+			obj.push_back((*it)->Serialize());
+		}
+
+		ScopedDbConnection c(m_store->Host());
+
+		c->insert("JULEA.Items", obj);
+		c.done();
 	}
 
 	/*

@@ -37,8 +37,6 @@ namespace JULEA
 		BSONObjBuilder ob;
 		int n = 0;
 
-		list<Collection> collections;
-
 		if (names.size() == 1)
 		{
 			ob.append("Name", names.front());
@@ -57,6 +55,7 @@ namespace JULEA
 			ob.append("$or", obv.obj());
 		}
 
+		list<Collection> collections;
 		ScopedDbConnection c(Host());
 
 		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", ob.obj(), n);

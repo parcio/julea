@@ -19,14 +19,15 @@ namespace JULEA
 {
 	class _Item : public RefCounted<_Item>
 	{
+		friend class Item;
+
 		friend class _Collection;
 
 		public:
-			_Item (string const&);
-			_Item (_Collection*, string const&);
-
 			string const& Name () const;
 		private:
+			_Item (string const&);
+			_Item (_Collection*, mongo::BSONObj const&);
 			~_Item ();
 
 			mongo::BSONObj Serialize ();
@@ -40,10 +41,19 @@ namespace JULEA
 
 	class Item : public Public<_Item>
 	{
-		Item (string const& name)
-		{
-			m_p = new _Item(name);
-		}
+		friend class _Collection;
+
+		public:
+			Item (string const& name)
+			{
+				m_p = new _Item(name);
+			}
+
+		private:
+			Item (_Collection* collection, mongo::BSONObj const& obj)
+			{
+				m_p = new _Item(collection, obj);
+			}
 	};
 }
 
