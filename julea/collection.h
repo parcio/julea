@@ -9,6 +9,7 @@
 
 namespace JULEA
 {
+	class _Collection;
 	class Collection;
 }
 
@@ -18,38 +19,38 @@ namespace JULEA
 
 namespace JULEA
 {
-	class Collection : public RefCounted<Collection>
+	class _Collection : public RefCounted<_Collection>
 	{
-		friend class Item;
-		friend class Store;
+		friend class _Item;
+		friend class _Store;
 
 		public:
 			/*
 			class Iterator
 			{
 				public:
-					Iterator (Collection const& directory) : connection(FileSystem::Host()), directory(directory) { cursor =  connection->query("JULEA.DirectoryEntries", mongo::BSONObjBuilder().append("Collection", directory.m_id).obj()); };
+					Iterator (_Collection const& directory) : connection(FileSystem::Host()), directory(directory) { cursor =  connection->query("JULEA.DirectoryEntries", mongo::BSONObjBuilder().append("_Collection", directory.m_id).obj()); };
 					~Iterator () { connection.done(); };
 
 					bool More () { return cursor->more(); };
-					Item Next () { mongo::BSONObj f; string name; f = cursor->next(); name = f.getField("Name").String(); return Item(name); };
+					_Item Next () { mongo::BSONObj f; string name; f = cursor->next(); name = f.getField("Name").String(); return _Item(name); };
 				private:
 					mongo::ScopedDbConnection connection;
-					Collection const& directory;
+					_Collection const& directory;
 					std::auto_ptr<mongo::DBClientCursor> cursor;
 			};
 			*/
 
 		public:
-			Collection (string const&);
+			_Collection (string const&);
 
 			string const& Name () const;
 
-			Item* Get (string const&);
+			_Item* Get (string const&);
 		private:
-			Collection (Store*, string const&);
-			Collection (Store*, mongo::BSONObj const&);
-			~Collection ();
+			_Collection (_Store*, string const&);
+			_Collection (_Store*, mongo::BSONObj const&);
+			~_Collection ();
 
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
@@ -58,9 +59,21 @@ namespace JULEA
 
 			mongo::OID m_id;
 			string m_name;
-			std::list<Item*> newItems;
+			std::list<_Item*> newItems;
 
-			Store* m_store;
+			_Store* m_store;
+	};
+
+	class Collection
+	{
+		public:
+			Collection (string const&);
+			~Collection ();
+
+			Collection& operator-> ();
+
+		private:
+			_Collection* m_p;
 	};
 }
 

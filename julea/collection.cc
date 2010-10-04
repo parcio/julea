@@ -10,7 +10,7 @@ using namespace mongo;
 
 namespace JULEA
 {
-	BSONObj Collection::Serialize ()
+	BSONObj _Collection::Serialize ()
 	{
 		BSONObj o;
 
@@ -27,24 +27,24 @@ namespace JULEA
 		return o;
 	}
 
-	void Collection::Deserialize (BSONObj const& o)
+	void _Collection::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
 		m_name = o.getField("Name").String();
 	}
 
-	mongo::OID const& Collection::ID () const
+	mongo::OID const& _Collection::ID () const
 	{
 		return m_id;
 	}
 
-	Collection::Collection (string const& name)
+	_Collection::_Collection (string const& name)
 		: m_name(name), m_store(0)
 	{
 		m_id.clear();
 	}
 
-	Collection::Collection (Store* store, string const& name)
+	_Collection::_Collection (_Store* store, string const& name)
 		: m_name(name), m_store(store->Ref())
 	{
 		m_id.clear();
@@ -61,7 +61,7 @@ namespace JULEA
 		c.done();
 	}
 
-	Collection::Collection (Store* store, BSONObj const& obj)
+	_Collection::_Collection (_Store* store, BSONObj const& obj)
 		: m_name(""), m_store(store->Ref())
 	{
 		m_id.clear();
@@ -69,34 +69,34 @@ namespace JULEA
 		Deserialize(obj);
 	}
 
-	Collection::~Collection ()
+	_Collection::~_Collection ()
 	{
 		m_store->Unref();
 	}
 
-	string const& Collection::Name () const
+	string const& _Collection::Name () const
 	{
 		return m_name;
 	}
 
-	Item* Collection::Get (string const& name)
+	_Item* _Collection::Get (string const& name)
 	{
 		string path(m_name + "/" + name);
-		Item* item = new Item(this, path);
+		_Item* item = new _Item(this, path);
 		newItems.push_back(item);
 
 		return item;
 	}
 
 	/*
-	bool Collection::Create ()
+	bool _Collection::Create ()
 	{
 		if (m_id.isSet())
 		{
 			return true;
 		}
 
-		ScopedDbConnection c(Store::Host());
+		ScopedDbConnection c(_Store::Host());
 
 		BSONObj d;
 		BSONObj e;
@@ -112,15 +112,15 @@ namespace JULEA
 	*/
 
 	/*
-	bool Collection::CreateFiles ()
+	bool _Collection::CreateFiles ()
 	{
-		ScopedDbConnection c(Store::Host());
+		ScopedDbConnection c(_Store::Host());
 
 		BSONObj d;
 
 		vector<BSONObj> fv;
 		vector<BSONObj> dev;
-		list<Item>::iterator it;
+		list<_Item>::iterator it;
 
 		if (!m_id.isSet())
 		{
@@ -132,7 +132,7 @@ namespace JULEA
 			BSONObj f;
 			BSONElement fid;
 
-			Item file = *it;
+			_Item file = *it;
 
 			fv.push_back(file.Serialize());
 

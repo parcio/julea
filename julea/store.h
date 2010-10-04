@@ -7,6 +7,7 @@
 
 namespace JULEA
 {
+	class _Store;
 	class Store;
 }
 
@@ -15,22 +16,46 @@ namespace JULEA
 
 namespace JULEA
 {
-	class Store : public RefCounted<Store>
+	class _Store : public RefCounted<_Store>
 	{
-		friend class Collection;
+		friend class Store;
+
+		friend class _Collection;
 
 		public:
-			Store (string const&);
+			_Store (string const&);
 
 			string const& Host () const;
 
-			std::map<string, Collection*> Get (std::list<string>);
-			void Create (std::list<Collection*>);
+			std::map<string, _Collection*> Get (std::list<string>);
+			void Create (std::list<_Collection*>);
 		private:
-			~Store ();
+			~_Store ();
 
 			string m_host;
-			std::map<string, Collection*> m_collections;
+			std::map<string, _Collection*> m_collections;
+	};
+
+	class Store
+	{
+		public:
+			Store (string const& name)
+			{
+				m_p = new _Store(name);
+			}
+
+			~Store ()
+			{
+				m_p->Unref();
+			}
+
+			_Store* operator-> ()
+			{
+				return m_p;
+			}
+
+		private:
+			_Store* m_p;
 	};
 }
 

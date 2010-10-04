@@ -6,14 +6,6 @@
 namespace JULEA
 {
 	template<typename T>
-	class RefCounted;
-}
-
-#include "ref_counted.h"
-
-namespace JULEA
-{
-	template<typename T>
 	class RefCounted : public boost::noncopyable
 	{
 		protected:

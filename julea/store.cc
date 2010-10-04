@@ -10,7 +10,7 @@ using namespace mongo;
 
 namespace JULEA
 {
-	Store::Store (string const& host)
+	_Store::_Store (string const& host)
 		: m_host(host)
 	{
 		if (m_host.empty())
@@ -23,18 +23,18 @@ namespace JULEA
 		c.done();
 	}
 
-	Store::~Store ()
+	_Store::~_Store ()
 	{
 	}
 
-	string const& Store::Host () const
+	string const& _Store::Host () const
 	{
 		return m_host;
 	}
 
-	map<string, Collection*> Store::Get (list<string> names)
+	map<string, _Collection*> _Store::Get (list<string> names)
 	{
-		map<string, Collection*> collections;
+		map<string, _Collection*> collections;
 
 		ScopedDbConnection c(Host());
 
@@ -44,7 +44,7 @@ namespace JULEA
 
 			while (cur->more())
 			{
-				Collection* collection = new Collection(this, cur->next());
+				_Collection* collection = new _Collection(this, cur->next());
 				collections[collection->Name()] = collection;
 			}
 		}
@@ -54,7 +54,7 @@ namespace JULEA
 
 			if (cur->more())
 			{
-				Collection* collection = new Collection(this, cur->next());
+				_Collection* collection = new _Collection(this, cur->next());
 				collections[collection->Name()] = collection;
 			}
 		}
@@ -72,7 +72,7 @@ namespace JULEA
 
 			while (cur->more())
 			{
-				Collection* collection = new Collection(this, cur->next());
+				_Collection* collection = new _Collection(this, cur->next());
 				collections[collection->Name()] = collection;
 			}
 		}
@@ -82,7 +82,7 @@ namespace JULEA
 		return collections;
 	}
 
-	void Store::Create (list<Collection*> collections)
+	void _Store::Create (list<_Collection*> collections)
 	{
 		vector<BSONObj> obj;
 
@@ -93,7 +93,7 @@ namespace JULEA
 
 		ScopedDbConnection c(Host());
 
-		list<Collection*>::iterator it;
+		list<_Collection*>::iterator it;
 
 		for (it = collections.begin(); it != collections.end(); ++it)
 		{

@@ -12,7 +12,7 @@ using namespace mongo;
 
 namespace JULEA
 {
-	BSONObj Item::Serialize ()
+	BSONObj _Item::Serialize ()
 	{
 		BSONObj o;
 
@@ -30,14 +30,14 @@ namespace JULEA
 		return o;
 	}
 
-	void Item::Deserialize (BSONObj const& o)
+	void _Item::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
 		//m_collectionID = o.getField("Collection").OID();
 		//m_name = o.getField("Name").String();
 	}
 
-	Item::Item (Collection* collection, string const& name)
+	_Item::_Item (_Collection* collection, string const& name)
 		: m_name(name), m_collection(collection->Ref())
 	{
 		m_id.clear();
@@ -54,12 +54,12 @@ namespace JULEA
 		c.done();
 	}
 
-	Item::~Item ()
+	_Item::~_Item ()
 	{
 		m_collection->Unref();
 	}
 
-	string const& Item::Name () const
+	string const& _Item::Name () const
 	{
 		return m_name;
 	}

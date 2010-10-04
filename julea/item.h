@@ -7,6 +7,7 @@
 
 namespace JULEA
 {
+	class _Item;
 	class Item;
 }
 
@@ -14,16 +15,16 @@ namespace JULEA
 
 namespace JULEA
 {
-	class Item : public boost::noncopyable
+	class _Item : public boost::noncopyable
 	{
-		friend class Collection;
+		friend class _Collection;
 
 		public:
-			Item (Collection*, string const&);
+			_Item (_Collection*, string const&);
 
 			string const& Name () const;
 		private:
-			~Item ();
+			~_Item ();
 
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
@@ -31,7 +32,19 @@ namespace JULEA
 			mongo::OID m_id;
 			string m_name;
 
-			Collection* m_collection;
+			_Collection* m_collection;
+	};
+
+	class Item
+	{
+		public:
+			Item (string const&);
+			~Item ();
+
+			Item& operator-> ();
+
+		private:
+			_Item* m_p;
 	};
 }
 
