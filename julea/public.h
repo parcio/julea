@@ -12,15 +12,15 @@ namespace JULEA
 			{
 			}
 
-			Public (Public const& collection)
-				: m_p(collection.m_p)
+			Public (Public const& p)
+				: m_p(p.m_p)
 			{
 				m_p->Ref();
 			}
 
-			Public& operator= (Public const& collection)
+			Public& operator= (Public const& p)
 			{
-				m_p = collection.m_p;
+				m_p = p.m_p;
 				m_p->Ref();
 
 				return *this;
