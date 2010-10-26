@@ -3,6 +3,7 @@
 
 #include "collection.h"
 
+#include "exception.h"
 #include "store.h"
 
 using namespace std;
@@ -40,7 +41,12 @@ namespace JULEA
 
 	void _Collection::Associate (_Store* store)
 	{
-		m_store = store;
+		if (m_store != 0)
+		{
+			throw Exception("");
+		}
+
+		m_store = store->Ref();
 	}
 
 	_Collection::_Collection (string const& name)
@@ -114,8 +120,15 @@ namespace JULEA
 			return;
 		}
 
+		BSONObj o;
 		vector<BSONObj> obj;
 		list<Item>::iterator it;
+
+		o = BSONObjBuilder()
+			.append("_id", 1)
+			.append("Collection", 1)
+			.append("Name", 1)
+			.obj();
 
 		for (it = items.begin(); it != items.end(); ++it)
 		{
@@ -125,6 +138,7 @@ namespace JULEA
 
 		ScopedDbConnection c(m_store->Host());
 
+		c->ensureIndex("JULEA.Items", o);
 		c->insert("JULEA.Items", obj);
 		c.done();
 	}

@@ -28,7 +28,6 @@ namespace JULEA
 
 			~Public ()
 			{
-				cout << "unref " << m_p << " " <<  this << endl;
 				m_p->Unref();
 			}
 

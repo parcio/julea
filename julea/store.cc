@@ -77,8 +77,14 @@ namespace JULEA
 			return;
 		}
 
+		BSONObj o;
 		vector<BSONObj> obj;
 		list<Collection>::iterator it;
+
+		o = BSONObjBuilder()
+			.append("_id", 1)
+			.append("Name", 1)
+			.obj();
 
 		for (it = collections.begin(); it != collections.end(); ++it)
 		{
@@ -88,6 +94,7 @@ namespace JULEA
 
 		ScopedDbConnection c(Host());
 
+		c->ensureIndex("JULEA.Collections", o);
 		c->insert("JULEA.Collections", obj);
 		c.done();
 	}

@@ -17,7 +17,6 @@ int main (int argc, char** argv)
 
 	Store s(argv[1]);
 	list<Collection> collections;
-	list<Item> items;
 
 	for (int j = 0; j < 10; j++)
 	{
@@ -32,6 +31,8 @@ int main (int argc, char** argv)
 
 	for (it = collections.begin(); it != collections.end(); ++it)
 	{
+		list<Item> items;
+
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(i));

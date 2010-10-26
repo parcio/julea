@@ -5,6 +5,7 @@
 
 #include "item.h"
 
+#include "exception.h"
 #include "store.h"
 
 using namespace std;
@@ -33,13 +34,17 @@ namespace JULEA
 	void _Item::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
-		//m_collectionID = o.getField("Collection").OID();
-		//m_name = o.getField("Name").String();
+		m_name = o.getField("Name").String();
 	}
 
 	void _Item::Associate (_Collection* collection)
 	{
-		m_collection = collection;
+		if (m_collection != 0)
+		{
+			throw Exception("");
+		}
+
+		m_collection = collection->Ref();
 	}
 
 	_Item::_Item (string const& name)
