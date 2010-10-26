@@ -82,7 +82,7 @@ namespace JULEA
 
 		for (it = collections.begin(); it != collections.end(); ++it)
 		{
-			(*it)->m_store = this;
+			(*it)->Associate(this);
 			obj.push_back((*it)->Serialize());
 		}
 

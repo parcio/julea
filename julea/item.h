@@ -33,6 +33,8 @@ namespace JULEA
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
 
+			void Associate (_Collection*);
+
 			mongo::OID m_id;
 			string m_name;
 

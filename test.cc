@@ -16,35 +16,31 @@ int main (int argc, char** argv)
 	}
 
 	Store s(argv[1]);
-	list<Collection> newCollections;
-	map<string, Collection> collections;
-	list<string> newItems;
-	map<string, Item> items;
+	list<Collection> collections;
+	list<Item> items;
 
 	for (int j = 0; j < 10; j++)
 	{
 		string name("test-" + lexical_cast<string>(j));
 
-		newCollections.push_back(Collection(name));
+		collections.push_back(Collection(name));
 	}
 
-	for (int i = 0; i < 10000; i++)
-	{
-		string name("test-" + lexical_cast<string>(i));
+	s->Create(collections);
 
-		newItems.push_back(name);
-	}
+	list<Collection>::iterator it;
 
-//	map<string, Collection>::iterator it;
-
-	s->Create(newCollections);
-
-	/*
 	for (it = collections.begin(); it != collections.end(); ++it)
 	{
-		items = it->second->Create(itemsList);
+		for (int i = 0; i < 10000; i++)
+		{
+			string name("test-" + lexical_cast<string>(i));
+
+			items.push_back(Item(name));
+		}
+
+		(*it)->Create(items);
 	}
-	*/
 
 	/*
 	Collection::Iterator i(Collection("test-3"));

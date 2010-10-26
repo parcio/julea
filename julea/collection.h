@@ -59,6 +59,8 @@ namespace JULEA
 
 			mongo::OID const& ID () const;
 
+			void Associate (_Store*);
+
 			mongo::OID m_id;
 			string m_name;
 
