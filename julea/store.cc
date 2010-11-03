@@ -82,7 +82,6 @@ namespace JULEA
 		list<Collection>::iterator it;
 
 		o = BSONObjBuilder()
-			.append("_id", 1)
 			.append("Name", 1)
 			.obj();
 
@@ -94,7 +93,7 @@ namespace JULEA
 
 		ScopedDbConnection c(Host());
 
-		c->ensureIndex("JULEA.Collections", o);
+		c->ensureIndex("JULEA.Collections", o, true);
 		c->insert("JULEA.Collections", obj);
 		c.done();
 	}
