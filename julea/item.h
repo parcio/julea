@@ -14,17 +14,23 @@ namespace JULEA
 #include "collection.h"
 #include "public.h"
 #include "ref_counted.h"
+#include "semantics.h"
 
 namespace JULEA
 {
 	class _Item : public RefCounted<_Item>
 	{
+		friend class RefCounted<_Item>;
+
 		friend class Item;
 
 		friend class _Collection;
 
 		public:
 			string const& Name () const;
+
+			void SetSemantics (Semantics);
+			Semantics GetSemantics ();
 		private:
 			_Item (string const&);
 			_Item (_Collection*, mongo::BSONObj const&);
@@ -39,6 +45,7 @@ namespace JULEA
 			string m_name;
 
 			_Collection* m_collection;
+			_Semantics* m_semantics;
 	};
 
 	class Item : public Public<_Item>

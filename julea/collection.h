@@ -22,6 +22,8 @@ namespace JULEA
 {
 	class _Collection : public RefCounted<_Collection>
 	{
+		friend class RefCounted<_Collection>;
+
 		friend class Collection;
 
 		friend class _Item;

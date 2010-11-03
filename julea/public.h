@@ -37,6 +37,12 @@ namespace JULEA
 			}
 
 		protected:
+			Public (T* p)
+				: m_p(p)
+			{
+				m_p->Ref();
+			}
+
 			T* m_p;
 	};
 }

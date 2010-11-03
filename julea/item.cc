@@ -6,7 +6,6 @@
 #include "item.h"
 
 #include "exception.h"
-#include "store.h"
 
 using namespace std;
 using namespace mongo;
@@ -48,13 +47,13 @@ namespace JULEA
 	}
 
 	_Item::_Item (string const& name)
-		: m_name(name), m_collection(0)
+		: m_name(name), m_collection(0), m_semantics(0)
 	{
 		m_id.clear();
 	}
 
 	_Item::_Item (_Collection* collection, BSONObj const& obj)
-		: m_name(""), m_collection(collection->Ref())
+		: m_name(""), m_collection(collection->Ref()), m_semantics(0)
 	{
 		m_id.clear();
 
@@ -64,10 +63,30 @@ namespace JULEA
 	_Item::~_Item ()
 	{
 		m_collection->Unref();
+
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
 	}
 
 	string const& _Item::Name () const
 	{
 		return m_name;
+	}
+
+	void _Item::SetSemantics (Semantics semantics)
+	{
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+
+		m_semantics = semantics->Ref();
+	}
+
+	Semantics _Item::GetSemantics ()
+	{
+		return Semantics(m_semantics);
 	}
 }

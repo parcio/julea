@@ -32,12 +32,17 @@ int main (int argc, char** argv)
 	for (it = collections.begin(); it != collections.end(); ++it)
 	{
 		list<Item> items;
+		Semantics semantics;
+
+		semantics->SetConsistency(Consistency::Strict);
 
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(i));
+			Item item(name);
 
-			items.push_back(Item(name));
+			item->SetSemantics(semantics);
+			items.push_back(item);
 		}
 
 		(*it)->Create(items);

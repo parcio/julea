@@ -31,7 +31,7 @@ namespace JULEA
 
 				if (m_refCount == 0)
 				{
-					delete this;
+					delete static_cast<T*>(this);
 
 					return true;
 				}

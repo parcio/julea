@@ -19,6 +19,8 @@ namespace JULEA
 {
 	class _Store : public RefCounted<_Store>
 	{
+		friend class RefCounted<_Store>;
+
 		friend class Store;
 
 		public:
