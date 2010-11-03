@@ -23,6 +23,8 @@ namespace JULEA
 		o = BSONObjBuilder()
 			.append("_id", m_id)
 			.append("Name", m_name)
+			.append("User", m_owner.User())
+			.append("Group", m_owner.Group())
 			.obj();
 
 		return o;
@@ -32,6 +34,9 @@ namespace JULEA
 	{
 		m_id = o.getField("_id").OID();
 		m_name = o.getField("Name").String();
+
+		m_owner.m_user = o.getField("User").Int();
+		m_owner.m_group = o.getField("Group").Int();
 	}
 
 	mongo::OID const& _Collection::ID () const

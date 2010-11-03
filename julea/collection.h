@@ -13,6 +13,7 @@ namespace JULEA
 	class Collection;
 }
 
+#include "credentials.h"
 #include "item.h"
 #include "public.h"
 #include "ref_counted.h"
@@ -65,6 +66,8 @@ namespace JULEA
 
 			mongo::OID m_id;
 			string m_name;
+
+			Credentials m_owner;
 
 			_Store* m_store;
 	};

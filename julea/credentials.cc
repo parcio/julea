@@ -16,8 +16,22 @@ namespace JULEA
 		m_group = getegid();
 	}
 
-	Credentials::Credentials (uint32_t user, uint32_t group)
+	Credentials::Credentials (int user, int group)
 		: m_user(user), m_group(group)
 	{
+	}
+
+	Credentials::~Credentials ()
+	{
+	}
+
+	int Credentials::User ()
+	{
+		return m_user;
+	}
+
+	int Credentials::Group ()
+	{
+		return m_group;
 	}
 }

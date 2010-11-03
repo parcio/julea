@@ -10,13 +10,18 @@ namespace JULEA
 {
 	class Credentials
 	{
+		friend class _Collection;
+
 		public:
 			Credentials ();
-			Credentials (uint32_t, uint32_t);
+			Credentials (int, int);
 			~Credentials ();
+
+			int User ();
+			int Group ();
 		private:
-			uint32_t m_user;
-			uint32_t m_group;
+			int m_user;
+			int m_group;
 	};
 }
 
