@@ -17,31 +17,31 @@ namespace JULEA
 	{
 	}
 
-	Consistency::Type _Semantics::SetConsistency (Consistency::Type consistency)
+	_Semantics* _Semantics::SetConsistency (Consistency::Type consistency)
 	{
 		m_consistency = consistency;
 
-		return consistency;
+		return this;
 	}
 
-	Persistency::Type _Semantics::SetPersistency (Persistency::Type persistency)
+	_Semantics* _Semantics::SetPersistency (Persistency::Type persistency)
 	{
 		m_persistency = persistency;
 
-		return persistency;
+		return this;
 	}
 
-	Concurrency::Type _Semantics::SetConcurrency (Concurrency::Type concurrency)
+	_Semantics* _Semantics::SetConcurrency (Concurrency::Type concurrency)
 	{
 		m_concurrency = concurrency;
 
-		return concurrency;
+		return this;
 	}
 
-	Security::Type _Semantics::SetSecurity (Security::Type security)
+	_Semantics* _Semantics::SetSecurity (Security::Type security)
 	{
 		m_security = security;
 
-		return security;
+		return this;
 	}
 }

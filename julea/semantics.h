@@ -56,10 +56,10 @@ namespace JULEA
 		friend class Semantics;
 
 		public:
-			Consistency::Type SetConsistency (Consistency::Type);
-			Persistency::Type SetPersistency (Persistency::Type);
-			Concurrency::Type SetConcurrency (Concurrency::Type);
-			Security::Type SetSecurity (Security::Type);
+			_Semantics* SetConsistency (Consistency::Type);
+			_Semantics* SetPersistency (Persistency::Type);
+			_Semantics* SetConcurrency (Concurrency::Type);
+			_Semantics* SetSecurity (Security::Type);
 		private:
 			_Semantics ();
 			~_Semantics ();
@@ -73,6 +73,7 @@ namespace JULEA
 	class Semantics : public Public<_Semantics>
 	{
 		friend class _Item;
+		friend class _Store;
 
 		public:
 			Semantics ()
