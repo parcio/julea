@@ -12,14 +12,54 @@ using namespace mongo;
 
 namespace JULEA
 {
+	_Item::_Item (string const& name)
+		: m_initialized(false),
+		  m_name(name),
+		  m_collection(0),
+		  m_semantics(0)
+	{
+		m_id.init();
+	}
+
+	_Item::_Item (_Collection* collection, BSONObj const& obj)
+		: m_initialized(true),
+		  m_name(""),
+		  m_collection(collection->Ref()),
+		  m_semantics(0)
+	{
+		m_id.init();
+
+		Deserialize(obj);
+	}
+
+	_Item::~_Item ()
+	{
+		m_collection->Unref();
+
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+	}
+
+	void _Item::IsInitialized (bool check)
+	{
+		if (m_initialized != check)
+		{
+			if (check)
+			{
+				throw Exception("Item not initialized.");
+			}
+			else
+			{
+				throw Exception("Item already initialized.");
+			}
+		}
+	}
+
 	BSONObj _Item::Serialize ()
 	{
 		BSONObj o;
-
-		if (!m_id.isSet())
-		{
-			m_id.init();
-		}
 
 		o = BSONObjBuilder()
 			.append("_id", m_id)
@@ -38,36 +78,10 @@ namespace JULEA
 
 	void _Item::Associate (_Collection* collection)
 	{
-		if (m_collection != 0)
-		{
-			throw Exception("");
-		}
+		IsInitialized(false);
 
 		m_collection = collection->Ref();
-	}
-
-	_Item::_Item (string const& name)
-		: m_name(name), m_collection(0), m_semantics(0)
-	{
-		m_id.clear();
-	}
-
-	_Item::_Item (_Collection* collection, BSONObj const& obj)
-		: m_name(""), m_collection(collection->Ref()), m_semantics(0)
-	{
-		m_id.clear();
-
-		Deserialize(obj);
-	}
-
-	_Item::~_Item ()
-	{
-		m_collection->Unref();
-
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
+		m_initialized = true;
 	}
 
 	string const& _Item::Name () const
@@ -75,18 +89,18 @@ namespace JULEA
 		return m_name;
 	}
 
-	void _Item::SetSemantics (Semantics semantics)
+	_Semantics const* _Item::GetSemantics ()
 	{
 		if (m_semantics != 0)
 		{
-			m_semantics->Unref();
+			return m_semantics;
 		}
 
-		m_semantics = semantics->Ref();
+		return m_collection->GetSemantics();
 	}
 
-	Semantics _Item::GetSemantics ()
+	void _Item::SetSemantics (Semantics const& semantics)
 	{
-		return Semantics(m_semantics);
+		m_semantics = semantics->Ref();
 	}
 }

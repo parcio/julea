@@ -17,6 +17,7 @@ namespace JULEA
 #include "item.h"
 #include "public.h"
 #include "ref_counted.h"
+#include "semantics.h"
 #include "store.h"
 
 namespace JULEA
@@ -52,24 +53,36 @@ namespace JULEA
 
 			std::list<Item> Get (std::list<string>);
 			void Create (std::list<Item>);
+
+			_Semantics const* GetSemantics ();
+			void SetSemantics (Semantics const&);
 		private:
 			_Collection (string const&);
 			_Collection (_Store*, mongo::BSONObj const&);
 			~_Collection ();
 
+			void IsInitialized (bool) const;
+
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
+
+			std::string const& ItemsCollection ();
 
 			mongo::OID const& ID () const;
 
 			void Associate (_Store*);
+
+			bool m_initialized;
 
 			mongo::OID m_id;
 			string m_name;
 
 			Credentials m_owner;
 
+			_Semantics* m_semantics;
 			_Store* m_store;
+
+			std::string m_itemsCollection;
 	};
 
 	class Collection : public Public<_Collection>

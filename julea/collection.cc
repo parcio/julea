@@ -11,14 +11,49 @@ using namespace mongo;
 
 namespace JULEA
 {
+	_Collection::_Collection (string const& name)
+		: m_initialized(false),
+		  m_name(name),
+		  m_store(0),
+		  m_itemsCollection("")
+	{
+		m_id.init();
+	}
+
+	_Collection::_Collection (_Store* store, BSONObj const& obj)
+		: m_initialized(true),
+		  m_name(""),
+		  m_store(store->Ref()),
+		  m_itemsCollection("")
+	{
+		m_id.init();
+
+		Deserialize(obj);
+	}
+
+	_Collection::~_Collection ()
+	{
+		m_store->Unref();
+	}
+
+	void _Collection::IsInitialized (bool check) const
+	{
+		if (m_initialized != check)
+		{
+			if (check)
+			{
+				throw Exception("Collection not initialized.");
+			}
+			else
+			{
+				throw Exception("Collection already initialized.");
+			}
+		}
+	}
+
 	BSONObj _Collection::Serialize ()
 	{
 		BSONObj o;
-
-		if (!m_id.isSet())
-		{
-			m_id.init();
-		}
 
 		o = BSONObjBuilder()
 			.append("_id", m_id)
@@ -39,6 +74,18 @@ namespace JULEA
 		m_owner.m_group = o.getField("Group").Int();
 	}
 
+	string const& _Collection::ItemsCollection ()
+	{
+		IsInitialized(true);
+
+		if (m_itemsCollection.empty())
+		{
+			m_itemsCollection = m_store->Name() + ".Items";
+		}
+
+		return m_itemsCollection;
+	}
+
 	mongo::OID const& _Collection::ID () const
 	{
 		return m_id;
@@ -46,31 +93,10 @@ namespace JULEA
 
 	void _Collection::Associate (_Store* store)
 	{
-		if (m_store != 0)
-		{
-			throw Exception("");
-		}
+		IsInitialized(false);
 
 		m_store = store->Ref();
-	}
-
-	_Collection::_Collection (string const& name)
-		: m_name(name), m_store(0)
-	{
-		m_id.clear();
-	}
-
-	_Collection::_Collection (_Store* store, BSONObj const& obj)
-		: m_name(""), m_store(store->Ref())
-	{
-		m_id.clear();
-
-		Deserialize(obj);
-	}
-
-	_Collection::~_Collection ()
-	{
-		m_store->Unref();
+		m_initialized = true;
 	}
 
 	string const& _Collection::Name () const
@@ -82,6 +108,8 @@ namespace JULEA
 	{
 		BSONObjBuilder ob;
 		int n = 0;
+
+		IsInitialized(true);
 
 		ob.append("Collection", m_id);
 
@@ -104,9 +132,9 @@ namespace JULEA
 		}
 
 		list<Item> items;
-		ScopedDbConnection c(m_store->Host());
+		ScopedDbConnection c(m_store->Connection()->GetServersString());
 
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Items", ob.obj(), n);
+		auto_ptr<DBClientCursor> cur = c->query(ItemsCollection(), ob.obj(), n);
 
 		while (cur->more())
 		{
@@ -120,6 +148,8 @@ namespace JULEA
 
 	void _Collection::Create (list<Item> items)
 	{
+		IsInitialized(true);
+
 		if (items.size() == 0)
 		{
 			return;
@@ -140,10 +170,34 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-		ScopedDbConnection c(m_store->Host());
+		ScopedDbConnection c(m_store->Connection()->GetServersString());
 
-		c->ensureIndex("JULEA.Items", o, true);
-		c->insert("JULEA.Items", obj);
+		c->ensureIndex(ItemsCollection(), o, true);
+		c->insert(ItemsCollection(), obj);
+
+		if (GetSemantics()->GetPersistency() == Persistency::Strict)
+		{
+			BSONObj ores;
+
+			c->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+			//cout << ores << endl;
+		}
+
 		c.done();
+	}
+
+	_Semantics const* _Collection::GetSemantics ()
+	{
+		if (m_semantics != 0)
+		{
+			return m_semantics;
+		}
+
+		return m_store->GetSemantics();
+	}
+
+	void _Collection::SetSemantics (Semantics const& semantics)
+	{
+		m_semantics = semantics->Ref();
 	}
 }

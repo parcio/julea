@@ -29,17 +29,21 @@ namespace JULEA
 		public:
 			string const& Name () const;
 
-			void SetSemantics (Semantics);
-			Semantics GetSemantics ();
+			_Semantics const* GetSemantics ();
+			void SetSemantics (Semantics const&);
 		private:
 			_Item (string const&);
 			_Item (_Collection*, mongo::BSONObj const&);
 			~_Item ();
 
+			void IsInitialized (bool);
+
 			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
 
 			void Associate (_Collection*);
+
+			bool m_initialized;
 
 			mongo::OID m_id;
 			string m_name;

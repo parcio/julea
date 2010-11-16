@@ -31,7 +31,7 @@ namespace JULEA
 				m_p->Unref();
 			}
 
-			T* operator-> ()
+			T* operator-> () const
 			{
 				return m_p;
 			}

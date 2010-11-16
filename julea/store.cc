@@ -10,32 +10,74 @@ using namespace mongo;
 
 namespace JULEA
 {
-	_Store::_Store (string const& host)
-		: m_host(host)
+	_Store::_Store (string const& name)
+		: m_initialized(false),
+		  m_name(name),
+		  m_connection(0),
+		  m_semantics(0),
+		  m_collectionsCollection("")
 	{
-		if (m_host.empty())
-		{
-			throw Exception("Store not initialized.");
-		}
+		m_semantics = new _Semantics();
+	}
 
-		ScopedDbConnection c(m_host);
-
-		c.done();
+	_Store::_Store (_Connection* connection, string const& name)
+		: m_initialized(true),
+		  m_name(name),
+		  m_connection(connection),
+		  m_semantics(0),
+		  m_collectionsCollection("")
+	{
+		m_semantics = new _Semantics();
 	}
 
 	_Store::~_Store ()
 	{
+		delete m_semantics;
 	}
 
-	string const& _Store::Host () const
+	void _Store::IsInitialized (bool check) const
 	{
-		return m_host;
+		if (m_initialized != check)
+		{
+			if (check)
+			{
+				throw Exception("Store not initialized.");
+			}
+			else
+			{
+				throw Exception("Store already initialized.");
+			}
+		}
+	}
+
+	string const& _Store::CollectionsCollection ()
+	{
+		IsInitialized(true);
+
+		if (m_collectionsCollection.empty())
+		{
+			m_collectionsCollection = m_name + ".Collections";
+		}
+
+		return m_collectionsCollection;
+	}
+
+	_Connection* _Store::Connection ()
+	{
+		return m_connection;
+	}
+
+	string const& _Store::Name ()
+	{
+		return m_name;
 	}
 
 	list<Collection> _Store::Get (list<string> names)
 	{
 		BSONObjBuilder ob;
 		int n = 0;
+
+		IsInitialized(true);
 
 		if (names.size() == 1)
 		{
@@ -56,9 +98,9 @@ namespace JULEA
 		}
 
 		list<Collection> collections;
-		ScopedDbConnection c(Host());
+		ScopedDbConnection c(m_connection->GetServersString());
 
-		auto_ptr<DBClientCursor> cur = c->query("JULEA.Collections", ob.obj(), n);
+		auto_ptr<DBClientCursor> cur = c->query(CollectionsCollection(), ob.obj(), n);
 
 		while (cur->more())
 		{
@@ -72,6 +114,8 @@ namespace JULEA
 
 	void _Store::Create (list<Collection> collections)
 	{
+		IsInitialized(true);
+
 		if (collections.size() == 0)
 		{
 			return;
@@ -91,10 +135,30 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-		ScopedDbConnection c(Host());
+		ScopedDbConnection c(m_connection->GetServersString());
 
-		c->ensureIndex("JULEA.Collections", o, true);
-		c->insert("JULEA.Collections", obj);
+		c->ensureIndex(CollectionsCollection(), o, true);
+		c->insert(CollectionsCollection(), obj);
+//		cout << "error: " << c->getLastErrorDetailed() << endl;
+
+		if (GetSemantics()->GetPersistency() == Persistency::Strict)
+		{
+			BSONObj ores;
+
+			c->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+			//cout << ores << endl;
+		}
+
 		c.done();
+	}
+
+	_Semantics const* _Store::GetSemantics ()
+	{
+		return m_semantics;
+	}
+
+	void _Store::SetSemantics (Semantics const& semantics)
+	{
+		m_semantics = semantics->Ref();
 	}
 }

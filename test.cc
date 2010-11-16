@@ -15,23 +15,31 @@ int main (int argc, char** argv)
 		return 1;
 	}
 
-	Store s(argv[1]);
+	Connection c;
+
+	for (int i = 1; i < argc; ++i)
+	{
+		c->AddServer(argv[i]);
+	}
+
+	c->Connect();
+
+	Store s = c->Get("JULEA");
+
 	Semantics semantics;
+
+	semantics->SetPersistency(Persistency::Lax);
+
 	list<Collection> collections;
-
-	semantics
-		->SetConsistency(Consistency::Strict)
-		->SetPersistency(Persistency::Strict)
-		->SetConcurrency(Concurrency::Strict)
-		->SetSecurity(Security::Strict);
-
-//	s->SetSemantics(semantics);
 
 	for (int j = 0; j < 10; j++)
 	{
 		string name("test-" + lexical_cast<string>(j));
+		Collection collection(name);
 
-		collections.push_back(Collection(name));
+		collection->SetSemantics(semantics);
+
+		collections.push_back(collection);
 	}
 
 	s->Create(collections);

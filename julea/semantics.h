@@ -29,7 +29,8 @@ namespace JULEA
 	{
 		enum Type
 		{
-			Strict
+			Strict,
+			Lax
 		};
 	}
 
@@ -55,10 +56,16 @@ namespace JULEA
 
 		friend class Semantics;
 
+		friend class _Store;
+
 		public:
+			Consistency::Type const& GetConsistency () const;
 			_Semantics* SetConsistency (Consistency::Type);
+			Persistency::Type const& GetPersistency () const;
 			_Semantics* SetPersistency (Persistency::Type);
+			Concurrency::Type const& GetConcurrency () const;
 			_Semantics* SetConcurrency (Concurrency::Type);
+			Security::Type const& GetSecurity () const;
 			_Semantics* SetSecurity (Security::Type);
 		private:
 			_Semantics ();
