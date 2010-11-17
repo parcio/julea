@@ -32,7 +32,7 @@ namespace JULEA
 
 	_Store::~_Store ()
 	{
-		delete m_semantics;
+		m_semantics->Unref();
 	}
 
 	void _Store::IsInitialized (bool check) const
@@ -159,6 +159,11 @@ namespace JULEA
 
 	void _Store::SetSemantics (Semantics const& semantics)
 	{
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+
 		m_semantics = semantics->Ref();
 	}
 }

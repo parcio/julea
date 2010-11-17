@@ -34,7 +34,10 @@ namespace JULEA
 
 	_Item::~_Item ()
 	{
-		m_collection->Unref();
+		if (m_collection != 0)
+		{
+			m_collection->Unref();
+		}
 
 		if (m_semantics != 0)
 		{
@@ -101,6 +104,11 @@ namespace JULEA
 
 	void _Item::SetSemantics (Semantics const& semantics)
 	{
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+
 		m_semantics = semantics->Ref();
 	}
 }

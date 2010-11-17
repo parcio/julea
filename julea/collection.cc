@@ -14,6 +14,7 @@ namespace JULEA
 	_Collection::_Collection (string const& name)
 		: m_initialized(false),
 		  m_name(name),
+		  m_semantics(0),
 		  m_store(0),
 		  m_itemsCollection("")
 	{
@@ -23,6 +24,7 @@ namespace JULEA
 	_Collection::_Collection (_Store* store, BSONObj const& obj)
 		: m_initialized(true),
 		  m_name(""),
+		  m_semantics(0),
 		  m_store(store->Ref()),
 		  m_itemsCollection("")
 	{
@@ -33,7 +35,15 @@ namespace JULEA
 
 	_Collection::~_Collection ()
 	{
-		m_store->Unref();
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+
+		if (m_store != 0)
+		{
+			m_store->Unref();
+		}
 	}
 
 	void _Collection::IsInitialized (bool check) const
@@ -198,6 +208,11 @@ namespace JULEA
 
 	void _Collection::SetSemantics (Semantics const& semantics)
 	{
+		if (m_semantics != 0)
+		{
+			m_semantics->Unref();
+		}
+
 		m_semantics = semantics->Ref();
 	}
 }
