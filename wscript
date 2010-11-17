@@ -1,52 +1,46 @@
 #!/usr/bin/env python
 
-import os
+top = '.'
+out = 'build'
 
-import Utils
+def options (ctx):
+	ctx.load('boost')
+	ctx.load('compiler_cxx')
 
-def set_options (opt):
-	opt.tool_options('boost')
-	opt.tool_options('compiler_cxx')
+def configure (ctx):
+	ctx.load('boost')
+	ctx.load('compiler_cxx')
 
-def configure (conf):
-	conf.check_tool('boost')
-	conf.check_tool('compiler_cxx')
-
-	conf.check_boost(
-		lib='filesystem program_options system thread',
-		mandatory=True
+	ctx.check_boost(
+		lib='filesystem program_options system thread'
 	)
 
-#	conf.check_cfg(
+#	ctx.check_cfg(
 #		package='glibmm-2.4',
 #		args='--cflags --libs',
 #		uselib_store='GLIBMM',
 #		mandatory=True
 #	)
 
-	conf.check_cxx(
-		lib='mongoclient',
-		mandatory=True
+	ctx.check_cxx(
+		lib='mongoclient'
 	)
 
-	conf.env.CXXFLAGS += ['-Wall', '-Wextra', '-pedantic', '-ggdb']
+	ctx.env.CXXFLAGS += ['-Wall', '-Wextra', '-pedantic', '-ggdb']
 
-	conf.write_config_header('config.h')
+	ctx.write_config_header('config.h')
 
-def build (bld):
-	bld.new_task_gen(
-		features = 'cxx cstaticlib',
+def build (ctx):
+	ctx.stlib(
 		source = ['julea/%s.cc' % file for file in ('collection', 'connection', 'credentials', 'exception', 'item', 'semantics', 'store')],
 		target = 'julea',
-		uselib = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_THREAD', 'MONGOCLIENT'],
+		use = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_SYSTEM', 'BOOST_THREAD', 'MONGOCLIENT'],
 		includes = ['.']
 	)
 
-	bld.new_task_gen(
-		features = 'cxx cprogram',
+	ctx.program(
 		source = ['test.cc'],
 		target = 'test',
-		uselib = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_THREAD', 'MONGOCLIENT'],
-		uselib_local = ['julea'],
+		use = ['julea'],
 		includes = ['.', 'julea']
 	)
