@@ -62,16 +62,14 @@ int main (int argc, char** argv)
 		(*it)->Create(items);
 	}
 
-	/*
-	Collection::Iterator i(Collection("test-3"));
+	Collection::Iterator iterator(collections.front());
 
-	while (i.More())
+	while (iterator.More())
 	{
-		Item f = i.Next();
+		Item i = iterator.Next();
 
-		cout << f.Name() << endl;
+//		cout << i->Name() << endl;
 	}
-	*/
 
 	return 0;
 }

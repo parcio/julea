@@ -25,6 +25,7 @@ namespace JULEA
 
 		friend class Store;
 
+		friend class Collection;
 		friend class _Collection;
 
 		public:

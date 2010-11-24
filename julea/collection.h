@@ -32,23 +32,6 @@ namespace JULEA
 		friend class _Store;
 
 		public:
-			/*
-			class Iterator
-			{
-				public:
-					Iterator (_Collection const& directory) : connection(FileSystem::Host()), directory(directory) { cursor =  connection->query("JULEA.DirectoryEntries", mongo::BSONObjBuilder().append("_Collection", directory.m_id).obj()); };
-					~Iterator () { connection.done(); };
-
-					bool More () { return cursor->more(); };
-					_Item Next () { mongo::BSONObj f; string name; f = cursor->next(); name = f.getField("Name").String(); return _Item(name); };
-				private:
-					mongo::ScopedDbConnection connection;
-					_Collection const& directory;
-					std::auto_ptr<mongo::DBClientCursor> cursor;
-			};
-			*/
-
-		public:
 			string const& Name () const;
 
 			std::list<Item> Get (std::list<string>);
@@ -88,6 +71,21 @@ namespace JULEA
 	class Collection : public Public<_Collection>
 	{
 		friend class _Store;
+
+		public:
+			class Iterator
+			{
+				public:
+					Iterator (Collection const&);
+					~Iterator ();
+
+					bool More ();
+					Item Next ();
+				private:
+					mongo::ScopedDbConnection m_connection;
+					_Collection* m_collection;
+					std::auto_ptr<mongo::DBClientCursor> m_cursor;
+			};
 
 		public:
 			Collection (string const& name)

@@ -215,4 +215,29 @@ namespace JULEA
 
 		m_semantics = semantics->Ref();
 	}
+
+	Collection::Iterator::Iterator (Collection const& collection)
+		: m_connection(collection->m_store->Connection()->GetServersString()),
+		  m_collection(collection->Ref())
+	{
+		BSONObjBuilder ob;
+
+		ob.append("Collection", m_collection->ID());
+		m_cursor = m_connection->query(m_collection->ItemsCollection(), ob.obj());
+	}
+
+	Collection::Iterator::~Iterator ()
+	{
+		m_connection.done();
+	}
+
+	bool Collection::Iterator::More ()
+	{
+		return m_cursor->more();
+	}
+
+	Item Collection::Iterator::Next ()
+	{
+		return Item(m_collection, m_cursor->next());
+	}
 }

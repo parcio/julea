@@ -54,6 +54,7 @@ namespace JULEA
 
 	class Item : public Public<_Item>
 	{
+		friend class Collection;
 		friend class _Collection;
 
 		public:
