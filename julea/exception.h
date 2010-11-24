@@ -6,6 +6,8 @@
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
+#define JULEA_FILELINE __FILE__ ":" BOOST_STRINGIZE(__LINE__)
+
 namespace JULEA
 {
 	class Exception;

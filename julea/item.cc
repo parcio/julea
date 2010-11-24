@@ -51,11 +51,11 @@ namespace JULEA
 		{
 			if (check)
 			{
-				throw Exception("Item not initialized.");
+				throw Exception(JULEA_FILELINE ": Item not initialized.");
 			}
 			else
 			{
-				throw Exception("Item already initialized.");
+				throw Exception(JULEA_FILELINE ": Item already initialized.");
 			}
 		}
 	}

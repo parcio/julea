@@ -52,11 +52,11 @@ namespace JULEA
 		{
 			if (check)
 			{
-				throw Exception("Collection not initialized.");
+				throw Exception(JULEA_FILELINE ": Collection not initialized.");
 			}
 			else
 			{
-				throw Exception("Collection already initialized.");
+				throw Exception(JULEA_FILELINE ": Collection already initialized.");
 			}
 		}
 	}

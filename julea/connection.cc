@@ -20,9 +20,16 @@ namespace JULEA
 
 	void _Connection::Connect ()
 	{
-		ScopedDbConnection c(m_servers_string);
+		try
+		{
+			ScopedDbConnection c(m_servers_string);
 
-		c.done();
+			c.done();
+		}
+		catch (...)
+		{
+			throw Exception(JULEA_FILELINE ": Can not connect to “" + m_servers_string + "”.");
+		}
 	}
 
 	list<string> _Connection::GetServers ()

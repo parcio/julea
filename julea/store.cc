@@ -41,11 +41,11 @@ namespace JULEA
 		{
 			if (check)
 			{
-				throw Exception("Store not initialized.");
+				throw Exception(JULEA_FILELINE ": Store not initialized.");
 			}
 			else
 			{
-				throw Exception("Store already initialized.");
+				throw Exception(JULEA_FILELINE ": Store already initialized.");
 			}
 		}
 	}

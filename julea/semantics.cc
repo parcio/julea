@@ -6,11 +6,11 @@ using namespace mongo;
 namespace JULEA
 {
 	_Semantics::_Semantics ()
+		: m_consistency(Consistency::Strict),
+		  m_persistency(Persistency::Strict),
+		  m_concurrency(Concurrency::Strict),
+		  m_security(Security::Strict)
 	{
-		m_consistency = Consistency::Strict;
-		m_persistency = Persistency::Strict;
-		m_concurrency = Concurrency::Strict;
-		m_security = Security::Strict;
 	}
 
 	_Semantics::~_Semantics ()
