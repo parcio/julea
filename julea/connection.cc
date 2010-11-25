@@ -18,6 +18,11 @@ namespace JULEA
 	{
 	}
 
+	ScopedDbConnection* _Connection::GetMongoDB ()
+	{
+		return new ScopedDbConnection(m_servers_string);
+	}
+
 	void _Connection::Connect ()
 	{
 		try
@@ -35,11 +40,6 @@ namespace JULEA
 	list<string> _Connection::GetServers ()
 	{
 		return m_servers;
-	}
-
-	string _Connection::GetServersString ()
-	{
-		return m_servers_string;
 	}
 
 	_Connection* _Connection::AddServer (string const& server)

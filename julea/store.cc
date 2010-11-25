@@ -98,16 +98,18 @@ namespace JULEA
 		}
 
 		list<Collection> collections;
-		ScopedDbConnection c(m_connection->GetServersString());
+		ScopedDbConnection* c = m_connection->GetMongoDB();
+		DBClientBase* b = c->get();
 
-		auto_ptr<DBClientCursor> cur = c->query(CollectionsCollection(), ob.obj(), n);
+		auto_ptr<DBClientCursor> cur = b->query(CollectionsCollection(), ob.obj(), n);
 
 		while (cur->more())
 		{
 			collections.push_back(Collection(this, cur->next()));
 		}
 
-		c.done();
+		c->done();
+		delete c;
 
 		return collections;
 	}
@@ -135,21 +137,23 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-		ScopedDbConnection c(m_connection->GetServersString());
+		ScopedDbConnection* c = m_connection->GetMongoDB();
+		DBClientBase* b = c->get();
 
-		c->ensureIndex(CollectionsCollection(), o, true);
-		c->insert(CollectionsCollection(), obj);
+		b->ensureIndex(CollectionsCollection(), o, true);
+		b->insert(CollectionsCollection(), obj);
 //		cout << "error: " << c->getLastErrorDetailed() << endl;
 
 		if (GetSemantics()->GetPersistency() == Persistency::Strict)
 		{
 			BSONObj ores;
 
-			c->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+			b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
 			//cout << ores << endl;
 		}
 
-		c.done();
+		c->done();
+		delete c;
 	}
 
 	_Semantics const* _Store::GetSemantics ()

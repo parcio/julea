@@ -23,11 +23,14 @@ namespace JULEA
 
 		friend class Connection;
 
+		friend class _Collection;
+		friend class Collection;
+		friend class _Store;
+
 		public:
 			void Connect ();
 
 			std::list<string> GetServers ();
-			std::string GetServersString ();
 
 			_Connection* AddServer (string const&);
 
@@ -35,6 +38,8 @@ namespace JULEA
 		private:
 			_Connection ();
 			~_Connection ();
+
+			mongo::ScopedDbConnection* GetMongoDB ();
 
 			std::list<string> m_servers;
 			std::string m_servers_string;

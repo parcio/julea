@@ -142,16 +142,18 @@ namespace JULEA
 		}
 
 		list<Item> items;
-		ScopedDbConnection c(m_store->Connection()->GetServersString());
+		ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
+		DBClientBase* b = c->get();
 
-		auto_ptr<DBClientCursor> cur = c->query(ItemsCollection(), ob.obj(), n);
+		auto_ptr<DBClientCursor> cur = b->query(ItemsCollection(), ob.obj(), n);
 
 		while (cur->more())
 		{
 			items.push_back(Item(this, cur->next()));
 		}
 
-		c.done();
+		c->done();
+		delete c;
 
 		return items;
 	}
@@ -180,20 +182,22 @@ namespace JULEA
 			obj.push_back((*it)->Serialize());
 		}
 
-		ScopedDbConnection c(m_store->Connection()->GetServersString());
+		ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
+		DBClientBase* b = c->get();
 
-		c->ensureIndex(ItemsCollection(), o, true);
-		c->insert(ItemsCollection(), obj);
+		b->ensureIndex(ItemsCollection(), o, true);
+		b->insert(ItemsCollection(), obj);
 
 		if (GetSemantics()->GetPersistency() == Persistency::Strict)
 		{
 			BSONObj ores;
 
-			c->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+			b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
 			//cout << ores << endl;
 		}
 
-		c.done();
+		c->done();
+		delete c;
 	}
 
 	_Semantics const* _Collection::GetSemantics ()
@@ -217,18 +221,22 @@ namespace JULEA
 	}
 
 	Collection::Iterator::Iterator (Collection const& collection)
-		: m_connection(collection->m_store->Connection()->GetServersString()),
+		: m_connection(collection->m_store->Connection()->GetMongoDB()),
 		  m_collection(collection->Ref())
 	{
+		DBClientBase* b = m_connection->get();
 		BSONObjBuilder ob;
 
 		ob.append("Collection", m_collection->ID());
-		m_cursor = m_connection->query(m_collection->ItemsCollection(), ob.obj());
+		m_cursor = b->query(m_collection->ItemsCollection(), ob.obj());
 	}
 
 	Collection::Iterator::~Iterator ()
 	{
-		m_connection.done();
+		m_connection->done();
+		delete m_connection;
+
+		m_collection->Unref();
 	}
 
 	bool Collection::Iterator::More ()

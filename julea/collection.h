@@ -82,7 +82,7 @@ namespace JULEA
 					bool More ();
 					Item Next ();
 				private:
-					mongo::ScopedDbConnection m_connection;
+					mongo::ScopedDbConnection* m_connection;
 					_Collection* m_collection;
 					std::auto_ptr<mongo::DBClientCursor> m_cursor;
 			};
