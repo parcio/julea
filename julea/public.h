@@ -1,6 +1,7 @@
 #ifndef H_PUBLIC
 #define H_PUBLIC
 
+/*
 namespace JULEA
 {
 	template<typename T>
@@ -46,5 +47,6 @@ namespace JULEA
 			T* m_p;
 	};
 }
+*/
 
 #endif

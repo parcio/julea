@@ -1,6 +1,7 @@
 #ifndef H_EXCEPTION
 #define H_EXCEPTION
 
+/*
 #include <exception>
 
 #include <mongo/client/connpool.h>
@@ -26,5 +27,6 @@ namespace JULEA
 			string m_description;
 	};
 }
+*/
 
 #endif

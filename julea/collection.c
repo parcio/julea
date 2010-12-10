@@ -1,3 +1,4 @@
+/*
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
 
@@ -249,3 +250,4 @@ namespace JULEA
 		return Item(m_collection, m_cursor->next());
 	}
 }
+*/

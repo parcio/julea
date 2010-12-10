@@ -1,6 +1,7 @@
 #ifndef H_CONNECTION
 #define H_CONNECTION
 
+/*
 #include <boost/utility.hpp>
 
 #include <mongo/client/connpool.h>
@@ -54,5 +55,6 @@ namespace JULEA
 			}
 	};
 }
+*/
 
 #endif

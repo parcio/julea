@@ -1,3 +1,4 @@
+/*
 #include <mongo/client/connpool.h>
 
 #include "connection.h"
@@ -61,3 +62,4 @@ namespace JULEA
 		return Store(this, name);
 	}
 }
+*/

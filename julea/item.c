@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 
 #include <mongo/client/connpool.h>
@@ -112,3 +113,4 @@ namespace JULEA
 		m_semantics = semantics->Ref();
 	}
 }
+*/

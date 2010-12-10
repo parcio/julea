@@ -1,6 +1,7 @@
 #ifndef H_CREDENTIALS
 #define H_CREDENTIALS
 
+/*
 namespace JULEA
 {
 	class Credentials;
@@ -24,5 +25,6 @@ namespace JULEA
 			int m_group;
 	};
 }
+*/
 
 #endif

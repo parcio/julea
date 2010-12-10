@@ -1,6 +1,7 @@
 #ifndef H_COLLECTION
 #define H_COLLECTION
 
+/*
 #include <list>
 
 #include <boost/utility.hpp>
@@ -100,5 +101,6 @@ namespace JULEA
 			}
 	};
 }
+*/
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef H_SEMANTICS
 #define H_SEMANTICS
 
+/*
 #include <boost/utility.hpp>
 
 #include <mongo/db/jsobj.h>
@@ -95,5 +96,6 @@ namespace JULEA
 			}
 	};
 }
+*/
 
 #endif

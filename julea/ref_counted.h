@@ -1,6 +1,7 @@
 #ifndef H_REF_COUNTED
 #define H_REF_COUNTED
 
+/*
 #include <boost/utility.hpp>
 
 namespace JULEA
@@ -43,5 +44,6 @@ namespace JULEA
 			unsigned int m_refCount;
 	};
 }
+*/
 
 #endif

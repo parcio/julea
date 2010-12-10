@@ -1,6 +1,7 @@
 #ifndef H_STORE
 #define H_STORE
 
+/*
 #include <boost/utility.hpp>
 
 #include <mongo/db/jsobj.h>
@@ -74,5 +75,6 @@ namespace JULEA
 			}
 	};
 }
+*/
 
 #endif

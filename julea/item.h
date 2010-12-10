@@ -1,6 +1,7 @@
 #ifndef H_ITEM
 #define H_ITEM
 
+/*
 #include <boost/utility.hpp>
 
 #include <mongo/db/jsobj.h>
@@ -70,5 +71,6 @@ namespace JULEA
 			}
 	};
 }
+*/
 
 #endif

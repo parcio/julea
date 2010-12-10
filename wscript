@@ -4,16 +4,10 @@ top = '.'
 out = 'build'
 
 def options (ctx):
-	ctx.load('boost')
-	ctx.load('compiler_cxx')
+	ctx.load('compiler_c')
 
 def configure (ctx):
-	ctx.load('boost')
-	ctx.load('compiler_cxx')
-
-	ctx.check_boost(
-		lib='filesystem program_options system thread'
-	)
+	ctx.load('compiler_c')
 
 #	ctx.check_cfg(
 #		package='glibmm-2.4',
@@ -22,25 +16,27 @@ def configure (ctx):
 #		mandatory=True
 #	)
 
-	ctx.check_cxx(
-		lib='mongoclient'
+	ctx.check_cfg(
+		package = 'glib-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GLIB'
 	)
 
-	ctx.env.CXXFLAGS += ['-Wall', '-Wextra', '-pedantic', '-ggdb']
+	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra', '-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 
 	ctx.write_config_header('config.h')
 
 def build (ctx):
 	ctx.stlib(
-		source = ['julea/%s.cc' % file for file in ('collection', 'connection', 'credentials', 'exception', 'item', 'semantics', 'store')],
+		source = ['julea/%s.c' % file for file in ('collection', 'connection', 'credentials', 'exception', 'item', 'semantics', 'store')],
 		target = 'julea',
-		use = ['BOOST_FILESYSTEM', 'BOOST_PROGRAM_OPTIONS', 'BOOST_SYSTEM', 'BOOST_THREAD', 'MONGOCLIENT'],
+		use = ['GLIB'],
 		includes = ['.']
 	)
 
 	ctx.program(
-		source = ['test.cc'],
+		source = ['test.c'],
 		target = 'test',
-		use = ['julea'],
+		use = ['GLIB', 'julea'],
 		includes = ['.', 'julea']
 	)
