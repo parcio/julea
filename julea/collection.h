@@ -1,19 +1,18 @@
 #ifndef H_COLLECTION
 #define H_COLLECTION
 
+struct JCollection;
+
+typedef struct JCollection JCollection;
+
+#include <glib.h>
+
+#include "semantics.h"
+
+JCollection* j_collection_new (const gchar*);
+void j_collection_set_semantics (JCollection*, JSemantics*);
+
 /*
-#include <list>
-
-#include <boost/utility.hpp>
-
-#include <mongo/db/jsobj.h>
-
-namespace JULEA
-{
-	class _Collection;
-	class Collection;
-}
-
 #include "credentials.h"
 #include "item.h"
 #include "public.h"
@@ -41,7 +40,6 @@ namespace JULEA
 			_Semantics const* GetSemantics ();
 			void SetSemantics (Semantics const&);
 		private:
-			_Collection (string const&);
 			_Collection (_Store*, mongo::BSONObj const&);
 			~_Collection ();
 

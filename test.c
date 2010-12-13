@@ -1,56 +1,54 @@
-/*
-#include <iostream>
-
-#include <boost/lexical_cast.hpp>
+#include <glib.h>
 
 #include "julea.h"
 
-using namespace boost;
-using namespace std;
-using namespace JULEA;
-
 int main (int argc, char** argv)
 {
+	JConnection* connection;
+	JStore* store;
+	JSemantics* semantics;
+	JCollection* collections;
+	JItem* items;
+
 	if (argc < 2)
 	{
 		return 1;
 	}
 
-	Connection c;
+	connection = j_connection_new();
 
 	for (int i = 1; i < argc; ++i)
 	{
-		c->AddServer(argv[i]);
+		j_connection_add_server(connection, argv[i]);
 	}
 
-	c->Connect();
+	j_connection_connect(connection);
+	store = j_connection_get(connection, "JULEA");
 
-	Store s = c->Get("JULEA");
+	semantics = j_semantics_new();
+	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
-	Semantics semantics;
-
-	semantics->SetPersistency(Persistency::Lax);
-
-	list<Collection> collections;
-
-	for (int j = 0; j < 10; j++)
+	for (guint j = 0; j < 10; j++)
 	{
-		string name("test-" + lexical_cast<string>(j));
-		Collection collection(name);
+		JCollection* collection;
+		gchar* name;
 
-		collection->SetSemantics(semantics);
+		name = g_strdup_printf("test-%u", j);
 
-		collections.push_back(collection);
+		collection = j_collection_new(name);
+		j_collection_set_semantics(collection, semantics);
+
+		//collections.push_back(collection);
+		g_free(name);
 	}
 
-	s->Create(collections);
+	j_store_create(store, collections);
 
+	/*
 	list<Collection>::iterator it;
 
 	for (it = collections.begin(); it != collections.end(); ++it)
 	{
-		list<Item> items;
-
 		for (int i = 0; i < 10000; i++)
 		{
 			string name("test-" + lexical_cast<string>(i));
@@ -71,7 +69,7 @@ int main (int argc, char** argv)
 
 //		cout << i->Name() << endl;
 	}
+	*/
 
 	return 0;
 }
-*/

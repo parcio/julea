@@ -1,17 +1,20 @@
 #ifndef H_CONNECTION
 #define H_CONNECTION
 
+struct JConnection;
+
+typedef struct JConnection JConnection;
+
+#include <glib.h>
+
+#include "store.h"
+
+JConnection* j_connection_new (void);
+void j_connection_connect (JConnection*);
+void j_connection_add_server (JConnection*, const gchar*);
+JStore* j_connection_get (JConnection*, const gchar*);
+
 /*
-#include <boost/utility.hpp>
-
-#include <mongo/client/connpool.h>
-
-namespace JULEA
-{
-	class _Connection;
-	class Connection;
-}
-
 #include "public.h"
 #include "ref_counted.h"
 #include "store.h"
@@ -29,15 +32,8 @@ namespace JULEA
 		friend class _Store;
 
 		public:
-			void Connect ();
-
 			std::list<string> GetServers ();
-
-			_Connection* AddServer (string const&);
-
-			Store Get (string const&);
 		private:
-			_Connection ();
 			~_Connection ();
 
 			mongo::ScopedDbConnection* GetMongoDB ();

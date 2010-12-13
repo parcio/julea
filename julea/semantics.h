@@ -1,56 +1,49 @@
 #ifndef H_SEMANTICS
 #define H_SEMANTICS
 
-/*
-#include <boost/utility.hpp>
+struct JSemantics;
 
-#include <mongo/db/jsobj.h>
+typedef struct JSemantics JSemantics;
 
-namespace JULEA
+enum
 {
-	class _Semantics;
-	class Semantics;
-}
+	J_SEMANTICS_CONSISTENCY,
+	J_SEMANTICS_PERSISTENCY,
+	J_SEMANTICS_CONCURRENCY,
+	J_SEMANTICS_SECURITY
+};
 
+enum
+{
+	J_SEMANTICS_CONSISTENCY_STRICT
+};
+
+enum
+{
+	J_SEMANTICS_PERSISTENCY_STRICT,
+	J_SEMANTICS_PERSISTENCY_LAX
+};
+
+enum
+{
+	J_SEMANTICS_CONCURRENCY_STRICT
+};
+
+enum
+{
+	J_SEMANTICS_SECURITY_STRICT
+};
+
+JSemantics* j_semantics_new (void);
+void j_semantics_set (JSemantics*, gint, gint);
+
+/*
 #include "collection.h"
 #include "public.h"
 #include "ref_counted.h"
 
 namespace JULEA
 {
-	namespace Consistency
-	{
-		enum Type
-		{
-			Strict
-		};
-	}
-
-	namespace Persistency
-	{
-		enum Type
-		{
-			Strict,
-			Lax
-		};
-	}
-
-	namespace Concurrency
-	{
-		enum Type
-		{
-			Strict
-		};
-	}
-
-	namespace Security
-	{
-		enum Type
-		{
-			Strict
-		};
-	}
-
 	class _Semantics : public RefCounted<_Semantics>
 	{
 		friend class RefCounted<_Semantics>;
@@ -69,7 +62,6 @@ namespace JULEA
 			Security::Type const& GetSecurity () const;
 			_Semantics* SetSecurity (Security::Type);
 		private:
-			_Semantics ();
 			~_Semantics ();
 
 			Consistency::Type m_consistency;

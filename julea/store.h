@@ -1,17 +1,19 @@
 #ifndef H_STORE
 #define H_STORE
 
+struct JStore;
+
+typedef struct JStore JStore;
+
+#include <glib.h>
+
+#include "collection.h"
+#include "connection.h"
+
+JStore* j_store_new (JConnection*, const gchar*);
+void j_store_create (JStore*, JCollection*);
+
 /*
-#include <boost/utility.hpp>
-
-#include <mongo/db/jsobj.h>
-
-namespace JULEA
-{
-	class _Store;
-	class Store;
-}
-
 #include "collection.h"
 #include "connection.h"
 #include "public.h"
@@ -33,13 +35,11 @@ namespace JULEA
 			std::string const& Name ();
 
 			std::list<Collection> Get (std::list<string>);
-			void Create (std::list<Collection>);
 
 			_Semantics const* GetSemantics ();
 			void SetSemantics (Semantics const&);
 		private:
 			_Store (string const&);
-			_Store (_Connection*, string const&);
 			~_Store ();
 
 			void IsInitialized (bool) const;

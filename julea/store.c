@@ -1,8 +1,78 @@
+#include <glib.h>
+
+#include "store.h"
+
+#include "collection.h"
+#include "connection.h"
+
+struct JStore
+{
+};
+
+JStore*
+j_store_new (JConnection* connection, const gchar* name)
+{
+	/*
+	: m_initialized(true),
+	m_name(name),
+	m_connection(connection),
+	m_semantics(0),
+	m_collectionsCollection("")
+
+	m_semantics = new _Semantics();
+	*/
+
+	return g_new(JStore, 1);
+}
+
+void
+j_store_create (JStore* store, JCollection* collections)
+{
+	/*
+	IsInitialized(true);
+
+	if (collections.size() == 0)
+	{
+		return;
+	}
+
+	BSONObj o;
+	vector<BSONObj> obj;
+	list<Collection>::iterator it;
+
+	o = BSONObjBuilder()
+		.append("Name", 1)
+		.obj();
+
+	for (it = collections.begin(); it != collections.end(); ++it)
+	{
+		(*it)->Associate(this);
+		obj.push_back((*it)->Serialize());
+	}
+
+	ScopedDbConnection* c = m_connection->GetMongoDB();
+	DBClientBase* b = c->get();
+
+	b->ensureIndex(CollectionsCollection(), o, true);
+	b->insert(CollectionsCollection(), obj);
+	//		cout << "error: " << c->getLastErrorDetailed() << endl;
+
+	if (GetSemantics()->GetPersistency() == Persistency::Strict)
+	{
+		BSONObj ores;
+
+		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+		//cout << ores << endl;
+	}
+
+	c->done();
+	delete c;
+	*/
+}
+
 /*
 #include <mongo/client/connpool.h>
 #include <mongo/db/jsobj.h>
-
-#include "store.h"
 
 #include "exception.h"
 
@@ -15,16 +85,6 @@ namespace JULEA
 		: m_initialized(false),
 		  m_name(name),
 		  m_connection(0),
-		  m_semantics(0),
-		  m_collectionsCollection("")
-	{
-		m_semantics = new _Semantics();
-	}
-
-	_Store::_Store (_Connection* connection, string const& name)
-		: m_initialized(true),
-		  m_name(name),
-		  m_connection(connection),
 		  m_semantics(0),
 		  m_collectionsCollection("")
 	{
@@ -113,48 +173,6 @@ namespace JULEA
 		delete c;
 
 		return collections;
-	}
-
-	void _Store::Create (list<Collection> collections)
-	{
-		IsInitialized(true);
-
-		if (collections.size() == 0)
-		{
-			return;
-		}
-
-		BSONObj o;
-		vector<BSONObj> obj;
-		list<Collection>::iterator it;
-
-		o = BSONObjBuilder()
-			.append("Name", 1)
-			.obj();
-
-		for (it = collections.begin(); it != collections.end(); ++it)
-		{
-			(*it)->Associate(this);
-			obj.push_back((*it)->Serialize());
-		}
-
-		ScopedDbConnection* c = m_connection->GetMongoDB();
-		DBClientBase* b = c->get();
-
-		b->ensureIndex(CollectionsCollection(), o, true);
-		b->insert(CollectionsCollection(), obj);
-//		cout << "error: " << c->getLastErrorDetailed() << endl;
-
-		if (GetSemantics()->GetPersistency() == Persistency::Strict)
-		{
-			BSONObj ores;
-
-			b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
-			//cout << ores << endl;
-		}
-
-		c->done();
-		delete c;
 	}
 
 	_Semantics const* _Store::GetSemantics ()

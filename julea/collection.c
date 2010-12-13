@@ -1,27 +1,49 @@
-/*
-#include <mongo/client/connpool.h>
-#include <mongo/db/jsobj.h>
+#include <glib.h>
 
 #include "collection.h"
 
+#include "semantics.h"
+
+struct JCollection
+{
+};
+
+JCollection*
+j_collection_new (const gchar* name)
+{
+	/*
+	: m_initialized(false),
+	m_name(name),
+	m_semantics(0),
+	m_store(0),
+	m_itemsCollection("")
+
+	m_id.init();
+	*/
+
+	return g_new(JCollection, 1);
+}
+
+void
+j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
+{
+	/*
+	if (m_semantics != 0)
+	{
+		m_semantics->Unref();
+	}
+
+	m_semantics = semantics->Ref();
+	*/
+}
+
+
+/*
 #include "exception.h"
 #include "store.h"
 
-using namespace std;
-using namespace mongo;
-
 namespace JULEA
 {
-	_Collection::_Collection (string const& name)
-		: m_initialized(false),
-		  m_name(name),
-		  m_semantics(0),
-		  m_store(0),
-		  m_itemsCollection("")
-	{
-		m_id.init();
-	}
-
 	_Collection::_Collection (_Store* store, BSONObj const& obj)
 		: m_initialized(true),
 		  m_name(""),
@@ -209,16 +231,6 @@ namespace JULEA
 		}
 
 		return m_store->GetSemantics();
-	}
-
-	void _Collection::SetSemantics (Semantics const& semantics)
-	{
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
-
-		m_semantics = semantics->Ref();
 	}
 
 	Collection::Iterator::Iterator (Collection const& collection)

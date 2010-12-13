@@ -1,17 +1,11 @@
 #ifndef H_ITEM
 #define H_ITEM
 
+struct JItem;
+
+typedef struct JItem JItem;
+
 /*
-#include <boost/utility.hpp>
-
-#include <mongo/db/jsobj.h>
-
-namespace JULEA
-{
-	class _Item;
-	class Item;
-}
-
 #include "collection.h"
 #include "public.h"
 #include "ref_counted.h"

@@ -4,11 +4,6 @@
 /*
 namespace JULEA
 {
-	class Credentials;
-}
-
-namespace JULEA
-{
 	class Credentials
 	{
 		friend class _Collection;
