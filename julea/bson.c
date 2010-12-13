@@ -53,7 +53,11 @@ void
 j_bson_free (JBSON* jbson)
 {
 	bson_destroy(&(jbson->b));
+	/*
 	bson_buffer_destroy(&(jbson->buf));
+	*/
+
+	g_free(jbson);
 }
 
 void

@@ -98,6 +98,13 @@ int main (int argc, char** argv)
 	}
 	*/
 
+	for (GList* l = collections; l != NULL; l = l->next)
+	{
+		j_collection_unref(l->data);
+	}
+
+	g_list_free(collections);
+
 	j_semantics_unref(semantics);
 	j_store_unref(store);
 	j_connection_unref(connection);
