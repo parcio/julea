@@ -20,19 +20,25 @@ def configure (ctx):
 
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
-	ctx.write_config_header('config.h')
-
 def build (ctx):
+	e = ctx.env.derive()
+	e.CFLAGS = ['-std=c99']
+
+	ctx.stlib(
+		source = ['mongodb/src/%s.c' % file for file in ('bson', 'md5', 'mongo', 'numbers')],
+		target = 'mongodb',
+		env = e
+	)
+
 	ctx.stlib(
 		source = ['julea/%s.c' % file for file in ('collection', 'connection', 'credentials', 'exception', 'item', 'semantics', 'store')],
 		target = 'julea',
-		use = ['GLIB'],
-		includes = ['.']
+		use = ['GLIB', 'mongodb']
 	)
 
 	ctx.program(
 		source = ['test.c'],
 		target = 'test',
 		use = ['GLIB', 'julea'],
-		includes = ['.', 'julea']
+		includes = ['julea']
 	)
