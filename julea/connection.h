@@ -10,8 +10,11 @@ typedef struct JConnection JConnection;
 #include "store.h"
 
 JConnection* j_connection_new (void);
-void j_connection_connect (JConnection*);
-void j_connection_add_server (JConnection*, const gchar*);
+JConnection* j_connection_ref (JConnection*);
+void j_connection_unref (JConnection*);
+
+gboolean j_connection_connect (JConnection*, const gchar*);
+
 JStore* j_connection_get (JConnection*, const gchar*);
 
 /*

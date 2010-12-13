@@ -4,54 +4,86 @@
 
 struct JSemantics
 {
+	gint consistency;
+	gint persistency;
+	gint concurrency;
+	gint security;
+
+	guint ref_count;
 };
 
 JSemantics*
 j_semantics_new (void)
 {
-	/*
-: m_consistency(Consistency::Strict),
-	m_persistency(Persistency::Strict),
-	m_concurrency(Concurrency::Strict),
-	m_security(Security::Strict)
-	*/
+	JSemantics* semantics;
 
-	return g_new(JSemantics, 1);
+	semantics = g_new(JSemantics, 1);
+	semantics->concurrency = J_SEMANTICS_CONCURRENCY_STRICT;
+	semantics->consistency = J_SEMANTICS_CONSISTENCY_STRICT;
+	semantics->persistency = J_SEMANTICS_PERSISTENCY_STRICT;
+	semantics->security = J_SEMANTICS_SECURITY_STRICT;
+	semantics->ref_count = 1;
+
+	return semantics;
+}
+
+JSemantics*
+j_semantics_ref (JSemantics* semantics)
+{
+	semantics->ref_count++;
+
+	return semantics;
+}
+
+void
+j_semantics_unref (JSemantics* semantics)
+{
+	semantics->ref_count--;
+
+	if (semantics->ref_count == 0)
+	{
+		g_free(semantics);
+	}
 }
 
 void
 j_semantics_set (JSemantics* semantics, gint key, gint value)
 {
+	if (key == J_SEMANTICS_CONCURRENCY)
+	{
+		semantics->concurrency = value;
+	}
+	else if (key == J_SEMANTICS_CONSISTENCY)
+	{
+		semantics->consistency = value;
+	}
+	else if (key == J_SEMANTICS_PERSISTENCY)
+	{
+		semantics->persistency = value;
+	}
+	else if (key == J_SEMANTICS_SECURITY)
+	{
+		semantics->security = value;
+	}
 }
 
-/*
-using namespace std;
-using namespace mongo;
-
-namespace JULEA
+gint
+j_semantics_get (JSemantics* semantics, gint key)
 {
-	_Semantics::~_Semantics ()
+	if (key == J_SEMANTICS_CONCURRENCY)
 	{
+		return semantics->concurrency;
 	}
-
-	Consistency::Type const& _Semantics::GetConsistency () const
+	else if (key == J_SEMANTICS_CONSISTENCY)
 	{
-		return m_consistency;
+		return semantics->consistency;
 	}
-
-	Persistency::Type const& _Semantics::GetPersistency () const
+	else if (key == J_SEMANTICS_PERSISTENCY)
 	{
-		return m_persistency;
+		return semantics->persistency;
 	}
-
-	Concurrency::Type const& _Semantics::GetConcurrency () const
+	else if (key == J_SEMANTICS_SECURITY)
 	{
-		return m_concurrency;
-	}
-
-	Security::Type const& _Semantics::GetSecurity () const
-	{
-		return m_security;
+		return semantics->security;
 	}
 }
-*/

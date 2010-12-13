@@ -3,45 +3,126 @@
 #include "collection.h"
 
 #include "semantics.h"
+#include "store.h"
 
 struct JCollection
 {
+	gchar* name;
+
+	JSemantics* semantics;
+	JStore* store;
+
+	guint ref_count;
 };
 
 JCollection*
 j_collection_new (const gchar* name)
 {
+	JCollection* collection;
 	/*
 	: m_initialized(false),
-	m_name(name),
-	m_semantics(0),
-	m_store(0),
 	m_itemsCollection("")
 
 	m_id.init();
 	*/
 
-	return g_new(JCollection, 1);
+	collection = g_new(JCollection, 1);
+	collection->name = g_strdup(name);
+	collection->semantics = NULL;
+	collection->store = NULL;
+	collection->ref_count = 1;
+
+	return collection;
+}
+
+JCollection*
+j_collection_ref (JCollection* collection)
+{
+	collection->ref_count++;
+
+	return collection;
+}
+
+void
+j_collection_unref (JCollection* collection)
+{
+	collection->ref_count--;
+
+	if (collection->ref_count == 0)
+	{
+		if (collection->semantics != NULL)
+		{
+			j_semantics_unref(collection->semantics);
+		}
+
+		if (collection->store != NULL)
+		{
+			j_store_unref(collection->store);
+		}
+
+		g_free(collection->name);
+		g_free(collection);
+	}
+}
+
+void
+j_collection_create (JCollection* collection, GList* items)
+{
+	/*
+	IsInitialized(true);
+
+	if (items.size() == 0)
+	{
+		return;
+	}
+
+	BSONObj o;
+	vector<BSONObj> obj;
+	list<Item>::iterator it;
+
+	o = BSONObjBuilder()
+		.append("Collection", 1)
+		.append("Name", 1)
+		.obj();
+
+	for (it = items.begin(); it != items.end(); ++it)
+	{
+		(*it)->Associate(this);
+		obj.push_back((*it)->Serialize());
+	}
+
+	ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
+	DBClientBase* b = c->get();
+
+	b->ensureIndex(ItemsCollection(), o, true);
+	b->insert(ItemsCollection(), obj);
+
+	if (GetSemantics()->GetPersistency() == Persistency::Strict)
+	{
+		BSONObj ores;
+
+		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
+		//cout << ores << endl;
+	}
+
+	c->done();
+	delete c;
+	*/
 }
 
 void
 j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 {
-	/*
-	if (m_semantics != 0)
+	if (collection->semantics != NULL)
 	{
-		m_semantics->Unref();
+		j_semantics_unref(collection->semantics);
 	}
 
-	m_semantics = semantics->Ref();
-	*/
+	collection->semantics = j_semantics_ref(semantics);
 }
 
 
 /*
-#include "exception.h"
-#include "store.h"
-
 namespace JULEA
 {
 	_Collection::_Collection (_Store* store, BSONObj const& obj)
@@ -54,19 +135,6 @@ namespace JULEA
 		m_id.init();
 
 		Deserialize(obj);
-	}
-
-	_Collection::~_Collection ()
-	{
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
-
-		if (m_store != 0)
-		{
-			m_store->Unref();
-		}
 	}
 
 	void _Collection::IsInitialized (bool check) const
@@ -179,48 +247,6 @@ namespace JULEA
 		delete c;
 
 		return items;
-	}
-
-	void _Collection::Create (list<Item> items)
-	{
-		IsInitialized(true);
-
-		if (items.size() == 0)
-		{
-			return;
-		}
-
-		BSONObj o;
-		vector<BSONObj> obj;
-		list<Item>::iterator it;
-
-		o = BSONObjBuilder()
-			.append("Collection", 1)
-			.append("Name", 1)
-			.obj();
-
-		for (it = items.begin(); it != items.end(); ++it)
-		{
-			(*it)->Associate(this);
-			obj.push_back((*it)->Serialize());
-		}
-
-		ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
-		DBClientBase* b = c->get();
-
-		b->ensureIndex(ItemsCollection(), o, true);
-		b->insert(ItemsCollection(), obj);
-
-		if (GetSemantics()->GetPersistency() == Persistency::Strict)
-		{
-			BSONObj ores;
-
-			b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
-			//cout << ores << endl;
-		}
-
-		c->done();
-		delete c;
 	}
 
 	_Semantics const* _Collection::GetSemantics ()

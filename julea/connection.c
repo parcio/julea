@@ -1,51 +1,60 @@
 #include <glib.h>
 
+#include <mongo.h>
+
 #include "connection.h"
 
 struct JConnection
 {
+	mongo_connection connection;
+
+	guint ref_count;
 };
 
 JConnection*
 j_connection_new (void)
 {
-	/*
-	: m_servers(), m_servers_string("")
-	*/
+	JConnection* connection;
 
-	return g_new(JConnection, 1);
+	connection = g_new(JConnection, 1);
+	connection->ref_count = 1;
+
+	return connection;
+}
+
+JConnection*
+j_connection_ref (JConnection* connection)
+{
+	connection->ref_count++;
+
+	return connection;
 }
 
 void
-j_connection_connect (JConnection* connection)
+j_connection_unref (JConnection* connection)
 {
-	/*
-	try
-	{
-		ScopedDbConnection c(m_servers_string);
+	connection->ref_count--;
 
-		c.done();
-	}
-	catch (...)
+	if (connection->ref_count == 0)
 	{
-		throw Exception(JULEA_FILELINE ": Can not connect to “" + m_servers_string + "”.");
+		mongo_destroy(&(connection->connection));
+
+		g_free(connection);
 	}
-	*/
 }
 
-void
-j_connection_add_server (JConnection* connection, const gchar* server)
+gboolean
+j_connection_connect (JConnection* connection, const gchar* server)
 {
-	/*
-	m_servers.push_back(server);
+	mongo_connection_options opts;
+	mongo_conn_return status;
 
-	if (!m_servers_string.empty())
-	{
-		m_servers_string += ",";
-	}
+	g_strlcpy(opts.host, server, 255);
+	opts.port = 27017;
 
-	m_servers_string += server;
-	*/
+	status = mongo_connect(&(connection->connection), &opts);
+
+	return (status == mongo_conn_success);
 }
 
 JStore*
@@ -55,22 +64,8 @@ j_connection_get (JConnection* connection, const gchar* name)
 }
 
 /*
-#include "exception.h"
-
-namespace JULEA
-{
-	_Connection::~_Connection ()
-	{
-	}
-
 	ScopedDbConnection* _Connection::GetMongoDB ()
 	{
 		return new ScopedDbConnection(m_servers_string);
 	}
-
-	list<string> _Connection::GetServers ()
-	{
-		return m_servers;
-	}
-}
 */

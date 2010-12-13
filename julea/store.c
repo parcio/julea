@@ -1,32 +1,58 @@
 #include <glib.h>
 
+#include <bson.h>
+
 #include "store.h"
 
+#include "bson.h"
 #include "collection.h"
 #include "connection.h"
 
 struct JStore
 {
+	gchar* name;
+
+	JConnection* connection;
+	JSemantics* semantics;
+
+	guint ref_count;
 };
 
 JStore*
 j_store_new (JConnection* connection, const gchar* name)
 {
+	JStore* store;
 	/*
 	: m_initialized(true),
-	m_name(name),
-	m_connection(connection),
-	m_semantics(0),
 	m_collectionsCollection("")
-
-	m_semantics = new _Semantics();
 	*/
 
-	return g_new(JStore, 1);
+	store = g_new(JStore, 1);
+	store->name = g_strdup(name);
+	store->connection = j_connection_ref(connection);
+	store->semantics = j_semantics_new();
+	store->ref_count = 1;
+
+	return store;
 }
 
 void
-j_store_create (JStore* store, JCollection* collections)
+j_store_unref (JStore* store)
+{
+	store->ref_count--;
+
+	if (store->ref_count == 0)
+	{
+		j_connection_unref(store->connection);
+		j_semantics_unref(store->semantics);
+
+		g_free(store->name);
+		g_free(store);
+	}
+}
+
+void
+j_store_create (JStore* store, GList* collections)
 {
 	/*
 	IsInitialized(true);
@@ -35,14 +61,19 @@ j_store_create (JStore* store, JCollection* collections)
 	{
 		return;
 	}
+	*/
 
-	BSONObj o;
+	JBSON* jbson;
+	bson* index;
+
+	jbson = j_bson_new();
+	j_bson_append_int(jbson, "Name", 1);
+	index = j_bson_get(jbson);
+	j_bson_free(jbson);
+
+	/*
 	vector<BSONObj> obj;
 	list<Collection>::iterator it;
-
-	o = BSONObjBuilder()
-		.append("Name", 1)
-		.obj();
 
 	for (it = collections.begin(); it != collections.end(); ++it)
 	{

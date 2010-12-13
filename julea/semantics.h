@@ -35,7 +35,11 @@ enum
 };
 
 JSemantics* j_semantics_new (void);
+JSemantics* j_semantics_ref (JSemantics*);
+void j_semantics_unref (JSemantics*);
+
 void j_semantics_set (JSemantics*, gint, gint);
+gint j_semantics_get (JSemantics*, gint);
 
 /*
 #include "collection.h"

@@ -7,22 +7,21 @@ int main (int argc, char** argv)
 	JConnection* connection;
 	JStore* store;
 	JSemantics* semantics;
-	JCollection* collections;
-	JItem* items;
+	GList* collections = NULL;
+	GList* items = NULL;
 
-	if (argc < 2)
+	if (argc != 2)
 	{
 		return 1;
 	}
 
 	connection = j_connection_new();
 
-	for (int i = 1; i < argc; ++i)
+	if (!j_connection_connect(connection, argv[1]))
 	{
-		j_connection_add_server(connection, argv[i]);
+		return 1;
 	}
 
-	j_connection_connect(connection);
 	store = j_connection_get(connection, "JULEA");
 
 	semantics = j_semantics_new();
@@ -38,7 +37,8 @@ int main (int argc, char** argv)
 		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
 
-		//collections.push_back(collection);
+		collections = g_list_prepend(collections, collection);
+
 		g_free(name);
 	}
 
@@ -70,6 +70,10 @@ int main (int argc, char** argv)
 //		cout << i->Name() << endl;
 	}
 	*/
+
+	j_semantics_unref(semantics);
+	j_store_unref(store);
+	j_connection_unref(connection);
 
 	return 0;
 }

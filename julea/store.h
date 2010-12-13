@@ -11,7 +11,9 @@ typedef struct JStore JStore;
 #include "connection.h"
 
 JStore* j_store_new (JConnection*, const gchar*);
-void j_store_create (JStore*, JCollection*);
+void j_store_unref (JStore*);
+
+void j_store_create (JStore*, GList*);
 
 /*
 #include "collection.h"

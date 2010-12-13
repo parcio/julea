@@ -10,6 +10,11 @@ typedef struct JCollection JCollection;
 #include "semantics.h"
 
 JCollection* j_collection_new (const gchar*);
+JCollection* j_collection_ref (JCollection*);
+void j_collection_unref (JCollection*);
+
+void j_collection_create (JCollection*, GList*);
+
 void j_collection_set_semantics (JCollection*, JSemantics*);
 
 /*
@@ -35,10 +40,8 @@ namespace JULEA
 			string const& Name () const;
 
 			std::list<Item> Get (std::list<string>);
-			void Create (std::list<Item>);
 
 			_Semantics const* GetSemantics ();
-			void SetSemantics (Semantics const&);
 		private:
 			_Collection (_Store*, mongo::BSONObj const&);
 			~_Collection ();
