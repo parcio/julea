@@ -35,7 +35,6 @@ int main (int argc, char** argv)
 	JStore* store;
 	JSemantics* semantics;
 	GList* collections = NULL;
-	GList* items = NULL;
 
 	if (argc != 2)
 	{
@@ -76,6 +75,7 @@ int main (int argc, char** argv)
 	for (GList* l = collections; l != NULL; l = l->next)
 	{
 		JCollection* collection = l->data;
+		GList* items = NULL;
 
 		for (guint i = 0; i < 10000; i++)
 		{
@@ -93,6 +93,13 @@ int main (int argc, char** argv)
 		}
 
 		j_collection_create(collection, items);
+
+		for (GList* li = items; li != NULL; li = li->next)
+		{
+			j_item_unref(li->data);
+		}
+
+		g_list_free(items);
 	}
 
 	/*

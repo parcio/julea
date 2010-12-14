@@ -116,6 +116,7 @@ j_collection_unref (JCollection* collection)
 			j_store_unref(collection->store);
 		}
 
+		g_free(collection->collection.items);
 		g_free(collection->name);
 		g_free(collection);
 	}
@@ -139,10 +140,6 @@ j_collection_create (JCollection* collection, GList* items)
 
 	/*
 	IsInitialized(true);
-
-	BSONObj o;
-	vector<BSONObj> obj;
-	list<Item>::iterator it;
 	*/
 
 	length = g_list_length(items);
@@ -191,18 +188,6 @@ j_collection_create (JCollection* collection, GList* items)
 	g_free(obj);
 
 	/*
-	for (it = items.begin(); it != items.end(); ++it)
-	{
-		(*it)->Associate(this);
-		obj.push_back((*it)->Serialize());
-	}
-
-	ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
-	DBClientBase* b = c->get();
-
-	b->ensureIndex(ItemsCollection(), o, true);
-	b->insert(ItemsCollection(), obj);
-
 	if (GetSemantics()->GetPersistency() == Persistency::Strict)
 	{
 		BSONObj ores;
@@ -210,9 +195,6 @@ j_collection_create (JCollection* collection, GList* items)
 		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
 		//cout << ores << endl;
 	}
-
-	c->done();
-	delete c;
 	*/
 }
 
