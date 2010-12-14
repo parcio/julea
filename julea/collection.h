@@ -44,6 +44,7 @@ const gchar* j_collection_name (JCollection*);
 
 void j_collection_create (JCollection*, GList*);
 
+JSemantics* j_collection_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);
 
 /*
@@ -67,34 +68,18 @@ namespace JULEA
 
 		public:
 			std::list<Item> Get (std::list<string>);
-
-			_Semantics const* GetSemantics ();
 		private:
 			_Collection (_Store*, mongo::BSONObj const&);
-			~_Collection ();
 
 			void IsInitialized (bool) const;
 
-			mongo::BSONObj Serialize ();
 			void Deserialize (mongo::BSONObj const&);
-
-			std::string const& ItemsCollection ();
 
 			mongo::OID const& ID () const;
 
-			void Associate (_Store*);
-
 			bool m_initialized;
 
-			mongo::OID m_id;
-			string m_name;
-
 			Credentials m_owner;
-
-			_Semantics* m_semantics;
-			_Store* m_store;
-
-			std::string m_itemsCollection;
 	};
 
 	class Collection : public Public<_Collection>

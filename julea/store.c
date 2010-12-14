@@ -118,6 +118,23 @@ j_store_name (JStore* store)
 	return store->name;
 }
 
+JSemantics*
+j_store_semantics (JStore* store)
+{
+	return store->semantics;
+}
+
+void
+j_store_set_semantics (JStore* store, JSemantics* semantics)
+{
+	if (store->semantics != NULL)
+	{
+		j_semantics_unref(store->semantics);
+	}
+
+	store->semantics = j_semantics_ref(semantics);
+}
+
 JConnection*
 j_store_connection (JStore* store)
 {
@@ -181,17 +198,25 @@ j_store_create (JStore* store, GList* collections)
 
 	g_free(jobj);
 	g_free(obj);
-	//		cout << "error: " << c->getLastErrorDetailed() << endl;
 
 	/*
-	if (GetSemantics()->GetPersistency() == Persistency::Strict)
 	{
-		BSONObj ores;
+		bson oerr;
 
-		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
-		//cout << ores << endl;
+		mongo_cmd_get_last_error(mc, store->name, &oerr);
+		bson_print(&oerr);
+		bson_destroy(&oerr);
 	}
 	*/
+
+	if (j_semantics_get(store->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+	{
+		bson ores;
+
+		mongo_simple_int_command(mc, "admin", "fsync", 1, &ores);
+		//bson_print(&ores);
+		bson_destroy(&ores);
+	}
 }
 
 /*
@@ -265,21 +290,6 @@ namespace JULEA
 		delete c;
 
 		return collections;
-	}
-
-	_Semantics const* _Store::GetSemantics ()
-	{
-		return m_semantics;
-	}
-
-	void _Store::SetSemantics (Semantics const& semantics)
-	{
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
-
-		m_semantics = semantics->Ref();
 	}
 }
 */

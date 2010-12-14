@@ -133,6 +133,7 @@ j_collection_create (JCollection* collection, GList* items)
 {
 	JBSON* index;
 	JBSON** jobj;
+	JSemantics* semantics;
 	mongo_connection* mc;
 	bson** obj;
 	guint length;
@@ -187,15 +188,27 @@ j_collection_create (JCollection* collection, GList* items)
 	g_free(jobj);
 	g_free(obj);
 
-	/*
-	if (GetSemantics()->GetPersistency() == Persistency::Strict)
-	{
-		BSONObj ores;
+	semantics = j_collection_semantics(collection);
 
-		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
-		//cout << ores << endl;
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+	{
+		bson ores;
+
+		mongo_simple_int_command(mc, "admin", "fsync", 1, &ores);
+		//bson_print(&ores);
+		bson_destroy(&ores);
 	}
-	*/
+}
+
+JSemantics*
+j_collection_semantics (JCollection* collection)
+{
+	if (collection->semantics != NULL)
+	{
+		return collection->semantics;
+	}
+
+	return j_store_semantics(collection->store);
 }
 
 void
@@ -338,16 +351,6 @@ namespace JULEA
 		delete c;
 
 		return items;
-	}
-
-	_Semantics const* _Collection::GetSemantics ()
-	{
-		if (m_semantics != 0)
-		{
-			return m_semantics;
-		}
-
-		return m_store->GetSemantics();
 	}
 
 	Collection::Iterator::Iterator (Collection const& collection)

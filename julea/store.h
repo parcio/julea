@@ -43,9 +43,12 @@ void j_store_unref (JStore*);
 
 const gchar* j_store_name (JStore*);
 
+void j_store_create (JStore*, GList*);
+
 JConnection* j_store_connection (JStore*);
 
-void j_store_create (JStore*, GList*);
+JSemantics* j_store_semantics (JStore*);
+void j_store_set_semantics (JStore*, JSemantics*);
 
 /*
 #include "collection.h"
@@ -67,25 +70,12 @@ namespace JULEA
 
 		public:
 			std::list<Collection> Get (std::list<string>);
-
-			_Semantics const* GetSemantics ();
-			void SetSemantics (Semantics const&);
 		private:
 			_Store (string const&);
-			~_Store ();
 
 			void IsInitialized (bool) const;
 
-			_Connection* Connection ();
-
 			bool m_initialized;
-
-			std::string m_name;
-
-			_Connection* m_connection;
-			_Semantics* m_semantics;
-
-			std::string m_collectionsCollection;
 	};
 
 	class Store : public Public<_Store>
