@@ -61,6 +61,17 @@ j_bson_free (JBSON* jbson)
 }
 
 void
+j_bson_append_new_id (JBSON* jbson, const gchar* key)
+{
+	bson_append_new_oid(&(jbson->buf), key);
+}
+
+void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
+{
+	bson_append_oid(&(jbson->buf), key, value);
+}
+
+void
 j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 {
 	bson_append_int(&(jbson->buf), key, value);

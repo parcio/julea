@@ -38,9 +38,12 @@ typedef struct JStore JStore;
 #include "connection.h"
 
 JStore* j_store_new (JConnection*, const gchar*);
+JStore* j_store_ref (JStore*);
 void j_store_unref (JStore*);
 
 const gchar* j_store_name (JStore*);
+
+JConnection* j_store_connection (JStore*);
 
 void j_store_create (JStore*, GList*);
 
@@ -72,8 +75,6 @@ namespace JULEA
 			~_Store ();
 
 			void IsInitialized (bool) const;
-
-			string const& CollectionsCollection ();
 
 			_Connection* Connection ();
 

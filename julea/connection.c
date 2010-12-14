@@ -30,6 +30,7 @@
 #include <mongo.h>
 
 #include "connection.h"
+#include "connection-internal.h"
 
 struct JConnection
 {
@@ -96,6 +97,14 @@ JStore*
 j_connection_get (JConnection* connection, const gchar* name)
 {
 	return j_store_new(connection, name);
+}
+
+/* Internal */
+
+mongo_connection*
+j_connection_connection (JConnection* connection)
+{
+	return &(connection->connection);
 }
 
 /*

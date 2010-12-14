@@ -28,22 +28,46 @@
 #include <glib.h>
 
 #include <bson.h>
+#include <mongo.h>
 
 #include "store.h"
 
 #include "bson.h"
 #include "collection.h"
+#include "collection-internal.h"
 #include "connection.h"
+#include "connection-internal.h"
 
 struct JStore
 {
 	gchar* name;
+
+	struct
+	{
+		gchar* collections;
+	}
+	collection;
 
 	JConnection* connection;
 	JSemantics* semantics;
 
 	guint ref_count;
 };
+
+static
+const gchar*
+j_store_collection_collections (JStore* store)
+{
+	/*
+		IsInitialized(true);
+	*/
+	if (store->collection.collections == NULL)
+	{
+		store->collection.collections = g_strdup_printf("%s.Collections", store->name);
+	}
+
+	return store->collection.collections;
+}
 
 JStore*
 j_store_new (JConnection* connection, const gchar* name)
@@ -56,9 +80,18 @@ j_store_new (JConnection* connection, const gchar* name)
 
 	store = g_new(JStore, 1);
 	store->name = g_strdup(name);
+	store->collection.collections = NULL;
 	store->connection = j_connection_ref(connection);
 	store->semantics = j_semantics_new();
 	store->ref_count = 1;
+
+	return store;
+}
+
+JStore*
+j_store_ref (JStore* store)
+{
+	store->ref_count++;
 
 	return store;
 }
@@ -73,6 +106,7 @@ j_store_unref (JStore* store)
 		j_connection_unref(store->connection);
 		j_semantics_unref(store->semantics);
 
+		g_free(store->collection.collections);
 		g_free(store->name);
 		g_free(store);
 	}
@@ -84,43 +118,72 @@ j_store_name (JStore* store)
 	return store->name;
 }
 
+JConnection*
+j_store_connection (JStore* store)
+{
+	return store->connection;
+}
+
 void
 j_store_create (JStore* store, GList* collections)
 {
+	mongo_connection* mc;
+	JBSON* index;
+	JBSON** jobj;
+	bson** obj;
+	guint length;
+	guint i;
+
 	/*
 	IsInitialized(true);
+	*/
 
-	if (collections.size() == 0)
+	length = g_list_length(collections);
+
+	if (length == 0)
 	{
 		return;
 	}
-	*/
 
-	JBSON* jbson;
-	bson* index;
+	jobj = g_new(JBSON*, length);
+	obj = g_new(bson*, length);
+	i = 0;
 
-	jbson = j_bson_new();
-	j_bson_append_int(jbson, "Name", 1);
-	index = j_bson_get(jbson);
-	j_bson_free(jbson);
-
-	/*
-	vector<BSONObj> obj;
-	list<Collection>::iterator it;
-
-	for (it = collections.begin(); it != collections.end(); ++it)
+	for (GList* l = collections; l != NULL; l = l->next)
 	{
-		(*it)->Associate(this);
-		obj.push_back((*it)->Serialize());
+		JCollection* collection = l->data;
+		JBSON* jbson;
+
+		j_collection_associate(collection, store);
+		jbson = j_collection_serialize(collection);
+
+		jobj[i] = jbson;
+		obj[i] = j_bson_get(jbson);
+
+		i++;
 	}
 
-	ScopedDbConnection* c = m_connection->GetMongoDB();
-	DBClientBase* b = c->get();
+	mc = j_connection_connection(store->connection);
 
-	b->ensureIndex(CollectionsCollection(), o, true);
-	b->insert(CollectionsCollection(), obj);
+	index = j_bson_new();
+	j_bson_append_int(index, "Name", 1);
+
+	mongo_create_index(mc, j_store_collection_collections(store), j_bson_get(index), MONGO_INDEX_UNIQUE, NULL);
+
+	j_bson_free(index);
+
+	mongo_insert_batch(mc, j_store_collection_collections(store), obj, length);
+
+	for (i = 0; i < length; i++)
+	{
+		j_bson_free(jobj[i]);
+	}
+
+	g_free(jobj);
+	g_free(obj);
 	//		cout << "error: " << c->getLastErrorDetailed() << endl;
 
+	/*
 	if (GetSemantics()->GetPersistency() == Persistency::Strict)
 	{
 		BSONObj ores;
@@ -128,9 +191,6 @@ j_store_create (JStore* store, GList* collections)
 		b->runCommand("admin", BSONObjBuilder().append("fsync", 1).obj(), ores);
 		//cout << ores << endl;
 	}
-
-	c->done();
-	delete c;
 	*/
 }
 
@@ -158,18 +218,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Store already initialized.");
 			}
 		}
-	}
-
-	string const& _Store::CollectionsCollection ()
-	{
-		IsInitialized(true);
-
-		if (m_collectionsCollection.empty())
-		{
-			m_collectionsCollection = m_name + ".Collections";
-		}
-
-		return m_collectionsCollection;
 	}
 
 	_Connection* _Store::Connection ()

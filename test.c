@@ -27,7 +27,7 @@
 
 #include <glib.h>
 
-#include "julea.h"
+#include <julea.h>
 
 int main (int argc, char** argv)
 {
@@ -88,6 +88,8 @@ int main (int argc, char** argv)
 			//j_item_set_semantics(item, semantics);
 
 			items = g_list_prepend(items, item);
+
+			g_free(name);
 		}
 
 		j_collection_create(collection, items);

@@ -25,24 +25,17 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_BSON
-#define H_BSON
+#ifndef H_ITEM_INTERNAL
+#define H_ITEM_INTERNAL
 
-struct JBSON;
-
-typedef struct JBSON JBSON;
+#include "item.h"
 
 #include <glib.h>
 
-#include <bson.h>
+#include "bson.h"
+#include "collection.h"
 
-JBSON* j_bson_new (void);
-void j_bson_free (JBSON*);
-
-void j_bson_append_new_id (JBSON*, const gchar*);
-void j_bson_append_id (JBSON*, const gchar*, const bson_oid_t*);
-void j_bson_append_int (JBSON*, const gchar*, gint);
-void j_bson_append_str (JBSON*, const gchar*, const gchar*);
-bson* j_bson_get (JBSON*);
+void j_item_associate (JItem*, JCollection*);
+JBSON* j_item_serialize (JItem*);
 
 #endif

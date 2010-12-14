@@ -28,6 +28,7 @@
 #include <glib.h>
 
 #include "item.h"
+#include "item-internal.h"
 
 #include "collection.h"
 #include "semantics.h"
@@ -95,6 +96,32 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 	item->semantics = j_semantics_ref(semantics);
 }
 
+/* Internal */
+
+void
+j_item_associate (JItem* item, JCollection* collection)
+{
+		/*
+		IsInitialized(false);
+		m_initialized = true;
+		*/
+	item->collection = j_collection_ref(collection);
+}
+
+JBSON*
+j_item_serialize (JItem* item)
+{
+	JBSON* jbson;
+
+	jbson = j_bson_new();
+	j_bson_append_new_id(jbson, "_id");
+	/* FIXME id */
+	j_bson_append_str(jbson, "Collection", j_collection_name(item->collection));
+	j_bson_append_str(jbson, "Name", item->name);
+
+	return jbson;
+}
+
 /*
 #include "item.h"
 
@@ -128,31 +155,10 @@ namespace JULEA
 		}
 	}
 
-	BSONObj _Item::Serialize ()
-	{
-		BSONObj o;
-
-		o = BSONObjBuilder()
-			.append("_id", m_id)
-			.append("Collection", m_collection->ID())
-			.append("Name", m_name)
-			.obj();
-
-		return o;
-	}
-
 	void _Item::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
 		m_name = o.getField("Name").String();
-	}
-
-	void _Item::Associate (_Collection* collection)
-	{
-		IsInitialized(false);
-
-		m_collection = collection->Ref();
-		m_initialized = true;
 	}
 
 	_Semantics const* _Item::GetSemantics ()

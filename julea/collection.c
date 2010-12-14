@@ -27,9 +27,16 @@
 
 #include <glib.h>
 
+#include <mongo.h>
+
 #include "collection.h"
+#include "collection-internal.h"
 
 #include "bson.h"
+#include "connection.h"
+#include "connection-internal.h"
+#include "item.h"
+#include "item-internal.h"
 #include "semantics.h"
 #include "store.h"
 
@@ -37,11 +44,31 @@ struct JCollection
 {
 	gchar* name;
 
+	struct
+	{
+		gchar* items;
+	}
+	collection;
+
 	JSemantics* semantics;
 	JStore* store;
 
 	guint ref_count;
 };
+
+static
+const gchar*
+j_collection_collection_items (JCollection* collection)
+{
+	g_return_val_if_fail(collection->store != NULL, NULL);
+
+	if (collection->collection.items == NULL)
+	{
+		collection->collection.items = g_strdup_printf("%s.Items", j_store_name(collection->store));
+	}
+
+	return collection->collection.items;
+}
 
 JCollection*
 j_collection_new (const gchar* name)
@@ -56,6 +83,7 @@ j_collection_new (const gchar* name)
 
 	collection = g_new(JCollection, 1);
 	collection->name = g_strdup(name);
+	collection->collection.items = NULL;
 	collection->semantics = NULL;
 	collection->store = NULL;
 	collection->ref_count = 1;
@@ -102,27 +130,65 @@ j_collection_name (JCollection* collection)
 void
 j_collection_create (JCollection* collection, GList* items)
 {
+	JBSON* index;
+	JBSON** jobj;
+	mongo_connection* mc;
+	bson** obj;
+	guint length;
+	guint i;
+
 	/*
 	IsInitialized(true);
-
-	if (items.size() == 0)
-	{
-		return;
-	}
 
 	BSONObj o;
 	vector<BSONObj> obj;
 	list<Item>::iterator it;
 	*/
 
-	JBSON* jbson;
-	bson* index;
+	length = g_list_length(items);
 
-	jbson = j_bson_new();
-	j_bson_append_int(jbson, "Collection", 1);
-	j_bson_append_int(jbson, "Name", 1);
-	index = j_bson_get(jbson);
-	j_bson_free(jbson);
+	if (length == 0)
+	{
+		return;
+	}
+
+	jobj = g_new(JBSON*, length);
+	obj = g_new(bson*, length);
+	i = 0;
+
+	for (GList* l = items; l != NULL; l = l->next)
+	{
+		JItem* item = l->data;
+		JBSON* jbson;
+
+		j_item_associate(item, collection);
+		jbson = j_item_serialize(item);
+
+		jobj[i] = jbson;
+		obj[i] = j_bson_get(jbson);
+
+		i++;
+	}
+
+	mc = j_connection_connection(j_store_connection(collection->store));
+
+	index = j_bson_new();
+	j_bson_append_int(index, "Collection", 1);
+	j_bson_append_int(index, "Name", 1);
+
+	mongo_create_index(mc, j_collection_collection_items(collection), j_bson_get(index), MONGO_INDEX_UNIQUE, NULL);
+
+	j_bson_free(index);
+
+	mongo_insert_batch(mc, j_collection_collection_items(collection), obj, length);
+
+	for (i = 0; i < length; i++)
+	{
+		j_bson_free(jobj[i]);
+	}
+
+	g_free(jobj);
+	g_free(obj);
 
 	/*
 	for (it = items.begin(); it != items.end(); ++it)
@@ -161,6 +227,36 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 	collection->semantics = j_semantics_ref(semantics);
 }
 
+/* Internal */
+
+void
+j_collection_associate (JCollection* collection, JStore* store)
+{
+	/*
+		IsInitialized(false);
+
+		m_initialized = true;
+	*/
+
+	collection->store = j_store_ref(store);
+}
+
+JBSON*
+j_collection_serialize (JCollection* collection)
+{
+	/*
+			.append("User", m_owner.User())
+			.append("Group", m_owner.Group())
+	*/
+
+	JBSON* jbson;
+
+	jbson = j_bson_new();
+	j_bson_append_new_id(jbson, "_id");
+	j_bson_append_str(jbson, "Name", collection->name);
+
+	return jbson;
+}
 
 /*
 namespace JULEA
@@ -192,20 +288,6 @@ namespace JULEA
 		}
 	}
 
-	BSONObj _Collection::Serialize ()
-	{
-		BSONObj o;
-
-		o = BSONObjBuilder()
-			.append("_id", m_id)
-			.append("Name", m_name)
-			.append("User", m_owner.User())
-			.append("Group", m_owner.Group())
-			.obj();
-
-		return o;
-	}
-
 	void _Collection::Deserialize (BSONObj const& o)
 	{
 		m_id = o.getField("_id").OID();
@@ -230,14 +312,6 @@ namespace JULEA
 	mongo::OID const& _Collection::ID () const
 	{
 		return m_id;
-	}
-
-	void _Collection::Associate (_Store* store)
-	{
-		IsInitialized(false);
-
-		m_store = store->Ref();
-		m_initialized = true;
 	}
 
 	list<Item> _Collection::Get (list<string> names)
