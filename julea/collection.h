@@ -40,6 +40,8 @@ JCollection* j_collection_new (const gchar*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
+const gchar* j_collection_name (JCollection*);
+
 void j_collection_create (JCollection*, GList*);
 
 void j_collection_set_semantics (JCollection*, JSemantics*);
@@ -64,8 +66,6 @@ namespace JULEA
 		friend class _Store;
 
 		public:
-			string const& Name () const;
-
 			std::list<Item> Get (std::list<string>);
 
 			_Semantics const* GetSemantics ();

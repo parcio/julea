@@ -40,6 +40,8 @@ typedef struct JStore JStore;
 JStore* j_store_new (JConnection*, const gchar*);
 void j_store_unref (JStore*);
 
+const gchar* j_store_name (JStore*);
+
 void j_store_create (JStore*, GList*);
 
 /*
@@ -61,8 +63,6 @@ namespace JULEA
 		friend class _Collection;
 
 		public:
-			std::string const& Name ();
-
 			std::list<Collection> Get (std::list<string>);
 
 			_Semantics const* GetSemantics ();

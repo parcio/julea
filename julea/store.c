@@ -78,6 +78,12 @@ j_store_unref (JStore* store)
 	}
 }
 
+const gchar*
+j_store_name (JStore* store)
+{
+	return store->name;
+}
+
 void
 j_store_create (JStore* store, GList* collections)
 {
@@ -139,21 +145,6 @@ using namespace mongo;
 
 namespace JULEA
 {
-	_Store::_Store (string const& name)
-		: m_initialized(false),
-		  m_name(name),
-		  m_connection(0),
-		  m_semantics(0),
-		  m_collectionsCollection("")
-	{
-		m_semantics = new _Semantics();
-	}
-
-	_Store::~_Store ()
-	{
-		m_semantics->Unref();
-	}
-
 	void _Store::IsInitialized (bool check) const
 	{
 		if (m_initialized != check)
@@ -184,11 +175,6 @@ namespace JULEA
 	_Connection* _Store::Connection ()
 	{
 		return m_connection;
-	}
-
-	string const& _Store::Name ()
-	{
-		return m_name;
 	}
 
 	list<Collection> _Store::Get (list<string> names)

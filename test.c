@@ -46,6 +46,8 @@ int main (int argc, char** argv)
 
 	if (!j_connection_connect(connection, argv[1]))
 	{
+		j_connection_unref(connection);
+
 		return 1;
 	}
 
@@ -54,12 +56,12 @@ int main (int argc, char** argv)
 	semantics = j_semantics_new();
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
-	for (guint j = 0; j < 10; j++)
+	for (guint i = 0; i < 10; i++)
 	{
 		JCollection* collection;
 		gchar* name;
 
-		name = g_strdup_printf("test-%u", j);
+		name = g_strdup_printf("test-%u", i);
 
 		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
@@ -71,23 +73,27 @@ int main (int argc, char** argv)
 
 	j_store_create(store, collections);
 
-	/*
-	list<Collection>::iterator it;
-
-	for (it = collections.begin(); it != collections.end(); ++it)
+	for (GList* l = collections; l != NULL; l = l->next)
 	{
-		for (int i = 0; i < 10000; i++)
-		{
-			string name("test-" + lexical_cast<string>(i));
-			Item item(name);
+		JCollection* collection = l->data;
 
-	//		item->SetSemantics(semantics);
-			items.push_back(item);
+		for (guint i = 0; i < 10000; i++)
+		{
+			JItem* item;
+			gchar* name;
+
+			name = g_strdup_printf("test-%u", i);
+
+			item = j_item_new(name);
+			//j_item_set_semantics(item, semantics);
+
+			items = g_list_prepend(items, item);
 		}
 
-		(*it)->Create(items);
+		j_collection_create(collection, items);
 	}
 
+	/*
 	Collection::Iterator iterator(collections.front());
 
 	while (iterator.More())

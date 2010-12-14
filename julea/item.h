@@ -32,6 +32,17 @@ struct JItem;
 
 typedef struct JItem JItem;
 
+#include <glib.h>
+
+#include "semantics.h"
+
+JItem* j_item_new (const gchar*);
+void j_item_unref (JItem*);
+
+const gchar* j_item_name (JItem*);
+
+void j_item_set_semantics (JItem*, JSemantics*);
+
 /*
 #include "collection.h"
 #include "public.h"
@@ -49,12 +60,8 @@ namespace JULEA
 		friend class _Collection;
 
 		public:
-			string const& Name () const;
-
 			_Semantics const* GetSemantics ();
-			void SetSemantics (Semantics const&);
 		private:
-			_Item (string const&);
 			_Item (_Collection*, mongo::BSONObj const&);
 			~_Item ();
 

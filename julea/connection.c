@@ -35,6 +35,8 @@ struct JConnection
 {
 	mongo_connection connection;
 
+	gboolean connected;
+
 	guint ref_count;
 };
 
@@ -44,6 +46,7 @@ j_connection_new (void)
 	JConnection* connection;
 
 	connection = g_new(JConnection, 1);
+	connection->connected = FALSE;
 	connection->ref_count = 1;
 
 	return connection;
@@ -64,7 +67,10 @@ j_connection_unref (JConnection* connection)
 
 	if (connection->ref_count == 0)
 	{
-		mongo_destroy(&(connection->connection));
+		if (connection->connected)
+		{
+			mongo_destroy(&(connection->connection));
+		}
 
 		g_free(connection);
 	}
@@ -75,6 +81,8 @@ j_connection_connect (JConnection* connection, const gchar* server)
 {
 	mongo_connection_options opts;
 	mongo_conn_return status;
+
+	connection->connected = TRUE;
 
 	g_strlcpy(opts.host, server, 255);
 	opts.port = 27017;

@@ -25,30 +25,83 @@
  * SUCH DAMAGE.
  */
 
+#include <glib.h>
+
+#include "item.h"
+
+#include "collection.h"
+#include "semantics.h"
+
+struct JItem
+{
+	gchar* name;
+
+	JCollection* collection;
+	JSemantics* semantics;
+
+	guint ref_count;
+};
+
+JItem*
+j_item_new (const gchar* name)
+{
+	JItem* item;
+
+	item = g_new(JItem, 1);
+	item->name = g_strdup(name);
+	item->collection = NULL;
+	item->semantics = NULL;
+	item->ref_count = 1;
+
+	return item;
+}
+
+void
+j_item_unref (JItem* item)
+{
+	item->ref_count--;
+
+	if (item->ref_count == 0)
+	{
+		if (item->collection != NULL)
+		{
+			j_collection_unref(item->collection);
+		}
+
+		if (item->semantics != NULL)
+		{
+			j_semantics_unref(item->semantics);
+		}
+
+		g_free(item->name);
+		g_free(item);
+	}
+}
+
+const gchar*
+j_item_name (JItem* item)
+{
+	return item->name;
+}
+
+void
+j_item_set_semantics (JItem* item, JSemantics* semantics)
+{
+	if (item->semantics != NULL)
+	{
+		j_semantics_unref(item->semantics);
+	}
+
+	item->semantics = j_semantics_ref(semantics);
+}
+
 /*
-#include <iostream>
-
-#include <mongo/client/connpool.h>
-#include <mongo/db/jsobj.h>
-
 #include "item.h"
 
 #include "exception.h"
 
-using namespace std;
-using namespace mongo;
-
 namespace JULEA
 {
-	_Item::_Item (string const& name)
-		: m_initialized(false),
-		  m_name(name),
-		  m_collection(0),
-		  m_semantics(0)
-	{
-		m_id.init();
-	}
-
 	_Item::_Item (_Collection* collection, BSONObj const& obj)
 		: m_initialized(true),
 		  m_name(""),
@@ -58,19 +111,6 @@ namespace JULEA
 		m_id.init();
 
 		Deserialize(obj);
-	}
-
-	_Item::~_Item ()
-	{
-		if (m_collection != 0)
-		{
-			m_collection->Unref();
-		}
-
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
 	}
 
 	void _Item::IsInitialized (bool check)
@@ -115,11 +155,6 @@ namespace JULEA
 		m_initialized = true;
 	}
 
-	string const& _Item::Name () const
-	{
-		return m_name;
-	}
-
 	_Semantics const* _Item::GetSemantics ()
 	{
 		if (m_semantics != 0)
@@ -128,16 +163,6 @@ namespace JULEA
 		}
 
 		return m_collection->GetSemantics();
-	}
-
-	void _Item::SetSemantics (Semantics const& semantics)
-	{
-		if (m_semantics != 0)
-		{
-			m_semantics->Unref();
-		}
-
-		m_semantics = semantics->Ref();
 	}
 }
 */

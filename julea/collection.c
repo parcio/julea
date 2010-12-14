@@ -29,6 +29,7 @@
 
 #include "collection.h"
 
+#include "bson.h"
 #include "semantics.h"
 #include "store.h"
 
@@ -92,6 +93,12 @@ j_collection_unref (JCollection* collection)
 	}
 }
 
+const gchar*
+j_collection_name (JCollection* collection)
+{
+	return collection->name;
+}
+
 void
 j_collection_create (JCollection* collection, GList* items)
 {
@@ -106,12 +113,18 @@ j_collection_create (JCollection* collection, GList* items)
 	BSONObj o;
 	vector<BSONObj> obj;
 	list<Item>::iterator it;
+	*/
 
-	o = BSONObjBuilder()
-		.append("Collection", 1)
-		.append("Name", 1)
-		.obj();
+	JBSON* jbson;
+	bson* index;
 
+	jbson = j_bson_new();
+	j_bson_append_int(jbson, "Collection", 1);
+	j_bson_append_int(jbson, "Name", 1);
+	index = j_bson_get(jbson);
+	j_bson_free(jbson);
+
+	/*
 	for (it = items.begin(); it != items.end(); ++it)
 	{
 		(*it)->Associate(this);
@@ -225,11 +238,6 @@ namespace JULEA
 
 		m_store = store->Ref();
 		m_initialized = true;
-	}
-
-	string const& _Collection::Name () const
-	{
-		return m_name;
 	}
 
 	list<Item> _Collection::Get (list<string> names)
