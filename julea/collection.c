@@ -96,29 +96,6 @@ j_collection_new (const gchar* name)
 }
 
 JCollection*
-j_collection_new_from_bson (JStore* store, JBSON* jbson)
-{
-	/*
-		: m_initialized(true),
-	*/
-	JCollection* collection;
-
-	g_return_val_if_fail(store != NULL, NULL);
-	g_return_val_if_fail(jbson != NULL, NULL);
-
-	collection = g_new(JCollection, 1);
-	collection->name = NULL;
-	collection->collection.items = NULL;
-	collection->semantics = NULL;
-	collection->store = j_store_ref(store);
-	collection->ref_count = 1;
-
-	j_collection_deserialize(collection, jbson);
-
-	return collection;
-}
-
-JCollection*
 j_collection_ref (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -236,6 +213,75 @@ j_collection_create (JCollection* collection, GQueue* items)
 	}
 }
 
+GQueue*
+j_collection_get (JCollection* collection, GQueue* names)
+{
+	JBSON* empty;
+	JBSON* jbson;
+	mongo_connection* mc;
+	mongo_cursor* cursor;
+	GQueue* items;
+	guint length;
+	guint n = 0;
+
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(names != NULL, NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	jbson = j_bson_new();
+	length = g_queue_get_length(names);
+
+	/* FIXME */
+	j_bson_append_str(jbson, "Collection", collection->name);
+
+	if (length == 1)
+	{
+		const gchar* name = names->head->data;
+
+		j_bson_append_str(jbson, "Name", name);
+		n = 1;
+	}
+	else
+	{
+		j_bson_append_object_start(jbson, "$or");
+
+		for (GList* l = names->head; l != NULL; l = l->next)
+		{
+			const gchar* name = l->data;
+
+			j_bson_append_str(jbson, "Name", name);
+		}
+
+		j_bson_append_object_end(jbson);
+	}
+
+	empty = j_bson_new_empty();
+
+	mc = j_connection_connection(j_store_connection(collection->store));
+	cursor = mongo_find(mc, j_collection_collection_items(collection), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
+
+	items = g_queue_new();
+
+	while (mongo_cursor_next(cursor))
+	{
+		JBSON* item_bson;
+
+		item_bson = j_bson_new_from_bson(&(cursor->current));
+		g_queue_push_tail(items, j_item_new_from_bson(collection, item_bson));
+		j_bson_free(item_bson);
+	}
+
+	mongo_cursor_destroy(cursor);
+
+	j_bson_free(empty);
+	j_bson_free(jbson);
+
+	return items;
+}
+
 JSemantics*
 j_collection_semantics (JCollection* collection)
 {
@@ -264,6 +310,29 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 }
 
 /* Internal */
+
+JCollection*
+j_collection_new_from_bson (JStore* store, JBSON* jbson)
+{
+	/*
+		: m_initialized(true),
+	*/
+	JCollection* collection;
+
+	g_return_val_if_fail(store != NULL, NULL);
+	g_return_val_if_fail(jbson != NULL, NULL);
+
+	collection = g_new(JCollection, 1);
+	collection->name = NULL;
+	collection->collection.items = NULL;
+	collection->semantics = NULL;
+	collection->store = j_store_ref(store);
+	collection->ref_count = 1;
+
+	j_collection_deserialize(collection, jbson);
+
+	return collection;
+}
 
 void
 j_collection_associate (JCollection* collection, JStore* store)
@@ -332,65 +401,9 @@ namespace JULEA
 		}
 	}
 
-	string const& _Collection::ItemsCollection ()
-	{
-		IsInitialized(true);
-
-		if (m_itemsCollection.empty())
-		{
-			m_itemsCollection = m_store->Name() + ".Items";
-		}
-
-		return m_itemsCollection;
-	}
-
 	mongo::OID const& _Collection::ID () const
 	{
 		return m_id;
-	}
-
-	list<Item> _Collection::Get (list<string> names)
-	{
-		BSONObjBuilder ob;
-		int n = 0;
-
-		IsInitialized(true);
-
-		ob.append("Collection", m_id);
-
-		if (names.size() == 1)
-		{
-			ob.append("Name", names.front());
-			n = 1;
-		}
-		else
-		{
-			BSONObjBuilder obv;
-			list<string>::iterator it;
-
-			for (it = names.begin(); it != names.end(); ++it)
-			{
-				obv.append("Name", *it);
-			}
-
-			ob.append("$or", obv.obj());
-		}
-
-		list<Item> items;
-		ScopedDbConnection* c = m_store->Connection()->GetMongoDB();
-		DBClientBase* b = c->get();
-
-		auto_ptr<DBClientCursor> cur = b->query(ItemsCollection(), ob.obj(), n);
-
-		while (cur->more())
-		{
-			items.push_back(Item(this, cur->next()));
-		}
-
-		c->done();
-		delete c;
-
-		return items;
 	}
 
 	Collection::Iterator::Iterator (Collection const& collection)

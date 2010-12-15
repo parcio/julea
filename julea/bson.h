@@ -48,6 +48,7 @@ void j_bson_append_new_id (JBSON*, const gchar*);
 void j_bson_append_id (JBSON*, const gchar*, const bson_oid_t*);
 void j_bson_append_int (JBSON*, const gchar*, gint);
 void j_bson_append_str (JBSON*, const gchar*, const gchar*);
+
 bson* j_bson_get (JBSON*);
 
 #endif

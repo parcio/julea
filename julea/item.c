@@ -107,6 +107,25 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 
 /* Internal */
 
+JItem*
+j_item_new_from_bson (JCollection* collection, JBSON* jbson)
+{
+	JItem* item;
+
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(jbson != NULL, NULL);
+
+	item = g_new(JItem, 1);
+	item->name = NULL;
+	item->collection = j_collection_ref(collection);
+	item->semantics = NULL;
+	item->ref_count = 1;
+
+	j_item_deserialize(item, jbson);
+
+	return item;
+}
+
 void
 j_item_associate (JItem* item, JCollection* collection)
 {
@@ -136,6 +155,19 @@ j_item_serialize (JItem* item)
 	return jbson;
 }
 
+void
+j_item_deserialize (JItem* item, JBSON* jbson)
+{
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(jbson != NULL);
+
+	/*
+		m_id = o.getField("_id").OID();
+		m_name = o.getField("Name").String();
+	*/
+
+}
+
 /*
 #include "item.h"
 
@@ -143,17 +175,6 @@ j_item_serialize (JItem* item)
 
 namespace JULEA
 {
-	_Item::_Item (_Collection* collection, BSONObj const& obj)
-		: m_initialized(true),
-		  m_name(""),
-		  m_collection(collection->Ref()),
-		  m_semantics(0)
-	{
-		m_id.init();
-
-		Deserialize(obj);
-	}
-
 	void _Item::IsInitialized (bool check)
 	{
 		if (m_initialized != check)
@@ -167,12 +188,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Item already initialized.");
 			}
 		}
-	}
-
-	void _Item::Deserialize (BSONObj const& o)
-	{
-		m_id = o.getField("_id").OID();
-		m_name = o.getField("Name").String();
 	}
 
 	_Semantics const* _Item::GetSemantics ()

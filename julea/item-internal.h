@@ -35,7 +35,11 @@
 #include "bson.h"
 #include "collection.h"
 
+JItem* j_item_new_from_bson (JCollection*, JBSON*);
+
 void j_item_associate (JItem*, JCollection*);
+
 JBSON* j_item_serialize (JItem*);
+void j_item_deserialize (JItem*, JBSON*);
 
 #endif
