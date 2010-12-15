@@ -91,6 +91,19 @@ j_item_name (JItem* item)
 	return item->name;
 }
 
+JSemantics*
+j_item_semantics (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, NULL);
+
+	if (item->semantics != NULL)
+	{
+		return item->semantics;
+	}
+
+	return j_collection_semantics(item->collection);
+}
+
 void
 j_item_set_semantics (JItem* item, JSemantics* semantics)
 {
@@ -188,16 +201,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Item already initialized.");
 			}
 		}
-	}
-
-	_Semantics const* _Item::GetSemantics ()
-	{
-		if (m_semantics != 0)
-		{
-			return m_semantics;
-		}
-
-		return m_collection->GetSemantics();
 	}
 }
 */

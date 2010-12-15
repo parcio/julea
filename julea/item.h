@@ -41,6 +41,7 @@ void j_item_unref (JItem*);
 
 const gchar* j_item_name (JItem*);
 
+JSemantics* j_item_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
 
 /*
