@@ -142,7 +142,7 @@ j_store_connection (JStore* store)
 }
 
 void
-j_store_create (JStore* store, GList* collections)
+j_store_create (JStore* store, GQueue* collections)
 {
 	mongo_connection* mc;
 	JBSON* index;
@@ -155,7 +155,7 @@ j_store_create (JStore* store, GList* collections)
 	IsInitialized(true);
 	*/
 
-	length = g_list_length(collections);
+	length = g_queue_get_length(collections);
 
 	if (length == 0)
 	{
@@ -166,7 +166,7 @@ j_store_create (JStore* store, GList* collections)
 	obj = g_new(bson*, length);
 	i = 0;
 
-	for (GList* l = collections; l != NULL; l = l->next)
+	for (GList* l = collections->head; l != NULL; l = l->next)
 	{
 		JCollection* collection = l->data;
 		JBSON* jbson;

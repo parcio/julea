@@ -43,7 +43,7 @@ void j_store_unref (JStore*);
 
 const gchar* j_store_name (JStore*);
 
-void j_store_create (JStore*, GList*);
+void j_store_create (JStore*, GQueue*);
 
 JConnection* j_store_connection (JStore*);
 

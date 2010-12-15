@@ -129,7 +129,7 @@ j_collection_name (JCollection* collection)
 }
 
 void
-j_collection_create (JCollection* collection, GList* items)
+j_collection_create (JCollection* collection, GQueue* items)
 {
 	JBSON* index;
 	JBSON** jobj;
@@ -143,7 +143,7 @@ j_collection_create (JCollection* collection, GList* items)
 	IsInitialized(true);
 	*/
 
-	length = g_list_length(items);
+	length = g_queue_get_length(items);
 
 	if (length == 0)
 	{
@@ -154,7 +154,7 @@ j_collection_create (JCollection* collection, GList* items)
 	obj = g_new(bson*, length);
 	i = 0;
 
-	for (GList* l = items; l != NULL; l = l->next)
+	for (GList* l = items->head; l != NULL; l = l->next)
 	{
 		JItem* item = l->data;
 		JBSON* jbson;

@@ -34,7 +34,7 @@ int main (int argc, char** argv)
 	JConnection* connection;
 	JStore* store;
 	JSemantics* semantics;
-	GList* collections = NULL;
+	GQueue* collections;
 
 	if (argc != 2)
 	{
@@ -55,6 +55,10 @@ int main (int argc, char** argv)
 	semantics = j_semantics_new();
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
+	//j_store_set_semantics(store, semantics);
+
+	collections = g_queue_new();
+
 	for (guint i = 0; i < 10; i++)
 	{
 		JCollection* collection;
@@ -65,17 +69,19 @@ int main (int argc, char** argv)
 		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
 
-		collections = g_list_prepend(collections, collection);
+		g_queue_push_tail(collections, collection);
 
 		g_free(name);
 	}
 
 	j_store_create(store, collections);
 
-	for (GList* l = collections; l != NULL; l = l->next)
+	for (GList* l = collections->head; l != NULL; l = l->next)
 	{
 		JCollection* collection = l->data;
-		GList* items = NULL;
+		GQueue* items;
+
+		items = g_queue_new();
 
 		for (guint i = 0; i < 10000; i++)
 		{
@@ -87,19 +93,19 @@ int main (int argc, char** argv)
 			item = j_item_new(name);
 			//j_item_set_semantics(item, semantics);
 
-			items = g_list_prepend(items, item);
+			g_queue_push_tail(items, item);
 
 			g_free(name);
 		}
 
 		j_collection_create(collection, items);
 
-		for (GList* li = items; li != NULL; li = li->next)
+		for (GList* li = items->head; li != NULL; li = li->next)
 		{
 			j_item_unref(li->data);
 		}
 
-		g_list_free(items);
+		g_queue_free(items);
 	}
 
 	/*
@@ -113,12 +119,12 @@ int main (int argc, char** argv)
 	}
 	*/
 
-	for (GList* l = collections; l != NULL; l = l->next)
+	for (GList* l = collections->head; l != NULL; l = l->next)
 	{
 		j_collection_unref(l->data);
 	}
 
-	g_list_free(collections);
+	g_queue_free(collections);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
