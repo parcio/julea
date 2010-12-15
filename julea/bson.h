@@ -37,7 +37,11 @@ typedef struct JBSON JBSON;
 #include <bson.h>
 
 JBSON* j_bson_new (void);
+JBSON* j_bson_new_from_bson (bson*);
 void j_bson_free (JBSON*);
+
+void j_bson_append_object_start (JBSON*, const gchar*);
+void j_bson_append_object_end (JBSON*);
 
 void j_bson_append_new_id (JBSON*, const gchar*);
 void j_bson_append_id (JBSON*, const gchar*, const bson_oid_t*);

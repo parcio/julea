@@ -33,8 +33,15 @@
 
 struct JBSON
 {
-	bson b;
-	bson_buffer buf;
+	bson bson;
+	bson_buffer buffer;
+
+	struct
+	{
+		gboolean bson;
+		gboolean buffer;
+	}
+	destroy;
 };
 
 JBSON*
@@ -43,8 +50,24 @@ j_bson_new (void)
 	JBSON* jbson;
 
 	jbson = g_new(JBSON, 1);
+	jbson->destroy.bson = FALSE;
+	jbson->destroy.buffer = TRUE;
 
-	bson_buffer_init(&(jbson->buf));
+	bson_buffer_init(&(jbson->buffer));
+
+	return jbson;
+}
+
+JBSON*
+j_bson_new_from_bson (bson* bson_)
+{
+	JBSON* jbson;
+
+	jbson = g_new(JBSON, 1);
+	jbson->destroy.bson = FALSE;
+	jbson->destroy.buffer = FALSE;
+
+	bson_init(&(jbson->bson), bson_->data, 0);
 
 	return jbson;
 }
@@ -52,41 +75,75 @@ j_bson_new (void)
 void
 j_bson_free (JBSON* jbson)
 {
-	bson_destroy(&(jbson->b));
-	/*
-	bson_buffer_destroy(&(jbson->buf));
-	*/
+	if (jbson->destroy.bson)
+	{
+		bson_destroy(&(jbson->bson));
+	}
+
+	if (jbson->destroy.buffer)
+	{
+		bson_buffer_destroy(&(jbson->buffer));
+	}
 
 	g_free(jbson);
 }
 
 void
+j_bson_append_object_start (JBSON* jbson, const gchar* key)
+{
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_start_object(&(jbson->buffer), key);
+}
+
+void j_bson_append_object_end (JBSON* jbson)
+{
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_finish_object(&(jbson->buffer));
+}
+
+void
 j_bson_append_new_id (JBSON* jbson, const gchar* key)
 {
-	bson_append_new_oid(&(jbson->buf), key);
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_new_oid(&(jbson->buffer), key);
 }
 
 void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
 {
-	bson_append_oid(&(jbson->buf), key, value);
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_oid(&(jbson->buffer), key, value);
 }
 
 void
 j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 {
-	bson_append_int(&(jbson->buf), key, value);
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_int(&(jbson->buffer), key, value);
 }
 
 void
 j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
 {
-	bson_append_string(&(jbson->buf), key, value);
+	g_return_if_fail(jbson->destroy.buffer);
+
+	bson_append_string(&(jbson->buffer), key, value);
 }
 
 bson*
 j_bson_get (JBSON* jbson)
 {
-	bson_from_buffer(&(jbson->b), &(jbson->buf));
+	if (jbson->destroy.buffer)
+	{
+		jbson->destroy.bson = TRUE;
+		jbson->destroy.buffer = FALSE;
 
-	return &(jbson->b);
+		bson_from_buffer(&(jbson->bson), &(jbson->buffer));
+	}
+
+	return &(jbson->bson);
 }
