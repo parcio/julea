@@ -44,6 +44,7 @@ void j_store_unref (JStore*);
 const gchar* j_store_name (JStore*);
 
 void j_store_create (JStore*, GQueue*);
+GQueue* j_store_get (JStore*, GQueue*);
 
 JConnection* j_store_connection (JStore*);
 
@@ -68,8 +69,6 @@ namespace JULEA
 		friend class Collection;
 		friend class _Collection;
 
-		public:
-			std::list<Collection> Get (std::list<string>);
 		private:
 			_Store (string const&);
 

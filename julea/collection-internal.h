@@ -32,10 +32,16 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 #include "bson.h"
 #include "store.h"
 
+JCollection* j_collection_new_from_bson (JStore*, JBSON*);
+
 void j_collection_associate (JCollection*, JStore*);
+
 JBSON* j_collection_serialize (JCollection*);
+void j_collection_deserialize (JCollection*, JBSON*);
 
 #endif

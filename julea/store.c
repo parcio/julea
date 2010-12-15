@@ -219,14 +219,71 @@ j_store_create (JStore* store, GQueue* collections)
 	}
 }
 
+GQueue*
+j_store_get (JStore* store, GQueue* names)
+{
+	JBSON* empty;
+	JBSON* jbson;
+	mongo_connection* mc;
+	mongo_cursor* cursor;
+	GQueue* collections;
+	guint length;
+	guint n = 0;
+
+	/*
+		IsInitialized(true);
+	*/
+
+	jbson = j_bson_new();
+	length = g_queue_get_length(names);
+
+	if (length == 1)
+	{
+		const gchar* name = names->head->data;
+
+		j_bson_append_str(jbson, "Name", name);
+		n = 1;
+	}
+	else
+	{
+		j_bson_append_object_start(jbson, "$or");
+
+		for (GList* l = names->head; l != NULL; l = l->next)
+		{
+			const gchar* name = l->data;
+
+			j_bson_append_str(jbson, "Name", name);
+		}
+
+		j_bson_append_object_end(jbson);
+	}
+
+	empty = j_bson_new_empty();
+
+	mc = j_connection_connection(store->connection);
+	cursor = mongo_find(mc, j_store_collection_collections(store), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
+
+	collections = g_queue_new();
+
+	while (mongo_cursor_next(cursor))
+	{
+		JBSON* collection_bson;
+
+		collection_bson = j_bson_new_from_bson(&(cursor->current));
+		g_queue_push_tail(collections, j_collection_new_from_bson(store, collection_bson));
+		j_bson_free(collection_bson);
+	}
+
+	mongo_cursor_destroy(cursor);
+
+	j_bson_free(empty);
+	j_bson_free(jbson);
+
+	return collections;
+}
+
 /*
-#include <mongo/client/connpool.h>
-#include <mongo/db/jsobj.h>
-
 #include "exception.h"
-
-using namespace std;
-using namespace mongo;
 
 namespace JULEA
 {
@@ -243,53 +300,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Store already initialized.");
 			}
 		}
-	}
-
-	_Connection* _Store::Connection ()
-	{
-		return m_connection;
-	}
-
-	list<Collection> _Store::Get (list<string> names)
-	{
-		BSONObjBuilder ob;
-		int n = 0;
-
-		IsInitialized(true);
-
-		if (names.size() == 1)
-		{
-			ob.append("Name", names.front());
-			n = 1;
-		}
-		else
-		{
-			BSONObjBuilder obv;
-			list<string>::iterator it;
-
-			for (it = names.begin(); it != names.end(); ++it)
-			{
-				obv.append("Name", *it);
-			}
-
-			ob.append("$or", obv.obj());
-		}
-
-		list<Collection> collections;
-		ScopedDbConnection* c = m_connection->GetMongoDB();
-		DBClientBase* b = c->get();
-
-		auto_ptr<DBClientCursor> cur = b->query(CollectionsCollection(), ob.obj(), n);
-
-		while (cur->more())
-		{
-			collections.push_back(Collection(this, cur->next()));
-		}
-
-		c->done();
-		delete c;
-
-		return collections;
 	}
 }
 */

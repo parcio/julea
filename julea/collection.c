@@ -27,6 +27,7 @@
 
 #include <glib.h>
 
+#include <bson.h>
 #include <mongo.h>
 
 #include "collection.h"
@@ -76,7 +77,6 @@ j_collection_new (const gchar* name)
 	JCollection* collection;
 	/*
 	: m_initialized(false),
-	m_itemsCollection("")
 
 	m_id.init();
 	*/
@@ -87,6 +87,26 @@ j_collection_new (const gchar* name)
 	collection->semantics = NULL;
 	collection->store = NULL;
 	collection->ref_count = 1;
+
+	return collection;
+}
+
+JCollection*
+j_collection_new_from_bson (JStore* store, JBSON* jbson)
+{
+	/*
+		: m_initialized(true),
+	*/
+	JCollection* collection;
+
+	collection = g_new(JCollection, 1);
+	collection->name = NULL;
+	collection->collection.items = NULL;
+	collection->semantics = NULL;
+	collection->store = j_store_ref(store);
+	collection->ref_count = 1;
+
+	j_collection_deserialize(collection, jbson);
 
 	return collection;
 }
@@ -253,21 +273,21 @@ j_collection_serialize (JCollection* collection)
 	return jbson;
 }
 
+void
+j_collection_deserialize (JCollection* collection, JBSON* jbson)
+{
+	/*
+		m_id = o.getField("_id").OID();
+		m_name = o.getField("Name").String();
+
+		m_owner.m_user = o.getField("User").Int();
+		m_owner.m_group = o.getField("Group").Int();
+	*/
+}
+
 /*
 namespace JULEA
 {
-	_Collection::_Collection (_Store* store, BSONObj const& obj)
-		: m_initialized(true),
-		  m_name(""),
-		  m_semantics(0),
-		  m_store(store->Ref()),
-		  m_itemsCollection("")
-	{
-		m_id.init();
-
-		Deserialize(obj);
-	}
-
 	void _Collection::IsInitialized (bool check) const
 	{
 		if (m_initialized != check)
@@ -281,15 +301,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Collection already initialized.");
 			}
 		}
-	}
-
-	void _Collection::Deserialize (BSONObj const& o)
-	{
-		m_id = o.getField("_id").OID();
-		m_name = o.getField("Name").String();
-
-		m_owner.m_user = o.getField("User").Int();
-		m_owner.m_group = o.getField("Group").Int();
 	}
 
 	string const& _Collection::ItemsCollection ()

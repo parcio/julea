@@ -72,6 +72,20 @@ j_bson_new_from_bson (bson* bson_)
 	return jbson;
 }
 
+JBSON*
+j_bson_new_empty (void)
+{
+	JBSON* jbson;
+
+	jbson = g_new(JBSON, 1);
+	jbson->destroy.bson = TRUE;
+	jbson->destroy.buffer = FALSE;
+
+	bson_empty(&(jbson->bson));
+
+	return jbson;
+}
+
 void
 j_bson_free (JBSON* jbson)
 {
