@@ -56,6 +56,8 @@ j_connection_new (void)
 JConnection*
 j_connection_ref (JConnection* connection)
 {
+	g_return_val_if_fail(connection != NULL, NULL);
+
 	connection->ref_count++;
 
 	return connection;
@@ -64,6 +66,8 @@ j_connection_ref (JConnection* connection)
 void
 j_connection_unref (JConnection* connection)
 {
+	g_return_if_fail(connection != NULL);
+
 	connection->ref_count--;
 
 	if (connection->ref_count == 0)
@@ -83,6 +87,9 @@ j_connection_connect (JConnection* connection, const gchar* server)
 	mongo_connection_options opts;
 	mongo_conn_return status;
 
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(server != NULL, FALSE);
+
 	connection->connected = TRUE;
 
 	g_strlcpy(opts.host, server, 255);
@@ -96,6 +103,9 @@ j_connection_connect (JConnection* connection, const gchar* server)
 JStore*
 j_connection_get (JConnection* connection, const gchar* name)
 {
+	g_return_val_if_fail(connection != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
 	return j_store_new(connection, name);
 }
 
@@ -104,6 +114,8 @@ j_connection_get (JConnection* connection, const gchar* name)
 mongo_connection*
 j_connection_connection (JConnection* connection)
 {
+	g_return_val_if_fail(connection != NULL, NULL);
+
 	return &(connection->connection);
 }
 

@@ -61,6 +61,7 @@ static
 const gchar*
 j_collection_collection_items (JCollection* collection)
 {
+	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(collection->store != NULL, NULL);
 
 	if (collection->collection.items == NULL)
@@ -75,6 +76,9 @@ JCollection*
 j_collection_new (const gchar* name)
 {
 	JCollection* collection;
+
+	g_return_val_if_fail(name != NULL, NULL);
+
 	/*
 	: m_initialized(false),
 
@@ -99,6 +103,9 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 	*/
 	JCollection* collection;
 
+	g_return_val_if_fail(store != NULL, NULL);
+	g_return_val_if_fail(jbson != NULL, NULL);
+
 	collection = g_new(JCollection, 1);
 	collection->name = NULL;
 	collection->collection.items = NULL;
@@ -114,6 +121,8 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 JCollection*
 j_collection_ref (JCollection* collection)
 {
+	g_return_val_if_fail(collection != NULL, NULL);
+
 	collection->ref_count++;
 
 	return collection;
@@ -122,6 +131,8 @@ j_collection_ref (JCollection* collection)
 void
 j_collection_unref (JCollection* collection)
 {
+	g_return_if_fail(collection != NULL);
+
 	collection->ref_count--;
 
 	if (collection->ref_count == 0)
@@ -145,6 +156,8 @@ j_collection_unref (JCollection* collection)
 const gchar*
 j_collection_name (JCollection* collection)
 {
+	g_return_val_if_fail(collection != NULL, NULL);
+
 	return collection->name;
 }
 
@@ -158,6 +171,9 @@ j_collection_create (JCollection* collection, GQueue* items)
 	bson** obj;
 	guint length;
 	guint i;
+
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(items != NULL);
 
 	/*
 	IsInitialized(true);
@@ -223,6 +239,8 @@ j_collection_create (JCollection* collection, GQueue* items)
 JSemantics*
 j_collection_semantics (JCollection* collection)
 {
+	g_return_val_if_fail(collection != NULL, NULL);
+
 	if (collection->semantics != NULL)
 	{
 		return collection->semantics;
@@ -234,6 +252,9 @@ j_collection_semantics (JCollection* collection)
 void
 j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 {
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(semantics != NULL);
+
 	if (collection->semantics != NULL)
 	{
 		j_semantics_unref(collection->semantics);
@@ -247,6 +268,9 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 void
 j_collection_associate (JCollection* collection, JStore* store)
 {
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(store != NULL);
+
 	/*
 		IsInitialized(false);
 
@@ -266,6 +290,8 @@ j_collection_serialize (JCollection* collection)
 
 	JBSON* jbson;
 
+	g_return_val_if_fail(collection != NULL, NULL);
+
 	jbson = j_bson_new();
 	j_bson_append_new_id(jbson, "_id");
 	j_bson_append_str(jbson, "Name", collection->name);
@@ -276,6 +302,9 @@ j_collection_serialize (JCollection* collection)
 void
 j_collection_deserialize (JCollection* collection, JBSON* jbson)
 {
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(jbson != NULL);
+
 	/*
 		m_id = o.getField("_id").OID();
 		m_name = o.getField("Name").String();

@@ -48,6 +48,8 @@ j_item_new (const gchar* name)
 {
 	JItem* item;
 
+	g_return_val_if_fail(name != NULL, NULL);
+
 	item = g_new(JItem, 1);
 	item->name = g_strdup(name);
 	item->collection = NULL;
@@ -60,6 +62,8 @@ j_item_new (const gchar* name)
 void
 j_item_unref (JItem* item)
 {
+	g_return_if_fail(item != NULL);
+
 	item->ref_count--;
 
 	if (item->ref_count == 0)
@@ -82,12 +86,17 @@ j_item_unref (JItem* item)
 const gchar*
 j_item_name (JItem* item)
 {
+	g_return_val_if_fail(item != NULL, NULL);
+
 	return item->name;
 }
 
 void
 j_item_set_semantics (JItem* item, JSemantics* semantics)
 {
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(semantics != NULL);
+
 	if (item->semantics != NULL)
 	{
 		j_semantics_unref(item->semantics);
@@ -101,6 +110,9 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 void
 j_item_associate (JItem* item, JCollection* collection)
 {
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(collection != NULL);
+
 		/*
 		IsInitialized(false);
 		m_initialized = true;
@@ -112,6 +124,8 @@ JBSON*
 j_item_serialize (JItem* item)
 {
 	JBSON* jbson;
+
+	g_return_val_if_fail(item != NULL, NULL);
 
 	jbson = j_bson_new();
 	j_bson_append_new_id(jbson, "_id");

@@ -57,6 +57,8 @@ j_semantics_new (void)
 JSemantics*
 j_semantics_ref (JSemantics* semantics)
 {
+	g_return_val_if_fail(semantics != NULL, NULL);
+
 	semantics->ref_count++;
 
 	return semantics;
@@ -65,6 +67,8 @@ j_semantics_ref (JSemantics* semantics)
 void
 j_semantics_unref (JSemantics* semantics)
 {
+	g_return_if_fail(semantics != NULL);
+
 	semantics->ref_count--;
 
 	if (semantics->ref_count == 0)
@@ -76,41 +80,43 @@ j_semantics_unref (JSemantics* semantics)
 void
 j_semantics_set (JSemantics* semantics, gint key, gint value)
 {
-	if (key == J_SEMANTICS_CONCURRENCY)
+	g_return_if_fail(semantics != NULL);
+
+	switch (key)
 	{
-		semantics->concurrency = value;
-	}
-	else if (key == J_SEMANTICS_CONSISTENCY)
-	{
-		semantics->consistency = value;
-	}
-	else if (key == J_SEMANTICS_PERSISTENCY)
-	{
-		semantics->persistency = value;
-	}
-	else if (key == J_SEMANTICS_SECURITY)
-	{
-		semantics->security = value;
+		case J_SEMANTICS_CONCURRENCY:
+			semantics->concurrency = value;
+			break;
+		case J_SEMANTICS_CONSISTENCY:
+			semantics->consistency = value;
+			break;
+		case J_SEMANTICS_PERSISTENCY:
+			semantics->persistency = value;
+			break;
+		case J_SEMANTICS_SECURITY:
+			semantics->security = value;
+			break;
+		default:
+			break;
 	}
 }
 
 gint
 j_semantics_get (JSemantics* semantics, gint key)
 {
-	if (key == J_SEMANTICS_CONCURRENCY)
+	g_return_val_if_fail(semantics != NULL, -1);
+
+	switch (key)
 	{
-		return semantics->concurrency;
-	}
-	else if (key == J_SEMANTICS_CONSISTENCY)
-	{
-		return semantics->consistency;
-	}
-	else if (key == J_SEMANTICS_PERSISTENCY)
-	{
-		return semantics->persistency;
-	}
-	else if (key == J_SEMANTICS_SECURITY)
-	{
-		return semantics->security;
+		case J_SEMANTICS_CONCURRENCY:
+			return semantics->concurrency;
+		case J_SEMANTICS_CONSISTENCY:
+			return semantics->consistency;
+		case J_SEMANTICS_PERSISTENCY:
+			return semantics->persistency;
+		case J_SEMANTICS_SECURITY:
+			return semantics->security;
+		default:
+			return -1;
 	}
 }

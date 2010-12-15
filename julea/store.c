@@ -58,9 +58,12 @@ static
 const gchar*
 j_store_collection_collections (JStore* store)
 {
+	g_return_val_if_fail(store != NULL, NULL);
+
 	/*
 		IsInitialized(true);
 	*/
+
 	if (store->collection.collections == NULL)
 	{
 		store->collection.collections = g_strdup_printf("%s.Collections", store->name);
@@ -78,6 +81,9 @@ j_store_new (JConnection* connection, const gchar* name)
 	m_collectionsCollection("")
 	*/
 
+	g_return_val_if_fail(connection != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
 	store = g_new(JStore, 1);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
@@ -91,6 +97,8 @@ j_store_new (JConnection* connection, const gchar* name)
 JStore*
 j_store_ref (JStore* store)
 {
+	g_return_val_if_fail(store != NULL, NULL);
+
 	store->ref_count++;
 
 	return store;
@@ -99,6 +107,8 @@ j_store_ref (JStore* store)
 void
 j_store_unref (JStore* store)
 {
+	g_return_if_fail(store != NULL);
+
 	store->ref_count--;
 
 	if (store->ref_count == 0)
@@ -115,18 +125,25 @@ j_store_unref (JStore* store)
 const gchar*
 j_store_name (JStore* store)
 {
+	g_return_val_if_fail(store != NULL, NULL);
+
 	return store->name;
 }
 
 JSemantics*
 j_store_semantics (JStore* store)
 {
+	g_return_val_if_fail(store != NULL, NULL);
+
 	return store->semantics;
 }
 
 void
 j_store_set_semantics (JStore* store, JSemantics* semantics)
 {
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(semantics != NULL);
+
 	if (store->semantics != NULL)
 	{
 		j_semantics_unref(store->semantics);
@@ -138,6 +155,8 @@ j_store_set_semantics (JStore* store, JSemantics* semantics)
 JConnection*
 j_store_connection (JStore* store)
 {
+	g_return_val_if_fail(store != NULL, NULL);
+
 	return store->connection;
 }
 
@@ -150,6 +169,9 @@ j_store_create (JStore* store, GQueue* collections)
 	bson** obj;
 	guint length;
 	guint i;
+
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(collections != NULL);
 
 	/*
 	IsInitialized(true);
@@ -229,6 +251,9 @@ j_store_get (JStore* store, GQueue* names)
 	GQueue* collections;
 	guint length;
 	guint n = 0;
+
+	g_return_val_if_fail(store != NULL, NULL);
+	g_return_val_if_fail(names != NULL, NULL);
 
 	/*
 		IsInitialized(true);

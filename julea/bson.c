@@ -63,6 +63,8 @@ j_bson_new_from_bson (bson* bson_)
 {
 	JBSON* jbson;
 
+	g_return_val_if_fail(bson_ != NULL, NULL);
+
 	jbson = g_new(JBSON, 1);
 	jbson->destroy.bson = FALSE;
 	jbson->destroy.buffer = FALSE;
@@ -89,6 +91,8 @@ j_bson_new_empty (void)
 void
 j_bson_free (JBSON* jbson)
 {
+	g_return_if_fail(jbson != NULL);
+
 	if (jbson->destroy.bson)
 	{
 		bson_destroy(&(jbson->bson));
@@ -105,6 +109,7 @@ j_bson_free (JBSON* jbson)
 void
 j_bson_append_object_start (JBSON* jbson, const gchar* key)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_start_object(&(jbson->buffer), key);
@@ -112,6 +117,7 @@ j_bson_append_object_start (JBSON* jbson, const gchar* key)
 
 void j_bson_append_object_end (JBSON* jbson)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_finish_object(&(jbson->buffer));
@@ -120,6 +126,7 @@ void j_bson_append_object_end (JBSON* jbson)
 void
 j_bson_append_new_id (JBSON* jbson, const gchar* key)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_new_oid(&(jbson->buffer), key);
@@ -127,6 +134,7 @@ j_bson_append_new_id (JBSON* jbson, const gchar* key)
 
 void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_oid(&(jbson->buffer), key, value);
@@ -135,6 +143,7 @@ void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
 void
 j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_int(&(jbson->buffer), key, value);
@@ -143,6 +152,7 @@ j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 void
 j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
 {
+	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
 
 	bson_append_string(&(jbson->buffer), key, value);
@@ -151,6 +161,8 @@ j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
 bson*
 j_bson_get (JBSON* jbson)
 {
+	g_return_val_if_fail(jbson != NULL, NULL);
+
 	if (jbson->destroy.buffer)
 	{
 		jbson->destroy.bson = TRUE;
