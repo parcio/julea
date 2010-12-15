@@ -25,31 +25,60 @@
  * SUCH DAMAGE.
  */
 
-/*
-#include <unistd.h>
+#include <glib.h>
 
-#include <mongo/client/connpool.h>
-#include <mongo/db/jsobj.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "credentials.h"
 
-using namespace std;
-using namespace mongo;
-
-namespace JULEA
+struct JCredentials
 {
-	Credentials::Credentials ()
-	{
-		m_user = geteuid();
-		m_group = getegid();
-	}
+	uid_t user;
+	uid_t group;
 
+	guint ref_count;
+};
+
+JCredentials*
+j_credentials_new (void)
+{
+	JCredentials* credentials;
+
+	credentials = g_new(JCredentials, 1);
+	credentials->user = geteuid();
+	credentials->group = getegid();
+	credentials->ref_count = 1;
+
+	return credentials;
+}
+
+JCredentials*
+j_credentials_ref (JCredentials* credentials)
+{
+	g_return_val_if_fail(credentials != NULL, NULL);
+
+	credentials->ref_count++;
+
+	return credentials;
+}
+
+void
+j_credentials_unref (JCredentials* credentials)
+{
+	g_return_if_fail(credentials != NULL);
+
+	credentials->ref_count--;
+
+	if (credentials->ref_count == 0)
+	{
+		g_free(credentials);
+	}
+}
+
+/*
 	Credentials::Credentials (int user, int group)
 		: m_user(user), m_group(group)
-	{
-	}
-
-	Credentials::~Credentials ()
 	{
 	}
 
@@ -62,5 +91,4 @@ namespace JULEA
 	{
 		return m_group;
 	}
-}
 */

@@ -28,25 +28,21 @@
 #ifndef H_CREDENTIALS
 #define H_CREDENTIALS
 
-/*
-namespace JULEA
-{
-	class Credentials
-	{
-		friend class _Collection;
+struct JCredentials;
 
-		public:
-			Credentials ();
+typedef struct JCredentials JCredentials;
+
+#include <glib.h>
+
+JCredentials* j_credentials_new (void);
+JCredentials* j_credentials_ref (JCredentials*);
+void j_credentials_unref (JCredentials*);
+
+/*
 			Credentials (int, int);
-			~Credentials ();
 
 			int User ();
 			int Group ();
-		private:
-			int m_user;
-			int m_group;
-	};
-}
 */
 
 #endif
