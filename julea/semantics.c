@@ -29,6 +29,11 @@
 
 #include "semantics.h"
 
+/**
+ * \defgroup JSemantics Semantics
+ * @{
+ */
+
 struct JSemantics
 {
 	gint consistency;
@@ -120,3 +125,7 @@ j_semantics_get (JSemantics* semantics, gint key)
 			return -1;
 	}
 }
+
+/**
+ * @}
+ */

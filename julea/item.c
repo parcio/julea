@@ -33,6 +33,11 @@
 #include "collection.h"
 #include "semantics.h"
 
+/**
+ * \defgroup JItem Item
+ * @{
+ */
+
 struct JItem
 {
 	gchar* name;
@@ -204,3 +209,7 @@ namespace JULEA
 	}
 }
 */
+
+/**
+ * @}
+ */

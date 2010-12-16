@@ -41,6 +41,11 @@
 #include "semantics.h"
 #include "store.h"
 
+/**
+ * \defgroup JCollection Collection
+ * @{
+ */
+
 struct JCollection
 {
 	gchar* name;
@@ -436,3 +441,7 @@ namespace JULEA
 	}
 }
 */
+
+/**
+ * @}
+ */

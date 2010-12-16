@@ -32,6 +32,11 @@
 #include "connection.h"
 #include "connection-internal.h"
 
+/**
+ * \defgroup JConnection Connection
+ * @{
+ */
+
 struct JConnection
 {
 	mongo_connection connection;
@@ -125,3 +130,7 @@ j_connection_connection (JConnection* connection)
 		return new ScopedDbConnection(m_servers_string);
 	}
 */
+
+/**
+ * @}
+ */

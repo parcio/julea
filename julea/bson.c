@@ -31,6 +31,11 @@
 
 #include "bson.h"
 
+/**
+ * \defgroup JBSON BSON
+ * @{
+ */
+
 struct JBSON
 {
 	bson bson;
@@ -173,3 +178,7 @@ j_bson_get (JBSON* jbson)
 
 	return &(jbson->bson);
 }
+
+/**
+ * @}
+ */

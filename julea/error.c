@@ -29,8 +29,17 @@
 
 #include "error.h"
 
+/**
+ * \defgroup JError Error
+ * @{
+ */
+
 GQuark
 j_error_quark (void)
 {
 	return g_quark_from_static_string("j-error-quark");
 }
+
+/**
+ * @}
+ */

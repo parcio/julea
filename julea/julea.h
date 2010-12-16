@@ -25,6 +25,12 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \mainpage
+ *
+ * Hello world.
+ */
+
 #include <collection.h>
 #include <connection.h>
 #include <credentials.h>

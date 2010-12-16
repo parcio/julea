@@ -32,6 +32,11 @@
 
 #include "credentials.h"
 
+/**
+ * \defgroup JCredentials Credentials
+ * @{
+ */
+
 struct JCredentials
 {
 	uid_t user;
@@ -92,3 +97,7 @@ j_credentials_unref (JCredentials* credentials)
 		return m_group;
 	}
 */
+
+/**
+ * @}
+ */

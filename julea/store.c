@@ -38,6 +38,11 @@
 #include "connection.h"
 #include "connection-internal.h"
 
+/**
+ * \defgroup JStore Store
+ * @{
+ */
+
 struct JStore
 {
 	gchar* name;
@@ -328,3 +333,7 @@ namespace JULEA
 	}
 }
 */
+
+/**
+ * @}
+ */
