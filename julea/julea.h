@@ -26,6 +26,10 @@
  */
 
 /**
+ * \file
+ */
+
+/**
  * \mainpage
  *
  * Hello world.

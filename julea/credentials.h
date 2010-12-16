@@ -25,6 +25,10 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ */
+
 #ifndef H_CREDENTIALS
 #define H_CREDENTIALS
 

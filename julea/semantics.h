@@ -25,6 +25,10 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ */
+
 #ifndef H_SEMANTICS
 #define H_SEMANTICS
 

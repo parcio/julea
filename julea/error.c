@@ -25,6 +25,10 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ */
+
 #include <glib.h>
 
 #include "error.h"

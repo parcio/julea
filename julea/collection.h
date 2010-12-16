@@ -25,6 +25,10 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ */
+
 #ifndef H_COLLECTION
 #define H_COLLECTION
 

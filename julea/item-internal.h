@@ -25,6 +25,10 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ */
+
 #ifndef H_ITEM_INTERNAL
 #define H_ITEM_INTERNAL
 
