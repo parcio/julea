@@ -34,16 +34,16 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "collection.h"
-#include "collection-internal.h"
+#include "jcollection.h"
+#include "jcollection-internal.h"
 
-#include "bson.h"
-#include "connection.h"
-#include "connection-internal.h"
-#include "item.h"
-#include "item-internal.h"
-#include "semantics.h"
-#include "store.h"
+#include "jbson.h"
+#include "jconnection.h"
+#include "jconnection-internal.h"
+#include "jitem.h"
+#include "jitem-internal.h"
+#include "jsemantics.h"
+#include "jstore.h"
 
 /**
  * \defgroup JCollection Collection

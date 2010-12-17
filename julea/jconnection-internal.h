@@ -32,7 +32,7 @@
 #ifndef H_CONNECTION_INTERNAL
 #define H_CONNECTION_INTERNAL
 
-#include "connection.h"
+#include "jconnection.h"
 
 #include <mongo.h>
 

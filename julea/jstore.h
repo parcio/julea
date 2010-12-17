@@ -38,8 +38,8 @@ typedef struct JStore JStore;
 
 #include <glib.h>
 
-#include "collection.h"
-#include "connection.h"
+#include "jcollection.h"
+#include "jconnection.h"
 
 JStore* j_store_new (JConnection*, const gchar*);
 JStore* j_store_ref (JStore*);

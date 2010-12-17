@@ -38,7 +38,7 @@ typedef struct JCollection JCollection;
 
 #include <glib.h>
 
-#include "semantics.h"
+#include "jsemantics.h"
 
 JCollection* j_collection_new (const gchar*);
 JCollection* j_collection_ref (JCollection*);

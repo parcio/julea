@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#include "semantics.h"
+#include "jsemantics.h"
 
 /**
  * \defgroup JSemantics Semantics

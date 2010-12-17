@@ -33,8 +33,8 @@
 
 #include <mongo.h>
 
-#include "connection.h"
-#include "connection-internal.h"
+#include "jconnection.h"
+#include "jconnection-internal.h"
 
 /**
  * \defgroup JConnection Connection

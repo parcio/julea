@@ -38,7 +38,7 @@ typedef struct JConnection JConnection;
 
 #include <glib.h>
 
-#include "store.h"
+#include "jstore.h"
 
 JConnection* j_connection_new (void);
 JConnection* j_connection_ref (JConnection*);

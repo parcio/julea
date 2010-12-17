@@ -32,12 +32,12 @@
 #ifndef H_ITEM_INTERNAL
 #define H_ITEM_INTERNAL
 
-#include "item.h"
+#include "jitem.h"
 
 #include <glib.h>
 
-#include "bson.h"
-#include "collection.h"
+#include "jbson.h"
+#include "jcollection.h"
 
 JItem* j_item_new_from_bson (JCollection*, JBSON*);
 

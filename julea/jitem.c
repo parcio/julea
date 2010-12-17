@@ -31,11 +31,11 @@
 
 #include <glib.h>
 
-#include "item.h"
-#include "item-internal.h"
+#include "jitem.h"
+#include "jitem-internal.h"
 
-#include "collection.h"
-#include "semantics.h"
+#include "jcollection.h"
+#include "jsemantics.h"
 
 /**
  * \defgroup JItem Item

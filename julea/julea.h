@@ -35,10 +35,10 @@
  * Hello world.
  */
 
-#include <collection.h>
-#include <connection.h>
-#include <credentials.h>
-#include <error.h>
-#include <item.h>
-#include <semantics.h>
-#include <store.h>
+#include <jcollection.h>
+#include <jconnection.h>
+#include <jcredentials.h>
+#include <jerror.h>
+#include <jitem.h>
+#include <jsemantics.h>
+#include <jstore.h>

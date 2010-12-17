@@ -33,7 +33,7 @@
 
 #include <bson.h>
 
-#include "bson.h"
+#include "jbson.h"
 
 /**
  * \defgroup JBSON BSON

@@ -38,7 +38,7 @@ typedef struct JItem JItem;
 
 #include <glib.h>
 
-#include "semantics.h"
+#include "jsemantics.h"
 
 JItem* j_item_new (const gchar*);
 void j_item_unref (JItem*);

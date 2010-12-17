@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "credentials.h"
+#include "jcredentials.h"
 
 /**
  * \defgroup JCredentials Credentials

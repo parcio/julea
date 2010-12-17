@@ -32,14 +32,14 @@
 #ifndef H_COLLECTION_INTERNAL
 #define H_COLLECTION_INTERNAL
 
-#include "collection.h"
+#include "jcollection.h"
 
 #include <glib.h>
 
 #include <bson.h>
 
-#include "bson.h"
-#include "store.h"
+#include "jbson.h"
+#include "jstore.h"
 
 JCollection* j_collection_new_from_bson (JStore*, JBSON*);
 

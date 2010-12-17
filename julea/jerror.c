@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#include "error.h"
+#include "jerror.h"
 
 /**
  * \defgroup JError Error

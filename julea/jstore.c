@@ -34,13 +34,13 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "store.h"
+#include "jstore.h"
 
-#include "bson.h"
-#include "collection.h"
-#include "collection-internal.h"
-#include "connection.h"
-#include "connection-internal.h"
+#include "jbson.h"
+#include "jcollection.h"
+#include "jcollection-internal.h"
+#include "jconnection.h"
+#include "jconnection-internal.h"
 
 /**
  * \defgroup JStore Store
