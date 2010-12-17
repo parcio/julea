@@ -92,21 +92,6 @@ namespace JULEA
 		friend class _Store;
 
 		public:
-			class Iterator
-			{
-				public:
-					Iterator (Collection const&);
-					~Iterator ();
-
-					bool More ();
-					Item Next ();
-				private:
-					mongo::ScopedDbConnection* m_connection;
-					_Collection* m_collection;
-					std::auto_ptr<mongo::DBClientCursor> m_cursor;
-			};
-
-		public:
 			Collection (string const& name)
 			{
 				m_p = new _Collection(name);

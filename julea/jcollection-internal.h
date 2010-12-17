@@ -43,6 +43,10 @@
 
 JCollection* j_collection_new_from_bson (JStore*, JBSON*);
 
+const gchar* j_collection_collection_items (JCollection*);
+
+JStore* j_collection_store (JCollection*);
+
 void j_collection_associate (JCollection*, JStore*);
 
 JBSON* j_collection_serialize (JCollection*);

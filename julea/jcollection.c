@@ -66,21 +66,6 @@ struct JCollection
 	guint ref_count;
 };
 
-static
-const gchar*
-j_collection_collection_items (JCollection* collection)
-{
-	g_return_val_if_fail(collection != NULL, NULL);
-	g_return_val_if_fail(collection->store != NULL, NULL);
-
-	if (collection->collection.items == NULL)
-	{
-		collection->collection.items = g_strdup_printf("%s.Items", j_store_name(collection->store));
-	}
-
-	return collection->collection.items;
-}
-
 JCollection*
 j_collection_new (const gchar* name)
 {
@@ -343,6 +328,28 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 	return collection;
 }
 
+const gchar*
+j_collection_collection_items (JCollection* collection)
+{
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(collection->store != NULL, NULL);
+
+	if (collection->collection.items == NULL)
+	{
+		collection->collection.items = g_strdup_printf("%s.Items", j_store_name(collection->store));
+	}
+
+	return collection->collection.items;
+}
+
+JStore*
+j_collection_store (JCollection* collection)
+{
+	g_return_val_if_fail(collection != NULL, NULL);
+
+	return collection->store;
+}
+
 void
 j_collection_associate (JCollection* collection, JStore* store)
 {
@@ -413,35 +420,6 @@ namespace JULEA
 	mongo::OID const& _Collection::ID () const
 	{
 		return m_id;
-	}
-
-	Collection::Iterator::Iterator (Collection const& collection)
-		: m_connection(collection->m_store->Connection()->GetMongoDB()),
-		  m_collection(collection->Ref())
-	{
-		DBClientBase* b = m_connection->get();
-		BSONObjBuilder ob;
-
-		ob.append("Collection", m_collection->ID());
-		m_cursor = b->query(m_collection->ItemsCollection(), ob.obj());
-	}
-
-	Collection::Iterator::~Iterator ()
-	{
-		m_connection->done();
-		delete m_connection;
-
-		m_collection->Unref();
-	}
-
-	bool Collection::Iterator::More ()
-	{
-		return m_cursor->more();
-	}
-
-	Item Collection::Iterator::Next ()
-	{
-		return Item(m_collection, m_cursor->next());
 	}
 }
 */

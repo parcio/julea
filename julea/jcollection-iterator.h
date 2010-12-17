@@ -29,17 +29,22 @@
  * \file
  */
 
-/**
- * \mainpage
- *
- * Hello world.
- */
+#ifndef H_COLLECTION_ITERATOR
+#define H_COLLECTION_ITERATOR
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jsemantics.h>
-#include <jstore.h>
+#include <glib.h>
+
+struct JCollectionIterator;
+
+typedef struct JCollectionIterator JCollectionIterator;
+
+#include "jcollection.h"
+#include "jitem.h"
+
+JCollectionIterator* j_collection_iterator_new (JCollection*);
+void j_collection_iterator_free (JCollectionIterator*);
+
+gboolean j_collection_iterator_next (JCollectionIterator*);
+JItem* j_collection_iterator_get (JCollectionIterator*);
+
+#endif
