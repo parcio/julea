@@ -29,18 +29,22 @@
  * \file
  **/
 
-/**
- * \mainpage
- *
- * Hello world.
- **/
+#ifndef H_STORE_ITERATOR
+#define H_STORE_ITERATOR
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+#include <glib.h>
+
+struct JStoreIterator;
+
+typedef struct JStoreIterator JStoreIterator;
+
+#include "jcollection.h"
+#include "jstore.h"
+
+JStoreIterator* j_store_iterator_new (JStore*);
+void j_store_iterator_free (JStoreIterator*);
+
+gboolean j_store_iterator_next (JStoreIterator*);
+JCollection* j_store_iterator_get (JStoreIterator*);
+
+#endif

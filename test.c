@@ -34,6 +34,7 @@ int main (int argc, char** argv)
 	JCollectionIterator* citerator;
 	JConnection* connection;
 	JStore* store;
+	JStoreIterator* siterator;
 	JSemantics* semantics;
 	GQueue* collections;
 
@@ -109,6 +110,18 @@ int main (int argc, char** argv)
 		g_queue_free(items);
 	}
 
+	siterator = j_store_iterator_new(store);
+
+	while (j_store_iterator_next(siterator))
+	{
+		JCollection* collection = j_store_iterator_get(siterator);
+
+		g_print("%s ", j_collection_name(collection));
+	}
+
+	g_print("\n");
+
+	j_store_iterator_free(siterator);
 
 	citerator = j_collection_iterator_new(collections->head->data);
 
@@ -118,6 +131,10 @@ int main (int argc, char** argv)
 
 		g_print("%s ", j_item_name(item));
 	}
+
+	g_print("\n");
+
+	j_collection_iterator_free(citerator);
 
 	for (GList* l = collections->head; l != NULL; l = l->next)
 	{

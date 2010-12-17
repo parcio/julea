@@ -29,18 +29,13 @@
  * \file
  **/
 
-/**
- * \mainpage
- *
- * Hello world.
- **/
+#ifndef H_STORE_INTERNAL
+#define H_STORE_INTERNAL
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+#include <glib.h>
+
+#include "jstore.h"
+
+const gchar* j_store_collection_collections (JStore*);
+
+#endif

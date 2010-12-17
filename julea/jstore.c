@@ -35,6 +35,7 @@
 #include <mongo.h>
 
 #include "jstore.h"
+#include "jstore-internal.h"
 
 #include "jbson.h"
 #include "jcollection.h"
@@ -65,24 +66,6 @@ struct JStore
 
 	guint ref_count;
 };
-
-static
-const gchar*
-j_store_collection_collections (JStore* store)
-{
-	g_return_val_if_fail(store != NULL, NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	if (store->collection.collections == NULL)
-	{
-		store->collection.collections = g_strdup_printf("%s.Collections", store->name);
-	}
-
-	return store->collection.collections;
-}
 
 /**
  * Creates a new JStore.
@@ -320,6 +303,25 @@ j_store_get (JStore* store, GQueue* names)
 	j_bson_free(jbson);
 
 	return collections;
+}
+
+/* Internal */
+
+const gchar*
+j_store_collection_collections (JStore* store)
+{
+	g_return_val_if_fail(store != NULL, NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	if (store->collection.collections == NULL)
+	{
+		store->collection.collections = g_strdup_printf("%s.Collections", store->name);
+	}
+
+	return store->collection.collections;
 }
 
 /*
