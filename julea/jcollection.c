@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -48,8 +48,11 @@
 /**
  * \defgroup JCollection Collection
  * @{
- */
+ **/
 
+/**
+ * A JCollection.
+ **/
 struct JCollection
 {
 	gchar* name;
@@ -66,6 +69,20 @@ struct JCollection
 	guint ref_count;
 };
 
+/**
+ * Creates a new JCollection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCollection* c;
+ * c = j_collection_new("JULEA");
+ * \endcode
+ *
+ * \param 	name	The collection's name.
+ *
+ * \return A new JCollection.
+ **/
 JCollection*
 j_collection_new (const gchar* name)
 {
@@ -89,6 +106,20 @@ j_collection_new (const gchar* name)
 	return collection;
 }
 
+/**
+ * Increases the collection's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCollection* c;
+ * j_collection_ref(c);
+ * \endcode
+ *
+ * \param	collection	The JCollection.
+ *
+ * \return #collection.
+ **/
 JCollection*
 j_collection_ref (JCollection* collection)
 {
@@ -384,6 +415,9 @@ j_collection_serialize (JCollection* collection)
 	return jbson;
 }
 
+/**
+ * \private
+ **/
 void
 j_collection_deserialize (JCollection* collection, JBSON* jbson)
 {
@@ -426,4 +460,4 @@ namespace JULEA
 
 /**
  * @}
- */
+ **/

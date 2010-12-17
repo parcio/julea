@@ -27,13 +27,13 @@
 
 /**
  * \file
- */
+ **/
 
 /**
  * \mainpage
  *
  * Hello world.
- */
+ **/
 
 #include <jcollection.h>
 #include <jcollection-iterator.h>

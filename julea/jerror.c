@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -36,7 +36,7 @@
 /**
  * \defgroup JError Error
  * @{
- */
+ **/
 
 GQuark
 j_error_quark (void)
@@ -46,4 +46,4 @@ j_error_quark (void)
 
 /**
  * @}
- */
+ **/

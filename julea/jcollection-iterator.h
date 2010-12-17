@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #ifndef H_COLLECTION_ITERATOR
 #define H_COLLECTION_ITERATOR

@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #ifndef H_BSON
 #define H_BSON

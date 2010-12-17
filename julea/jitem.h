@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #ifndef H_ITEM
 #define H_ITEM

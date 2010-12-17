@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -39,8 +39,11 @@
 /**
  * \defgroup JCredentials Credentials
  * @{
- */
+ **/
 
+/**
+ * A JCredentials.
+ **/
 struct JCredentials
 {
 	uid_t user;
@@ -104,4 +107,4 @@ j_credentials_unref (JCredentials* credentials)
 
 /**
  * @}
- */
+ **/

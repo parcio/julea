@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -47,7 +47,7 @@
 /**
  * \defgroup JCollectionIterator Collection Iterator
  * @{
- */
+ **/
 
 struct JCollectionIterator
 {
@@ -136,4 +136,4 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 /**
  * @}
- */
+ **/

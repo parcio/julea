@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #ifndef H_STORE
 #define H_STORE

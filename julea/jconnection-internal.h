@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #ifndef H_CONNECTION_INTERNAL
 #define H_CONNECTION_INTERNAL

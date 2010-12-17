@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -39,8 +39,11 @@
 /**
  * \defgroup JConnection Connection
  * @{
- */
+ **/
 
+/**
+ * A JConnection.
+ **/
 struct JConnection
 {
 	mongo_connection connection;
@@ -62,6 +65,9 @@ j_connection_new (void)
 	return connection;
 }
 
+/**
+ * Increases a JConnection's reference count.
+ **/
 JConnection*
 j_connection_ref (JConnection* connection)
 {
@@ -137,4 +143,4 @@ j_connection_connection (JConnection* connection)
 
 /**
  * @}
- */
+ **/

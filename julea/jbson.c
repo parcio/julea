@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -38,21 +38,52 @@
 /**
  * \defgroup JBSON BSON
  * @{
- */
+ **/
 
+/**
+ * A JBSON object.
+ * This is basically a wrapper around the bson and bson_buffer data types provided by MongoDB's C driver.
+ **/
 struct JBSON
 {
+	/**
+	 * BSON object.
+	 **/
 	bson bson;
+	/**
+	 * BSON buffer used to build #bson.
+	 **/
 	bson_buffer buffer;
 
+	/**
+	 * Whether to destroy the internal objects.
+	 **/
 	struct
 	{
+		/**
+		 * Whether to destroy #bson.
+		 **/
 		gboolean bson;
+		/**
+		 * Whether to destroy #buffer.
+		 **/
 		gboolean buffer;
 	}
 	destroy;
 };
 
+/**
+ * Creates a new JBSON object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JSBON* j;
+ * j = j_bson_new();
+ * \endcode
+ *
+ * \return A new JBSON object.
+ **/
 JBSON*
 j_bson_new (void)
 {
@@ -67,6 +98,20 @@ j_bson_new (void)
 	return jbson;
 }
 
+/**
+ * Creates a new JBSON object from an existing bson object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBSON* j;
+ * j = j_bson_new_from_bson(...);
+ * \endcode
+ *
+ * \param	bson_	The existing bson object.
+ *
+ * \return A new JBSON object.
+ **/
 JBSON*
 j_bson_new_from_bson (bson* bson_)
 {
@@ -83,6 +128,18 @@ j_bson_new_from_bson (bson* bson_)
 	return jbson;
 }
 
+/**
+ * Creates a new empty JBSON object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBSON* j;
+ * j = j_bson_new_empty();
+ * \endcode
+ *
+ * \return A new empty JBSON object.
+ **/
 JBSON*
 j_bson_new_empty (void)
 {
@@ -97,6 +154,19 @@ j_bson_new_empty (void)
 	return jbson;
 }
 
+/**
+ * Frees the memory allocated for the JBSON object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBSON* j;
+ * j = j_bson_new();
+ * j_bson_free(j);
+ * \endcode
+ *
+ * \param	jbson	A JBSON object.
+ **/
 void
 j_bson_free (JBSON* jbson)
 {
@@ -185,4 +255,4 @@ j_bson_get (JBSON* jbson)
 
 /**
  * @}
- */
+ **/

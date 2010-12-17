@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -36,8 +36,11 @@
 /**
  * \defgroup JSemantics Semantics
  * @{
- */
+ **/
 
+/**
+ * A JSemantics.
+ **/
 struct JSemantics
 {
 	gint consistency;
@@ -132,4 +135,4 @@ j_semantics_get (JSemantics* semantics, gint key)
 
 /**
  * @}
- */
+ **/

@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -40,8 +40,11 @@
 /**
  * \defgroup JItem Item
  * @{
- */
+ **/
 
+/**
+ * A JItem.
+ **/
 struct JItem
 {
 	gchar* name;
@@ -148,6 +151,19 @@ j_item_new_from_bson (JCollection* collection, JBSON* jbson)
 	return item;
 }
 
+/**
+ * Associates a JItem with a JCollection.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item The JItem.
+ * \param collection The JCollection.
+ **/
 void
 j_item_associate (JItem* item, JCollection* collection)
 {
@@ -216,4 +232,4 @@ namespace JULEA
 
 /**
  * @}
- */
+ **/

@@ -27,7 +27,7 @@
 
 /**
  * \file
- */
+ **/
 
 #include <glib.h>
 
@@ -45,8 +45,11 @@
 /**
  * \defgroup JStore Store
  * @{
- */
+ **/
 
+/**
+ * A JStore.
+ **/
 struct JStore
 {
 	gchar* name;
@@ -81,6 +84,9 @@ j_store_collection_collections (JStore* store)
 	return store->collection.collections;
 }
 
+/**
+ * Creates a new JStore.
+ **/
 JStore*
 j_store_new (JConnection* connection, const gchar* name)
 {
@@ -340,4 +346,4 @@ namespace JULEA
 
 /**
  * @}
- */
+ **/
