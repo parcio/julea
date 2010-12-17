@@ -31,7 +31,7 @@ def build (ctx):
 	)
 
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jsemantics', 'jstore', 'jstore-iterator')],
 		target = 'julea',
 		use = ['GLIB', 'mongodb'],
 		includes = ['mongodb/src']

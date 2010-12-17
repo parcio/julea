@@ -29,19 +29,93 @@
  * \file
  **/
 
+#include <glib.h>
+
+#include "jlist.h"
+
 /**
- * \mainpage
- *
- * Hello world.
+ * \defgroup JList List
+ * @{
  **/
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+struct JListElement
+{
+	struct JListElement* next;
+	gpointer data;
+};
+
+typedef struct JListElement JListElement;
+
+struct JList
+{
+	JListElement* head;
+	JListElement* tail;
+
+	guint length;
+};
+
+JList*
+j_list_new (void)
+{
+	JList* list;
+
+	list = g_new(JList, 1);
+	list->head = NULL;
+	list->tail = NULL;
+	list->length = 0;
+
+	return list;
+}
+
+void
+j_list_free (JList* list, JListFreeFunc func)
+{
+	g_return_if_fail(list != NULL);
+
+	g_free(list);
+}
+
+guint
+j_list_length (JList* list)
+{
+	g_return_val_if_fail(list != NULL, 0);
+
+	return list->length;
+}
+
+void
+j_list_append (JList* list, gpointer data)
+{
+	JListElement* element;
+
+	g_return_if_fail(list != NULL);
+	g_return_if_fail(data != NULL);
+
+	element = g_new(JListElement, 1);
+	element->next = NULL;
+	element->data = data;
+
+	list->tail->next = element;
+	list->tail = element;
+	list->length++;
+}
+
+void
+j_list_prepend (JList* list, gpointer data)
+{
+	JListElement* element;
+
+	g_return_if_fail(list != NULL);
+	g_return_if_fail(data != NULL);
+
+	element = g_new(JListElement, 1);
+	element->next = list->head;
+	element->data = data;
+
+	list->head = element;
+	list->length++;
+}
+
+/**
+ * @}
+ **/

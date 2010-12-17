@@ -29,19 +29,23 @@
  * \file
  **/
 
-/**
- * \mainpage
- *
- * Hello world.
- **/
+#ifndef H_LIST
+#define H_LIST
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+struct JList;
+
+typedef struct JList JList;
+
+typedef void (*JListFreeFunc) (gpointer);
+
+#include <glib.h>
+
+JList* j_list_new (void);
+void j_list_free (JList*, JListFreeFunc);
+
+guint j_list_length (JList*);
+
+void j_list_append (JList*, gpointer);
+void j_list_prepend (JList*, gpointer);
+
+#endif
