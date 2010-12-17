@@ -117,6 +117,7 @@ int main (int argc, char** argv)
 		JCollection* collection = j_store_iterator_get(siterator);
 
 		g_print("%s ", j_collection_name(collection));
+		j_collection_unref(collection);
 	}
 
 	g_print("\n");
@@ -130,6 +131,7 @@ int main (int argc, char** argv)
 		JItem* item = j_collection_iterator_get(citerator);
 
 		g_print("%s ", j_item_name(item));
+		j_item_unref(item);
 	}
 
 	g_print("\n");

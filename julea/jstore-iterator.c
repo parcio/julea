@@ -72,6 +72,8 @@ j_store_iterator_new (JStore* store)
 	JStoreIterator* iterator;
 	mongo_connection* mc;
 
+	g_return_val_if_fail(store != NULL, NULL);
+
 	iterator = g_new(JStoreIterator, 1);
 	iterator->store = j_store_ref(store);
 

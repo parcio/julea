@@ -109,7 +109,7 @@ j_semantics_set (JSemantics* semantics, gint key, gint value)
 			semantics->security = value;
 			break;
 		default:
-			break;
+			g_warn_if_reached();
 	}
 }
 
@@ -129,7 +129,7 @@ j_semantics_get (JSemantics* semantics, gint key)
 		case J_SEMANTICS_SECURITY:
 			return semantics->security;
 		default:
-			return -1;
+			g_return_val_if_reached(-1);
 	}
 }
 

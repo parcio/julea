@@ -73,6 +73,8 @@ j_collection_iterator_new (JCollection* collection)
 	JCollectionIterator* iterator;
 	mongo_connection* mc;
 
+	g_return_val_if_fail(collection != NULL, NULL);
+
 	iterator = g_new(JCollectionIterator, 1);
 	iterator->collection = j_collection_ref(collection);
 
