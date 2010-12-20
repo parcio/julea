@@ -32,19 +32,12 @@
 #include <glib.h>
 
 #include "jlist.h"
+#include "jlist-internal.h"
 
 /**
  * \defgroup JList List
  * @{
  **/
-
-struct JListElement
-{
-	struct JListElement* next;
-	gpointer data;
-};
-
-typedef struct JListElement JListElement;
 
 struct JList
 {
@@ -70,7 +63,25 @@ j_list_new (void)
 void
 j_list_free (JList* list, JListFreeFunc func)
 {
+	JListElement* element;
+
 	g_return_if_fail(list != NULL);
+
+	element = list->head;
+
+	while (element != NULL)
+	{
+		JListElement* next;
+
+		if (func != NULL)
+		{
+			func(element->data);
+		}
+
+		next = element->next;
+		g_free(element);
+		element = next;
+	}
 
 	g_free(list);
 }
@@ -95,9 +106,19 @@ j_list_append (JList* list, gpointer data)
 	element->next = NULL;
 	element->data = data;
 
-	list->tail->next = element;
-	list->tail = element;
 	list->length++;
+
+	if (list->tail != NULL)
+	{
+		list->tail->next = element;
+	}
+
+	list->tail = element;
+
+	if (list->head == NULL)
+	{
+		list->head = list->tail;
+	}
 }
 
 void
@@ -112,8 +133,23 @@ j_list_prepend (JList* list, gpointer data)
 	element->next = list->head;
 	element->data = data;
 
-	list->head = element;
 	list->length++;
+	list->head = element;
+
+	if (list->tail == NULL)
+	{
+		list->tail = list->head;
+	}
+}
+
+/* Internal */
+
+JListElement*
+j_list_head (JList* list)
+{
+	g_return_val_if_fail(list != NULL, NULL);
+
+	return list->head;
 }
 
 /**
