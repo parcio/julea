@@ -56,7 +56,7 @@ j_semantics_new (void)
 {
 	JSemantics* semantics;
 
-	semantics = g_new(JSemantics, 1);
+	semantics = g_slice_new(JSemantics);
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_STRICT;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_STRICT;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_STRICT;
@@ -85,7 +85,7 @@ j_semantics_unref (JSemantics* semantics)
 
 	if (semantics->ref_count == 0)
 	{
-		g_free(semantics);
+		g_slice_free(JSemantics, semantics);
 	}
 }
 

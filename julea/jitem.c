@@ -62,7 +62,7 @@ j_item_new (const gchar* name)
 
 	g_return_val_if_fail(name != NULL, NULL);
 
-	item = g_new(JItem, 1);
+	item = g_slice_new(JItem);
 	item->name = g_strdup(name);
 	item->collection = NULL;
 	item->semantics = NULL;
@@ -91,7 +91,8 @@ j_item_unref (JItem* item)
 		}
 
 		g_free(item->name);
-		g_free(item);
+
+		g_slice_free(JItem, item);
 	}
 }
 
@@ -140,7 +141,7 @@ j_item_new_from_bson (JCollection* collection, JBSON* jbson)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(jbson != NULL, NULL);
 
-	item = g_new(JItem, 1);
+	item = g_slice_new(JItem);
 	item->name = NULL;
 	item->collection = j_collection_ref(collection);
 	item->semantics = NULL;

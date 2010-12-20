@@ -84,7 +84,7 @@ j_store_new (JConnection* connection, const gchar* name)
 	g_return_val_if_fail(connection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	store = g_new(JStore, 1);
+	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
 	store->connection = j_connection_ref(connection);
@@ -118,7 +118,8 @@ j_store_unref (JStore* store)
 
 		g_free(store->collection.collections);
 		g_free(store->name);
-		g_free(store);
+
+		g_slice_free(JStore, store);
 	}
 }
 

@@ -75,7 +75,7 @@ j_collection_iterator_new (JCollection* collection)
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	iterator = g_new(JCollectionIterator, 1);
+	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
 
 	mc = j_connection_connection(j_store_connection(j_collection_store(iterator->collection)));
@@ -110,7 +110,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 
 	j_collection_unref(iterator->collection);
 
-	g_free(iterator);
+	g_slice_free(JCollectionIterator, iterator);
 }
 
 gboolean

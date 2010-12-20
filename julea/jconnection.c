@@ -58,7 +58,7 @@ j_connection_new (void)
 {
 	JConnection* connection;
 
-	connection = g_new(JConnection, 1);
+	connection = g_slice_new(JConnection);
 	connection->connected = FALSE;
 	connection->ref_count = 1;
 
@@ -92,7 +92,7 @@ j_connection_unref (JConnection* connection)
 			mongo_destroy(&(connection->connection));
 		}
 
-		g_free(connection);
+		g_slice_free(JConnection, connection);
 	}
 }
 

@@ -89,7 +89,7 @@ j_bson_new (void)
 {
 	JBSON* jbson;
 
-	jbson = g_new(JBSON, 1);
+	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = FALSE;
 	jbson->destroy.buffer = TRUE;
 
@@ -119,7 +119,7 @@ j_bson_new_from_bson (bson* bson_)
 
 	g_return_val_if_fail(bson_ != NULL, NULL);
 
-	jbson = g_new(JBSON, 1);
+	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = FALSE;
 	jbson->destroy.buffer = FALSE;
 
@@ -145,7 +145,7 @@ j_bson_new_empty (void)
 {
 	JBSON* jbson;
 
-	jbson = g_new(JBSON, 1);
+	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = TRUE;
 	jbson->destroy.buffer = FALSE;
 
@@ -182,7 +182,7 @@ j_bson_free (JBSON* jbson)
 		bson_buffer_destroy(&(jbson->buffer));
 	}
 
-	g_free(jbson);
+	g_slice_free(JBSON, jbson);
 }
 
 void

@@ -98,7 +98,7 @@ j_collection_new (const gchar* name)
 	m_id.init();
 	*/
 
-	collection = g_new(JCollection, 1);
+	collection = g_slice_new(JCollection);
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
@@ -153,7 +153,8 @@ j_collection_unref (JCollection* collection)
 
 		g_free(collection->collection.items);
 		g_free(collection->name);
-		g_free(collection);
+
+		g_slice_free(JCollection, collection);
 	}
 }
 
@@ -360,7 +361,7 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(jbson != NULL, NULL);
 
-	collection = g_new(JCollection, 1);
+	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->collection.items = NULL;
 	collection->semantics = NULL;

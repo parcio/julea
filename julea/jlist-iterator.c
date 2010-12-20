@@ -55,7 +55,7 @@ j_list_iterator_new (JList* list)
 
 	g_return_val_if_fail(list != NULL, NULL);
 
-	iterator = g_new(JListIterator, 1);
+	iterator = g_slice_new(JListIterator);
 	iterator->list = list;
 	iterator->current = j_list_head(iterator->list);
 	iterator->first = TRUE;
@@ -68,7 +68,7 @@ j_list_iterator_free (JListIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	g_free(iterator);
+	g_slice_free(JListIterator, iterator);
 }
 
 gboolean

@@ -52,7 +52,7 @@ j_list_new (void)
 {
 	JList* list;
 
-	list = g_new(JList, 1);
+	list = g_slice_new(JList);
 	list->head = NULL;
 	list->tail = NULL;
 	list->length = 0;
@@ -79,11 +79,11 @@ j_list_free (JList* list, JListFreeFunc func)
 		}
 
 		next = element->next;
-		g_free(element);
+		g_slice_free(JListElement, element);
 		element = next;
 	}
 
-	g_free(list);
+	g_slice_free(JList, list);
 }
 
 guint
@@ -102,7 +102,7 @@ j_list_append (JList* list, gpointer data)
 	g_return_if_fail(list != NULL);
 	g_return_if_fail(data != NULL);
 
-	element = g_new(JListElement, 1);
+	element = g_slice_new(JListElement);
 	element->next = NULL;
 	element->data = data;
 
@@ -129,7 +129,7 @@ j_list_prepend (JList* list, gpointer data)
 	g_return_if_fail(list != NULL);
 	g_return_if_fail(data != NULL);
 
-	element = g_new(JListElement, 1);
+	element = g_slice_new(JListElement);
 	element->next = list->head;
 	element->data = data;
 

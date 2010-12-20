@@ -74,7 +74,7 @@ j_store_iterator_new (JStore* store)
 
 	g_return_val_if_fail(store != NULL, NULL);
 
-	iterator = g_new(JStoreIterator, 1);
+	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
 
 	mc = j_connection_connection(j_store_connection(iterator->store));
@@ -104,7 +104,7 @@ j_store_iterator_free (JStoreIterator* iterator)
 
 	j_store_unref(iterator->store);
 
-	g_free(iterator);
+	g_slice_free(JStoreIterator, iterator);
 }
 
 gboolean
