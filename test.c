@@ -36,7 +36,8 @@ int main (int argc, char** argv)
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
-	GQueue* collections;
+	JList* collections;
+	JListIterator* cliterator;
 
 	if (argc != 2)
 	{
@@ -59,7 +60,7 @@ int main (int argc, char** argv)
 
 	//j_store_set_semantics(store, semantics);
 
-	collections = g_queue_new();
+	collections = j_list_new();
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -71,19 +72,21 @@ int main (int argc, char** argv)
 		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
 
-		g_queue_push_tail(collections, collection);
+		j_list_append(collections, collection);
 
 		g_free(name);
 	}
 
 	j_store_create(store, collections);
 
-	for (GList* l = collections->head; l != NULL; l = l->next)
-	{
-		JCollection* collection = l->data;
-		GQueue* items;
+	cliterator = j_list_iterator_new(collections);
 
-		items = g_queue_new();
+	while (j_list_iterator_next(cliterator))
+	{
+		JCollection* collection = j_list_iterator_get(cliterator);
+		JList* items;
+
+		items = j_list_new();
 
 		for (guint i = 0; i < 10000; i++)
 		{
@@ -95,20 +98,17 @@ int main (int argc, char** argv)
 			item = j_item_new(name);
 			//j_item_set_semantics(item, semantics);
 
-			g_queue_push_tail(items, item);
+			j_list_append(items, item);
 
 			g_free(name);
 		}
 
 		j_collection_create(collection, items);
 
-		for (GList* li = items->head; li != NULL; li = li->next)
-		{
-			j_item_unref(li->data);
-		}
-
-		g_queue_free(items);
+		j_list_free(items, (JListFreeFunc)j_item_unref);
 	}
+
+	j_list_iterator_free(cliterator);
 
 	siterator = j_store_iterator_new(store);
 
@@ -124,7 +124,10 @@ int main (int argc, char** argv)
 
 	j_store_iterator_free(siterator);
 
-	citerator = j_collection_iterator_new(collections->head->data);
+	cliterator = j_list_iterator_new(collections);
+	j_list_iterator_next(cliterator);
+	citerator = j_collection_iterator_new(j_list_iterator_get(cliterator));
+	j_list_iterator_free(cliterator);
 
 	while (j_collection_iterator_next(citerator))
 	{
@@ -138,12 +141,7 @@ int main (int argc, char** argv)
 
 	j_collection_iterator_free(citerator);
 
-	for (GList* l = collections->head; l != NULL; l = l->next)
-	{
-		j_collection_unref(l->data);
-	}
-
-	g_queue_free(collections);
+	j_list_free(collections, (JListFreeFunc)j_collection_unref);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);

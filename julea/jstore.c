@@ -42,6 +42,8 @@
 #include "jcollection-internal.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
+#include "jlist.h"
+#include "jlist-iterator.h"
 
 /**
  * \defgroup JStore Store
@@ -159,11 +161,12 @@ j_store_connection (JStore* store)
 }
 
 void
-j_store_create (JStore* store, GQueue* collections)
+j_store_create (JStore* store, JList* collections)
 {
-	mongo_connection* mc;
 	JBSON* index;
 	JBSON** jobj;
+	JListIterator* it;
+	mongo_connection* mc;
 	bson** obj;
 	guint length;
 	guint i;
@@ -175,7 +178,7 @@ j_store_create (JStore* store, GQueue* collections)
 	IsInitialized(true);
 	*/
 
-	length = g_queue_get_length(collections);
+	length = j_list_length(collections);
 
 	if (length == 0)
 	{
@@ -185,10 +188,11 @@ j_store_create (JStore* store, GQueue* collections)
 	jobj = g_new(JBSON*, length);
 	obj = g_new(bson*, length);
 	i = 0;
+	it = j_list_iterator_new(collections);
 
-	for (GList* l = collections->head; l != NULL; l = l->next)
+	while (j_list_iterator_next(it))
 	{
-		JCollection* collection = l->data;
+		JCollection* collection = j_list_iterator_get(it);
 		JBSON* jbson;
 
 		j_collection_associate(collection, store);
@@ -199,6 +203,8 @@ j_store_create (JStore* store, GQueue* collections)
 
 		i++;
 	}
+
+	j_list_iterator_free(it);
 
 	mc = j_connection_connection(store->connection);
 
@@ -239,14 +245,15 @@ j_store_create (JStore* store, GQueue* collections)
 	}
 }
 
-GQueue*
-j_store_get (JStore* store, GQueue* names)
+JList*
+j_store_get (JStore* store, JList* names)
 {
 	JBSON* empty;
 	JBSON* jbson;
 	mongo_connection* mc;
 	mongo_cursor* cursor;
-	GQueue* collections;
+	JList* collections;
+	JListIterator* it;
 	guint length;
 	guint n = 0;
 
@@ -258,11 +265,15 @@ j_store_get (JStore* store, GQueue* names)
 	*/
 
 	jbson = j_bson_new();
-	length = g_queue_get_length(names);
+	length = j_list_length(names);
+	it = j_list_iterator_new(names);
 
 	if (length == 1)
 	{
-		const gchar* name = names->head->data;
+		const gchar* name;
+
+		j_list_iterator_next(it);
+		name = j_list_iterator_get(it);
 
 		j_bson_append_str(jbson, "Name", name);
 		n = 1;
@@ -271,9 +282,9 @@ j_store_get (JStore* store, GQueue* names)
 	{
 		j_bson_append_object_start(jbson, "$or");
 
-		for (GList* l = names->head; l != NULL; l = l->next)
+		while (j_list_iterator_next(it))
 		{
-			const gchar* name = l->data;
+			const gchar* name = j_list_iterator_get(it);
 
 			j_bson_append_str(jbson, "Name", name);
 		}
@@ -281,19 +292,21 @@ j_store_get (JStore* store, GQueue* names)
 		j_bson_append_object_end(jbson);
 	}
 
+	j_list_iterator_free(it);
+
 	empty = j_bson_new_empty();
 
 	mc = j_connection_connection(store->connection);
 	cursor = mongo_find(mc, j_store_collection_collections(store), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
 
-	collections = g_queue_new();
+	collections = j_list_new();
 
 	while (mongo_cursor_next(cursor))
 	{
 		JBSON* collection_bson;
 
 		collection_bson = j_bson_new_from_bson(&(cursor->current));
-		g_queue_push_tail(collections, j_collection_new_from_bson(store, collection_bson));
+		j_list_append(collections, j_collection_new_from_bson(store, collection_bson));
 		j_bson_free(collection_bson);
 	}
 
