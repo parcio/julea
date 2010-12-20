@@ -46,6 +46,9 @@
 
 /**
  * \defgroup JStoreIterator Store Iterator
+ *
+ * Data structures and functions for iterating over stores.
+ *
  * @{
  **/
 

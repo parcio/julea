@@ -41,13 +41,37 @@
  * @{
  **/
 
+/**
+ *
+ **/
 struct JListIterator
 {
+	/**
+	 * The associated list.
+	 **/
 	JList* list;
+	/**
+	 * The current list element.
+	 **/
 	JListElement* current;
+	/**
+	 * Whether the current element is the first one.
+	 **/
 	gboolean first;
 };
 
+/**
+ * Creates a new list iterator.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ *
+ * \return A new list iterator.
+ **/
 JListIterator*
 j_list_iterator_new (JList* list)
 {

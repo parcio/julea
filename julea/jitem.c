@@ -39,6 +39,9 @@
 
 /**
  * \defgroup JItem Item
+ *
+ * Data structures and functions for managing items.
+ *
  * @{
  **/
 

@@ -38,6 +38,9 @@
 
 /**
  * \defgroup JConnection Connection
+ *
+ * Data structures and functions for managing connections to servers.
+ *
  * @{
  **/
 

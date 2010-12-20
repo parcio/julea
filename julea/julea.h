@@ -32,7 +32,10 @@
 /**
  * \mainpage
  *
- * Hello world.
+ * JULEA is a distributed file system with a newly designed application programming interface.
+ * It also allows to change the file system semantics at runtime.
+ *
+ * The name JULEA is a play on ROMIO.
  **/
 
 #include <jcollection.h>

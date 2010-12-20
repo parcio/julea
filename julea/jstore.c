@@ -47,6 +47,9 @@
 
 /**
  * \defgroup JStore Store
+ *
+ * Data structures and functions for managing stores.
+ *
  * @{
  **/
 

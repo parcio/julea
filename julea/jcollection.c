@@ -49,14 +49,20 @@
 
 /**
  * \defgroup JCollection Collection
+ *
+ * Data structures and functions for managing collections.
+ *
  * @{
  **/
 
 /**
- * A JCollection.
+ * A collection of items.
  **/
 struct JCollection
 {
+	/**
+	 * The collection's name.
+	 **/
 	gchar* name;
 
 	struct
@@ -65,9 +71,18 @@ struct JCollection
 	}
 	collection;
 
+	/**
+	 * Pointer to the used semantics.
+	 **/
 	JSemantics* semantics;
+	/**
+	 * Pointer to the parent store.
+	 **/
 	JStore* store;
 
+	/**
+	 * The reference count.
+	 **/
 	guint ref_count;
 };
 
@@ -81,7 +96,7 @@ struct JCollection
  * c = j_collection_new("JULEA");
  * \endcode
  *
- * \param 	name	The collection's name.
+ * \param name The collection's name.
  *
  * \return A new JCollection.
  **/
@@ -118,7 +133,7 @@ j_collection_new (const gchar* name)
  * j_collection_ref(c);
  * \endcode
  *
- * \param	collection	The JCollection.
+ * \param collection The JCollection.
  *
  * \return #collection.
  **/

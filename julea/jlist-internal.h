@@ -34,9 +34,18 @@
 
 #include "jlist.h"
 
+/**
+ * A JList element.
+ **/
 struct JListElement
 {
+	/**
+	 * Pointer to the next element.
+	 **/
 	struct JListElement* next;
+	/**
+	 * Pointer to data.
+	 **/
 	gpointer data;
 };
 

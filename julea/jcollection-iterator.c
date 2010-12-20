@@ -46,6 +46,9 @@
 
 /**
  * \defgroup JCollectionIterator Collection Iterator
+ *
+ * Data structures and functions for iterating over collections.
+ *
  * @{
  **/
 

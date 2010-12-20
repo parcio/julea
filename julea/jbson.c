@@ -37,6 +37,9 @@
 
 /**
  * \defgroup JBSON BSON
+ *
+ * Data structures and functions for handling binary JSON objects.
+ *
  * @{
  **/
 
@@ -108,7 +111,7 @@ j_bson_new (void)
  * j = j_bson_new_from_bson(...);
  * \endcode
  *
- * \param	bson_	The existing bson object.
+ * \param bson_ The existing bson object.
  *
  * \return A new JBSON object.
  **/
@@ -165,7 +168,7 @@ j_bson_new_empty (void)
  * j_bson_free(j);
  * \endcode
  *
- * \param	jbson	A JBSON object.
+ * \param jbson A JBSON object.
  **/
 void
 j_bson_free (JBSON* jbson)
@@ -185,6 +188,17 @@ j_bson_free (JBSON* jbson)
 	g_slice_free(JBSON, jbson);
 }
 
+/**
+ * Starts a new sub-object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ * \param key The sub-object's key.
+ **/
 void
 j_bson_append_object_start (JBSON* jbson, const gchar* key)
 {
@@ -194,7 +208,18 @@ j_bson_append_object_start (JBSON* jbson, const gchar* key)
 	bson_append_start_object(&(jbson->buffer), key);
 }
 
-void j_bson_append_object_end (JBSON* jbson)
+/**
+ * Ends the last sub-object started.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ **/
+void
+j_bson_append_object_end (JBSON* jbson)
 {
 	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
@@ -202,6 +227,17 @@ void j_bson_append_object_end (JBSON* jbson)
 	bson_append_finish_object(&(jbson->buffer));
 }
 
+/**
+ * Appends a newly generated ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ * \param key The ID's key.
+ **/
 void
 j_bson_append_new_id (JBSON* jbson, const gchar* key)
 {
@@ -211,7 +247,20 @@ j_bson_append_new_id (JBSON* jbson, const gchar* key)
 	bson_append_new_oid(&(jbson->buffer), key);
 }
 
-void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
+/**
+ * Appends an ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ * \param key The ID's key.
+ * \param value The ID.
+ **/
+void
+j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
 {
 	g_return_if_fail(jbson != NULL);
 	g_return_if_fail(jbson->destroy.buffer);
@@ -219,6 +268,18 @@ void j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
 	bson_append_oid(&(jbson->buffer), key, value);
 }
 
+/**
+ * Appends an integer.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ * \param key The integer's key.
+ * \param value The integer.
+ **/
 void
 j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 {
@@ -228,6 +289,18 @@ j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
 	bson_append_int(&(jbson->buffer), key, value);
 }
 
+/**
+ * Appends a string.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ * \param key The string's key.
+ * \param value The string.
+ **/
 void
 j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
 {
@@ -237,6 +310,18 @@ j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
 	bson_append_string(&(jbson->buffer), key, value);
 }
 
+/**
+ * Constructs and returns the BSON object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param jbson A JBSON object.
+ *
+ * \return A bson object.
+ **/
 bson*
 j_bson_get (JBSON* jbson)
 {

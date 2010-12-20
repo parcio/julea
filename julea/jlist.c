@@ -39,14 +39,37 @@
  * @{
  **/
 
+/**
+ * A linked list which allows fast prepend and append operations.
+ * Also allows querying the length of the list without iterating over it.
+ **/
 struct JList
 {
+	/**
+	 * Pointer to the first element.
+	 **/
 	JListElement* head;
+	/**
+	 * Pointer to the last element.
+	 **/
 	JListElement* tail;
 
+	/**
+	 * The list's length.
+	 **/
 	guint length;
 };
 
+/**
+ * Creates a new list.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \return A new list.
+ **/
 JList*
 j_list_new (void)
 {
@@ -60,6 +83,17 @@ j_list_new (void)
 	return list;
 }
 
+/**
+ * Frees the memory allocated for the list.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ * \param func A function to free the element data, or NULL.
+ **/
 void
 j_list_free (JList* list, JListFreeFunc func)
 {
@@ -86,6 +120,18 @@ j_list_free (JList* list, JListFreeFunc func)
 	g_slice_free(JList, list);
 }
 
+/**
+ * Returns the list's length.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ *
+ * \return The list's length.
+ **/
 guint
 j_list_length (JList* list)
 {
@@ -144,6 +190,20 @@ j_list_prepend (JList* list, gpointer data)
 
 /* Internal */
 
+/**
+ * Returns the list's first element.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A JList.
+ *
+ * \return A JListElement.
+ **/
 JListElement*
 j_list_head (JList* list)
 {
