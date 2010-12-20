@@ -29,20 +29,73 @@
  * \file
  **/
 
+#include <glib.h>
+
+#include "jlist-iterator.h"
+
+#include "jlist.h"
+#include "jlist-internal.h"
+
 /**
- * \mainpage
- *
- * Hello world.
+ * \defgroup JListIterator List Iterator
+ * @{
  **/
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+struct JListIterator
+{
+	JList* list;
+	JListElement* current;
+	gboolean first;
+};
+
+JListIterator*
+j_list_iterator_new (JList* list)
+{
+	JListIterator* iterator;
+
+	g_return_val_if_fail(list != NULL, NULL);
+
+	iterator = g_new(JListIterator, 1);
+	iterator->list = list;
+	iterator->current = j_list_head(iterator->list);
+	iterator->first = TRUE;
+
+	return iterator;
+}
+
+void
+j_list_iterator_free (JListIterator* iterator)
+{
+	g_return_if_fail(iterator != NULL);
+
+	g_free(iterator);
+}
+
+gboolean
+j_list_iterator_next (JListIterator* iterator)
+{
+	g_return_val_if_fail(iterator != NULL, FALSE);
+
+	if (!iterator->first)
+	{
+		iterator->current = iterator->current->next;
+	}
+	else
+	{
+		iterator->first = FALSE;
+	}
+
+	return (iterator->current != NULL);
+}
+
+gpointer
+j_list_iterator_get (JListIterator* iterator)
+{
+	g_return_val_if_fail(iterator != NULL, NULL);
+
+	return iterator->current->data;
+}
+
+/**
+ * @}
+ **/

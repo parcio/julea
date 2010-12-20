@@ -29,20 +29,21 @@
  * \file
  **/
 
-/**
- * \mainpage
- *
- * Hello world.
- **/
+#ifndef H_LIST_ITERATOR
+#define H_LIST_ITERATOR
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+struct JListIterator;
+
+typedef struct JListIterator JListIterator;
+
+#include <glib.h>
+
+#include "jlist.h"
+
+JListIterator* j_list_iterator_new (JList*);
+void j_list_iterator_free (JListIterator*);
+
+gboolean j_list_iterator_next (JListIterator*);
+gpointer j_list_iterator_get (JListIterator*);
+
+#endif
