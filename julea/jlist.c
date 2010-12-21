@@ -204,14 +204,15 @@ j_list_prepend (JList* list, gpointer data)
 gpointer
 j_list_get (JList* list, gint index)
 {
-	JListElement* element = NULL;
+	gpointer data = NULL;
 
 	g_return_val_if_fail(list != NULL, NULL);
-	g_return_val_if_fail(index >= (gint)list->length, NULL);
-	g_return_val_if_fail(index < (gint)list->length * -1, NULL);
+	g_return_val_if_fail(index < (gint)list->length, NULL);
+	g_return_val_if_fail(index >= (gint)list->length * -1, NULL);
 
 	if (list->head != NULL && list->tail != NULL)
 	{
+		JListElement* element;
 		guint real_index;
 		guint i;
 
@@ -220,7 +221,7 @@ j_list_get (JList* list, gint index)
 
 		if (real_index == (list->length - 1))
 		{
-			return list->tail;
+			return list->tail->data;
 		}
 
 		for (i = 0; i < real_index; i++)
@@ -232,9 +233,11 @@ j_list_get (JList* list, gint index)
 				return NULL;
 			}
 		}
+
+		data = element->data;
 	}
 
-	return element;
+	return data;
 }
 
 /* Internal */
