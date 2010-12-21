@@ -257,7 +257,6 @@ j_store_get (JStore* store, JList* names)
 	mongo_connection* mc;
 	mongo_cursor* cursor;
 	JList* collections;
-	JListIterator* it;
 	guint length;
 	guint n = 0;
 
@@ -270,21 +269,20 @@ j_store_get (JStore* store, JList* names)
 
 	jbson = j_bson_new();
 	length = j_list_length(names);
-	it = j_list_iterator_new(names);
 
 	if (length == 1)
 	{
-		const gchar* name;
-
-		j_list_iterator_next(it);
-		name = j_list_iterator_get(it);
+		const gchar* name = j_list_get(names, 0);
 
 		j_bson_append_str(jbson, "Name", name);
 		n = 1;
 	}
 	else
 	{
+		JListIterator* it;
+
 		j_bson_append_object_start(jbson, "$or");
+		it = j_list_iterator_new(names);
 
 		while (j_list_iterator_next(it))
 		{
@@ -293,10 +291,9 @@ j_store_get (JStore* store, JList* names)
 			j_bson_append_str(jbson, "Name", name);
 		}
 
+		j_list_iterator_free(it);
 		j_bson_append_object_end(jbson);
 	}
-
-	j_list_iterator_free(it);
 
 	empty = j_bson_new_empty();
 

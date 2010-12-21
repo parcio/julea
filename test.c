@@ -124,10 +124,7 @@ int main (int argc, char** argv)
 
 	j_store_iterator_free(siterator);
 
-	cliterator = j_list_iterator_new(collections);
-	j_list_iterator_next(cliterator);
-	citerator = j_collection_iterator_new(j_list_iterator_get(cliterator));
-	j_list_iterator_free(cliterator);
+	citerator = j_collection_iterator_new(j_list_get(collections, 0));
 
 	while (j_collection_iterator_next(citerator))
 	{
