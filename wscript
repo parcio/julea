@@ -37,12 +37,13 @@ def build (ctx):
 		includes = ['mongodb/src']
 	)
 
-	ctx.program(
-		source = ['test/list.c'],
-		target = 'test/list',
-		use = ['GLIB', 'julea'],
-		includes = ['julea']
-	)
+	for test in ('list', 'list-iterator'):
+		ctx.program(
+			source = ['test/%s.c' % (test,)],
+			target = 'test/%s' % (test,),
+			use = ['GLIB', 'julea'],
+			includes = ['julea']
+		)
 
 	ctx.program(
 		source = ['benchmark.c'],
