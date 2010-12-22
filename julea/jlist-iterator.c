@@ -80,7 +80,7 @@ j_list_iterator_new (JList* list)
 	g_return_val_if_fail(list != NULL, NULL);
 
 	iterator = g_slice_new(JListIterator);
-	iterator->list = list;
+	iterator->list = j_list_ref(list);
 	iterator->current = j_list_head(iterator->list);
 	iterator->first = TRUE;
 
@@ -91,6 +91,8 @@ void
 j_list_iterator_free (JListIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
+
+	j_list_unref(iterator->list);
 
 	g_slice_free(JListIterator, iterator);
 }
@@ -116,6 +118,11 @@ gpointer
 j_list_iterator_get (JListIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
+
+	if (iterator->current == NULL)
+	{
+		return NULL;
+	}
 
 	return iterator->current->data;
 }

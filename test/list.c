@@ -32,13 +32,13 @@
 static void
 test_list_fixture_setup (JList** list, gconstpointer data)
 {
-	*list = j_list_new();
+	*list = j_list_new(g_free);
 }
 
 static void
 test_list_fixture_teardown (JList** list, gconstpointer data)
 {
-	j_list_free(*list, g_free);
+	j_list_unref(*list);
 }
 
 static void
@@ -50,9 +50,9 @@ test_list_new_free (gpointer* fixture, gconstpointer data)
 	{
 		JList* list;
 
-		list = j_list_new();
+		list = j_list_new(NULL);
 		g_assert(list != NULL);
-		j_list_free(list, NULL);
+		j_list_unref(list);
 	}
 }
 

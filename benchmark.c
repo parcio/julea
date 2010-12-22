@@ -60,7 +60,7 @@ int main (int argc, char** argv)
 
 	//j_store_set_semantics(store, semantics);
 
-	collections = j_list_new();
+	collections = j_list_new((JListFreeFunc)j_collection_unref);
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -86,7 +86,7 @@ int main (int argc, char** argv)
 		JCollection* collection = j_list_iterator_get(cliterator);
 		JList* items;
 
-		items = j_list_new();
+		items = j_list_new((JListFreeFunc)j_item_unref);
 
 		for (guint i = 0; i < 10000; i++)
 		{
@@ -105,7 +105,7 @@ int main (int argc, char** argv)
 
 		j_collection_create(collection, items);
 
-		j_list_free(items, (JListFreeFunc)j_item_unref);
+		j_list_unref(items);
 	}
 
 	j_list_iterator_free(cliterator);
@@ -138,7 +138,7 @@ int main (int argc, char** argv)
 
 	j_collection_iterator_free(citerator);
 
-	j_list_free(collections, (JListFreeFunc)j_collection_unref);
+	j_list_unref(collections);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);

@@ -58,6 +58,16 @@ struct JList
 	 * The list's length.
 	 **/
 	guint length;
+
+	/**
+	 * The function used to free the list elements.
+	 **/
+	JListFreeFunc free_func;
+
+	/**
+	 * The list's reference count.
+	 **/
+	guint ref_count;
 };
 
 /**
@@ -71,7 +81,7 @@ struct JList
  * \return A new list.
  **/
 JList*
-j_list_new (void)
+j_list_new (JListFreeFunc free_func)
 {
 	JList* list;
 
@@ -79,12 +89,34 @@ j_list_new (void)
 	list->head = NULL;
 	list->tail = NULL;
 	list->length = 0;
+	list->free_func = free_func;
+	list->ref_count = 1;
 
 	return list;
 }
 
 /**
- * Frees the memory allocated for the list.
+ * Increases the list's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \param list A list.
+ *
+ * \return The list.
+ **/
+JList*
+j_list_ref (JList* list)
+{
+	g_return_val_if_fail(list != NULL, NULL);
+
+	list->ref_count++;
+
+	return list;
+}
+
+/**
+ * Decreases the list's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the list.
  *
  * \author Michael Kuhn
  *
@@ -95,29 +127,34 @@ j_list_new (void)
  * \param func A function to free the element data, or NULL.
  **/
 void
-j_list_free (JList* list, JListFreeFunc func)
+j_list_unref (JList* list)
 {
-	JListElement* element;
-
 	g_return_if_fail(list != NULL);
 
-	element = list->head;
+	list->ref_count--;
 
-	while (element != NULL)
+	if (list->ref_count == 0)
 	{
-		JListElement* next;
+		JListElement* element;
 
-		if (func != NULL)
+		element = list->head;
+
+		while (element != NULL)
 		{
-			func(element->data);
+			JListElement* next;
+
+			if (list->free_func != NULL)
+			{
+				list->free_func(element->data);
+			}
+
+			next = element->next;
+			g_slice_free(JListElement, element);
+			element = next;
 		}
 
-		next = element->next;
-		g_slice_free(JListElement, element);
-		element = next;
+		g_slice_free(JList, list);
 	}
-
-	g_slice_free(JList, list);
 }
 
 /**

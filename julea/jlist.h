@@ -40,8 +40,9 @@ typedef void (*JListFreeFunc) (gpointer);
 
 #include <glib.h>
 
-JList* j_list_new (void);
-void j_list_free (JList*, JListFreeFunc);
+JList* j_list_new (JListFreeFunc);
+JList* j_list_ref (JList*);
+void j_list_unref (JList*);
 
 guint j_list_length (JList*);
 

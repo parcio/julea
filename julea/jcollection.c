@@ -315,7 +315,7 @@ j_collection_get (JCollection* collection, JList* names)
 	mc = j_connection_connection(j_store_connection(collection->store));
 	cursor = mongo_find(mc, j_collection_collection_items(collection), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
 
-	items = j_list_new();
+	items = j_list_new((JListFreeFunc)j_item_unref);
 
 	while (mongo_cursor_next(cursor))
 	{

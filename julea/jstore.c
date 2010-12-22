@@ -300,7 +300,7 @@ j_store_get (JStore* store, JList* names)
 	mc = j_connection_connection(store->connection);
 	cursor = mongo_find(mc, j_store_collection_collections(store), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
 
-	collections = j_list_new();
+	collections = j_list_new((JListFreeFunc)j_collection_unref);
 
 	while (mongo_cursor_next(cursor))
 	{
