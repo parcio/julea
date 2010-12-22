@@ -38,8 +38,15 @@ def build (ctx):
 	)
 
 	ctx.program(
-		source = ['test.c'],
-		target = 'test',
+		source = ['test/list.c'],
+		target = 'test/list',
+		use = ['GLIB', 'julea'],
+		includes = ['julea']
+	)
+
+	ctx.program(
+		source = ['benchmark.c'],
+		target = 'benchmark',
 		use = ['GLIB', 'julea'],
 		includes = ['julea']
 	)
