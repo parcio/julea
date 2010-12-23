@@ -37,7 +37,7 @@ def build (ctx):
 		includes = ['mongodb/src']
 	)
 
-	for test in ('bson', 'list', 'list-iterator', 'semantics'):
+	for test in ('bson', 'bson-iterator', 'list', 'list-iterator', 'semantics'):
 		ctx.program(
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),

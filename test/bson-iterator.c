@@ -29,85 +29,92 @@
 
 #include <julea.h>
 
+#include <jbson.h>
+#include <jbson-iterator.h>
+
 static void
-test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
+test_bson_iterator_fixture_setup (JBSONIterator** iterator, gconstpointer data)
 {
-	JList* list;
+	JBSON* jbson;
 
-	list = j_list_new(g_free);
+	jbson = j_bson_new();
 
-	j_list_append(list, g_strdup("0"));
-	j_list_append(list, g_strdup("1"));
-	j_list_append(list, g_strdup("2"));
+	j_bson_append_new_id(jbson, "_id");
+	j_bson_append_int(jbson, "int", 23);
+	j_bson_append_str(jbson, "str", "42");
 
-	*iterator = j_list_iterator_new(list);
+	*iterator = j_bson_iterator_new(jbson);
 
-	j_list_unref(list);
+	j_bson_unref(jbson);
 }
 
 static void
-test_list_iterator_fixture_teardown (JListIterator** iterator, gconstpointer data)
+test_bson_iterator_fixture_teardown (JBSONIterator** iterator, gconstpointer data)
 {
-	j_list_iterator_free(*iterator);
+	j_bson_iterator_free(*iterator);
 }
 
 static void
-test_list_iterator_new_free (gpointer* fixture, gconstpointer data)
+test_bson_iterator_new_free (gpointer* fixture, gconstpointer data)
 {
 	const guint n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
-		JList* list;
-		JListIterator* iterator;
+		JBSON* jbson;
+		JBSONIterator* iterator;
 
-		list = j_list_new(NULL);
-		g_assert(list != NULL);
-		iterator = j_list_iterator_new(list);
+		jbson = j_bson_new();
+		g_assert(jbson != NULL);
+		iterator = j_bson_iterator_new(jbson);
 		g_assert(iterator != NULL);
-		j_list_iterator_free(iterator);
-		j_list_unref(list);
+		j_bson_iterator_free(iterator);
+		j_bson_unref(jbson);
 	}
 }
 
 static void
-test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
+test_bson_iterator_next_get (JBSONIterator** iterator, gconstpointer data)
 {
+	const gchar* k;
 	const gchar* s;
+	gint i;
 	gboolean next;
 
-	next = j_list_iterator_next(*iterator);
+	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
-	s = j_list_iterator_get(*iterator);
-	g_assert_cmpstr(s, ==, "0");
+	k = j_bson_iterator_get_key(*iterator);
+	j_bson_iterator_get_id(*iterator);
+	g_assert_cmpstr(k, ==, "_id");
 
-	next = j_list_iterator_next(*iterator);
+	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
-	s = j_list_iterator_get(*iterator);
-	g_assert_cmpstr(s, ==, "1");
+	k = j_bson_iterator_get_key(*iterator);
+	i = j_bson_iterator_get_int(*iterator);
+	g_assert_cmpstr(k, ==, "int");
+	g_assert_cmpint(i, ==, 23);
 
-	next = j_list_iterator_next(*iterator);
+	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
-	s = j_list_iterator_get(*iterator);
-	g_assert_cmpstr(s, ==, "2");
+	k = j_bson_iterator_get_key(*iterator);
+	s = j_bson_iterator_get_string(*iterator);
+	g_assert_cmpstr(k, ==, "str");
+	g_assert_cmpstr(s, ==, "42");
 
-	next = j_list_iterator_next(*iterator);
+	next = j_bson_iterator_next(*iterator);
 	g_assert(!next);
-
-	s = j_list_iterator_get(*iterator);
-	g_assert(s == NULL);
 }
 
 int main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/list-iterator/new_free", gpointer, NULL, NULL, test_list_iterator_new_free, NULL);
+	g_test_add("/julea/bson-iterator/new_free", gpointer, NULL, NULL, test_bson_iterator_new_free, NULL);
 
-	g_test_add("/julea/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);
+	g_test_add("/julea/bson-iterator/next_get", JBSONIterator*, NULL, test_bson_iterator_fixture_setup, test_bson_iterator_next_get, test_bson_iterator_fixture_teardown);
 
 	return g_test_run();
 }
