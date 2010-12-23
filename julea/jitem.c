@@ -34,6 +34,8 @@
 #include "jitem.h"
 #include "jitem-internal.h"
 
+#include "jbson.h"
+#include "jbson-iterator.h"
 #include "jcollection.h"
 #include "jsemantics.h"
 
@@ -200,14 +202,31 @@ j_item_serialize (JItem* item)
 void
 j_item_deserialize (JItem* item, JBSON* jbson)
 {
+	JBSONIterator* iterator;
+
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(jbson != NULL);
 
+	iterator = j_bson_iterator_new(jbson);
+
 	/*
 		m_id = o.getField("_id").OID();
-		m_name = o.getField("Name").String();
 	*/
 
+	while (j_bson_iterator_next(iterator))
+	{
+		const gchar* key;
+
+		key = j_bson_iterator_get_key(iterator);
+
+		if (g_strcmp0(key, "Name") == 0)
+		{
+			g_free(item->name);
+			item->name = g_strdup(j_bson_iterator_get_string(iterator));
+		}
+	}
+
+	j_bson_iterator_free(iterator);
 }
 
 /*

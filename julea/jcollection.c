@@ -38,6 +38,7 @@
 #include "jcollection-internal.h"
 
 #include "jbson.h"
+#include "jbson-iterator.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
 #include "jitem.h"
@@ -448,16 +449,34 @@ j_collection_serialize (JCollection* collection)
 void
 j_collection_deserialize (JCollection* collection, JBSON* jbson)
 {
+	JBSONIterator* iterator;
+
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(jbson != NULL);
 
+	iterator = j_bson_iterator_new(jbson);
+
 	/*
 		m_id = o.getField("_id").OID();
-		m_name = o.getField("Name").String();
 
 		m_owner.m_user = o.getField("User").Int();
 		m_owner.m_group = o.getField("Group").Int();
 	*/
+
+	while (j_bson_iterator_next(iterator))
+	{
+		const gchar* key;
+
+		key = j_bson_iterator_get_key(iterator);
+
+		if (g_strcmp0(key, "Name") == 0)
+		{
+			g_free(collection->name);
+			collection->name = g_strdup(j_bson_iterator_get_string(iterator));
+		}
+	}
+
+	j_bson_iterator_free(iterator);
 }
 
 /*
