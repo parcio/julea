@@ -86,7 +86,7 @@ j_store_iterator_new (JStore* store)
 
 	iterator->cursor = mongo_find(mc, j_store_collection_collections(iterator->store), j_bson_get(empty), j_bson_get(empty), 0, 0, 0);
 
-	j_bson_free(empty);
+	j_bson_unref(empty);
 
 	return iterator;
 }
@@ -128,7 +128,7 @@ j_store_iterator_get (JStoreIterator* iterator)
 
 	jbson = j_bson_new_from_bson(&(iterator->cursor->current));
 	collection = j_collection_new_from_bson(iterator->store, jbson);
-	j_bson_free(jbson);
+	j_bson_unref(jbson);
 
 	return collection;
 }

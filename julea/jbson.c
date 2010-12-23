@@ -73,6 +73,11 @@ struct JBSON
 		gboolean buffer;
 	}
 	destroy;
+
+	/**
+	 * Reference count.
+	 **/
+	guint ref_count;
 };
 
 /**
@@ -81,7 +86,7 @@ struct JBSON
  * \author Michael Kuhn
  *
  * \code
- * JSBON* j;
+ * JBSON* j;
  * j = j_bson_new();
  * \endcode
  *
@@ -95,6 +100,7 @@ j_bson_new (void)
 	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = FALSE;
 	jbson->destroy.buffer = TRUE;
+	jbson->ref_count = 1;
 
 	bson_buffer_init(&(jbson->buffer));
 
@@ -125,6 +131,7 @@ j_bson_new_from_bson (bson* bson_)
 	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = FALSE;
 	jbson->destroy.buffer = FALSE;
+	jbson->ref_count = 1;
 
 	bson_init(&(jbson->bson), bson_->data, 0);
 
@@ -151,6 +158,7 @@ j_bson_new_empty (void)
 	jbson = g_slice_new(JBSON);
 	jbson->destroy.bson = TRUE;
 	jbson->destroy.buffer = FALSE;
+	jbson->ref_count = 1;
 
 	bson_empty(&(jbson->bson));
 
@@ -158,34 +166,59 @@ j_bson_new_empty (void)
 }
 
 /**
- * Frees the memory allocated for the JBSON object.
+ * Increases the JBSON object's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \param list A JBSON object.
+ *
+ * \return The JBSON object.
+ **/
+JBSON*
+j_bson_ref (JBSON* jbson)
+{
+	g_return_val_if_fail(jbson != NULL, NULL);
+
+	jbson->ref_count++;
+
+	return jbson;
+}
+
+/**
+ * Decreases the JBSON object's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the JBSON object.
  *
  * \author Michael Kuhn
  *
  * \code
  * JBSON* j;
  * j = j_bson_new();
- * j_bson_free(j);
+ * j_bson_unref(j);
  * \endcode
  *
  * \param jbson A JBSON object.
  **/
 void
-j_bson_free (JBSON* jbson)
+j_bson_unref (JBSON* jbson)
 {
 	g_return_if_fail(jbson != NULL);
 
-	if (jbson->destroy.bson)
-	{
-		bson_destroy(&(jbson->bson));
-	}
+	jbson->ref_count--;
 
-	if (jbson->destroy.buffer)
+	if (jbson->ref_count == 0)
 	{
-		bson_buffer_destroy(&(jbson->buffer));
-	}
+		if (jbson->destroy.bson)
+		{
+			bson_destroy(&(jbson->bson));
+		}
 
-	g_slice_free(JBSON, jbson);
+		if (jbson->destroy.buffer)
+		{
+			bson_buffer_destroy(&(jbson->buffer));
+		}
+
+		g_slice_free(JBSON, jbson);
+	}
 }
 
 /**

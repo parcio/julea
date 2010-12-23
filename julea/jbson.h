@@ -43,7 +43,8 @@ typedef struct JBSON JBSON;
 JBSON* j_bson_new (void);
 JBSON* j_bson_new_from_bson (bson*);
 JBSON* j_bson_new_empty (void);
-void j_bson_free (JBSON*);
+JBSON* j_bson_ref (JBSON*);
+void j_bson_unref (JBSON*);
 
 void j_bson_append_object_start (JBSON*, const gchar*);
 void j_bson_append_object_end (JBSON*);

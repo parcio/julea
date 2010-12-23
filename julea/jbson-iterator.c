@@ -80,7 +80,7 @@ j_bson_iterator_new (JBSON* jbson)
 	bson* bson_;
 
 	iterator = g_slice_new(JBSONIterator);
-	iterator->jbson = jbson;
+	iterator->jbson = j_bson_ref(jbson);
 
 	bson_ = j_bson_get(iterator->jbson);
 	bson_iterator_init(&(iterator->iterator), bson_->data);
@@ -102,6 +102,8 @@ void
 j_bson_iterator_free (JBSONIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
+
+	j_bson_unref(iterator->jbson);
 
 	g_slice_free(JBSONIterator, iterator);
 }

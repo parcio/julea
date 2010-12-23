@@ -91,8 +91,8 @@ j_collection_iterator_new (JCollection* collection)
 
 	iterator->cursor = mongo_find(mc, j_collection_collection_items(iterator->collection), j_bson_get(jbson), j_bson_get(empty), 0, 0, 0);
 
-	j_bson_free(empty);
-	j_bson_free(jbson);
+	j_bson_unref(empty);
+	j_bson_unref(jbson);
 
 	return iterator;
 }
@@ -134,7 +134,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	jbson = j_bson_new_from_bson(&(iterator->cursor->current));
 	item = j_item_new_from_bson(iterator->collection, jbson);
-	j_bson_free(jbson);
+	j_bson_unref(jbson);
 
 	return item;
 }

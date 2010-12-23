@@ -42,11 +42,11 @@ test_bson_fixture_setup (JBSON** jbson, gconstpointer data)
 static void
 test_bson_fixture_teardown (JBSON** jbson, gconstpointer data)
 {
-	j_bson_free(*jbson);
+	j_bson_unref(*jbson);
 }
 
 static void
-test_bson_new_free (gpointer* fixture, gconstpointer data)
+test_bson_new_unref (gpointer* fixture, gconstpointer data)
 {
 	const guint n = 100000;
 
@@ -56,7 +56,7 @@ test_bson_new_free (gpointer* fixture, gconstpointer data)
 
 		jbson = j_bson_new();
 		g_assert(jbson != NULL);
-		j_bson_free(jbson);
+		j_bson_unref(jbson);
 	}
 }
 
@@ -95,7 +95,7 @@ int main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/bson/new_free", gpointer, NULL, NULL, test_bson_new_free, NULL);
+	g_test_add("/julea/bson/new_unref", gpointer, NULL, NULL, test_bson_new_unref, NULL);
 
 	g_test_add("/julea/bson/append", JBSON*, NULL, test_bson_fixture_setup, test_bson_append, test_bson_fixture_teardown);
 	g_test_add("/julea/bson/get", JBSON*, NULL, test_bson_fixture_setup, test_bson_get, test_bson_fixture_teardown);

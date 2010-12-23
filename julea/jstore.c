@@ -217,13 +217,13 @@ j_store_create (JStore* store, JList* collections)
 
 	mongo_create_index(mc, j_store_collection_collections(store), j_bson_get(index), MONGO_INDEX_UNIQUE, NULL);
 
-	j_bson_free(index);
+	j_bson_unref(index);
 
 	mongo_insert_batch(mc, j_store_collection_collections(store), obj, length);
 
 	for (i = 0; i < length; i++)
 	{
-		j_bson_free(jobj[i]);
+		j_bson_unref(jobj[i]);
 	}
 
 	g_free(jobj);
@@ -308,13 +308,13 @@ j_store_get (JStore* store, JList* names)
 
 		collection_bson = j_bson_new_from_bson(&(cursor->current));
 		j_list_append(collections, j_collection_new_from_bson(store, collection_bson));
-		j_bson_free(collection_bson);
+		j_bson_unref(collection_bson);
 	}
 
 	mongo_cursor_destroy(cursor);
 
-	j_bson_free(empty);
-	j_bson_free(jbson);
+	j_bson_unref(empty);
+	j_bson_unref(jbson);
 
 	return collections;
 }
