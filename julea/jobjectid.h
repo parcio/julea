@@ -29,30 +29,21 @@
  * \file
  **/
 
-#ifndef H_BSON_ITERATOR
-#define H_BSON_ITERATOR
+#ifndef H_OBJECT_ID
+#define H_OBJECT_ID
 
-struct JBSONIterator;
+struct JObjectID;
 
-typedef struct JBSONIterator JBSONIterator;
+typedef struct JObjectID JObjectID;
 
 #include <glib.h>
 
-#include "jbson.h"
+JObjectID* j_object_id_new (gboolean);
+JObjectID* j_object_id_new_for_data (gconstpointer);
+void j_object_id_free (JObjectID*);
 
-JBSONIterator* j_bson_iterator_new (JBSON*);
-void j_bson_iterator_free (JBSONIterator*);
-
-gboolean j_bson_iterator_find (JBSONIterator*, const gchar*);
-
-gboolean j_bson_iterator_next (JBSONIterator*);
-
-const gchar* j_bson_iterator_get_key (JBSONIterator*);
-
-JObjectID* j_bson_iterator_get_id (JBSONIterator*);
-gboolean j_bson_iterator_get_boolean (JBSONIterator*);
-gint32 j_bson_iterator_get_int32 (JBSONIterator*);
-gint64 j_bson_iterator_get_int64 (JBSONIterator*);
-const gchar* j_bson_iterator_get_string (JBSONIterator*);
+void j_object_id_init (JObjectID*);
+gchar* j_object_id_hex (JObjectID*);
+gconstpointer j_object_id_data (JObjectID*);
 
 #endif

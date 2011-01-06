@@ -35,17 +35,18 @@
 static void
 test_bson_iterator_fixture_setup (JBSONIterator** iterator, gconstpointer data)
 {
-	JBSON* jbson;
+	JBSON* bson;
 
-	jbson = j_bson_new();
+	bson = j_bson_new();
 
-	j_bson_append_new_id(jbson, "_id");
-	j_bson_append_int(jbson, "int", 23);
-	j_bson_append_str(jbson, "str", "42");
+	j_bson_append_new_object_id(bson, "_id");
+	j_bson_append_int32(bson, "int32", 23);
+	j_bson_append_int64(bson, "int64", 23);
+	j_bson_append_string(bson, "string", "42");
 
-	*iterator = j_bson_iterator_new(jbson);
+	*iterator = j_bson_iterator_new(bson);
 
-	j_bson_unref(jbson);
+	j_bson_unref(bson);
 }
 
 static void
@@ -61,47 +62,58 @@ test_bson_iterator_new_free (gpointer* fixture, gconstpointer data)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JBSON* jbson;
+		JBSON* bson;
 		JBSONIterator* iterator;
 
-		jbson = j_bson_new();
-		g_assert(jbson != NULL);
-		iterator = j_bson_iterator_new(jbson);
+		bson = j_bson_new();
+		g_assert(bson != NULL);
+		iterator = j_bson_iterator_new(bson);
 		g_assert(iterator != NULL);
 		j_bson_iterator_free(iterator);
-		j_bson_unref(jbson);
+		j_bson_unref(bson);
 	}
 }
 
 static void
 test_bson_iterator_next_get (JBSONIterator** iterator, gconstpointer data)
 {
+	JObjectID* id;
 	const gchar* k;
 	const gchar* s;
-	gint i;
+	gint32 i;
+	gint64 j;
 	gboolean next;
 
 	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
 	k = j_bson_iterator_get_key(*iterator);
-	j_bson_iterator_get_id(*iterator);
+	id = j_bson_iterator_get_id(*iterator);
 	g_assert_cmpstr(k, ==, "_id");
+	g_assert(id != NULL);
 
 	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
 	k = j_bson_iterator_get_key(*iterator);
-	i = j_bson_iterator_get_int(*iterator);
-	g_assert_cmpstr(k, ==, "int");
+	i = j_bson_iterator_get_int32(*iterator);
+	g_assert_cmpstr(k, ==, "int32");
 	g_assert_cmpint(i, ==, 23);
 
 	next = j_bson_iterator_next(*iterator);
 	g_assert(next);
 
 	k = j_bson_iterator_get_key(*iterator);
+	j = j_bson_iterator_get_int64(*iterator);
+	g_assert_cmpstr(k, ==, "int64");
+	g_assert_cmpint(j, ==, 23);
+
+	next = j_bson_iterator_next(*iterator);
+	g_assert(next);
+
+	k = j_bson_iterator_get_key(*iterator);
 	s = j_bson_iterator_get_string(*iterator);
-	g_assert_cmpstr(k, ==, "str");
+	g_assert_cmpstr(k, ==, "string");
 	g_assert_cmpstr(s, ==, "42");
 
 	next = j_bson_iterator_next(*iterator);

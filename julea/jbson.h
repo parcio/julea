@@ -36,24 +36,38 @@ struct JBSON;
 
 typedef struct JBSON JBSON;
 
+enum JBSONType
+{
+	J_BSON_TYPE_END = 0,
+	J_BSON_TYPE_STRING = 2,
+	J_BSON_TYPE_DOCUMENT = 3,
+	J_BSON_TYPE_OBJECT_ID = 7,
+	J_BSON_TYPE_BOOLEAN = 8,
+	J_BSON_TYPE_INT32 = 16,
+	J_BSON_TYPE_INT64 = 18
+};
+
+typedef enum JBSONType JBSONType;
+
 #include <glib.h>
 
-#include <bson.h>
+#include "jobjectid.h"
 
 JBSON* j_bson_new (void);
-JBSON* j_bson_new_from_bson (bson*);
 JBSON* j_bson_new_empty (void);
 JBSON* j_bson_ref (JBSON*);
 void j_bson_unref (JBSON*);
 
-void j_bson_append_object_start (JBSON*, const gchar*);
-void j_bson_append_object_end (JBSON*);
+gint32 j_bson_size (JBSON*);
 
-void j_bson_append_new_id (JBSON*, const gchar*);
-void j_bson_append_id (JBSON*, const gchar*, const bson_oid_t*);
-void j_bson_append_int (JBSON*, const gchar*, gint);
-void j_bson_append_str (JBSON*, const gchar*, const gchar*);
+void j_bson_append_new_object_id (JBSON*, const gchar*);
+void j_bson_append_object_id (JBSON*, const gchar*, JObjectID*);
+void j_bson_append_boolean (JBSON*, const gchar*, gboolean);
+void j_bson_append_int32 (JBSON*, const gchar*, gint32);
+void j_bson_append_int64 (JBSON*, const gchar*, gint64);
+void j_bson_append_string (JBSON*, const gchar*, const gchar*);
+void j_bson_append_document (JBSON*, const gchar*, JBSON*);
 
-bson* j_bson_get (JBSON*);
+gpointer j_bson_data (JBSON*);
 
 #endif

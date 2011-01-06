@@ -31,48 +31,42 @@
 
 #include <glib.h>
 
-#include <bson.h>
+#include <string.h>
 
 #include "jbson.h"
+
+#include "jobjectid.h"
+
 
 /**
  * \defgroup JBSON BSON
  *
- * Data structures and functions for handling binary JSON objects.
+ * Data structures and functions for handling binary JSON documents.
  *
  * @{
  **/
 
 /**
- * A JBSON object.
- * This is basically a wrapper around the bson and bson_buffer data types provided by MongoDB's C driver.
+ * A BSON document.
  **/
 struct JBSON
 {
 	/**
-	 * BSON object.
+	 * The data.
 	 **/
-	bson bson;
-	/**
-	 * BSON buffer used to build #bson.
-	 **/
-	bson_buffer buffer;
+	gchar* data;
 
 	/**
-	 * Whether to destroy the internal objects.
+	 * Current position within #data.
 	 **/
-	struct
-	{
-		/**
-		 * Whether to destroy #bson.
-		 **/
-		gboolean bson;
-		/**
-		 * Whether to destroy #buffer.
-		 **/
-		gboolean buffer;
-	}
-	destroy;
+	gchar* current;
+
+	/**
+	 * Size of #data.
+	 **/
+	gsize allocated_size;
+
+	gboolean finalized;
 
 	/**
 	 * Reference count.
@@ -80,8 +74,82 @@ struct JBSON
 	guint ref_count;
 };
 
+static void
+j_bson_resize (JBSON* bson, gsize n)
+{
+	gsize pos = 4;
+
+	if (bson->current != NULL)
+	{
+		pos = bson->current - bson->data;
+	}
+
+	bson->allocated_size += n;
+	bson->data = g_renew(gchar, bson->data, bson->allocated_size);
+	bson->current = bson->data + pos;
+}
+
+static void
+j_bson_finalize (JBSON* bson)
+{
+	gint32 size;
+
+	if (bson->finalized)
+	{
+		return;
+	}
+
+	size = bson->current - bson->data + 1;
+	*((gint32*)(bson->data)) = GINT32_TO_LE(size);
+	*(bson->current) = '\0';
+
+	bson->finalized = TRUE;
+}
+
+static void
+j_bson_append_8 (JBSON* bson, gconstpointer data)
+{
+	*(bson->current) = *((const gchar*)data);
+	bson->current++;
+}
+
+static void
+j_bson_append_32 (JBSON* bson, gconstpointer data)
+{
+
+	*((gint32*)(bson->current)) = GINT32_TO_LE(*((const gint32*)data));
+	bson->current += 4;
+}
+
+static void
+j_bson_append_64 (JBSON* bson, gconstpointer data)
+{
+
+	*((gint64*)(bson->current)) = GINT64_TO_LE(*((const gint64*)data));
+	bson->current += 8;
+}
+
+static void
+j_bson_append_n (JBSON* bson, gconstpointer data, gsize n)
+{
+	memcpy(bson->current, data, n);
+	bson->current += n;
+}
+
+static void
+j_bson_append_element (JBSON* bson, const gchar* name, gchar type, gsize n)
+{
+	gsize len;
+
+	len = strlen(name) + 1;
+	j_bson_resize(bson, 1 + len + n);
+
+	j_bson_append_8(bson, &type);
+	j_bson_append_n(bson, name, len);
+}
+
 /**
- * Creates a new JBSON object.
+ * Creates a new BSON document.
  *
  * \author Michael Kuhn
  *
@@ -90,56 +158,27 @@ struct JBSON
  * j = j_bson_new();
  * \endcode
  *
- * \return A new JBSON object.
+ * \return A new BSON document.
  **/
 JBSON*
 j_bson_new (void)
 {
-	JBSON* jbson;
+	JBSON* bson;
 
-	jbson = g_slice_new(JBSON);
-	jbson->destroy.bson = FALSE;
-	jbson->destroy.buffer = TRUE;
-	jbson->ref_count = 1;
+	bson = g_slice_new(JBSON);
+	bson->data = NULL;
+	bson->current = NULL;
+	bson->allocated_size = 0;
+	bson->finalized = FALSE;
+	bson->ref_count = 1;
 
-	bson_buffer_init(&(jbson->buffer));
+	j_bson_resize(bson, 128);
 
-	return jbson;
+	return bson;
 }
 
 /**
- * Creates a new JBSON object from an existing bson object.
- *
- * \author Michael Kuhn
- *
- * \code
- * JBSON* j;
- * j = j_bson_new_from_bson(...);
- * \endcode
- *
- * \param bson_ The existing bson object.
- *
- * \return A new JBSON object.
- **/
-JBSON*
-j_bson_new_from_bson (bson* bson_)
-{
-	JBSON* jbson;
-
-	g_return_val_if_fail(bson_ != NULL, NULL);
-
-	jbson = g_slice_new(JBSON);
-	jbson->destroy.bson = FALSE;
-	jbson->destroy.buffer = FALSE;
-	jbson->ref_count = 1;
-
-	bson_init(&(jbson->bson), bson_->data, 0);
-
-	return jbson;
-}
-
-/**
- * Creates a new empty JBSON object.
+ * Creates a new empty BSON document.
  *
  * \author Michael Kuhn
  *
@@ -148,45 +187,52 @@ j_bson_new_from_bson (bson* bson_)
  * j = j_bson_new_empty();
  * \endcode
  *
- * \return A new empty JBSON object.
+ * \return A new empty BSON document.
  **/
 JBSON*
 j_bson_new_empty (void)
 {
-	JBSON* jbson;
+	static JBSON* bson = NULL;
 
-	jbson = g_slice_new(JBSON);
-	jbson->destroy.bson = TRUE;
-	jbson->destroy.buffer = FALSE;
-	jbson->ref_count = 1;
+	if (G_UNLIKELY(bson == NULL))
+	{
+		bson = g_slice_new(JBSON);
+		bson->data = NULL;
+		bson->current = NULL;
+		bson->allocated_size = 0;
+		bson->finalized = FALSE;
+		bson->ref_count = 1;
 
-	bson_empty(&(jbson->bson));
+		j_bson_resize(bson, 5);
+	}
 
-	return jbson;
+	j_bson_ref(bson);
+
+	return bson;
 }
 
 /**
- * Increases the JBSON object's reference count.
+ * Increases the BSON document's reference count.
  *
  * \author Michael Kuhn
  *
- * \param list A JBSON object.
+ * \param list A BSON document.
  *
- * \return The JBSON object.
+ * \return The BSON document.
  **/
 JBSON*
-j_bson_ref (JBSON* jbson)
+j_bson_ref (JBSON* bson)
 {
-	g_return_val_if_fail(jbson != NULL, NULL);
+	g_return_val_if_fail(bson != NULL, NULL);
 
-	jbson->ref_count++;
+	bson->ref_count++;
 
-	return jbson;
+	return bson;
 }
 
 /**
- * Decreases the JBSON object's reference count.
- * When the reference count reaches zero, frees the memory allocated for the JBSON object.
+ * Decreases the BSON document's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the BSON document.
  *
  * \author Michael Kuhn
  *
@@ -196,130 +242,163 @@ j_bson_ref (JBSON* jbson)
  * j_bson_unref(j);
  * \endcode
  *
- * \param jbson A JBSON object.
+ * \param bson A BSON document.
  **/
 void
-j_bson_unref (JBSON* jbson)
+j_bson_unref (JBSON* bson)
 {
-	g_return_if_fail(jbson != NULL);
+	g_return_if_fail(bson != NULL);
 
-	jbson->ref_count--;
+	bson->ref_count--;
 
-	if (jbson->ref_count == 0)
+	if (bson->ref_count == 0)
 	{
-		if (jbson->destroy.bson)
-		{
-			bson_destroy(&(jbson->bson));
-		}
+		g_free(bson->data);
 
-		if (jbson->destroy.buffer)
-		{
-			bson_buffer_destroy(&(jbson->buffer));
-		}
-
-		g_slice_free(JBSON, jbson);
+		g_slice_free(JBSON, bson);
 	}
 }
 
 /**
- * Starts a new sub-object.
+ * Returns the BSON document's size.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
- * \param key The sub-object's key.
+ * \param bson A BSON document.
+ *
+ * \return The size.
  **/
-void
-j_bson_append_object_start (JBSON* jbson, const gchar* key)
+gint32
+j_bson_size (JBSON* bson)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	g_return_val_if_fail(bson != NULL, -1);
 
-	bson_append_start_object(&(jbson->buffer), key);
+	j_bson_finalize(bson);
+
+	return GINT32_FROM_LE(*((const gint32*)(bson->data)));
 }
 
 /**
- * Ends the last sub-object started.
+ * Appends a newly generated object ID.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
+ * \param bson A BSON document.
+ * \param key The object ID's key.
  **/
 void
-j_bson_append_object_end (JBSON* jbson)
+j_bson_append_new_object_id (JBSON* bson, const gchar* key)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	JObjectID* id;
 
-	bson_append_finish_object(&(jbson->buffer));
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
+
+	id = j_object_id_new(TRUE);
+	j_bson_append_object_id(bson, key, id);
+	j_object_id_free(id);
 }
 
 /**
- * Appends a newly generated ID.
+ * Appends an object ID.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
+ * \param bson A BSON document.
  * \param key The ID's key.
+ * \param value The object ID.
  **/
 void
-j_bson_append_new_id (JBSON* jbson, const gchar* key)
+j_bson_append_object_id (JBSON* bson, const gchar* key, JObjectID* value)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
 
-	bson_append_new_oid(&(jbson->buffer), key);
+	j_bson_append_element(bson, key, J_BSON_TYPE_OBJECT_ID, 12);
+	j_bson_append_n(bson, j_object_id_data(value), 12);
+	bson->finalized = FALSE;
 }
 
 /**
- * Appends an ID.
+ * Appends a boolean.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
- * \param key The ID's key.
- * \param value The ID.
+ * \param bson A BSON document.
+ * \param key The boolean's key.
+ * \param value The boolean.
  **/
 void
-j_bson_append_id (JBSON* jbson, const gchar* key, const bson_oid_t* value)
+j_bson_append_boolean (JBSON* bson, const gchar* key, gboolean value)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	gchar v;
 
-	bson_append_oid(&(jbson->buffer), key, value);
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
+
+	v = (value) ? 1 : 0;
+
+	j_bson_append_element(bson, key, J_BSON_TYPE_BOOLEAN, 1);
+	j_bson_append_8(bson, &value);
+	bson->finalized = FALSE;
 }
 
 /**
- * Appends an integer.
+ * Appends a 32 bit integer.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
+ * \param bson A BSON document.
  * \param key The integer's key.
  * \param value The integer.
  **/
 void
-j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
+j_bson_append_int32 (JBSON* bson, const gchar* key, gint32 value)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
 
-	bson_append_int(&(jbson->buffer), key, value);
+	j_bson_append_element(bson, key, J_BSON_TYPE_INT32, 4);
+	j_bson_append_32(bson, &value);
+	bson->finalized = FALSE;
+}
+
+/**
+ * Appends a 64 bit integer.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param bson A BSON document.
+ * \param key The integer's key.
+ * \param value The integer.
+ **/
+void
+j_bson_append_int64 (JBSON* bson, const gchar* key, gint64 value)
+{
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
+
+	j_bson_append_element(bson, key, J_BSON_TYPE_INT64, 8);
+	j_bson_append_64(bson, &value);
+	bson->finalized = FALSE;
 }
 
 /**
@@ -330,45 +409,74 @@ j_bson_append_int (JBSON* jbson, const gchar* key, gint value)
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
+ * \param bson A BSON document.
  * \param key The string's key.
  * \param value The string.
  **/
 void
-j_bson_append_str (JBSON* jbson, const gchar* key, const gchar* value)
+j_bson_append_string (JBSON* bson, const gchar* key, const gchar* value)
 {
-	g_return_if_fail(jbson != NULL);
-	g_return_if_fail(jbson->destroy.buffer);
+	gsize len;
 
-	bson_append_string(&(jbson->buffer), key, value);
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
+	g_return_if_fail(value != NULL);
+
+	len = strlen(value) + 1;
+	j_bson_append_element(bson, key, J_BSON_TYPE_STRING, len);
+	j_bson_append_32(bson, &len);
+	j_bson_append_n(bson, value, len);
+	bson->finalized = FALSE;
 }
 
 /**
- * Constructs and returns the BSON object.
+ * Appends a BSON document.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param jbson A JBSON object.
- *
- * \return A bson object.
+ * \param bson A BSON document.
+ * \param key The BSON document's key.
+ * \param value The BSON document.
  **/
-bson*
-j_bson_get (JBSON* jbson)
+void
+j_bson_append_document (JBSON* bson, const gchar* key, JBSON* value)
 {
-	g_return_val_if_fail(jbson != NULL, NULL);
+	gint32 size;
 
-	if (jbson->destroy.buffer)
-	{
-		jbson->destroy.bson = TRUE;
-		jbson->destroy.buffer = FALSE;
+	g_return_if_fail(bson != NULL);
+	g_return_if_fail(key != NULL);
+	g_return_if_fail(value != NULL);
+	g_return_if_fail(bson != value);
 
-		bson_from_buffer(&(jbson->bson), &(jbson->buffer));
-	}
+	size = j_bson_size(value);
+	j_bson_append_element(bson, key, J_BSON_TYPE_DOCUMENT, size);
+	j_bson_append_n(bson, j_bson_data(value), size);
+	bson->finalized = FALSE;
+}
 
-	return &(jbson->bson);
+/**
+ * Constructs and returns the BSON document's data.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param bson A BSON document.
+ *
+ * \return The data.
+ **/
+gpointer
+j_bson_data (JBSON* bson)
+{
+	g_return_val_if_fail(bson != NULL, NULL);
+
+	j_bson_finalize(bson);
+
+	return bson->data;
 }
 
 /**

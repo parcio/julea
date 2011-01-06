@@ -27,22 +27,20 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <julea.h>
 
 #include <jbson.h>
 
 static void
-test_bson_fixture_setup (JBSON** jbson, gconstpointer data)
+test_bson_fixture_setup (JBSON** bson, gconstpointer data)
 {
-	*jbson = j_bson_new();
+	*bson = j_bson_new();
 }
 
 static void
-test_bson_fixture_teardown (JBSON** jbson, gconstpointer data)
+test_bson_fixture_teardown (JBSON** bson, gconstpointer data)
 {
-	j_bson_unref(*jbson);
+	j_bson_unref(*bson);
 }
 
 static void
@@ -52,42 +50,53 @@ test_bson_new_unref (gpointer* fixture, gconstpointer data)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JBSON* jbson;
+		JBSON* bson;
 
-		jbson = j_bson_new();
-		g_assert(jbson != NULL);
-		j_bson_unref(jbson);
+		bson = j_bson_new();
+		g_assert(bson != NULL);
+		j_bson_unref(bson);
 	}
 }
 
 static void
-test_bson_append (JBSON** jbson, gconstpointer data)
+test_bson_append (JBSON** bson, gconstpointer data)
 {
-	const guint n = 100000;
+	const guint n = 3;
 
 	for (guint i = 0; i < n; i++)
 	{
+		JBSON* b;
 		gchar* name;
 
+		b = j_bson_new();
 		name = g_strdup_printf("%u", i);
-		j_bson_append_object_start(*jbson, name);
-		j_bson_append_new_id(*jbson, "_id");
+
+		j_bson_append_boolean(b, "_boolean", i);
+		j_bson_append_int32(b, "_int32", i);
+		j_bson_append_int64(b, "_int64", i);
+		j_bson_append_string(b, "_string", name);
+
+		j_bson_append_new_object_id(*bson, "_id");
 		// FIXME append_id
-		j_bson_append_int(*jbson, "int", i);
-		j_bson_append_str(*jbson, "str", name);
-		j_bson_append_object_end(*jbson);
+		j_bson_append_boolean(*bson, "boolean", i);
+		j_bson_append_int32(*bson, "int32", i);
+		j_bson_append_int64(*bson, "int64", i);
+		j_bson_append_string(*bson, "string", name);
+		j_bson_append_document(*bson, name, b);
+
 		g_free(name);
+		j_bson_unref(b);
 	}
 }
 
 static void
-test_bson_get (JBSON** jbson, gconstpointer data)
+test_bson_data (JBSON** bson, gconstpointer data)
 {
-	bson* b;
+	gconstpointer b;
 
-	b = j_bson_get(*jbson);
+	b = j_bson_data(*bson);
 	g_assert(b != NULL);
-	b = j_bson_get(*jbson);
+	b = j_bson_data(*bson);
 	g_assert(b != NULL);
 }
 
@@ -98,7 +107,7 @@ int main (int argc, char** argv)
 	g_test_add("/julea/bson/new_unref", gpointer, NULL, NULL, test_bson_new_unref, NULL);
 
 	g_test_add("/julea/bson/append", JBSON*, NULL, test_bson_fixture_setup, test_bson_append, test_bson_fixture_teardown);
-	g_test_add("/julea/bson/get", JBSON*, NULL, test_bson_fixture_setup, test_bson_get, test_bson_fixture_teardown);
+	g_test_add("/julea/bson/get", JBSON*, NULL, test_bson_fixture_setup, test_bson_data, test_bson_fixture_teardown);
 
 	return g_test_run();
 }
