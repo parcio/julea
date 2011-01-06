@@ -126,7 +126,7 @@ j_store_iterator_get (JStoreIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	jbson = j_bson_new_from_bson(&(iterator->cursor->current));
+	jbson = j_bson_new_for_data(iterator->cursor->current.data);
 	collection = j_collection_new_from_bson(iterator->store, jbson);
 	j_bson_unref(jbson);
 

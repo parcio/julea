@@ -31,12 +31,13 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 #include <string.h>
 
 #include "jbson.h"
 
 #include "jobjectid.h"
-
 
 /**
  * \defgroup JBSON BSON
@@ -72,6 +73,9 @@ struct JBSON
 	 * Reference count.
 	 **/
 	guint ref_count;
+
+	/* FIXME hack */
+	bson b;
 };
 
 static void
@@ -87,6 +91,7 @@ j_bson_resize (JBSON* bson, gsize n)
 	bson->allocated_size += n;
 	bson->data = g_renew(gchar, bson->data, bson->allocated_size);
 	bson->current = bson->data + pos;
+	bson_init(&(bson->b), bson->data, 0);
 }
 
 static void
@@ -173,6 +178,23 @@ j_bson_new (void)
 	bson->ref_count = 1;
 
 	j_bson_resize(bson, 128);
+
+	return bson;
+}
+
+/* FIXME hack */
+JBSON*
+j_bson_new_for_data (gconstpointer data)
+{
+	JBSON* bson;
+
+	bson = g_slice_new(JBSON);
+	bson->data = data;
+	bson->current = NULL;
+	bson->allocated_size = 0;
+	bson->finalized = TRUE;
+	bson->ref_count = 1;
+	bson_init(&(bson->b), bson->data, 0);
 
 	return bson;
 }
@@ -477,6 +499,13 @@ j_bson_data (JBSON* bson)
 	j_bson_finalize(bson);
 
 	return bson->data;
+}
+
+/* FIXME hack */
+bson*
+j_bson_get (JBSON* bson)
+{
+	return &(bson->b);
 }
 
 /**

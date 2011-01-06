@@ -191,10 +191,10 @@ j_item_serialize (JItem* item)
 	g_return_val_if_fail(item != NULL, NULL);
 
 	jbson = j_bson_new();
-	j_bson_append_new_id(jbson, "_id");
+	j_bson_append_new_object_id(jbson, "_id");
 	/* FIXME id */
-	j_bson_append_str(jbson, "Collection", j_collection_name(item->collection));
-	j_bson_append_str(jbson, "Name", item->name);
+	j_bson_append_string(jbson, "Collection", j_collection_name(item->collection));
+	j_bson_append_string(jbson, "Name", item->name);
 
 	return jbson;
 }

@@ -36,6 +36,7 @@
 #include "jbson-iterator.h"
 
 #include "jbson.h"
+#include "jobjectid.h"
 
 /**
  * \defgroup JBSONIterator BSON Iterator

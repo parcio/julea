@@ -39,6 +39,7 @@ typedef struct JBSONIterator JBSONIterator;
 #include <glib.h>
 
 #include "jbson.h"
+#include "jobjectid.h"
 
 JBSONIterator* j_bson_iterator_new (JBSON*);
 void j_bson_iterator_free (JBSONIterator*);

@@ -30,11 +30,17 @@ def build (ctx):
 		env = e
 	)
 
+	# FIXME hack
+	e = ctx.env.derive()
+	e.CFLAGS = ctx.env.CFLAGS[:]
+	e.CFLAGS.remove('-Wshadow')
+
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
 		target = 'julea',
 		use = ['GLIB', 'mongodb'],
-		includes = ['mongodb/src']
+		includes = ['mongodb/src'],
+		env = e
 	)
 
 	for test in ('bson', 'bson-iterator', 'list', 'list-iterator', 'semantics'):
@@ -42,7 +48,8 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['julea', 'mongodb/src']
+			includes = ['julea', 'mongodb/src'],
+			env = e
 		)
 
 	ctx.program(

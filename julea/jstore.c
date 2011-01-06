@@ -213,7 +213,7 @@ j_store_create (JStore* store, JList* collections)
 	mc = j_connection_connection(store->connection);
 
 	index = j_bson_new();
-	j_bson_append_int(index, "Name", 1);
+	j_bson_append_int32(index, "Name", 1);
 
 	mongo_create_index(mc, j_store_collection_collections(store), j_bson_get(index), MONGO_INDEX_UNIQUE, NULL);
 
@@ -274,25 +274,28 @@ j_store_get (JStore* store, JList* names)
 	{
 		const gchar* name = j_list_get(names, 0);
 
-		j_bson_append_str(jbson, "Name", name);
+		j_bson_append_string(jbson, "Name", name);
 		n = 1;
 	}
 	else
 	{
+		JBSON* names_bson;
 		JListIterator* it;
 
-		j_bson_append_object_start(jbson, "$or");
+		names_bson = j_bson_new();
 		it = j_list_iterator_new(names);
 
 		while (j_list_iterator_next(it))
 		{
 			const gchar* name = j_list_iterator_get(it);
 
-			j_bson_append_str(jbson, "Name", name);
+			j_bson_append_string(names_bson, "Name", name);
 		}
 
 		j_list_iterator_free(it);
-		j_bson_append_object_end(jbson);
+
+		j_bson_append_document(jbson, "$or", names_bson);
+		j_bson_unref(names_bson);
 	}
 
 	empty = j_bson_new_empty();
@@ -306,7 +309,7 @@ j_store_get (JStore* store, JList* names)
 	{
 		JBSON* collection_bson;
 
-		collection_bson = j_bson_new_from_bson(&(cursor->current));
+		collection_bson = j_bson_new_for_data(cursor->current.data);
 		j_list_append(collections, j_collection_new_from_bson(store, collection_bson));
 		j_bson_unref(collection_bson);
 	}

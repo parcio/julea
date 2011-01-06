@@ -87,7 +87,7 @@ j_collection_iterator_new (JCollection* collection)
 	jbson = j_bson_new();
 
 	// FIXME id
-	j_bson_append_str(jbson, "Collection", j_collection_name(iterator->collection));
+	j_bson_append_string(jbson, "Collection", j_collection_name(iterator->collection));
 
 	iterator->cursor = mongo_find(mc, j_collection_collection_items(iterator->collection), j_bson_get(jbson), j_bson_get(empty), 0, 0, 0);
 
@@ -132,7 +132,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	jbson = j_bson_new_from_bson(&(iterator->cursor->current));
+	jbson = j_bson_new_for_data(iterator->cursor->current.data);
 	item = j_item_new_from_bson(iterator->collection, jbson);
 	j_bson_unref(jbson);
 

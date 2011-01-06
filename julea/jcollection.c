@@ -232,8 +232,8 @@ j_collection_create (JCollection* collection, JList* items)
 	mc = j_connection_connection(j_store_connection(collection->store));
 
 	index = j_bson_new();
-	j_bson_append_int(index, "Collection", 1);
-	j_bson_append_int(index, "Name", 1);
+	j_bson_append_int32(index, "Collection", 1);
+	j_bson_append_int32(index, "Name", 1);
 
 	mongo_create_index(mc, j_collection_collection_items(collection), j_bson_get(index), MONGO_INDEX_UNIQUE, NULL);
 
@@ -283,31 +283,34 @@ j_collection_get (JCollection* collection, JList* names)
 	length = j_list_length(names);
 
 	/* FIXME */
-	j_bson_append_str(jbson, "Collection", collection->name);
+	j_bson_append_string(jbson, "Collection", collection->name);
 
 	if (length == 1)
 	{
 		const gchar* name = j_list_get(names, 0);
 
-		j_bson_append_str(jbson, "Name", name);
+		j_bson_append_string(jbson, "Name", name);
 		n = 1;
 	}
 	else
 	{
+		JBSON* names_bson;
 		JListIterator* it;
 
-		j_bson_append_object_start(jbson, "$or");
+		names_bson = j_bson_new();
 		it = j_list_iterator_new(names);
 
 		while (j_list_iterator_next(it))
 		{
 			const gchar* name = j_list_iterator_get(it);
 
-			j_bson_append_str(jbson, "Name", name);
+			j_bson_append_string(names_bson, "Name", name);
 		}
 
 		j_list_iterator_free(it);
-		j_bson_append_object_end(jbson);
+
+		j_bson_append_document(jbson, "$or", names_bson);
+		j_bson_unref(names_bson);
 	}
 
 
@@ -322,7 +325,7 @@ j_collection_get (JCollection* collection, JList* names)
 	{
 		JBSON* item_bson;
 
-		item_bson = j_bson_new_from_bson(&(cursor->current));
+		item_bson = j_bson_new_for_data(cursor->current.data);
 		j_list_append(items, j_item_new_from_bson(collection, item_bson));
 		j_bson_unref(item_bson);
 	}
@@ -437,8 +440,8 @@ j_collection_serialize (JCollection* collection)
 	g_return_val_if_fail(collection != NULL, NULL);
 
 	jbson = j_bson_new();
-	j_bson_append_new_id(jbson, "_id");
-	j_bson_append_str(jbson, "Name", collection->name);
+	j_bson_append_new_object_id(jbson, "_id");
+	j_bson_append_string(jbson, "Name", collection->name);
 
 	return jbson;
 }
