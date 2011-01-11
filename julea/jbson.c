@@ -275,7 +275,11 @@ j_bson_unref (JBSON* bson)
 
 	if (bson->ref_count == 0)
 	{
-		g_free(bson->data);
+		/* FIXME hack */
+		if (bson->allocated_size > 0)
+		{
+			g_free(bson->data);
+		}
 
 		g_slice_free(JBSON, bson);
 	}
@@ -505,6 +509,10 @@ j_bson_data (JBSON* bson)
 bson*
 j_bson_get (JBSON* bson)
 {
+	g_return_val_if_fail(bson != NULL, NULL);
+
+	j_bson_finalize(bson);
+
 	return &(bson->b);
 }
 
