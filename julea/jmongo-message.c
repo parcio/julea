@@ -43,22 +43,6 @@
  * See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol.
  */
 
-static const gint32 j_mongo_message_zero = 0;
-
-enum JMongoMessageOpCode
-{
-	J_MONGO_MESSAGE_OP_REPLY = 1,
-	J_MONGO_MESSAGE_OP_MSG = 1000,
-	J_MONGO_MESSAGE_OP_UPDATE = 2001,
-	J_MONGO_MESSAGE_OP_INSERT = 2002,
-	J_MONGO_MESSAGE_OP_QUERY = 2004,
-	J_MONGO_MESSAGE_OP_GET_MORE = 2005,
-	J_MONGO_MESSAGE_OP_DELETE = 2006,
-	J_MONGO_MESSAGE_OP_KILL_CURSORS = 2007
-};
-
-typedef enum JMongoMessageOpCode JMongoMessageOpCode;
-
 #pragma pack(4)
 struct JMongoMessageHeader
 {
@@ -83,11 +67,15 @@ struct JMongoMessage
 #pragma pack()
 
 JMongoMessage*
-j_mongo_message_new (gsize length)
+j_mongo_message_new (gsize length, JMongoMessageOp op)
 {
 	JMongoMessage* message;
 
 	message = g_malloc(sizeof(JMongoMessageHeader) + length);
+	message->header.message_length = GINT32_TO_LE(sizeof(JMongoMessageHeader) + length);
+	message->header.request_id = GINT32_TO_LE(0);
+	message->header.response_to = GINT32_TO_LE(0);
+	message->header.op_code = GINT32_TO_LE(op);
 
 	return message;
 }
@@ -96,6 +84,18 @@ void
 j_mongo_message_free (JMongoMessage* message)
 {
 	g_free(message);
+}
+
+gpointer
+j_mongo_message_data (JMongoMessage* message)
+{
+	return message->data;
+}
+
+gsize
+j_mongo_message_length (JMongoMessage* message)
+{
+	return GINT32_FROM_LE(message->header.message_length);
 }
 
 /**

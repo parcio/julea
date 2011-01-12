@@ -29,24 +29,17 @@
  * \file
  **/
 
-#ifndef H_MONGO_CONNECTION
-#define H_MONGO_CONNECTION
-
-struct JMongoConnection;
-
-typedef struct JMongoConnection JMongoConnection;
+#ifndef H_MONGO
+#define H_MONGO
 
 #include <glib.h>
 
-#include "jmongo-message.h"
+#include "jbson.h"
+#include "jlist.h"
+#include "jmongo-connection.h"
 
-JMongoConnection* j_mongo_connection_new (void);
-JMongoConnection* j_mongo_connection_ref (JMongoConnection*);
-void j_mongo_connection_unref (JMongoConnection*);
+void j_mongo_create_index(JMongoConnection*, const gchar*, JBSON*, gboolean);
 
-gboolean j_mongo_connection_connect (JMongoConnection*, const gchar*);
-void j_mongo_connection_disconnect (JMongoConnection*);
-
-void j_mongo_connection_send (JMongoConnection*, JMongoMessage*);
+void j_mongo_insert_list (JMongoConnection*, const gchar*, JList*);
 
 #endif

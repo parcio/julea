@@ -1,0 +1,135 @@
+/*
+ * Copyright (c) 2010-2011 Michael Kuhn
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/**
+ * \file
+ **/
+
+#include <glib.h>
+
+#include <string.h>
+
+#include "jmongo.h"
+
+#include "jbson.h"
+#include "jlist-iterator.h"
+#include "jmongo-message.h"
+
+/**
+ * \defgroup JMongo MongoDB Convenience Functions
+ *
+ * @{
+ **/
+
+static const gint32 j_mongo_zero = 0;
+
+static gpointer
+j_mongo_append_8 (gchar* data, gconstpointer value)
+{
+	*data = *((const gchar*)value);
+
+	return (data + 1);
+}
+
+static gpointer
+j_mongo_append_32 (gchar* data, gconstpointer value)
+{
+
+	*((gint32*)(data)) = GINT32_TO_LE(*((const gint32*)value));
+
+	return (data + 4);
+}
+
+static gpointer
+j_mongo_append_64 (gchar* data, gconstpointer value)
+{
+
+	*((gint64*)(data)) = GINT64_TO_LE(*((const gint64*)value));
+
+	return (data + 8);
+}
+
+static gpointer
+j_mongo_append_n (gchar* data, gconstpointer value, gsize n)
+{
+	memcpy(data, value, n);
+
+	return (data + n);
+}
+
+void
+j_mongo_create_index(JMongoConnection* connection, const gchar* collection, JBSON* bson, gboolean is_unique)
+{
+}
+
+void
+j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JList* list)
+{
+	JListIterator* it;
+	JMongoMessage* message;
+	gsize length;
+	gsize message_length;
+	gpointer data;
+
+	length = strlen(collection) + 1;
+	message_length = 4 + length;
+	it = j_list_iterator_new(list);
+
+	while (j_list_iterator_next(it))
+	{
+		JBSON* bson = j_list_iterator_get(it);
+
+		message_length += j_bson_size(bson);
+	}
+
+	j_list_iterator_free(it);
+
+	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_INSERT);
+	data = j_mongo_message_data(message);
+
+	data = j_mongo_append_32(data, &j_mongo_zero);
+	data = j_mongo_append_n(data, collection, length);
+
+	it = j_list_iterator_new(list);
+
+	while (j_list_iterator_next(it))
+	{
+		JBSON* bson = j_list_iterator_get(it);
+
+		data = j_mongo_append_n(data, j_bson_data(bson), j_bson_size(bson));
+	}
+
+	j_list_iterator_free(it);
+
+	j_mongo_connection_send(connection, message);
+
+	j_mongo_message_free(message);
+}
+
+/**
+ * @}
+ **/

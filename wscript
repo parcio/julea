@@ -48,7 +48,7 @@ def build (ctx):
 	e.CFLAGS.remove('-Wshadow')
 
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo-connection', 'jmongo-message', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-message', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
 		target = 'julea',
 		use = ['GLIB', 'GOBJECT', 'GIO', 'mongodb'],
 		includes = ['mongodb/src'],

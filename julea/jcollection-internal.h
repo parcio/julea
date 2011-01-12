@@ -36,8 +36,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include "jbson.h"
 #include "jstore.h"
 

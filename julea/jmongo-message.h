@@ -36,9 +36,26 @@ struct JMongoMessage;
 
 typedef struct JMongoMessage JMongoMessage;
 
+enum JMongoMessageOp
+{
+	J_MONGO_MESSAGE_OP_REPLY = 1,
+	J_MONGO_MESSAGE_OP_MSG = 1000,
+	J_MONGO_MESSAGE_OP_UPDATE = 2001,
+	J_MONGO_MESSAGE_OP_INSERT = 2002,
+	J_MONGO_MESSAGE_OP_QUERY = 2004,
+	J_MONGO_MESSAGE_OP_GET_MORE = 2005,
+	J_MONGO_MESSAGE_OP_DELETE = 2006,
+	J_MONGO_MESSAGE_OP_KILL_CURSORS = 2007
+};
+
+typedef enum JMongoMessageOp JMongoMessageOp;
+
 #include <glib.h>
 
-JMongoMessage* j_mongo_message_new (gsize);
+JMongoMessage* j_mongo_message_new (gsize, JMongoMessageOp);
 void j_mongo_message_free (JMongoMessage*);
+
+gpointer j_mongo_message_data (JMongoMessage*);
+gsize j_mongo_message_length (JMongoMessage*);
 
 #endif

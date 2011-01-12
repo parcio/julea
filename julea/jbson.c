@@ -121,7 +121,6 @@ j_bson_append_8 (JBSON* bson, gconstpointer data)
 static void
 j_bson_append_32 (JBSON* bson, gconstpointer data)
 {
-
 	*((gint32*)(bson->current)) = GINT32_TO_LE(*((const gint32*)data));
 	bson->current += 4;
 }
@@ -129,7 +128,6 @@ j_bson_append_32 (JBSON* bson, gconstpointer data)
 static void
 j_bson_append_64 (JBSON* bson, gconstpointer data)
 {
-
 	*((gint64*)(bson->current)) = GINT64_TO_LE(*((const gint64*)data));
 	bson->current += 8;
 }
