@@ -119,7 +119,7 @@ j_connection_get (JConnection* connection, const gchar* name)
 
 /* Internal */
 
-gpointer
+JMongoConnection*
 j_connection_connection (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);

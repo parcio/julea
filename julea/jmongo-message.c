@@ -29,13 +29,75 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#include <glib.h>
 
-#include "jconnection.h"
+#include "jmongo-message.h"
 
-#include "jmongo-connection.h"
+/**
+ * \defgroup JMongoMessage MongoDB Message
+ *
+ * @{
+ **/
 
-JMongoConnection* j_connection_connection (JConnection*);
+/*
+ * See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol.
+ */
 
-#endif
+static const gint32 j_mongo_message_zero = 0;
+
+enum JMongoMessageOpCode
+{
+	J_MONGO_MESSAGE_OP_REPLY = 1,
+	J_MONGO_MESSAGE_OP_MSG = 1000,
+	J_MONGO_MESSAGE_OP_UPDATE = 2001,
+	J_MONGO_MESSAGE_OP_INSERT = 2002,
+	J_MONGO_MESSAGE_OP_QUERY = 2004,
+	J_MONGO_MESSAGE_OP_GET_MORE = 2005,
+	J_MONGO_MESSAGE_OP_DELETE = 2006,
+	J_MONGO_MESSAGE_OP_KILL_CURSORS = 2007
+};
+
+typedef enum JMongoMessageOpCode JMongoMessageOpCode;
+
+#pragma pack(4)
+struct JMongoMessageHeader
+{
+	gint32 message_length;
+	gint32 request_id;
+	gint32 response_to;
+	gint32 op_code;
+};
+#pragma pack()
+
+typedef struct JMongoMessageHeader JMongoMessageHeader;
+
+/**
+ * A MongoDB message.
+ **/
+#pragma pack(4)
+struct JMongoMessage
+{
+	JMongoMessageHeader header;
+	gchar data[];
+};
+#pragma pack()
+
+JMongoMessage*
+j_mongo_message_new (gsize length)
+{
+	JMongoMessage* message;
+
+	message = g_malloc(sizeof(JMongoMessageHeader) + length);
+
+	return message;
+}
+
+void
+j_mongo_message_free (JMongoMessage* message)
+{
+	g_free(message);
+}
+
+/**
+ * @}
+ **/

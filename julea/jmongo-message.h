@@ -29,13 +29,16 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#ifndef H_MONGO_MESSAGE
+#define H_MONGO_MESSAGE
 
-#include "jconnection.h"
+struct JMongoMessage;
 
-#include "jmongo-connection.h"
+typedef struct JMongoMessage JMongoMessage;
 
-JMongoConnection* j_connection_connection (JConnection*);
+#include <glib.h>
+
+JMongoMessage* j_mongo_message_new (gsize);
+void j_mongo_message_free (JMongoMessage*);
 
 #endif
