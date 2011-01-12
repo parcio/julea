@@ -15,6 +15,18 @@ def configure (ctx):
 		uselib_store = 'GLIB'
 	)
 
+	ctx.check_cfg(
+		package = 'gobject-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GOBJECT'
+	)
+
+	ctx.check_cfg(
+		package = 'gio-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GIO'
+	)
+
 	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra']
 	ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 
@@ -36,9 +48,9 @@ def build (ctx):
 	e.CFLAGS.remove('-Wshadow')
 
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo-connection', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
 		target = 'julea',
-		use = ['GLIB', 'mongodb'],
+		use = ['GLIB', 'GOBJECT', 'GIO', 'mongodb'],
 		includes = ['mongodb/src'],
 		env = e
 	)
@@ -55,6 +67,6 @@ def build (ctx):
 	ctx.program(
 		source = ['benchmark.c'],
 		target = 'benchmark',
-		use = ['GLIB', 'julea'],
+		use = ['GLIB', 'GOBJECT', 'julea'],
 		includes = ['julea']
 	)

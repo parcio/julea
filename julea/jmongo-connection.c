@@ -30,109 +30,121 @@
  **/
 
 #include <glib.h>
-
-#include "jconnection.h"
-#include "jconnection-internal.h"
+#include <gio/gio.h>
 
 #include "jmongo-connection.h"
 
 /**
- * \defgroup JConnection Connection
- *
- * Data structures and functions for managing connections to servers.
+ * \defgroup JMongoConnection MongoDB Connection
  *
  * @{
  **/
 
 /**
- * A JConnection.
+ * A MongoDB connection.
  **/
-struct JConnection
+struct JMongoConnection
 {
-	JMongoConnection* connection;
+	GInputStream* input;
+	GOutputStream* output;
 
 	gboolean connected;
 
 	guint ref_count;
 };
 
-JConnection*
-j_connection_new (void)
+JMongoConnection*
+j_mongo_connection_new (void)
 {
-	JConnection* connection;
+	JMongoConnection* connection;
 
-	connection = g_slice_new(JConnection);
-	connection->connection = j_mongo_connection_new();
+	connection = g_slice_new(JMongoConnection);
+	connection->input = NULL;
+	connection->output = NULL;
 	connection->connected = FALSE;
 	connection->ref_count = 1;
 
 	return connection;
 }
 
-/**
- * Increases a JConnection's reference count.
- **/
-JConnection*
-j_connection_ref (JConnection* connection)
+static void
+j_mongo_connection_close (JMongoConnection* connection)
 {
-	g_return_val_if_fail(connection != NULL, NULL);
+	if (connection->input != NULL)
+	{
+		g_object_unref(connection->input);
+		connection->input = NULL;
+	}
 
+	if (connection->output != NULL)
+	{
+		g_object_unref(connection->output);
+		connection->output = NULL;
+	}
+}
+
+JMongoConnection*
+j_mongo_connection_ref (JMongoConnection* connection)
+{
 	connection->ref_count++;
 
 	return connection;
 }
 
 void
-j_connection_unref (JConnection* connection)
+j_mongo_connection_unref (JMongoConnection* connection)
 {
-	g_return_if_fail(connection != NULL);
-
 	connection->ref_count--;
 
 	if (connection->ref_count == 0)
 	{
-		j_mongo_connection_unref(connection->connection);
+		j_mongo_connection_close(connection);
 
-		g_slice_free(JConnection, connection);
+		g_slice_free(JMongoConnection, connection);
 	}
 }
 
 gboolean
-j_connection_connect (JConnection* connection, const gchar* server)
+j_mongo_connection_connect (JMongoConnection* connection, const gchar* host)
 {
-	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(server != NULL, FALSE);
+	GSocketClient* client;
+	GSocketConnection* socket;
 
-	connection->connected = j_mongo_connection_connect(connection->connection, server);
-
-	return connection->connected;
-}
-
-JStore*
-j_connection_get (JConnection* connection, const gchar* name)
-{
-	g_return_val_if_fail(connection != NULL, NULL);
-	g_return_val_if_fail(name != NULL, NULL);
-
-	return j_store_new(connection, name);
-}
-
-/* Internal */
-
-gpointer
-j_connection_connection (JConnection* connection)
-{
-	g_return_val_if_fail(connection != NULL, NULL);
-
-	return connection->connection;
-}
-
-/*
-	ScopedDbConnection* _Connection::GetMongoDB ()
+	if (connection->connected)
 	{
-		return new ScopedDbConnection(m_servers_string);
+		return FALSE;
 	}
-*/
+
+	client = g_socket_client_new();
+
+	if ((socket = g_socket_client_connect_to_host(client, host, 27017, NULL, NULL)) == NULL)
+	{
+		goto error;
+	}
+
+	connection->input = g_io_stream_get_input_stream(G_IO_STREAM(socket));
+	connection->output = g_io_stream_get_output_stream(G_IO_STREAM(socket));
+	connection->connected = TRUE;
+
+	return TRUE;
+
+error:
+	g_object_unref(client);
+
+	return FALSE;
+}
+
+void
+j_mongo_connection_disconnect (JMongoConnection* connection)
+{
+	if (!connection->connected)
+	{
+		return;
+	}
+
+	j_mongo_connection_close(connection);
+	connection->connected = FALSE;
+}
 
 /**
  * @}

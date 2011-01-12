@@ -26,6 +26,7 @@
  */
 
 #include <glib.h>
+#include <glib-object.h>
 
 #include <julea.h>
 
@@ -38,6 +39,8 @@ int main (int argc, char** argv)
 	JSemantics* semantics;
 	JList* collections;
 	JListIterator* cliterator;
+
+	g_type_init();
 
 	if (argc != 2)
 	{

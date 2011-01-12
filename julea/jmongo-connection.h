@@ -29,13 +29,20 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#ifndef H_MONGO_CONNECTION
+#define H_MONGO_CONNECTION
 
-#include "jconnection.h"
+struct JMongoConnection;
 
-#include <mongo.h>
+typedef struct JMongoConnection JMongoConnection;
 
-gpointer j_connection_connection (JConnection*);
+#include <glib.h>
+
+JMongoConnection* j_mongo_connection_new (void);
+JMongoConnection* j_mongo_connection_ref (JMongoConnection*);
+void j_mongo_connection_unref (JMongoConnection*);
+
+gboolean j_mongo_connection_connect (JMongoConnection*, const gchar*);
+void j_mongo_connection_disconnect (JMongoConnection*);
 
 #endif
