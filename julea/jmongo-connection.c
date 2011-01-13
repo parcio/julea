@@ -45,6 +45,7 @@
  **/
 struct JMongoConnection
 {
+	GSocketConnection* connection;
 	GInputStream* input;
 	GOutputStream* output;
 
@@ -59,6 +60,7 @@ j_mongo_connection_new (void)
 	JMongoConnection* connection;
 
 	connection = g_slice_new(JMongoConnection);
+	connection->connection = NULL;
 	connection->input = NULL;
 	connection->output = NULL;
 	connection->connected = FALSE;
@@ -70,15 +72,11 @@ j_mongo_connection_new (void)
 static void
 j_mongo_connection_close (JMongoConnection* connection)
 {
-	if (connection->input != NULL)
+	if (connection->connection != NULL)
 	{
-		g_object_unref(connection->input);
+		g_object_unref(connection->connection);
+		connection->connection = NULL;
 		connection->input = NULL;
-	}
-
-	if (connection->output != NULL)
-	{
-		g_object_unref(connection->output);
 		connection->output = NULL;
 	}
 }
@@ -108,7 +106,6 @@ gboolean
 j_mongo_connection_connect (JMongoConnection* connection, const gchar* host)
 {
 	GSocketClient* client;
-	GSocketConnection* socket;
 
 	if (connection->connected)
 	{
@@ -117,13 +114,15 @@ j_mongo_connection_connect (JMongoConnection* connection, const gchar* host)
 
 	client = g_socket_client_new();
 
-	if ((socket = g_socket_client_connect_to_host(client, host, 27017, NULL, NULL)) == NULL)
+	if ((connection->connection = g_socket_client_connect_to_host(client, host, 27017, NULL, NULL)) == NULL)
 	{
 		goto error;
 	}
 
-	connection->input = g_io_stream_get_input_stream(G_IO_STREAM(socket));
-	connection->output = g_io_stream_get_output_stream(G_IO_STREAM(socket));
+	g_object_unref(client);
+
+	connection->input = g_io_stream_get_input_stream(G_IO_STREAM(connection->connection));
+	connection->output = g_io_stream_get_output_stream(G_IO_STREAM(connection->connection));
 	connection->connected = TRUE;
 
 	return TRUE;
