@@ -37,6 +37,8 @@
 
 #include "jbson.h"
 #include "jlist-iterator.h"
+#include "jmongo-connection.h"
+#include "jmongo-iterator.h"
 #include "jmongo-message.h"
 
 /**
@@ -81,9 +83,75 @@ j_mongo_append_n (gchar* data, gconstpointer value, gsize n)
 	return (data + n);
 }
 
+static gchar*
+j_mongo_get_db (const gchar* ns)
+{
+	gchar* db;
+	gchar* pos;
+
+	pos = strchr(ns, '.');
+
+	if (pos == NULL)
+	{
+		return g_strdup(ns);
+	}
+
+	db = g_new(gchar, pos - ns + 1);
+	g_strlcpy(db, ns, pos - ns + 1);
+
+	return db;
+}
+
 void
 j_mongo_create_index(JMongoConnection* connection, const gchar* collection, JBSON* bson, gboolean is_unique)
 {
+	JBSON* index;
+	gchar* db;
+	gchar* ns;
+
+	index = j_bson_new();
+
+	j_bson_append_document(index, "key", bson);
+	j_bson_append_string(index, "ns", collection);
+	j_bson_append_string(index, "name", "foobar");
+
+	if (is_unique)
+	{
+		j_bson_append_boolean(index, "unique", TRUE);
+	}
+
+	db = j_mongo_get_db(collection);
+	ns = g_strdup_printf("%s.system.indexes", db);
+
+	j_mongo_insert(connection, ns, index);
+
+	j_bson_unref(index);
+
+	g_free(db);
+	g_free(ns);
+}
+
+void
+j_mongo_insert (JMongoConnection* connection, const gchar* collection, JBSON* bson)
+{
+	JMongoMessage* message;
+	gsize length;
+	gsize message_length;
+	gpointer data;
+
+	length = strlen(collection) + 1;
+	message_length = 4 + length + j_bson_size(bson);
+
+	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_INSERT);
+	data = j_mongo_message_data(message);
+
+	data = j_mongo_append_32(data, &j_mongo_zero);
+	data = j_mongo_append_n(data, collection, length);
+	data = j_mongo_append_n(data, j_bson_data(bson), j_bson_size(bson));
+
+	j_mongo_connection_send(connection, message);
+
+	j_mongo_message_free(message);
 }
 
 void
@@ -128,6 +196,43 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 	j_mongo_connection_send(connection, message);
 
 	j_mongo_message_free(message);
+}
+
+JMongoIterator*
+j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* query, JBSON* fields, gint32 number_to_skip, gint32 number_to_return)
+{
+	JMongoMessage* message;
+	gsize length;
+	gsize message_length;
+	gpointer data;
+
+	length = strlen(collection) + 1;
+	message_length = 4 + length + 4 + 4 + j_bson_size(query);
+
+	if (fields != NULL)
+	{
+		message_length += j_bson_size(fields);
+	}
+
+	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_QUERY);
+	data = j_mongo_message_data(message);
+
+	data = j_mongo_append_32(data, &j_mongo_zero);
+	data = j_mongo_append_n(data, collection, length);
+	data = j_mongo_append_32(data, &number_to_skip);
+	data = j_mongo_append_32(data, &number_to_return);
+	data = j_mongo_append_n(data, j_bson_data(query), j_bson_size(query));
+
+	if (fields != NULL)
+	{
+		data = j_mongo_append_n(data, j_bson_data(fields), j_bson_size(fields));
+	}
+
+	j_mongo_connection_send(connection, message);
+
+	j_mongo_message_free(message);
+
+	return j_mongo_iterator_new();
 }
 
 /**

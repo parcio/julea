@@ -29,21 +29,21 @@
  * \file
  **/
 
-#ifndef H_MONGO
-#define H_MONGO
+#ifndef H_MONGO_ITERATOR
+#define H_MONGO_ITERATOR
+
+struct JMongoIterator;
+
+typedef struct JMongoIterator JMongoIterator;
 
 #include <glib.h>
 
 #include "jbson.h"
-#include "jlist.h"
-#include "jmongo-connection.h"
-#include "jmongo-iterator.h"
 
-void j_mongo_create_index(JMongoConnection*, const gchar*, JBSON*, gboolean);
+JMongoIterator* j_mongo_iterator_new (void);
+void j_mongo_iterator_free (JMongoIterator*);
 
-void j_mongo_insert (JMongoConnection*, const gchar*, JBSON*);
-void j_mongo_insert_list (JMongoConnection*, const gchar*, JList*);
-
-JMongoIterator* j_mongo_find (JMongoConnection*, const gchar*, JBSON*, JBSON*, gint32, gint32);
+gboolean j_mongo_iterator_next (JMongoIterator*);
+JBSON* j_mongo_iterator_get (JMongoIterator*);
 
 #endif

@@ -31,9 +31,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-#include <mongo.h>
-
 #include "jstore-iterator.h"
 
 #include "jbson.h"
@@ -41,6 +38,8 @@
 #include "jcollection-internal.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
+#include "jmongo.h"
+#include "jmongo-iterator.h"
 #include "jstore.h"
 #include "jstore-internal.h"
 
@@ -54,7 +53,7 @@
 
 struct JStoreIterator
 {
-	mongo_cursor* cursor;
+	JMongoIterator* iterator;
 
 	JStore* store;
 };
@@ -73,18 +72,18 @@ j_store_iterator_new (JStore* store)
 {
 	JBSON* empty;
 	JStoreIterator* iterator;
-	mongo_connection* mc;
+	JMongoConnection* connection;
 
 	g_return_val_if_fail(store != NULL, NULL);
 
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
 
-	mc = j_connection_connection(j_store_connection(iterator->store));
+	connection = j_connection_connection(j_store_connection(iterator->store));
 
 	empty = j_bson_new_empty();
 
-	iterator->cursor = mongo_find(mc, j_store_collection_collections(iterator->store), j_bson_get(empty), j_bson_get(empty), 0, 0, 0);
+	iterator->iterator = j_mongo_find(connection, j_store_collection_collections(iterator->store), empty, NULL, 0, 0);
 
 	j_bson_unref(empty);
 
@@ -103,7 +102,7 @@ j_store_iterator_free (JStoreIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	mongo_cursor_destroy(iterator->cursor);
+	j_mongo_iterator_free(iterator->iterator);
 
 	j_store_unref(iterator->store);
 
@@ -115,20 +114,20 @@ j_store_iterator_next (JStoreIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return (mongo_cursor_next(iterator->cursor) == 1);
+	return j_mongo_iterator_next(iterator->iterator);
 }
 
 JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
 {
-	JBSON* jbson;
+	JBSON* bson;
 	JCollection* collection;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	jbson = j_bson_new_for_data(iterator->cursor->current.data);
-	collection = j_collection_new_from_bson(iterator->store, jbson);
-	j_bson_unref(jbson);
+	bson = j_mongo_iterator_get(iterator->iterator);
+	collection = j_collection_new_from_bson(iterator->store, bson);
+	j_bson_unref(bson);
 
 	return collection;
 }

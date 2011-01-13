@@ -139,12 +139,12 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 /* Internal */
 
 JItem*
-j_item_new_from_bson (JCollection* collection, JBSON* jbson)
+j_item_new_from_bson (JCollection* collection, JBSON* bson)
 {
 	JItem* item;
 
 	g_return_val_if_fail(collection != NULL, NULL);
-	g_return_val_if_fail(jbson != NULL, NULL);
+	g_return_val_if_fail(bson != NULL, NULL);
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
@@ -152,7 +152,7 @@ j_item_new_from_bson (JCollection* collection, JBSON* jbson)
 	item->semantics = NULL;
 	item->ref_count = 1;
 
-	j_item_deserialize(item, jbson);
+	j_item_deserialize(item, bson);
 
 	return item;
 }
@@ -186,28 +186,28 @@ j_item_associate (JItem* item, JCollection* collection)
 JBSON*
 j_item_serialize (JItem* item)
 {
-	JBSON* jbson;
+	JBSON* bson;
 
 	g_return_val_if_fail(item != NULL, NULL);
 
-	jbson = j_bson_new();
-	j_bson_append_new_object_id(jbson, "_id");
+	bson = j_bson_new();
+	j_bson_append_new_object_id(bson, "_id");
 	/* FIXME id */
-	j_bson_append_string(jbson, "Collection", j_collection_name(item->collection));
-	j_bson_append_string(jbson, "Name", item->name);
+	j_bson_append_string(bson, "Collection", j_collection_name(item->collection));
+	j_bson_append_string(bson, "Name", item->name);
 
-	return jbson;
+	return bson;
 }
 
 void
-j_item_deserialize (JItem* item, JBSON* jbson)
+j_item_deserialize (JItem* item, JBSON* bson)
 {
 	JBSONIterator* iterator;
 
 	g_return_if_fail(item != NULL);
-	g_return_if_fail(jbson != NULL);
+	g_return_if_fail(bson != NULL);
 
-	iterator = j_bson_iterator_new(jbson);
+	iterator = j_bson_iterator_new(bson);
 
 	/*
 		m_id = o.getField("_id").OID();

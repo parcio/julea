@@ -192,12 +192,12 @@ j_store_create (JStore* store, JList* collections)
 	while (j_list_iterator_next(it))
 	{
 		JCollection* collection = j_list_iterator_get(it);
-		JBSON* jbson;
+		JBSON* bson;
 
 		j_collection_associate(collection, store);
-		jbson = j_collection_serialize(collection);
+		bson = j_collection_serialize(collection);
 
-		j_list_append(obj, jbson);
+		j_list_append(obj, bson);
 	}
 
 	j_list_iterator_free(it);
@@ -237,9 +237,9 @@ JList*
 j_store_get (JStore* store, JList* names)
 {
 	JBSON* empty;
-	JBSON* jbson;
-	//mongo_connection* mc;
-	//mongo_cursor* cursor;
+	JBSON* bson;
+	JMongoConnection* connection;
+	JMongoIterator* iterator;
 	JList* collections;
 	guint length;
 	guint n = 0;
@@ -251,14 +251,14 @@ j_store_get (JStore* store, JList* names)
 		IsInitialized(true);
 	*/
 
-	jbson = j_bson_new();
+	bson = j_bson_new();
 	length = j_list_length(names);
 
 	if (length == 1)
 	{
 		const gchar* name = j_list_get(names, 0);
 
-		j_bson_append_string(jbson, "Name", name);
+		j_bson_append_string(bson, "Name", name);
 		n = 1;
 	}
 	else
@@ -278,30 +278,30 @@ j_store_get (JStore* store, JList* names)
 
 		j_list_iterator_free(it);
 
-		j_bson_append_document(jbson, "$or", names_bson);
+		j_bson_append_document(bson, "$or", names_bson);
 		j_bson_unref(names_bson);
 	}
 
 	empty = j_bson_new_empty();
 
-	//mc = j_connection_connection(store->connection);
-	//cursor = mongo_find(mc, j_store_collection_collections(store), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
+	connection = j_connection_connection(store->connection);
+	iterator = j_mongo_find(connection, j_store_collection_collections(store), bson, NULL, n, 0);
 
 	collections = j_list_new((JListFreeFunc)j_collection_unref);
 
-	//while (mongo_cursor_next(cursor))
+	while (j_mongo_iterator_next(iterator))
 	{
 		JBSON* collection_bson;
 
-		//collection_bson = j_bson_new_for_data(cursor->current.data);
+		collection_bson = j_mongo_iterator_get(iterator);
 		j_list_append(collections, j_collection_new_from_bson(store, collection_bson));
 		j_bson_unref(collection_bson);
 	}
 
-	//mongo_cursor_destroy(cursor);
+	j_mongo_iterator_free(iterator);
 
 	j_bson_unref(empty);
-	j_bson_unref(jbson);
+	j_bson_unref(bson);
 
 	return collections;
 }

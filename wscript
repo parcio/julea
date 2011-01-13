@@ -33,26 +33,10 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
 def build (ctx):
-	e = ctx.env.derive()
-	e.CFLAGS = ['-std=c99']
-
 	ctx.stlib(
-		source = ['mongodb/src/%s.c' % file for file in ('bson', 'md5', 'mongo', 'numbers')],
-		target = 'mongodb',
-		env = e
-	)
-
-	# FIXME hack
-	e = ctx.env.derive()
-	e.CFLAGS = ctx.env.CFLAGS[:]
-	e.CFLAGS.remove('-Wshadow')
-
-	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-message', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
 		target = 'julea',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'mongodb'],
-		includes = ['mongodb/src'],
-		env = e
+		use = ['GLIB', 'GOBJECT', 'GIO']
 	)
 
 	for test in ('bson', 'bson-iterator', 'list', 'list-iterator', 'semantics'):
@@ -60,8 +44,7 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['julea', 'mongodb/src'],
-			env = e
+			includes = ['julea']
 		)
 
 	ctx.program(

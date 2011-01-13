@@ -51,8 +51,6 @@ typedef enum JBSONType JBSONType;
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include "jobjectid.h"
 
 JBSON* j_bson_new (void);
@@ -72,7 +70,5 @@ void j_bson_append_string (JBSON*, const gchar*, const gchar*);
 void j_bson_append_document (JBSON*, const gchar*, JBSON*);
 
 gpointer j_bson_data (JBSON*);
-
-bson* j_bson_get (JBSON*);
 
 #endif

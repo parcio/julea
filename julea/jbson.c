@@ -31,8 +31,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <string.h>
 
 #include "jbson.h"
@@ -46,6 +44,10 @@
  *
  * @{
  **/
+
+/*
+ * See http://bsonspec.org/.
+ */
 
 /**
  * A BSON document.
@@ -73,9 +75,6 @@ struct JBSON
 	 * Reference count.
 	 **/
 	guint ref_count;
-
-	/* FIXME hack */
-	bson b;
 };
 
 static void
@@ -91,7 +90,6 @@ j_bson_resize (JBSON* bson, gsize n)
 	bson->allocated_size += n;
 	bson->data = g_renew(gchar, bson->data, bson->allocated_size);
 	bson->current = bson->data + pos;
-	bson_init(&(bson->b), bson->data, 0);
 }
 
 static void
@@ -180,23 +178,6 @@ j_bson_new (void)
 	return bson;
 }
 
-/* FIXME hack */
-JBSON*
-j_bson_new_for_data (gconstpointer data)
-{
-	JBSON* bson;
-
-	bson = g_slice_new(JBSON);
-	bson->data = data;
-	bson->current = NULL;
-	bson->allocated_size = 0;
-	bson->finalized = TRUE;
-	bson->ref_count = 1;
-	bson_init(&(bson->b), bson->data, 0);
-
-	return bson;
-}
-
 /**
  * Creates a new empty BSON document.
  *
@@ -273,11 +254,7 @@ j_bson_unref (JBSON* bson)
 
 	if (bson->ref_count == 0)
 	{
-		/* FIXME hack */
-		if (bson->allocated_size > 0)
-		{
-			g_free(bson->data);
-		}
+		g_free(bson->data);
 
 		g_slice_free(JBSON, bson);
 	}
@@ -501,17 +478,6 @@ j_bson_data (JBSON* bson)
 	j_bson_finalize(bson);
 
 	return bson->data;
-}
-
-/* FIXME hack */
-bson*
-j_bson_get (JBSON* bson)
-{
-	g_return_val_if_fail(bson != NULL, NULL);
-
-	j_bson_finalize(bson);
-
-	return &(bson->b);
 }
 
 /**

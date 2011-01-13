@@ -211,12 +211,12 @@ j_collection_create (JCollection* collection, JList* items)
 	while (j_list_iterator_next(it))
 	{
 		JItem* item = j_list_iterator_get(it);
-		JBSON* jbson;
+		JBSON* bson;
 
 		j_item_associate(item, collection);
-		jbson = j_item_serialize(item);
+		bson = j_item_serialize(item);
 
-		j_list_append(obj, jbson);
+		j_list_append(obj, bson);
 	}
 
 	j_list_iterator_free(it);
@@ -249,8 +249,9 @@ JList*
 j_collection_get (JCollection* collection, JList* names)
 {
 	JBSON* empty;
-	JBSON* jbson;
-	//mongo_connection* mc;
+	JBSON* bson;
+	JMongoConnection* connection;
+	JMongoIterator* iterator;
 	//mongo_cursor* cursor;
 	JList* items;
 	guint length;
@@ -263,17 +264,17 @@ j_collection_get (JCollection* collection, JList* names)
 		IsInitialized(true);
 	*/
 
-	jbson = j_bson_new();
+	bson = j_bson_new();
 	length = j_list_length(names);
 
 	/* FIXME */
-	j_bson_append_string(jbson, "Collection", collection->name);
+	j_bson_append_string(bson, "Collection", collection->name);
 
 	if (length == 1)
 	{
 		const gchar* name = j_list_get(names, 0);
 
-		j_bson_append_string(jbson, "Name", name);
+		j_bson_append_string(bson, "Name", name);
 		n = 1;
 	}
 	else
@@ -293,31 +294,31 @@ j_collection_get (JCollection* collection, JList* names)
 
 		j_list_iterator_free(it);
 
-		j_bson_append_document(jbson, "$or", names_bson);
+		j_bson_append_document(bson, "$or", names_bson);
 		j_bson_unref(names_bson);
 	}
 
 
 	empty = j_bson_new_empty();
 
-	//mc = j_connection_connection(j_store_connection(collection->store));
-	//cursor = mongo_find(mc, j_collection_collection_items(collection), j_bson_get(jbson), j_bson_get(empty), n, 0, 0);
+	connection = j_connection_connection(j_store_connection(collection->store));
+	iterator = j_mongo_find(connection, j_collection_collection_items(collection), bson, NULL, n, 0);
 
 	items = j_list_new((JListFreeFunc)j_item_unref);
 
-	//while (mongo_cursor_next(cursor))
+	while (j_mongo_iterator_next(iterator))
 	{
 		JBSON* item_bson;
 
-		//item_bson = j_bson_new_for_data(cursor->current.data);
+		item_bson = j_mongo_iterator_get(iterator);
 		j_list_append(items, j_item_new_from_bson(collection, item_bson));
 		j_bson_unref(item_bson);
 	}
 
-	//mongo_cursor_destroy(cursor);
+	j_mongo_iterator_free(iterator);
 
 	j_bson_unref(empty);
-	j_bson_unref(jbson);
+	j_bson_unref(bson);
 
 	return items;
 }
@@ -352,7 +353,7 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 /* Internal */
 
 JCollection*
-j_collection_new_from_bson (JStore* store, JBSON* jbson)
+j_collection_new_from_bson (JStore* store, JBSON* bson)
 {
 	/*
 		: m_initialized(true),
@@ -360,7 +361,7 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 	JCollection* collection;
 
 	g_return_val_if_fail(store != NULL, NULL);
-	g_return_val_if_fail(jbson != NULL, NULL);
+	g_return_val_if_fail(bson != NULL, NULL);
 
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
@@ -369,7 +370,7 @@ j_collection_new_from_bson (JStore* store, JBSON* jbson)
 	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
-	j_collection_deserialize(collection, jbson);
+	j_collection_deserialize(collection, bson);
 
 	return collection;
 }
@@ -419,29 +420,29 @@ j_collection_serialize (JCollection* collection)
 			.append("Group", m_owner.Group())
 	*/
 
-	JBSON* jbson;
+	JBSON* bson;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	jbson = j_bson_new();
-	j_bson_append_new_object_id(jbson, "_id");
-	j_bson_append_string(jbson, "Name", collection->name);
+	bson = j_bson_new();
+	j_bson_append_new_object_id(bson, "_id");
+	j_bson_append_string(bson, "Name", collection->name);
 
-	return jbson;
+	return bson;
 }
 
 /**
  * \private
  **/
 void
-j_collection_deserialize (JCollection* collection, JBSON* jbson)
+j_collection_deserialize (JCollection* collection, JBSON* bson)
 {
 	JBSONIterator* iterator;
 
 	g_return_if_fail(collection != NULL);
-	g_return_if_fail(jbson != NULL);
+	g_return_if_fail(bson != NULL);
 
-	iterator = j_bson_iterator_new(jbson);
+	iterator = j_bson_iterator_new(bson);
 
 	/*
 		m_id = o.getField("_id").OID();
