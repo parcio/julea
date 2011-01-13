@@ -39,6 +39,7 @@ typedef struct JMongoConnection JMongoConnection;
 #include <glib.h>
 
 #include "jmongo-message.h"
+#include "jmongo-reply.h"
 
 JMongoConnection* j_mongo_connection_new (void);
 JMongoConnection* j_mongo_connection_ref (JMongoConnection*);
@@ -48,5 +49,6 @@ gboolean j_mongo_connection_connect (JMongoConnection*, const gchar*);
 void j_mongo_connection_disconnect (JMongoConnection*);
 
 void j_mongo_connection_send (JMongoConnection*, JMongoMessage*);
+JMongoReply* j_mongo_connection_receive (JMongoConnection*);
 
 #endif

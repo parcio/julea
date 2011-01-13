@@ -29,33 +29,84 @@
  * \file
  **/
 
-#ifndef H_MONGO
-#define H_MONGO
-
 #include <glib.h>
 
+#include "jmongo-reply.h"
+
+#include "jmongo.h"
+
+/**
+ * \defgroup JMongoReply MongoDB Reply
+ *
+ * @{
+ **/
+
+/*
+ * See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol.
+ */
+
+/**
+ * A MongoDB reply.
+ **/
 #pragma pack(4)
-struct JMongoHeader
+struct JMongoReply
 {
-	gint32 message_length;
-	gint32 request_id;
-	gint32 response_to;
-	gint32 op_code;
+	JMongoHeader header;
+	gint32 response_flags;
+	gint64 cursor_id;
+	gint32 starting_from;
+	gint32 number_returned;
+	gchar data[];
 };
 #pragma pack()
 
-typedef struct JMongoHeader JMongoHeader;
+JMongoReply*
+j_mongo_reply_new (JMongoHeader* header)
+{
+	JMongoReply* reply;
+	gsize length;
 
-#include "jbson.h"
-#include "jlist.h"
-#include "jmongo-connection.h"
-#include "jmongo-iterator.h"
+	length = GINT32_FROM_LE(header->message_length);
 
-void j_mongo_create_index(JMongoConnection*, const gchar*, JBSON*, gboolean);
+	reply = g_malloc(length);
+	reply->header.message_length = header->message_length;
+	reply->header.request_id = header->request_id;
+	reply->header.response_to = header->response_to;
+	reply->header.op_code = header->op_code;
 
-void j_mongo_insert (JMongoConnection*, const gchar*, JBSON*);
-void j_mongo_insert_list (JMongoConnection*, const gchar*, JList*);
+	return reply;
+}
 
-JMongoIterator* j_mongo_find (JMongoConnection*, const gchar*, JBSON*, JBSON*, gint32, gint32);
+void
+j_mongo_reply_free (JMongoReply* reply)
+{
+	g_free(reply);
+}
 
-#endif
+gpointer
+j_mongo_reply_fields (JMongoReply* reply)
+{
+	return &(reply->response_flags);
+}
+
+gpointer
+j_mongo_reply_data (JMongoReply* reply)
+{
+	return reply->data;
+}
+
+gsize
+j_mongo_reply_length (JMongoReply* reply)
+{
+	return GINT32_FROM_LE(reply->header.message_length);
+}
+
+gint32
+j_mongo_reply_number (JMongoReply* reply)
+{
+	return GINT32_FROM_LE(reply->number_returned);
+}
+
+/**
+ * @}
+ **/

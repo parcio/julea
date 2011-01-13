@@ -34,6 +34,9 @@
 
 #include "jmongo-iterator.h"
 
+#include "jbson.h"
+#include "jmongo-reply.h"
+
 /**
  * \defgroup JMongoIterator MongoDB Iterator
  *
@@ -45,14 +48,64 @@
  **/
 struct JMongoIterator
 {
+	JMongoReply* reply;
+	JBSON* bson;
+	const gchar* data;
 };
 
+static gboolean
+j_mongo_iterator_get_more (JMongoIterator* iterator)
+{
+	/*
+	JMongoMessage* message;
+	JMongoReply* reply;
+	gsize length;
+	gsize message_length;
+	gpointer data;
+
+	length = strlen(collection) + 1;
+	message_length = 4 + length + 4 + 4 + j_bson_size(query);
+
+	if (fields != NULL)
+	{
+		message_length += j_bson_size(fields);
+	}
+
+	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_QUERY);
+	data = j_mongo_message_data(message);
+
+	data = j_mongo_append_32(data, &j_mongo_zero);
+	data = j_mongo_append_n(data, collection, length);
+	data = j_mongo_append_32(data, &number_to_skip);
+	data = j_mongo_append_32(data, &number_to_return);
+	data = j_mongo_append_n(data, j_bson_data(query), j_bson_size(query));
+
+	if (fields != NULL)
+	{
+		data = j_mongo_append_n(data, j_bson_data(fields), j_bson_size(fields));
+	}
+
+	j_mongo_connection_send(connection, message);
+
+	j_mongo_message_free(message);
+
+	reply = j_mongo_connection_receive(connection);
+
+	return j_mongo_iterator_new(reply);
+	*/
+
+	return FALSE;
+}
+
 JMongoIterator*
-j_mongo_iterator_new (void)
+j_mongo_iterator_new (JMongoReply* reply)
 {
 	JMongoIterator* iterator;
 
 	iterator = g_slice_new(JMongoIterator);
+	iterator->reply = reply;
+	iterator->bson = NULL;
+	iterator->data = NULL;
 
 	return iterator;
 }
@@ -60,19 +113,54 @@ j_mongo_iterator_new (void)
 void
 j_mongo_iterator_free (JMongoIterator* iterator)
 {
+	if (iterator->bson != NULL)
+	{
+		j_bson_unref(iterator->bson);
+	}
+
+	j_mongo_reply_free(iterator->reply);
+
 	g_slice_free(JMongoIterator, iterator);
 }
 
 gboolean
 j_mongo_iterator_next (JMongoIterator* iterator)
 {
-	return FALSE;
+	if (j_mongo_reply_number(iterator->reply) == 0)
+	{
+		return FALSE;
+	}
+
+	if (iterator->data == NULL)
+	{
+		iterator->data = j_mongo_reply_data(iterator->reply);
+		iterator->bson = j_bson_new_for_data(iterator->data);
+
+		return TRUE;
+	}
+
+	iterator->data += j_bson_size(iterator->bson);
+
+	if (iterator->data >= (gchar*)iterator->reply + j_mongo_reply_length(iterator->reply))
+	{
+		if (!j_mongo_iterator_get_more(iterator))
+		{
+			return FALSE;
+		}
+
+		iterator->data = j_mongo_reply_data(iterator->reply);
+	}
+
+	j_bson_unref(iterator->bson);
+	iterator->bson = j_bson_new_for_data(iterator->data);
+
+	return TRUE;
 }
 
 JBSON*
 j_mongo_iterator_get (JMongoIterator* iterator)
 {
-	return NULL;
+	return j_bson_ref(iterator->bson);
 }
 
 /**

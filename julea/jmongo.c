@@ -202,6 +202,7 @@ JMongoIterator*
 j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* query, JBSON* fields, gint32 number_to_skip, gint32 number_to_return)
 {
 	JMongoMessage* message;
+	JMongoReply* reply;
 	gsize length;
 	gsize message_length;
 	gpointer data;
@@ -232,7 +233,9 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 
 	j_mongo_message_free(message);
 
-	return j_mongo_iterator_new();
+	reply = j_mongo_connection_receive(connection);
+
+	return j_mongo_iterator_new(reply);
 }
 
 /**

@@ -29,33 +29,23 @@
  * \file
  **/
 
-#ifndef H_MONGO
-#define H_MONGO
+#ifndef H_MONGO_REPLY
+#define H_MONGO_REPLY
+
+struct JMongoReply;
+
+typedef struct JMongoReply JMongoReply;
 
 #include <glib.h>
 
-#pragma pack(4)
-struct JMongoHeader
-{
-	gint32 message_length;
-	gint32 request_id;
-	gint32 response_to;
-	gint32 op_code;
-};
-#pragma pack()
+#include "jmongo.h"
 
-typedef struct JMongoHeader JMongoHeader;
+JMongoReply* j_mongo_reply_new (JMongoHeader*);
+void j_mongo_reply_free (JMongoReply*);
 
-#include "jbson.h"
-#include "jlist.h"
-#include "jmongo-connection.h"
-#include "jmongo-iterator.h"
-
-void j_mongo_create_index(JMongoConnection*, const gchar*, JBSON*, gboolean);
-
-void j_mongo_insert (JMongoConnection*, const gchar*, JBSON*);
-void j_mongo_insert_list (JMongoConnection*, const gchar*, JList*);
-
-JMongoIterator* j_mongo_find (JMongoConnection*, const gchar*, JBSON*, JBSON*, gint32, gint32);
+gpointer j_mongo_reply_fields (JMongoReply*);
+gpointer j_mongo_reply_data (JMongoReply*);
+gsize j_mongo_reply_length (JMongoReply*);
+gint32 j_mongo_reply_number (JMongoReply*);
 
 #endif

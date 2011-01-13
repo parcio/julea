@@ -34,6 +34,9 @@
 
 #include "jmongo-connection.h"
 
+#include "jmongo.h"
+#include "jmongo-reply.h"
+
 /**
  * \defgroup JMongoConnection MongoDB Connection
  *
@@ -150,6 +153,19 @@ j_mongo_connection_send (JMongoConnection* connection, JMongoMessage* message)
 {
 	g_output_stream_write_all(connection->output, message, j_mongo_message_length(message), NULL, NULL, NULL);
 	g_output_stream_flush(connection->output, NULL, NULL);
+}
+
+JMongoReply*
+j_mongo_connection_receive (JMongoConnection* connection)
+{
+	JMongoReply* reply;
+	JMongoHeader header;
+
+	g_input_stream_read_all(connection->input, &header, sizeof(JMongoHeader), NULL, NULL, NULL);
+	reply = j_mongo_reply_new(&header);
+	g_input_stream_read_all(connection->input, j_mongo_reply_fields(reply), j_mongo_reply_length(reply) - sizeof(JMongoHeader), NULL, NULL, NULL);
+
+	return reply;
 }
 
 /**

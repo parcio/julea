@@ -178,6 +178,21 @@ j_bson_new (void)
 	return bson;
 }
 
+JBSON*
+j_bson_new_for_data (gconstpointer data)
+{
+	JBSON* bson;
+
+	bson = g_slice_new(JBSON);
+	bson->data = data;
+	bson->current = NULL;
+	bson->allocated_size = 0;
+	bson->finalized = TRUE;
+	bson->ref_count = 1;
+
+	return bson;
+}
+
 /**
  * Creates a new empty BSON document.
  *
@@ -254,7 +269,10 @@ j_bson_unref (JBSON* bson)
 
 	if (bson->ref_count == 0)
 	{
-		g_free(bson->data);
+		if (bson->allocated_size > 0)
+		{
+			g_free(bson->data);
+		}
 
 		g_slice_free(JBSON, bson);
 	}

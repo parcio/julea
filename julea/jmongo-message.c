@@ -33,6 +33,8 @@
 
 #include "jmongo-message.h"
 
+#include "jmongo.h"
+
 /**
  * \defgroup JMongoMessage MongoDB Message
  *
@@ -43,25 +45,13 @@
  * See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol.
  */
 
-#pragma pack(4)
-struct JMongoMessageHeader
-{
-	gint32 message_length;
-	gint32 request_id;
-	gint32 response_to;
-	gint32 op_code;
-};
-#pragma pack()
-
-typedef struct JMongoMessageHeader JMongoMessageHeader;
-
 /**
  * A MongoDB message.
  **/
 #pragma pack(4)
 struct JMongoMessage
 {
-	JMongoMessageHeader header;
+	JMongoHeader header;
 	gchar data[];
 };
 #pragma pack()
@@ -71,8 +61,8 @@ j_mongo_message_new (gsize length, JMongoMessageOp op)
 {
 	JMongoMessage* message;
 
-	message = g_malloc(sizeof(JMongoMessageHeader) + length);
-	message->header.message_length = GINT32_TO_LE(sizeof(JMongoMessageHeader) + length);
+	message = g_malloc(sizeof(JMongoHeader) + length);
+	message->header.message_length = GINT32_TO_LE(sizeof(JMongoHeader) + length);
 	message->header.request_id = GINT32_TO_LE(0);
 	message->header.response_to = GINT32_TO_LE(0);
 	message->header.op_code = GINT32_TO_LE(op);
