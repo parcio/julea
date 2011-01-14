@@ -102,6 +102,8 @@ j_mongo_iterator_new (JMongoReply* reply)
 {
 	JMongoIterator* iterator;
 
+	g_return_val_if_fail(reply != NULL, NULL);
+
 	iterator = g_slice_new(JMongoIterator);
 	iterator->reply = reply;
 	iterator->bson = NULL;
@@ -113,6 +115,8 @@ j_mongo_iterator_new (JMongoReply* reply)
 void
 j_mongo_iterator_free (JMongoIterator* iterator)
 {
+	g_return_if_fail(iterator != NULL);
+
 	if (iterator->bson != NULL)
 	{
 		j_bson_unref(iterator->bson);
@@ -126,6 +130,8 @@ j_mongo_iterator_free (JMongoIterator* iterator)
 gboolean
 j_mongo_iterator_next (JMongoIterator* iterator)
 {
+	g_return_val_if_fail(iterator != NULL, FALSE);
+
 	if (j_mongo_reply_number(iterator->reply) == 0)
 	{
 		return FALSE;
@@ -160,6 +166,8 @@ j_mongo_iterator_next (JMongoIterator* iterator)
 JBSON*
 j_mongo_iterator_get (JMongoIterator* iterator)
 {
+	g_return_val_if_fail(iterator != NULL, NULL);
+
 	return j_bson_ref(iterator->bson);
 }
 

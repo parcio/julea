@@ -96,10 +96,7 @@ j_mongo_get_db (const gchar* ns)
 		return g_strdup(ns);
 	}
 
-	db = g_new(gchar, pos - ns + 1);
-	g_strlcpy(db, ns, pos - ns + 1);
-
-	return db;
+	return g_strndup(ns, pos - ns);
 }
 
 void
@@ -108,6 +105,10 @@ j_mongo_create_index(JMongoConnection* connection, const gchar* collection, JBSO
 	JBSON* index;
 	gchar* db;
 	gchar* ns;
+
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(bson != NULL);
 
 	index = j_bson_new();
 
@@ -139,6 +140,10 @@ j_mongo_insert (JMongoConnection* connection, const gchar* collection, JBSON* bs
 	gsize message_length;
 	gpointer data;
 
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(bson != NULL);
+
 	length = strlen(collection) + 1;
 	message_length = 4 + length + j_bson_size(bson);
 
@@ -162,6 +167,10 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 	gsize length;
 	gsize message_length;
 	gpointer data;
+
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(list != NULL);
 
 	length = strlen(collection) + 1;
 	message_length = 4 + length;
@@ -206,6 +215,9 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 	gsize length;
 	gsize message_length;
 	gpointer data;
+
+	g_return_val_if_fail(connection != NULL, NULL);
+	g_return_val_if_fail(collection != NULL, NULL);
 
 	length = strlen(collection) + 1;
 	message_length = 4 + length + 4 + 4 + j_bson_size(query);
