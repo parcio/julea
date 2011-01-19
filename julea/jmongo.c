@@ -36,6 +36,7 @@
 #include "jmongo.h"
 
 #include "jbson.h"
+#include "jbson-iterator.h"
 #include "jlist-iterator.h"
 #include "jmongo-connection.h"
 #include "jmongo-iterator.h"
@@ -86,7 +87,6 @@ j_mongo_append_n (gchar* data, gconstpointer value, gsize n)
 static gchar*
 j_mongo_get_db (const gchar* ns)
 {
-	gchar* db;
 	gchar* pos;
 
 	pos = strchr(ns, '.');
@@ -103,6 +103,9 @@ void
 j_mongo_create_index(JMongoConnection* connection, const gchar* collection, JBSON* bson, gboolean is_unique)
 {
 	JBSON* index;
+	JBSONIterator* iterator;
+	gchar name[255];
+	gsize pos;
 	gchar* db;
 	gchar* ns;
 
@@ -110,11 +113,44 @@ j_mongo_create_index(JMongoConnection* connection, const gchar* collection, JBSO
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(bson != NULL);
 
+	iterator = j_bson_iterator_new(bson);
+	pos = 0;
+
+	while (j_bson_iterator_next(iterator))
+	{
+		const gchar* key;
+		gsize len;
+
+		key = j_bson_iterator_get_key(iterator);
+		len = strlen(key);
+
+		if (pos >= 255)
+		{
+			break;
+		}
+
+		if (pos > 0)
+		{
+			g_strlcpy(name + pos, "_", 255 - pos);
+			pos += 1;
+		}
+
+		g_strlcpy(name + pos, key, 255 - pos);
+		pos += len;
+	}
+
+	j_bson_iterator_free(iterator);
+
+	if (pos == 0)
+	{
+		return;
+	}
+
 	index = j_bson_new();
 
 	j_bson_append_document(index, "key", bson);
 	j_bson_append_string(index, "ns", collection);
-	j_bson_append_string(index, "name", "foobar");
+	j_bson_append_string(index, "name", name);
 
 	if (is_unique)
 	{
