@@ -48,6 +48,12 @@ def build (ctx):
 		)
 
 	ctx.program(
+		source = ['julead/%s.c' % file for file in ('julead',)],
+		target = 'julead/julead',
+		use = ['GLIB', 'GOBJECT', 'GIO']
+	)
+
+	ctx.program(
 		source = ['benchmark.c'],
 		target = 'benchmark',
 		use = ['GLIB', 'GOBJECT', 'julea'],

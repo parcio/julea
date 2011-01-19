@@ -30,6 +30,8 @@
  **/
 
 #include <glib.h>
+#include <glib-object.h>
+#include <gio/gio.h>
 
 #include "jconnection.h"
 #include "jconnection-internal.h"
@@ -50,6 +52,7 @@
 struct JConnection
 {
 	JMongoConnection* connection;
+	GSocketConnection* socket;
 
 	gboolean connected;
 
@@ -63,6 +66,7 @@ j_connection_new (void)
 
 	connection = g_slice_new(JConnection);
 	connection->connection = j_mongo_connection_new();
+	connection->socket = NULL;
 	connection->connected = FALSE;
 	connection->ref_count = 1;
 
@@ -93,6 +97,11 @@ j_connection_unref (JConnection* connection)
 	{
 		j_mongo_connection_unref(connection->connection);
 
+		if (connection->socket != NULL)
+		{
+			g_object_unref(connection->socket);
+		}
+
 		g_slice_free(JConnection, connection);
 	}
 }
@@ -100,10 +109,20 @@ j_connection_unref (JConnection* connection)
 gboolean
 j_connection_connect (JConnection* connection, const gchar* server)
 {
+	gboolean is_connected;
+	GSocketClient* client;
+
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(server != NULL, FALSE);
 
-	connection->connected = j_mongo_connection_connect(connection->connection, server);
+	is_connected = j_mongo_connection_connect(connection->connection, server);
+
+	client = g_socket_client_new();
+	/* FIXME localhost for testing */
+	connection->socket = g_socket_client_connect_to_host(client, "localhost", 4711, NULL, NULL);
+	g_object_unref(client);
+
+	connection->connected = is_connected && (connection->socket != NULL);
 
 	return connection->connected;
 }
@@ -126,13 +145,6 @@ j_connection_connection (JConnection* connection)
 
 	return connection->connection;
 }
-
-/*
-	ScopedDbConnection* _Connection::GetMongoDB ()
-	{
-		return new ScopedDbConnection(m_servers_string);
-	}
-*/
 
 /**
  * @}
