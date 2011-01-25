@@ -53,6 +53,13 @@ def build (ctx):
 		use = ['GLIB', 'GOBJECT', 'GIO']
 	)
 
+	for tool in ('julea-config',):
+		ctx.program(
+			source = ['tools/%s.c' % (tool,)],
+			target = 'tools/%s' % (tool,),
+			use = ['GLIB', 'GOBJECT', 'GIO']
+		)
+
 	ctx.program(
 		source = ['benchmark.c'],
 		target = 'benchmark',
