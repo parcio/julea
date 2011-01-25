@@ -36,6 +36,7 @@
 #include "jconnection.h"
 #include "jconnection-internal.h"
 
+#include "jcommon.h"
 #include "jmongo-connection.h"
 
 /**
@@ -107,19 +108,18 @@ j_connection_unref (JConnection* connection)
 }
 
 gboolean
-j_connection_connect (JConnection* connection, const gchar* server)
+j_connection_connect (JConnection* connection)
 {
 	gboolean is_connected;
 	GSocketClient* client;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(server != NULL, FALSE);
+	g_return_val_if_fail(j_is_initialized(), FALSE);
 
-	is_connected = j_mongo_connection_connect(connection->connection, server);
+	is_connected = j_mongo_connection_connect(connection->connection, j_common->metadata[0]);
 
 	client = g_socket_client_new();
-	/* FIXME localhost for testing */
-	connection->socket = g_socket_client_connect_to_host(client, "localhost", 4711, NULL, NULL);
+	connection->socket = g_socket_client_connect_to_host(client, j_common->data[0], 4711, NULL, NULL);
 	g_object_unref(client);
 
 	connection->connected = is_connected && (connection->socket != NULL);

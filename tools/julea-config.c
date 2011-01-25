@@ -73,22 +73,10 @@ write_config (gchar const* path)
 	if (path != NULL)
 	{
 		GFile* file;
-		GFileOutputStream* output;
 
 		file = g_file_new_for_commandline_arg(path);
-		output = g_file_replace(file, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL);
+		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
 
-		if (output == NULL)
-		{
-			g_object_unref(file);
-			ret = FALSE;
-
-			goto out;
-		}
-
-		g_output_stream_write_all(G_OUTPUT_STREAM(output), key_file_data, key_file_data_len, NULL, NULL, NULL);
-
-		g_object_unref(output);
 		g_object_unref(file);
 	}
 	else
@@ -96,7 +84,6 @@ write_config (gchar const* path)
 		g_print("%s", key_file_data);
 	}
 
-out:
 	g_free(key_file_data);
 	g_key_file_free(key_file);
 

@@ -44,7 +44,7 @@ JConnection* j_connection_new (void);
 JConnection* j_connection_ref (JConnection*);
 void j_connection_unref (JConnection*);
 
-gboolean j_connection_connect (JConnection*, const gchar*);
+gboolean j_connection_connect (JConnection*);
 
 JStore* j_connection_get (JConnection*, const gchar*);
 

@@ -29,29 +29,22 @@
  * \file
  **/
 
-#ifndef H_JULEA
-#define H_JULEA
+#ifndef H_COMMON
+#define H_COMMON
 
-/**
- * \mainpage
- *
- * JULEA is a distributed file system with a newly designed application programming interface.
- * It also allows to change the file system semantics at runtime.
- *
- * The name JULEA is a play on ROMIO.
- **/
+#include <glib.h>
 
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jcommon.h>
-#include <jconnection.h>
-#include <jcredentials.h>
-#include <jerror.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
+struct JCommon
+{
+	gchar** data;
+	gchar** metadata;
+};
+
+typedef struct JCommon JCommon;
+
+extern JCommon* j_common;
+
+gboolean j_init (void);
+gboolean j_is_initialized (void);
 
 #endif

@@ -48,14 +48,14 @@ main (int argc, char** argv)
 
 	g_type_init();
 
-	if (argc != 2)
+	if (!j_init())
 	{
 		return 1;
 	}
 
 	connection = j_connection_new();
 
-	if (!j_connection_connect(connection, argv[1]))
+	if (!j_connection_connect(connection))
 	{
 		j_connection_unref(connection);
 
