@@ -183,6 +183,8 @@ j_bson_new_for_data (gconstpointer data)
 {
 	JBSON* bson;
 
+	g_return_val_if_fail(data != NULL, NULL);
+
 	bson = g_slice_new(JBSON);
 	bson->data = data;
 	bson->current = NULL;

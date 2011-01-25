@@ -55,7 +55,8 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 	return TRUE;
 }
 
-int main (int argc, char** argv)
+int
+main (int argc, char** argv)
 {
 	GMainLoop* main_loop;
 	GSocketListener* listener;

@@ -107,6 +107,8 @@ j_bson_iterator_new (JBSON* bson)
 {
 	JBSONIterator* iterator;
 
+	g_return_val_if_fail(bson != NULL, NULL);
+
 	iterator = g_slice_new(JBSONIterator);
 	iterator->bson = j_bson_ref(bson);
 	iterator->data = j_bson_data(iterator->bson);

@@ -66,6 +66,8 @@ j_mongo_reply_new (JMongoHeader* header)
 	JMongoReply* reply;
 	gsize length;
 
+	g_return_val_if_fail(header != NULL, NULL);
+
 	length = GINT32_FROM_LE(header->message_length);
 
 	reply = g_malloc(length);
@@ -80,30 +82,40 @@ j_mongo_reply_new (JMongoHeader* header)
 void
 j_mongo_reply_free (JMongoReply* reply)
 {
+	g_return_if_fail(reply != NULL);
+
 	g_free(reply);
 }
 
 gpointer
 j_mongo_reply_fields (JMongoReply* reply)
 {
+	g_return_val_if_fail(reply != NULL, NULL);
+
 	return &(reply->response_flags);
 }
 
 gpointer
 j_mongo_reply_data (JMongoReply* reply)
 {
+	g_return_val_if_fail(reply != NULL, NULL);
+
 	return reply->data;
 }
 
 gsize
 j_mongo_reply_length (JMongoReply* reply)
 {
+	g_return_val_if_fail(reply != NULL, 0);
+
 	return GINT32_FROM_LE(reply->header.message_length);
 }
 
 gint32
 j_mongo_reply_number (JMongoReply* reply)
 {
+	g_return_val_if_fail(reply != NULL, -1);
+
 	return GINT32_FROM_LE(reply->number_returned);
 }
 

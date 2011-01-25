@@ -30,7 +30,8 @@
 
 #include <julea.h>
 
-int main (int argc, char** argv)
+int
+main (int argc, char** argv)
 {
 	JCollectionIterator* citerator;
 	JConnection* connection;
@@ -39,6 +40,11 @@ int main (int argc, char** argv)
 	JSemantics* semantics;
 	JList* collections;
 	JListIterator* cliterator;
+
+	if (!g_thread_get_initialized())
+	{
+		g_thread_init(NULL);
+	}
 
 	g_type_init();
 

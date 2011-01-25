@@ -88,6 +88,8 @@ j_object_id_new_for_data (gconstpointer data)
 {
 	JObjectID* id;
 
+	g_return_val_if_fail(data != NULL, NULL);
+
 	id = g_slice_new(JObjectID);
 
 	memcpy(&(id->data), data, 12);

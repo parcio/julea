@@ -57,6 +57,18 @@ struct JMongoConnection
 	guint ref_count;
 };
 
+static void
+j_mongo_connection_close (JMongoConnection* connection)
+{
+	if (connection->connection != NULL)
+	{
+		g_object_unref(connection->connection);
+		connection->connection = NULL;
+		connection->input = NULL;
+		connection->output = NULL;
+	}
+}
+
 JMongoConnection*
 j_mongo_connection_new (void)
 {
@@ -72,21 +84,11 @@ j_mongo_connection_new (void)
 	return connection;
 }
 
-static void
-j_mongo_connection_close (JMongoConnection* connection)
-{
-	if (connection->connection != NULL)
-	{
-		g_object_unref(connection->connection);
-		connection->connection = NULL;
-		connection->input = NULL;
-		connection->output = NULL;
-	}
-}
-
 JMongoConnection*
 j_mongo_connection_ref (JMongoConnection* connection)
 {
+	g_return_val_if_fail(connection != NULL, NULL);
+
 	connection->ref_count++;
 
 	return connection;
@@ -95,6 +97,8 @@ j_mongo_connection_ref (JMongoConnection* connection)
 void
 j_mongo_connection_unref (JMongoConnection* connection)
 {
+	g_return_if_fail(connection != NULL);
+
 	connection->ref_count--;
 
 	if (connection->ref_count == 0)
@@ -109,6 +113,9 @@ gboolean
 j_mongo_connection_connect (JMongoConnection* connection, const gchar* host)
 {
 	GSocketClient* client;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(host != NULL, FALSE);
 
 	if (connection->connected)
 	{
@@ -139,6 +146,8 @@ error:
 void
 j_mongo_connection_disconnect (JMongoConnection* connection)
 {
+	g_return_if_fail(connection != NULL);
+
 	if (!connection->connected)
 	{
 		return;
@@ -151,6 +160,9 @@ j_mongo_connection_disconnect (JMongoConnection* connection)
 void
 j_mongo_connection_send (JMongoConnection* connection, JMongoMessage* message)
 {
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(message != NULL);
+
 	g_output_stream_write_all(connection->output, message, j_mongo_message_length(message), NULL, NULL, NULL);
 	g_output_stream_flush(connection->output, NULL, NULL);
 }
@@ -160,6 +172,8 @@ j_mongo_connection_receive (JMongoConnection* connection)
 {
 	JMongoReply* reply;
 	JMongoHeader header;
+
+	g_return_val_if_fail(connection != NULL, NULL);
 
 	g_input_stream_read_all(connection->input, &header, sizeof(JMongoHeader), NULL, NULL, NULL);
 	reply = j_mongo_reply_new(&header);

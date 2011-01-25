@@ -254,6 +254,7 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 
 	g_return_val_if_fail(connection != NULL, NULL);
 	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(query != NULL, NULL);
 
 	length = strlen(collection) + 1;
 	message_length = 4 + length + 4 + 4 + j_bson_size(query);

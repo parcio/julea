@@ -73,18 +73,24 @@ j_mongo_message_new (gsize length, JMongoMessageOp op)
 void
 j_mongo_message_free (JMongoMessage* message)
 {
+	g_return_if_fail(message != NULL);
+
 	g_free(message);
 }
 
 gpointer
 j_mongo_message_data (JMongoMessage* message)
 {
+	g_return_val_if_fail(message != NULL, NULL);
+
 	return message->data;
 }
 
 gsize
 j_mongo_message_length (JMongoMessage* message)
 {
+	g_return_val_if_fail(message != NULL, 0);
+
 	return GINT32_FROM_LE(message->header.message_length);
 }
 
