@@ -29,28 +29,56 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include "jmessage.h"
+
 static gboolean
 julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
+	JMessageHeader header;
+	JMessageOp op;
 	GInputStream* input;
 	GOutputStream* output;
-	gchar buf[1];
+	gchar* buffer;
 	gsize bytes_read;
 
 	g_print("new %p\n", (gpointer)connection);
 
+	buffer = g_new(gchar, 1 * 1024 * 1024);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 
-	while (g_input_stream_read_all(input, buf, 1, &bytes_read, NULL, NULL))
+	while (g_input_stream_read_all(input, &header, sizeof(JMessageHeader), &bytes_read, NULL, NULL))
 	{
+		guint32 length;
+
 		if (bytes_read == 0)
 		{
 			break;
 		}
 
 		g_print("read %" G_GSIZE_FORMAT "\n", bytes_read);
+
+		length = GUINT32_FROM_LE(header.length);
+		op = GINT32_FROM_LE(header.op);
+
+		if (g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL))
+		{
+			g_print("read %" G_GSIZE_FORMAT "\n", bytes_read);
+
+			switch (op)
+			{
+				case J_MESSAGE_OP_READ:
+					break;
+				case J_MESSAGE_OP_WRITE:
+					break;
+				default:
+					g_warn_if_reached();
+					break;
+			}
+		}
 	}
+
+	g_free(buffer);
 
 	return TRUE;
 }

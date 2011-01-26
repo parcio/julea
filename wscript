@@ -34,9 +34,10 @@ def configure (ctx):
 
 def build (ctx):
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')] + ['common/%s.c' % file for file in ('jmessage',)],
 		target = 'julea',
-		use = ['GLIB', 'GOBJECT', 'GIO']
+		use = ['GLIB', 'GOBJECT', 'GIO'],
+		includes = ['common']
 	)
 
 	for test in ('bson', 'bson-iterator', 'list', 'list-iterator', 'semantics'):
@@ -48,9 +49,10 @@ def build (ctx):
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)],
+		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jmessage',)],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO']
+		use = ['GLIB', 'GOBJECT', 'GIO'],
+		includes = ['common']
 	)
 
 	for tool in ('julea-config',):

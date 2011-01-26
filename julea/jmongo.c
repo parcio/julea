@@ -61,7 +61,6 @@ j_mongo_append_8 (gchar* data, gconstpointer value)
 static gpointer
 j_mongo_append_32 (gchar* data, gconstpointer value)
 {
-
 	*((gint32*)(data)) = GINT32_TO_LE(*((const gint32*)value));
 
 	return (data + 4);
@@ -70,7 +69,6 @@ j_mongo_append_32 (gchar* data, gconstpointer value)
 static gpointer
 j_mongo_append_64 (gchar* data, gconstpointer value)
 {
-
 	*((gint64*)(data)) = GINT64_TO_LE(*((const gint64*)value));
 
 	return (data + 8);
