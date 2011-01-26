@@ -61,15 +61,17 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 		length = GUINT32_FROM_LE(header.length);
 		op = GINT32_FROM_LE(header.op);
 
-		if (g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL))
+		if (g_input_stream_read_all(input, buffer, length - sizeof(JMessageHeader), &bytes_read, NULL, NULL))
 		{
 			g_print("read %" G_GSIZE_FORMAT "\n", bytes_read);
 
 			switch (op)
 			{
 				case J_MESSAGE_OP_READ:
+					g_printerr("read\n");
 					break;
 				case J_MESSAGE_OP_WRITE:
+					g_printerr("write\n");
 					break;
 				default:
 					g_warn_if_reached();

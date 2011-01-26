@@ -53,6 +53,19 @@ struct JMessage
 };
 #pragma pack()
 
+/**
+ * Creates a new message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param length The message's length
+ * \param op The message's operation
+ *
+ * \return A new message
+ **/
 JMessage*
 j_message_new (gsize length, JMessageOp op)
 {
@@ -67,6 +80,16 @@ j_message_new (gsize length, JMessageOp op)
 	return message;
 }
 
+/**
+ * Frees the memory allocated by the message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ **/
 void
 j_message_free (JMessage* message)
 {
@@ -75,6 +98,19 @@ j_message_free (JMessage* message)
 	g_free(message);
 }
 
+/**
+ * Appends 1 byte to the message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ * \param data The data to append
+ *
+ * \return TRUE on success, FALSE if an error occurred
+ **/
 gboolean
 j_message_append_1 (JMessage* message, gconstpointer data)
 {
@@ -92,6 +128,20 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
+/**
+ * Appends 4 bytes to the message.
+ * The bytes are converted to little endian automatically.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ * \param data The data to append
+ *
+ * \return TRUE on success, FALSE if an error occurred
+ **/
 gboolean
 j_message_append_4 (JMessage* message, gconstpointer data)
 {
@@ -109,6 +159,20 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
+/**
+ * Appends 8 bytes to the message.
+ * The bytes are converted to little endian automatically.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ * \param data The data to append
+ *
+ * \return TRUE on success, FALSE if an error occurred
+ **/
 gboolean
 j_message_append_8 (JMessage* message, gconstpointer data)
 {
@@ -126,7 +190,23 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
-
+/**
+ * Appends a number of bytes to the message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * gchar* str = "Hello world!";
+ * ...
+ * j_message_append_n(message, str, strlen(str) + 1);
+ * \endcode
+ *
+ * \param[in] message The message
+ * \param[in] data    The data to append
+ * \param[in] length  The length of data
+ *
+ * \return TRUE on success, FALSE if an error occurred
+ **/
 gboolean
 j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 {
@@ -144,6 +224,18 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 	return TRUE;
 }
 
+/**
+ * Returns the message's data.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ *
+ * \return The message's data
+ **/
 gconstpointer
 j_message_data (JMessage* message)
 {
@@ -152,6 +244,18 @@ j_message_data (JMessage* message)
 	return &(message->header);
 }
 
+/**
+ * Returns the message's length.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message
+ *
+ * \return The message's length
+ **/
 gsize
 j_message_length (JMessage* message)
 {
