@@ -47,8 +47,19 @@
 #pragma pack(4)
 struct JMessage
 {
+	/**
+	 * The current position within #data.
+	 **/
 	gchar* current;
+
+	/**
+	 * The message's header.
+	 **/
 	JMessageHeader header;
+
+	/**
+	 * The message's data.
+	 **/
 	gchar data[];
 };
 #pragma pack()
@@ -61,10 +72,10 @@ struct JMessage
  * \code
  * \endcode
  *
- * \param length The message's length
- * \param op The message's operation
+ * \param length The message's length.
+ * \param op     The message's operation.
  *
- * \return A new message
+ * \return A new message. Should be freed with j_message_free().
  **/
 JMessage*
 j_message_new (gsize length, JMessageOp op)
@@ -88,7 +99,7 @@ j_message_new (gsize length, JMessageOp op)
  * \code
  * \endcode
  *
- * \param message The message
+ * \param message The message.
  **/
 void
 j_message_free (JMessage* message)
@@ -106,10 +117,10 @@ j_message_free (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message
- * \param data The data to append
+ * \param message The message.
+ * \param data    The data to append.
  *
- * \return TRUE on success, FALSE if an error occurred
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
 j_message_append_1 (JMessage* message, gconstpointer data)
@@ -137,10 +148,10 @@ j_message_append_1 (JMessage* message, gconstpointer data)
  * \code
  * \endcode
  *
- * \param message The message
- * \param data The data to append
+ * \param message The message.
+ * \param data    The data to append.
  *
- * \return TRUE on success, FALSE if an error occurred
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
 j_message_append_4 (JMessage* message, gconstpointer data)
@@ -168,10 +179,10 @@ j_message_append_4 (JMessage* message, gconstpointer data)
  * \code
  * \endcode
  *
- * \param message The message
- * \param data The data to append
+ * \param message The message.
+ * \param data    The data to append.
  *
- * \return TRUE on success, FALSE if an error occurred
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
 j_message_append_8 (JMessage* message, gconstpointer data)
@@ -201,11 +212,11 @@ j_message_append_8 (JMessage* message, gconstpointer data)
  * j_message_append_n(message, str, strlen(str) + 1);
  * \endcode
  *
- * \param[in] message The message
- * \param[in] data    The data to append
- * \param[in] length  The length of data
+ * \param message The message.
+ * \param data    The data to append.
+ * \param length  The length of data.
  *
- * \return TRUE on success, FALSE if an error occurred
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
 j_message_append_n (JMessage* message, gconstpointer data, gsize length)
@@ -232,9 +243,9 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
  * \code
  * \endcode
  *
- * \param message The message
+ * \param message The message.
  *
- * \return The message's data
+ * \return The message's data.
  **/
 gconstpointer
 j_message_data (JMessage* message)
@@ -252,9 +263,9 @@ j_message_data (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message
+ * \param message The message.
  *
- * \return The message's length
+ * \return The message's length.
  **/
 gsize
 j_message_length (JMessage* message)

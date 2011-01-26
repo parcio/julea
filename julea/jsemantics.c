@@ -39,18 +39,46 @@
  **/
 
 /**
- * A JSemantics.
+ * A semantics object.
  **/
 struct JSemantics
 {
+	/**
+	 * The consistency semantics.
+	 **/
 	gint consistency;
+
+	/**
+	 * The persistency semantics.
+	 **/
 	gint persistency;
+
+	/**
+	 * The concurrency semantics.
+	 **/
 	gint concurrency;
+
+	/**
+	 * The security semantics.
+	 **/
 	gint security;
 
+	/**
+	 * The reference count.
+	 **/
 	guint ref_count;
 };
 
+/**
+ * Creates a new semantics object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \return A new semantics object. Should be freed with j_semantics_unref().
+ **/
 JSemantics*
 j_semantics_new (void)
 {
@@ -66,6 +94,18 @@ j_semantics_new (void)
 	return semantics;
 }
 
+/**
+ * Increases the semantics' reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param semantics The semantics.
+ *
+ * \return The semantics.
+ **/
 JSemantics*
 j_semantics_ref (JSemantics* semantics)
 {
@@ -76,6 +116,17 @@ j_semantics_ref (JSemantics* semantics)
 	return semantics;
 }
 
+/**
+ * Decreases the semantics' reference count.
+ * When the reference count reaches zero, frees the memory allocated for the semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param semantics The semantics.
+ **/
 void
 j_semantics_unref (JSemantics* semantics)
 {
@@ -89,6 +140,21 @@ j_semantics_unref (JSemantics* semantics)
 	}
 }
 
+/**
+ * Sets a specific aspect of the semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JSemantics* semantics;
+ * ...
+ * j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+ * \endcode
+ *
+ * \param semantics The semantics.
+ * \param key       The aspect's key.
+ * \param value     The aspect's value.
+ **/
 void
 j_semantics_set (JSemantics* semantics, gint key, gint value)
 {
@@ -113,6 +179,22 @@ j_semantics_set (JSemantics* semantics, gint key, gint value)
 	}
 }
 
+/**
+ * Gets a specific aspect of the semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JSemantics* semantics;
+ * ...
+ * j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
+ * \endcode
+ *
+ * \param semantics The semantics.
+ * \param key       The aspect's key.
+ *
+ * \return The aspect's value.
+ **/
 gint
 j_semantics_get (JSemantics* semantics, gint key)
 {

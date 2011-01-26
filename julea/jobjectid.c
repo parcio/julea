@@ -50,6 +50,9 @@
  **/
 struct JObjectID
 {
+	/**
+	 * The object ID's data.
+	 **/
 	union
 	{
 		gint32 ints[3];
@@ -66,7 +69,9 @@ struct JObjectID
  * \code
  * \endcode
  *
- * \return A new object ID.
+ * \param initialize Whether to initialize the object ID automatically.
+ *
+ * \return A new object ID. Should be freed with j_object_id_free().
  **/
 JObjectID*
 j_object_id_new (gboolean initialize)
@@ -83,6 +88,18 @@ j_object_id_new (gboolean initialize)
 	return id;
 }
 
+/**
+ * Creates a new object ID from the given data.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param data The data.
+ *
+ * \return A new object ID.
+ **/
 JObjectID*
 j_object_id_new_for_data (gconstpointer data)
 {
@@ -97,6 +114,16 @@ j_object_id_new_for_data (gconstpointer data)
 	return id;
 }
 
+/**
+ * Frees the memory allocated for an object ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param id The object ID.
+ **/
 void
 j_object_id_free (JObjectID* id)
 {
@@ -105,6 +132,16 @@ j_object_id_free (JObjectID* id)
 	g_slice_free(JObjectID, id);
 }
 
+/**
+ * Initializes an object ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param id The object ID.
+ **/
 void
 j_object_id_init (JObjectID* id)
 {
@@ -129,6 +166,18 @@ j_object_id_init (JObjectID* id)
 	g_atomic_int_inc(&counter);
 }
 
+/**
+ * Returns an object ID's hexadecimal digest.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param id The object ID.
+ *
+ * \return A newly allocated string containing the hexadecimal digest. Should be freed using g_free().
+ **/
 gchar*
 j_object_id_hex (JObjectID* id)
 {
@@ -156,6 +205,18 @@ j_object_id_hex (JObjectID* id)
 	return hash;
 }
 
+/**
+ * Creates an object ID's data.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param id The object ID.
+ *
+ * \return The object ID's data.
+ **/
 gconstpointer
 j_object_id_data (JObjectID* id)
 {
