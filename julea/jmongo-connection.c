@@ -163,7 +163,7 @@ j_mongo_connection_send (JMongoConnection* connection, JMongoMessage* message)
 	g_return_if_fail(connection != NULL);
 	g_return_if_fail(message != NULL);
 
-	g_output_stream_write_all(connection->output, message, j_mongo_message_length(message), NULL, NULL, NULL);
+	g_output_stream_write_all(connection->output, j_mongo_message_data(message), j_mongo_message_length(message), NULL, NULL, NULL);
 	g_output_stream_flush(connection->output, NULL, NULL);
 }
 

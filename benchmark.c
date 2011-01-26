@@ -50,6 +50,7 @@ main (int argc, char** argv)
 
 	if (!j_init())
 	{
+		g_printerr("Could not initialize.\n");
 		return 1;
 	}
 
@@ -57,6 +58,7 @@ main (int argc, char** argv)
 
 	if (!j_connection_connect(connection))
 	{
+		g_printerr("Could not connect.\n");
 		j_connection_unref(connection);
 
 		return 1;

@@ -55,7 +55,12 @@ typedef enum JMongoMessageOp JMongoMessageOp;
 JMongoMessage* j_mongo_message_new (gsize, JMongoMessageOp);
 void j_mongo_message_free (JMongoMessage*);
 
-gpointer j_mongo_message_data (JMongoMessage*);
+gboolean j_mongo_message_append_1 (JMongoMessage*, gconstpointer);
+gboolean j_mongo_message_append_4 (JMongoMessage*, gconstpointer);
+gboolean j_mongo_message_append_8 (JMongoMessage*, gconstpointer);
+gboolean j_mongo_message_append_n (JMongoMessage*, gconstpointer, gsize);
+
+gconstpointer j_mongo_message_data (JMongoMessage*);
 gsize j_mongo_message_length (JMongoMessage*);
 
 #endif

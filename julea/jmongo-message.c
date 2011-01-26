@@ -31,6 +31,8 @@
 
 #include <glib.h>
 
+#include <string.h>
+
 #include "jmongo-message.h"
 
 #include "jmongo.h"
@@ -51,6 +53,7 @@
 #pragma pack(4)
 struct JMongoMessage
 {
+	gchar* current;
 	JMongoHeader header;
 	gchar data[];
 };
@@ -61,7 +64,8 @@ j_mongo_message_new (gsize length, JMongoMessageOp op)
 {
 	JMongoMessage* message;
 
-	message = g_malloc(sizeof(JMongoHeader) + length);
+	message = g_malloc(sizeof(gchar*) + sizeof(JMongoHeader) + length);
+	message->current = message->data;
 	message->header.message_length = GINT32_TO_LE(sizeof(JMongoHeader) + length);
 	message->header.request_id = GINT32_TO_LE(0);
 	message->header.response_to = GINT32_TO_LE(0);
@@ -78,12 +82,80 @@ j_mongo_message_free (JMongoMessage* message)
 	g_free(message);
 }
 
-gpointer
+gboolean
+j_mongo_message_append_1 (JMongoMessage* message, gconstpointer data)
+{
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (message->current + 1 > (gchar const*)j_mongo_message_data(message) + j_mongo_message_length(message))
+	{
+		return FALSE;
+	}
+
+	*(message->current) = *((gchar const*)data);
+	message->current += 1;
+
+	return TRUE;
+}
+
+gboolean
+j_mongo_message_append_4 (JMongoMessage* message, gconstpointer data)
+{
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (message->current + 4 > (gchar const*)j_mongo_message_data(message) + j_mongo_message_length(message))
+	{
+		return FALSE;
+	}
+
+	*((gint32*)(message->current)) = GINT32_TO_LE(*((gint32 const*)data));
+	message->current += 4;
+
+	return TRUE;
+}
+
+gboolean
+j_mongo_message_append_8 (JMongoMessage* message, gconstpointer data)
+{
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (message->current + 8 > (gchar const*)j_mongo_message_data(message) + j_mongo_message_length(message))
+	{
+		return FALSE;
+	}
+
+	*((gint64*)(message->current)) = GINT64_TO_LE(*((gint64 const*)data));
+	message->current += 8;
+
+	return TRUE;
+}
+
+gboolean
+j_mongo_message_append_n (JMongoMessage* message, gconstpointer data, gsize length)
+{
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (message->current + length > (gchar const*)j_mongo_message_data(message) + j_mongo_message_length(message))
+	{
+		return FALSE;
+	}
+
+	memcpy(message->current, data, length);
+	message->current += length;
+
+	return TRUE;
+}
+
+gconstpointer
 j_mongo_message_data (JMongoMessage* message)
 {
 	g_return_val_if_fail(message != NULL, NULL);
 
-	return message->data;
+	return &(message->header);
 }
 
 gsize

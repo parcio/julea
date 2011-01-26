@@ -50,38 +50,6 @@
 
 static const gint32 j_mongo_zero = 0;
 
-static gpointer
-j_mongo_append_8 (gchar* data, gconstpointer value)
-{
-	*data = *((const gchar*)value);
-
-	return (data + 1);
-}
-
-static gpointer
-j_mongo_append_32 (gchar* data, gconstpointer value)
-{
-	*((gint32*)(data)) = GINT32_TO_LE(*((const gint32*)value));
-
-	return (data + 4);
-}
-
-static gpointer
-j_mongo_append_64 (gchar* data, gconstpointer value)
-{
-	*((gint64*)(data)) = GINT64_TO_LE(*((const gint64*)value));
-
-	return (data + 8);
-}
-
-static gpointer
-j_mongo_append_n (gchar* data, gconstpointer value, gsize n)
-{
-	memcpy(data, value, n);
-
-	return (data + n);
-}
-
 static gchar*
 j_mongo_get_db (const gchar* ns)
 {
@@ -172,7 +140,6 @@ j_mongo_insert (JMongoConnection* connection, const gchar* collection, JBSON* bs
 	JMongoMessage* message;
 	gsize length;
 	gsize message_length;
-	gpointer data;
 
 	g_return_if_fail(connection != NULL);
 	g_return_if_fail(collection != NULL);
@@ -182,11 +149,10 @@ j_mongo_insert (JMongoConnection* connection, const gchar* collection, JBSON* bs
 	message_length = 4 + length + j_bson_size(bson);
 
 	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_INSERT);
-	data = j_mongo_message_data(message);
 
-	data = j_mongo_append_32(data, &j_mongo_zero);
-	data = j_mongo_append_n(data, collection, length);
-	data = j_mongo_append_n(data, j_bson_data(bson), j_bson_size(bson));
+	j_mongo_message_append_4(message, &j_mongo_zero);
+	j_mongo_message_append_n(message, collection, length);
+	j_mongo_message_append_n(message, j_bson_data(bson), j_bson_size(bson));
 
 	j_mongo_connection_send(connection, message);
 
@@ -200,7 +166,6 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 	JMongoMessage* message;
 	gsize length;
 	gsize message_length;
-	gpointer data;
 
 	g_return_if_fail(connection != NULL);
 	g_return_if_fail(collection != NULL);
@@ -220,10 +185,9 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 	j_list_iterator_free(it);
 
 	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_INSERT);
-	data = j_mongo_message_data(message);
 
-	data = j_mongo_append_32(data, &j_mongo_zero);
-	data = j_mongo_append_n(data, collection, length);
+	j_mongo_message_append_4(message, &j_mongo_zero);
+	j_mongo_message_append_n(message, collection, length);
 
 	it = j_list_iterator_new(list);
 
@@ -231,7 +195,7 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 	{
 		JBSON* bson = j_list_iterator_get(it);
 
-		data = j_mongo_append_n(data, j_bson_data(bson), j_bson_size(bson));
+		j_mongo_message_append_n(message, j_bson_data(bson), j_bson_size(bson));
 	}
 
 	j_list_iterator_free(it);
@@ -248,7 +212,6 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 	JMongoReply* reply;
 	gsize length;
 	gsize message_length;
-	gpointer data;
 
 	g_return_val_if_fail(connection != NULL, NULL);
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -263,17 +226,16 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 	}
 
 	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_QUERY);
-	data = j_mongo_message_data(message);
 
-	data = j_mongo_append_32(data, &j_mongo_zero);
-	data = j_mongo_append_n(data, collection, length);
-	data = j_mongo_append_32(data, &number_to_skip);
-	data = j_mongo_append_32(data, &number_to_return);
-	data = j_mongo_append_n(data, j_bson_data(query), j_bson_size(query));
+	j_mongo_message_append_4(message, &j_mongo_zero);
+	j_mongo_message_append_n(message, collection, length);
+	j_mongo_message_append_4(message, &number_to_skip);
+	j_mongo_message_append_4(message, &number_to_return);
+	j_mongo_message_append_n(message, j_bson_data(query), j_bson_size(query));
 
 	if (fields != NULL)
 	{
-		data = j_mongo_append_n(data, j_bson_data(fields), j_bson_size(fields));
+		j_mongo_message_append_n(message, j_bson_data(fields), j_bson_size(fields));
 	}
 
 	j_mongo_connection_send(connection, message);
