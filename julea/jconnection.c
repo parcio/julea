@@ -155,6 +155,29 @@ j_connection_connect (JConnection* connection)
 	return connection->connected;
 }
 
+gboolean
+j_connection_disconnect (JConnection* connection)
+{
+	guint i;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(j_is_initialized(), FALSE);
+
+	if (!connection->connected)
+	{
+		return FALSE;
+	}
+
+	j_mongo_connection_disconnect(connection->connection);
+
+	for (i = 0; i < j_common->data_len; i++)
+	{
+		g_io_stream_close(G_IO_STREAM(connection->sockets[i]), NULL, NULL);
+	}
+
+	return TRUE;
+}
+
 JStore*
 j_connection_get (JConnection* connection, const gchar* name)
 {

@@ -153,6 +153,8 @@ main (int argc, char** argv)
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
+
+	j_connection_disconnect(connection);
 	j_connection_unref(connection);
 
 	return 0;
