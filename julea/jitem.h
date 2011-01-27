@@ -48,6 +48,8 @@ const gchar* j_item_name (JItem*);
 JSemantics* j_item_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
 
+gboolean j_item_write (JItem*, gconstpointer, gsize, goffset);
+
 /*
 #include "collection.h"
 #include "public.h"

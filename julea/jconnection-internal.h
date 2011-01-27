@@ -34,8 +34,10 @@
 
 #include "jconnection.h"
 
+#include "jmessage.h"
 #include "jmongo-connection.h"
 
 JMongoConnection* j_connection_connection (JConnection*);
+gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
 
 #endif

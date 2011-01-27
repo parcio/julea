@@ -31,12 +31,18 @@
 
 #include <glib.h>
 
+#include <string.h>
+
 #include "jitem.h"
 #include "jitem-internal.h"
 
 #include "jbson.h"
 #include "jbson-iterator.h"
+#include "jcommon.h"
 #include "jcollection.h"
+#include "jcollection-internal.h"
+#include "jconnection-internal.h"
+#include "jmessage.h"
 #include "jsemantics.h"
 
 /**
@@ -134,6 +140,76 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 	}
 
 	item->semantics = j_semantics_ref(semantics);
+}
+
+gboolean
+j_item_write (JItem* item, gconstpointer data, gsize length, goffset offset)
+{
+	goffset block;
+	goffset rounds;
+	goffset off;
+	gsize overhead;
+	gsize remaining;
+	guint i;
+
+	gsize const block_size = 512 * 1024;
+
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (length == 0)
+	{
+		return TRUE;
+	}
+
+	block = offset / block_size;
+	rounds = block / j_common->data_len;
+	overhead = offset % block_size;
+	off = (rounds * block_size) + overhead;
+	remaining = length;
+	i = block % j_common->data_len;
+
+	while (remaining > 0)
+	{
+		JMessage* message;
+		gchar const* store;
+		gchar const* collection;
+		gsize count;
+
+		count = MIN(remaining, block_size - overhead);
+
+		store = j_store_name(j_collection_store(item->collection));
+		collection = j_collection_name(item->collection);
+
+		message = j_message_new(strlen(store) + 1 + strlen(collection) + 1 + strlen(item->name) + 1 + sizeof(gsize) + sizeof(goffset), J_MESSAGE_OP_WRITE);
+		j_message_append_n(message, store, strlen(store) + 1);
+		j_message_append_n(message, collection, strlen(collection) + 1);
+		j_message_append_n(message, item->name, strlen(item->name) + 1);
+		j_message_append_8(message, &count);
+		j_message_append_8(message, &off);
+
+		j_connection_send(j_store_connection(j_collection_store(item->collection)), i, message, data, count);
+
+		j_message_free(message);
+
+		if (overhead > 0)
+		{
+			overhead = 0;
+			off = rounds * block_size;
+		}
+
+		if (i == j_common->data_len - 1)
+		{
+			off += block_size;
+		}
+
+		remaining -= count;
+		data = (gchar const*)data + count;
+		i = (i + 1) % j_common->data_len;
+
+	}
+
+	return TRUE;
 }
 
 /* Internal */

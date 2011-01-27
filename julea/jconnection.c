@@ -37,6 +37,7 @@
 #include "jconnection-internal.h"
 
 #include "jcommon.h"
+#include "jmessage.h"
 #include "jmongo-connection.h"
 
 /**
@@ -195,6 +196,29 @@ j_connection_connection (JConnection* connection)
 	g_return_val_if_fail(connection != NULL, NULL);
 
 	return connection->connection;
+}
+
+gboolean
+j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpointer data, gsize length)
+{
+	GOutputStream* output;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(i < j_common->data_len, FALSE);
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
+
+	g_output_stream_write_all(output, j_message_data(message), j_message_length(message), NULL, NULL, NULL);
+
+	if (data != NULL && length > 0)
+	{
+		g_output_stream_write_all(output, data, length, NULL, NULL, NULL);
+	}
+
+	g_output_stream_flush(output, NULL, NULL);
+
+	return TRUE;
 }
 
 /**

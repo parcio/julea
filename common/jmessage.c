@@ -30,6 +30,7 @@
  **/
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <string.h>
 
@@ -236,6 +237,137 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 }
 
 /**
+ * Gets 1 byte from the message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The 1 byte.
+ **/
+gchar
+j_message_get_1 (JMessage* message)
+{
+	gchar ret;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	ret = *((gchar const*)(message->current));
+	message->current += 1;
+
+	return ret;
+}
+
+/**
+ * Gets 4 bytes from the message.
+ * The bytes are converted from little endian automatically.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The 4 bytes.
+ **/
+gint32
+j_message_get_4 (JMessage* message)
+{
+	gint32 ret;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	ret = GINT32_FROM_LE(*((gint32 const*)(message->current)));
+	message->current += 4;
+
+	return ret;
+}
+
+/**
+ * Gets 8 bytes from the message.
+ * The bytes are converted from little endian automatically.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The 8 bytes.
+ **/
+gint64
+j_message_get_8 (JMessage* message)
+{
+	gint64 ret;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	ret = GINT64_FROM_LE(*((gint64 const*)(message->current)));
+	message->current += 8;
+
+	return ret;
+}
+
+/**
+ * Gets a string from the message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The string.
+ **/
+gchar const*
+j_message_get_string (JMessage* message)
+{
+	gchar const* ret;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	ret = message->current;
+	message->current += strlen(ret) + 1;
+
+	return ret;
+}
+
+gboolean
+j_message_read (JMessage* message, GInputStream* stream)
+{
+	gsize bytes_read;
+
+	if (!g_input_stream_read_all(stream, &(message->header), sizeof(JMessageHeader), &bytes_read, NULL, NULL))
+	{
+		return FALSE;
+	}
+
+	g_printerr("read_header %" G_GSIZE_FORMAT "\n", bytes_read);
+
+	if (bytes_read == 0)
+	{
+		return FALSE;
+	}
+
+	if (!g_input_stream_read_all(stream, message->data, j_message_length(message) - sizeof(JMessageHeader), &bytes_read, NULL, NULL))
+	{
+		return FALSE;
+	}
+
+	g_printerr("read_message %" G_GSIZE_FORMAT "\n", bytes_read);
+
+	message->current = message->data;
+
+	return TRUE;
+}
+
+/**
  * Returns the message's data.
  *
  * \author Michael Kuhn
@@ -273,6 +405,14 @@ j_message_length (JMessage* message)
 	g_return_val_if_fail(message != NULL, 0);
 
 	return GUINT32_FROM_LE(message->header.length);
+}
+
+JMessageOp
+j_message_op (JMessage* message)
+{
+	g_return_val_if_fail(message != NULL, 0);
+
+	return GINT32_FROM_LE(message->header.op);
 }
 
 /**

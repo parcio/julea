@@ -48,6 +48,7 @@ typedef struct JMessageHeader JMessageHeader;
 
 enum JMessageOp
 {
+	J_MESSAGE_OP_NONE,
 	J_MESSAGE_OP_READ,
 	J_MESSAGE_OP_WRITE
 };
@@ -55,6 +56,7 @@ enum JMessageOp
 typedef enum JMessageOp JMessageOp;
 
 #include <glib.h>
+#include <gio/gio.h>
 
 JMessage* j_message_new (gsize, JMessageOp);
 void j_message_free (JMessage*);
@@ -64,7 +66,15 @@ gboolean j_message_append_4 (JMessage*, gconstpointer);
 gboolean j_message_append_8 (JMessage*, gconstpointer);
 gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
 
+gchar j_message_get_1 (JMessage*);
+gint32 j_message_get_4 (JMessage*);
+gint64 j_message_get_8 (JMessage*);
+gchar const* j_message_get_string (JMessage*);
+
 gconstpointer j_message_data (JMessage*);
 gsize j_message_length (JMessage*);
+JMessageOp j_message_op (JMessage*);
+
+gboolean j_message_read (JMessage*, GInputStream*);
 
 #endif

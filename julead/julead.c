@@ -29,6 +29,8 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <string.h>
+
 #include "jmessage.h"
 
 static GFile* j_storage = NULL;
@@ -39,53 +41,58 @@ static gchar const* opt_storage = "/tmp/julea";
 static gboolean
 julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
-	JMessageHeader header;
-	JMessageOp op;
+	JMessage* message;
 	GInputStream* input;
 	GOutputStream* output;
-	gchar* buffer;
-	gsize bytes_read;
 
 	g_printerr("new %p\n", (gpointer)connection);
 
-	buffer = g_new(gchar, 1 * 1024 * 1024);
+	message = j_message_new(1024 * 1024, J_MESSAGE_OP_NONE);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 
-	while (g_input_stream_read_all(input, &header, sizeof(JMessageHeader), &bytes_read, NULL, NULL))
+	while (j_message_read(message, input))
 	{
-		guint32 length;
-
-		if (bytes_read == 0)
+		switch (j_message_op(message))
 		{
-			break;
-		}
+			case J_MESSAGE_OP_NONE:
+				g_printerr("none_op\n");
+				break;
+			case J_MESSAGE_OP_READ:
+				g_printerr("read_op\n");
+				break;
+			case J_MESSAGE_OP_WRITE:
+				g_printerr("write_op\n");
+				{
+					gchar* buf;
+					gchar const* store;
+					gchar const* collection;
+					gchar const* item;
+					gsize length;
+					goffset offset;
 
-		g_print("read %" G_GSIZE_FORMAT "\n", bytes_read);
+					store = j_message_get_string(message);
+					collection = j_message_get_string(message);
+					item = j_message_get_string(message);
+					length = j_message_get_8(message);
+					offset = j_message_get_8(message);
 
-		length = GUINT32_FROM_LE(header.length);
-		op = GINT32_FROM_LE(header.op);
+					buf = g_new(gchar, 512 * 1024);
 
-		if (g_input_stream_read_all(input, buffer, length - sizeof(JMessageHeader), &bytes_read, NULL, NULL))
-		{
-			g_print("read %" G_GSIZE_FORMAT "\n", bytes_read);
+					g_printerr("xxx %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-			switch (op)
-			{
-				case J_MESSAGE_OP_READ:
-					g_printerr("read\n");
-					break;
-				case J_MESSAGE_OP_WRITE:
-					g_printerr("write\n");
-					break;
-				default:
-					g_warn_if_reached();
-					break;
-			}
+					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
+
+					g_free(buf);
+				}
+				break;
+			default:
+				g_warn_if_reached();
+				break;
 		}
 	}
 
-	g_free(buffer);
+	j_message_free(message);
 
 	g_printerr("close %p\n", (gpointer)connection);
 
@@ -145,6 +152,8 @@ main (int argc, char** argv)
 
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
+
+	g_object_unref(j_storage);
 
 	return 0;
 }

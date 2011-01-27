@@ -40,6 +40,7 @@ main (int argc, char** argv)
 	JSemantics* semantics;
 	JList* collections;
 	JListIterator* cliterator;
+	gboolean is_first = TRUE;
 
 	if (!g_thread_get_initialized())
 	{
@@ -140,6 +141,17 @@ main (int argc, char** argv)
 	while (j_collection_iterator_next(citerator))
 	{
 		JItem* item = j_collection_iterator_get(citerator);
+
+		if (is_first)
+		{
+			gchar* buf;
+
+			is_first = FALSE;
+			buf = g_new(gchar, 1024 * 1024 + 1);
+			j_item_write(item, buf, 1024 * 1024 + 1, 0);
+			j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1);
+			g_free(buf);
+		}
 
 		g_print("%s ", j_item_name(item));
 		j_item_unref(item);
