@@ -78,10 +78,7 @@ j_init (void)
 	gchar const* const* dirs;
 	guint i;
 
-	if (j_is_initialized())
-	{
-		return FALSE;
-	}
+	g_return_val_if_fail(!j_is_initialized(), FALSE);
 
 	key_file = g_key_file_new();
 	path = g_build_filename(g_get_user_config_dir(), "julea", "julea", NULL);
@@ -123,9 +120,27 @@ out:
 }
 
 gboolean
+j_deinit (void)
+{
+	JCommon* p;
+
+	g_return_val_if_fail(j_is_initialized(), FALSE);
+
+	p = g_atomic_pointer_get(&j_common);
+	g_atomic_pointer_set(&j_common, NULL);
+
+	g_strfreev(p->data);
+	g_strfreev(p->metadata);
+
+	g_slice_free(JCommon, p);
+
+	return TRUE;
+}
+
+gboolean
 j_is_initialized (void)
 {
-	gpointer p;
+	JCommon* p;
 
 	p = g_atomic_pointer_get(&j_common);
 
