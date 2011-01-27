@@ -29,8 +29,10 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
-static gchar* opt_data = NULL;
-static gchar* opt_metadata = NULL;
+static gboolean opt_local = FALSE;
+static gboolean opt_global = FALSE;
+static gchar const* opt_data = NULL;
+static gchar const* opt_metadata = NULL;
 
 static
 gchar**
@@ -53,7 +55,7 @@ string_split (gchar const* string)
 
 static
 gboolean
-write_config (gchar const* path)
+write_config (gchar* path)
 {
 	GKeyFile* key_file;
 	gboolean ret = TRUE;
@@ -78,6 +80,8 @@ write_config (gchar const* path)
 		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
 
 		g_object_unref(file);
+
+		g_free(path);
 	}
 	else
 	{
@@ -101,6 +105,8 @@ main (gint argc, gchar** argv)
 	gchar* path = NULL;
 
 	GOptionEntry entries[] = {
+		{ "local", 'l', 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
+		{ "global", 'g', 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
 		{ "data", 'd', 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
 		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
 		{ NULL }
@@ -124,7 +130,7 @@ main (gint argc, gchar** argv)
 		return 1;
 	}
 
-	if (opt_data == NULL || opt_metadata == NULL)
+	if (opt_data == NULL || opt_metadata == NULL || (opt_local && opt_global))
 	{
 		gchar* help;
 
@@ -139,9 +145,17 @@ main (gint argc, gchar** argv)
 
 	g_option_context_free(context);
 
-	if (argc > 1)
+	if (opt_local)
 	{
-		path = argv[1];
+		path = g_build_filename(g_get_user_config_dir(), "julea", "julea", NULL);
+	}
+	else if (opt_global)
+	{
+		path = g_build_filename(g_get_system_config_dirs()[0], "julea", "julea", NULL);
+	}
+	else if (argc > 1)
+	{
+		path = g_strdup(argv[1]);
 	}
 
 	if (!write_config(path))

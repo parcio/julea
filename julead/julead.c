@@ -31,6 +31,11 @@
 
 #include "jmessage.h"
 
+static GFile* j_storage = NULL;
+
+static gint opt_port = 4711;
+static gchar const* opt_storage = "/tmp/julea";
+
 static gboolean
 julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
@@ -41,7 +46,7 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 	gchar* buffer;
 	gsize bytes_read;
 
-	g_print("new %p\n", (gpointer)connection);
+	g_printerr("new %p\n", (gpointer)connection);
 
 	buffer = g_new(gchar, 1 * 1024 * 1024);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
@@ -82,6 +87,8 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 
 	g_free(buffer);
 
+	g_printerr("close %p\n", (gpointer)connection);
+
 	return TRUE;
 }
 
@@ -90,6 +97,14 @@ main (int argc, char** argv)
 {
 	GMainLoop* main_loop;
 	GSocketListener* listener;
+	GError* error = NULL;
+	GOptionContext* context;
+
+	GOptionEntry entries[] = {
+		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
+		{ "storage", 's', 0, G_OPTION_ARG_STRING, &opt_storage, "Storage space to use", "/tmp/julea" },
+		{ NULL }
+	};
 
 	if (!g_thread_get_initialized())
 	{
@@ -98,8 +113,29 @@ main (int argc, char** argv)
 
 	g_type_init();
 
+	context = g_option_context_new(NULL);
+	g_option_context_add_main_entries(context, entries, NULL);
+
+	if (!g_option_context_parse(context, &argc, &argv, &error))
+	{
+		g_option_context_free(context);
+
+		if (error)
+		{
+			g_printerr("%s\n", error->message);
+			g_error_free(error);
+		}
+
+		return 1;
+	}
+
+	g_option_context_free(context);
+
+	j_storage = g_file_new_for_commandline_arg(opt_storage);
+	g_file_make_directory_with_parents(j_storage, NULL, NULL);
+
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
-	g_socket_listener_add_inet_port(listener, 4711, NULL, NULL);
+	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
 	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(julead_on_run), NULL);
 

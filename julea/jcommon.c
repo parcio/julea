@@ -64,6 +64,8 @@ j_init_common (GKeyFile* key_file)
 	common = g_slice_new(JCommon);
 	common->data = data;
 	common->metadata = metadata;
+	common->data_len = g_strv_length(data);
+	common->metadata_len = g_strv_length(metadata);
 
 	g_atomic_pointer_set(&j_common, common);
 }

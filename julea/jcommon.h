@@ -38,6 +38,9 @@ struct JCommon
 {
 	gchar** data;
 	gchar** metadata;
+
+	guint data_len;
+	guint metadata_len;
 };
 
 typedef struct JCommon JCommon;

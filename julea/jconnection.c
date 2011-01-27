@@ -53,7 +53,7 @@
 struct JConnection
 {
 	JMongoConnection* connection;
-	GSocketConnection* socket;
+	GSocketConnection** sockets;
 
 	gboolean connected;
 
@@ -64,12 +64,20 @@ JConnection*
 j_connection_new (void)
 {
 	JConnection* connection;
+	guint i;
+
+	g_return_val_if_fail(j_is_initialized(), FALSE);
 
 	connection = g_slice_new(JConnection);
 	connection->connection = j_mongo_connection_new();
-	connection->socket = NULL;
+	connection->sockets = g_new(GSocketConnection*, j_common->data_len);
 	connection->connected = FALSE;
 	connection->ref_count = 1;
+
+	for (i = 0; i < j_common->data_len; i++)
+	{
+		connection->sockets[i] = NULL;
+	}
 
 	return connection;
 }
@@ -90,6 +98,8 @@ j_connection_ref (JConnection* connection)
 void
 j_connection_unref (JConnection* connection)
 {
+	guint i;
+
 	g_return_if_fail(connection != NULL);
 
 	connection->ref_count--;
@@ -98,10 +108,15 @@ j_connection_unref (JConnection* connection)
 	{
 		j_mongo_connection_unref(connection->connection);
 
-		if (connection->socket != NULL)
+		for (i = 0; i < j_common->data_len; i++)
 		{
-			g_object_unref(connection->socket);
+			if (connection->sockets[i] != NULL)
+			{
+				g_object_unref(connection->sockets[i]);
+			}
 		}
+
+		g_free(connection->sockets);
 
 		g_slice_free(JConnection, connection);
 	}
@@ -110,19 +125,32 @@ j_connection_unref (JConnection* connection)
 gboolean
 j_connection_connect (JConnection* connection)
 {
-	gboolean is_connected;
 	GSocketClient* client;
+	gboolean is_connected;
+	guint i;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(j_is_initialized(), FALSE);
 
+	if (connection->connected)
+	{
+		return FALSE;
+	}
+
 	is_connected = j_mongo_connection_connect(connection->connection, j_common->metadata[0]);
 
 	client = g_socket_client_new();
-	connection->socket = g_socket_client_connect_to_host(client, j_common->data[0], 4711, NULL, NULL);
+
+	for (i = 0; i < j_common->data_len; i++)
+	{
+		connection->sockets[i] = g_socket_client_connect_to_host(client, j_common->data[i], 4711, NULL, NULL);
+
+		is_connected = is_connected && (connection->sockets[i] != NULL);
+	}
+
 	g_object_unref(client);
 
-	connection->connected = is_connected && (connection->socket != NULL);
+	connection->connected = is_connected;
 
 	return connection->connected;
 }
