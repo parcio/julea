@@ -146,6 +146,7 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 gboolean
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 {
+	JDistribution* distribution;
 	guint64 new_length;
 	guint64 new_offset;
 	guint index;
@@ -154,9 +155,10 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 	g_return_val_if_fail(item != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
+	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 	d = data;
 
-	while (j_distribution_round_robin(length, offset, &index, &new_length, &new_offset))
+	while (j_distribution_iterate(distribution, &index, &new_length, &new_offset))
 	{
 		JMessage* message;
 		gchar const* store;
@@ -184,9 +186,9 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 		j_message_free(message);
 
 		d += new_length;
-		length -= new_length;
-		offset += new_length;
 	}
+
+	j_distribution_free(distribution);
 
 	return TRUE;
 }

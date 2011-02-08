@@ -32,58 +32,82 @@
 #include <jcommon-internal.h>
 #include <jdistribution.h>
 
-static void
-test_distribution_round_robin (gpointer* fixture, gconstpointer data)
+static
+void
+test_distribution_fixture_setup (gpointer* fixture, gconstpointer data)
 {
 	GKeyFile* key_file;
 	gchar const* servers[3] = { "localhost", "localhost", NULL };
-	gboolean ret;
-	guint64 length;
-	guint64 offset;
-	guint index;
 
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 2);
 
 	j_init_for_data(key_file);
+
 	g_key_file_free(key_file);
+}
 
-	ret = j_distribution_round_robin(512 * 1024, 0, &index, &length, &offset);
-	g_assert(ret);
-	g_assert_cmpuint(index, ==, 0);
-	g_assert_cmpuint(length, ==, 512 * 1024);
-	g_assert_cmpuint(offset, ==, 0);
+static
+void
+test_distribution_fixture_teardown (gpointer* fixture, gconstpointer data)
+{
+	j_deinit();
+}
 
-	ret = j_distribution_round_robin(512 * 1024, 42, &index, &length, &offset);
+static
+void
+test_distribution_round_robin (gpointer* fixture, gconstpointer data)
+{
+	JDistribution* distribution;
+	gboolean ret;
+	guint64 length;
+	guint64 offset;
+	guint index;
+
+	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
+
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
 	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
 	g_assert_cmpuint(offset, ==, 42);
 
-	ret = j_distribution_round_robin(512 * 1024, 512 * 1024, &index, &length, &offset);
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, 512 * 1024);
 	g_assert_cmpuint(offset, ==, 0);
 
-	ret = j_distribution_round_robin(512 * 1024, (512 * 1024) + 42, &index, &length, &offset);
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 0);
+	g_assert_cmpuint(length, ==, 512 * 1024);
+	g_assert_cmpuint(offset, ==, 512 * 1024);
+
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
-	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
-	g_assert_cmpuint(offset, ==, 42);
+	g_assert_cmpuint(length, ==, 512 * 1024);
+	g_assert_cmpuint(offset, ==, 512 * 1024);
 
-	ret = j_distribution_round_robin(0, 0, &index, &length, &offset);
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 0);
+	g_assert_cmpuint(length, ==, 42);
+	g_assert_cmpuint(offset, ==, 2 * 512 * 1024);
+
+	ret = j_distribution_iterate(distribution, &index, &length, &offset);
 	g_assert(!ret);
 
-	j_deinit();
+	j_distribution_free(distribution);
 }
 
 int main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/bson/round_robin", gpointer, NULL, NULL, test_distribution_round_robin, NULL);
+	g_test_add("/julea/bson/round_robin", gpointer, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
 
 	return g_test_run();
 }

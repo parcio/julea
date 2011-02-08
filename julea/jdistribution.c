@@ -43,8 +43,16 @@
  * @{
  **/
 
+struct JDistribution
+{
+	JDistributionType type;
+	guint64 length;
+	guint64 offset;
+};
+
+static
 gboolean
-j_distribution_round_robin (guint64 length, guint64 offset, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
 	guint64 const block_size = 512 * 1024;
 
@@ -56,20 +64,56 @@ j_distribution_round_robin (guint64 length, guint64 offset, guint* index, guint6
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
 
-	if (length == 0)
+	if (distribution->length == 0)
 	{
 		return FALSE;
 	}
 
-	block = offset / block_size;
+	block = distribution->offset / block_size;
 	round = block / j_common()->data_len;
-	displacement = offset % block_size;
+	displacement = distribution->offset % block_size;
 
 	*index = block % j_common()->data_len;
-	*new_length = MIN(length, block_size - displacement);
+	*new_length = MIN(distribution->length, block_size - displacement);
 	*new_offset = (round * block_size) + displacement;
 
+	distribution->length -= *new_length;
+	distribution->offset += *new_length;
+
 	return TRUE;
+}
+
+JDistribution*
+j_distribution_new (JDistributionType type, guint64 length, guint64 offset)
+{
+	JDistribution* distribution;
+
+	distribution = g_slice_new(JDistribution);
+	distribution->type = type;
+	distribution->length = length;
+	distribution->offset = offset;
+
+	return distribution;
+}
+
+void
+j_distribution_free (JDistribution* distribution)
+{
+	g_return_if_fail(distribution != NULL);
+
+	g_slice_free(JDistribution, distribution);
+}
+
+gboolean
+j_distribution_iterate (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+{
+	switch (distribution->type)
+	{
+		case J_DISTRIBUTION_ROUND_ROBIN:
+			return j_distribution_round_robin(distribution, index, new_length, new_offset);
+		default:
+			g_return_val_if_reached(FALSE);
+	}
 }
 
 /**
