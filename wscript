@@ -40,7 +40,7 @@ def build (ctx):
 		includes = ['common']
 	)
 
-	for test in ('bson', 'bson-iterator', 'list', 'list-iterator', 'semantics'):
+	for test in ('bson', 'bson-iterator', 'distribution', 'list', 'list-iterator', 'semantics'):
 		ctx.program(
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),

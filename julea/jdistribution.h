@@ -36,5 +36,4 @@
 
 gboolean j_distribution_round_robin (guint64, guint64, guint*, guint64*, guint64*);
 
-
 #endif

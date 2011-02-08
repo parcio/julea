@@ -25,54 +25,47 @@
  * SUCH DAMAGE.
  */
 
-/**
- * \file
- **/
-
 #include <glib.h>
 
-#include "jdistribution.h"
+#include <julea.h>
 
-#include "jcommon.h"
+#include <jdistribution.h>
 
-/**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
- *
- * @{
- **/
-
-gboolean
-j_distribution_round_robin (guint64 length, guint64 offset, guint* index, guint64* new_length, guint64* new_offset)
+static void
+test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 {
-	guint64 const block_size = 512 * 1024;
+	gboolean ret;
+	guint64 length;
+	guint64 offset;
+	guint index;
 
-	guint64 block;
-	guint64 displacement;
-	guint64 round;
+	/* FIXME use specific config */
 
-	g_return_val_if_fail(j_is_initialized(), FALSE);
-	g_return_val_if_fail(index != NULL, FALSE);
-	g_return_val_if_fail(new_length != NULL, FALSE);
-	g_return_val_if_fail(new_offset != NULL, FALSE);
+	j_init();
 
-	if (length == 0)
-	{
-		return FALSE;
-	}
+	ret = j_distribution_round_robin(512 * 1024, 0, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 0);
+	g_assert_cmpuint(length, ==, 512 * 1024);
+	g_assert_cmpuint(offset, ==, 0);
 
-	block = offset / block_size;
-	round = block / j_common->data_len;
-	displacement = offset % block_size;
+	ret = j_distribution_round_robin(512 * 1024, 42, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 0);
+	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
+	g_assert_cmpuint(offset, ==, 42);
 
-	*index = block % j_common->data_len;
-	*new_length = MIN(length, block_size - displacement);
-	*new_offset = (round * block_size) + displacement;
+	ret = j_distribution_round_robin(0, 0, &index, &length, &offset);
+	g_assert(!ret);
 
-	return TRUE;
+	j_deinit();
 }
 
-/**
- * @}
- **/
+int main (int argc, char** argv)
+{
+	g_test_init(&argc, &argv, NULL);
+
+	g_test_add("/julea/bson/round_robin", gpointer, NULL, NULL, test_distribution_round_robin, NULL);
+
+	return g_test_run();
+}
