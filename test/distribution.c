@@ -29,19 +29,25 @@
 
 #include <julea.h>
 
+#include <jcommon-internal.h>
 #include <jdistribution.h>
 
 static void
 test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 {
+	GKeyFile* key_file;
+	gchar const* servers[3] = { "localhost", "localhost", NULL };
 	gboolean ret;
 	guint64 length;
 	guint64 offset;
 	guint index;
 
-	/* FIXME use specific config */
+	key_file = g_key_file_new();
+	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
+	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 2);
 
-	j_init();
+	j_init_for_data(key_file);
+	g_key_file_free(key_file);
 
 	ret = j_distribution_round_robin(512 * 1024, 0, &index, &length, &offset);
 	g_assert(ret);
@@ -52,6 +58,18 @@ test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 	ret = j_distribution_round_robin(512 * 1024, 42, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
+	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
+	g_assert_cmpuint(offset, ==, 42);
+
+	ret = j_distribution_round_robin(512 * 1024, 512 * 1024, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 1);
+	g_assert_cmpuint(length, ==, 512 * 1024);
+	g_assert_cmpuint(offset, ==, 0);
+
+	ret = j_distribution_round_robin(512 * 1024, (512 * 1024) + 42, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
 	g_assert_cmpuint(offset, ==, 42);
 
