@@ -105,7 +105,7 @@ j_distribution_free (JDistribution* distribution)
 }
 
 gboolean
-j_distribution_iterate (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
 	switch (distribution->type)
 	{

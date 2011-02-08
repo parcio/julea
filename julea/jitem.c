@@ -44,6 +44,7 @@
 #include "jconnection-internal.h"
 #include "jdistribution.h"
 #include "jmessage.h"
+#include "jobjectid.h"
 #include "jsemantics.h"
 
 /**
@@ -59,6 +60,7 @@
  **/
 struct JItem
 {
+	JObjectID* id;
 	gchar* name;
 
 	JCollection* collection;
@@ -75,6 +77,7 @@ j_item_new (const gchar* name)
 	g_return_val_if_fail(name != NULL, NULL);
 
 	item = g_slice_new(JItem);
+	item->id = j_object_id_new(TRUE);
 	item->name = g_strdup(name);
 	item->collection = NULL;
 	item->semantics = NULL;
@@ -100,6 +103,11 @@ j_item_unref (JItem* item)
 		if (item->semantics != NULL)
 		{
 			j_semantics_unref(item->semantics);
+		}
+
+		if (item->id != NULL)
+		{
+			j_object_id_free(item->id);
 		}
 
 		g_free(item->name);
@@ -158,7 +166,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 	d = data;
 
-	while (j_distribution_iterate(distribution, &index, &new_length, &new_offset))
+	while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 	{
 		JMessage* message;
 		gchar const* store;
@@ -204,6 +212,7 @@ j_item_new_from_bson (JCollection* collection, JBSON* bson)
 	g_return_val_if_fail(bson != NULL, NULL);
 
 	item = g_slice_new(JItem);
+	item->id = NULL;
 	item->name = NULL;
 	item->collection = j_collection_ref(collection);
 	item->semantics = NULL;
@@ -248,9 +257,8 @@ j_item_serialize (JItem* item)
 	g_return_val_if_fail(item != NULL, NULL);
 
 	bson = j_bson_new();
-	j_bson_append_new_object_id(bson, "_id");
-	/* FIXME id */
-	j_bson_append_string(bson, "Collection", j_collection_name(item->collection));
+	j_bson_append_object_id(bson, "_id", item->id);
+	j_bson_append_object_id(bson, "Collection", j_collection_id(item->collection));
 	j_bson_append_string(bson, "Name", item->name);
 
 	return bson;
@@ -266,17 +274,22 @@ j_item_deserialize (JItem* item, JBSON* bson)
 
 	iterator = j_bson_iterator_new(bson);
 
-	/*
-		m_id = o.getField("_id").OID();
-	*/
-
 	while (j_bson_iterator_next(iterator))
 	{
 		const gchar* key;
 
 		key = j_bson_iterator_get_key(iterator);
 
-		if (g_strcmp0(key, "Name") == 0)
+		if (g_strcmp0(key, "ID") == 0)
+		{
+			if (item->id != NULL)
+			{
+				j_object_id_free(item->id);
+			}
+
+			item->id = j_bson_iterator_get_id(iterator);
+		}
+		else if (g_strcmp0(key, "Name") == 0)
 		{
 			g_free(item->name);
 			item->name = g_strdup(j_bson_iterator_get_string(iterator));
@@ -286,13 +299,15 @@ j_item_deserialize (JItem* item, JBSON* bson)
 	j_bson_iterator_free(iterator);
 }
 
-/*
-#include "item.h"
-
-#include "exception.h"
-
-namespace JULEA
+JObjectID*
+j_item_id (JItem* item)
 {
+	g_return_val_if_fail(item != NULL, NULL);
+
+	return item->id;
+}
+
+/*
 	void _Item::IsInitialized (bool check)
 	{
 		if (m_initialized != check)
@@ -307,7 +322,6 @@ namespace JULEA
 			}
 		}
 	}
-}
 */
 
 /**

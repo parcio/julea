@@ -48,6 +48,6 @@ typedef struct JDistribution JDistribution;
 JDistribution* j_distribution_new (JDistributionType, guint64, guint64);
 void j_distribution_free (JDistribution*);
 
-gboolean j_distribution_iterate (JDistribution*, guint*, guint64*, guint64*);
+gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*);
 
 #endif

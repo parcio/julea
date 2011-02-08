@@ -83,8 +83,7 @@ j_collection_iterator_new (JCollection* collection)
 
 	bson = j_bson_new();
 
-	// FIXME id
-	j_bson_append_string(bson, "Collection", j_collection_name(iterator->collection));
+	j_bson_append_object_id(bson, "Collection", j_collection_id(iterator->collection));
 
 	iterator->iterator = j_mongo_find(connection, j_collection_collection_items(iterator->collection), bson, NULL, 0, 0);
 

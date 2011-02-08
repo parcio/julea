@@ -67,37 +67,37 @@ test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
 	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
 	g_assert_cmpuint(offset, ==, 42);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, 512 * 1024);
 	g_assert_cmpuint(offset, ==, 0);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
 	g_assert_cmpuint(length, ==, 512 * 1024);
 	g_assert_cmpuint(offset, ==, 512 * 1024);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, 512 * 1024);
 	g_assert_cmpuint(offset, ==, 512 * 1024);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
 	g_assert_cmpuint(length, ==, 42);
 	g_assert_cmpuint(offset, ==, 2 * 512 * 1024);
 
-	ret = j_distribution_iterate(distribution, &index, &length, &offset);
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(!ret);
 
 	j_distribution_free(distribution);

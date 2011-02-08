@@ -50,4 +50,6 @@ void j_collection_associate (JCollection*, JStore*);
 JBSON* j_collection_serialize (JCollection*);
 void j_collection_deserialize (JCollection*, JBSON*);
 
+JObjectID* j_collection_id (JCollection*);
+
 #endif

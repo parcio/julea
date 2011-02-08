@@ -80,7 +80,6 @@ j_store_new (JConnection* connection, const gchar* name)
 	JStore* store;
 	/*
 	: m_initialized(true),
-	m_collectionsCollection("")
 	*/
 
 	g_return_val_if_fail(connection != NULL, NULL);

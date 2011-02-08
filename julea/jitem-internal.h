@@ -38,6 +38,7 @@
 
 #include "jbson.h"
 #include "jcollection.h"
+#include "jobjectid.h"
 
 JItem* j_item_new_from_bson (JCollection*, JBSON*);
 
@@ -45,5 +46,7 @@ void j_item_associate (JItem*, JCollection*);
 
 JBSON* j_item_serialize (JItem*);
 void j_item_deserialize (JItem*, JBSON*);
+
+JObjectID* j_item_id (JItem*);
 
 #endif

@@ -66,18 +66,21 @@ test_bson_append (JBSON** bson, gconstpointer data)
 	for (guint i = 0; i < n; i++)
 	{
 		JBSON* b;
+		JObjectID* id;
 		gchar* name;
 
+		id = j_object_id_new(TRUE);
 		b = j_bson_new();
 		name = g_strdup_printf("%u", i);
 
+		j_bson_append_object_id(b, "_id", id);
 		j_bson_append_boolean(b, "_boolean", i);
 		j_bson_append_int32(b, "_int32", i);
 		j_bson_append_int64(b, "_int64", i);
 		j_bson_append_string(b, "_string", name);
 
 		j_bson_append_new_object_id(*bson, "_id");
-		// FIXME append_id
+		j_bson_append_object_id(*bson, "id", id);
 		j_bson_append_boolean(*bson, "boolean", i);
 		j_bson_append_int32(*bson, "int32", i);
 		j_bson_append_int64(*bson, "int64", i);
@@ -86,6 +89,7 @@ test_bson_append (JBSON** bson, gconstpointer data)
 
 		g_free(name);
 		j_bson_unref(b);
+		j_object_id_free(id);
 	}
 }
 

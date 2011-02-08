@@ -44,6 +44,7 @@
 #include "jlist-iterator.h"
 #include "jmongo.h"
 #include "jmongo-connection.h"
+#include "jobjectid.h"
 #include "jsemantics.h"
 #include "jstore.h"
 
@@ -60,6 +61,8 @@
  **/
 struct JCollection
 {
+	JObjectID* id;
+
 	/**
 	 * The collection's name.
 	 **/
@@ -109,11 +112,10 @@ j_collection_new (const gchar* name)
 
 	/*
 	: m_initialized(false),
-
-	m_id.init();
 	*/
 
 	collection = g_slice_new(JCollection);
+	collection->id = j_object_id_new(TRUE);
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
@@ -164,6 +166,11 @@ j_collection_unref (JCollection* collection)
 		if (collection->store != NULL)
 		{
 			j_store_unref(collection->store);
+		}
+
+		if (collection->id != NULL)
+		{
+			j_object_id_free(collection->id);
 		}
 
 		g_free(collection->collection.items);
@@ -267,8 +274,7 @@ j_collection_get (JCollection* collection, JList* names)
 	bson = j_bson_new();
 	length = j_list_length(names);
 
-	/* FIXME */
-	j_bson_append_string(bson, "Collection", collection->name);
+	j_bson_append_object_id(bson, "Collection", collection->id);
 
 	if (length == 1)
 	{
@@ -364,6 +370,7 @@ j_collection_new_from_bson (JStore* store, JBSON* bson)
 	g_return_val_if_fail(bson != NULL, NULL);
 
 	collection = g_slice_new(JCollection);
+	collection->id = NULL;
 	collection->name = NULL;
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
@@ -425,7 +432,7 @@ j_collection_serialize (JCollection* collection)
 	g_return_val_if_fail(collection != NULL, NULL);
 
 	bson = j_bson_new();
-	j_bson_append_new_object_id(bson, "_id");
+	j_bson_append_object_id(bson, "_id", collection->id);
 	j_bson_append_string(bson, "Name", collection->name);
 
 	return bson;
@@ -445,8 +452,6 @@ j_collection_deserialize (JCollection* collection, JBSON* bson)
 	iterator = j_bson_iterator_new(bson);
 
 	/*
-		m_id = o.getField("_id").OID();
-
 		m_owner.m_user = o.getField("User").Int();
 		m_owner.m_group = o.getField("Group").Int();
 	*/
@@ -457,7 +462,16 @@ j_collection_deserialize (JCollection* collection, JBSON* bson)
 
 		key = j_bson_iterator_get_key(iterator);
 
-		if (g_strcmp0(key, "Name") == 0)
+		if (g_strcmp0(key, "ID") == 0)
+		{
+			if (collection->id != NULL)
+			{
+				j_object_id_free(collection->id);
+			}
+
+			collection->id = j_bson_iterator_get_id(iterator);
+		}
+		else if (g_strcmp0(key, "Name") == 0)
 		{
 			g_free(collection->name);
 			collection->name = g_strdup(j_bson_iterator_get_string(iterator));
@@ -465,6 +479,14 @@ j_collection_deserialize (JCollection* collection, JBSON* bson)
 	}
 
 	j_bson_iterator_free(iterator);
+}
+
+JObjectID*
+j_collection_id (JCollection* collection)
+{
+	g_return_val_if_fail(collection != NULL, NULL);
+
+	return collection->id;
 }
 
 /*
