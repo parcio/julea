@@ -48,64 +48,15 @@ const gchar* j_item_name (JItem*);
 JSemantics* j_item_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
 
-gboolean j_item_write (JItem*, gconstpointer, gsize, goffset);
+gboolean j_item_write (JItem*, gconstpointer, guint64, guint64);
 
 /*
-#include "collection.h"
-#include "public.h"
-#include "ref_counted.h"
-#include "semantics.h"
-
-namespace JULEA
-{
-	class _Item : public RefCounted<_Item>
-	{
-		friend class RefCounted<_Item>;
-
-		friend class Item;
-
-		friend class _Collection;
-
-		public:
-			_Semantics const* GetSemantics ();
 		private:
-			_Item (_Collection*, mongo::BSONObj const&);
-			~_Item ();
-
 			void IsInitialized (bool);
-
-			mongo::BSONObj Serialize ();
-			void Deserialize (mongo::BSONObj const&);
-
-			void Associate (_Collection*);
 
 			bool m_initialized;
 
 			mongo::OID m_id;
-			string m_name;
-
-			_Collection* m_collection;
-			_Semantics* m_semantics;
-	};
-
-	class Item : public Public<_Item>
-	{
-		friend class Collection;
-		friend class _Collection;
-
-		public:
-			Item (string const& name)
-			{
-				m_p = new _Item(name);
-			}
-
-		private:
-			Item (_Collection* collection, mongo::BSONObj const& obj)
-			{
-				m_p = new _Item(collection, obj);
-			}
-	};
-}
 */
 
 #endif

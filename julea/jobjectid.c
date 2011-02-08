@@ -161,9 +161,7 @@ j_object_id_init (JObjectID* id)
 
 	id->data.ints[0] = GINT32_TO_BE(tv.tv_sec);
 	id->data.ints[1] = pid;
-	id->data.ints[2] = GINT32_TO_BE(g_atomic_int_get(&counter));
-
-	g_atomic_int_inc(&counter);
+	id->data.ints[2] = GINT32_TO_BE(g_atomic_int_exchange_and_add(&counter, 1));
 }
 
 /**

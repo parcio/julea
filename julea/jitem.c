@@ -144,10 +144,10 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 }
 
 gboolean
-j_item_write (JItem* item, gconstpointer data, gsize length, goffset offset)
+j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 {
-	goffset new_offset;
-	gsize new_length;
+	guint64 new_length;
+	guint64 new_offset;
 	guint index;
 	gchar const* d;
 
@@ -172,7 +172,7 @@ j_item_write (JItem* item, gconstpointer data, gsize length, goffset offset)
 		collection_len = strlen(collection) + 1;
 		item_len = strlen(item->name) + 1;
 
-		message = j_message_new(store_len + collection_len + item_len + sizeof(gsize) + sizeof(goffset), J_MESSAGE_OP_WRITE);
+		message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OP_WRITE);
 		j_message_append_n(message, store, store_len);
 		j_message_append_n(message, collection, collection_len);
 		j_message_append_n(message, item->name, item_len);

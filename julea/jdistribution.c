@@ -44,13 +44,13 @@
  **/
 
 gboolean
-j_distribution_round_robin (gsize length, goffset offset, guint* index, gsize* new_length, goffset* new_offset)
+j_distribution_round_robin (guint64 length, guint64 offset, guint* index, guint64* new_length, guint64* new_offset)
 {
-	goffset block;
-	goffset round;
-	gsize displacement;
+	guint64 const block_size = 512 * 1024;
 
-	gsize const block_size = 512 * 1024;
+	guint64 block;
+	guint64 displacement;
+	guint64 round;
 
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);

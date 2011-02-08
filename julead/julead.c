@@ -68,8 +68,8 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 					gchar const* store;
 					gchar const* collection;
 					gchar const* item;
-					gsize length;
-					goffset offset;
+					guint64 length;
+					guint64 offset;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
