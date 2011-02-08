@@ -31,8 +31,6 @@
 
 #include <glib.h>
 
-#include <string.h>
-
 #include "jdistribution.h"
 
 #include "jcommon.h"

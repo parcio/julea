@@ -161,14 +161,21 @@ j_item_write (JItem* item, gconstpointer data, gsize length, goffset offset)
 		JMessage* message;
 		gchar const* store;
 		gchar const* collection;
+		gsize store_len;
+		gsize collection_len;
+		gsize item_len;
 
 		store = j_store_name(j_collection_store(item->collection));
 		collection = j_collection_name(item->collection);
 
-		message = j_message_new(strlen(store) + 1 + strlen(collection) + 1 + strlen(item->name) + 1 + sizeof(gsize) + sizeof(goffset), J_MESSAGE_OP_WRITE);
-		j_message_append_n(message, store, strlen(store) + 1);
-		j_message_append_n(message, collection, strlen(collection) + 1);
-		j_message_append_n(message, item->name, strlen(item->name) + 1);
+		store_len = strlen(store) + 1;
+		collection_len = strlen(collection) + 1;
+		item_len = strlen(item->name) + 1;
+
+		message = j_message_new(store_len + collection_len + item_len + sizeof(gsize) + sizeof(goffset), J_MESSAGE_OP_WRITE);
+		j_message_append_n(message, store, store_len);
+		j_message_append_n(message, collection, collection_len);
+		j_message_append_n(message, item->name, item_len);
 		j_message_append_8(message, &new_length);
 		j_message_append_8(message, &new_offset);
 
