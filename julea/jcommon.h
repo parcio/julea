@@ -45,11 +45,10 @@ struct JCommon
 
 typedef struct JCommon JCommon;
 
-extern JCommon* j_common;
-
 gboolean j_init (void);
 gboolean j_deinit (void);
 
 gboolean j_is_initialized (void);
+JCommon* j_common (void);
 
 #endif

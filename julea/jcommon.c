@@ -34,41 +34,14 @@
 #include <gio/gio.h>
 
 #include "jcommon.h"
+#include "jcommon-internal.h"
 
 /**
  * \defgroup JCommon Common
  * @{
  **/
 
-JCommon* j_common = NULL;
-
-static
-void
-j_init_common (GKeyFile* key_file)
-{
-	JCommon* common;
-	gchar** data;
-	gchar** metadata;
-
-	data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
-	metadata = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
-
-	if (data == NULL || data[0] == NULL || metadata == NULL || metadata[0] == NULL)
-	{
-		g_strfreev(data);
-		g_strfreev(metadata);
-
-		return;
-	}
-
-	common = g_slice_new(JCommon);
-	common->data = data;
-	common->metadata = metadata;
-	common->data_len = g_strv_length(data);
-	common->metadata_len = g_strv_length(metadata);
-
-	g_atomic_pointer_set(&j_common, common);
-}
+static JCommon* j_common_global = NULL;
 
 gboolean
 j_init (void)
@@ -85,7 +58,7 @@ j_init (void)
 
 	if (g_key_file_load_from_file(key_file, path, G_KEY_FILE_NONE, NULL))
 	{
-		j_init_common(key_file);
+		j_init_for_data(key_file);
 
 		goto out;
 	}
@@ -100,7 +73,7 @@ j_init (void)
 
 		if (g_key_file_load_from_file(key_file, path, G_KEY_FILE_NONE, NULL))
 		{
-			j_init_common(key_file);
+			j_init_for_data(key_file);
 
 			goto out;
 		}
@@ -126,8 +99,8 @@ j_deinit (void)
 
 	g_return_val_if_fail(j_is_initialized(), FALSE);
 
-	p = g_atomic_pointer_get(&j_common);
-	g_atomic_pointer_set(&j_common, NULL);
+	p = g_atomic_pointer_get(&j_common_global);
+	g_atomic_pointer_set(&j_common_global, NULL);
 
 	g_strfreev(p->data);
 	g_strfreev(p->metadata);
@@ -142,9 +115,55 @@ j_is_initialized (void)
 {
 	JCommon* p;
 
-	p = g_atomic_pointer_get(&j_common);
+	p = g_atomic_pointer_get(&j_common_global);
 
 	return (p != NULL);
+}
+
+JCommon*
+j_common (void)
+{
+	JCommon* p;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	p = g_atomic_pointer_get(&j_common_global);
+
+	return p;
+}
+
+/* Internal */
+
+gboolean
+j_init_for_data (GKeyFile* key_file)
+{
+	JCommon* common;
+	gchar** data;
+	gchar** metadata;
+
+	g_return_val_if_fail(!j_is_initialized(), FALSE);
+	g_return_val_if_fail(key_file != NULL, FALSE);
+
+	data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
+	metadata = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
+
+	if (data == NULL || data[0] == NULL || metadata == NULL || metadata[0] == NULL)
+	{
+		g_strfreev(data);
+		g_strfreev(metadata);
+
+		return FALSE;
+	}
+
+	common = g_slice_new(JCommon);
+	common->data = data;
+	common->metadata = metadata;
+	common->data_len = g_strv_length(data);
+	common->metadata_len = g_strv_length(metadata);
+
+	g_atomic_pointer_set(&j_common_global, common);
+
+	return TRUE;
 }
 
 /**

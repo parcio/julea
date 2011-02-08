@@ -29,49 +29,11 @@
  * \file
  **/
 
+#ifndef H_COMMON_INTERNAL
+#define H_COMMON_INTERNAL
+
 #include <glib.h>
 
-#include "jdistribution.h"
+gboolean j_init_for_data (GKeyFile*);
 
-#include "jcommon.h"
-
-/**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
- *
- * @{
- **/
-
-gboolean
-j_distribution_round_robin (guint64 length, guint64 offset, guint* index, guint64* new_length, guint64* new_offset)
-{
-	guint64 const block_size = 512 * 1024;
-
-	guint64 block;
-	guint64 displacement;
-	guint64 round;
-
-	g_return_val_if_fail(index != NULL, FALSE);
-	g_return_val_if_fail(new_length != NULL, FALSE);
-	g_return_val_if_fail(new_offset != NULL, FALSE);
-
-	if (length == 0)
-	{
-		return FALSE;
-	}
-
-	block = offset / block_size;
-	round = block / j_common()->data_len;
-	displacement = offset % block_size;
-
-	*index = block % j_common()->data_len;
-	*new_length = MIN(length, block_size - displacement);
-	*new_offset = (round * block_size) + displacement;
-
-	return TRUE;
-}
-
-/**
- * @}
- **/
+#endif
