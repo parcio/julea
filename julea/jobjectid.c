@@ -146,9 +146,10 @@ void
 j_object_id_init (JObjectID* id)
 {
 	static GPid pid = 0;
-	static gint counter = 0;
+	static gint32 counter = 0;
 
 	GTimeVal tv;
+	gint32 c;
 
 	g_return_if_fail(id != NULL);
 
@@ -158,10 +159,11 @@ j_object_id_init (JObjectID* id)
 	}
 
 	g_get_current_time(&tv);
+	c = g_atomic_int_exchange_and_add(&counter, 1);
 
 	id->data.ints[0] = GINT32_TO_BE(tv.tv_sec);
 	id->data.ints[1] = pid;
-	id->data.ints[2] = GINT32_TO_BE(g_atomic_int_exchange_and_add(&counter, 1));
+	id->data.ints[2] = GINT32_TO_BE(c);
 }
 
 /**
