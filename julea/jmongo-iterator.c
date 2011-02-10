@@ -70,6 +70,11 @@ j_mongo_iterator_get_more (JMongoIterator* iterator)
 
 	cursor_id = j_mongo_reply_cursor_id(iterator->reply);
 
+	if (cursor_id == 0)
+	{
+		return FALSE;
+	}
+
 	length = strlen(iterator->collection) + 1;
 	message_length = 4 + length + 4 + 8;
 
