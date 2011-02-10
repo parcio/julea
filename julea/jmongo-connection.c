@@ -171,13 +171,10 @@ JMongoReply*
 j_mongo_connection_receive (JMongoConnection* connection)
 {
 	JMongoReply* reply;
-	JMongoHeader header;
 
 	g_return_val_if_fail(connection != NULL, NULL);
 
-	g_input_stream_read_all(connection->input, &header, sizeof(JMongoHeader), NULL, NULL, NULL);
-	reply = j_mongo_reply_new(&header);
-	g_input_stream_read_all(connection->input, j_mongo_reply_fields(reply), j_mongo_reply_length(reply) - sizeof(JMongoHeader), NULL, NULL, NULL);
+	reply = j_mongo_reply_new(connection->input);
 
 	return reply;
 }

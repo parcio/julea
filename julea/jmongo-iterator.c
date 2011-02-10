@@ -50,7 +50,6 @@ struct JMongoIterator
 {
 	JMongoReply* reply;
 	JBSON* bson;
-	const gchar* data;
 };
 
 static gboolean
@@ -107,7 +106,6 @@ j_mongo_iterator_new (JMongoReply* reply)
 	iterator = g_slice_new(JMongoIterator);
 	iterator->reply = reply;
 	iterator->bson = NULL;
-	iterator->data = NULL;
 
 	return iterator;
 }
@@ -137,30 +135,27 @@ j_mongo_iterator_next (JMongoIterator* iterator)
 		return FALSE;
 	}
 
-	if (iterator->data == NULL)
+	if (iterator->bson == NULL)
 	{
-		iterator->data = j_mongo_reply_data(iterator->reply);
-		iterator->bson = j_bson_new_for_data(iterator->data);
+		iterator->bson = j_mongo_reply_get(iterator->reply);
 
-		return TRUE;
+		return (iterator->bson != NULL);
 	}
 
-	iterator->data += j_bson_size(iterator->bson);
+	j_bson_unref(iterator->bson);
+	iterator->bson = j_mongo_reply_get(iterator->reply);
 
-	if (iterator->data >= (gchar*)iterator->reply + j_mongo_reply_length(iterator->reply))
+	if (iterator->bson == NULL)
 	{
 		if (!j_mongo_iterator_get_more(iterator))
 		{
 			return FALSE;
 		}
 
-		iterator->data = j_mongo_reply_data(iterator->reply);
+		iterator->bson = j_mongo_reply_get(iterator->reply);
 	}
 
-	j_bson_unref(iterator->bson);
-	iterator->bson = j_bson_new_for_data(iterator->data);
-
-	return TRUE;
+	return (iterator->bson != NULL);
 }
 
 JBSON*

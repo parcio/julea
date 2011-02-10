@@ -37,14 +37,16 @@ struct JMongoReply;
 typedef struct JMongoReply JMongoReply;
 
 #include <glib.h>
+#include <gio/gio.h>
 
+#include "jbson.h"
 #include "jmongo.h"
 
-JMongoReply* j_mongo_reply_new (JMongoHeader*);
+JMongoReply* j_mongo_reply_new (GInputStream*);
 void j_mongo_reply_free (JMongoReply*);
 
-gpointer j_mongo_reply_fields (JMongoReply*);
-gpointer j_mongo_reply_data (JMongoReply*);
+JBSON* j_mongo_reply_get (JMongoReply*);
+
 gsize j_mongo_reply_length (JMongoReply*);
 gint32 j_mongo_reply_number (JMongoReply*);
 

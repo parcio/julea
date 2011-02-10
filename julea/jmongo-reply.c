@@ -30,9 +30,11 @@
  **/
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include "jmongo-reply.h"
 
+#include "jbson.h"
 #include "jmongo.h"
 
 /**
@@ -51,6 +53,7 @@
 #pragma pack(4)
 struct JMongoReply
 {
+	gchar* current;
 	JMongoHeader header;
 	gint32 response_flags;
 	gint64 cursor_id;
@@ -61,20 +64,34 @@ struct JMongoReply
 #pragma pack()
 
 JMongoReply*
-j_mongo_reply_new (JMongoHeader* header)
+j_mongo_reply_new (GInputStream* stream)
 {
+	JMongoHeader header;
 	JMongoReply* reply;
-	gsize length;
+	gsize bytes_read;
 
-	g_return_val_if_fail(header != NULL, NULL);
+	g_return_val_if_fail(stream != NULL, NULL);
 
-	length = GINT32_FROM_LE(header->message_length);
+	if (!g_input_stream_read_all(stream, &header, sizeof(JMongoHeader), &bytes_read, NULL, NULL))
+	{
+		return NULL;
+	}
 
-	reply = g_malloc(length);
-	reply->header.message_length = header->message_length;
-	reply->header.request_id = header->request_id;
-	reply->header.response_to = header->response_to;
-	reply->header.op_code = header->op_code;
+	if (bytes_read == 0)
+	{
+		return NULL;
+	}
+
+	reply = g_malloc(sizeof(gchar*) + GINT32_FROM_LE(header.message_length));
+	reply->current = reply->data;
+	reply->header = header;
+
+	if (!g_input_stream_read_all(stream, &(reply->response_flags), j_mongo_reply_length(reply) - sizeof(JMongoHeader), &bytes_read, NULL, NULL))
+	{
+		g_free(reply);
+
+		return NULL;
+	}
 
 	return reply;
 }
@@ -87,20 +104,22 @@ j_mongo_reply_free (JMongoReply* reply)
 	g_free(reply);
 }
 
-gpointer
-j_mongo_reply_fields (JMongoReply* reply)
+JBSON*
+j_mongo_reply_get (JMongoReply* reply)
 {
+	JBSON* bson;
+
 	g_return_val_if_fail(reply != NULL, NULL);
 
-	return &(reply->response_flags);
-}
+	if (reply->current >= (gchar const*)&(reply->header) + j_mongo_reply_length(reply))
+	{
+		return NULL;
+	}
 
-gpointer
-j_mongo_reply_data (JMongoReply* reply)
-{
-	g_return_val_if_fail(reply != NULL, NULL);
+	bson = j_bson_new_for_data(reply->current);
+	reply->current += j_bson_size(bson);
 
-	return reply->data;
+	return bson;
 }
 
 gsize
