@@ -244,7 +244,7 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 
 	reply = j_mongo_connection_receive(connection);
 
-	return j_mongo_iterator_new(reply);
+	return j_mongo_iterator_new(connection, collection, reply);
 }
 
 /**

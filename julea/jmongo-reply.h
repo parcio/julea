@@ -49,5 +49,6 @@ JBSON* j_mongo_reply_get (JMongoReply*);
 
 gsize j_mongo_reply_length (JMongoReply*);
 gint32 j_mongo_reply_number (JMongoReply*);
+gint64 j_mongo_reply_cursor_id (JMongoReply*);
 
 #endif

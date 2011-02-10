@@ -32,9 +32,13 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <string.h>
+
 #include "jmongo-iterator.h"
 
 #include "jbson.h"
+#include "jmongo-connection.h"
+#include "jmongo-message.h"
 #include "jmongo-reply.h"
 
 /**
@@ -48,62 +52,55 @@
  **/
 struct JMongoIterator
 {
+	JMongoConnection* connection;
+	gchar* collection;
 	JMongoReply* reply;
 	JBSON* bson;
 };
 
-static gboolean
+static
+gboolean
 j_mongo_iterator_get_more (JMongoIterator* iterator)
 {
-	/*
 	JMongoMessage* message;
-	JMongoReply* reply;
+	gint32 const zero = 0;
+	gint64 cursor_id;
 	gsize length;
 	gsize message_length;
-	gpointer data;
 
-	length = strlen(collection) + 1;
-	message_length = 4 + length + 4 + 4 + j_bson_size(query);
+	cursor_id = j_mongo_reply_cursor_id(iterator->reply);
 
-	if (fields != NULL)
-	{
-		message_length += j_bson_size(fields);
-	}
+	length = strlen(iterator->collection) + 1;
+	message_length = 4 + length + 4 + 8;
 
-	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_QUERY);
-	data = j_mongo_message_data(message);
+	message = j_mongo_message_new(message_length, J_MONGO_MESSAGE_OP_GET_MORE);
 
-	data = j_mongo_append_32(data, &j_mongo_zero);
-	data = j_mongo_append_n(data, collection, length);
-	data = j_mongo_append_32(data, &number_to_skip);
-	data = j_mongo_append_32(data, &number_to_return);
-	data = j_mongo_append_n(data, j_bson_data(query), j_bson_size(query));
+	j_mongo_message_append_4(message, &zero);
+	j_mongo_message_append_n(message, iterator->collection, length);
+	j_mongo_message_append_4(message, &zero);
+	j_mongo_message_append_8(message, &cursor_id);
 
-	if (fields != NULL)
-	{
-		data = j_mongo_append_n(data, j_bson_data(fields), j_bson_size(fields));
-	}
-
-	j_mongo_connection_send(connection, message);
+	j_mongo_connection_send(iterator->connection, message);
 
 	j_mongo_message_free(message);
 
-	reply = j_mongo_connection_receive(connection);
+	j_mongo_reply_free(iterator->reply);
+	iterator->reply = j_mongo_connection_receive(iterator->connection);
+	iterator->bson = NULL;
 
-	return j_mongo_iterator_new(reply);
-	*/
-
-	return FALSE;
+	return TRUE;
 }
 
 JMongoIterator*
-j_mongo_iterator_new (JMongoReply* reply)
+j_mongo_iterator_new (JMongoConnection* connection, gchar const* collection, JMongoReply* reply)
 {
 	JMongoIterator* iterator;
 
 	g_return_val_if_fail(reply != NULL, NULL);
 
 	iterator = g_slice_new(JMongoIterator);
+	iterator->connection = j_mongo_connection_ref(connection);
+	iterator->collection = g_strdup(collection);
 	iterator->reply = reply;
 	iterator->bson = NULL;
 
@@ -121,6 +118,9 @@ j_mongo_iterator_free (JMongoIterator* iterator)
 	}
 
 	j_mongo_reply_free(iterator->reply);
+	j_mongo_connection_unref(iterator->connection);
+
+	g_free(iterator->collection);
 
 	g_slice_free(JMongoIterator, iterator);
 }

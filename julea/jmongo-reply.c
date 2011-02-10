@@ -138,6 +138,14 @@ j_mongo_reply_number (JMongoReply* reply)
 	return GINT32_FROM_LE(reply->number_returned);
 }
 
+gint64
+j_mongo_reply_cursor_id (JMongoReply* reply)
+{
+	g_return_val_if_fail(reply != NULL, -1);
+
+	return GINT64_FROM_LE(reply->cursor_id);
+}
+
 /**
  * @}
  **/
