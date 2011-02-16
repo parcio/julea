@@ -42,6 +42,8 @@ test_distribution_fixture_setup (gpointer* fixture, gconstpointer data)
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 2);
+	g_key_file_set_string(key_file, "storage", "backend", "null");
+	g_key_file_set_string(key_file, "storage", "path", "");
 
 	j_init_for_data(key_file);
 

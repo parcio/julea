@@ -29,80 +29,31 @@
  * \file
  **/
 
+#ifndef H_CONFIGURATION
+#define H_CONFIGURATION
+
+struct JConfiguration
+{
+	gchar** data;
+	gchar** metadata;
+
+	guint data_len;
+	guint metadata_len;
+
+	struct
+	{
+		gchar* backend;
+		gchar* path;
+	}
+	storage;
+};
+
+typedef struct JConfiguration JConfiguration;
+
 #include <glib.h>
 
-#include "jcommon.h"
-#include "jcommon-internal.h"
+JConfiguration* j_configuration_new (void);
+JConfiguration* j_configuration_new_for_data (GKeyFile*);
+void j_configuration_free (JConfiguration*);
 
-#include "jconfiguration.h"
-
-/**
- * \defgroup JCommon Common
- * @{
- **/
-
-static JConfiguration* j_configuration_global = NULL;
-
-gboolean
-j_init (void)
-{
-	g_return_val_if_fail(!j_is_initialized(), FALSE);
-
-	g_atomic_pointer_set(&j_configuration_global, j_configuration_new());
-
-	return j_is_initialized();
-}
-
-gboolean
-j_deinit (void)
-{
-	JConfiguration* p;
-
-	g_return_val_if_fail(j_is_initialized(), FALSE);
-
-	p = g_atomic_pointer_get(&j_configuration_global);
-	g_atomic_pointer_set(&j_configuration_global, NULL);
-
-	j_configuration_free(p);
-
-	return TRUE;
-}
-
-gboolean
-j_is_initialized (void)
-{
-	JConfiguration* p;
-
-	p = g_atomic_pointer_get(&j_configuration_global);
-
-	return (p != NULL);
-}
-
-JConfiguration*
-j_configuration (void)
-{
-	JConfiguration* p;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	p = g_atomic_pointer_get(&j_configuration_global);
-
-	return p;
-}
-
-/* Internal */
-
-gboolean
-j_init_for_data (GKeyFile* key_file)
-{
-	g_return_val_if_fail(!j_is_initialized(), FALSE);
-	g_return_val_if_fail(key_file != NULL, FALSE);
-
-	g_atomic_pointer_set(&j_configuration_global, j_configuration_new_for_data(key_file));
-
-	return j_is_initialized();
-}
-
-/**
- * @}
- **/
+#endif

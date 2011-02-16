@@ -34,28 +34,13 @@
 
 #include <glib.h>
 
-struct JCommon
-{
-	gchar** data;
-	gchar** metadata;
-
-	guint data_len;
-	guint metadata_len;
-
-	struct
-	{
-		gchar* backend;
-		gchar* path;
-	}
-	storage;
-};
-
-typedef struct JCommon JCommon;
+#include "jconfiguration.h"
 
 gboolean j_init (void);
 gboolean j_deinit (void);
 
 gboolean j_is_initialized (void);
-JCommon* j_common (void);
+
+JConfiguration* j_configuration (void);
 
 #endif

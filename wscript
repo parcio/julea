@@ -34,7 +34,7 @@ def configure (ctx):
 
 def build (ctx):
 	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jdistribution', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')] + ['common/%s.c' % file for file in ('jmessage',)],
+		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jdistribution', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julea',
 		use = ['GLIB', 'GOBJECT', 'GIO'],
 		includes = ['common']
@@ -45,11 +45,11 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['julea']
+			includes = ['common', 'julea']
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jmessage',)],
+		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julead/julead',
 		use = ['GLIB', 'GOBJECT', 'GIO'],
 		includes = ['common']
@@ -66,5 +66,5 @@ def build (ctx):
 		source = ['benchmark.c'],
 		target = 'benchmark',
 		use = ['GLIB', 'GOBJECT', 'julea'],
-		includes = ['julea']
+		includes = ['common', 'julea']
 	)

@@ -69,11 +69,11 @@ j_connection_new (void)
 
 	connection = g_slice_new(JConnection);
 	connection->connection = j_mongo_connection_new();
-	connection->sockets = g_new(GSocketConnection*, j_common()->data_len);
+	connection->sockets = g_new(GSocketConnection*, j_configuration()->data_len);
 	connection->connected = FALSE;
 	connection->ref_count = 1;
 
-	for (i = 0; i < j_common()->data_len; i++)
+	for (i = 0; i < j_configuration()->data_len; i++)
 	{
 		connection->sockets[i] = NULL;
 	}
@@ -107,7 +107,7 @@ j_connection_unref (JConnection* connection)
 	{
 		j_mongo_connection_unref(connection->connection);
 
-		for (i = 0; i < j_common()->data_len; i++)
+		for (i = 0; i < j_configuration()->data_len; i++)
 		{
 			if (connection->sockets[i] != NULL)
 			{
@@ -135,13 +135,13 @@ j_connection_connect (JConnection* connection)
 		return FALSE;
 	}
 
-	is_connected = j_mongo_connection_connect(connection->connection, j_common()->metadata[0]);
+	is_connected = j_mongo_connection_connect(connection->connection, j_configuration()->metadata[0]);
 
 	client = g_socket_client_new();
 
-	for (i = 0; i < j_common()->data_len; i++)
+	for (i = 0; i < j_configuration()->data_len; i++)
 	{
-		connection->sockets[i] = g_socket_client_connect_to_host(client, j_common()->data[i], 4711, NULL, NULL);
+		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration()->data[i], 4711, NULL, NULL);
 
 		is_connected = is_connected && (connection->sockets[i] != NULL);
 	}
@@ -167,7 +167,7 @@ j_connection_disconnect (JConnection* connection)
 
 	j_mongo_connection_disconnect(connection->connection);
 
-	for (i = 0; i < j_common()->data_len; i++)
+	for (i = 0; i < j_configuration()->data_len; i++)
 	{
 		g_io_stream_close(G_IO_STREAM(connection->sockets[i]), NULL, NULL);
 	}
@@ -200,7 +200,7 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 	GOutputStream* output;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(i < j_common()->data_len, FALSE);
+	g_return_val_if_fail(i < j_configuration()->data_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));

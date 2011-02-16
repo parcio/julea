@@ -70,10 +70,10 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	}
 
 	block = distribution->offset / block_size;
-	round = block / j_common()->data_len;
+	round = block / j_configuration()->data_len;
 	displacement = distribution->offset % block_size;
 
-	*index = block % j_common()->data_len;
+	*index = block % j_configuration()->data_len;
 	*new_length = MIN(distribution->length, block_size - displacement);
 	*new_offset = (round * block_size) + displacement;
 
