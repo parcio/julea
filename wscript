@@ -49,7 +49,7 @@ def build (ctx):
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+		source = ['julead/%s.c' % file for file in ('julead', 'backend/gio', 'backend/null')] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julead/julead',
 		use = ['GLIB', 'GOBJECT', 'GIO'],
 		includes = ['common']

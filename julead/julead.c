@@ -31,12 +31,17 @@
 
 #include <string.h>
 
+#include "julead.h"
+
+#include "backend/null.h"
+#include "backend/gio.h"
+
+#include "jconfiguration.h"
 #include "jmessage.h"
 
-static GFile* j_storage = NULL;
-
 static gint opt_port = 4711;
-static gchar const* opt_storage = "/tmp/julea";
+
+static JOperations j_op;
 
 static gboolean
 julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
@@ -70,6 +75,7 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 					gchar const* item;
 					guint64 length;
 					guint64 offset;
+					gpointer p;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -81,7 +87,10 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 
 					g_printerr("xxx %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
+					p = j_op.open(store, collection, item);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
+					j_op.write(p, buf, length, offset);
+					j_op.close(p);
 
 					g_free(buf);
 				}
@@ -99,9 +108,42 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 	return TRUE;
 }
 
+static
+gboolean
+julead_backend_setup (JConfiguration* configuration)
+{
+	if (strcmp(configuration->storage.backend, "null") == 0)
+	{
+		j_op.init = julead_backend_null_init;
+		j_op.deinit = julead_backend_null_deinit;
+		j_op.open = julead_backend_null_open;
+		j_op.close = julead_backend_null_close;
+		j_op.read = julead_backend_null_read;
+		j_op.write = julead_backend_null_write;
+	}
+	else if (strcmp(configuration->storage.backend, "gio") == 0)
+	{
+		j_op.init = julead_backend_gio_init;
+		j_op.deinit = julead_backend_gio_deinit;
+		j_op.open = julead_backend_gio_open;
+		j_op.close = julead_backend_gio_close;
+		j_op.read = julead_backend_gio_read;
+		j_op.write = julead_backend_gio_write;
+	}
+	else
+	{
+		return FALSE;
+	}
+
+	j_op.init(configuration->storage.path);
+
+	return TRUE;
+}
+
 int
 main (int argc, char** argv)
 {
+	JConfiguration* configuration;
 	GMainLoop* main_loop;
 	GSocketListener* listener;
 	GError* error = NULL;
@@ -109,7 +151,6 @@ main (int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
-		{ "storage", 's', 0, G_OPTION_ARG_STRING, &opt_storage, "Storage space to use", "/tmp/julea" },
 		{ NULL }
 	};
 
@@ -138,8 +179,19 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
-	j_storage = g_file_new_for_commandline_arg(opt_storage);
-	g_file_make_directory_with_parents(j_storage, NULL, NULL);
+	configuration = j_configuration_new();
+
+	if (configuration == NULL)
+	{
+		return 1;
+	}
+
+	if (!julead_backend_setup(configuration))
+	{
+		return 1;
+	}
+
+	j_configuration_free(configuration);
 
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
@@ -153,7 +205,7 @@ main (int argc, char** argv)
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
 
-	g_object_unref(j_storage);
+	j_op.deinit();
 
 	return 0;
 }
