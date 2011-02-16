@@ -41,6 +41,13 @@ struct JCommon
 
 	guint data_len;
 	guint metadata_len;
+
+	struct
+	{
+		gchar* backend;
+		gchar* path;
+	}
+	storage;
 };
 
 typedef struct JCommon JCommon;

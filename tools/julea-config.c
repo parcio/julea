@@ -29,10 +29,14 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <string.h>
+
 static gboolean opt_local = FALSE;
 static gboolean opt_global = FALSE;
 static gchar const* opt_data = NULL;
 static gchar const* opt_metadata = NULL;
+static gchar const* opt_storage_backend = "gio";
+static gchar const* opt_storage_path = NULL;
 
 static
 gchar**
@@ -67,9 +71,23 @@ write_config (gchar* path)
 	data = string_split(opt_data);
 	metadata = string_split(opt_metadata);
 
+	if (opt_storage_path == NULL)
+	{
+		if (strcmp(opt_storage_backend, "null") == 0)
+		{
+			opt_storage_path = "";
+		}
+		else if (strcmp(opt_storage_backend, "gio") == 0)
+		{
+			opt_storage_path = "/tmp/julea";
+		}
+	}
+
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)data, g_strv_length(data));
 	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)metadata, g_strv_length(metadata));
+	g_key_file_set_string(key_file, "storage", "backend", opt_storage_backend);
+	g_key_file_set_string(key_file, "storage", "path", opt_storage_path);
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
@@ -109,6 +127,8 @@ main (gint argc, gchar** argv)
 		{ "global", 'g', 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
 		{ "data", 'd', 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
 		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
+		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio" },
+		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp" },
 		{ NULL }
 	};
 
@@ -130,7 +150,11 @@ main (gint argc, gchar** argv)
 		return 1;
 	}
 
-	if (opt_data == NULL || opt_metadata == NULL || (opt_local && opt_global))
+	if (opt_data == NULL
+	    || opt_metadata == NULL
+	    || (opt_local && opt_global)
+	    || (strcmp(opt_storage_backend, "null") != 0 && strcmp(opt_storage_backend, "gio") != 0)
+	)
 	{
 		gchar* help;
 

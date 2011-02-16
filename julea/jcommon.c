@@ -102,6 +102,9 @@ j_deinit (void)
 	p = g_atomic_pointer_get(&j_common_global);
 	g_atomic_pointer_set(&j_common_global, NULL);
 
+	g_free(p->storage.backend);
+	g_free(p->storage.path);
+
 	g_strfreev(p->data);
 	g_strfreev(p->metadata);
 
@@ -140,14 +143,21 @@ j_init_for_data (GKeyFile* key_file)
 	JCommon* common;
 	gchar** data;
 	gchar** metadata;
+	gchar* storage_backend;
+	gchar* storage_path;
 
 	g_return_val_if_fail(!j_is_initialized(), FALSE);
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
 	metadata = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
+	storage_backend = g_key_file_get_string(key_file, "storage", "backend", NULL);
+	storage_path = g_key_file_get_string(key_file, "storage", "path", NULL);
 
-	if (data == NULL || data[0] == NULL || metadata == NULL || metadata[0] == NULL)
+	if (data == NULL || data[0] == NULL
+	    || metadata == NULL || metadata[0] == NULL
+	    || storage_backend == NULL
+	    || storage_path == NULL)
 	{
 		g_strfreev(data);
 		g_strfreev(metadata);
@@ -160,6 +170,8 @@ j_init_for_data (GKeyFile* key_file)
 	common->metadata = metadata;
 	common->data_len = g_strv_length(data);
 	common->metadata_len = g_strv_length(metadata);
+	common->storage.backend = storage_backend;
+	common->storage.path = storage_path;
 
 	g_atomic_pointer_set(&j_common_global, common);
 
