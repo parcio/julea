@@ -26,38 +26,52 @@
  */
 
 #include <glib.h>
+#include <gmodule.h>
 
-#include "null.h"
+#include "backend.h"
 
-void
-julead_backend_null_init (gchar const* path)
-{
-}
+void init (JBackendVTable*, gchar const*);
+void deinit (void);
 
-void
-julead_backend_null_deinit (void)
-{
-}
-
+static
 gpointer
-julead_backend_null_open (gchar const* store, gchar const* collection, gchar const* item)
+jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 {
 	return (gpointer)1;
 }
 
+static
 void
-julead_backend_null_close (gpointer item)
+jd_backend_close (gpointer item)
 {
 }
 
+static
 guint64
-julead_backend_null_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
+jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 {
 	return length;
 }
 
+static
 guint64
-julead_backend_null_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
+jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
 {
 	return length;
+}
+
+G_MODULE_EXPORT
+void
+init (JBackendVTable* vtable, gchar const* path)
+{
+	vtable->open = jd_backend_open;
+	vtable->close = jd_backend_close;
+	vtable->read = jd_backend_read;
+	vtable->write = jd_backend_write;
+}
+
+G_MODULE_EXPORT
+void
+deinit (void)
+{
 }

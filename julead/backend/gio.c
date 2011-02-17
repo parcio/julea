@@ -28,38 +28,25 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
+#include <gmodule.h>
 
-#include "gio.h"
+#include "backend.h"
 
-static gchar* julead_backend_gio_path = NULL;
+void init (JBackendVTable*, gchar const*);
+void deinit (void);
 
-void
-julead_backend_gio_init (gchar const* path)
-{
-	GFile* file;
+static gchar* jd_backend_path = NULL;
 
-	julead_backend_gio_path = g_strdup(path);
-
-	file = g_file_new_for_path(path);
-	g_file_make_directory_with_parents(file, NULL, NULL);
-	g_object_unref(file);
-}
-
-void
-julead_backend_gio_deinit (void)
-{
-	g_free(julead_backend_gio_path);
-}
-
+static
 gpointer
-julead_backend_gio_open (gchar const* store, gchar const* collection, gchar const* item)
+jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 {
 	GFile* file;
 	GFile* parent;
 	GFileIOStream* stream;
 	gchar* path;
 
-	path = g_build_filename(julead_backend_gio_path, store, collection, item, NULL);
+	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
 
 	parent = g_file_get_parent(file);
@@ -79,16 +66,18 @@ julead_backend_gio_open (gchar const* store, gchar const* collection, gchar cons
 	return stream;
 }
 
+static
 void
-julead_backend_gio_close (gpointer item)
+jd_backend_close (gpointer item)
 {
 	GFileIOStream* stream = item;
 
 	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
 }
 
+static
 guint64
-julead_backend_gio_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
+jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 {
 	GFileIOStream* stream = item;
 	GInputStream* input;
@@ -101,8 +90,9 @@ julead_backend_gio_read (gpointer item, gpointer buffer, guint64 length, guint64
 	return bytes_read;
 }
 
+static
 guint64
-julead_backend_gio_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
+jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
 {
 	GFileIOStream* stream = item;
 	GOutputStream* output;
@@ -113,4 +103,29 @@ julead_backend_gio_write (gpointer item, gconstpointer buffer, guint64 length, g
 	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
 
 	return bytes_written;
+}
+
+G_MODULE_EXPORT
+void
+init (JBackendVTable* vtable, gchar const* path)
+{
+	GFile* file;
+
+	vtable->open = jd_backend_open;
+	vtable->close = jd_backend_close;
+	vtable->read = jd_backend_read;
+	vtable->write = jd_backend_write;
+
+	jd_backend_path = g_strdup(path);
+
+	file = g_file_new_for_path(path);
+	g_file_make_directory_with_parents(file, NULL, NULL);
+	g_object_unref(file);
+}
+
+G_MODULE_EXPORT
+void
+deinit (void)
+{
+	g_free(jd_backend_path);
 }

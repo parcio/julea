@@ -29,16 +29,21 @@
  * \file
  **/
 
-#ifndef H_BACKEND_GIO
-#define H_BACKEND_GIO
+#ifndef H_BACKEND
+#define H_BACKEND
 
-void julead_backend_gio_init (gchar const*);
-void julead_backend_gio_deinit (void);
+struct JBackendVTable
+{
+	gpointer (*open) (gchar const*, gchar const*, gchar const*);
+	void (*close) (gpointer);
 
-gpointer julead_backend_gio_open (gchar const*, gchar const*, gchar const*);
-void julead_backend_gio_close (gpointer);
+	guint64 (*read) (gpointer, gpointer, guint64, guint64);
+	guint64 (*write) (gpointer, gconstpointer, guint64, guint64);
+};
 
-guint64 julead_backend_gio_read (gpointer, gpointer, guint64, guint64);
-guint64 julead_backend_gio_write (gpointer, gconstpointer, guint64, guint64);
+typedef struct JBackendVTable JBackendVTable;
+
+typedef void (*JBackendInitFunc) (JBackendVTable*, gchar const*);
+typedef void (*JBackendDeinitFunc) (void);
 
 #endif

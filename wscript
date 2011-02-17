@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import Utils
+
 top = '.'
 out = 'build'
 
@@ -8,6 +10,7 @@ def options (ctx):
 
 def configure (ctx):
 	ctx.load('compiler_c')
+	ctx.load('gnu_dirs')
 
 	ctx.check_cfg(
 		package = 'glib-2.0',
@@ -27,6 +30,12 @@ def configure (ctx):
 		uselib_store = 'GIO'
 	)
 
+	ctx.check_cfg(
+		package = 'gmodule-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GMODULE'
+	)
+
 	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra']
 	ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 
@@ -37,7 +46,8 @@ def build (ctx):
 		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jdistribution', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julea',
 		use = ['GLIB', 'GOBJECT', 'GIO'],
-		includes = ['common']
+		includes = ['common'],
+		install_path = None
 	)
 
 	for test in ('bson', 'bson-iterator', 'distribution', 'list', 'list-iterator', 'semantics'):
@@ -45,26 +55,40 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['common', 'julea']
+			includes = ['common', 'julea'],
+			install_path = None
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead', 'backend/gio', 'backend/null')] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO'],
-		includes = ['common']
+		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE'],
+		includes = ['common'],
+		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
+		install_path = '${BINDIR}'
 	)
+
+	for backend in ('gio', 'null'):
+		ctx.shlib(
+			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+			target = 'julead/backend/%s' % (backend,),
+			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE'],
+			includes = ['common'],
+			install_path = '${LIBDIR}/julea/backend'
+		)
 
 	for tool in ('julea-config',):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/%s' % (tool,),
-			use = ['GLIB', 'GOBJECT', 'GIO']
+			use = ['GLIB', 'GOBJECT', 'GIO'],
+			install_dir = '${BINDIR}'
 		)
 
 	ctx.program(
 		source = ['benchmark.c'],
 		target = 'benchmark',
 		use = ['GLIB', 'GOBJECT', 'julea'],
-		includes = ['common', 'julea']
+		includes = ['common', 'julea'],
+		install_path = None
 	)

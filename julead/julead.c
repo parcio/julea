@@ -28,23 +28,22 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
+#include <gmodule.h>
 
 #include <string.h>
 
-#include "julead.h"
-
-#include "backend/null.h"
-#include "backend/gio.h"
+#include "backend/backend.h"
 
 #include "jconfiguration.h"
 #include "jmessage.h"
 
 static gint opt_port = 4711;
 
-static JOperations j_op;
+static JBackendVTable jd_vtable;
+static GModule* backend = NULL;
 
 static gboolean
-julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
+jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JMessage* message;
 	GInputStream* input;
@@ -87,10 +86,10 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 
 					g_printerr("xxx %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-					p = j_op.open(store, collection, item);
+					p = jd_vtable.open(store, collection, item);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-					j_op.write(p, buf, length, offset);
-					j_op.close(p);
+					jd_vtable.write(p, buf, length, offset);
+					jd_vtable.close(p);
 
 					g_free(buf);
 				}
@@ -110,34 +109,31 @@ julead_on_run (GThreadedSocketService* service, GSocketConnection* connection, G
 
 static
 gboolean
-julead_backend_setup (JConfiguration* configuration)
+jd_backend_setup (JConfiguration* configuration)
 {
-	if (strcmp(configuration->storage.backend, "null") == 0)
-	{
-		j_op.init = julead_backend_null_init;
-		j_op.deinit = julead_backend_null_deinit;
-		j_op.open = julead_backend_null_open;
-		j_op.close = julead_backend_null_close;
-		j_op.read = julead_backend_null_read;
-		j_op.write = julead_backend_null_write;
-	}
-	else if (strcmp(configuration->storage.backend, "gio") == 0)
-	{
-		j_op.init = julead_backend_gio_init;
-		j_op.deinit = julead_backend_gio_deinit;
-		j_op.open = julead_backend_gio_open;
-		j_op.close = julead_backend_gio_close;
-		j_op.read = julead_backend_gio_read;
-		j_op.write = julead_backend_gio_write;
-	}
-	else
-	{
-		return FALSE;
-	}
+	JBackendInitFunc init_func;
+	gchar* path;
 
-	j_op.init(configuration->storage.path);
+	path = g_module_build_path(JULEAD_BACKEND_PATH, configuration->storage.backend);
+	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
+	g_free(path);
+
+	g_module_symbol(backend, "init", (gpointer*)&init_func);
+	init_func(&jd_vtable, configuration->storage.path);
 
 	return TRUE;
+}
+
+static
+void
+jd_backend_teardown (void)
+{
+	JBackendDeinitFunc deinit_func;
+
+	g_module_symbol(backend, "deinit", (gpointer*)&deinit_func);
+	deinit_func();
+
+	g_module_close(backend);
 }
 
 int
@@ -186,7 +182,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if (!julead_backend_setup(configuration))
+	if (!jd_backend_setup(configuration))
 	{
 		return 1;
 	}
@@ -196,7 +192,7 @@ main (int argc, char** argv)
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
-	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(julead_on_run), NULL);
+	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(main_loop);
@@ -205,7 +201,7 @@ main (int argc, char** argv)
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
 
-	j_op.deinit();
+	jd_backend_teardown();
 
 	return 0;
 }
