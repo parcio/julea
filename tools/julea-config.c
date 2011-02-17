@@ -81,6 +81,10 @@ write_config (gchar* path)
 		{
 			opt_storage_path = "/tmp/julea";
 		}
+		else if (strcmp(opt_storage_backend, "posix") == 0)
+		{
+			opt_storage_path = "/tmp/julea";
+		}
 	}
 
 	key_file = g_key_file_new();
@@ -127,7 +131,7 @@ main (gint argc, gchar** argv)
 		{ "global", 'g', 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
 		{ "data", 'd', 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
 		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
-		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio" },
+		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
 		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp" },
 		{ NULL }
 	};
@@ -153,7 +157,7 @@ main (gint argc, gchar** argv)
 	if (opt_data == NULL
 	    || opt_metadata == NULL
 	    || (opt_local && opt_global)
-	    || (strcmp(opt_storage_backend, "null") != 0 && strcmp(opt_storage_backend, "gio") != 0)
+	    || (strcmp(opt_storage_backend, "null") != 0 && strcmp(opt_storage_backend, "gio") != 0 && strcmp(opt_storage_backend, "posix") != 0)
 	)
 	{
 		gchar* help;

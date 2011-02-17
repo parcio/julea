@@ -68,7 +68,7 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	for backend in ('gio', 'null'):
+	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
 			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 			target = 'julead/backend/%s' % (backend,),

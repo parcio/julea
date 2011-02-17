@@ -25,10 +25,16 @@
  * SUCH DAMAGE.
  */
 
+#define _XOPEN_SOURCE 500
+
 #include <glib.h>
-#include <glib-object.h>
-#include <gio/gio.h>
+#include <glib/gstdio.h>
 #include <gmodule.h>
+
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "backend.h"
 
@@ -41,52 +47,46 @@ static
 gpointer
 jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 {
-	GFile* file;
-	GFileIOStream* stream;
 	gchar* path;
+	gint fd;
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
-	file = g_file_new_for_path(path);
 
-	stream = g_file_open_readwrite(file, NULL, NULL);
+	fd = open(path, O_RDWR);
 
-	if (stream == NULL)
+	if (fd == -1)
 	{
-		GFile* parent;
+		gchar* parent;
 
-		parent = g_file_get_parent(file);
-		g_file_make_directory_with_parents(parent, NULL, NULL);
-		g_object_unref(parent);
+		parent = g_path_get_dirname(path);
+		g_mkdir_with_parents(parent, 0700);
+		g_free(parent);
 
-		stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
+		fd = open(path, O_RDWR | O_CREAT);
 	}
 
-	g_object_unref(file);
 	g_free(path);
 
-	return stream;
+	return GINT_TO_POINTER(fd);
 }
 
 static
 void
 jd_backend_close (gpointer item)
 {
-	GFileIOStream* stream = item;
+	gint fd = GPOINTER_TO_INT(item);
 
-	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
+	close(fd);
 }
 
 static
 guint64
 jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 {
-	GFileIOStream* stream = item;
-	GInputStream* input;
+	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_read;
 
-	input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
-	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-	g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
+	bytes_read = pread(fd, buffer, length, offset);
 
 	return bytes_read;
 }
@@ -95,13 +95,10 @@ static
 guint64
 jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
 {
-	GFileIOStream* stream = item;
-	GOutputStream* output;
+	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_written;
 
-	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
-	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
+	bytes_written = pwrite(fd, buffer, length, offset);
 
 	return bytes_written;
 }
@@ -110,8 +107,6 @@ G_MODULE_EXPORT
 void
 init (JBackendVTable* vtable, gchar const* path)
 {
-	GFile* file;
-
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
 	vtable->read = jd_backend_read;
@@ -119,9 +114,7 @@ init (JBackendVTable* vtable, gchar const* path)
 
 	jd_backend_path = g_strdup(path);
 
-	file = g_file_new_for_path(path);
-	g_file_make_directory_with_parents(file, NULL, NULL);
-	g_object_unref(file);
+	g_mkdir_with_parents(path, 0700);
 }
 
 G_MODULE_EXPORT
