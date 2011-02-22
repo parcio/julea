@@ -206,7 +206,7 @@ j_mongo_insert_list (JMongoConnection* connection, const gchar* collection, JLis
 }
 
 JMongoIterator*
-j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* query, JBSON* fields, gint32 number_to_skip, gint32 number_to_return)
+j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* query, JBSON* fields, gint32 number_to_return, gint32 number_to_skip)
 {
 	JMongoMessage* message;
 	JMongoReply* reply;

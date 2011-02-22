@@ -260,7 +260,7 @@ j_store_get (JStore* store, JList* names)
 		j_bson_append_string(bson, "Name", name);
 		n = 1;
 	}
-	else
+	else if (length > 1)
 	{
 		JBSON* names_bson;
 		JListIterator* it;
