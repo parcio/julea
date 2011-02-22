@@ -58,4 +58,7 @@ void j_mongo_insert_list (JMongoConnection*, const gchar*, JList*);
 
 JMongoIterator* j_mongo_find (JMongoConnection*, const gchar*, JBSON*, JBSON*, gint32, gint32);
 
+gboolean j_mongo_command (JMongoConnection*, const gchar*, JBSON*);
+gboolean j_mongo_command_int (JMongoConnection*, const gchar*, const gchar*, gint32);
+
 #endif

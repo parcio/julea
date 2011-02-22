@@ -247,6 +247,51 @@ j_mongo_find (JMongoConnection* connection, const gchar* collection, JBSON* quer
 	return j_mongo_iterator_new(connection, collection, reply);
 }
 
+gboolean
+j_mongo_command (JMongoConnection* connection, const gchar* db, JBSON* command)
+{
+	JMongoIterator* iterator;
+	gboolean ret = FALSE;
+	gchar* ns;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(db != NULL, FALSE);
+	g_return_val_if_fail(command != NULL, FALSE);
+
+	ns = g_strconcat(db, ".$cmd", NULL);
+	iterator = j_mongo_find(connection, ns, command, NULL, 1, 0);
+	g_free(ns);
+
+	if (j_mongo_iterator_next(iterator))
+	{
+		ret = TRUE;
+	}
+
+	j_mongo_iterator_free(iterator);
+
+	return ret;
+}
+
+gboolean
+j_mongo_command_int (JMongoConnection* connection, const gchar* db, const gchar* key, gint32 value)
+{
+	JBSON* bson;
+	gboolean ret;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(db != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+
+	bson = j_bson_new();
+	j_bson_append_int32(bson, key, value);
+
+	ret = j_mongo_command(connection, db, bson);
+
+	j_bson_unref(bson);
+
+	return ret;
+}
+
 /**
  * @}
  **/

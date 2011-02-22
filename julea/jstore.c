@@ -224,11 +224,7 @@ j_store_create (JStore* store, JList* collections)
 
 	if (j_semantics_get(store->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
-		//bson ores;
-
-		//mongo_simple_int_command(mc, "admin", "fsync", 1, &ores);
-		//bson_print(&ores);
-		//bson_destroy(&ores);
+		j_mongo_command_int(connection, "admin", "fsync", 1);
 	}
 }
 
