@@ -115,7 +115,27 @@ j_mongo_iterator_new (JMongoConnection* connection, gchar const* collection, JMo
 void
 j_mongo_iterator_free (JMongoIterator* iterator)
 {
+	gint64 cursor_id;
+
 	g_return_if_fail(iterator != NULL);
+
+	cursor_id = j_mongo_reply_cursor_id(iterator->reply);
+
+	if (cursor_id != 0)
+	{
+		JMongoMessage* message;
+		gint32 const zero = 0;
+		gint32 const one = 1;
+
+		message = j_mongo_message_new(sizeof(gint32) + sizeof(gint32) + sizeof(gint64), J_MONGO_MESSAGE_OP_KILL_CURSORS);
+		j_mongo_message_append_4(message, &zero);
+		j_mongo_message_append_4(message, &one);
+		j_mongo_message_append_8(message, &cursor_id);
+
+		j_mongo_connection_send(iterator->connection, message);
+
+		j_mongo_message_free(message);
+	}
 
 	if (iterator->bson != NULL)
 	{
