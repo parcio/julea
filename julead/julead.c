@@ -35,6 +35,10 @@
 #include <signal.h>
 #include <string.h>
 
+#ifdef HAVE_OTF
+#include <otf.h>
+#endif
+
 #include "backend/backend.h"
 
 #include "jconfiguration.h"
@@ -45,6 +49,11 @@ static gint opt_port = 4711;
 static JBackendVTable jd_vtable;
 static GModule* backend = NULL;
 static GMainLoop* main_loop;
+
+#ifdef HAVE_OTF
+static OTF_FileManager* manager;
+static OTF_Writer* writer;
+#endif
 
 static
 void
@@ -62,6 +71,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	JMessage* message;
 	GInputStream* input;
 	GOutputStream* output;
+
+#ifdef HAVE_OTF
+	OTF_Writer_writeEnter(writer, 10000, 1, 1, 0);
+#endif
 
 	g_printerr("new %p\n", (gpointer)connection);
 
@@ -117,6 +130,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	j_message_free(message);
 
 	g_printerr("close %p\n", (gpointer)connection);
+
+#ifdef HAVE_OTF
+	OTF_Writer_writeLeave(writer, 10000, 1, 1, 0);
+#endif
 
 	return TRUE;
 }
@@ -216,6 +233,16 @@ main (int argc, char** argv)
 
 	j_configuration_free(configuration);
 
+#ifdef HAVE_OTF
+	manager = OTF_FileManager_open(1);
+	g_assert(manager != NULL);
+	writer = OTF_Writer_open("julead", 1, manager);
+	g_assert(writer != NULL);
+
+	OTF_Writer_writeDefProcess(writer, 0, 1, "master", 0);
+	OTF_Writer_writeDefFunction(writer, 0, 1, "on_run", 1000, 0);
+#endif
+
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
@@ -227,6 +254,11 @@ main (int argc, char** argv)
 
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
+
+#ifdef HAVE_OTF
+	OTF_Writer_close(writer);
+	OTF_FileManager_close(manager);
+#endif
 
 	jd_backend_teardown();
 

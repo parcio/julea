@@ -8,6 +8,8 @@ out = 'build'
 def options (ctx):
 	ctx.load('compiler_c')
 
+	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
+
 def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
@@ -36,6 +38,24 @@ def configure (ctx):
 		uselib_store = 'GMODULE'
 	)
 
+	if ctx.options.otf:
+		ctx.env.LIB_OTF      = ['otf']
+		ctx.env.LIBPATH_OTF  = ['%s/lib' % (ctx.options.otf,)]
+		ctx.env.RPATH_OTF    = ['%s/lib' % (ctx.options.otf,)]
+		ctx.env.INCLUDES_OTF = ['%s/include' % (ctx.options.otf,)]
+
+		ctx.check_cc(
+			header_name = 'otf.h',
+			define_name = 'HAVE_OTF',
+			use = ['OTF']
+		)
+
+		ctx.check_cc(
+			lib = 'otf',
+			define_name = 'HAVE_OTF',
+			use = ['OTF']
+		)
+
 	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra']
 	ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 
@@ -62,7 +82,7 @@ def build (ctx):
 	ctx.program(
 		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE'],
+		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
 		includes = ['common'],
 		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
 		install_path = '${BINDIR}'
@@ -72,7 +92,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
 			target = 'julead/backend/%s' % (backend,),
-			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE'],
+			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
 			includes = ['common'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
