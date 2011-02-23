@@ -25,11 +25,14 @@
  * SUCH DAMAGE.
  */
 
+#define _POSIX_SOURCE
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <gmodule.h>
 
+#include <signal.h>
 #include <string.h>
 
 #include "backend/backend.h"
@@ -41,6 +44,17 @@ static gint opt_port = 4711;
 
 static JBackendVTable jd_vtable;
 static GModule* backend = NULL;
+static GMainLoop* main_loop;
+
+static
+void
+jd_signal (int signo)
+{
+	if (g_main_loop_is_running(main_loop))
+	{
+		g_main_loop_quit(main_loop);
+	}
+}
 
 static gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
@@ -140,10 +154,10 @@ int
 main (int argc, char** argv)
 {
 	JConfiguration* configuration;
-	GMainLoop* main_loop;
 	GSocketListener* listener;
 	GError* error = NULL;
 	GOptionContext* context;
+	struct sigaction sig;
 
 	GOptionEntry entries[] = {
 		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
@@ -174,6 +188,19 @@ main (int argc, char** argv)
 	}
 
 	g_option_context_free(context);
+
+	sig.sa_handler = jd_signal;
+	sigemptyset(&sig.sa_mask);
+	sig.sa_flags = 0;
+
+	sigaction(SIGINT, &sig, NULL);
+	sigaction(SIGHUP, &sig, NULL);
+	sigaction(SIGTERM, &sig, NULL);
+	sigaction(SIGQUIT, &sig, NULL);
+
+	sig.sa_handler = SIG_IGN;
+
+	sigaction(SIGPIPE, &sig, NULL);
 
 	configuration = j_configuration_new();
 
