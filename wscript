@@ -80,7 +80,7 @@ def build (ctx):
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
 		target = 'julead/julead',
 		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
 		includes = ['common'],
@@ -90,7 +90,7 @@ def build (ctx):
 
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
 			target = 'julead/backend/%s' % (backend,),
 			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
 			includes = ['common'],
