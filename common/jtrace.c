@@ -45,6 +45,8 @@
  * @{
  **/
 
+static gboolean j_trace_enabled = FALSE;
+
 #ifdef HAVE_OTF
 static OTF_FileManager* otf_manager = NULL;
 static OTF_Writer* otf_writer = NULL;
@@ -56,6 +58,7 @@ static guint32 otf_file_id = 1;
 static GHashTable* otf_function_table = NULL;
 #endif
 
+G_GNUC_UNUSED
 static
 guint64
 j_trace_get_time (void)
@@ -73,12 +76,17 @@ void
 j_trace_init (gchar const* name)
 {
 	g_return_if_fail(name != NULL);
+	g_return_if_fail(!j_trace_enabled);
+
+	if (g_getenv("J_TRACE_ENABLE") == NULL)
+	{
+		g_printerr("Tracing is disabled. Set the J_TRACE_ENABLE environment variable to enable it.\n");
+		return;
+	}
+
+	j_trace_enabled = TRUE;
 
 #ifdef HAVE_OTF
-	g_return_if_fail(otf_manager == NULL);
-	g_return_if_fail(otf_writer == NULL);
-	g_return_if_fail(otf_function_table == NULL);
-
 	otf_manager = OTF_FileManager_open(1);
 	g_assert(otf_manager != NULL);
 
@@ -92,11 +100,11 @@ j_trace_init (gchar const* name)
 void
 j_trace_deinit (void)
 {
-#ifdef HAVE_OTF
-	g_return_if_fail(otf_manager != NULL);
-	g_return_if_fail(otf_writer != NULL);
-	g_return_if_fail(otf_function_table != NULL);
+	g_return_if_fail(j_trace_enabled);
 
+	j_trace_enabled = FALSE;
+
+#ifdef HAVE_OTF
 	g_hash_table_unref(otf_function_table);
 	otf_function_table = NULL;
 
@@ -113,6 +121,11 @@ j_trace_define_process (gchar const* name)
 {
 	g_return_if_fail(name != NULL);
 
+	if (!j_trace_enabled)
+	{
+		return;
+	}
+
 #ifdef HAVE_OTF
 	OTF_Writer_writeDefProcess(otf_writer, 1, otf_process_id, name, 0);
 	otf_process_id++;
@@ -123,6 +136,11 @@ void
 j_trace_define_file (gchar const* name)
 {
 	g_return_if_fail(name != NULL);
+
+	if (!j_trace_enabled)
+	{
+		return;
+	}
 
 #ifdef HAVE_OTF
 	OTF_Writer_writeDefFile(otf_writer, 1, otf_file_id, name, 0);
@@ -137,6 +155,11 @@ j_trace_enter (gchar const* name)
 	gpointer value;
 	guint32 function_id;
 #endif
+
+	if (!j_trace_enabled)
+	{
+		return;
+	}
 
 	g_return_if_fail(name != NULL);
 
@@ -166,6 +189,11 @@ j_trace_leave (gchar const* name)
 	guint32 function_id;
 #endif
 
+	if (!j_trace_enabled)
+	{
+		return;
+	}
+
 	g_return_if_fail(name != NULL);
 
 #ifdef HAVE_OTF
@@ -182,6 +210,11 @@ j_trace_file_begin (gchar const* path)
 {
 	g_return_if_fail(path != NULL);
 
+	if (!j_trace_enabled)
+	{
+		return;
+	}
+
 #ifdef HAVE_OTF
 	OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
 #endif
@@ -193,6 +226,11 @@ j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 #ifdef HAVE_OTF
 	guint32 otf_op;
 #endif
+
+	if (!j_trace_enabled)
+	{
+		return;
+	}
 
 	g_return_if_fail(path != NULL);
 
