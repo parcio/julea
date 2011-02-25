@@ -30,6 +30,8 @@
 #include <gio/gio.h>
 #include <gmodule.h>
 
+#include <jtrace.h>
+
 #include "backend.h"
 
 void init (JBackendVTable*, gchar const*);
@@ -44,6 +46,8 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 	GFile* file;
 	GFileIOStream* stream;
 	gchar* path;
+
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
@@ -64,6 +68,8 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 	g_object_unref(file);
 	g_free(path);
 
+	j_trace_leave(G_STRFUNC);
+
 	return stream;
 }
 
@@ -73,7 +79,11 @@ jd_backend_close (gpointer item)
 {
 	GFileIOStream* stream = item;
 
+	j_trace_enter(G_STRFUNC);
+
 	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 static
@@ -84,9 +94,13 @@ jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 	GInputStream* input;
 	gsize bytes_read;
 
+	j_trace_enter(G_STRFUNC);
+
 	input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
 	g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
+
+	j_trace_leave(G_STRFUNC);
 
 	return bytes_read;
 }
@@ -99,9 +113,13 @@ jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 o
 	GOutputStream* output;
 	gsize bytes_written;
 
+	j_trace_enter(G_STRFUNC);
+
 	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
 	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
+
+	j_trace_leave(G_STRFUNC);
 
 	return bytes_written;
 }
@@ -111,6 +129,8 @@ void
 init (JBackendVTable* vtable, gchar const* path)
 {
 	GFile* file;
+
+	j_trace_enter(G_STRFUNC);
 
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
@@ -122,11 +142,17 @@ init (JBackendVTable* vtable, gchar const* path)
 	file = g_file_new_for_path(path);
 	g_file_make_directory_with_parents(file, NULL, NULL);
 	g_object_unref(file);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
 deinit (void)
 {
+	j_trace_enter(G_STRFUNC);
+
 	g_free(jd_backend_path);
+
+	j_trace_leave(G_STRFUNC);
 }

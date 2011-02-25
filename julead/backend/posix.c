@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <jtrace.h>
+
 #include "backend.h"
 
 void init (JBackendVTable*, gchar const*);
@@ -49,6 +51,8 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* path;
 	gint fd;
+
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
@@ -67,6 +71,8 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 
 	g_free(path);
 
+	j_trace_leave(G_STRFUNC);
+
 	return GINT_TO_POINTER(fd);
 }
 
@@ -76,7 +82,11 @@ jd_backend_close (gpointer item)
 {
 	gint fd = GPOINTER_TO_INT(item);
 
+	j_trace_enter(G_STRFUNC);
+
 	close(fd);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 static
@@ -86,7 +96,11 @@ jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_read;
 
+	j_trace_enter(G_STRFUNC);
+
 	bytes_read = pread(fd, buffer, length, offset);
+
+	j_trace_leave(G_STRFUNC);
 
 	return bytes_read;
 }
@@ -98,7 +112,11 @@ jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 o
 	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_written;
 
+	j_trace_enter(G_STRFUNC);
+
 	bytes_written = pwrite(fd, buffer, length, offset);
+
+	j_trace_leave(G_STRFUNC);
 
 	return bytes_written;
 }
@@ -107,6 +125,8 @@ G_MODULE_EXPORT
 void
 init (JBackendVTable* vtable, gchar const* path)
 {
+	j_trace_enter(G_STRFUNC);
+
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
 	vtable->read = jd_backend_read;
@@ -115,11 +135,17 @@ init (JBackendVTable* vtable, gchar const* path)
 	jd_backend_path = g_strdup(path);
 
 	g_mkdir_with_parents(path, 0700);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
 deinit (void)
 {
+	j_trace_enter(G_STRFUNC);
+
 	g_free(jd_backend_path);
+
+	j_trace_leave(G_STRFUNC);
 }

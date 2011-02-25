@@ -28,6 +28,8 @@
 #include <glib.h>
 #include <gmodule.h>
 
+#include <jtrace.h>
+
 #include "backend.h"
 
 void init (JBackendVTable*, gchar const*);
@@ -37,6 +39,9 @@ static
 gpointer
 jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 {
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
+
 	return (gpointer)1;
 }
 
@@ -44,12 +49,17 @@ static
 void
 jd_backend_close (gpointer item)
 {
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 static
 guint64
 jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
 {
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
+
 	return length;
 }
 
@@ -57,6 +67,9 @@ static
 guint64
 jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
 {
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
+
 	return length;
 }
 
@@ -64,14 +77,20 @@ G_MODULE_EXPORT
 void
 init (JBackendVTable* vtable, gchar const* path)
 {
+	j_trace_enter(G_STRFUNC);
+
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
 	vtable->read = jd_backend_read;
 	vtable->write = jd_backend_write;
+
+	j_trace_leave(G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
 deinit (void)
 {
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }

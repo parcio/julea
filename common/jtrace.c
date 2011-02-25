@@ -51,17 +51,41 @@ static OTF_Writer* otf_writer = NULL;
 
 static guint32 otf_process_id = 1;
 static guint32 otf_function_id = 1;
+static guint32 otf_file_id = 1;
+
+static GHashTable* otf_function_table = NULL;
 #endif
 
-void
-j_trace_init (const gchar* name)
+static
+guint64
+j_trace_get_time (void)
 {
+	GTimeVal timeval;
+	guint64 timestamp;
+
+	g_get_current_time(&timeval);
+	timestamp = (timeval.tv_sec * G_USEC_PER_SEC) + timeval.tv_usec;
+
+	return timestamp;
+}
+
+void
+j_trace_init (gchar const* name)
+{
+	g_return_if_fail(name != NULL);
+
 #ifdef HAVE_OTF
+	g_return_if_fail(otf_manager == NULL);
+	g_return_if_fail(otf_writer == NULL);
+	g_return_if_fail(otf_function_table == NULL);
+
 	otf_manager = OTF_FileManager_open(1);
 	g_assert(otf_manager != NULL);
 
 	otf_writer = OTF_Writer_open(name, 1, otf_manager);
 	g_assert(otf_writer != NULL);
+
+	otf_function_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 #endif
 }
 
@@ -69,6 +93,13 @@ void
 j_trace_deinit (void)
 {
 #ifdef HAVE_OTF
+	g_return_if_fail(otf_manager != NULL);
+	g_return_if_fail(otf_writer != NULL);
+	g_return_if_fail(otf_function_table != NULL);
+
+	g_hash_table_unref(otf_function_table);
+	otf_function_table = NULL;
+
 	OTF_Writer_close(otf_writer);
 	otf_writer = NULL;
 
@@ -78,8 +109,10 @@ j_trace_deinit (void)
 }
 
 void
-j_trace_define_process (const gchar* name)
+j_trace_define_process (gchar const* name)
 {
+	g_return_if_fail(name != NULL);
+
 #ifdef HAVE_OTF
 	OTF_Writer_writeDefProcess(otf_writer, 1, otf_process_id, name, 0);
 	otf_process_id++;
@@ -87,39 +120,96 @@ j_trace_define_process (const gchar* name)
 }
 
 void
-j_trace_define_function (const gchar* name)
+j_trace_define_file (gchar const* name)
 {
+	g_return_if_fail(name != NULL);
+
 #ifdef HAVE_OTF
-	OTF_Writer_writeDefFunction(otf_writer, 1, otf_function_id, name, 0, 0);
-	otf_function_id++;
+	OTF_Writer_writeDefFile(otf_writer, 1, otf_file_id, name, 0);
+	otf_file_id++;
 #endif
 }
 
 void
-j_trace_enter (void)
+j_trace_enter (gchar const* name)
 {
 #ifdef HAVE_OTF
-	GTimeVal timeval;
-	guint64 timestamp;
+	gpointer value;
+	guint32 function_id;
+#endif
 
-	g_get_current_time(&timeval);
-	timestamp = (timeval.tv_sec * G_USEC_PER_SEC) + timeval.tv_usec;
+	g_return_if_fail(name != NULL);
 
-	OTF_Writer_writeEnter(otf_writer, timestamp, 1, 1, 0);
+#ifdef HAVE_OTF
+	if ((value = g_hash_table_lookup(otf_function_table, name)) == NULL)
+	{
+		function_id = otf_function_id;
+		otf_function_id++;
+
+		OTF_Writer_writeDefFunction(otf_writer, 1, function_id, name, 0, 0);
+		g_hash_table_insert(otf_function_table, g_strdup(name), GUINT_TO_POINTER(function_id));
+	}
+	else
+	{
+		function_id = GPOINTER_TO_UINT(value);
+	}
+
+	OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), 1, 1, 0);
 #endif
 }
 
 void
-j_trace_leave (void)
+j_trace_leave (gchar const* name)
 {
 #ifdef HAVE_OTF
-	GTimeVal timeval;
-	guint64 timestamp;
+	gpointer value;
+	guint32 function_id;
+#endif
 
-	g_get_current_time(&timeval);
-	timestamp = (timeval.tv_sec * G_USEC_PER_SEC) + timeval.tv_usec;
+	g_return_if_fail(name != NULL);
 
-	OTF_Writer_writeLeave(otf_writer, timestamp, 1, 1, 0);
+#ifdef HAVE_OTF
+	value = g_hash_table_lookup(otf_function_table, name);
+	g_assert(value != NULL);
+	function_id = GPOINTER_TO_UINT(value);
+
+	OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, 1, 0);
+#endif
+}
+
+void
+j_trace_file_begin (gchar const* path)
+{
+	g_return_if_fail(path != NULL);
+
+#ifdef HAVE_OTF
+	OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
+#endif
+}
+
+void
+j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
+{
+#ifdef HAVE_OTF
+	guint32 otf_op;
+#endif
+
+	g_return_if_fail(path != NULL);
+
+#ifdef HAVE_OTF
+	switch (op)
+	{
+		case J_TRACE_FILE_READ:
+			otf_op = OTF_FILEOP_READ;
+			break;
+		case J_TRACE_FILE_WRITE:
+			otf_op = OTF_FILEOP_WRITE;
+			break;
+		default:
+			g_return_if_reached();
+	}
+
+	OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, otf_file_id, 1, 0, otf_op, length, 0);
 #endif
 }
 

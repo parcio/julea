@@ -32,15 +32,26 @@
 #ifndef H_TRACE
 #define H_TRACE
 
+enum JTraceFileOp
+{
+	J_TRACE_FILE_READ,
+	J_TRACE_FILE_WRITE
+};
+
+typedef enum JTraceFileOp JTraceFileOp;
+
 #include <glib.h>
 
-void j_trace_init (const gchar*);
+void j_trace_init (gchar const*);
 void j_trace_deinit (void);
 
-void j_trace_define_process (const gchar*);
-void j_trace_define_function (const gchar*);
+void j_trace_define_process (gchar const*);
+void j_trace_define_file (gchar const*);
 
-void j_trace_enter (void);
-void j_trace_leave (void);
+void j_trace_enter (gchar const*);
+void j_trace_leave (gchar const*);
+
+void j_trace_file_begin (gchar const*);
+void j_trace_file_end (gchar const*, JTraceFileOp, guint64);
 
 #endif

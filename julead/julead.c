@@ -35,11 +35,11 @@
 #include <signal.h>
 #include <string.h>
 
-#include "backend/backend.h"
+#include <jconfiguration.h>
+#include <jmessage.h>
+#include <jtrace.h>
 
-#include "jconfiguration.h"
-#include "jmessage.h"
-#include "jtrace.h"
+#include "backend/backend.h"
 
 static gint opt_port = 4711;
 
@@ -64,7 +64,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	GInputStream* input;
 	GOutputStream* output;
 
-	j_trace_enter();
+	j_trace_enter(G_STRFUNC);
 
 	g_printerr("new %p\n", (gpointer)connection);
 
@@ -121,7 +121,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	g_printerr("close %p\n", (gpointer)connection);
 
-	j_trace_leave();
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -207,6 +207,9 @@ main (int argc, char** argv)
 
 	sigaction(SIGPIPE, &sig, NULL);
 
+	j_trace_init("julead");
+	j_trace_define_process("master");
+
 	configuration = j_configuration_new();
 
 	if (configuration == NULL)
@@ -221,10 +224,6 @@ main (int argc, char** argv)
 
 	j_configuration_free(configuration);
 
-	j_trace_init("julead");
-	j_trace_define_process("master");
-	j_trace_define_function("on_run");
-
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
@@ -237,9 +236,9 @@ main (int argc, char** argv)
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
 
-	j_trace_deinit();
-
 	jd_backend_teardown();
+
+	j_trace_deinit();
 
 	return 0;
 }
