@@ -55,6 +55,7 @@ static guint32 otf_process_id = 1;
 static guint32 otf_function_id = 1;
 static guint32 otf_file_id = 1;
 
+static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_function_table = NULL;
 #endif
 
@@ -93,6 +94,7 @@ j_trace_init (gchar const* name)
 	otf_writer = OTF_Writer_open(name, 1, otf_manager);
 	g_assert(otf_writer != NULL);
 
+	otf_file_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	otf_function_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 #endif
 }
@@ -108,6 +110,9 @@ j_trace_deinit (void)
 	j_trace_enabled = FALSE;
 
 #ifdef HAVE_OTF
+	g_hash_table_unref(otf_file_table);
+	otf_file_table = NULL;
+
 	g_hash_table_unref(otf_function_table);
 	otf_function_table = NULL;
 
@@ -132,22 +137,6 @@ j_trace_define_process (gchar const* name)
 #ifdef HAVE_OTF
 	OTF_Writer_writeDefProcess(otf_writer, 1, otf_process_id, name, 0);
 	otf_process_id++;
-#endif
-}
-
-void
-j_trace_define_file (gchar const* name)
-{
-	g_return_if_fail(name != NULL);
-
-	if (!j_trace_enabled)
-	{
-		return;
-	}
-
-#ifdef HAVE_OTF
-	OTF_Writer_writeDefFile(otf_writer, 1, otf_file_id, name, 0);
-	otf_file_id++;
 #endif
 }
 
@@ -211,6 +200,11 @@ j_trace_leave (gchar const* name)
 void
 j_trace_file_begin (gchar const* path)
 {
+#ifdef HAVE_OTF
+	gpointer value;
+	guint32 file_id;
+#endif
+
 	g_return_if_fail(path != NULL);
 
 	if (!j_trace_enabled)
@@ -219,6 +213,19 @@ j_trace_file_begin (gchar const* path)
 	}
 
 #ifdef HAVE_OTF
+	if ((value = g_hash_table_lookup(otf_file_table, path)) == NULL)
+	{
+		file_id = otf_file_id;
+		otf_file_id++;
+
+		OTF_Writer_writeDefFile(otf_writer, 1, file_id, path, 0);
+		g_hash_table_insert(otf_file_table, g_strdup(path), GUINT_TO_POINTER(file_id));
+	}
+	else
+	{
+		file_id = GPOINTER_TO_UINT(value);
+	}
+
 	OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
 #endif
 }
@@ -227,6 +234,8 @@ void
 j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 {
 #ifdef HAVE_OTF
+	gpointer value;
+	guint32 file_id;
 	guint32 otf_op;
 #endif
 
@@ -250,7 +259,11 @@ j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 			g_return_if_reached();
 	}
 
-	OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, otf_file_id, 1, 0, otf_op, length, 0);
+	value = g_hash_table_lookup(otf_file_table, path);
+	g_assert(value != NULL);
+	file_id = GPOINTER_TO_UINT(value);
+
+	OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, file_id, 1, 0, otf_op, length, 0);
 #endif
 }
 

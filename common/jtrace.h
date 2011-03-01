@@ -46,7 +46,6 @@ void j_trace_init (gchar const*);
 void j_trace_deinit (void);
 
 void j_trace_define_process (gchar const*);
-void j_trace_define_file (gchar const*);
 
 void j_trace_enter (gchar const*);
 void j_trace_leave (gchar const*);
