@@ -100,7 +100,10 @@ j_trace_init (gchar const* name)
 void
 j_trace_deinit (void)
 {
-	g_return_if_fail(j_trace_enabled);
+	if (!j_trace_enabled)
+	{
+		return;
+	}
 
 	j_trace_enabled = FALSE;
 

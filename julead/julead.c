@@ -81,6 +81,32 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_OP_READ:
 				g_printerr("read_op\n");
+				{
+					gchar* buf;
+					gchar const* store;
+					gchar const* collection;
+					gchar const* item;
+					guint64 length;
+					guint64 offset;
+					gpointer p;
+
+					store = j_message_get_string(message);
+					collection = j_message_get_string(message);
+					item = j_message_get_string(message);
+					length = j_message_get_8(message);
+					offset = j_message_get_8(message);
+
+					buf = g_new(gchar, 512 * 1024);
+
+					g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
+
+					p = jd_vtable.open(store, collection, item);
+					jd_vtable.read(p, buf, length, offset);
+					//g_output_stream_write_all(input, buf, length, NULL, NULL, NULL);
+					jd_vtable.close(p);
+
+					g_free(buf);
+				}
 				break;
 			case J_MESSAGE_OP_WRITE:
 				g_printerr("write_op\n");
@@ -101,7 +127,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					buf = g_new(gchar, 512 * 1024);
 
-					g_printerr("xxx %s %s %s %ld %ld\n", store, collection, item, length, offset);
+					g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
 					p = jd_vtable.open(store, collection, item);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);

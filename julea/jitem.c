@@ -152,6 +152,58 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 }
 
 gboolean
+j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
+{
+	JDistribution* distribution;
+	guint64 new_length;
+	guint64 new_offset;
+	guint index;
+
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (length == 0)
+	{
+		return FALSE;
+	}
+
+	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+
+	while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
+	{
+		JMessage* message;
+		gchar const* store;
+		gchar const* collection;
+		gsize store_len;
+		gsize collection_len;
+		gsize item_len;
+
+		store = j_store_name(j_collection_store(item->collection));
+		collection = j_collection_name(item->collection);
+
+		store_len = strlen(store) + 1;
+		collection_len = strlen(collection) + 1;
+		item_len = strlen(item->name) + 1;
+
+		message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OP_READ);
+		j_message_append_n(message, store, store_len);
+		j_message_append_n(message, collection, collection_len);
+		j_message_append_n(message, item->name, item_len);
+		j_message_append_8(message, &new_length);
+		j_message_append_8(message, &new_offset);
+
+		j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
+		/* FIXME receive */
+
+		j_message_free(message);
+	}
+
+	j_distribution_free(distribution);
+
+	return TRUE;
+}
+
+gboolean
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 {
 	JDistribution* distribution;
@@ -162,6 +214,11 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 
 	g_return_val_if_fail(item != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+
+	if (length == 0)
+	{
+		return FALSE;
+	}
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 	d = data;

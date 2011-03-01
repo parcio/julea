@@ -150,6 +150,8 @@ main (int argc, char** argv)
 			buf = g_new0(gchar, 1024 * 1024 + 1);
 			j_item_write(item, buf, 1024 * 1024 + 1, 0);
 			j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1);
+			j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1);
+			j_item_read(item, buf, 1024 * 1024 + 1, 0);
 			g_free(buf);
 		}
 
