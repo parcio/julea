@@ -9,6 +9,7 @@ def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
+	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -54,6 +55,24 @@ def configure (ctx):
 			lib = 'otf',
 			define_name = 'HAVE_OTF',
 			use = ['OTF']
+		)
+
+	if ctx.options.zookeeper:
+		ctx.env.LIB_ZOOKEEPER      = ['zookeeper_mt']
+		ctx.env.LIBPATH_ZOOKEEPER  = ['%s/lib' % (ctx.options.zookeeper,)]
+		ctx.env.RPATH_ZOOKEEPER    = ['%s/lib' % (ctx.options.zookeeper,)]
+		ctx.env.INCLUDES_ZOOKEEPER = ['%s/include/c-client-src' % (ctx.options.zookeeper,)]
+
+		ctx.check_cc(
+			header_name = 'zookeeper.h',
+			define_name = 'HAVE_ZOOKEEPER',
+			use = ['ZOOKEEPER']
+		)
+
+		ctx.check_cc(
+			lib = 'zookeeper_mt',
+			define_name = 'HAVE_ZOOKEEPER',
+			use = ['ZOOKEEPER']
 		)
 
 	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra']
