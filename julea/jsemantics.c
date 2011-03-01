@@ -59,6 +59,11 @@ struct JSemantics
 	gint concurrency;
 
 	/**
+	 * The redundancy semantics.
+	 **/
+	gint redundancy;
+
+	/**
 	 * The security semantics.
 	 **/
 	gint security;
@@ -88,6 +93,7 @@ j_semantics_new (void)
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_STRICT;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_STRICT;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_STRICT;
+	semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
 	semantics->security = J_SEMANTICS_SECURITY_STRICT;
 	semantics->ref_count = 1;
 
@@ -156,7 +162,7 @@ j_semantics_unref (JSemantics* semantics)
  * \param value     The aspect's value.
  **/
 void
-j_semantics_set (JSemantics* semantics, gint key, gint value)
+j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 {
 	g_return_if_fail(semantics != NULL);
 
@@ -170,6 +176,9 @@ j_semantics_set (JSemantics* semantics, gint key, gint value)
 			break;
 		case J_SEMANTICS_PERSISTENCY:
 			semantics->persistency = value;
+			break;
+		case J_SEMANTICS_REDUNDANCY:
+			semantics->redundancy = value;
 			break;
 		case J_SEMANTICS_SECURITY:
 			semantics->security = value;
@@ -196,7 +205,7 @@ j_semantics_set (JSemantics* semantics, gint key, gint value)
  * \return The aspect's value.
  **/
 gint
-j_semantics_get (JSemantics* semantics, gint key)
+j_semantics_get (JSemantics* semantics, JSemanticsType key)
 {
 	g_return_val_if_fail(semantics != NULL, -1);
 
@@ -208,6 +217,8 @@ j_semantics_get (JSemantics* semantics, gint key)
 			return semantics->consistency;
 		case J_SEMANTICS_PERSISTENCY:
 			return semantics->persistency;
+		case J_SEMANTICS_REDUNDANCY:
+			return semantics->redundancy;
 		case J_SEMANTICS_SECURITY:
 			return semantics->security;
 		default:
