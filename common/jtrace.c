@@ -143,11 +143,6 @@ j_trace_define_process (gchar const* name)
 void
 j_trace_enter (gchar const* name)
 {
-#ifdef HAVE_OTF
-	gpointer value;
-	guint32 function_id;
-#endif
-
 	if (!j_trace_enabled)
 	{
 		return;
@@ -156,31 +151,31 @@ j_trace_enter (gchar const* name)
 	g_return_if_fail(name != NULL);
 
 #ifdef HAVE_OTF
-	if ((value = g_hash_table_lookup(otf_function_table, name)) == NULL)
 	{
-		function_id = otf_function_id;
-		otf_function_id++;
+		gpointer value;
+		guint32 function_id;
 
-		OTF_Writer_writeDefFunction(otf_writer, 1, function_id, name, 0, 0);
-		g_hash_table_insert(otf_function_table, g_strdup(name), GUINT_TO_POINTER(function_id));
-	}
-	else
-	{
-		function_id = GPOINTER_TO_UINT(value);
-	}
+		if ((value = g_hash_table_lookup(otf_function_table, name)) == NULL)
+		{
+			function_id = otf_function_id;
+			otf_function_id++;
 
-	OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), 1, 1, 0);
+			OTF_Writer_writeDefFunction(otf_writer, 1, function_id, name, 0, 0);
+			g_hash_table_insert(otf_function_table, g_strdup(name), GUINT_TO_POINTER(function_id));
+		}
+		else
+		{
+			function_id = GPOINTER_TO_UINT(value);
+		}
+
+		OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), 1, 1, 0);
+	}
 #endif
 }
 
 void
 j_trace_leave (gchar const* name)
 {
-#ifdef HAVE_OTF
-	gpointer value;
-	guint32 function_id;
-#endif
-
 	if (!j_trace_enabled)
 	{
 		return;
@@ -189,22 +184,22 @@ j_trace_leave (gchar const* name)
 	g_return_if_fail(name != NULL);
 
 #ifdef HAVE_OTF
-	value = g_hash_table_lookup(otf_function_table, name);
-	g_assert(value != NULL);
-	function_id = GPOINTER_TO_UINT(value);
+	{
+		gpointer value;
+		guint32 function_id;
 
-	OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, 1, 0);
+		value = g_hash_table_lookup(otf_function_table, name);
+		g_assert(value != NULL);
+		function_id = GPOINTER_TO_UINT(value);
+
+		OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, 1, 0);
+	}
 #endif
 }
 
 void
 j_trace_file_begin (gchar const* path)
 {
-#ifdef HAVE_OTF
-	gpointer value;
-	guint32 file_id;
-#endif
-
 	g_return_if_fail(path != NULL);
 
 	if (!j_trace_enabled)
@@ -213,32 +208,31 @@ j_trace_file_begin (gchar const* path)
 	}
 
 #ifdef HAVE_OTF
-	if ((value = g_hash_table_lookup(otf_file_table, path)) == NULL)
 	{
-		file_id = otf_file_id;
-		otf_file_id++;
+		gpointer value;
+		guint32 file_id;
 
-		OTF_Writer_writeDefFile(otf_writer, 1, file_id, path, 0);
-		g_hash_table_insert(otf_file_table, g_strdup(path), GUINT_TO_POINTER(file_id));
-	}
-	else
-	{
-		file_id = GPOINTER_TO_UINT(value);
-	}
+		if ((value = g_hash_table_lookup(otf_file_table, path)) == NULL)
+		{
+			file_id = otf_file_id;
+			otf_file_id++;
 
-	OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
+			OTF_Writer_writeDefFile(otf_writer, 1, file_id, path, 0);
+			g_hash_table_insert(otf_file_table, g_strdup(path), GUINT_TO_POINTER(file_id));
+		}
+		else
+		{
+			file_id = GPOINTER_TO_UINT(value);
+		}
+
+		OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
+	}
 #endif
 }
 
 void
 j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 {
-#ifdef HAVE_OTF
-	gpointer value;
-	guint32 file_id;
-	guint32 otf_op;
-#endif
-
 	if (!j_trace_enabled)
 	{
 		return;
@@ -247,23 +241,29 @@ j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 	g_return_if_fail(path != NULL);
 
 #ifdef HAVE_OTF
-	switch (op)
 	{
-		case J_TRACE_FILE_READ:
-			otf_op = OTF_FILEOP_READ;
-			break;
-		case J_TRACE_FILE_WRITE:
-			otf_op = OTF_FILEOP_WRITE;
-			break;
-		default:
-			g_return_if_reached();
+		gpointer value;
+		guint32 file_id;
+		guint32 otf_op;
+
+		switch (op)
+		{
+			case J_TRACE_FILE_READ:
+				otf_op = OTF_FILEOP_READ;
+				break;
+			case J_TRACE_FILE_WRITE:
+				otf_op = OTF_FILEOP_WRITE;
+				break;
+			default:
+				g_return_if_reached();
+		}
+
+		value = g_hash_table_lookup(otf_file_table, path);
+		g_assert(value != NULL);
+		file_id = GPOINTER_TO_UINT(value);
+
+		OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, file_id, 1, 0, otf_op, length, 0);
 	}
-
-	value = g_hash_table_lookup(otf_file_table, path);
-	g_assert(value != NULL);
-	file_id = GPOINTER_TO_UINT(value);
-
-	OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, file_id, 1, 0, otf_op, length, 0);
 #endif
 }
 
