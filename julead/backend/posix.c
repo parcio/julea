@@ -40,19 +40,19 @@
 
 #include "backend.h"
 
-void init (JBackendVTable*, gchar const*);
-void deinit (void);
+void init (JBackendVTable*, gchar const*, JTrace*);
+void deinit (JTrace*);
 
 static gchar* jd_backend_path = NULL;
 
 static
 gpointer
-jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
+jd_backend_open (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	gchar* path;
 	gint fd;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
@@ -71,61 +71,61 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
 
 	g_free(path);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return GINT_TO_POINTER(fd);
 }
 
 static
 void
-jd_backend_close (gpointer item)
+jd_backend_close (gpointer item, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(item);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	close(fd);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }
 
 static
 guint64
-jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
+jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_read;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	bytes_read = pread(fd, buffer, length, offset);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return bytes_read;
 }
 
 static
 guint64
-jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
+jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(item);
 	gsize bytes_written;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	bytes_written = pwrite(fd, buffer, length, offset);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return bytes_written;
 }
 
 G_MODULE_EXPORT
 void
-init (JBackendVTable* vtable, gchar const* path)
+init (JBackendVTable* vtable, gchar const* path, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
@@ -136,16 +136,16 @@ init (JBackendVTable* vtable, gchar const* path)
 
 	g_mkdir_with_parents(path, 0700);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
-deinit (void)
+deinit (JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	g_free(jd_backend_path);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }

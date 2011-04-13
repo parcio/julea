@@ -45,6 +45,16 @@
  * @{
  **/
 
+struct JTrace
+{
+	GThread* thread;
+	gchar* function_name;
+
+#ifdef HAVE_OTF
+	guint32 process_id;
+#endif
+};
+
 static gboolean j_trace_enabled = FALSE;
 
 #ifdef HAVE_OTF
@@ -57,6 +67,7 @@ static guint32 otf_file_id = 1;
 
 static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_function_table = NULL;
+static GHashTable* otf_process_table = NULL;
 #endif
 
 G_GNUC_UNUSED
@@ -96,6 +107,7 @@ j_trace_init (gchar const* name)
 
 	otf_file_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	otf_function_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+	otf_process_table = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
 #endif
 }
 
@@ -116,6 +128,9 @@ j_trace_deinit (void)
 	g_hash_table_unref(otf_function_table);
 	otf_function_table = NULL;
 
+	g_hash_table_unref(otf_process_table);
+	otf_process_table = NULL;
+
 	OTF_Writer_close(otf_writer);
 	otf_writer = NULL;
 
@@ -125,29 +140,14 @@ j_trace_deinit (void)
 }
 
 void
-j_trace_define_process (gchar const* name)
-{
-	g_return_if_fail(name != NULL);
-
-	if (!j_trace_enabled)
-	{
-		return;
-	}
-
-#ifdef HAVE_OTF
-	OTF_Writer_writeDefProcess(otf_writer, 1, otf_process_id, name, 0);
-	otf_process_id++;
-#endif
-}
-
-void
-j_trace_enter (gchar const* name)
+j_trace_enter (JTrace* trace, gchar const* name)
 {
 	if (!j_trace_enabled)
 	{
 		return;
 	}
 
+	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
 #ifdef HAVE_OTF
@@ -168,19 +168,20 @@ j_trace_enter (gchar const* name)
 			function_id = GPOINTER_TO_UINT(value);
 		}
 
-		OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), 1, 1, 0);
+		OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), function_id, trace->process_id, 0);
 	}
 #endif
 }
 
 void
-j_trace_leave (gchar const* name)
+j_trace_leave (JTrace* trace, gchar const* name)
 {
 	if (!j_trace_enabled)
 	{
 		return;
 	}
 
+	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
 #ifdef HAVE_OTF
@@ -192,13 +193,13 @@ j_trace_leave (gchar const* name)
 		g_assert(value != NULL);
 		function_id = GPOINTER_TO_UINT(value);
 
-		OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, 1, 0);
+		OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, trace->process_id, 0);
 	}
 #endif
 }
 
 void
-j_trace_file_begin (gchar const* path)
+j_trace_file_begin (JTrace* trace, gchar const* path)
 {
 	g_return_if_fail(path != NULL);
 
@@ -225,13 +226,13 @@ j_trace_file_begin (gchar const* path)
 			file_id = GPOINTER_TO_UINT(value);
 		}
 
-		OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), 1, 1, 0);
+		OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), trace->process_id, 1, 0);
 	}
 #endif
 }
 
 void
-j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
+j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOp op, guint64 length)
 {
 	if (!j_trace_enabled)
 	{
@@ -262,9 +263,82 @@ j_trace_file_end (gchar const* path, JTraceFileOp op, guint64 length)
 		g_assert(value != NULL);
 		file_id = GPOINTER_TO_UINT(value);
 
-		OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), 1, file_id, 1, 0, otf_op, length, 0);
+		OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), trace->process_id, file_id, 1, 0, otf_op, length, 0);
 	}
 #endif
+}
+
+JTrace*
+j_trace_thread_enter (GThread* thread, gchar const* function_name)
+{
+	JTrace* trace;
+
+	if (!j_trace_enabled)
+	{
+		return NULL;
+	}
+
+	g_return_val_if_fail(function_name != NULL, NULL);
+
+	trace = g_slice_new(JTrace);
+	trace->thread = thread;
+	trace->function_name = g_strdup(function_name);
+
+#ifdef HAVE_OTF
+	{
+		gpointer value;
+		guint32 process_id;
+
+		if (!g_hash_table_lookup_extended(otf_process_table, thread, NULL, &value))
+		{
+			gchar* name;
+
+			process_id = otf_process_id;
+			otf_process_id++;
+
+			if (thread == NULL)
+			{
+				name = g_strdup("Main process");
+			}
+			else
+			{
+				name = g_strdup_printf("Thread %p (%s)", (gconstpointer)thread, function_name);
+			}
+
+			OTF_Writer_writeDefProcess(otf_writer, 1, process_id, name, 0);
+			g_hash_table_insert(otf_process_table, thread, GUINT_TO_POINTER(process_id));
+
+			g_free(name);
+		}
+		else
+		{
+			process_id = GPOINTER_TO_UINT(value);
+		}
+
+		trace->process_id = process_id;
+
+		j_trace_enter(trace, function_name);
+	}
+#endif
+
+	return trace;
+}
+
+void
+j_trace_thread_leave (JTrace* trace)
+{
+	if (!j_trace_enabled)
+	{
+		return;
+	}
+
+	g_return_if_fail(trace != NULL);
+
+	j_trace_leave(trace, trace->function_name);
+
+	g_free(trace->function_name);
+
+	g_slice_free(JTrace, trace);
 }
 
 /**

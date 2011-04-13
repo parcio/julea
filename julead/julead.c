@@ -44,6 +44,7 @@
 static gint opt_port = 4711;
 
 static JBackendVTable jd_vtable;
+JTrace* jd_trace = NULL;
 static GModule* backend = NULL;
 static GMainLoop* main_loop;
 
@@ -61,10 +62,11 @@ static gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JMessage* message;
+	JTrace* trace;
 	GInputStream* input;
 	GOutputStream* output;
 
-	j_trace_enter(G_STRFUNC);
+	trace = j_trace_thread_enter(g_thread_self(), G_STRFUNC);
 
 	g_printerr("new %p\n", (gpointer)connection);
 
@@ -100,10 +102,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-					p = jd_vtable.open(store, collection, item);
-					jd_vtable.read(p, buf, length, offset);
+					p = jd_vtable.open(store, collection, item, trace);
+					jd_vtable.read(p, buf, length, offset, trace);
 					//g_output_stream_write_all(input, buf, length, NULL, NULL, NULL);
-					jd_vtable.close(p);
+					jd_vtable.close(p, trace);
 
 					g_free(buf);
 				}
@@ -129,10 +131,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-					p = jd_vtable.open(store, collection, item);
+					p = jd_vtable.open(store, collection, item, trace);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-					jd_vtable.write(p, buf, length, offset);
-					jd_vtable.close(p);
+					jd_vtable.write(p, buf, length, offset, trace);
+					jd_vtable.close(p, trace);
 
 					g_free(buf);
 				}
@@ -147,7 +149,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	g_printerr("close %p\n", (gpointer)connection);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_thread_leave(trace);
 
 	return TRUE;
 }
@@ -164,7 +166,7 @@ jd_backend_setup (JConfiguration* configuration)
 	g_free(path);
 
 	g_module_symbol(backend, "init", (gpointer*)&init_func);
-	init_func(&jd_vtable, configuration->storage.path);
+	init_func(&jd_vtable, configuration->storage.path, jd_trace);
 
 	return TRUE;
 }
@@ -176,7 +178,7 @@ jd_backend_teardown (void)
 	JBackendDeinitFunc deinit_func;
 
 	g_module_symbol(backend, "deinit", (gpointer*)&deinit_func);
-	deinit_func();
+	deinit_func(jd_trace);
 
 	g_module_close(backend);
 }
@@ -234,12 +236,13 @@ main (int argc, char** argv)
 	sigaction(SIGPIPE, &sig, NULL);
 
 	j_trace_init("julead");
-	j_trace_define_process("master");
+	jd_trace = j_trace_thread_enter(NULL, G_STRFUNC);
 
 	configuration = j_configuration_new();
 
 	if (configuration == NULL)
 	{
+		g_printerr("Could not read configuration.\n");
 		return 1;
 	}
 
@@ -264,6 +267,7 @@ main (int argc, char** argv)
 
 	jd_backend_teardown();
 
+	j_trace_thread_leave(jd_trace);
 	j_trace_deinit();
 
 	return 0;

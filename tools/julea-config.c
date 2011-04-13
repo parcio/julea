@@ -97,11 +97,15 @@ write_config (gchar* path)
 	if (path != NULL)
 	{
 		GFile* file;
+		GFile* parent;
 
 		file = g_file_new_for_commandline_arg(path);
+		parent = g_file_get_parent(file);
+		g_file_make_directory_with_parents(parent, NULL, NULL);
 		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
 
 		g_object_unref(file);
+		g_object_unref(parent);
 
 		g_free(path);
 	}
@@ -132,7 +136,7 @@ main (gint argc, gchar** argv)
 		{ "data", 'd', 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
 		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
 		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
-		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp" },
+		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp/julea" },
 		{ NULL }
 	};
 

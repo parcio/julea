@@ -32,18 +32,20 @@
 #ifndef H_BACKEND
 #define H_BACKEND
 
+#include "jtrace.h"
+
 struct JBackendVTable
 {
-	gpointer (*open) (gchar const*, gchar const*, gchar const*);
-	void (*close) (gpointer);
+	gpointer (*open) (gchar const*, gchar const*, gchar const*, JTrace*);
+	void (*close) (gpointer, JTrace*);
 
-	guint64 (*read) (gpointer, gpointer, guint64, guint64);
-	guint64 (*write) (gpointer, gconstpointer, guint64, guint64);
+	guint64 (*read) (gpointer, gpointer, guint64, guint64, JTrace*);
+	guint64 (*write) (gpointer, gconstpointer, guint64, guint64, JTrace*);
 };
 
 typedef struct JBackendVTable JBackendVTable;
 
-typedef void (*JBackendInitFunc) (JBackendVTable*, gchar const*);
-typedef void (*JBackendDeinitFunc) (void);
+typedef void (*JBackendInitFunc) (JBackendVTable*, gchar const*, JTrace*);
+typedef void (*JBackendDeinitFunc) (JTrace*);
 
 #endif

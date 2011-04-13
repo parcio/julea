@@ -32,65 +32,65 @@
 
 #include "backend.h"
 
-void init (JBackendVTable*, gchar const*);
-void deinit (void);
+void init (JBackendVTable*, gchar const*, JTrace*);
+void deinit (JTrace*);
 
 static
 gpointer
-jd_backend_open (gchar const* store, gchar const* collection, gchar const* item)
+jd_backend_open (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return (gpointer)1;
 }
 
 static
 void
-jd_backend_close (gpointer item)
+jd_backend_close (gpointer item, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }
 
 static
 guint64
-jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset)
+jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return length;
 }
 
 static
 guint64
-jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset)
+jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 
 	return length;
 }
 
 G_MODULE_EXPORT
 void
-init (JBackendVTable* vtable, gchar const* path)
+init (JBackendVTable* vtable, gchar const* path, JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
 
 	vtable->open = jd_backend_open;
 	vtable->close = jd_backend_close;
 	vtable->read = jd_backend_read;
 	vtable->write = jd_backend_write;
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
-deinit (void)
+deinit (JTrace* trace)
 {
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
 }
