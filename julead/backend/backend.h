@@ -34,18 +34,21 @@
 
 #include "jtrace.h"
 
-struct JBackendVTable
+struct JBackendFile
 {
-	gpointer (*open) (gchar const*, gchar const*, gchar const*, JTrace*);
-	void (*close) (gpointer, JTrace*);
-
-	guint64 (*read) (gpointer, gpointer, guint64, guint64, JTrace*);
-	guint64 (*write) (gpointer, gconstpointer, guint64, guint64, JTrace*);
+	gchar* path;
+	gpointer user_data;
 };
 
-typedef struct JBackendVTable JBackendVTable;
+typedef struct JBackendFile JBackendFile;
 
-typedef void (*JBackendInitFunc) (JBackendVTable*, gchar const*, JTrace*);
-typedef void (*JBackendDeinitFunc) (JTrace*);
+void (*jd_backend_init) (gchar const*, JTrace*);
+void (*jd_backend_deinit) (JTrace*);
+
+void (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
+void (*jd_backend_close) (JBackendFile*, JTrace*);
+
+guint64 (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, JTrace*);
+guint64 (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, JTrace*);
 
 #endif

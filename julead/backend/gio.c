@@ -33,15 +33,13 @@
 #include <jtrace.h>
 
 #include "backend.h"
-
-void init (JBackendVTable*, gchar const*, JTrace*);
-void deinit (JTrace*);
+#include "backend-internal.h"
 
 static gchar* jd_backend_path = NULL;
 
-static
-gpointer
-jd_backend_open (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
+G_MODULE_EXPORT
+void
+backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	GFile* file;
 	GFileIOStream* stream;
@@ -52,6 +50,7 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item,
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
 
+	j_trace_file_begin(trace, path);
 	stream = g_file_open_readwrite(file, NULL, NULL);
 
 	if (stream == NULL)
@@ -65,59 +64,77 @@ jd_backend_open (gchar const* store, gchar const* collection, gchar const* item,
 		stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
 	}
 
+	j_trace_file_end(trace, path, J_TRACE_FILE_OPEN, 0);
+
+	bf->path = path;
+	bf->user_data = stream;
+
 	g_object_unref(file);
-	g_free(path);
 
 	j_trace_leave(trace, G_STRFUNC);
-
-	return stream;
 }
 
-static
+G_MODULE_EXPORT
 void
-jd_backend_close (gpointer item, JTrace* trace)
+backend_close (JBackendFile* bf, JTrace* trace)
 {
-	GFileIOStream* stream = item;
+	GFileIOStream* stream = bf->user_data;
 
 	j_trace_enter(trace, G_STRFUNC);
 
+	j_trace_file_begin(trace, bf->path);
 	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0);
+
+	g_free(bf->path);
 
 	j_trace_leave(trace, G_STRFUNC);
 }
 
-static
+G_MODULE_EXPORT
 guint64
-jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
-	GFileIOStream* stream = item;
+	GFileIOStream* stream = bf->user_data;
 	GInputStream* input;
 	gsize bytes_read;
 
 	j_trace_enter(trace, G_STRFUNC);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
+
+	j_trace_file_begin(trace, bf->path);
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0);
+
+	j_trace_file_begin(trace, bf->path);
 	g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read);
 
 	j_trace_leave(trace, G_STRFUNC);
 
 	return bytes_read;
 }
 
-static
+G_MODULE_EXPORT
 guint64
-jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
-	GFileIOStream* stream = item;
+	GFileIOStream* stream = bf->user_data;
 	GOutputStream* output;
 	gsize bytes_written;
 
 	j_trace_enter(trace, G_STRFUNC);
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+
+	j_trace_file_begin(trace, bf->path);
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0);
+
+	j_trace_file_begin(trace, bf->path);
 	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written);
 
 	j_trace_leave(trace, G_STRFUNC);
 
@@ -126,16 +143,11 @@ jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 o
 
 G_MODULE_EXPORT
 void
-init (JBackendVTable* vtable, gchar const* path, JTrace* trace)
+backend_init (gchar const* path, JTrace* trace)
 {
 	GFile* file;
 
 	j_trace_enter(trace, G_STRFUNC);
-
-	vtable->open = jd_backend_open;
-	vtable->close = jd_backend_close;
-	vtable->read = jd_backend_read;
-	vtable->write = jd_backend_write;
 
 	jd_backend_path = g_strdup(path);
 
@@ -148,7 +160,7 @@ init (JBackendVTable* vtable, gchar const* path, JTrace* trace)
 
 G_MODULE_EXPORT
 void
-deinit (JTrace* trace)
+backend_deinit (JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 

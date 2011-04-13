@@ -31,31 +31,27 @@
 #include <jtrace.h>
 
 #include "backend.h"
+#include "backend-internal.h"
 
-void init (JBackendVTable*, gchar const*, JTrace*);
-void deinit (JTrace*);
-
-static
-gpointer
-jd_backend_open (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
-{
-	j_trace_enter(trace, G_STRFUNC);
-	j_trace_leave(trace, G_STRFUNC);
-
-	return (gpointer)1;
-}
-
-static
+G_MODULE_EXPORT
 void
-jd_backend_close (gpointer item, JTrace* trace)
+backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 	j_trace_leave(trace, G_STRFUNC);
 }
 
-static
+G_MODULE_EXPORT
+void
+backend_close (JBackendFile* bf, JTrace* trace)
+{
+	j_trace_enter(trace, G_STRFUNC);
+	j_trace_leave(trace, G_STRFUNC);
+}
+
+G_MODULE_EXPORT
 guint64
-jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 	j_trace_leave(trace, G_STRFUNC);
@@ -63,9 +59,9 @@ jd_backend_read (gpointer item, gpointer buffer, guint64 length, guint64 offset,
 	return length;
 }
 
-static
+G_MODULE_EXPORT
 guint64
-jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 	j_trace_leave(trace, G_STRFUNC);
@@ -75,21 +71,15 @@ jd_backend_write (gpointer item, gconstpointer buffer, guint64 length, guint64 o
 
 G_MODULE_EXPORT
 void
-init (JBackendVTable* vtable, gchar const* path, JTrace* trace)
+backend_init (gchar const* path, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
-
-	vtable->open = jd_backend_open;
-	vtable->close = jd_backend_close;
-	vtable->read = jd_backend_read;
-	vtable->write = jd_backend_write;
-
 	j_trace_leave(trace, G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
-deinit (JTrace* trace)
+backend_deinit (JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 	j_trace_leave(trace, G_STRFUNC);

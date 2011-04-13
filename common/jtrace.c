@@ -49,7 +49,6 @@ struct JTrace
 {
 	gchar* name;
 
-	GThread* thread;
 	gchar* function_name;
 
 #ifdef HAVE_OTF
@@ -304,11 +303,20 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOp op, guint64 len
 
 		switch (op)
 		{
+			case J_TRACE_FILE_OPEN:
+				otf_op = OTF_FILEOP_OPEN;
+				break;
+			case J_TRACE_FILE_CLOSE:
+				otf_op = OTF_FILEOP_CLOSE;
+				break;
 			case J_TRACE_FILE_READ:
 				otf_op = OTF_FILEOP_READ;
 				break;
 			case J_TRACE_FILE_WRITE:
 				otf_op = OTF_FILEOP_WRITE;
+				break;
+			case J_TRACE_FILE_SEEK:
+				otf_op = OTF_FILEOP_SEEK;
 				break;
 			default:
 				g_return_if_reached();
@@ -336,7 +344,6 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 	g_return_val_if_fail(function_name != NULL, NULL);
 
 	trace = g_slice_new(JTrace);
-	trace->thread = thread;
 	trace->function_name = g_strdup(function_name);
 
 	if (thread == NULL)

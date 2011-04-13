@@ -43,8 +43,6 @@
 
 static gint opt_port = 4711;
 
-static JBackendVTable jd_vtable;
-JTrace* jd_trace = NULL;
 static GModule* backend = NULL;
 static GMainLoop* main_loop;
 
@@ -82,13 +80,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OP_READ:
 				g_printerr("read_op\n");
 				{
+					JBackendFile bf;
 					gchar* buf;
 					gchar const* store;
 					gchar const* collection;
 					gchar const* item;
 					guint64 length;
 					guint64 offset;
-					gpointer p;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -100,10 +98,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-					p = jd_vtable.open(store, collection, item, trace);
-					jd_vtable.read(p, buf, length, offset, trace);
+					jd_backend_open(&bf, store, collection, item, trace);
+					jd_backend_read(&bf, buf, length, offset, trace);
 					//g_output_stream_write_all(input, buf, length, NULL, NULL, NULL);
-					jd_vtable.close(p, trace);
+					jd_backend_close(&bf, trace);
 
 					g_free(buf);
 				}
@@ -111,13 +109,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OP_WRITE:
 				g_printerr("write_op\n");
 				{
+					JBackendFile bf;
 					gchar* buf;
 					gchar const* store;
 					gchar const* collection;
 					gchar const* item;
 					guint64 length;
 					guint64 offset;
-					gpointer p;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -129,10 +127,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-					p = jd_vtable.open(store, collection, item, trace);
+					jd_backend_open(&bf, store, collection, item, trace);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-					jd_vtable.write(p, buf, length, offset, trace);
-					jd_vtable.close(p, trace);
+					jd_backend_write(&bf, buf, length, offset, trace);
+					jd_backend_close(&bf, trace);
 
 					g_free(buf);
 				}
@@ -150,42 +148,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	return TRUE;
 }
 
-static
-gboolean
-jd_backend_setup (JConfiguration* configuration)
-{
-	JBackendInitFunc init_func;
-	gchar* path;
-
-	path = g_module_build_path(JULEAD_BACKEND_PATH, configuration->storage.backend);
-	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
-	g_free(path);
-
-	g_module_symbol(backend, "init", (gpointer*)&init_func);
-	init_func(&jd_vtable, configuration->storage.path, jd_trace);
-
-	return TRUE;
-}
-
-static
-void
-jd_backend_teardown (void)
-{
-	JBackendDeinitFunc deinit_func;
-
-	g_module_symbol(backend, "deinit", (gpointer*)&deinit_func);
-	deinit_func(jd_trace);
-
-	g_module_close(backend);
-}
-
 int
 main (int argc, char** argv)
 {
 	JConfiguration* configuration;
+	JTrace* trace;
 	GSocketListener* listener;
 	GError* error = NULL;
 	GOptionContext* context;
+	gchar* path;
 	struct sigaction sig;
 
 	GOptionEntry entries[] = {
@@ -232,7 +203,7 @@ main (int argc, char** argv)
 	sigaction(SIGPIPE, &sig, NULL);
 
 	j_trace_init("julead");
-	jd_trace = j_trace_thread_enter(NULL, G_STRFUNC);
+	trace = j_trace_thread_enter(NULL, G_STRFUNC);
 
 	configuration = j_configuration_new();
 
@@ -242,10 +213,18 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if (!jd_backend_setup(configuration))
-	{
-		return 1;
-	}
+	path = g_module_build_path(JULEAD_BACKEND_PATH, configuration->storage.backend);
+	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
+	g_free(path);
+
+	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
+	g_module_symbol(backend, "backend_deinit", (gpointer*)&jd_backend_deinit);
+	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
+	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
+	g_module_symbol(backend, "backend_read", (gpointer*)&jd_backend_read);
+	g_module_symbol(backend, "backend_write", (gpointer*)&jd_backend_write);
+
+	jd_backend_init(configuration->storage.path, trace);
 
 	j_configuration_free(configuration);
 
@@ -261,9 +240,11 @@ main (int argc, char** argv)
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
 
-	jd_backend_teardown();
+	jd_backend_deinit(trace);
 
-	j_trace_thread_leave(jd_trace);
+	g_module_close(backend);
+
+	j_trace_thread_leave(trace);
 	j_trace_deinit();
 
 	return 0;
