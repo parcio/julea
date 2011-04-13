@@ -42,13 +42,13 @@ struct JBackendFile
 
 typedef struct JBackendFile JBackendFile;
 
-void (*jd_backend_init) (gchar const*, JTrace*);
-void (*jd_backend_deinit) (JTrace*);
+void (*jd_backend_init) (gchar const*, JTrace*) = NULL;
+void (*jd_backend_deinit) (JTrace*) = NULL;
 
-void (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
-void (*jd_backend_close) (JBackendFile*, JTrace*);
+void (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*) = NULL;
+void (*jd_backend_close) (JBackendFile*, JTrace*) = NULL;
 
-guint64 (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, JTrace*);
-guint64 (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, JTrace*);
+guint64 (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, JTrace*) = NULL;
+guint64 (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, JTrace*) = NULL;
 
 #endif

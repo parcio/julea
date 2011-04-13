@@ -224,6 +224,13 @@ main (int argc, char** argv)
 	g_module_symbol(backend, "backend_read", (gpointer*)&jd_backend_read);
 	g_module_symbol(backend, "backend_write", (gpointer*)&jd_backend_write);
 
+	g_assert(jd_backend_init != NULL);
+	g_assert(jd_backend_deinit != NULL);
+	g_assert(jd_backend_open != NULL);
+	g_assert(jd_backend_close != NULL);
+	g_assert(jd_backend_read != NULL);
+	g_assert(jd_backend_write != NULL);
+
 	jd_backend_init(configuration->storage.path, trace);
 
 	j_configuration_free(configuration);
