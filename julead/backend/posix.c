@@ -54,7 +54,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
-	j_trace_file_begin(trace, path);
+	j_trace_file_begin(trace, path, J_TRACE_FILE_OPEN);
 	fd = open(path, O_RDWR);
 
 	if (fd == -1)
@@ -84,7 +84,7 @@ backend_close (JBackendFile* bf, JTrace* trace)
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
 	close(fd);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0);
 
@@ -100,7 +100,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
 	bytes_read = pread(fd, buffer, length, offset);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read);
 
@@ -118,7 +118,7 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
 	bytes_written = pwrite(fd, buffer, length, offset);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written);
 

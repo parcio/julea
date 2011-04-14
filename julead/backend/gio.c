@@ -50,7 +50,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
 
-	j_trace_file_begin(trace, path);
+	j_trace_file_begin(trace, path, J_TRACE_FILE_OPEN);
 	stream = g_file_open_readwrite(file, NULL, NULL);
 
 	if (stream == NULL)
@@ -82,7 +82,7 @@ backend_close (JBackendFile* bf, JTrace* trace)
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
 	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0);
 
@@ -103,11 +103,11 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
 	g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read);
 
@@ -128,11 +128,11 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
 	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0);
 
-	j_trace_file_begin(trace, bf->path);
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
 	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written);
 

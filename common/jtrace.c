@@ -81,7 +81,6 @@ static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_process_table = NULL;
 #endif
 
-G_GNUC_UNUSED
 static
 guint64
 j_trace_get_time (void)
@@ -93,6 +92,27 @@ j_trace_get_time (void)
 	timestamp = (timeval.tv_sec * G_USEC_PER_SEC) + timeval.tv_usec;
 
 	return timestamp;
+}
+
+static
+gchar const*
+j_trace_file_operation_name (JTraceFileOperation op)
+{
+	switch (op)
+	{
+		case J_TRACE_FILE_OPEN:
+			return "open";
+		case J_TRACE_FILE_CLOSE:
+			return "close";
+		case J_TRACE_FILE_READ:
+			return "read";
+		case J_TRACE_FILE_WRITE:
+			return "write";
+		case J_TRACE_FILE_SEEK:
+			return "seek";
+		default:
+			return NULL;
+	}
 }
 
 void
@@ -172,6 +192,8 @@ j_trace_deinit (void)
 void
 j_trace_enter (JTrace* trace, gchar const* name)
 {
+	guint64 timestamp;
+
 	if (j_trace_flags == J_TRACE_OFF)
 	{
 		return;
@@ -180,9 +202,11 @@ j_trace_enter (JTrace* trace, gchar const* name)
 	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
+	timestamp = j_trace_get_time();
+
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("%s: Entering %s\n", trace->name, name);
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ENTER %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, name);
 	}
 
 #ifdef HAVE_OTF
@@ -204,7 +228,7 @@ j_trace_enter (JTrace* trace, gchar const* name)
 			function_id = GPOINTER_TO_UINT(value);
 		}
 
-		OTF_Writer_writeEnter(otf_writer, j_trace_get_time(), function_id, trace->process_id, 0);
+		OTF_Writer_writeEnter(otf_writer, timestamp, function_id, trace->process_id, 0);
 	}
 #endif
 }
@@ -212,6 +236,8 @@ j_trace_enter (JTrace* trace, gchar const* name)
 void
 j_trace_leave (JTrace* trace, gchar const* name)
 {
+	guint64 timestamp;
+
 	if (j_trace_flags == J_TRACE_OFF)
 	{
 		return;
@@ -220,9 +246,11 @@ j_trace_leave (JTrace* trace, gchar const* name)
 	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
+	timestamp = j_trace_get_time();
+
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("%s: Leaving %s\n", trace->name, name);
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: LEAVE %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, name);
 	}
 
 #ifdef HAVE_OTF
@@ -235,14 +263,16 @@ j_trace_leave (JTrace* trace, gchar const* name)
 		g_assert(value != NULL);
 		function_id = GPOINTER_TO_UINT(value);
 
-		OTF_Writer_writeLeave(otf_writer, j_trace_get_time(), function_id, trace->process_id, 0);
+		OTF_Writer_writeLeave(otf_writer, timestamp, function_id, trace->process_id, 0);
 	}
 #endif
 }
 
 void
-j_trace_file_begin (JTrace* trace, gchar const* path)
+j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 {
+	guint64 timestamp;
+
 	g_return_if_fail(path != NULL);
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -250,9 +280,11 @@ j_trace_file_begin (JTrace* trace, gchar const* path)
 		return;
 	}
 
+	timestamp = j_trace_get_time();
+
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("%s: Beginning file operation at %s\n", trace->name, path);
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: BEGIN %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, j_trace_file_operation_name(op), path);
 	}
 
 #ifdef HAVE_OTF
@@ -274,24 +306,35 @@ j_trace_file_begin (JTrace* trace, gchar const* path)
 			file_id = GPOINTER_TO_UINT(value);
 		}
 
-		OTF_Writer_writeBeginFileOperation(otf_writer, j_trace_get_time(), trace->process_id, 1, 0);
+		OTF_Writer_writeBeginFileOperation(otf_writer, timestamp, trace->process_id, 1, 0);
 	}
 #endif
+
+	return;
 }
 
 void
-j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOp op, guint64 length)
+j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guint64 length)
 {
+	guint64 timestamp;
+
 	if (j_trace_flags == J_TRACE_OFF)
 	{
 		return;
 	}
 
-	g_return_if_fail(path != NULL);
+	timestamp = j_trace_get_time();
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("%s: Ending file operation %s (length=%" G_GUINT64_FORMAT ")\n", trace->name, path, length);
+		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
+		{
+			g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: END %s %s (length=%" G_GUINT64_FORMAT ")\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, j_trace_file_operation_name(op), path, length);
+		}
+		else
+		{
+			g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: END %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, j_trace_file_operation_name(op), path);
+		}
 	}
 
 #ifdef HAVE_OTF
@@ -326,7 +369,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOp op, guint64 len
 		g_assert(value != NULL);
 		file_id = GPOINTER_TO_UINT(value);
 
-		OTF_Writer_writeEndFileOperation(otf_writer, j_trace_get_time(), trace->process_id, file_id, 1, 0, otf_op, length, 0);
+		OTF_Writer_writeEndFileOperation(otf_writer, timestamp, trace->process_id, file_id, 1, 0, otf_op, length, 0);
 	}
 #endif
 }
