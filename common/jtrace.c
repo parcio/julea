@@ -75,10 +75,12 @@ static OTF_Writer* otf_writer = NULL;
 static guint32 otf_process_id = 1;
 static guint32 otf_function_id = 1;
 static guint32 otf_file_id = 1;
+static guint32 otf_counter_id = 1;
 
-static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_process_table = NULL;
+static GHashTable* otf_file_table = NULL;
+static GHashTable* otf_counter_table = NULL;
 #endif
 
 static
@@ -151,9 +153,10 @@ j_trace_init (gchar const* name)
 		otf_writer = OTF_Writer_open(name, 1, otf_manager);
 		g_assert(otf_writer != NULL);
 
-		otf_file_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		otf_function_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		otf_process_table = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
+		otf_file_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		otf_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	}
 #endif
 }
@@ -171,14 +174,17 @@ j_trace_deinit (void)
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
-		g_hash_table_unref(otf_file_table);
-		otf_file_table = NULL;
-
 		g_hash_table_unref(otf_function_table);
 		otf_function_table = NULL;
 
 		g_hash_table_unref(otf_process_table);
 		otf_process_table = NULL;
+
+		g_hash_table_unref(otf_file_table);
+		otf_file_table = NULL;
+
+		g_hash_table_unref(otf_counter_table);
+		otf_counter_table = NULL;
 
 		OTF_Writer_close(otf_writer);
 		otf_writer = NULL;
@@ -442,6 +448,50 @@ j_trace_thread_leave (JTrace* trace)
 	g_free(trace->function_name);
 
 	g_slice_free(JTrace, trace);
+}
+
+void
+j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
+{
+	guint64 timestamp;
+
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return;
+	}
+
+	g_return_if_fail(trace != NULL);
+	g_return_if_fail(name != NULL);
+
+	timestamp = j_trace_get_time();
+
+	if (j_trace_flags == J_TRACE_ECHO)
+	{
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: COUNTER %s %" G_GUINT64_FORMAT "\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, name, counter_value);
+	}
+
+#ifdef HAVE_OTF
+	if (j_trace_flags == J_TRACE_OTF)
+	{
+		gpointer value;
+		guint32 counter_id;
+
+		if ((value = g_hash_table_lookup(otf_counter_table, name)) == NULL)
+		{
+			counter_id = otf_counter_id;
+			otf_counter_id++;
+
+			OTF_Writer_writeDefCounter(otf_writer, 1, counter_id, name, OTF_COUNTER_TYPE_ACC + OTF_COUNTER_SCOPE_START, 0, NULL);
+			g_hash_table_insert(otf_counter_table, g_strdup(name), GUINT_TO_POINTER(counter_id));
+		}
+		else
+		{
+			counter_id = GPOINTER_TO_UINT(value);
+		}
+
+		OTF_Writer_writeCounter(otf_writer, timestamp, trace->process_id, counter_id, counter_value);
+	}
+#endif
 }
 
 /**
