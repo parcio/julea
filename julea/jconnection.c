@@ -217,6 +217,22 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 	return TRUE;
 }
 
+gboolean
+j_connection_receive (JConnection* connection, guint i, gpointer data, gsize length)
+{
+	GInputStream* input;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(i < j_configuration()->data_len, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
+
+	g_input_stream_read_all(input, data, length, NULL, NULL, NULL);
+
+	return TRUE;
+}
+
 /**
  * @}
  **/

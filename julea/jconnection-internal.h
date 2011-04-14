@@ -39,5 +39,6 @@
 
 JMongoConnection* j_connection_connection (JConnection*);
 gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
+gboolean j_connection_receive (JConnection*, guint, gpointer, gsize);
 
 #endif

@@ -155,6 +155,7 @@ gboolean
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 {
 	JDistribution* distribution;
+	gchar* d;
 	guint64 new_length;
 	guint64 new_offset;
 	guint index;
@@ -168,6 +169,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 	}
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+	d = data;
 
 	while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 	{
@@ -193,9 +195,11 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 		j_message_append_8(message, &new_offset);
 
 		j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
-		/* FIXME receive */
+		j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, d, new_length);
 
 		j_message_free(message);
+
+		d += new_length;
 	}
 
 	j_distribution_free(distribution);

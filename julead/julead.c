@@ -100,7 +100,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_open(&bf, store, collection, item, trace);
 					jd_backend_read(&bf, buf, length, offset, trace);
-					//g_output_stream_write_all(input, buf, length, NULL, NULL, NULL);
+					g_output_stream_write_all(output, buf, length, NULL, NULL, NULL);
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);
