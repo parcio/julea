@@ -33,6 +33,10 @@
 
 #include <string.h>
 
+#ifdef HAVE_HDTRACE
+#include <hdTrace.h>
+#endif
+
 #ifdef HAVE_OTF
 #include <otf.h>
 #endif
@@ -51,6 +55,11 @@ struct JTrace
 
 	gchar* function_name;
 
+#ifdef HAVE_HDTRACE
+	hdTopoNode* hdtrace_topo_node;
+	hdTrace* hdtrace_trace;
+#endif
+
 #ifdef HAVE_OTF
 	guint32 process_id;
 #endif
@@ -67,6 +76,10 @@ enum JTraceFlags
 typedef enum JTraceFlags JTraceFlags;
 
 static JTraceFlags j_trace_flags = J_TRACE_OFF;
+
+#ifdef HAVE_HDTRACE
+static hdTopology* hdtrace_topology = NULL;
+#endif
 
 #ifdef HAVE_OTF
 static OTF_FileManager* otf_manager = NULL;
@@ -144,6 +157,15 @@ j_trace_init (gchar const* name)
 		j_trace_flags = J_TRACE_OTF;
 	}
 
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		gchar const* levels[] = { "Host", "Process", "Thread" };
+
+		hdtrace_topology = hdT_createTopology(name, levels, 3);
+	}
+#endif
+
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
@@ -169,7 +191,15 @@ j_trace_deinit (void)
 		return;
 	}
 
-	j_trace_flags = FALSE;
+	j_trace_flags = J_TRACE_OFF;
+
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_destroyTopology(hdtrace_topology);
+		hdtrace_topology = NULL;
+	}
+#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
@@ -215,6 +245,13 @@ j_trace_enter (JTrace* trace, gchar const* name)
 		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ENTER %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, name);
 	}
 
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_logStateStart(trace->hdtrace_trace, name);
+	}
+#endif
+
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
@@ -259,6 +296,13 @@ j_trace_leave (JTrace* trace, gchar const* name)
 		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: LEAVE %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, name);
 	}
 
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_logStateEnd(trace->hdtrace_trace);
+	}
+#endif
+
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
@@ -292,6 +336,13 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 	{
 		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: BEGIN %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, j_trace_file_operation_name(op), path);
 	}
+
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_logStateStart(trace->hdtrace_trace, path);
+	}
+#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
@@ -342,6 +393,13 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 			g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: END %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->name, j_trace_file_operation_name(op), path);
 		}
 	}
+
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_logStateEnd(trace->hdtrace_trace);
+	}
+#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
@@ -404,6 +462,19 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 		trace->name = g_strdup_printf("Thread %p", (gconstpointer)thread);
 	}
 
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		gchar const* topo_path[] = { "FIXME", "FIXME", trace->name };
+
+		trace->hdtrace_topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 3);
+		trace->hdtrace_trace = hdT_createTrace(trace->hdtrace_topo_node);
+
+		hdT_enableTrace(trace->hdtrace_trace);
+		hdT_setNestedDepth(trace->hdtrace_trace, 3);
+	}
+#endif
+
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
@@ -443,6 +514,14 @@ j_trace_thread_leave (JTrace* trace)
 	g_return_if_fail(trace != NULL);
 
 	j_trace_leave(trace, trace->function_name);
+
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdT_finalize(trace->hdtrace_trace);
+		hdT_destroyTopoNode(trace->hdtrace_topo_node);
+	}
+#endif
 
 	g_free(trace->name);
 	g_free(trace->function_name);

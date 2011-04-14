@@ -8,6 +8,7 @@ out = 'build'
 def options (ctx):
 	ctx.load('compiler_c')
 
+	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
 
@@ -38,6 +39,24 @@ def configure (ctx):
 		args = ['--cflags', '--libs'],
 		uselib_store = 'GMODULE'
 	)
+
+	if ctx.options.hdtrace:
+		ctx.env.LIB_HDTRACE      = ['hdTrace']
+		ctx.env.LIBPATH_HDTRACE  = ['%s/lib' % (ctx.options.hdtrace,)]
+		ctx.env.RPATH_HDTRACE    = ['%s/lib' % (ctx.options.hdtrace,)]
+		ctx.env.INCLUDES_HDTRACE = ['%s/include' % (ctx.options.hdtrace,)]
+
+		ctx.check_cc(
+			header_name = 'hdTrace.h',
+			define_name = 'HAVE_HDTRACE',
+			use = ['HDTRACE']
+		)
+
+		ctx.check_cc(
+			lib = 'hdTrace',
+			define_name = 'HAVE_HDTRACE',
+			use = ['HDTRACE']
+		)
 
 	if ctx.options.otf:
 		ctx.env.LIB_OTF      = ['otf']
@@ -101,7 +120,7 @@ def build (ctx):
 	ctx.program(
 		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
+		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'HDTRACE', 'OTF'],
 		includes = ['common'],
 		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
 		install_path = '${BINDIR}'
@@ -111,7 +130,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
 			target = 'julead/backend/%s' % (backend,),
-			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'OTF'],
+			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'HDTRACE', 'OTF'],
 			includes = ['common'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
