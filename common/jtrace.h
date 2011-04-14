@@ -60,7 +60,7 @@ void j_trace_enter (JTrace*, gchar const*);
 void j_trace_leave (JTrace*, gchar const*);
 
 void j_trace_file_begin (JTrace*, gchar const*, JTraceFileOperation);
-void j_trace_file_end (JTrace*, gchar const*, JTraceFileOperation, guint64);
+void j_trace_file_end (JTrace*, gchar const*, JTraceFileOperation, guint64, guint64);
 
 JTrace* j_trace_thread_enter (GThread*, gchar const*);
 void j_trace_thread_leave (JTrace*);

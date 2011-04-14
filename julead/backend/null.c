@@ -38,6 +38,13 @@ void
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
+
+	bf->path = g_strdup_printf("%s.%s.%s", store, collection, item);
+	bf->user_data = NULL;
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_OPEN);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_OPEN, 0, 0);
+
 	j_trace_leave(trace, G_STRFUNC);
 }
 
@@ -46,6 +53,12 @@ void
 backend_close (JBackendFile* bf, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+
+	g_free(bf->path);
+
 	j_trace_leave(trace, G_STRFUNC);
 }
 
@@ -54,6 +67,10 @@ guint64
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, length, offset);
+
 	j_trace_leave(trace, G_STRFUNC);
 
 	return length;
@@ -64,6 +81,10 @@ guint64
 backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, length, offset);
+
 	j_trace_leave(trace, G_STRFUNC);
 
 	return length;
