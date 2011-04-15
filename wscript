@@ -135,18 +135,11 @@ def build (ctx):
 			install_path = '${LIBDIR}/julea/backend'
 		)
 
-	for tool in ('julea-config',):
+	for tool in ('benchmark', 'config',):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
-			target = 'tools/%s' % (tool,),
-			use = ['GLIB', 'GOBJECT', 'GIO'],
-			install_dir = '${BINDIR}'
+			target = 'tools/julea-%s' % (tool,),
+			use = ['julea', 'GLIB', 'GOBJECT', 'GIO'],
+			includes = ['common', 'julea'],
+			install_path = '${BINDIR}'
 		)
-
-	ctx.program(
-		source = ['benchmark.c'],
-		target = 'benchmark',
-		use = ['GLIB', 'GOBJECT', 'julea'],
-		includes = ['common', 'julea'],
-		install_path = None
-	)

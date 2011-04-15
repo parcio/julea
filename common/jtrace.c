@@ -31,8 +31,6 @@
 
 #include <glib.h>
 
-#include <string.h>
-
 #ifdef HAVE_HDTRACE
 #include <hdTrace.h>
 #endif
