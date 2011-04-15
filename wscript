@@ -41,7 +41,7 @@ def configure (ctx):
 	)
 
 	if ctx.options.hdtrace:
-		ctx.env.LIB_HDTRACE      = ['hdTrace']
+		ctx.env.LIB_HDTRACE      = ['hdTracing']
 		ctx.env.LIBPATH_HDTRACE  = ['%s/lib' % (ctx.options.hdtrace,)]
 		ctx.env.RPATH_HDTRACE    = ['%s/lib' % (ctx.options.hdtrace,)]
 		ctx.env.INCLUDES_HDTRACE = ['%s/include' % (ctx.options.hdtrace,)]
@@ -53,7 +53,7 @@ def configure (ctx):
 		)
 
 		ctx.check_cc(
-			lib = 'hdTrace',
+			lib = 'hdTracing',
 			define_name = 'HAVE_HDTRACE',
 			use = ['HDTRACE']
 		)
