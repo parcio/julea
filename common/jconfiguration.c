@@ -41,6 +41,16 @@
  * @{
  **/
 
+/**
+ * Creates a new configuration.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \return A new configuration. Should be freed with j_configuration_free().
+ **/
 JConfiguration*
 j_configuration_new (void)
 {
@@ -87,6 +97,18 @@ out:
 	return configuration;
 }
 
+/**
+ * Creates a new configuration for the given configuration data.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param key_file The configuration data.
+ *
+ * \return A new configuration. Should be freed with j_configuration_free().
+ **/
 JConfiguration*
 j_configuration_new_for_data (GKeyFile* key_file)
 {
@@ -127,6 +149,16 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	return configuration;
 }
 
+/**
+ * Frees the memory allocated by the configuration.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param configuration The configuration.
+ **/
 void
 j_configuration_free (JConfiguration* configuration)
 {
