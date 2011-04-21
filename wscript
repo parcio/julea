@@ -114,7 +114,7 @@ def build (ctx):
 		target = 'julea',
 		use = ['GLIB', 'GOBJECT', 'GIO', 'HDTRACE', 'OTF'],
 		includes = ['include'],
-		install_path = None
+		install_path = '${LIBDIR}'
 	)
 
 	for test in ('bson', 'bson-iterator', 'distribution', 'list', 'list-iterator', 'semantics'):
