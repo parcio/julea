@@ -43,7 +43,8 @@ def configure (ctx):
 	ctx.check_cfg(
 		package = 'fuse',
 		args = ['--cflags', '--libs'],
-		uselib_store = 'FUSE'
+		uselib_store = 'FUSE',
+		mandatory = False
 	)
 
 	if ctx.options.hdtrace:
@@ -150,10 +151,11 @@ def build (ctx):
 			install_path = '${BINDIR}'
 		)
 
-	ctx.program(
-		source = ctx.path.ant_glob('fuse/*.c'),
-		target = 'fuse/juleafs',
-		use = ['GLIB', 'GIO', 'FUSE', 'julea'],
-		includes = ['include'],
-		install_path = '${BINDIR}'
-	)
+	if ctx.env.HAVE_FUSE:
+		ctx.program(
+			source = ctx.path.ant_glob('fuse/*.c'),
+			target = 'fuse/juleafs',
+			use = ['GLIB', 'GIO', 'FUSE', 'julea'],
+			includes = ['include'],
+			install_path = '${BINDIR}'
+		)
