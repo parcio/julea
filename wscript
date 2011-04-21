@@ -106,11 +106,11 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
 def build (ctx):
-	ctx.stlib(
-		source = ['julea/%s.c' % file for file in ('jbson', 'jbson-iterator', 'jcollection', 'jcollection-iterator', 'jcommon', 'jconnection', 'jcredentials', 'jdistribution', 'jerror', 'jitem', 'jlist', 'jlist-iterator', 'jmongo', 'jmongo-connection', 'jmongo-iterator', 'jmongo-message', 'jmongo-reply', 'jobjectid', 'jsemantics', 'jstore', 'jstore-iterator')] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage')],
+	ctx.shlib(
+		source = ctx.path.ant_glob('lib/*.c'),
 		target = 'julea',
-		use = ['GLIB', 'GOBJECT', 'GIO'],
-		includes = ['common'],
+		use = ['GLIB', 'GOBJECT', 'GIO', 'HDTRACE', 'OTF'],
+		includes = ['include'],
 		install_path = None
 	)
 
@@ -119,25 +119,25 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['common', 'julea'],
+			includes = ['include'],
 			install_path = None
 		)
 
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
+		source = ['julead/%s.c' % file for file in ('julead',)],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'HDTRACE', 'OTF'],
-		includes = ['common'],
+		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'julea'],
+		includes = ['include'],
 		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
 		install_path = '${BINDIR}'
 	)
 
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['julead/backend/%s.c' % (backend,)] + ['common/%s.c' % file for file in ('jconfiguration', 'jmessage', 'jtrace')],
+			source = ['julead/backend/%s.c' % (backend,)],
 			target = 'julead/backend/%s' % (backend,),
-			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'HDTRACE', 'OTF'],
-			includes = ['common'],
+			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'julea'],
+			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
 
@@ -145,8 +145,8 @@ def build (ctx):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/julea-%s' % (tool,),
-			use = ['julea', 'GLIB', 'GOBJECT', 'GIO'],
-			includes = ['common', 'julea'],
+			use = ['GLIB', 'GOBJECT', 'GIO', 'julea'],
+			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
 
@@ -154,6 +154,6 @@ def build (ctx):
 		source = ctx.path.ant_glob('fuse/*.c'),
 		target = 'fuse/juleafs',
 		use = ['GLIB', 'GIO', 'FUSE', 'julea'],
-		includes = ['common', 'julea'],
+		includes = ['include'],
 		install_path = '${BINDIR}'
 	)
