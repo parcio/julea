@@ -107,6 +107,8 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
 def build (ctx):
+	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h'))
+
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),
 		target = 'julea',
@@ -120,7 +122,7 @@ def build (ctx):
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['include'],
+			includes = ['include', 'lib'],
 			install_path = None
 		)
 
