@@ -40,6 +40,12 @@ def configure (ctx):
 		uselib_store = 'GMODULE'
 	)
 
+	ctx.check_cfg(
+		package = 'fuse',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'FUSE'
+	)
+
 	if ctx.options.hdtrace:
 		ctx.env.LIB_HDTRACE      = ['hdTracing']
 		ctx.env.LIBPATH_HDTRACE  = ['%s/lib' % (ctx.options.hdtrace,)]
@@ -143,3 +149,11 @@ def build (ctx):
 			includes = ['common', 'julea'],
 			install_path = '${BINDIR}'
 		)
+
+	ctx.program(
+		source = ctx.path.ant_glob('fuse/*.c'),
+		target = 'fuse/juleafs',
+		use = ['GLIB', 'GIO', 'FUSE', 'julea'],
+		includes = ['common', 'julea'],
+		install_path = '${BINDIR}'
+	)
