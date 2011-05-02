@@ -107,8 +107,10 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
 def build (ctx):
-	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h'))
+	# Headers
+	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl = 'include/*-internal.h'))
 
+	# Library
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),
 		target = 'julea',
@@ -117,15 +119,17 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
+	# Tests
 	for test in ('bson', 'bson-iterator', 'distribution', 'list', 'list-iterator', 'semantics'):
 		ctx.program(
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
 			use = ['GLIB', 'julea'],
-			includes = ['include', 'lib'],
+			includes = ['include'],
 			install_path = None
 		)
 
+	# Daemon
 	ctx.program(
 		source = ['julead/%s.c' % file for file in ('julead',)],
 		target = 'julead/julead',
@@ -135,6 +139,7 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
+	# Daemon backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
 			source = ['julead/backend/%s.c' % (backend,)],
@@ -144,6 +149,7 @@ def build (ctx):
 			install_path = '${LIBDIR}/julea/backend'
 		)
 
+	# Tools
 	for tool in ('benchmark', 'config',):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
@@ -153,6 +159,7 @@ def build (ctx):
 			install_path = '${BINDIR}'
 		)
 
+	# FUSE
 	if ctx.env.HAVE_FUSE:
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
