@@ -27,6 +27,13 @@
 
 #include "juleafs.h"
 
+#include <glib.h>
+#include <glib-object.h>
+
+#include <string.h>
+
+JConnection* jfs_connection = NULL;
+
 struct fuse_operations jfs_vtable = {
 	.access   = jfs_access,
 	.chmod    = jfs_chmod,
@@ -45,11 +52,63 @@ struct fuse_operations jfs_vtable = {
 	.write    = jfs_write,
 };
 
-int main (int argc, char* argv[])
+gchar**
+jfs_path_components (gchar const* path)
+{
+	return g_strsplit(path + 1, "/", 0);
+}
+
+guint
+jfs_path_depth (gchar const* path)
+{
+	gchar const* c;
+	guint depth = 0;
+
+	if (strcmp(path, "/") == 0)
+	{
+		return 0;
+	}
+
+	for (c = path; *c; c++)
+	{
+		if (*c == '/')
+		{
+			depth++;
+		}
+	}
+
+	return depth;
+}
+
+int
+main (int argc, char** argv)
 {
 	gint ret;
 
+	g_type_init();
+
+	if (!j_init())
+	{
+		g_printerr("Could not initialize.\n");
+		return 1;
+	}
+
+	jfs_connection = j_connection_new();
+
+	if (!j_connection_connect(jfs_connection))
+	{
+		g_printerr("Could not connect.\n");
+		j_connection_unref(jfs_connection);
+
+		return 1;
+	}
+
 	ret = fuse_main(argc, argv, &jfs_vtable, NULL);
+
+	j_connection_disconnect(jfs_connection);
+	j_connection_unref(jfs_connection);
+
+	j_deinit();
 
 	return ret;
 }

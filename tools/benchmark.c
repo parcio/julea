@@ -42,11 +42,6 @@ main (int argc, char** argv)
 	JListIterator* cliterator;
 	gboolean is_first = TRUE;
 
-	if (!g_thread_get_initialized())
-	{
-		g_thread_init(NULL);
-	}
-
 	g_type_init();
 
 	if (!j_init())

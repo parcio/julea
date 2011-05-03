@@ -28,10 +28,38 @@
 #include "juleafs.h"
 
 #include <errno.h>
+#include <string.h>
 
-int jfs_getattr (char const* path, struct stat* stbuf)
+int
+jfs_getattr (char const* path, struct stat* stbuf)
 {
-	gint ret = -ENOENT;
+	guint depth;
+	int ret = -ENOENT;
+
+	depth = jfs_path_depth(path);
+
+	if (depth < 3)
+	{
+		stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+		stbuf->st_nlink = 1;
+		stbuf->st_uid = 0;
+		stbuf->st_gid = 0;
+		stbuf->st_size = 0;
+		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
+
+		ret = 0;
+	}
+	else if (depth == 4)
+	{
+		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+		stbuf->st_nlink = 1;
+		stbuf->st_uid = 0;
+		stbuf->st_gid = 0;
+		stbuf->st_size = 0;
+		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
+
+		ret = 0;
+	}
 
 	return ret;
 }

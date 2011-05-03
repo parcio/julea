@@ -33,6 +33,8 @@
 
 #include <julea.h>
 
+extern JConnection* jfs_connection;
+
 int jfs_access (char const*, int);
 int jfs_chmod (char const*, mode_t);
 int jfs_chown (char const*, uid_t, gid_t);
@@ -51,3 +53,6 @@ int jfs_truncate (char const*, off_t);
 int jfs_unlink (char const*);
 int jfs_utimens (char const*, const struct timespec*);
 int jfs_write (char const*, char const*, size_t, off_t, struct fuse_file_info*);
+
+gchar** jfs_path_components (gchar const*);
+guint jfs_path_depth (gchar const*);

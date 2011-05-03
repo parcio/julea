@@ -165,7 +165,7 @@ def build (ctx):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/julea-%s' % (tool,),
-			use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT', 'GTHREAD'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
@@ -175,7 +175,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/juleafs',
-			use = ['lib/julea', 'GLIB', 'FUSE'],
+			use = ['lib/julea', 'GLIB', 'GOBJECT', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
