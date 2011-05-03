@@ -17,9 +17,21 @@ def configure (ctx):
 	ctx.load('gnu_dirs')
 
 	ctx.check_cfg(
+		package = 'gio-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GIO'
+	)
+
+	ctx.check_cfg(
 		package = 'glib-2.0',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'GLIB'
+	)
+
+	ctx.check_cfg(
+		package = 'gmodule-2.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'GMODULE'
 	)
 
 	ctx.check_cfg(
@@ -29,15 +41,9 @@ def configure (ctx):
 	)
 
 	ctx.check_cfg(
-		package = 'gio-2.0',
+		package = 'gthread-2.0',
 		args = ['--cflags', '--libs'],
-		uselib_store = 'GIO'
-	)
-
-	ctx.check_cfg(
-		package = 'gmodule-2.0',
-		args = ['--cflags', '--libs'],
-		uselib_store = 'GMODULE'
+		uselib_store = 'GTHREAD'
 	)
 
 	ctx.check_cfg(
@@ -106,6 +112,11 @@ def configure (ctx):
 
 	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
 
+	# FIXME
+	ctx.env.CFLAGS.remove('-Wmissing-include-dirs')
+
+	ctx.define('G_DISABLE_DEPRECATED', 1)
+
 def build (ctx):
 	# Headers
 	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl = 'include/*-internal.h'))
@@ -113,8 +124,8 @@ def build (ctx):
 	# Library
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),
-		target = 'julea',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'HDTRACE', 'OTF'],
+		target = 'lib/julea',
+		use = ['GIO', 'GLIB', 'GOBJECT', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		install_path = '${LIBDIR}'
 	)
@@ -124,7 +135,7 @@ def build (ctx):
 		ctx.program(
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),
-			use = ['GLIB', 'julea'],
+			use = ['lib/julea', 'GLIB'],
 			includes = ['include'],
 			install_path = None
 		)
@@ -133,7 +144,7 @@ def build (ctx):
 	ctx.program(
 		source = ['julead/%s.c' % file for file in ('julead',)],
 		target = 'julead/julead',
-		use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'julea'],
+		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
 		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
 		install_path = '${BINDIR}'
@@ -144,7 +155,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['julead/backend/%s.c' % (backend,)],
 			target = 'julead/backend/%s' % (backend,),
-			use = ['GLIB', 'GOBJECT', 'GIO', 'GMODULE', 'julea'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
@@ -154,7 +165,7 @@ def build (ctx):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/julea-%s' % (tool,),
-			use = ['GLIB', 'GOBJECT', 'GIO', 'julea'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT', 'GTHREAD'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
@@ -164,7 +175,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/juleafs',
-			use = ['GLIB', 'GIO', 'FUSE', 'julea'],
+			use = ['lib/julea', 'GLIB', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
