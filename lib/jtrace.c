@@ -33,6 +33,7 @@
 
 #ifdef HAVE_HDTRACE
 #include <hdTrace.h>
+#include <hdStats.h>
 #endif
 
 #ifdef HAVE_OTF
@@ -87,6 +88,9 @@ static gint j_trace_thread_id = 1;
 
 #ifdef HAVE_HDTRACE
 static hdTopology* hdtrace_topology = NULL;
+static hdTopoNode* hdtrace_topo_node = NULL;
+
+static GHashTable* hdtrace_counter_table = NULL;
 #endif
 
 #ifdef HAVE_OTF
@@ -101,6 +105,18 @@ static guint32 otf_counter_id = 1;
 static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_counter_table = NULL;
+#endif
+
+#ifdef HAVE_HDTRACE
+static
+void
+hdtrace_counter_free (gpointer data)
+{
+	hdStatsGroup* stats_group = data;
+
+	hdS_disableGroup(stats_group);
+	hdS_finalize(stats_group);
+}
 #endif
 
 static
@@ -168,8 +184,15 @@ j_trace_init (gchar const* name)
 	if (j_trace_flags == J_TRACE_HDTRACE)
 	{
 		gchar const* levels[] = { "Host", "Process", "Thread" };
+		gchar const* topo_path[] = { g_get_host_name(), name };
 
 		hdtrace_topology = hdT_createTopology(name, levels, 3);
+		g_assert(hdtrace_topology != NULL);
+
+		hdtrace_topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 2);
+		g_assert(hdtrace_topo_node != NULL);
+
+		hdtrace_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, hdtrace_counter_free);
 	}
 #endif
 
@@ -205,6 +228,12 @@ j_trace_deinit (void)
 #ifdef HAVE_HDTRACE
 	if (j_trace_flags == J_TRACE_HDTRACE)
 	{
+		g_hash_table_unref(hdtrace_counter_table);
+		hdtrace_counter_table = NULL;
+
+		hdT_destroyTopoNode(hdtrace_topo_node);
+		hdtrace_topo_node = NULL;
+
 		hdT_destroyTopology(hdtrace_topology);
 		hdtrace_topology = NULL;
 	}
@@ -552,6 +581,25 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: COUNTER %s %" G_GUINT64_FORMAT "\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, name, counter_value);
 	}
 
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags == J_TRACE_HDTRACE)
+	{
+		hdStatsGroup* stats_group;
+
+		if ((stats_group = g_hash_table_lookup(hdtrace_counter_table, name)) == NULL)
+		{
+			stats_group = hdS_createGroup(name, hdtrace_topo_node, 2);
+			hdS_addValue(stats_group, name, UINT64, "B", "julead");
+			hdS_commitGroup(stats_group);
+			hdS_enableGroup(stats_group);
+
+			g_hash_table_insert(hdtrace_counter_table, g_strdup(name), stats_group);
+		}
+
+		hdS_writeUInt64Value(stats_group, counter_value);
+	}
+#endif
+
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
@@ -563,7 +611,7 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 			counter_id = otf_counter_id;
 			otf_counter_id++;
 
-			OTF_Writer_writeDefCounter(otf_writer, 1, counter_id, name, OTF_COUNTER_TYPE_ACC + OTF_COUNTER_SCOPE_START, 0, NULL);
+			OTF_Writer_writeDefCounter(otf_writer, 1, counter_id, name, OTF_COUNTER_TYPE_ABS + OTF_COUNTER_SCOPE_LAST, 0, NULL);
 			g_hash_table_insert(otf_counter_table, g_strdup(name), GUINT_TO_POINTER(counter_id));
 		}
 		else

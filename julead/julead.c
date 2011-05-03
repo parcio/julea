@@ -46,12 +46,6 @@ static gint opt_port = 4711;
 static GModule* backend = NULL;
 static GMainLoop* main_loop;
 
-static guint64 stat_read = 0;
-static guint64 stat_written = 0;
-
-static guint64 stat_sent = 0;
-static guint64 stat_received = 0;
-
 static
 void
 jd_signal (int signo)
@@ -62,7 +56,8 @@ jd_signal (int signo)
 	}
 }
 
-static gboolean
+static
+gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JMessage* message;
@@ -106,11 +101,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_open(&bf, store, collection, item, trace);
 					jd_backend_read(&bf, buf, length, offset, trace);
-					stat_read += length;
-					j_trace_counter(trace, "julead_read", stat_read);
+					j_trace_counter(trace, "julead_read", length);
 					g_output_stream_write_all(output, buf, length, NULL, NULL, NULL);
-					stat_sent += length;
-					j_trace_counter(trace, "julead_sent", stat_sent);
+					j_trace_counter(trace, "julead_sent", length);
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);
@@ -139,11 +132,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_open(&bf, store, collection, item, trace);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-					stat_received += length;
-					j_trace_counter(trace, "julead_received", stat_received);
+					j_trace_counter(trace, "julead_received", length);
 					jd_backend_write(&bf, buf, length, offset, trace);
-					stat_written += length;
-					j_trace_counter(trace, "julead_written", stat_written);
+					j_trace_counter(trace, "julead_written", length);
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);
