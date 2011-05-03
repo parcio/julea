@@ -36,8 +36,9 @@
 struct JMessageHeader
 {
 	guint32 length;
-	gint32 id;
-	gint32 op;
+	guint32 id;
+	guint32 op_type;
+	guint32 op_count;
 };
 #pragma pack()
 
@@ -46,19 +47,19 @@ struct JMessage;
 typedef struct JMessage JMessage;
 typedef struct JMessageHeader JMessageHeader;
 
-enum JMessageOperation
+enum JMessageOperationType
 {
 	J_MESSAGE_OPERATION_NONE,
 	J_MESSAGE_OPERATION_READ,
 	J_MESSAGE_OPERATION_WRITE
 };
 
-typedef enum JMessageOperation JMessageOperation;
+typedef enum JMessageOperationType JMessageOperationType;
 
 #include <glib.h>
 #include <gio/gio.h>
 
-JMessage* j_message_new (gsize, JMessageOperation);
+JMessage* j_message_new (gsize, JMessageOperationType, guint32);
 void j_message_free (JMessage*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
@@ -73,7 +74,8 @@ gchar const* j_message_get_string (JMessage*);
 
 gconstpointer j_message_data (JMessage*);
 gsize j_message_length (JMessage*);
-JMessageOperation j_message_operation (JMessage*);
+JMessageOperationType j_message_operation_type (JMessage*);
+guint32 j_message_operation_count (JMessage*);
 
 gboolean j_message_read (JMessage*, GInputStream*);
 

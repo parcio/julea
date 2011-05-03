@@ -74,12 +74,13 @@ struct JMessage
  * \endcode
  *
  * \param length The message's length.
- * \param op     The message's operation.
+ * \param op     The message's operation type.
+ * \param count  The message's operation count.
  *
  * \return A new message. Should be freed with j_message_free().
  **/
 JMessage*
-j_message_new (gsize length, JMessageOperation op)
+j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
 {
 	JMessage* message;
 	guint32 real_length;
@@ -89,8 +90,9 @@ j_message_new (gsize length, JMessageOperation op)
 	message = g_malloc(sizeof(gchar*) + real_length);
 	message->current = message->data;
 	message->header.length = GUINT32_TO_LE(real_length);
-	message->header.id = GINT32_TO_LE(0);
-	message->header.op = GINT32_TO_LE(op);
+	message->header.id = GUINT32_TO_LE(0);
+	message->header.op_type = GUINT32_TO_LE(op_type);
+	message->header.op_count = GUINT32_TO_LE(op_count);
 
 	return message;
 }
@@ -425,12 +427,32 @@ j_message_length (JMessage* message)
  *
  * \return The message's operation type.
  **/
-JMessageOperation
-j_message_operation (JMessage* message)
+JMessageOperationType
+j_message_operation_type (JMessage* message)
 {
 	g_return_val_if_fail(message != NULL, J_MESSAGE_OPERATION_NONE);
 
-	return GINT32_FROM_LE(message->header.op);
+	return GUINT32_FROM_LE(message->header.op_type);
+}
+
+/**
+ * Returns the message's operation count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The message's operation count.
+ **/
+guint32
+j_message_operation_count (JMessage* message)
+{
+	g_return_val_if_fail(message != NULL, 0);
+
+	return GUINT32_FROM_LE(message->header.op_count);
 }
 
 /**
