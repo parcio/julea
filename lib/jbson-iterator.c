@@ -56,14 +56,15 @@ struct JBSONIterator
 	 **/
 	JBSON* bson;
 
-	const gchar* data;
+	gchar const* data;
 	gboolean first;
 };
 
-static const gchar*
+static
+gchar const*
 j_bson_iterator_get_value (JBSONIterator* iterator)
 {
-	const gchar* key;
+	gchar const* key;
 	gsize len;
 
 	key = iterator->data + 1;
@@ -72,19 +73,22 @@ j_bson_iterator_get_value (JBSONIterator* iterator)
 	return (key + len);
 }
 
-static gchar
+static
+gchar
 j_bson_iterator_get_8 (gconstpointer data)
 {
-	return *((const gchar*)data);
+	return *((gchar const*)data);
 }
 
-static gint32
+static
+gint32
 j_bson_iterator_get_32 (gconstpointer data)
 {
 	return GINT32_FROM_LE(*((const gint32*)data));
 }
 
-static gint64
+static
+gint64
 j_bson_iterator_get_64 (gconstpointer data)
 {
 	return GINT64_FROM_LE(*((const gint64*)data));
@@ -140,7 +144,7 @@ j_bson_iterator_free (JBSONIterator* iterator)
 }
 
 gboolean
-j_bson_iterator_find (JBSONIterator* iterator, const gchar* key)
+j_bson_iterator_find (JBSONIterator* iterator, gchar const* key)
 {
 	gboolean ret = FALSE;
 
@@ -209,7 +213,19 @@ j_bson_iterator_next (JBSONIterator* iterator)
 	return (type != J_BSON_TYPE_END);
 }
 
-const gchar*
+JBSONType
+j_bson_iterator_get_type (JBSONIterator* iterator)
+{
+	JBSONType type;
+
+	g_return_val_if_fail(iterator != NULL, FALSE);
+
+	type = j_bson_iterator_get_8(iterator->data);
+
+	return type;
+}
+
+gchar const*
 j_bson_iterator_get_key (JBSONIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
@@ -249,7 +265,7 @@ j_bson_iterator_get_int64 (JBSONIterator* iterator)
 	return j_bson_iterator_get_64(j_bson_iterator_get_value(iterator));
 }
 
-const gchar*
+gchar const*
 j_bson_iterator_get_string (JBSONIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);

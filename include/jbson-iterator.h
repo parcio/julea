@@ -44,16 +44,17 @@ typedef struct JBSONIterator JBSONIterator;
 JBSONIterator* j_bson_iterator_new (JBSON*);
 void j_bson_iterator_free (JBSONIterator*);
 
-gboolean j_bson_iterator_find (JBSONIterator*, const gchar*);
+gboolean j_bson_iterator_find (JBSONIterator*, gchar const*);
 
 gboolean j_bson_iterator_next (JBSONIterator*);
 
-const gchar* j_bson_iterator_get_key (JBSONIterator*);
+JBSONType j_bson_iterator_get_type (JBSONIterator*);
+gchar const* j_bson_iterator_get_key (JBSONIterator*);
 
 JObjectID* j_bson_iterator_get_id (JBSONIterator*);
 gboolean j_bson_iterator_get_boolean (JBSONIterator*);
 gint32 j_bson_iterator_get_int32 (JBSONIterator*);
 gint64 j_bson_iterator_get_int64 (JBSONIterator*);
-const gchar* j_bson_iterator_get_string (JBSONIterator*);
+gchar const* j_bson_iterator_get_string (JBSONIterator*);
 
 #endif
