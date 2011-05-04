@@ -35,6 +35,7 @@
 
 #include "jbson.h"
 
+#include "jbson-iterator.h"
 #include "jobjectid.h"
 
 /**
@@ -112,7 +113,7 @@ j_bson_finalize (JBSON* bson)
 static void
 j_bson_append_8 (JBSON* bson, gconstpointer data)
 {
-	*(bson->current) = *((const gchar*)data);
+	*(bson->current) = *((gchar const*)data);
 	bson->current++;
 }
 
@@ -138,7 +139,7 @@ j_bson_append_n (JBSON* bson, gconstpointer data, gsize n)
 }
 
 static void
-j_bson_append_element (JBSON* bson, const gchar* name, gchar type, gsize n)
+j_bson_append_element (JBSON* bson, gchar const* name, gchar type, gsize n)
 {
 	gsize len;
 
@@ -314,7 +315,7 @@ j_bson_size (JBSON* bson)
  * \param key The object ID's key.
  **/
 void
-j_bson_append_new_object_id (JBSON* bson, const gchar* key)
+j_bson_append_new_object_id (JBSON* bson, gchar const* key)
 {
 	JObjectID* id;
 
@@ -339,7 +340,7 @@ j_bson_append_new_object_id (JBSON* bson, const gchar* key)
  * \param value The object ID.
  **/
 void
-j_bson_append_object_id (JBSON* bson, const gchar* key, JObjectID* value)
+j_bson_append_object_id (JBSON* bson, gchar const* key, JObjectID* value)
 {
 	g_return_if_fail(bson != NULL);
 	g_return_if_fail(key != NULL);
@@ -362,7 +363,7 @@ j_bson_append_object_id (JBSON* bson, const gchar* key, JObjectID* value)
  * \param value The boolean.
  **/
 void
-j_bson_append_boolean (JBSON* bson, const gchar* key, gboolean value)
+j_bson_append_boolean (JBSON* bson, gchar const* key, gboolean value)
 {
 	gchar v;
 
@@ -389,7 +390,7 @@ j_bson_append_boolean (JBSON* bson, const gchar* key, gboolean value)
  * \param value The integer.
  **/
 void
-j_bson_append_int32 (JBSON* bson, const gchar* key, gint32 value)
+j_bson_append_int32 (JBSON* bson, gchar const* key, gint32 value)
 {
 	g_return_if_fail(bson != NULL);
 	g_return_if_fail(key != NULL);
@@ -412,7 +413,7 @@ j_bson_append_int32 (JBSON* bson, const gchar* key, gint32 value)
  * \param value The integer.
  **/
 void
-j_bson_append_int64 (JBSON* bson, const gchar* key, gint64 value)
+j_bson_append_int64 (JBSON* bson, gchar const* key, gint64 value)
 {
 	g_return_if_fail(bson != NULL);
 	g_return_if_fail(key != NULL);
@@ -435,7 +436,7 @@ j_bson_append_int64 (JBSON* bson, const gchar* key, gint64 value)
  * \param value The string.
  **/
 void
-j_bson_append_string (JBSON* bson, const gchar* key, const gchar* value)
+j_bson_append_string (JBSON* bson, gchar const* key, gchar const* value)
 {
 	gsize len;
 
@@ -463,7 +464,7 @@ j_bson_append_string (JBSON* bson, const gchar* key, const gchar* value)
  * \param value The BSON document.
  **/
 void
-j_bson_append_document (JBSON* bson, const gchar* key, JBSON* value)
+j_bson_append_document (JBSON* bson, gchar const* key, JBSON* value)
 {
 	gint32 size;
 
@@ -498,6 +499,79 @@ j_bson_data (JBSON* bson)
 	j_bson_finalize(bson);
 
 	return bson->data;
+}
+
+gchar*
+j_bson_to_string (JBSON* bson)
+{
+	JBSONIterator* iterator;
+	GString* string;
+	gchar* ret;
+
+	string = g_string_new("");
+	iterator = j_bson_iterator_new(bson);
+
+	while (j_bson_iterator_next(iterator))
+	{
+		JBSONType type;
+		gchar const* key;
+
+		type = j_bson_iterator_get_type(iterator);
+		key = j_bson_iterator_get_key(iterator);
+
+		g_string_append_printf(string, "%s (%d): ", key, type);
+
+		switch (type)
+		{
+			case J_BSON_TYPE_STRING:
+				g_string_append_printf(string, "%s", j_bson_iterator_get_string(iterator));
+				break;
+			case J_BSON_TYPE_DOCUMENT:
+				g_string_append(string, "FIXME");
+				break;
+			case J_BSON_TYPE_OBJECT_ID:
+				{
+					gchar* hex;
+
+					hex = j_object_id_hex(j_bson_iterator_get_id(iterator));
+					g_string_append(string, hex);
+					g_free(hex);
+					break;
+				}
+			case J_BSON_TYPE_BOOLEAN:
+				g_string_append(string, (j_bson_iterator_get_boolean(iterator)) ? "true" : "false");
+				break;
+			case J_BSON_TYPE_INT32:
+				g_string_append_printf(string, "%d", j_bson_iterator_get_int32(iterator));
+				break;
+			case J_BSON_TYPE_INT64:
+				/* FIXME */
+				g_string_append_printf(string, "%ld", j_bson_iterator_get_int64(iterator));
+				break;
+			case J_BSON_TYPE_END:
+			default:
+				g_warn_if_reached();
+		}
+
+		g_string_append(string, "\n");
+	}
+
+	j_bson_iterator_free(iterator);
+
+	ret = string->str;
+	g_string_free(string, FALSE);
+
+	return ret;
+}
+
+void
+j_bson_print (JBSON* bson)
+{
+	gchar* str;
+
+	str = j_bson_to_string(bson);
+	g_print("%s", str);
+	g_free(str);
 }
 
 /**

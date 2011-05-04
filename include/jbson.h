@@ -61,14 +61,17 @@ void j_bson_unref (JBSON*);
 
 gint32 j_bson_size (JBSON*);
 
-void j_bson_append_new_object_id (JBSON*, const gchar*);
-void j_bson_append_object_id (JBSON*, const gchar*, JObjectID*);
-void j_bson_append_boolean (JBSON*, const gchar*, gboolean);
-void j_bson_append_int32 (JBSON*, const gchar*, gint32);
-void j_bson_append_int64 (JBSON*, const gchar*, gint64);
-void j_bson_append_string (JBSON*, const gchar*, const gchar*);
-void j_bson_append_document (JBSON*, const gchar*, JBSON*);
+void j_bson_append_new_object_id (JBSON*, gchar const*);
+void j_bson_append_object_id (JBSON*, gchar const*, JObjectID*);
+void j_bson_append_boolean (JBSON*, gchar const*, gboolean);
+void j_bson_append_int32 (JBSON*, gchar const*, gint32);
+void j_bson_append_int64 (JBSON*, gchar const*, gint64);
+void j_bson_append_string (JBSON*, gchar const*, gchar const*);
+void j_bson_append_document (JBSON*, gchar const*, JBSON*);
 
 gpointer j_bson_data (JBSON*);
+
+gchar* j_bson_to_string (JBSON*);
+void j_bson_print (JBSON*);
 
 #endif
