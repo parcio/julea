@@ -458,7 +458,7 @@ j_collection_deserialize (JCollection* collection, JBSON* bson)
 
 		key = j_bson_iterator_get_key(iterator);
 
-		if (g_strcmp0(key, "ID") == 0)
+		if (g_strcmp0(key, "_id") == 0)
 		{
 			if (collection->id != NULL)
 			{

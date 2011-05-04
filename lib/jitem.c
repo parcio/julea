@@ -341,7 +341,7 @@ j_item_deserialize (JItem* item, JBSON* bson)
 
 		key = j_bson_iterator_get_key(iterator);
 
-		if (g_strcmp0(key, "ID") == 0)
+		if (g_strcmp0(key, "_id") == 0)
 		{
 			if (item->id != NULL)
 			{
