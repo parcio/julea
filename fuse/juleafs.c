@@ -69,7 +69,7 @@ jfs_path_depth (gchar const* path)
 		return 0;
 	}
 
-	for (c = path; *c; c++)
+	for (c = path; *c != '\0'; c++)
 	{
 		if (*c == '/')
 		{

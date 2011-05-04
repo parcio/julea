@@ -49,7 +49,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 
 		ret = 0;
 	}
-	else if (depth == 4)
+	else if (depth == 3)
 	{
 		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 		stbuf->st_nlink = 1;

@@ -33,10 +33,50 @@
 int
 jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
+	JCollection* collection = NULL;
+	JStore* store = NULL;
+	gchar** components;
 	guint depth;
 	int ret = -ENOENT;
 
 	depth = jfs_path_depth(path);
+
+	if (depth > 2)
+	{
+		return ret;
+	}
+
+	components = jfs_path_components(path);
+
+	if (depth > 0)
+	{
+		if (components[0][0] == '.')
+		{
+			return ret;
+		}
+
+		store = j_connection_get(jfs_connection, components[0]);
+	}
+
+	if (depth > 1)
+	{
+		JList* collections;
+		JList* names;
+
+		if (components[1][0] == '.')
+		{
+			return ret;
+		}
+
+		names = j_list_new(NULL);
+		j_list_append(names, components[1]);
+
+		collections = j_store_get(store, names);
+		collection = j_collection_ref(j_list_get(collections, 0));
+
+		j_list_unref(collections);
+		j_list_unref(names);
+	}
 
 	if (depth == 0)
 	{
@@ -46,70 +86,53 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 	}
 	else if (depth == 1)
 	{
-		JStore* store;
 		JStoreIterator* siterator;
-		gchar** components;
 
-		components = jfs_path_components(path);
-
-		store = j_connection_get(jfs_connection, components[0]);
 		siterator = j_store_iterator_new(store);
 
 		while (j_store_iterator_next(siterator))
 		{
-			JCollection* collection = j_store_iterator_get(siterator);
+			JCollection* c = j_store_iterator_get(siterator);
 
-			filler(buf, j_collection_name(collection), NULL, 0);
-			j_collection_unref(collection);
+			filler(buf, j_collection_name(c), NULL, 0);
+			j_collection_unref(c);
 		}
 
 		j_store_iterator_free(siterator);
-		j_store_unref(store);
 
-		g_strfreev(components);
 
 		ret = 0;
 	}
 	else if (depth == 2)
 	{
-		/*
 		JCollectionIterator* citerator;
-		JList* collections;
-		JList* names;
-		JStore* store;
-		gchar** components;
 
-		components = jfs_path_components(path);
+		citerator = j_collection_iterator_new(collection);
 
-		names = j_list_new(NULL);
-		j_list_append(names, components[1]);
-
-		store = j_connection_get(jfs_connection, components[0]);
-		collections = j_store_get(store, names);
-
-		if (j_list_length(collections) > 0)
+		while (j_collection_iterator_next(citerator))
 		{
-			citerator = j_collection_iterator_new(j_list_get(collections, 0));
+			JItem* i = j_collection_iterator_get(citerator);
 
-			while (j_collection_iterator_next(citerator))
-			{
-				JItem* item = j_collection_iterator_get(citerator);
-
-				filler(buf, j_item_name(item), NULL, 0);
-				j_item_unref(item);
-			}
-
-			j_collection_iterator_free(citerator);
+			filler(buf, j_item_name(i), NULL, 0);
+			j_item_unref(i);
 		}
 
-		j_list_unref(collections);
-		j_list_unref(names);
-
-		g_strfreev(components);
+		j_collection_iterator_free(citerator);
 
 		ret = 0;
-		*/
 	}
+
+	if (collection != NULL)
+	{
+		j_collection_unref(collection);
+	}
+
+	if (store != NULL)
+	{
+		j_store_unref(store);
+	}
+
+	g_strfreev(components);
 
 	return ret;
 }
