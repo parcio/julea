@@ -140,13 +140,14 @@ main (int argc, char** argv)
 		if (is_first)
 		{
 			gchar* buf;
+			guint64 bytes;
 
 			is_first = FALSE;
 			buf = g_new0(gchar, 1024 * 1024 + 1);
-			j_item_write(item, buf, 1024 * 1024 + 1, 0);
-			j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1);
-			j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1);
-			j_item_read(item, buf, 1024 * 1024 + 1, 0);
+			j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes);
+			j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
+			j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
+			j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes);
 			g_free(buf);
 		}
 

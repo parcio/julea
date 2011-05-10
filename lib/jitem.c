@@ -162,7 +162,7 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 }
 
 gboolean
-j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
+j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JDistribution* distribution;
 	gchar* d;
@@ -172,6 +172,9 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 
 	g_return_val_if_fail(item != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
+
+	*bytes_read = 0;
 
 	if (length == 0)
 	{
@@ -210,6 +213,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 		j_message_free(message);
 
 		d += new_length;
+		*bytes_read += new_length;
 	}
 
 	j_distribution_free(distribution);
@@ -218,7 +222,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset)
 }
 
 gboolean
-j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
+j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JDistribution* distribution;
 	guint64 new_length;
@@ -228,6 +232,9 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 
 	g_return_val_if_fail(item != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
+
+	*bytes_written = 0;
 
 	if (length == 0)
 	{
@@ -265,6 +272,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset)
 		j_message_free(message);
 
 		d += new_length;
+		*bytes_written += new_length;
 	}
 
 	j_distribution_free(distribution);
