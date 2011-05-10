@@ -208,7 +208,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 		j_message_append_8(message, &new_offset);
 
 		j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
-		j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, d, new_length);
+		j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
 
 		j_message_free(message);
 

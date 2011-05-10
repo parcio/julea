@@ -72,11 +72,12 @@ gint32 j_message_get_4 (JMessage*);
 gint64 j_message_get_8 (JMessage*);
 gchar const* j_message_get_string (JMessage*);
 
+gboolean j_message_read (JMessage*, GInputStream*);
+
 gconstpointer j_message_data (JMessage*);
 gsize j_message_length (JMessage*);
+guint32 j_message_id (JMessage*);
 JMessageOperationType j_message_operation_type (JMessage*);
 guint32 j_message_operation_count (JMessage*);
-
-gboolean j_message_read (JMessage*, GInputStream*);
 
 #endif

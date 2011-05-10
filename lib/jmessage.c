@@ -416,6 +416,26 @@ j_message_length (JMessage* message)
 }
 
 /**
+ * Returns the message's ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The message's ID.
+ **/
+guint32
+j_message_id (JMessage* message)
+{
+	g_return_val_if_fail(message != NULL, 0);
+
+	return GUINT32_FROM_LE(message->header.id);
+}
+
+/**
  * Returns the message's operation type.
  *
  * \author Michael Kuhn

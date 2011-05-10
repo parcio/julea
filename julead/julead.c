@@ -37,6 +37,7 @@
 
 #include <jconfiguration.h>
 #include <jmessage.h>
+#include <jmessage-reply.h>
 #include <jtrace.h>
 
 #include "backend/backend.h"
@@ -86,6 +87,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_READ:
 				g_printerr("read_op\n");
 				{
+					JMessageReply* reply;
 					gchar* buf;
 					guint64 length;
 					guint64 offset;
@@ -104,10 +106,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_open(&bf, store, collection, item, trace);
 					bytes_read = jd_backend_read(&bf, buf, length, offset, trace);
 					j_trace_counter(trace, "julead_read", bytes_read);
+					reply = j_message_reply_new(message, bytes_read);
+					j_message_reply_write(reply, output);
 					g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
 					j_trace_counter(trace, "julead_sent", bytes_read);
 					jd_backend_close(&bf, trace);
 
+					j_message_reply_free(reply);
 					g_free(buf);
 				}
 				break;

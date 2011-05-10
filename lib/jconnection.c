@@ -38,6 +38,7 @@
 
 #include "jcommon.h"
 #include "jmessage.h"
+#include "jmessage-reply.h"
 #include "jmongo-connection.h"
 
 /**
@@ -218,17 +219,23 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 }
 
 gboolean
-j_connection_receive (JConnection* connection, guint i, gpointer data, gsize length)
+j_connection_receive (JConnection* connection, guint i, JMessage* message, gpointer data, gsize length)
 {
+	JMessageReply* message_reply;
 	GInputStream* input;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(i < j_configuration()->data_len, FALSE);
+	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
+	message_reply = j_message_reply_new(message, 0);
 
-	g_input_stream_read_all(input, data, length, NULL, NULL, NULL);
+	j_message_reply_read(message_reply, input);
+	g_input_stream_read_all(input, data, j_message_reply_length(message_reply), NULL, NULL, NULL);
+
+	j_message_reply_free(message_reply);
 
 	return TRUE;
 }

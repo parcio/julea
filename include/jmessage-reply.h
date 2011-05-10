@@ -29,16 +29,33 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#ifndef H_MESSAGE_REPLY
+#define H_MESSAGE_REPLY
 
-#include "jconnection.h"
+#pragma pack(4)
+struct JMessageReplyHeader
+{
+	guint32 id;
+	guint32 length;
+};
+#pragma pack()
 
-#include "jmessage.h"
-#include "jmongo-connection.h"
+struct JMessageReply;
 
-JMongoConnection* j_connection_connection (JConnection*);
-gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
-gboolean j_connection_receive (JConnection*, guint, JMessage*, gpointer, gsize);
+typedef struct JMessageReply JMessageReply;
+typedef struct JMessageReplyHeader JMessageReplyHeader;
+
+#include <glib.h>
+#include <gio/gio.h>
+
+#include <jmessage.h>
+
+JMessageReply* j_message_reply_new (JMessage*, guint64);
+void j_message_reply_free (JMessageReply*);
+
+gboolean j_message_reply_read (JMessageReply*, GInputStream*);
+gboolean j_message_reply_write (JMessageReply*, GOutputStream*);
+
+gsize j_message_reply_length (JMessageReply*);
 
 #endif
