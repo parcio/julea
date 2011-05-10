@@ -73,6 +73,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	while (j_message_read(message, input))
 	{
+		JBackendFile bf;
+		gchar const* store;
+		gchar const* collection;
+		gchar const* item;
+
 		switch (j_message_operation_type(message))
 		{
 			case J_MESSAGE_OPERATION_NONE:
@@ -81,13 +86,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_READ:
 				g_printerr("read_op\n");
 				{
-					JBackendFile bf;
 					gchar* buf;
-					gchar const* store;
-					gchar const* collection;
-					gchar const* item;
 					guint64 length;
 					guint64 offset;
+					guint64 bytes_read;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -100,10 +102,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
 					jd_backend_open(&bf, store, collection, item, trace);
-					jd_backend_read(&bf, buf, length, offset, trace);
-					j_trace_counter(trace, "julead_read", length);
-					g_output_stream_write_all(output, buf, length, NULL, NULL, NULL);
-					j_trace_counter(trace, "julead_sent", length);
+					bytes_read = jd_backend_read(&bf, buf, length, offset, trace);
+					j_trace_counter(trace, "julead_read", bytes_read);
+					g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
+					j_trace_counter(trace, "julead_sent", bytes_read);
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);
@@ -112,13 +114,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_WRITE:
 				g_printerr("write_op\n");
 				{
-					JBackendFile bf;
 					gchar* buf;
-					gchar const* store;
-					gchar const* collection;
-					gchar const* item;
 					guint64 length;
 					guint64 offset;
+					guint64 bytes_written;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -133,8 +132,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_open(&bf, store, collection, item, trace);
 					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 					j_trace_counter(trace, "julead_received", length);
-					jd_backend_write(&bf, buf, length, offset, trace);
-					j_trace_counter(trace, "julead_written", length);
+					bytes_written = jd_backend_write(&bf, buf, length, offset, trace);
+					j_trace_counter(trace, "julead_written", bytes_written);
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);

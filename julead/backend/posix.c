@@ -65,7 +65,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 		g_mkdir_with_parents(parent, 0700);
 		g_free(parent);
 
-		fd = open(path, O_RDWR | O_CREAT);
+		fd = open(path, O_RDWR | O_CREAT, 0600);
 	}
 
 	j_trace_file_end(trace, path, J_TRACE_FILE_OPEN, 0, 0);
