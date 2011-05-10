@@ -56,3 +56,4 @@ int jfs_write (char const*, char const*, size_t, off_t, struct fuse_file_info*);
 
 gchar** jfs_path_components (gchar const*);
 guint jfs_path_depth (gchar const*);
+guint jfs_path_parse (gchar const*, JStore**, JCollection**, JItem**);
