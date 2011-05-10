@@ -29,9 +29,45 @@
 
 #include <errno.h>
 
-int jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
+int
+jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
+	JCollection* collection = NULL;
+	JItem* item = NULL;
+	JStore* store = NULL;
+	guint depth;
+	guint64 bytes_read;
 	int ret = -ENOENT;
+
+	depth = jfs_path_parse(path, &store, &collection, &item);
+
+	if (depth != 3)
+	{
+		goto end;
+	}
+
+	if (item != NULL)
+	{
+		j_item_read(item, buf, size, offset, &bytes_read);
+
+		ret = bytes_read;
+	}
+
+end:
+	if (collection != NULL)
+	{
+		j_collection_unref(collection);
+	}
+
+	if (store != NULL)
+	{
+		j_store_unref(store);
+	}
+
+	if (item != NULL)
+	{
+		j_item_unref(item);
+	}
 
 	return ret;
 }

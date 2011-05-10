@@ -29,9 +29,43 @@
 
 #include <errno.h>
 
-int jfs_truncate (char const* path, off_t size)
+int
+jfs_truncate (char const* path, off_t size)
 {
-	gint ret = -ENOENT;
+	JCollection* collection = NULL;
+	JItem* item = NULL;
+	JStore* store = NULL;
+	guint depth;
+	int ret = -ENOENT;
+
+	depth = jfs_path_parse(path, &store, &collection, &item);
+
+	if (depth != 3)
+	{
+		goto end;
+	}
+
+	if (item != NULL)
+	{
+		/* FIXME */
+		ret = 0;
+	}
+
+end:
+	if (collection != NULL)
+	{
+		j_collection_unref(collection);
+	}
+
+	if (store != NULL)
+	{
+		j_store_unref(store);
+	}
+
+	if (item != NULL)
+	{
+		j_item_unref(item);
+	}
 
 	return ret;
 }
