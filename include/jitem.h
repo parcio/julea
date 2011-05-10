@@ -41,6 +41,7 @@ typedef struct JItem JItem;
 #include "jsemantics.h"
 
 JItem* j_item_new (const gchar*);
+JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
 const gchar* j_item_name (JItem*);

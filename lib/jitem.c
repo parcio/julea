@@ -86,6 +86,16 @@ j_item_new (const gchar* name)
 	return item;
 }
 
+JItem*
+j_item_ref (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, NULL);
+
+	item->ref_count++;
+
+	return item;
+}
+
 void
 j_item_unref (JItem* item)
 {
