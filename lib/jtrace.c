@@ -53,6 +53,8 @@ struct JTrace
 	gchar* thread_name;
 	gchar* function_name;
 
+	guint function_depth;
+
 #ifdef HAVE_HDTRACE
 	struct
 	{
@@ -275,11 +277,21 @@ j_trace_enter (JTrace* trace, gchar const* name)
 	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
+	trace->function_depth++;
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ENTER %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, name);
+		guint i;
+
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+		for (i = 1; i < trace->function_depth; i++)
+		{
+			g_printerr("  ");
+		}
+
+		g_printerr("ENTER %s\n", name);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -326,11 +338,21 @@ j_trace_leave (JTrace* trace, gchar const* name)
 	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
+	trace->function_depth--;
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: LEAVE %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, name);
+		guint i;
+
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+		for (i = 0; i < trace->function_depth; i++)
+		{
+			g_printerr("  ");
+		}
+
+		g_printerr("LEAVE %s\n", name);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -371,7 +393,16 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: BEGIN %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, j_trace_file_operation_name(op), path);
+		guint i;
+
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+		for (i = 0; i < trace->function_depth; i++)
+		{
+			g_printerr("  ");
+		}
+
+		g_printerr("BEGIN %s %s\n", j_trace_file_operation_name(op), path);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -422,14 +453,23 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
+		guint i;
+
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+		for (i = 0; i < trace->function_depth; i++)
+		{
+			g_printerr("  ");
+		}
+
+		g_printerr("END %s %s", j_trace_file_operation_name(op), path);
+
 		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
 		{
-			g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: END %s %s (length=%" G_GUINT64_FORMAT ", offset=%" G_GUINT64_FORMAT ")\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, j_trace_file_operation_name(op), path, length, offset);
+			g_printerr("(length=%" G_GUINT64_FORMAT ", offset=%" G_GUINT64_FORMAT ")", length, offset);
 		}
-		else
-		{
-			g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: END %s %s\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, j_trace_file_operation_name(op), path);
-		}
+
+		g_printerr("\n");
 	}
 
 #ifdef HAVE_HDTRACE
@@ -496,6 +536,7 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 
 	trace = g_slice_new(JTrace);
 	trace->function_name = g_strdup(function_name);
+	trace->function_depth = 0;
 
 	if (thread == NULL)
 	{
@@ -578,7 +619,16 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: COUNTER %s %" G_GUINT64_FORMAT "\n", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name, name, counter_value);
+		guint i;
+
+		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+		for (i = 0; i < trace->function_depth; i++)
+		{
+			g_printerr("  ");
+		}
+
+		g_printerr("COUNTER %s %" G_GUINT64_FORMAT "\n", name, counter_value);
 	}
 
 #ifdef HAVE_HDTRACE
