@@ -38,10 +38,10 @@ typedef struct JItemStatus JItemStatus;
 
 enum JItemStatusFlags
 {
-	J_ITEM_STATUS_NONE              =       0,
-	J_ITEM_STATUS_SIZE              = (1 << 0),
-	J_ITEM_STATUS_ACCESS_TIME       = (1 << 1),
-	J_ITEM_STATUS_MODIFICATION_TIME = (1 << 2)
+	J_ITEM_STATUS_NONE              = 0,
+	J_ITEM_STATUS_SIZE              = 1 << 0,
+	J_ITEM_STATUS_ACCESS_TIME       = 1 << 1,
+	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 2
 };
 
 typedef enum JItemStatusFlags JItemStatusFlags;

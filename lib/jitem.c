@@ -46,6 +46,7 @@
 #include "jmessage.h"
 #include "jobjectid.h"
 #include "jsemantics.h"
+#include "jtrace.h"
 
 /**
  * \defgroup JItem Item
@@ -76,12 +77,16 @@ j_item_new (const gchar* name)
 
 	g_return_val_if_fail(name != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	item = g_slice_new(JItem);
 	item->id = j_object_id_new(TRUE);
 	item->name = g_strdup(name);
 	item->collection = NULL;
 	item->semantics = NULL;
 	item->ref_count = 1;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item;
 }
@@ -91,7 +96,11 @@ j_item_ref (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	item->ref_count++;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item;
 }
@@ -100,6 +109,8 @@ void
 j_item_unref (JItem* item)
 {
 	g_return_if_fail(item != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	item->ref_count--;
 
@@ -124,12 +135,17 @@ j_item_unref (JItem* item)
 
 		g_slice_free(JItem, item);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 const gchar*
 j_item_name (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item->name;
 }
@@ -139,10 +155,14 @@ j_item_semantics (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (item->semantics != NULL)
 	{
 		return item->semantics;
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return j_collection_semantics(item->collection);
 }
@@ -153,18 +173,23 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(semantics != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (item->semantics != NULL)
 	{
 		j_semantics_unref(item->semantics);
 	}
 
 	item->semantics = j_semantics_ref(semantics);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 gboolean
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JDistribution* distribution;
+	gboolean ret = TRUE;
 	gchar* d;
 	guint64 new_length;
 	guint64 new_offset;
@@ -174,12 +199,17 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	*bytes_read = 0;
 
 	if (length == 0)
 	{
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
+
+	j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_READ);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 	d = data;
@@ -218,13 +248,19 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 
 	j_distribution_free(distribution);
 
-	return TRUE;
+	j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_READ, length, offset);
+
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 gboolean
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JDistribution* distribution;
+	gboolean ret = TRUE;
 	guint64 new_length;
 	guint64 new_offset;
 	guint index;
@@ -234,12 +270,17 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	*bytes_written = 0;
 
 	if (length == 0)
 	{
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
+
+	j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_WRITE);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 	d = data;
@@ -277,7 +318,12 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 
 	j_distribution_free(distribution);
 
-	return TRUE;
+	j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_WRITE, length, offset);
+
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /* Internal */
@@ -290,6 +336,8 @@ j_item_new_from_bson (JCollection* collection, JBSON* bson)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(bson != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	item = g_slice_new(JItem);
 	item->id = NULL;
 	item->name = NULL;
@@ -298,6 +346,8 @@ j_item_new_from_bson (JCollection* collection, JBSON* bson)
 	item->ref_count = 1;
 
 	j_item_deserialize(item, bson);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item;
 }
@@ -321,11 +371,15 @@ j_item_associate (JItem* item, JCollection* collection)
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(collection != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 		/*
 		IsInitialized(false);
 		m_initialized = true;
 		*/
 	item->collection = j_collection_ref(collection);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 JBSON*
@@ -335,10 +389,14 @@ j_item_serialize (JItem* item)
 
 	g_return_val_if_fail(item != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	bson = j_bson_new();
 	j_bson_append_object_id(bson, "_id", item->id);
 	j_bson_append_object_id(bson, "Collection", j_collection_id(item->collection));
 	j_bson_append_string(bson, "Name", item->name);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return bson;
 }
@@ -350,6 +408,8 @@ j_item_deserialize (JItem* item, JBSON* bson)
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(bson != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	iterator = j_bson_iterator_new(bson);
 
@@ -376,12 +436,17 @@ j_item_deserialize (JItem* item, JBSON* bson)
 	}
 
 	j_bson_iterator_free(iterator);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 JObjectID*
 j_item_id (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item->id;
 }
