@@ -99,10 +99,10 @@ static GHashTable* hdtrace_counter_table = NULL;
 static OTF_FileManager* otf_manager = NULL;
 static OTF_Writer* otf_writer = NULL;
 
-static guint32 otf_process_id = 1;
-static guint32 otf_function_id = 1;
-static guint32 otf_file_id = 1;
-static guint32 otf_counter_id = 1;
+static guint32 otf_process_id = 0;
+static guint32 otf_function_id = 0;
+static guint32 otf_file_id = 0;
+static guint32 otf_counter_id = 0;
 
 static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_file_table = NULL;
@@ -201,6 +201,11 @@ j_trace_init (gchar const* name)
 #ifdef HAVE_OTF
 	if (j_trace_flags == J_TRACE_OTF)
 	{
+		otf_process_id = 1;
+		otf_function_id = 1;
+		otf_file_id = 1;
+		otf_counter_id = 1;
+
 		otf_manager = OTF_FileManager_open(1);
 		g_assert(otf_manager != NULL);
 
@@ -224,8 +229,6 @@ j_trace_deinit (void)
 	{
 		return;
 	}
-
-	j_trace_flags = J_TRACE_OFF;
 
 #ifdef HAVE_HDTRACE
 	if (j_trace_flags == J_TRACE_HDTRACE)
@@ -260,6 +263,8 @@ j_trace_deinit (void)
 		otf_manager = NULL;
 	}
 #endif
+
+	j_trace_flags = J_TRACE_OFF;
 
 	g_free(j_trace_name);
 }
