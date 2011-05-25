@@ -35,6 +35,7 @@
 #include <glib.h>
 
 #include "jconfiguration.h"
+#include "jtrace.h"
 
 gboolean j_init (void);
 gboolean j_deinit (void);
@@ -42,5 +43,6 @@ gboolean j_deinit (void);
 gboolean j_is_initialized (void);
 
 JConfiguration* j_configuration (void);
+JTrace* j_trace (void);
 
 #endif

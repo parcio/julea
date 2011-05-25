@@ -35,6 +35,7 @@
 #include "jcommon-internal.h"
 
 #include "jconfiguration.h"
+#include "jtrace.h"
 
 /**
  * \defgroup JCommon Common
@@ -42,28 +43,34 @@
  **/
 
 static JConfiguration* j_configuration_global = NULL;
+static JTrace* j_trace_global = NULL;
 
 gboolean
 j_init (void)
 {
 	g_return_val_if_fail(!j_is_initialized(), FALSE);
 
-	g_atomic_pointer_set(&j_configuration_global, j_configuration_new());
-
-	return j_is_initialized();
+	return j_init_for_data(NULL);
 }
 
 gboolean
 j_deinit (void)
 {
-	JConfiguration* p;
+	JConfiguration* conf;
+	JTrace* trace;
 
 	g_return_val_if_fail(j_is_initialized(), FALSE);
 
-	p = g_atomic_pointer_get(&j_configuration_global);
+	conf = g_atomic_pointer_get(&j_configuration_global);
 	g_atomic_pointer_set(&j_configuration_global, NULL);
 
-	j_configuration_free(p);
+	trace = g_atomic_pointer_get(&j_trace_global);
+	g_atomic_pointer_set(&j_trace_global, NULL);
+
+	j_configuration_free(conf);
+	j_trace_thread_leave(trace);
+
+	j_trace_deinit();
 
 	return TRUE;
 }
@@ -90,15 +97,41 @@ j_configuration (void)
 	return p;
 }
 
+JTrace*
+j_trace (void)
+{
+	JTrace* p;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	p = g_atomic_pointer_get(&j_trace_global);
+
+	return p;
+}
+
 /* Internal */
 
 gboolean
 j_init_for_data (GKeyFile* key_file)
 {
-	g_return_val_if_fail(!j_is_initialized(), FALSE);
-	g_return_val_if_fail(key_file != NULL, FALSE);
+	JConfiguration* conf;
 
-	g_atomic_pointer_set(&j_configuration_global, j_configuration_new_for_data(key_file));
+	g_return_val_if_fail(!j_is_initialized(), FALSE);
+
+	j_trace_init("JULEA");
+
+	g_atomic_pointer_set(&j_trace_global, j_trace_thread_enter(NULL, G_STRFUNC));
+
+	if (key_file != NULL)
+	{
+		conf = j_configuration_new_for_data(key_file);
+	}
+	else
+	{
+		conf = j_configuration_new();
+	}
+
+	g_atomic_pointer_set(&j_configuration_global, conf);
 
 	return j_is_initialized();
 }
