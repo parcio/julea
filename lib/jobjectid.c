@@ -196,8 +196,8 @@ j_object_id_hex (JObjectID* id)
 
 	for (i = 0; i < 12; i++)
 	{
-		hash[2 * i]     = hex[(id->data.chars[i] >> 4) & 0x0F];
-		hash[2 * i + 1] = hex[ id->data.chars[i]       & 0x0F];
+		hash[(2 * i)]     = hex[(id->data.chars[i] >> 4) & 0x0F];
+		hash[(2 * i) + 1] = hex[ id->data.chars[i]       & 0x0F];
 	}
 
 	hash[24] = '\0';
@@ -206,7 +206,7 @@ j_object_id_hex (JObjectID* id)
 }
 
 /**
- * Creates an object ID's data.
+ * Returns an object ID's data.
  *
  * \author Michael Kuhn
  *

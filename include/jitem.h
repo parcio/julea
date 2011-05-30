@@ -38,6 +38,7 @@ typedef struct JItem JItem;
 
 #include <glib.h>
 
+#include "jitem-status.h"
 #include "jsemantics.h"
 
 JItem* j_item_new (const gchar*);
@@ -45,6 +46,9 @@ JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
 const gchar* j_item_name (JItem*);
+
+JItemStatus* j_item_get_status (JItem*);
+void j_item_set_status (JItem*, JItemStatus*);
 
 JSemantics* j_item_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
@@ -57,8 +61,6 @@ gboolean j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*);
 			void IsInitialized (bool);
 
 			bool m_initialized;
-
-			mongo::OID m_id;
 */
 
 #endif

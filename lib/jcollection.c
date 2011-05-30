@@ -40,6 +40,8 @@
 #include "jconnection-internal.h"
 #include "jitem.h"
 #include "jitem-internal.h"
+#include "jitem-status.h"
+#include "jitem-status-internal.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
 #include "jmongo.h"
@@ -71,6 +73,7 @@ struct JCollection
 	struct
 	{
 		gchar* items;
+		gchar* item_statuses;
 	}
 	collection;
 
@@ -188,6 +191,17 @@ j_collection_name (JCollection* collection)
 	return collection->name;
 }
 
+/**
+ * Creates the given items.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection The collection.
+ * \param names      A list of items.
+ **/
 void
 j_collection_create (JCollection* collection, JList* items)
 {
@@ -248,6 +262,19 @@ j_collection_create (JCollection* collection, JList* items)
 	}
 }
 
+/**
+ * Gets the given items.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection The collection.
+ * \param names      A list of names.
+ *
+ * \return A list of items.
+ **/
 JList*
 j_collection_get (JCollection* collection, JList* names)
 {
@@ -300,7 +327,6 @@ j_collection_get (JCollection* collection, JList* names)
 		j_bson_unref(names_bson);
 	}
 
-
 	empty = j_bson_new_empty();
 
 	connection = j_connection_connection(j_store_connection(collection->store));
@@ -323,6 +349,107 @@ j_collection_get (JCollection* collection, JList* names)
 	j_bson_unref(bson);
 
 	return items;
+}
+
+/**
+ * Gets the statuses of the given items.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection The collection.
+ * \param names      A list of items.
+ * \param flags      Item status flags.
+ **/
+void
+j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags flags)
+{
+	JBSON* empty;
+	JBSON* fields;
+	JBSON* bson;
+	JMongoConnection* connection;
+	JMongoIterator* iterator;
+	guint length;
+	guint n = 0;
+
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(items != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	bson = j_bson_new();
+	length = j_list_length(items);
+
+	if (length == 1)
+	{
+		JItem* item = j_list_get(items, 0);
+
+		j_bson_append_object_id(bson, "Item", j_item_id(item));
+		n = 1;
+	}
+	else if (length > 1)
+	{
+		JBSON* items_bson;
+		JListIterator* it;
+
+		items_bson = j_bson_new();
+		it = j_list_iterator_new(items);
+
+		while (j_list_iterator_next(it))
+		{
+			JItem* item = j_list_iterator_get(it);
+
+			j_bson_append_object_id(items_bson, "Item", j_item_id(item));
+		}
+
+		j_list_iterator_free(it);
+
+		j_bson_append_document(bson, "$or", items_bson);
+		j_bson_unref(items_bson);
+	}
+
+	empty = j_bson_new_empty();
+	fields = j_bson_new();
+
+	if (flags & J_ITEM_STATUS_SIZE)
+	{
+		j_bson_append_int32(fields, "Size", 1);
+	}
+
+	if (flags & J_ITEM_STATUS_ACCESS_TIME)
+	{
+		j_bson_append_int32(fields, "AccessTime", 1);
+	}
+
+	if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+	{
+		j_bson_append_int32(fields, "ModificationTime", 1);
+	}
+
+	connection = j_connection_connection(j_store_connection(collection->store));
+	iterator = j_mongo_find(connection, j_collection_collection_item_statuses(collection), bson, fields, n, 0);
+
+	while (j_mongo_iterator_next(iterator))
+	{
+		JBSON* status_bson;
+		JItemStatus* status;
+
+		status_bson = j_mongo_iterator_get(iterator);
+		status = j_item_status_new(flags);
+		j_item_status_deserialize(status, status_bson);
+		// FIXME j_item_set_status(item, status);
+		j_bson_unref(status_bson);
+	}
+
+	j_mongo_iterator_free(iterator);
+
+	j_bson_unref(empty);
+	j_bson_unref(fields);
+	j_bson_unref(bson);
 }
 
 JSemantics*
@@ -390,6 +517,20 @@ j_collection_collection_items (JCollection* collection)
 	}
 
 	return collection->collection.items;
+}
+
+const gchar*
+j_collection_collection_item_statuses (JCollection* collection)
+{
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(collection->store != NULL, NULL);
+
+	if (G_UNLIKELY(collection->collection.item_statuses == NULL))
+	{
+		collection->collection.item_statuses = g_strdup_printf("%s.ItemStatuses", j_store_name(collection->store));
+	}
+
+	return collection->collection.item_statuses;
 }
 
 JStore*

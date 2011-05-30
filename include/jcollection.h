@@ -38,6 +38,7 @@ typedef struct JCollection JCollection;
 
 #include <glib.h>
 
+#include "jitem-status.h"
 #include "jlist.h"
 #include "jsemantics.h"
 
@@ -49,6 +50,7 @@ const gchar* j_collection_name (JCollection*);
 
 void j_collection_create (JCollection*, JList*);
 JList* j_collection_get (JCollection*, JList*);
+void j_collection_get_status (JCollection*, JList*, JItemStatusFlags);
 
 JSemantics* j_collection_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);

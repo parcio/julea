@@ -42,6 +42,7 @@
 JCollection* j_collection_new_from_bson (JStore*, JBSON*);
 
 const gchar* j_collection_collection_items (JCollection*);
+const gchar* j_collection_collection_item_statuses (JCollection*);
 
 JStore* j_collection_store (JCollection*);
 

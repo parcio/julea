@@ -43,6 +43,7 @@
 #include "jcollection-internal.h"
 #include "jconnection-internal.h"
 #include "jdistribution.h"
+#include "jitem-status.h"
 #include "jmessage.h"
 #include "jobjectid.h"
 #include "jsemantics.h"
@@ -63,6 +64,7 @@ struct JItem
 {
 	JObjectID* id;
 	gchar* name;
+	JItemStatus* status;
 
 	JCollection* collection;
 	JSemantics* semantics;
@@ -82,6 +84,7 @@ j_item_new (const gchar* name)
 	item = g_slice_new(JItem);
 	item->id = j_object_id_new(TRUE);
 	item->name = g_strdup(name);
+	item->status = NULL;
 	item->collection = NULL;
 	item->semantics = NULL;
 	item->ref_count = 1;
@@ -126,6 +129,11 @@ j_item_unref (JItem* item)
 			j_semantics_unref(item->semantics);
 		}
 
+		if (item->status != NULL)
+		{
+			j_item_status_unref(item->status);
+		}
+
 		if (item->id != NULL)
 		{
 			j_object_id_free(item->id);
@@ -148,6 +156,35 @@ j_item_name (JItem* item)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item->name;
+}
+
+JItemStatus*
+j_item_get_status (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return item->status;
+}
+
+void
+j_item_set_status (JItem* item, JItemStatus* status)
+{
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(status != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	if (item->status != NULL)
+	{
+		j_item_status_unref(item->status);
+	}
+
+	item->status = status;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 JSemantics*
