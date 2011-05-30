@@ -45,12 +45,12 @@ JItem* j_item_new (const gchar*);
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
-const gchar* j_item_name (JItem*);
+const gchar* j_item_get_name (JItem*);
 
 JItemStatus* j_item_get_status (JItem*);
 void j_item_set_status (JItem*, JItemStatus*);
 
-JSemantics* j_item_semantics (JItem*);
+JSemantics* j_item_get_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
 
 gboolean j_item_read (JItem*, gpointer, guint64, guint64, guint64*);

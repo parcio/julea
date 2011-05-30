@@ -381,6 +381,28 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 		IsInitialized(true);
 	*/
 
+	if (flags == J_ITEM_STATUS_NONE)
+	{
+		JItemStatus* status;
+		JListIterator* it;
+
+		status = j_item_status_new(flags);
+		it = j_list_iterator_new(items);
+
+		while (j_list_iterator_next(it))
+		{
+			JItem* item = j_list_iterator_get(it);
+
+			j_item_set_status(item, j_item_status_ref(status));
+		}
+
+		j_list_iterator_free(it);
+
+		j_item_status_unref(status);
+
+		return;
+	}
+
 	bson = j_bson_new();
 	length = j_list_length(items);
 

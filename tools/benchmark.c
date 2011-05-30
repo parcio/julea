@@ -151,7 +151,7 @@ main (int argc, char** argv)
 			g_free(buf);
 		}
 
-		g_print("%s ", j_item_name(item));
+		g_print("%s ", j_item_get_name(item));
 		j_item_unref(item);
 	}
 

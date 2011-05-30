@@ -80,7 +80,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		{
 			JItem* i = j_collection_iterator_get(citerator);
 
-			filler(buf, j_item_name(i), NULL, 0);
+			filler(buf, j_item_get_name(i), NULL, 0);
 			j_item_unref(i);
 		}
 

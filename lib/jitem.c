@@ -148,7 +148,7 @@ j_item_unref (JItem* item)
 }
 
 const gchar*
-j_item_name (JItem* item)
+j_item_get_name (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
@@ -188,7 +188,7 @@ j_item_set_status (JItem* item, JItemStatus* status)
 }
 
 JSemantics*
-j_item_semantics (JItem* item)
+j_item_get_semantics (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
