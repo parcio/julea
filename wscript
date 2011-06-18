@@ -8,6 +8,8 @@ out = 'build'
 def options (ctx):
 	ctx.load('compiler_c')
 
+	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
+
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
@@ -15,6 +17,8 @@ def options (ctx):
 def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
+
+	ctx.check_large_file()
 
 	ctx.check_cfg(
 		package = 'gio-2.0',
@@ -107,15 +111,16 @@ def configure (ctx):
 			use = ['ZOOKEEPER']
 		)
 
-	ctx.env.CFLAGS += ['-std=c99', '-pedantic', '-Wall', '-Wextra']
-	ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
+	ctx.env.CFLAGS += ['-std=c99']
 
-	ctx.env.CFLAGS += ['-D_FILE_OFFSET_BITS=64']
+	if ctx.options.debug:
+		ctx.env.CFLAGS += ['-pedantic', '-Wall', '-Wextra']
+		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
+		ctx.env.CFLAGS += ['-ggdb']
 
-	# FIXME
-	ctx.env.CFLAGS.remove('-Wmissing-include-dirs')
-
-	ctx.define('G_DISABLE_DEPRECATED', 1)
+		ctx.define('G_DISABLE_DEPRECATED', 1)
+	else:
+		ctx.env.CFLAGS += ['-O2']
 
 def build (ctx):
 	# Headers
