@@ -135,23 +135,7 @@ j_list_unref (JList* list)
 
 	if (list->ref_count == 0)
 	{
-		JListElement* element;
-
-		element = list->head;
-
-		while (element != NULL)
-		{
-			JListElement* next;
-
-			if (list->free_func != NULL)
-			{
-				list->free_func(element->data);
-			}
-
-			next = element->next;
-			g_slice_free(JListElement, element);
-			element = next;
-		}
+		j_list_delete_all(list);
 
 		g_slice_free(JList, list);
 	}
@@ -275,6 +259,34 @@ j_list_get (JList* list, gint index)
 	}
 
 	return data;
+}
+
+void
+j_list_delete_all (JList* list)
+{
+	JListElement* element;
+
+	g_return_if_fail(list != NULL);
+
+	element = list->head;
+
+	while (element != NULL)
+	{
+		JListElement* next;
+
+		if (list->free_func != NULL)
+		{
+			list->free_func(element->data);
+		}
+
+		next = element->next;
+		g_slice_free(JListElement, element);
+		element = next;
+	}
+
+	list->head = NULL;
+	list->tail = NULL;
+	list->length = 0;
 }
 
 /* Internal */

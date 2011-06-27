@@ -29,28 +29,18 @@
  * \file
  **/
 
-#ifndef H_LIST
-#define H_LIST
+#ifndef H_OPERATION
+#define H_OPERATION
 
-struct JList;
+struct JOperation;
 
-typedef struct JList JList;
-
-typedef void (*JListFreeFunc) (gpointer);
+typedef struct JOperation JOperation;
 
 #include <glib.h>
 
-JList* j_list_new (JListFreeFunc);
-JList* j_list_ref (JList*);
-void j_list_unref (JList*);
+JOperation* j_operation_new (void);
+void j_operation_free (JOperation*);
 
-guint j_list_length (JList*);
-
-void j_list_append (JList*, gpointer);
-void j_list_prepend (JList*, gpointer);
-
-gpointer j_list_get (JList*, gint);
-
-void j_list_delete_all (JList*);
+gboolean j_operation_execute (JOperation*);
 
 #endif

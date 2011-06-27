@@ -40,20 +40,23 @@ typedef struct JCollection JCollection;
 
 #include "jitem-status.h"
 #include "jlist.h"
+#include "joperation.h"
 #include "jsemantics.h"
+#include "jstore.h"
 
-JCollection* j_collection_new (const gchar*);
+JCollection* j_collection_new (JStore* store, const gchar*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
 const gchar* j_collection_name (JCollection*);
 
-void j_collection_create (JCollection*, JList*);
-JList* j_collection_get (JCollection*, JList*);
 void j_collection_get_status (JCollection*, JList*, JItemStatusFlags);
 
 JSemantics* j_collection_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);
+
+void j_collection_create (JCollection*, JOperation*);
+void j_collection_get (JCollection*, JOperation*);
 
 /*
 #include "credentials.h"

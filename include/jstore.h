@@ -41,15 +41,13 @@ typedef struct JStore JStore;
 #include "jcollection.h"
 #include "jconnection.h"
 #include "jlist.h"
+#include "joperation.h"
 
 JStore* j_store_new (JConnection*, const gchar*);
 JStore* j_store_ref (JStore*);
 void j_store_unref (JStore*);
 
 const gchar* j_store_name (JStore*);
-
-void j_store_create (JStore*, JList*);
-JList* j_store_get (JStore*, JList*);
 
 JConnection* j_store_connection (JStore*);
 

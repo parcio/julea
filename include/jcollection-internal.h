@@ -46,11 +46,12 @@ const gchar* j_collection_collection_item_statuses (JCollection*);
 
 JStore* j_collection_store (JCollection*);
 
-void j_collection_associate (JCollection*, JStore*);
-
 JBSON* j_collection_serialize (JCollection*);
 void j_collection_deserialize (JCollection*, JBSON*);
 
 JObjectID* j_collection_id (JCollection*);
+
+void j_collection_create_internal (JList*);
+void j_collection_get_internal (JList*);
 
 #endif

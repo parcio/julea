@@ -29,28 +29,62 @@
  * \file
  **/
 
-#ifndef H_LIST
-#define H_LIST
-
-struct JList;
-
-typedef struct JList JList;
-
-typedef void (*JListFreeFunc) (gpointer);
+#ifndef H_OPERATION_INTERNAL
+#define H_OPERATION_INTERNAL
 
 #include <glib.h>
 
-JList* j_list_new (JListFreeFunc);
-JList* j_list_ref (JList*);
-void j_list_unref (JList*);
+#include <joperation.h>
 
-guint j_list_length (JList*);
+#include <jitem.h>
+#include <jstore.h>
 
-void j_list_append (JList*, gpointer);
-void j_list_prepend (JList*, gpointer);
+enum JOperationType
+{
+	J_OPERATION_NONE,
+	J_OPERATION_COLLECTION_CREATE,
+	J_OPERATION_COLLECTION_GET,
+	J_OPERATION_ITEM_CREATE,
+	J_OPERATION_ITEM_GET
+};
 
-gpointer j_list_get (JList*, gint);
+typedef enum JOperationType JOperationType;
 
-void j_list_delete_all (JList*);
+struct JOperationPart
+{
+	JOperationType type;
+
+	union
+	{
+		struct
+		{
+			JCollection* collection;
+		}
+		collection_create;
+
+		struct
+		{
+			JCollection* collection;
+		}
+		collection_get;
+
+		struct
+		{
+			JItem* item;
+		}
+		item_create;
+
+		struct
+		{
+			JItem* item;
+		}
+		item_get;
+	}
+	u;
+};
+
+typedef struct JOperationPart JOperationPart;
+
+void j_operation_add (JOperation*, JOperationPart*);
 
 #endif

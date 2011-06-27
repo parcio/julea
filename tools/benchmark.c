@@ -38,9 +38,7 @@ main (int argc, char** argv)
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
-	JList* collections;
-	JListIterator* cliterator;
-	gboolean is_first = TRUE;
+	JOperation* operation;
 
 	g_type_init();
 
@@ -67,7 +65,7 @@ main (int argc, char** argv)
 
 	//j_store_set_semantics(store, semantics);
 
-	collections = j_list_new((JListFreeFunc)j_collection_unref);
+	operation = j_operation_new();
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -76,90 +74,87 @@ main (int argc, char** argv)
 
 		name = g_strdup_printf("test-%u", i);
 
-		collection = j_collection_new(name);
+		collection = j_collection_new(store, name);
 		j_collection_set_semantics(collection, semantics);
-
-		j_list_append(collections, collection);
+		j_collection_create(collection, operation);
 
 		g_free(name);
-	}
 
-	j_store_create(store, collections);
+		j_operation_execute(operation);
 
-	cliterator = j_list_iterator_new(collections);
-
-	while (j_list_iterator_next(cliterator))
-	{
-		JCollection* collection = j_list_iterator_get(cliterator);
-		JList* items;
-
-		items = j_list_new((JListFreeFunc)j_item_unref);
-
-		for (guint i = 0; i < 10000; i++)
+		for (guint j = 0; j < 10000; j++)
 		{
 			JItem* item;
-			gchar* name;
 
-			name = g_strdup_printf("test-%u", i);
+			name = g_strdup_printf("test-%u", j);
 
-			item = j_item_new(name);
+			item = j_item_new(collection, name);
 			//j_item_set_semantics(item, semantics);
-
-			j_list_append(items, item);
+			j_item_create(item, operation);
+			j_item_unref(item);
 
 			g_free(name);
 		}
 
-		j_collection_create(collection, items);
-
-		j_list_unref(items);
-	}
-
-	j_list_iterator_free(cliterator);
-
-	siterator = j_store_iterator_new(store);
-
-	while (j_store_iterator_next(siterator))
-	{
-		JCollection* collection = j_store_iterator_get(siterator);
-
-		g_print("%s ", j_collection_name(collection));
 		j_collection_unref(collection);
+
+		j_operation_execute(operation);
 	}
 
-	g_print("\n");
-
-	j_store_iterator_free(siterator);
-
-	citerator = j_collection_iterator_new(j_list_get(collections, 0));
-
-	while (j_collection_iterator_next(citerator))
 	{
-		JItem* item = j_collection_iterator_get(citerator);
+		JCollection* first_collection;
+		gboolean is_first = TRUE;
 
-		if (is_first)
+		siterator = j_store_iterator_new(store);
+
+		while (j_store_iterator_next(siterator))
 		{
-			gchar* buf;
-			guint64 bytes;
+			JCollection* collection = j_store_iterator_get(siterator);
 
-			is_first = FALSE;
-			buf = g_new0(gchar, 1024 * 1024 + 1);
-			j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes);
-			j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
-			j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
-			j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes);
-			g_free(buf);
+			g_print("%s ", j_collection_name(collection));
+
+			if (is_first)
+			{
+				first_collection = j_collection_ref(collection);
+			}
+
+			j_collection_unref(collection);
 		}
 
-		g_print("%s ", j_item_get_name(item));
-		j_item_unref(item);
+		g_print("\n");
+
+		j_store_iterator_free(siterator);
+
+		citerator = j_collection_iterator_new(first_collection);
+		j_collection_unref(first_collection);
+
+		while (j_collection_iterator_next(citerator))
+		{
+			JItem* item = j_collection_iterator_get(citerator);
+
+			if (is_first)
+			{
+				gchar* buf;
+				guint64 bytes;
+
+				is_first = FALSE;
+
+				buf = g_new0(gchar, 1024 * 1024 + 1);
+				j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes);
+				j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
+				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
+				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes);
+				g_free(buf);
+			}
+
+			g_print("%s ", j_item_get_name(item));
+			j_item_unref(item);
+		}
+
+		g_print("\n");
+
+		j_collection_iterator_free(citerator);
 	}
-
-	g_print("\n");
-
-	j_collection_iterator_free(citerator);
-
-	j_list_unref(collections);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);

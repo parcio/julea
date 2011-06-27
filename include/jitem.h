@@ -38,10 +38,12 @@ typedef struct JItem JItem;
 
 #include <glib.h>
 
+#include "jcollection.h"
 #include "jitem-status.h"
+#include "joperation.h"
 #include "jsemantics.h"
 
-JItem* j_item_new (const gchar*);
+JItem* j_item_new (JCollection*, const gchar*);
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
@@ -52,6 +54,9 @@ void j_item_set_status (JItem*, JItemStatus*);
 
 JSemantics* j_item_get_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
+
+void j_item_create (JItem*, JOperation*);
+void j_item_get (JItem*, JOperation*);
 
 gboolean j_item_read (JItem*, gpointer, guint64, guint64, guint64*);
 gboolean j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*);

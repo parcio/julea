@@ -83,6 +83,7 @@ jfs_path_depth (gchar const* path)
 guint
 jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JItem** item)
 {
+	JOperation* operation;
 	gchar** components;
 	guint depth;
 
@@ -90,6 +91,7 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 	*collection = NULL;
 	*item = NULL;
 
+	operation = j_operation_new();
 	depth = jfs_path_depth(path);
 	components = jfs_path_components(path);
 
@@ -111,24 +113,17 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 
 	if (depth > 1)
 	{
-		JList* collections;
-		JList* names;
-
 		/* FIXME */
 		if (components[1][0] == '.')
 		{
 			goto end;
 		}
 
-		names = j_list_new(NULL);
-		j_list_append(names, components[1]);
+		*collection = j_collection_new(*store, components[1]);
+		j_collection_get(*collection, operation);
+		j_operation_execute(operation);
 
-		collections = j_store_get(*store, names);
-		*collection = j_collection_ref(j_list_get(collections, 0));
-
-		j_list_unref(collections);
-		j_list_unref(names);
-
+		// FIXME
 		if (*collection == NULL)
 		{
 			goto end;
@@ -137,24 +132,17 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 
 	if (depth > 2)
 	{
-		JList* items;
-		JList* names;
-
 		/* FIXME */
 		if (components[2][0] == '.')
 		{
 			goto end;
 		}
 
-		names = j_list_new(NULL);
-		j_list_append(names, components[2]);
+		*item = j_item_new(*collection, components[2]);
+		j_item_get(*item, operation);
+		j_operation_execute(operation);
 
-		items = j_collection_get(*collection, names);
-		*item = j_item_ref(j_list_get(items, 0));
-
-		j_list_unref(items);
-		j_list_unref(names);
-
+		// FIXME
 		if (*item == NULL)
 		{
 			goto end;
