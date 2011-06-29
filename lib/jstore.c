@@ -43,6 +43,8 @@
 #include "jlist-iterator.h"
 #include "jmongo.h"
 #include "jmongo-connection.h"
+#include "joperation.h"
+#include "joperation-internal.h"
 
 /**
  * \defgroup JStore Store
@@ -162,6 +164,20 @@ j_store_connection (JStore* store)
 	return store->connection;
 }
 
+void
+j_store_get (JStore* store, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(store != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_GET;
+	part->u.store_get.store = j_store_ref(store);
+
+	j_operation_add(operation, part);
+}
+
 /* Internal */
 
 const gchar*
@@ -179,6 +195,30 @@ j_store_collection_collections (JStore* store)
 	}
 
 	return store->collection.collections;
+}
+
+void
+j_store_get_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JStore* store = part->u.store_get.store;
+
+		//store = j_store_new();
+	}
+
+	j_list_iterator_free(it);
 }
 
 /*

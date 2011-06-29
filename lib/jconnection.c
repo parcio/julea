@@ -176,15 +176,6 @@ j_connection_disconnect (JConnection* connection)
 	return TRUE;
 }
 
-JStore*
-j_connection_get (JConnection* connection, const gchar* name)
-{
-	g_return_val_if_fail(connection != NULL, NULL);
-	g_return_val_if_fail(name != NULL, NULL);
-
-	return j_store_new(connection, name);
-}
-
 /* Internal */
 
 JMongoConnection*

@@ -47,8 +47,6 @@ void j_connection_unref (JConnection*);
 gboolean j_connection_connect (JConnection*);
 gboolean j_connection_disconnect (JConnection*);
 
-JStore* j_connection_get (JConnection*, const gchar*);
-
 /*
 #include "public.h"
 #include "ref_counted.h"

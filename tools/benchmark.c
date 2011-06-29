@@ -58,14 +58,17 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	store = j_connection_get(connection, "JULEA");
+	operation = j_operation_new();
+
+	store = j_store_new(connection, "JULEA");
+	j_store_get(store, operation);
+
+	j_operation_execute(operation);
 
 	semantics = j_semantics_new();
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
 	//j_store_set_semantics(store, semantics);
-
-	operation = j_operation_new();
 
 	for (guint i = 0; i < 10; i++)
 	{

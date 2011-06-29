@@ -103,7 +103,9 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 			goto end;
 		}
 
-		*store = j_connection_get(jfs_connection, components[0]);
+		*store = j_store_new(jfs_connection, components[0]);
+		j_store_get(*store, operation);
+		j_operation_execute(operation);
 
 		if (*store == NULL)
 		{

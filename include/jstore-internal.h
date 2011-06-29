@@ -38,4 +38,6 @@
 
 const gchar* j_store_collection_collections (JStore*);
 
+void j_store_get_internal (JList*);
+
 #endif

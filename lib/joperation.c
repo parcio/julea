@@ -38,6 +38,7 @@
 #include "jitem-internal.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
+#include "jstore-internal.h"
 
 /**
  * \defgroup JOperation Operation
@@ -85,6 +86,12 @@ j_operation_part_free (gpointer data)
 			break;
 		case J_OPERATION_ITEM_GET:
 			j_item_unref(part->u.item_get.item);
+			break;
+		case J_OPERATION_STORE_CREATE:
+			j_store_unref(part->u.store_create.store);
+			break;
+		case J_OPERATION_STORE_GET:
+			j_store_unref(part->u.store_get.store);
 			break;
 		case J_OPERATION_NONE:
 		default:
@@ -163,6 +170,12 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			break;
 		case J_OPERATION_ITEM_GET:
 			j_item_get_internal(list);
+			break;
+		case J_OPERATION_STORE_CREATE:
+			//j_store_create_internal(list);
+			break;
+		case J_OPERATION_STORE_GET:
+			j_store_get_internal(list);
 			break;
 		case J_OPERATION_NONE:
 		default:

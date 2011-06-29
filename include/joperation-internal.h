@@ -45,7 +45,9 @@ enum JOperationType
 	J_OPERATION_COLLECTION_CREATE,
 	J_OPERATION_COLLECTION_GET,
 	J_OPERATION_ITEM_CREATE,
-	J_OPERATION_ITEM_GET
+	J_OPERATION_ITEM_GET,
+	J_OPERATION_STORE_CREATE,
+	J_OPERATION_STORE_GET
 };
 
 typedef enum JOperationType JOperationType;
@@ -79,6 +81,18 @@ struct JOperationPart
 			JItem* item;
 		}
 		item_get;
+
+		struct
+		{
+			JStore* store;
+		}
+		store_create;
+
+		struct
+		{
+			JStore* store;
+		}
+		store_get;
 	}
 	u;
 };

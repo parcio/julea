@@ -42,6 +42,7 @@ typedef struct JStore JStore;
 #include <jconnection.h>
 #include <jlist.h>
 #include <joperation.h>
+#include <jstore.h>
 
 JStore* j_store_new (JConnection*, const gchar*);
 JStore* j_store_ref (JStore*);
@@ -53,6 +54,8 @@ JConnection* j_store_connection (JStore*);
 
 JSemantics* j_store_semantics (JStore*);
 void j_store_set_semantics (JStore*, JSemantics*);
+
+void j_store_get (JStore*, JOperation*);
 
 /*
 #include "collection.h"
