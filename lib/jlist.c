@@ -161,6 +161,17 @@ j_list_length (JList* list)
 	return list->length;
 }
 
+/**
+ * Appends a new list element to a list.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ * \param data A list element.
+ **/
 void
 j_list_append (JList* list, gpointer data)
 {
@@ -188,6 +199,17 @@ j_list_append (JList* list, gpointer data)
 	}
 }
 
+/**
+ * Prepends a new list element to a list.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ * \param data A list element.
+ **/
 void
 j_list_prepend (JList* list, gpointer data)
 {
@@ -217,8 +239,8 @@ j_list_prepend (JList* list, gpointer data)
  *
  * \author Michael Kuhn
  *
- * \param list A list.
- * \param index The list element's index.
+ * \param list  A list.
+ * \param index An index.
  *
  * \return A list element, or NULL.
  **/
@@ -261,6 +283,13 @@ j_list_get (JList* list, gint index)
 	return data;
 }
 
+/**
+ * Deletes all list elements.
+ *
+ * \author Michael Kuhn
+ *
+ * \param list A list.
+ **/
 void
 j_list_delete_all (JList* list)
 {

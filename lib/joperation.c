@@ -53,10 +53,22 @@ struct JOperation
 	JList* list;
 };
 
+/**
+ * Frees an operation part.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param data An operation part.
+ **/
 /* FIXME */
 static
 void
-j_operation_free_list (gpointer data)
+j_operation_part_free (gpointer data)
 {
 	JOperationPart* part = data;
 
@@ -66,33 +78,31 @@ j_operation_free_list (gpointer data)
 			j_collection_unref(part->u.collection_create.collection);
 			break;
 		case J_OPERATION_COLLECTION_GET:
+			j_collection_unref(part->u.collection_get.collection);
 			break;
 		case J_OPERATION_ITEM_CREATE:
 			j_item_unref(part->u.item_create.item);
 			break;
 		case J_OPERATION_ITEM_GET:
+			j_item_unref(part->u.item_get.item);
 			break;
 		case J_OPERATION_NONE:
 		default:
-			g_return_if_reached();
+			g_warn_if_reached();
 	}
 
 	g_slice_free(JOperationPart, part);
 }
 
 /**
- * Creates a new message.
+ * Creates a new operation.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param length The message's length.
- * \param op     The message's operation type.
- * \param count  The message's operation count.
- *
- * \return A new message. Should be freed with j_message_free().
+ * \return A new operation. Should be freed with j_operation_free().
  **/
 JOperation*
 j_operation_new (void)
@@ -100,20 +110,20 @@ j_operation_new (void)
 	JOperation* operation;
 
 	operation = g_slice_new(JOperation);
-	operation->list = j_list_new(j_operation_free_list);
+	operation->list = j_list_new(j_operation_part_free);
 
 	return operation;
 }
 
 /**
- * Frees the memory allocated by the message.
+ * Frees the memory allocated by the operation.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param operation An operation.
  **/
 void
 j_operation_free (JOperation* operation)
@@ -125,6 +135,17 @@ j_operation_free (JOperation* operation)
 	g_slice_free(JOperation, operation);
 }
 
+/**
+ * Executes the operation parts of a given operation type.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param type An operation type.
+ * \param list A list of operation parts.
+ **/
 static
 void
 j_operation_execute_internal (JOperationType type, JList* list)
@@ -151,6 +172,18 @@ j_operation_execute_internal (JOperationType type, JList* list)
 	j_list_delete_all(list);
 }
 
+/**
+ * Executes the operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ *
+ * \return TRUE on success, FALSE if an error occured.
+ **/
 gboolean
 j_operation_execute (JOperation* operation)
 {
@@ -194,6 +227,19 @@ j_operation_execute (JOperation* operation)
 
 /* Internal */
 
+/**
+ * Adds a new part to the operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ * \param part      An operation part.
+ **/
 void
 j_operation_add (JOperation* operation, JOperationPart* part)
 {
