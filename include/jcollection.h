@@ -38,11 +38,11 @@ typedef struct JCollection JCollection;
 
 #include <glib.h>
 
-#include "jitem-status.h"
-#include "jlist.h"
-#include "joperation.h"
-#include "jsemantics.h"
-#include "jstore.h"
+#include <jitem-status.h>
+#include <jlist.h>
+#include <joperation.h>
+#include <jsemantics.h>
+#include <jstore.h>
 
 JCollection* j_collection_new (JStore* store, const gchar*);
 JCollection* j_collection_ref (JCollection*);

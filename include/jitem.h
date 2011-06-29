@@ -38,10 +38,10 @@ typedef struct JItem JItem;
 
 #include <glib.h>
 
-#include "jcollection.h"
-#include "jitem-status.h"
-#include "joperation.h"
-#include "jsemantics.h"
+#include <jcollection.h>
+#include <jitem-status.h>
+#include <joperation.h>
+#include <jsemantics.h>
 
 JItem* j_item_new (JCollection*, const gchar*);
 JItem* j_item_ref (JItem*);

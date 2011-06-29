@@ -46,10 +46,10 @@ struct JMongoHeader
 
 typedef struct JMongoHeader JMongoHeader;
 
-#include "jbson.h"
-#include "jlist.h"
-#include "jmongo-connection.h"
-#include "jmongo-iterator.h"
+#include <jbson.h>
+#include <jlist.h>
+#include <jmongo-connection.h>
+#include <jmongo-iterator.h>
 
 void j_mongo_create_index(JMongoConnection*, const gchar*, JBSON*, gboolean);
 

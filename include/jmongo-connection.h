@@ -38,8 +38,8 @@ typedef struct JMongoConnection JMongoConnection;
 
 #include <glib.h>
 
-#include "jmongo-message.h"
-#include "jmongo-reply.h"
+#include <jmongo-message.h>
+#include <jmongo-reply.h>
 
 JMongoConnection* j_mongo_connection_new (void);
 JMongoConnection* j_mongo_connection_ref (JMongoConnection*);

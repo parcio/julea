@@ -32,7 +32,7 @@
 #ifndef H_LIST_INTERNAL
 #define H_LIST_INTERNAL
 
-#include "jlist.h"
+#include <jlist.h>
 
 /**
  * A JList element.

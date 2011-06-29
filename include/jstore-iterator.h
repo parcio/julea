@@ -38,8 +38,8 @@ struct JStoreIterator;
 
 typedef struct JStoreIterator JStoreIterator;
 
-#include "jcollection.h"
-#include "jstore.h"
+#include <jcollection.h>
+#include <jstore.h>
 
 JStoreIterator* j_store_iterator_new (JStore*);
 void j_store_iterator_free (JStoreIterator*);

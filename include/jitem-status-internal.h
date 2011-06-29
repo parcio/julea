@@ -32,11 +32,11 @@
 #ifndef H_ITEM_STATUS_INTERNAL
 #define H_ITEM_STATUS_INTERNAL
 
-#include "jitem-status.h"
+#include <jitem-status.h>
 
 #include <glib.h>
 
-#include "jbson.h"
+#include <jbson.h>
 
 JBSON* j_item_status_serialize (JItemStatus*);
 void j_item_status_deserialize (JItemStatus*, JBSON*);

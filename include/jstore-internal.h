@@ -34,7 +34,7 @@
 
 #include <glib.h>
 
-#include "jstore.h"
+#include <jstore.h>
 
 const gchar* j_store_collection_collections (JStore*);
 

@@ -38,9 +38,9 @@ typedef struct JMongoIterator JMongoIterator;
 
 #include <glib.h>
 
-#include "jbson.h"
-#include "jmongo-connection.h"
-#include "jmongo-reply.h"
+#include <jbson.h>
+#include <jmongo-connection.h>
+#include <jmongo-reply.h>
 
 JMongoIterator* j_mongo_iterator_new (JMongoConnection*, const gchar*, JMongoReply*);
 void j_mongo_iterator_free (JMongoIterator*);

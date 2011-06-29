@@ -34,8 +34,8 @@
 
 #include <glib.h>
 
-#include "jconfiguration.h"
-#include "jtrace.h"
+#include <jconfiguration.h>
+#include <jtrace.h>
 
 gboolean j_init (void);
 gboolean j_deinit (void);

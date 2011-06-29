@@ -38,8 +38,8 @@ struct JCollectionIterator;
 
 typedef struct JCollectionIterator JCollectionIterator;
 
-#include "jcollection.h"
-#include "jitem.h"
+#include <jcollection.h>
+#include <jitem.h>
 
 JCollectionIterator* j_collection_iterator_new (JCollection*);
 void j_collection_iterator_free (JCollectionIterator*);

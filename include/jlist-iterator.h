@@ -38,7 +38,7 @@ typedef struct JListIterator JListIterator;
 
 #include <glib.h>
 
-#include "jlist.h"
+#include <jlist.h>
 
 JListIterator* j_list_iterator_new (JList*);
 void j_list_iterator_free (JListIterator*);
