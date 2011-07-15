@@ -32,6 +32,8 @@
 #ifndef H_LIST_INTERNAL
 #define H_LIST_INTERNAL
 
+#include <glib.h>
+
 #include <jlist.h>
 
 /**
@@ -51,8 +53,6 @@ struct JListElement
 
 typedef struct JListElement JListElement;
 
-#include <glib.h>
-
-JListElement* j_list_head (JList*);
+G_GNUC_INTERNAL JListElement* j_list_head (JList*);
 
 #endif

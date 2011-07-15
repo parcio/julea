@@ -29,7 +29,7 @@
 
 #include <julea.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jdistribution.h>
 
 static

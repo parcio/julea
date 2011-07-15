@@ -39,19 +39,19 @@
 #include <jbson.h>
 #include <jstore.h>
 
-JCollection* j_collection_new_from_bson (JStore*, JBSON*);
+G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, JBSON*);
 
-const gchar* j_collection_collection_items (JCollection*);
-const gchar* j_collection_collection_item_statuses (JCollection*);
+G_GNUC_INTERNAL const gchar* j_collection_collection_items (JCollection*);
+G_GNUC_INTERNAL const gchar* j_collection_collection_item_statuses (JCollection*);
 
-JStore* j_collection_store (JCollection*);
+G_GNUC_INTERNAL JStore* j_collection_store (JCollection*);
 
-JBSON* j_collection_serialize (JCollection*);
-void j_collection_deserialize (JCollection*, JBSON*);
+G_GNUC_INTERNAL JBSON* j_collection_serialize (JCollection*);
+G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, JBSON*);
 
-JObjectID* j_collection_id (JCollection*);
+G_GNUC_INTERNAL JObjectID* j_collection_id (JCollection*);
 
-void j_collection_create_internal (JList*);
-void j_collection_get_internal (JList*);
+G_GNUC_INTERNAL void j_collection_create_internal (JList*);
+G_GNUC_INTERNAL void j_collection_get_internal (JList*);
 
 #endif

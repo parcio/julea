@@ -36,8 +36,8 @@
 
 #include <jstore.h>
 
-const gchar* j_store_collection_collections (JStore*);
+G_GNUC_INTERNAL const gchar* j_store_collection_collections (JStore*);
 
-void j_store_get_internal (JList*);
+G_GNUC_INTERNAL void j_store_get_internal (JList*);
 
 #endif

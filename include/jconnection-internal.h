@@ -32,13 +32,15 @@
 #ifndef H_CONNECTION_INTERNAL
 #define H_CONNECTION_INTERNAL
 
+#include <glib.h>
+
 #include <jconnection.h>
 
 #include <jmessage.h>
 #include <jmongo-connection.h>
 
-JMongoConnection* j_connection_connection (JConnection*);
-gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
-gboolean j_connection_receive (JConnection*, guint, JMessage*, gpointer, gsize);
+G_GNUC_INTERNAL JMongoConnection* j_connection_connection (JConnection*);
+G_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
+G_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*, gpointer, gsize);
 
 #endif

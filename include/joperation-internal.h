@@ -99,6 +99,6 @@ struct JOperationPart
 
 typedef struct JOperationPart JOperationPart;
 
-void j_operation_add (JOperation*, JOperationPart*);
+G_GNUC_INTERNAL void j_operation_add (JOperation*, JOperationPart*);
 
 #endif
