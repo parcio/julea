@@ -10,6 +10,8 @@ def options (ctx):
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 
+	ctx.add_option('--mongodb', action='store', default=None, help='Use MongoDB')
+
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
@@ -18,7 +20,9 @@ def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
 
-	ctx.check_large_file()
+	ctx.env.CFLAGS += ['-std=c99']
+
+	#ctx.check_large_file()
 
 	ctx.check_cfg(
 		package = 'gio-2.0',
@@ -57,61 +61,59 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	if ctx.options.hdtrace:
-		ctx.env.LIB_HDTRACE      = ['hdTracing']
-		ctx.env.LIBPATH_HDTRACE  = ['%s/lib' % (ctx.options.hdtrace,)]
-		ctx.env.RPATH_HDTRACE    = ['%s/lib' % (ctx.options.hdtrace,)]
-		ctx.env.INCLUDES_HDTRACE = ['%s/include' % (ctx.options.hdtrace,)]
-
+	if ctx.options.mongodb:
 		ctx.check_cc(
-			header_name = 'hdTrace.h',
-			define_name = 'HAVE_HDTRACE',
-			use = ['HDTRACE']
+			header_name = 'bson.h',
+			lib = 'bson',
+			includes = ['%s/src' % (ctx.options.mongodb,)],
+			libpath = ['%s' % (ctx.options.mongodb,)],
+			rpath = ['%s' % (ctx.options.mongodb,)],
+			uselib_store = 'BSON',
+			define_name = 'HAVE_BSON'
 		)
 
 		ctx.check_cc(
+			header_name = 'mongo.h',
+			lib = 'mongoc',
+			includes = ['%s/src' % (ctx.options.mongodb,)],
+			libpath = ['%s' % (ctx.options.mongodb,)],
+			rpath = ['%s' % (ctx.options.mongodb,)],
+			uselib_store = 'MONGO',
+			define_name = 'HAVE_MONGO'
+		)
+
+	if ctx.options.hdtrace:
+		ctx.check_cc(
+			header_name = 'hdTrace.h',
 			lib = 'hdTracing',
-			define_name = 'HAVE_HDTRACE',
-			use = ['HDTRACE']
+			includes = ['%s/include' % (ctx.options.hdtrace,)],
+			libpath = ['%s/lib' % (ctx.options.hdtrace,)],
+			rpath = ['%s/lib' % (ctx.options.hdtrace,)],
+			uselib_store = 'HDTRACE',
+			define_name = 'HAVE_HDTRACE'
 		)
 
 	if ctx.options.otf:
-		ctx.env.LIB_OTF      = ['otf']
-		ctx.env.LIBPATH_OTF  = ['%s/lib' % (ctx.options.otf,)]
-		ctx.env.RPATH_OTF    = ['%s/lib' % (ctx.options.otf,)]
-		ctx.env.INCLUDES_OTF = ['%s/include' % (ctx.options.otf,)]
-
 		ctx.check_cc(
 			header_name = 'otf.h',
-			define_name = 'HAVE_OTF',
-			use = ['OTF']
-		)
-
-		ctx.check_cc(
 			lib = 'otf',
-			define_name = 'HAVE_OTF',
-			use = ['OTF']
+			includes = ['%s/include' % (ctx.options.otf,)],
+			libpath = ['%s/lib' % (ctx.options.otf,)],
+			rpath = ['%s/lib' % (ctx.options.otf,)],
+			uselib_store = 'OTF',
+			define_name = 'HAVE_OTF'
 		)
 
 	if ctx.options.zookeeper:
-		ctx.env.LIB_ZOOKEEPER      = ['zookeeper_mt']
-		ctx.env.LIBPATH_ZOOKEEPER  = ['%s/lib' % (ctx.options.zookeeper,)]
-		ctx.env.RPATH_ZOOKEEPER    = ['%s/lib' % (ctx.options.zookeeper,)]
-		ctx.env.INCLUDES_ZOOKEEPER = ['%s/include/c-client-src' % (ctx.options.zookeeper,)]
-
 		ctx.check_cc(
 			header_name = 'zookeeper.h',
-			define_name = 'HAVE_ZOOKEEPER',
-			use = ['ZOOKEEPER']
-		)
-
-		ctx.check_cc(
 			lib = 'zookeeper_mt',
-			define_name = 'HAVE_ZOOKEEPER',
-			use = ['ZOOKEEPER']
+			includes = ['%s/include/c-client-src' % (ctx.options.zookeeper,)],
+			libpath = ['%s/lib' % (ctx.options.zookeeper,)],
+			rpath = ['%s/lib' % (ctx.options.zookeeper,)],
+			uselib_store = 'ZOOKEEPER',
+			define_name = 'HAVE_ZOOKEEPER'
 		)
-
-	ctx.env.CFLAGS += ['-std=c99']
 
 	if ctx.options.debug:
 		ctx.env.CFLAGS += ['-pedantic', '-Wall', '-Wextra']
