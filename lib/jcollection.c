@@ -31,11 +31,12 @@
 
 #include <glib.h>
 
+#include <bson.h>
+#include <mongo.h>
+
 #include "jcollection.h"
 #include "jcollection-internal.h"
 
-#include "jbson.h"
-#include "jbson-iterator.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
 #include "jitem.h"
@@ -44,9 +45,6 @@
 #include "jitem-status-internal.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
-#include "jmongo.h"
-#include "jmongo-connection.h"
-#include "jobjectid.h"
 #include "joperation.h"
 #include "joperation-internal.h"
 #include "jsemantics.h"
@@ -66,7 +64,7 @@
  **/
 struct JCollection
 {
-	JObjectID* id;
+	bson_oid_t id;
 
 	/**
 	 * The collection's name.
@@ -123,7 +121,7 @@ j_collection_new (JStore* store, const gchar* name)
 	*/
 
 	collection = g_slice_new(JCollection);
-	collection->id = j_object_id_new(TRUE);
+	bson_oid_gen(&(collection->id));
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
@@ -176,11 +174,6 @@ j_collection_unref (JCollection* collection)
 			j_store_unref(collection->store);
 		}
 
-		if (collection->id != NULL)
-		{
-			j_object_id_free(collection->id);
-		}
-
 		g_free(collection->collection.items);
 		g_free(collection->name);
 
@@ -211,11 +204,11 @@ j_collection_name (JCollection* collection)
 void
 j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags flags)
 {
-	JBSON* empty;
-	JBSON* fields;
-	JBSON* bson;
-	JMongoConnection* connection;
-	JMongoIterator* iterator;
+	bson empty;
+	bson fields;
+	bson b;
+	mongo* connection;
+	mongo_cursor* iterator;
 	guint length;
 	guint n = 0;
 
@@ -248,75 +241,75 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 		return;
 	}
 
-	bson = j_bson_new();
+	bson_init(&b);
 	length = j_list_length(items);
 
 	if (length == 1)
 	{
 		JItem* item = j_list_get(items, 0);
 
-		j_bson_append_object_id(bson, "Item", j_item_id(item));
+		bson_append_oid(&b, "Item", j_item_id(item));
 		n = 1;
 	}
 	else if (length > 1)
 	{
-		JBSON* items_bson;
+		bson items_bson;
 		JListIterator* it;
 
-		items_bson = j_bson_new();
+		bson_init(&items_bson);
 		it = j_list_iterator_new(items);
 
 		while (j_list_iterator_next(it))
 		{
 			JItem* item = j_list_iterator_get(it);
 
-			j_bson_append_object_id(items_bson, "Item", j_item_id(item));
+			bson_append_oid(&items_bson, "Item", j_item_id(item));
 		}
 
 		j_list_iterator_free(it);
+		bson_finish(&items_bson);
 
-		j_bson_append_document(bson, "$or", items_bson);
-		j_bson_unref(items_bson);
+		bson_append_bson(&b, "$or", &items_bson);
+		bson_destroy(&items_bson);
 	}
 
-	empty = j_bson_new_empty();
-	fields = j_bson_new();
+	bson_finish(&b);
+	bson_empty(&empty);
+	bson_init(&fields);
 
 	if (flags & J_ITEM_STATUS_SIZE)
 	{
-		j_bson_append_int32(fields, "Size", 1);
+		bson_append_int(&fields, "Size", 1);
 	}
 
 	if (flags & J_ITEM_STATUS_ACCESS_TIME)
 	{
-		j_bson_append_int32(fields, "AccessTime", 1);
+		bson_append_int(&fields, "AccessTime", 1);
 	}
 
 	if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
 	{
-		j_bson_append_int32(fields, "ModificationTime", 1);
+		bson_append_int(&fields, "ModificationTime", 1);
 	}
+
+	bson_finish(&fields);
 
 	connection = j_connection_connection(j_store_connection(collection->store));
-	iterator = j_mongo_find(connection, j_collection_collection_item_statuses(collection), bson, fields, n, 0);
+	iterator = mongo_find(connection, j_collection_collection_item_statuses(collection), &b, &fields, n, 0, 0);
 
-	while (j_mongo_iterator_next(iterator))
+	while (mongo_cursor_next(iterator))
 	{
-		JBSON* status_bson;
 		JItemStatus* status;
 
-		status_bson = j_mongo_iterator_get(iterator);
 		status = j_item_status_new(flags);
-		j_item_status_deserialize(status, status_bson);
+		j_item_status_deserialize(status, &(iterator->current));
 		// FIXME j_item_set_status(item, status);
-		j_bson_unref(status_bson);
 	}
 
-	j_mongo_iterator_free(iterator);
+	mongo_cursor_destroy(iterator);
 
-	j_bson_unref(empty);
-	j_bson_unref(fields);
-	j_bson_unref(bson);
+	bson_destroy(&fields);
+	bson_destroy(&b);
 }
 
 JSemantics*
@@ -377,7 +370,7 @@ j_collection_get (JCollection* collection, JOperation* operation)
 /* Internal */
 
 JCollection*
-j_collection_new_from_bson (JStore* store, JBSON* bson)
+j_collection_new_from_bson (JStore* store, bson* b)
 {
 	/*
 		: m_initialized(true),
@@ -385,17 +378,16 @@ j_collection_new_from_bson (JStore* store, JBSON* bson)
 	JCollection* collection;
 
 	g_return_val_if_fail(store != NULL, NULL);
-	g_return_val_if_fail(bson != NULL, NULL);
+	g_return_val_if_fail(b != NULL, NULL);
 
 	collection = g_slice_new(JCollection);
-	collection->id = NULL;
 	collection->name = NULL;
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
 	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
-	j_collection_deserialize(collection, bson);
+	j_collection_deserialize(collection, b);
 
 	return collection;
 }
@@ -436,7 +428,7 @@ j_collection_store (JCollection* collection)
 	return collection->store;
 }
 
-JBSON*
+bson*
 j_collection_serialize (JCollection* collection)
 {
 	/*
@@ -444,79 +436,76 @@ j_collection_serialize (JCollection* collection)
 			.append("Group", m_owner.Group())
 	*/
 
-	JBSON* bson;
+	bson* b;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	bson = j_bson_new();
-	j_bson_append_object_id(bson, "_id", collection->id);
-	j_bson_append_string(bson, "Name", collection->name);
+	b = g_slice_new(bson);
+	bson_init(b);
+	bson_append_oid(b, "_id", &(collection->id));
+	bson_append_string(b, "Name", collection->name);
+	bson_finish(b);
 
-	return bson;
+	return b;
 }
 
 /**
  * \private
  **/
 void
-j_collection_deserialize (JCollection* collection, JBSON* bson)
+j_collection_deserialize (JCollection* collection, bson* b)
 {
-	JBSONIterator* iterator;
+	bson_iterator iterator;
 
 	g_return_if_fail(collection != NULL);
-	g_return_if_fail(bson != NULL);
+	g_return_if_fail(b != NULL);
 
 	//j_bson_print(bson);
 
-	iterator = j_bson_iterator_new(bson);
+	bson_iterator_init(&iterator, b->data);
 
 	/*
 		m_owner.m_user = o.getField("User").Int();
 		m_owner.m_group = o.getField("Group").Int();
 	*/
 
-	while (j_bson_iterator_next(iterator))
+	while (bson_iterator_next(&iterator))
 	{
 		const gchar* key;
 
-		key = j_bson_iterator_get_key(iterator);
+		key = bson_iterator_key(&iterator);
 
 		if (g_strcmp0(key, "_id") == 0)
 		{
-			if (collection->id != NULL)
-			{
-				j_object_id_free(collection->id);
-			}
-
-			collection->id = j_bson_iterator_get_id(iterator);
+			collection->id = *bson_iterator_oid(&iterator);
 		}
 		else if (g_strcmp0(key, "Name") == 0)
 		{
 			g_free(collection->name);
-			collection->name = g_strdup(j_bson_iterator_get_string(iterator));
+			collection->name = g_strdup(bson_iterator_string(&iterator));
 		}
 	}
-
-	j_bson_iterator_free(iterator);
 }
 
-JObjectID*
+bson_oid_t*
 j_collection_id (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	return collection->id;
+	return &(collection->id);
 }
 
 void
 j_collection_create_internal (JList* parts)
 {
-	JBSON* index;
-	JList* obj;
 	JListIterator* it;
-	JMongoConnection* connection;
 	JSemantics* semantics;
 	JStore* store;
+	bson** obj;
+	bson index;
+	mongo* connection;
+	guint i;
+	guint length;
 
 	g_return_if_fail(parts != NULL);
 
@@ -524,33 +513,44 @@ j_collection_create_internal (JList* parts)
 	IsInitialized(true);
 	*/
 
-	obj = j_list_new((JListFreeFunc)j_bson_unref);
+	i = 0;
+	length = j_list_length(parts);
+	obj = g_new(bson*, length);
 	it = j_list_iterator_new(parts);
 
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.collection_create.collection;
-		JBSON* bson;
+		bson* b;
 
 		store = collection->store;
-		bson = j_collection_serialize(collection);
+		b = j_collection_serialize(collection);
 
-		j_list_append(obj, bson);
+		obj[i] = b;
+		i++;
 	}
 
 	j_list_iterator_free(it);
 
 	connection = j_connection_connection(j_store_connection(store));
 
-	index = j_bson_new();
-	j_bson_append_int32(index, "Name", 1);
+	bson_init(&index);
+	bson_append_int(&index, "Name", 1);
+	bson_finish(&index);
 
-	j_mongo_create_index(connection, j_store_collection_collections(store), index, TRUE);
-	j_mongo_insert_list(connection, j_store_collection_collections(store), obj);
+	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
+	mongo_insert_batch(connection, j_store_collection_collections(store), obj, length);
 
-	j_bson_unref(index);
-	j_list_unref(obj);
+	bson_destroy(&index);
+
+	for (i = 0; i < length; i++)
+	{
+		bson_destroy(obj[i]);
+		g_slice_free(bson, obj[i]);
+	}
+
+	g_free(obj);
 
 	/*
 	{
@@ -566,18 +566,18 @@ j_collection_create_internal (JList* parts)
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
-		j_mongo_command_int(connection, "admin", "fsync", 1);
+		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}
 }
 
 void
 j_collection_get_internal (JList* parts)
 {
-	JBSON* empty;
-	JBSON* bson;
-	JMongoConnection* connection;
-	JMongoIterator* iterator;
 	JStore* store;
+	bson empty;
+	bson b;
+	mongo* connection;
+	mongo_cursor* iterator;
 	guint length;
 	guint n = 0;
 
@@ -587,7 +587,7 @@ j_collection_get_internal (JList* parts)
 		IsInitialized(true);
 	*/
 
-	bson = j_bson_new();
+	bson_init(&b);
 	length = j_list_length(parts);
 
 	if (length == 1)
@@ -597,15 +597,15 @@ j_collection_get_internal (JList* parts)
 
 		store = collection->store;
 
-		j_bson_append_string(bson, "Name", collection->name);
+		bson_append_string(&b, "Name", collection->name);
 		n = 1;
 	}
 	else if (length > 1)
 	{
-		JBSON* names_bson;
+		bson names_bson;
 		JListIterator* it;
 
-		names_bson = j_bson_new();
+		bson_init(&names_bson);
 		it = j_list_iterator_new(parts);
 
 		while (j_list_iterator_next(it))
@@ -615,33 +615,30 @@ j_collection_get_internal (JList* parts)
 
 			store = collection->store;
 
-			j_bson_append_string(names_bson, "Name", collection->name);
+			bson_append_string(&names_bson, "Name", collection->name);
 		}
 
 		j_list_iterator_free(it);
+		bson_finish(&names_bson);
 
-		j_bson_append_document(bson, "$or", names_bson);
-		j_bson_unref(names_bson);
+		bson_append_bson(&b, "$or", &names_bson);
+		bson_destroy(&names_bson);
 	}
 
-	empty = j_bson_new_empty();
+	bson_finish(&b);
+	bson_empty(&empty);
 
 	connection = j_connection_connection(j_store_connection(store));
-	iterator = j_mongo_find(connection, j_store_collection_collections(store), bson, NULL, n, 0);
+	iterator = mongo_find(connection, j_store_collection_collections(store), &b, NULL, n, 0, 0);
 
-	while (j_mongo_iterator_next(iterator))
+	while (mongo_cursor_next(iterator))
 	{
-		JBSON* collection_bson;
-
-		collection_bson = j_mongo_iterator_get(iterator);
-		//j_list_append(collections, j_collection_new_from_bson(store, collection_bson));
-		j_bson_unref(collection_bson);
+		//j_list_append(collections, j_collection_new_from_bson(store, iterator->current));
 	}
 
-	j_mongo_iterator_free(iterator);
+	mongo_cursor_destroy(iterator);
 
-	j_bson_unref(empty);
-	j_bson_unref(bson);
+	bson_destroy(&b);
 }
 
 /*

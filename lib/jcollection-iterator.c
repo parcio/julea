@@ -31,17 +31,17 @@
 
 #include <glib.h>
 
+#include <bson.h>
+#include <mongo.h>
+
 #include "jcollection-iterator.h"
 
-#include "jbson.h"
 #include "jcollection.h"
 #include "jcollection-internal.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
 #include "jitem.h"
 #include "jitem-internal.h"
-#include "jmongo.h"
-#include "jmongo-iterator.h"
 
 /**
  * \defgroup JCollectionIterator Collection Iterator
@@ -53,7 +53,7 @@
 
 struct JCollectionIterator
 {
-	JMongoIterator* iterator;
+	mongo_cursor* iterator;
 
 	JCollection* collection;
 };
@@ -70,9 +70,9 @@ struct JCollectionIterator
 JCollectionIterator*
 j_collection_iterator_new (JCollection* collection)
 {
-	JBSON* bson;
 	JCollectionIterator* iterator;
-	JMongoConnection* connection;
+	bson b;
+	mongo* connection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -81,13 +81,13 @@ j_collection_iterator_new (JCollection* collection)
 
 	connection = j_connection_connection(j_store_connection(j_collection_store(iterator->collection)));
 
-	bson = j_bson_new();
+	bson_init(&b);
+	bson_append_oid(&b, "Collection", j_collection_id(iterator->collection));
+	bson_finish(&b);
 
-	j_bson_append_object_id(bson, "Collection", j_collection_id(iterator->collection));
+	iterator->iterator = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, NULL, 0, 0, 0);
 
-	iterator->iterator = j_mongo_find(connection, j_collection_collection_items(iterator->collection), bson, NULL, 0, 0);
-
-	j_bson_unref(bson);
+	bson_destroy(&b);
 
 	return iterator;
 }
@@ -104,7 +104,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	j_mongo_iterator_free(iterator->iterator);
+	mongo_cursor_destroy(iterator->iterator);
 
 	j_collection_unref(iterator->collection);
 
@@ -116,20 +116,17 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return j_mongo_iterator_next(iterator->iterator);
+	return (mongo_cursor_next(iterator->iterator) == MONGO_OK);
 }
 
 JItem*
 j_collection_iterator_get (JCollectionIterator* iterator)
 {
-	JBSON* bson;
 	JItem* item;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	bson = j_mongo_iterator_get(iterator->iterator);
-	item = j_item_new_from_bson(iterator->collection, bson);
-	j_bson_unref(bson);
+	item = j_item_new_from_bson(iterator->collection, &(iterator->iterator->current));
 
 	return item;
 }

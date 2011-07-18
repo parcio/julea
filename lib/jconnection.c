@@ -33,13 +33,14 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <mongo.h>
+
 #include "jconnection.h"
 #include "jconnection-internal.h"
 
 #include "jcommon.h"
 #include "jmessage.h"
 #include "jmessage-reply.h"
-#include "jmongo-connection.h"
 
 /**
  * \defgroup JConnection Connection
@@ -54,7 +55,7 @@
  **/
 struct JConnection
 {
-	JMongoConnection* connection;
+	mongo connection;
 	GSocketConnection** sockets;
 
 	gboolean connected;
@@ -69,7 +70,7 @@ j_connection_new (void)
 	guint i;
 
 	connection = g_slice_new(JConnection);
-	connection->connection = j_mongo_connection_new();
+	mongo_init(&(connection->connection));
 	connection->sockets = g_new(GSocketConnection*, j_configuration()->data_len);
 	connection->connected = FALSE;
 	connection->ref_count = 1;
@@ -106,7 +107,7 @@ j_connection_unref (JConnection* connection)
 
 	if (connection->ref_count == 0)
 	{
-		j_mongo_connection_unref(connection->connection);
+		mongo_destroy(&(connection->connection));
 
 		for (i = 0; i < j_configuration()->data_len; i++)
 		{
@@ -136,7 +137,7 @@ j_connection_connect (JConnection* connection)
 		return FALSE;
 	}
 
-	is_connected = j_mongo_connection_connect(connection->connection, j_configuration()->metadata[0]);
+	is_connected = (mongo_connect(&(connection->connection), j_configuration()->metadata[0], 27017) == MONGO_OK);
 
 	client = g_socket_client_new();
 
@@ -166,7 +167,7 @@ j_connection_disconnect (JConnection* connection)
 		return FALSE;
 	}
 
-	j_mongo_connection_disconnect(connection->connection);
+	mongo_disconnect(&(connection->connection));
 
 	for (i = 0; i < j_configuration()->data_len; i++)
 	{
@@ -178,12 +179,12 @@ j_connection_disconnect (JConnection* connection)
 
 /* Internal */
 
-JMongoConnection*
+mongo*
 j_connection_connection (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);
 
-	return connection->connection;
+	return &(connection->connection);
 }
 
 gboolean

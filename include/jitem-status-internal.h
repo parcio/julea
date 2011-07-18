@@ -34,11 +34,11 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 #include <jitem-status.h>
 
-#include <jbson.h>
-
-G_GNUC_INTERNAL JBSON* j_item_status_serialize (JItemStatus*);
-G_GNUC_INTERNAL void j_item_status_deserialize (JItemStatus*, JBSON*);
+G_GNUC_INTERNAL bson* j_item_status_serialize (JItemStatus*);
+G_GNUC_INTERNAL void j_item_status_deserialize (JItemStatus*, bson*);
 
 #endif

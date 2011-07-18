@@ -10,7 +10,7 @@ def options (ctx):
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 
-	ctx.add_option('--mongodb', action='store', default=None, help='Use MongoDB')
+	ctx.add_option('--mongodb', action='store', default='/usr', help='Use MongoDB')
 
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
@@ -61,26 +61,27 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	if ctx.options.mongodb:
-		ctx.check_cc(
-			header_name = 'bson.h',
-			lib = 'bson',
-			includes = ['%s/src' % (ctx.options.mongodb,)],
-			libpath = ['%s' % (ctx.options.mongodb,)],
-			rpath = ['%s' % (ctx.options.mongodb,)],
-			uselib_store = 'BSON',
-			define_name = 'HAVE_BSON'
-		)
+	# BSON
+	ctx.check_cc(
+		header_name = 'bson.h',
+		lib = 'bson',
+		includes = ['%s/src' % (ctx.options.mongodb,)],
+		libpath = ['%s' % (ctx.options.mongodb,)],
+		rpath = ['%s' % (ctx.options.mongodb,)],
+		uselib_store = 'BSON',
+		define_name = 'HAVE_BSON'
+	)
 
-		ctx.check_cc(
-			header_name = 'mongo.h',
-			lib = 'mongoc',
-			includes = ['%s/src' % (ctx.options.mongodb,)],
-			libpath = ['%s' % (ctx.options.mongodb,)],
-			rpath = ['%s' % (ctx.options.mongodb,)],
-			uselib_store = 'MONGO',
-			define_name = 'HAVE_MONGO'
-		)
+	# MongoDB
+	ctx.check_cc(
+		header_name = 'mongo.h',
+		lib = 'mongoc',
+		includes = ['%s/src' % (ctx.options.mongodb,)],
+		libpath = ['%s' % (ctx.options.mongodb,)],
+		rpath = ['%s' % (ctx.options.mongodb,)],
+		uselib_store = 'MONGODB',
+		define_name = 'HAVE_MONGODB'
+	)
 
 	if ctx.options.hdtrace:
 		ctx.check_cc(
@@ -132,13 +133,13 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),
 		target = 'lib/julea',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'HDTRACE', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		install_path = '${LIBDIR}'
 	)
 
 	# Tests
-	for test in ('bson', 'bson-iterator', 'distribution', 'list', 'list-iterator', 'semantics'):
+	for test in ('distribution', 'list', 'list-iterator', 'semantics'):
 		ctx.program(
 			source = ['test/%s.c' % (test,)],
 			target = 'test/%s' % (test,),

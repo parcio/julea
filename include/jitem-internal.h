@@ -34,18 +34,18 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 #include <jitem.h>
 
-#include <jbson.h>
 #include <jcollection.h>
-#include <jobjectid.h>
 
-G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, JBSON*);
+G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson*);
 
-G_GNUC_INTERNAL JBSON* j_item_serialize (JItem*);
-G_GNUC_INTERNAL void j_item_deserialize (JItem*, JBSON*);
+G_GNUC_INTERNAL bson* j_item_serialize (JItem*);
+G_GNUC_INTERNAL void j_item_deserialize (JItem*, bson*);
 
-G_GNUC_INTERNAL JObjectID* j_item_id (JItem*);
+G_GNUC_INTERNAL bson_oid_t* j_item_id (JItem*);
 
 G_GNUC_INTERNAL void j_item_create_internal (JList*);
 G_GNUC_INTERNAL void j_item_get_internal (JList*);

@@ -105,7 +105,7 @@ main (int argc, char** argv)
 	}
 
 	{
-		JCollection* first_collection;
+		JCollection* first_collection = NULL;
 		gboolean is_first = TRUE;
 
 		siterator = j_store_iterator_new(store);
@@ -118,6 +118,7 @@ main (int argc, char** argv)
 
 			if (is_first)
 			{
+				is_first = FALSE;
 				first_collection = j_collection_ref(collection);
 			}
 

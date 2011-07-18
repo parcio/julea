@@ -34,15 +34,12 @@
 #include "jstore.h"
 #include "jstore-internal.h"
 
-#include "jbson.h"
 #include "jcollection.h"
 #include "jcollection-internal.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
-#include "jmongo.h"
-#include "jmongo-connection.h"
 #include "joperation.h"
 #include "joperation-internal.h"
 

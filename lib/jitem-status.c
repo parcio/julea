@@ -33,11 +33,11 @@
 
 #include <string.h>
 
+#include <bson.h>
+
 #include "jitem-status.h"
 #include "jitem-status-internal.h"
 
-#include "jbson.h"
-#include "jbson-iterator.h"
 #include "jcommon.h"
 #include "jtrace.h"
 
@@ -183,59 +183,59 @@ j_item_status_set_modification_time (JItemStatus* status, gint64 modification_ti
 
 /* Internal */
 
-JBSON*
+bson*
 j_item_status_serialize (JItemStatus* status)
 {
-	JBSON* bson;
+	bson* b;
 
 	g_return_val_if_fail(status != NULL, NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	bson = j_bson_new();
-	//j_bson_append_object_id(bson, "Collection", j_collection_id(item->collection));
-	j_bson_append_int64(bson, "Size", status->size);
-	j_bson_append_int64(bson, "AccessTime", status->access_time);
-	j_bson_append_int64(bson, "ModificationTime", status->modification_time);
+	b = g_slice_new(bson);
+	bson_init(b);
+	//bson_append_oid(&b, "Collection", j_collection_id(item->collection));
+	bson_append_long(b, "Size", status->size);
+	bson_append_long(b, "AccessTime", status->access_time);
+	bson_append_long(b, "ModificationTime", status->modification_time);
+	bson_finish(b);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 
-	return bson;
+	return b;
 }
 
 void
-j_item_status_deserialize (JItemStatus* status, JBSON* bson)
+j_item_status_deserialize (JItemStatus* status, bson* b)
 {
-	JBSONIterator* iterator;
+	bson_iterator iterator;
 
 	g_return_if_fail(status != NULL);
-	g_return_if_fail(bson != NULL);
+	g_return_if_fail(b != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	iterator = j_bson_iterator_new(bson);
+	bson_iterator_init(&iterator, b->data);
 
-	while (j_bson_iterator_next(iterator))
+	while (bson_iterator_next(&iterator))
 	{
 		const gchar* key;
 
-		key = j_bson_iterator_get_key(iterator);
+		key = bson_iterator_key(&iterator);
 
 		if (g_strcmp0(key, "Size") == 0)
 		{
-			status->size = j_bson_iterator_get_int64(iterator);
+			status->size = bson_iterator_long(&iterator);
 		}
 		else if (g_strcmp0(key, "AccessTime") == 0)
 		{
-			status->access_time = j_bson_iterator_get_int64(iterator);
+			status->access_time = bson_iterator_long(&iterator);
 		}
 		else if (g_strcmp0(key, "ModificationTime") == 0)
 		{
-			status->modification_time = j_bson_iterator_get_int64(iterator);
+			status->modification_time = bson_iterator_long(&iterator);
 		}
 	}
-
-	j_bson_iterator_free(iterator);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 }

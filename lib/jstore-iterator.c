@@ -31,15 +31,15 @@
 
 #include <glib.h>
 
+#include <bson.h>
+#include <mongo.h>
+
 #include "jstore-iterator.h"
 
-#include "jbson.h"
 #include "jcollection.h"
 #include "jcollection-internal.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
-#include "jmongo.h"
-#include "jmongo-iterator.h"
 #include "jstore.h"
 #include "jstore-internal.h"
 
@@ -53,7 +53,7 @@
 
 struct JStoreIterator
 {
-	JMongoIterator* iterator;
+	mongo_cursor* iterator;
 
 	JStore* store;
 };
@@ -70,9 +70,9 @@ struct JStoreIterator
 JStoreIterator*
 j_store_iterator_new (JStore* store)
 {
-	JBSON* empty;
 	JStoreIterator* iterator;
-	JMongoConnection* connection;
+	bson empty;
+	mongo* connection;
 
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -81,11 +81,9 @@ j_store_iterator_new (JStore* store)
 
 	connection = j_connection_connection(j_store_connection(iterator->store));
 
-	empty = j_bson_new_empty();
+	bson_empty(&empty);
 
-	iterator->iterator = j_mongo_find(connection, j_store_collection_collections(iterator->store), empty, NULL, 0, 0);
-
-	j_bson_unref(empty);
+	iterator->iterator = mongo_find(connection, j_store_collection_collections(iterator->store), &empty, NULL, 0, 0, 0);
 
 	return iterator;
 }
@@ -102,7 +100,7 @@ j_store_iterator_free (JStoreIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	j_mongo_iterator_free(iterator->iterator);
+	mongo_cursor_destroy(iterator->iterator);
 
 	j_store_unref(iterator->store);
 
@@ -114,20 +112,17 @@ j_store_iterator_next (JStoreIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return j_mongo_iterator_next(iterator->iterator);
+	return (mongo_cursor_next(iterator->iterator) == MONGO_OK);
 }
 
 JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
 {
-	JBSON* bson;
 	JCollection* collection;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	bson = j_mongo_iterator_get(iterator->iterator);
-	collection = j_collection_new_from_bson(iterator->store, bson);
-	j_bson_unref(bson);
+	collection = j_collection_new_from_bson(iterator->store, &(iterator->iterator->current));
 
 	return collection;
 }

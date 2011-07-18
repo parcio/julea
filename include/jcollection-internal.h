@@ -32,24 +32,25 @@
 #ifndef H_COLLECTION_INTERNAL
 #define H_COLLECTION_INTERNAL
 
-#include <jcollection.h>
-
 #include <glib.h>
 
-#include <jbson.h>
+#include <bson.h>
+
+#include <jcollection.h>
+
 #include <jstore.h>
 
-G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, JBSON*);
+G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson*);
 
 G_GNUC_INTERNAL const gchar* j_collection_collection_items (JCollection*);
 G_GNUC_INTERNAL const gchar* j_collection_collection_item_statuses (JCollection*);
 
 G_GNUC_INTERNAL JStore* j_collection_store (JCollection*);
 
-G_GNUC_INTERNAL JBSON* j_collection_serialize (JCollection*);
-G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, JBSON*);
+G_GNUC_INTERNAL bson* j_collection_serialize (JCollection*);
+G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson*);
 
-G_GNUC_INTERNAL JObjectID* j_collection_id (JCollection*);
+G_GNUC_INTERNAL bson_oid_t* j_collection_id (JCollection*);
 
 G_GNUC_INTERNAL void j_collection_create_internal (JList*);
 G_GNUC_INTERNAL void j_collection_get_internal (JList*);
