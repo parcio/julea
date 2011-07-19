@@ -111,6 +111,18 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 	g_slice_free(JCollectionIterator, iterator);
 }
 
+/**
+ * Checks whether another item is available.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A collection iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the collection is reached.
+ **/
 gboolean
 j_collection_iterator_next (JCollectionIterator* iterator)
 {
@@ -119,6 +131,18 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 	return (mongo_cursor_next(iterator->iterator) == MONGO_OK);
 }
 
+/**
+ * Returns the current item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A collection iterator.
+ *
+ * \return An item.
+ **/
 JItem*
 j_collection_iterator_get (JCollectionIterator* iterator)
 {

@@ -87,6 +87,16 @@ j_list_iterator_new (JList* list)
 	return iterator;
 }
 
+/**
+ * Frees the memory allocated by a list iterator.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ **/
 void
 j_list_iterator_free (JListIterator* iterator)
 {
@@ -97,6 +107,18 @@ j_list_iterator_free (JListIterator* iterator)
 	g_slice_free(JListIterator, iterator);
 }
 
+/**
+ * Checks whether another list element is available.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the list is reached.
+ **/
 gboolean
 j_list_iterator_next (JListIterator* iterator)
 {
@@ -114,6 +136,18 @@ j_list_iterator_next (JListIterator* iterator)
 	return (iterator->current != NULL);
 }
 
+/**
+ * Returns the current list element.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ *
+ * \return A list element.
+ **/
 gpointer
 j_list_iterator_get (JListIterator* iterator)
 {

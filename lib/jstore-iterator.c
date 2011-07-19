@@ -107,6 +107,18 @@ j_store_iterator_free (JStoreIterator* iterator)
 	g_slice_free(JStoreIterator, iterator);
 }
 
+/**
+ * Checks whether another collection is available.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the store is reached.
+ **/
 gboolean
 j_store_iterator_next (JStoreIterator* iterator)
 {
@@ -115,6 +127,18 @@ j_store_iterator_next (JStoreIterator* iterator)
 	return (mongo_cursor_next(iterator->iterator) == MONGO_OK);
 }
 
+/**
+ * Returns the current collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return A collection.
+ **/
 JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
 {

@@ -58,7 +58,7 @@ struct JOperation
 };
 
 /**
- * Frees an operation part.
+ * Frees the memory allocated by an operation part.
  *
  * \private
  *

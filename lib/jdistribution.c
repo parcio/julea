@@ -64,6 +64,23 @@ struct JDistribution
 	guint64 offset;
 };
 
+/**
+ * Distributes data in a round robin fashion.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        A server index.
+ * \param new_length   A new length.
+ * \param new_offset   A new offset.
+ *
+ * \return TRUE on success, FALSE if the distribution is finished.
+ **/
 static
 gboolean
 j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
@@ -93,6 +110,23 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	return TRUE;
 }
 
+/**
+ * Creates a new distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, 0, 0);
+ * \endcode
+ *
+ * \param type   A distribution type.
+ * \param length A length.
+ * \param offset An offset.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
 JDistribution*
 j_distribution_new (JDistributionType type, guint64 length, guint64 offset)
 {
@@ -106,6 +140,16 @@ j_distribution_new (JDistributionType type, guint64 length, guint64 offset)
 	return distribution;
 }
 
+/**
+ * Frees the memory allocated by a distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ **/
 void
 j_distribution_free (JDistribution* distribution)
 {
@@ -114,6 +158,21 @@ j_distribution_free (JDistribution* distribution)
 	g_slice_free(JDistribution, distribution);
 }
 
+/**
+ * Calculates a new length and a new offset based on a distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        A server index.
+ * \param new_length   A new length.
+ * \param new_offset   A new offset.
+ *
+ * \return TRUE on success, FALSE if the distribution is finished.
+ **/
 gboolean
 j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
