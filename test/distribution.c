@@ -54,7 +54,7 @@ static
 void
 test_distribution_fixture_teardown (gpointer* fixture, gconstpointer data)
 {
-	j_deinit();
+	j_fini();
 }
 
 static

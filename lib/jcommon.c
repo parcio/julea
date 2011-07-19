@@ -78,7 +78,7 @@ j_init_for_data (GKeyFile* key_file)
 }
 
 gboolean
-j_deinit (void)
+j_fini (void)
 {
 	JConfiguration* conf;
 	JTrace* trace;
@@ -94,7 +94,7 @@ j_deinit (void)
 	j_configuration_free(conf);
 	j_trace_thread_leave(trace);
 
-	j_trace_deinit();
+	j_trace_fini();
 
 	return TRUE;
 }

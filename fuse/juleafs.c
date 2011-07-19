@@ -185,7 +185,7 @@ main (int argc, char** argv)
 	j_connection_disconnect(jfs_connection);
 	j_connection_unref(jfs_connection);
 
-	j_deinit();
+	j_fini();
 
 	return ret;
 }

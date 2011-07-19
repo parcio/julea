@@ -396,11 +396,11 @@ j_trace_init (gchar const* name)
  * \author Michael Kuhn
  *
  * \code
- * j_trace_deinit();
+ * j_trace_fini();
  * \endcode
  **/
 void
-j_trace_deinit (void)
+j_trace_fini (void)
 {
 	if (j_trace_flags == J_TRACE_OFF)
 	{

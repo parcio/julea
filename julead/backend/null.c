@@ -100,7 +100,7 @@ backend_init (gchar const* path, JTrace* trace)
 
 G_MODULE_EXPORT
 void
-backend_deinit (JTrace* trace)
+backend_fini (JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 	j_trace_leave(trace, G_STRFUNC);

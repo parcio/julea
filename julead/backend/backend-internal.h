@@ -35,7 +35,7 @@
 #include "backend.h"
 
 void backend_init (gchar const*, JTrace*);
-void backend_deinit (JTrace*);
+void backend_fini (JTrace*);
 
 void backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
 void backend_close (JBackendFile*, JTrace*);

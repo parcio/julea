@@ -227,14 +227,14 @@ main (int argc, char** argv)
 	g_free(path);
 
 	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
-	g_module_symbol(backend, "backend_deinit", (gpointer*)&jd_backend_deinit);
+	g_module_symbol(backend, "backend_fini", (gpointer*)&jd_backend_fini);
 	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
 	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
 	g_module_symbol(backend, "backend_read", (gpointer*)&jd_backend_read);
 	g_module_symbol(backend, "backend_write", (gpointer*)&jd_backend_write);
 
 	g_assert(jd_backend_init != NULL);
-	g_assert(jd_backend_deinit != NULL);
+	g_assert(jd_backend_fini != NULL);
 	g_assert(jd_backend_open != NULL);
 	g_assert(jd_backend_close != NULL);
 	g_assert(jd_backend_read != NULL);
@@ -256,12 +256,12 @@ main (int argc, char** argv)
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
 
-	jd_backend_deinit(trace);
+	jd_backend_fini(trace);
 
 	g_module_close(backend);
 
 	j_trace_thread_leave(trace);
-	j_trace_deinit();
+	j_trace_fini();
 
 	return 0;
 }

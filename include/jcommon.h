@@ -39,7 +39,7 @@
 
 gboolean j_init (void);
 gboolean j_init_for_data (GKeyFile*);
-gboolean j_deinit (void);
+gboolean j_fini (void);
 
 gboolean j_is_initialized (void);
 

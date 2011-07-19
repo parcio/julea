@@ -54,7 +54,7 @@ typedef struct JTraceFile JTraceFile;
 #include <glib.h>
 
 void j_trace_init (gchar const*);
-void j_trace_deinit (void);
+void j_trace_fini (void);
 
 void j_trace_enter (JTrace*, gchar const*);
 void j_trace_leave (JTrace*, gchar const*);
