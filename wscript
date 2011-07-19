@@ -129,6 +129,15 @@ def build (ctx):
 	# Headers
 	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl = 'include/*-internal.h'))
 
+	# Trace library
+#	ctx.shlib(
+#		source = ['lib/jtrace.c'],
+#		target = 'lib/jtrace',
+#		use = ['GLIB', 'HDTRACE', 'OTF'],
+#		includes = ['include'],
+#		install_path = '${LIBDIR}'
+#	)
+
 	# Library
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),

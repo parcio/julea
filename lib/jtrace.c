@@ -45,28 +45,62 @@
 /**
  * \defgroup JTrace Trace
  *
+ * The JTrace framework offers abstracted trace capabilities.
+ * It can use normal terminal output, HDTrace and OTF.
+ *
  * @{
  **/
 
+/**
+ * A trace.
+ * Usually one trace per thread is used.
+ **/
 struct JTrace
 {
+	/**
+	 * Thread name.
+	 * “Main thread” or “Thread %d”.
+	 **/
 	gchar* thread_name;
+
+	/**
+	 * Name of the thread function.
+	 **/
 	gchar* function_name;
 
+	/**
+	 * Function depth within the current thread.
+	 **/
 	guint function_depth;
 
 #ifdef HAVE_HDTRACE
+	/**
+	 * HDTrace-specific structure.
+	 **/
 	struct
 	{
+		/**
+		 * Thread's topology node.
+		 **/
 		hdTopoNode* topo_node;
+
+		/**
+		 * Thread's trace.
+		 **/
 		hdTrace* trace;
 	}
 	hdtrace;
 #endif
 
 #ifdef HAVE_OTF
+	/**
+	 * OTF-specific structure.
+	 **/
 	struct
 	{
+		/**
+		 * Thread's process ID.
+		 **/
 		guint32 process_id;
 	}
 	otf;
@@ -113,6 +147,18 @@ static GHashTable* otf_counter_table = NULL;
 #endif
 
 #ifdef HAVE_HDTRACE
+/**
+ * Frees the memory allocated by a HDTrace stats group.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param data A HDTrace stats group.
+ **/
 static
 void
 hdtrace_counter_free (gpointer data)
@@ -124,6 +170,21 @@ hdtrace_counter_free (gpointer data)
 }
 #endif
 
+/**
+ * Returns the current time.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * guint64 timestamp;
+ *
+ * timestamp = j_trace_get_time();
+ * \endcode
+ *
+ * \return A time stamp in microseconds.
+ **/
 static
 guint64
 j_trace_get_time (void)
@@ -137,6 +198,20 @@ j_trace_get_time (void)
 	return timestamp;
 }
 
+/**
+ * Returns the name of a file operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param op A file operation.
+ *
+ * \return A name.
+ **/
 static
 gchar const*
 j_trace_file_operation_name (JTraceFileOperation op)
@@ -193,6 +268,17 @@ j_trace_function_check (gchar const* name)
 	return TRUE;
 }
 
+/**
+ * Initializes the trace framework.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * j_trace_init("JULEA");
+ * \endcode
+ *
+ * \param name A trace name.
+ **/
 void
 j_trace_init (gchar const* name)
 {
@@ -304,6 +390,15 @@ j_trace_init (gchar const* name)
 	j_trace_name = g_strdup(name);
 }
 
+/**
+ * Shuts down the trace framework.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * j_trace_deinit();
+ * \endcode
+ **/
 void
 j_trace_deinit (void)
 {
@@ -354,6 +449,17 @@ j_trace_deinit (void)
 	g_free(j_trace_name);
 }
 
+/**
+ * Traces the entering of a function.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ * \param name  A function name.
+ **/
 void
 j_trace_enter (JTrace* trace, gchar const* name)
 {
@@ -421,6 +527,17 @@ j_trace_enter (JTrace* trace, gchar const* name)
 #endif
 }
 
+/**
+ * Traces the leaving of a function.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ * \param name  A function name.
+ **/
 void
 j_trace_leave (JTrace* trace, gchar const* name)
 {
@@ -478,6 +595,18 @@ j_trace_leave (JTrace* trace, gchar const* name)
 #endif
 }
 
+/**
+ * Traces the beginning of a file operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ * \param path  A file path.
+ * \param op    A file operation.
+ **/
 void
 j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 {
@@ -540,6 +669,20 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 	return;
 }
 
+/**
+ * Traces the ending of a file operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace  A trace.
+ * \param path   A file path.
+ * \param op     A file operation.
+ * \param length A length.
+ * \param offset An offset.
+ **/
 void
 j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset)
 {
@@ -623,6 +766,19 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 #endif
 }
 
+/**
+ * Traces the entering of a thread.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param thread         A thread.
+ * \param function_name  A function name.
+ *
+ * \return A new trace. Should be freed with j_trace_thread_leave().
+ **/
 JTrace*
 j_trace_thread_enter (GThread* thread, gchar const* function_name)
 {
@@ -677,6 +833,16 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 	return trace;
 }
 
+/**
+ * Traces the leaving of a thread.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ **/
 void
 j_trace_thread_leave (JTrace* trace)
 {
@@ -703,6 +869,18 @@ j_trace_thread_leave (JTrace* trace)
 	g_slice_free(JTrace, trace);
 }
 
+/**
+ * Traces a counter.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace         A trace.
+ * \param name          A counter name.
+ * \param counter_value A counter value.
+ **/
 void
 j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 {
