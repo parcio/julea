@@ -106,9 +106,11 @@ main (int argc, char** argv)
 
 	{
 		JCollection* first_collection = NULL;
-		gboolean is_first = TRUE;
+		gboolean is_first;
 
 		siterator = j_store_iterator_new(store);
+
+		is_first = TRUE;
 
 		while (j_store_iterator_next(siterator))
 		{
@@ -132,6 +134,8 @@ main (int argc, char** argv)
 		citerator = j_collection_iterator_new(first_collection);
 		j_collection_unref(first_collection);
 
+		is_first = TRUE;
+
 		while (j_collection_iterator_next(citerator))
 		{
 			JItem* item = j_collection_iterator_get(citerator);
@@ -144,10 +148,14 @@ main (int argc, char** argv)
 				is_first = FALSE;
 
 				buf = g_new0(gchar, 1024 * 1024 + 1);
-				j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes);
-				j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
-				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes);
-				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes);
+
+				j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
+				j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
+				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
+				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
+
+				j_operation_execute(operation);
+
 				g_free(buf);
 			}
 
@@ -162,6 +170,8 @@ main (int argc, char** argv)
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
+
+	j_operation_free(operation);
 
 	j_connection_disconnect(connection);
 	j_connection_unref(connection);

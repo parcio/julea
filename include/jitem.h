@@ -58,8 +58,8 @@ void j_item_set_semantics (JItem*, JSemantics*);
 void j_item_create (JItem*, JOperation*);
 void j_item_get (JItem*, JOperation*);
 
-gboolean j_item_read (JItem*, gpointer, guint64, guint64, guint64*);
-gboolean j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*);
+void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JOperation*);
+void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation*);
 
 /*
 		private:

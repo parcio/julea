@@ -48,7 +48,12 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 
 	if (item != NULL)
 	{
-		j_item_read(item, buf, size, offset, &bytes_read);
+		JOperation* operation;
+
+		operation = j_operation_new();
+		j_item_read(item, buf, size, offset, &bytes_read, operation);
+		j_operation_execute(operation);
+		j_operation_free(operation);
 
 		ret = bytes_read;
 	}

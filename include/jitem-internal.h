@@ -50,4 +50,7 @@ G_GNUC_INTERNAL bson_oid_t* j_item_id (JItem*);
 G_GNUC_INTERNAL void j_item_create_internal (JList*);
 G_GNUC_INTERNAL void j_item_get_internal (JList*);
 
+G_GNUC_INTERNAL void j_item_read_internal (JList*);
+G_GNUC_INTERNAL void j_item_write_internal (JList*);
+
 #endif

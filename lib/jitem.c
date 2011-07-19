@@ -273,145 +273,44 @@ j_item_get (JItem* item, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
-gboolean
-j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read)
+void
+j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JOperation* operation)
 {
-	JDistribution* distribution;
-	gboolean ret = TRUE;
-	gchar* d;
-	guint64 new_length;
-	guint64 new_offset;
-	guint index;
+	JOperationPart* part;
 
-	g_return_val_if_fail(item != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(bytes_read != NULL, FALSE);
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(data != NULL);
+	g_return_if_fail(bytes_read != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_ITEM_READ;
+	part->u.item_read.item = j_item_ref(item);
+	part->u.item_read.data = data;
+	part->u.item_read.length = length;
+	part->u.item_read.offset = offset;
+	part->u.item_read.bytes_read = bytes_read;
 
-	*bytes_read = 0;
-
-	if (length == 0)
-	{
-		ret = FALSE;
-		goto end;
-	}
-
-	j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_READ);
-
-	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
-	d = data;
-
-	while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
-	{
-		JMessage* message;
-		gchar const* store;
-		gchar const* collection;
-		gsize store_len;
-		gsize collection_len;
-		gsize item_len;
-
-		store = j_store_name(j_collection_store(item->collection));
-		collection = j_collection_name(item->collection);
-
-		store_len = strlen(store) + 1;
-		collection_len = strlen(collection) + 1;
-		item_len = strlen(item->name) + 1;
-
-		message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_READ, 1);
-		j_message_append_n(message, store, store_len);
-		j_message_append_n(message, collection, collection_len);
-		j_message_append_n(message, item->name, item_len);
-		j_message_append_8(message, &new_length);
-		j_message_append_8(message, &new_offset);
-
-		j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
-		j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
-
-		j_message_free(message);
-
-		d += new_length;
-		*bytes_read += new_length;
-	}
-
-	j_distribution_free(distribution);
-
-	j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_READ, length, offset);
-
-end:
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return ret;
+	j_operation_add(operation, part);
 }
 
-gboolean
-j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written)
+void
+j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JOperation* operation)
 {
-	JDistribution* distribution;
-	gboolean ret = TRUE;
-	guint64 new_length;
-	guint64 new_offset;
-	guint index;
-	gchar const* d;
+	JOperationPart* part;
 
-	g_return_val_if_fail(item != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(bytes_written != NULL, FALSE);
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(data != NULL);
+	g_return_if_fail(bytes_written != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_ITEM_WRITE;
+	part->u.item_write.item = j_item_ref(item);
+	part->u.item_write.data = data;
+	part->u.item_write.length = length;
+	part->u.item_write.offset = offset;
+	part->u.item_write.bytes_written = bytes_written;
 
-	*bytes_written = 0;
-
-	if (length == 0)
-	{
-		ret = FALSE;
-		goto end;
-	}
-
-	j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_WRITE);
-
-	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
-	d = data;
-
-	while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
-	{
-		JMessage* message;
-		gchar const* store;
-		gchar const* collection;
-		gsize store_len;
-		gsize collection_len;
-		gsize item_len;
-
-		store = j_store_name(j_collection_store(item->collection));
-		collection = j_collection_name(item->collection);
-
-		store_len = strlen(store) + 1;
-		collection_len = strlen(collection) + 1;
-		item_len = strlen(item->name) + 1;
-
-		message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_WRITE, 1);
-		j_message_append_n(message, store, store_len);
-		j_message_append_n(message, collection, collection_len);
-		j_message_append_n(message, item->name, item_len);
-		j_message_append_8(message, &new_length);
-		j_message_append_8(message, &new_offset);
-
-		j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
-
-		j_message_free(message);
-
-		d += new_length;
-		*bytes_written += new_length;
-	}
-
-	j_distribution_free(distribution);
-
-	j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_WRITE, length, offset);
-
-end:
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return ret;
+	j_operation_add(operation, part);
 }
 
 /* Internal */
@@ -642,6 +541,164 @@ j_item_get_internal (JList* parts)
 
 	bson_destroy(&b);
 }
+
+void
+j_item_read_internal (JList* parts)
+{
+	JDistribution* distribution;
+	JListIterator* iterator;
+	gchar* d;
+	guint64 new_length;
+	guint64 new_offset;
+	guint index;
+
+	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	iterator = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperationPart* part = j_list_iterator_get(iterator);
+		JItem* item = part->u.item_read.item;
+		gpointer data = part->u.item_read.data;
+		guint64 length = part->u.item_read.length;
+		guint64 offset = part->u.item_read.offset;
+		guint64* bytes_read = part->u.item_read.bytes_read;
+
+		*bytes_read = 0;
+
+		if (length == 0)
+		{
+			continue;
+		}
+
+		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_READ);
+
+		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		d = data;
+
+		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
+		{
+			JMessage* message;
+			gchar const* store;
+			gchar const* collection;
+			gsize store_len;
+			gsize collection_len;
+			gsize item_len;
+
+			store = j_store_name(j_collection_store(item->collection));
+			collection = j_collection_name(item->collection);
+
+			store_len = strlen(store) + 1;
+			collection_len = strlen(collection) + 1;
+			item_len = strlen(item->name) + 1;
+
+			message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_READ, 1);
+			j_message_append_n(message, store, store_len);
+			j_message_append_n(message, collection, collection_len);
+			j_message_append_n(message, item->name, item_len);
+			j_message_append_8(message, &new_length);
+			j_message_append_8(message, &new_offset);
+
+			j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
+			j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
+
+			j_message_free(message);
+
+			d += new_length;
+			*bytes_read += new_length;
+		}
+
+		j_distribution_free(distribution);
+
+		j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_READ, length, offset);
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
+
+void
+j_item_write_internal (JList* parts)
+{
+	JDistribution* distribution;
+	JListIterator* iterator;
+	guint64 new_length;
+	guint64 new_offset;
+	guint index;
+	gchar const* d;
+
+	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	iterator = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperationPart* part = j_list_iterator_get(iterator);
+		JItem* item = part->u.item_write.item;
+		gconstpointer data = part->u.item_write.data;
+		guint64 length = part->u.item_write.length;
+		guint64 offset = part->u.item_write.offset;
+		guint64* bytes_written = part->u.item_write.bytes_written;
+
+		*bytes_written = 0;
+
+		if (length == 0)
+		{
+			continue;
+		}
+
+		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_WRITE);
+
+		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		d = data;
+
+		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
+		{
+			JMessage* message;
+			gchar const* store;
+			gchar const* collection;
+			gsize store_len;
+			gsize collection_len;
+			gsize item_len;
+
+			store = j_store_name(j_collection_store(item->collection));
+			collection = j_collection_name(item->collection);
+
+			store_len = strlen(store) + 1;
+			collection_len = strlen(collection) + 1;
+			item_len = strlen(item->name) + 1;
+
+			message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_WRITE, 1);
+			j_message_append_n(message, store, store_len);
+			j_message_append_n(message, collection, collection_len);
+			j_message_append_n(message, item->name, item_len);
+			j_message_append_8(message, &new_length);
+			j_message_append_8(message, &new_offset);
+
+			j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
+
+			j_message_free(message);
+
+			d += new_length;
+			*bytes_written += new_length;
+		}
+
+		j_distribution_free(distribution);
+
+		j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_WRITE, length, offset);
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
+
 
 /*
 	void _Item::IsInitialized (bool check)

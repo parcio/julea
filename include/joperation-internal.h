@@ -46,6 +46,8 @@ enum JOperationType
 	J_OPERATION_COLLECTION_GET,
 	J_OPERATION_ITEM_CREATE,
 	J_OPERATION_ITEM_GET,
+	J_OPERATION_ITEM_READ,
+	J_OPERATION_ITEM_WRITE,
 	J_OPERATION_STORE_CREATE,
 	J_OPERATION_STORE_GET
 };
@@ -81,6 +83,26 @@ struct JOperationPart
 			JItem* item;
 		}
 		item_get;
+
+		struct
+		{
+			JItem* item;
+			gpointer data;
+			guint64 length;
+			guint64 offset;
+			guint64* bytes_read;
+		}
+		item_read;
+
+		struct
+		{
+			JItem* item;
+			gconstpointer data;
+			guint64 length;
+			guint64 offset;
+			guint64* bytes_written;
+		}
+		item_write;
 
 		struct
 		{

@@ -87,6 +87,12 @@ j_operation_part_free (gpointer data)
 		case J_OPERATION_ITEM_GET:
 			j_item_unref(part->u.item_get.item);
 			break;
+		case J_OPERATION_ITEM_READ:
+			j_item_unref(part->u.item_get.item);
+			break;
+		case J_OPERATION_ITEM_WRITE:
+			j_item_unref(part->u.item_get.item);
+			break;
 		case J_OPERATION_STORE_CREATE:
 			j_store_unref(part->u.store_create.store);
 			break;
@@ -170,6 +176,12 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			break;
 		case J_OPERATION_ITEM_GET:
 			j_item_get_internal(list);
+			break;
+		case J_OPERATION_ITEM_READ:
+			j_item_read_internal(list);
+			break;
+		case J_OPERATION_ITEM_WRITE:
+			j_item_write_internal(list);
 			break;
 		case J_OPERATION_STORE_CREATE:
 			//j_store_create_internal(list);

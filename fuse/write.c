@@ -48,7 +48,12 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 
 	if (item != NULL)
 	{
-		j_item_write(item, buf, size, offset, &bytes_written);
+		JOperation* operation;
+
+		operation = j_operation_new();
+		j_item_write(item, buf, size, offset, &bytes_written, operation);
+		j_operation_execute(operation);
+		j_operation_free(operation);
 
 		ret = bytes_written;
 	}
