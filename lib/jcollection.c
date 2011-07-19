@@ -95,18 +95,21 @@ struct JCollection
 };
 
 /**
- * Creates a new JCollection.
+ * Creates a new collection.
  *
  * \author Michael Kuhn
  *
  * \code
  * JCollection* c;
- * c = j_collection_new("JULEA");
+ * JStore* s;
+ *
+ * c = j_collection_new(s, "JULEA");
  * \endcode
  *
- * \param name The collection's name.
+ * \param store A store.
+ * \param name  A collection name.
  *
- * \return A new JCollection.
+ * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
 j_collection_new (JStore* store, const gchar* name)
@@ -132,16 +135,17 @@ j_collection_new (JStore* store, const gchar* name)
 }
 
 /**
- * Increases the collection's reference count.
+ * Increases a collection's reference count.
  *
  * \author Michael Kuhn
  *
  * \code
  * JCollection* c;
+ *
  * j_collection_ref(c);
  * \endcode
  *
- * \param collection The JCollection.
+ * \param collection A collection.
  *
  * \return #collection.
  **/
@@ -155,6 +159,17 @@ j_collection_ref (JCollection* collection)
 	return collection;
 }
 
+/**
+ * Decreases a collection's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ **/
 void
 j_collection_unref (JCollection* collection)
 {
@@ -181,6 +196,18 @@ j_collection_unref (JCollection* collection)
 	}
 }
 
+/**
+ * Returns a collection's name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return A collection name.
+ **/
 const gchar*
 j_collection_name (JCollection* collection)
 {
@@ -312,6 +339,18 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 	bson_destroy(&b);
 }
 
+/**
+ * Returns a collection's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return A semantics object.
+ **/
 JSemantics*
 j_collection_semantics (JCollection* collection)
 {
@@ -325,6 +364,17 @@ j_collection_semantics (JCollection* collection)
 	return j_store_semantics(collection->store);
 }
 
+/**
+ * Sets a collection's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param semantics  A semantics object.
+ **/
 void
 j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 {
@@ -339,6 +389,17 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 	collection->semantics = j_semantics_ref(semantics);
 }
 
+/**
+ * Creates a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param operation  An operation.
+ **/
 void
 j_collection_create (JCollection* collection, JOperation* operation)
 {
@@ -353,6 +414,17 @@ j_collection_create (JCollection* collection, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Gets a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param operation  An operation.
+ **/
 void
 j_collection_get (JCollection* collection, JOperation* operation)
 {
@@ -369,6 +441,21 @@ j_collection_get (JCollection* collection, JOperation* operation)
 
 /* Internal */
 
+/**
+ * Creates a new collection from a BSON object.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store A store.
+ * \param b     A BSON object.
+ *
+ * \return A new collection. Should be freed with j_collection_unref().
+ **/
 JCollection*
 j_collection_new_from_bson (JStore* store, bson* b)
 {
@@ -420,6 +507,20 @@ j_collection_collection_item_statuses (JCollection* collection)
 	return collection->collection.item_statuses;
 }
 
+/**
+ * Returns a collection's store.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return A store.
+ **/
 JStore*
 j_collection_store (JCollection* collection)
 {
@@ -428,6 +529,20 @@ j_collection_store (JCollection* collection)
 	return collection->store;
 }
 
+/**
+ * Serializes a collection.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return A new BSON object. Should be freed with g_slice_free().
+ **/
 bson*
 j_collection_serialize (JCollection* collection)
 {
@@ -450,7 +565,17 @@ j_collection_serialize (JCollection* collection)
 }
 
 /**
+ * Deserializes a collection.
+ *
  * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param b          A BSON object.
  **/
 void
 j_collection_deserialize (JCollection* collection, bson* b)
@@ -487,6 +612,20 @@ j_collection_deserialize (JCollection* collection, bson* b)
 	}
 }
 
+/**
+ * Returns a collection's ID.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return An ID.
+ **/
 bson_oid_t*
 j_collection_id (JCollection* collection)
 {
@@ -657,11 +796,6 @@ namespace JULEA
 				throw Exception(JULEA_FILELINE ": Collection already initialized.");
 			}
 		}
-	}
-
-	mongo::OID const& _Collection::ID () const
-	{
-		return m_id;
 	}
 }
 */

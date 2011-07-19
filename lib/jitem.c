@@ -76,6 +76,23 @@ struct JItem
 	guint ref_count;
 };
 
+/**
+ * Creates a new item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCollection* c;
+ * JItem* i;
+ *
+ * i = j_item_new(c, "JULEA");
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param name       An item name.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
 JItem*
 j_item_new (JCollection* collection, const gchar* name)
 {
@@ -98,6 +115,21 @@ j_item_new (JCollection* collection, const gchar* name)
 	return item;
 }
 
+/**
+ * Increases an item's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JItem* i;
+ *
+ * j_item_ref(i);
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return #item.
+ **/
 JItem*
 j_item_ref (JItem* item)
 {
@@ -112,6 +144,17 @@ j_item_ref (JItem* item)
 	return item;
 }
 
+/**
+ * Decreases an item's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ **/
 void
 j_item_unref (JItem* item)
 {
@@ -146,6 +189,18 @@ j_item_unref (JItem* item)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
+/**
+ * Returns an item's name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return An item name.
+ **/
 const gchar*
 j_item_get_name (JItem* item)
 {
@@ -186,6 +241,18 @@ j_item_set_status (JItem* item, JItemStatus* status)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
+/**
+ * Returns an item's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A semantics object.
+ **/
 JSemantics*
 j_item_get_semantics (JItem* item)
 {
@@ -203,6 +270,17 @@ j_item_get_semantics (JItem* item)
 	return j_collection_semantics(item->collection);
 }
 
+/**
+ * Sets an item's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param semantics A semantics object.
+ **/
 void
 j_item_set_semantics (JItem* item, JSemantics* semantics)
 {
@@ -222,15 +300,15 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 }
 
 /**
- * Creates the given items.
+ * Creates an item.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param collection The collection.
- * \param names      A list of items.
+ * \param item      An item.
+ * \param operation An operation.
  **/
 void
 j_item_create (JItem* item, JOperation* operation)
@@ -247,17 +325,15 @@ j_item_create (JItem* item, JOperation* operation)
 }
 
 /**
- * Gets the given items.
+ * Gets an item.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param collection The collection.
- * \param names      A list of names.
- *
- * \return A list of items.
+ * \param item      An item.
+ * \param operation An operation.
  **/
 void
 j_item_get (JItem* item, JOperation* operation)
@@ -273,6 +349,21 @@ j_item_get (JItem* item, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Reads an item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item       An item.
+ * \param data       A buffer to hold the read data.
+ * \param length     Number of bytes to read.
+ * \param offset     An offset within #item.
+ * \param bytes_read Number of bytes read.
+ * \param operation  An operation.
+ **/
 void
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JOperation* operation)
 {
@@ -293,6 +384,21 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	j_operation_add(operation, part);
 }
 
+/**
+ * Writes an item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item        An item.
+ * \param data        A buffer holding the data to write.
+ * \param length      Number of bytes to write.
+ * \param offset      An offset within #item.
+ * \param bytes_write Number of bytes written.
+ * \param operation   An operation.
+ **/
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JOperation* operation)
 {
@@ -315,6 +421,21 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 
 /* Internal */
 
+/**
+ * Creates a new item from a BSON object.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param b          A BSON object.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
 JItem*
 j_item_new_from_bson (JCollection* collection, bson* b)
 {
@@ -339,6 +460,20 @@ j_item_new_from_bson (JCollection* collection, bson* b)
 	return item;
 }
 
+/**
+ * Serializes an item.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A new BSON object. Should be freed with g_slice_free().
+ **/
 bson*
 j_item_serialize (JItem* item)
 {
@@ -360,6 +495,19 @@ j_item_serialize (JItem* item)
 	return b;
 }
 
+/**
+ * Deserializes an item.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param b    A BSON object.
+ **/
 void
 j_item_deserialize (JItem* item, bson* b)
 {
@@ -392,6 +540,20 @@ j_item_deserialize (JItem* item, bson* b)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
+/**
+ * Returns an item's ID.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return An ID.
+ **/
 bson_oid_t*
 j_item_id (JItem* item)
 {
