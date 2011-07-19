@@ -212,7 +212,7 @@ j_collection_unref (JCollection* collection)
  * \return A collection name.
  **/
 const gchar*
-j_collection_name (JCollection* collection)
+j_collection_get_name (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -278,7 +278,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 	{
 		JItem* item = j_list_get(items, 0);
 
-		bson_append_oid(&b, "Item", j_item_id(item));
+		bson_append_oid(&b, "Item", j_item_get_id(item));
 		n = 1;
 	}
 	else if (length > 1)
@@ -293,7 +293,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 		{
 			JItem* item = j_list_iterator_get(it);
 
-			bson_append_oid(&items_bson, "Item", j_item_id(item));
+			bson_append_oid(&items_bson, "Item", j_item_get_id(item));
 		}
 
 		j_list_iterator_free(it);
@@ -324,7 +324,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 
 	bson_finish(&fields);
 
-	connection = j_connection_connection(j_store_connection(collection->store));
+	connection = j_connection_get_connection(j_store_get_connection(collection->store));
 	iterator = mongo_find(connection, j_collection_collection_item_statuses(collection), &b, &fields, n, 0, 0);
 
 	while (mongo_cursor_next(iterator))
@@ -355,7 +355,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
  * \return A semantics object.
  **/
 JSemantics*
-j_collection_semantics (JCollection* collection)
+j_collection_get_semantics (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -364,7 +364,7 @@ j_collection_semantics (JCollection* collection)
 		return collection->semantics;
 	}
 
-	return j_store_semantics(collection->store);
+	return j_store_get_semantics(collection->store);
 }
 
 /**
@@ -490,7 +490,7 @@ j_collection_collection_items (JCollection* collection)
 
 	if (G_UNLIKELY(collection->collection.items == NULL))
 	{
-		collection->collection.items = g_strdup_printf("%s.Items", j_store_name(collection->store));
+		collection->collection.items = g_strdup_printf("%s.Items", j_store_get_name(collection->store));
 	}
 
 	return collection->collection.items;
@@ -504,7 +504,7 @@ j_collection_collection_item_statuses (JCollection* collection)
 
 	if (G_UNLIKELY(collection->collection.item_statuses == NULL))
 	{
-		collection->collection.item_statuses = g_strdup_printf("%s.ItemStatuses", j_store_name(collection->store));
+		collection->collection.item_statuses = g_strdup_printf("%s.ItemStatuses", j_store_get_name(collection->store));
 	}
 
 	return collection->collection.item_statuses;
@@ -525,7 +525,7 @@ j_collection_collection_item_statuses (JCollection* collection)
  * \return A store.
  **/
 JStore*
-j_collection_store (JCollection* collection)
+j_collection_get_store (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -629,8 +629,8 @@ j_collection_deserialize (JCollection* collection, bson* b)
  *
  * \return An ID.
  **/
-bson_oid_t*
-j_collection_id (JCollection* collection)
+bson_oid_t const*
+j_collection_get_id (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -675,7 +675,7 @@ j_collection_create_internal (JList* parts)
 
 	j_list_iterator_free(it);
 
-	connection = j_connection_connection(j_store_connection(store));
+	connection = j_connection_get_connection(j_store_get_connection(store));
 
 	bson_init(&index);
 	bson_append_int(&index, "Name", 1);
@@ -704,7 +704,7 @@ j_collection_create_internal (JList* parts)
 	}
 	*/
 
-	semantics = j_store_semantics(store);
+	semantics = j_store_get_semantics(store);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
@@ -770,7 +770,7 @@ j_collection_get_internal (JList* parts)
 	bson_finish(&b);
 	bson_empty(&empty);
 
-	connection = j_connection_connection(j_store_connection(store));
+	connection = j_connection_get_connection(j_store_get_connection(store));
 	iterator = mongo_find(connection, j_store_collection_collections(store), &b, NULL, n, 0, 0);
 
 	while (mongo_cursor_next(iterator))

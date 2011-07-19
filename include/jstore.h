@@ -48,11 +48,11 @@ JStore* j_store_new (JConnection*, const gchar*);
 JStore* j_store_ref (JStore*);
 void j_store_unref (JStore*);
 
-const gchar* j_store_name (JStore*);
+const gchar* j_store_get_name (JStore*);
 
-JConnection* j_store_connection (JStore*);
+JConnection* j_store_get_connection (JStore*);
 
-JSemantics* j_store_semantics (JStore*);
+JSemantics* j_store_get_semantics (JStore*);
 void j_store_set_semantics (JStore*, JSemantics*);
 
 void j_store_get (JStore*, JOperation*);

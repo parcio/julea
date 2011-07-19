@@ -79,7 +79,7 @@ j_store_iterator_new (JStore* store)
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
 
-	connection = j_connection_connection(j_store_connection(iterator->store));
+	connection = j_connection_get_connection(j_store_get_connection(iterator->store));
 
 	bson_empty(&empty);
 

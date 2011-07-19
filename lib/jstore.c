@@ -124,7 +124,7 @@ j_store_unref (JStore* store)
 }
 
 const gchar*
-j_store_name (JStore* store)
+j_store_get_name (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -132,7 +132,7 @@ j_store_name (JStore* store)
 }
 
 JSemantics*
-j_store_semantics (JStore* store)
+j_store_get_semantics (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -154,7 +154,7 @@ j_store_set_semantics (JStore* store, JSemantics* semantics)
 }
 
 JConnection*
-j_store_connection (JStore* store)
+j_store_get_connection (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);
 

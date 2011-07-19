@@ -288,7 +288,7 @@ j_item_get_semantics (JItem* item)
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 
-	return j_collection_semantics(item->collection);
+	return j_collection_get_semantics(item->collection);
 }
 
 /**
@@ -507,7 +507,7 @@ j_item_serialize (JItem* item)
 	b = g_slice_new(bson);
 	bson_init(b);
 	bson_append_oid(b, "_id", &(item->id));
-	bson_append_oid(b, "Collection", j_collection_id(item->collection));
+	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
 	bson_finish(b);
 
@@ -575,8 +575,8 @@ j_item_deserialize (JItem* item, bson* b)
  *
  * \return An ID.
  **/
-bson_oid_t*
-j_item_id (JItem* item)
+bson_oid_t const*
+j_item_get_id (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
@@ -624,7 +624,7 @@ j_item_create_internal (JList* parts)
 
 	j_list_iterator_free(it);
 
-	connection = j_connection_connection(j_store_connection(j_collection_store(collection)));
+	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
 
 	bson_init(&index);
 	bson_append_int(&index, "Collection", 1);
@@ -644,7 +644,7 @@ j_item_create_internal (JList* parts)
 
 	g_free(obj);
 
-	semantics = j_collection_semantics(collection);
+	semantics = j_collection_get_semantics(collection);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
@@ -679,7 +679,7 @@ j_item_get_internal (JList* parts)
 
 		collection = item->collection;
 
-		bson_append_oid(&b, "Collection", j_collection_id(item->collection));
+		bson_append_oid(&b, "Collection", j_collection_get_id(item->collection));
 		bson_append_string(&b, "Name", item->name);
 		n = 1;
 	}
@@ -704,7 +704,7 @@ j_item_get_internal (JList* parts)
 		j_list_iterator_free(it);
 		bson_finish(&names_bson);
 
-		bson_append_oid(&b, "Collection", j_collection_id(collection));
+		bson_append_oid(&b, "Collection", j_collection_get_id(collection));
 		bson_append_bson(&b, "$or", &names_bson);
 		bson_destroy(&names_bson);
 	}
@@ -712,7 +712,7 @@ j_item_get_internal (JList* parts)
 	bson_finish(&b);
 	bson_empty(&empty);
 
-	connection = j_connection_connection(j_store_connection(j_collection_store(collection)));
+	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
 	iterator = mongo_find(connection, j_collection_collection_items(collection), &b, NULL, n, 0, 0);
 
 	while (mongo_cursor_next(iterator))
@@ -771,8 +771,8 @@ j_item_read_internal (JList* parts)
 			gsize collection_len;
 			gsize item_len;
 
-			store = j_store_name(j_collection_store(item->collection));
-			collection = j_collection_name(item->collection);
+			store = j_store_get_name(j_collection_get_store(item->collection));
+			collection = j_collection_get_name(item->collection);
 
 			store_len = strlen(store) + 1;
 			collection_len = strlen(collection) + 1;
@@ -785,8 +785,8 @@ j_item_read_internal (JList* parts)
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 
-			j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, NULL, 0);
-			j_connection_receive(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
+			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
+			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, message, d, new_length);
 
 			j_message_free(message);
 
@@ -850,8 +850,8 @@ j_item_write_internal (JList* parts)
 			gsize collection_len;
 			gsize item_len;
 
-			store = j_store_name(j_collection_store(item->collection));
-			collection = j_collection_name(item->collection);
+			store = j_store_get_name(j_collection_get_store(item->collection));
+			collection = j_collection_get_name(item->collection);
 
 			store_len = strlen(store) + 1;
 			collection_len = strlen(collection) + 1;
@@ -864,7 +864,7 @@ j_item_write_internal (JList* parts)
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 
-			j_connection_send(j_store_connection(j_collection_store(item->collection)), index, message, d, new_length);
+			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, d, new_length);
 
 			j_message_free(message);
 

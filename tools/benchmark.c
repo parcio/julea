@@ -116,7 +116,7 @@ main (int argc, char** argv)
 		{
 			JCollection* collection = j_store_iterator_get(siterator);
 
-			g_print("%s ", j_collection_name(collection));
+			g_print("%s ", j_collection_get_name(collection));
 
 			if (is_first)
 			{

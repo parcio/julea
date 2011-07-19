@@ -48,11 +48,11 @@ JCollection* j_collection_new (JStore* store, const gchar*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
-const gchar* j_collection_name (JCollection*);
+const gchar* j_collection_get_name (JCollection*);
 
 void j_collection_get_status (JCollection*, JList*, JItemStatusFlags);
 
-JSemantics* j_collection_semantics (JCollection*);
+JSemantics* j_collection_get_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);
 
 void j_collection_create (JCollection*, JOperation*);

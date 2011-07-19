@@ -113,7 +113,7 @@ j_item_status_unref (JItemStatus* status)
 }
 
 guint64
-j_item_status_size (JItemStatus* status)
+j_item_status_get_size (JItemStatus* status)
 {
 	g_return_val_if_fail(status != NULL, 0);
 	g_return_val_if_fail((status->flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE, 0);
@@ -136,7 +136,7 @@ j_item_status_set_size (JItemStatus* status, guint64 size)
 }
 
 gint64
-j_item_status_access_time (JItemStatus* status)
+j_item_status_get_access_time (JItemStatus* status)
 {
 	g_return_val_if_fail(status != NULL, 0);
 	g_return_val_if_fail((status->flags & J_ITEM_STATUS_ACCESS_TIME) == J_ITEM_STATUS_ACCESS_TIME, 0);
@@ -159,7 +159,7 @@ j_item_status_set_access_time (JItemStatus* status, gint64 access_time)
 }
 
 gint64
-j_item_status_modification_time (JItemStatus* status)
+j_item_status_get_modification_time (JItemStatus* status)
 {
 	g_return_val_if_fail(status != NULL, 0);
 	g_return_val_if_fail((status->flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME, 0);
@@ -194,7 +194,7 @@ j_item_status_serialize (JItemStatus* status)
 
 	b = g_slice_new(bson);
 	bson_init(b);
-	//bson_append_oid(&b, "Collection", j_collection_id(item->collection));
+	//bson_append_oid(&b, "Collection", j_collection_get_id(item->collection));
 	bson_append_long(b, "Size", status->size);
 	bson_append_long(b, "AccessTime", status->access_time);
 	bson_append_long(b, "ModificationTime", status->modification_time);

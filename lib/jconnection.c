@@ -267,7 +267,7 @@ j_connection_disconnect (JConnection* connection)
  * \return A MongoDB connection.
  **/
 mongo*
-j_connection_connection (JConnection* connection)
+j_connection_get_connection (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);
 

@@ -52,13 +52,13 @@ JItemStatus* j_item_status_new (JItemStatusFlags);
 JItemStatus* j_item_status_ref (JItemStatus*);
 void j_item_status_unref (JItemStatus*);
 
-guint64 j_item_status_size (JItemStatus*);
+guint64 j_item_status_get_size (JItemStatus*);
 void j_item_status_set_size (JItemStatus*, guint64);
 
-gint64 j_item_status_access_time (JItemStatus*);
+gint64 j_item_status_get_access_time (JItemStatus*);
 void j_item_status_set_access_time (JItemStatus*, gint64);
 
-gint64 j_item_status_modification_time (JItemStatus*);
+gint64 j_item_status_get_modification_time (JItemStatus*);
 void j_item_status_set_modification_time (JItemStatus*, gint64);
 
 #endif

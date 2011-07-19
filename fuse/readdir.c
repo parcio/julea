@@ -62,7 +62,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		{
 			JCollection* c = j_store_iterator_get(siterator);
 
-			filler(buf, j_collection_name(c), NULL, 0);
+			filler(buf, j_collection_get_name(c), NULL, 0);
 			j_collection_unref(c);
 		}
 

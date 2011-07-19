@@ -79,10 +79,10 @@ j_collection_iterator_new (JCollection* collection)
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
 
-	connection = j_connection_connection(j_store_connection(j_collection_store(iterator->collection)));
+	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(iterator->collection)));
 
 	bson_init(&b);
-	bson_append_oid(&b, "Collection", j_collection_id(iterator->collection));
+	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
 	iterator->iterator = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, NULL, 0, 0, 0);
