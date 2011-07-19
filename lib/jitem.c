@@ -66,13 +66,34 @@
  **/
 struct JItem
 {
+	/**
+	 * The ID.
+	 **/
 	bson_oid_t id;
+
+	/**
+	 * The name.
+	 **/
 	gchar* name;
+
+	/**
+	 * The status.
+	 **/
 	JItemStatus* status;
 
+	/**
+	 * The parent collection.
+	 **/
 	JCollection* collection;
+
+	/**
+	 * The semantics.
+	 **/
 	JSemantics* semantics;
 
+	/**
+	 * The reference count.
+	 **/
 	guint ref_count;
 };
 

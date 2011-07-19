@@ -51,6 +51,9 @@
  **/
 struct JOperation
 {
+	/**
+	 * The list of pending operation parts.
+	 **/
 	JList* list;
 };
 

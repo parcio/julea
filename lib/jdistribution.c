@@ -43,10 +43,24 @@
  * @{
  **/
 
+/**
+ * A distribution.
+ **/
 struct JDistribution
 {
+	/**
+	 * The type.
+	 **/
 	JDistributionType type;
+
+	/**
+	 * The length.
+	 **/
 	guint64 length;
+
+	/**
+	 * The offset.
+	 **/
 	guint64 offset;
 };
 
@@ -59,10 +73,6 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	guint64 block;
 	guint64 displacement;
 	guint64 round;
-
-	g_return_val_if_fail(index != NULL, FALSE);
-	g_return_val_if_fail(new_length != NULL, FALSE);
-	g_return_val_if_fail(new_offset != NULL, FALSE);
 
 	if (distribution->length == 0)
 	{
@@ -107,6 +117,11 @@ j_distribution_free (JDistribution* distribution)
 gboolean
 j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
+	g_return_val_if_fail(distribution != NULL, FALSE);
+	g_return_val_if_fail(index != NULL, FALSE);
+	g_return_val_if_fail(new_length != NULL, FALSE);
+	g_return_val_if_fail(new_offset != NULL, FALSE);
+
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:

@@ -54,8 +54,14 @@ enum JOperationType
 
 typedef enum JOperationType JOperationType;
 
+/**
+ * An operation part.
+ **/
 struct JOperationPart
 {
+	/**
+	 * The type.
+	 **/
 	JOperationType type;
 
 	union

@@ -55,11 +55,24 @@
  **/
 struct JConnection
 {
+	/**
+	 * The MongoDB connection.
+	 **/
 	mongo connection;
+
+	/**
+	 * The julead connections.
+	 **/
 	GSocketConnection** sockets;
 
+	/**
+	 * The connection status.
+	 **/
 	gboolean connected;
 
+	/**
+	 * The reference count.
+	 **/
 	guint ref_count;
 };
 

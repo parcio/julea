@@ -46,16 +46,16 @@
 struct JList
 {
 	/**
-	 * Pointer to the first element.
+	 * The first element.
 	 **/
 	JListElement* head;
 	/**
-	 * Pointer to the last element.
+	 * The last element.
 	 **/
 	JListElement* tail;
 
 	/**
-	 * The list's length.
+	 * The length.
 	 **/
 	guint length;
 
@@ -65,7 +65,7 @@ struct JList
 	JListFreeFunc free_func;
 
 	/**
-	 * The list's reference count.
+	 * The reference count.
 	 **/
 	guint ref_count;
 };

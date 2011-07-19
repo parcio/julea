@@ -64,10 +64,13 @@
  **/
 struct JCollection
 {
+	/**
+	 * The ID.
+	 **/
 	bson_oid_t id;
 
 	/**
-	 * The collection's name.
+	 * The name.
 	 **/
 	gchar* name;
 
@@ -79,12 +82,12 @@ struct JCollection
 	collection;
 
 	/**
-	 * Pointer to the used semantics.
+	 * The semantics.
 	 **/
 	JSemantics* semantics;
 
 	/**
-	 * Pointer to the parent store.
+	 * The parent store.
 	 **/
 	JStore* store;
 
