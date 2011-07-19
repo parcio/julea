@@ -51,7 +51,7 @@
  **/
 
 /**
- * A JConnection.
+ * A connection.
  **/
 struct JConnection
 {
@@ -76,6 +76,19 @@ struct JConnection
 	guint ref_count;
 };
 
+/**
+ * Creates a new connection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JConnection* c;
+ *
+ * c = j_connection_new();
+ * \endcode
+ *
+ * \return A new connection. Should be freed with j_connection_unref().
+ **/
 JConnection*
 j_connection_new (void)
 {
@@ -97,7 +110,19 @@ j_connection_new (void)
 }
 
 /**
- * Increases a JConnection's reference count.
+ * Increases a connection's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JConnection* c;
+ *
+ * j_connection_ref(c);
+ * \endcode
+ *
+ * \param connection A connection.
+ *
+ * \return #connection.
  **/
 JConnection*
 j_connection_ref (JConnection* connection)
@@ -109,6 +134,17 @@ j_connection_ref (JConnection* connection)
 	return connection;
 }
 
+/**
+ * Decreases a connection's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the connection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ **/
 void
 j_connection_unref (JConnection* connection)
 {
@@ -136,6 +172,18 @@ j_connection_unref (JConnection* connection)
 	}
 }
 
+/**
+ * Connects a connection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
 j_connection_connect (JConnection* connection)
 {
@@ -168,6 +216,18 @@ j_connection_connect (JConnection* connection)
 	return connection->connected;
 }
 
+/**
+ * Disconnects a connection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
 j_connection_disconnect (JConnection* connection)
 {
@@ -192,6 +252,20 @@ j_connection_disconnect (JConnection* connection)
 
 /* Internal */
 
+/**
+ * Returns a MongoDB connection.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ *
+ * \return A MongoDB connection.
+ **/
 mongo*
 j_connection_connection (JConnection* connection)
 {
@@ -200,6 +274,24 @@ j_connection_connection (JConnection* connection)
 	return &(connection->connection);
 }
 
+/**
+ * Sends data via the julead connections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ * \param i          A connection index.
+ * \param message    A message.
+ * \param data       An optional data buffer.
+ * \param length     Number of bytes to send.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
 j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpointer data, gsize length)
 {
@@ -223,6 +315,24 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 	return TRUE;
 }
 
+/**
+ * Receives data via the julead connections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ * \param i          A connection index.
+ * \param message    A message.
+ * \param data       A data buffer.
+ * \param length     #data's length.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
 j_connection_receive (JConnection* connection, guint i, JMessage* message, gpointer data, gsize length)
 {
