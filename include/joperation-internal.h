@@ -44,12 +44,15 @@ enum JOperationType
 	J_OPERATION_NONE,
 	J_OPERATION_COLLECTION_CREATE,
 	J_OPERATION_COLLECTION_GET,
+	J_OPERATION_COLLECTION_DELETE,
 	J_OPERATION_ITEM_CREATE,
 	J_OPERATION_ITEM_GET,
+	J_OPERATION_ITEM_DELETE,
 	J_OPERATION_ITEM_READ,
 	J_OPERATION_ITEM_WRITE,
 	J_OPERATION_STORE_CREATE,
-	J_OPERATION_STORE_GET
+	J_OPERATION_STORE_GET,
+	J_OPERATION_STORE_DELETE
 };
 
 typedef enum JOperationType JOperationType;
@@ -80,6 +83,12 @@ struct JOperationPart
 
 		struct
 		{
+			JCollection* collection;
+		}
+		collection_delete;
+
+		struct
+		{
 			JItem* item;
 		}
 		item_create;
@@ -89,6 +98,12 @@ struct JOperationPart
 			JItem* item;
 		}
 		item_get;
+
+		struct
+		{
+			JItem* item;
+		}
+		item_delete;
 
 		struct
 		{
@@ -121,6 +136,12 @@ struct JOperationPart
 			JStore* store;
 		}
 		store_get;
+
+		struct
+		{
+			JStore* store;
+		}
+		store_delete;
 	}
 	u;
 };

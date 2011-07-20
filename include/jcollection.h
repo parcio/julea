@@ -57,6 +57,7 @@ void j_collection_set_semantics (JCollection*, JSemantics*);
 
 void j_collection_create (JCollection*, JOperation*);
 void j_collection_get (JCollection*, JOperation*);
+void j_collection_delete (JCollection*, JOperation*);
 
 /*
 #include "credentials.h"

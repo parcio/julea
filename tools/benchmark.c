@@ -61,7 +61,7 @@ main (int argc, char** argv)
 	operation = j_operation_new();
 
 	store = j_store_new(connection, "JULEA");
-	j_store_get(store, operation);
+	j_store_create(store, operation);
 
 	j_operation_execute(operation);
 
@@ -167,6 +167,46 @@ main (int argc, char** argv)
 
 		j_collection_iterator_free(citerator);
 	}
+
+
+	for (guint i = 0; i < 10; i++)
+	{
+		JCollection* collection;
+		gchar* name;
+
+		name = g_strdup_printf("test-%u", i);
+
+		collection = j_collection_new(store, name);
+		j_collection_get(collection, operation);
+
+		g_free(name);
+
+		j_operation_execute(operation);
+
+		for (guint j = 0; j < 10000; j++)
+		{
+			JItem* item;
+
+			name = g_strdup_printf("test-%u", j);
+
+			item = j_item_new(collection, name);
+			j_item_delete(item, operation);
+			j_item_unref(item);
+
+			g_free(name);
+		}
+
+		j_collection_unref(collection);
+
+		j_collection_delete(collection, operation);
+
+		j_operation_execute(operation);
+	}
+
+	j_store_delete(store, operation);
+
+	j_operation_execute(operation);
+
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);

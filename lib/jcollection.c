@@ -442,6 +442,31 @@ j_collection_get (JCollection* collection, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Deletes a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param operation  An operation.
+ **/
+void
+j_collection_delete (JCollection* collection, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(collection != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_COLLECTION_DELETE;
+	part->u.collection_delete.collection = j_collection_ref(collection);
+
+	j_operation_add(operation, part);
+}
+
 /* Internal */
 
 /**

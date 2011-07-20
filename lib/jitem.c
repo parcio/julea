@@ -371,6 +371,31 @@ j_item_get (JItem* item, JOperation* operation)
 }
 
 /**
+ * Deletes an item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param operation An operation.
+ **/
+void
+j_item_delete (JItem* item, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(item != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_ITEM_DELETE;
+	part->u.item_delete.item = j_item_ref(item);
+
+	j_operation_add(operation, part);
+}
+
+/**
  * Reads an item.
  *
  * \author Michael Kuhn

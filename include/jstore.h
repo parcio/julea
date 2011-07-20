@@ -55,7 +55,9 @@ JConnection* j_store_get_connection (JStore*);
 JSemantics* j_store_get_semantics (JStore*);
 void j_store_set_semantics (JStore*, JSemantics*);
 
+void j_store_create (JStore*, JOperation*);
 void j_store_get (JStore*, JOperation*);
+void j_store_delete (JStore*, JOperation*);
 
 /*
 #include "collection.h"

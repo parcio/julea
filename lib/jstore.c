@@ -162,6 +162,20 @@ j_store_get_connection (JStore* store)
 }
 
 void
+j_store_create (JStore* store, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(store != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_CREATE;
+	part->u.store_create.store = j_store_ref(store);
+
+	j_operation_add(operation, part);
+}
+
+void
 j_store_get (JStore* store, JOperation* operation)
 {
 	JOperationPart* part;
@@ -171,6 +185,20 @@ j_store_get (JStore* store, JOperation* operation)
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_STORE_GET;
 	part->u.store_get.store = j_store_ref(store);
+
+	j_operation_add(operation, part);
+}
+
+void
+j_store_delete (JStore* store, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(store != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_DELETE;
+	part->u.store_delete.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
 }
@@ -192,6 +220,30 @@ j_store_collection_collections (JStore* store)
 	}
 
 	return store->collection.collections;
+}
+
+void
+j_store_create_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JStore* store = part->u.store_create.store;
+
+		//store = j_store_new();
+	}
+
+	j_list_iterator_free(it);
 }
 
 void
