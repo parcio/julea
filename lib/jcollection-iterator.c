@@ -141,7 +141,7 @@ j_collection_iterator_next (JCollectionIterator* iterator)
  *
  * \param iterator A collection iterator.
  *
- * \return An item.
+ * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
 j_collection_iterator_get (JCollectionIterator* iterator)

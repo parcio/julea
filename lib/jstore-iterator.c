@@ -137,7 +137,7 @@ j_store_iterator_next (JStoreIterator* iterator)
  *
  * \param iterator A store iterator.
  *
- * \return A collection.
+ * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
