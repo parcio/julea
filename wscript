@@ -196,3 +196,13 @@ def build (ctx):
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
+
+	# pkg-config
+	ctx(
+		features = 'subst',
+		source = 'pkg-config/julea.pc.in',
+		target = 'pkg-config/julea.pc',
+		install_path = '${LIBDIR}/pkgconfig',
+		INCLUDEDIR = Utils.subst_vars('${INCLUDEDIR}', ctx.env),
+		LIBDIR = Utils.subst_vars('${LIBDIR}', ctx.env)
+	)

@@ -1,0 +1,9 @@
+includedir=@INCLUDEDIR@
+libdir=@LIBDIR@
+
+Name: JULEA
+Description: The JULEA library
+URL: http://redmine.wr.informatik.uni-hamburg.de/projects/julea
+Version: 1.0.0
+Cflags: -I${includedir}/julea
+Libs: -L${libdir} -ljulea
