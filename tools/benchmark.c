@@ -38,6 +38,7 @@ main (int argc, char** argv)
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
+	JOperation* delete_operation;
 	JOperation* operation;
 
 	g_type_init();
@@ -58,6 +59,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
+	delete_operation = j_operation_new();
 	operation = j_operation_new();
 
 	store = j_store_new(connection, "JULEA");
@@ -94,15 +96,19 @@ main (int argc, char** argv)
 			item = j_item_new(collection, name);
 			//j_item_set_semantics(item, semantics);
 			j_item_create(item, operation);
+			j_item_delete(item, delete_operation);
 			j_item_unref(item);
 
 			g_free(name);
 		}
 
+		j_collection_delete(collection, delete_operation);
 		j_collection_unref(collection);
 
 		j_operation_execute(operation);
 	}
+
+	j_store_delete(store, delete_operation);
 
 	{
 		JCollection* first_collection = NULL;
@@ -168,49 +174,12 @@ main (int argc, char** argv)
 		j_collection_iterator_free(citerator);
 	}
 
-
-	for (guint i = 0; i < 10; i++)
-	{
-		JCollection* collection;
-		gchar* name;
-
-		name = g_strdup_printf("test-%u", i);
-
-		collection = j_collection_new(store, name);
-		j_collection_get(collection, operation);
-
-		g_free(name);
-
-		j_operation_execute(operation);
-
-		for (guint j = 0; j < 10000; j++)
-		{
-			JItem* item;
-
-			name = g_strdup_printf("test-%u", j);
-
-			item = j_item_new(collection, name);
-			j_item_delete(item, operation);
-			j_item_unref(item);
-
-			g_free(name);
-		}
-
-		j_collection_unref(collection);
-
-		j_collection_delete(collection, operation);
-
-		j_operation_execute(operation);
-	}
-
-	j_store_delete(store, operation);
-
-	j_operation_execute(operation);
-
+	j_operation_execute(delete_operation);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
 
+	j_operation_free(delete_operation);
 	j_operation_free(operation);
 
 	j_connection_disconnect(connection);
