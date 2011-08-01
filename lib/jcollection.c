@@ -238,7 +238,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 	bson fields;
 	bson b;
 	mongo* connection;
-	mongo_cursor* iterator;
+	mongo_cursor* cursor;
 	guint length;
 	guint n = 0;
 
@@ -325,18 +325,18 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 	bson_finish(&fields);
 
 	connection = j_connection_get_connection(j_store_get_connection(collection->store));
-	iterator = mongo_find(connection, j_collection_collection_item_statuses(collection), &b, &fields, n, 0, 0);
+	cursor = mongo_find(connection, j_collection_collection_item_statuses(collection), &b, &fields, n, 0, 0);
 
-	while (mongo_cursor_next(iterator) == MONGO_OK)
+	while (mongo_cursor_next(cursor) == MONGO_OK)
 	{
 		JItemStatus* status;
 
 		status = j_item_status_new(flags);
-		j_item_status_deserialize(status, &(iterator->current));
+		j_item_status_deserialize(status, &(cursor->current));
 		// FIXME j_item_set_status(item, status);
 	}
 
-	mongo_cursor_destroy(iterator);
+	mongo_cursor_destroy(cursor);
 
 	bson_destroy(&fields);
 	bson_destroy(&b);
@@ -744,7 +744,7 @@ j_collection_get_internal (JList* parts)
 	bson empty;
 	bson b;
 	mongo* connection;
-	mongo_cursor* iterator;
+	mongo_cursor* cursor;
 	GHashTable* hash_table;
 	guint length;
 
@@ -798,25 +798,25 @@ j_collection_get_internal (JList* parts)
 	bson_empty(&empty);
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
-	iterator = mongo_find(connection, j_store_collection_collections(store), &b, NULL, length, 0, 0);
+	cursor = mongo_find(connection, j_store_collection_collections(store), &b, NULL, length, 0, 0);
 
-	while (mongo_cursor_next(iterator) == MONGO_OK)
+	while (mongo_cursor_next(cursor) == MONGO_OK)
 	{
 		JCollection* collection;
 		bson_iterator it;
 		gchar const* name;
 
-		bson_iterator_init(&it, iterator->current.data);
-		bson_find(&it, &(iterator->current), "Name");
+		bson_iterator_init(&it, cursor->current.data);
+		bson_find(&it, &(cursor->current), "Name");
 		name = bson_iterator_string(&it);
 
 		if ((collection = g_hash_table_lookup(hash_table, name)) != NULL)
 		{
-			j_collection_deserialize(collection, &(iterator->current));
+			j_collection_deserialize(collection, &(cursor->current));
 		}
 	}
 
-	mongo_cursor_destroy(iterator);
+	mongo_cursor_destroy(cursor);
 
 	bson_destroy(&b);
 

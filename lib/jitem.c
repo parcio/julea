@@ -684,7 +684,7 @@ j_item_get_internal (JList* parts)
 	bson empty;
 	bson b;
 	mongo* connection;
-	mongo_cursor* iterator;
+	mongo_cursor* cursor;
 	GHashTable* hash_table;
 	guint length;
 
@@ -740,25 +740,25 @@ j_item_get_internal (JList* parts)
 	bson_empty(&empty);
 
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
-	iterator = mongo_find(connection, j_collection_collection_items(collection), &b, NULL, length, 0, 0);
+	cursor = mongo_find(connection, j_collection_collection_items(collection), &b, NULL, length, 0, 0);
 
-	while (mongo_cursor_next(iterator) == MONGO_OK)
+	while (mongo_cursor_next(cursor) == MONGO_OK)
 	{
 		JItem* item;
 		bson_iterator it;
 		gchar const* name;
 
-		bson_iterator_init(&it, iterator->current.data);
-		bson_find(&it, &(iterator->current), "Name");
+		bson_iterator_init(&it, cursor->current.data);
+		bson_find(&it, &(cursor->current), "Name");
 		name = bson_iterator_string(&it);
 
 		if ((item = g_hash_table_lookup(hash_table, name)) != NULL)
 		{
-			j_item_deserialize(item, &(iterator->current));
+			j_item_deserialize(item, &(cursor->current));
 		}
 	}
 
-	mongo_cursor_destroy(iterator);
+	mongo_cursor_destroy(cursor);
 
 	bson_destroy(&b);
 

@@ -53,7 +53,7 @@
 
 struct JCollectionIterator
 {
-	mongo_cursor* iterator;
+	mongo_cursor* cursor;
 
 	JCollection* collection;
 };
@@ -85,7 +85,7 @@ j_collection_iterator_new (JCollection* collection)
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->iterator = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, NULL, 0, 0, 0);
+	iterator->cursor = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, NULL, 0, 0, 0);
 
 	bson_destroy(&b);
 
@@ -104,7 +104,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	mongo_cursor_destroy(iterator->iterator);
+	mongo_cursor_destroy(iterator->cursor);
 
 	j_collection_unref(iterator->collection);
 
@@ -128,7 +128,7 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return (mongo_cursor_next(iterator->iterator) == MONGO_OK);
+	return (mongo_cursor_next(iterator->cursor) == MONGO_OK);
 }
 
 /**
@@ -150,7 +150,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	item = j_item_new_from_bson(iterator->collection, &(iterator->iterator->current));
+	item = j_item_new_from_bson(iterator->collection, &(iterator->cursor->current));
 
 	return item;
 }
