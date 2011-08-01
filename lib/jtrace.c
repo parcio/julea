@@ -146,6 +146,33 @@ static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_counter_table = NULL;
 #endif
 
+/**
+ * Prints a common header to stderr.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace     A trace.
+ * \param timestamp A timestamp.
+ **/
+static
+void
+j_trace_echo_printerr (JTrace* trace, guint64 timestamp)
+{
+	guint i;
+
+	g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
+
+	for (i = 1; i < trace->function_depth; i++)
+	{
+		g_printerr("  ");
+	}
+}
+
 #ifdef HAVE_HDTRACE
 /**
  * Frees the memory allocated by a HDTrace stats group.
@@ -161,7 +188,7 @@ static GHashTable* otf_counter_table = NULL;
  **/
 static
 void
-hdtrace_counter_free (gpointer data)
+j_trace_hdtrace_counter_free (gpointer data)
 {
 	hdStatsGroup* stats_group = data;
 
@@ -362,7 +389,7 @@ j_trace_init (gchar const* name)
 		hdtrace_topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 2);
 		g_assert(hdtrace_topo_node != NULL);
 
-		hdtrace_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, hdtrace_counter_free);
+		hdtrace_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, j_trace_hdtrace_counter_free);
 	}
 #endif
 
@@ -484,15 +511,7 @@ j_trace_enter (JTrace* trace, gchar const* name)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		guint i;
-
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
-
-		for (i = 1; i < trace->function_depth; i++)
-		{
-			g_printerr("  ");
-		}
-
+		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("ENTER %s\n", name);
 	}
 
@@ -561,15 +580,7 @@ j_trace_leave (JTrace* trace, gchar const* name)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		guint i;
-
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
-
-		for (i = 0; i < trace->function_depth; i++)
-		{
-			g_printerr("  ");
-		}
-
+		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("LEAVE %s\n", name);
 	}
 
@@ -623,15 +634,7 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		guint i;
-
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
-
-		for (i = 0; i < trace->function_depth; i++)
-		{
-			g_printerr("  ");
-		}
-
+		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("BEGIN %s %s\n", j_trace_file_operation_name(op), path);
 	}
 
@@ -697,15 +700,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		guint i;
-
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
-
-		for (i = 0; i < trace->function_depth; i++)
-		{
-			g_printerr("  ");
-		}
-
+		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("END %s %s", j_trace_file_operation_name(op), path);
 
 		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
@@ -898,15 +893,7 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 
 	if (j_trace_flags == J_TRACE_ECHO)
 	{
-		guint i;
-
-		g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
-
-		for (i = 0; i < trace->function_depth; i++)
-		{
-			g_printerr("  ");
-		}
-
+		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("COUNTER %s %" G_GUINT64_FORMAT "\n", name, counter_value);
 	}
 
