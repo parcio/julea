@@ -167,7 +167,7 @@ j_trace_echo_printerr (JTrace* trace, guint64 timestamp)
 
 	g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace->thread_name);
 
-	for (i = 1; i < trace->function_depth; i++)
+	for (i = 0; i < trace->function_depth; i++)
 	{
 		g_printerr("  ");
 	}
@@ -318,8 +318,35 @@ j_trace_init (gchar const* name)
 
 	if ((j_trace = g_getenv("J_TRACE")) == NULL)
 	{
-		g_printerr("Tracing is disabled. Set the J_TRACE environment variable to enable it. Valid values are echo, hdtrace or otf.\n");
+		g_printerr("Tracing is disabled. Set the J_TRACE environment variable to enable it. Valid values are echo, hdtrace and otf. Multiple values can be combined with commas.\n");
 		return;
+	}
+	else
+	{
+		gchar** p;
+		guint i;
+		guint l;
+
+		p = g_strsplit(j_trace, ",", 0);
+		l = g_strv_length(p);
+
+		for (i = 0; i < l; i++)
+		{
+			if (g_strcmp0(p[i], "echo") == 0)
+			{
+				j_trace_flags |= J_TRACE_ECHO;
+			}
+			else if (g_strcmp0(p[i], "hdtrace") == 0)
+			{
+				j_trace_flags |= J_TRACE_HDTRACE;
+			}
+			else if (g_strcmp0(p[i], "otf") == 0)
+			{
+				j_trace_flags |= J_TRACE_OTF;
+			}
+		}
+
+		g_strfreev(p);
 	}
 
 	if ((j_trace_function_blacklist = g_getenv("J_TRACE_FUNCTION_BLACKLIST")) != NULL)
@@ -364,21 +391,8 @@ j_trace_init (gchar const* name)
 		g_strfreev(p);
 	}
 
-	if (g_strcmp0(j_trace, "echo") == 0)
-	{
-		j_trace_flags = J_TRACE_ECHO;
-	}
-	else if (g_strcmp0(j_trace, "hdtrace") == 0)
-	{
-		j_trace_flags = J_TRACE_HDTRACE;
-	}
-	else if (g_strcmp0(j_trace, "otf") == 0)
-	{
-		j_trace_flags = J_TRACE_OTF;
-	}
-
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		gchar const* levels[] = { "Host", "Process", "Thread" };
 		gchar const* topo_path[] = { g_get_host_name(), name };
@@ -394,7 +408,7 @@ j_trace_init (gchar const* name)
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		otf_process_id = 1;
 		otf_function_id = 1;
@@ -435,7 +449,7 @@ j_trace_fini (void)
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		g_hash_table_unref(hdtrace_counter_table);
 		hdtrace_counter_table = NULL;
@@ -449,7 +463,7 @@ j_trace_fini (void)
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		g_hash_table_unref(otf_function_table);
 		otf_function_table = NULL;
@@ -470,6 +484,7 @@ j_trace_fini (void)
 
 	j_trace_flags = J_TRACE_OFF;
 
+	// FIXME leak
 	g_free(j_trace_function_blacklist_patterns);
 	g_free(j_trace_function_whitelist_patterns);
 
@@ -506,24 +521,23 @@ j_trace_enter (JTrace* trace, gchar const* name)
 		return;
 	}
 
-	trace->function_depth++;
 	timestamp = j_trace_get_time();
 
-	if (j_trace_flags == J_TRACE_ECHO)
+	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("ENTER %s\n", name);
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		hdT_logStateStart(trace->hdtrace.trace, name);
 	}
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		gpointer value;
 		guint32 function_id;
@@ -544,6 +558,8 @@ j_trace_enter (JTrace* trace, gchar const* name)
 		OTF_Writer_writeEnter(otf_writer, timestamp, function_id, trace->otf.process_id, 0);
 	}
 #endif
+
+	trace->function_depth++;
 }
 
 /**
@@ -578,21 +594,21 @@ j_trace_leave (JTrace* trace, gchar const* name)
 	trace->function_depth--;
 	timestamp = j_trace_get_time();
 
-	if (j_trace_flags == J_TRACE_ECHO)
+	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("LEAVE %s\n", name);
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		hdT_logStateEnd(trace->hdtrace.trace);
 	}
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		gpointer value;
 		guint32 function_id;
@@ -632,14 +648,14 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 
 	timestamp = j_trace_get_time();
 
-	if (j_trace_flags == J_TRACE_ECHO)
+	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("BEGIN %s %s\n", j_trace_file_operation_name(op), path);
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		hdT_logStateStart(trace->hdtrace.trace, j_trace_file_operation_name(op));
 		hdT_logAttributes(trace->hdtrace.trace, "path='%s'", path);
@@ -647,7 +663,7 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		gpointer value;
 		guint32 file_id;
@@ -698,7 +714,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 	timestamp = j_trace_get_time();
 
-	if (j_trace_flags == J_TRACE_ECHO)
+	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("END %s %s", j_trace_file_operation_name(op), path);
@@ -712,7 +728,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
 		{
@@ -725,7 +741,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		gpointer value;
 		guint32 file_id;
@@ -801,7 +817,7 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		gchar const* topo_path[] = { g_get_host_name(), j_trace_name, trace->thread_name };
 
@@ -814,7 +830,7 @@ j_trace_thread_enter (GThread* thread, gchar const* function_name)
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		trace->otf.process_id = otf_process_id;
 		otf_process_id++;
@@ -851,7 +867,7 @@ j_trace_thread_leave (JTrace* trace)
 	j_trace_leave(trace, trace->function_name);
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		hdT_finalize(trace->hdtrace.trace);
 		hdT_destroyTopoNode(trace->hdtrace.topo_node);
@@ -891,14 +907,14 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 
 	timestamp = j_trace_get_time();
 
-	if (j_trace_flags == J_TRACE_ECHO)
+	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("COUNTER %s %" G_GUINT64_FORMAT "\n", name, counter_value);
 	}
 
 #ifdef HAVE_HDTRACE
-	if (j_trace_flags == J_TRACE_HDTRACE)
+	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
 		hdStatsGroup* stats_group;
 
@@ -917,7 +933,7 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 #endif
 
 #ifdef HAVE_OTF
-	if (j_trace_flags == J_TRACE_OTF)
+	if (j_trace_flags & J_TRACE_OTF)
 	{
 		gpointer value;
 		guint32 counter_id;
