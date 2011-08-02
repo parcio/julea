@@ -208,7 +208,7 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			j_store_get_internal(list);
 			break;
 		case J_OPERATION_STORE_DELETE:
-			// FIXME
+			j_store_delete_internal(list);
 			break;
 		case J_OPERATION_NONE:
 		default:

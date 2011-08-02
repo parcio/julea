@@ -397,6 +397,8 @@ j_trace_init (gchar const* name)
 		gchar const* levels[] = { "Host", "Process", "Thread" };
 		gchar const* topo_path[] = { g_get_host_name(), name };
 
+		hdTrace_init();
+
 		hdtrace_topology = hdT_createTopology(name, levels, 3);
 		g_assert(hdtrace_topology != NULL);
 

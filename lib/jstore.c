@@ -247,6 +247,32 @@ j_store_create_internal (JList* parts)
 }
 
 void
+j_store_delete_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JStore* store = part->u.store_delete.store;
+		mongo* connection;
+
+		connection = j_connection_get_connection(store->connection);
+		mongo_cmd_drop_db(connection, store->name);
+	}
+
+	j_list_iterator_free(it);
+}
+
+void
 j_store_get_internal (JList* parts)
 {
 	JListIterator* it;
