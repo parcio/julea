@@ -738,15 +738,9 @@ j_collection_create_internal (JList* parts)
 }
 
 void
-j_collection_get_internal (JList* parts)
+j_collection_delete_internal (JList* parts)
 {
-	JStore* store;
-	bson empty;
-	bson b;
-	mongo* connection;
-	mongo_cursor* cursor;
-	GHashTable* hash_table;
-	guint length;
+	JListIterator* it;
 
 	g_return_if_fail(parts != NULL);
 
@@ -754,73 +748,69 @@ j_collection_get_internal (JList* parts)
 		IsInitialized(true);
 	*/
 
-	hash_table = g_hash_table_new(g_str_hash, g_str_equal);
-	bson_init(&b);
-	length = j_list_length(parts);
+	it = j_list_iterator_new(parts);
 
-	if (length == 1)
+	/* FIXME do some optimizations for len(parts) > 1 */
+	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_get(parts, 0);
+		JOperationPart* part = j_list_iterator_get(it);
+		JCollection* collection = part->u.collection_delete.collection;
+		bson b;
+		mongo* connection;
+
+		bson_init(&b);
+		bson_append_oid(&b, "_id", &(collection->id));
+		bson_finish(&b);
+
+		connection = j_connection_get_connection(j_store_get_connection(collection->store));
+		mongo_remove(connection, j_store_collection_collections(collection->store), &b);
+
+		bson_destroy(&b);
+	}
+
+	j_list_iterator_free(it);
+}
+
+void
+j_collection_get_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	/* FIXME do some optimizations for len(parts) > 1 */
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.collection_get.collection;
+		bson b;
+		mongo* connection;
+		mongo_cursor* cursor;
 
-		store = collection->store;
-
-		g_hash_table_insert(hash_table, collection->name, collection);
+		bson_init(&b);
 		bson_append_string(&b, "Name", collection->name);
-	}
-	else if (length > 1)
-	{
-		bson names_bson;
-		JListIterator* it;
+		bson_finish(&b);
 
-		bson_init(&names_bson);
-		it = j_list_iterator_new(parts);
+		connection = j_connection_get_connection(j_store_get_connection(collection->store));
+		cursor = mongo_find(connection, j_store_collection_collections(collection->store), &b, NULL, 1, 0, 0);
 
-		while (j_list_iterator_next(it))
-		{
-			JOperationPart* part = j_list_iterator_get(it);
-			JCollection* collection = part->u.collection_get.collection;
+		bson_destroy(&b);
 
-			store = collection->store;
-
-			g_hash_table_insert(hash_table, collection->name, collection);
-			bson_append_string(&names_bson, "Name", collection->name);
-		}
-
-		j_list_iterator_free(it);
-		bson_finish(&names_bson);
-
-		bson_append_bson(&b, "$or", &names_bson);
-		bson_destroy(&names_bson);
-	}
-
-	bson_finish(&b);
-	bson_empty(&empty);
-
-	connection = j_connection_get_connection(j_store_get_connection(store));
-	cursor = mongo_find(connection, j_store_collection_collections(store), &b, NULL, length, 0, 0);
-
-	while (mongo_cursor_next(cursor) == MONGO_OK)
-	{
-		JCollection* collection;
-		bson_iterator it;
-		gchar const* name;
-
-		bson_iterator_init(&it, cursor->current.data);
-		bson_find(&it, &(cursor->current), "Name");
-		name = bson_iterator_string(&it);
-
-		if ((collection = g_hash_table_lookup(hash_table, name)) != NULL)
+		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
 			j_collection_deserialize(collection, &(cursor->current));
 		}
+
+		mongo_cursor_destroy(cursor);
 	}
 
-	mongo_cursor_destroy(cursor);
-
-	bson_destroy(&b);
-
-	g_hash_table_unref(hash_table);
+	j_list_iterator_free(it);
 }
 
 /*

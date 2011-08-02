@@ -53,6 +53,7 @@ G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson*);
 G_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 
 G_GNUC_INTERNAL void j_collection_create_internal (JList*);
+G_GNUC_INTERNAL void j_collection_delete_internal (JList*);
 G_GNUC_INTERNAL void j_collection_get_internal (JList*);
 
 #endif

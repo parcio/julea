@@ -184,7 +184,7 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			j_collection_get_internal(list);
 			break;
 		case J_OPERATION_COLLECTION_DELETE:
-			// FIXME
+			j_collection_delete_internal(list);
 			break;
 		case J_OPERATION_ITEM_CREATE:
 			j_item_create_internal(list);
@@ -193,7 +193,7 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			j_item_get_internal(list);
 			break;
 		case J_OPERATION_ITEM_DELETE:
-			// FIXME
+			j_item_delete_internal(list);
 			break;
 		case J_OPERATION_ITEM_READ:
 			j_item_read_internal(list);
