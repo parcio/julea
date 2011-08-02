@@ -96,7 +96,7 @@ test_list_prepend (JList** list, gconstpointer data)
 static void
 test_list_get (JList** list, gconstpointer data)
 {
-	const gchar* s;
+	gchar const* s;
 
 	j_list_append(*list, g_strdup("0"));
 	j_list_append(*list, g_strdup("1"));

@@ -206,7 +206,7 @@ j_item_status_serialize (JItemStatus* status)
 }
 
 void
-j_item_status_deserialize (JItemStatus* status, bson* b)
+j_item_status_deserialize (JItemStatus* status, bson const* b)
 {
 	bson_iterator iterator;
 
@@ -215,11 +215,11 @@ j_item_status_deserialize (JItemStatus* status, bson* b)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	bson_iterator_init(&iterator, b->data);
+	bson_iterator_init(&iterator, b);
 
 	while (bson_iterator_next(&iterator))
 	{
-		const gchar* key;
+		gchar const* key;
 
 		key = bson_iterator_key(&iterator);
 

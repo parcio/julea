@@ -115,7 +115,7 @@ struct JItem
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_new (JCollection* collection, const gchar* name)
+j_item_new (JCollection* collection, gchar const* name)
 {
 	JItem* item;
 
@@ -222,7 +222,7 @@ j_item_unref (JItem* item)
  *
  * \return An item name.
  **/
-const gchar*
+gchar const*
 j_item_get_name (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
@@ -483,7 +483,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_new_from_bson (JCollection* collection, bson* b)
+j_item_new_from_bson (JCollection* collection, bson const* b)
 {
 	JItem* item;
 
@@ -555,7 +555,7 @@ j_item_serialize (JItem* item)
  * \param b    A BSON object.
  **/
 void
-j_item_deserialize (JItem* item, bson* b)
+j_item_deserialize (JItem* item, bson const* b)
 {
 	bson_iterator iterator;
 
@@ -564,11 +564,11 @@ j_item_deserialize (JItem* item, bson* b)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	bson_iterator_init(&iterator, b->data);
+	bson_iterator_init(&iterator, b);
 
 	while (bson_iterator_next(&iterator))
 	{
-		const gchar* key;
+		gchar const* key;
 
 		key = bson_iterator_key(&iterator);
 
@@ -745,7 +745,7 @@ j_item_get_internal (JList* parts)
 
 		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
-			j_item_deserialize(item, &(cursor->current));
+			j_item_deserialize(item, mongo_cursor_bson(cursor));
 		}
 
 		mongo_cursor_destroy(cursor);

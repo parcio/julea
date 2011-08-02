@@ -74,7 +74,7 @@ struct JStore
  * Creates a new JStore.
  **/
 JStore*
-j_store_new (JConnection* connection, const gchar* name)
+j_store_new (JConnection* connection, gchar const* name)
 {
 	JStore* store;
 	/*
@@ -123,7 +123,7 @@ j_store_unref (JStore* store)
 	}
 }
 
-const gchar*
+gchar const*
 j_store_get_name (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);
@@ -205,7 +205,7 @@ j_store_delete (JStore* store, JOperation* operation)
 
 /* Internal */
 
-const gchar*
+gchar const*
 j_store_collection_collections (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);

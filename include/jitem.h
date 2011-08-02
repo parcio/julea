@@ -43,11 +43,11 @@ typedef struct JItem JItem;
 #include <joperation.h>
 #include <jsemantics.h>
 
-JItem* j_item_new (JCollection*, const gchar*);
+JItem* j_item_new (JCollection*, gchar const*);
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
-const gchar* j_item_get_name (JItem*);
+gchar const* j_item_get_name (JItem*);
 
 JItemStatus* j_item_get_status (JItem*);
 void j_item_set_status (JItem*, JItemStatus*);

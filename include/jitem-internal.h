@@ -40,10 +40,10 @@
 
 #include <jcollection.h>
 
-G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson*);
+G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson const*);
 
 G_GNUC_INTERNAL bson* j_item_serialize (JItem*);
-G_GNUC_INTERNAL void j_item_deserialize (JItem*, bson*);
+G_GNUC_INTERNAL void j_item_deserialize (JItem*, bson const*);
 
 G_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
 

@@ -44,11 +44,11 @@ typedef struct JCollection JCollection;
 #include <jsemantics.h>
 #include <jstore.h>
 
-JCollection* j_collection_new (JStore* store, const gchar*);
+JCollection* j_collection_new (JStore* store, gchar const*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
-const gchar* j_collection_get_name (JCollection*);
+gchar const* j_collection_get_name (JCollection*);
 
 void j_collection_get_status (JCollection*, JList*, JItemStatusFlags);
 

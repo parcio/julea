@@ -146,7 +146,7 @@ j_store_iterator_get (JStoreIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	collection = j_collection_new_from_bson(iterator->store, &(iterator->cursor->current));
+	collection = j_collection_new_from_bson(iterator->store, mongo_cursor_bson(iterator->cursor));
 
 	return collection;
 }

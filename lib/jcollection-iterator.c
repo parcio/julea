@@ -150,7 +150,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	item = j_item_new_from_bson(iterator->collection, &(iterator->cursor->current));
+	item = j_item_new_from_bson(iterator->collection, mongo_cursor_bson(iterator->cursor));
 
 	return item;
 }

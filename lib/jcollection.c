@@ -115,7 +115,7 @@ struct JCollection
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new (JStore* store, const gchar* name)
+j_collection_new (JStore* store, gchar const* name)
 {
 	JCollection* collection;
 
@@ -211,7 +211,7 @@ j_collection_unref (JCollection* collection)
  *
  * \return A collection name.
  **/
-const gchar*
+gchar const*
 j_collection_get_name (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -332,7 +332,7 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 		JItemStatus* status;
 
 		status = j_item_status_new(flags);
-		j_item_status_deserialize(status, &(cursor->current));
+		j_item_status_deserialize(status, mongo_cursor_bson(cursor));
 		// FIXME j_item_set_status(item, status);
 	}
 
@@ -485,7 +485,7 @@ j_collection_delete (JCollection* collection, JOperation* operation)
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new_from_bson (JStore* store, bson* b)
+j_collection_new_from_bson (JStore* store, bson const* b)
 {
 	/*
 		: m_initialized(true),
@@ -507,7 +507,7 @@ j_collection_new_from_bson (JStore* store, bson* b)
 	return collection;
 }
 
-const gchar*
+gchar const*
 j_collection_collection_items (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -521,7 +521,7 @@ j_collection_collection_items (JCollection* collection)
 	return collection->collection.items;
 }
 
-const gchar*
+gchar const*
 j_collection_collection_item_statuses (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -606,7 +606,7 @@ j_collection_serialize (JCollection* collection)
  * \param b          A BSON object.
  **/
 void
-j_collection_deserialize (JCollection* collection, bson* b)
+j_collection_deserialize (JCollection* collection, bson const* b)
 {
 	bson_iterator iterator;
 
@@ -615,7 +615,7 @@ j_collection_deserialize (JCollection* collection, bson* b)
 
 	//j_bson_print(bson);
 
-	bson_iterator_init(&iterator, b->data);
+	bson_iterator_init(&iterator, b);
 
 	/*
 		m_owner.m_user = o.getField("User").Int();
@@ -624,7 +624,7 @@ j_collection_deserialize (JCollection* collection, bson* b)
 
 	while (bson_iterator_next(&iterator))
 	{
-		const gchar* key;
+		gchar const* key;
 
 		key = bson_iterator_key(&iterator);
 
@@ -804,7 +804,7 @@ j_collection_get_internal (JList* parts)
 
 		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
-			j_collection_deserialize(collection, &(cursor->current));
+			j_collection_deserialize(collection, mongo_cursor_bson(cursor));
 		}
 
 		mongo_cursor_destroy(cursor);

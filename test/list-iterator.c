@@ -73,7 +73,7 @@ test_list_iterator_new_free (gpointer* fixture, gconstpointer data)
 static void
 test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 {
-	const gchar* s;
+	gchar const* s;
 	gboolean next;
 
 	next = j_list_iterator_next(*iterator);

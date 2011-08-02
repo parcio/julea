@@ -44,11 +44,11 @@ typedef struct JStore JStore;
 #include <joperation.h>
 #include <jstore.h>
 
-JStore* j_store_new (JConnection*, const gchar*);
+JStore* j_store_new (JConnection*, gchar const*);
 JStore* j_store_ref (JStore*);
 void j_store_unref (JStore*);
 
-const gchar* j_store_get_name (JStore*);
+gchar const* j_store_get_name (JStore*);
 
 JConnection* j_store_get_connection (JStore*);
 
