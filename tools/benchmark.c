@@ -79,9 +79,9 @@ main (int argc, char** argv)
 
 		name = g_strdup_printf("test-%u", i);
 
-		collection = j_collection_new(store, name);
+		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
-		j_collection_create(collection, operation);
+		j_store_add_collection(store, collection, operation);
 
 		g_free(name);
 
@@ -102,7 +102,7 @@ main (int argc, char** argv)
 			g_free(name);
 		}
 
-		j_collection_delete(collection, delete_operation);
+		j_store_delete_collection(store, collection, delete_operation);
 		j_collection_unref(collection);
 
 		j_operation_execute(operation);

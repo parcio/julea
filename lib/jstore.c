@@ -203,6 +203,90 @@ j_store_delete (JStore* store, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Adds a collection to a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store      A store.
+ * \param collection A collection.
+ * \param operation  An operation.
+ **/
+void
+j_store_add_collection (JStore* store, JCollection* collection, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(collection != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_ADD_COLLECTION;
+	part->u.store_add_collection.store = j_store_ref(store);
+	part->u.store_add_collection.collection = j_collection_ref(collection);
+
+	j_operation_add(operation, part);
+}
+
+/**
+ * Gets a collection from a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store      A store.
+ * \param collection A collection.
+ * \param name       A name.
+ * \param operation  An operation.
+ **/
+void
+j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(collection != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_GET_COLLECTION;
+	part->u.store_get_collection.store = j_store_ref(store);
+	part->u.store_get_collection.collection = collection;
+	part->u.store_get_collection.name = g_strdup(name);
+
+	j_operation_add(operation, part);
+}
+
+/**
+ * Deletes a collection from a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store      A store.
+ * \param collection A collection.
+ * \param operation  An operation.
+ **/
+void
+j_store_delete_collection (JStore* store, JCollection* collection, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(collection != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_STORE_DELETE_COLLECTION;
+	part->u.store_delete_collection.store = j_store_ref(store);
+	part->u.store_delete_collection.collection = j_collection_ref(collection);
+
+	j_operation_add(operation, part);
+}
+
 /* Internal */
 
 gchar const*
@@ -291,6 +375,163 @@ j_store_get_internal (JList* parts)
 		JStore* store = part->u.store_get.store;
 
 		//store = j_store_new();
+	}
+
+	j_list_iterator_free(it);
+}
+
+void
+j_store_add_collection_internal (JList* parts)
+{
+	JListIterator* it;
+	JSemantics* semantics;
+	JStore* store;
+	bson** obj;
+	bson index;
+	mongo* connection;
+	guint i;
+	guint length;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+	IsInitialized(true);
+	*/
+
+	i = 0;
+	length = j_list_length(parts);
+	obj = g_new(bson*, length);
+	it = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JCollection* collection = part->u.store_add_collection.collection;
+		bson* b;
+
+		store = part->u.store_add_collection.store;
+		j_collection_set_store(collection, store);
+		b = j_collection_serialize(collection);
+
+		obj[i] = b;
+		i++;
+	}
+
+	j_list_iterator_free(it);
+
+	connection = j_connection_get_connection(j_store_get_connection(store));
+
+	bson_init(&index);
+	bson_append_int(&index, "Name", 1);
+	bson_finish(&index);
+
+	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
+	mongo_insert_batch(connection, j_store_collection_collections(store), obj, length);
+
+	bson_destroy(&index);
+
+	for (i = 0; i < length; i++)
+	{
+		bson_destroy(obj[i]);
+		g_slice_free(bson, obj[i]);
+	}
+
+	g_free(obj);
+
+	/*
+	{
+		bson oerr;
+
+		mongo_cmd_get_last_error(mc, store->name, &oerr);
+		bson_print(&oerr);
+		bson_destroy(&oerr);
+	}
+	*/
+
+	semantics = j_store_get_semantics(store);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+	{
+		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
+	}
+}
+
+void
+j_store_delete_collection_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	/* FIXME do some optimizations for len(parts) > 1 */
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JCollection* collection = part->u.store_delete_collection.collection;
+		JStore* store = part->u.store_delete_collection.store;
+		bson b;
+		mongo* connection;
+
+		bson_init(&b);
+		bson_append_oid(&b, "_id", j_collection_get_id(collection));
+		bson_finish(&b);
+
+		connection = j_connection_get_connection(j_store_get_connection(store));
+		mongo_remove(connection, j_store_collection_collections(store), &b);
+
+		bson_destroy(&b);
+	}
+
+	j_list_iterator_free(it);
+}
+
+void
+j_store_get_collection_internal (JList* parts)
+{
+	JListIterator* it;
+
+	g_return_if_fail(parts != NULL);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(parts);
+
+	/* FIXME do some optimizations for len(parts) > 1 */
+	while (j_list_iterator_next(it))
+	{
+		JOperationPart* part = j_list_iterator_get(it);
+		JCollection** collection = part->u.store_get_collection.collection;
+		JStore* store = part->u.store_get_collection.store;
+		bson b;
+		mongo* connection;
+		mongo_cursor* cursor;
+		gchar const* name = part->u.store_get_collection.name;
+
+		bson_init(&b);
+		bson_append_string(&b, "Name", name);
+		bson_finish(&b);
+
+		connection = j_connection_get_connection(j_store_get_connection(store));
+		cursor = mongo_find(connection, j_store_collection_collections(store), &b, NULL, 1, 0, 0);
+
+		bson_destroy(&b);
+
+		*collection = NULL;
+
+		while (mongo_cursor_next(cursor) == MONGO_OK)
+		{
+			*collection = j_collection_new_from_bson(store, mongo_cursor_bson(cursor));
+		}
+
+		mongo_cursor_destroy(cursor);
 	}
 
 	j_list_iterator_free(it);

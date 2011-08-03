@@ -45,7 +45,7 @@ typedef struct JCollection JCollection;
 #include <jsemantics.h>
 #include <jstore.h>
 
-JCollection* j_collection_new (JStore* store, gchar const*);
+JCollection* j_collection_new (gchar const*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
@@ -55,10 +55,6 @@ void j_collection_get_status (JCollection*, JList*, JItemStatusFlags);
 
 JSemantics* j_collection_get_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);
-
-void j_collection_create (JCollection*, JOperation*);
-void j_collection_get (JCollection*, JOperation*);
-void j_collection_delete (JCollection*, JOperation*);
 
 void j_collection_add_item (JCollection*, JItem*, JOperation*);
 void j_collection_delete_item (JCollection*, JItem*, JOperation*);

@@ -59,6 +59,10 @@ void j_store_create (JStore*, JOperation*);
 void j_store_get (JStore*, JOperation*);
 void j_store_delete (JStore*, JOperation*);
 
+void j_store_add_collection (JStore*, JCollection*, JOperation*);
+void j_store_get_collection (JStore*, JCollection**, gchar const*, JOperation*);
+void j_store_delete_collection (JStore*, JCollection*, JOperation*);
+
 /*
 #include "collection.h"
 #include "connection.h"

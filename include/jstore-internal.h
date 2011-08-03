@@ -42,4 +42,8 @@ G_GNUC_INTERNAL void j_store_create_internal (JList*);
 G_GNUC_INTERNAL void j_store_delete_internal (JList*);
 G_GNUC_INTERNAL void j_store_get_internal (JList*);
 
+G_GNUC_INTERNAL void j_store_add_collection_internal (JList*);
+G_GNUC_INTERNAL void j_store_delete_collection_internal (JList*);
+G_GNUC_INTERNAL void j_store_get_collection_internal (JList*);
+
 #endif

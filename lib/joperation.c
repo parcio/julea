@@ -78,15 +78,6 @@ j_operation_part_free (gpointer data)
 
 	switch (part->type)
 	{
-		case J_OPERATION_COLLECTION_CREATE:
-			j_collection_unref(part->u.collection_create.collection);
-			break;
-		case J_OPERATION_COLLECTION_GET:
-			j_collection_unref(part->u.collection_get.collection);
-			break;
-		case J_OPERATION_COLLECTION_DELETE:
-			j_collection_unref(part->u.collection_delete.collection);
-			break;
 		case J_OPERATION_COLLECTION_ADD_ITEM:
 			j_collection_unref(part->u.collection_add_item.collection);
 			j_item_unref(part->u.collection_add_item.item);
@@ -113,6 +104,18 @@ j_operation_part_free (gpointer data)
 			break;
 		case J_OPERATION_STORE_DELETE:
 			j_store_unref(part->u.store_delete.store);
+			break;
+		case J_OPERATION_STORE_ADD_COLLECTION:
+			j_store_unref(part->u.store_add_collection.store);
+			j_collection_unref(part->u.store_add_collection.collection);
+			break;
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+			j_store_unref(part->u.store_delete_collection.store);
+			j_collection_unref(part->u.store_delete_collection.collection);
+			break;
+		case J_OPERATION_STORE_GET_COLLECTION:
+			j_store_unref(part->u.store_get_collection.store);
+			g_free(part->u.store_get_collection.name);
 			break;
 		case J_OPERATION_NONE:
 		default:
@@ -180,15 +183,6 @@ j_operation_execute_internal (JOperationType type, JList* list)
 {
 	switch (type)
 	{
-		case J_OPERATION_COLLECTION_CREATE:
-			j_collection_create_internal(list);
-			break;
-		case J_OPERATION_COLLECTION_GET:
-			j_collection_get_internal(list);
-			break;
-		case J_OPERATION_COLLECTION_DELETE:
-			j_collection_delete_internal(list);
-			break;
 		case J_OPERATION_COLLECTION_ADD_ITEM:
 			j_collection_add_item_internal(list);
 			break;
@@ -212,6 +206,15 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			break;
 		case J_OPERATION_STORE_DELETE:
 			j_store_delete_internal(list);
+			break;
+		case J_OPERATION_STORE_ADD_COLLECTION:
+			j_store_add_collection_internal(list);
+			break;
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+			j_store_delete_collection_internal(list);
+			break;
+		case J_OPERATION_STORE_GET_COLLECTION:
+			j_store_get_collection_internal(list);
 			break;
 		case J_OPERATION_NONE:
 		default:

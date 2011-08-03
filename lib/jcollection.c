@@ -104,22 +104,19 @@ struct JCollection
  *
  * \code
  * JCollection* c;
- * JStore* s;
  *
- * c = j_collection_new(s, "JULEA");
+ * c = j_collection_new("JULEA");
  * \endcode
  *
- * \param store A store.
  * \param name  A collection name.
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new (JStore* store, gchar const* name)
+j_collection_new (gchar const* name)
 {
 	JCollection* collection;
 
-	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	/*
@@ -131,7 +128,7 @@ j_collection_new (JStore* store, gchar const* name)
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
 	collection->semantics = NULL;
-	collection->store = j_store_ref(store);
+	collection->store = NULL;
 	collection->ref_count = 1;
 
 	return collection;
@@ -393,81 +390,6 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 }
 
 /**
- * Creates a collection.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param operation  An operation.
- **/
-void
-j_collection_create (JCollection* collection, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(collection != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_COLLECTION_CREATE;
-	part->u.collection_create.collection = j_collection_ref(collection);
-
-	j_operation_add(operation, part);
-}
-
-/**
- * Gets a collection.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param operation  An operation.
- **/
-void
-j_collection_get (JCollection* collection, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(collection != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_COLLECTION_GET;
-	part->u.collection_get.collection = j_collection_ref(collection);
-
-	j_operation_add(operation, part);
-}
-
-/**
- * Deletes a collection.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param operation  An operation.
- **/
-void
-j_collection_delete (JCollection* collection, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(collection != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_COLLECTION_DELETE;
-	part->u.collection_delete.collection = j_collection_ref(collection);
-
-	j_operation_add(operation, part);
-}
-
-/**
  * Adds an item to a collection.
  *
  * \author Michael Kuhn
@@ -505,6 +427,7 @@ j_collection_add_item (JCollection* collection, JItem* item, JOperation* operati
  *
  * \param collection A collection.
  * \param item       An item.
+ * \param name       A name.
  * \param operation  An operation.
  **/
 void
@@ -748,154 +671,13 @@ j_collection_get_id (JCollection* collection)
 }
 
 void
-j_collection_create_internal (JList* parts)
+j_collection_set_store (JCollection* collection, JStore* store)
 {
-	JListIterator* it;
-	JSemantics* semantics;
-	JStore* store;
-	bson** obj;
-	bson index;
-	mongo* connection;
-	guint i;
-	guint length;
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(collection->store == NULL);
 
-	g_return_if_fail(parts != NULL);
-
-	/*
-	IsInitialized(true);
-	*/
-
-	i = 0;
-	length = j_list_length(parts);
-	obj = g_new(bson*, length);
-	it = j_list_iterator_new(parts);
-
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.collection_create.collection;
-		bson* b;
-
-		store = collection->store;
-		b = j_collection_serialize(collection);
-
-		obj[i] = b;
-		i++;
-	}
-
-	j_list_iterator_free(it);
-
-	connection = j_connection_get_connection(j_store_get_connection(store));
-
-	bson_init(&index);
-	bson_append_int(&index, "Name", 1);
-	bson_finish(&index);
-
-	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
-	mongo_insert_batch(connection, j_store_collection_collections(store), obj, length);
-
-	bson_destroy(&index);
-
-	for (i = 0; i < length; i++)
-	{
-		bson_destroy(obj[i]);
-		g_slice_free(bson, obj[i]);
-	}
-
-	g_free(obj);
-
-	/*
-	{
-		bson oerr;
-
-		mongo_cmd_get_last_error(mc, store->name, &oerr);
-		bson_print(&oerr);
-		bson_destroy(&oerr);
-	}
-	*/
-
-	semantics = j_store_get_semantics(store);
-
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-}
-
-void
-j_collection_delete_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	/* FIXME do some optimizations for len(parts) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.collection_delete.collection;
-		bson b;
-		mongo* connection;
-
-		bson_init(&b);
-		bson_append_oid(&b, "_id", &(collection->id));
-		bson_finish(&b);
-
-		connection = j_connection_get_connection(j_store_get_connection(collection->store));
-		mongo_remove(connection, j_store_collection_collections(collection->store), &b);
-
-		bson_destroy(&b);
-	}
-
-	j_list_iterator_free(it);
-}
-
-void
-j_collection_get_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	/* FIXME do some optimizations for len(parts) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.collection_get.collection;
-		bson b;
-		mongo* connection;
-		mongo_cursor* cursor;
-
-		bson_init(&b);
-		bson_append_string(&b, "Name", collection->name);
-		bson_finish(&b);
-
-		connection = j_connection_get_connection(j_store_get_connection(collection->store));
-		cursor = mongo_find(connection, j_store_collection_collections(collection->store), &b, NULL, 1, 0, 0);
-
-		bson_destroy(&b);
-
-		while (mongo_cursor_next(cursor) == MONGO_OK)
-		{
-			j_collection_deserialize(collection, mongo_cursor_bson(cursor));
-		}
-
-		mongo_cursor_destroy(cursor);
-	}
-
-	j_list_iterator_free(it);
+	collection->store = j_store_ref(store);
 }
 
 void
