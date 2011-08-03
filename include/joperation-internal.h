@@ -42,17 +42,17 @@
 enum JOperationType
 {
 	J_OPERATION_NONE,
+	J_OPERATION_ADD_STORE,
+	J_OPERATION_GET_STORE,
+	J_OPERATION_DELETE_STORE,
+	J_OPERATION_STORE_ADD_COLLECTION,
+	J_OPERATION_STORE_DELETE_COLLECTION,
+	J_OPERATION_STORE_GET_COLLECTION,
 	J_OPERATION_COLLECTION_ADD_ITEM,
 	J_OPERATION_COLLECTION_GET_ITEM,
 	J_OPERATION_COLLECTION_DELETE_ITEM,
 	J_OPERATION_ITEM_READ,
-	J_OPERATION_ITEM_WRITE,
-	J_OPERATION_STORE_CREATE,
-	J_OPERATION_STORE_GET,
-	J_OPERATION_STORE_DELETE,
-	J_OPERATION_STORE_ADD_COLLECTION,
-	J_OPERATION_STORE_DELETE_COLLECTION,
-	J_OPERATION_STORE_GET_COLLECTION
+	J_OPERATION_ITEM_WRITE
 };
 
 typedef enum JOperationType JOperationType;
@@ -69,6 +69,50 @@ struct JOperationPart
 
 	union
 	{
+		struct
+		{
+			JConnection* connection;
+			JStore* store;
+		}
+		add_store;
+
+		struct
+		{
+			JConnection* connection;
+			JStore** store;
+			gchar* name;
+		}
+		get_store;
+
+		struct
+		{
+			JConnection* connection;
+			JStore* store;
+		}
+		delete_store;
+
+		struct
+		{
+			JStore* store;
+			JCollection* collection;
+		}
+		store_add_collection;
+
+		struct
+		{
+			JStore* store;
+			JCollection* collection;
+		}
+		store_delete_collection;
+
+		struct
+		{
+			JStore* store;
+			JCollection** collection;
+			gchar* name;
+		}
+		store_get_collection;
+
 		struct
 		{
 			JCollection* collection;
@@ -110,46 +154,6 @@ struct JOperationPart
 			guint64* bytes_written;
 		}
 		item_write;
-
-		struct
-		{
-			JStore* store;
-		}
-		store_create;
-
-		struct
-		{
-			JStore* store;
-		}
-		store_get;
-
-		struct
-		{
-			JStore* store;
-		}
-		store_delete;
-
-		struct
-		{
-			JStore* store;
-			JCollection* collection;
-		}
-		store_add_collection;
-
-		struct
-		{
-			JStore* store;
-			JCollection* collection;
-		}
-		store_delete_collection;
-
-		struct
-		{
-			JStore* store;
-			JCollection** collection;
-			gchar* name;
-		}
-		store_get_collection;
 	}
 	u;
 };

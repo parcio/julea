@@ -74,20 +74,19 @@ struct JStore
  * Creates a new JStore.
  **/
 JStore*
-j_store_new (JConnection* connection, gchar const* name)
+j_store_new (gchar const* name)
 {
 	JStore* store;
 	/*
 	: m_initialized(true),
 	*/
 
-	g_return_val_if_fail(connection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
-	store->connection = j_connection_ref(connection);
+	store->connection = NULL;
 	store->semantics = j_semantics_new();
 	store->ref_count = 1;
 
@@ -159,48 +158,6 @@ j_store_get_connection (JStore* store)
 	g_return_val_if_fail(store != NULL, NULL);
 
 	return store->connection;
-}
-
-void
-j_store_create (JStore* store, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(store != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_STORE_CREATE;
-	part->u.store_create.store = j_store_ref(store);
-
-	j_operation_add(operation, part);
-}
-
-void
-j_store_get (JStore* store, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(store != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_STORE_GET;
-	part->u.store_get.store = j_store_ref(store);
-
-	j_operation_add(operation, part);
-}
-
-void
-j_store_delete (JStore* store, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(store != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_STORE_DELETE;
-	part->u.store_delete.store = j_store_ref(store);
-
-	j_operation_add(operation, part);
 }
 
 /**
@@ -307,77 +264,13 @@ j_store_collection_collections (JStore* store)
 }
 
 void
-j_store_create_internal (JList* parts)
+j_store_set_connection (JStore* store, JConnection* connection)
 {
-	JListIterator* it;
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(store->connection == NULL);
 
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JStore* store = part->u.store_create.store;
-
-		//store = j_store_new();
-	}
-
-	j_list_iterator_free(it);
-}
-
-void
-j_store_delete_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JStore* store = part->u.store_delete.store;
-		mongo* connection;
-
-		connection = j_connection_get_connection(store->connection);
-		mongo_cmd_drop_db(connection, store->name);
-	}
-
-	j_list_iterator_free(it);
-}
-
-void
-j_store_get_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JStore* store = part->u.store_get.store;
-
-		//store = j_store_new();
-	}
-
-	j_list_iterator_free(it);
+	store->connection = j_connection_ref(connection);
 }
 
 void

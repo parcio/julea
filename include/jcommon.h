@@ -35,6 +35,7 @@
 #include <glib.h>
 
 #include <jconfiguration.h>
+#include <jstore.h>
 #include <jtrace.h>
 
 gboolean j_init (void);
@@ -45,5 +46,9 @@ gboolean j_is_initialized (void);
 
 JConfiguration* j_configuration (void);
 JTrace* j_trace (void);
+
+void j_add_store (JConnection*, JStore*, JOperation*);
+void j_delete_store (JConnection*, JStore*, JOperation*);
+void j_get_store (JConnection*, JStore**, gchar const*, JOperation*);
 
 #endif

@@ -29,19 +29,15 @@
  * \file
  **/
 
-#ifndef H_STORE_INTERNAL
-#define H_STORE_INTERNAL
+#ifndef H_COMMON_INTERNAL
+#define H_COMMON_INTERNAL
 
 #include <glib.h>
 
-#include <jstore.h>
+#include <jcommon.h>
 
-G_GNUC_INTERNAL gchar const* j_store_collection_collections (JStore*);
-
-G_GNUC_INTERNAL void j_store_set_connection (JStore*, JConnection*);
-
-G_GNUC_INTERNAL void j_store_add_collection_internal (JList*);
-G_GNUC_INTERNAL void j_store_delete_collection_internal (JList*);
-G_GNUC_INTERNAL void j_store_get_collection_internal (JList*);
+G_GNUC_INTERNAL void j_add_store_internal (JList*);
+G_GNUC_INTERNAL void j_delete_store_internal (JList*);
+G_GNUC_INTERNAL void j_get_store_internal (JList*);
 
 #endif

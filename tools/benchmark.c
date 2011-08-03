@@ -62,8 +62,8 @@ main (int argc, char** argv)
 	delete_operation = j_operation_new();
 	operation = j_operation_new();
 
-	store = j_store_new(connection, "JULEA");
-	j_store_create(store, operation);
+	store = j_store_new("JULEA");
+	j_add_store(connection, store, operation);
 
 	j_operation_execute(operation);
 
@@ -108,7 +108,7 @@ main (int argc, char** argv)
 		j_operation_execute(operation);
 	}
 
-	j_store_delete(store, delete_operation);
+	j_delete_store(connection, store, delete_operation);
 
 	{
 		JCollection* first_collection = NULL;
@@ -146,6 +146,8 @@ main (int argc, char** argv)
 		{
 			JItem* item = j_collection_iterator_get(citerator);
 
+			g_print("%s ", j_item_get_name(item));
+
 			if (is_first)
 			{
 				gchar* buf;
@@ -165,7 +167,6 @@ main (int argc, char** argv)
 				g_free(buf);
 			}
 
-			g_print("%s ", j_item_get_name(item));
 			j_item_unref(item);
 		}
 
