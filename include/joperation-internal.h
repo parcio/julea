@@ -45,9 +45,9 @@ enum JOperationType
 	J_OPERATION_COLLECTION_CREATE,
 	J_OPERATION_COLLECTION_GET,
 	J_OPERATION_COLLECTION_DELETE,
-	J_OPERATION_ITEM_CREATE,
-	J_OPERATION_ITEM_GET,
-	J_OPERATION_ITEM_DELETE,
+	J_OPERATION_COLLECTION_ADD_ITEM,
+	J_OPERATION_COLLECTION_GET_ITEM,
+	J_OPERATION_COLLECTION_DELETE_ITEM,
 	J_OPERATION_ITEM_READ,
 	J_OPERATION_ITEM_WRITE,
 	J_OPERATION_STORE_CREATE,
@@ -89,21 +89,25 @@ struct JOperationPart
 
 		struct
 		{
+			JCollection* collection;
 			JItem* item;
 		}
-		item_create;
+		collection_add_item;
 
 		struct
 		{
-			JItem* item;
+			JCollection* collection;
+			JItem** item;
+			gchar* name;
 		}
-		item_get;
+		collection_get_item;
 
 		struct
 		{
+			JCollection* collection;
 			JItem* item;
 		}
-		item_delete;
+		collection_delete_item;
 
 		struct
 		{

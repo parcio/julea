@@ -140,11 +140,9 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 			goto end;
 		}
 
-		*item = j_item_new(*collection, components[2]);
-		j_item_get(*item, operation);
+		j_collection_get_item(*collection, item, components[2], operation);
 		j_operation_execute(operation);
 
-		// FIXME
 		if (*item == NULL)
 		{
 			goto end;

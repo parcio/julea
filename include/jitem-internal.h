@@ -47,9 +47,7 @@ G_GNUC_INTERNAL void j_item_deserialize (JItem*, bson const*);
 
 G_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
 
-G_GNUC_INTERNAL void j_item_create_internal (JList*);
-G_GNUC_INTERNAL void j_item_delete_internal (JList*);
-G_GNUC_INTERNAL void j_item_get_internal (JList*);
+G_GNUC_INTERNAL void j_item_set_collection (JItem*, JCollection*);
 
 G_GNUC_INTERNAL void j_item_read_internal (JList*);
 G_GNUC_INTERNAL void j_item_write_internal (JList*);

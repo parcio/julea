@@ -93,10 +93,10 @@ main (int argc, char** argv)
 
 			name = g_strdup_printf("test-%u", j);
 
-			item = j_item_new(collection, name);
+			item = j_item_new(name);
 			//j_item_set_semantics(item, semantics);
-			j_item_create(item, operation);
-			j_item_delete(item, delete_operation);
+			j_collection_add_item(collection, item, operation);
+			j_collection_delete_item(collection, item, delete_operation);
 			j_item_unref(item);
 
 			g_free(name);

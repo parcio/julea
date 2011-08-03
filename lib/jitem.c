@@ -103,19 +103,17 @@ struct JItem
  * \author Michael Kuhn
  *
  * \code
- * JCollection* c;
  * JItem* i;
  *
- * i = j_item_new(c, "JULEA");
+ * i = j_item_new("JULEA");
  * \endcode
  *
- * \param collection A collection.
  * \param name       An item name.
  *
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_new (JCollection* collection, gchar const* name)
+j_item_new (gchar const* name)
 {
 	JItem* item;
 
@@ -127,7 +125,7 @@ j_item_new (JCollection* collection, gchar const* name)
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
 	item->status = NULL;
-	item->collection = j_collection_ref(collection);
+	item->collection = NULL;
 	item->semantics = NULL;
 	item->ref_count = 1;
 
@@ -318,81 +316,6 @@ j_item_set_semantics (JItem* item, JSemantics* semantics)
 	item->semantics = j_semantics_ref(semantics);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
-}
-
-/**
- * Creates an item.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param operation An operation.
- **/
-void
-j_item_create (JItem* item, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(item != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_CREATE;
-	part->u.item_create.item = j_item_ref(item);
-
-	j_operation_add(operation, part);
-}
-
-/**
- * Gets an item.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param operation An operation.
- **/
-void
-j_item_get (JItem* item, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(item != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_GET;
-	part->u.item_get.item = j_item_ref(item);
-
-	j_operation_add(operation, part);
-}
-
-/**
- * Deletes an item.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param operation An operation.
- **/
-void
-j_item_delete (JItem* item, JOperation* operation)
-{
-	JOperationPart* part;
-
-	g_return_if_fail(item != NULL);
-
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_DELETE;
-	part->u.item_delete.item = j_item_ref(item);
-
-	j_operation_add(operation, part);
 }
 
 /**
@@ -612,146 +535,13 @@ j_item_get_id (JItem* item)
 }
 
 void
-j_item_create_internal (JList* parts)
+j_item_set_collection (JItem* item, JCollection* collection)
 {
-	JCollection* collection;
-	JListIterator* it;
-	JSemantics* semantics;
-	bson** obj;
-	bson index;
-	mongo* connection;
-	guint i;
-	guint length;
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(item->collection == NULL);
 
-	g_return_if_fail(parts != NULL);
-
-	/*
-	IsInitialized(true);
-	*/
-
-	i = 0;
-	length = j_list_length(parts);
-	obj = g_new(bson*, length);
-	it = j_list_iterator_new(parts);
-
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JItem* item = part->u.item_create.item;
-		bson* b;
-
-		collection = item->collection;
-		b = j_item_serialize(item);
-
-		obj[i] = b;
-		i++;
-	}
-
-	j_list_iterator_free(it);
-
-	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
-
-	bson_init(&index);
-	bson_append_int(&index, "Collection", 1);
-	bson_append_int(&index, "Name", 1);
-	bson_finish(&index);
-
-	mongo_create_index(connection, j_collection_collection_items(collection), &index, MONGO_INDEX_UNIQUE, NULL);
-	mongo_insert_batch(connection, j_collection_collection_items(collection), obj, length);
-
-	bson_destroy(&index);
-
-	for (i = 0; i < length; i++)
-	{
-		bson_destroy(obj[i]);
-		g_slice_free(bson, obj[i]);
-	}
-
-	g_free(obj);
-
-	semantics = j_collection_get_semantics(collection);
-
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-}
-
-void
-j_item_delete_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	/* FIXME do some optimizations for len(parts) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JItem* item = part->u.item_delete.item;
-		bson b;
-		mongo* connection;
-
-		bson_init(&b);
-		bson_append_oid(&b, "_id", &(item->id));
-		bson_finish(&b);
-
-		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(item->collection)));
-		mongo_remove(connection, j_collection_collection_items(item->collection), &b);
-
-		bson_destroy(&b);
-	}
-
-	j_list_iterator_free(it);
-}
-
-void
-j_item_get_internal (JList* parts)
-{
-	JListIterator* it;
-
-	g_return_if_fail(parts != NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	it = j_list_iterator_new(parts);
-
-	/* FIXME do some optimizations for len(parts) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JOperationPart* part = j_list_iterator_get(it);
-		JItem* item = part->u.item_get.item;
-		bson b;
-		mongo* connection;
-		mongo_cursor* cursor;
-
-		bson_init(&b);
-		bson_append_oid(&b, "Collection", j_collection_get_id(item->collection));
-		bson_append_string(&b, "Name", item->name);
-		bson_finish(&b);
-
-		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(item->collection)));
-		cursor = mongo_find(connection, j_collection_collection_items(item->collection), &b, NULL, 1, 0, 0);
-
-		bson_destroy(&b);
-
-		while (mongo_cursor_next(cursor) == MONGO_OK)
-		{
-			j_item_deserialize(item, mongo_cursor_bson(cursor));
-		}
-
-		mongo_cursor_destroy(cursor);
-	}
-
-	j_list_iterator_free(it);
+	item->collection = j_collection_ref(collection);
 }
 
 void

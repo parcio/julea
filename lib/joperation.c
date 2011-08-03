@@ -87,20 +87,23 @@ j_operation_part_free (gpointer data)
 		case J_OPERATION_COLLECTION_DELETE:
 			j_collection_unref(part->u.collection_delete.collection);
 			break;
-		case J_OPERATION_ITEM_CREATE:
-			j_item_unref(part->u.item_create.item);
+		case J_OPERATION_COLLECTION_ADD_ITEM:
+			j_collection_unref(part->u.collection_add_item.collection);
+			j_item_unref(part->u.collection_add_item.item);
 			break;
-		case J_OPERATION_ITEM_GET:
-			j_item_unref(part->u.item_get.item);
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+			j_collection_unref(part->u.collection_delete_item.collection);
+			j_item_unref(part->u.collection_delete_item.item);
 			break;
-		case J_OPERATION_ITEM_DELETE:
-			j_item_unref(part->u.item_delete.item);
+		case J_OPERATION_COLLECTION_GET_ITEM:
+			j_collection_unref(part->u.collection_get_item.collection);
+			g_free(part->u.collection_get_item.name);
 			break;
 		case J_OPERATION_ITEM_READ:
-			j_item_unref(part->u.item_get.item);
+			j_item_unref(part->u.item_read.item);
 			break;
 		case J_OPERATION_ITEM_WRITE:
-			j_item_unref(part->u.item_get.item);
+			j_item_unref(part->u.item_write.item);
 			break;
 		case J_OPERATION_STORE_CREATE:
 			j_store_unref(part->u.store_create.store);
@@ -186,14 +189,14 @@ j_operation_execute_internal (JOperationType type, JList* list)
 		case J_OPERATION_COLLECTION_DELETE:
 			j_collection_delete_internal(list);
 			break;
-		case J_OPERATION_ITEM_CREATE:
-			j_item_create_internal(list);
+		case J_OPERATION_COLLECTION_ADD_ITEM:
+			j_collection_add_item_internal(list);
 			break;
-		case J_OPERATION_ITEM_GET:
-			j_item_get_internal(list);
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+			j_collection_delete_item_internal(list);
 			break;
-		case J_OPERATION_ITEM_DELETE:
-			j_item_delete_internal(list);
+		case J_OPERATION_COLLECTION_GET_ITEM:
+			j_collection_get_item_internal(list);
 			break;
 		case J_OPERATION_ITEM_READ:
 			j_item_read_internal(list);

@@ -38,6 +38,7 @@ typedef struct JCollection JCollection;
 
 #include <glib.h>
 
+#include <jitem.h>
 #include <jitem-status.h>
 #include <jlist.h>
 #include <joperation.h>
@@ -58,6 +59,10 @@ void j_collection_set_semantics (JCollection*, JSemantics*);
 void j_collection_create (JCollection*, JOperation*);
 void j_collection_get (JCollection*, JOperation*);
 void j_collection_delete (JCollection*, JOperation*);
+
+void j_collection_add_item (JCollection*, JItem*, JOperation*);
+void j_collection_delete_item (JCollection*, JItem*, JOperation*);
+void j_collection_get_item (JCollection*, JItem**, gchar const*, JOperation*);
 
 /*
 #include "credentials.h"
