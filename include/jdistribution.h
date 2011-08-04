@@ -32,6 +32,8 @@
 #ifndef H_DISTRIBUTION
 #define H_DISTRIBUTION
 
+#include <glib.h>
+
 enum JDistributionType
 {
 	J_DISTRIBUTION_ROUND_ROBIN
@@ -43,9 +45,9 @@ struct JDistribution;
 
 typedef struct JDistribution JDistribution;
 
-#include <glib.h>
+#include <jconfiguration.h>
 
-JDistribution* j_distribution_new (JDistributionType, guint64, guint64);
+JDistribution* j_distribution_new (JConfiguration*, JDistributionType, guint64, guint64);
 void j_distribution_free (JDistribution*);
 
 gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*);

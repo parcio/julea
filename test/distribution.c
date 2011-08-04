@@ -67,7 +67,7 @@ test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 	guint64 offset;
 	guint index;
 
-	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
+	distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);

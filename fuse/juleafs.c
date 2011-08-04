@@ -32,8 +32,6 @@
 
 #include <string.h>
 
-JConnection* jfs_connection = NULL;
-
 struct fuse_operations jfs_vtable = {
 	.access   = jfs_access,
 	.chmod    = jfs_chmod,
@@ -103,7 +101,7 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 			goto end;
 		}
 
-		j_get_store(jfs_connection, store, components[0], operation);
+		j_get_store(store, components[0], operation);
 		j_operation_execute(operation);
 
 		if (*store == NULL)
@@ -165,20 +163,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	jfs_connection = j_connection_new();
-
-	if (!j_connection_connect(jfs_connection))
-	{
-		g_printerr("Could not connect.\n");
-		j_connection_unref(jfs_connection);
-
-		return 1;
-	}
-
 	ret = fuse_main(argc, argv, &jfs_vtable, NULL);
-
-	j_connection_disconnect(jfs_connection);
-	j_connection_unref(jfs_connection);
 
 	j_fini();
 

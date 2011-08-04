@@ -34,6 +34,7 @@
 #include "jdistribution.h"
 
 #include "jcommon.h"
+#include "jconfiguration.h"
 
 /**
  * \defgroup JDistribution Distribution
@@ -48,6 +49,11 @@
  **/
 struct JDistribution
 {
+	/**
+	 * The configuration.
+	 **/
+	JConfiguration* configuration;
+
 	/**
 	 * The type.
 	 **/
@@ -97,10 +103,10 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	}
 
 	block = distribution->offset / block_size;
-	round = block / j_configuration()->data_len;
+	round = block / distribution->configuration->data_len;
 	displacement = distribution->offset % block_size;
 
-	*index = block % j_configuration()->data_len;
+	*index = block % distribution->configuration->data_len;
 	*new_length = MIN(distribution->length, block_size - displacement);
 	*new_offset = (round * block_size) + displacement;
 
@@ -128,11 +134,12 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
  * \return A new distribution. Should be freed with j_distribution_free().
  **/
 JDistribution*
-j_distribution_new (JDistributionType type, guint64 length, guint64 offset)
+j_distribution_new (JConfiguration* configuration, JDistributionType type, guint64 length, guint64 offset)
 {
 	JDistribution* distribution;
 
 	distribution = g_slice_new(JDistribution);
+	distribution->configuration = j_configuration_ref(configuration);
 	distribution->type = type;
 	distribution->length = length;
 	distribution->offset = offset;
@@ -154,6 +161,8 @@ void
 j_distribution_free (JDistribution* distribution)
 {
 	g_return_if_fail(distribution != NULL);
+
+	j_configuration_unref(distribution->configuration);
 
 	g_slice_free(JDistribution, distribution);
 }

@@ -46,6 +46,8 @@ struct JConfiguration
 		gchar* path;
 	}
 	storage;
+
+	guint ref_count;
 };
 
 typedef struct JConfiguration JConfiguration;
@@ -54,6 +56,7 @@ typedef struct JConfiguration JConfiguration;
 
 JConfiguration* j_configuration_new (void);
 JConfiguration* j_configuration_new_for_data (GKeyFile*);
-void j_configuration_free (JConfiguration*);
+JConfiguration* j_configuration_ref (JConfiguration*);
+void j_configuration_unref (JConfiguration*);
 
 #endif

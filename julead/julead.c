@@ -242,7 +242,7 @@ main (int argc, char** argv)
 
 	jd_backend_init(configuration->storage.path, trace);
 
-	j_configuration_free(configuration);
+	j_configuration_unref(configuration);
 
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);

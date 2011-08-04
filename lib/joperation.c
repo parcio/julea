@@ -224,8 +224,6 @@ j_operation_execute_internal (JOperationType type, JList* list)
 		default:
 			g_return_if_reached();
 	}
-
-	j_list_delete_all(list);
 }
 
 /**
@@ -265,6 +263,7 @@ j_operation_execute (JOperation* operation)
 		if (part->type != last_type && last_type != J_OPERATION_NONE)
 		{
 			j_operation_execute_internal(last_type, same_list);
+			j_list_delete_all(same_list);
 		}
 
 		last_type = part->type;

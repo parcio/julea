@@ -34,7 +34,6 @@ int
 main (int argc, char** argv)
 {
 	JCollectionIterator* citerator;
-	JConnection* connection;
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
@@ -49,21 +48,11 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	connection = j_connection_new();
-
-	if (!j_connection_connect(connection))
-	{
-		g_printerr("Could not connect.\n");
-		j_connection_unref(connection);
-
-		return 1;
-	}
-
 	delete_operation = j_operation_new();
 	operation = j_operation_new();
 
 	store = j_store_new("JULEA");
-	j_add_store(connection, store, operation);
+	j_add_store(store, operation);
 
 	j_operation_execute(operation);
 
@@ -108,7 +97,7 @@ main (int argc, char** argv)
 		j_operation_execute(operation);
 	}
 
-	j_delete_store(connection, store, delete_operation);
+	j_delete_store(store, delete_operation);
 
 	{
 		JCollection* first_collection = NULL;
@@ -182,9 +171,6 @@ main (int argc, char** argv)
 
 	j_operation_free(delete_operation);
 	j_operation_free(operation);
-
-	j_connection_disconnect(connection);
-	j_connection_unref(connection);
 
 	j_fini();
 

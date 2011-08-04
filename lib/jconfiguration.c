@@ -150,25 +150,56 @@ j_configuration_new_for_data (GKeyFile* key_file)
 }
 
 /**
- * Frees the memory allocated by the configuration.
+ * Increases a configuration's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JConfiguration* c;
+ *
+ * j_configuration_ref(c);
+ * \endcode
+ *
+ * \param configuration A configuration.
+ *
+ * \return #configuration.
+ **/
+JConfiguration*
+j_configuration_ref (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	configuration->ref_count++;
+
+	return configuration;
+}
+
+/**
+ * Decreases a configuration's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the configuration.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param configuration The configuration.
+ * \param configuration A configuration.
  **/
 void
-j_configuration_free (JConfiguration* configuration)
+j_configuration_unref (JConfiguration* configuration)
 {
-	g_free(configuration->storage.backend);
-	g_free(configuration->storage.path);
+	configuration->ref_count--;
 
-	g_strfreev(configuration->data);
-	g_strfreev(configuration->metadata);
+	if (configuration->ref_count == 0)
+	{
+		g_free(configuration->storage.backend);
+		g_free(configuration->storage.path);
 
-	g_slice_free(JConfiguration, configuration);
+		g_strfreev(configuration->data);
+		g_strfreev(configuration->metadata);
+
+		g_slice_free(JConfiguration, configuration);
+	}
 }
 
 /**

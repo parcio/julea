@@ -53,8 +53,14 @@
  * @{
  **/
 
-static JConfiguration* j_configuration_global = NULL;
-static JTrace* j_trace_global = NULL;
+struct JCommon
+{
+	JConfiguration* configuration;
+	JConnection* connection;
+	JTrace* trace;
+};
+
+static JCommon* j_common = NULL;
 
 gboolean
 j_init (void)
@@ -67,44 +73,79 @@ j_init (void)
 gboolean
 j_init_for_data (GKeyFile* key_file)
 {
-	JConfiguration* conf;
+	JCommon* common;
 
 	g_return_val_if_fail(!j_is_initialized(), FALSE);
 
+	common = g_slice_new(JCommon);
+	common->configuration = NULL;
+	common->connection = NULL;
+	common->trace = NULL;
+
 	j_trace_init("JULEA");
 
-	g_atomic_pointer_set(&j_trace_global, j_trace_thread_enter(NULL, G_STRFUNC));
+	common->trace = j_trace_thread_enter(NULL, G_STRFUNC);
 
 	if (key_file != NULL)
 	{
-		conf = j_configuration_new_for_data(key_file);
+		common->configuration = j_configuration_new_for_data(key_file);
 	}
 	else
 	{
-		conf = j_configuration_new();
+		common->configuration = j_configuration_new();
 	}
 
-	g_atomic_pointer_set(&j_configuration_global, conf);
+	if (common->configuration == NULL)
+	{
+		goto error;
+	}
 
-	return j_is_initialized();
+	common->connection = j_connection_new(common->configuration);
+
+	if (!j_connection_connect(common->connection))
+	{
+		goto error;
+	}
+
+	g_atomic_pointer_set(&j_common, common);
+
+	return TRUE;
+
+error:
+	if (common->connection != NULL)
+	{
+		j_connection_unref(common->connection);
+	}
+
+	if (common->configuration != NULL)
+	{
+		j_configuration_unref(common->configuration);
+	}
+
+	j_trace_thread_leave(common->trace);
+
+	j_trace_fini();
+
+	g_slice_free(JCommon, common);
+
+	return FALSE;
 }
 
 gboolean
 j_fini (void)
 {
-	JConfiguration* conf;
-	JTrace* trace;
+	JCommon* common;
 
 	g_return_val_if_fail(j_is_initialized(), FALSE);
 
-	conf = g_atomic_pointer_get(&j_configuration_global);
-	g_atomic_pointer_set(&j_configuration_global, NULL);
+	common = g_atomic_pointer_get(&j_common);
+	g_atomic_pointer_set(&j_common, NULL);
 
-	trace = g_atomic_pointer_get(&j_trace_global);
-	g_atomic_pointer_set(&j_trace_global, NULL);
+	j_connection_disconnect(common->connection);
 
-	j_configuration_free(conf);
-	j_trace_thread_leave(trace);
+	j_connection_unref(common->connection);
+	j_configuration_unref(common->configuration);
+	j_trace_thread_leave(common->trace);
 
 	j_trace_fini();
 
@@ -114,9 +155,9 @@ j_fini (void)
 gboolean
 j_is_initialized (void)
 {
-	JConfiguration* p;
+	JCommon* p;
 
-	p = g_atomic_pointer_get(&j_configuration_global);
+	p = g_atomic_pointer_get(&j_common);
 
 	return (p != NULL);
 }
@@ -124,67 +165,76 @@ j_is_initialized (void)
 JConfiguration*
 j_configuration (void)
 {
-	JConfiguration* p;
+	JCommon* common;
 
 	g_return_val_if_fail(j_is_initialized(), NULL);
 
-	p = g_atomic_pointer_get(&j_configuration_global);
+	common = g_atomic_pointer_get(&j_common);
 
-	return p;
+	return common->configuration;
 }
 
 JTrace*
 j_trace (void)
 {
-	JTrace* p;
+	JCommon* common;
 
 	g_return_val_if_fail(j_is_initialized(), NULL);
 
-	p = g_atomic_pointer_get(&j_trace_global);
+	common = g_atomic_pointer_get(&j_common);
 
-	return p;
+	return common->trace;
 }
 
 void
-j_add_store (JConnection* connection, JStore* store, JOperation* operation)
+j_add_store (JStore* store, JOperation* operation)
 {
+	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 
+	common = g_atomic_pointer_get(&j_common);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_ADD_STORE;
-	part->u.add_store.connection = j_connection_ref(connection);
+	part->u.add_store.connection = j_connection_ref(common->connection);
 	part->u.add_store.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
 }
 
 void
-j_delete_store (JConnection* connection, JStore* store, JOperation* operation)
+j_delete_store (JStore* store, JOperation* operation)
 {
+	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 
+	common = g_atomic_pointer_get(&j_common);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_DELETE_STORE;
-	part->u.delete_store.connection = j_connection_ref(connection);
+	part->u.delete_store.connection = j_connection_ref(common->connection);
 	part->u.delete_store.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
 }
 
 void
-j_get_store (JConnection* connection, JStore** store, gchar const* name, JOperation* operation)
+j_get_store (JStore** store, gchar const* name, JOperation* operation)
 {
+	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 
+	common = g_atomic_pointer_get(&j_common);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_GET_STORE;
-	part->u.get_store.connection = j_connection_ref(connection);
+	part->u.get_store.connection = j_connection_ref(common->connection);
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);
 

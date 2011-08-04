@@ -578,7 +578,7 @@ j_item_read_internal (JList* parts)
 
 		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_READ);
 
-		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
@@ -657,7 +657,7 @@ j_item_write_internal (JList* parts)
 
 		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_WRITE);
 
-		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
