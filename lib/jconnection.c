@@ -72,6 +72,11 @@ struct JConnection
 	GSocketConnection** sockets;
 
 	/**
+	 * The number of julead connections.
+	 **/
+	guint sockets_len;
+
+	/**
 	 * The connection status.
 	 **/
 	gboolean connected;
@@ -106,11 +111,12 @@ j_connection_new (JConfiguration* configuration)
 	connection = g_slice_new(JConnection);
 	connection->configuration = j_configuration_ref(configuration);
 	mongo_init(&(connection->connection));
-	connection->sockets = g_new(GSocketConnection*, connection->configuration->data_len);
+	connection->sockets_len = j_configuration_get_data_server_number(connection->configuration);
+	connection->sockets = g_new(GSocketConnection*, connection->sockets_len);
 	connection->connected = FALSE;
 	connection->ref_count = 1;
 
-	for (i = 0; i < connection->configuration->data_len; i++)
+	for (i = 0; i < connection->sockets_len; i++)
 	{
 		connection->sockets[i] = NULL;
 	}
@@ -167,7 +173,7 @@ j_connection_unref (JConnection* connection)
 	{
 		mongo_destroy(&(connection->connection));
 
-		for (i = 0; i < connection->configuration->data_len; i++)
+		for (i = 0; i < connection->sockets_len; i++)
 		{
 			if (connection->sockets[i] != NULL)
 			{
@@ -209,13 +215,13 @@ j_connection_connect (JConnection* connection)
 		return FALSE;
 	}
 
-	is_connected = (mongo_connect(&(connection->connection), connection->configuration->metadata[0], 27017) == MONGO_OK);
+	is_connected = (mongo_connect(&(connection->connection), j_configuration_get_metadata_server(connection->configuration, 0), 27017) == MONGO_OK);
 
 	client = g_socket_client_new();
 
-	for (i = 0; i < connection->configuration->data_len; i++)
+	for (i = 0; i < connection->sockets_len; i++)
 	{
-		connection->sockets[i] = g_socket_client_connect_to_host(client, connection->configuration->data[i], 4711, NULL, NULL);
+		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, NULL);
 
 		is_connected = is_connected && (connection->sockets[i] != NULL);
 	}
@@ -253,7 +259,7 @@ j_connection_disconnect (JConnection* connection)
 
 	mongo_disconnect(&(connection->connection));
 
-	for (i = 0; i < connection->configuration->data_len; i++)
+	for (i = 0; i < connection->sockets_len; i++)
 	{
 		g_io_stream_close(G_IO_STREAM(connection->sockets[i]), NULL, NULL);
 	}
@@ -309,7 +315,7 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 	GOutputStream* output;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(i < connection->configuration->data_len, FALSE);
+	g_return_val_if_fail(i < connection->sockets_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
@@ -351,7 +357,7 @@ j_connection_receive (JConnection* connection, guint i, JMessage* message, gpoin
 	GInputStream* input;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(i < connection->configuration->data_len, FALSE);
+	g_return_val_if_fail(i < connection->sockets_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 

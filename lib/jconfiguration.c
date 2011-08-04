@@ -41,6 +41,24 @@
  * @{
  **/
 
+struct JConfiguration
+{
+	gchar** data;
+	gchar** metadata;
+
+	guint data_len;
+	guint metadata_len;
+
+	struct
+	{
+		gchar* backend;
+		gchar* path;
+	}
+	storage;
+
+	guint ref_count;
+};
+
 /**
  * Creates a new configuration.
  *
@@ -200,6 +218,56 @@ j_configuration_unref (JConfiguration* configuration)
 
 		g_slice_free(JConfiguration, configuration);
 	}
+}
+
+gchar const*
+j_configuration_get_data_server (JConfiguration* configuration, guint index)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+	g_return_val_if_fail(index < configuration->data_len, NULL);
+
+	return configuration->data[index];
+}
+
+gchar const*
+j_configuration_get_metadata_server (JConfiguration* configuration, guint index)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+	g_return_val_if_fail(index < configuration->metadata_len, NULL);
+
+	return configuration->metadata[index];
+}
+
+guint
+j_configuration_get_data_server_number (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->data_len;
+}
+
+guint
+j_configuration_get_metadata_server_number (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->metadata_len;
+}
+
+gchar const*
+j_configuration_get_storage_backend (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->storage.backend;
+}
+
+gchar const*
+j_configuration_get_storage_path (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->storage.path;
 }
 
 /**

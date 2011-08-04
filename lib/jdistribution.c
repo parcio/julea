@@ -103,10 +103,10 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	}
 
 	block = distribution->offset / block_size;
-	round = block / distribution->configuration->data_len;
+	round = block / j_configuration_get_data_server_number(distribution->configuration);
 	displacement = distribution->offset % block_size;
 
-	*index = block % distribution->configuration->data_len;
+	*index = block % j_configuration_get_data_server_number(distribution->configuration);
 	*new_length = MIN(distribution->length, block_size - displacement);
 	*new_offset = (round * block_size) + displacement;
 

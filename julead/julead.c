@@ -222,7 +222,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	path = g_module_build_path(JULEAD_BACKEND_PATH, configuration->storage.backend);
+	path = g_module_build_path(JULEAD_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
 	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
 	g_free(path);
 
@@ -240,7 +240,7 @@ main (int argc, char** argv)
 	g_assert(jd_backend_read != NULL);
 	g_assert(jd_backend_write != NULL);
 
-	jd_backend_init(configuration->storage.path, trace);
+	jd_backend_init(j_configuration_get_storage_path(configuration), trace);
 
 	j_configuration_unref(configuration);
 

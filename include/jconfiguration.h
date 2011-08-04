@@ -32,31 +32,23 @@
 #ifndef H_CONFIGURATION
 #define H_CONFIGURATION
 
-struct JConfiguration
-{
-	gchar** data;
-	gchar** metadata;
+#include <glib.h>
 
-	guint data_len;
-	guint metadata_len;
-
-	struct
-	{
-		gchar* backend;
-		gchar* path;
-	}
-	storage;
-
-	guint ref_count;
-};
+struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
-
-#include <glib.h>
 
 JConfiguration* j_configuration_new (void);
 JConfiguration* j_configuration_new_for_data (GKeyFile*);
 JConfiguration* j_configuration_ref (JConfiguration*);
 void j_configuration_unref (JConfiguration*);
 
+gchar const* j_configuration_get_data_server (JConfiguration*, guint);
+gchar const* j_configuration_get_metadata_server (JConfiguration*, guint);
+
+guint j_configuration_get_data_server_number (JConfiguration*);
+guint j_configuration_get_metadata_server_number (JConfiguration*);
+
+gchar const* j_configuration_get_storage_backend (JConfiguration*);
+gchar const* j_configuration_get_storage_path (JConfiguration*);
 #endif
