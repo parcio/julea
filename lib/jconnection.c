@@ -87,6 +87,12 @@ struct JConnection
 	guint ref_count;
 };
 
+GQuark
+j_connection_error_quark (void)
+{
+	return g_quark_from_static_string("j-connection-error-quark");
+}
+
 /**
  * Creates a new connection.
  *

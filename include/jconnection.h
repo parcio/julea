@@ -32,6 +32,14 @@
 #ifndef H_CONNECTION
 #define H_CONNECTION
 
+#define J_CONNECTION_ERROR j_connection_error_quark()
+
+typedef enum
+{
+	J_CONNECTION_ERROR_FAILED
+}
+JConnectionError;
+
 struct JConnection;
 
 typedef struct JConnection JConnection;
@@ -40,6 +48,8 @@ typedef struct JConnection JConnection;
 
 #include <jconfiguration.h>
 #include <jstore.h>
+
+GQuark j_connection_error_quark (void);
 
 JConnection* j_connection_new (JConfiguration*);
 JConnection* j_connection_ref (JConnection*);
