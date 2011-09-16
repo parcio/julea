@@ -40,8 +40,6 @@ main (int argc, char** argv)
 	JOperation* delete_operation;
 	JOperation* operation;
 
-	g_type_init();
-
 	if (!j_init())
 	{
 		g_printerr("Could not initialize.\n");

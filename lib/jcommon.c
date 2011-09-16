@@ -82,6 +82,8 @@ j_init_for_data (GKeyFile* key_file)
 	common->connection = NULL;
 	common->trace = NULL;
 
+	g_type_init();
+
 	j_trace_init("JULEA");
 
 	common->trace = j_trace_thread_enter(NULL, G_STRFUNC);
@@ -131,12 +133,12 @@ error:
 	return FALSE;
 }
 
-gboolean
+void
 j_fini (void)
 {
 	JCommon* common;
 
-	g_return_val_if_fail(j_is_initialized(), FALSE);
+	g_return_if_fail(j_is_initialized());
 
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
@@ -148,8 +150,6 @@ j_fini (void)
 	j_trace_thread_leave(common->trace);
 
 	j_trace_fini();
-
-	return TRUE;
 }
 
 gboolean

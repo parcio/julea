@@ -29,22 +29,25 @@
 
 #include <julea.h>
 
-static void
+static
+void
 test_semantics_fixture_setup (JSemantics** semantics, gconstpointer data)
 {
 	*semantics = j_semantics_new();
 }
 
-static void
+static
+void
 test_semantics_fixture_teardown (JSemantics** semantics, gconstpointer data)
 {
 	j_semantics_unref(*semantics);
 }
 
-static void
-test_semantics_new_ref_unref (gpointer* fixture, gconstpointer data)
+static
+void
+test_semantics_new_ref_unref (void)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -59,7 +62,8 @@ test_semantics_new_ref_unref (gpointer* fixture, gconstpointer data)
 	}
 }
 
-static void
+static
+void
 test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 {
 	gint s;
@@ -67,23 +71,26 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 	j_semantics_set(*semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONCURRENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_CONCURRENCY_STRICT);
+
 	j_semantics_set(*semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONSISTENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_CONSISTENCY_STRICT);
+
 	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 	s = j_semantics_get(*semantics, J_SEMANTICS_PERSISTENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_LAX);
+
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_SECURITY_STRICT);
 }
 
-int main (int argc, char** argv)
+int
+main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/semantics/new_ref_unref", gpointer, NULL, NULL, test_semantics_new_ref_unref, NULL);
-
+	g_test_add_func("/julea/semantics/new_ref_unref", test_semantics_new_ref_unref);
 	g_test_add("/julea/semantics/set_get", JSemantics*, NULL, test_semantics_fixture_setup, test_semantics_set_get, test_semantics_fixture_teardown);
 
 	return g_test_run();

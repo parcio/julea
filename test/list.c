@@ -29,22 +29,25 @@
 
 #include <julea.h>
 
-static void
+static
+void
 test_list_fixture_setup (JList** list, gconstpointer data)
 {
 	*list = j_list_new(g_free);
 }
 
-static void
+static
+void
 test_list_fixture_teardown (JList** list, gconstpointer data)
 {
 	j_list_unref(*list);
 }
 
-static void
-test_list_new_free (gpointer* fixture, gconstpointer data)
+static
+void
+test_list_new_free (void)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -56,10 +59,11 @@ test_list_new_free (gpointer* fixture, gconstpointer data)
 	}
 }
 
-static void
+static
+void
 test_list_length (JList** list, gconstpointer data)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 	guint l;
 
 	for (guint i = 0; i < n; i++)
@@ -71,10 +75,11 @@ test_list_length (JList** list, gconstpointer data)
 	g_assert_cmpuint(l, ==, n);
 }
 
-static void
+static
+void
 test_list_append (JList** list, gconstpointer data)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -82,10 +87,11 @@ test_list_append (JList** list, gconstpointer data)
 	}
 }
 
-static void
+static
+void
 test_list_prepend (JList** list, gconstpointer data)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -93,7 +99,8 @@ test_list_prepend (JList** list, gconstpointer data)
 	}
 }
 
-static void
+static
+void
 test_list_get (JList** list, gconstpointer data)
 {
 	gchar const* s;
@@ -122,12 +129,12 @@ test_list_get (JList** list, gconstpointer data)
 	g_assert_cmpstr(s, ==, "0");
 }
 
-int main (int argc, char** argv)
+int
+main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/list/new_free", gpointer, NULL, NULL, test_list_new_free, NULL);
-
+	g_test_add_func("/julea/list/new_free", test_list_new_free);
 	g_test_add("/julea/list/length", JList*, NULL, test_list_fixture_setup, test_list_length, test_list_fixture_teardown);
 	g_test_add("/julea/list/append", JList*, NULL, test_list_fixture_setup, test_list_append, test_list_fixture_teardown);
 	g_test_add("/julea/list/prepend", JList*, NULL, test_list_fixture_setup, test_list_prepend, test_list_fixture_teardown);

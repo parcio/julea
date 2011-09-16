@@ -34,10 +34,10 @@
 
 static
 void
-test_distribution_fixture_setup (gpointer* fixture, gconstpointer data)
+test_distribution_fixture_setup (JConfiguration** configuration, gconstpointer data)
 {
 	GKeyFile* key_file;
-	gchar const* servers[3] = { "localhost", "localhost", NULL };
+	gchar const* servers[] = { "localhost", "localhost", NULL };
 
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
@@ -45,21 +45,21 @@ test_distribution_fixture_setup (gpointer* fixture, gconstpointer data)
 	g_key_file_set_string(key_file, "storage", "backend", "null");
 	g_key_file_set_string(key_file, "storage", "path", "");
 
-	j_init_for_data(key_file);
+	*configuration = j_configuration_new_for_data(key_file);
 
 	g_key_file_free(key_file);
 }
 
 static
 void
-test_distribution_fixture_teardown (gpointer* fixture, gconstpointer data)
+test_distribution_fixture_teardown (JConfiguration** configuration, gconstpointer data)
 {
-	j_fini();
+	j_configuration_unref(*configuration);
 }
 
 static
 void
-test_distribution_round_robin (gpointer* fixture, gconstpointer data)
+test_distribution_round_robin (JConfiguration** configuration, gconstpointer data)
 {
 	JDistribution* distribution;
 	gboolean ret;
@@ -67,7 +67,7 @@ test_distribution_round_robin (gpointer* fixture, gconstpointer data)
 	guint64 offset;
 	guint index;
 
-	distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
+	distribution = j_distribution_new(*configuration, J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
@@ -109,7 +109,7 @@ int main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/bson/round_robin", gpointer, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
+	g_test_add("/julea/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
 
 	return g_test_run();
 }

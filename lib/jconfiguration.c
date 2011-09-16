@@ -67,7 +67,7 @@ struct JConfiguration
  * \code
  * \endcode
  *
- * \return A new configuration. Should be freed with j_configuration_free().
+ * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
 j_configuration_new (void)
@@ -125,7 +125,7 @@ out:
  *
  * \param key_file The configuration data.
  *
- * \return A new configuration. Should be freed with j_configuration_free().
+ * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
 j_configuration_new_for_data (GKeyFile* key_file)
@@ -163,6 +163,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->metadata_len = g_strv_length(metadata);
 	configuration->storage.backend = storage_backend;
 	configuration->storage.path = storage_path;
+	configuration->ref_count = 1;
 
 	return configuration;
 }
@@ -239,7 +240,7 @@ j_configuration_get_metadata_server (JConfiguration* configuration, guint index)
 }
 
 guint
-j_configuration_get_data_server_number (JConfiguration* configuration)
+j_configuration_get_data_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
@@ -247,7 +248,7 @@ j_configuration_get_data_server_number (JConfiguration* configuration)
 }
 
 guint
-j_configuration_get_metadata_server_number (JConfiguration* configuration)
+j_configuration_get_metadata_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 

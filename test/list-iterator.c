@@ -29,7 +29,8 @@
 
 #include <julea.h>
 
-static void
+static
+void
 test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 {
 	JList* list;
@@ -45,16 +46,18 @@ test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 	j_list_unref(list);
 }
 
-static void
+static
+void
 test_list_iterator_fixture_teardown (JListIterator** iterator, gconstpointer data)
 {
 	j_list_iterator_free(*iterator);
 }
 
-static void
-test_list_iterator_new_free (gpointer* fixture, gconstpointer data)
+static
+void
+test_list_iterator_new_free (void)
 {
-	const guint n = 100000;
+	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -70,7 +73,8 @@ test_list_iterator_new_free (gpointer* fixture, gconstpointer data)
 	}
 }
 
-static void
+static
+void
 test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 {
 	gchar const* s;
@@ -101,12 +105,12 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 	g_assert(s == NULL);
 }
 
-int main (int argc, char** argv)
+int
+main (int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 
-	g_test_add("/julea/list-iterator/new_free", gpointer, NULL, NULL, test_list_iterator_new_free, NULL);
-
+	g_test_add_func("/julea/list-iterator/new_free", test_list_iterator_new_free);
 	g_test_add("/julea/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);
 
 	return g_test_run();

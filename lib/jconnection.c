@@ -117,7 +117,7 @@ j_connection_new (JConfiguration* configuration)
 	connection = g_slice_new(JConnection);
 	connection->configuration = j_configuration_ref(configuration);
 	mongo_init(&(connection->connection));
-	connection->sockets_len = j_configuration_get_data_server_number(connection->configuration);
+	connection->sockets_len = j_configuration_get_data_server_count(connection->configuration);
 	connection->sockets = g_new(GSocketConnection*, connection->sockets_len);
 	connection->connected = FALSE;
 	connection->ref_count = 1;

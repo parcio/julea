@@ -46,8 +46,8 @@ void j_configuration_unref (JConfiguration*);
 gchar const* j_configuration_get_data_server (JConfiguration*, guint);
 gchar const* j_configuration_get_metadata_server (JConfiguration*, guint);
 
-guint j_configuration_get_data_server_number (JConfiguration*);
-guint j_configuration_get_metadata_server_number (JConfiguration*);
+guint j_configuration_get_data_server_count (JConfiguration*);
+guint j_configuration_get_metadata_server_count (JConfiguration*);
 
 gchar const* j_configuration_get_storage_backend (JConfiguration*);
 gchar const* j_configuration_get_storage_path (JConfiguration*);
