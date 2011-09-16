@@ -27,20 +27,68 @@
 
 #include <glib.h>
 
+#include <julea.h>
+
+#include <jmessage.h>
+
 #include "test.h"
 
-int
-main (int argc, char** argv)
+static
+void
+test_message_new_free (void)
 {
-	g_test_init(&argc, &argv, NULL);
+	JMessage* message;
 
-	test_collection();
-	test_configuration();
-	test_distribution();
-	test_list();
-	test_list_iterator();
-	test_message();
-	test_semantics();
+	message = j_message_new(0, J_MESSAGE_OPERATION_NONE, 0);
+	g_assert(message != NULL);
+	j_message_free(message);
+}
 
-	return g_test_run();
+static
+void
+test_message_header (void)
+{
+	JMessage* message;
+
+	message = j_message_new(42, J_MESSAGE_OPERATION_READ, 23);
+	g_assert(message != NULL);
+
+	g_assert(j_message_data(message) != NULL);
+	g_assert_cmpuint(j_message_length(message), ==, 42 + sizeof(JMessageHeader));
+
+	g_assert(j_message_operation_type(message) == J_MESSAGE_OPERATION_READ);
+	g_assert_cmpuint(j_message_operation_count(message), ==, 23);
+
+	j_message_free(message);
+}
+
+static
+void
+test_message_append (void)
+{
+	JMessage* message;
+	gboolean ret;
+	guint64 dummy = 42;
+
+	message = j_message_new(20, J_MESSAGE_OPERATION_NONE, 0);
+	g_assert(message != NULL);
+
+	ret = j_message_append_1(message, &dummy);
+	g_assert(ret);
+	ret = j_message_append_4(message, &dummy);
+	g_assert(ret);
+	ret = j_message_append_8(message, &dummy);
+	g_assert(ret);
+	ret = j_message_append_n(message, &dummy, 7);
+	g_assert(ret);
+
+	j_message_free(message);
+}
+
+void
+test_message (void)
+{
+	g_test_add_func("/julea/message/new_free", test_message_new_free);
+	g_test_add_func("/julea/message/header", test_message_header);
+	g_test_add_func("/julea/message/append", test_message_append);
 }
