@@ -148,14 +148,13 @@ def build (ctx):
 	)
 
 	# Tests
-	for test in ('distribution', 'list', 'list-iterator', 'semantics'):
-		ctx.program(
-			source = ['test/%s.c' % (test,)],
-			target = 'test/%s' % (test,),
-			use = ['lib/julea', 'GLIB'],
-			includes = ['include'],
-			install_path = None
-		)
+	ctx.program(
+		source = ctx.path.ant_glob('test/*.c'),
+		target = 'test/test',
+		use = ['lib/julea', 'GLIB'],
+		includes = ['include'],
+		install_path = None
+	)
 
 	# Daemon
 	ctx.program(

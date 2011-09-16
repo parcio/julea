@@ -29,6 +29,8 @@
 
 #include <julea.h>
 
+#include "test.h"
+
 static
 void
 test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
@@ -105,13 +107,9 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 	g_assert(s == NULL);
 }
 
-int
-main (int argc, char** argv)
+void
+test_list_iterator (void)
 {
-	g_test_init(&argc, &argv, NULL);
-
 	g_test_add_func("/julea/list-iterator/new_free", test_list_iterator_new_free);
 	g_test_add("/julea/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);
-
-	return g_test_run();
 }

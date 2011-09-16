@@ -29,6 +29,8 @@
 
 #include <julea.h>
 
+#include "test.h"
+
 static
 void
 test_list_fixture_setup (JList** list, gconstpointer data)
@@ -129,16 +131,12 @@ test_list_get (JList** list, gconstpointer data)
 	g_assert_cmpstr(s, ==, "0");
 }
 
-int
-main (int argc, char** argv)
+void
+test_list (void)
 {
-	g_test_init(&argc, &argv, NULL);
-
 	g_test_add_func("/julea/list/new_free", test_list_new_free);
 	g_test_add("/julea/list/length", JList*, NULL, test_list_fixture_setup, test_list_length, test_list_fixture_teardown);
 	g_test_add("/julea/list/append", JList*, NULL, test_list_fixture_setup, test_list_append, test_list_fixture_teardown);
 	g_test_add("/julea/list/prepend", JList*, NULL, test_list_fixture_setup, test_list_prepend, test_list_fixture_teardown);
 	g_test_add("/julea/list/get", JList*, NULL, test_list_fixture_setup, test_list_get, test_list_fixture_teardown);
-
-	return g_test_run();
 }

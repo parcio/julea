@@ -29,6 +29,8 @@
 
 #include <julea.h>
 
+#include "test.h"
+
 static
 void
 test_semantics_fixture_setup (JSemantics** semantics, gconstpointer data)
@@ -85,13 +87,9 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 	g_assert_cmpint(s, ==, J_SEMANTICS_SECURITY_STRICT);
 }
 
-int
-main (int argc, char** argv)
+void
+test_semantics (void)
 {
-	g_test_init(&argc, &argv, NULL);
-
 	g_test_add_func("/julea/semantics/new_ref_unref", test_semantics_new_ref_unref);
 	g_test_add("/julea/semantics/set_get", JSemantics*, NULL, test_semantics_fixture_setup, test_semantics_set_get, test_semantics_fixture_teardown);
-
-	return g_test_run();
 }
