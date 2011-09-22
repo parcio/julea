@@ -122,8 +122,7 @@ static JTraceFlags j_trace_flags = J_TRACE_OFF;
 static gchar* j_trace_name = NULL;
 static gint j_trace_thread_id = 1;
 
-static GPatternSpec** j_trace_function_blacklist_patterns = NULL;
-static GPatternSpec** j_trace_function_whitelist_patterns = NULL;
+static GPatternSpec** j_trace_function_patterns = NULL;
 
 #ifdef HAVE_HDTRACE
 static hdTopology* hdtrace_topology = NULL;
@@ -264,26 +263,13 @@ static
 gboolean
 j_trace_function_check (gchar const* name)
 {
-	guint i;
-
-	if (j_trace_function_blacklist_patterns != NULL)
+	if (j_trace_function_patterns != NULL)
 	{
-		for (i = 0; j_trace_function_blacklist_patterns[i] != NULL; i++)
-		{
-			if (g_pattern_match_string(j_trace_function_blacklist_patterns[i], name))
-			{
-				return FALSE;
-			}
-		}
+		guint i;
 
-		return TRUE;
-	}
-
-	if (j_trace_function_whitelist_patterns != NULL)
-	{
-		for (i = 0; j_trace_function_whitelist_patterns[i] != NULL; i++)
+		for (i = 0; j_trace_function_patterns[i] != NULL; i++)
 		{
-			if (g_pattern_match_string(j_trace_function_whitelist_patterns[i], name))
+			if (g_pattern_match_string(j_trace_function_patterns[i], name))
 			{
 				return TRUE;
 			}
@@ -310,8 +296,7 @@ void
 j_trace_init (gchar const* name)
 {
 	gchar const* j_trace;
-	gchar const* j_trace_function_blacklist;
-	gchar const* j_trace_function_whitelist;
+	gchar const* j_trace_function;
 
 	g_return_if_fail(name != NULL);
 	g_return_if_fail(j_trace_flags == J_TRACE_OFF);
@@ -349,44 +334,23 @@ j_trace_init (gchar const* name)
 		g_strfreev(p);
 	}
 
-	if ((j_trace_function_blacklist = g_getenv("J_TRACE_FUNCTION_BLACKLIST")) != NULL)
+	if ((j_trace_function = g_getenv("J_TRACE_FUNCTION")) != NULL)
 	{
 		gchar** p;
 		guint i;
 		guint l;
 
-		p = g_strsplit(j_trace_function_blacklist, ",", 0);
+		p = g_strsplit(j_trace_function, ",", 0);
 		l = g_strv_length(p);
 
-		j_trace_function_blacklist_patterns = g_new(GPatternSpec*, l + 1);
+		j_trace_function_patterns = g_new(GPatternSpec*, l + 1);
 
 		for (i = 0; i < l; i++)
 		{
-			j_trace_function_blacklist_patterns[i] = g_pattern_spec_new(p[i]);
+			j_trace_function_patterns[i] = g_pattern_spec_new(p[i]);
 		}
 
-		j_trace_function_blacklist_patterns[l] = NULL;
-
-		g_strfreev(p);
-	}
-
-	if ((j_trace_function_whitelist = g_getenv("J_TRACE_FUNCTION_WHITELIST")) != NULL)
-	{
-		gchar** p;
-		guint i;
-		guint l;
-
-		p = g_strsplit(j_trace_function_whitelist, ",", 0);
-		l = g_strv_length(p);
-
-		j_trace_function_whitelist_patterns = g_new(GPatternSpec*, l + 1);
-
-		for (i = 0; i < l; i++)
-		{
-			j_trace_function_whitelist_patterns[i] = g_pattern_spec_new(p[i]);
-		}
-
-		j_trace_function_whitelist_patterns[l] = NULL;
+		j_trace_function_patterns[l] = NULL;
 
 		g_strfreev(p);
 	}
@@ -486,9 +450,17 @@ j_trace_fini (void)
 
 	j_trace_flags = J_TRACE_OFF;
 
-	// FIXME leak
-	g_free(j_trace_function_blacklist_patterns);
-	g_free(j_trace_function_whitelist_patterns);
+	if (j_trace_function_patterns != NULL)
+	{
+		guint i;
+
+		for (i = 0; j_trace_function_patterns[i] != NULL; i++)
+		{
+			g_pattern_spec_free(j_trace_function_patterns[i]);
+		}
+	}
+
+	g_free(j_trace_function_patterns);
 
 	g_free(j_trace_name);
 }
