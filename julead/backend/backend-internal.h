@@ -40,6 +40,8 @@ void backend_fini (JTrace*);
 void backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
 void backend_close (JBackendFile*, JTrace*);
 
+void backend_sync (JBackendFile*, JTrace*);
+
 guint64 backend_read (JBackendFile*, gpointer, guint64, guint64, JTrace*);
 guint64 backend_write (JBackendFile*, gconstpointer, guint64, guint64, JTrace*);
 

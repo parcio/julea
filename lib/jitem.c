@@ -663,6 +663,7 @@ j_item_write_internal (JList* parts)
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 		{
 			JMessage* message;
+			JSemantics* semantics;
 			gchar const* store;
 			gchar const* collection;
 			gsize store_len;
@@ -689,6 +690,20 @@ j_item_write_internal (JList* parts)
 
 			d += new_length;
 			*bytes_written += new_length;
+
+			semantics = j_item_get_semantics(item);
+
+			if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+			{
+				message = j_message_new(store_len + collection_len + item_len, J_MESSAGE_OPERATION_SYNC, 1);
+				j_message_append_n(message, store, store_len);
+				j_message_append_n(message, collection, collection_len);
+				j_message_append_n(message, item->name, item_len);
+
+				j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
+
+				j_message_free(message);
+			}
 		}
 
 		j_distribution_free(distribution);

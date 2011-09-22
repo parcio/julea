@@ -92,6 +92,21 @@ backend_close (JBackendFile* bf, JTrace* trace)
 }
 
 G_MODULE_EXPORT
+void
+backend_sync (JBackendFile* bf, JTrace* trace)
+{
+	gint fd = GPOINTER_TO_INT(bf->user_data);
+
+	j_trace_enter(trace, G_STRFUNC);
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
+	fsync(fd);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+
+	j_trace_leave(trace, G_STRFUNC);
+}
+
+G_MODULE_EXPORT
 guint64
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {

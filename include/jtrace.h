@@ -34,11 +34,12 @@
 
 enum JTraceFileOperation
 {
-	J_TRACE_FILE_OPEN,
 	J_TRACE_FILE_CLOSE,
+	J_TRACE_FILE_OPEN,
 	J_TRACE_FILE_READ,
-	J_TRACE_FILE_WRITE,
-	J_TRACE_FILE_SEEK
+	J_TRACE_FILE_SEEK,
+	J_TRACE_FILE_SYNC,
+	J_TRACE_FILE_WRITE
 };
 
 typedef enum JTraceFileOperation JTraceFileOperation;

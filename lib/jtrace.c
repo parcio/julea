@@ -244,16 +244,18 @@ j_trace_file_operation_name (JTraceFileOperation op)
 {
 	switch (op)
 	{
-		case J_TRACE_FILE_OPEN:
-			return "open";
 		case J_TRACE_FILE_CLOSE:
 			return "close";
+		case J_TRACE_FILE_OPEN:
+			return "open";
 		case J_TRACE_FILE_READ:
 			return "read";
-		case J_TRACE_FILE_WRITE:
-			return "write";
 		case J_TRACE_FILE_SEEK:
 			return "seek";
+		case J_TRACE_FILE_SYNC:
+			return "sync";
+		case J_TRACE_FILE_WRITE:
+			return "write";
 		default:
 			return NULL;
 	}
@@ -723,20 +725,23 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 		switch (op)
 		{
-			case J_TRACE_FILE_OPEN:
-				otf_op = OTF_FILEOP_OPEN;
-				break;
 			case J_TRACE_FILE_CLOSE:
 				otf_op = OTF_FILEOP_CLOSE;
+				break;
+			case J_TRACE_FILE_OPEN:
+				otf_op = OTF_FILEOP_OPEN;
 				break;
 			case J_TRACE_FILE_READ:
 				otf_op = OTF_FILEOP_READ;
 				break;
-			case J_TRACE_FILE_WRITE:
-				otf_op = OTF_FILEOP_WRITE;
-				break;
 			case J_TRACE_FILE_SEEK:
 				otf_op = OTF_FILEOP_SEEK;
+				break;
+			case J_TRACE_FILE_SYNC:
+				otf_op = OTF_FILEOP_SYNC;
+				break;
+			case J_TRACE_FILE_WRITE:
+				otf_op = OTF_FILEOP_WRITE;
 				break;
 			default:
 				g_return_if_reached();

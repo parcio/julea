@@ -92,6 +92,24 @@ backend_close (JBackendFile* bf, JTrace* trace)
 }
 
 G_MODULE_EXPORT
+void
+backend_sync (JBackendFile* bf, JTrace* trace)
+{
+	GFileIOStream* stream = bf->user_data;
+	GOutputStream* output;
+
+	j_trace_enter(trace, G_STRFUNC);
+
+	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
+	g_output_stream_flush(output, NULL, NULL);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+
+	j_trace_leave(trace, G_STRFUNC);
+}
+
+G_MODULE_EXPORT
 guint64
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
