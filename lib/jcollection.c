@@ -37,6 +37,7 @@
 #include "jcollection.h"
 #include "jcollection-internal.h"
 
+#include "jcommon.h"
 #include "jconnection.h"
 #include "jconnection-internal.h"
 #include "jitem.h"
@@ -50,6 +51,7 @@
 #include "jsemantics.h"
 #include "jstore.h"
 #include "jstore-internal.h"
+#include "jtrace.h"
 
 /**
  * \defgroup JCollection Collection
@@ -119,6 +121,8 @@ j_collection_new (gchar const* name)
 
 	g_return_val_if_fail(name != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	/*
 	: m_initialized(false),
 	*/
@@ -130,6 +134,8 @@ j_collection_new (gchar const* name)
 	collection->semantics = NULL;
 	collection->store = NULL;
 	collection->ref_count = 1;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection;
 }
@@ -154,7 +160,11 @@ j_collection_ref (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	collection->ref_count++;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection;
 }
@@ -175,6 +185,8 @@ j_collection_unref (JCollection* collection)
 {
 	g_return_if_fail(collection != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	collection->ref_count--;
 
 	if (collection->ref_count == 0)
@@ -194,6 +206,8 @@ j_collection_unref (JCollection* collection)
 
 		g_slice_free(JCollection, collection);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -212,6 +226,9 @@ gchar const*
 j_collection_get_name (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->name;
 }
@@ -241,6 +258,8 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(items != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	/*
 		IsInitialized(true);
@@ -337,6 +356,8 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 
 	bson_destroy(&fields);
 	bson_destroy(&b);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -354,14 +375,24 @@ j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags
 JSemantics*
 j_collection_get_semantics (JCollection* collection)
 {
+	JSemantics* ret;
+
 	g_return_val_if_fail(collection != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	if (collection->semantics != NULL)
 	{
-		return collection->semantics;
+		ret = collection->semantics;
+	}
+	else
+	{
+		ret = j_store_get_semantics(collection->store);
 	}
 
-	return j_store_get_semantics(collection->store);
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -381,12 +412,16 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(semantics != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (collection->semantics != NULL)
 	{
 		j_semantics_unref(collection->semantics);
 	}
 
 	collection->semantics = j_semantics_ref(semantics);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -409,12 +444,16 @@ j_collection_add_item (JCollection* collection, JItem* item, JOperation* operati
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_COLLECTION_ADD_ITEM;
 	part->u.collection_add_item.collection = j_collection_ref(collection);
 	part->u.collection_add_item.item = j_item_ref(item);
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -438,6 +477,8 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_COLLECTION_GET_ITEM;
 	part->u.collection_get_item.collection = j_collection_ref(collection);
@@ -445,6 +486,8 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	part->u.collection_get_item.name = g_strdup(name);
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -467,12 +510,16 @@ j_collection_delete_item (JCollection* collection, JItem* item, JOperation* oper
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_COLLECTION_DELETE_ITEM;
 	part->u.collection_delete_item.collection = j_collection_ref(collection);
 	part->u.collection_delete_item.item = j_item_ref(item);
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /* Internal */
@@ -503,6 +550,8 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->collection.items = NULL;
@@ -511,6 +560,8 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	collection->ref_count = 1;
 
 	j_collection_deserialize(collection, b);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection;
 }
@@ -521,10 +572,14 @@ j_collection_collection_items (JCollection* collection)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(collection->store != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (G_UNLIKELY(collection->collection.items == NULL))
 	{
 		collection->collection.items = g_strdup_printf("%s.Items", j_store_get_name(collection->store));
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->collection.items;
 }
@@ -535,10 +590,14 @@ j_collection_collection_item_statuses (JCollection* collection)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(collection->store != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (G_UNLIKELY(collection->collection.item_statuses == NULL))
 	{
 		collection->collection.item_statuses = g_strdup_printf("%s.ItemStatuses", j_store_get_name(collection->store));
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->collection.item_statuses;
 }
@@ -561,6 +620,9 @@ JStore*
 j_collection_get_store (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->store;
 }
@@ -591,11 +653,15 @@ j_collection_serialize (JCollection* collection)
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	b = g_slice_new(bson);
 	bson_init(b);
 	bson_append_oid(b, "_id", &(collection->id));
 	bson_append_string(b, "Name", collection->name);
 	bson_finish(b);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return b;
 }
@@ -620,6 +686,8 @@ j_collection_deserialize (JCollection* collection, bson const* b)
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(b != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	//j_bson_print(bson);
 
@@ -646,6 +714,8 @@ j_collection_deserialize (JCollection* collection, bson const* b)
 			collection->name = g_strdup(bson_iterator_string(&iterator));
 		}
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -667,6 +737,9 @@ j_collection_get_id (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
+
 	return &(collection->id);
 }
 
@@ -677,7 +750,11 @@ j_collection_set_store (JCollection* collection, JStore* store)
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection->store == NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	collection->store = j_store_ref(store);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 void
@@ -693,6 +770,8 @@ j_collection_add_item_internal (JList* parts)
 	guint length;
 
 	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	/*
 	IsInitialized(true);
@@ -745,6 +824,8 @@ j_collection_add_item_internal (JList* parts)
 	{
 		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 void
@@ -753,6 +834,8 @@ j_collection_delete_item_internal (JList* parts)
 	JListIterator* it;
 
 	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	/*
 		IsInitialized(true);
@@ -780,6 +863,8 @@ j_collection_delete_item_internal (JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 void
@@ -788,6 +873,8 @@ j_collection_get_item_internal (JList* parts)
 	JListIterator* it;
 
 	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	/*
 		IsInitialized(true);
@@ -827,6 +914,8 @@ j_collection_get_item_internal (JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /*
