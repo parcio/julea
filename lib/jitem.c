@@ -250,18 +250,24 @@ j_item_get_name (JItem* item)
 JSemantics*
 j_item_get_semantics (JItem* item)
 {
+	JSemantics* ret;
+
 	g_return_val_if_fail(item != NULL, NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
 	if (item->semantics != NULL)
 	{
-		return item->semantics;
+		ret = item->semantics;
+	}
+	else
+	{
+		ret = j_collection_get_semantics(item->collection);
 	}
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 
-	return j_collection_get_semantics(item->collection);
+	return ret;
 }
 
 /**
