@@ -63,17 +63,10 @@ struct JCommon
 static JCommon* j_common = NULL;
 
 gboolean
-j_init (void)
-{
-	g_return_val_if_fail(!j_is_initialized(), FALSE);
-
-	return j_init_for_data(NULL);
-}
-
-gboolean
-j_init_for_data (GKeyFile* key_file)
+j_init (gint* argc, gchar*** argv)
 {
 	JCommon* common;
+	gchar* basename;
 
 	g_return_val_if_fail(!j_is_initialized(), FALSE);
 
@@ -84,18 +77,12 @@ j_init_for_data (GKeyFile* key_file)
 
 	g_type_init();
 
-	j_trace_init("JULEA");
+	basename = g_path_get_basename((*argv)[0]);
+	j_trace_init(basename);
+	g_free(basename);
 
 	common->trace = j_trace_thread_enter(NULL, G_STRFUNC);
-
-	if (key_file != NULL)
-	{
-		common->configuration = j_configuration_new_for_data(key_file);
-	}
-	else
-	{
-		common->configuration = j_configuration_new();
-	}
+	common->configuration = j_configuration_new();
 
 	if (common->configuration == NULL)
 	{

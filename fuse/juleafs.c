@@ -157,7 +157,7 @@ main (int argc, char** argv)
 
 	g_type_init();
 
-	if (!j_init())
+	if (!j_init(&argc, &argv))
 	{
 		g_printerr("Could not initialize.\n");
 		return 1;

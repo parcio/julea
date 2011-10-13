@@ -365,7 +365,7 @@ j_trace_init (gchar const* name)
 
 		hdTrace_init();
 
-		hdtrace_topology = hdT_createTopology(name, levels, 3);
+		hdtrace_topology = hdT_createTopology("JULEA", levels, 3);
 		g_assert(hdtrace_topology != NULL);
 
 		hdtrace_topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 2);

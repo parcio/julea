@@ -38,7 +38,7 @@ main (int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-	j_init();
+	j_init(&argc, &argv);
 
 	test_collection();
 	test_configuration();
