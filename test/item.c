@@ -31,27 +31,84 @@
 
 #include "test.h"
 
-int
-main (int argc, char** argv)
+static
+void
+test_item_new_free (void)
 {
-	gint ret;
+	guint const n = 100000;
 
-	g_test_init(&argc, &argv, NULL);
+	for (guint i = 0; i < n; i++)
+	{
+		JItem* item;
 
-	j_init();
+		item = j_item_new("test-item");
+		g_assert(item != NULL);
+		j_item_unref(item);
+	}
+}
 
-	test_collection();
-	test_configuration();
-	test_distribution();
-	test_item();
-	test_list();
-	test_list_iterator();
-	test_message();
-	test_semantics();
+static
+void
+test_item_name (void)
+{
+	JItem* item;
 
-	ret = g_test_run();
+	item = j_item_new("test-item");
 
-	j_fini();
+	g_assert_cmpstr(j_item_get_name(item), ==, "test-item");
 
-	return ret;
+	j_item_unref(item);
+}
+
+static
+void
+test_item_semantics (void)
+{
+	JItem* item;
+	JSemantics* semantics;
+
+	item = j_item_new("test-item");
+	semantics = j_semantics_new();
+
+	j_item_set_semantics(item, semantics);
+	g_assert(j_item_get_semantics(item) == semantics);
+
+	j_semantics_unref(semantics);
+	j_item_unref(item);
+}
+
+static
+void
+test_item_size (void)
+{
+	JItem* item;
+
+	item = j_item_new("test-item");
+
+	g_assert_cmpuint(j_item_get_size(item), ==, 0);
+
+	j_item_unref(item);
+}
+
+static
+void
+test_item_modification_time (void)
+{
+	JItem* item;
+
+	item = j_item_new("test-item");
+
+	g_assert_cmpuint(j_item_get_modification_time(item), >, 0);
+
+	j_item_unref(item);
+}
+
+void
+test_item (void)
+{
+	g_test_add_func("/julea/item/new_free", test_item_new_free);
+	g_test_add_func("/julea/item/name", test_item_name);
+	g_test_add_func("/julea/item/semantics", test_item_semantics);
+	g_test_add_func("/julea/item/size", test_item_size);
+	g_test_add_func("/julea/item/modification_time", test_item_modification_time);
 }
