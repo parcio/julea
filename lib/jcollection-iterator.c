@@ -68,10 +68,11 @@ struct JCollectionIterator
  * \return A new JCollectionIterator.
  **/
 JCollectionIterator*
-j_collection_iterator_new (JCollection* collection)
+j_collection_iterator_new (JCollection* collection, JItemStatusFlags flags)
 {
 	JCollectionIterator* iterator;
 	bson b;
+	bson fields;
 	mongo* connection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -81,12 +82,30 @@ j_collection_iterator_new (JCollection* collection)
 
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(iterator->collection)));
 
+	bson_init(&fields);
+
+	bson_append_int(&fields, "_id", 1);
+	bson_append_int(&fields, "Name", 1);
+
+	if (flags & J_ITEM_STATUS_SIZE)
+	{
+		bson_append_int(&fields, "Size", 1);
+	}
+
+	if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+	{
+		bson_append_int(&fields, "ModificationTime", 1);
+	}
+
+	bson_finish(&fields);
+
 	bson_init(&b);
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->cursor = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, NULL, 0, 0, 0);
+	iterator->cursor = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
 
+	bson_destroy(&fields);
 	bson_destroy(&b);
 
 	return iterator;

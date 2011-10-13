@@ -32,6 +32,15 @@
 #ifndef H_ITEM
 #define H_ITEM
 
+enum JItemStatusFlags
+{
+	J_ITEM_STATUS_NONE              = 0,
+	J_ITEM_STATUS_SIZE              = 1 << 0,
+	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 1
+};
+
+typedef enum JItemStatusFlags JItemStatusFlags;
+
 struct JItem;
 
 typedef struct JItem JItem;
@@ -39,7 +48,6 @@ typedef struct JItem JItem;
 #include <glib.h>
 
 #include <jcollection.h>
-#include <jitem-status.h>
 #include <joperation.h>
 #include <jsemantics.h>
 
@@ -49,14 +57,17 @@ void j_item_unref (JItem*);
 
 gchar const* j_item_get_name (JItem*);
 
-JItemStatus* j_item_get_status (JItem*);
-void j_item_set_status (JItem*, JItemStatus*);
-
 JSemantics* j_item_get_semantics (JItem*);
 void j_item_set_semantics (JItem*, JSemantics*);
 
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JOperation*);
 void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation*);
+
+guint64 j_item_get_size (JItem*);
+void j_item_set_size (JItem*, guint64);
+
+gint64 j_item_get_modification_time (JItem*);
+void j_item_set_modification_time (JItem*, gint64);
 
 /*
 		private:

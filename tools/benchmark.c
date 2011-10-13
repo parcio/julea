@@ -124,7 +124,7 @@ main (int argc, char** argv)
 
 		j_store_iterator_free(siterator);
 
-		citerator = j_collection_iterator_new(first_collection);
+		citerator = j_collection_iterator_new(first_collection, J_ITEM_STATUS_MODIFICATION_TIME);
 		j_collection_unref(first_collection);
 
 		is_first = TRUE;
@@ -133,7 +133,7 @@ main (int argc, char** argv)
 		{
 			JItem* item = j_collection_iterator_get(citerator);
 
-			g_print("%s ", j_item_get_name(item));
+			g_print("%s (%" G_GUINT64_FORMAT ") ", j_item_get_name(item), j_item_get_modification_time(item));
 
 			if (is_first)
 			{

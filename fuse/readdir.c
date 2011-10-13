@@ -74,7 +74,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 	{
 		JCollectionIterator* citerator;
 
-		citerator = j_collection_iterator_new(collection);
+		citerator = j_collection_iterator_new(collection, J_ITEM_STATUS_NONE);
 
 		while (j_collection_iterator_next(citerator))
 		{

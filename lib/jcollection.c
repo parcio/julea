@@ -42,8 +42,6 @@
 #include "jconnection-internal.h"
 #include "jitem.h"
 #include "jitem-internal.h"
-#include "jitem-status.h"
-#include "jitem-status-internal.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
 #include "joperation.h"
@@ -79,7 +77,6 @@ struct JCollection
 	struct
 	{
 		gchar* items;
-		gchar* item_statuses;
 	}
 	collection;
 
@@ -234,133 +231,6 @@ j_collection_get_name (JCollection* collection)
 }
 
 /**
- * Gets the statuses of the given items.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection The collection.
- * \param names      A list of items.
- * \param flags      Item status flags.
- **/
-void
-j_collection_get_status (JCollection* collection, JList* items, JItemStatusFlags flags)
-{
-	bson empty;
-	bson fields;
-	bson b;
-	mongo* connection;
-	mongo_cursor* cursor;
-	guint length;
-	guint n = 0;
-
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(items != NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	if (flags == J_ITEM_STATUS_NONE)
-	{
-		JItemStatus* status;
-		JListIterator* it;
-
-		status = j_item_status_new(flags);
-		it = j_list_iterator_new(items);
-
-		while (j_list_iterator_next(it))
-		{
-			JItem* item = j_list_iterator_get(it);
-
-			j_item_set_status(item, j_item_status_ref(status));
-		}
-
-		j_list_iterator_free(it);
-
-		j_item_status_unref(status);
-
-		return;
-	}
-
-	bson_init(&b);
-	length = j_list_length(items);
-
-	if (length == 1)
-	{
-		JItem* item = j_list_get(items, 0);
-
-		bson_append_oid(&b, "Item", j_item_get_id(item));
-		n = 1;
-	}
-	else if (length > 1)
-	{
-		bson items_bson;
-		JListIterator* it;
-
-		bson_init(&items_bson);
-		it = j_list_iterator_new(items);
-
-		while (j_list_iterator_next(it))
-		{
-			JItem* item = j_list_iterator_get(it);
-
-			bson_append_oid(&items_bson, "Item", j_item_get_id(item));
-		}
-
-		j_list_iterator_free(it);
-		bson_finish(&items_bson);
-
-		bson_append_bson(&b, "$or", &items_bson);
-		bson_destroy(&items_bson);
-	}
-
-	bson_finish(&b);
-	bson_empty(&empty);
-	bson_init(&fields);
-
-	if (flags & J_ITEM_STATUS_SIZE)
-	{
-		bson_append_int(&fields, "Size", 1);
-	}
-
-	if (flags & J_ITEM_STATUS_ACCESS_TIME)
-	{
-		bson_append_int(&fields, "AccessTime", 1);
-	}
-
-	if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-	{
-		bson_append_int(&fields, "ModificationTime", 1);
-	}
-
-	bson_finish(&fields);
-
-	connection = j_connection_get_connection(j_store_get_connection(collection->store));
-	cursor = mongo_find(connection, j_collection_collection_item_statuses(collection), &b, &fields, n, 0, 0);
-
-	while (mongo_cursor_next(cursor) == MONGO_OK)
-	{
-		JItemStatus* status;
-
-		status = j_item_status_new(flags);
-		j_item_status_deserialize(status, mongo_cursor_bson(cursor));
-		// FIXME j_item_set_status(item, status);
-	}
-
-	mongo_cursor_destroy(cursor);
-
-	bson_destroy(&fields);
-	bson_destroy(&b);
-
-	j_trace_leave(j_trace(), G_STRFUNC);
-}
-
-/**
  * Returns a collection's semantics.
  *
  * \author Michael Kuhn
@@ -470,7 +340,7 @@ j_collection_add_item (JCollection* collection, JItem* item, JOperation* operati
  * \param operation  An operation.
  **/
 void
-j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JOperation* operation)
+j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JOperation* operation)
 {
 	JOperationPart* part;
 
@@ -484,6 +354,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	part->u.collection_get_item.collection = j_collection_ref(collection);
 	part->u.collection_get_item.item = item;
 	part->u.collection_get_item.name = g_strdup(name);
+	part->u.collection_get_item.flags = flags;
 
 	j_operation_add(operation, part);
 
@@ -582,24 +453,6 @@ j_collection_collection_items (JCollection* collection)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->collection.items;
-}
-
-gchar const*
-j_collection_collection_item_statuses (JCollection* collection)
-{
-	g_return_val_if_fail(collection != NULL, NULL);
-	g_return_val_if_fail(collection->store != NULL, NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (G_UNLIKELY(collection->collection.item_statuses == NULL))
-	{
-		collection->collection.item_statuses = g_strdup_printf("%s.ItemStatuses", j_store_get_name(collection->store));
-	}
-
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return collection->collection.item_statuses;
 }
 
 /**
@@ -888,10 +741,29 @@ j_collection_get_item_internal (JList* parts)
 		JOperationPart* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.collection_get_item.collection;
 		JItem** item = part->u.collection_get_item.item;
+		JItemStatusFlags flags = part->u.collection_get_item.flags;
 		bson b;
+		bson fields;
 		mongo* connection;
 		mongo_cursor* cursor;
 		gchar const* name = part->u.collection_get_item.name;
+
+		bson_init(&fields);
+
+		bson_append_int(&fields, "_id", 1);
+		bson_append_int(&fields, "Name", 1);
+
+		if (flags & J_ITEM_STATUS_SIZE)
+		{
+			bson_append_int(&fields, "Size", 1);
+		}
+
+		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		{
+			bson_append_int(&fields, "ModificationTime", 1);
+		}
+
+		bson_finish(&fields);
 
 		bson_init(&b);
 		bson_append_oid(&b, "Collection", &(collection->id));
@@ -899,8 +771,9 @@ j_collection_get_item_internal (JList* parts)
 		bson_finish(&b);
 
 		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
-		cursor = mongo_find(connection, j_collection_collection_items(collection), &b, NULL, 1, 0, 0);
+		cursor = mongo_find(connection, j_collection_collection_items(collection), &b, &fields, 1, 0, 0);
 
+		bson_destroy(&fields);
 		bson_destroy(&b);
 
 		*item = NULL;

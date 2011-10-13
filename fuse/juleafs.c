@@ -135,7 +135,7 @@ jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JIt
 			goto end;
 		}
 
-		j_collection_get_item(*collection, item, components[2], operation);
+		j_collection_get_item(*collection, item, components[2], J_ITEM_STATUS_NONE, operation);
 		j_operation_execute(operation);
 
 		if (*item == NULL)

@@ -41,7 +41,7 @@ typedef struct JCollectionIterator JCollectionIterator;
 #include <jcollection.h>
 #include <jitem.h>
 
-JCollectionIterator* j_collection_iterator_new (JCollection*);
+JCollectionIterator* j_collection_iterator_new (JCollection*, JItemStatusFlags);
 void j_collection_iterator_free (JCollectionIterator*);
 
 gboolean j_collection_iterator_next (JCollectionIterator*);

@@ -44,7 +44,6 @@
 #include "jcollection-internal.h"
 #include "jconnection-internal.h"
 #include "jdistribution.h"
-#include "jitem-status.h"
 #include "jlist.h"
 #include "jlist-iterator.h"
 #include "jmessage.h"
@@ -79,7 +78,15 @@ struct JItem
 	/**
 	 * The status.
 	 **/
-	JItemStatus* status;
+	struct
+	{
+		guint flags;
+
+		guint64 size;
+
+		gint64 modification_time;
+	}
+	status;
 
 	/**
 	 * The parent collection.
@@ -124,7 +131,9 @@ j_item_new (gchar const* name)
 	item = g_slice_new(JItem);
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
-	item->status = NULL;
+	item->status.flags = J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME;
+	item->status.size = 0;
+	item->status.modification_time = g_get_real_time();
 	item->collection = NULL;
 	item->semantics = NULL;
 	item->ref_count = 1;
@@ -195,11 +204,6 @@ j_item_unref (JItem* item)
 			j_semantics_unref(item->semantics);
 		}
 
-		if (item->status != NULL)
-		{
-			j_item_status_unref(item->status);
-		}
-
 		g_free(item->name);
 
 		g_slice_free(JItem, item);
@@ -229,35 +233,6 @@ j_item_get_name (JItem* item)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item->name;
-}
-
-JItemStatus*
-j_item_get_status (JItem* item)
-{
-	g_return_val_if_fail(item != NULL, NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return item->status;
-}
-
-void
-j_item_set_status (JItem* item, JItemStatus* status)
-{
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(status != NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (item->status != NULL)
-	{
-		j_item_status_unref(item->status);
-	}
-
-	item->status = status;
-
-	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -388,6 +363,52 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	j_operation_add(operation, part);
 }
 
+guint64
+j_item_get_size (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, 0);
+	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE, 0);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return item->status.size;
+}
+
+void
+j_item_set_size (JItem* item, guint64 size)
+{
+	g_return_if_fail(item != NULL);
+	g_return_if_fail((item->status.flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	item->status.size = size;
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
+
+gint64
+j_item_get_modification_time (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, 0);
+	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME, 0);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return item->status.modification_time;
+}
+
+void
+j_item_set_modification_time (JItem* item, gint64 modification_time)
+{
+	g_return_if_fail(item != NULL);
+	g_return_if_fail((item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	item->status.modification_time = modification_time;
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
+
 /* Internal */
 
 /**
@@ -417,7 +438,9 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
-	item->status = NULL;
+	item->status.flags = J_ITEM_STATUS_NONE;
+	item->status.size = 0;
+	item->status.modification_time = 0;
 	item->collection = j_collection_ref(collection);
 	item->semantics = NULL;
 	item->ref_count = 1;
@@ -457,6 +480,8 @@ j_item_serialize (JItem* item)
 	bson_append_oid(b, "_id", &(item->id));
 	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
+	bson_append_long(b, "Size", item->status.size);
+	bson_append_long(b, "ModificationTime", item->status.modification_time);
 	bson_finish(b);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
@@ -503,6 +528,16 @@ j_item_deserialize (JItem* item, bson const* b)
 		{
 			g_free(item->name);
 			item->name = g_strdup(bson_iterator_string(&iterator));
+		}
+		else if (g_strcmp0(key, "Size") == 0)
+		{
+			item->status.size = bson_iterator_long(&iterator);
+			item->status.flags |= J_ITEM_STATUS_SIZE;
+		}
+		else if (g_strcmp0(key, "ModificationTime") == 0)
+		{
+			item->status.modification_time = bson_iterator_long(&iterator);
+			item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
 		}
 	}
 
