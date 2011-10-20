@@ -151,6 +151,11 @@ main (int argc, char** argv)
 
 				j_operation_execute(operation);
 
+				j_item_get_status(item, J_ITEM_STATUS_SIZE, operation);
+				j_operation_execute(operation);
+
+				g_print("(%" G_GUINT64_FORMAT ") ", j_item_get_size(item));
+
 				g_free(buf);
 			}
 

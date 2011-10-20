@@ -115,6 +115,9 @@ j_operation_part_free (gpointer data)
 			j_collection_unref(part->u.collection_get_item.collection);
 			g_free(part->u.collection_get_item.name);
 			break;
+		case J_OPERATION_ITEM_GET_STATUS:
+			j_item_unref(part->u.item_get_status.item);
+			break;
 		case J_OPERATION_ITEM_READ:
 			j_item_unref(part->u.item_read.item);
 			break;
@@ -213,6 +216,9 @@ j_operation_execute_internal (JOperationType type, JList* list)
 			break;
 		case J_OPERATION_COLLECTION_GET_ITEM:
 			j_collection_get_item_internal(list);
+			break;
+		case J_OPERATION_ITEM_GET_STATUS:
+			j_item_get_status_internal(list);
 			break;
 		case J_OPERATION_ITEM_READ:
 			j_item_read_internal(list);

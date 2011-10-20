@@ -63,6 +63,8 @@ void j_item_set_semantics (JItem*, JSemantics*);
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JOperation*);
 void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation*);
 
+void j_item_get_status (JItem*, JItemStatusFlags, JOperation*);
+
 guint64 j_item_get_size (JItem*);
 void j_item_set_size (JItem*, guint64);
 

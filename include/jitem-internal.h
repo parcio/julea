@@ -52,4 +52,6 @@ G_GNUC_INTERNAL void j_item_set_collection (JItem*, JCollection*);
 G_GNUC_INTERNAL void j_item_read_internal (JList*);
 G_GNUC_INTERNAL void j_item_write_internal (JList*);
 
+G_GNUC_INTERNAL void j_item_get_status_internal (JList*);
+
 #endif

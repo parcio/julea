@@ -342,12 +342,12 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
  * \code
  * \endcode
  *
- * \param item        An item.
- * \param data        A buffer holding the data to write.
- * \param length      Number of bytes to write.
- * \param offset      An offset within #item.
- * \param bytes_write Number of bytes written.
- * \param operation   An operation.
+ * \param item          An item.
+ * \param data          A buffer holding the data to write.
+ * \param length        Number of bytes to write.
+ * \param offset        An offset within #item.
+ * \param bytes_written Number of bytes written.
+ * \param operation     An operation.
  **/
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JOperation* operation)
@@ -365,6 +365,33 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	part->u.item_write.length = length;
 	part->u.item_write.offset = offset;
 	part->u.item_write.bytes_written = bytes_written;
+
+	j_operation_add(operation, part);
+}
+
+/**
+ * Get the status of an item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param flags     Status flags.
+ * \param operation An operation.
+ **/
+void
+j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
+{
+	JOperationPart* part;
+
+	g_return_if_fail(item != NULL);
+
+	part = g_slice_new(JOperationPart);
+	part->type = J_OPERATION_ITEM_GET_STATUS;
+	part->u.item_get_status.item = j_item_ref(item);
+	part->u.item_get_status.flags = flags;
 
 	j_operation_add(operation, part);
 }
@@ -757,6 +784,68 @@ j_item_write_internal (JList* parts)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
+void
+j_item_get_status_internal (JList* parts)
+{
+	JListIterator* iterator;
+
+	g_return_if_fail(parts != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	iterator = j_list_iterator_new(parts);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperationPart* part = j_list_iterator_get(iterator);
+		JItem* item = part->u.item_get_status.item;
+		JItemStatusFlags flags = part->u.item_get_status.flags;
+		bson b;
+		bson fields;
+		mongo* connection;
+		mongo_cursor* cursor;
+
+		if (flags == J_ITEM_STATUS_NONE)
+		{
+			continue;
+		}
+
+		bson_init(&fields);
+
+		if (flags & J_ITEM_STATUS_SIZE)
+		{
+			bson_append_int(&fields, "Size", 1);
+		}
+
+		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		{
+			bson_append_int(&fields, "ModificationTime", 1);
+		}
+
+		bson_finish(&fields);
+
+		bson_init(&b);
+		bson_append_oid(&b, "_id", &(item->id));
+		bson_finish(&b);
+
+		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(item->collection)));
+		cursor = mongo_find(connection, j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
+
+		bson_destroy(&fields);
+		bson_destroy(&b);
+
+		while (mongo_cursor_next(cursor) == MONGO_OK)
+		{
+			j_item_deserialize(item, mongo_cursor_bson(cursor));
+		}
+
+		mongo_cursor_destroy(cursor);
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
 
 /*
 	void _Item::IsInitialized (bool check)

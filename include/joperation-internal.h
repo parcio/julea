@@ -51,6 +51,7 @@ enum JOperationType
 	J_OPERATION_COLLECTION_ADD_ITEM,
 	J_OPERATION_COLLECTION_GET_ITEM,
 	J_OPERATION_COLLECTION_DELETE_ITEM,
+	J_OPERATION_ITEM_GET_STATUS,
 	J_OPERATION_ITEM_READ,
 	J_OPERATION_ITEM_WRITE
 };
@@ -135,6 +136,13 @@ struct JOperationPart
 			JItemStatusFlags flags;
 		}
 		collection_get_item;
+
+		struct
+		{
+			JItem* item;
+			JItemStatusFlags flags;
+		}
+		item_get_status;
 
 		struct
 		{
