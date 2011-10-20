@@ -36,11 +36,16 @@ struct JOperation;
 
 typedef struct JOperation JOperation;
 
+typedef void (*JOperationCompletedFunc) (JOperation*);
+
 #include <glib.h>
 
 JOperation* j_operation_new (void);
 void j_operation_free (JOperation*);
 
 gboolean j_operation_execute (JOperation*);
+
+void j_operation_execute_async (JOperation*, JOperationCompletedFunc);
+void j_operation_wait (JOperation*);
 
 #endif

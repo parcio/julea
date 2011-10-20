@@ -56,7 +56,31 @@ struct JOperation
 	 * The list of pending operation parts.
 	 **/
 	JList* list;
+
+	GThread* thread;
 };
+
+struct JOperationAsync
+{
+	JOperation* operation;
+	JOperationCompletedFunc func;
+};
+
+typedef struct JOperationAsync JOperationAsync;
+
+static
+gpointer
+j_operation_thread (gpointer data)
+{
+	JOperationAsync* async = data;
+
+	j_operation_execute(async->operation);
+	(*async->func)(async->operation);
+
+	g_slice_free(JOperationAsync, async);
+
+	return NULL;
+}
 
 /**
  * Frees the memory allocated by an operation part.
@@ -149,6 +173,7 @@ j_operation_new (void)
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new(j_operation_part_free);
+	operation->thread = NULL;
 
 	return operation;
 }
@@ -284,6 +309,47 @@ j_operation_execute (JOperation* operation)
 	j_list_delete_all(operation->list);
 
 	return TRUE;
+}
+
+/**
+ * Executes the operation asynchronously.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ * \param func      A complete function.
+ *
+ * \return TRUE on success, FALSE if an error occured.
+ **/
+void
+j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func)
+{
+	JOperationAsync* async;
+
+	g_return_if_fail(operation != NULL);
+	g_return_if_fail(func != NULL);
+
+	async = g_slice_new(JOperationAsync);
+	async->operation = operation;
+	async->func = func;
+
+	// FIXME use thread pool
+	operation->thread = g_thread_create(j_operation_thread, async, TRUE, NULL);
+}
+
+void
+j_operation_wait (JOperation* operation)
+{
+	g_return_if_fail(operation != NULL);
+
+	if (operation->thread != NULL)
+	{
+		g_thread_join(operation->thread);
+		operation->thread = NULL;
+	}
 }
 
 /* Internal */
