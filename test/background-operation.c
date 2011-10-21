@@ -25,17 +25,47 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+#include <glib.h>
 
-void test_background_operation (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_semantics (void);
+#include <julea.h>
 
-#endif
+#include <jbackground-operation-internal.h>
+
+#include "test.h"
+
+static
+void
+on_background_operation_completed (gpointer data)
+{
+}
+
+static
+void
+test_background_operation_new_ref_unref (void)
+{
+	JBackgroundOperation* background_operation;
+
+	background_operation = j_background_operation_new(on_background_operation_completed, NULL);
+	j_background_operation_ref(background_operation);
+	j_background_operation_unref(background_operation);
+	j_background_operation_unref(background_operation);
+}
+
+static
+void
+test_background_operation_wait (void)
+{
+	JBackgroundOperation* background_operation;
+
+	background_operation = j_background_operation_new(on_background_operation_completed, NULL);
+
+	j_background_operation_wait(background_operation);
+	j_background_operation_unref(background_operation);
+}
+
+void
+test_background_operation (void)
+{
+	g_test_add_func("/julea/background_operation/new_ref_unref", test_background_operation_new_ref_unref);
+	g_test_add_func("/julea/background_operation/wait", test_background_operation_wait);
+}
