@@ -396,6 +396,18 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Returns an item's size.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A size.
+ **/
 guint64
 j_item_get_size (JItem* item)
 {
@@ -408,6 +420,17 @@ j_item_get_size (JItem* item)
 	return item->status.size;
 }
 
+/**
+ * Sets an item's size.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param size A size.
+ **/
 void
 j_item_set_size (JItem* item, guint64 size)
 {
@@ -419,6 +442,18 @@ j_item_set_size (JItem* item, guint64 size)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
+/**
+ * Returns an item's modification time.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A modification time.
+ **/
 gint64
 j_item_get_modification_time (JItem* item)
 {
@@ -431,6 +466,17 @@ j_item_get_modification_time (JItem* item)
 	return item->status.modification_time;
 }
 
+/**
+ * Sets an item's modification time.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param size A modification time.
+ **/
 void
 j_item_set_modification_time (JItem* item, gint64 modification_time)
 {

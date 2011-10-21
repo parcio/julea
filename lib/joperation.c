@@ -34,6 +34,7 @@
 #include "joperation.h"
 #include "joperation-internal.h"
 
+#include "jbackground-operation-internal.h"
 #include "jcollection-internal.h"
 #include "jcommon-internal.h"
 #include "jitem-internal.h"
@@ -57,7 +58,7 @@ struct JOperation
 	 **/
 	JList* list;
 
-	GThread* thread;
+	JBackgroundOperation* background_operation;
 };
 
 struct JOperationAsync
@@ -69,8 +70,8 @@ struct JOperationAsync
 typedef struct JOperationAsync JOperationAsync;
 
 static
-gpointer
-j_operation_thread (gpointer data)
+void
+j_operation_background_operation (gpointer data)
 {
 	JOperationAsync* async = data;
 
@@ -78,8 +79,6 @@ j_operation_thread (gpointer data)
 	(*async->func)(async->operation);
 
 	g_slice_free(JOperationAsync, async);
-
-	return NULL;
 }
 
 /**
@@ -173,7 +172,7 @@ j_operation_new (void)
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new(j_operation_part_free);
-	operation->thread = NULL;
+	operation->background_operation = NULL;
 
 	return operation;
 }
@@ -336,8 +335,7 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func)
 	async->operation = operation;
 	async->func = func;
 
-	// FIXME use thread pool
-	operation->thread = g_thread_create(j_operation_thread, async, TRUE, NULL);
+	operation->background_operation = j_background_operation_new(j_operation_background_operation, async);
 }
 
 void
@@ -345,10 +343,11 @@ j_operation_wait (JOperation* operation)
 {
 	g_return_if_fail(operation != NULL);
 
-	if (operation->thread != NULL)
+	if (operation->background_operation != NULL)
 	{
-		g_thread_join(operation->thread);
-		operation->thread = NULL;
+		j_background_operation_wait(operation->background_operation);
+		j_background_operation_unref(operation->background_operation);
+		operation->background_operation = NULL;
 	}
 }
 

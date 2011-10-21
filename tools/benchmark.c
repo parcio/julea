@@ -30,6 +30,13 @@
 
 #include <julea.h>
 
+static
+void
+on_operation_completed (JOperation* operation)
+{
+	g_print("Operation %p completed!\n", (gpointer)operation);
+}
+
 int
 main (int argc, char** argv)
 {
@@ -149,7 +156,8 @@ main (int argc, char** argv)
 				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
 				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
 
-				j_operation_execute(operation);
+				j_operation_execute_async(operation, on_operation_completed);
+				j_operation_wait(operation);
 
 				j_item_get_status(item, J_ITEM_STATUS_SIZE, operation);
 				j_operation_execute(operation);
