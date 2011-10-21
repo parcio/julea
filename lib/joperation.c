@@ -70,7 +70,7 @@ struct JOperationAsync
 typedef struct JOperationAsync JOperationAsync;
 
 static
-void
+gpointer
 j_operation_background_operation (gpointer data)
 {
 	JOperationAsync* async = data;
@@ -79,6 +79,8 @@ j_operation_background_operation (gpointer data)
 	(*async->func)(async->operation);
 
 	g_slice_free(JOperationAsync, async);
+
+	return NULL;
 }
 
 /**

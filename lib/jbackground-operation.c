@@ -42,11 +42,14 @@ struct JBackgroundOperation
 {
 	JBackgroundOperationFunc func;
 	gpointer data;
+	gpointer result;
+
+	gboolean completed;
 
 	GMutex* mutex;
 	GCond* cond;
 
-	guint ref_count;
+	gint ref_count;
 };
 
 static GThreadPool* j_thread_pool = NULL;
@@ -57,9 +60,12 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 {
 	JBackgroundOperation* background_operation = data;
 
-	(*background_operation->func)(background_operation->data);
+	background_operation->result = (*(background_operation->func))(background_operation->data);
 
+	g_mutex_lock(background_operation->mutex);
+	background_operation->completed = TRUE;
 	g_cond_signal(background_operation->cond);
+	g_mutex_unlock(background_operation->mutex);
 
 	j_background_operation_unref(background_operation);
 }
@@ -97,6 +103,8 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 	background_operation = g_slice_new(JBackgroundOperation);
 	background_operation->func = func;
 	background_operation->data = data;
+	background_operation->result = NULL;
+	background_operation->completed = FALSE;
 	background_operation->mutex = g_mutex_new();
 	background_operation->cond = g_cond_new();
 	background_operation->ref_count = 2;
@@ -109,7 +117,7 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 JBackgroundOperation*
 j_background_operation_ref (JBackgroundOperation* background_operation)
 {
-	background_operation->ref_count++;
+	g_atomic_int_inc(&(background_operation->ref_count));
 
 	return background_operation;
 }
@@ -117,9 +125,7 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 void
 j_background_operation_unref (JBackgroundOperation* background_operation)
 {
-	background_operation->ref_count--;
-
-	if (background_operation->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
 		g_cond_free(background_operation->cond);
 		g_mutex_free(background_operation->mutex);
@@ -128,12 +134,19 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 	}
 }
 
-void
+gpointer
 j_background_operation_wait (JBackgroundOperation* background_operation)
 {
 	g_mutex_lock(background_operation->mutex);
-	g_cond_wait(background_operation->cond, background_operation->mutex);
+
+	while (!background_operation->completed)
+	{
+		g_cond_wait(background_operation->cond, background_operation->mutex);
+	}
+
 	g_mutex_unlock(background_operation->mutex);
+
+	return background_operation->result;
 }
 
 /**

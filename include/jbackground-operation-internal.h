@@ -38,7 +38,7 @@ struct JBackgroundOperation;
 
 typedef struct JBackgroundOperation JBackgroundOperation;
 
-typedef void (*JBackgroundOperationFunc) (gpointer);
+typedef gpointer (*JBackgroundOperationFunc) (gpointer);
 
 void j_background_operation_init (void);
 void j_background_operation_fini (void);
@@ -47,6 +47,6 @@ JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpoi
 JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
 void j_background_operation_unref (JBackgroundOperation*);
 
-void j_background_operation_wait (JBackgroundOperation*);
+gpointer j_background_operation_wait (JBackgroundOperation*);
 
 #endif

@@ -34,9 +34,10 @@
 #include "test.h"
 
 static
-void
+gpointer
 on_background_operation_completed (gpointer data)
 {
+	return NULL;
 }
 
 static
