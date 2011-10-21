@@ -78,6 +78,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* store;
 		gchar const* collection;
 		gchar const* item;
+		guint32 operation_count;
+		guint i;
+
+		operation_count = j_message_operation_count(message);
 
 		switch (j_message_operation_type(message))
 		{
@@ -96,23 +100,31 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
-					length = j_message_get_8(message);
-					offset = j_message_get_8(message);
 
 					buf = g_new(gchar, 512 * 1024);
 
-					g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
-
 					jd_backend_open(&bf, store, collection, item, trace);
-					bytes_read = jd_backend_read(&bf, buf, length, offset, trace);
-					j_trace_counter(trace, "julead_read", bytes_read);
-					reply = j_message_reply_new(message, bytes_read);
-					j_message_reply_write(reply, output);
-					g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
-					j_trace_counter(trace, "julead_sent", bytes_read);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						length = j_message_get_8(message);
+						offset = j_message_get_8(message);
+
+						g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
+
+						bytes_read = jd_backend_read(&bf, buf, length, offset, trace);
+						j_trace_counter(trace, "julead_read", bytes_read);
+
+						// FIXME one big reply
+						reply = j_message_reply_new(message, bytes_read);
+						j_message_reply_write(reply, output);
+						g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
+						j_trace_counter(trace, "julead_sent", bytes_read);
+						j_message_reply_free(reply);
+					}
+
 					jd_backend_close(&bf, trace);
 
-					j_message_reply_free(reply);
 					g_free(buf);
 				}
 				break;
@@ -147,18 +159,25 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
-					length = j_message_get_8(message);
-					offset = j_message_get_8(message);
 
 					buf = g_new(gchar, 512 * 1024);
 
-					g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
-
 					jd_backend_open(&bf, store, collection, item, trace);
-					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-					j_trace_counter(trace, "julead_received", length);
-					bytes_written = jd_backend_write(&bf, buf, length, offset, trace);
-					j_trace_counter(trace, "julead_written", bytes_written);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						length = j_message_get_8(message);
+						offset = j_message_get_8(message);
+
+						g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
+
+						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
+						j_trace_counter(trace, "julead_received", length);
+
+						bytes_written = jd_backend_write(&bf, buf, length, offset, trace);
+						j_trace_counter(trace, "julead_written", bytes_written);
+					}
+
 					jd_backend_close(&bf, trace);
 
 					g_free(buf);
