@@ -76,7 +76,11 @@ j_operation_background_operation (gpointer data)
 	JOperationAsync* async = data;
 
 	j_operation_execute(async->operation);
-	(*async->func)(async->operation);
+
+	if (async->func != NULL)
+	{
+		(*async->func)(async->operation);
+	}
 
 	g_slice_free(JOperationAsync, async);
 
@@ -331,7 +335,6 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func)
 	JOperationAsync* async;
 
 	g_return_if_fail(operation != NULL);
-	g_return_if_fail(func != NULL);
 
 	async = g_slice_new(JOperationAsync);
 	async->operation = operation;

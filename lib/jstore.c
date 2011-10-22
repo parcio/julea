@@ -206,7 +206,9 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 {
 	JOperationPart* part;
 
+	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
+	g_return_if_fail(name != NULL);
 
 	part = g_slice_new(JOperationPart);
 	part->type = J_OPERATION_STORE_GET_COLLECTION;
@@ -234,6 +236,7 @@ j_store_delete_collection (JStore* store, JCollection* collection, JOperation* o
 {
 	JOperationPart* part;
 
+	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
 
 	part = g_slice_new(JOperationPart);

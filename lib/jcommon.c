@@ -221,6 +221,7 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
+	g_return_if_fail(name != NULL);
 
 	common = g_atomic_pointer_get(&j_common);
 

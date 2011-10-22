@@ -346,6 +346,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
+	g_return_if_fail(name != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 

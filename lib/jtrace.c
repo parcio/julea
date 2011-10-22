@@ -336,6 +336,11 @@ j_trace_init (gchar const* name)
 		g_strfreev(p);
 	}
 
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return;
+	}
+
 	if ((j_trace_function = g_getenv("J_TRACE_FUNCTION")) != NULL)
 	{
 		gchar** p;

@@ -100,6 +100,8 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 {
 	JBackgroundOperation* background_operation;
 
+	g_return_val_if_fail(func != NULL, NULL);
+
 	background_operation = g_slice_new(JBackgroundOperation);
 	background_operation->func = func;
 	background_operation->data = data;
@@ -117,6 +119,8 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 JBackgroundOperation*
 j_background_operation_ref (JBackgroundOperation* background_operation)
 {
+	g_return_val_if_fail(background_operation != NULL, NULL);
+
 	g_atomic_int_inc(&(background_operation->ref_count));
 
 	return background_operation;
@@ -125,6 +129,8 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 void
 j_background_operation_unref (JBackgroundOperation* background_operation)
 {
+	g_return_if_fail(background_operation != NULL);
+
 	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
 		g_cond_free(background_operation->cond);
@@ -137,6 +143,8 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 gpointer
 j_background_operation_wait (JBackgroundOperation* background_operation)
 {
+	g_return_val_if_fail(background_operation != NULL, NULL);
+
 	g_mutex_lock(background_operation->mutex);
 
 	while (!background_operation->completed)
