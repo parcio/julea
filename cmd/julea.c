@@ -71,6 +71,7 @@ j_cmd_parse (gchar const* store_name, gchar const* collection_name, gchar const*
 static gboolean opt_create = FALSE;
 static gboolean opt_list = FALSE;
 static gboolean opt_remove = FALSE;
+static gboolean opt_status = FALSE;
 
 int
 main (int argc, char** argv)
@@ -85,6 +86,7 @@ main (int argc, char** argv)
 		{ "create", 'c', 0, G_OPTION_ARG_NONE, &opt_create, "Create a store/collection/item", NULL },
 		{ "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List stores/collections/items", NULL },
 		{ "remove", 'r', 0, G_OPTION_ARG_NONE, &opt_remove, "Remove a store/collection/item", NULL },
+		{ "status", 's', 0, G_OPTION_ARG_NONE, &opt_status, "Get item status", NULL },
 		{ NULL }
 	};
 
@@ -149,6 +151,10 @@ main (int argc, char** argv)
 	else if (opt_remove)
 	{
 		j_cmd_remove(store_name, collection_name, item_name);
+	}
+	else if (opt_status)
+	{
+		j_cmd_status(store_name, collection_name, item_name);
 	}
 
 	j_fini();

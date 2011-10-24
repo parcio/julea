@@ -25,13 +25,44 @@
  * SUCH DAMAGE.
  */
 
-#include <julea.h>
+#include "julea.h"
 
-#include <glib.h>
+void
+j_cmd_status (gchar const* store_name, gchar const* collection_name, gchar const* item_name)
+{
+	JStore* store = NULL;
+	JCollection* collection = NULL;
+	JItem* item = NULL;
+	JOperation* operation;
 
-void j_cmd_parse (gchar const*, gchar const*, gchar const*, JStore**, JCollection**, JItem**);
+	j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item);
 
-void j_cmd_create (gchar const*, gchar const*, gchar const*);
-void j_cmd_list (gchar const*, gchar const*, gchar const*);
-void j_cmd_remove (gchar const*, gchar const*, gchar const*);
-void j_cmd_status (gchar const*, gchar const*, gchar const*);
+	operation = j_operation_new();
+
+	if (item != NULL)
+	{
+		gchar* size;
+
+		j_item_get_status(item, J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME, operation);
+		j_operation_execute(operation);
+
+		size = g_format_size(j_item_get_size(item));
+
+		g_print("Size:              %s\n", size);
+		/* FIXME format modification time */
+		g_print("Modification time: %" G_GINT64_FORMAT  "\n", j_item_get_modification_time(item));
+
+		g_free(size);
+	}
+	else if (collection != NULL)
+	{
+	}
+	else if (store != NULL)
+	{
+	}
+	else
+	{
+	}
+
+	j_operation_free(operation);
+}
