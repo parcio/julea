@@ -176,6 +176,15 @@ def build (ctx):
 			install_path = '${LIBDIR}/julea/backend'
 		)
 
+	# Command line
+	ctx.program(
+		source = ctx.path.ant_glob('cmd/*.c'),
+		target = 'cmd/julea',
+		use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT'],
+		includes = ['include'],
+		install_path = '${BINDIR}'
+	)
+
 	# Tools
 	for tool in ('benchmark', 'config',):
 		ctx.program(
