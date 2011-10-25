@@ -142,6 +142,8 @@ j_fini (void)
 	j_trace_thread_leave(common->trace);
 
 	j_trace_fini();
+
+	g_slice_free(JCommon, common);
 }
 
 gboolean

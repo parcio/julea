@@ -27,39 +27,96 @@
 
 #include "julea.h"
 
-void
+gboolean
 j_cmd_create (gchar const* store_name, gchar const* collection_name, gchar const* item_name)
 {
+	gboolean ret = TRUE;
 	JStore* store = NULL;
 	JCollection* collection = NULL;
 	JItem* item = NULL;
 	JOperation* operation;
 
-	j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item);
+	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item)
+	    && !j_cmd_error_last(store_name, collection_name, item_name, store, collection, item))
+	{
+		gchar* error;
+
+		ret = FALSE;
+
+		error = j_cmd_error_exists(store_name, collection_name, item_name, store, collection, item);
+		g_print("Error: %s\n", error);
+		g_free(error);
+
+		goto end;
+	}
 
 	operation = j_operation_new();
 
 	if (item != NULL)
 	{
+		ret = FALSE;
+		g_print("Error: Item “%s” already exists.\n", j_item_get_name(item));
 	}
 	else if (collection != NULL)
 	{
-		item = j_item_new(item_name);
-		j_collection_add_item(collection, item, operation);
-		j_operation_execute(operation);
+		if (item_name != NULL)
+		{
+			item = j_item_new(item_name);
+			j_collection_add_item(collection, item, operation);
+			j_operation_execute(operation);
+		}
+		else
+		{
+			ret = FALSE;
+			g_print("Error: Collection “%s” already exists.\n", j_collection_get_name(collection));
+		}
 	}
 	else if (store != NULL)
 	{
-		collection = j_collection_new(collection_name);
-		j_store_add_collection(store, collection, operation);
-		j_operation_execute(operation);
+		if (collection_name != NULL)
+		{
+			collection = j_collection_new(collection_name);
+			j_store_add_collection(store, collection, operation);
+			j_operation_execute(operation);
+		}
+		else
+		{
+			ret = FALSE;
+			g_print("Error: Store “%s” already exists.\n", j_store_get_name(store));
+		}
 	}
 	else
 	{
-		store = j_store_new(store_name);
-		j_add_store(store, operation);
-		j_operation_execute(operation);
+		if (store_name != NULL)
+		{
+			store = j_store_new(store_name);
+			j_add_store(store, operation);
+			j_operation_execute(operation);
+		}
+		else
+		{
+			ret = FALSE;
+			j_cmd_usage();
+		}
 	}
 
 	j_operation_free(operation);
+
+end:
+	if (item != NULL)
+	{
+		j_item_unref(item);
+	}
+
+	if (collection != NULL)
+	{
+		j_collection_unref(collection);
+	}
+
+	if (store != NULL)
+	{
+		j_store_unref(store);
+	}
+
+	return ret;
 }

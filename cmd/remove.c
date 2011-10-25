@@ -27,15 +27,27 @@
 
 #include "julea.h"
 
-void
+gboolean
 j_cmd_remove (gchar const* store_name, gchar const* collection_name, gchar const* item_name)
 {
+	gboolean ret = TRUE;
 	JStore* store = NULL;
 	JCollection* collection = NULL;
 	JItem* item = NULL;
 	JOperation* operation;
 
-	j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item);
+	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item))
+	{
+		gchar* error;
+
+		ret = FALSE;
+
+		error = j_cmd_error_exists(store_name, collection_name, item_name, store, collection, item);
+		g_print("Error: %s\n", error);
+		g_free(error);
+
+		goto end;
+	}
 
 	operation = j_operation_new();
 
@@ -56,7 +68,27 @@ j_cmd_remove (gchar const* store_name, gchar const* collection_name, gchar const
 	}
 	else
 	{
+		ret = FALSE;
+		j_cmd_usage();
 	}
 
 	j_operation_free(operation);
+
+end:
+	if (item != NULL)
+	{
+		j_item_unref(item);
+	}
+
+	if (collection != NULL)
+	{
+		j_collection_unref(collection);
+	}
+
+	if (store != NULL)
+	{
+		j_store_unref(store);
+	}
+
+	return ret;
 }
