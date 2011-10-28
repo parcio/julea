@@ -28,11 +28,11 @@
 #define _POSIX_SOURCE
 
 #include <glib.h>
+#include <glib-unix.h>
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <gmodule.h>
 
-#include <signal.h>
 #include <string.h>
 
 #include <jconfiguration.h>
@@ -42,19 +42,18 @@
 
 #include "backend/backend.h"
 
-static gint opt_port = 4711;
-
-static GModule* backend = NULL;
-static GMainLoop* main_loop;
-
 static
-void
-jd_signal (int signo)
+gboolean
+jd_signal (gpointer data)
 {
+	GMainLoop* main_loop = data;
+
 	if (g_main_loop_is_running(main_loop))
 	{
 		g_main_loop_quit(main_loop);
 	}
+
+	return FALSE;
 }
 
 static
@@ -199,13 +198,16 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 int
 main (int argc, char** argv)
 {
+	gint opt_port = 4711;
+
 	JConfiguration* configuration;
 	JTrace* trace;
-	GSocketListener* listener;
 	GError* error = NULL;
+	GMainLoop* main_loop;
+	GModule* backend;
 	GOptionContext* context;
+	GSocketListener* listener;
 	gchar* path;
-	struct sigaction sig;
 
 	GOptionEntry entries[] = {
 		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
@@ -236,19 +238,6 @@ main (int argc, char** argv)
 	}
 
 	g_option_context_free(context);
-
-	sig.sa_handler = jd_signal;
-	sigemptyset(&sig.sa_mask);
-	sig.sa_flags = 0;
-
-	sigaction(SIGINT, &sig, NULL);
-	sigaction(SIGHUP, &sig, NULL);
-	sigaction(SIGTERM, &sig, NULL);
-	sigaction(SIGQUIT, &sig, NULL);
-
-	sig.sa_handler = SIG_IGN;
-
-	sigaction(SIGPIPE, &sig, NULL);
 
 	j_trace_init("julead");
 	trace = j_trace_thread_enter(NULL, G_STRFUNC);
@@ -291,6 +280,11 @@ main (int argc, char** argv)
 	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
+
+	g_unix_signal_add(SIGHUP, jd_signal, main_loop);
+	g_unix_signal_add(SIGINT, jd_signal, main_loop);
+	g_unix_signal_add(SIGTERM, jd_signal, main_loop);
+
 	g_main_loop_run(main_loop);
 	g_main_loop_unref(main_loop);
 
