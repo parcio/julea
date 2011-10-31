@@ -30,6 +30,19 @@
 #include <locale.h>
 #include <stdlib.h>
 
+guint
+j_cmd_remaining_length (gchar const** remaining)
+{
+	guint i = 0;
+
+	for (; *remaining != NULL; remaining++)
+	{
+		i++;
+	}
+
+	return i;
+}
+
 void
 j_cmd_usage (void)
 {
@@ -38,6 +51,7 @@ j_cmd_usage (void)
 	g_print("\n");
 	g_print("Commands:\n");
 	g_print("  create  STORE  [COLLECTION] [ITEM]\n");
+	g_print("  copy    STORE   COLLECTION   ITEM   FILE\n");
 	g_print("  list   [STORE] [COLLECTION]\n");
 	g_print("  remove  STORE  [COLLECTION] [ITEM]\n");
 	g_print("  status  STORE   COLLECTION   ITEM\n");
@@ -147,6 +161,8 @@ main (int argc, char** argv)
 	gchar const* store_name = NULL;
 	gchar const* collection_name = NULL;
 	gchar const* item_name = NULL;
+	gchar const** remaining = NULL;
+	gint i;
 
 	setlocale(LC_ALL, "");
 
@@ -156,6 +172,7 @@ main (int argc, char** argv)
 
 	switch (argc)
 	{
+		default:
 		case 5:
 			item_name = argv[4];
 		case 4:
@@ -165,7 +182,7 @@ main (int argc, char** argv)
 		case 2:
 			command = argv[1];
 			break;
-		default:
+		case 1:
 			j_cmd_usage();
 			return 1;
 	}
@@ -176,27 +193,42 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if (g_strcmp0(command, "create") == 0)
+	remaining = g_new(gchar const*, MAX(argc - 4, 1));
+
+	for (i = 0; i + 5 < argc; i++)
 	{
-		success = j_cmd_create(store_name, collection_name, item_name);
+		remaining[i] = argv[i + 5];
+	}
+
+	remaining[MAX(argc - 5, 0)] = NULL;
+
+	if (g_strcmp0(command, "copy") == 0)
+	{
+		success = j_cmd_copy(store_name, collection_name, item_name, remaining);
+	}
+	else if (g_strcmp0(command, "create") == 0)
+	{
+		success = j_cmd_create(store_name, collection_name, item_name, remaining);
 	}
 	else if (g_strcmp0(command, "list") == 0)
 	{
-		success = j_cmd_list(store_name, collection_name, item_name);
+		success = j_cmd_list(store_name, collection_name, item_name, remaining);
 	}
 	else if (g_strcmp0(command, "remove") == 0)
 	{
-		success = j_cmd_remove(store_name, collection_name, item_name);
+		success = j_cmd_remove(store_name, collection_name, item_name, remaining);
 	}
 	else if (g_strcmp0(command, "status") == 0)
 	{
-		success = j_cmd_status(store_name, collection_name, item_name);
+		success = j_cmd_status(store_name, collection_name, item_name, remaining);
 	}
 	else
 	{
 		success = FALSE;
 		j_cmd_usage();
 	}
+
+	g_free(remaining);
 
 	j_fini();
 

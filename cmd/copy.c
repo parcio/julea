@@ -27,16 +27,20 @@
 
 #include "julea.h"
 
+#include <gio/gio.h>
+
 gboolean
-j_cmd_status (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
+j_cmd_copy (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
 {
 	gboolean ret = TRUE;
 	JStore* store = NULL;
 	JCollection* collection = NULL;
 	JItem* item = NULL;
 	JOperation* operation;
+	GFile* file;
+	GFileOutputStream* stream;
 
-	if (j_cmd_remaining_length(remaining) > 0)
+	if (j_cmd_remaining_length(remaining) != 1)
 	{
 		ret = FALSE;
 		j_cmd_usage();
@@ -56,22 +60,22 @@ j_cmd_status (gchar const* store_name, gchar const* collection_name, gchar const
 		goto end;
 	}
 
+	file = g_file_new_for_commandline_arg(remaining[0]);
+	stream = g_file_replace(file, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL);
+	g_object_unref(file);
+
+	if (stream == NULL)
+	{
+		ret = FALSE;
+		g_print("Error: Can not open file “%s”.\n", remaining[0]);
+		goto end;
+	}
+
 	operation = j_operation_new();
 
 	if (item != NULL)
 	{
-		gchar* size;
-
-		j_item_get_status(item, J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME, operation);
-		j_operation_execute(operation);
-
-		size = g_format_size(j_item_get_size(item));
-
-		g_print("Size:              %s\n", size);
-		/* FIXME format modification time */
-		g_print("Modification time: %" G_GINT64_FORMAT  "\n", j_item_get_modification_time(item));
-
-		g_free(size);
+		/* FIXME */
 	}
 	else
 	{
@@ -80,6 +84,8 @@ j_cmd_status (gchar const* store_name, gchar const* collection_name, gchar const
 	}
 
 	j_operation_free(operation);
+
+	g_object_unref(stream);
 
 end:
 	if (item != NULL)

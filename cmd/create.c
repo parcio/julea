@@ -28,13 +28,20 @@
 #include "julea.h"
 
 gboolean
-j_cmd_create (gchar const* store_name, gchar const* collection_name, gchar const* item_name)
+j_cmd_create (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
 {
 	gboolean ret = TRUE;
 	JStore* store = NULL;
 	JCollection* collection = NULL;
 	JItem* item = NULL;
 	JOperation* operation;
+
+	if (j_cmd_remaining_length(remaining) > 0)
+	{
+		ret = FALSE;
+		j_cmd_usage();
+		goto end;
+	}
 
 	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item)
 	    && !j_cmd_error_last(store_name, collection_name, item_name, store, collection, item))
