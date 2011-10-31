@@ -45,6 +45,42 @@ static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
 gboolean
+backend_create (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
+{
+	gchar* parent;
+	gchar* path;
+	gint fd;
+
+	j_trace_enter(trace, G_STRFUNC);
+
+	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+
+	j_trace_file_begin(trace, path, J_TRACE_FILE_CREATE);
+
+	parent = g_path_get_dirname(path);
+	g_mkdir_with_parents(parent, 0700);
+	g_free(parent);
+
+	fd = open(path, O_RDWR | O_CREAT, 0600);
+
+	j_trace_file_end(trace, path, J_TRACE_FILE_CREATE, 0, 0);
+
+	if (fd != -1)
+	{
+		j_trace_file_begin(trace, path, J_TRACE_FILE_CLOSE);
+		close(fd);
+		j_trace_file_end(trace, path, J_TRACE_FILE_CLOSE, 0, 0);
+	}
+
+	g_free(path);
+
+	j_trace_leave(trace, G_STRFUNC);
+
+	return (fd != -1);
+}
+
+G_MODULE_EXPORT
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	gchar* path;
@@ -56,18 +92,6 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 
 	j_trace_file_begin(trace, path, J_TRACE_FILE_OPEN);
 	fd = open(path, O_RDWR);
-
-	if (fd == -1)
-	{
-		gchar* parent;
-
-		parent = g_path_get_dirname(path);
-		g_mkdir_with_parents(parent, 0700);
-		g_free(parent);
-
-		fd = open(path, O_RDWR | O_CREAT, 0600);
-	}
-
 	j_trace_file_end(trace, path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;

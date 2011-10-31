@@ -45,6 +45,7 @@ typedef struct JBackendFile JBackendFile;
 void (*jd_backend_init) (gchar const*, JTrace*) = NULL;
 void (*jd_backend_fini) (JTrace*) = NULL;
 
+gboolean (*jd_backend_create) (gchar const*, gchar const*, gchar const*, JTrace*) = NULL;
 
 gboolean (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*) = NULL;
 gboolean (*jd_backend_close) (JBackendFile*, JTrace*) = NULL;

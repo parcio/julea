@@ -39,6 +39,47 @@ static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
 gboolean
+backend_create (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
+{
+	GFile* file;
+	GFile* parent;
+	GFileIOStream* stream;
+	gchar* path;
+
+	j_trace_enter(trace, G_STRFUNC);
+
+	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+	file = g_file_new_for_path(path);
+
+	j_trace_file_begin(trace, path, J_TRACE_FILE_CREATE);
+
+	parent = g_file_get_parent(file);
+	g_file_make_directory_with_parents(parent, NULL, NULL);
+	g_object_unref(parent);
+
+	stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
+
+	j_trace_file_end(trace, path, J_TRACE_FILE_CREATE, 0, 0);
+
+	if (stream != NULL)
+	{
+		j_trace_file_begin(trace, path, J_TRACE_FILE_CLOSE);
+		g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
+		j_trace_file_end(trace, path, J_TRACE_FILE_CLOSE, 0, 0);
+	}
+
+	g_object_unref(stream);
+	g_object_unref(file);
+
+	g_free(path);
+
+	j_trace_leave(trace, G_STRFUNC);
+
+	return (stream != NULL);
+}
+
+G_MODULE_EXPORT
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	GFile* file;
@@ -52,18 +93,6 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 
 	j_trace_file_begin(trace, path, J_TRACE_FILE_OPEN);
 	stream = g_file_open_readwrite(file, NULL, NULL);
-
-	if (stream == NULL)
-	{
-		GFile* parent;
-
-		parent = g_file_get_parent(file);
-		g_file_make_directory_with_parents(parent, NULL, NULL);
-		g_object_unref(parent);
-
-		stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
-	}
-
 	j_trace_file_end(trace, path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;

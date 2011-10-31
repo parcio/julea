@@ -87,6 +87,21 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_NONE:
 				g_printerr("none_op\n");
 				break;
+			case J_MESSAGE_OPERATION_CREATE:
+				g_printerr("create_op\n");
+				{
+					for (i = 0; i < operation_count; i++)
+					{
+						store = j_message_get_string(message);
+						collection = j_message_get_string(message);
+						item = j_message_get_string(message);
+
+						g_printerr("CREATE %s %s %s\n", store, collection, item);
+
+						jd_backend_create(store, collection, item, trace);
+					}
+				}
+				break;
 			case J_MESSAGE_OPERATION_READ:
 				g_printerr("read_op\n");
 				{
@@ -259,6 +274,7 @@ main (int argc, char** argv)
 
 	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
 	g_module_symbol(backend, "backend_fini", (gpointer*)&jd_backend_fini);
+	g_module_symbol(backend, "backend_create", (gpointer*)&jd_backend_create);
 	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
 	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
 	g_module_symbol(backend, "backend_sync", (gpointer*)&jd_backend_sync);
@@ -267,6 +283,7 @@ main (int argc, char** argv)
 
 	g_assert(jd_backend_init != NULL);
 	g_assert(jd_backend_fini != NULL);
+	g_assert(jd_backend_create != NULL);
 	g_assert(jd_backend_open != NULL);
 	g_assert(jd_backend_close != NULL);
 	g_assert(jd_backend_sync != NULL);

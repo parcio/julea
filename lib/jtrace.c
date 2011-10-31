@@ -246,6 +246,8 @@ j_trace_file_operation_name (JTraceFileOperation op)
 	{
 		case J_TRACE_FILE_CLOSE:
 			return "close";
+		case J_TRACE_FILE_CREATE:
+			return "create";
 		case J_TRACE_FILE_OPEN:
 			return "open";
 		case J_TRACE_FILE_READ:
@@ -732,6 +734,9 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 		{
 			case J_TRACE_FILE_CLOSE:
 				otf_op = OTF_FILEOP_CLOSE;
+				break;
+			case J_TRACE_FILE_CREATE:
+				otf_op = OTF_FILEOP_OTHER;
 				break;
 			case J_TRACE_FILE_OPEN:
 				otf_op = OTF_FILEOP_OPEN;
