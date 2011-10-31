@@ -25,35 +25,24 @@
  * SUCH DAMAGE.
  */
 
+/**
+ * \file
+ **/
+
+#ifndef H_URI
+#define H_URI
+
+struct JURI;
+
+typedef struct JURI JURI;
+
 #include <glib.h>
 
-#include <julea.h>
+JURI* j_uri_new (gchar const*);
+void j_uri_free (JURI*);
 
-#include "test.h"
+gchar const* j_uri_get_store (JURI*);
+gchar const* j_uri_get_collection (JURI*);
+gchar const* j_uri_get_item (JURI*);
 
-int
-main (int argc, char** argv)
-{
-	gint ret;
-
-	g_test_init(&argc, &argv, NULL);
-
-	j_init(&argc, &argv);
-
-	test_background_operation();
-	test_collection();
-	test_configuration();
-	test_distribution();
-	test_item();
-	test_list();
-	test_list_iterator();
-	test_message();
-	test_semantics();
-	test_uri();
-
-	ret = g_test_run();
-
-	j_fini();
-
-	return ret;
-}
+#endif

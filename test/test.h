@@ -37,5 +37,6 @@ void test_list (void);
 void test_list_iterator (void);
 void test_message (void);
 void test_semantics (void);
+void test_uri (void);
 
 #endif
