@@ -90,10 +90,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_CREATE:
 				g_printerr("create_op\n");
 				{
+					store = j_message_get_string(message);
+					collection = j_message_get_string(message);
+
 					for (i = 0; i < operation_count; i++)
 					{
-						store = j_message_get_string(message);
-						collection = j_message_get_string(message);
 						item = j_message_get_string(message);
 
 						g_printerr("CREATE %s %s %s\n", store, collection, item);
@@ -128,7 +129,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
-						bytes_read = jd_backend_read(&bf, buf, length, offset, trace);
+						jd_backend_read(&bf, buf, length, offset, &bytes_read, trace);
 						j_trace_counter(trace, "julead_read", bytes_read);
 
 						// FIXME one big reply
@@ -191,7 +192,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 						j_trace_counter(trace, "julead_received", length);
 
-						bytes_written = jd_backend_write(&bf, buf, length, offset, trace);
+						jd_backend_write(&bf, buf, length, offset, &bytes_written, trace);
 						j_trace_counter(trace, "julead_written", bytes_written);
 					}
 

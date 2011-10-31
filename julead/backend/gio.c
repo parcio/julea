@@ -154,11 +154,11 @@ backend_sync (JBackendFile* bf, JTrace* trace)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
 	GInputStream* input;
-	gsize bytes_read;
+	gsize nbytes;
 
 	j_trace_enter(trace, G_STRFUNC);
 
@@ -171,8 +171,13 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
 		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
-		g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
-		j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read, offset);
+		g_input_stream_read_all(input, buffer, length, &nbytes, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, nbytes, offset);
+
+		if (bytes_read != NULL)
+		{
+			*bytes_read = nbytes;
+		}
 	}
 
 	j_trace_leave(trace, G_STRFUNC);
@@ -182,11 +187,11 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
 	GOutputStream* output;
-	gsize bytes_written;
+	gsize nbytes;
 
 	j_trace_enter(trace, G_STRFUNC);
 
@@ -199,8 +204,13 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
 		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
-		g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
-		j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written, offset);
+		g_output_stream_write_all(output, buffer, length, &nbytes, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
+
+		if (bytes_written != NULL)
+		{
+			*bytes_written = nbytes;
+		}
 	}
 
 	j_trace_leave(trace, G_STRFUNC);

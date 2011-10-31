@@ -44,7 +44,7 @@ gboolean backend_close (JBackendFile*, JTrace*);
 
 gboolean backend_sync (JBackendFile*, JTrace*);
 
-gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, JTrace*);
-gboolean backend_write (JBackendFile*, gconstpointer, guint64, guint64, JTrace*);
+gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, guint64*, JTrace*);
+gboolean backend_write (JBackendFile*, gconstpointer, guint64, guint64, guint64*, JTrace*);
 
 #endif

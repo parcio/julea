@@ -52,7 +52,7 @@ gboolean (*jd_backend_close) (JBackendFile*, JTrace*) = NULL;
 
 gboolean (*jd_backend_sync) (JBackendFile*, JTrace*) = NULL;
 
-gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, JTrace*) = NULL;
-gboolean (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, JTrace*) = NULL;
+gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, guint64*, JTrace*) = NULL;
+gboolean (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, guint64*, JTrace*) = NULL;
 
 #endif

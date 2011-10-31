@@ -102,12 +102,17 @@ backend_sync (JBackendFile* bf, JTrace* trace)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 
 	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, length, offset);
+
+	if (bytes_read != NULL)
+	{
+		*bytes_read = length;
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
@@ -116,12 +121,17 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
+backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
 
 	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, length, offset);
+
+	if (bytes_written != NULL)
+	{
+		*bytes_written = length;
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
