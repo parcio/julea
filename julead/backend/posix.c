@@ -44,7 +44,7 @@
 static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	gchar* path;
@@ -74,40 +74,54 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	bf->user_data = GINT_TO_POINTER(fd);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (fd != -1);
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_close (JBackendFile* bf, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
-	close(fd);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	if (fd != -1)
+	{
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
+		close(fd);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	}
+
+	g_free(bf->path);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (fd != -1);
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_sync (JBackendFile* bf, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
-	fsync(fd);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+	if (fd != -1)
+	{
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
+		fsync(fd);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (fd != -1);
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
@@ -115,17 +129,20 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
-	bytes_read = pread(fd, buffer, length, offset);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read, offset);
+	if (fd != -1)
+	{
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
+		bytes_read = pread(fd, buffer, length, offset);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read, offset);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return bytes_read;
+	return (fd != -1);
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
@@ -133,13 +150,16 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
-	bytes_written = pwrite(fd, buffer, length, offset);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written, offset);
+	if (fd != -1)
+	{
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
+		bytes_written = pwrite(fd, buffer, length, offset);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written, offset);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return bytes_written;
+	return (fd != -1);
 }
 
 G_MODULE_EXPORT

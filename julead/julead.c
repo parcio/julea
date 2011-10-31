@@ -92,10 +92,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessageReply* reply;
 					gchar* buf;
-					guint64 length;
-					guint64 offset;
-					guint64 bytes_read;
 
+					/* FIXME allow different items? */
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
@@ -106,6 +104,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
+						guint64 length;
+						guint64 offset;
+						guint64 bytes_read;
+
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
@@ -151,9 +153,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				g_printerr("write_op\n");
 				{
 					gchar* buf;
-					guint64 length;
-					guint64 offset;
-					guint64 bytes_written;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -165,6 +164,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
+						guint64 length;
+						guint64 offset;
+						guint64 bytes_written;
+
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 

@@ -34,7 +34,7 @@
 #include "backend-internal.h"
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
@@ -46,10 +46,12 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_OPEN, 0, 0);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_close (JBackendFile* bf, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
@@ -60,10 +62,12 @@ backend_close (JBackendFile* bf, JTrace* trace)
 	g_free(bf->path);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_sync (JBackendFile* bf, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
@@ -72,10 +76,12 @@ backend_sync (JBackendFile* bf, JTrace* trace)
 	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
@@ -85,11 +91,11 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return length;
+	return TRUE;
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);
@@ -99,7 +105,7 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return length;
+	return TRUE;
 }
 
 G_MODULE_EXPORT

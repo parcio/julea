@@ -702,7 +702,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
 		{
-			g_printerr("(length=%" G_GUINT64_FORMAT ", offset=%" G_GUINT64_FORMAT ")", length, offset);
+			g_printerr(" (length=%" G_GUINT64_FORMAT ", offset=%" G_GUINT64_FORMAT ")", length, offset);
 		}
 
 		g_printerr("\n");

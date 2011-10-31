@@ -38,7 +38,7 @@
 static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	GFile* file;
@@ -72,27 +72,36 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	g_object_unref(file);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (stream != NULL);
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_close (JBackendFile* bf, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
-	g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	if (stream != NULL)
+	{
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_CLOSE);
+		g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	}
+
+	g_object_unref(stream);
 
 	g_free(bf->path);
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (stream != NULL);
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_sync (JBackendFile* bf, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
@@ -100,17 +109,22 @@ backend_sync (JBackendFile* bf, JTrace* trace)
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+	if (stream != NULL)
+	{
+		output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
-	g_output_stream_flush(output, NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SYNC);
+		g_output_stream_flush(output, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SYNC, 0, 0);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
+
+	return (stream != NULL);
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
@@ -119,23 +133,26 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
+	if (stream != NULL)
+	{
+		input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
-	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
+		g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
-	g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read, offset);
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_READ);
+		g_input_stream_read_all(input, buffer, length, &bytes_read, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_READ, bytes_read, offset);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return bytes_read;
+	return (stream != NULL);
 }
 
 G_MODULE_EXPORT
-guint64
+gboolean
 backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, JTrace* trace)
 {
 	GFileIOStream* stream = bf->user_data;
@@ -144,19 +161,22 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_enter(trace, G_STRFUNC);
 
-	output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+	if (stream != NULL)
+	{
+		output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
-	g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_SEEK);
+		g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
-	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
-	g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
-	j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written, offset);
+		j_trace_file_begin(trace, bf->path, J_TRACE_FILE_WRITE);
+		g_output_stream_write_all(output, buffer, length, &bytes_written, NULL, NULL);
+		j_trace_file_end(trace, bf->path, J_TRACE_FILE_WRITE, bytes_written, offset);
+	}
 
 	j_trace_leave(trace, G_STRFUNC);
 
-	return bytes_written;
+	return (stream != NULL);
 }
 
 G_MODULE_EXPORT
