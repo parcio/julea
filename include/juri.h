@@ -32,17 +32,39 @@
 #ifndef H_URI
 #define H_URI
 
+#define J_URI_ERROR j_uri_error_quark()
+
+typedef enum
+{
+	J_URI_ERROR_STORE_NOT_FOUND,
+	J_URI_ERROR_COLLECTION_NOT_FOUND,
+	J_URI_ERROR_ITEM_NOT_FOUND
+}
+JURIError;
+
 struct JURI;
 
 typedef struct JURI JURI;
 
+#include <jcollection.h>
+#include <jitem.h>
+#include <jstore.h>
+
 #include <glib.h>
+
+GQuark j_uri_error_quark (void);
 
 JURI* j_uri_new (gchar const*);
 void j_uri_free (JURI*);
 
-gchar const* j_uri_get_store (JURI*);
-gchar const* j_uri_get_collection (JURI*);
-gchar const* j_uri_get_item (JURI*);
+gchar const* j_uri_get_store_name (JURI*);
+gchar const* j_uri_get_collection_name (JURI*);
+gchar const* j_uri_get_item_name (JURI*);
+
+gboolean j_uri_get (JURI*, GError**);
+
+JStore* j_uri_get_store (JURI*);
+JCollection* j_uri_get_collection (JURI*);
+JItem* j_uri_get_item (JURI*);
 
 #endif
