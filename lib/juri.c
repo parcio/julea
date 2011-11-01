@@ -65,6 +65,7 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 {
 	gchar** parts = NULL;
 	guint parts_len;
+	guint i;
 
 	if (!g_str_has_prefix(uri_, "julea://"))
 	{
@@ -77,6 +78,14 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 	if (parts_len < 1 || parts_len > 3)
 	{
 		goto error;
+	}
+
+	for (i = 0; i < parts_len; i++)
+	{
+		if (g_strcmp0(parts[i], "") == 0)
+		{
+			goto error;
+		}
 	}
 
 	if (parts_len >= 1)

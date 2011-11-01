@@ -27,102 +27,90 @@
 
 #include "julea.h"
 
+#include <juri.h>
+
 gboolean
-j_cmd_create (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
+j_cmd_create (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JStore* store = NULL;
-	JCollection* collection = NULL;
-	JItem* item = NULL;
 	JOperation* operation;
+	JURI* uri = NULL;
+	GError* error = NULL;
 
-	if (j_cmd_remaining_length(remaining) > 0)
+	if (j_cmd_arguments_length(arguments) != 1)
 	{
 		ret = FALSE;
 		j_cmd_usage();
 		goto end;
 	}
 
-	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item)
-	    && !j_cmd_error_last(store_name, collection_name, item_name, store, collection, item))
+	if ((uri = j_uri_new(arguments[0])) == NULL)
 	{
-		gchar* error;
+		ret = FALSE;
+		g_print("Error: Invalid argument “%s”.\n", arguments[0]);
+		goto end;
+	}
 
+	if (j_uri_get(uri, &error))
+	{
 		ret = FALSE;
 
-		error = j_cmd_error_exists(store_name, collection_name, item_name, store, collection, item);
-		g_print("Error: %s\n", error);
-		g_free(error);
+		if (j_uri_get_item(uri) != NULL)
+		{
+			g_print("Error: Item “%s” already exists.\n", j_item_get_name(j_uri_get_item(uri)));
+		}
+		else if (j_uri_get_collection(uri) != NULL)
+		{
+			g_print("Error: Collection “%s” already exists.\n", j_collection_get_name(j_uri_get_collection(uri)));
+		}
+		else if (j_uri_get_store(uri) != NULL)
+		{
+			g_print("Error: Store “%s” already exists.\n", j_store_get_name(j_uri_get_store(uri)));
+		}
 
+		goto end;
+	}
+	else if (!j_cmd_error_last(uri))
+	{
+		ret = FALSE;
+		g_print("Error: %s\n", error->message);
+		g_error_free(error);
 		goto end;
 	}
 
 	operation = j_operation_new();
 
-	if (item != NULL)
+	if (j_uri_get_collection(uri) != NULL)
 	{
-		ret = FALSE;
-		g_print("Error: Item “%s” already exists.\n", j_item_get_name(item));
+		JItem* item;
+
+		item = j_item_new(j_uri_get_item_name(uri));
+		j_collection_add_item(j_uri_get_collection(uri), item, operation);
+		j_operation_execute(operation);
 	}
-	else if (collection != NULL)
+	else if (j_uri_get_store(uri) != NULL)
 	{
-		if (item_name != NULL)
-		{
-			item = j_item_new(item_name);
-			j_collection_add_item(collection, item, operation);
-			j_operation_execute(operation);
-		}
-		else
-		{
-			ret = FALSE;
-			g_print("Error: Collection “%s” already exists.\n", j_collection_get_name(collection));
-		}
-	}
-	else if (store != NULL)
-	{
-		if (collection_name != NULL)
-		{
-			collection = j_collection_new(collection_name);
-			j_store_add_collection(store, collection, operation);
-			j_operation_execute(operation);
-		}
-		else
-		{
-			ret = FALSE;
-			g_print("Error: Store “%s” already exists.\n", j_store_get_name(store));
-		}
+		JCollection* collection;
+
+		collection = j_collection_new(j_uri_get_collection_name(uri));
+		j_store_add_collection(j_uri_get_store(uri), collection, operation);
+		j_operation_execute(operation);
 	}
 	else
 	{
-		if (store_name != NULL)
-		{
-			store = j_store_new(store_name);
-			j_add_store(store, operation);
-			j_operation_execute(operation);
-		}
-		else
-		{
-			ret = FALSE;
-			j_cmd_usage();
-		}
+		JStore* store;
+
+		store = j_store_new(j_uri_get_store_name(uri));
+		j_add_store(store, operation);
+		j_operation_execute(operation);
 	}
 
 	j_operation_free(operation);
 
 end:
-	if (item != NULL)
+	if (uri != NULL)
 	{
-		j_item_unref(item);
-	}
-
-	if (collection != NULL)
-	{
-		j_collection_unref(collection);
-	}
-
-	if (store != NULL)
-	{
-		j_store_unref(store);
+		j_uri_free(uri);
 	}
 
 	return ret;

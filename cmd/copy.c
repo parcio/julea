@@ -27,53 +27,57 @@
 
 #include "julea.h"
 
+#include <juri.h>
+
 #include <gio/gio.h>
 
 gboolean
-j_cmd_copy (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
+j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JStore* store = NULL;
-	JCollection* collection = NULL;
-	JItem* item = NULL;
 	JOperation* operation;
+	JURI* uri;
+	GError* error = NULL;
 	GFile* file;
 	GFileOutputStream* stream;
 
-	if (j_cmd_remaining_length(remaining) != 1)
+	if (j_cmd_arguments_length(arguments) != 2)
 	{
 		ret = FALSE;
 		j_cmd_usage();
 		goto end;
 	}
 
-	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item))
+	/* FIXME */
+	if ((uri = j_uri_new(arguments[0])) == NULL)
 	{
-		gchar* error;
-
 		ret = FALSE;
-
-		error = j_cmd_error_exists(store_name, collection_name, item_name, store, collection, item);
-		g_print("Error: %s\n", error);
-		g_free(error);
-
+		g_print("Error: Invalid argument “%s”.\n", arguments[0]);
 		goto end;
 	}
 
-	file = g_file_new_for_commandline_arg(remaining[0]);
+	if (!j_uri_get(uri, &error))
+	{
+		ret = FALSE;
+		g_print("Error: %s\n", error->message);
+		g_error_free(error);
+		goto end;
+	}
+
+	file = g_file_new_for_commandline_arg(arguments[1]);
 	stream = g_file_replace(file, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL);
 	g_object_unref(file);
 
 	if (stream == NULL)
 	{
 		ret = FALSE;
-		g_print("Error: Can not open file “%s”.\n", remaining[0]);
+		g_print("Error: Can not open file “%s”.\n", arguments[1]);
 		goto end;
 	}
 
 	operation = j_operation_new();
 
-	if (item != NULL)
+	if (j_uri_get_item(uri) != NULL)
 	{
 		/* FIXME */
 	}
@@ -88,19 +92,9 @@ j_cmd_copy (gchar const* store_name, gchar const* collection_name, gchar const* 
 	g_object_unref(stream);
 
 end:
-	if (item != NULL)
+	if (uri != NULL)
 	{
-		j_item_unref(item);
-	}
-
-	if (collection != NULL)
-	{
-		j_collection_unref(collection);
-	}
-
-	if (store != NULL)
-	{
-		j_store_unref(store);
+		j_uri_free(uri);
 	}
 
 	return ret;

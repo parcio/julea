@@ -27,74 +27,62 @@
 
 #include "julea.h"
 
+#include <juri.h>
+
 gboolean
-j_cmd_remove (gchar const* store_name, gchar const* collection_name, gchar const* item_name, gchar const** remaining)
+j_cmd_remove (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JStore* store = NULL;
-	JCollection* collection = NULL;
-	JItem* item = NULL;
 	JOperation* operation;
+	JURI* uri;
+	GError* error = NULL;
 
-	if (j_cmd_remaining_length(remaining) > 0)
+	if (j_cmd_arguments_length(arguments) != 1)
 	{
 		ret = FALSE;
 		j_cmd_usage();
 		goto end;
 	}
 
-	if (!j_cmd_parse(store_name, collection_name, item_name, &store, &collection, &item))
+	if ((uri = j_uri_new(arguments[0])) == NULL)
 	{
-		gchar* error;
-
 		ret = FALSE;
+		g_print("Error: Invalid argument “%s”.\n", arguments[0]);
+		goto end;
+	}
 
-		error = j_cmd_error_exists(store_name, collection_name, item_name, store, collection, item);
-		g_print("Error: %s\n", error);
-		g_free(error);
-
+	if (!j_uri_get(uri, &error))
+	{
+		ret = FALSE;
+		g_print("Error: %s\n", error->message);
+		g_error_free(error);
 		goto end;
 	}
 
 	operation = j_operation_new();
 
-	if (item != NULL)
+	if (j_uri_get_item(uri) != NULL)
 	{
-		j_collection_delete_item(collection, item, operation);
+		j_collection_delete_item(j_uri_get_collection(uri), j_uri_get_item(uri), operation);
 		j_operation_execute(operation);
 	}
-	else if (collection != NULL)
+	else if (j_uri_get_collection(uri) != NULL)
 	{
-		j_store_delete_collection(store, collection, operation);
+		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), operation);
 		j_operation_execute(operation);
 	}
-	else if (store != NULL)
+	else if (j_uri_get_store(uri) != NULL)
 	{
-		j_delete_store(store, operation);
+		j_delete_store(j_uri_get_store(uri), operation);
 		j_operation_execute(operation);
-	}
-	else
-	{
-		ret = FALSE;
-		j_cmd_usage();
 	}
 
 	j_operation_free(operation);
 
 end:
-	if (item != NULL)
+	if (uri != NULL)
 	{
-		j_item_unref(item);
-	}
-
-	if (collection != NULL)
-	{
-		j_collection_unref(collection);
-	}
-
-	if (store != NULL)
-	{
-		j_store_unref(store);
+		j_uri_free(uri);
 	}
 
 	return ret;

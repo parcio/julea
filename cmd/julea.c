@@ -31,11 +31,11 @@
 #include <stdlib.h>
 
 guint
-j_cmd_remaining_length (gchar const** remaining)
+j_cmd_arguments_length (gchar const** arguments)
 {
 	guint i = 0;
 
-	for (; *remaining != NULL; remaining++)
+	for (; *arguments != NULL; arguments++)
 	{
 		i++;
 	}
@@ -50,101 +50,29 @@ j_cmd_usage (void)
 	g_print("  %s COMMAND\n", g_get_prgname());
 	g_print("\n");
 	g_print("Commands:\n");
-	g_print("  create  STORE  [COLLECTION] [ITEM]\n");
-	g_print("  copy    STORE   COLLECTION   ITEM   FILE\n");
-	g_print("  list   [STORE] [COLLECTION]\n");
-	g_print("  remove  STORE  [COLLECTION] [ITEM]\n");
-	g_print("  status  STORE   COLLECTION   ITEM\n");
+	g_print("  create julea://store/[collection/[item]]\n");
+	g_print("  copy   julea://store/collection/item file://file\n");
+	g_print("         file://file julea://store/collection/item\n");
+	g_print("  list   julea://[store/[collection]]\n");
+	g_print("  remove julea://store/[collection/[item]]\n");
+	g_print("  status julea://store/collection/item\n");
 	g_print("\n");
 }
 
 gboolean
-j_cmd_parse (gchar const* store_name, gchar const* collection_name, gchar const* item_name, JStore** store, JCollection** collection, JItem** item)
-{
-	JOperation* operation;
-
-	g_return_val_if_fail(store != NULL && *store == NULL, FALSE);
-	g_return_val_if_fail(collection != NULL && *collection == NULL, FALSE);
-	g_return_val_if_fail(item != NULL && *item == NULL, FALSE);
-
-	operation = j_operation_new();
-
-	if (store_name != NULL)
-	{
-		j_get_store(store, store_name, operation);
-		j_operation_execute(operation);
-
-		if (*store == NULL)
-		{
-			return FALSE;
-		}
-	}
-
-	if (collection_name != NULL)
-	{
-		j_store_get_collection(*store, collection, collection_name, operation);
-		j_operation_execute(operation);
-
-		if (*collection == NULL)
-		{
-			return FALSE;
-		}
-	}
-
-	if (item_name != NULL)
-	{
-		j_collection_get_item(*collection, item, item_name, J_ITEM_STATUS_NONE, operation);
-		j_operation_execute(operation);
-
-		if (*item == NULL)
-		{
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-gchar*
-j_cmd_error_exists (gchar const* store_name, gchar const* collection_name, gchar const* item_name, JStore* store, JCollection* collection, JItem* item)
-{
-	gchar* error = NULL;
-
-	if (store == NULL && store_name != NULL)
-	{
-		error = g_strdup_printf("Store “%s” does not exist.", store_name);
-	}
-	else if (collection == NULL && collection_name != NULL)
-	{
-		error = g_strdup_printf("Collection “%s” does not exist.", collection_name);
-	}
-	else if (item == NULL && item_name != NULL)
-	{
-		error = g_strdup_printf("Item “%s” does not exist.", item_name);
-	}
-
-	if (error == NULL)
-	{
-		error = g_strdup("Unknown error.");
-	}
-
-	return error;
-}
-
-gboolean
-j_cmd_error_last (gchar const* store_name, gchar const* collection_name, gchar const* item_name, JStore* store, JCollection* collection, JItem* item)
+j_cmd_error_last (JURI* uri)
 {
 	gboolean ret = FALSE;
 
-	if (store == NULL && store_name != NULL)
+	if (j_uri_get_store(uri) == NULL && j_uri_get_store_name(uri) != NULL)
 	{
-		ret = (collection_name == NULL && item_name == NULL);
+		ret = (j_uri_get_collection_name(uri) == NULL && j_uri_get_item_name(uri) == NULL);
 	}
-	else if (collection == NULL && collection_name != NULL)
+	else if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
 	{
-		ret = (item_name == NULL);
+		ret = (j_uri_get_item_name(uri) == NULL);
 	}
-	else if (item == NULL && item_name != NULL)
+	else if (j_uri_get_item(uri) == NULL && j_uri_get_item_name(uri) != NULL)
 	{
 		ret = TRUE;
 	}
@@ -158,10 +86,7 @@ main (int argc, char** argv)
 	gboolean success;
 	gchar* basename;
 	gchar const* command = NULL;
-	gchar const* store_name = NULL;
-	gchar const* collection_name = NULL;
-	gchar const* item_name = NULL;
-	gchar const** remaining = NULL;
+	gchar const** arguments = NULL;
 	gint i;
 
 	setlocale(LC_ALL, "");
@@ -170,22 +95,13 @@ main (int argc, char** argv)
 	g_set_prgname(basename);
 	g_free(basename);
 
-	switch (argc)
+	if (argc <= 2)
 	{
-		default:
-		case 5:
-			item_name = argv[4];
-		case 4:
-			collection_name = argv[3];
-		case 3:
-			store_name = argv[2];
-		case 2:
-			command = argv[1];
-			break;
-		case 1:
-			j_cmd_usage();
-			return 1;
+		j_cmd_usage();
+		return 1;
 	}
+
+	command = argv[1];
 
 	if (!j_init(&argc, &argv))
 	{
@@ -193,34 +109,34 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	remaining = g_new(gchar const*, MAX(argc - 4, 1));
+	arguments = g_new(gchar const*, argc - 1);
 
-	for (i = 0; i + 5 < argc; i++)
+	for (i = 2; i < argc; i++)
 	{
-		remaining[i] = argv[i + 5];
+		arguments[i - 2] = argv[i];
 	}
 
-	remaining[MAX(argc - 5, 0)] = NULL;
+	arguments[argc - 2] = NULL;
 
 	if (g_strcmp0(command, "copy") == 0)
 	{
-		success = j_cmd_copy(store_name, collection_name, item_name, remaining);
+		success = j_cmd_copy(arguments);
 	}
 	else if (g_strcmp0(command, "create") == 0)
 	{
-		success = j_cmd_create(store_name, collection_name, item_name, remaining);
+		success = j_cmd_create(arguments);
 	}
 	else if (g_strcmp0(command, "list") == 0)
 	{
-		success = j_cmd_list(store_name, collection_name, item_name, remaining);
+		success = j_cmd_list(arguments);
 	}
 	else if (g_strcmp0(command, "remove") == 0)
 	{
-		success = j_cmd_remove(store_name, collection_name, item_name, remaining);
+		success = j_cmd_remove(arguments);
 	}
 	else if (g_strcmp0(command, "status") == 0)
 	{
-		success = j_cmd_status(store_name, collection_name, item_name, remaining);
+		success = j_cmd_status(arguments);
 	}
 	else
 	{
@@ -228,7 +144,7 @@ main (int argc, char** argv)
 		j_cmd_usage();
 	}
 
-	g_free(remaining);
+	g_free(arguments);
 
 	j_fini();
 

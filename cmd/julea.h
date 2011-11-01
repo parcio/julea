@@ -27,18 +27,18 @@
 
 #include <julea.h>
 
+#include <juri.h>
+
 #include <glib.h>
 
 void j_cmd_usage (void);
 
-guint j_cmd_remaining_length (gchar const**);
-gboolean j_cmd_parse (gchar const*, gchar const*, gchar const*, JStore**, JCollection**, JItem**);
+guint j_cmd_arguments_length (gchar const**);
 
-gchar* j_cmd_error_exists (gchar const*, gchar const*, gchar const*, JStore*, JCollection*, JItem*);
-gboolean j_cmd_error_last (gchar const*, gchar const*, gchar const*, JStore*, JCollection*, JItem*);
+gboolean j_cmd_error_last (JURI*);
 
-gboolean j_cmd_create (gchar const*, gchar const*, gchar const*, gchar const**);
-gboolean j_cmd_copy (gchar const*, gchar const*, gchar const*, gchar const**);
-gboolean j_cmd_list (gchar const*, gchar const*, gchar const*, gchar const**);
-gboolean j_cmd_remove (gchar const*, gchar const*, gchar const*, gchar const**);
-gboolean j_cmd_status (gchar const*, gchar const*, gchar const*, gchar const**);
+gboolean j_cmd_create (gchar const**);
+gboolean j_cmd_copy (gchar const**);
+gboolean j_cmd_list (gchar const**);
+gboolean j_cmd_remove (gchar const**);
+gboolean j_cmd_status (gchar const**);
