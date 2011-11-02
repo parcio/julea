@@ -51,7 +51,8 @@ j_cmd_usage (void)
 	g_print("\n");
 	g_print("Commands:\n");
 	g_print("  create julea://store/[collection/[item]]\n");
-	g_print("  copy   julea://store/collection/item file://file\n");
+	g_print("  copy   julea://store/collection/item julea://store/collection/item\n");
+	g_print("         julea://store/collection/item file://file\n");
 	g_print("         file://file julea://store/collection/item\n");
 	g_print("  list   julea://[store/[collection]]\n");
 	g_print("  remove julea://store/[collection/[item]]\n");

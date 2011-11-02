@@ -225,6 +225,12 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->store_name != NULL)
 	{
+		if (uri->store != NULL)
+		{
+			j_store_unref(uri->store);
+			uri->store = NULL;
+		}
+
 		j_get_store(&(uri->store), uri->store_name, operation);
 		j_operation_execute(operation);
 
@@ -238,6 +244,12 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->collection_name != NULL)
 	{
+		if (uri->collection != NULL)
+		{
+			j_collection_unref(uri->collection);
+			uri->collection = NULL;
+		}
+
 		j_store_get_collection(uri->store, &(uri->collection), uri->collection_name, operation);
 		j_operation_execute(operation);
 
@@ -251,6 +263,12 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->item_name != NULL)
 	{
+		if (uri->item != NULL)
+		{
+			j_item_unref(uri->item);
+			uri->item = NULL;
+		}
+
 		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, J_ITEM_STATUS_NONE, operation);
 		j_operation_execute(operation);
 

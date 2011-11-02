@@ -70,12 +70,17 @@ j_cmd_create (gchar const** arguments)
 
 		goto end;
 	}
-	else if (!j_cmd_error_last(uri))
+	else
 	{
-		ret = FALSE;
-		g_print("Error: %s\n", error->message);
+		if (!j_cmd_error_last(uri))
+		{
+			ret = FALSE;
+			g_print("Error: %s\n", error->message);
+			g_error_free(error);
+			goto end;
+		}
+
 		g_error_free(error);
-		goto end;
 	}
 
 	operation = j_operation_new();

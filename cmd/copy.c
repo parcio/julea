@@ -36,10 +36,13 @@ j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	JOperation* operation;
-	JURI* uri;
-	GError* error = NULL;
+	JURI* uri[2] = { NULL, NULL };
+	GError* error;
 	GFile* file;
-	GFileOutputStream* stream;
+	GFileIOStream* stream[2] = { NULL, NULL };
+	gchar* buffer;
+	guint64 offset;
+	guint i;
 
 	if (j_cmd_arguments_length(arguments) != 2)
 	{
@@ -48,53 +51,163 @@ j_cmd_copy (gchar const** arguments)
 		goto end;
 	}
 
-	/* FIXME */
-	if ((uri = j_uri_new(arguments[0])) == NULL)
+	for (i = 0; i <= 1; i++)
 	{
-		ret = FALSE;
-		g_print("Error: Invalid argument “%s”.\n", arguments[0]);
-		goto end;
-	}
+		if ((uri[i] = j_uri_new(arguments[i])) != NULL)
+		{
+			error = NULL;
 
-	if (!j_uri_get(uri, &error))
-	{
-		ret = FALSE;
-		g_print("Error: %s\n", error->message);
-		g_error_free(error);
-		goto end;
-	}
+			if (j_uri_get_item_name(uri[i]) == NULL)
+			{
+				ret = FALSE;
+				j_cmd_usage();
+				goto end;
+			}
 
-	file = g_file_new_for_commandline_arg(arguments[1]);
-	stream = g_file_replace(file, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL);
-	g_object_unref(file);
+			if (i == 0)
+			{
+				if (!j_uri_get(uri[i], &error))
+				{
+					ret = FALSE;
+					g_print("Error: %s\n", error->message);
+					g_error_free(error);
+					goto end;
+				}
+			}
+			else if (i == 1)
+			{
+				JItem* item;
 
-	if (stream == NULL)
-	{
-		ret = FALSE;
-		g_print("Error: Can not open file “%s”.\n", arguments[1]);
-		goto end;
+				if (j_uri_get(uri[i], &error))
+				{
+					ret = FALSE;
+
+					if (j_uri_get_item(uri[i]) != NULL)
+					{
+						g_print("Error: Item “%s” already exists.\n", j_item_get_name(j_uri_get_item(uri[i])));
+					}
+
+					goto end;
+				}
+				else
+				{
+					if (!j_cmd_error_last(uri[i]))
+					{
+						ret = FALSE;
+						g_print("Error: %s\n", error->message);
+						g_error_free(error);
+						goto end;
+					}
+
+					g_error_free(error);
+				}
+
+				operation = j_operation_new();
+
+				item = j_item_new(j_uri_get_item_name(uri[i]));
+				j_collection_add_item(j_uri_get_collection(uri[i]), item, operation);
+				j_item_unref(item);
+
+				j_operation_execute(operation);
+
+				j_operation_free(operation);
+
+				j_uri_get(uri[i], NULL);
+			}
+		}
+		else
+		{
+			error = NULL;
+
+			file = g_file_new_for_commandline_arg(arguments[i]);
+
+			if (i == 0)
+			{
+				stream[i] = g_file_open_readwrite(file, NULL, &error);
+			}
+			else if (i == 1)
+			{
+				stream[i] = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, &error);
+			}
+
+			g_object_unref(file);
+
+			if (stream[i] == NULL)
+			{
+				ret = FALSE;
+
+				if (error != NULL)
+				{
+					g_print("Error: %s\n", error->message);
+					g_error_free(error);
+				}
+
+				goto end;
+			}
+
+		}
 	}
 
 	operation = j_operation_new();
+	offset = 0;
+	buffer = g_new(gchar, 1024 * 1024);
 
-	if (j_uri_get_item(uri) != NULL)
+	while (TRUE)
 	{
-		/* FIXME */
-	}
-	else
-	{
-		ret = FALSE;
-		j_cmd_usage();
+		guint64 bytes_read;
+
+		if (uri[0] != NULL)
+		{
+		}
+		else if (stream[0] != NULL)
+		{
+			GInputStream* input;
+			gsize nbytes;
+
+			input = g_io_stream_get_input_stream(G_IO_STREAM(stream[0]));
+
+			g_input_stream_read_all(input, buffer, 1024 * 1024, &nbytes, NULL, NULL);
+			bytes_read = nbytes;
+		}
+
+		if (bytes_read == 0)
+		{
+			break;
+		}
+
+		if (uri[1] != NULL)
+		{
+			guint64 dummy;
+
+			j_item_write(j_uri_get_item(uri[1]), buffer, bytes_read, offset, &dummy, operation);
+			j_operation_execute(operation);
+		}
+		else if (stream[1] != NULL)
+		{
+			GOutputStream* output;
+
+			output = g_io_stream_get_output_stream(G_IO_STREAM(stream[1]));
+
+			g_output_stream_write_all(output, buffer, bytes_read, NULL, NULL, NULL);
+		}
+
+		offset += bytes_read;
 	}
 
 	j_operation_free(operation);
 
-	g_object_unref(stream);
-
 end:
-	if (uri != NULL)
+	for (i = 0; i <= 1; i++)
 	{
-		j_uri_free(uri);
+		if (stream[i] != NULL)
+		{
+			g_object_unref(stream[i]);
+		}
+
+		if (uri[i] != NULL)
+		{
+			j_uri_free(uri[i]);
+		}
 	}
 
 	return ret;

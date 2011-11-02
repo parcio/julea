@@ -68,6 +68,8 @@ struct JOperationPart
 	 **/
 	JOperationType type;
 
+	/* FIXME key? */
+
 	union
 	{
 		struct
