@@ -825,6 +825,7 @@ j_item_write_internal (JList* parts)
 				j_message_append_n(message, item->name, item_len);
 
 				j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
+				j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
 
 				j_message_free(message);
 			}

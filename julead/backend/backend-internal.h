@@ -38,6 +38,7 @@ void backend_init (gchar const*, JTrace*);
 void backend_fini (JTrace*);
 
 gboolean backend_create (gchar const*, gchar const*, gchar const*, JTrace*);
+gboolean backend_delete (JBackendFile*, JTrace*);
 
 gboolean backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
 gboolean backend_close (JBackendFile*, JTrace*);

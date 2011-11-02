@@ -55,6 +55,20 @@ backend_create (gchar const* store, gchar const* collection, gchar const* item, 
 
 G_MODULE_EXPORT
 gboolean
+backend_delete (JBackendFile* bf, JTrace* trace)
+{
+	j_trace_enter(trace, G_STRFUNC);
+
+	j_trace_file_begin(trace, bf->path, J_TRACE_FILE_DELETE);
+	j_trace_file_end(trace, bf->path, J_TRACE_FILE_DELETE, 0, 0);
+
+	j_trace_leave(trace, G_STRFUNC);
+
+	return TRUE;
+}
+
+G_MODULE_EXPORT
+gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	j_trace_enter(trace, G_STRFUNC);

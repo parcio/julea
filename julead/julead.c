@@ -103,6 +103,32 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
+			case J_MESSAGE_OPERATION_DELETE:
+				g_printerr("delete_op\n");
+				{
+					store = j_message_get_string(message);
+					collection = j_message_get_string(message);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						JMessageReply* reply;
+
+						item = j_message_get_string(message);
+
+						g_printerr("DELETE %s %s %s\n", store, collection, item);
+
+						jd_backend_open(&bf, store, collection, item, trace);
+
+						jd_backend_delete(&bf, trace);
+
+						reply = j_message_reply_new(message, 0);
+						j_message_reply_write(reply, output);
+						j_message_reply_free(reply);
+
+						jd_backend_close(&bf, trace);
+					}
+				}
+				break;
 			case J_MESSAGE_OPERATION_READ:
 				g_printerr("read_op\n");
 				{
@@ -276,6 +302,7 @@ main (int argc, char** argv)
 	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
 	g_module_symbol(backend, "backend_fini", (gpointer*)&jd_backend_fini);
 	g_module_symbol(backend, "backend_create", (gpointer*)&jd_backend_create);
+	g_module_symbol(backend, "backend_delete", (gpointer*)&jd_backend_delete);
 	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
 	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
 	g_module_symbol(backend, "backend_sync", (gpointer*)&jd_backend_sync);
@@ -285,6 +312,7 @@ main (int argc, char** argv)
 	g_assert(jd_backend_init != NULL);
 	g_assert(jd_backend_fini != NULL);
 	g_assert(jd_backend_create != NULL);
+	g_assert(jd_backend_delete != NULL);
 	g_assert(jd_backend_open != NULL);
 	g_assert(jd_backend_close != NULL);
 	g_assert(jd_backend_sync != NULL);

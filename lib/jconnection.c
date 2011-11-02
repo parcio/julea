@@ -365,13 +365,16 @@ j_connection_receive (JConnection* connection, guint i, JMessage* message, gpoin
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(i < connection->sockets_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
 	message_reply = j_message_reply_new(message, 0);
 
 	j_message_reply_read(message_reply, input);
-	g_input_stream_read_all(input, data, j_message_reply_length(message_reply), NULL, NULL, NULL);
+
+	if (data != NULL)
+	{
+		g_input_stream_read_all(input, data, j_message_reply_length(message_reply), NULL, NULL, NULL);
+	}
 
 	j_message_reply_free(message_reply);
 

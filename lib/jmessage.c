@@ -83,14 +83,16 @@ JMessage*
 j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
 {
 	JMessage* message;
+	guint32 rand;
 	guint32 real_length;
 
+	rand = g_random_int();
 	real_length = sizeof(JMessageHeader) + length;
 
 	message = g_malloc(sizeof(gchar*) + real_length);
 	message->current = message->data;
 	message->header.length = GUINT32_TO_LE(real_length);
-	message->header.id = GUINT32_TO_LE(0);
+	message->header.id = GUINT32_TO_LE(rand);
 	message->header.op_type = GUINT32_TO_LE(op_type);
 	message->header.op_count = GUINT32_TO_LE(op_count);
 
