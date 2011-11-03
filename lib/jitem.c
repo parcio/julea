@@ -698,11 +698,13 @@ j_item_read_internal (JList* parts)
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 		{
 			JMessage* message;
+			JMessage* reply;
 			gchar const* store;
 			gchar const* collection;
 			gsize store_len;
 			gsize collection_len;
 			gsize item_len;
+			guint64 nbytes;
 
 			store = j_store_get_name(j_collection_get_store(item->collection));
 			collection = j_collection_get_name(item->collection);
@@ -718,13 +720,23 @@ j_item_read_internal (JList* parts)
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
-			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, message, d, new_length);
+			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
+
+			reply = j_message_new_reply(message, sizeof(guint64));
+			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
+			nbytes = j_message_get_8(reply);
+			j_connection_receive_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, nbytes);
 
 			j_message_free(message);
+			j_message_free(reply);
 
-			d += new_length;
-			*bytes_read += new_length;
+			d += nbytes;
+			*bytes_read += nbytes;
+
+			if (nbytes < new_length)
+			{
+				break;
+			}
 		}
 
 		j_distribution_free(distribution);
@@ -797,7 +809,7 @@ j_item_write_internal (JList* parts)
 			j_message_append_n(message, collection, collection_len);
 			j_message_append_n(message, item->name, item_len);
 
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
+			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
 
 			j_message_free(message);
 
@@ -808,7 +820,8 @@ j_item_write_internal (JList* parts)
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, d, new_length);
+			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
+			j_connection_send_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, new_length);
 
 			j_message_free(message);
 
@@ -819,15 +832,20 @@ j_item_write_internal (JList* parts)
 
 			if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 			{
+				JMessage* reply;
+
 				message = j_message_new(store_len + collection_len + item_len, J_MESSAGE_OPERATION_SYNC, 1);
 				j_message_append_n(message, store, store_len);
 				j_message_append_n(message, collection, collection_len);
 				j_message_append_n(message, item->name, item_len);
 
-				j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
-				j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, message, NULL, 0);
+				j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
+
+				reply = j_message_new_reply(message, 0);
+				j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
 
 				j_message_free(message);
+				j_message_free(reply);
 			}
 		}
 

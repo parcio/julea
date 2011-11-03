@@ -158,6 +158,12 @@ j_cmd_copy (gchar const** arguments)
 
 		if (uri[0] != NULL)
 		{
+			guint64 nbytes;
+
+			j_item_read(j_uri_get_item(uri[0]), buffer, 1024 * 1024, offset, &nbytes, operation);
+			j_operation_execute(operation);
+
+			bytes_read = nbytes;
 		}
 		else if (stream[0] != NULL)
 		{
@@ -168,11 +174,6 @@ j_cmd_copy (gchar const** arguments)
 
 			g_input_stream_read_all(input, buffer, 1024 * 1024, &nbytes, NULL, NULL);
 			bytes_read = nbytes;
-		}
-
-		if (bytes_read == 0)
-		{
-			break;
 		}
 
 		if (uri[1] != NULL)
@@ -192,6 +193,11 @@ j_cmd_copy (gchar const** arguments)
 		}
 
 		offset += bytes_read;
+
+		if (bytes_read < 1024 * 1024)
+		{
+			break;
+		}
 	}
 
 	j_operation_free(operation);

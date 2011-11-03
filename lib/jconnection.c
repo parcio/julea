@@ -41,7 +41,6 @@
 
 #include "jcommon.h"
 #include "jmessage.h"
-#include "jmessage-reply.h"
 
 /**
  * \defgroup JConnection Connection
@@ -298,7 +297,7 @@ j_connection_get_connection (JConnection* connection)
 }
 
 /**
- * Sends data via the julead connections.
+ * Sends a message via the julead connections.
  *
  * \private
  *
@@ -310,13 +309,11 @@ j_connection_get_connection (JConnection* connection)
  * \param connection A connection.
  * \param i          A connection index.
  * \param message    A message.
- * \param data       An optional data buffer.
- * \param length     Number of bytes to send.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpointer data, gsize length)
+j_connection_send (JConnection* connection, guint i, JMessage* message)
 {
 	GOutputStream* output;
 
@@ -326,16 +323,77 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
 
-	g_output_stream_write_all(output, j_message_data(message), j_message_length(message), NULL, NULL, NULL);
-
-	if (data != NULL && length > 0)
-	{
-		g_output_stream_write_all(output, data, length, NULL, NULL, NULL);
-	}
+	j_message_write(message, output);
 
 	g_output_stream_flush(output, NULL, NULL);
 
 	return TRUE;
+}
+
+/**
+ * Sends data via the julead connections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ * \param i          A connection index.
+ * \param data       An optional data buffer.
+ * \param length     Number of bytes to send.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_connection_send_data (JConnection* connection, guint i, gconstpointer data, gsize length)
+{
+	GOutputStream* output;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(i < connection->sockets_len, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+
+	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
+
+	g_output_stream_write_all(output, data, length, NULL, NULL, NULL);
+	g_output_stream_flush(output, NULL, NULL);
+
+	return TRUE;
+}
+
+/**
+ * Receives a message via the julead connections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param connection A connection.
+ * \param i          A connection index.
+ * \param reply      A reply message.
+ * \param message    A message.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_connection_receive (JConnection* connection, guint i, JMessage* reply, JMessage* message)
+{
+	GInputStream* input;
+
+	g_return_val_if_fail(connection != NULL, FALSE);
+	g_return_val_if_fail(i < connection->sockets_len, FALSE);
+	g_return_val_if_fail(message != NULL, FALSE);
+
+	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
+
+	return j_message_read_reply(reply, message, input);
 }
 
 /**
@@ -350,35 +408,24 @@ j_connection_send (JConnection* connection, guint i, JMessage* message, gconstpo
  *
  * \param connection A connection.
  * \param i          A connection index.
- * \param message    A message.
  * \param data       A data buffer.
  * \param length     #data's length.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_connection_receive (JConnection* connection, guint i, JMessage* message, gpointer data, gsize length)
+j_connection_receive_data (JConnection* connection, guint i, gpointer data, gsize length)
 {
-	JMessageReply* message_reply;
 	GInputStream* input;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(i < connection->sockets_len, FALSE);
-	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
-	message_reply = j_message_reply_new(message, 0);
 
-	j_message_reply_read(message_reply, input);
-
-	if (data != NULL)
-	{
-		g_input_stream_read_all(input, data, j_message_reply_length(message_reply), NULL, NULL, NULL);
-	}
-
-	j_message_reply_free(message_reply);
-
-	return TRUE;
+	return g_input_stream_read_all(input, data, length, NULL, NULL, NULL);
 }
 
 /**

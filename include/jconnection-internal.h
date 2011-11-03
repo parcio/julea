@@ -41,7 +41,11 @@
 #include <jmessage.h>
 
 G_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
-G_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*, gconstpointer, gsize);
-G_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*, gpointer, gsize);
+
+G_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*);
+G_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpointer, gsize);
+
+G_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*, JMessage*);
+G_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
 
 #endif

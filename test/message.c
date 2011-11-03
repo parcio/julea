@@ -53,9 +53,6 @@ test_message_header (void)
 	message = j_message_new(42, J_MESSAGE_OPERATION_READ, 23);
 	g_assert(message != NULL);
 
-	g_assert(j_message_data(message) != NULL);
-	g_assert_cmpuint(j_message_length(message), ==, 42 + sizeof(JMessageHeader));
-
 	g_assert(j_message_operation_type(message) == J_MESSAGE_OPERATION_READ);
 	g_assert_cmpuint(j_message_operation_count(message), ==, 23);
 

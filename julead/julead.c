@@ -37,7 +37,6 @@
 
 #include <jconfiguration.h>
 #include <jmessage.h>
-#include <jmessage-reply.h>
 #include <jtrace.h>
 
 #include "backend/backend.h"
@@ -111,7 +110,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
-						JMessageReply* reply;
+						JMessage* reply;
 
 						item = j_message_get_string(message);
 
@@ -121,9 +120,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						jd_backend_delete(&bf, trace);
 
-						reply = j_message_reply_new(message, 0);
-						j_message_reply_write(reply, output);
-						j_message_reply_free(reply);
+						reply = j_message_new_reply(message, 0);
+						j_message_write(reply, output);
+						j_message_free(reply);
 
 						jd_backend_close(&bf, trace);
 					}
@@ -132,10 +131,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_READ:
 				g_printerr("read_op\n");
 				{
-					JMessageReply* reply;
+					JMessage* reply;
 					gchar* buf;
 
-					/* FIXME allow different items? */
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
@@ -159,11 +157,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_trace_counter(trace, "julead_read", bytes_read);
 
 						// FIXME one big reply
-						reply = j_message_reply_new(message, bytes_read);
-						j_message_reply_write(reply, output);
+						reply = j_message_new_reply(message, sizeof(guint64));
+						j_message_append_8(reply, &bytes_read);
+						j_message_write(reply, output);
+						j_message_free(reply);
+
 						g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
 						j_trace_counter(trace, "julead_sent", bytes_read);
-						j_message_reply_free(reply);
 					}
 
 					jd_backend_close(&bf, trace);
@@ -174,7 +174,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_SYNC:
 				g_printerr("sync_op\n");
 				{
-					JMessageReply* reply;
+					JMessage* reply;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -184,11 +184,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_open(&bf, store, collection, item, trace);
 					jd_backend_sync(&bf, trace);
-					reply = j_message_reply_new(message, 0);
-					j_message_reply_write(reply, output);
+					reply = j_message_new_reply(message, 0);
+					j_message_write(reply, output);
 					jd_backend_close(&bf, trace);
 
-					j_message_reply_free(reply);
+					j_message_free(reply);
 				}
 				break;
 			case J_MESSAGE_OPERATION_WRITE:
@@ -227,6 +227,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_free(buf);
 				}
 				break;
+			case J_MESSAGE_OPERATION_REPLY:
 			default:
 				g_warn_if_reached();
 				break;

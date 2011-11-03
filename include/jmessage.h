@@ -53,6 +53,7 @@ enum JMessageOperationType
 	J_MESSAGE_OPERATION_CREATE,
 	J_MESSAGE_OPERATION_DELETE,
 	J_MESSAGE_OPERATION_READ,
+	J_MESSAGE_OPERATION_REPLY,
 	J_MESSAGE_OPERATION_SYNC,
 	J_MESSAGE_OPERATION_WRITE
 };
@@ -63,6 +64,7 @@ typedef enum JMessageOperationType JMessageOperationType;
 #include <gio/gio.h>
 
 JMessage* j_message_new (gsize, JMessageOperationType, guint32);
+JMessage* j_message_new_reply (JMessage*, gsize);
 void j_message_free (JMessage*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
@@ -76,9 +78,9 @@ gint64 j_message_get_8 (JMessage*);
 gchar const* j_message_get_string (JMessage*);
 
 gboolean j_message_read (JMessage*, GInputStream*);
+gboolean j_message_read_reply (JMessage*, JMessage*, GInputStream*);
+gboolean j_message_write (JMessage*, GOutputStream*);
 
-gconstpointer j_message_data (JMessage*);
-gsize j_message_length (JMessage*);
 guint32 j_message_id (JMessage*);
 JMessageOperationType j_message_operation_type (JMessage*);
 guint32 j_message_operation_count (JMessage*);

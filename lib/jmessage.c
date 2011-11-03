@@ -66,6 +66,27 @@ struct JMessage
 #pragma pack()
 
 /**
+ * Returns the message's length.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message The message.
+ *
+ * \return The message's length.
+ **/
+static
+gsize
+j_message_length (JMessage* message)
+{
+	return GUINT32_FROM_LE(message->header.length);
+}
+
+/**
  * Creates a new message.
  *
  * \author Michael Kuhn
@@ -97,6 +118,36 @@ j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
 	message->header.op_count = GUINT32_TO_LE(op_count);
 
 	return message;
+}
+
+/**
+ * Creates a new reply message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A new message. Should be freed with j_message_free().
+ **/
+JMessage*
+j_message_new_reply (JMessage* message, gsize length)
+{
+	JMessage* reply;
+	guint32 real_length;
+
+	real_length = sizeof(JMessageHeader) + length;
+
+	reply = g_malloc(sizeof(gchar*) + real_length);
+	reply->current = reply->data;
+	reply->header.length = GUINT32_TO_LE(real_length);
+	reply->header.id = message->header.id;
+	reply->header.op_type = GUINT32_TO_LE(J_MESSAGE_OPERATION_REPLY);
+	reply->header.op_count = message->header.op_count;
+
+	return reply;
 }
 
 /**
@@ -135,7 +186,7 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 {
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(message->current + 1 <= (gchar const*)j_message_data(message) + j_message_length(message), FALSE);
+	g_return_val_if_fail(message->current + 1 <= (gchar const*)&(message->header) + j_message_length(message), FALSE);
 
 	*(message->current) = *((gchar const*)data);
 	message->current += 1;
@@ -162,7 +213,7 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 {
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(message->current + 4 <= (gchar const*)j_message_data(message) + j_message_length(message), FALSE);
+	g_return_val_if_fail(message->current + 4 <= (gchar const*)&(message->header) + j_message_length(message), FALSE);
 
 	*((gint32*)(message->current)) = GINT32_TO_LE(*((gint32 const*)data));
 	message->current += 4;
@@ -189,7 +240,7 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 {
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(message->current + 8 <= (gchar const*)j_message_data(message) + j_message_length(message), FALSE);
+	g_return_val_if_fail(message->current + 8 <= (gchar const*)&(message->header) + j_message_length(message), FALSE);
 
 	*((gint64*)(message->current)) = GINT64_TO_LE(*((gint64 const*)data));
 	message->current += 8;
@@ -219,7 +270,7 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 {
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(message->current + length <= (gchar const*)j_message_data(message) + j_message_length(message), FALSE);
+	g_return_val_if_fail(message->current + length <= (gchar const*)&(message->header) + j_message_length(message), FALSE);
 
 	memcpy(message->current, data, length);
 	message->current += length;
@@ -245,7 +296,7 @@ j_message_get_1 (JMessage* message)
 	gchar ret;
 
 	g_return_val_if_fail(message != NULL, '\0');
-	g_return_val_if_fail(message->current + 1 <= (gchar const*)j_message_data(message) + j_message_length(message), '\0');
+	g_return_val_if_fail(message->current + 1 <= (gchar const*)&(message->header) + j_message_length(message), '\0');
 
 	ret = *((gchar const*)(message->current));
 	message->current += 1;
@@ -272,7 +323,7 @@ j_message_get_4 (JMessage* message)
 	gint32 ret;
 
 	g_return_val_if_fail(message != NULL, 0);
-	g_return_val_if_fail(message->current + 4 <= (gchar const*)j_message_data(message) + j_message_length(message), 0);
+	g_return_val_if_fail(message->current + 4 <= (gchar const*)&(message->header) + j_message_length(message), 0);
 
 	ret = GINT32_FROM_LE(*((gint32 const*)(message->current)));
 	message->current += 4;
@@ -299,7 +350,7 @@ j_message_get_8 (JMessage* message)
 	gint64 ret;
 
 	g_return_val_if_fail(message != NULL, 0);
-	g_return_val_if_fail(message->current + 8 <= (gchar const*)j_message_data(message) + j_message_length(message), 0);
+	g_return_val_if_fail(message->current + 8 <= (gchar const*)&(message->header) + j_message_length(message), 0);
 
 	ret = GINT64_FROM_LE(*((gint64 const*)(message->current)));
 	message->current += 8;
@@ -378,7 +429,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 }
 
 /**
- * Returns the message's data.
+ * Reads a reply from the network.
  *
  * \author Michael Kuhn
  *
@@ -386,19 +437,31 @@ j_message_read (JMessage* message, GInputStream* stream)
  * \endcode
  *
  * \param message The message.
+ * \parem stream  The network stream.
  *
- * \return The message's data.
+ * \return TRUE on success, FALSE if an error occurred.
  **/
-gconstpointer
-j_message_data (JMessage* message)
+gboolean
+j_message_read_reply (JMessage* reply, JMessage* message, GInputStream* stream)
 {
-	g_return_val_if_fail(message != NULL, NULL);
+	g_return_val_if_fail(reply != NULL, FALSE);
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(stream != NULL, FALSE);
 
-	return &(message->header);
+	g_return_val_if_fail(j_message_operation_type(reply) == J_MESSAGE_OPERATION_REPLY, FALSE);
+
+	if (j_message_read(reply, stream))
+	{
+		g_return_val_if_fail(reply->header.id == message->header.id, FALSE);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 /**
- * Returns the message's length.
+ * Writes a message to the network.
  *
  * \author Michael Kuhn
  *
@@ -406,15 +469,31 @@ j_message_data (JMessage* message)
  * \endcode
  *
  * \param message The message.
+ * \parem stream  The network stream.
  *
- * \return The message's length.
+ * \return TRUE on success, FALSE if an error occurred.
  **/
-gsize
-j_message_length (JMessage* message)
+gboolean
+j_message_write (JMessage* message, GOutputStream* stream)
 {
-	g_return_val_if_fail(message != NULL, 0);
+	gsize bytes_written;
 
-	return GUINT32_FROM_LE(message->header.length);
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(stream != NULL, FALSE);
+
+	if (!g_output_stream_write_all(stream, &(message->header), j_message_length(message), &bytes_written, NULL, NULL))
+	{
+		return FALSE;
+	}
+
+	g_printerr("write_message %" G_GSIZE_FORMAT "\n", bytes_written);
+
+	if (bytes_written == 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /**
