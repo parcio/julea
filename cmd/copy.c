@@ -202,6 +202,8 @@ j_cmd_copy (gchar const** arguments)
 
 	j_operation_free(operation);
 
+	g_free(buffer);
+
 end:
 	for (i = 0; i <= 1; i++)
 	{

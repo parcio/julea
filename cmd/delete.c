@@ -30,7 +30,7 @@
 #include <juri.h>
 
 gboolean
-j_cmd_remove (gchar const** arguments)
+j_cmd_delete (gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	JOperation* operation;

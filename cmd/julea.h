@@ -39,6 +39,6 @@ gboolean j_cmd_error_last (JURI*);
 
 gboolean j_cmd_create (gchar const**);
 gboolean j_cmd_copy (gchar const**);
+gboolean j_cmd_delete (gchar const**);
 gboolean j_cmd_list (gchar const**);
-gboolean j_cmd_remove (gchar const**);
 gboolean j_cmd_status (gchar const**);

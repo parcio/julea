@@ -127,13 +127,13 @@ main (int argc, char** argv)
 	{
 		success = j_cmd_create(arguments);
 	}
+	else if (g_strcmp0(command, "delete") == 0)
+	{
+		success = j_cmd_delete(arguments);
+	}
 	else if (g_strcmp0(command, "list") == 0)
 	{
 		success = j_cmd_list(arguments);
-	}
-	else if (g_strcmp0(command, "remove") == 0)
-	{
-		success = j_cmd_remove(arguments);
 	}
 	else if (g_strcmp0(command, "status") == 0)
 	{
