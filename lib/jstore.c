@@ -31,17 +31,17 @@
 
 #include <glib.h>
 
-#include "jstore.h"
-#include "jstore-internal.h"
+#include <jstore.h>
+#include <jstore-internal.h>
 
-#include "jcollection.h"
-#include "jcollection-internal.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
-#include "jlist.h"
-#include "jlist-iterator.h"
-#include "joperation.h"
-#include "joperation-internal.h"
+#include <jcollection.h>
+#include <jcollection-internal.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
+#include <jlist.h>
+#include <jlist-iterator.h>
+#include <joperation.h>
+#include <joperation-internal.h>
 
 /**
  * \defgroup JStore Store

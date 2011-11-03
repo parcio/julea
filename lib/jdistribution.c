@@ -31,10 +31,10 @@
 
 #include <glib.h>
 
-#include "jdistribution.h"
+#include <jdistribution.h>
 
-#include "jcommon.h"
-#include "jconfiguration.h"
+#include <jcommon.h>
+#include <jconfiguration-internal.h>
 
 /**
  * \defgroup JDistribution Distribution

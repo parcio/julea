@@ -32,13 +32,13 @@
 #ifndef H_LIST
 #define H_LIST
 
+#include <glib.h>
+
 struct JList;
 
 typedef struct JList JList;
 
 typedef void (*JListFreeFunc) (gpointer);
-
-#include <glib.h>
 
 JList* j_list_new (JListFreeFunc);
 JList* j_list_ref (JList*);

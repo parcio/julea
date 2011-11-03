@@ -34,11 +34,11 @@
 
 #include <glib.h>
 
-#include <mongo.h>
-
 #include <jconnection.h>
 
 #include <jmessage.h>
+
+#include <mongo.h>
 
 G_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
 

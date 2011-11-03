@@ -32,22 +32,22 @@
 #ifndef H_CONNECTION
 #define H_CONNECTION
 
+#include <glib.h>
+
 #define J_CONNECTION_ERROR j_connection_error_quark()
 
-typedef enum
+enum JConnectionError
 {
 	J_CONNECTION_ERROR_FAILED
-}
-JConnectionError;
+};
+
+typedef enum JConnectionError JConnectionError;
 
 struct JConnection;
 
 typedef struct JConnection JConnection;
 
-#include <glib.h>
-
-#include <jconfiguration.h>
-#include <jstore.h>
+#include <jconfiguration-internal.h>
 
 GQuark j_connection_error_quark (void);
 

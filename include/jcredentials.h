@@ -32,11 +32,11 @@
 #ifndef H_CREDENTIALS
 #define H_CREDENTIALS
 
+#include <glib.h>
+
 struct JCredentials;
 
 typedef struct JCredentials JCredentials;
-
-#include <glib.h>
 
 JCredentials* j_credentials_new (void);
 JCredentials* j_credentials_ref (JCredentials*);

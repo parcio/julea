@@ -34,8 +34,6 @@
 
 #include <glib.h>
 
-#include <jlist.h>
-
 /**
  * A JList element.
  **/
@@ -52,6 +50,8 @@ struct JListElement
 };
 
 typedef struct JListElement JListElement;
+
+#include <jlist.h>
 
 G_GNUC_INTERNAL JListElement* j_list_head (JList*);
 

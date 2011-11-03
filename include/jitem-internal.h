@@ -34,11 +34,11 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <jitem.h>
 
 #include <jcollection.h>
+
+#include <bson.h>
 
 G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson const*);
 

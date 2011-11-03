@@ -35,12 +35,12 @@
 
 #include <mongo.h>
 
-#include "jconfiguration.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
+#include <jconfiguration-internal.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
 
-#include "jcommon.h"
-#include "jmessage.h"
+#include <jcommon.h>
+#include <jmessage.h>
 
 /**
  * \defgroup JConnection Connection

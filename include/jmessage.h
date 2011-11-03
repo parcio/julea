@@ -32,20 +32,7 @@
 #ifndef H_MESSAGE
 #define H_MESSAGE
 
-#pragma pack(4)
-struct JMessageHeader
-{
-	guint32 length;
-	guint32 id;
-	guint32 op_type;
-	guint32 op_count;
-};
-#pragma pack()
-
-struct JMessage;
-
-typedef struct JMessage JMessage;
-typedef struct JMessageHeader JMessageHeader;
+#include <glib.h>
 
 enum JMessageOperationType
 {
@@ -60,7 +47,22 @@ enum JMessageOperationType
 
 typedef enum JMessageOperationType JMessageOperationType;
 
-#include <glib.h>
+#pragma pack(4)
+struct JMessageHeader
+{
+	guint32 length;
+	guint32 id;
+	guint32 op_type;
+	guint32 op_count;
+};
+#pragma pack()
+
+typedef struct JMessageHeader JMessageHeader;
+
+struct JMessage;
+
+typedef struct JMessage JMessage;
+
 #include <gio/gio.h>
 
 JMessage* j_message_new (gsize, JMessageOperationType, guint32);

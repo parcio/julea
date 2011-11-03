@@ -32,6 +32,8 @@
 #ifndef H_TRACE
 #define H_TRACE
 
+#include <glib.h>
+
 enum JTraceFileOperation
 {
 	J_TRACE_FILE_CLOSE,
@@ -53,8 +55,6 @@ typedef struct JTrace JTrace;
 struct JTraceFile;
 
 typedef struct JTraceFile JTraceFile;
-
-#include <glib.h>
 
 void j_trace_init (gchar const*);
 void j_trace_fini (void);

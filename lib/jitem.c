@@ -36,21 +36,21 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "jitem.h"
-#include "jitem-internal.h"
+#include <jitem.h>
+#include <jitem-internal.h>
 
-#include "jcommon.h"
-#include "jcollection.h"
-#include "jcollection-internal.h"
-#include "jconnection-internal.h"
-#include "jdistribution.h"
-#include "jlist.h"
-#include "jlist-iterator.h"
-#include "jmessage.h"
-#include "joperation.h"
-#include "joperation-internal.h"
-#include "jsemantics.h"
-#include "jtrace.h"
+#include <jcommon.h>
+#include <jcollection.h>
+#include <jcollection-internal.h>
+#include <jconnection-internal.h>
+#include <jdistribution.h>
+#include <jlist.h>
+#include <jlist-iterator.h>
+#include <jmessage.h>
+#include <joperation.h>
+#include <joperation-internal.h>
+#include <jsemantics.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JItem Item

@@ -34,14 +34,14 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "jstore-iterator.h"
+#include <jstore-iterator.h>
 
-#include "jcollection.h"
-#include "jcollection-internal.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
-#include "jstore.h"
-#include "jstore-internal.h"
+#include <jcollection.h>
+#include <jcollection-internal.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
+#include <jstore.h>
+#include <jstore-internal.h>
 
 /**
  * \defgroup JStoreIterator Store Iterator

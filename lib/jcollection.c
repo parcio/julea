@@ -34,22 +34,22 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "jcollection.h"
-#include "jcollection-internal.h"
+#include <jcollection.h>
+#include <jcollection-internal.h>
 
-#include "jcommon.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
-#include "jitem.h"
-#include "jitem-internal.h"
-#include "jlist.h"
-#include "jlist-iterator.h"
-#include "joperation.h"
-#include "joperation-internal.h"
-#include "jsemantics.h"
-#include "jstore.h"
-#include "jstore-internal.h"
-#include "jtrace.h"
+#include <jcommon.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
+#include <jitem.h>
+#include <jitem-internal.h>
+#include <jlist.h>
+#include <jlist-iterator.h>
+#include <joperation.h>
+#include <joperation-internal.h>
+#include <jsemantics.h>
+#include <jstore.h>
+#include <jstore-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCollection Collection

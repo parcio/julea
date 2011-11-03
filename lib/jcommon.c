@@ -34,20 +34,20 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "jcommon.h"
-#include "jcommon-internal.h"
+#include <jcommon.h>
+#include <jcommon-internal.h>
 
-#include "jbackground-operation-internal.h"
-#include "jconfiguration.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
-#include "jlist.h"
-#include "jlist-iterator.h"
-#include "joperation.h"
-#include "joperation-internal.h"
-#include "jstore.h"
-#include "jstore-internal.h"
-#include "jtrace.h"
+#include <jbackground-operation-internal.h>
+#include <jconfiguration-internal.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
+#include <jlist.h>
+#include <jlist-iterator.h>
+#include <joperation.h>
+#include <joperation-internal.h>
+#include <jstore.h>
+#include <jstore-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCommon Common

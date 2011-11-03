@@ -32,11 +32,11 @@
 #ifndef H_LIST_ITERATOR
 #define H_LIST_ITERATOR
 
+#include <glib.h>
+
 struct JListIterator;
 
 typedef struct JListIterator JListIterator;
-
-#include <glib.h>
 
 #include <jlist.h>
 

@@ -32,9 +32,7 @@
 #ifndef H_SEMANTICS
 #define H_SEMANTICS
 
-struct JSemantics;
-
-typedef struct JSemantics JSemantics;
+#include <glib.h>
 
 enum JSemanticsType
 {
@@ -72,6 +70,10 @@ enum
 {
 	J_SEMANTICS_SECURITY_STRICT
 };
+
+struct JSemantics;
+
+typedef struct JSemantics JSemantics;
 
 JSemantics* j_semantics_new (void);
 JSemantics* j_semantics_ref (JSemantics*);

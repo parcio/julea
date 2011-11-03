@@ -32,6 +32,8 @@
 #ifndef H_ITEM
 #define H_ITEM
 
+#include <glib.h>
+
 enum JItemStatusFlags
 {
 	J_ITEM_STATUS_NONE              = 0,
@@ -45,9 +47,6 @@ struct JItem;
 
 typedef struct JItem JItem;
 
-#include <glib.h>
-
-#include <jcollection.h>
 #include <joperation.h>
 #include <jsemantics.h>
 

@@ -31,8 +31,8 @@
 
 #include <glib.h>
 
-#include "jlist.h"
-#include "jlist-internal.h"
+#include <jlist.h>
+#include <jlist-internal.h>
 
 /**
  * \defgroup JList List

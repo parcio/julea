@@ -32,17 +32,15 @@
 #ifndef H_STORE
 #define H_STORE
 
+#include <glib.h>
+
 struct JStore;
 
 typedef struct JStore JStore;
 
-#include <glib.h>
-
 #include <jcollection.h>
 #include <jconnection.h>
-#include <jlist.h>
 #include <joperation.h>
-#include <jstore.h>
 
 JStore* j_store_new (gchar const*);
 JStore* j_store_ref (JStore*);

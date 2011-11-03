@@ -32,11 +32,11 @@
 #ifndef H_COLLECTION
 #define H_COLLECTION
 
+#include <glib.h>
+
 struct JCollection;
 
 typedef struct JCollection JCollection;
-
-#include <glib.h>
 
 #include <jitem.h>
 #include <jlist.h>

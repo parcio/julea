@@ -34,14 +34,14 @@
 #include <bson.h>
 #include <mongo.h>
 
-#include "jcollection-iterator.h"
+#include <jcollection-iterator.h>
 
-#include "jcollection.h"
-#include "jcollection-internal.h"
-#include "jconnection.h"
-#include "jconnection-internal.h"
-#include "jitem.h"
-#include "jitem-internal.h"
+#include <jcollection.h>
+#include <jcollection-internal.h>
+#include <jconnection.h>
+#include <jconnection-internal.h>
+#include <jitem.h>
+#include <jitem-internal.h>
 
 /**
  * \defgroup JCollectionIterator Collection Iterator

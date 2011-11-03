@@ -40,7 +40,7 @@
 #include <otf.h>
 #endif
 
-#include "jtrace.h"
+#include <jtrace.h>
 
 /**
  * \defgroup JTrace Trace

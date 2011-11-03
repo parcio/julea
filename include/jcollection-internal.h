@@ -34,11 +34,12 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <jcollection.h>
 
+#include <jlist.h>
 #include <jstore.h>
+
+#include <bson.h>
 
 G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
 

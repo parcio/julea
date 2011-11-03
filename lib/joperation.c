@@ -31,16 +31,16 @@
 
 #include <glib.h>
 
-#include "joperation.h"
-#include "joperation-internal.h"
+#include <joperation.h>
+#include <joperation-internal.h>
 
-#include "jbackground-operation-internal.h"
-#include "jcollection-internal.h"
-#include "jcommon-internal.h"
-#include "jitem-internal.h"
-#include "jlist.h"
-#include "jlist-iterator.h"
-#include "jstore-internal.h"
+#include <jbackground-operation-internal.h>
+#include <jcollection-internal.h>
+#include <jcommon-internal.h>
+#include <jitem-internal.h>
+#include <jlist.h>
+#include <jlist-iterator.h>
+#include <jstore-internal.h>
 
 /**
  * \defgroup JOperation Operation

@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#include "jbackground-operation-internal.h"
+#include <jbackground-operation-internal.h>
 
 /**
  * \defgroup JBackgroundOperation Background Operation

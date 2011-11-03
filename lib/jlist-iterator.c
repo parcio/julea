@@ -31,10 +31,10 @@
 
 #include <glib.h>
 
-#include "jlist-iterator.h"
+#include <jlist-iterator.h>
 
-#include "jlist.h"
-#include "jlist-internal.h"
+#include <jlist.h>
+#include <jlist-internal.h>
 
 /**
  * \defgroup JListIterator List Iterator

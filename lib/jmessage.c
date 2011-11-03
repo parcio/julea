@@ -34,7 +34,7 @@
 
 #include <string.h>
 
-#include "jmessage.h"
+#include <jmessage.h>
 
 /**
  * \defgroup JMessage Message
