@@ -65,6 +65,7 @@ struct JOperationAsync
 {
 	JOperation* operation;
 	JOperationCompletedFunc func;
+	gpointer user_data;
 };
 
 typedef struct JOperationAsync JOperationAsync;
@@ -79,7 +80,7 @@ j_operation_background_operation (gpointer data)
 
 	if (async->func != NULL)
 	{
-		(*async->func)(async->operation);
+		(*async->func)(async->operation, async->user_data);
 	}
 
 	g_slice_free(JOperationAsync, async);
@@ -330,7 +331,7 @@ j_operation_execute (JOperation* operation)
  * \return TRUE on success, FALSE if an error occured.
  **/
 void
-j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func)
+j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, gpointer user_data)
 {
 	JOperationAsync* async;
 
@@ -339,6 +340,7 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func)
 	async = g_slice_new(JOperationAsync);
 	async->operation = operation;
 	async->func = func;
+	async->user_data = user_data;
 
 	operation->background_operation = j_background_operation_new(j_operation_background_operation, async);
 }

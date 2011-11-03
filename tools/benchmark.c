@@ -32,9 +32,9 @@
 
 static
 void
-on_operation_completed (JOperation* operation)
+on_operation_completed (JOperation* operation, gpointer data)
 {
-	g_print("Operation %p completed!\n", (gpointer)operation);
+	g_print("Operation %p completed! (user_data=%p)\n", (gpointer)operation, data);
 }
 
 int
@@ -156,7 +156,7 @@ main (int argc, char** argv)
 				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
 				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
 
-				j_operation_execute_async(operation, on_operation_completed);
+				j_operation_execute_async(operation, on_operation_completed, NULL);
 				j_operation_wait(operation);
 
 				j_item_get_status(item, J_ITEM_STATUS_SIZE, operation);
