@@ -42,13 +42,13 @@
 enum JOperationType
 {
 	J_OPERATION_NONE,
-	J_OPERATION_ADD_STORE,
+	J_OPERATION_CREATE_STORE,
 	J_OPERATION_GET_STORE,
 	J_OPERATION_DELETE_STORE,
-	J_OPERATION_STORE_ADD_COLLECTION,
+	J_OPERATION_STORE_CREATE_COLLECTION,
 	J_OPERATION_STORE_DELETE_COLLECTION,
 	J_OPERATION_STORE_GET_COLLECTION,
-	J_OPERATION_COLLECTION_ADD_ITEM,
+	J_OPERATION_COLLECTION_CREATE_ITEM,
 	J_OPERATION_COLLECTION_GET_ITEM,
 	J_OPERATION_COLLECTION_DELETE_ITEM,
 	J_OPERATION_ITEM_GET_STATUS,
@@ -77,7 +77,7 @@ struct JOperationPart
 			JConnection* connection;
 			JStore* store;
 		}
-		add_store;
+		create_store;
 
 		struct
 		{
@@ -99,7 +99,7 @@ struct JOperationPart
 			JStore* store;
 			JCollection* collection;
 		}
-		store_add_collection;
+		store_create_collection;
 
 		struct
 		{
@@ -121,7 +121,7 @@ struct JOperationPart
 			JCollection* collection;
 			JItem* item;
 		}
-		collection_add_item;
+		collection_create_item;
 
 		struct
 		{

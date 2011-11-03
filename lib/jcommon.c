@@ -181,7 +181,7 @@ j_trace (void)
 }
 
 void
-j_add_store (JStore* store, JOperation* operation)
+j_create_store (JStore* store, JOperation* operation)
 {
 	JCommon* common;
 	JOperationPart* part;
@@ -191,9 +191,9 @@ j_add_store (JStore* store, JOperation* operation)
 	common = g_atomic_pointer_get(&j_common);
 
 	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ADD_STORE;
-	part->u.add_store.connection = j_connection_ref(common->connection);
-	part->u.add_store.store = j_store_ref(store);
+	part->type = J_OPERATION_CREATE_STORE;
+	part->u.create_store.connection = j_connection_ref(common->connection);
+	part->u.create_store.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
 }
@@ -239,7 +239,7 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 /* Internal */
 
 void
-j_add_store_internal (JList* parts)
+j_create_store_internal (JList* parts)
 {
 	JListIterator* it;
 
@@ -255,7 +255,7 @@ j_add_store_internal (JList* parts)
 	{
 		JOperationPart* part = j_list_iterator_get(it);
 		JConnection* connection = part->u.delete_store.connection;
-		JStore* store = part->u.add_store.store;
+		JStore* store = part->u.create_store.store;
 
 		j_store_set_connection(store, connection);
 		//store = j_store_new();

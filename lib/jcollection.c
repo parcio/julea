@@ -295,7 +295,7 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
 }
 
 /**
- * Adds an item to a collection.
+ * Creates an item in a collection.
  *
  * \author Michael Kuhn
  *
@@ -307,7 +307,7 @@ j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
  * \param operation  An operation.
  **/
 void
-j_collection_add_item (JCollection* collection, JItem* item, JOperation* operation)
+j_collection_create_item (JCollection* collection, JItem* item, JOperation* operation)
 {
 	JOperationPart* part;
 
@@ -317,9 +317,9 @@ j_collection_add_item (JCollection* collection, JItem* item, JOperation* operati
 	j_trace_enter(j_trace(), G_STRFUNC);
 
 	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_COLLECTION_ADD_ITEM;
-	part->u.collection_add_item.collection = j_collection_ref(collection);
-	part->u.collection_add_item.item = j_item_ref(item);
+	part->type = J_OPERATION_COLLECTION_CREATE_ITEM;
+	part->u.collection_create_item.collection = j_collection_ref(collection);
+	part->u.collection_create_item.item = j_item_ref(item);
 
 	j_operation_add(operation, part);
 
@@ -612,7 +612,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 }
 
 void
-j_collection_add_item_internal (JList* parts)
+j_collection_create_item_internal (JList* parts)
 {
 	JCollection* collection;
 	JListIterator* it;
@@ -639,10 +639,10 @@ j_collection_add_item_internal (JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JItem* item = part->u.collection_add_item.item;
+		JItem* item = part->u.collection_create_item.item;
 		bson* b;
 
-		collection = part->u.collection_add_item.collection;
+		collection = part->u.collection_create_item.collection;
 		j_item_set_collection(item, collection);
 		b = j_item_serialize(item);
 

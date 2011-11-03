@@ -90,7 +90,7 @@ j_cmd_create (gchar const** arguments)
 		JItem* item;
 
 		item = j_item_new(j_uri_get_item_name(uri));
-		j_collection_add_item(j_uri_get_collection(uri), item, operation);
+		j_collection_create_item(j_uri_get_collection(uri), item, operation);
 		j_operation_execute(operation);
 	}
 	else if (j_uri_get_store(uri) != NULL)
@@ -98,7 +98,7 @@ j_cmd_create (gchar const** arguments)
 		JCollection* collection;
 
 		collection = j_collection_new(j_uri_get_collection_name(uri));
-		j_store_add_collection(j_uri_get_store(uri), collection, operation);
+		j_store_create_collection(j_uri_get_store(uri), collection, operation);
 		j_operation_execute(operation);
 	}
 	else
@@ -106,7 +106,7 @@ j_cmd_create (gchar const** arguments)
 		JStore* store;
 
 		store = j_store_new(j_uri_get_store_name(uri));
-		j_add_store(store, operation);
+		j_create_store(store, operation);
 		j_operation_execute(operation);
 	}
 

@@ -105,7 +105,7 @@ j_cmd_copy (gchar const** arguments)
 				operation = j_operation_new();
 
 				item = j_item_new(j_uri_get_item_name(uri[i]));
-				j_collection_add_item(j_uri_get_collection(uri[i]), item, operation);
+				j_collection_create_item(j_uri_get_collection(uri[i]), item, operation);
 				j_item_unref(item);
 
 				j_operation_execute(operation);

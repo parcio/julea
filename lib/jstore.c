@@ -161,7 +161,7 @@ j_store_get_connection (JStore* store)
 }
 
 /**
- * Adds a collection to a store.
+ * Creates a collection in a store.
  *
  * \author Michael Kuhn
  *
@@ -173,7 +173,7 @@ j_store_get_connection (JStore* store)
  * \param operation  An operation.
  **/
 void
-j_store_add_collection (JStore* store, JCollection* collection, JOperation* operation)
+j_store_create_collection (JStore* store, JCollection* collection, JOperation* operation)
 {
 	JOperationPart* part;
 
@@ -181,9 +181,9 @@ j_store_add_collection (JStore* store, JCollection* collection, JOperation* oper
 	g_return_if_fail(collection != NULL);
 
 	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_STORE_ADD_COLLECTION;
-	part->u.store_add_collection.store = j_store_ref(store);
-	part->u.store_add_collection.collection = j_collection_ref(collection);
+	part->type = J_OPERATION_STORE_CREATE_COLLECTION;
+	part->u.store_create_collection.store = j_store_ref(store);
+	part->u.store_create_collection.collection = j_collection_ref(collection);
 
 	j_operation_add(operation, part);
 }
@@ -277,7 +277,7 @@ j_store_set_connection (JStore* store, JConnection* connection)
 }
 
 void
-j_store_add_collection_internal (JList* parts)
+j_store_create_collection_internal (JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -302,10 +302,10 @@ j_store_add_collection_internal (JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.store_add_collection.collection;
+		JCollection* collection = part->u.store_create_collection.collection;
 		bson* b;
 
-		store = part->u.store_add_collection.store;
+		store = part->u.store_create_collection.store;
 		j_collection_set_store(collection, store);
 		b = j_collection_serialize(collection);
 

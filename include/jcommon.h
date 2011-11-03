@@ -50,7 +50,7 @@ gboolean j_is_initialized (void);
 JConfiguration* j_configuration (void);
 JTrace* j_trace (void);
 
-void j_add_store (JStore*, JOperation*);
+void j_create_store (JStore*, JOperation*);
 void j_delete_store (JStore*, JOperation*);
 void j_get_store (JStore**, gchar const*, JOperation*);
 

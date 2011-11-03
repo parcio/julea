@@ -36,7 +36,7 @@
 
 #include <jcommon.h>
 
-G_GNUC_INTERNAL void j_add_store_internal (JList*);
+G_GNUC_INTERNAL void j_create_store_internal (JList*);
 G_GNUC_INTERNAL void j_delete_store_internal (JList*);
 G_GNUC_INTERNAL void j_get_store_internal (JList*);
 

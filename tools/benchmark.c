@@ -57,7 +57,7 @@ main (int argc, char** argv)
 	operation = j_operation_new();
 
 	store = j_store_new("JULEA");
-	j_add_store(store, operation);
+	j_create_store(store, operation);
 
 	j_operation_execute(operation);
 
@@ -75,7 +75,7 @@ main (int argc, char** argv)
 
 		collection = j_collection_new(name);
 		j_collection_set_semantics(collection, semantics);
-		j_store_add_collection(store, collection, operation);
+		j_store_create_collection(store, collection, operation);
 
 		g_free(name);
 
@@ -89,7 +89,7 @@ main (int argc, char** argv)
 
 			item = j_item_new(name);
 			//j_item_set_semantics(item, semantics);
-			j_collection_add_item(collection, item, operation);
+			j_collection_create_item(collection, item, operation);
 			j_collection_delete_item(collection, item, delete_operation);
 			j_item_unref(item);
 

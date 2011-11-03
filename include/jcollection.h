@@ -53,7 +53,7 @@ gchar const* j_collection_get_name (JCollection*);
 JSemantics* j_collection_get_semantics (JCollection*);
 void j_collection_set_semantics (JCollection*, JSemantics*);
 
-void j_collection_add_item (JCollection*, JItem*, JOperation*);
+void j_collection_create_item (JCollection*, JItem*, JOperation*);
 void j_collection_delete_item (JCollection*, JItem*, JOperation*);
 void j_collection_get_item (JCollection*, JItem**, gchar const*, JItemStatusFlags, JOperation*);
 
