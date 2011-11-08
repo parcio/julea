@@ -33,12 +33,38 @@
 int
 jfs_getattr (char const* path, struct stat* stbuf)
 {
-	guint depth;
+	JURI* uri;
 	int ret = -ENOENT;
 
-	depth = jfs_path_depth(path);
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
 
-	if (depth < 3)
+	if (!j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+
+	if (j_uri_get_item(uri) != NULL)
+	{
+		JOperation* operation;
+
+		operation = j_operation_new();
+		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
+		j_operation_execute(operation);
+		j_operation_free(operation);
+
+		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+		stbuf->st_nlink = 1;
+		stbuf->st_uid = 0;
+		stbuf->st_gid = 0;
+		stbuf->st_size = j_item_get_size(j_uri_get_item(uri));
+		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = j_item_get_modification_time(j_uri_get_item(uri)) / G_USEC_PER_SEC;
+
+		ret = 0;
+	}
+	else
 	{
 		stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 		stbuf->st_nlink = 1;
@@ -49,9 +75,12 @@ jfs_getattr (char const* path, struct stat* stbuf)
 
 		ret = 0;
 	}
-	else if (depth == 3)
+
+end:
+	/* FIXME */
+	if (g_strcmp0(path, "/") == 0)
 	{
-		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+		stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 		stbuf->st_nlink = 1;
 		stbuf->st_uid = 0;
 		stbuf->st_gid = 0;
@@ -59,6 +88,11 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
 
 		ret = 0;
+	}
+
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
 	}
 
 	return ret;

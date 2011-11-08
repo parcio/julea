@@ -31,7 +31,36 @@
 
 int jfs_unlink (char const* path)
 {
-	gint ret = -ENOENT;
+	JOperation* operation;
+	JURI* uri;
+	int ret = -ENOENT;
+
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
+
+	if (!j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+
+	operation = j_operation_new();
+
+	if (j_uri_get_item(uri) != NULL)
+	{
+		ret = 0;
+		j_collection_delete_item(j_uri_get_collection(uri), j_uri_get_item(uri), operation);
+		j_operation_execute(operation);
+	}
+
+	j_operation_free(operation);
+
+end:
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
+	}
 
 	return ret;
 }

@@ -28,9 +28,6 @@
 #include "juleafs.h"
 
 #include <glib.h>
-#include <glib-object.h>
-
-#include <string.h>
 
 struct fuse_operations jfs_vtable = {
 	.access   = jfs_access,
@@ -50,112 +47,44 @@ struct fuse_operations jfs_vtable = {
 	.write    = jfs_write,
 };
 
-gchar**
-jfs_path_components (gchar const* path)
+JURI*
+jfs_get_uri (gchar const* path)
 {
-	return g_strsplit(path + 1, "/", 0);
+	JURI* uri;
+	gchar* new_path;
+
+	new_path = g_strconcat("julea://", path + 1, NULL);
+	uri = j_uri_new(new_path);
+	g_free(new_path);
+
+	return uri;
 }
 
-guint
-jfs_path_depth (gchar const* path)
+gboolean
+jfs_uri_last (JURI* uri)
 {
-	gchar const* c;
-	guint depth = 0;
+	gboolean ret = FALSE;
 
-	if (strcmp(path, "/") == 0)
+	if (j_uri_get_store(uri) == NULL && j_uri_get_store_name(uri) != NULL)
 	{
-		return 0;
+		ret = (j_uri_get_collection_name(uri) == NULL && j_uri_get_item_name(uri) == NULL);
+	}
+	else if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
+	{
+		ret = (j_uri_get_item_name(uri) == NULL);
+	}
+	else if (j_uri_get_item(uri) == NULL && j_uri_get_item_name(uri) != NULL)
+	{
+		ret = TRUE;
 	}
 
-	for (c = path; *c != '\0'; c++)
-	{
-		if (*c == '/')
-		{
-			depth++;
-		}
-	}
-
-	return depth;
-}
-
-guint
-jfs_path_parse (gchar const* path, JStore** store, JCollection** collection, JItem** item)
-{
-	JOperation* operation;
-	gchar** components;
-	guint depth;
-
-	*store = NULL;
-	*collection = NULL;
-	*item = NULL;
-
-	operation = j_operation_new();
-	depth = jfs_path_depth(path);
-	components = jfs_path_components(path);
-
-	if (depth > 0)
-	{
-		/* FIXME */
-		if (components[0][0] == '.')
-		{
-			goto end;
-		}
-
-		j_get_store(store, components[0], operation);
-		j_operation_execute(operation);
-
-		if (*store == NULL)
-		{
-			goto end;
-		}
-	}
-
-	if (depth > 1)
-	{
-		/* FIXME */
-		if (components[1][0] == '.')
-		{
-			goto end;
-		}
-
-		j_store_get_collection(*store, collection, components[1], operation);
-		j_operation_execute(operation);
-
-		if (*collection == NULL)
-		{
-			goto end;
-		}
-	}
-
-	if (depth > 2)
-	{
-		/* FIXME */
-		if (components[2][0] == '.')
-		{
-			goto end;
-		}
-
-		j_collection_get_item(*collection, item, components[2], J_ITEM_STATUS_NONE, operation);
-		j_operation_execute(operation);
-
-		if (*item == NULL)
-		{
-			goto end;
-		}
-	}
-
-end:
-	g_strfreev(components);
-
-	return depth;
+	return ret;
 }
 
 int
 main (int argc, char** argv)
 {
 	gint ret;
-
-	g_type_init();
 
 	if (!j_init(&argc, &argv))
 	{

@@ -33,48 +33,27 @@
 int
 jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
-	JCollection* collection = NULL;
-	JItem* item = NULL;
-	JStore* store = NULL;
-	guint depth;
+	JURI* uri;
 	int ret = -ENOENT;
 
-	depth = jfs_path_parse(path, &store, &collection, &item);
-
-	if (depth > 2)
+	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;
 	}
 
-	if (depth == 0)
+	if (!j_uri_get(uri, NULL))
 	{
-		filler(buf, "JULEA", NULL, 0);
-
-		ret = 0;
+		goto end;
 	}
-	else if (depth == 1)
+
+	if (j_uri_get_item(uri) != NULL)
 	{
-		JStoreIterator* siterator;
-
-		siterator = j_store_iterator_new(store);
-
-		while (j_store_iterator_next(siterator))
-		{
-			JCollection* c = j_store_iterator_get(siterator);
-
-			filler(buf, j_collection_get_name(c), NULL, 0);
-			j_collection_unref(c);
-		}
-
-		j_store_iterator_free(siterator);
-
-		ret = 0;
 	}
-	else if (depth == 2)
+	else if (j_uri_get_collection(uri) != NULL)
 	{
 		JCollectionIterator* citerator;
 
-		citerator = j_collection_iterator_new(collection, J_ITEM_STATUS_NONE);
+		citerator = j_collection_iterator_new(j_uri_get_collection(uri), J_ITEM_STATUS_NONE);
 
 		while (j_collection_iterator_next(citerator))
 		{
@@ -88,21 +67,43 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 
 		ret = 0;
 	}
+	else if (j_uri_get_store(uri) != NULL)
+	{
+		JStoreIterator* siterator;
+
+		siterator = j_store_iterator_new(j_uri_get_store(uri));
+
+		while (j_store_iterator_next(siterator))
+		{
+			JCollection* c = j_store_iterator_get(siterator);
+
+			filler(buf, j_collection_get_name(c), NULL, 0);
+			j_collection_unref(c);
+		}
+
+		j_store_iterator_free(siterator);
+
+		ret = 0;
+	}
+	else
+	{
+		filler(buf, "JULEA", NULL, 0);
+
+		ret = 0;
+	}
 
 end:
-	if (collection != NULL)
+	/* FIXME */
+	if (g_strcmp0(path, "/") == 0)
 	{
-		j_collection_unref(collection);
+		filler(buf, "JULEA", NULL, 0);
+
+		ret = 0;
 	}
 
-	if (store != NULL)
+	if (uri != NULL)
 	{
-		j_store_unref(store);
-	}
-
-	if (item != NULL)
-	{
-		j_item_unref(item);
+		j_uri_free(uri);
 	}
 
 	return ret;

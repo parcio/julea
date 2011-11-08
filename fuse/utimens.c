@@ -27,7 +27,39 @@
 
 #include "juleafs.h"
 
+#include <errno.h>
+
 int jfs_utimens (char const* path, const struct timespec ts[2])
 {
-	return 0;
+	JURI* uri;
+	int ret = -ENOENT;
+
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
+
+	if (!j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+
+	if (j_uri_get_item(uri) != NULL)
+	{
+		guint64 time_;
+
+		ret = 0;
+		time_ = (ts[1].tv_sec * G_USEC_PER_SEC) + (ts[1].tv_nsec / 1000);
+
+		/* FIXME */
+		j_item_set_modification_time(j_uri_get_item(uri), time_);
+	}
+
+end:
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
+	}
+
+	return ret;
 }

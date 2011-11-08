@@ -32,26 +32,26 @@
 int
 jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-	JCollection* collection = NULL;
-	JItem* item = NULL;
-	JStore* store = NULL;
-	guint depth;
+	JURI* uri;
 	guint64 bytes_read;
 	int ret = -ENOENT;
 
-	depth = jfs_path_parse(path, &store, &collection, &item);
-
-	if (depth != 3)
+	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;
 	}
 
-	if (item != NULL)
+	if (!j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+
+	if (j_uri_get_item(uri) != NULL)
 	{
 		JOperation* operation;
 
 		operation = j_operation_new();
-		j_item_read(item, buf, size, offset, &bytes_read, operation);
+		j_item_read(j_uri_get_item(uri), buf, size, offset, &bytes_read, operation);
 		j_operation_execute(operation);
 		j_operation_free(operation);
 
@@ -59,19 +59,9 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 	}
 
 end:
-	if (collection != NULL)
+	if (uri != NULL)
 	{
-		j_collection_unref(collection);
-	}
-
-	if (store != NULL)
-	{
-		j_store_unref(store);
-	}
-
-	if (item != NULL)
-	{
-		j_item_unref(item);
+		j_uri_free(uri);
 	}
 
 	return ret;

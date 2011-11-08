@@ -32,39 +32,31 @@
 int
 jfs_truncate (char const* path, off_t size)
 {
-	JCollection* collection = NULL;
-	JItem* item = NULL;
-	JStore* store = NULL;
-	guint depth;
+	JURI* uri;
 	int ret = -ENOENT;
 
-	depth = jfs_path_parse(path, &store, &collection, &item);
-
-	if (depth != 3)
+	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;
 	}
 
-	if (item != NULL)
+	if (!j_uri_get(uri, NULL))
 	{
-		/* FIXME */
+		goto end;
+	}
+
+	if (j_uri_get_item(uri) != NULL)
+	{
 		ret = 0;
+
+		/* FIXME */
+		j_item_set_size(j_uri_get_item(uri), size);
 	}
 
 end:
-	if (collection != NULL)
+	if (uri != NULL)
 	{
-		j_collection_unref(collection);
-	}
-
-	if (store != NULL)
-	{
-		j_store_unref(store);
-	}
-
-	if (item != NULL)
-	{
-		j_item_unref(item);
+		j_uri_free(uri);
 	}
 
 	return ret;

@@ -31,7 +31,42 @@
 
 int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 {
-	gint ret = -ENOENT;
+	JOperation* operation;
+	JURI* uri;
+	int ret = -ENOENT;
+
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
+
+	if (j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+	else if (!jfs_uri_last(uri))
+	{
+		goto end;
+	}
+
+	operation = j_operation_new();
+
+	if (j_uri_get_collection(uri) != NULL)
+	{
+		JItem* item;
+
+		item = j_item_new(j_uri_get_item_name(uri));
+		j_collection_create_item(j_uri_get_collection(uri), item, operation);
+		j_operation_execute(operation);
+	}
+
+	j_operation_free(operation);
+
+end:
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
+	}
 
 	return ret;
 }

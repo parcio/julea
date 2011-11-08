@@ -31,7 +31,43 @@
 
 int jfs_rmdir (char const* path)
 {
-	gint ret = -ENOENT;
+	JOperation* operation;
+	JURI* uri;
+	int ret = -ENOENT;
+
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
+
+	if (!j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+
+	operation = j_operation_new();
+
+	if (j_uri_get_item(uri) != NULL)
+	{
+	}
+	else if (j_uri_get_collection(uri) != NULL)
+	{
+		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), operation);
+		j_operation_execute(operation);
+	}
+	else if (j_uri_get_store(uri) != NULL)
+	{
+		j_delete_store(j_uri_get_store(uri), operation);
+		j_operation_execute(operation);
+	}
+
+	j_operation_free(operation);
+
+end:
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
+	}
 
 	return ret;
 }

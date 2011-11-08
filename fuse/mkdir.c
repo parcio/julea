@@ -31,7 +31,53 @@
 
 int jfs_mkdir(char const* path, mode_t mode)
 {
-	gint ret = -ENOENT;
+	JOperation* operation;
+	JURI* uri;
+	int ret = -ENOENT;
+
+	if ((uri = jfs_get_uri(path)) == NULL)
+	{
+		goto end;
+	}
+
+	if (j_uri_get(uri, NULL))
+	{
+		goto end;
+	}
+	else if (!jfs_uri_last(uri))
+	{
+		goto end;
+	}
+
+	operation = j_operation_new();
+
+	if (j_uri_get_collection(uri) != NULL)
+	{
+	}
+	else if (j_uri_get_store(uri) != NULL)
+	{
+		JCollection* collection;
+
+		collection = j_collection_new(j_uri_get_collection_name(uri));
+		j_store_create_collection(j_uri_get_store(uri), collection, operation);
+		j_operation_execute(operation);
+	}
+	else
+	{
+		JStore* store;
+
+		store = j_store_new(j_uri_get_store_name(uri));
+		j_create_store(store, operation);
+		j_operation_execute(operation);
+	}
+
+	j_operation_free(operation);
+
+end:
+	if (uri != NULL)
+	{
+		j_uri_free(uri);
+	}
 
 	return ret;
 }

@@ -29,9 +29,11 @@
 #define _XOPEN_SOURCE
 
 #include <fuse.h>
-#include <glib.h>
 
 #include <julea.h>
+#include <juri.h>
+
+#include <glib.h>
 
 extern JConnection* jfs_connection;
 
@@ -54,6 +56,5 @@ int jfs_unlink (char const*);
 int jfs_utimens (char const*, const struct timespec*);
 int jfs_write (char const*, char const*, size_t, off_t, struct fuse_file_info*);
 
-gchar** jfs_path_components (gchar const*);
-guint jfs_path_depth (gchar const*);
-guint jfs_path_parse (gchar const*, JStore**, JCollection**, JItem**);
+JURI* jfs_get_uri (gchar const*);
+gboolean jfs_uri_last (JURI*);

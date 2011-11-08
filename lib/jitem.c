@@ -435,9 +435,9 @@ void
 j_item_set_size (JItem* item, guint64 size)
 {
 	g_return_if_fail(item != NULL);
-	g_return_if_fail((item->status.flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
+	item->status.flags |= J_ITEM_STATUS_SIZE;
 	item->status.size = size;
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
@@ -481,9 +481,9 @@ void
 j_item_set_modification_time (JItem* item, gint64 modification_time)
 {
 	g_return_if_fail(item != NULL);
-	g_return_if_fail((item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
+	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.modification_time = modification_time;
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
