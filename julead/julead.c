@@ -98,7 +98,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						g_printerr("CREATE %s %s %s\n", store, collection, item);
 
-						jd_backend_create(store, collection, item, trace);
+						jd_backend_create(&bf, store, collection, item, trace);
+						jd_backend_close(&bf, trace);
 					}
 				}
 				break;

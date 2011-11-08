@@ -45,7 +45,7 @@ static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
 gboolean
-backend_create (gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
+backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item, JTrace* trace)
 {
 	gchar* parent;
 	gchar* path;
@@ -65,14 +65,8 @@ backend_create (gchar const* store, gchar const* collection, gchar const* item, 
 
 	j_trace_file_end(trace, path, J_TRACE_FILE_CREATE, 0, 0);
 
-	if (fd != -1)
-	{
-		j_trace_file_begin(trace, path, J_TRACE_FILE_CLOSE);
-		close(fd);
-		j_trace_file_end(trace, path, J_TRACE_FILE_CLOSE, 0, 0);
-	}
-
-	g_free(path);
+	bf->path = path;
+	bf->user_data = GINT_TO_POINTER(fd);
 
 	j_trace_leave(trace, G_STRFUNC);
 
