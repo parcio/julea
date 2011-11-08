@@ -180,8 +180,20 @@ j_operation_free (JOperation* operation)
  **/
 static
 void
-j_operation_execute_internal (JOperation* operation, JOperationType type, JList* list)
+j_operation_execute_internal (JOperation* operation, JList* list)
 {
+	JOperationPart* part;
+	JOperationType type;
+
+	part = j_list_get_first(list);
+
+	if (part == NULL)
+	{
+		return;
+	}
+
+	type = part->type;
+
 	switch (type)
 	{
 		case J_OPERATION_CREATE_STORE:
@@ -224,6 +236,8 @@ j_operation_execute_internal (JOperation* operation, JOperationType type, JList*
 		default:
 			g_warn_if_reached();
 	}
+
+	j_list_delete_all(list);
 }
 
 /**
@@ -244,6 +258,7 @@ j_operation_execute (JOperation* operation)
 	JList* same_list;
 	JListIterator* iterator;
 	JOperationType last_type;
+	gpointer last_key;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 
@@ -254,23 +269,24 @@ j_operation_execute (JOperation* operation)
 
 	iterator = j_list_iterator_new(operation->list);
 	same_list = j_list_new(NULL);
+	last_key = NULL;
 	last_type = J_OPERATION_NONE;
 
 	while (j_list_iterator_next(iterator))
 	{
 		JOperationPart* part = j_list_iterator_get(iterator);
 
-		if (part->type != last_type && last_type != J_OPERATION_NONE)
+		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
 		{
-			j_operation_execute_internal(operation, last_type, same_list);
-			j_list_delete_all(same_list);
+			j_operation_execute_internal(operation, same_list);
 		}
 
+		last_key = part->key;
 		last_type = part->type;
 		j_list_append(same_list, part);
 	}
 
-	j_operation_execute_internal(operation, last_type, same_list);
+	j_operation_execute_internal(operation, same_list);
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);

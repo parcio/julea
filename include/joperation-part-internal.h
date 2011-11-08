@@ -70,9 +70,8 @@ struct JOperationPart
 	 **/
 	JOperationType type;
 
+	gpointer key;
 	gboolean cached;
-
-	/* FIXME key? */
 
 	union
 	{

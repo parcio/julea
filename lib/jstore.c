@@ -156,6 +156,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JOperation* o
 	g_return_if_fail(collection != NULL);
 
 	part = j_operation_part_new(J_OPERATION_STORE_CREATE_COLLECTION);
+	part->key = store;
 	part->u.store_create_collection.store = j_store_ref(store);
 	part->u.store_create_collection.collection = j_collection_ref(collection);
 
@@ -185,6 +186,7 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 	g_return_if_fail(name != NULL);
 
 	part = j_operation_part_new(J_OPERATION_STORE_GET_COLLECTION);
+	part->key = store;
 	part->u.store_get_collection.store = j_store_ref(store);
 	part->u.store_get_collection.collection = collection;
 	part->u.store_get_collection.name = g_strdup(name);
@@ -213,6 +215,7 @@ j_store_delete_collection (JStore* store, JCollection* collection, JOperation* o
 	g_return_if_fail(collection != NULL);
 
 	part = j_operation_part_new(J_OPERATION_STORE_DELETE_COLLECTION);
+	part->key = store;
 	part->u.store_delete_collection.store = j_store_ref(store);
 	part->u.store_delete_collection.collection = j_collection_ref(collection);
 

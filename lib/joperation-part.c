@@ -56,6 +56,7 @@ j_operation_part_new (JOperationType type)
 
 	part = g_slice_new(JOperationPart);
 	part->type = type;
+	part->key = NULL;
 	part->cached = FALSE;
 
 	return part;

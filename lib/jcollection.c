@@ -241,6 +241,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JOperation* oper
 	j_trace_enter(j_trace(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_COLLECTION_CREATE_ITEM);
+	part->key = collection;
 	part->u.collection_create_item.collection = j_collection_ref(collection);
 	part->u.collection_create_item.item = j_item_ref(item);
 
@@ -274,6 +275,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	j_trace_enter(j_trace(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_COLLECTION_GET_ITEM);
+	part->key = collection;
 	part->u.collection_get_item.collection = j_collection_ref(collection);
 	part->u.collection_get_item.item = item;
 	part->u.collection_get_item.name = g_strdup(name);
@@ -307,6 +309,7 @@ j_collection_delete_item (JCollection* collection, JItem* item, JOperation* oper
 	j_trace_enter(j_trace(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_COLLECTION_DELETE_ITEM);
+	part->key = collection;
 	part->u.collection_delete_item.collection = j_collection_ref(collection);
 	part->u.collection_delete_item.item = j_item_ref(item);
 

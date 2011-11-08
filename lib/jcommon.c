@@ -195,6 +195,7 @@ j_create_store (JStore* store, JOperation* operation)
 	common = g_atomic_pointer_get(&j_common);
 
 	part = j_operation_part_new(J_OPERATION_CREATE_STORE);
+	part->key = NULL;
 	part->u.create_store.connection = j_connection_ref(common->connection);
 	part->u.create_store.store = j_store_ref(store);
 
@@ -212,6 +213,7 @@ j_delete_store (JStore* store, JOperation* operation)
 	common = g_atomic_pointer_get(&j_common);
 
 	part = j_operation_part_new(J_OPERATION_DELETE_STORE);
+	part->key = NULL;
 	part->u.delete_store.connection = j_connection_ref(common->connection);
 	part->u.delete_store.store = j_store_ref(store);
 
@@ -230,6 +232,7 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 	common = g_atomic_pointer_get(&j_common);
 
 	part = j_operation_part_new(J_OPERATION_GET_STORE);
+	part->key = NULL;
 	part->u.get_store.connection = j_connection_ref(common->connection);
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);
