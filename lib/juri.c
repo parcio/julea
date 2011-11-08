@@ -39,6 +39,8 @@
 #include <joperation.h>
 #include <jstore.h>
 
+#include <string.h>
+
 /**
  * \defgroup JURI URI
  *
@@ -83,6 +85,11 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 	for (i = 0; i < parts_len; i++)
 	{
 		if (g_strcmp0(parts[i], "") == 0)
+		{
+			goto error;
+		}
+		/* FIXME */
+		else if (strchr(parts[i], '.') != NULL)
 		{
 			goto error;
 		}
@@ -138,16 +145,20 @@ j_uri_new (gchar const* uri_)
 
 	uri = g_slice_new(JURI);
 
+	uri->store_name = NULL;
+	uri->collection_name = NULL;
+	uri->item_name = NULL;
+
+	uri->store = NULL;
+	uri->collection = NULL;
+	uri->item = NULL;
+
 	if (!j_uri_parse(uri, uri_))
 	{
 		g_slice_free(JURI, uri);
 
 		return NULL;
 	}
-
-	uri->store = NULL;
-	uri->collection = NULL;
-	uri->item = NULL;
 
 	return uri;
 }
@@ -217,6 +228,7 @@ gboolean
 j_uri_get (JURI* uri, GError** error)
 {
 	JOperation* operation;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -236,9 +248,10 @@ j_uri_get (JURI* uri, GError** error)
 
 		if (uri->store == NULL)
 		{
+			ret = FALSE;
 			g_set_error(error, J_URI_ERROR, J_URI_ERROR_STORE_NOT_FOUND, "Store “%s” does not exist.", uri->store_name);
 
-			return FALSE;
+			goto end;
 		}
 	}
 
@@ -255,9 +268,10 @@ j_uri_get (JURI* uri, GError** error)
 
 		if (uri->collection == NULL)
 		{
+			ret = FALSE;
 			g_set_error(error, J_URI_ERROR, J_URI_ERROR_COLLECTION_NOT_FOUND, "Collection “%s” does not exist.", uri->collection_name);
 
-			return FALSE;
+			goto end;
 		}
 	}
 
@@ -274,13 +288,17 @@ j_uri_get (JURI* uri, GError** error)
 
 		if (uri->item == NULL)
 		{
+			ret = FALSE;
 			g_set_error(error, J_URI_ERROR, J_URI_ERROR_ITEM_NOT_FOUND, "Item “%s” does not exist.", uri->item_name);
 
-			return FALSE;
+			goto end;
 		}
 	}
 
-	return TRUE;
+end:
+	j_operation_free(operation);
+
+	return ret;
 }
 
 JStore*

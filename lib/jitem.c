@@ -725,7 +725,11 @@ j_item_read_internal (JList* parts)
 			reply = j_message_new_reply(message, sizeof(guint64));
 			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
 			nbytes = j_message_get_8(reply);
-			j_connection_receive_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, nbytes);
+
+			if (nbytes > 0)
+			{
+				j_connection_receive_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, nbytes);
+			}
 
 			j_message_free(message);
 			j_message_free(reply);
