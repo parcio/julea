@@ -94,11 +94,6 @@ struct JItem
 	JCollection* collection;
 
 	/**
-	 * The semantics.
-	 **/
-	JSemantics* semantics;
-
-	/**
 	 * The reference count.
 	 **/
 	guint ref_count;
@@ -135,7 +130,6 @@ j_item_new (gchar const* name)
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
 	item->collection = NULL;
-	item->semantics = NULL;
 	item->ref_count = 1;
 
 	j_trace_leave(j_trace(), G_STRFUNC);
@@ -199,11 +193,6 @@ j_item_unref (JItem* item)
 			j_collection_unref(item->collection);
 		}
 
-		if (item->semantics != NULL)
-		{
-			j_semantics_unref(item->semantics);
-		}
-
 		g_free(item->name);
 
 		g_slice_free(JItem, item);
@@ -233,70 +222,6 @@ j_item_get_name (JItem* item)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return item->name;
-}
-
-/**
- * Returns an item's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A semantics object.
- **/
-JSemantics*
-j_item_get_semantics (JItem* item)
-{
-	JSemantics* ret;
-
-	g_return_val_if_fail(item != NULL, NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (item->semantics != NULL)
-	{
-		ret = item->semantics;
-	}
-	else
-	{
-		ret = j_collection_get_semantics(item->collection);
-	}
-
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return ret;
-}
-
-/**
- * Sets an item's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param semantics A semantics object.
- **/
-void
-j_item_set_semantics (JItem* item, JSemantics* semantics)
-{
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(semantics != NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (item->semantics != NULL)
-	{
-		j_semantics_unref(item->semantics);
-	}
-
-	item->semantics = j_semantics_ref(semantics);
-
-	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -521,7 +446,6 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item->status.size = 0;
 	item->status.modification_time = 0;
 	item->collection = j_collection_ref(collection);
-	item->semantics = NULL;
 	item->ref_count = 1;
 
 	j_item_deserialize(item, b);
@@ -659,7 +583,7 @@ j_item_set_collection (JItem* item, JCollection* collection)
 }
 
 void
-j_item_read_internal (JList* parts)
+j_item_read_internal (JOperation* operation, JList* parts)
 {
 	JDistribution* distribution;
 	JListIterator* iterator;
@@ -668,6 +592,7 @@ j_item_read_internal (JList* parts)
 	guint64 new_offset;
 	guint index;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
@@ -754,7 +679,7 @@ j_item_read_internal (JList* parts)
 }
 
 void
-j_item_write_internal (JList* parts)
+j_item_write_internal (JOperation* operation, JList* parts)
 {
 	JDistribution* distribution;
 	JListIterator* iterator;
@@ -763,6 +688,7 @@ j_item_write_internal (JList* parts)
 	guint index;
 	gchar const* d;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
@@ -832,7 +758,7 @@ j_item_write_internal (JList* parts)
 			d += new_length;
 			*bytes_written += new_length;
 
-			semantics = j_item_get_semantics(item);
+			semantics = j_operation_get_semantics(operation);
 
 			if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 			{
@@ -864,10 +790,11 @@ j_item_write_internal (JList* parts)
 }
 
 void
-j_item_get_status_internal (JList* parts)
+j_item_get_status_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* iterator;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);

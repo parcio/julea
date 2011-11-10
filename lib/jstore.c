@@ -42,6 +42,7 @@
 #include <jlist-iterator.h>
 #include <joperation.h>
 #include <joperation-internal.h>
+#include <jsemantics.h>
 
 /**
  * \defgroup JStore Store
@@ -65,7 +66,6 @@ struct JStore
 	collection;
 
 	JConnection* connection;
-	JSemantics* semantics;
 
 	guint ref_count;
 };
@@ -87,7 +87,6 @@ j_store_new (gchar const* name)
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
 	store->connection = NULL;
-	store->semantics = j_semantics_new();
 	store->ref_count = 1;
 
 	return store;
@@ -113,7 +112,6 @@ j_store_unref (JStore* store)
 	if (store->ref_count == 0)
 	{
 		j_connection_unref(store->connection);
-		j_semantics_unref(store->semantics);
 
 		g_free(store->collection.collections);
 		g_free(store->name);
@@ -128,28 +126,6 @@ j_store_get_name (JStore* store)
 	g_return_val_if_fail(store != NULL, NULL);
 
 	return store->name;
-}
-
-JSemantics*
-j_store_get_semantics (JStore* store)
-{
-	g_return_val_if_fail(store != NULL, NULL);
-
-	return store->semantics;
-}
-
-void
-j_store_set_semantics (JStore* store, JSemantics* semantics)
-{
-	g_return_if_fail(store != NULL);
-	g_return_if_fail(semantics != NULL);
-
-	if (store->semantics != NULL)
-	{
-		j_semantics_unref(store->semantics);
-	}
-
-	store->semantics = j_semantics_ref(semantics);
 }
 
 JConnection*
@@ -277,7 +253,7 @@ j_store_set_connection (JStore* store, JConnection* connection)
 }
 
 void
-j_store_create_collection_internal (JList* parts)
+j_store_create_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -288,6 +264,7 @@ j_store_create_collection_internal (JList* parts)
 	guint i;
 	guint length;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*
@@ -344,7 +321,7 @@ j_store_create_collection_internal (JList* parts)
 	}
 	*/
 
-	semantics = j_store_get_semantics(store);
+	semantics = j_operation_get_semantics(operation);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
@@ -353,10 +330,11 @@ j_store_create_collection_internal (JList* parts)
 }
 
 void
-j_store_delete_collection_internal (JList* parts)
+j_store_delete_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*
@@ -388,10 +366,11 @@ j_store_delete_collection_internal (JList* parts)
 }
 
 void
-j_store_get_collection_internal (JList* parts)
+j_store_get_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*

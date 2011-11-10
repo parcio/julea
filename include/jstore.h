@@ -50,9 +50,6 @@ gchar const* j_store_get_name (JStore*);
 
 JConnection* j_store_get_connection (JStore*);
 
-JSemantics* j_store_get_semantics (JStore*);
-void j_store_set_semantics (JStore*, JSemantics*);
-
 void j_store_create_collection (JStore*, JCollection*, JOperation*);
 void j_store_get_collection (JStore*, JCollection**, gchar const*, JOperation*);
 void j_store_delete_collection (JStore*, JCollection*, JOperation*);

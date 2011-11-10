@@ -56,9 +56,6 @@ void j_item_unref (JItem*);
 
 gchar const* j_item_get_name (JItem*);
 
-JSemantics* j_item_get_semantics (JItem*);
-void j_item_set_semantics (JItem*, JSemantics*);
-
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JOperation*);
 void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation*);
 

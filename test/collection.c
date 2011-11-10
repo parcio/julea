@@ -60,27 +60,9 @@ test_collection_name (void)
 	j_collection_unref(collection);
 }
 
-static
-void
-test_collection_semantics (void)
-{
-	JCollection* collection;
-	JSemantics* semantics;
-
-	collection = j_collection_new("test-collection");
-	semantics = j_semantics_new();
-
-	j_collection_set_semantics(collection, semantics);
-	g_assert(j_collection_get_semantics(collection) == semantics);
-
-	j_semantics_unref(semantics);
-	j_collection_unref(collection);
-}
-
 void
 test_collection (void)
 {
 	g_test_add_func("/julea/collection/new_free", test_collection_new_free);
 	g_test_add_func("/julea/collection/name", test_collection_name);
-	g_test_add_func("/julea/collection/semantics", test_collection_semantics);
 }

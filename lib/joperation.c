@@ -40,6 +40,7 @@
 #include <jitem-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <jsemantics.h>
 #include <jstore-internal.h>
 
 /**
@@ -57,6 +58,8 @@ struct JOperation
 	 * The list of pending operation parts.
 	 **/
 	JList* list;
+
+	JSemantics* semantics;
 
 	JBackgroundOperation* background_operation;
 };
@@ -205,6 +208,70 @@ j_operation_free (JOperation* operation)
 }
 
 /**
+ * Returns an operation's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ *
+ * \return A semantics object.
+ **/
+JSemantics*
+j_operation_get_semantics (JOperation* operation)
+{
+	JSemantics* ret;
+
+	g_return_val_if_fail(operation != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	if (operation->semantics != NULL)
+	{
+		ret = operation->semantics;
+	}
+	else
+	{
+		//ret = j_collection_get_semantics(item->collection);
+	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
+}
+
+/**
+ * Sets an operation's semantics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ * \param semantics A semantics object.
+ **/
+void
+j_operation_set_semantics (JOperation* operation, JSemantics* semantics)
+{
+	g_return_if_fail(operation != NULL);
+	g_return_if_fail(semantics != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+
+	if (operation->semantics != NULL)
+	{
+		j_semantics_unref(operation->semantics);
+	}
+
+	operation->semantics = j_semantics_ref(semantics);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+}
+
+/**
  * Executes the operation parts of a given operation type.
  *
  * \author Michael Kuhn
@@ -217,49 +284,49 @@ j_operation_free (JOperation* operation)
  **/
 static
 void
-j_operation_execute_internal (JOperationType type, JList* list)
+j_operation_execute_internal (JOperation* operation, JOperationType type, JList* list)
 {
 	switch (type)
 	{
 		case J_OPERATION_CREATE_STORE:
-			j_create_store_internal(list);
+			j_create_store_internal(operation, list);
 			break;
 		case J_OPERATION_GET_STORE:
-			j_get_store_internal(list);
+			j_get_store_internal(operation, list);
 			break;
 		case J_OPERATION_DELETE_STORE:
-			j_delete_store_internal(list);
+			j_delete_store_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:
-			j_store_create_collection_internal(list);
+			j_store_create_collection_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_DELETE_COLLECTION:
-			j_store_delete_collection_internal(list);
+			j_store_delete_collection_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_GET_COLLECTION:
-			j_store_get_collection_internal(list);
+			j_store_get_collection_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			j_collection_create_item_internal(list);
+			j_collection_create_item_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			j_collection_delete_item_internal(list);
+			j_collection_delete_item_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_GET_ITEM:
-			j_collection_get_item_internal(list);
+			j_collection_get_item_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
-			j_item_get_status_internal(list);
+			j_item_get_status_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_READ:
-			j_item_read_internal(list);
+			j_item_read_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_WRITE:
-			j_item_write_internal(list);
+			j_item_write_internal(operation, list);
 			break;
 		case J_OPERATION_NONE:
 		default:
-			g_return_if_reached();
+			g_warn_if_reached();
 	}
 }
 
@@ -299,7 +366,7 @@ j_operation_execute (JOperation* operation)
 
 		if (part->type != last_type && last_type != J_OPERATION_NONE)
 		{
-			j_operation_execute_internal(last_type, same_list);
+			j_operation_execute_internal(operation, last_type, same_list);
 			j_list_delete_all(same_list);
 		}
 
@@ -307,7 +374,7 @@ j_operation_execute (JOperation* operation)
 		j_list_append(same_list, part);
 	}
 
-	j_operation_execute_internal(last_type, same_list);
+	j_operation_execute_internal(operation, last_type, same_list);
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);

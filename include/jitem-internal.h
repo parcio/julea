@@ -49,9 +49,9 @@ G_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
 
 G_GNUC_INTERNAL void j_item_set_collection (JItem*, JCollection*);
 
-G_GNUC_INTERNAL void j_item_read_internal (JList*);
-G_GNUC_INTERNAL void j_item_write_internal (JList*);
+G_GNUC_INTERNAL void j_item_read_internal (JOperation*, JList*);
+G_GNUC_INTERNAL void j_item_write_internal (JOperation*, JList*);
 
-G_GNUC_INTERNAL void j_item_get_status_internal (JList*);
+G_GNUC_INTERNAL void j_item_get_status_internal (JOperation*, JList*);
 
 #endif

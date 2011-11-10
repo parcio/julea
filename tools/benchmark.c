@@ -64,8 +64,6 @@ main (int argc, char** argv)
 	semantics = j_semantics_new();
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
-	//j_store_set_semantics(store, semantics);
-
 	for (guint i = 0; i < 10; i++)
 	{
 		JCollection* collection;
@@ -74,12 +72,13 @@ main (int argc, char** argv)
 		name = g_strdup_printf("test-%u", i);
 
 		collection = j_collection_new(name);
-		j_collection_set_semantics(collection, semantics);
 		j_store_create_collection(store, collection, operation);
 
 		g_free(name);
 
+		j_operation_set_semantics(operation, semantics);
 		j_operation_execute(operation);
+		j_operation_set_semantics(operation, NULL);
 
 		for (guint j = 0; j < 10000; j++)
 		{
@@ -88,7 +87,6 @@ main (int argc, char** argv)
 			name = g_strdup_printf("test-%u", j);
 
 			item = j_item_new(name);
-			//j_item_set_semantics(item, semantics);
 			j_collection_create_item(collection, item, operation);
 			j_collection_delete_item(collection, item, delete_operation);
 			j_item_unref(item);

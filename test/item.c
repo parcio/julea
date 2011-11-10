@@ -62,23 +62,6 @@ test_item_name (void)
 
 static
 void
-test_item_semantics (void)
-{
-	JItem* item;
-	JSemantics* semantics;
-
-	item = j_item_new("test-item");
-	semantics = j_semantics_new();
-
-	j_item_set_semantics(item, semantics);
-	g_assert(j_item_get_semantics(item) == semantics);
-
-	j_semantics_unref(semantics);
-	j_item_unref(item);
-}
-
-static
-void
 test_item_size (void)
 {
 	JItem* item;
@@ -108,7 +91,6 @@ test_item (void)
 {
 	g_test_add_func("/julea/item/new_free", test_item_new_free);
 	g_test_add_func("/julea/item/name", test_item_name);
-	g_test_add_func("/julea/item/semantics", test_item_semantics);
 	g_test_add_func("/julea/item/size", test_item_size);
 	g_test_add_func("/julea/item/modification_time", test_item_modification_time);
 }

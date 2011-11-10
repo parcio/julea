@@ -239,10 +239,11 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 /* Internal */
 
 void
-j_create_store_internal (JList* parts)
+j_create_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*
@@ -265,10 +266,11 @@ j_create_store_internal (JList* parts)
 }
 
 void
-j_delete_store_internal (JList* parts)
+j_delete_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*
@@ -290,10 +292,11 @@ j_delete_store_internal (JList* parts)
 }
 
 void
-j_get_store_internal (JList* parts)
+j_get_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	/*

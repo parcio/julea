@@ -81,11 +81,6 @@ struct JCollection
 	collection;
 
 	/**
-	 * The semantics.
-	 **/
-	JSemantics* semantics;
-
-	/**
 	 * The parent store.
 	 **/
 	JStore* store;
@@ -128,7 +123,6 @@ j_collection_new (gchar const* name)
 	bson_oid_gen(&(collection->id));
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
-	collection->semantics = NULL;
 	collection->store = NULL;
 	collection->ref_count = 1;
 
@@ -188,11 +182,6 @@ j_collection_unref (JCollection* collection)
 
 	if (collection->ref_count == 0)
 	{
-		if (collection->semantics != NULL)
-		{
-			j_semantics_unref(collection->semantics);
-		}
-
 		if (collection->store != NULL)
 		{
 			j_store_unref(collection->store);
@@ -228,70 +217,6 @@ j_collection_get_name (JCollection* collection)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return collection->name;
-}
-
-/**
- * Returns a collection's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- *
- * \return A semantics object.
- **/
-JSemantics*
-j_collection_get_semantics (JCollection* collection)
-{
-	JSemantics* ret;
-
-	g_return_val_if_fail(collection != NULL, NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (collection->semantics != NULL)
-	{
-		ret = collection->semantics;
-	}
-	else
-	{
-		ret = j_store_get_semantics(collection->store);
-	}
-
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return ret;
-}
-
-/**
- * Sets a collection's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param semantics  A semantics object.
- **/
-void
-j_collection_set_semantics (JCollection* collection, JSemantics* semantics)
-{
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(semantics != NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (collection->semantics != NULL)
-	{
-		j_semantics_unref(collection->semantics);
-	}
-
-	collection->semantics = j_semantics_ref(semantics);
-
-	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -427,7 +352,6 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->collection.items = NULL;
-	collection->semantics = NULL;
 	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
@@ -612,7 +536,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 }
 
 void
-j_collection_create_item_internal (JList* parts)
+j_collection_create_item_internal (JOperation* operation, JList* parts)
 {
 	JCollection* collection;
 	JListIterator* it;
@@ -623,6 +547,7 @@ j_collection_create_item_internal (JList* parts)
 	guint i;
 	guint length;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
@@ -672,7 +597,7 @@ j_collection_create_item_internal (JList* parts)
 
 	g_free(obj);
 
-	semantics = j_collection_get_semantics(collection);
+	semantics = j_operation_get_semantics(operation);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
 	{
@@ -683,10 +608,11 @@ j_collection_create_item_internal (JList* parts)
 }
 
 void
-j_collection_delete_item_internal (JList* parts)
+j_collection_delete_item_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
@@ -722,10 +648,11 @@ j_collection_delete_item_internal (JList* parts)
 }
 
 void
-j_collection_get_item_internal (JList* parts)
+j_collection_get_item_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
+	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
