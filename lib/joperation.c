@@ -73,6 +73,20 @@ struct JOperationAsync
 
 typedef struct JOperationAsync JOperationAsync;
 
+static JSemantics* j_operation_default_semantics = NULL;
+
+static
+JSemantics*
+j_operation_get_default_semantics (void)
+{
+	if (G_UNLIKELY(j_operation_default_semantics == NULL))
+	{
+		j_operation_default_semantics = j_semantics_new();
+	}
+
+	return j_operation_default_semantics;
+}
+
 static
 gpointer
 j_operation_background_operation (gpointer data)
@@ -234,7 +248,7 @@ j_operation_get_semantics (JOperation* operation)
 	}
 	else
 	{
-		//ret = j_collection_get_semantics(item->collection);
+		ret = j_operation_get_default_semantics();
 	}
 
 	j_trace_leave(j_trace(), G_STRFUNC);

@@ -25,19 +25,46 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+#include <glib.h>
 
-void test_background_operation (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_operation (void);
-void test_semantics (void);
-void test_uri (void);
+#include <julea.h>
 
-#endif
+#include "test.h"
+
+static
+void
+test_operation_new_free (void)
+{
+	JOperation* operation;
+
+	operation = j_operation_new();
+	g_assert(operation != NULL);
+
+	j_operation_free(operation);
+}
+
+static
+void
+test_operation_semantics (void)
+{
+	JOperation* operation;
+	JSemantics* semantics;
+
+	operation = j_operation_new();
+	semantics = j_semantics_new();
+
+	g_assert(j_operation_get_semantics(operation) != NULL);
+
+	j_operation_set_semantics(operation, semantics);
+	g_assert(j_operation_get_semantics(operation) == semantics);
+
+	j_operation_free(operation);
+	j_semantics_unref(semantics);
+}
+
+void
+test_operation (void)
+{
+	g_test_add_func("/julea/operation/new_free", test_operation_new_free);
+	g_test_add_func("/julea/operation/semantics", test_operation_semantics);
+}

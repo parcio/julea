@@ -48,6 +48,7 @@ main (int argc, char** argv)
 	test_list();
 	test_list_iterator();
 	test_message();
+	test_operation();
 	test_semantics();
 	test_uri();
 
