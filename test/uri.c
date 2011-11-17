@@ -49,6 +49,12 @@ test_uri_valid (void)
 {
 	JURI* uri;
 
+	uri = j_uri_new("julea://");
+	g_assert_cmpstr(j_uri_get_store_name(uri), ==, NULL);
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, NULL);
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
+	j_uri_free(uri);
+
 	uri = j_uri_new("julea://JULEA");
 	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, NULL);
@@ -65,6 +71,18 @@ test_uri_valid (void)
 	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "foo");
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "bar");
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://JULEA/fo.o");
+	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "fo.o");
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://JULEA/fo.o/ba.r");
+	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "fo.o");
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "ba.r");
 	j_uri_free(uri);
 }
 
@@ -89,10 +107,22 @@ test_uri_invalid (void)
 	uri = j_uri_new("JULEA://JULEA");
 	g_assert(uri == NULL);
 
-	uri = j_uri_new("julea://");
+	uri = j_uri_new("julea://JULEA/foo/bar/42");
 	g_assert(uri == NULL);
 
-	uri = j_uri_new("julea://JULEA/foo/bar/42");
+	uri = j_uri_new("julea://JULEA/");
+	g_assert(uri == NULL);
+
+	uri = j_uri_new("julea://JULEA/foo/");
+	g_assert(uri == NULL);
+
+	uri = j_uri_new("julea://JUL.EA");
+	g_assert(uri == NULL);
+
+	uri = j_uri_new("julea://JUL.EA/foo");
+	g_assert(uri == NULL);
+
+	uri = j_uri_new("julea://JUL.EA/foo/bar");
 	g_assert(uri == NULL);
 }
 

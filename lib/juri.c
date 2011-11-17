@@ -77,7 +77,7 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 	parts = g_strsplit(uri_ + 8, "/", 0);
 	parts_len = g_strv_length(parts);
 
-	if (parts_len < 1 || parts_len > 3)
+	if (parts_len > 3)
 	{
 		goto error;
 	}
@@ -88,8 +88,11 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 		{
 			goto error;
 		}
-		/* FIXME */
-		else if (strchr(parts[i], '.') != NULL)
+	}
+
+	for (i = 0; i < MIN(parts_len, 1); i++)
+	{
+		if (strchr(parts[i], '.') != NULL)
 		{
 			goto error;
 		}

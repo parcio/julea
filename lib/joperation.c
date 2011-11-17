@@ -84,7 +84,7 @@ j_operation_get_default_semantics (void)
 		j_operation_default_semantics = j_semantics_new();
 	}
 
-	return j_operation_default_semantics;
+	return j_semantics_ref(j_operation_default_semantics);
 }
 
 static
@@ -196,6 +196,7 @@ j_operation_new (void)
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new(j_operation_part_free);
+	operation->semantics = NULL;
 	operation->background_operation = NULL;
 
 	return operation;
@@ -215,6 +216,11 @@ void
 j_operation_free (JOperation* operation)
 {
 	g_return_if_fail(operation != NULL);
+
+	if (operation->semantics != NULL)
+	{
+		j_semantics_unref(operation->semantics);
+	}
 
 	j_list_unref(operation->list);
 
