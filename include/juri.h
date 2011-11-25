@@ -32,8 +32,20 @@
 #ifndef H_URI
 #define H_URI
 
+/**
+ * \addtogroup JURI
+ *
+ * @{
+ **/
+
+/**
+ * A URI error domain.
+ **/
 #define J_URI_ERROR j_uri_error_quark()
 
+/**
+ * A URI error code.
+ **/
 typedef enum
 {
 	J_URI_ERROR_STORE_NOT_FOUND,
@@ -44,6 +56,9 @@ JURIError;
 
 struct JURI;
 
+/**
+ * A URI.
+ **/
 typedef struct JURI JURI;
 
 #include <jcollection.h>
@@ -66,5 +81,9 @@ gboolean j_uri_get (JURI*, GError**);
 JStore* j_uri_get_store (JURI*);
 JCollection* j_uri_get_collection (JURI*);
 JItem* j_uri_get_item (JURI*);
+
+/**
+ * @}
+ **/
 
 #endif

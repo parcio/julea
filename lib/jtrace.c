@@ -289,6 +289,10 @@ j_trace_function_check (gchar const* name)
 
 /**
  * Initializes the trace framework.
+ * Tracing is disabled by default.
+ * Set the \c J_TRACE environment variable to enable it.
+ * Valid values are \e echo, \e hdtrace and \e otf.
+ * Multiple values can be combined with commas.
  *
  * \author Michael Kuhn
  *
@@ -309,7 +313,6 @@ j_trace_init (gchar const* name)
 
 	if ((j_trace = g_getenv("J_TRACE")) == NULL)
 	{
-		g_printerr("Tracing is disabled. Set the J_TRACE environment variable to enable it. Valid values are echo, hdtrace and otf. Multiple values can be combined with commas.\n");
 		return;
 	}
 	else

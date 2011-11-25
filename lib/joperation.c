@@ -345,7 +345,7 @@ j_operation_execute_internal (JOperation* operation, JOperationType type, JList*
  *
  * \param operation An operation.
  *
- * \return TRUE on success, FALSE if an error occured.
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
 j_operation_execute (JOperation* operation)
@@ -400,7 +400,7 @@ j_operation_execute (JOperation* operation)
  * \param operation An operation.
  * \param func      A complete function.
  *
- * \return TRUE on success, FALSE if an error occured.
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 void
 j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, gpointer user_data)

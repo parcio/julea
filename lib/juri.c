@@ -52,15 +52,55 @@
  **/
 struct JURI
 {
+	/**
+	 * The store name.
+	 **/
 	gchar* store_name;
+
+	/**
+	 * The collection name.
+	 **/
 	gchar* collection_name;
+
+	/**
+	 * The item name.
+	 **/
 	gchar* item_name;
 
+	/**
+	 * The store.
+	 **/
 	JStore* store;
+
+	/**
+	 * The collection.
+	 **/
 	JCollection* collection;
+
+	/**
+	 * The item.
+	 **/
 	JItem* item;
 };
 
+/**
+ * Parses a given URI.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ *
+ * uri = g_slice_new(JURI);
+ *
+ * j_uri_parse(uri, "julea://foo/bar");
+ * \endcode
+ *
+ * \param uri  A URI.
+ * \param uri_ A URI string.
+ **/
 static
 gboolean
 j_uri_parse (JURI* uri, gchar const* uri_)
@@ -123,6 +163,13 @@ error:
 	return FALSE;
 }
 
+/**
+ * Returns the URI error quark.
+ *
+ * \author Michael Kuhn
+ *
+ * \return The URI error quark.
+ **/
 GQuark
 j_uri_error_quark (void)
 {
@@ -135,9 +182,12 @@ j_uri_error_quark (void)
  * \author Michael Kuhn
  *
  * \code
+ * JURI* uri;
+ *
+ * uri = j_uri_new("julea://foo/bar");
  * \endcode
  *
- * \param uri_ A URI.
+ * \param uri_ A URI string.
  *
  * \return A new URI. Should be freed with j_uri_free().
  **/
@@ -172,6 +222,11 @@ j_uri_new (gchar const* uri_)
  * \author Michael Kuhn
  *
  * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * j_uri_free(uri);
  * \endcode
  *
  * \param uri A URI.
@@ -203,6 +258,23 @@ j_uri_free (JURI* uri)
 	g_slice_free(JURI, uri);
 }
 
+/**
+ * Returns the store name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_uri_get_store_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The store name.
+ **/
 gchar const*
 j_uri_get_store_name (JURI* uri)
 {
@@ -211,6 +283,23 @@ j_uri_get_store_name (JURI* uri)
 	return uri->store_name;
 }
 
+/**
+ * Returns the collection name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_uri_get_collection_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The collection name.
+ **/
 gchar const*
 j_uri_get_collection_name (JURI* uri)
 {
@@ -219,6 +308,23 @@ j_uri_get_collection_name (JURI* uri)
 	return uri->collection_name;
 }
 
+/**
+ * Returns the item name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_uri_get_item_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The item name.
+ **/
 gchar const*
 j_uri_get_item_name (JURI* uri)
 {
@@ -227,6 +333,25 @@ j_uri_get_item_name (JURI* uri)
 	return uri->item_name;
 }
 
+/**
+ * Gets the store, collection and item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_get(uri, &error);
+ * \endcode
+ *
+ * \param uri   A URI.
+ * \param error An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
 j_uri_get (JURI* uri, GError** error)
 {
@@ -304,6 +429,24 @@ end:
 	return ret;
 }
 
+/**
+ * Returns the store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JStore* store;
+ * JURI* uri;
+ *
+ * ...
+ *
+ * store = j_uri_get_store(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The store.
+ **/
 JStore*
 j_uri_get_store (JURI* uri)
 {
@@ -312,6 +455,24 @@ j_uri_get_store (JURI* uri)
 	return uri->store;
 }
 
+/**
+ * Returns the collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCollection* collection;
+ * JURI* uri;
+ *
+ * ...
+ *
+ * collection = j_uri_get_collection(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The collection.
+ **/
 JCollection*
 j_uri_get_collection (JURI* uri)
 {
@@ -320,6 +481,24 @@ j_uri_get_collection (JURI* uri)
 	return uri->collection;
 }
 
+/**
+ * Returns the item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JItem* item;
+ * JURI* uri;
+ *
+ * ...
+ *
+ * item = j_uri_get_item(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The item.
+ **/
 JItem*
 j_uri_get_item (JURI* uri)
 {
