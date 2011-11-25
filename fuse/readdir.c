@@ -93,14 +93,6 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 	}
 
 end:
-	/* FIXME */
-	if (g_strcmp0(path, "/") == 0)
-	{
-		filler(buf, "JULEA", NULL, 0);
-
-		ret = 0;
-	}
-
 	if (uri != NULL)
 	{
 		j_uri_free(uri);

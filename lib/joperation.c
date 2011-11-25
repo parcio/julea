@@ -196,7 +196,7 @@ j_operation_new (void)
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new(j_operation_part_free);
-	operation->semantics = NULL;
+	operation->semantics = j_operation_get_default_semantics();
 	operation->background_operation = NULL;
 
 	return operation;
@@ -247,16 +247,7 @@ j_operation_get_semantics (JOperation* operation)
 	g_return_val_if_fail(operation != NULL, NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (operation->semantics != NULL)
-	{
-		ret = operation->semantics;
-	}
-	else
-	{
-		ret = j_operation_get_default_semantics();
-	}
-
+	ret = operation->semantics;
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return ret;
@@ -280,14 +271,8 @@ j_operation_set_semantics (JOperation* operation, JSemantics* semantics)
 	g_return_if_fail(semantics != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
-
-	if (operation->semantics != NULL)
-	{
-		j_semantics_unref(operation->semantics);
-	}
-
+	j_semantics_unref(operation->semantics);
 	operation->semantics = j_semantics_ref(semantics);
-
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 

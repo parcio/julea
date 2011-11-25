@@ -77,19 +77,6 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	}
 
 end:
-	/* FIXME */
-	if (g_strcmp0(path, "/") == 0)
-	{
-		stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-		stbuf->st_nlink = 1;
-		stbuf->st_uid = 0;
-		stbuf->st_gid = 0;
-		stbuf->st_size = 0;
-		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
-
-		ret = 0;
-	}
-
 	if (uri != NULL)
 	{
 		j_uri_free(uri);

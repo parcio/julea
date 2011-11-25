@@ -48,11 +48,12 @@ int jfs_utimens (char const* path, const struct timespec ts[2])
 	{
 		guint64 time_;
 
-		ret = 0;
 		time_ = (ts[1].tv_sec * G_USEC_PER_SEC) + (ts[1].tv_nsec / 1000);
 
 		/* FIXME */
 		j_item_set_modification_time(j_uri_get_item(uri), time_);
+
+		ret = 0;
 	}
 
 end:

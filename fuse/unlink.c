@@ -49,9 +49,10 @@ int jfs_unlink (char const* path)
 
 	if (j_uri_get_item(uri) != NULL)
 	{
-		ret = 0;
 		j_collection_delete_item(j_uri_get_collection(uri), j_uri_get_item(uri), operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 
 	j_operation_free(operation);

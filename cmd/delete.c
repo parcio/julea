@@ -76,6 +76,11 @@ j_cmd_delete (gchar const** arguments)
 		j_delete_store(j_uri_get_store(uri), operation);
 		j_operation_execute(operation);
 	}
+	else
+	{
+		ret = FALSE;
+		j_cmd_usage();
+	}
 
 	j_operation_free(operation);
 

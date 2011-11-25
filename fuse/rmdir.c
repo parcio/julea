@@ -54,11 +54,15 @@ int jfs_rmdir (char const* path)
 	{
 		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 	else if (j_uri_get_store(uri) != NULL)
 	{
 		j_delete_store(j_uri_get_store(uri), operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 
 	j_operation_free(operation);

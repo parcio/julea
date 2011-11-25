@@ -61,6 +61,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 		collection = j_collection_new(j_uri_get_collection_name(uri));
 		j_store_create_collection(j_uri_get_store(uri), collection, operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 	else
 	{
@@ -69,6 +71,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 		store = j_store_new(j_uri_get_store_name(uri));
 		j_create_store(store, operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 
 	j_operation_free(operation);

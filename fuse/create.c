@@ -58,6 +58,8 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 		item = j_item_new(j_uri_get_item_name(uri));
 		j_collection_create_item(j_uri_get_collection(uri), item, operation);
 		j_operation_execute(operation);
+
+		ret = 0;
 	}
 
 	j_operation_free(operation);
