@@ -53,16 +53,16 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	delete_operation = j_operation_new();
-	operation = j_operation_new();
+	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+
+	delete_operation = j_operation_new(NULL);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("JULEA");
 	j_create_store(store, operation);
 
 	j_operation_execute(operation);
-
-	semantics = j_semantics_new();
-	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -76,9 +76,7 @@ main (int argc, char** argv)
 
 		g_free(name);
 
-		j_operation_set_semantics(operation, semantics);
 		j_operation_execute(operation);
-		j_operation_set_semantics(operation, NULL);
 
 		for (guint j = 0; j < 10000; j++)
 		{

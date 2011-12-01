@@ -49,7 +49,7 @@ int jfs_mkdir(char const* path, mode_t mode)
 		goto end;
 	}
 
-	operation = j_operation_new();
+	operation = j_operation_new(NULL);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{

@@ -37,7 +37,7 @@ test_operation_new_free (void)
 {
 	JOperation* operation;
 
-	operation = j_operation_new();
+	operation = j_operation_new(NULL);
 	g_assert(operation != NULL);
 
 	j_operation_free(operation);
@@ -50,16 +50,19 @@ test_operation_semantics (void)
 	JOperation* operation;
 	JSemantics* semantics;
 
-	operation = j_operation_new();
-	semantics = j_semantics_new();
+	operation = j_operation_new(NULL);
 
 	g_assert(j_operation_get_semantics(operation) != NULL);
 
-	j_operation_set_semantics(operation, semantics);
+	j_operation_free(operation);
+
+	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_operation_new(semantics);
+
 	g_assert(j_operation_get_semantics(operation) == semantics);
 
-	j_operation_free(operation);
 	j_semantics_unref(semantics);
+	j_operation_free(operation);
 }
 
 void

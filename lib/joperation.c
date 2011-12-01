@@ -81,10 +81,10 @@ j_operation_get_default_semantics (void)
 {
 	if (G_UNLIKELY(j_operation_default_semantics == NULL))
 	{
-		j_operation_default_semantics = j_semantics_new();
+		j_operation_default_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	}
 
-	return j_semantics_ref(j_operation_default_semantics);
+	return j_operation_default_semantics;
 }
 
 static
@@ -190,14 +190,20 @@ j_operation_part_free (gpointer data)
  * \return A new operation. Should be freed with j_operation_free().
  **/
 JOperation*
-j_operation_new (void)
+j_operation_new (JSemantics* semantics)
 {
 	JOperation* operation;
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new(j_operation_part_free);
-	operation->semantics = j_operation_get_default_semantics();
 	operation->background_operation = NULL;
+
+	if (semantics == NULL)
+	{
+		semantics = j_operation_get_default_semantics();
+	}
+
+	operation->semantics = j_semantics_ref(semantics);
 
 	return operation;
 }
@@ -251,29 +257,6 @@ j_operation_get_semantics (JOperation* operation)
 	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return ret;
-}
-
-/**
- * Sets an operation's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param operation An operation.
- * \param semantics A semantics object.
- **/
-void
-j_operation_set_semantics (JOperation* operation, JSemantics* semantics)
-{
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(semantics != NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_semantics_unref(operation->semantics);
-	operation->semantics = j_semantics_ref(semantics);
-	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**

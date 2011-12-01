@@ -35,7 +35,7 @@ static
 void
 test_semantics_fixture_setup (JSemantics** semantics, gconstpointer data)
 {
-	*semantics = j_semantics_new();
+	*semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 }
 
 static
@@ -55,7 +55,7 @@ test_semantics_new_ref_unref (void)
 	{
 		JSemantics* semantics;
 
-		semantics = j_semantics_new();
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 		g_assert(semantics != NULL);
 		semantics = j_semantics_ref(semantics);
 		g_assert(semantics != NULL);
@@ -70,13 +70,13 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 {
 	gint s;
 
-	j_semantics_set(*semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_STRICT);
+	j_semantics_set(*semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONCURRENCY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_CONCURRENCY_STRICT);
+	g_assert_cmpint(s, ==, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
 
-	j_semantics_set(*semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_STRICT);
+	j_semantics_set(*semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONSISTENCY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_CONSISTENCY_STRICT);
+	g_assert_cmpint(s, ==, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 
 	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
 	s = j_semantics_get(*semantics, J_SEMANTICS_PERSISTENCY);

@@ -50,7 +50,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	{
 		JOperation* operation;
 
-		operation = j_operation_new();
+		operation = j_operation_new(NULL);
 		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
 		j_operation_execute(operation);
 		j_operation_free(operation);

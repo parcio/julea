@@ -85,17 +85,32 @@ struct JSemantics
  * \return A new semantics object. Should be freed with j_semantics_unref().
  **/
 JSemantics*
-j_semantics_new (void)
+j_semantics_new (JSemanticsTemplate template)
 {
 	JSemantics* semantics;
 
 	semantics = g_slice_new(JSemantics);
-	semantics->concurrency = J_SEMANTICS_CONCURRENCY_STRICT;
-	semantics->consistency = J_SEMANTICS_CONSISTENCY_STRICT;
+	semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
+	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_STRICT;
 	semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
 	semantics->security = J_SEMANTICS_SECURITY_STRICT;
 	semantics->ref_count = 1;
+
+	switch (template)
+	{
+		case J_SEMANTICS_TEMPLATE_DEFAULT:
+			break;
+		case J_SEMANTICS_TEMPLATE_POSIX:
+			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
+			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_STRICT;
+			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
+			semantics->security = J_SEMANTICS_SECURITY_STRICT;
+			break;
+		default:
+			g_warn_if_reached();
+	}
 
 	return semantics;
 }

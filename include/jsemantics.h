@@ -34,6 +34,14 @@
 
 #include <glib.h>
 
+enum JSemanticsTemplate
+{
+	J_SEMANTICS_TEMPLATE_DEFAULT,
+	J_SEMANTICS_TEMPLATE_POSIX
+};
+
+typedef enum JSemanticsTemplate JSemanticsTemplate;
+
 enum JSemanticsType
 {
 	J_SEMANTICS_CONSISTENCY,
@@ -47,35 +55,43 @@ typedef enum JSemanticsType JSemanticsType;
 
 enum
 {
-	J_SEMANTICS_CONSISTENCY_STRICT
+	J_SEMANTICS_CONCURRENCY_OVERLAPPING,
+	J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING,
+	J_SEMANTICS_CONCURRENCY_NONE
+};
+
+enum
+{
+	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
+	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
 
 enum
 {
 	J_SEMANTICS_PERSISTENCY_STRICT,
-	J_SEMANTICS_PERSISTENCY_LAX
+	J_SEMANTICS_PERSISTENCY_LAX,
+	J_SEMANTICS_PERSISTENCY_NONE
 };
 
 enum
 {
-	J_SEMANTICS_CONCURRENCY_STRICT
+	J_SEMANTICS_REDUNDANCY_NONE,
+	J_SEMANTICS_REDUNDANCY_ONE_COPY,
+	J_SEMANTICS_REDUNDANCY_TWO_COPIES,
+	J_SEMANTICS_REDUNDANCY_THREE_COPIES
 };
 
 enum
 {
-	J_SEMANTICS_REDUNDANCY_NONE
-};
-
-enum
-{
-	J_SEMANTICS_SECURITY_STRICT
+	J_SEMANTICS_SECURITY_STRICT,
+	J_SEMANTICS_SECURITY_NONE
 };
 
 struct JSemantics;
 
 typedef struct JSemantics JSemantics;
 
-JSemantics* j_semantics_new (void);
+JSemantics* j_semantics_new (JSemanticsTemplate);
 JSemantics* j_semantics_ref (JSemantics*);
 void j_semantics_unref (JSemantics*);
 

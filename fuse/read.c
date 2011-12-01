@@ -50,7 +50,7 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 	{
 		JOperation* operation;
 
-		operation = j_operation_new();
+		operation = j_operation_new(NULL);
 		j_item_read(j_uri_get_item(uri), buf, size, offset, &bytes_read, operation);
 		j_operation_execute(operation);
 		j_operation_free(operation);

@@ -42,11 +42,10 @@ typedef void (*JOperationCompletedFunc) (JOperation*, gpointer);
 
 #include <jsemantics.h>
 
-JOperation* j_operation_new (void);
+JOperation* j_operation_new (JSemantics*);
 void j_operation_free (JOperation*);
 
 JSemantics* j_operation_get_semantics (JOperation*);
-void j_operation_set_semantics (JOperation*, JSemantics*);
 
 gboolean j_operation_execute (JOperation*);
 

@@ -361,7 +361,7 @@ j_uri_get (JURI* uri, GError** error)
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	operation = j_operation_new();
+	operation = j_operation_new(NULL);
 
 	if (uri->store_name != NULL)
 	{
