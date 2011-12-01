@@ -29,25 +29,11 @@
  * \file
  **/
 
-#ifndef H_CONFIGURATION
-#define H_CONFIGURATION
+#ifndef H_CONFIGURATION_INTERNAL
+#define H_CONFIGURATION_INTERNAL
 
 #include <glib.h>
 
-struct JConfiguration;
+G_GNUC_INTERNAL JConfiguration* j_configuration_new_for_data (GKeyFile*);
 
-typedef struct JConfiguration JConfiguration;
-
-JConfiguration* j_configuration_new (void);
-JConfiguration* j_configuration_ref (JConfiguration*);
-void j_configuration_unref (JConfiguration*);
-
-gchar const* j_configuration_get_data_server (JConfiguration*, guint);
-gchar const* j_configuration_get_metadata_server (JConfiguration*, guint);
-
-guint j_configuration_get_data_server_count (JConfiguration*);
-guint j_configuration_get_metadata_server_count (JConfiguration*);
-
-gchar const* j_configuration_get_storage_backend (JConfiguration*);
-gchar const* j_configuration_get_storage_path (JConfiguration*);
 #endif

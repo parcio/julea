@@ -29,6 +29,8 @@
 
 #include <julea.h>
 
+#include <jconfiguration-internal.h>
+
 #include "test.h"
 
 static

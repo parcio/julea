@@ -30,6 +30,7 @@
 #include <julea.h>
 
 #include <jcommon.h>
+#include <jconfiguration-internal.h>
 #include <jdistribution.h>
 
 #include "test.h"
