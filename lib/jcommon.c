@@ -38,7 +38,7 @@
 #include <jcommon-internal.h>
 
 #include <jbackground-operation-internal.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
 #include <jlist.h>

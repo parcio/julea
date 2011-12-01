@@ -34,7 +34,7 @@
 #include <jdistribution.h>
 
 #include <jcommon.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 
 /**
  * \defgroup JDistribution Distribution

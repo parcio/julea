@@ -33,7 +33,7 @@
 
 #include <string.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 
 /**
  * \defgroup JConfiguration Configuration

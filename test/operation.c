@@ -29,6 +29,8 @@
 
 #include <julea.h>
 
+#include <joperation-internal.h>
+
 #include "test.h"
 
 static

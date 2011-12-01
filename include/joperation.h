@@ -45,8 +45,6 @@ typedef void (*JOperationCompletedFunc) (JOperation*, gpointer);
 JOperation* j_operation_new (JSemantics*);
 void j_operation_free (JOperation*);
 
-JSemantics* j_operation_get_semantics (JOperation*);
-
 gboolean j_operation_execute (JOperation*);
 
 void j_operation_execute_async (JOperation*, JOperationCompletedFunc, gpointer);

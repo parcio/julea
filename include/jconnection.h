@@ -47,7 +47,7 @@ struct JConnection;
 
 typedef struct JConnection JConnection;
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 
 GQuark j_connection_error_quark (void);
 

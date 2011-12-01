@@ -102,7 +102,7 @@ j_cmd_copy (gchar const** arguments)
 					g_error_free(error);
 				}
 
-				operation = j_operation_new();
+				operation = j_operation_new(NULL);
 
 				item = j_item_new(j_uri_get_item_name(uri[i]));
 				j_collection_create_item(j_uri_get_collection(uri[i]), item, operation);
@@ -148,7 +148,7 @@ j_cmd_copy (gchar const** arguments)
 		}
 	}
 
-	operation = j_operation_new();
+	operation = j_operation_new(NULL);
 	offset = 0;
 	buffer = g_new(gchar, 1024 * 1024);
 

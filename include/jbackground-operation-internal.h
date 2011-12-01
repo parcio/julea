@@ -40,13 +40,13 @@ typedef struct JBackgroundOperation JBackgroundOperation;
 
 typedef gpointer (*JBackgroundOperationFunc) (gpointer);
 
-void j_background_operation_init (void);
-void j_background_operation_fini (void);
+G_GNUC_INTERNAL void j_background_operation_init (void);
+G_GNUC_INTERNAL void j_background_operation_fini (void);
 
-JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);
-JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
-void j_background_operation_unref (JBackgroundOperation*);
+G_GNUC_INTERNAL JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);
+G_GNUC_INTERNAL JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
+G_GNUC_INTERNAL void j_background_operation_unref (JBackgroundOperation*);
 
-gpointer j_background_operation_wait (JBackgroundOperation*);
+G_GNUC_INTERNAL gpointer j_background_operation_wait (JBackgroundOperation*);
 
 #endif

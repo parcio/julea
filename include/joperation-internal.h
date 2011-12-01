@@ -171,6 +171,8 @@ struct JOperationPart
 
 typedef struct JOperationPart JOperationPart;
 
+G_GNUC_INTERNAL JSemantics* j_operation_get_semantics (JOperation*);
+
 G_GNUC_INTERNAL void j_operation_add (JOperation*, JOperationPart*);
 
 #endif

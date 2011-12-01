@@ -59,7 +59,7 @@ j_cmd_delete (gchar const** arguments)
 		goto end;
 	}
 
-	operation = j_operation_new();
+	operation = j_operation_new(NULL);
 
 	if (j_uri_get_item(uri) != NULL)
 	{

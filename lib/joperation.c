@@ -234,32 +234,6 @@ j_operation_free (JOperation* operation)
 }
 
 /**
- * Returns an operation's semantics.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param operation An operation.
- *
- * \return A semantics object.
- **/
-JSemantics*
-j_operation_get_semantics (JOperation* operation)
-{
-	JSemantics* ret;
-
-	g_return_val_if_fail(operation != NULL, NULL);
-
-	j_trace_enter(j_trace(), G_STRFUNC);
-	ret = operation->semantics;
-	j_trace_leave(j_trace(), G_STRFUNC);
-
-	return ret;
-}
-
-/**
  * Executes the operation parts of a given operation type.
  *
  * \author Michael Kuhn
@@ -414,6 +388,34 @@ j_operation_wait (JOperation* operation)
 }
 
 /* Internal */
+
+/**
+ * Returns an operation's semantics.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ *
+ * \return A semantics object.
+ **/
+JSemantics*
+j_operation_get_semantics (JOperation* operation)
+{
+	JSemantics* ret;
+
+	g_return_val_if_fail(operation != NULL, NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
+	ret = operation->semantics;
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
+}
 
 /**
  * Adds a new part to the operation.

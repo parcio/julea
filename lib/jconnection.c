@@ -35,7 +35,7 @@
 
 #include <mongo.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
 

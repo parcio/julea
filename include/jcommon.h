@@ -38,7 +38,7 @@ struct JCommon;
 
 typedef struct JCommon JCommon;
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <joperation.h>
 #include <jstore.h>
 #include <jtrace.h>

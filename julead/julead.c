@@ -35,7 +35,7 @@
 
 #include <string.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jmessage.h>
 #include <jtrace.h>
 

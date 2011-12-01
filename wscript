@@ -154,9 +154,9 @@ def build (ctx):
 
 	# Tests
 	ctx.program(
-		source = ctx.path.ant_glob('test/*.c'),
+		source = ctx.path.ant_glob('test/*.c') + ctx.path.ant_glob('lib/*.c'),
 		target = 'test/test',
-		use = ['lib/julea', 'GLIB'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		install_path = None
 	)
