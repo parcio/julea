@@ -45,6 +45,7 @@
 #include <jlist-iterator.h>
 #include <joperation.h>
 #include <joperation-internal.h>
+#include <joperation-part-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
 #include <jtrace.h>
@@ -190,8 +191,7 @@ j_create_store (JStore* store, JOperation* operation)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_CREATE_STORE;
+	part = j_operation_part_new(J_OPERATION_CREATE_STORE);
 	part->u.create_store.connection = j_connection_ref(common->connection);
 	part->u.create_store.store = j_store_ref(store);
 
@@ -208,8 +208,7 @@ j_delete_store (JStore* store, JOperation* operation)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_DELETE_STORE;
+	part = j_operation_part_new(J_OPERATION_DELETE_STORE);
 	part->u.delete_store.connection = j_connection_ref(common->connection);
 	part->u.delete_store.store = j_store_ref(store);
 
@@ -227,8 +226,7 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_GET_STORE;
+	part = j_operation_part_new(J_OPERATION_GET_STORE);
 	part->u.get_store.connection = j_connection_ref(common->connection);
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);

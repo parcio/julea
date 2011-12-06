@@ -40,6 +40,7 @@
 #include <jitem-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <joperation-part-internal.h>
 #include <jsemantics.h>
 #include <jstore-internal.h>
 
@@ -106,80 +107,6 @@ j_operation_background_operation (gpointer data)
 }
 
 /**
- * Frees the memory allocated by an operation part.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param data An operation part.
- **/
-/* FIXME */
-static
-void
-j_operation_part_free (gpointer data)
-{
-	JOperationPart* part = data;
-
-	switch (part->type)
-	{
-		case J_OPERATION_CREATE_STORE:
-			j_connection_unref(part->u.create_store.connection);
-			j_store_unref(part->u.create_store.store);
-			break;
-		case J_OPERATION_GET_STORE:
-			j_connection_unref(part->u.get_store.connection);
-			g_free(part->u.get_store.name);
-			break;
-		case J_OPERATION_DELETE_STORE:
-			j_connection_unref(part->u.delete_store.connection);
-			j_store_unref(part->u.delete_store.store);
-			break;
-		case J_OPERATION_STORE_CREATE_COLLECTION:
-			j_store_unref(part->u.store_create_collection.store);
-			j_collection_unref(part->u.store_create_collection.collection);
-			break;
-		case J_OPERATION_STORE_DELETE_COLLECTION:
-			j_store_unref(part->u.store_delete_collection.store);
-			j_collection_unref(part->u.store_delete_collection.collection);
-			break;
-		case J_OPERATION_STORE_GET_COLLECTION:
-			j_store_unref(part->u.store_get_collection.store);
-			g_free(part->u.store_get_collection.name);
-			break;
-		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			j_collection_unref(part->u.collection_create_item.collection);
-			j_item_unref(part->u.collection_create_item.item);
-			break;
-		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			j_collection_unref(part->u.collection_delete_item.collection);
-			j_item_unref(part->u.collection_delete_item.item);
-			break;
-		case J_OPERATION_COLLECTION_GET_ITEM:
-			j_collection_unref(part->u.collection_get_item.collection);
-			g_free(part->u.collection_get_item.name);
-			break;
-		case J_OPERATION_ITEM_GET_STATUS:
-			j_item_unref(part->u.item_get_status.item);
-			break;
-		case J_OPERATION_ITEM_READ:
-			j_item_unref(part->u.item_read.item);
-			break;
-		case J_OPERATION_ITEM_WRITE:
-			j_item_unref(part->u.item_write.item);
-			break;
-		case J_OPERATION_NONE:
-		default:
-			g_warn_if_reached();
-	}
-
-	g_slice_free(JOperationPart, part);
-}
-
-/**
  * Creates a new operation.
  *
  * \author Michael Kuhn
@@ -195,7 +122,7 @@ j_operation_new (JSemantics* semantics)
 	JOperation* operation;
 
 	operation = g_slice_new(JOperation);
-	operation->list = j_list_new(j_operation_part_free);
+	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
 	operation->background_operation = NULL;
 
 	if (semantics == NULL)
@@ -223,6 +150,8 @@ j_operation_free (JOperation* operation)
 {
 	g_return_if_fail(operation != NULL);
 
+	j_operation_wait(operation);
+
 	if (operation->semantics != NULL)
 	{
 		j_semantics_unref(operation->semantics);
@@ -235,6 +164,8 @@ j_operation_free (JOperation* operation)
 
 /**
  * Executes the operation parts of a given operation type.
+ *
+ * \private
  *
  * \author Michael Kuhn
  *
@@ -253,11 +184,11 @@ j_operation_execute_internal (JOperation* operation, JOperationType type, JList*
 		case J_OPERATION_CREATE_STORE:
 			j_create_store_internal(operation, list);
 			break;
-		case J_OPERATION_GET_STORE:
-			j_get_store_internal(operation, list);
-			break;
 		case J_OPERATION_DELETE_STORE:
 			j_delete_store_internal(operation, list);
+			break;
+		case J_OPERATION_GET_STORE:
+			j_get_store_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:
 			j_store_create_collection_internal(operation, list);

@@ -49,6 +49,7 @@
 #include <jmessage.h>
 #include <joperation.h>
 #include <joperation-internal.h>
+#include <joperation-part-internal.h>
 #include <jsemantics.h>
 #include <jtrace.h>
 
@@ -248,8 +249,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_READ;
+	part = j_operation_part_new(J_OPERATION_ITEM_READ);
 	part->u.item_read.item = j_item_ref(item);
 	part->u.item_read.data = data;
 	part->u.item_read.length = length;
@@ -283,8 +283,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_WRITE;
+	part = j_operation_part_new(J_OPERATION_ITEM_WRITE);
 	part->u.item_write.item = j_item_ref(item);
 	part->u.item_write.data = data;
 	part->u.item_write.length = length;
@@ -313,8 +312,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
 
 	g_return_if_fail(item != NULL);
 
-	part = g_slice_new(JOperationPart);
-	part->type = J_OPERATION_ITEM_GET_STATUS;
+	part = j_operation_part_new(J_OPERATION_ITEM_GET_STATUS);
 	part->u.item_get_status.item = j_item_ref(item);
 	part->u.item_get_status.flags = flags;
 
