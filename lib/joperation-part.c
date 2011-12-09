@@ -56,6 +56,7 @@ j_operation_part_new (JOperationType type)
 
 	part = g_slice_new(JOperationPart);
 	part->type = type;
+	part->cached = FALSE;
 
 	return part;
 }
@@ -121,6 +122,11 @@ j_operation_part_free (JOperationPart* part)
 			j_item_unref(part->u.item_read.item);
 			break;
 		case J_OPERATION_ITEM_WRITE:
+			if (part->cached)
+			{
+				g_free((gpointer)part->u.item_write.data);
+			}
+
 			j_item_unref(part->u.item_write.item);
 			break;
 		case J_OPERATION_NONE:
@@ -129,6 +135,49 @@ j_operation_part_free (JOperationPart* part)
 	}
 
 	g_slice_free(JOperationPart, part);
+}
+
+gboolean
+j_operation_part_can_cache (JOperationPart* part)
+{
+	gboolean ret = FALSE;
+
+	switch (part->type)
+	{
+		case J_OPERATION_CREATE_STORE:
+		case J_OPERATION_DELETE_STORE:
+		case J_OPERATION_STORE_CREATE_COLLECTION:
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+		case J_OPERATION_COLLECTION_CREATE_ITEM:
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+		case J_OPERATION_ITEM_WRITE:
+			ret = TRUE;
+			break;
+
+		case J_OPERATION_GET_STORE:
+		case J_OPERATION_STORE_GET_COLLECTION:
+		case J_OPERATION_COLLECTION_GET_ITEM:
+		case J_OPERATION_ITEM_GET_STATUS:
+		case J_OPERATION_ITEM_READ:
+			ret = FALSE;
+			break;
+
+		case J_OPERATION_NONE:
+		default:
+			g_warn_if_reached();
+	}
+
+	return ret;
+}
+
+void
+j_operation_part_cache (JOperationPart* part)
+{
+	if (part->type == J_OPERATION_ITEM_WRITE)
+	{
+		part->cached = TRUE;
+		part->u.item_write.data = g_memdup(part->u.item_write.data, part->u.item_write.length);
+	}
 }
 
 /**

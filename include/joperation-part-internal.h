@@ -68,6 +68,8 @@ struct JOperationPart
 	 **/
 	JOperationType type;
 
+	gboolean cached;
+
 	/* FIXME key? */
 
 	union
@@ -173,5 +175,8 @@ typedef struct JOperationPart JOperationPart;
 
 G_GNUC_INTERNAL JOperationPart* j_operation_part_new (JOperationType);
 G_GNUC_INTERNAL void j_operation_part_free (JOperationPart*);
+
+G_GNUC_INTERNAL gboolean j_operation_part_can_cache (JOperationPart*);
+G_GNUC_INTERNAL void j_operation_part_cache (JOperationPart*);
 
 #endif

@@ -38,6 +38,7 @@
 #include <jcommon-internal.h>
 
 #include <jbackground-operation-internal.h>
+#include <jcache-internal.h>
 #include <jconfiguration.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
@@ -99,6 +100,7 @@ j_init (gint* argc, gchar*** argv)
 	}
 
 	j_background_operation_init();
+	j_cache_init();
 
 	g_atomic_pointer_set(&j_common, common);
 
@@ -134,6 +136,7 @@ j_fini (void)
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
 
+	j_cache_fini();
 	j_background_operation_fini();
 
 	j_connection_disconnect(common->connection);

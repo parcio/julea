@@ -35,6 +35,7 @@
 #include <joperation-internal.h>
 
 #include <jbackground-operation-internal.h>
+#include <jcache-internal.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jitem-internal.h>
@@ -113,6 +114,8 @@ j_operation_background_operation (gpointer data)
  *
  * \code
  * \endcode
+ *
+ * \param semantics A semantics object.
  *
  * \return A new operation. Should be freed with j_operation_free().
  **/
@@ -366,6 +369,16 @@ j_operation_add (JOperation* operation, JOperationPart* part)
 {
 	g_return_if_fail(operation != NULL);
 	g_return_if_fail(part != NULL);
+
+	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
+	    && j_operation_part_can_cache(part))
+	{
+		j_operation_part_cache(part);
+
+		j_cache_add(part);
+
+		return;
+	}
 
 	j_list_append(operation->list, part);
 }
