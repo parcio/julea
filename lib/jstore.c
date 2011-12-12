@@ -68,7 +68,7 @@ struct JStore
 
 	JConnection* connection;
 
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -98,7 +98,7 @@ j_store_ref (JStore* store)
 {
 	g_return_val_if_fail(store != NULL, NULL);
 
-	store->ref_count++;
+	g_atomic_int_inc(&(store->ref_count));
 
 	return store;
 }
@@ -108,9 +108,7 @@ j_store_unref (JStore* store)
 {
 	g_return_if_fail(store != NULL);
 
-	store->ref_count--;
-
-	if (store->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(store->ref_count)))
 	{
 		j_connection_unref(store->connection);
 

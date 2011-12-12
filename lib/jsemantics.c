@@ -71,7 +71,7 @@ struct JSemantics
 	/**
 	 * The reference count.
 	 **/
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -132,7 +132,7 @@ j_semantics_ref (JSemantics* semantics)
 {
 	g_return_val_if_fail(semantics != NULL, NULL);
 
-	semantics->ref_count++;
+	g_atomic_int_inc(&(semantics->ref_count));
 
 	return semantics;
 }
@@ -153,9 +153,7 @@ j_semantics_unref (JSemantics* semantics)
 {
 	g_return_if_fail(semantics != NULL);
 
-	semantics->ref_count--;
-
-	if (semantics->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(semantics->ref_count)))
 	{
 		g_slice_free(JSemantics, semantics);
 	}

@@ -97,7 +97,7 @@ struct JItem
 	/**
 	 * The reference count.
 	 **/
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -160,7 +160,7 @@ j_item_ref (JItem* item)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	item->ref_count++;
+	g_atomic_int_inc(&(item->ref_count));
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 
@@ -185,9 +185,7 @@ j_item_unref (JItem* item)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	item->ref_count--;
-
-	if (item->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
 		if (item->collection != NULL)
 		{

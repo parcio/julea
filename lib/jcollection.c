@@ -89,7 +89,7 @@ struct JCollection
 	/**
 	 * The reference count.
 	 **/
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -154,7 +154,7 @@ j_collection_ref (JCollection* collection)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	collection->ref_count++;
+	g_atomic_int_inc(&(collection->ref_count));
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 
@@ -179,9 +179,7 @@ j_collection_unref (JCollection* collection)
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
-	collection->ref_count--;
-
-	if (collection->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
 		if (collection->store != NULL)
 		{

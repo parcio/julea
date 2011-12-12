@@ -57,7 +57,7 @@ struct JConfiguration
 	}
 	storage;
 
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -189,7 +189,7 @@ j_configuration_ref (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	configuration->ref_count++;
+	g_atomic_int_inc(&(configuration->ref_count));
 
 	return configuration;
 }
@@ -208,9 +208,7 @@ j_configuration_ref (JConfiguration* configuration)
 void
 j_configuration_unref (JConfiguration* configuration)
 {
-	configuration->ref_count--;
-
-	if (configuration->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
 		g_free(configuration->storage.backend);
 		g_free(configuration->storage.path);

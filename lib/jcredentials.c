@@ -49,7 +49,7 @@ struct JCredentials
 	uid_t user;
 	uid_t group;
 
-	guint ref_count;
+	gint ref_count;
 };
 
 JCredentials*
@@ -70,7 +70,7 @@ j_credentials_ref (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	credentials->ref_count++;
+	g_atomic_int_inc(&(credentials->ref_count));
 
 	return credentials;
 }
@@ -80,9 +80,7 @@ j_credentials_unref (JCredentials* credentials)
 {
 	g_return_if_fail(credentials != NULL);
 
-	credentials->ref_count--;
-
-	if (credentials->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
 		g_slice_free(JCredentials, credentials);
 	}

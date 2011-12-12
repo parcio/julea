@@ -83,7 +83,7 @@ struct JConnection
 	/**
 	 * The reference count.
 	 **/
-	guint ref_count;
+	gint ref_count;
 };
 
 GQuark
@@ -149,7 +149,7 @@ j_connection_ref (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);
 
-	connection->ref_count++;
+	g_atomic_int_inc(&(connection->ref_count));
 
 	return connection;
 }
@@ -172,9 +172,7 @@ j_connection_unref (JConnection* connection)
 
 	g_return_if_fail(connection != NULL);
 
-	connection->ref_count--;
-
-	if (connection->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(connection->ref_count)))
 	{
 		mongo_destroy(&(connection->connection));
 

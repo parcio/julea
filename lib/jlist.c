@@ -67,7 +67,7 @@ struct JList
 	/**
 	 * The reference count.
 	 **/
-	guint ref_count;
+	gint ref_count;
 };
 
 /**
@@ -109,7 +109,7 @@ j_list_ref (JList* list)
 {
 	g_return_val_if_fail(list != NULL, NULL);
 
-	list->ref_count++;
+	g_atomic_int_inc(&(list->ref_count));
 
 	return list;
 }
@@ -131,9 +131,7 @@ j_list_unref (JList* list)
 {
 	g_return_if_fail(list != NULL);
 
-	list->ref_count--;
-
-	if (list->ref_count == 0)
+	if (g_atomic_int_dec_and_test(&(list->ref_count)))
 	{
 		j_list_delete_all(list);
 
