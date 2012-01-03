@@ -25,56 +25,19 @@
  * SUCH DAMAGE.
  */
 
-#include <glib.h>
+/**
+ * \file
+ **/
 
-#include <julea.h>
+#ifndef H_JULEA_INTERNAL
+#define H_JULEA_INTERNAL
 
-#include "benchmark.h"
+#ifdef J_ENABLE_INTERNAL
+#define J_GNUC_INTERNAL
+#else
+#define J_GNUC_INTERNAL G_GNUC_INTERNAL
+#endif
 
-GTimer* j_benchmark_timer = NULL;
+/* FIXME j_sync() for benchmarks */
 
-void
-j_benchmark_timer_start (void)
-{
-	g_timer_start(j_benchmark_timer);
-}
-
-gdouble
-j_benchmark_timer_elapsed (void)
-{
-	return g_timer_elapsed(j_benchmark_timer, NULL);
-}
-
-void
-j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
-{
-	gchar* left;
-	gchar* ret;
-
-	left = g_strconcat(name, ":", NULL);
-	g_print("%-60s ", left);
-	g_free(left);
-
-	ret = (*benchmark_func)();
-
-	g_print("%s\n", ret);
-	g_free(ret);
-}
-
-int
-main (int argc, char** argv)
-{
-	j_init(&argc, &argv);
-
-	j_benchmark_timer = g_timer_new();
-
-	benchmark_background_operation();
-	benchmark_collection();
-	benchmark_item();
-
-	g_timer_destroy(j_benchmark_timer);
-
-	j_fini();
-
-	return 0;
-}
+#endif

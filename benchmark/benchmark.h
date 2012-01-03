@@ -37,5 +37,6 @@ void j_benchmark_run (gchar const*, BenchmarkFunc);
 
 void benchmark_background_operation (void);
 void benchmark_collection (void);
+void benchmark_item (void);
 
 #endif

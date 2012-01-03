@@ -33,10 +33,11 @@
 
 static
 gchar*
-_benchmark_collection_create (gboolean batch)
+_benchmark_item_create (gboolean batch)
 {
 	guint const n = (batch) ? 100000 : 1000;
 
+	JCollection* collection;
 	JOperation* delete_operation;
 	JOperation* operation;
 	JStore* store;
@@ -46,23 +47,25 @@ _benchmark_collection_create (gboolean batch)
 	operation = j_operation_new(NULL);
 
 	store = j_store_new("test");
+	collection = j_collection_new("test");
 	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
 	j_operation_execute(operation);
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
-		JCollection* collection;
+		JItem* item;
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		item = j_item_new(name);
 		g_free(name);
 
-		j_store_create_collection(store, collection, operation);
-		j_store_delete_collection(store, collection, delete_operation);
-		j_collection_unref(collection);
+		j_collection_create_item(collection, item, operation);
+		j_collection_delete_item(collection, item, delete_operation);
+		j_item_unref(item);
 
 		if (!batch)
 		{
@@ -77,7 +80,9 @@ _benchmark_collection_create (gboolean batch)
 
 	elapsed = j_benchmark_timer_elapsed();
 
+	j_store_delete_collection(store, collection, delete_operation);
 	j_delete_store(store, delete_operation);
+	j_collection_unref(collection);
 	j_store_unref(store);
 	j_operation_execute(delete_operation);
 
@@ -89,24 +94,25 @@ _benchmark_collection_create (gboolean batch)
 
 static
 gchar*
-benchmark_collection_create (void)
+benchmark_item_create (void)
 {
-	return _benchmark_collection_create(FALSE);
+	return _benchmark_item_create(FALSE);
 }
 
 static
 gchar*
-benchmark_collection_create_batch (void)
+benchmark_item_create_batch (void)
 {
-	return _benchmark_collection_create(TRUE);
+	return _benchmark_item_create(TRUE);
 }
 
 static
 gchar*
-_benchmark_collection_delete (gboolean batch)
+_benchmark_item_delete (gboolean batch)
 {
 	guint const n = 10000;
 
+	JCollection* collection;
 	JOperation* operation;
 	JStore* store;
 	gdouble elapsed;
@@ -114,20 +120,22 @@ _benchmark_collection_delete (gboolean batch)
 	operation = j_operation_new(NULL);
 
 	store = j_store_new("test");
+	collection = j_collection_new("test");
 	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
 	j_operation_execute(operation);
 
 	for (guint i = 0; i < n; i++)
 	{
-		JCollection* collection;
+		JItem* item;
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		item = j_item_new(name);
 		g_free(name);
 
-		j_store_create_collection(store, collection, operation);
-		j_collection_unref(collection);
+		j_collection_create_item(collection, item, operation);
+		j_item_unref(item);
 	}
 
 	j_operation_execute(operation);
@@ -136,16 +144,16 @@ _benchmark_collection_delete (gboolean batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JCollection* collection;
+		JItem* item;
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		j_store_get_collection(store, &collection, name, operation);
+		j_collection_get_item(collection, &item, name, J_ITEM_STATUS_NONE, operation);
 		j_operation_execute(operation);
 		g_free(name);
 
-		j_store_delete_collection(store, collection, operation);
-		j_collection_unref(collection);
+		j_collection_delete_item(collection, item, operation);
+		j_item_unref(item);
 
 		if (!batch)
 		{
@@ -160,7 +168,9 @@ _benchmark_collection_delete (gboolean batch)
 
 	elapsed = j_benchmark_timer_elapsed();
 
+	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
+	j_collection_unref(collection);
 	j_store_unref(store);
 	j_operation_execute(operation);
 
@@ -171,24 +181,25 @@ _benchmark_collection_delete (gboolean batch)
 
 static
 gchar*
-benchmark_collection_delete (void)
+benchmark_item_delete (void)
 {
-	return _benchmark_collection_delete(FALSE);
+	return _benchmark_item_delete(FALSE);
 }
 
 static
 gchar*
-benchmark_collection_delete_batch (void)
+benchmark_item_delete_batch (void)
 {
-	return _benchmark_collection_delete(TRUE);
+	return _benchmark_item_delete(TRUE);
 }
 
 static
 gchar*
-benchmark_collection_delete_batch_without_get (void)
+benchmark_item_delete_batch_without_get (void)
 {
 	guint const n = 100000;
 
+	JCollection* collection;
 	JOperation* delete_operation;
 	JOperation* operation;
 	JStore* store;
@@ -198,21 +209,23 @@ benchmark_collection_delete_batch_without_get (void)
 	operation = j_operation_new(NULL);
 
 	store = j_store_new("test");
+	collection = j_collection_new("test");
 	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
 	j_operation_execute(operation);
 
 	for (guint i = 0; i < n; i++)
 	{
-		JCollection* collection;
+		JItem* item;
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		item = j_item_new(name);
 		g_free(name);
 
-		j_store_create_collection(store, collection, operation);
-		j_store_delete_collection(store, collection, delete_operation);
-		j_collection_unref(collection);
+		j_collection_create_item(collection, item, operation);
+		j_collection_delete_item(collection, item, delete_operation);
+		j_item_unref(item);
 	}
 
 	j_operation_execute(operation);
@@ -223,7 +236,9 @@ benchmark_collection_delete_batch_without_get (void)
 
 	elapsed = j_benchmark_timer_elapsed();
 
+	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
+	j_collection_unref(collection);
 	j_store_unref(store);
 	j_operation_execute(operation);
 
@@ -234,12 +249,12 @@ benchmark_collection_delete_batch_without_get (void)
 }
 
 void
-benchmark_collection (void)
+benchmark_item (void)
 {
-	j_benchmark_run("/collection/create", benchmark_collection_create);
-	j_benchmark_run("/collection/create-batch", benchmark_collection_create_batch);
-	j_benchmark_run("/collection/delete", benchmark_collection_delete);
-	j_benchmark_run("/collection/delete-batch", benchmark_collection_delete_batch);
-	j_benchmark_run("/collection/delete-batch-without-get", benchmark_collection_delete_batch_without_get);
+	j_benchmark_run("/item/create", benchmark_item_create);
+	j_benchmark_run("/item/create-batch", benchmark_item_create_batch);
+	j_benchmark_run("/item/delete", benchmark_item_delete);
+	j_benchmark_run("/item/delete-batch", benchmark_item_delete_batch);
+	j_benchmark_run("/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
 	/* FIXME get */
 }
