@@ -34,18 +34,20 @@
 
 #include <glib.h>
 
+#include <julea-internal.h>
+
 #include <jconnection.h>
 
 #include <jmessage.h>
 
 #include <mongo.h>
 
-G_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
+J_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
 
-G_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*);
-G_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpointer, gsize);
+J_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*);
+J_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpointer, gsize);
 
-G_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*, JMessage*);
-G_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
+J_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*, JMessage*);
+J_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
 
 #endif

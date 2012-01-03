@@ -152,21 +152,33 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
-	# Tests
-	ctx.program(
-		source = ctx.path.ant_glob('test/*.c') + ctx.path.ant_glob('lib/*.c'),
-		target = 'test/test',
+	# Library (internal)
+	ctx.shlib(
+		source = ctx.path.ant_glob('lib/*.c'),
+		target = 'lib/julea-internal',
 		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
+		defines = ['J_ENABLE_INTERNAL'],
+		install_path = None
+	)
+
+	# Tests
+	ctx.program(
+		source = ctx.path.ant_glob('test/*.c'),
+		target = 'test/test',
+		use = ['lib/julea-internal', 'GLIB'],
+		includes = ['include'],
+		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
 
 	# Benchmarks
 	ctx.program(
-		source = ctx.path.ant_glob('benchmark/*.c') + ctx.path.ant_glob('lib/*.c'),
+		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/benchmark',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
+		use = ['lib/julea-internal', 'GLIB'],
 		includes = ['include'],
+		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
 

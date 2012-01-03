@@ -34,6 +34,8 @@
 
 #include <glib.h>
 
-G_GNUC_INTERNAL JConfiguration* j_configuration_new_for_data (GKeyFile*);
+#include <julea-internal.h>
+
+J_GNUC_INTERNAL JConfiguration* j_configuration_new_for_data (GKeyFile*);
 
 #endif

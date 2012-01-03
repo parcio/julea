@@ -34,15 +34,17 @@
 
 #include <glib.h>
 
+#include <julea-internal.h>
+
 struct JCache;
 
 typedef struct JCache JCache;
 
 #include <joperation-part-internal.h>
 
-G_GNUC_INTERNAL void j_cache_init (void);
-G_GNUC_INTERNAL void j_cache_fini (void);
+J_GNUC_INTERNAL void j_cache_init (void);
+J_GNUC_INTERNAL void j_cache_fini (void);
 
-G_GNUC_INTERNAL void j_cache_add (JOperationPart*);
+J_GNUC_INTERNAL void j_cache_add (JOperationPart*);
 
 #endif

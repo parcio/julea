@@ -34,12 +34,14 @@
 
 #include <glib.h>
 
+#include <julea-internal.h>
+
 #include <joperation.h>
 
 #include <joperation-part-internal.h>
 
-G_GNUC_INTERNAL JSemantics* j_operation_get_semantics (JOperation*);
+J_GNUC_INTERNAL JSemantics* j_operation_get_semantics (JOperation*);
 
-G_GNUC_INTERNAL void j_operation_add (JOperation*, JOperationPart*);
+J_GNUC_INTERNAL void j_operation_add (JOperation*, JOperationPart*);
 
 #endif

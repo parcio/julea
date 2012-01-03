@@ -34,29 +34,31 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
+#include <julea-internal.h>
+
 #include <jcollection.h>
 
 #include <jlist.h>
 #include <jstore.h>
 
-#include <bson.h>
+J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
 
-G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
+J_GNUC_INTERNAL gchar const* j_collection_collection_items (JCollection*);
+J_GNUC_INTERNAL gchar const* j_collection_collection_item_statuses (JCollection*);
 
-G_GNUC_INTERNAL gchar const* j_collection_collection_items (JCollection*);
-G_GNUC_INTERNAL gchar const* j_collection_collection_item_statuses (JCollection*);
+J_GNUC_INTERNAL JStore* j_collection_get_store (JCollection*);
 
-G_GNUC_INTERNAL JStore* j_collection_get_store (JCollection*);
+J_GNUC_INTERNAL bson* j_collection_serialize (JCollection*);
+J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson const*);
 
-G_GNUC_INTERNAL bson* j_collection_serialize (JCollection*);
-G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson const*);
+J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 
-G_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
+J_GNUC_INTERNAL void j_collection_set_store (JCollection*, JStore*);
 
-G_GNUC_INTERNAL void j_collection_set_store (JCollection*, JStore*);
-
-G_GNUC_INTERNAL void j_collection_create_item_internal (JOperation*, JList*);
-G_GNUC_INTERNAL void j_collection_delete_item_internal (JOperation*, JList*);
-G_GNUC_INTERNAL void j_collection_get_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL void j_collection_create_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL void j_collection_delete_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL void j_collection_get_item_internal (JOperation*, JList*);
 
 #endif

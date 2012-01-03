@@ -34,6 +34,8 @@
 
 #include <glib.h>
 
+#include <julea-internal.h>
+
 #include <joperation.h>
 
 #include <jitem.h>
@@ -173,10 +175,10 @@ struct JOperationPart
 
 typedef struct JOperationPart JOperationPart;
 
-G_GNUC_INTERNAL JOperationPart* j_operation_part_new (JOperationType);
-G_GNUC_INTERNAL void j_operation_part_free (JOperationPart*);
+J_GNUC_INTERNAL JOperationPart* j_operation_part_new (JOperationType);
+J_GNUC_INTERNAL void j_operation_part_free (JOperationPart*);
 
-G_GNUC_INTERNAL gboolean j_operation_part_can_cache (JOperationPart*);
-G_GNUC_INTERNAL void j_operation_part_cache (JOperationPart*);
+J_GNUC_INTERNAL gboolean j_operation_part_can_cache (JOperationPart*);
+J_GNUC_INTERNAL void j_operation_part_cache (JOperationPart*);
 
 #endif
