@@ -90,6 +90,6 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 void
 test_semantics (void)
 {
-	g_test_add_func("/julea/semantics/new_ref_unref", test_semantics_new_ref_unref);
-	g_test_add("/julea/semantics/set_get", JSemantics*, NULL, test_semantics_fixture_setup, test_semantics_set_get, test_semantics_fixture_teardown);
+	g_test_add_func("/semantics/new_ref_unref", test_semantics_new_ref_unref);
+	g_test_add("/semantics/set_get", JSemantics*, NULL, test_semantics_fixture_setup, test_semantics_set_get, test_semantics_fixture_teardown);
 }

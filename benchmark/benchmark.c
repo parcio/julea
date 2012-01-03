@@ -29,68 +29,51 @@
 
 #include <julea.h>
 
-#include "test.h"
+#include "benchmark.h"
 
-static
+GTimer* j_benchmark_timer = NULL;
+
 void
-test_item_new_free (void)
+j_benchmark_timer_start (void)
 {
-	guint const n = 100000;
-
-	for (guint i = 0; i < n; i++)
-	{
-		JItem* item;
-
-		item = j_item_new("test-item");
-		g_assert(item != NULL);
-		j_item_unref(item);
-	}
+	g_timer_start(j_benchmark_timer);
 }
 
-static
-void
-test_item_name (void)
+gdouble
+j_benchmark_timer_elapsed (void)
 {
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpstr(j_item_get_name(item), ==, "test-item");
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_size (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_size(item), ==, 0);
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_modification_time (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_modification_time(item), >, 0);
-
-	j_item_unref(item);
+	return g_timer_elapsed(j_benchmark_timer, NULL);
 }
 
 void
-test_item (void)
+j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 {
-	g_test_add_func("/item/new_free", test_item_new_free);
-	g_test_add_func("/item/name", test_item_name);
-	g_test_add_func("/item/size", test_item_size);
-	g_test_add_func("/item/modification_time", test_item_modification_time);
+	gchar* left;
+	gchar* ret;
+
+	left = g_strconcat(name, ":", NULL);
+	g_print("%-60s ", left);
+	g_free(left);
+
+	ret = (*benchmark_func)();
+
+	g_print("%s\n", ret);
+	g_free(ret);
+}
+
+int
+main (int argc, char** argv)
+{
+	j_init(&argc, &argv);
+
+	j_benchmark_timer = g_timer_new();
+
+	benchmark_background_operation();
+	benchmark_collection();
+
+	g_timer_destroy(j_benchmark_timer);
+
+	j_fini();
+
+	return 0;
 }

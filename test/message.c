@@ -85,7 +85,7 @@ test_message_append (void)
 void
 test_message (void)
 {
-	g_test_add_func("/julea/message/new_free", test_message_new_free);
-	g_test_add_func("/julea/message/header", test_message_header);
-	g_test_add_func("/julea/message/append", test_message_append);
+	g_test_add_func("/message/new_free", test_message_new_free);
+	g_test_add_func("/message/header", test_message_header);
+	g_test_add_func("/message/append", test_message_append);
 }

@@ -111,5 +111,5 @@ test_distribution_round_robin (JConfiguration** configuration, gconstpointer dat
 void
 test_distribution (void)
 {
-	g_test_add("/julea/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
+	g_test_add("/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
 }

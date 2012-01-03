@@ -29,68 +29,50 @@
 
 #include <julea.h>
 
-#include "test.h"
+#include <jbackground-operation-internal.h>
+
+#include "benchmark.h"
+
+gint benchmark_background_operation_counter;
 
 static
-void
-test_item_new_free (void)
+gpointer
+on_background_operation_completed (gpointer data)
+{
+	g_atomic_int_inc(&benchmark_background_operation_counter);
+
+	return NULL;
+}
+
+static
+gchar*
+benchmark_background_operation_new_ref_unref (void)
 {
 	guint const n = 100000;
 
+	JBackgroundOperation* background_operation;
+	gdouble elapsed;
+
+	g_atomic_int_set(&benchmark_background_operation_counter, 0);
+
+	j_benchmark_timer_start();
+
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
-
-		item = j_item_new("test-item");
-		g_assert(item != NULL);
-		j_item_unref(item);
+		background_operation = j_background_operation_new(on_background_operation_completed, NULL);
+		j_background_operation_unref(background_operation);
 	}
-}
 
-static
-void
-test_item_name (void)
-{
-	JItem* item;
+	/* FIXME overhead? */
+	while (g_atomic_int_get(&benchmark_background_operation_counter) != (gint)n);
 
-	item = j_item_new("test-item");
+	elapsed = j_benchmark_timer_elapsed();
 
-	g_assert_cmpstr(j_item_get_name(item), ==, "test-item");
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_size (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_size(item), ==, 0);
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_modification_time (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_modification_time(item), >, 0);
-
-	j_item_unref(item);
+	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
 
 void
-test_item (void)
+benchmark_background_operation (void)
 {
-	g_test_add_func("/item/new_free", test_item_new_free);
-	g_test_add_func("/item/name", test_item_name);
-	g_test_add_func("/item/size", test_item_size);
-	g_test_add_func("/item/modification_time", test_item_modification_time);
+	j_benchmark_run("/background_operation", benchmark_background_operation_new_ref_unref);
 }

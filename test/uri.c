@@ -129,7 +129,7 @@ test_uri_invalid (void)
 void
 test_uri (void)
 {
-	g_test_add_func("/julea/uri/new_free", test_uri_new_free);
-	g_test_add_func("/julea/uri/valid", test_uri_valid);
-	g_test_add_func("/julea/uri/invalid", test_uri_invalid);
+	g_test_add_func("/uri/new_free", test_uri_new_free);
+	g_test_add_func("/uri/valid", test_uri_valid);
+	g_test_add_func("/uri/invalid", test_uri_invalid);
 }

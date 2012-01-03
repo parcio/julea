@@ -110,6 +110,6 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 void
 test_list_iterator (void)
 {
-	g_test_add_func("/julea/list-iterator/new_free", test_list_iterator_new_free);
-	g_test_add("/julea/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);
+	g_test_add_func("/list-iterator/new_free", test_list_iterator_new_free);
+	g_test_add("/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);
 }

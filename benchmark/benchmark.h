@@ -25,72 +25,17 @@
  * SUCH DAMAGE.
  */
 
-#include <glib.h>
+#ifndef H_BENCHMARK
+#define H_BENCHMARK
 
-#include <julea.h>
+typedef gchar* (*BenchmarkFunc) (void);
 
-#include "test.h"
+void j_benchmark_timer_start (void);
+gdouble j_benchmark_timer_elapsed (void);
 
-static
-void
-test_item_new_free (void)
-{
-	guint const n = 100000;
+void j_benchmark_run (gchar const*, BenchmarkFunc);
 
-	for (guint i = 0; i < n; i++)
-	{
-		JItem* item;
+void benchmark_background_operation (void);
+void benchmark_collection (void);
 
-		item = j_item_new("test-item");
-		g_assert(item != NULL);
-		j_item_unref(item);
-	}
-}
-
-static
-void
-test_item_name (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpstr(j_item_get_name(item), ==, "test-item");
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_size (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_size(item), ==, 0);
-
-	j_item_unref(item);
-}
-
-static
-void
-test_item_modification_time (void)
-{
-	JItem* item;
-
-	item = j_item_new("test-item");
-
-	g_assert_cmpuint(j_item_get_modification_time(item), >, 0);
-
-	j_item_unref(item);
-}
-
-void
-test_item (void)
-{
-	g_test_add_func("/item/new_free", test_item_new_free);
-	g_test_add_func("/item/name", test_item_name);
-	g_test_add_func("/item/size", test_item_size);
-	g_test_add_func("/item/modification_time", test_item_modification_time);
-}
+#endif

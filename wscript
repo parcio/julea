@@ -161,6 +161,15 @@ def build (ctx):
 		install_path = None
 	)
 
+	# Benchmarks
+	ctx.program(
+		source = ctx.path.ant_glob('benchmark/*.c') + ctx.path.ant_glob('lib/*.c'),
+		target = 'benchmark/benchmark',
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
+		includes = ['include'],
+		install_path = None
+	)
+
 	# Daemon
 	ctx.program(
 		source = ['julead/%s.c' % file for file in ('julead',)],

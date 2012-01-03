@@ -70,6 +70,6 @@ test_operation_semantics (void)
 void
 test_operation (void)
 {
-	g_test_add_func("/julea/operation/new_free", test_operation_new_free);
-	g_test_add_func("/julea/operation/semantics", test_operation_semantics);
+	g_test_add_func("/operation/new_free", test_operation_new_free);
+	g_test_add_func("/operation/semantics", test_operation_semantics);
 }

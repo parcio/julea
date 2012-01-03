@@ -63,6 +63,6 @@ test_collection_name (void)
 void
 test_collection (void)
 {
-	g_test_add_func("/julea/collection/new_free", test_collection_new_free);
-	g_test_add_func("/julea/collection/name", test_collection_name);
+	g_test_add_func("/collection/new_free", test_collection_new_free);
+	g_test_add_func("/collection/name", test_collection_name);
 }
