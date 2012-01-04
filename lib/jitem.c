@@ -748,9 +748,9 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			j_message_append_n(message, item->name, item_len);
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
+			j_message_add_data(message, d, new_length);
 
 			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
-			j_connection_send_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, new_length);
 
 			j_message_free(message);
 

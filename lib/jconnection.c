@@ -323,43 +323,6 @@ j_connection_send (JConnection* connection, guint i, JMessage* message)
 
 	j_message_write(message, output);
 
-	g_output_stream_flush(output, NULL, NULL);
-
-	return TRUE;
-}
-
-/**
- * Sends data via the julead connections.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param connection A connection.
- * \param i          A connection index.
- * \param data       An optional data buffer.
- * \param length     Number of bytes to send.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean
-j_connection_send_data (JConnection* connection, guint i, gconstpointer data, gsize length)
-{
-	GOutputStream* output;
-
-	g_return_val_if_fail(connection != NULL, FALSE);
-	g_return_val_if_fail(i < connection->sockets_len, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(length > 0, FALSE);
-
-	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
-
-	g_output_stream_write_all(output, data, length, NULL, NULL, NULL);
-	g_output_stream_flush(output, NULL, NULL);
-
 	return TRUE;
 }
 

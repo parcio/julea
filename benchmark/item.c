@@ -353,7 +353,7 @@ _benchmark_item_write (gboolean batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		gchar dummy;
+		gchar dummy = 42;
 		guint64 nb;
 
 		j_item_write(item, &dummy, 1, i, &nb, operation);

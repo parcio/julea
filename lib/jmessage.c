@@ -36,11 +36,22 @@
 
 #include <jmessage.h>
 
+#include <jlist.h>
+#include <jlist-iterator.h>
+
 /**
  * \defgroup JMessage Message
  *
  * @{
  **/
+
+struct JMessageData
+{
+	gconstpointer data;
+	guint64 length;
+};
+
+typedef struct JMessageData JMessageData;
 
 /**
  * A message.
@@ -52,6 +63,8 @@ struct JMessage
 	 * The current position within #data.
 	 **/
 	gchar* current;
+
+	JList* data_list;
 
 	/**
 	 * The message's header.
@@ -86,6 +99,13 @@ j_message_length (JMessage* message)
 	return GUINT32_FROM_LE(message->header.length);
 }
 
+static
+void
+j_message_data_free (gpointer data)
+{
+	g_slice_free(JMessageData, data);
+}
+
 /**
  * Creates a new message.
  *
@@ -110,8 +130,9 @@ j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
 	rand = g_random_int();
 	real_length = sizeof(JMessageHeader) + length;
 
-	message = g_malloc(sizeof(gchar*) + real_length);
+	message = g_malloc(sizeof(gchar*) + sizeof(JList*) + real_length);
 	message->current = message->data;
+	message->data_list = j_list_new(j_message_data_free);
 	message->header.length = GUINT32_TO_LE(real_length);
 	message->header.id = GUINT32_TO_LE(rand);
 	message->header.op_type = GUINT32_TO_LE(op_type);
@@ -140,8 +161,9 @@ j_message_new_reply (JMessage* message, gsize length)
 
 	real_length = sizeof(JMessageHeader) + length;
 
-	reply = g_malloc(sizeof(gchar*) + real_length);
+	reply = g_malloc(sizeof(gchar*) + sizeof(JList*) + real_length);
 	reply->current = reply->data;
+	reply->data_list = NULL;
 	reply->header.length = GUINT32_TO_LE(real_length);
 	reply->header.id = message->header.id;
 	reply->header.op_type = GUINT32_TO_LE(J_MESSAGE_OPERATION_REPLY);
@@ -164,6 +186,11 @@ void
 j_message_free (JMessage* message)
 {
 	g_return_if_fail(message != NULL);
+
+	if (message->data_list != NULL)
+	{
+		j_list_unref(message->data_list);
+	}
 
 	g_free(message);
 }
@@ -476,6 +503,7 @@ j_message_read_reply (JMessage* reply, JMessage* message, GInputStream* stream)
 gboolean
 j_message_write (JMessage* message, GOutputStream* stream)
 {
+	JListIterator* iterator;
 	gsize bytes_written;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -492,6 +520,27 @@ j_message_write (JMessage* message, GOutputStream* stream)
 	{
 		return FALSE;
 	}
+
+	if (message->data_list != NULL)
+	{
+		iterator = j_list_iterator_new(message->data_list);
+
+		while (j_list_iterator_next(iterator))
+		{
+			JMessageData* message_data = j_list_iterator_get(iterator);
+
+			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, NULL))
+			{
+				return FALSE;
+			}
+
+			g_printerr("write_message_data %" G_GSIZE_FORMAT "\n", bytes_written);
+		}
+
+		j_list_iterator_free(iterator);
+	}
+
+	g_output_stream_flush(stream, NULL, NULL);
 
 	return TRUE;
 }
@@ -554,6 +603,22 @@ j_message_operation_count (JMessage* message)
 	g_return_val_if_fail(message != NULL, 0);
 
 	return GUINT32_FROM_LE(message->header.op_count);
+}
+
+void
+j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
+{
+	JMessageData* message_data;
+
+	g_return_if_fail(message != NULL);
+	g_return_if_fail(data != NULL);
+	g_return_if_fail(length > 0);
+
+	message_data = g_slice_new(JMessageData);
+	message_data->data = data;
+	message_data->length = length;
+
+	j_list_append(message->data_list, message_data);
 }
 
 /**

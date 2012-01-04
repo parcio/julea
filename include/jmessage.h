@@ -87,4 +87,6 @@ guint32 j_message_id (JMessage*);
 JMessageOperationType j_message_operation_type (JMessage*);
 guint32 j_message_operation_count (JMessage*);
 
+void j_message_add_data (JMessage*, gconstpointer, guint64);
+
 #endif
