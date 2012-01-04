@@ -248,6 +248,83 @@ benchmark_item_delete_batch_without_get (void)
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
 
+static
+gchar*
+_benchmark_item_write (gboolean batch)
+{
+	guint const n = (batch) ? 100 : 100;
+
+	JCollection* collection;
+	JItem* item;
+	JOperation* operation;
+	JStore* store;
+	gchar* ret;
+	gchar* size;
+	gdouble elapsed;
+
+	operation = j_operation_new(NULL);
+
+	store = j_store_new("test");
+	collection = j_collection_new("test");
+	item = j_item_new("test");
+	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
+	j_collection_create_item(collection, item, operation);
+	j_operation_execute(operation);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		gchar dummy;
+		guint64 nb;
+
+		j_item_write(item, &dummy, 1, i, &nb, operation);
+
+		if (!batch)
+		{
+			j_operation_execute(operation);
+		}
+	}
+
+	if (batch)
+	{
+		j_operation_execute(operation);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	j_collection_delete_item(collection, item, operation);
+	j_store_delete_collection(store, collection, operation);
+	j_delete_store(store, operation);
+	j_item_unref(item);
+	j_collection_unref(collection);
+	j_store_unref(store);
+	j_operation_execute(operation);
+
+	j_operation_free(operation);
+
+	size = g_format_size(n / elapsed);
+	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
+	g_free(size);
+
+	return ret;
+}
+
+static
+gchar*
+benchmark_item_write (void)
+{
+	return _benchmark_item_write(FALSE);
+}
+
+static
+gchar*
+benchmark_item_write_batch (void)
+{
+	return _benchmark_item_write(TRUE);
+}
+
 void
 benchmark_item (void)
 {
@@ -257,4 +334,6 @@ benchmark_item (void)
 	j_benchmark_run("/item/delete-batch", benchmark_item_delete_batch);
 	j_benchmark_run("/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
 	/* FIXME get */
+	j_benchmark_run("/item/write", benchmark_item_write);
+	j_benchmark_run("/item/write-batch", benchmark_item_write_batch);
 }
