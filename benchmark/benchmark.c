@@ -31,6 +31,7 @@
 
 #include "benchmark.h"
 
+gchar* j_benchmark_filter = NULL;
 GTimer* j_benchmark_timer = NULL;
 
 void
@@ -51,6 +52,11 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	gchar* left;
 	gchar* ret;
 
+	if (j_benchmark_filter != NULL && !g_str_has_prefix(name, j_benchmark_filter))
+	{
+		return;
+	}
+
 	left = g_strconcat(name, ":", NULL);
 	g_print("%-60s ", left);
 	g_free(left);
@@ -66,12 +72,18 @@ main (int argc, char** argv)
 {
 	j_init(&argc, &argv);
 
+	if (argc > 1)
+	{
+		j_benchmark_filter = g_strdup(argv[1]);
+	}
+
 	j_benchmark_timer = g_timer_new();
 
 	benchmark_background_operation();
 	benchmark_collection();
 	benchmark_item();
 
+	g_free(j_benchmark_filter);
 	g_timer_destroy(j_benchmark_timer);
 
 	j_fini();
