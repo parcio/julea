@@ -49,7 +49,8 @@ guint j_list_length (JList*);
 void j_list_append (JList*, gpointer);
 void j_list_prepend (JList*, gpointer);
 
-gpointer j_list_get (JList*, gint);
+gpointer j_list_get_first (JList*);
+gpointer j_list_get_last (JList*);
 
 void j_list_delete_all (JList*);
 

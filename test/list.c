@@ -112,23 +112,10 @@ test_list_get (JList** list, gconstpointer data)
 	j_list_append(*list, g_strdup("-2"));
 	j_list_append(*list, g_strdup("-1"));
 
-	s = j_list_get(*list, 0);
+	s = j_list_get_first(*list);
 	g_assert_cmpstr(s, ==, "0");
-	s = j_list_get(*list, 1);
-	g_assert_cmpstr(s, ==, "1");
-	s = j_list_get(*list, 2);
-	g_assert_cmpstr(s, ==, "-2");
-	s = j_list_get(*list, 3);
+	s = j_list_get_last(*list);
 	g_assert_cmpstr(s, ==, "-1");
-
-	s = j_list_get(*list, -1);
-	g_assert_cmpstr(s, ==, "-1");
-	s = j_list_get(*list, -2);
-	g_assert_cmpstr(s, ==, "-2");
-	s = j_list_get(*list, -3);
-	g_assert_cmpstr(s, ==, "1");
-	s = j_list_get(*list, -4);
-	g_assert_cmpstr(s, ==, "0");
 }
 
 void

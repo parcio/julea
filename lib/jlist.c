@@ -230,52 +230,48 @@ j_list_prepend (JList* list, gpointer data)
 }
 
 /**
- * Returns a specific list element.
- *
- * This has to iterate over the list to find the specified element and, therefore, might be slow.
- * It is primarily intended as a convenience function to get the first or last element.
+ * Returns the first list element.
  *
  * \author Michael Kuhn
  *
  * \param list  A list.
- * \param index An index.
  *
  * \return A list element, or NULL.
  **/
 gpointer
-j_list_get (JList* list, gint index)
+j_list_get_first (JList* list)
 {
 	gpointer data = NULL;
 
 	g_return_val_if_fail(list != NULL, NULL);
-	g_return_val_if_fail(index < (gint)list->length, NULL);
-	g_return_val_if_fail(index >= (gint)list->length * -1, NULL);
 
 	if (list->head != NULL && list->tail != NULL)
 	{
-		JListElement* element;
-		guint real_index;
-		guint i;
+		data = list->head->data;
+	}
 
-		real_index = ((index < 0) ? list->length : 0) + index;
-		element = list->head;
+	return data;
+}
 
-		if (real_index == (list->length - 1))
-		{
-			return list->tail->data;
-		}
+/**
+ * Returns the last list element.
+ *
+ * \author Michael Kuhn
+ *
+ * \param list  A list.
+ *
+ * \return A list element, or NULL.
+ **/
+gpointer
+j_list_get_last (JList* list)
+{
+	gpointer data = NULL;
 
-		for (i = 0; i < real_index; i++)
-		{
-			element = element->next;
+	g_return_val_if_fail(list != NULL, NULL);
 
-			if (element == NULL)
-			{
-				return NULL;
-			}
-		}
-
-		data = element->data;
+	if (list->head != NULL && list->tail != NULL)
+	{
+		data = list->tail->data;
 	}
 
 	return data;
