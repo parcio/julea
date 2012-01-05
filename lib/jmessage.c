@@ -121,7 +121,7 @@ j_message_data_free (gpointer data)
  * \return A new message. Should be freed with j_message_free().
  **/
 JMessage*
-j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
+j_message_new (gsize length, JMessageOperationType op_type)
 {
 	JMessage* message;
 	guint32 rand;
@@ -136,7 +136,7 @@ j_message_new (gsize length, JMessageOperationType op_type, guint32 op_count)
 	message->header.length = GUINT32_TO_LE(real_length);
 	message->header.id = GUINT32_TO_LE(rand);
 	message->header.op_type = GUINT32_TO_LE(op_type);
-	message->header.op_count = GUINT32_TO_LE(op_count);
+	message->header.op_count = GUINT32_TO_LE(0);
 
 	return message;
 }
@@ -619,6 +619,17 @@ j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
 	message_data->length = length;
 
 	j_list_append(message->data_list, message_data);
+}
+
+void
+j_message_add_operation (JMessage* message)
+{
+	guint32 op_count;
+
+	g_return_if_fail(message != NULL);
+
+	op_count = GUINT32_FROM_LE(message->header.op_count) + 1;
+	message->header.op_count = GUINT32_TO_LE(op_count);
 }
 
 /**

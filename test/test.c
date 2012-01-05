@@ -38,7 +38,10 @@ main (int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-	j_init(&argc, &argv);
+	if (!j_init(&argc, &argv))
+	{
+		return 1;
+	}
 
 	test_background_operation();
 	test_collection();

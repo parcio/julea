@@ -66,7 +66,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	trace = j_trace_thread_enter(g_thread_self(), G_STRFUNC);
 
-	message = j_message_new(1024 * 1024, J_MESSAGE_OPERATION_NONE, 0);
+	message = j_message_new(1024 * 1024, J_MESSAGE_OPERATION_NONE);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 
@@ -229,6 +229,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_REPLY:
+				g_printerr("reply_op\n");
 			default:
 				g_warn_if_reached();
 				break;

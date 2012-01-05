@@ -65,7 +65,7 @@ typedef struct JMessage JMessage;
 
 #include <gio/gio.h>
 
-JMessage* j_message_new (gsize, JMessageOperationType, guint32);
+JMessage* j_message_new (gsize, JMessageOperationType);
 JMessage* j_message_new_reply (JMessage*, gsize);
 void j_message_free (JMessage*);
 
@@ -88,5 +88,6 @@ JMessageOperationType j_message_operation_type (JMessage*);
 guint32 j_message_operation_count (JMessage*);
 
 void j_message_add_data (JMessage*, gconstpointer, guint64);
+void j_message_add_operation (JMessage*);
 
 #endif

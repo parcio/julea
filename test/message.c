@@ -39,7 +39,7 @@ test_message_new_free (void)
 {
 	JMessage* message;
 
-	message = j_message_new(0, J_MESSAGE_OPERATION_NONE, 0);
+	message = j_message_new(0, J_MESSAGE_OPERATION_NONE);
 	g_assert(message != NULL);
 	j_message_free(message);
 }
@@ -50,11 +50,15 @@ test_message_header (void)
 {
 	JMessage* message;
 
-	message = j_message_new(42, J_MESSAGE_OPERATION_READ, 23);
+	message = j_message_new(42, J_MESSAGE_OPERATION_READ);
 	g_assert(message != NULL);
 
+	j_message_add_operation(message);
+	j_message_add_operation(message);
+	j_message_add_operation(message);
+
 	g_assert(j_message_operation_type(message) == J_MESSAGE_OPERATION_READ);
-	g_assert_cmpuint(j_message_operation_count(message), ==, 23);
+	g_assert_cmpuint(j_message_operation_count(message), ==, 3);
 
 	j_message_free(message);
 }
@@ -67,7 +71,7 @@ test_message_append (void)
 	gboolean ret;
 	guint64 dummy = 42;
 
-	message = j_message_new(20, J_MESSAGE_OPERATION_NONE, 0);
+	message = j_message_new(20, J_MESSAGE_OPERATION_NONE);
 	g_assert(message != NULL);
 
 	ret = j_message_append_1(message, &dummy);
