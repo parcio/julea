@@ -637,11 +637,11 @@ j_item_read_internal (JOperation* operation, JList* parts)
 			collection_len = strlen(collection) + 1;
 			item_len = strlen(item->name) + 1;
 
-			message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_READ);
-			j_message_add_operation(message);
+			message = j_message_new(J_MESSAGE_OPERATION_READ, store_len + collection_len + item_len);
 			j_message_append_n(message, store, store_len);
 			j_message_append_n(message, collection, collection_len);
 			j_message_append_n(message, item->name, item_len);
+			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 
@@ -734,21 +734,21 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			item_len = strlen(item->name) + 1;
 
 			/* FIXME temporary workaround */
-			message = j_message_new(store_len + collection_len + item_len, J_MESSAGE_OPERATION_CREATE);
-			j_message_add_operation(message);
+			message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
 			j_message_append_n(message, store, store_len);
 			j_message_append_n(message, collection, collection_len);
+			j_message_add_operation(message, item_len);
 			j_message_append_n(message, item->name, item_len);
 
 			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
 
 			j_message_free(message);
 
-			message = j_message_new(store_len + collection_len + item_len + sizeof(guint64) + sizeof(guint64), J_MESSAGE_OPERATION_WRITE);
-			j_message_add_operation(message);
+			message = j_message_new(J_MESSAGE_OPERATION_WRITE, store_len + collection_len + item_len);
 			j_message_append_n(message, store, store_len);
 			j_message_append_n(message, collection, collection_len);
 			j_message_append_n(message, item->name, item_len);
+			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
 			j_message_append_8(message, &new_length);
 			j_message_append_8(message, &new_offset);
 			j_message_add_data(message, d, new_length);
@@ -766,8 +766,8 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			{
 				JMessage* reply;
 
-				message = j_message_new(store_len + collection_len + item_len, J_MESSAGE_OPERATION_SYNC);
-				j_message_add_operation(message);
+				message = j_message_new(J_MESSAGE_OPERATION_SYNC, store_len + collection_len + item_len);
+				j_message_add_operation(message, 0);
 				j_message_append_n(message, store, store_len);
 				j_message_append_n(message, collection, collection_len);
 				j_message_append_n(message, item->name, item_len);
