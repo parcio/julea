@@ -681,28 +681,64 @@ j_item_read_internal (JOperation* operation, JList* parts)
 void
 j_item_write_internal (JOperation* operation, JList* parts)
 {
-	JDistribution* distribution;
+	JConnection* connection;
 	JListIterator* iterator;
-	guint64 new_length;
-	guint64 new_offset;
-	guint index;
-	gchar const* d;
+	JMessage** messages;
+	guint n;
+	gchar const* item_name;
+	gchar const* collection_name;
+	gchar const* store_name;
+	gsize item_len;
+	gsize collection_len;
+	gsize store_len;
 
 	g_return_if_fail(operation != NULL);
 	g_return_if_fail(parts != NULL);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
+	n = j_configuration_get_data_server_count(j_configuration());
+	messages = g_new(JMessage*, n);
+
+	for (guint i = 0; i < n; i++)
+	{
+		messages[i] = NULL;
+	}
+
+	{
+		JItem* item;
+		JOperationPart* part;
+
+		part = j_list_get_first(parts);
+		g_assert(part != NULL);
+		item = part->u.item_write.item;
+
+		connection = j_store_get_connection(j_collection_get_store(item->collection));
+
+		item_name = item->name;
+		collection_name = j_collection_get_name(item->collection);
+		store_name = j_store_get_name(j_collection_get_store(item->collection));
+
+		store_len = strlen(store_name) + 1;
+		collection_len = strlen(collection_name) + 1;
+		item_len = strlen(item->name) + 1;
+	}
+
 	iterator = j_list_iterator_new(parts);
 
 	while (j_list_iterator_next(iterator))
 	{
 		JOperationPart* part = j_list_iterator_get(iterator);
-		JItem* item = part->u.item_write.item;
 		gconstpointer data = part->u.item_write.data;
 		guint64 length = part->u.item_write.length;
 		guint64 offset = part->u.item_write.offset;
 		guint64* bytes_written = part->u.item_write.bytes_written;
+
+		JDistribution* distribution;
+		gchar const* d;
+		guint64 new_length;
+		guint64 new_offset;
+		guint index;
 
 		*bytes_written = 0;
 
@@ -711,83 +747,85 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_WRITE);
+		j_trace_file_begin(j_trace(), item_name, J_TRACE_FILE_WRITE);
 
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 		{
-			JMessage* message;
-			JSemantics* semantics;
-			gchar const* store;
-			gchar const* collection;
-			gsize store_len;
-			gsize collection_len;
-			gsize item_len;
+			if (messages[index] == NULL)
+			{
+				/* FIXME */
+				messages[index] = j_message_new(J_MESSAGE_OPERATION_WRITE, store_len + collection_len + item_len);
+				j_message_append_n(messages[index], store_name, store_len);
+				j_message_append_n(messages[index], collection_name, collection_len);
+				j_message_append_n(messages[index], item_name, item_len);
+			}
 
-			store = j_store_get_name(j_collection_get_store(item->collection));
-			collection = j_collection_get_name(item->collection);
-
-			store_len = strlen(store) + 1;
-			collection_len = strlen(collection) + 1;
-			item_len = strlen(item->name) + 1;
-
-			/* FIXME temporary workaround */
-			message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
-			j_message_append_n(message, store, store_len);
-			j_message_append_n(message, collection, collection_len);
-			j_message_add_operation(message, item_len);
-			j_message_append_n(message, item->name, item_len);
-
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
-
-			j_message_free(message);
-
-			message = j_message_new(J_MESSAGE_OPERATION_WRITE, store_len + collection_len + item_len);
-			j_message_append_n(message, store, store_len);
-			j_message_append_n(message, collection, collection_len);
-			j_message_append_n(message, item->name, item_len);
-			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(message, &new_length);
-			j_message_append_8(message, &new_offset);
-			j_message_add_data(message, d, new_length);
-
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
-
-			j_message_free(message);
+			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
+			j_message_append_8(messages[index], &new_length);
+			j_message_append_8(messages[index], &new_offset);
+			j_message_add_data(messages[index], d, new_length);
 
 			d += new_length;
+			/* FIXME */
 			*bytes_written += new_length;
-
-			semantics = j_operation_get_semantics(operation);
-
-			if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
-			{
-				JMessage* reply;
-
-				message = j_message_new(J_MESSAGE_OPERATION_SYNC, store_len + collection_len + item_len);
-				j_message_add_operation(message, 0);
-				j_message_append_n(message, store, store_len);
-				j_message_append_n(message, collection, collection_len);
-				j_message_append_n(message, item->name, item_len);
-
-				j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
-
-				reply = j_message_new_reply(message, 0);
-				j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
-
-				j_message_free(message);
-				j_message_free(reply);
-			}
 		}
 
 		j_distribution_free(distribution);
 
-		j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_WRITE, length, offset);
+		j_trace_file_end(j_trace(), item_name, J_TRACE_FILE_WRITE, length, offset);
 	}
 
 	j_list_iterator_free(iterator);
+
+	for (guint i = 0; i < n; i++)
+	{
+		JMessage* message;
+		JSemantics* semantics;
+
+		if (messages[i] == NULL)
+		{
+			continue;
+		}
+
+		/* FIXME temporary workaround */
+		message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
+		j_message_append_n(message, store_name, store_len);
+		j_message_append_n(message, collection_name, collection_len);
+		j_message_add_operation(message, item_len);
+		j_message_append_n(message, item_name, item_len);
+
+		j_connection_send(connection, i, message);
+		j_message_free(message);
+
+		j_connection_send(connection, i, messages[i]);
+		j_message_free(messages[i]);
+
+		semantics = j_operation_get_semantics(operation);
+
+		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+		{
+			JMessage* reply;
+
+			message = j_message_new(J_MESSAGE_OPERATION_SYNC, store_len + collection_len + item_len);
+			j_message_add_operation(message, 0);
+			j_message_append_n(message, store_name, store_len);
+			j_message_append_n(message, collection_name, collection_len);
+			j_message_append_n(message, item_name, item_len);
+
+			j_connection_send(connection, i, message);
+
+			reply = j_message_new_reply(message, 0);
+			j_connection_receive(connection, i, reply, message);
+
+			j_message_free(message);
+			j_message_free(reply);
+		}
+	}
+
+	g_free(messages);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 }

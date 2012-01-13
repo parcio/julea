@@ -250,7 +250,7 @@ benchmark_item_delete_batch_without_get (void)
 
 static
 gchar*
-_benchmark_item_read (gboolean batch)
+_benchmark_item_read (gboolean batch, guint block_size)
 {
 	guint const n = (batch) ? 100 : 100;
 
@@ -258,7 +258,7 @@ _benchmark_item_read (gboolean batch)
 	JItem* item;
 	JOperation* operation;
 	JStore* store;
-	gchar dummy[n];
+	gchar dummy[n * block_size];
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
@@ -272,14 +272,14 @@ _benchmark_item_read (gboolean batch)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_item_write(item, dummy, n, 0, &nb, operation);
+	j_item_write(item, dummy, n * block_size, 0, &nb, operation);
 	j_operation_execute(operation);
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
-		j_item_read(item, dummy, 1, i, &nb, operation);
+		j_item_read(item, dummy, block_size, i * block_size, &nb, operation);
 
 		if (!batch)
 		{
@@ -304,7 +304,7 @@ _benchmark_item_read (gboolean batch)
 
 	j_operation_free(operation);
 
-	size = g_format_size(n / elapsed);
+	size = g_format_size((n * block_size) / elapsed);
 	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
 	g_free(size);
 
@@ -315,19 +315,19 @@ static
 gchar*
 benchmark_item_read (void)
 {
-	return _benchmark_item_read(FALSE);
+	return _benchmark_item_read(FALSE, 4 * 1024);
 }
 
 static
 gchar*
 benchmark_item_read_batch (void)
 {
-	return _benchmark_item_read(TRUE);
+	return _benchmark_item_read(TRUE, 4 * 1024);
 }
 
 static
 gchar*
-_benchmark_item_write (gboolean batch)
+_benchmark_item_write (gboolean batch, guint block_size)
 {
 	guint const n = (batch) ? 100 : 100;
 
@@ -356,7 +356,7 @@ _benchmark_item_write (gboolean batch)
 		gchar dummy = 42;
 		guint64 nb;
 
-		j_item_write(item, &dummy, 1, i, &nb, operation);
+		j_item_write(item, &dummy, block_size, i * block_size, &nb, operation);
 
 		if (!batch)
 		{
@@ -381,7 +381,7 @@ _benchmark_item_write (gboolean batch)
 
 	j_operation_free(operation);
 
-	size = g_format_size(n / elapsed);
+	size = g_format_size((n * block_size) / elapsed);
 	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
 	g_free(size);
 
@@ -392,14 +392,14 @@ static
 gchar*
 benchmark_item_write (void)
 {
-	return _benchmark_item_write(FALSE);
+	return _benchmark_item_write(FALSE, 4 * 1024);
 }
 
 static
 gchar*
 benchmark_item_write_batch (void)
 {
-	return _benchmark_item_write(TRUE);
+	return _benchmark_item_write(TRUE, 4 * 1024);
 }
 
 void

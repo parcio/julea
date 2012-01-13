@@ -68,7 +68,6 @@ typedef struct JMessageHeader JMessageHeader;
 /**
  * A message.
  **/
-#pragma pack(4)
 struct JMessage
 {
 	/**
@@ -83,17 +82,9 @@ struct JMessage
 	 **/
 	gchar* data;
 };
-#pragma pack()
-
-static
-JMessageHeader*
-j_message_header (JMessage* message)
-{
-	return (JMessageHeader*)message->data;
-}
 
 /**
- * Returns the message's length.
+ * Returns a message's header.
  *
  * \private
  *
@@ -102,7 +93,28 @@ j_message_header (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
+ *
+ * \return The message's header.
+ **/
+static
+JMessageHeader*
+j_message_header (JMessage* message)
+{
+	return (JMessageHeader*)message->data;
+}
+
+/**
+ * Returns a message's length.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
  *
  * \return The message's length.
  **/
@@ -125,6 +137,28 @@ j_message_data_free (gpointer data)
 }
 
 /**
+ * Checks whether it is possible to append data to a message.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param length  A length.
+ *
+ * \return TRUE if it is possible, FALSE otherwise.
+ **/
+static
+gboolean
+j_message_can_append (JMessage* message, gsize length)
+{
+	return (message->current + length <= message->data + j_message_length(message));
+}
+
+/**
  * Creates a new message.
  *
  * \author Michael Kuhn
@@ -132,9 +166,8 @@ j_message_data_free (gpointer data)
  * \code
  * \endcode
  *
- * \param length The message's length.
- * \param op     The message's operation type.
- * \param count  The message's operation count.
+ * \param op_type An operation type.
+ * \param length  A length.
  *
  * \return A new message. Should be freed with j_message_free().
  **/
@@ -144,6 +177,8 @@ j_message_new (JMessageOperationType op_type, gsize length)
 	JMessage* message;
 	guint32 rand;
 	guint32 real_length;
+
+	g_return_val_if_fail(op_type != J_MESSAGE_OPERATION_NONE, NULL);
 
 	rand = g_random_int();
 	real_length = sizeof(JMessageHeader) + length;
@@ -170,14 +205,17 @@ j_message_new (JMessageOperationType op_type, gsize length)
  * \endcode
  *
  * \param message A message.
+ * \param length  A length.
  *
- * \return A new message. Should be freed with j_message_free().
+ * \return A new reply message. Should be freed with j_message_free().
  **/
 JMessage*
 j_message_new_reply (JMessage* message, gsize length)
 {
 	JMessage* reply;
 	guint32 real_length;
+
+	g_return_val_if_fail(message != NULL, NULL);
 
 	real_length = sizeof(JMessageHeader) + length;
 
@@ -195,14 +233,14 @@ j_message_new_reply (JMessage* message, gsize length)
 }
 
 /**
- * Frees the memory allocated by the message.
+ * Frees the memory allocated by a message.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  **/
 void
 j_message_free (JMessage* message)
@@ -219,23 +257,16 @@ j_message_free (JMessage* message)
 	g_slice_free(JMessage, message);
 }
 
-static
-gboolean
-j_message_can_append (JMessage* message, gsize length)
-{
-	return (message->current + length <= message->data + j_message_length(message));
-}
-
 /**
- * Appends 1 byte to the message.
+ * Appends 1 byte to a message.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
- * \param data    The data to append.
+ * \param message A message.
+ * \param data    Data to append.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -253,7 +284,7 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 }
 
 /**
- * Appends 4 bytes to the message.
+ * Appends 4 bytes to a message.
  * The bytes are converted to little endian automatically.
  *
  * \author Michael Kuhn
@@ -261,8 +292,8 @@ j_message_append_1 (JMessage* message, gconstpointer data)
  * \code
  * \endcode
  *
- * \param message The message.
- * \param data    The data to append.
+ * \param message A message.
+ * \param data    Data to append.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -280,7 +311,7 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 }
 
 /**
- * Appends 8 bytes to the message.
+ * Appends 8 bytes to a message.
  * The bytes are converted to little endian automatically.
  *
  * \author Michael Kuhn
@@ -288,8 +319,8 @@ j_message_append_4 (JMessage* message, gconstpointer data)
  * \code
  * \endcode
  *
- * \param message The message.
- * \param data    The data to append.
+ * \param message A message.
+ * \param data    Data to append.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -307,7 +338,7 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 }
 
 /**
- * Appends a number of bytes to the message.
+ * Appends a number of bytes to a message.
  *
  * \author Michael Kuhn
  *
@@ -317,9 +348,9 @@ j_message_append_8 (JMessage* message, gconstpointer data)
  * j_message_append_n(message, str, strlen(str) + 1);
  * \endcode
  *
- * \param message The message.
- * \param data    The data to append.
- * \param length  The length of data.
+ * \param message A message.
+ * \param data    Data to append.
+ * \param length  Length of data.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -337,16 +368,16 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 }
 
 /**
- * Gets 1 byte from the message.
+ * Gets 1 byte from a message.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
- * \return The 1 byte.
+ * \return A character.
  **/
 gchar
 j_message_get_1 (JMessage* message)
@@ -363,7 +394,7 @@ j_message_get_1 (JMessage* message)
 }
 
 /**
- * Gets 4 bytes from the message.
+ * Gets 4 bytes from a message.
  * The bytes are converted from little endian automatically.
  *
  * \author Michael Kuhn
@@ -371,9 +402,9 @@ j_message_get_1 (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
- * \return The 4 bytes.
+ * \return A 4-bytes integer.
  **/
 gint32
 j_message_get_4 (JMessage* message)
@@ -390,7 +421,7 @@ j_message_get_4 (JMessage* message)
 }
 
 /**
- * Gets 8 bytes from the message.
+ * Gets 8 bytes from a message.
  * The bytes are converted from little endian automatically.
  *
  * \author Michael Kuhn
@@ -398,9 +429,9 @@ j_message_get_4 (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
- * \return The 8 bytes.
+ * \return An 8-bytes integer.
  **/
 gint64
 j_message_get_8 (JMessage* message)
@@ -417,16 +448,16 @@ j_message_get_8 (JMessage* message)
 }
 
 /**
- * Gets a string from the message.
+ * Gets a string from a message.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
- * \return The string.
+ * \return A string.
  **/
 gchar const*
 j_message_get_string (JMessage* message)
@@ -449,8 +480,8 @@ j_message_get_string (JMessage* message)
  * \code
  * \endcode
  *
- * \param message The message.
- * \parem stream  The network stream.
+ * \param message A message.
+ * \parem stream  A network stream.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -487,15 +518,16 @@ j_message_read (JMessage* message, GInputStream* stream)
 }
 
 /**
- * Reads a reply from the network.
+ * Reads a reply message from the network.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
- * \parem stream  The network stream.
+ * \param reply   A reply message.
+ * \param message A message.
+ * \parem stream  A network stream.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -526,8 +558,8 @@ j_message_read_reply (JMessage* reply, JMessage* message, GInputStream* stream)
  * \code
  * \endcode
  *
- * \param message The message.
- * \parem stream  The network stream.
+ * \param message A message.
+ * \parem stream  A network stream.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -577,14 +609,14 @@ j_message_write (JMessage* message, GOutputStream* stream)
 }
 
 /**
- * Returns the message's ID.
+ * Returns a message's ID.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
  * \return The message's ID.
  **/
@@ -601,14 +633,14 @@ j_message_id (JMessage* message)
 }
 
 /**
- * Returns the message's operation type.
+ * Returns a message's operation type.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
  * \return The message's operation type.
  **/
@@ -625,14 +657,14 @@ j_message_operation_type (JMessage* message)
 }
 
 /**
- * Returns the message's operation count.
+ * Returns a message's operation count.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param message The message.
+ * \param message A message.
  *
  * \return The message's operation count.
  **/
@@ -648,6 +680,18 @@ j_message_operation_count (JMessage* message)
 	return GUINT32_FROM_LE(op_count);
 }
 
+/**
+ * Adds new data to a message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data.
+ * \param length  A length.
+ **/
 void
 j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
 {
@@ -664,6 +708,17 @@ j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
 	j_list_append(message->data_list, message_data);
 }
 
+/**
+ * Adds a new operation to a message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param length  A length.
+ **/
 void
 j_message_add_operation (JMessage* message, gsize length)
 {
