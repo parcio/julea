@@ -75,7 +75,7 @@ struct JMessage
 	 **/
 	gchar* current;
 
-	JList* data_list;
+	JList* send_list;
 
 	/**
 	 * The message's data.
@@ -186,7 +186,7 @@ j_message_new (JMessageOperationType op_type, gsize length)
 	message = g_slice_new(JMessage);
 	message->data = g_malloc(real_length);
 	message->current = message->data + sizeof(JMessageHeader);
-	message->data_list = j_list_new(j_message_data_free);
+	message->send_list = j_list_new(j_message_data_free);
 
 	j_message_header(message)->length = GUINT32_TO_LE(real_length);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
@@ -222,7 +222,7 @@ j_message_new_reply (JMessage* message, gsize length)
 	reply = g_slice_new(JMessage);
 	reply->data = g_malloc(real_length);
 	reply->current = reply->data + sizeof(JMessageHeader);
-	reply->data_list = NULL;
+	reply->send_list = NULL;
 
 	j_message_header(reply)->length = GUINT32_TO_LE(real_length);
 	j_message_header(reply)->id = j_message_header(message)->id;
@@ -247,9 +247,9 @@ j_message_free (JMessage* message)
 {
 	g_return_if_fail(message != NULL);
 
-	if (message->data_list != NULL)
+	if (message->send_list != NULL)
 	{
-		j_list_unref(message->data_list);
+		j_list_unref(message->send_list);
 	}
 
 	g_free(message->data);
@@ -584,9 +584,9 @@ j_message_write (JMessage* message, GOutputStream* stream)
 		return FALSE;
 	}
 
-	if (message->data_list != NULL)
+	if (message->send_list != NULL)
 	{
-		iterator = j_list_iterator_new(message->data_list);
+		iterator = j_list_iterator_new(message->send_list);
 
 		while (j_list_iterator_next(iterator))
 		{
@@ -681,7 +681,7 @@ j_message_operation_count (JMessage* message)
 }
 
 /**
- * Adds new data to a message.
+ * Adds new data to send to a message.
  *
  * \author Michael Kuhn
  *
@@ -693,7 +693,7 @@ j_message_operation_count (JMessage* message)
  * \param length  A length.
  **/
 void
-j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
+j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
 {
 	JMessageData* message_data;
 
@@ -705,7 +705,7 @@ j_message_add_data (JMessage* message, gconstpointer data, guint64 length)
 	message_data->data = data;
 	message_data->length = length;
 
-	j_list_append(message->data_list, message_data);
+	j_list_append(message->send_list, message_data);
 }
 
 /**

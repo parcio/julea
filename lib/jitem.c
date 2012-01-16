@@ -766,7 +766,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
 			j_message_append_8(messages[index], &new_length);
 			j_message_append_8(messages[index], &new_offset);
-			j_message_add_data(messages[index], d, new_length);
+			j_message_add_send(messages[index], d, new_length);
 
 			d += new_length;
 			/* FIXME */
