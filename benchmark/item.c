@@ -27,6 +27,8 @@
 
 #include <glib.h>
 
+#include <string.h>
+
 #include <julea.h>
 
 #include "benchmark.h"
@@ -264,6 +266,8 @@ _benchmark_item_read (gboolean batch, guint block_size)
 	gdouble elapsed;
 	guint64 nb;
 
+	memset(dummy, 0, n * block_size);
+
 	operation = j_operation_new(NULL);
 
 	store = j_store_new("test");
@@ -335,9 +339,12 @@ _benchmark_item_write (gboolean batch, guint block_size)
 	JItem* item;
 	JOperation* operation;
 	JStore* store;
+	gchar dummy[n * block_size];
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
+
+	memset(dummy, 0, n * block_size);
 
 	operation = j_operation_new(NULL);
 
@@ -353,7 +360,6 @@ _benchmark_item_write (gboolean batch, guint block_size)
 
 	for (guint i = 0; i < n; i++)
 	{
-		gchar dummy = 42;
 		guint64 nb;
 
 		j_item_write(item, &dummy, block_size, i * block_size, &nb, operation);

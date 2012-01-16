@@ -178,7 +178,7 @@ j_message_new (JMessageOperationType op_type, gsize length)
 	guint32 rand;
 	guint32 real_length;
 
-	g_return_val_if_fail(op_type != J_MESSAGE_OPERATION_NONE, NULL);
+	//g_return_val_if_fail(op_type != J_MESSAGE_OPERATION_NONE, NULL);
 
 	rand = g_random_int();
 	real_length = sizeof(JMessageHeader) + length;
