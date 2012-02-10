@@ -322,7 +322,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 
 	semantics = j_operation_get_semantics(operation);
 
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STRICT)
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 	{
 		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}

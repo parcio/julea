@@ -54,7 +54,7 @@ main (int argc, char** argv)
 	}
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 //	j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
 
 	delete_operation = j_operation_new(NULL);

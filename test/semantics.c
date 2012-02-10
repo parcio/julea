@@ -78,9 +78,9 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONSISTENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 
-	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 	s = j_semantics_get(*semantics, J_SEMANTICS_PERSISTENCY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_LAX);
+	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);

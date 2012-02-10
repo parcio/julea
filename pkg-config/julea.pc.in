@@ -5,5 +5,6 @@ Name: JULEA
 Description: The JULEA library
 URL: http://redmine.wr.informatik.uni-hamburg.de/projects/julea
 Version: 1.0.0
+Requires.private: gio-2.0 >= 2.30, glib-2.0 >= 2.30, gobject-2.0 >= 2.30, gthread-2.0 >= 2.30
 Cflags: -I${includedir}/julea
 Libs: -L${libdir} -ljulea
