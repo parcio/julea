@@ -394,12 +394,9 @@ j_operation_add (JOperation* operation, JOperationPart* part)
 	g_return_if_fail(part != NULL);
 
 	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
-	    && j_operation_part_can_cache(part))
+	    && j_operation_cache_test(part)
+	    && j_operation_cache_add(part))
 	{
-		j_operation_part_cache(part);
-
-		j_operation_cache_add(part);
-
 		return;
 	}
 

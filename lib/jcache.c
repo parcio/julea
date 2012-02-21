@@ -75,9 +75,11 @@ j_cache_free (JCache* cache)
 	g_slice_free(JCache, cache);
 }
 
-gboolean
+gpointer
 j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 {
+	gpointer ret = NULL;
+
 	if (G_UNLIKELY(cache->data == NULL))
 	{
 		cache->data = g_malloc(cache->size);
@@ -86,13 +88,14 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 
 	if (cache->current + length > cache->data + cache->size)
 	{
-		return FALSE;
+		return ret;
 	}
 
 	memcpy(cache->current, data, length);
+	ret = cache->current;
 	cache->current += length;
 
-	return TRUE;
+	return ret;
 }
 
 void

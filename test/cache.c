@@ -48,19 +48,19 @@ void
 test_cache_put (void)
 {
 	JCache* cache;
-	gboolean ret;
+	gpointer ret;
 	gchar dummy[1];
 
 	cache = j_cache_new(3);
 
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(ret);
+	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(ret);
+	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(ret);
+	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(!ret);
+	g_assert(ret == NULL);
 
 	j_cache_free(cache);
 }
@@ -70,22 +70,22 @@ void
 test_cache_clear (void)
 {
 	JCache* cache;
-	gboolean ret;
+	gpointer ret;
 	gchar dummy[1];
 
 	cache = j_cache_new(1);
 
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(ret);
+	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(!ret);
+	g_assert(ret == NULL);
 
 	j_cache_clear(cache);
 
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(ret);
+	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
-	g_assert(!ret);
+	g_assert(ret == NULL);
 
 	j_cache_free(cache);
 }

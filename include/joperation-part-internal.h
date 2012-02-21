@@ -71,7 +71,6 @@ struct JOperationPart
 	JOperationType type;
 
 	gpointer key;
-	gboolean cached;
 
 	union
 	{
@@ -176,8 +175,5 @@ typedef struct JOperationPart JOperationPart;
 
 J_GNUC_INTERNAL JOperationPart* j_operation_part_new (JOperationType);
 J_GNUC_INTERNAL void j_operation_part_free (JOperationPart*);
-
-J_GNUC_INTERNAL gboolean j_operation_part_can_cache (JOperationPart*);
-J_GNUC_INTERNAL void j_operation_part_cache (JOperationPart*);
 
 #endif

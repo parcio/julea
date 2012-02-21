@@ -33,10 +33,12 @@
 
 #include <joperation-cache-internal.h>
 
+#include <jcache-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <joperation.h>
 #include <joperation-part-internal.h>
+#include <julea-internal.h>
 
 /**
  * \defgroup JOperationCache Operation Cache
@@ -45,6 +47,7 @@
 
 struct JOperationCache
 {
+	JCache* cache;
 	JList* list;
 };
 
@@ -58,6 +61,7 @@ j_operation_cache_init (void)
 	g_return_if_fail(j_operation_cache == NULL);
 
 	cache = g_slice_new(JOperationCache);
+	cache->cache = j_cache_new(J_MIB(50));
 	cache->list = j_list_new((JListFreeFunc)j_operation_part_free);
 
 	g_atomic_pointer_set(&j_operation_cache, cache);
@@ -86,13 +90,64 @@ j_operation_cache_fini (void)
 	j_list_iterator_free(iterator);
 
 	j_list_unref(cache->list);
+	j_cache_free(cache->cache);
+
 	g_slice_free(JOperationCache, cache);
 }
 
-void
+gboolean
+j_operation_cache_test (JOperationPart* part)
+{
+	gboolean ret = FALSE;
+
+	switch (part->type)
+	{
+		case J_OPERATION_CREATE_STORE:
+		case J_OPERATION_DELETE_STORE:
+		case J_OPERATION_STORE_CREATE_COLLECTION:
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+		case J_OPERATION_COLLECTION_CREATE_ITEM:
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+		case J_OPERATION_ITEM_WRITE:
+			ret = TRUE;
+			break;
+
+		case J_OPERATION_GET_STORE:
+		case J_OPERATION_STORE_GET_COLLECTION:
+		case J_OPERATION_COLLECTION_GET_ITEM:
+		case J_OPERATION_ITEM_GET_STATUS:
+		case J_OPERATION_ITEM_READ:
+			ret = FALSE;
+			break;
+
+		case J_OPERATION_NONE:
+		default:
+			g_warn_if_reached();
+	}
+
+	return ret;
+}
+
+gboolean
 j_operation_cache_add (JOperationPart* part)
 {
+	if (part->type == J_OPERATION_ITEM_WRITE)
+	{
+		gpointer data;
+
+		data = j_cache_put(j_operation_cache->cache, part->u.item_write.data, part->u.item_write.length);
+
+		if (data == NULL)
+		{
+			return FALSE;
+		}
+
+		part->u.item_write.data = data;
+	}
+
 	j_list_append(j_operation_cache->list, part);
+
+	return TRUE;
 }
 
 /**

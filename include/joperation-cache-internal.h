@@ -45,6 +45,7 @@ typedef struct JOperationCache JOperationCache;
 J_GNUC_INTERNAL void j_operation_cache_init (void);
 J_GNUC_INTERNAL void j_operation_cache_fini (void);
 
-J_GNUC_INTERNAL void j_operation_cache_add (JOperationPart*);
+J_GNUC_INTERNAL gboolean j_operation_cache_test (JOperationPart*);
+J_GNUC_INTERNAL gboolean j_operation_cache_add (JOperationPart*);
 
 #endif
