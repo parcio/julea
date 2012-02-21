@@ -38,7 +38,7 @@ struct JOperation;
 
 typedef struct JOperation JOperation;
 
-typedef void (*JOperationCompletedFunc) (JOperation*, gpointer);
+typedef void (*JOperationCompletedFunc) (JOperation*, gboolean, gpointer);
 
 #include <jsemantics.h>
 

@@ -40,8 +40,8 @@
 
 #include <jlist.h>
 
-J_GNUC_INTERNAL void j_create_store_internal (JOperation*, JList*);
-J_GNUC_INTERNAL void j_delete_store_internal (JOperation*, JList*);
-J_GNUC_INTERNAL void j_get_store_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_create_store_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_delete_store_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_get_store_internal (JOperation*, JList*);
 
 #endif

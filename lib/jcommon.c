@@ -242,13 +242,13 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 
 /* Internal */
 
-void
+gboolean
 j_create_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -267,15 +267,17 @@ j_create_store_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_delete_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -293,15 +295,17 @@ j_delete_store_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_get_store_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -321,6 +325,8 @@ j_get_store_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	return TRUE;
 }
 
 /**

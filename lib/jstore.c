@@ -251,7 +251,7 @@ j_store_set_connection (JStore* store, JConnection* connection)
 	store->connection = j_connection_ref(connection);
 }
 
-void
+gboolean
 j_store_create_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
@@ -263,8 +263,8 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	guint i;
 	guint length;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 	IsInitialized(true);
@@ -326,15 +326,17 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	{
 		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}
+
+	return TRUE;
 }
 
-void
+gboolean
 j_store_delete_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -362,15 +364,17 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_store_get_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -409,6 +413,8 @@ j_store_get_collection_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	return TRUE;
 }
 
 /*

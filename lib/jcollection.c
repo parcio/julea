@@ -534,7 +534,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
-void
+gboolean
 j_collection_create_item_internal (JOperation* operation, JList* parts)
 {
 	JCollection* collection;
@@ -546,8 +546,8 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 	guint i;
 	guint length;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -604,15 +604,17 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 	}
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_collection_delete_item_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -644,15 +646,17 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 	j_list_iterator_free(it);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_collection_get_item_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -716,6 +720,8 @@ j_collection_get_item_internal (JOperation* operation, JList* parts)
 	j_list_iterator_free(it);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
 /*

@@ -581,7 +581,7 @@ j_item_set_collection (JItem* item, JCollection* collection)
 	item->collection = j_collection_ref(collection);
 }
 
-void
+gboolean
 j_item_read_internal (JOperation* operation, JList* parts)
 {
 	JDistribution* distribution;
@@ -591,8 +591,8 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	guint64 new_offset;
 	guint index;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -676,9 +676,11 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	j_list_iterator_free(iterator);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_item_write_internal (JOperation* operation, JList* parts)
 {
 	JConnection* connection;
@@ -692,8 +694,8 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	gsize collection_len;
 	gsize store_len;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -828,15 +830,17 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	g_free(messages);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
-void
+gboolean
 j_item_get_status_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* iterator;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(parts != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
@@ -892,6 +896,8 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 	j_list_iterator_free(iterator);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return TRUE;
 }
 
 /*

@@ -32,9 +32,9 @@
 
 static
 void
-on_operation_completed (JOperation* operation, gpointer data)
+on_operation_completed (JOperation* operation, gboolean ret, gpointer user_data)
 {
-	g_print("Operation %p completed! (user_data=%p)\n", (gpointer)operation, data);
+	g_print("Operation %p completed! (ret=%d, user_data=%p)\n", (gpointer)operation, ret, user_data);
 }
 
 int

@@ -93,13 +93,15 @@ static
 gpointer
 j_operation_background_operation (gpointer data)
 {
+	gboolean ret;
+
 	JOperationAsync* async = data;
 
-	j_operation_execute(async->operation);
+	ret = j_operation_execute(async->operation);
 
 	if (async->func != NULL)
 	{
-		(*async->func)(async->operation, async->user_data);
+		(*async->func)(async->operation, ret, async->user_data);
 	}
 
 	g_slice_free(JOperationAsync, async);
@@ -179,17 +181,18 @@ j_operation_free (JOperation* operation)
  * \param list A list of operation parts.
  **/
 static
-void
+gboolean
 j_operation_execute_internal (JOperation* operation, JList* list)
 {
 	JOperationPart* part;
 	JOperationType type;
+	gboolean ret = TRUE;
 
 	part = j_list_get_first(list);
 
 	if (part == NULL)
 	{
-		return;
+		return ret;
 	}
 
 	type = part->type;
@@ -197,47 +200,50 @@ j_operation_execute_internal (JOperation* operation, JList* list)
 	switch (type)
 	{
 		case J_OPERATION_CREATE_STORE:
-			j_create_store_internal(operation, list);
+			ret = j_create_store_internal(operation, list);
 			break;
 		case J_OPERATION_DELETE_STORE:
-			j_delete_store_internal(operation, list);
+			ret = j_delete_store_internal(operation, list);
 			break;
 		case J_OPERATION_GET_STORE:
-			j_get_store_internal(operation, list);
+			ret = j_get_store_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:
-			j_store_create_collection_internal(operation, list);
+			ret = j_store_create_collection_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_DELETE_COLLECTION:
-			j_store_delete_collection_internal(operation, list);
+			ret = j_store_delete_collection_internal(operation, list);
 			break;
 		case J_OPERATION_STORE_GET_COLLECTION:
-			j_store_get_collection_internal(operation, list);
+			ret = j_store_get_collection_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			j_collection_create_item_internal(operation, list);
+			ret = j_collection_create_item_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			j_collection_delete_item_internal(operation, list);
+			ret = j_collection_delete_item_internal(operation, list);
 			break;
 		case J_OPERATION_COLLECTION_GET_ITEM:
-			j_collection_get_item_internal(operation, list);
+			ret = j_collection_get_item_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
-			j_item_get_status_internal(operation, list);
+			ret = j_item_get_status_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_READ:
-			j_item_read_internal(operation, list);
+			ret = j_item_read_internal(operation, list);
 			break;
 		case J_OPERATION_ITEM_WRITE:
-			j_item_write_internal(operation, list);
+			ret = j_item_write_internal(operation, list);
 			break;
 		case J_OPERATION_NONE:
 		default:
+			ret = FALSE;
 			g_warn_if_reached();
 	}
 
 	j_list_delete_all(list);
+
+	return ret;
 }
 
 /**
@@ -259,6 +265,7 @@ j_operation_execute (JOperation* operation)
 	JListIterator* iterator;
 	JOperationType last_type;
 	gpointer last_key;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 
@@ -278,7 +285,7 @@ j_operation_execute (JOperation* operation)
 
 		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
 		{
-			j_operation_execute_internal(operation, same_list);
+			ret = j_operation_execute_internal(operation, same_list) && ret;
 		}
 
 		last_key = part->key;
@@ -286,14 +293,14 @@ j_operation_execute (JOperation* operation)
 		j_list_append(same_list, part);
 	}
 
-	j_operation_execute_internal(operation, same_list);
+	ret = j_operation_execute_internal(operation, same_list) && ret;
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);
 
 	j_list_delete_all(operation->list);
 
-	return TRUE;
+	return ret;
 }
 
 /**

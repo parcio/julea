@@ -57,8 +57,8 @@ J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 
 J_GNUC_INTERNAL void j_collection_set_store (JCollection*, JStore*);
 
-J_GNUC_INTERNAL void j_collection_create_item_internal (JOperation*, JList*);
-J_GNUC_INTERNAL void j_collection_delete_item_internal (JOperation*, JList*);
-J_GNUC_INTERNAL void j_collection_get_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_collection_create_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_collection_delete_item_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_collection_get_item_internal (JOperation*, JList*);
 
 #endif
