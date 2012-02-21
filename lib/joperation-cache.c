@@ -53,6 +53,26 @@ struct JOperationCache
 
 static JOperationCache* j_operation_cache = NULL;
 
+static
+void
+j_operation_cache_execute (JOperationCache* cache)
+{
+	JListIterator* iterator;
+
+	iterator = j_list_iterator_new(cache->list);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperation* operation = j_list_iterator_get(iterator);
+
+		j_operation_execute(operation);
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_cache_clear(cache->cache);
+}
+
 void
 j_operation_cache_init (void)
 {
@@ -71,23 +91,13 @@ void
 j_operation_cache_fini (void)
 {
 	JOperationCache* cache;
-	JListIterator* iterator;
 
 	g_return_if_fail(j_operation_cache != NULL);
 
 	cache = g_atomic_pointer_get(&j_operation_cache);
 	g_atomic_pointer_set(&j_operation_cache, NULL);
 
-	iterator = j_list_iterator_new(cache->list);
-
-	while (j_list_iterator_next(iterator))
-	{
-		JOperation* operation = j_list_iterator_get(iterator);
-
-		j_operation_execute(operation);
-	}
-
-	j_list_iterator_free(iterator);
+	j_operation_cache_execute(cache);
 
 	j_list_unref(cache->list);
 	j_cache_free(cache->cache);
