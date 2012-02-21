@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#include <jcache-internal.h>
+#include <joperation-cache-internal.h>
 
 #include <jlist.h>
 #include <jlist-iterator.h>
@@ -39,40 +39,40 @@
 #include <joperation-part-internal.h>
 
 /**
- * \defgroup JCache Cache
+ * \defgroup JOperationCache Operation Cache
  * @{
  **/
 
-struct JCache
+struct JOperationCache
 {
 	JList* list;
 };
 
-static JCache* j_cache = NULL;
+static JOperationCache* j_operation_cache = NULL;
 
 void
-j_cache_init (void)
+j_operation_cache_init (void)
 {
-	JCache* cache;
+	JOperationCache* cache;
 
-	g_return_if_fail(j_cache == NULL);
+	g_return_if_fail(j_operation_cache == NULL);
 
-	cache = g_slice_new(JCache);
+	cache = g_slice_new(JOperationCache);
 	cache->list = j_list_new((JListFreeFunc)j_operation_part_free);
 
-	g_atomic_pointer_set(&j_cache, cache);
+	g_atomic_pointer_set(&j_operation_cache, cache);
 }
 
 void
-j_cache_fini (void)
+j_operation_cache_fini (void)
 {
-	JCache* cache;
+	JOperationCache* cache;
 	JListIterator* iterator;
 
-	g_return_if_fail(j_cache != NULL);
+	g_return_if_fail(j_operation_cache != NULL);
 
-	cache = g_atomic_pointer_get(&j_cache);
-	g_atomic_pointer_set(&j_cache, NULL);
+	cache = g_atomic_pointer_get(&j_operation_cache);
+	g_atomic_pointer_set(&j_operation_cache, NULL);
 
 	iterator = j_list_iterator_new(cache->list);
 
@@ -86,13 +86,13 @@ j_cache_fini (void)
 	j_list_iterator_free(iterator);
 
 	j_list_unref(cache->list);
-	g_slice_free(JCache, cache);
+	g_slice_free(JOperationCache, cache);
 }
 
 void
-j_cache_add (JOperationPart* part)
+j_operation_cache_add (JOperationPart* part)
 {
-	j_list_append(j_cache->list, part);
+	j_list_append(j_operation_cache->list, part);
 }
 
 /**

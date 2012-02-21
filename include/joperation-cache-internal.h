@@ -29,22 +29,22 @@
  * \file
  **/
 
-#ifndef H_CACHE_INTERNAL
-#define H_CACHE_INTERNAL
+#ifndef H_OPERATION_CACHE_INTERNAL
+#define H_OPERATION_CACHE_INTERNAL
 
 #include <glib.h>
 
 #include <julea-internal.h>
 
-struct JCache;
+struct JOperationCache;
 
-typedef struct JCache JCache;
+typedef struct JOperationCache JOperationCache;
 
 #include <joperation-part-internal.h>
 
-J_GNUC_INTERNAL void j_cache_init (void);
-J_GNUC_INTERNAL void j_cache_fini (void);
+J_GNUC_INTERNAL void j_operation_cache_init (void);
+J_GNUC_INTERNAL void j_operation_cache_fini (void);
 
-J_GNUC_INTERNAL void j_cache_add (JOperationPart*);
+J_GNUC_INTERNAL void j_operation_cache_add (JOperationPart*);
 
 #endif

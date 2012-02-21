@@ -35,12 +35,12 @@
 #include <joperation-internal.h>
 
 #include <jbackground-operation-internal.h>
-#include <jcache-internal.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jitem-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <joperation-cache-internal.h>
 #include <joperation-part-internal.h>
 #include <jsemantics.h>
 #include <jstore-internal.h>
@@ -398,7 +398,7 @@ j_operation_add (JOperation* operation, JOperationPart* part)
 	{
 		j_operation_part_cache(part);
 
-		j_cache_add(part);
+		j_operation_cache_add(part);
 
 		return;
 	}
