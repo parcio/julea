@@ -64,6 +64,11 @@ struct JOperation
 	JSemantics* semantics;
 
 	JBackgroundOperation* background_operation;
+
+	/**
+	 * The reference count.
+	 **/
+	gint ref_count;
 };
 
 struct JOperationAsync
@@ -119,7 +124,7 @@ j_operation_background_operation (gpointer data)
  *
  * \param semantics A semantics object.
  *
- * \return A new operation. Should be freed with j_operation_free().
+ * \return A new operation. Should be freed with j_operation_unref().
  **/
 JOperation*
 j_operation_new (JSemantics* semantics)
@@ -129,6 +134,7 @@ j_operation_new (JSemantics* semantics)
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
 	operation->background_operation = NULL;
+	operation->ref_count = 1;
 
 	if (semantics == NULL)
 	{
@@ -141,7 +147,27 @@ j_operation_new (JSemantics* semantics)
 }
 
 /**
- * Frees the memory allocated by the operation.
+ * Increases the operation's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \param list An operation.
+ *
+ * \return The operation.
+ **/
+JOperation*
+j_operation_ref (JOperation* operation)
+{
+	g_return_val_if_fail(operation != NULL, NULL);
+
+	g_atomic_int_inc(&(operation->ref_count));
+
+	return operation;
+}
+
+/**
+ * Decreases the operation's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the operation.
  *
  * \author Michael Kuhn
  *
@@ -151,20 +177,23 @@ j_operation_new (JSemantics* semantics)
  * \param operation An operation.
  **/
 void
-j_operation_free (JOperation* operation)
+j_operation_unref (JOperation* operation)
 {
 	g_return_if_fail(operation != NULL);
 
-	j_operation_wait(operation);
-
-	if (operation->semantics != NULL)
+	if (g_atomic_int_dec_and_test(&(operation->ref_count)))
 	{
-		j_semantics_unref(operation->semantics);
+		j_operation_wait(operation);
+
+		if (operation->semantics != NULL)
+		{
+			j_semantics_unref(operation->semantics);
+		}
+
+		j_list_unref(operation->list);
+
+		g_slice_free(JOperation, operation);
 	}
-
-	j_list_unref(operation->list);
-
-	g_slice_free(JOperation, operation);
 }
 
 /**

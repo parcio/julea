@@ -55,7 +55,7 @@ int jfs_unlink (char const* path)
 		ret = 0;
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 end:
 	if (uri != NULL)

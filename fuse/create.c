@@ -62,7 +62,7 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 		ret = 0;
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 end:
 	if (uri != NULL)

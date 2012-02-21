@@ -110,7 +110,7 @@ j_cmd_copy (gchar const** arguments)
 
 				j_operation_execute(operation);
 
-				j_operation_free(operation);
+				j_operation_unref(operation);
 
 				j_uri_get(uri[i], NULL);
 			}
@@ -200,7 +200,7 @@ j_cmd_copy (gchar const** arguments)
 		}
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 	g_free(buffer);
 

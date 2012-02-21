@@ -75,7 +75,7 @@ int jfs_mkdir(char const* path, mode_t mode)
 		ret = 0;
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 end:
 	if (uri != NULL)

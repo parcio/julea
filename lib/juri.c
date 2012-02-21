@@ -424,7 +424,7 @@ j_uri_get (JURI* uri, GError** error)
 	}
 
 end:
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 	return ret;
 }

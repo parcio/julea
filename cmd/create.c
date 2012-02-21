@@ -110,7 +110,7 @@ j_cmd_create (gchar const** arguments)
 		j_operation_execute(operation);
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 end:
 	if (uri != NULL)

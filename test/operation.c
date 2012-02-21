@@ -42,7 +42,7 @@ test_operation_new_free (void)
 	operation = j_operation_new(NULL);
 	g_assert(operation != NULL);
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 }
 
 static
@@ -56,7 +56,7 @@ test_operation_semantics (void)
 
 	g_assert(j_operation_get_semantics(operation) != NULL);
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	operation = j_operation_new(semantics);
@@ -64,7 +64,7 @@ test_operation_semantics (void)
 	g_assert(j_operation_get_semantics(operation) == semantics);
 
 	j_semantics_unref(semantics);
-	j_operation_free(operation);
+	j_operation_unref(operation);
 }
 
 void

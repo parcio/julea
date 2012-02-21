@@ -173,8 +173,8 @@ main (int argc, char** argv)
 	j_semantics_unref(semantics);
 	j_store_unref(store);
 
-	j_operation_free(delete_operation);
-	j_operation_free(operation);
+	j_operation_unref(delete_operation);
+	j_operation_unref(operation);
 
 	j_fini();
 

@@ -82,7 +82,7 @@ j_cmd_delete (gchar const** arguments)
 		j_cmd_usage();
 	}
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 end:
 	if (uri != NULL)

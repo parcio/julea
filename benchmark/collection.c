@@ -81,8 +81,8 @@ _benchmark_collection_create (gboolean batch)
 	j_store_unref(store);
 	j_operation_execute(delete_operation);
 
-	j_operation_free(delete_operation);
-	j_operation_free(operation);
+	j_operation_unref(delete_operation);
+	j_operation_unref(operation);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -164,7 +164,7 @@ _benchmark_collection_delete (gboolean batch)
 	j_store_unref(store);
 	j_operation_execute(operation);
 
-	j_operation_free(operation);
+	j_operation_unref(operation);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -227,8 +227,8 @@ benchmark_collection_delete_batch_without_get (void)
 	j_store_unref(store);
 	j_operation_execute(operation);
 
-	j_operation_free(delete_operation);
-	j_operation_free(operation);
+	j_operation_unref(delete_operation);
+	j_operation_unref(operation);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }

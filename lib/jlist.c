@@ -78,6 +78,8 @@ struct JList
  * \code
  * \endcode
  *
+ * \param free_func A function to free the element data, or NULL.
+ *
  * \return A new list.
  **/
 JList*
@@ -124,7 +126,6 @@ j_list_ref (JList* list)
  * \endcode
  *
  * \param list A list.
- * \param func A function to free the element data, or NULL.
  **/
 void
 j_list_unref (JList* list)
