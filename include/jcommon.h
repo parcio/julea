@@ -43,7 +43,7 @@ typedef struct JCommon JCommon;
 #include <jstore.h>
 #include <jtrace.h>
 
-gboolean j_init (gint*, gchar***);
+void j_init (gint*, gchar***);
 void j_fini (void);
 
 gboolean j_is_initialized (void);

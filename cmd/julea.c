@@ -104,11 +104,7 @@ main (int argc, char** argv)
 
 	command = argv[1];
 
-	if (!j_init(&argc, &argv))
-	{
-		g_printerr("Could not initialize.\n");
-		return 1;
-	}
+	j_init(&argc, &argv);
 
 	arguments = g_new(gchar const*, argc - 1);
 

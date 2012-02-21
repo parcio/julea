@@ -86,11 +86,7 @@ main (int argc, char** argv)
 {
 	gint ret;
 
-	if (!j_init(&argc, &argv))
-	{
-		g_printerr("Could not initialize.\n");
-		return 1;
-	}
+	j_init(&argc, &argv);
 
 	ret = fuse_main(argc, argv, &jfs_vtable, NULL);
 

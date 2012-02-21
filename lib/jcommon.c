@@ -65,13 +65,13 @@ struct JCommon
 
 static JCommon* j_common = NULL;
 
-gboolean
+void
 j_init (gint* argc, gchar*** argv)
 {
 	JCommon* common;
 	gchar* basename;
 
-	g_return_val_if_fail(!j_is_initialized(), FALSE);
+	g_return_if_fail(!j_is_initialized());
 
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
@@ -104,7 +104,7 @@ j_init (gint* argc, gchar*** argv)
 
 	g_atomic_pointer_set(&j_common, common);
 
-	return TRUE;
+	return;
 
 error:
 	if (common->connection != NULL)
@@ -123,7 +123,7 @@ error:
 
 	g_slice_free(JCommon, common);
 
-	return FALSE;
+	g_error("%s: Failed to initialize JULEA.", G_STRLOC);
 }
 
 void

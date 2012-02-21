@@ -47,11 +47,7 @@ main (int argc, char** argv)
 	JOperation* delete_operation;
 	JOperation* operation;
 
-	if (!j_init(&argc, &argv))
-	{
-		g_printerr("Could not initialize.\n");
-		return 1;
-	}
+	j_init(&argc, &argv);
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
