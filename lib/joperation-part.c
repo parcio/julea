@@ -80,15 +80,12 @@ j_operation_part_free (JOperationPart* part)
 	switch (part->type)
 	{
 		case J_OPERATION_CREATE_STORE:
-			j_connection_unref(part->u.create_store.connection);
 			j_store_unref(part->u.create_store.store);
 			break;
 		case J_OPERATION_DELETE_STORE:
-			j_connection_unref(part->u.delete_store.connection);
 			j_store_unref(part->u.delete_store.store);
 			break;
 		case J_OPERATION_GET_STORE:
-			j_connection_unref(part->u.get_store.connection);
 			g_free(part->u.get_store.name);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:

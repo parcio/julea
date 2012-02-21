@@ -36,6 +36,7 @@
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
+#include <jcommon.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
 #include <jlist.h>
@@ -87,7 +88,7 @@ j_store_new (gchar const* name)
 	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
-	store->connection = NULL;
+	store->connection = j_connection_ref(j_connection());
 	store->ref_count = 1;
 
 	return store;
@@ -239,16 +240,6 @@ j_store_collection_collections (JStore* store)
 	}
 
 	return store->collection.collections;
-}
-
-void
-j_store_set_connection (JStore* store, JConnection* connection)
-{
-	g_return_if_fail(store != NULL);
-	g_return_if_fail(connection != NULL);
-	g_return_if_fail(store->connection == NULL);
-
-	store->connection = j_connection_ref(connection);
 }
 
 gboolean

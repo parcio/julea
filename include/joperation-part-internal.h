@@ -76,21 +76,18 @@ struct JOperationPart
 	{
 		struct
 		{
-			JConnection* connection;
 			JStore* store;
 		}
 		create_store;
 
 		struct
 		{
-			JConnection* connection;
 			JStore* store;
 		}
 		delete_store;
 
 		struct
 		{
-			JConnection* connection;
 			JStore** store;
 			gchar* name;
 		}

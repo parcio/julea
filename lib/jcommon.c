@@ -172,6 +172,18 @@ j_configuration (void)
 	return common->configuration;
 }
 
+JConnection*
+j_connection (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->connection;
+}
+
 JTrace*
 j_trace (void)
 {
@@ -187,16 +199,12 @@ j_trace (void)
 void
 j_create_store (JStore* store, JOperation* operation)
 {
-	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 
-	common = g_atomic_pointer_get(&j_common);
-
 	part = j_operation_part_new(J_OPERATION_CREATE_STORE);
 	part->key = NULL;
-	part->u.create_store.connection = j_connection_ref(common->connection);
 	part->u.create_store.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
@@ -205,16 +213,12 @@ j_create_store (JStore* store, JOperation* operation)
 void
 j_delete_store (JStore* store, JOperation* operation)
 {
-	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 
-	common = g_atomic_pointer_get(&j_common);
-
 	part = j_operation_part_new(J_OPERATION_DELETE_STORE);
 	part->key = NULL;
-	part->u.delete_store.connection = j_connection_ref(common->connection);
 	part->u.delete_store.store = j_store_ref(store);
 
 	j_operation_add(operation, part);
@@ -223,17 +227,13 @@ j_delete_store (JStore* store, JOperation* operation)
 void
 j_get_store (JStore** store, gchar const* name, JOperation* operation)
 {
-	JCommon* common;
 	JOperationPart* part;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(name != NULL);
 
-	common = g_atomic_pointer_get(&j_common);
-
 	part = j_operation_part_new(J_OPERATION_GET_STORE);
 	part->key = NULL;
-	part->u.get_store.connection = j_connection_ref(common->connection);
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);
 
@@ -259,10 +259,9 @@ j_create_store_internal (JOperation* operation, JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JConnection* connection = part->u.delete_store.connection;
 		JStore* store = part->u.create_store.store;
 
-		j_store_set_connection(store, connection);
+		(void)store;
 		//store = j_store_new();
 	}
 
@@ -288,10 +287,9 @@ j_delete_store_internal (JOperation* operation, JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JConnection* connection = part->u.delete_store.connection;
 		JStore* store = part->u.delete_store.store;
 
-		mongo_cmd_drop_db(j_connection_get_connection(connection), j_store_get_name(store));
+		mongo_cmd_drop_db(j_connection_get_connection(j_store_get_connection(store)), j_store_get_name(store));
 	}
 
 	j_list_iterator_free(it);
@@ -316,12 +314,10 @@ j_get_store_internal (JOperation* operation, JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JConnection* connection = part->u.delete_store.connection;
 		JStore** store = part->u.get_store.store;
 		gchar const* name = part->u.get_store.name;
 
 		*store = j_store_new(name);
-		j_store_set_connection(*store, connection);
 	}
 
 	j_list_iterator_free(it);

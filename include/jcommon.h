@@ -49,6 +49,7 @@ void j_fini (void);
 gboolean j_is_initialized (void);
 
 JConfiguration* j_configuration (void);
+JConnection* j_connection (void);
 JTrace* j_trace (void);
 
 void j_create_store (JStore*, JOperation*);
