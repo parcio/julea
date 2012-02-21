@@ -40,6 +40,7 @@
 #include <jcollection-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <joperation-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
 
@@ -75,6 +76,8 @@ j_store_iterator_new (JStore* store)
 	mongo* connection;
 
 	g_return_val_if_fail(store != NULL, NULL);
+
+	j_operation_cache_flush();
 
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);

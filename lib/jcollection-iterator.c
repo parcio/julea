@@ -42,6 +42,7 @@
 #include <jconnection-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
+#include <joperation-internal.h>
 
 /**
  * \defgroup JCollectionIterator Collection Iterator
@@ -76,6 +77,8 @@ j_collection_iterator_new (JCollection* collection, JItemStatusFlags flags)
 	mongo* connection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
+
+	j_operation_cache_flush();
 
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);

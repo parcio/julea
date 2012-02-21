@@ -40,6 +40,11 @@
 
 #include <joperation-part-internal.h>
 
+J_GNUC_INTERNAL void j_operation_cache_init (void);
+J_GNUC_INTERNAL void j_operation_cache_fini (void);
+
+J_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
+
 J_GNUC_INTERNAL JSemantics* j_operation_get_semantics (JOperation*);
 
 J_GNUC_INTERNAL void j_operation_add (JOperation*, JOperationPart*);

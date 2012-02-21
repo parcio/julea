@@ -35,12 +35,12 @@
 #include <joperation-internal.h>
 
 #include <jbackground-operation-internal.h>
+#include <jcache-internal.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jitem-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <joperation-cache-internal.h>
 #include <joperation-part-internal.h>
 #include <jsemantics.h>
 #include <jstore-internal.h>
@@ -78,8 +78,16 @@ struct JOperationAsync
 	gpointer user_data;
 };
 
-typedef struct JOperationAsync JOperationAsync;
+struct JOperationCache
+{
+	JCache* cache;
+	JList* list;
+};
 
+typedef struct JOperationAsync JOperationAsync;
+typedef struct JOperationCache JOperationCache;
+
+static JOperationCache* j_operation_cache = NULL;
 static JSemantics* j_operation_default_semantics = NULL;
 
 static
@@ -112,6 +120,154 @@ j_operation_background_operation (gpointer data)
 	g_slice_free(JOperationAsync, async);
 
 	return NULL;
+}
+
+void
+j_operation_cache_init (void)
+{
+	JOperationCache* cache;
+
+	g_return_if_fail(j_operation_cache == NULL);
+
+	cache = g_slice_new(JOperationCache);
+	cache->cache = j_cache_new(J_MIB(50));
+	cache->list = j_list_new((JListFreeFunc)j_operation_unref);
+
+	g_atomic_pointer_set(&j_operation_cache, cache);
+}
+
+void
+j_operation_cache_fini (void)
+{
+	JOperationCache* cache;
+
+	g_return_if_fail(j_operation_cache != NULL);
+
+	j_operation_cache_flush();
+
+	cache = g_atomic_pointer_get(&j_operation_cache);
+	g_atomic_pointer_set(&j_operation_cache, NULL);
+
+	j_list_unref(cache->list);
+	j_cache_free(cache->cache);
+
+	g_slice_free(JOperationCache, cache);
+}
+
+// FIXME
+static gboolean j_operation_execute_internal (JOperation*);
+
+gboolean
+j_operation_cache_flush (void)
+{
+	JListIterator* iterator;
+	gboolean ret = TRUE;
+
+	iterator = j_list_iterator_new(j_operation_cache->list);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperation* operation = j_list_iterator_get(iterator);
+
+		ret = j_operation_execute_internal(operation) && ret;
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_list_delete_all(j_operation_cache->list);
+	j_cache_clear(j_operation_cache->cache);
+
+	return ret;
+}
+
+static
+gboolean
+j_operation_cache_test (JOperationPart* part)
+{
+	gboolean ret = FALSE;
+
+	switch (part->type)
+	{
+		case J_OPERATION_CREATE_STORE:
+		case J_OPERATION_DELETE_STORE:
+		case J_OPERATION_STORE_CREATE_COLLECTION:
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+		case J_OPERATION_COLLECTION_CREATE_ITEM:
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+		case J_OPERATION_ITEM_WRITE:
+			ret = TRUE;
+			break;
+
+		case J_OPERATION_GET_STORE:
+		case J_OPERATION_STORE_GET_COLLECTION:
+		case J_OPERATION_COLLECTION_GET_ITEM:
+		case J_OPERATION_ITEM_GET_STATUS:
+		case J_OPERATION_ITEM_READ:
+			ret = FALSE;
+			break;
+
+		case J_OPERATION_NONE:
+		default:
+			g_warn_if_reached();
+	}
+
+	return ret;
+}
+
+static
+gboolean
+j_operation_cache_add (JOperation* operation)
+{
+	JListIterator* iterator;
+	gboolean can_cache = TRUE;
+
+	iterator = j_list_iterator_new(operation->list);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperationPart* part = j_list_iterator_get(iterator);
+
+		can_cache = j_operation_cache_test(part) && can_cache;
+
+		if (!can_cache)
+		{
+			break;
+		}
+	}
+
+	j_list_iterator_free(iterator);
+
+	if (!can_cache)
+	{
+		return FALSE;
+	}
+
+	iterator = j_list_iterator_new(operation->list);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JOperationPart* part = j_list_iterator_get(iterator);
+
+		if (part->type == J_OPERATION_ITEM_WRITE)
+		{
+			gpointer data;
+
+			data = j_cache_put(j_operation_cache->cache, part->u.item_write.data, part->u.item_write.length);
+
+			if (data == NULL)
+			{
+				return FALSE;
+			}
+
+			part->u.item_write.data = data;
+		}
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_list_append(j_operation_cache->list, j_operation_ref(operation));
+
+	return TRUE;
 }
 
 /**
@@ -211,7 +367,7 @@ j_operation_unref (JOperation* operation)
  **/
 static
 gboolean
-j_operation_execute_internal (JOperation* operation, JList* list)
+j_operation_execute_same (JOperation* operation, JList* list)
 {
 	JOperationPart* part;
 	JOperationType type;
@@ -278,6 +434,8 @@ j_operation_execute_internal (JOperation* operation, JList* list)
 /**
  * Executes the operation.
  *
+ * \private
+ *
  * \author Michael Kuhn
  *
  * \code
@@ -287,21 +445,15 @@ j_operation_execute_internal (JOperation* operation, JList* list)
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
+static
 gboolean
-j_operation_execute (JOperation* operation)
+j_operation_execute_internal (JOperation* operation)
 {
 	JList* same_list;
 	JListIterator* iterator;
 	JOperationType last_type;
 	gpointer last_key;
 	gboolean ret = TRUE;
-
-	g_return_val_if_fail(operation != NULL, FALSE);
-
-	if (j_list_length(operation->list) == 0)
-	{
-		return FALSE;
-	}
 
 	iterator = j_list_iterator_new(operation->list);
 	same_list = j_list_new(NULL);
@@ -314,7 +466,7 @@ j_operation_execute (JOperation* operation)
 
 		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
 		{
-			ret = j_operation_execute_internal(operation, same_list) && ret;
+			ret = j_operation_execute_same(operation, same_list) && ret;
 		}
 
 		last_key = part->key;
@@ -322,7 +474,7 @@ j_operation_execute (JOperation* operation)
 		j_list_append(same_list, part);
 	}
 
-	ret = j_operation_execute_internal(operation, same_list) && ret;
+	ret = j_operation_execute_same(operation, same_list) && ret;
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);
@@ -330,6 +482,39 @@ j_operation_execute (JOperation* operation)
 	j_list_delete_all(operation->list);
 
 	return ret;
+}
+
+/**
+ * Executes the operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param operation An operation.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_operation_execute (JOperation* operation)
+{
+	g_return_val_if_fail(operation != NULL, FALSE);
+
+	if (j_list_length(operation->list) == 0)
+	{
+		return FALSE;
+	}
+
+	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
+	    && j_operation_cache_add(operation))
+	{
+		return TRUE;
+	}
+
+	j_operation_cache_flush();
+
+	return j_operation_execute_internal(operation);
 }
 
 /**
@@ -421,13 +606,6 @@ j_operation_add (JOperation* operation, JOperationPart* part)
 {
 	g_return_if_fail(operation != NULL);
 	g_return_if_fail(part != NULL);
-
-	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
-	    && j_operation_cache_test(part)
-	    && j_operation_cache_add(part))
-	{
-		return;
-	}
 
 	j_list_append(operation->list, part);
 }
