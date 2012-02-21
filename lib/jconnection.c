@@ -35,6 +35,15 @@
 
 #include <mongo.h>
 
+#define J_USE_NODELAY 0
+
+#if J_USE_NODELAY
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#endif
+
 #include <jconfiguration.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
@@ -224,7 +233,20 @@ j_connection_connect (JConnection* connection)
 
 	for (i = 0; i < connection->sockets_len; i++)
 	{
+#if J_USE_NODELAY
+		GSocket* socket_;
+		gint fd;
+		gint flag = 1;
+#endif
+
 		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, NULL);
+
+#if J_USE_NODELAY
+		socket_ = g_socket_connection_get_socket(connection->sockets[i]);
+		fd = g_socket_get_fd(socket_);
+
+		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
+#endif
 
 		is_connected = is_connected && (connection->sockets[i] != NULL);
 	}
