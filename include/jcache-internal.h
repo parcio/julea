@@ -25,20 +25,24 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+/**
+ * \file
+ **/
 
-void test_background_operation (void);
-void test_cache (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_operation (void);
-void test_semantics (void);
-void test_uri (void);
+#ifndef H_CACHE_INTERNAL
+#define H_CACHE_INTERNAL
 
+#include <glib.h>
+
+#include <julea-internal.h>
+
+struct JCache;
+
+typedef struct JCache JCache;
+
+J_GNUC_INTERNAL JCache* j_cache_new (guint64);
+J_GNUC_INTERNAL void j_cache_free (JCache*);
+
+J_GNUC_INTERNAL gboolean j_cache_put (JCache*, gconstpointer, guint64);
+J_GNUC_INTERNAL void j_cache_clear (JCache*);
 #endif

@@ -41,6 +41,7 @@ main (int argc, char** argv)
 	j_init(&argc, &argv);
 
 	test_background_operation();
+	test_cache();
 	test_collection();
 	test_configuration();
 	test_distribution();

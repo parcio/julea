@@ -25,20 +25,42 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+#include <glib.h>
 
-void test_background_operation (void);
-void test_cache (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_operation (void);
-void test_semantics (void);
-void test_uri (void);
+#include <julea.h>
 
-#endif
+#include <jcache-internal.h>
+
+#include "benchmark.h"
+
+static
+gchar*
+benchmark_cache_put (void)
+{
+	guint const n = J_MIB(50);
+
+	JCache* cache;
+	gchar dummy[1];
+	gdouble elapsed;
+
+	cache = j_cache_new(J_MIB(50));
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		j_cache_put(cache, dummy, 1);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	j_cache_free(cache);
+
+	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+}
+
+void
+benchmark_cache (void)
+{
+	j_benchmark_run("/cache", benchmark_cache_put);
+}

@@ -25,20 +25,75 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+#include <glib.h>
 
-void test_background_operation (void);
-void test_cache (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_operation (void);
-void test_semantics (void);
-void test_uri (void);
+#include <julea.h>
 
-#endif
+#include <jcache-internal.h>
+
+#include "test.h"
+
+static
+void
+test_cache_new_free (void)
+{
+	JCache* cache;
+
+	cache = j_cache_new(J_MIB(50));
+	j_cache_free(cache);
+}
+
+static
+void
+test_cache_put (void)
+{
+	JCache* cache;
+	gboolean ret;
+	gchar dummy[1];
+
+	cache = j_cache_new(3);
+
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(ret);
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(ret);
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(ret);
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(!ret);
+
+	j_cache_free(cache);
+}
+
+static
+void
+test_cache_clear (void)
+{
+	JCache* cache;
+	gboolean ret;
+	gchar dummy[1];
+
+	cache = j_cache_new(1);
+
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(ret);
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(!ret);
+
+	j_cache_clear(cache);
+
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(ret);
+	ret = j_cache_put(cache, dummy, 1);
+	g_assert(!ret);
+
+	j_cache_free(cache);
+}
+
+void
+test_cache (void)
+{
+	g_test_add_func("/cache/new_free", test_cache_new_free);
+	g_test_add_func("/cache/put", test_cache_put);
+	g_test_add_func("/cache/clear", test_cache_clear);
+}

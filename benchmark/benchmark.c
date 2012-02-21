@@ -80,6 +80,7 @@ main (int argc, char** argv)
 	j_benchmark_timer = g_timer_new();
 
 	benchmark_background_operation();
+	benchmark_cache();
 	benchmark_collection();
 	benchmark_item();
 

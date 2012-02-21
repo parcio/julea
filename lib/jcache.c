@@ -25,20 +25,82 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_TEST
-#define H_TEST
+/**
+ * \file
+ **/
 
-void test_background_operation (void);
-void test_cache (void);
-void test_collection (void);
-void test_configuration (void);
-void test_distribution (void);
-void test_item (void);
-void test_list (void);
-void test_list_iterator (void);
-void test_message (void);
-void test_operation (void);
-void test_semantics (void);
-void test_uri (void);
+#include <glib.h>
 
-#endif
+#include <string.h>
+
+#include <jcache-internal.h>
+
+/**
+ * \defgroup JCache Cache
+ * @{
+ **/
+
+struct JCache
+{
+	guint64 size;
+	gchar* data;
+	gchar* current;
+};
+
+JCache*
+j_cache_new (guint64 size)
+{
+	JCache* cache;
+
+	g_return_val_if_fail(size > 0, NULL);
+
+	cache = g_slice_new(JCache);
+	cache->size = size;
+	cache->data = NULL;
+	cache->current = NULL;
+
+	return cache;
+}
+
+void
+j_cache_free (JCache* cache)
+{
+	g_return_if_fail(cache != NULL);
+
+	if (cache->data != NULL)
+	{
+		g_free(cache->data);
+	}
+
+	g_slice_free(JCache, cache);
+}
+
+gboolean
+j_cache_put (JCache* cache, gconstpointer data, guint64 length)
+{
+	if (G_UNLIKELY(cache->data == NULL))
+	{
+		cache->data = g_malloc(cache->size);
+		cache->current = cache->data;
+	}
+
+	if (cache->current + length > cache->data + cache->size)
+	{
+		return FALSE;
+	}
+
+	memcpy(cache->current, data, length);
+	cache->current += length;
+
+	return TRUE;
+}
+
+void
+j_cache_clear (JCache* cache)
+{
+	cache->current = cache->data;
+}
+
+/**
+ * @}
+ **/

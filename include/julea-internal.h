@@ -38,6 +38,10 @@
 #define J_GNUC_INTERNAL G_GNUC_INTERNAL
 #endif
 
+#define J_KIB(n) ((n) * 1024)
+#define J_MIB(n) ((n) * J_KIB(1024))
+#define J_GIB(n) ((n) * J_MIB(1024))
+
 /* FIXME j_sync() for benchmarks */
 
 #endif
