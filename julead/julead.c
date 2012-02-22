@@ -262,10 +262,12 @@ main (int argc, char** argv)
 		{ NULL }
 	};
 
+#if !GLIB_CHECK_VERSION(2,31,0)
 	if (!g_thread_get_initialized())
 	{
 		g_thread_init(NULL);
 	}
+#endif
 
 	g_type_init();
 

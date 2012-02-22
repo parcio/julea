@@ -46,8 +46,13 @@ struct JBackgroundOperation
 
 	gboolean completed;
 
+#if GLIB_CHECK_VERSION(2,31,0)
+	GMutex mutex[1];
+	GCond cond[1];
+#else
 	GMutex* mutex;
 	GCond* cond;
+#endif
 
 	gint ref_count;
 };
@@ -107,9 +112,15 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 	background_operation->data = data;
 	background_operation->result = NULL;
 	background_operation->completed = FALSE;
+	background_operation->ref_count = 2;
+
+#if GLIB_CHECK_VERSION(2,31,0)
+	g_mutex_init(background_operation->mutex);
+	g_cond_init(background_operation->cond);
+#else
 	background_operation->mutex = g_mutex_new();
 	background_operation->cond = g_cond_new();
-	background_operation->ref_count = 2;
+#endif
 
 	g_thread_pool_push(j_thread_pool, background_operation, NULL);
 
@@ -133,8 +144,13 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 
 	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
+#if GLIB_CHECK_VERSION(2,31,0)
+		g_cond_clear(background_operation->cond);
+		g_mutex_clear(background_operation->mutex);
+#else
 		g_cond_free(background_operation->cond);
 		g_mutex_free(background_operation->mutex);
+#endif
 
 		g_slice_free(JBackgroundOperation, background_operation);
 	}
