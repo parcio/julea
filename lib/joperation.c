@@ -339,7 +339,10 @@ j_operation_unref (JOperation* operation)
 
 	if (g_atomic_int_dec_and_test(&(operation->ref_count)))
 	{
-		j_operation_wait(operation);
+		if (operation->background_operation != NULL)
+		{
+			j_background_operation_unref(operation->background_operation);
+		}
 
 		if (operation->semantics != NULL)
 		{
@@ -538,7 +541,7 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, 
 	g_return_if_fail(operation != NULL);
 
 	async = g_slice_new(JOperationAsync);
-	async->operation = operation;
+	async->operation = j_operation_ref(operation);
 	async->func = func;
 	async->user_data = user_data;
 

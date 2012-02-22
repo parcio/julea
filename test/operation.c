@@ -33,6 +33,15 @@
 
 #include "test.h"
 
+static gint test_operation_flag;
+
+static
+void
+on_operation_completed (JOperation* operation, gboolean ret, gpointer user_data)
+{
+	g_atomic_int_set(&test_operation_flag, 1);
+}
+
 static
 void
 test_operation_new_free (void)
@@ -67,9 +76,76 @@ test_operation_semantics (void)
 	j_operation_unref(operation);
 }
 
+static
+void
+_test_operation_execute (gboolean async)
+{
+	JCollection* collection;
+	JItem* item;
+	JOperation* operation;
+	JStore* store;
+
+	if (async)
+	{
+		g_atomic_int_set(&test_operation_flag, 0);
+	}
+
+	operation = j_operation_new(NULL);
+
+	store = j_store_new("test");
+	collection = j_collection_new("test");
+	item = j_item_new("item");
+
+	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
+	j_collection_create_item(collection, item, operation);
+	j_collection_delete_item(collection, item, operation);
+	j_store_delete_collection(store, collection, operation);
+	j_delete_store(store, operation);
+
+	j_item_unref(item);
+	j_collection_unref(collection);
+	j_store_unref(store);
+
+	if (async)
+	{
+		j_operation_execute_async(operation, on_operation_completed, NULL);
+	}
+	else
+	{
+		j_operation_execute(operation);
+	}
+
+	j_operation_unref(operation);
+
+	if (async)
+	{
+		while (g_atomic_int_get(&test_operation_flag) != 1)
+		{
+			g_usleep(1000);
+		}
+	}
+}
+
+static
+void
+test_operation_execute (void)
+{
+	_test_operation_execute(FALSE);
+}
+
+static
+void
+test_operation_execute_async (void)
+{
+	_test_operation_execute(TRUE);
+}
+
 void
 test_operation (void)
 {
 	g_test_add_func("/operation/new_free", test_operation_new_free);
 	g_test_add_func("/operation/semantics", test_operation_semantics);
+	g_test_add_func("/operation/execute", test_operation_execute);
+	g_test_add_func("/operation/execute_async", test_operation_execute_async);
 }
