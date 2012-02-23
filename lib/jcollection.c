@@ -611,7 +611,10 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 gboolean
 j_collection_delete_item_internal (JOperation* operation, JList* parts)
 {
+	JCollection* collection;
 	JListIterator* it;
+	JSemantics* semantics;
+	mongo* connection;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -628,10 +631,10 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 	while (j_list_iterator_next(it))
 	{
 		JOperationPart* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.collection_delete_item.collection;
 		JItem* item = part->u.collection_delete_item.item;
 		bson b;
-		mongo* connection;
+
+		collection = part->u.collection_delete_item.collection;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", j_item_get_id(item));
@@ -644,6 +647,13 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	semantics = j_operation_get_semantics(operation);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	{
+		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
+	}
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 

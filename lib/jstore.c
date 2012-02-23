@@ -325,6 +325,9 @@ gboolean
 j_store_delete_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
+	JSemantics* semantics;
+	JStore* store;
+	mongo* connection;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -340,9 +343,9 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	{
 		JOperationPart* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.store_delete_collection.collection;
-		JStore* store = part->u.store_delete_collection.store;
 		bson b;
-		mongo* connection;
+
+		store = part->u.store_delete_collection.store;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", j_collection_get_id(collection));
@@ -355,6 +358,14 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	connection = j_connection_get_connection(j_store_get_connection(store));
+	semantics = j_operation_get_semantics(operation);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	{
+		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
+	}
 
 	return TRUE;
 }
