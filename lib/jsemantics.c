@@ -115,6 +115,13 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
+		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
+			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
+			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_ON_CLOSE;
+			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
+			semantics->security = J_SEMANTICS_SECURITY_NONE;
+			break;
 		default:
 			g_warn_if_reached();
 	}
