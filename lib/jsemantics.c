@@ -69,6 +69,11 @@ struct JSemantics
 	gint security;
 
 	/**
+	 * Whether the semantics object is immutable.
+	 **/
+	gboolean immutable;
+
+	/**
 	 * The reference count.
 	 **/
 	gint ref_count;
@@ -76,6 +81,7 @@ struct JSemantics
 
 /**
  * Creates a new semantics object.
+ * Semantics objects become immutable after the first call to j_semantics_ref().
  *
  * \author Michael Kuhn
  *
@@ -95,6 +101,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
 	semantics->redundancy = J_SEMANTICS_REDUNDANCY_NONE;
 	semantics->security = J_SEMANTICS_SECURITY_STRICT;
+	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
 
 	switch (template)
@@ -133,6 +140,11 @@ j_semantics_ref (JSemantics* semantics)
 	g_return_val_if_fail(semantics != NULL, NULL);
 
 	g_atomic_int_inc(&(semantics->ref_count));
+
+	if (!semantics->immutable)
+	{
+		semantics->immutable = TRUE;
+	}
 
 	return semantics;
 }
@@ -178,6 +190,7 @@ void
 j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 {
 	g_return_if_fail(semantics != NULL);
+	g_return_if_fail(!semantics->immutable);
 
 	switch (key)
 	{
