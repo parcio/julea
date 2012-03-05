@@ -184,7 +184,7 @@ def build (ctx):
 
 	# Daemon
 	ctx.program(
-		source = ['julead/%s.c' % file for file in ('julead',)],
+		source = ctx.path.ant_glob('julead/*.c'),
 		target = 'julead/julead',
 		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
