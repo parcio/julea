@@ -54,6 +54,7 @@ typedef struct JStatistics JStatistics;
 J_GNUC_INTERNAL JStatistics* j_statistics_new (void);
 J_GNUC_INTERNAL void j_statistics_free (JStatistics*);
 
+J_GNUC_INTERNAL guint64 j_statistics_get (JStatistics*, JStatisticsType);
 J_GNUC_INTERNAL void j_statistics_set (JStatistics*, JStatisticsType, guint64);
 
 #endif

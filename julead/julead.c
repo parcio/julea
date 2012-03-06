@@ -242,6 +242,40 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_free(buf);
 				}
 				break;
+			case J_MESSAGE_OPERATION_STATISTICS:
+				g_printerr("statistics_op\n");
+				{
+					JMessage* reply;
+					JStatistics* statistics;
+					gchar get_all;
+					guint64 value;
+
+					get_all = j_message_get_1(message);
+
+					g_printerr("STATISTICS %d\n", get_all);
+
+					if (get_all == 0)
+					{
+						statistics = j_thread_get_statistics(thread);
+					}
+
+					reply = j_message_new_reply(message, 0);
+
+					value = j_statistics_get(statistics, J_STATISTICS_FILE_CREATED);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_FILE_DELETED);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_SYNC);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
+					j_message_append_8(reply, &value);
+
+					j_message_write(reply, output);
+					j_message_free(reply);
+				}
+				break;
 			case J_MESSAGE_OPERATION_REPLY:
 				g_printerr("reply_op\n");
 			default:

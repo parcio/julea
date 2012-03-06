@@ -99,6 +99,38 @@ j_statistics_free (JStatistics* statistics)
 	g_slice_free(JStatistics, statistics);
 }
 
+guint64
+j_statistics_get (JStatistics* statistics, JStatisticsType type)
+{
+	guint64 value = 0;
+
+	g_return_val_if_fail(statistics != NULL, 0);
+
+	switch (type)
+	{
+		case J_STATISTICS_FILE_CREATED:
+			value = statistics->files_created;
+			break;
+		case J_STATISTICS_FILE_DELETED:
+			value = statistics->files_deleted;
+			break;
+		case J_STATISTICS_SYNC:
+			value = statistics->sync_count;
+			break;
+		case J_STATISTICS_BYTES_READ:
+			value = statistics->bytes_read;
+			break;
+		case J_STATISTICS_BYTES_WRITTEN:
+			value = statistics->bytes_written;
+			break;
+		default:
+			g_warn_if_reached();
+			break;
+	}
+
+	return value;
+}
+
 void
 j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
