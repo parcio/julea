@@ -29,31 +29,31 @@
  * \file
  **/
 
-#ifndef H_DCONNECTION
-#define H_DCONNECTION
+#ifndef H_STATISTICS_INTERNAL
+#define H_STATISTICS_INTERNAL
 
 #include <glib.h>
 
-enum JDConnectionStatisticsType
+#include <julea-internal.h>
+
+enum JStatisticsType
 {
-	JD_CONNECTION_STATISTICS_FILE_CREATED,
-	JD_CONNECTION_STATISTICS_FILE_DELETED,
-	JD_CONNECTION_STATISTICS_SYNC,
-	JD_CONNECTION_STATISTICS_BYTES_READ,
-	JD_CONNECTION_STATISTICS_BYTES_WRITTEN
+	J_STATISTICS_FILE_CREATED,
+	J_STATISTICS_FILE_DELETED,
+	J_STATISTICS_SYNC,
+	J_STATISTICS_BYTES_READ,
+	J_STATISTICS_BYTES_WRITTEN
 };
 
-typedef enum JDConnectionStatisticsType JDConnectionStatisticsType;
+typedef enum JStatisticsType JStatisticsType;
 
-struct JDConnection;
+struct JStatistics;
 
-typedef struct JDConnection JDConnection;
+typedef struct JStatistics JStatistics;
 
-#include <jtrace.h>
+J_GNUC_INTERNAL JStatistics* j_statistics_new (void);
+J_GNUC_INTERNAL void j_statistics_free (JStatistics*);
 
-JDConnection* jd_connection_new (JTrace*);
-void jd_connection_free (JDConnection*);
-
-void jd_connection_set_statistics (JDConnection*, JDConnectionStatisticsType, guint64);
+J_GNUC_INTERNAL void j_statistics_set (JStatistics*, JStatisticsType, guint64);
 
 #endif

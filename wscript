@@ -186,9 +186,12 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('julead/*.c'),
 		target = 'julead/julead',
-		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
+		use = ['lib/julea-internal', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
-		defines = ['JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)],
+		defines = [
+			'J_ENABLE_INTERNAL',
+			'JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)
+		],
 		install_path = '${BINDIR}'
 	)
 

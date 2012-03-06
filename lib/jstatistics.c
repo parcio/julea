@@ -1,0 +1,132 @@
+/*
+ * Copyright (c) 2010-2012 Michael Kuhn
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/**
+ * \file
+ **/
+
+#include <glib.h>
+
+#include <jstatistics-internal.h>
+
+/**
+ * \defgroup JStatistics Statistics
+ *
+ * @{
+ **/
+
+/**
+ * A statistics.
+ **/
+struct JStatistics
+{
+	guint64 files_created;
+	guint64 files_deleted;
+
+	guint64 sync_count;
+
+	guint64 bytes_read;
+	guint64 bytes_written;
+};
+
+/**
+ * Creates a new statistics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JStatistics* s;
+ *
+ * s = j_statistics_new();
+ * \endcode
+ *
+ * \return A new statistics. Should be freed with j_statistics_free().
+ **/
+JStatistics*
+j_statistics_new (void)
+{
+	JStatistics* statistics;
+
+	statistics = g_slice_new(JStatistics);
+	statistics->files_created = 0;
+	statistics->files_deleted = 0;
+	statistics->sync_count = 0;
+	statistics->bytes_read = 0;
+	statistics->bytes_written = 0;
+
+	return statistics;
+}
+
+/**
+ * Frees the memory allocated for the statistics.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param statistics A statistics.
+ **/
+void
+j_statistics_free (JStatistics* statistics)
+{
+	g_return_if_fail(statistics != NULL);
+
+	g_slice_free(JStatistics, statistics);
+}
+
+void
+j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
+{
+	g_return_if_fail(statistics != NULL);
+
+	switch (type)
+	{
+		case J_STATISTICS_FILE_CREATED:
+			statistics->files_created += value;
+			break;
+		case J_STATISTICS_FILE_DELETED:
+			statistics->files_deleted += value;
+			break;
+		case J_STATISTICS_SYNC:
+			statistics->sync_count += value;
+			break;
+		case J_STATISTICS_BYTES_READ:
+			statistics->bytes_read += value;
+			break;
+		case J_STATISTICS_BYTES_WRITTEN:
+			statistics->bytes_written += value;
+			break;
+		default:
+			g_warn_if_reached();
+			break;
+	}
+}
+
+/**
+ * @}
+ **/
