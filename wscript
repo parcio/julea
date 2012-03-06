@@ -155,7 +155,7 @@ def build (ctx):
 	# Library (internal)
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/*.c'),
-		target = 'lib/julea-internal',
+		target = 'lib/julea-private',
 		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
@@ -166,7 +166,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('test/*.c'),
 		target = 'test/test',
-		use = ['lib/julea-internal', 'GLIB'],
+		use = ['lib/julea-private', 'GLIB'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -176,7 +176,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/benchmark',
-		use = ['lib/julea-internal', 'GLIB'],
+		use = ['lib/julea-private', 'GLIB'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -186,7 +186,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('julead/*.c'),
 		target = 'julead/julead',
-		use = ['lib/julea-internal', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
+		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
 		defines = [
 			'J_ENABLE_INTERNAL',
@@ -215,12 +215,13 @@ def build (ctx):
 	)
 
 	# Tools
-	for tool in ('benchmark', 'config'):
+	for tool in ('benchmark', 'config', 'statistics'):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/julea-%s' % (tool,),
-			use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT'],
+			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT'],
 			includes = ['include'],
+			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${BINDIR}'
 		)
 
