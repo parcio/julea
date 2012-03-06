@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#define _POSIX_SOURCE
-
 #include <glib.h>
 #include <glib-unix.h>
 #include <glib-object.h>
@@ -42,6 +40,10 @@
 #include <jtrace.h>
 
 #include "backend/backend.h"
+
+static JStatistics* jd_statistics;
+
+G_LOCK_DEFINE_STATIC(jd_statistics);
 
 static
 gboolean
@@ -258,8 +260,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						statistics = j_thread_get_statistics(thread);
 					}
+					else
+					{
+						/* FIXME locking */
+						statistics = jd_statistics;
+					}
 
-					reply = j_message_new_reply(message, 0);
+					reply = j_message_new_reply(message, 5 * sizeof(guint64));
 
 					value = j_statistics_get(statistics, J_STATISTICS_FILE_CREATED);
 					j_message_append_8(reply, &value);
@@ -285,6 +292,28 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	}
 
 	j_message_free(message);
+
+	{
+		JStatistics* statistics;
+		guint64 value;
+
+		statistics = j_thread_get_statistics(thread);
+
+		G_LOCK(jd_statistics);
+
+		value = j_statistics_get(statistics, J_STATISTICS_FILE_CREATED);
+		j_statistics_set(jd_statistics, J_STATISTICS_FILE_CREATED, value);
+		value = j_statistics_get(statistics, J_STATISTICS_FILE_DELETED);
+		j_statistics_set(jd_statistics, J_STATISTICS_FILE_DELETED, value);
+		value = j_statistics_get(statistics, J_STATISTICS_SYNC);
+		j_statistics_set(jd_statistics, J_STATISTICS_SYNC, value);
+		value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
+		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_READ, value);
+		value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
+		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
+
+		G_UNLOCK(jd_statistics);
+	}
 
 	j_thread_free(thread);
 
@@ -376,6 +405,8 @@ main (int argc, char** argv)
 
 	j_configuration_unref(configuration);
 
+	jd_statistics = j_statistics_new();
+
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
@@ -392,6 +423,8 @@ main (int argc, char** argv)
 
 	g_socket_service_stop(G_SOCKET_SERVICE(listener));
 	g_object_unref(listener);
+
+	j_statistics_free(jd_statistics);
 
 	jd_backend_fini(trace);
 
