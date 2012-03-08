@@ -33,6 +33,7 @@
 
 #include <string.h>
 
+#include <jcache-internal.h>
 #include <jconfiguration.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
@@ -63,12 +64,14 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
+	JCache* cache;
 	JMessage* message;
 	JThread* thread;
 	JTrace* trace;
 	GInputStream* input;
 	GOutputStream* output;
 
+	cache = j_cache_new(J_MIB(50));
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	trace = j_thread_get_trace(thread);
 
@@ -144,24 +147,25 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				g_printerr("read_op\n");
 				{
 					JMessage* reply;
-					gchar* buf;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
-					buf = g_new(gchar, 512 * 1024);
 
 					jd_backend_open(&bf, store, collection, item, trace);
 
 					for (i = 0; i < operation_count; i++)
 					{
+						gchar* buf;
 						guint64 length;
 						guint64 offset;
 						guint64 bytes_read;
 
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
+
+						buf = j_cache_get(cache, length);
 
 						g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
@@ -180,7 +184,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_close(&bf, trace);
 
-					g_free(buf);
+					j_cache_clear(cache);
 				}
 				break;
 			case J_MESSAGE_OPERATION_SYNC:
@@ -207,24 +211,23 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OPERATION_WRITE:
 				g_printerr("write_op\n");
 				{
-					gchar* buf;
-
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
-
-					buf = g_new(gchar, 512 * 1024);
 
 					jd_backend_open(&bf, store, collection, item, trace);
 
 					for (i = 0; i < operation_count; i++)
 					{
+						gchar* buf;
 						guint64 length;
 						guint64 offset;
 						guint64 bytes_written;
 
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
+
+						buf = j_cache_get(cache, length);
 
 						g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
@@ -233,11 +236,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						jd_backend_write(&bf, buf, length, offset, &bytes_written, trace);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+						j_cache_clear(cache);
 					}
 
 					jd_backend_close(&bf, trace);
-
-					g_free(buf);
 				}
 				break;
 			case J_MESSAGE_OPERATION_STATISTICS:
@@ -319,6 +322,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		G_UNLOCK(jd_statistics);
 	}
 
+	j_cache_free(cache);
 	j_thread_free(thread);
 
 	return TRUE;
