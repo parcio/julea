@@ -45,6 +45,27 @@ test_cache_new_free (void)
 
 static
 void
+test_cache_get (void)
+{
+	JCache* cache;
+	gpointer ret;
+
+	cache = j_cache_new(3);
+
+	ret = j_cache_get(cache, 1);
+	g_assert(ret != NULL);
+	ret = j_cache_get(cache, 1);
+	g_assert(ret != NULL);
+	ret = j_cache_get(cache, 1);
+	g_assert(ret != NULL);
+	ret = j_cache_get(cache, 1);
+	g_assert(ret == NULL);
+
+	j_cache_free(cache);
+}
+
+static
+void
 test_cache_put (void)
 {
 	JCache* cache;
@@ -75,6 +96,20 @@ test_cache_clear (void)
 
 	cache = j_cache_new(1);
 
+	ret = j_cache_get(cache, 1);
+	g_assert(ret != NULL);
+	ret = j_cache_get(cache, 1);
+	g_assert(ret == NULL);
+
+	j_cache_clear(cache);
+
+	ret = j_cache_get(cache, 1);
+	g_assert(ret != NULL);
+	ret = j_cache_get(cache, 1);
+	g_assert(ret == NULL);
+
+	j_cache_clear(cache);
+
 	ret = j_cache_put(cache, dummy, 1);
 	g_assert(ret != NULL);
 	ret = j_cache_put(cache, dummy, 1);
@@ -94,6 +129,7 @@ void
 test_cache (void)
 {
 	g_test_add_func("/cache/new_free", test_cache_new_free);
+	g_test_add_func("/cache/get", test_cache_get);
 	g_test_add_func("/cache/put", test_cache_put);
 	g_test_add_func("/cache/clear", test_cache_clear);
 }

@@ -76,9 +76,11 @@ j_cache_free (JCache* cache)
 }
 
 gpointer
-j_cache_put (JCache* cache, gconstpointer data, guint64 length)
+j_cache_get (JCache* cache, guint64 length)
 {
-	gpointer ret = NULL;
+	gpointer ret;
+
+	g_return_val_if_fail(cache != NULL, NULL);
 
 	if (G_UNLIKELY(cache->data == NULL))
 	{
@@ -88,12 +90,29 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 
 	if (cache->current + length > cache->data + cache->size)
 	{
-		return ret;
+		return NULL;
 	}
 
-	memcpy(cache->current, data, length);
 	ret = cache->current;
 	cache->current += length;
+
+	return ret;
+}
+
+gpointer
+j_cache_put (JCache* cache, gconstpointer data, guint64 length)
+{
+	gpointer ret;
+
+	g_return_val_if_fail(cache != NULL, NULL);
+	g_return_val_if_fail(data != NULL, NULL);
+
+	ret = j_cache_get(cache, length);
+
+	if (ret != NULL)
+	{
+		memcpy(ret, data, length);
+	}
 
 	return ret;
 }
@@ -101,6 +120,8 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 void
 j_cache_clear (JCache* cache)
 {
+	g_return_if_fail(cache != NULL);
+
 	cache->current = cache->data;
 }
 
