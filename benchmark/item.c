@@ -254,19 +254,19 @@ static
 gchar*
 _benchmark_item_read (gboolean batch, guint block_size)
 {
-	guint const n = (batch) ? 100 : 100;
+	guint const n = (batch) ? 1000 : 1000;
 
 	JCollection* collection;
 	JItem* item;
 	JOperation* operation;
 	JStore* store;
-	gchar dummy[n * block_size];
+	gchar dummy[block_size];
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
 	guint64 nb;
 
-	memset(dummy, 0, n * block_size);
+	memset(dummy, 0, block_size);
 
 	operation = j_operation_new(NULL);
 
@@ -276,7 +276,12 @@ _benchmark_item_read (gboolean batch, guint block_size)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_item_write(item, dummy, n * block_size, 0, &nb, operation);
+
+	for (guint i = 0; i < n; i++)
+	{
+		j_item_write(item, dummy, block_size, 0, &nb, operation);
+	}
+
 	j_operation_execute(operation);
 
 	j_benchmark_timer_start();
@@ -333,18 +338,18 @@ static
 gchar*
 _benchmark_item_write (gboolean batch, guint block_size)
 {
-	guint const n = (batch) ? 100 : 100;
+	guint const n = (batch) ? 1000 : 1000;
 
 	JCollection* collection;
 	JItem* item;
 	JOperation* operation;
 	JStore* store;
-	gchar dummy[n * block_size];
+	gchar dummy[block_size];
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
 
-	memset(dummy, 0, n * block_size);
+	memset(dummy, 0, block_size);
 
 	operation = j_operation_new(NULL);
 
