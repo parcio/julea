@@ -359,6 +359,21 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
+	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
+
+	if (!g_socket_listener_add_inet_port(listener, opt_port, NULL, &error))
+	{
+		g_object_unref(listener);
+
+		if (error)
+		{
+			g_printerr("%s\n", error->message);
+			g_error_free(error);
+		}
+
+		return 1;
+	}
+
 	j_trace_init("julead");
 	trace = j_trace_thread_enter(NULL, G_STRFUNC);
 
@@ -400,8 +415,6 @@ main (int argc, char** argv)
 
 	jd_statistics = j_statistics_new();
 
-	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
-	g_socket_listener_add_inet_port(listener, opt_port, NULL, NULL);
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
 	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);
 
