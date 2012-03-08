@@ -33,6 +33,8 @@
 
 #include <jstatistics-internal.h>
 
+#include <jtrace.h>
+
 /**
  * \defgroup JStatistics Statistics
  *
@@ -44,6 +46,8 @@
  **/
 struct JStatistics
 {
+	JTrace* trace;
+
 	guint64 files_created;
 	guint64 files_deleted;
 
@@ -56,8 +60,36 @@ struct JStatistics
 	guint64 bytes_sent;
 };
 
+static
+gchar const*
+j_statistics_get_type_name (JStatisticsType type)
+{
+	switch (type)
+	{
+		case J_STATISTICS_FILES_CREATED:
+			return "files_created";
+		case J_STATISTICS_FILES_DELETED:
+			return "files_deleted";
+		case J_STATISTICS_SYNC:
+			return "sync";
+		case J_STATISTICS_BYTES_READ:
+			return "bytes_read";
+		case J_STATISTICS_BYTES_WRITTEN:
+			return "bytes_written";
+		case J_STATISTICS_BYTES_RECEIVED:
+			return "bytes_received";
+		case J_STATISTICS_BYTES_SENT:
+			return "bytes_sent";
+		default:
+			g_warn_if_reached();
+			return NULL;
+	}
+}
+
 /**
  * Creates a new statistics.
+ *
+ * \private
  *
  * \author Michael Kuhn
  *
@@ -70,11 +102,12 @@ struct JStatistics
  * \return A new statistics. Should be freed with j_statistics_free().
  **/
 JStatistics*
-j_statistics_new (void)
+j_statistics_new (JTrace* trace)
 {
 	JStatistics* statistics;
 
 	statistics = g_slice_new(JStatistics);
+	statistics->trace = trace;
 	statistics->files_created = 0;
 	statistics->files_deleted = 0;
 	statistics->sync_count = 0;
@@ -88,6 +121,8 @@ j_statistics_new (void)
 
 /**
  * Frees the memory allocated for the statistics.
+ *
+ * \private
  *
  * \author Michael Kuhn
  *
@@ -173,6 +208,11 @@ j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
 		default:
 			g_warn_if_reached();
 			break;
+	}
+
+	if (statistics->trace != NULL)
+	{
+		j_trace_counter(statistics->trace, j_statistics_get_type_name(type), value);
 	}
 }
 

@@ -73,7 +73,7 @@ main (int argc, char** argv)
 
 	get_all = 1;
 	configuration = j_configuration();
-	statistics_total = j_statistics_new();
+	statistics_total = j_statistics_new(NULL);
 
 	message = j_message_new(J_MESSAGE_OPERATION_STATISTICS, sizeof(gchar));
 	j_message_add_operation(message, 0);
@@ -85,7 +85,7 @@ main (int argc, char** argv)
 		JStatistics* statistics;
 		guint64 value;
 
-		statistics = j_statistics_new();
+		statistics = j_statistics_new(NULL);
 
 		j_connection_send(j_connection(), i, message);
 

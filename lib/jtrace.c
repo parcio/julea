@@ -261,6 +261,7 @@ j_trace_file_operation_name (JTraceFileOperation op)
 		case J_TRACE_FILE_WRITE:
 			return "write";
 		default:
+			g_warn_if_reached();
 			return NULL;
 	}
 }

@@ -54,6 +54,8 @@ struct JThread
 /**
  * Creates a new thread.
  *
+ * \private
+ *
  * \author Michael Kuhn
  *
  * \code
@@ -72,14 +74,16 @@ j_thread_new (GThread* thread_id, gchar const* function_name)
 	g_return_val_if_fail(function_name != NULL, NULL);
 
 	thread = g_slice_new(JThread);
-	thread->statistics = j_statistics_new();
 	thread->trace = j_trace_thread_enter(thread_id, function_name);
+	thread->statistics = j_statistics_new(thread->trace);
 
 	return thread;
 }
 
 /**
  * Frees the memory allocated for the thread.
+ *
+ * \private
  *
  * \author Michael Kuhn
  *

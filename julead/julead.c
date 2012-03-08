@@ -166,9 +166,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
 						jd_backend_read(&bf, buf, length, offset, &bytes_read, trace);
-
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
-						j_trace_counter(trace, "julead_read", bytes_read);
 
 						// FIXME one big reply
 						reply = j_message_new_reply(message, sizeof(guint64));
@@ -177,7 +175,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_message_free(reply);
 
 						g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
-						j_trace_counter(trace, "julead_sent", bytes_read);
+						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
 					jd_backend_close(&bf, trace);
@@ -231,12 +229,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
 
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-						j_trace_counter(trace, "julead_received", length);
+						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_RECEIVED, length);
 
 						jd_backend_write(&bf, buf, length, offset, &bytes_written, trace);
-
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
-						j_trace_counter(trace, "julead_written", bytes_written);
 					}
 
 					jd_backend_close(&bf, trace);
@@ -421,7 +417,7 @@ main (int argc, char** argv)
 
 	j_configuration_unref(configuration);
 
-	jd_statistics = j_statistics_new();
+	jd_statistics = j_statistics_new(NULL);
 
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
 	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);
