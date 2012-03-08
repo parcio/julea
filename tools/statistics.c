@@ -39,18 +39,26 @@ print_statistics (JStatistics* statistics)
 {
 	gchar* size_read;
 	gchar* size_written;
+	gchar* size_received;
+	gchar* size_sent;
 
 	size_read = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_READ));
 	size_written = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN));
+	size_received = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED));
+	size_sent = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_SENT));
 
-	g_print("  %" G_GUINT64_FORMAT " files created\n", j_statistics_get(statistics, J_STATISTICS_FILE_CREATED));
-	g_print("  %" G_GUINT64_FORMAT " files deleted\n", j_statistics_get(statistics, J_STATISTICS_FILE_DELETED));
+	g_print("  %" G_GUINT64_FORMAT " files created\n", j_statistics_get(statistics, J_STATISTICS_FILES_CREATED));
+	g_print("  %" G_GUINT64_FORMAT " files deleted\n", j_statistics_get(statistics, J_STATISTICS_FILES_DELETED));
 	g_print("  %" G_GUINT64_FORMAT " syncs\n", j_statistics_get(statistics, J_STATISTICS_SYNC));
 	g_print("  %s read\n", size_read);
 	g_print("  %s written\n", size_written);
+	g_print("  %s received\n", size_received);
+	g_print("  %s sent\n", size_sent);
 
 	g_free(size_read);
 	g_free(size_written);
+	g_free(size_received);
+	g_free(size_sent);
 }
 
 int
@@ -81,16 +89,16 @@ main (int argc, char** argv)
 
 		j_connection_send(j_connection(), i, message);
 
-		reply = j_message_new_reply(message, 5 * sizeof(guint64));
+		reply = j_message_new_reply(message, 7 * sizeof(guint64));
 		j_connection_receive(j_connection(), i, reply, message);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_FILE_CREATED, value);
-		j_statistics_set(statistics_total, J_STATISTICS_FILE_CREATED, value);
+		j_statistics_set(statistics, J_STATISTICS_FILES_CREATED, value);
+		j_statistics_set(statistics_total, J_STATISTICS_FILES_CREATED, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_FILE_DELETED, value);
-		j_statistics_set(statistics_total, J_STATISTICS_FILE_DELETED, value);
+		j_statistics_set(statistics, J_STATISTICS_FILES_DELETED, value);
+		j_statistics_set(statistics_total, J_STATISTICS_FILES_DELETED, value);
 
 		value = j_message_get_8(reply);
 		j_statistics_set(statistics, J_STATISTICS_SYNC, value);
@@ -103,6 +111,14 @@ main (int argc, char** argv)
 		value = j_message_get_8(reply);
 		j_statistics_set(statistics, J_STATISTICS_BYTES_WRITTEN, value);
 		j_statistics_set(statistics_total, J_STATISTICS_BYTES_WRITTEN, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_BYTES_RECEIVED, value);
+		j_statistics_set(statistics_total, J_STATISTICS_BYTES_RECEIVED, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_BYTES_SENT, value);
+		j_statistics_set(statistics_total, J_STATISTICS_BYTES_SENT, value);
 
 		j_message_free(reply);
 

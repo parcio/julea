@@ -106,7 +106,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (jd_backend_create(&bf, store, collection, item, trace))
 						{
-							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILE_CREATED, 1);
+							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_CREATED, 1);
 							jd_backend_close(&bf, trace);
 						}
 					}
@@ -130,7 +130,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (jd_backend_delete(&bf, trace))
 						{
-							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILE_DELETED, 1);
+							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_DELETED, 1);
 							jd_backend_close(&bf, trace);
 						}
 
@@ -266,17 +266,21 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						statistics = jd_statistics;
 					}
 
-					reply = j_message_new_reply(message, 5 * sizeof(guint64));
+					reply = j_message_new_reply(message, 7 * sizeof(guint64));
 
-					value = j_statistics_get(statistics, J_STATISTICS_FILE_CREATED);
+					value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
 					j_message_append_8(reply, &value);
-					value = j_statistics_get(statistics, J_STATISTICS_FILE_DELETED);
+					value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(statistics, J_STATISTICS_SYNC);
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
 					j_message_append_8(reply, &value);
 
 					j_message_write(reply, output);
@@ -301,16 +305,20 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 		G_LOCK(jd_statistics);
 
-		value = j_statistics_get(statistics, J_STATISTICS_FILE_CREATED);
-		j_statistics_set(jd_statistics, J_STATISTICS_FILE_CREATED, value);
-		value = j_statistics_get(statistics, J_STATISTICS_FILE_DELETED);
-		j_statistics_set(jd_statistics, J_STATISTICS_FILE_DELETED, value);
+		value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
+		j_statistics_set(jd_statistics, J_STATISTICS_FILES_CREATED, value);
+		value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
+		j_statistics_set(jd_statistics, J_STATISTICS_FILES_DELETED, value);
 		value = j_statistics_get(statistics, J_STATISTICS_SYNC);
 		j_statistics_set(jd_statistics, J_STATISTICS_SYNC, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
 		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_READ, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
 		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
+		value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
+		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
+		value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
+		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_SENT, value);
 
 		G_UNLOCK(jd_statistics);
 	}

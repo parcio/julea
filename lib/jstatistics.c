@@ -51,6 +51,9 @@ struct JStatistics
 
 	guint64 bytes_read;
 	guint64 bytes_written;
+
+	guint64 bytes_received;
+	guint64 bytes_sent;
 };
 
 /**
@@ -77,6 +80,8 @@ j_statistics_new (void)
 	statistics->sync_count = 0;
 	statistics->bytes_read = 0;
 	statistics->bytes_written = 0;
+	statistics->bytes_received = 0;
+	statistics->bytes_sent = 0;
 
 	return statistics;
 }
@@ -108,10 +113,10 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 
 	switch (type)
 	{
-		case J_STATISTICS_FILE_CREATED:
+		case J_STATISTICS_FILES_CREATED:
 			value = statistics->files_created;
 			break;
-		case J_STATISTICS_FILE_DELETED:
+		case J_STATISTICS_FILES_DELETED:
 			value = statistics->files_deleted;
 			break;
 		case J_STATISTICS_SYNC:
@@ -122,6 +127,12 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 			break;
 		case J_STATISTICS_BYTES_WRITTEN:
 			value = statistics->bytes_written;
+			break;
+		case J_STATISTICS_BYTES_RECEIVED:
+			value = statistics->bytes_received;
+			break;
+		case J_STATISTICS_BYTES_SENT:
+			value = statistics->bytes_sent;
 			break;
 		default:
 			g_warn_if_reached();
@@ -138,10 +149,10 @@ j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
 
 	switch (type)
 	{
-		case J_STATISTICS_FILE_CREATED:
+		case J_STATISTICS_FILES_CREATED:
 			statistics->files_created += value;
 			break;
-		case J_STATISTICS_FILE_DELETED:
+		case J_STATISTICS_FILES_DELETED:
 			statistics->files_deleted += value;
 			break;
 		case J_STATISTICS_SYNC:
@@ -152,6 +163,12 @@ j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
 			break;
 		case J_STATISTICS_BYTES_WRITTEN:
 			statistics->bytes_written += value;
+			break;
+		case J_STATISTICS_BYTES_RECEIVED:
+			statistics->bytes_received += value;
+			break;
+		case J_STATISTICS_BYTES_SENT:
+			statistics->bytes_sent += value;
 			break;
 		default:
 			g_warn_if_reached();
