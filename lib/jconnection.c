@@ -229,6 +229,11 @@ j_connection_connect (JConnection* connection)
 
 	is_connected = (mongo_connect(&(connection->connection), j_configuration_get_metadata_server(connection->configuration, 0), 27017) == MONGO_OK);
 
+	if (!is_connected)
+	{
+		g_critical("%s: Can not connect to MongoDB.", G_STRLOC);
+	}
+
 	client = g_socket_client_new();
 
 	for (i = 0; i < connection->sockets_len; i++)
@@ -240,6 +245,11 @@ j_connection_connect (JConnection* connection)
 #endif
 
 		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, NULL);
+
+		if (connection->sockets[i] == NULL)
+		{
+			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
+		}
 
 #if J_USE_NODELAY
 		socket_ = g_socket_connection_get_socket(connection->sockets[i]);

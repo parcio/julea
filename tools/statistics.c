@@ -31,18 +31,41 @@
 
 #include <jconnection-internal.h>
 #include <jmessage.h>
+#include <jstatistics-internal.h>
+
+static
+void
+print_statistics (JStatistics* statistics)
+{
+	gchar* size_read;
+	gchar* size_written;
+
+	size_read = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_READ));
+	size_written = g_format_size(j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN));
+
+	g_print("  %" G_GUINT64_FORMAT " files created\n", j_statistics_get(statistics, J_STATISTICS_FILE_CREATED));
+	g_print("  %" G_GUINT64_FORMAT " files deleted\n", j_statistics_get(statistics, J_STATISTICS_FILE_DELETED));
+	g_print("  %" G_GUINT64_FORMAT " syncs\n", j_statistics_get(statistics, J_STATISTICS_SYNC));
+	g_print("  %s read\n", size_read);
+	g_print("  %s written\n", size_written);
+
+	g_free(size_read);
+	g_free(size_written);
+}
 
 int
 main (int argc, char** argv)
 {
 	JConfiguration* configuration;
 	JMessage* message;
+	JStatistics* statistics_total;
 	gchar get_all;
 
 	j_init(&argc, &argv);
 
 	get_all = 1;
 	configuration = j_configuration();
+	statistics_total = j_statistics_new();
 
 	message = j_message_new(J_MESSAGE_OPERATION_STATISTICS, sizeof(gchar));
 	j_message_add_operation(message, 0);
@@ -51,44 +74,59 @@ main (int argc, char** argv)
 	for (guint i = 0; i < j_configuration_get_data_server_count(configuration); i++)
 	{
 		JMessage* reply;
-		gchar* size;
+		JStatistics* statistics;
 		guint64 value;
+
+		statistics = j_statistics_new();
 
 		j_connection_send(j_connection(), i, message);
 
 		reply = j_message_new_reply(message, 5 * sizeof(guint64));
 		j_connection_receive(j_connection(), i, reply, message);
 
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_FILE_CREATED, value);
+		j_statistics_set(statistics_total, J_STATISTICS_FILE_CREATED, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_FILE_DELETED, value);
+		j_statistics_set(statistics_total, J_STATISTICS_FILE_DELETED, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_SYNC, value);
+		j_statistics_set(statistics_total, J_STATISTICS_SYNC, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_BYTES_READ, value);
+		j_statistics_set(statistics_total, J_STATISTICS_BYTES_READ, value);
+
+		value = j_message_get_8(reply);
+		j_statistics_set(statistics, J_STATISTICS_BYTES_WRITTEN, value);
+		j_statistics_set(statistics_total, J_STATISTICS_BYTES_WRITTEN, value);
+
+		j_message_free(reply);
+
 		g_print("Data server %d\n", i);
-
-		value = j_message_get_8(reply);
-		g_print("  %" G_GUINT64_FORMAT " files created\n", value);
-
-		value = j_message_get_8(reply);
-		g_print("  %" G_GUINT64_FORMAT " files deleted\n", value);
-
-		value = j_message_get_8(reply);
-		g_print("  %" G_GUINT64_FORMAT " syncs\n", value);
-
-		value = j_message_get_8(reply);
-		size = g_format_size(value);
-		g_print("  %s read\n", size);
-		g_free(size);
-
-		value = j_message_get_8(reply);
-		size = g_format_size(value);
-		g_print("  %s written\n", size);
-		g_free(size);
+		print_statistics(statistics);
 
 		if (i != j_configuration_get_data_server_count(configuration) - 1)
 		{
 			g_print("\n");
 		}
 
-		j_message_free(reply);
+		j_statistics_free(statistics);
 	}
 
+	if (j_configuration_get_data_server_count(configuration) > 1)
+	{
+		g_print("\n");
+		g_print("Total\n");
+		print_statistics(statistics_total);
+	}
+
+
 	j_message_free(message);
+	j_statistics_free(statistics_total);
 
 	j_fini();
 
