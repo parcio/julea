@@ -279,7 +279,7 @@ _benchmark_item_read (gboolean batch, guint block_size)
 
 	for (guint i = 0; i < n; i++)
 	{
-		j_item_write(item, dummy, block_size, 0, &nb, operation);
+		j_item_write(item, dummy, block_size, i * block_size, &nb, operation);
 	}
 
 	j_operation_execute(operation);
