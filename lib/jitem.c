@@ -61,6 +61,14 @@
  * @{
  **/
 
+struct JItemReadData
+{
+	gpointer data;
+	guint64* nbytes;
+};
+
+typedef struct JItemReadData JItemReadData;
+
 /**
  * A JItem.
  **/
@@ -584,28 +592,68 @@ j_item_set_collection (JItem* item, JCollection* collection)
 gboolean
 j_item_read_internal (JOperation* operation, JList* parts)
 {
-	JDistribution* distribution;
+	JConnection* connection;
+	JList** buffer_list;
 	JListIterator* iterator;
-	gchar* d;
-	guint64 new_length;
-	guint64 new_offset;
-	guint index;
+	JMessage** messages;
+	guint n;
+	gchar const* item_name;
+	gchar const* collection_name;
+	gchar const* store_name;
+	gsize item_len;
+	gsize collection_len;
+	gsize store_len;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace(), G_STRFUNC);
 
+	n = j_configuration_get_data_server_count(j_configuration());
+	messages = g_new(JMessage*, n);
+	buffer_list = g_new(JList*, n);
+
+	for (guint i = 0; i < n; i++)
+	{
+		messages[i] = NULL;
+		buffer_list[i] = j_list_new(NULL);
+	}
+
+	{
+		JItem* item;
+		JOperationPart* part;
+
+		part = j_list_get_first(parts);
+		g_assert(part != NULL);
+		item = part->u.item_read.item;
+
+		connection = j_store_get_connection(j_collection_get_store(item->collection));
+
+		item_name = item->name;
+		collection_name = j_collection_get_name(item->collection);
+		store_name = j_store_get_name(j_collection_get_store(item->collection));
+
+		item_len = strlen(item_name) + 1;
+		collection_len = strlen(collection_name) + 1;
+		store_len = strlen(store_name) + 1;
+	}
+
 	iterator = j_list_iterator_new(parts);
 
 	while (j_list_iterator_next(iterator))
 	{
 		JOperationPart* part = j_list_iterator_get(iterator);
-		JItem* item = part->u.item_read.item;
 		gpointer data = part->u.item_read.data;
 		guint64 length = part->u.item_read.length;
 		guint64 offset = part->u.item_read.offset;
 		guint64* bytes_read = part->u.item_read.bytes_read;
+
+		JDistribution* distribution;
+		JItemReadData* buffer;
+		gchar* d;
+		guint64 new_length;
+		guint64 new_offset;
+		guint index;
 
 		*bytes_read = 0;
 
@@ -614,66 +662,102 @@ j_item_read_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		j_trace_file_begin(j_trace(), item->name, J_TRACE_FILE_READ);
+		j_trace_file_begin(j_trace(), item_name, J_TRACE_FILE_READ);
 
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
 		{
-			JMessage* message;
-			JMessage* reply;
-			gchar const* store;
-			gchar const* collection;
-			gsize store_len;
-			gsize collection_len;
-			gsize item_len;
-			guint64 nbytes;
-
-			store = j_store_get_name(j_collection_get_store(item->collection));
-			collection = j_collection_get_name(item->collection);
-
-			store_len = strlen(store) + 1;
-			collection_len = strlen(collection) + 1;
-			item_len = strlen(item->name) + 1;
-
-			message = j_message_new(J_MESSAGE_OPERATION_READ, store_len + collection_len + item_len);
-			j_message_append_n(message, store, store_len);
-			j_message_append_n(message, collection, collection_len);
-			j_message_append_n(message, item->name, item_len);
-			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(message, &new_length);
-			j_message_append_8(message, &new_offset);
-
-			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
-
-			reply = j_message_new_reply(message);
-			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
-			nbytes = j_message_get_8(reply);
-
-			if (nbytes > 0)
+			if (messages[index] == NULL)
 			{
-				j_connection_receive_data(j_store_get_connection(j_collection_get_store(item->collection)), index, d, nbytes);
+				messages[index] = j_message_new(J_MESSAGE_OPERATION_READ, store_len + collection_len + item_len);
+				j_message_append_n(messages[index], store_name, store_len);
+				j_message_append_n(messages[index], collection_name, collection_len);
+				j_message_append_n(messages[index], item_name, item_len);
 			}
 
-			j_message_free(message);
-			j_message_free(reply);
+			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
+			j_message_append_8(messages[index], &new_length);
+			j_message_append_8(messages[index], &new_offset);
 
-			d += nbytes;
-			*bytes_read += nbytes;
+			buffer = g_slice_new(JItemReadData);
+			buffer->data = d;
+			buffer->nbytes = bytes_read;
 
-			if (nbytes < new_length)
-			{
-				break;
-			}
+			j_list_append(buffer_list[index], buffer);
+
+			d += new_length;
 		}
 
 		j_distribution_free(distribution);
 
-		j_trace_file_end(j_trace(), item->name, J_TRACE_FILE_READ, length, offset);
+		j_trace_file_end(j_trace(), item_name, J_TRACE_FILE_READ, length, offset);
 	}
 
 	j_list_iterator_free(iterator);
+
+	for (guint i = 0; i < n; i++)
+	{
+		JMessage* reply;
+		guint operations_done;
+		guint32 operation_count;
+		guint64 nbytes;
+
+		if (messages[i] == NULL)
+		{
+			continue;
+		}
+
+		j_connection_send(connection, i, messages[i]);
+
+		reply = j_message_new_reply(messages[i]);
+
+		iterator = j_list_iterator_new(buffer_list[i]);
+		operations_done = 0;
+		operation_count = j_message_operation_count(messages[i]);
+
+		while (operations_done < operation_count)
+		{
+			guint32 reply_operation_count;
+
+			j_connection_receive(connection, i, reply, messages[i]);
+
+			reply_operation_count = j_message_operation_count(reply);
+
+			for (guint j = 0; j < reply_operation_count && j_list_iterator_next(iterator); j++)
+			{
+				JItemReadData* buffer = j_list_iterator_get(iterator);
+
+				nbytes = j_message_get_8(reply);
+				*(buffer->nbytes) = nbytes;
+
+				if (nbytes > 0)
+				{
+					j_connection_receive_data(connection, i, buffer->data, nbytes);
+				}
+			}
+
+			operations_done += reply_operation_count;
+		}
+
+		j_list_iterator_free(iterator);
+
+		j_message_free(messages[i]);
+		j_message_free(reply);
+
+		j_list_unref(buffer_list[i]);
+
+		/*
+		if (nbytes < new_length)
+		{
+			break;
+		}
+		*/
+	}
+
+	g_free(messages);
+	g_free(buffer_list);
 
 	j_trace_leave(j_trace(), G_STRFUNC);
 

@@ -144,6 +144,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
+					reply = j_message_new_reply(message);
 
 					jd_backend_open(&bf, store, collection, item, trace);
 
@@ -159,21 +160,24 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						buf = j_cache_get(cache, length);
 
+						if (buf == NULL)
+						{
+							// FIXME send smaller reply
+						}
+
 						jd_backend_read(&bf, buf, length, offset, &bytes_read, trace);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
 
-						// FIXME one big reply
-						reply = j_message_new_reply(message);
 						j_message_add_operation(reply, sizeof(guint64));
 						j_message_append_8(reply, &bytes_read);
-						j_message_write(reply, output);
-						j_message_free(reply);
-
-						g_output_stream_write_all(output, buf, bytes_read, NULL, NULL, NULL);
+						j_message_add_send(reply, buf, bytes_read);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
 					jd_backend_close(&bf, trace);
+
+					j_message_write(reply, output);
+					j_message_free(reply);
 
 					j_cache_clear(cache);
 				}

@@ -272,7 +272,7 @@ j_message_new_reply (JMessage* message)
 	reply->size = sizeof(JMessageHeader);
 	reply->data = g_malloc(message->size);
 	reply->current = reply->data + sizeof(JMessageHeader);
-	reply->send_list = NULL;
+	reply->send_list = j_list_new(j_message_data_free);
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
