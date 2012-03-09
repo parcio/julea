@@ -124,13 +124,13 @@ j_list_iterator_next (JListIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (!iterator->first)
+	if (G_UNLIKELY(iterator->first))
 	{
-		iterator->current = iterator->current->next;
+		iterator->first = FALSE;
 	}
 	else
 	{
-		iterator->first = FALSE;
+		iterator->current = iterator->current->next;
 	}
 
 	return (iterator->current != NULL);
@@ -152,11 +152,7 @@ gpointer
 j_list_iterator_get (JListIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
-
-	if (iterator->current == NULL)
-	{
-		return NULL;
-	}
+	g_return_val_if_fail(iterator->current != NULL, NULL);
 
 	return iterator->current->data;
 }
