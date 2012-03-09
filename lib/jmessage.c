@@ -70,17 +70,19 @@ typedef struct JMessageHeader JMessageHeader;
  **/
 struct JMessage
 {
+	gsize size;
+
+	/**
+	 * The message's data.
+	 **/
+	gchar* data;
+
 	/**
 	 * The current position within #data.
 	 **/
 	gchar* current;
 
 	JList* send_list;
-
-	/**
-	 * The message's data.
-	 **/
-	gchar* data;
 };
 
 /**
@@ -155,7 +157,61 @@ static
 gboolean
 j_message_can_append (JMessage* message, gsize length)
 {
-	return (message->current + length <= message->data + j_message_length(message));
+	return (message->current + length <= message->data + message->size);
+}
+
+/**
+ * Checks whether it is possible to get data from a message.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param length  A length.
+ *
+ * \return TRUE if it is possible, FALSE otherwise.
+ **/
+static
+gboolean
+j_message_can_get (JMessage* message, gsize length)
+{
+	return (message->current + length <= message->data + sizeof(JMessageHeader) + j_message_length(message));
+}
+
+static
+void
+j_message_extend (JMessage* message, gsize length)
+{
+	gsize position;
+
+	if (length == 0)
+	{
+		return;
+	}
+
+	g_debug("%s: Extending by %ld bytes", G_STRLOC, length);
+
+	message->size += length;
+
+	position = message->current - message->data;
+	message->data = g_realloc(message->data, message->size);
+	message->current = message->data + position;
+}
+
+static
+void
+j_message_ensure_size (JMessage* message, gsize length)
+{
+	if (length <= message->size)
+	{
+		return;
+	}
+
+	j_message_extend(message, length - message->size);
 }
 
 /**
@@ -176,19 +232,18 @@ j_message_new (JMessageOperationType op_type, gsize length)
 {
 	JMessage* message;
 	guint32 rand;
-	guint32 real_length;
 
 	//g_return_val_if_fail(op_type != J_MESSAGE_OPERATION_NONE, NULL);
 
 	rand = g_random_int();
-	real_length = sizeof(JMessageHeader) + length;
 
 	message = g_slice_new(JMessage);
-	message->data = g_malloc(real_length);
+	message->size = sizeof(JMessageHeader) + length;
+	message->data = g_malloc(message->size);
 	message->current = message->data + sizeof(JMessageHeader);
 	message->send_list = j_list_new(j_message_data_free);
 
-	j_message_header(message)->length = GUINT32_TO_LE(real_length);
+	j_message_header(message)->length = GUINT32_TO_LE(0);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(message)->op_count = GUINT32_TO_LE(0);
@@ -205,29 +260,26 @@ j_message_new (JMessageOperationType op_type, gsize length)
  * \endcode
  *
  * \param message A message.
- * \param length  A length.
  *
  * \return A new reply message. Should be freed with j_message_free().
  **/
 JMessage*
-j_message_new_reply (JMessage* message, gsize length)
+j_message_new_reply (JMessage* message)
 {
 	JMessage* reply;
-	guint32 real_length;
 
 	g_return_val_if_fail(message != NULL, NULL);
 
-	real_length = sizeof(JMessageHeader) + length;
-
 	reply = g_slice_new(JMessage);
-	reply->data = g_malloc(real_length);
+	reply->size = sizeof(JMessageHeader);
+	reply->data = g_malloc(message->size);
 	reply->current = reply->data + sizeof(JMessageHeader);
 	reply->send_list = NULL;
 
-	j_message_header(reply)->length = GUINT32_TO_LE(real_length);
+	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
 	j_message_header(reply)->op_type = GUINT32_TO_LE(J_MESSAGE_OPERATION_REPLY);
-	j_message_header(reply)->op_count = j_message_header(message)->op_count;
+	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
 	return reply;
 }
@@ -273,12 +325,17 @@ j_message_free (JMessage* message)
 gboolean
 j_message_append_1 (JMessage* message, gconstpointer data)
 {
+	guint32 new_length;
+
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 1), FALSE);
 
 	*(message->current) = *((gchar const*)data);
 	message->current += 1;
+
+	new_length = j_message_length(message) + 1;
+	j_message_header(message)->length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -300,12 +357,17 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 gboolean
 j_message_append_4 (JMessage* message, gconstpointer data)
 {
+	guint32 new_length;
+
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 4), FALSE);
 
 	*((gint32*)(message->current)) = GINT32_TO_LE(*((gint32 const*)data));
 	message->current += 4;
+
+	new_length = j_message_length(message) + 4;
+	j_message_header(message)->length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -327,12 +389,17 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 gboolean
 j_message_append_8 (JMessage* message, gconstpointer data)
 {
+	guint32 new_length;
+
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 8), FALSE);
 
 	*((gint64*)(message->current)) = GINT64_TO_LE(*((gint64 const*)data));
 	message->current += 8;
+
+	new_length = j_message_length(message) + 8;
+	j_message_header(message)->length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -357,12 +424,17 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 gboolean
 j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 {
+	guint32 new_length;
+
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, length), FALSE);
 
 	memcpy(message->current, data, length);
 	message->current += length;
+
+	new_length = j_message_length(message) + length;
+	j_message_header(message)->length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -385,7 +457,7 @@ j_message_get_1 (JMessage* message)
 	gchar ret;
 
 	g_return_val_if_fail(message != NULL, '\0');
-	g_return_val_if_fail(j_message_can_append(message, 1), '\0');
+	g_return_val_if_fail(j_message_can_get(message, 1), '\0');
 
 	ret = *((gchar const*)(message->current));
 	message->current += 1;
@@ -412,7 +484,7 @@ j_message_get_4 (JMessage* message)
 	gint32 ret;
 
 	g_return_val_if_fail(message != NULL, 0);
-	g_return_val_if_fail(j_message_can_append(message, 4), 0);
+	g_return_val_if_fail(j_message_can_get(message, 4), 0);
 
 	ret = GINT32_FROM_LE(*((gint32 const*)(message->current)));
 	message->current += 4;
@@ -439,7 +511,7 @@ j_message_get_8 (JMessage* message)
 	gint64 ret;
 
 	g_return_val_if_fail(message != NULL, 0);
-	g_return_val_if_fail(j_message_can_append(message, 8), 0);
+	g_return_val_if_fail(j_message_can_get(message, 8), 0);
 
 	ret = GINT64_FROM_LE(*((gint64 const*)(message->current)));
 	message->current += 8;
@@ -505,7 +577,9 @@ j_message_read (JMessage* message, GInputStream* stream)
 		return FALSE;
 	}
 
-	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message) - sizeof(JMessageHeader), &bytes_read, NULL, NULL))
+	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
+
+	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, NULL))
 	{
 		return FALSE;
 	}
@@ -534,20 +608,23 @@ j_message_read (JMessage* message, GInputStream* stream)
 gboolean
 j_message_read_reply (JMessage* reply, JMessage* message, GInputStream* stream)
 {
+	gboolean ret = FALSE;
+
 	g_return_val_if_fail(reply != NULL, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
 	g_return_val_if_fail(j_message_operation_type(reply) == J_MESSAGE_OPERATION_REPLY, FALSE);
+	g_return_val_if_fail(j_message_header(reply)->id == j_message_header(message)->id, FALSE);
 
 	if (j_message_read(reply, stream))
 	{
 		g_return_val_if_fail(j_message_header(reply)->id == j_message_header(message)->id, FALSE);
 
-		return TRUE;
+		ret = TRUE;
 	}
 
-	return FALSE;
+	return ret;
 }
 
 /**
@@ -572,7 +649,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (!g_output_stream_write_all(stream, message->data, j_message_length(message), &bytes_written, NULL, NULL))
+	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, NULL))
 	{
 		return FALSE;
 	}
@@ -722,26 +799,14 @@ j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
 void
 j_message_add_operation (JMessage* message, gsize length)
 {
-	guint32 new_length;
 	guint32 new_op_count;
 
 	g_return_if_fail(message != NULL);
 
-	new_length = j_message_length(message) + length;
 	new_op_count = j_message_operation_count(message) + 1;
-
-	j_message_header(message)->length = GUINT32_TO_LE(new_length);
 	j_message_header(message)->op_count = GUINT32_TO_LE(new_op_count);
 
-	if (length > 0)
-	{
-		gsize position;
-
-		position = message->current - message->data;
-
-		message->data = g_realloc(message->data, new_length);
-		message->current = message->data + position;
-	}
+	j_message_extend(message, length);
 }
 
 /**

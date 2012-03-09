@@ -89,7 +89,7 @@ main (int argc, char** argv)
 
 		j_connection_send(j_connection(), i, message);
 
-		reply = j_message_new_reply(message, 7 * sizeof(guint64));
+		reply = j_message_new_reply(message);
 		j_connection_receive(j_connection(), i, reply, message);
 
 		value = j_message_get_8(reply);

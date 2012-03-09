@@ -647,7 +647,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 
 			j_connection_send(j_store_get_connection(j_collection_get_store(item->collection)), index, message);
 
-			reply = j_message_new_reply(message, sizeof(guint64));
+			reply = j_message_new_reply(message);
 			j_connection_receive(j_store_get_connection(j_collection_get_store(item->collection)), index, reply, message);
 			nbytes = j_message_get_8(reply);
 
@@ -819,7 +819,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 			j_connection_send(connection, i, message);
 
-			reply = j_message_new_reply(message, 0);
+			reply = j_message_new_reply(message);
 			j_connection_receive(connection, i, reply, message);
 
 			j_message_free(message);

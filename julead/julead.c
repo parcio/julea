@@ -75,7 +75,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	trace = j_thread_get_trace(thread);
 
-	message = j_message_new(J_MESSAGE_OPERATION_NONE, 1024 * 1024);
+	message = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 
@@ -137,7 +137,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							jd_backend_close(&bf, trace);
 						}
 
-						reply = j_message_new_reply(message, 0);
+						reply = j_message_new_reply(message);
 						j_message_write(reply, output);
 						j_message_free(reply);
 					}
@@ -173,7 +173,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
 
 						// FIXME one big reply
-						reply = j_message_new_reply(message, sizeof(guint64));
+						reply = j_message_new_reply(message);
+						j_message_add_operation(reply, sizeof(guint64));
 						j_message_append_8(reply, &bytes_read);
 						j_message_write(reply, output);
 						j_message_free(reply);
@@ -201,7 +202,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_open(&bf, store, collection, item, trace);
 					jd_backend_sync(&bf, trace);
 					j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
-					reply = j_message_new_reply(message, 0);
+					reply = j_message_new_reply(message);
 					j_message_write(reply, output);
 					jd_backend_close(&bf, trace);
 
@@ -265,7 +266,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						statistics = jd_statistics;
 					}
 
-					reply = j_message_new_reply(message, 7 * sizeof(guint64));
+					reply = j_message_new_reply(message);
+					j_message_add_operation(reply, 7 * sizeof(guint64));
 
 					value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
 					j_message_append_8(reply, &value);
