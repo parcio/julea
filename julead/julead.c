@@ -93,10 +93,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		switch (j_message_operation_type(message))
 		{
 			case J_MESSAGE_OPERATION_NONE:
-				g_printerr("none_op\n");
 				break;
 			case J_MESSAGE_OPERATION_CREATE:
-				g_printerr("create_op\n");
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -104,8 +102,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					for (i = 0; i < operation_count; i++)
 					{
 						item = j_message_get_string(message);
-
-						g_printerr("CREATE %s %s %s\n", store, collection, item);
 
 						if (jd_backend_create(&bf, store, collection, item, trace))
 						{
@@ -116,7 +112,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_DELETE:
-				g_printerr("delete_op\n");
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -126,8 +121,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						JMessage* reply;
 
 						item = j_message_get_string(message);
-
-						g_printerr("DELETE %s %s %s\n", store, collection, item);
 
 						jd_backend_open(&bf, store, collection, item, trace);
 
@@ -144,7 +137,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_READ:
-				g_printerr("read_op\n");
 				{
 					JMessage* reply;
 
@@ -167,8 +159,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						buf = j_cache_get(cache, length);
 
-						g_printerr("READ %s %s %s %ld %ld\n", store, collection, item, length, offset);
-
 						jd_backend_read(&bf, buf, length, offset, &bytes_read, trace);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
 
@@ -189,15 +179,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_SYNC:
-				g_printerr("sync_op\n");
 				{
 					JMessage* reply;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
-
-					g_printerr("SYNC %s %s %s\n", store, collection, item);
 
 					jd_backend_open(&bf, store, collection, item, trace);
 					jd_backend_sync(&bf, trace);
@@ -210,7 +197,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_WRITE:
-				g_printerr("write_op\n");
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -230,8 +216,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						buf = j_cache_get(cache, length);
 
-						g_printerr("WRITE %s %s %s %ld %ld\n", store, collection, item, length, offset);
-
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_RECEIVED, length);
 
@@ -245,7 +229,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_STATISTICS:
-				g_printerr("statistics_op\n");
 				{
 					JMessage* reply;
 					JStatistics* statistics;
@@ -253,8 +236,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					guint64 value;
 
 					get_all = j_message_get_1(message);
-
-					g_printerr("STATISTICS %d\n", get_all);
 
 					if (get_all == 0)
 					{
@@ -289,7 +270,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_OPERATION_REPLY:
-				g_printerr("reply_op\n");
 			default:
 				g_warn_if_reached();
 				break;

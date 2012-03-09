@@ -193,8 +193,6 @@ j_message_extend (JMessage* message, gsize length)
 		return;
 	}
 
-	g_debug("%s: Extending by %ld bytes", G_STRLOC, length);
-
 	message->size += length;
 
 	position = message->current - message->data;
@@ -570,8 +568,6 @@ j_message_read (JMessage* message, GInputStream* stream)
 		return FALSE;
 	}
 
-	g_printerr("read_header %" G_GSIZE_FORMAT "\n", bytes_read);
-
 	if (bytes_read == 0)
 	{
 		return FALSE;
@@ -583,8 +579,6 @@ j_message_read (JMessage* message, GInputStream* stream)
 	{
 		return FALSE;
 	}
-
-	g_printerr("read_message %" G_GSIZE_FORMAT "\n", bytes_read);
 
 	message->current = message->data + sizeof(JMessageHeader);
 
@@ -654,8 +648,6 @@ j_message_write (JMessage* message, GOutputStream* stream)
 		return FALSE;
 	}
 
-	g_printerr("write_message %" G_GSIZE_FORMAT "\n", bytes_written);
-
 	if (bytes_written == 0)
 	{
 		return FALSE;
@@ -673,8 +665,6 @@ j_message_write (JMessage* message, GOutputStream* stream)
 			{
 				return FALSE;
 			}
-
-			g_printerr("write_message_data %" G_GSIZE_FORMAT "\n", bytes_written);
 		}
 
 		j_list_iterator_free(iterator);
