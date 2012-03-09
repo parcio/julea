@@ -26,6 +26,9 @@
  */
 
 #include <glib.h>
+#include <gio/gio.h>
+
+#include <string.h>
 
 #include <julea.h>
 
@@ -91,10 +94,70 @@ test_message_append (void)
 	j_message_free(message);
 }
 
+static
+void
+test_message_write_read (void)
+{
+	JMessage* message[2];
+	GOutputStream* output;
+	GInputStream* input;
+	gboolean ret;
+	gchar dummy_1 = 23;
+	guint32 dummy_4 = 42;
+	guint64 dummy_8 = 2342;
+	gchar const* dummy_str = "42";
+
+	output = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
+	input = g_memory_input_stream_new();
+
+	message[0] = j_message_new(J_MESSAGE_OPERATION_NONE, 16);
+	g_assert(message[0] != NULL);
+	message[1] = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
+	g_assert(message[1] != NULL);
+
+	ret = j_message_append_1(message[0], &dummy_1);
+	g_assert(ret);
+	ret = j_message_append_4(message[0], &dummy_4);
+	g_assert(ret);
+	ret = j_message_append_8(message[0], &dummy_8);
+	g_assert(ret);
+	ret = j_message_append_n(message[0], dummy_str, strlen(dummy_str) + 1);
+	g_assert(ret);
+
+	ret = j_message_write(message[0], output);
+	g_assert(ret);
+
+	g_memory_input_stream_add_data(
+		G_MEMORY_INPUT_STREAM(input),
+		g_memory_output_stream_get_data(G_MEMORY_OUTPUT_STREAM(output)),
+		g_memory_output_stream_get_data_size(G_MEMORY_OUTPUT_STREAM(output)),
+		NULL
+	);
+
+	ret = j_message_read(message[1], input);
+	g_assert(ret);
+
+	dummy_1 = j_message_get_1(message[1]);
+	g_assert_cmpint(dummy_1, ==, 23);
+	dummy_4 = j_message_get_4(message[1]);
+	g_assert_cmpuint(dummy_4, ==, 42);
+	dummy_8 = j_message_get_8(message[1]);
+	g_assert_cmpuint(dummy_8, ==, 2342);
+	dummy_str = j_message_get_string(message[1]);
+	g_assert_cmpstr(dummy_str, ==, "42");
+
+	j_message_free(message[0]);
+	j_message_free(message[1]);
+
+	g_object_unref(input);
+	g_object_unref(output);
+}
+
 void
 test_message (void)
 {
 	g_test_add_func("/message/new_free", test_message_new_free);
 	g_test_add_func("/message/header", test_message_header);
 	g_test_add_func("/message/append", test_message_append);
+	g_test_add_func("/message/write_read", test_message_write_read);
 }
