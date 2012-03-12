@@ -39,9 +39,9 @@
 #include <jitem.h>
 #include <jitem-internal.h>
 
-#include <jcommon.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
+#include <jcommon-internal.h>
 #include <jconnection-internal.h>
 #include <jdistribution.h>
 #include <jlist.h>

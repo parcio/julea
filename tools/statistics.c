@@ -29,6 +29,7 @@
 
 #include <julea.h>
 
+#include <jcommon-internal.h>
 #include <jconnection-internal.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>

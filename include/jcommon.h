@@ -38,19 +38,13 @@ struct JCommon;
 
 typedef struct JCommon JCommon;
 
-#include <jconfiguration.h>
 #include <joperation.h>
 #include <jstore.h>
-#include <jtrace.h>
 
 void j_init (gint*, gchar***);
 void j_fini (void);
 
 gboolean j_is_initialized (void);
-
-JConfiguration* j_configuration (void);
-JConnection* j_connection (void);
-JTrace* j_trace (void);
 
 void j_create_store (JStore*, JOperation*);
 void j_delete_store (JStore*, JOperation*);
