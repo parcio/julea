@@ -53,7 +53,7 @@ struct JStatistics;
 
 typedef struct JStatistics JStatistics;
 
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 J_GNUC_INTERNAL JStatistics* j_statistics_new (JTrace*);
 J_GNUC_INTERNAL void j_statistics_free (JStatistics*);

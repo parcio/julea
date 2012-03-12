@@ -50,7 +50,7 @@
 #include <jsemantics.h>
 #include <jstore.h>
 #include <jstore-internal.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JCollection Collection

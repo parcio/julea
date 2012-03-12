@@ -48,7 +48,7 @@
 #include <joperation-part-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JCommon Common
@@ -63,6 +63,17 @@ struct JCommon
 };
 
 static JCommon* j_common = NULL;
+
+static
+gboolean
+j_is_initialized (void)
+{
+	JCommon* p;
+
+	p = g_atomic_pointer_get(&j_common);
+
+	return (p != NULL);
+}
 
 void
 j_init (gint* argc, gchar*** argv)
@@ -147,16 +158,6 @@ j_fini (void)
 	j_trace_fini();
 
 	g_slice_free(JCommon, common);
-}
-
-gboolean
-j_is_initialized (void)
-{
-	JCommon* p;
-
-	p = g_atomic_pointer_get(&j_common);
-
-	return (p != NULL);
 }
 
 JConfiguration*

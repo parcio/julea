@@ -32,7 +32,7 @@
 #ifndef H_BACKEND
 #define H_BACKEND
 
-#include "jtrace.h"
+#include <jtrace-internal.h>
 
 struct JBackendFile
 {

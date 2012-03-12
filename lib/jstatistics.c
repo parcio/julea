@@ -33,7 +33,7 @@
 
 #include <jstatistics-internal.h>
 
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JStatistics Statistics

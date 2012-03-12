@@ -51,7 +51,7 @@
 #include <joperation-internal.h>
 #include <joperation-part-internal.h>
 #include <jsemantics.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JItem Item

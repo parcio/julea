@@ -41,7 +41,7 @@
 #include <jconfiguration.h>
 #include <jconnection.h>
 #include <jlist.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 J_GNUC_INTERNAL JConfiguration* j_configuration (void);
 J_GNUC_INTERNAL JConnection* j_connection (void);

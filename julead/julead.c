@@ -38,7 +38,7 @@
 #include <jmessage.h>
 #include <jstatistics-internal.h>
 #include <jthread-internal.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 #include "backend/backend.h"
 

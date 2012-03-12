@@ -41,7 +41,7 @@ struct JThread;
 typedef struct JThread JThread;
 
 #include <jstatistics-internal.h>
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 J_GNUC_INTERNAL JThread* j_thread_new (GThread*, gchar const*);
 J_GNUC_INTERNAL void j_thread_free (JThread*);

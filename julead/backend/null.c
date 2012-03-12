@@ -28,7 +28,7 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#include <jtrace.h>
+#include <jtrace-internal.h>
 
 #include "backend.h"
 #include "backend-internal.h"
