@@ -255,6 +255,8 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = j_operation_part_new(J_OPERATION_ITEM_READ);
 	part->key = item;
 	part->u.item_read.item = j_item_ref(item);
@@ -264,6 +266,8 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	part->u.item_read.bytes_read = bytes_read;
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -290,6 +294,8 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = j_operation_part_new(J_OPERATION_ITEM_WRITE);
 	part->key = item;
 	part->u.item_write.item = j_item_ref(item);
@@ -299,6 +305,8 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	part->u.item_write.bytes_written = bytes_written;
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -320,12 +328,16 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
 
 	g_return_if_fail(item != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = j_operation_part_new(J_OPERATION_ITEM_GET_STATUS);
 	part->key = NULL;
 	part->u.item_get_status.item = j_item_ref(item);
 	part->u.item_get_status.flags = flags;
 
 	j_operation_add(operation, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -586,7 +598,11 @@ j_item_set_collection (JItem* item, JCollection* collection)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item->collection == NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	item->collection = j_collection_ref(collection);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 gboolean

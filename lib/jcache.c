@@ -35,6 +35,9 @@
 
 #include <jcache-internal.h>
 
+#include <jcommon-internal.h>
+#include <jtrace-internal.h>
+
 /**
  * \defgroup JCache Cache
  * @{
@@ -54,10 +57,14 @@ j_cache_new (guint64 size)
 
 	g_return_val_if_fail(size > 0, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	cache = g_slice_new(JCache);
 	cache->size = size;
 	cache->data = NULL;
 	cache->current = NULL;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return cache;
 }
@@ -67,12 +74,16 @@ j_cache_free (JCache* cache)
 {
 	g_return_if_fail(cache != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (cache->data != NULL)
 	{
 		g_free(cache->data);
 	}
 
 	g_slice_free(JCache, cache);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 gpointer
@@ -82,6 +93,8 @@ j_cache_get (JCache* cache, guint64 length)
 
 	g_return_val_if_fail(cache != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (G_UNLIKELY(cache->data == NULL))
 	{
 		cache->data = g_malloc(cache->size);
@@ -90,11 +103,15 @@ j_cache_get (JCache* cache, guint64 length)
 
 	if (cache->current + length > cache->data + cache->size)
 	{
-		return NULL;
+		ret = NULL;
+		goto end;
 	}
 
 	ret = cache->current;
 	cache->current += length;
+
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return ret;
 }
@@ -107,12 +124,16 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 	g_return_val_if_fail(cache != NULL, NULL);
 	g_return_val_if_fail(data != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	ret = j_cache_get(cache, length);
 
 	if (ret != NULL)
 	{
 		memcpy(ret, data, length);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return ret;
 }
@@ -122,7 +143,11 @@ j_cache_clear (JCache* cache)
 {
 	g_return_if_fail(cache != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	cache->current = cache->data;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**

@@ -160,42 +160,6 @@ j_fini (void)
 	g_slice_free(JCommon, common);
 }
 
-JConfiguration*
-j_configuration (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->configuration;
-}
-
-JConnection*
-j_connection (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->connection;
-}
-
-JTrace*
-j_trace (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->trace;
-}
-
 void
 j_create_store (JStore* store, JOperation* operation)
 {
@@ -241,6 +205,42 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 }
 
 /* Internal */
+
+JConfiguration*
+j_configuration (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->configuration;
+}
+
+JConnection*
+j_connection (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->connection;
+}
+
+JTrace*
+j_trace (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->trace;
+}
 
 gboolean
 j_create_store_internal (JOperation* operation, JList* parts)

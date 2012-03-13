@@ -94,10 +94,14 @@ static
 JSemantics*
 j_operation_get_default_semantics (void)
 {
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (G_UNLIKELY(j_operation_default_semantics == NULL))
 	{
 		j_operation_default_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return j_operation_default_semantics;
 }
@@ -106,9 +110,10 @@ static
 gpointer
 j_operation_background_operation (gpointer data)
 {
+	JOperationAsync* async = data;
 	gboolean ret;
 
-	JOperationAsync* async = data;
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	ret = j_operation_execute(async->operation);
 
@@ -118,6 +123,8 @@ j_operation_background_operation (gpointer data)
 	}
 
 	g_slice_free(JOperationAsync, async);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return NULL;
 }
@@ -129,11 +136,15 @@ j_operation_cache_init (void)
 
 	g_return_if_fail(j_operation_cache == NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	cache = g_slice_new(JOperationCache);
 	cache->cache = j_cache_new(J_MIB(50));
 	cache->list = j_list_new((JListFreeFunc)j_operation_unref);
 
 	g_atomic_pointer_set(&j_operation_cache, cache);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 void
@@ -142,6 +153,8 @@ j_operation_cache_fini (void)
 	JOperationCache* cache;
 
 	g_return_if_fail(j_operation_cache != NULL);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	j_operation_cache_flush();
 
@@ -152,6 +165,8 @@ j_operation_cache_fini (void)
 	j_cache_free(cache->cache);
 
 	g_slice_free(JOperationCache, cache);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 // FIXME
@@ -162,6 +177,8 @@ j_operation_cache_flush (void)
 {
 	JListIterator* iterator;
 	gboolean ret = TRUE;
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	iterator = j_list_iterator_new(j_operation_cache->list);
 
@@ -177,6 +194,8 @@ j_operation_cache_flush (void)
 	j_list_delete_all(j_operation_cache->list);
 	j_cache_clear(j_operation_cache->cache);
 
+	j_trace_leave(j_trace(), G_STRFUNC);
+
 	return ret;
 }
 
@@ -185,6 +204,8 @@ gboolean
 j_operation_cache_test (JOperationPart* part)
 {
 	gboolean ret = FALSE;
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	switch (part->type)
 	{
@@ -211,6 +232,8 @@ j_operation_cache_test (JOperationPart* part)
 			g_warn_if_reached();
 	}
 
+	j_trace_leave(j_trace(), G_STRFUNC);
+
 	return ret;
 }
 
@@ -218,8 +241,11 @@ static
 gboolean
 j_operation_cache_add (JOperation* operation)
 {
+	gboolean ret = TRUE;
 	JListIterator* iterator;
 	gboolean can_cache = TRUE;
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	iterator = j_list_iterator_new(operation->list);
 
@@ -239,7 +265,8 @@ j_operation_cache_add (JOperation* operation)
 
 	if (!can_cache)
 	{
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
 
 	iterator = j_list_iterator_new(operation->list);
@@ -256,7 +283,8 @@ j_operation_cache_add (JOperation* operation)
 
 			if (data == NULL)
 			{
-				return FALSE;
+				ret = FALSE;
+				goto end;
 			}
 
 			part->u.item_write.data = data;
@@ -267,7 +295,10 @@ j_operation_cache_add (JOperation* operation)
 
 	j_list_append(j_operation_cache->list, j_operation_ref(operation));
 
-	return TRUE;
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -287,6 +318,8 @@ j_operation_new (JSemantics* semantics)
 {
 	JOperation* operation;
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
 	operation->background_operation = NULL;
@@ -298,6 +331,8 @@ j_operation_new (JSemantics* semantics)
 	}
 
 	operation->semantics = j_semantics_ref(semantics);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return operation;
 }
@@ -316,7 +351,11 @@ j_operation_ref (JOperation* operation)
 {
 	g_return_val_if_fail(operation != NULL, NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	g_atomic_int_inc(&(operation->ref_count));
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return operation;
 }
@@ -337,6 +376,8 @@ j_operation_unref (JOperation* operation)
 {
 	g_return_if_fail(operation != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (g_atomic_int_dec_and_test(&(operation->ref_count)))
 	{
 		if (operation->background_operation != NULL)
@@ -353,6 +394,8 @@ j_operation_unref (JOperation* operation)
 
 		g_slice_free(JOperation, operation);
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -376,11 +419,13 @@ j_operation_execute_same (JOperation* operation, JList* list)
 	JOperationType type;
 	gboolean ret = TRUE;
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	part = j_list_get_first(list);
 
 	if (part == NULL)
 	{
-		return ret;
+		goto end;
 	}
 
 	type = part->type;
@@ -431,6 +476,9 @@ j_operation_execute_same (JOperation* operation, JList* list)
 
 	j_list_delete_all(list);
 
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
 	return ret;
 }
 
@@ -458,6 +506,8 @@ j_operation_execute_internal (JOperation* operation)
 	gpointer last_key;
 	gboolean ret = TRUE;
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	iterator = j_list_iterator_new(operation->list);
 	same_list = j_list_new(NULL);
 	last_key = NULL;
@@ -484,6 +534,8 @@ j_operation_execute_internal (JOperation* operation)
 
 	j_list_delete_all(operation->list);
 
+	j_trace_leave(j_trace(), G_STRFUNC);
+
 	return ret;
 }
 
@@ -502,22 +554,33 @@ j_operation_execute_internal (JOperation* operation)
 gboolean
 j_operation_execute (JOperation* operation)
 {
+	gboolean ret;
+
 	g_return_val_if_fail(operation != NULL, FALSE);
+
+	j_trace_enter(j_trace(), G_STRFUNC);
 
 	if (j_list_length(operation->list) == 0)
 	{
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
 
 	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
 	    && j_operation_cache_add(operation))
 	{
-		return TRUE;
+		ret = TRUE;
+		goto end;
 	}
 
 	j_operation_cache_flush();
 
-	return j_operation_execute_internal(operation);
+	ret = j_operation_execute_internal(operation);
+
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -540,12 +603,16 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, 
 
 	g_return_if_fail(operation != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	async = g_slice_new(JOperationAsync);
 	async->operation = j_operation_ref(operation);
 	async->func = func;
 	async->user_data = user_data;
 
 	operation->background_operation = j_background_operation_new(j_operation_background_operation, async);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 void
@@ -559,6 +626,8 @@ j_operation_wait (JOperation* operation)
 		j_background_operation_unref(operation->background_operation);
 		operation->background_operation = NULL;
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /* Internal */
@@ -610,7 +679,11 @@ j_operation_add (JOperation* operation, JOperationPart* part)
 	g_return_if_fail(operation != NULL);
 	g_return_if_fail(part != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	j_list_append(operation->list, part);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**

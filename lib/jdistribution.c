@@ -33,8 +33,9 @@
 
 #include <jdistribution.h>
 
-#include <jcommon.h>
+#include <jcommon-internal.h>
 #include <jconfiguration.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JDistribution Distribution
@@ -93,13 +94,17 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 {
 	guint64 const block_size = 512 * 1024;
 
+	gboolean ret = TRUE;
 	guint64 block;
 	guint64 displacement;
 	guint64 round;
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	if (distribution->length == 0)
 	{
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
 
 	block = distribution->offset / block_size;
@@ -113,7 +118,10 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
 
-	return TRUE;
+end:
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -138,11 +146,15 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 {
 	JDistribution* distribution;
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	distribution = g_slice_new(JDistribution);
 	distribution->configuration = j_configuration_ref(configuration);
 	distribution->type = type;
 	distribution->length = length;
 	distribution->offset = offset;
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 
 	return distribution;
 }
@@ -162,9 +174,13 @@ j_distribution_free (JDistribution* distribution)
 {
 	g_return_if_fail(distribution != NULL);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	j_configuration_unref(distribution->configuration);
 
 	g_slice_free(JDistribution, distribution);
+
+	j_trace_leave(j_trace(), G_STRFUNC);
 }
 
 /**
@@ -185,18 +201,27 @@ j_distribution_free (JDistribution* distribution)
 gboolean
 j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
+	gboolean ret = FALSE;
+
 	g_return_val_if_fail(distribution != NULL, FALSE);
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
 
+	j_trace_enter(j_trace(), G_STRFUNC);
+
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			return j_distribution_round_robin(distribution, index, new_length, new_offset);
+			ret = j_distribution_round_robin(distribution, index, new_length, new_offset);
+			break;
 		default:
-			g_return_val_if_reached(FALSE);
+			g_warn_if_reached();
 	}
+
+	j_trace_leave(j_trace(), G_STRFUNC);
+
+	return ret;
 }
 
 /**
