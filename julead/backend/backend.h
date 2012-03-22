@@ -42,18 +42,18 @@ struct JBackendFile
 
 typedef struct JBackendFile JBackendFile;
 
-void (*jd_backend_init) (gchar const*, JTrace*) = NULL;
-void (*jd_backend_fini) (JTrace*) = NULL;
+void (*jd_backend_init) (gchar const*) = NULL;
+void (*jd_backend_fini) (void) = NULL;
 
-gboolean (*jd_backend_create) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*) = NULL;
-gboolean (*jd_backend_delete) (JBackendFile*, JTrace*) = NULL;
+gboolean (*jd_backend_create) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
+gboolean (*jd_backend_delete) (JBackendFile*) = NULL;
 
-gboolean (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*) = NULL;
-gboolean (*jd_backend_close) (JBackendFile*, JTrace*) = NULL;
+gboolean (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
+gboolean (*jd_backend_close) (JBackendFile*) = NULL;
 
-gboolean (*jd_backend_sync) (JBackendFile*, JTrace*) = NULL;
+gboolean (*jd_backend_sync) (JBackendFile*) = NULL;
 
-gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, guint64*, JTrace*) = NULL;
-gboolean (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, guint64*, JTrace*) = NULL;
+gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, guint64*) = NULL;
+gboolean (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, guint64*) = NULL;
 
 #endif

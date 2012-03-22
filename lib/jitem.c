@@ -130,7 +130,7 @@ j_item_new (gchar const* name)
 
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	item = g_slice_new(JItem);
 	bson_oid_gen(&(item->id));
@@ -141,7 +141,7 @@ j_item_new (gchar const* name)
 	item->collection = NULL;
 	item->ref_count = 1;
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item;
 }
@@ -166,11 +166,11 @@ j_item_ref (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	g_atomic_int_inc(&(item->ref_count));
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item;
 }
@@ -191,7 +191,7 @@ j_item_unref (JItem* item)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
@@ -205,7 +205,7 @@ j_item_unref (JItem* item)
 		g_slice_free(JItem, item);
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -225,8 +225,8 @@ j_item_get_name (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item->name;
 }
@@ -255,7 +255,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_ITEM_READ);
 	part->key = item;
@@ -267,7 +267,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 
 	j_operation_add(operation, part);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -294,7 +294,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_ITEM_WRITE);
 	part->key = item;
@@ -306,7 +306,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 
 	j_operation_add(operation, part);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -328,7 +328,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
 
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	part = j_operation_part_new(J_OPERATION_ITEM_GET_STATUS);
 	part->key = NULL;
@@ -337,7 +337,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
 
 	j_operation_add(operation, part);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -358,8 +358,8 @@ j_item_get_size (JItem* item)
 	g_return_val_if_fail(item != NULL, 0);
 	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE, 0);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item->status.size;
 }
@@ -380,10 +380,10 @@ j_item_set_size (JItem* item, guint64 size)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	item->status.flags |= J_ITEM_STATUS_SIZE;
 	item->status.size = size;
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -404,8 +404,8 @@ j_item_get_modification_time (JItem* item)
 	g_return_val_if_fail(item != NULL, 0);
 	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME, 0);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item->status.modification_time;
 }
@@ -426,10 +426,10 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.modification_time = modification_time;
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /* Internal */
@@ -457,7 +457,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
@@ -469,7 +469,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 
 	j_item_deserialize(item, b);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item;
 }
@@ -495,7 +495,7 @@ j_item_serialize (JItem* item)
 
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	b = g_slice_new(bson);
 	bson_init(b);
@@ -506,7 +506,7 @@ j_item_serialize (JItem* item)
 	bson_append_long(b, "ModificationTime", item->status.modification_time);
 	bson_finish(b);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return b;
 }
@@ -532,7 +532,7 @@ j_item_deserialize (JItem* item, bson const* b)
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	bson_iterator_init(&iterator, b);
 
@@ -563,7 +563,7 @@ j_item_deserialize (JItem* item, bson const* b)
 		}
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -585,8 +585,8 @@ j_item_get_id (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return &(item->id);
 }
@@ -598,11 +598,11 @@ j_item_set_collection (JItem* item, JCollection* collection)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item->collection == NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	item->collection = j_collection_ref(collection);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 gboolean
@@ -623,7 +623,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	n = j_configuration_get_data_server_count(j_configuration());
 	messages = g_new(JMessage*, n);
@@ -678,7 +678,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		j_trace_file_begin(j_trace(), item_name, J_TRACE_FILE_READ);
+		j_trace_file_begin(j_trace_get_thread_default(), item_name, J_TRACE_FILE_READ);
 
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
@@ -708,7 +708,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 
 		j_distribution_free(distribution);
 
-		j_trace_file_end(j_trace(), item_name, J_TRACE_FILE_READ, length, offset);
+		j_trace_file_end(j_trace_get_thread_default(), item_name, J_TRACE_FILE_READ, length, offset);
 	}
 
 	j_list_iterator_free(iterator);
@@ -775,7 +775,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	g_free(messages);
 	g_free(buffer_list);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return TRUE;
 }
@@ -797,7 +797,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	n = j_configuration_get_data_server_count(j_configuration());
 	messages = g_new(JMessage*, n);
@@ -849,7 +849,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		j_trace_file_begin(j_trace(), item_name, J_TRACE_FILE_WRITE);
+		j_trace_file_begin(j_trace_get_thread_default(), item_name, J_TRACE_FILE_WRITE);
 
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
@@ -877,7 +877,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 		j_distribution_free(distribution);
 
-		j_trace_file_end(j_trace(), item_name, J_TRACE_FILE_WRITE, length, offset);
+		j_trace_file_end(j_trace_get_thread_default(), item_name, J_TRACE_FILE_WRITE, length, offset);
 	}
 
 	j_list_iterator_free(iterator);
@@ -929,7 +929,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 	g_free(messages);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return TRUE;
 }
@@ -942,7 +942,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	iterator = j_list_iterator_new(parts);
 
@@ -995,7 +995,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 
 	j_list_iterator_free(iterator);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return TRUE;
 }

@@ -37,6 +37,11 @@ static
 gpointer
 on_background_operation_completed (gpointer data)
 {
+	JItem* item;
+
+	item = j_item_new("background-item");
+	j_item_unref(item);
+
 	return NULL;
 }
 

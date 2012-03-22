@@ -49,6 +49,7 @@ struct JThread
 {
 	JStatistics* statistics;
 	JTrace* trace;
+	gchar* function_name;
 };
 
 /**
@@ -70,12 +71,28 @@ JThread*
 j_thread_new (GThread* thread_id, gchar const* function_name)
 {
 	JThread* thread;
+	JTrace* trace;
 
 	g_return_val_if_fail(function_name != NULL, NULL);
 
+	trace = j_trace_get_thread_default();
+
+	if (trace == NULL)
+	{
+		trace = j_trace_new(thread_id);
+		j_trace_set_thread_default(trace);
+	}
+	else
+	{
+		j_trace_ref(trace);
+	}
+
 	thread = g_slice_new(JThread);
-	thread->trace = j_trace_thread_enter(thread_id, function_name);
+	thread->trace = trace;
 	thread->statistics = j_statistics_new(thread->trace);
+	thread->function_name = g_strdup(function_name);
+
+	j_trace_enter(thread->trace, thread->function_name);
 
 	return thread;
 }
@@ -97,8 +114,12 @@ j_thread_free (JThread* thread)
 {
 	g_return_if_fail(thread != NULL);
 
-	j_trace_thread_leave(thread->trace);
+	j_trace_leave(thread->trace, thread->function_name);
+
+	j_trace_unref(thread->trace);
 	j_statistics_free(thread->statistics);
+
+	g_free(thread->function_name);
 
 	g_slice_free(JThread, thread);
 }
@@ -109,14 +130,6 @@ j_thread_get_statistics (JThread* thread)
 	g_return_val_if_fail(thread != NULL, NULL);
 
 	return thread->statistics;
-}
-
-JTrace*
-j_thread_get_trace (JThread* thread)
-{
-	g_return_val_if_fail(thread != NULL, NULL);
-
-	return thread->trace;
 }
 
 /**

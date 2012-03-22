@@ -105,6 +105,8 @@ struct JTrace
 	}
 	otf;
 #endif
+
+	gint ref_count;
 };
 
 enum JTraceFlags
@@ -144,6 +146,19 @@ static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_counter_table = NULL;
 #endif
+
+static
+void
+j_trace_thread_default_free (gpointer data)
+{
+	JTrace* trace = data;
+
+	j_trace_unref(trace);
+}
+
+static GPrivate j_trace_thread_default = G_PRIVATE_INIT(j_trace_thread_default_free);
+
+G_LOCK_DEFINE_STATIC(j_trace_echo);
 
 /**
  * Prints a common header to stderr.
@@ -480,6 +495,153 @@ j_trace_fini (void)
 	g_free(j_trace_name);
 }
 
+JTrace*
+j_trace_get_thread_default (void)
+{
+	return g_private_get(&j_trace_thread_default);
+}
+
+void
+j_trace_set_thread_default (JTrace* trace)
+{
+	if (trace != NULL)
+	{
+		j_trace_ref(trace);
+	}
+
+	g_private_replace(&j_trace_thread_default, trace);
+}
+
+/**
+ * Traces the entering of a thread.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param thread         A thread.
+ *
+ * \return A new trace. Should be freed with j_trace_thread_leave().
+ **/
+JTrace*
+j_trace_new (GThread* thread)
+{
+	JTrace* trace;
+
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return NULL;
+	}
+
+	trace = g_slice_new(JTrace);
+	trace->function_depth = 0;
+
+	if (thread == NULL)
+	{
+		trace->thread_name = g_strdup("Main process");
+	}
+	else
+	{
+		trace->thread_name = g_strdup_printf("Thread %d", j_trace_thread_id);
+		j_trace_thread_id++;
+	}
+
+#ifdef HAVE_HDTRACE
+	if (j_trace_flags & J_TRACE_HDTRACE)
+	{
+		gchar const* topo_path[] = { g_get_host_name(), j_trace_name, trace->thread_name };
+
+		trace->hdtrace.topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 3);
+		trace->hdtrace.trace = hdT_createTrace(trace->hdtrace.topo_node);
+
+		hdT_enableTrace(trace->hdtrace.trace);
+		hdT_setNestedDepth(trace->hdtrace.trace, 3);
+	}
+#endif
+
+#ifdef HAVE_OTF
+	if (j_trace_flags & J_TRACE_OTF)
+	{
+		trace->otf.process_id = otf_process_id;
+		otf_process_id++;
+
+		OTF_Writer_writeDefProcess(otf_writer, 1, trace->otf.process_id, trace->thread_name, 0);
+	}
+#endif
+
+	trace->ref_count = 1;
+
+	return trace;
+}
+
+/**
+ * Increases a trace's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JTrace* t;
+ *
+ * j_trace_ref(t);
+ * \endcode
+ *
+ * \param trace A trace.
+ *
+ * \return #trace.
+ **/
+JTrace*
+j_trace_ref (JTrace* trace)
+{
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return NULL;
+	}
+
+	g_return_val_if_fail(trace != NULL, NULL);
+
+	g_atomic_int_inc(&(trace->ref_count));
+
+	return trace;
+}
+
+/**
+ * Decreases a trace's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the trace.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ **/
+void
+j_trace_unref (JTrace* trace)
+{
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return;
+	}
+
+	g_return_if_fail(trace != NULL);
+
+	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
+	{
+#ifdef HAVE_HDTRACE
+		if (j_trace_flags & J_TRACE_HDTRACE)
+		{
+			hdT_finalize(trace->hdtrace.trace);
+			hdT_destroyTopoNode(trace->hdtrace.topo_node);
+		}
+#endif
+
+		g_free(trace->thread_name);
+
+		g_slice_free(JTrace, trace);
+	}
+}
+
 /**
  * Traces the entering of a function.
  *
@@ -514,8 +676,10 @@ j_trace_enter (JTrace* trace, gchar const* name)
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("ENTER %s\n", name);
+		G_UNLOCK(j_trace_echo);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -580,13 +744,21 @@ j_trace_leave (JTrace* trace, gchar const* name)
 		return;
 	}
 
+	/* FIXME */
+	if (trace->function_depth == 0)
+	{
+		return;
+	}
+
 	trace->function_depth--;
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("LEAVE %s\n", name);
+		G_UNLOCK(j_trace_echo);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -639,8 +811,10 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("BEGIN %s %s\n", j_trace_file_operation_name(op), path);
+		G_UNLOCK(j_trace_echo);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -705,6 +879,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("END %s %s", j_trace_file_operation_name(op), path);
 
@@ -714,6 +889,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 		}
 
 		g_printerr("\n");
+		G_UNLOCK(j_trace_echo);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -776,109 +952,6 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 }
 
 /**
- * Traces the entering of a thread.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param thread         A thread.
- * \param function_name  A function name.
- *
- * \return A new trace. Should be freed with j_trace_thread_leave().
- **/
-JTrace*
-j_trace_thread_enter (GThread* thread, gchar const* function_name)
-{
-	JTrace* trace;
-
-	if (j_trace_flags == J_TRACE_OFF)
-	{
-		return NULL;
-	}
-
-	g_return_val_if_fail(function_name != NULL, NULL);
-
-	trace = g_slice_new(JTrace);
-	trace->function_name = g_strdup(function_name);
-	trace->function_depth = 0;
-
-	if (thread == NULL)
-	{
-		trace->thread_name = g_strdup("Main process");
-	}
-	else
-	{
-		trace->thread_name = g_strdup_printf("Thread %d", j_trace_thread_id);
-		j_trace_thread_id++;
-	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		gchar const* topo_path[] = { g_get_host_name(), j_trace_name, trace->thread_name };
-
-		trace->hdtrace.topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 3);
-		trace->hdtrace.trace = hdT_createTrace(trace->hdtrace.topo_node);
-
-		hdT_enableTrace(trace->hdtrace.trace);
-		hdT_setNestedDepth(trace->hdtrace.trace, 3);
-	}
-#endif
-
-#ifdef HAVE_OTF
-	if (j_trace_flags & J_TRACE_OTF)
-	{
-		trace->otf.process_id = otf_process_id;
-		otf_process_id++;
-
-		OTF_Writer_writeDefProcess(otf_writer, 1, trace->otf.process_id, trace->thread_name, 0);
-	}
-#endif
-
-	j_trace_enter(trace, function_name);
-
-	return trace;
-}
-
-/**
- * Traces the leaving of a thread.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param trace A trace.
- **/
-void
-j_trace_thread_leave (JTrace* trace)
-{
-	if (j_trace_flags == J_TRACE_OFF)
-	{
-		return;
-	}
-
-	g_return_if_fail(trace != NULL);
-
-	j_trace_leave(trace, trace->function_name);
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		hdT_finalize(trace->hdtrace.trace);
-		hdT_destroyTopoNode(trace->hdtrace.topo_node);
-	}
-#endif
-
-	g_free(trace->thread_name);
-	g_free(trace->function_name);
-
-	g_slice_free(JTrace, trace);
-}
-
-/**
  * Traces a counter.
  *
  * \author Michael Kuhn
@@ -907,8 +980,10 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("COUNTER %s %" G_GUINT64_FORMAT "\n", name, counter_value);
+		G_UNLOCK(j_trace_echo);
 	}
 
 #ifdef HAVE_HDTRACE

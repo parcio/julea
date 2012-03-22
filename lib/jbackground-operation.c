@@ -34,6 +34,7 @@
 #include <jbackground-operation-internal.h>
 
 #include <jcommon-internal.h>
+#include <jthread-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -62,9 +63,9 @@ void
 j_background_operation_thread (gpointer data, gpointer user_data)
 {
 	JBackgroundOperation* background_operation = data;
+	JThread* thread;
 
-	/* FIXME own trace */
-	j_trace_enter(j_trace(), G_STRFUNC);
+	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 
 	background_operation->result = (*(background_operation->func))(background_operation->data);
 
@@ -75,7 +76,7 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 
 	j_background_operation_unref(background_operation);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_thread_free(thread);
 }
 
 void
@@ -85,12 +86,12 @@ j_background_operation_init (void)
 
 	g_return_if_fail(j_thread_pool == NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, /*FIXME*/16, FALSE, NULL);
 	g_atomic_pointer_set(&j_thread_pool, thread_pool);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 void
@@ -100,14 +101,14 @@ j_background_operation_fini (void)
 
 	g_return_if_fail(j_thread_pool != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	thread_pool = g_atomic_pointer_get(&j_thread_pool);
 	g_atomic_pointer_set(&j_thread_pool, NULL);
 
 	g_thread_pool_free(thread_pool, FALSE, TRUE);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 JBackgroundOperation*
@@ -117,7 +118,7 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 
 	g_return_val_if_fail(func != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	background_operation = g_slice_new(JBackgroundOperation);
 	background_operation->func = func;
@@ -131,7 +132,7 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 
 	g_thread_pool_push(j_thread_pool, background_operation, NULL);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return background_operation;
 }
@@ -141,11 +142,11 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 {
 	g_return_val_if_fail(background_operation != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	g_atomic_int_inc(&(background_operation->ref_count));
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return background_operation;
 }
@@ -155,7 +156,7 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 {
 	g_return_if_fail(background_operation != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
@@ -165,7 +166,7 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 		g_slice_free(JBackgroundOperation, background_operation);
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 gpointer
@@ -173,7 +174,7 @@ j_background_operation_wait (JBackgroundOperation* background_operation)
 {
 	g_return_val_if_fail(background_operation != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	g_mutex_lock(background_operation->mutex);
 
@@ -184,7 +185,7 @@ j_background_operation_wait (JBackgroundOperation* background_operation)
 
 	g_mutex_unlock(background_operation->mutex);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return background_operation->result;
 }

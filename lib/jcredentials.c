@@ -60,14 +60,14 @@ j_credentials_new (void)
 {
 	JCredentials* credentials;
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	credentials = g_slice_new(JCredentials);
 	credentials->user = geteuid();
 	credentials->group = getegid();
 	credentials->ref_count = 1;
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return credentials;
 }
@@ -77,11 +77,11 @@ j_credentials_ref (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	g_atomic_int_inc(&(credentials->ref_count));
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return credentials;
 }
@@ -91,14 +91,14 @@ j_credentials_unref (JCredentials* credentials)
 {
 	g_return_if_fail(credentials != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
 		g_slice_free(JCredentials, credentials);
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /*

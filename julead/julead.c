@@ -67,13 +67,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	JCache* cache;
 	JMessage* message;
 	JThread* thread;
-	JTrace* trace;
 	GInputStream* input;
 	GOutputStream* output;
 
-	cache = j_cache_new(J_MIB(50));
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
-	trace = j_thread_get_trace(thread);
+	cache = j_cache_new(J_MIB(50));
 
 	message = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
@@ -103,10 +101,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						item = j_message_get_string(message);
 
-						if (jd_backend_create(&bf, store, collection, item, trace))
+						if (jd_backend_create(&bf, store, collection, item))
 						{
 							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_CREATED, 1);
-							jd_backend_close(&bf, trace);
+							jd_backend_close(&bf);
 						}
 					}
 				}
@@ -122,12 +120,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						item = j_message_get_string(message);
 
-						jd_backend_open(&bf, store, collection, item, trace);
+						jd_backend_open(&bf, store, collection, item);
 
-						if (jd_backend_delete(&bf, trace))
+						if (jd_backend_delete(&bf))
 						{
 							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_DELETED, 1);
-							jd_backend_close(&bf, trace);
+							jd_backend_close(&bf);
 						}
 
 						reply = j_message_new_reply(message);
@@ -146,7 +144,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
-					jd_backend_open(&bf, store, collection, item, trace);
+					jd_backend_open(&bf, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -165,7 +163,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							// FIXME send smaller reply
 						}
 
-						jd_backend_read(&bf, buf, length, offset, &bytes_read, trace);
+						jd_backend_read(&bf, buf, length, offset, &bytes_read);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -174,7 +172,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					jd_backend_close(&bf, trace);
+					jd_backend_close(&bf);
 
 					j_message_write(reply, output);
 					j_message_free(reply);
@@ -190,12 +188,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
-					jd_backend_open(&bf, store, collection, item, trace);
-					jd_backend_sync(&bf, trace);
+					jd_backend_open(&bf, store, collection, item);
+					jd_backend_sync(&bf);
 					j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
 					reply = j_message_new_reply(message);
 					j_message_write(reply, output);
-					jd_backend_close(&bf, trace);
+					jd_backend_close(&bf);
 
 					j_message_free(reply);
 				}
@@ -206,7 +204,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
-					jd_backend_open(&bf, store, collection, item, trace);
+					jd_backend_open(&bf, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -223,13 +221,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_RECEIVED, length);
 
-						jd_backend_write(&bf, buf, length, offset, &bytes_written, trace);
+						jd_backend_write(&bf, buf, length, offset, &bytes_written);
 						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 						j_cache_clear(cache);
 					}
 
-					jd_backend_close(&bf, trace);
+					jd_backend_close(&bf);
 				}
 				break;
 			case J_MESSAGE_OPERATION_STATISTICS:
@@ -320,7 +318,7 @@ main (int argc, char** argv)
 	gint opt_port = 4711;
 
 	JConfiguration* configuration;
-	JTrace* trace;
+	JThread* thread;
 	GError* error = NULL;
 	GMainLoop* main_loop;
 	GModule* backend;
@@ -369,7 +367,8 @@ main (int argc, char** argv)
 	}
 
 	j_trace_init("julead");
-	trace = j_trace_thread_enter(NULL, G_STRFUNC);
+
+	thread = j_thread_new(NULL, G_STRFUNC);
 
 	configuration = j_configuration_new();
 
@@ -403,7 +402,7 @@ main (int argc, char** argv)
 	g_assert(jd_backend_read != NULL);
 	g_assert(jd_backend_write != NULL);
 
-	jd_backend_init(j_configuration_get_storage_path(configuration), trace);
+	jd_backend_init(j_configuration_get_storage_path(configuration));
 
 	j_configuration_unref(configuration);
 
@@ -426,11 +425,12 @@ main (int argc, char** argv)
 
 	j_statistics_free(jd_statistics);
 
-	jd_backend_fini(trace);
+	jd_backend_fini();
 
 	g_module_close(backend);
 
-	j_trace_thread_leave(trace);
+	j_thread_free(thread);
+
 	j_trace_fini();
 
 	return 0;

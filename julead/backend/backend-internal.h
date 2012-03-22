@@ -34,18 +34,18 @@
 
 #include "backend.h"
 
-void backend_init (gchar const*, JTrace*);
-void backend_fini (JTrace*);
+void backend_init (gchar const*);
+void backend_fini (void);
 
-gboolean backend_create (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
-gboolean backend_delete (JBackendFile*, JTrace*);
+gboolean backend_create (JBackendFile*, gchar const*, gchar const*, gchar const*);
+gboolean backend_delete (JBackendFile*);
 
-gboolean backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*, JTrace*);
-gboolean backend_close (JBackendFile*, JTrace*);
+gboolean backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*);
+gboolean backend_close (JBackendFile*);
 
-gboolean backend_sync (JBackendFile*, JTrace*);
+gboolean backend_sync (JBackendFile*);
 
-gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, guint64*, JTrace*);
-gboolean backend_write (JBackendFile*, gconstpointer, guint64, guint64, guint64*, JTrace*);
+gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, guint64*);
+gboolean backend_write (JBackendFile*, gconstpointer, guint64, guint64, guint64*);
 
 #endif

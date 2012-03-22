@@ -48,6 +48,7 @@
 #include <joperation-part-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
+#include <jthread-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -62,7 +63,7 @@ struct JCommon
 };
 
 static JCommon* j_common = NULL;
-static JTrace* j_trace_global = NULL;
+static JThread* j_thread_global = NULL;
 
 static
 gboolean
@@ -79,7 +80,7 @@ void
 j_init (gint* argc, gchar*** argv)
 {
 	JCommon* common;
-	JTrace* trace;
+	JThread* thread;
 	gchar* basename;
 
 	g_return_if_fail(!j_is_initialized());
@@ -94,8 +95,8 @@ j_init (gint* argc, gchar*** argv)
 	j_trace_init(basename);
 	g_free(basename);
 
-	trace = j_trace_thread_enter(NULL, G_STRFUNC);
-	g_atomic_pointer_set(&j_trace_global, trace);
+	thread = j_thread_new(NULL, "main");
+	g_atomic_pointer_set(&j_thread_global, thread);
 
 	common->configuration = j_configuration_new();
 
@@ -129,8 +130,9 @@ error:
 		j_configuration_unref(common->configuration);
 	}
 
-	j_trace_thread_leave(trace);
-	g_atomic_pointer_set(&j_trace_global, NULL);
+	g_atomic_pointer_set(&j_thread_global, NULL);
+
+	j_thread_free(thread);
 
 	j_trace_fini();
 
@@ -143,7 +145,7 @@ void
 j_fini (void)
 {
 	JCommon* common;
-	JTrace* trace;
+	JThread* thread;
 
 	g_return_if_fail(j_is_initialized());
 
@@ -158,10 +160,11 @@ j_fini (void)
 	j_connection_unref(common->connection);
 	j_configuration_unref(common->configuration);
 
-	trace = g_atomic_pointer_get(&j_trace_global);
-	g_atomic_pointer_set(&j_trace_global, NULL);
+	thread = g_atomic_pointer_get(&j_thread_global);
+	g_atomic_pointer_set(&j_thread_global, NULL);
 
-	j_trace_thread_leave(trace);
+	j_thread_free(thread);
+
 	j_trace_fini();
 
 	g_slice_free(JCommon, common);
@@ -235,16 +238,6 @@ j_connection (void)
 	common = g_atomic_pointer_get(&j_common);
 
 	return common->connection;
-}
-
-JTrace*
-j_trace (void)
-{
-	JTrace* trace;
-
-	trace = g_atomic_pointer_get(&j_trace_global);
-
-	return trace;
 }
 
 gboolean

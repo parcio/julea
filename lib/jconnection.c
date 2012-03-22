@@ -123,7 +123,7 @@ j_connection_new (JConfiguration* configuration)
 	JConnection* connection;
 	guint i;
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	connection = g_slice_new(JConnection);
 	connection->configuration = j_configuration_ref(configuration);
@@ -138,7 +138,7 @@ j_connection_new (JConfiguration* configuration)
 		connection->sockets[i] = NULL;
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return connection;
 }
@@ -163,11 +163,11 @@ j_connection_ref (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	g_atomic_int_inc(&(connection->ref_count));
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return connection;
 }
@@ -190,7 +190,7 @@ j_connection_unref (JConnection* connection)
 
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(connection->ref_count)))
 	{
@@ -211,7 +211,7 @@ j_connection_unref (JConnection* connection)
 		g_slice_free(JConnection, connection);
 	}
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
@@ -235,7 +235,7 @@ j_connection_connect (JConnection* connection)
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (connection->connected)
 	{
@@ -282,7 +282,7 @@ j_connection_connect (JConnection* connection)
 	connection->connected = ret;
 
 end:
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
@@ -307,7 +307,7 @@ j_connection_disconnect (JConnection* connection)
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (!connection->connected)
 	{
@@ -323,7 +323,7 @@ j_connection_disconnect (JConnection* connection)
 	}
 
 end:
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
@@ -349,8 +349,8 @@ j_connection_get_connection (JConnection* connection)
 {
 	g_return_val_if_fail(connection != NULL, NULL);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return &(connection->connection);
 }
@@ -380,12 +380,12 @@ j_connection_send (JConnection* connection, guint i, JMessage* message)
 	g_return_val_if_fail(i < connection->sockets_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i]));
 	j_message_write(message, output);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return TRUE;
 }
@@ -417,12 +417,12 @@ j_connection_receive (JConnection* connection, guint i, JMessage* reply, JMessag
 	g_return_val_if_fail(i < connection->sockets_len, FALSE);
 	g_return_val_if_fail(message != NULL, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
 	ret = j_message_read_reply(reply, message, input);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
@@ -455,12 +455,12 @@ j_connection_receive_data (JConnection* connection, guint i, gpointer data, gsiz
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(length > 0, FALSE);
 
-	j_trace_enter(j_trace(), G_STRFUNC);
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
 	ret = g_input_stream_read_all(input, data, length, NULL, NULL, NULL);
 
-	j_trace_leave(j_trace(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
