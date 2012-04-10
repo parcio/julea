@@ -31,6 +31,8 @@
 
 #include <glib.h>
 
+#include <unistd.h>
+
 #include <jbackground-operation-internal.h>
 
 #include <jcommon-internal.h>
@@ -83,12 +85,21 @@ void
 j_background_operation_init (void)
 {
 	GThreadPool* thread_pool;
+	guint thread_count = 8;
 
 	g_return_if_fail(j_thread_pool == NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, /*FIXME*/16, FALSE, NULL);
+#ifdef _SC_NPROCESSORS_ONLN
+	thread_count = sysconf(_SC_NPROCESSORS_ONLN);
+#else
+#ifdef _SC_NPROCESSORS_CONF
+	thread_count = sysconf(_SC_NPROCESSORS_CONF);
+#endif
+#endif
+
+	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, thread_count, FALSE, NULL);
 	g_atomic_pointer_set(&j_thread_pool, thread_pool);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
