@@ -103,7 +103,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (jd_backend_create(&bf, store, collection, item))
 						{
-							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_CREATED, 1);
+							j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_FILES_CREATED, 1);
 							jd_backend_close(&bf);
 						}
 					}
@@ -124,7 +124,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (jd_backend_delete(&bf))
 						{
-							j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_FILES_DELETED, 1);
+							j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_FILES_DELETED, 1);
 							jd_backend_close(&bf);
 						}
 
@@ -164,12 +164,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 
 						jd_backend_read(&bf, buf, length, offset, &bytes_read);
-						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
+						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
 						j_message_append_8(reply, &bytes_read);
 						j_message_add_send(reply, buf, bytes_read);
-						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_SENT, bytes_read);
+						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
 					jd_backend_close(&bf);
@@ -190,7 +190,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					jd_backend_open(&bf, store, collection, item);
 					jd_backend_sync(&bf);
-					j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
+					j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
 					reply = j_message_new_reply(message);
 					j_message_write(reply, output);
 					jd_backend_close(&bf);
@@ -219,10 +219,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						buf = j_cache_get(cache, length);
 
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_RECEIVED, length);
+						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_BYTES_RECEIVED, length);
 
 						jd_backend_write(&bf, buf, length, offset, &bytes_written);
-						j_statistics_set(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
+						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 						j_cache_clear(cache);
 					}
@@ -289,19 +289,19 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		G_LOCK(jd_statistics);
 
 		value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
-		j_statistics_set(jd_statistics, J_STATISTICS_FILES_CREATED, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_FILES_CREATED, value);
 		value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
-		j_statistics_set(jd_statistics, J_STATISTICS_FILES_DELETED, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_FILES_DELETED, value);
 		value = j_statistics_get(statistics, J_STATISTICS_SYNC);
-		j_statistics_set(jd_statistics, J_STATISTICS_SYNC, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_SYNC, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
-		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_READ, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_READ, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
-		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
-		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
-		j_statistics_set(jd_statistics, J_STATISTICS_BYTES_SENT, value);
+		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
 
 		G_UNLOCK(jd_statistics);
 	}

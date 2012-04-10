@@ -94,32 +94,32 @@ main (int argc, char** argv)
 		j_connection_receive(j_connection(), i, reply, message);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_FILES_CREATED, value);
-		j_statistics_set(statistics_total, J_STATISTICS_FILES_CREATED, value);
+		j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, value);
+		j_statistics_add(statistics_total, J_STATISTICS_FILES_CREATED, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_FILES_DELETED, value);
-		j_statistics_set(statistics_total, J_STATISTICS_FILES_DELETED, value);
+		j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, value);
+		j_statistics_add(statistics_total, J_STATISTICS_FILES_DELETED, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_SYNC, value);
-		j_statistics_set(statistics_total, J_STATISTICS_SYNC, value);
+		j_statistics_add(statistics, J_STATISTICS_SYNC, value);
+		j_statistics_add(statistics_total, J_STATISTICS_SYNC, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_BYTES_READ, value);
-		j_statistics_set(statistics_total, J_STATISTICS_BYTES_READ, value);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_READ, value);
+		j_statistics_add(statistics_total, J_STATISTICS_BYTES_READ, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_BYTES_WRITTEN, value);
-		j_statistics_set(statistics_total, J_STATISTICS_BYTES_WRITTEN, value);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, value);
+		j_statistics_add(statistics_total, J_STATISTICS_BYTES_WRITTEN, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_BYTES_RECEIVED, value);
-		j_statistics_set(statistics_total, J_STATISTICS_BYTES_RECEIVED, value);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, value);
+		j_statistics_add(statistics_total, J_STATISTICS_BYTES_RECEIVED, value);
 
 		value = j_message_get_8(reply);
-		j_statistics_set(statistics, J_STATISTICS_BYTES_SENT, value);
-		j_statistics_set(statistics_total, J_STATISTICS_BYTES_SENT, value);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, value);
+		j_statistics_add(statistics_total, J_STATISTICS_BYTES_SENT, value);
 
 		j_message_free(reply);
 

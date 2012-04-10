@@ -35,6 +35,7 @@
 
 #include <mongo.h>
 
+/* FIXME */
 #define J_USE_NODELAY 0
 
 #if J_USE_NODELAY

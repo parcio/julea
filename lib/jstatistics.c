@@ -178,7 +178,7 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 }
 
 void
-j_statistics_set (JStatistics* statistics, JStatisticsType type, guint64 value)
+j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
 	g_return_if_fail(statistics != NULL);
 
