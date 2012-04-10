@@ -289,7 +289,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	bson_finish(&index);
 
 	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
-	mongo_insert_batch(connection, j_store_collection_collections(store), obj, length);
+	mongo_insert_batch(connection, j_store_collection_collections(store), (bson const**)obj, length);
 
 	bson_destroy(&index);
 

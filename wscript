@@ -27,35 +27,35 @@ def configure (ctx):
 	ctx.check_cfg(
 		package = 'gio-2.0',
 		args = ['--cflags', '--libs'],
-		atleast_version = '2.30',
+		atleast_version = '2.32',
 		uselib_store = 'GIO'
 	)
 
 	ctx.check_cfg(
 		package = 'glib-2.0',
 		args = ['--cflags', '--libs'],
-		atleast_version = '2.30',
+		atleast_version = '2.32',
 		uselib_store = 'GLIB'
 	)
 
 	ctx.check_cfg(
 		package = 'gmodule-2.0',
 		args = ['--cflags', '--libs'],
-		atleast_version = '2.30',
+		atleast_version = '2.32',
 		uselib_store = 'GMODULE'
 	)
 
 	ctx.check_cfg(
 		package = 'gobject-2.0',
 		args = ['--cflags', '--libs'],
-		atleast_version = '2.30',
+		atleast_version = '2.32',
 		uselib_store = 'GOBJECT'
 	)
 
 	ctx.check_cfg(
 		package = 'gthread-2.0',
 		args = ['--cflags', '--libs'],
-		atleast_version = '2.30',
+		atleast_version = '2.32',
 		uselib_store = 'GTHREAD'
 	)
 
