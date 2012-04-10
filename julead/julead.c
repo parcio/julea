@@ -238,15 +238,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					guint64 value;
 
 					get_all = j_message_get_1(message);
+					statistics = (get_all == 0) ? j_thread_get_statistics(thread) : jd_statistics;
 
-					if (get_all == 0)
+					if (get_all != 0)
 					{
-						statistics = j_thread_get_statistics(thread);
-					}
-					else
-					{
-						/* FIXME locking */
-						statistics = jd_statistics;
+						G_LOCK(jd_statistics);
+						/* FIXME add statistics of all threads */
 					}
 
 					reply = j_message_new_reply(message);
@@ -266,6 +263,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
 					j_message_append_8(reply, &value);
+
+					if (get_all != 0)
+					{
+						G_UNLOCK(jd_statistics);
+					}
 
 					j_message_write(reply, output);
 					j_message_free(reply);
