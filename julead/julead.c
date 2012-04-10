@@ -130,7 +130,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						reply = j_message_new_reply(message);
 						j_message_write(reply, output);
-						j_message_free(reply);
+						j_message_unref(reply);
 					}
 				}
 				break;
@@ -175,7 +175,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_close(&bf);
 
 					j_message_write(reply, output);
-					j_message_free(reply);
+					j_message_unref(reply);
 
 					j_cache_clear(cache);
 				}
@@ -195,7 +195,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_write(reply, output);
 					jd_backend_close(&bf);
 
-					j_message_free(reply);
+					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_OPERATION_WRITE:
@@ -270,7 +270,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_write(reply, output);
-					j_message_free(reply);
+					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_OPERATION_REPLY:
@@ -280,7 +280,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		}
 	}
 
-	j_message_free(message);
+	j_message_unref(message);
 
 	{
 		JStatistics* statistics;

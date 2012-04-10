@@ -91,7 +91,7 @@ main (int argc, char** argv)
 		j_connection_send(j_connection(), i, message);
 
 		reply = j_message_new_reply(message);
-		j_connection_receive(j_connection(), i, reply, message);
+		j_connection_receive(j_connection(), i, reply);
 
 		value = j_message_get_8(reply);
 		j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, value);
@@ -121,7 +121,7 @@ main (int argc, char** argv)
 		j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, value);
 		j_statistics_add(statistics_total, J_STATISTICS_BYTES_SENT, value);
 
-		j_message_free(reply);
+		j_message_unref(reply);
 
 		g_print("Data server %d\n", i);
 		print_statistics(statistics);
@@ -142,7 +142,7 @@ main (int argc, char** argv)
 	}
 
 
-	j_message_free(message);
+	j_message_unref(message);
 	j_statistics_free(statistics_total);
 
 	j_fini();

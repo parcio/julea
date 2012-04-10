@@ -83,6 +83,9 @@ struct JMessage
 	gchar* current;
 
 	JList* send_list;
+	JMessage* original_message;
+
+	gint ref_count;
 };
 
 /**
@@ -101,7 +104,7 @@ struct JMessage
  **/
 static
 JMessageHeader*
-j_message_header (JMessage* message)
+j_message_header (JMessage const* message)
 {
 	return (JMessageHeader*)message->data;
 }
@@ -122,7 +125,7 @@ j_message_header (JMessage* message)
  **/
 static
 gsize
-j_message_length (JMessage* message)
+j_message_length (JMessage const* message)
 {
 	guint32 length;
 
@@ -155,7 +158,7 @@ j_message_data_free (gpointer data)
  **/
 static
 gboolean
-j_message_can_append (JMessage* message, gsize length)
+j_message_can_append (JMessage const* message, gsize length)
 {
 	return (message->current + length <= message->data + message->size);
 }
@@ -177,7 +180,7 @@ j_message_can_append (JMessage* message, gsize length)
  **/
 static
 gboolean
-j_message_can_get (JMessage* message, gsize length)
+j_message_can_get (JMessage const* message, gsize length)
 {
 	return (message->current + length <= message->data + sizeof(JMessageHeader) + j_message_length(message));
 }
@@ -223,7 +226,7 @@ j_message_ensure_size (JMessage* message, gsize length)
  * \param op_type An operation type.
  * \param length  A length.
  *
- * \return A new message. Should be freed with j_message_free().
+ * \return A new message. Should be freed with j_message_unref().
  **/
 JMessage*
 j_message_new (JMessageOperationType op_type, gsize length)
@@ -240,6 +243,8 @@ j_message_new (JMessageOperationType op_type, gsize length)
 	message->data = g_malloc(message->size);
 	message->current = message->data + sizeof(JMessageHeader);
 	message->send_list = j_list_new(j_message_data_free);
+	message->original_message = NULL;
+	message->ref_count = 1;
 
 	j_message_header(message)->length = GUINT32_TO_LE(0);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
@@ -259,7 +264,7 @@ j_message_new (JMessageOperationType op_type, gsize length)
  *
  * \param message A message.
  *
- * \return A new reply message. Should be freed with j_message_free().
+ * \return A new reply message. Should be freed with j_message_unref().
  **/
 JMessage*
 j_message_new_reply (JMessage* message)
@@ -270,9 +275,11 @@ j_message_new_reply (JMessage* message)
 
 	reply = g_slice_new(JMessage);
 	reply->size = sizeof(JMessageHeader);
-	reply->data = g_malloc(message->size);
+	reply->data = g_malloc(reply->size);
 	reply->current = reply->data + sizeof(JMessageHeader);
 	reply->send_list = j_list_new(j_message_data_free);
+	reply->original_message = j_message_ref(message);
+	reply->ref_count = 1;
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
@@ -283,7 +290,33 @@ j_message_new_reply (JMessage* message)
 }
 
 /**
- * Frees the memory allocated by a message.
+ * Increases a message's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JMessage* m;
+ *
+ * j_message_ref(m);
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return #message.
+ **/
+JMessage*
+j_message_ref (JMessage* message)
+{
+	g_return_val_if_fail(message != NULL, NULL);
+
+	g_atomic_int_inc(&(message->ref_count));
+
+	return message;
+}
+
+/**
+ * Decreases a message's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the message.
  *
  * \author Michael Kuhn
  *
@@ -293,18 +326,26 @@ j_message_new_reply (JMessage* message)
  * \param message A message.
  **/
 void
-j_message_free (JMessage* message)
+j_message_unref (JMessage* message)
 {
 	g_return_if_fail(message != NULL);
 
-	if (message->send_list != NULL)
+	if (g_atomic_int_dec_and_test(&(message->ref_count)))
 	{
-		j_list_unref(message->send_list);
+		if (message->original_message != NULL)
+		{
+			j_message_unref(message->original_message);
+		}
+
+		if (message->send_list != NULL)
+		{
+			j_list_unref(message->send_list);
+		}
+
+		g_free(message->data);
+
+		g_slice_free(JMessage, message);
 	}
-
-	g_free(message->data);
-
-	g_slice_free(JMessage, message);
 }
 
 /**
@@ -563,6 +604,11 @@ j_message_read (JMessage* message, GInputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
+	if (j_message_operation_type(message) == J_MESSAGE_OPERATION_REPLY)
+	{
+		g_return_val_if_fail(message->original_message != NULL, FALSE);
+	}
+
 	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, NULL))
 	{
 		return FALSE;
@@ -582,43 +628,12 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	return TRUE;
-}
-
-/**
- * Reads a reply message from the network.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param reply   A reply message.
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean
-j_message_read_reply (JMessage* reply, JMessage* message, GInputStream* stream)
-{
-	gboolean ret = FALSE;
-
-	g_return_val_if_fail(reply != NULL, FALSE);
-	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(stream != NULL, FALSE);
-
-	g_return_val_if_fail(j_message_operation_type(reply) == J_MESSAGE_OPERATION_REPLY, FALSE);
-	g_return_val_if_fail(j_message_header(reply)->id == j_message_header(message)->id, FALSE);
-
-	if (j_message_read(reply, stream))
+	if (j_message_operation_type(message) == J_MESSAGE_OPERATION_REPLY)
 	{
-		g_return_val_if_fail(j_message_header(reply)->id == j_message_header(message)->id, FALSE);
-
-		ret = TRUE;
+		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
 
-	return ret;
+	return TRUE;
 }
 
 /**
@@ -688,7 +703,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
  * \return The message's ID.
  **/
 guint32
-j_message_id (JMessage* message)
+j_message_id (JMessage const* message)
 {
 	guint32 id;
 
@@ -712,7 +727,7 @@ j_message_id (JMessage* message)
  * \return The message's operation type.
  **/
 JMessageOperationType
-j_message_operation_type (JMessage* message)
+j_message_operation_type (JMessage const* message)
 {
 	JMessageOperationType op_type;
 
@@ -736,7 +751,7 @@ j_message_operation_type (JMessage* message)
  * \return The message's operation count.
  **/
 guint32
-j_message_operation_count (JMessage* message)
+j_message_operation_count (JMessage const* message)
 {
 	guint32 op_count;
 

@@ -737,7 +737,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		{
 			guint32 reply_operation_count;
 
-			j_connection_receive(connection, i, reply, messages[i]);
+			j_connection_receive(connection, i, reply);
 
 			reply_operation_count = j_message_operation_count(reply);
 
@@ -759,8 +759,8 @@ j_item_read_internal (JOperation* operation, JList* parts)
 
 		j_list_iterator_free(iterator);
 
-		j_message_free(messages[i]);
-		j_message_free(reply);
+		j_message_unref(messages[i]);
+		j_message_unref(reply);
 
 		j_list_unref(buffer_list[i]);
 
@@ -900,10 +900,10 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		j_message_append_n(message, item_name, item_len);
 
 		j_connection_send(connection, i, message);
-		j_message_free(message);
+		j_message_unref(message);
 
 		j_connection_send(connection, i, messages[i]);
-		j_message_free(messages[i]);
+		j_message_unref(messages[i]);
 
 		semantics = j_operation_get_semantics(operation);
 
@@ -920,10 +920,10 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			j_connection_send(connection, i, message);
 
 			reply = j_message_new_reply(message);
-			j_connection_receive(connection, i, reply, message);
+			j_connection_receive(connection, i, reply);
 
-			j_message_free(message);
-			j_message_free(reply);
+			j_message_unref(message);
+			j_message_unref(reply);
 		}
 	}
 

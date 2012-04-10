@@ -409,19 +409,18 @@ j_connection_send (JConnection* connection, guint i, JMessage* message)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_connection_receive (JConnection* connection, guint i, JMessage* reply, JMessage* message)
+j_connection_receive (JConnection* connection, guint i, JMessage* reply)
 {
 	gboolean ret;
 	GInputStream* input;
 
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_return_val_if_fail(i < connection->sockets_len, FALSE);
-	g_return_val_if_fail(message != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i]));
-	ret = j_message_read_reply(reply, message, input);
+	ret = j_message_read(reply, input);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 

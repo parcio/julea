@@ -56,7 +56,8 @@ typedef struct JMessage JMessage;
 
 JMessage* j_message_new (JMessageOperationType, gsize);
 JMessage* j_message_new_reply (JMessage*);
-void j_message_free (JMessage*);
+JMessage* j_message_ref (JMessage*);
+void j_message_unref (JMessage*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
 gboolean j_message_append_4 (JMessage*, gconstpointer);
@@ -69,12 +70,11 @@ gint64 j_message_get_8 (JMessage*);
 gchar const* j_message_get_string (JMessage*);
 
 gboolean j_message_read (JMessage*, GInputStream*);
-gboolean j_message_read_reply (JMessage*, JMessage*, GInputStream*);
 gboolean j_message_write (JMessage*, GOutputStream*);
 
-guint32 j_message_id (JMessage*);
-JMessageOperationType j_message_operation_type (JMessage*);
-guint32 j_message_operation_count (JMessage*);
+guint32 j_message_id (JMessage const*);
+JMessageOperationType j_message_operation_type (JMessage const*);
+guint32 j_message_operation_count (JMessage const*);
 
 void j_message_add_send (JMessage*, gconstpointer, guint64);
 void j_message_add_operation (JMessage*, gsize);

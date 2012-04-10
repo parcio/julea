@@ -38,13 +38,15 @@
 
 static
 void
-test_message_new_free (void)
+test_message_new_ref_unref (void)
 {
 	JMessage* message;
 
 	message = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
 	g_assert(message != NULL);
-	j_message_free(message);
+	j_message_ref(message);
+	j_message_unref(message);
+	j_message_unref(message);
 }
 
 static
@@ -63,7 +65,7 @@ test_message_header (void)
 	g_assert(j_message_operation_type(message) == J_MESSAGE_OPERATION_READ);
 	g_assert_cmpuint(j_message_operation_count(message), ==, 3);
 
-	j_message_free(message);
+	j_message_unref(message);
 }
 
 static
@@ -91,7 +93,7 @@ test_message_append (void)
 	g_assert(!ret);
 	*/
 
-	j_message_free(message);
+	j_message_unref(message);
 }
 
 static
@@ -146,8 +148,8 @@ test_message_write_read (void)
 	dummy_str = j_message_get_string(message[1]);
 	g_assert_cmpstr(dummy_str, ==, "42");
 
-	j_message_free(message[0]);
-	j_message_free(message[1]);
+	j_message_unref(message[0]);
+	j_message_unref(message[1]);
 
 	g_object_unref(input);
 	g_object_unref(output);
@@ -156,7 +158,7 @@ test_message_write_read (void)
 void
 test_message (void)
 {
-	g_test_add_func("/message/new_free", test_message_new_free);
+	g_test_add_func("/message/new_ref_unref", test_message_new_ref_unref);
 	g_test_add_func("/message/header", test_message_header);
 	g_test_add_func("/message/append", test_message_append);
 	g_test_add_func("/message/write_read", test_message_write_read);
