@@ -70,9 +70,9 @@ def configure (ctx):
 	ctx.check_cc(
 		header_name = 'bson.h',
 		lib = 'bson',
-		includes = ['%s/src' % (ctx.options.mongodb,)],
-		libpath = ['%s' % (ctx.options.mongodb,)],
-		rpath = ['%s' % (ctx.options.mongodb,)],
+		includes = ['%s/include' % (ctx.options.mongodb,)],
+		libpath = ['%s/lib' % (ctx.options.mongodb,)],
+		rpath = ['%s/lib' % (ctx.options.mongodb,)],
 		uselib_store = 'BSON',
 		define_name = 'HAVE_BSON'
 	)
@@ -81,9 +81,9 @@ def configure (ctx):
 	ctx.check_cc(
 		header_name = 'mongo.h',
 		lib = 'mongoc',
-		includes = ['%s/src' % (ctx.options.mongodb,)],
-		libpath = ['%s' % (ctx.options.mongodb,)],
-		rpath = ['%s' % (ctx.options.mongodb,)],
+		includes = ['%s/include' % (ctx.options.mongodb,)],
+		libpath = ['%s/lib' % (ctx.options.mongodb,)],
+		rpath = ['%s/lib' % (ctx.options.mongodb,)],
 		uselib_store = 'MONGODB',
 		define_name = 'HAVE_MONGODB'
 	)
