@@ -33,7 +33,7 @@ gboolean
 j_cmd_list (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JURI* uri;
+	JURI* uri = NULL;
 	GError* error = NULL;
 
 	if (j_cmd_arguments_length(arguments) != 1)

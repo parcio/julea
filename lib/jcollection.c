@@ -537,7 +537,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 gboolean
 j_collection_create_item_internal (JOperation* operation, JList* parts)
 {
-	JCollection* collection;
+	JCollection* collection = NULL;
 	JListIterator* it;
 	JSemantics* semantics;
 	bson** obj;
@@ -576,6 +576,11 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 
 	j_list_iterator_free(it);
 
+	if (collection == NULL)
+	{
+		return TRUE;
+	}
+
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
 
 	bson_init(&index);
@@ -611,7 +616,7 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 gboolean
 j_collection_delete_item_internal (JOperation* operation, JList* parts)
 {
-	JCollection* collection;
+	JCollection* collection = NULL;
 	JListIterator* it;
 	JSemantics* semantics;
 	mongo* connection;
@@ -648,6 +653,12 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 
 	j_list_iterator_free(it);
 
+	if (collection == NULL)
+	{
+		return TRUE;
+	}
+
+	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
 	semantics = j_operation_get_semantics(operation);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)

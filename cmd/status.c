@@ -34,7 +34,7 @@ j_cmd_status (gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	JOperation* operation;
-	JURI* uri;
+	JURI* uri = NULL;
 	GError* error = NULL;
 
 	if (j_cmd_arguments_length(arguments) != 1)

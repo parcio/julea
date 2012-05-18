@@ -247,7 +247,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
-	JStore* store;
+	JStore* store = NULL;
 	bson** obj;
 	bson index;
 	mongo* connection;
@@ -281,6 +281,11 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	if (store == NULL)
+	{
+		return TRUE;
+	}
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
 
@@ -326,7 +331,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
-	JStore* store;
+	JStore* store = NULL;
 	mongo* connection;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
@@ -358,6 +363,11 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(it);
+
+	if (store == NULL)
+	{
+		return TRUE;
+	}
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
 	semantics = j_operation_get_semantics(operation);
