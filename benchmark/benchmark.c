@@ -31,8 +31,51 @@
 
 #include "benchmark.h"
 
-gchar* j_benchmark_filter = NULL;
+gchar* opt_path = NULL;
+gchar* opt_semantics = NULL;
+
 GTimer* j_benchmark_timer = NULL;
+
+static
+JSemantics*
+j_benchmark_get_semantics (void)
+{
+	JSemantics* semantics;
+	gchar** parts;
+	guint parts_len;
+
+	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	parts = g_strsplit(opt_semantics, ",", 0);
+	parts_len = g_strv_length(parts);
+
+	for (guint i = 0; i < parts_len; i++)
+	{
+		if (g_str_has_prefix(parts[i], "consistency:"))
+		{
+
+		}
+		else if (g_str_has_prefix(parts[i], "persistency:"))
+		{
+
+		}
+		else if (g_str_has_prefix(parts[i], "concurrency:"))
+		{
+
+		}
+		else if (g_str_has_prefix(parts[i], "redundancy:"))
+		{
+
+		}
+		else if (g_str_has_prefix(parts[i], "security:"))
+		{
+
+		}
+	}
+
+	g_strfreev(parts);
+
+	return semantics;
+}
 
 void
 j_benchmark_timer_start (void)
@@ -52,7 +95,7 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	gchar* left;
 	gchar* ret;
 
-	if (j_benchmark_filter != NULL && !g_str_has_prefix(name, j_benchmark_filter))
+	if (opt_path != NULL && !g_str_has_prefix(name, opt_path))
 	{
 		return;
 	}
@@ -70,13 +113,37 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 int
 main (int argc, char** argv)
 {
-	j_init(&argc, &argv);
+	JSemantics* semantics;
+	GError* error = NULL;
+	GOptionContext* context;
 
-	if (argc > 1)
+	GOptionEntry entries[] = {
+		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Path to use", "/" },
+		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
+		{ NULL }
+	};
+
+	context = g_option_context_new(NULL);
+	g_option_context_add_main_entries(context, entries, NULL);
+
+	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
-		j_benchmark_filter = g_strdup(argv[1]);
+		g_option_context_free(context);
+
+		if (error)
+		{
+			g_printerr("%s\n", error->message);
+			g_error_free(error);
+		}
+
+		return 1;
 	}
 
+	g_option_context_free(context);
+
+	j_init(&argc, &argv);
+
+	semantics = j_benchmark_get_semantics();
 	j_benchmark_timer = g_timer_new();
 
 	benchmark_background_operation();
@@ -84,10 +151,13 @@ main (int argc, char** argv)
 	benchmark_collection();
 	benchmark_item();
 
-	g_free(j_benchmark_filter);
 	g_timer_destroy(j_benchmark_timer);
+	j_semantics_unref(semantics);
 
 	j_fini();
+
+	g_free(opt_path);
+	g_free(opt_semantics);
 
 	return 0;
 }
