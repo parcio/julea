@@ -251,6 +251,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	bson** obj;
 	bson index;
 	mongo* connection;
+	mongo_write_concern write_concern[1];
 	guint i;
 	guint length;
 
@@ -284,20 +285,33 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 
 	if (store == NULL)
 	{
-		return TRUE;
+		goto end;
 	}
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
+	semantics = j_operation_get_semantics(operation);
+
+	mongo_write_concern_init(write_concern);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	{
+		write_concern->j = 1;
+		write_concern->w = 1;
+	}
 
 	bson_init(&index);
 	bson_append_int(&index, "Name", 1);
 	bson_finish(&index);
 
 	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
-	mongo_insert_batch(connection, j_store_collection_collections(store), (bson const**)obj, length);
+	/* FIXME MONGO_CONTINUE_ON_ERROR */
+	mongo_insert_batch(connection, j_store_collection_collections(store), (bson const**)obj, length, write_concern, 0);
 
 	bson_destroy(&index);
 
+	mongo_write_concern_destroy(write_concern);
+
+end:
 	for (i = 0; i < length; i++)
 	{
 		bson_destroy(obj[i]);
@@ -316,12 +330,12 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	}
 	*/
 
-	semantics = j_operation_get_semantics(operation);
-
+	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 	{
 		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}
+	*/
 
 	return TRUE;
 }
@@ -333,6 +347,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	JSemantics* semantics;
 	JStore* store = NULL;
 	mongo* connection;
+	mongo_write_concern write_concern[1];
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -340,6 +355,16 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	/*
 		IsInitialized(true);
 	*/
+
+	semantics = j_operation_get_semantics(operation);
+
+	mongo_write_concern_init(write_concern);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	{
+		write_concern->j = 1;
+		write_concern->w = 1;
+	}
 
 	it = j_list_iterator_new(parts);
 
@@ -357,25 +382,22 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 		bson_finish(&b);
 
 		connection = j_connection_get_connection(j_store_get_connection(store));
-		mongo_remove(connection, j_store_collection_collections(store), &b);
+		/* FIXME do not send write_concern on each remove */
+		mongo_remove(connection, j_store_collection_collections(store), &b, write_concern);
 
 		bson_destroy(&b);
 	}
 
 	j_list_iterator_free(it);
 
-	if (store == NULL)
-	{
-		return TRUE;
-	}
+	mongo_write_concern_destroy(write_concern);
 
-	connection = j_connection_get_connection(j_store_get_connection(store));
-	semantics = j_operation_get_semantics(operation);
-
+	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 	{
 		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
 	}
+	*/
 
 	return TRUE;
 }
