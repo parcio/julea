@@ -45,6 +45,12 @@ j_benchmark_get_semantics (void)
 	guint parts_len;
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	if (opt_semantics == NULL)
+	{
+		return semantics;
+	}
+
 	parts = g_strsplit(opt_semantics, ",", 0);
 	parts_len = g_strv_length(parts);
 

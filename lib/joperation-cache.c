@@ -51,78 +51,51 @@
 struct JOperationCache
 {
 	JCache* cache;
-	JList* list;
+	GAsyncQueue* queue;
+	GThread* thread;
+
+	gboolean working;
+
+	GMutex mutex[1];
+	GCond cond[1];
 };
 
 typedef struct JOperationCache JOperationCache;
 
 static JOperationCache* j_operation_cache = NULL;
 
-void
-j_operation_cache_init (void)
+static
+gpointer
+j_operation_cache_thread (gpointer data)
 {
-	JOperationCache* cache;
-
-	g_return_if_fail(j_operation_cache == NULL);
+	JOperationCache* cache = data;
+	JOperation* operation;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	cache = g_slice_new(JOperationCache);
-	cache->cache = j_cache_new(J_MIB(50));
-	cache->list = j_list_new((JListFreeFunc)j_operation_unref);
-
-	g_atomic_pointer_set(&j_operation_cache, cache);
-
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-}
-
-void
-j_operation_cache_fini (void)
-{
-	JOperationCache* cache;
-
-	g_return_if_fail(j_operation_cache != NULL);
-
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-
-	j_operation_cache_flush();
-
-	cache = g_atomic_pointer_get(&j_operation_cache);
-	g_atomic_pointer_set(&j_operation_cache, NULL);
-
-	j_list_unref(cache->list);
-	j_cache_free(cache->cache);
-
-	g_slice_free(JOperationCache, cache);
-
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-}
-
-gboolean
-j_operation_cache_flush (void)
-{
-	JListIterator* iterator;
-	gboolean ret = TRUE;
-
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-
-	iterator = j_list_iterator_new(j_operation_cache->list);
-
-	while (j_list_iterator_next(iterator))
+	while ((operation = g_async_queue_pop(cache->queue)) != NULL)
 	{
-		JOperation* operation = j_list_iterator_get(iterator);
+		j_operation_execute_internal(operation);
+		j_operation_unref(operation);
 
-		ret = j_operation_execute_internal(operation) && ret;
+		g_mutex_lock(cache->mutex);
+
+		cache->working = (g_async_queue_length(cache->queue) > 0);
+
+		if (!cache->working)
+		{
+			g_cond_signal(cache->cond);
+		}
+
+		g_mutex_unlock(cache->mutex);
 	}
 
-	j_list_iterator_free(iterator);
-
-	j_list_delete_all(j_operation_cache->list);
-	j_cache_clear(j_operation_cache->cache);
+	// FIXME
+	j_cache_clear(cache->cache);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return ret;
+	return NULL;
 }
 
 static
@@ -157,6 +130,79 @@ j_operation_cache_test (JOperationPart* part)
 		default:
 			g_warn_if_reached();
 	}
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return ret;
+}
+
+void
+j_operation_cache_init (void)
+{
+	JOperationCache* cache;
+
+	g_return_if_fail(j_operation_cache == NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	cache = g_slice_new(JOperationCache);
+	cache->cache = j_cache_new(J_MIB(50));
+	cache->queue = g_async_queue_new_full((GDestroyNotify)j_operation_unref);
+	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
+	cache->working = FALSE;
+
+	g_mutex_init(cache->mutex);
+	g_cond_init(cache->cond);
+
+	g_atomic_pointer_set(&j_operation_cache, cache);
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+}
+
+void
+j_operation_cache_fini (void)
+{
+	JOperationCache* cache;
+
+	g_return_if_fail(j_operation_cache != NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	j_operation_cache_flush();
+
+	cache = g_atomic_pointer_get(&j_operation_cache);
+	g_atomic_pointer_set(&j_operation_cache, NULL);
+
+	// FIXME
+	g_async_queue_push(cache->queue, NULL);
+	g_thread_join(cache->thread);
+
+	g_async_queue_unref(cache->queue);
+	j_cache_free(cache->cache);
+
+	g_cond_clear(cache->cond);
+	g_mutex_clear(cache->mutex);
+
+	g_slice_free(JOperationCache, cache);
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+}
+
+gboolean
+j_operation_cache_flush (void)
+{
+	gboolean ret = TRUE;
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	g_mutex_lock(j_operation_cache->mutex);
+
+	while (j_operation_cache->working)
+	{
+		g_cond_wait(j_operation_cache->cond, j_operation_cache->mutex);
+	}
+
+	g_mutex_unlock(j_operation_cache->mutex);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -220,7 +266,7 @@ j_operation_cache_add (JOperation* operation)
 
 	j_list_iterator_free(iterator);
 
-	j_list_append(j_operation_cache->list, j_operation_ref(operation));
+	g_async_queue_push(j_operation_cache->queue, j_operation_ref(operation));
 
 end:
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);

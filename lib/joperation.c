@@ -366,6 +366,7 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, 
 	JOperationAsync* async;
 
 	g_return_if_fail(operation != NULL);
+	g_return_if_fail(operation->background_operation == NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
