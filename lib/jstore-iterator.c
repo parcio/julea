@@ -41,6 +41,7 @@
 #include <jconnection.h>
 #include <jconnection-internal.h>
 #include <joperation-internal.h>
+#include <joperation-cache-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
 

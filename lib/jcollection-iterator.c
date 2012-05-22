@@ -43,6 +43,7 @@
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <joperation-internal.h>
+#include <joperation-cache-internal.h>
 
 /**
  * \defgroup JCollectionIterator Collection Iterator

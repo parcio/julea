@@ -45,6 +45,7 @@
 #include <jlist-iterator.h>
 #include <joperation.h>
 #include <joperation-internal.h>
+#include <joperation-cache-internal.h>
 #include <joperation-part-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
