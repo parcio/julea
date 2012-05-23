@@ -27,12 +27,15 @@
 
 #include <glib.h>
 
+#include <string.h>
+
 #include <julea.h>
 
 #include "benchmark.h"
 
 gchar* opt_path = NULL;
 gchar* opt_semantics = NULL;
+gchar* opt_template = NULL;
 
 GTimer* j_benchmark_timer = NULL;
 
@@ -44,7 +47,18 @@ j_benchmark_get_semantics (void)
 	gchar** parts;
 	guint parts_len;
 
-	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	if (opt_template == NULL || g_strcmp0(opt_template, "default") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
+	else if (g_strcmp0(opt_template, "posix") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
+	}
+	else if (g_strcmp0(opt_template, "checkpoint") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
+	}
 
 	if (opt_semantics == NULL)
 	{
@@ -56,25 +70,87 @@ j_benchmark_get_semantics (void)
 
 	for (guint i = 0; i < parts_len; i++)
 	{
+		gchar const* value;
+
+		if ((value = strchr(parts[i], ':')) == NULL)
+		{
+			continue;
+		}
+
 		if (g_str_has_prefix(parts[i], "consistency:"))
 		{
-
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "persistency:"))
 		{
-
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+			}
+			else if (g_strcmp0(value, "on-close") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_ON_CLOSE);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "concurrency:"))
 		{
-
+			if (g_strcmp0(value, "overlapping") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
+			}
+			else if (g_strcmp0(value, "non-overlapping") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "redundancy:"))
 		{
-
+			if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NONE);
+			}
+			else if (g_strcmp0(value, "one-copy") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_ONE_COPY);
+			}
+			else if (g_strcmp0(value, "two-copies") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_TWO_COPIES);
+			}
+			else if (g_strcmp0(value, "three-copies") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_THREE_COPIES);
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "security:"))
 		{
-
+			if (g_strcmp0(value, "strict") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_NONE);
+			}
 		}
 	}
 
@@ -124,8 +200,9 @@ main (int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
-		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Path to use", "/" },
+		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", "/" },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
+		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
 		{ NULL }
 	};
 
