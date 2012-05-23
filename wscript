@@ -14,6 +14,7 @@ def options (ctx):
 
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
+	ctx.add_option('--rados', action='store', default='/usr', help='Use RADOS')
 	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
 
 def configure (ctx):
@@ -108,6 +109,17 @@ def configure (ctx):
 			rpath = ['%s/lib' % (ctx.options.otf,)],
 			uselib_store = 'OTF',
 			define_name = 'HAVE_OTF'
+		)
+
+	if ctx.options.rados:
+		ctx.check_cc(
+			header_name = 'librados.h',
+			lib = 'rados',
+			includes = ['%s/include/rados' % (ctx.options.rados,)],
+			libpath = ['%s/lib' % (ctx.options.rados,)],
+			rpath = ['%s/lib' % (ctx.options.rados,)],
+			uselib_store = 'RADOS',
+			define_name = 'HAVE_RADOS'
 		)
 
 	if ctx.options.zookeeper:
