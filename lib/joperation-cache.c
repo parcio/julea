@@ -75,6 +75,12 @@ j_operation_cache_thread (gpointer data)
 
 	while ((operation = g_async_queue_pop(cache->queue)) != NULL)
 	{
+		/* data == cache, terminate */
+		if (operation == data)
+		{
+			return NULL;
+		}
+
 		j_operation_execute_internal(operation);
 		j_operation_unref(operation);
 
@@ -90,7 +96,7 @@ j_operation_cache_thread (gpointer data)
 		g_mutex_unlock(cache->mutex);
 	}
 
-	// FIXME
+	// FIXME clears all
 	j_cache_clear(cache->cache);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -173,8 +179,8 @@ j_operation_cache_fini (void)
 	cache = g_atomic_pointer_get(&j_operation_cache);
 	g_atomic_pointer_set(&j_operation_cache, NULL);
 
-	// FIXME
-	g_async_queue_push(cache->queue, NULL);
+	/* push fake operation */
+	g_async_queue_push(cache->queue, cache);
 	g_thread_join(cache->thread);
 
 	g_async_queue_unref(cache->queue);
