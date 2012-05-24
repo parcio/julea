@@ -14,8 +14,8 @@ def options (ctx):
 
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
-	ctx.add_option('--rados', action='store', default='/usr', help='Use RADOS')
-	ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
+	#ctx.add_option('--rados', action='store', default='/usr', help='Use RADOS')
+	#ctx.add_option('--zookeeper', action='store', default=None, help='Use ZooKeeper')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -111,27 +111,28 @@ def configure (ctx):
 			define_name = 'HAVE_OTF'
 		)
 
-	if ctx.options.rados:
-		ctx.check_cc(
-			header_name = 'librados.h',
-			lib = 'rados',
-			includes = ['%s/include/rados' % (ctx.options.rados,)],
-			libpath = ['%s/lib' % (ctx.options.rados,)],
-			rpath = ['%s/lib' % (ctx.options.rados,)],
-			uselib_store = 'RADOS',
-			define_name = 'HAVE_RADOS'
-		)
+	#if ctx.options.rados:
+	#	ctx.check_cc(
+	#		header_name = 'librados.h',
+	#		lib = 'rados',
+	#		includes = ['%s/include/rados' % (ctx.options.rados,)],
+	#		libpath = ['%s/lib' % (ctx.options.rados,)],
+	#		rpath = ['%s/lib' % (ctx.options.rados,)],
+	#		uselib_store = 'RADOS',
+	#		define_name = 'HAVE_RADOS',
+	#		mandatory = False
+	#	)
 
-	if ctx.options.zookeeper:
-		ctx.check_cc(
-			header_name = 'zookeeper.h',
-			lib = 'zookeeper_mt',
-			includes = ['%s/include/c-client-src' % (ctx.options.zookeeper,)],
-			libpath = ['%s/lib' % (ctx.options.zookeeper,)],
-			rpath = ['%s/lib' % (ctx.options.zookeeper,)],
-			uselib_store = 'ZOOKEEPER',
-			define_name = 'HAVE_ZOOKEEPER'
-		)
+	#if ctx.options.zookeeper:
+	#	ctx.check_cc(
+	#		header_name = 'zookeeper.h',
+	#		lib = 'zookeeper_mt',
+	#		includes = ['%s/include/c-client-src' % (ctx.options.zookeeper,)],
+	#		libpath = ['%s/lib' % (ctx.options.zookeeper,)],
+	#		rpath = ['%s/lib' % (ctx.options.zookeeper,)],
+	#		uselib_store = 'ZOOKEEPER',
+	#		define_name = 'HAVE_ZOOKEEPER'
+	#	)
 
 	if ctx.options.debug:
 		ctx.env.CFLAGS += ['-pedantic', '-Wall', '-Wextra']
