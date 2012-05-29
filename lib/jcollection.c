@@ -593,6 +593,8 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 		write_concern->w = 1;
 	}
 
+	mongo_write_concern_finish(write_concern);
+
 	bson_init(&index);
 	bson_append_int(&index, "Collection", 1);
 	bson_append_int(&index, "Name", 1);
@@ -654,6 +656,8 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 		write_concern->j = 1;
 		write_concern->w = 1;
 	}
+
+	mongo_write_concern_finish(write_concern);
 
 	it = j_list_iterator_new(parts);
 
