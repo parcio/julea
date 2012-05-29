@@ -1022,7 +1022,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			background_data = j_background_operation_wait(background_operations[i]);
 			j_background_operation_unref(background_operations[i]);
 
-			j_message_unref(background_data->u.write.sync_message);
+			if (background_data->u.write.sync_message != NULL)
+			{
+				j_message_unref(background_data->u.write.sync_message);
+			}
+
 			g_slice_free(JItemBackgroundData, background_data);
 		}
 
