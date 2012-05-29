@@ -115,10 +115,12 @@ _benchmark_item_delete (gboolean batch)
 	guint const n = 10000;
 
 	JCollection* collection;
+	JOperation* get_operation;
 	JOperation* operation;
 	JStore* store;
 	gdouble elapsed;
 
+	get_operation = j_operation_new(NULL);
 	operation = j_operation_new(NULL);
 
 	store = j_store_new("test");
@@ -150,8 +152,8 @@ _benchmark_item_delete (gboolean batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		j_collection_get_item(collection, &item, name, J_ITEM_STATUS_NONE, operation);
-		j_operation_execute(operation);
+		j_collection_get_item(collection, &item, name, J_ITEM_STATUS_NONE, get_operation);
+		j_operation_execute(get_operation);
 		g_free(name);
 
 		j_collection_delete_item(collection, item, operation);
@@ -176,6 +178,7 @@ _benchmark_item_delete (gboolean batch)
 	j_store_unref(store);
 	j_operation_execute(operation);
 
+	j_operation_unref(get_operation);
 	j_operation_unref(operation);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
