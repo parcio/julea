@@ -46,17 +46,44 @@
  **/
 struct JStatistics
 {
+	/**
+	 * The trace.
+	 **/
 	JTrace* trace;
 
+	/**
+	 * The number of created files.
+	 **/
 	guint64 files_created;
+
+	/**
+	 * The number of deleted files.
+	 **/
 	guint64 files_deleted;
 
+	/**
+	 * The number of sync operations.
+	 **/
 	guint64 sync_count;
 
+	/**
+	 * The number of read bytes.
+	 **/
 	guint64 bytes_read;
+
+	/**
+	 * The number of written bytes.
+	 **/
 	guint64 bytes_written;
 
+	/**
+	 * The number of received bytes.
+	 **/
 	guint64 bytes_received;
+
+	/**
+	 * The number of sent bytes.
+	 **/
 	guint64 bytes_sent;
 };
 
@@ -106,6 +133,8 @@ j_statistics_new (JTrace* trace)
 {
 	JStatistics* statistics;
 
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
 	statistics = g_slice_new(JStatistics);
 	statistics->trace = trace;
 	statistics->files_created = 0;
@@ -115,6 +144,8 @@ j_statistics_new (JTrace* trace)
 	statistics->bytes_written = 0;
 	statistics->bytes_received = 0;
 	statistics->bytes_sent = 0;
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return statistics;
 }
@@ -136,7 +167,11 @@ j_statistics_free (JStatistics* statistics)
 {
 	g_return_if_fail(statistics != NULL);
 
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
 	g_slice_free(JStatistics, statistics);
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 guint64
@@ -145,6 +180,8 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 	guint64 value = 0;
 
 	g_return_val_if_fail(statistics != NULL, 0);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	switch (type)
 	{
@@ -174,6 +211,8 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 			break;
 	}
 
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
 	return value;
 }
 
@@ -181,6 +220,8 @@ void
 j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
 	g_return_if_fail(statistics != NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	switch (type)
 	{
@@ -214,6 +255,8 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 	{
 		j_trace_counter(statistics->trace, j_statistics_get_type_name(type), value);
 	}
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**

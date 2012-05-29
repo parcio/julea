@@ -47,8 +47,19 @@
  **/
 struct JThread
 {
+	/**
+	 * The statistics.
+	 **/
 	JStatistics* statistics;
+
+	/**
+	 * The trace.
+	 **/
 	JTrace* trace;
+
+	/**
+	 * The name of the function executed in the thread.
+	 **/
 	gchar* function_name;
 };
 
@@ -128,6 +139,9 @@ JStatistics*
 j_thread_get_statistics (JThread* thread)
 {
 	g_return_val_if_fail(thread != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return thread->statistics;
 }

@@ -59,6 +59,9 @@
  **/
 struct JStore
 {
+	/**
+	 * The name.
+	 **/
 	gchar* name;
 
 	struct
@@ -67,8 +70,14 @@ struct JStore
 	}
 	collection;
 
+	/**
+	 * The connection.
+	 **/
 	JConnection* connection;
 
+	/**
+	 * The reference count.
+	 **/
 	gint ref_count;
 };
 

@@ -106,6 +106,9 @@ struct JTrace
 	otf;
 #endif
 
+	/**
+	 * The reference count.
+	 **/
 	gint ref_count;
 };
 

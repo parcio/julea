@@ -55,9 +55,15 @@
 
 struct JStoreIterator
 {
-	mongo_cursor* cursor;
-
+	/**
+	 * The store.
+	 **/
 	JStore* store;
+
+	/**
+	 * The MongoDB cursor.
+	 **/
+	mongo_cursor* cursor;
 };
 
 /**

@@ -44,22 +44,55 @@
  * @{
  **/
 
+/**
+ * A background operation.
+ **/
 struct JBackgroundOperation
 {
+	/**
+	 * The function to execute in the background.
+	 **/
 	JBackgroundOperationFunc func;
+
+	/**
+	 * User data to give to #func.
+	 **/
 	gpointer data;
+
+	/**
+	 * The return value of #func.
+	 **/
 	gpointer result;
 
+	/**
+	 * Whether the background operation has finished.
+	 **/
 	gboolean completed;
 
 	GMutex mutex[1];
 	GCond cond[1];
 
+	/**
+	 * The reference count.
+	 **/
 	gint ref_count;
 };
 
 static GThreadPool* j_thread_pool = NULL;
 
+/**
+ * Executes background operations.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param data A background operations.
+ * \param user_data User data.
+ **/
 static
 void
 j_background_operation_thread (gpointer data, gpointer user_data)
@@ -81,6 +114,15 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 	j_thread_free(thread);
 }
 
+/**
+ * Initializes the background operation framework.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * j_background_operation_init();
+ * \endcode
+ **/
 void
 j_background_operation_init (void)
 {
@@ -105,6 +147,15 @@ j_background_operation_init (void)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
+/**
+ * Shuts down the background operation framework.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * j_background_operation_fini();
+ * \endcode
+ **/
 void
 j_background_operation_fini (void)
 {
@@ -122,6 +173,29 @@ j_background_operation_fini (void)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
+/**
+ * Creates a new background operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * static
+ * gpointer
+ * background_func (gpointer data)
+ * {
+ *   return NULL;
+ * }
+ *
+ * JBackgroundOperation* background_operation;
+ *
+ * background_operation = j_background_operation_new(background_func, NULL);
+ * \endcode
+ *
+ * \param func A function to execute in the background.
+ * \param data User data given to #func.
+ *
+ * \return A new background operation. Should be freed with j_background_operation_unref().
+ **/
 JBackgroundOperation*
 j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 {
@@ -148,6 +222,21 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 	return background_operation;
 }
 
+/**
+ * Increases a background operation's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_ref(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ *
+ * \return #background_operation.
+ **/
 JBackgroundOperation*
 j_background_operation_ref (JBackgroundOperation* background_operation)
 {
@@ -162,6 +251,20 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 	return background_operation;
 }
 
+/**
+ * Decreases a background operation's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the background operation.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_unref(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ **/
 void
 j_background_operation_unref (JBackgroundOperation* background_operation)
 {
@@ -180,6 +283,21 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
+/**
+ * Waits for a background operation to finish.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_wait(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ *
+ * \return The return value of the function given to j_background_operation_new().
+ **/
 gpointer
 j_background_operation_wait (JBackgroundOperation* background_operation)
 {
