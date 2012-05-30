@@ -69,7 +69,14 @@ struct JBackgroundOperation
 	 **/
 	gboolean completed;
 
+	/**
+	 * The mutex for #completed.
+	 */
 	GMutex mutex[1];
+
+	/**
+	 * The condition for #completed.
+	 */
 	GCond cond[1];
 
 	/**

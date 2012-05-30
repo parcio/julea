@@ -42,21 +42,51 @@
  * @{
  **/
 
+/**
+ * A configuration.
+ */
 struct JConfiguration
 {
+	/**
+	 * The data servers.
+	 */
 	gchar** data;
+
+	/**
+	 * The metadata servers.
+	 */
 	gchar** metadata;
 
+	/**
+	 * The number of data servers.
+	 */
 	guint data_len;
+
+	/**
+	 * The number of metadata servers.
+	 */
 	guint metadata_len;
 
+	/**
+	 * The storage configuration.
+	 */
 	struct
 	{
+		/**
+		 * The backend.
+		 */
 		gchar* backend;
+
+		/**
+		 * The path.
+		 */
 		gchar* path;
 	}
 	storage;
 
+	/**
+	 * The reference count.
+	 */
 	gint ref_count;
 };
 

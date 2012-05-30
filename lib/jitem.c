@@ -62,22 +62,57 @@
  * @{
  **/
 
+/**
+ * Data for background operations.
+ */
 struct JItemBackgroundData
 {
+	/**
+	 * The connection.
+	 */
 	JConnection* connection;
+
+	/**
+	 * The message to send.
+	 */
 	JMessage* message;
+
+	/**
+	 * The data server's index.
+	 */
 	guint index;
 
+	/**
+	 * The union for read and write parts.
+	 */
 	union
 	{
+		/**
+		 * The read part.
+		 */
 		struct
 		{
+			/**
+			 * The list of buffers to fill.
+			 * Contains #JItemReadData elements.
+			 */
 			JList* buffer_list;
 		}
 		read;
 
+		/**
+		 * The write part.
+		 */
 		struct
 		{
+			/**
+			 * The create message.
+			 */
+			JMessage* create_message;
+
+			/**
+			 * The sync message.
+			 */
 			JMessage* sync_message;
 		}
 		write;
@@ -87,9 +122,19 @@ struct JItemBackgroundData
 
 typedef struct JItemBackgroundData JItemBackgroundData;
 
+/**
+ * Data for buffers.
+ */
 struct JItemReadData
 {
+	/**
+	 * The data.
+	 */
 	gpointer data;
+
+	/**
+	 * The data length.
+	 */
 	guint64* nbytes;
 };
 
@@ -134,6 +179,17 @@ struct JItem
 	gint ref_count;
 };
 
+/**
+ * Executes read operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
 static
 gpointer
 j_item_read_background_operation (gpointer data)
@@ -190,24 +246,30 @@ j_item_read_background_operation (gpointer data)
 	return data;
 }
 
+/**
+ * Executes write operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
 static
 gpointer
 j_item_write_background_operation (gpointer data)
 {
 	JItemBackgroundData* background_data = data;
 
-	/* FIXME temporary workaround */
-	/*
-	message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
-	j_message_append_n(message, store_name, store_len);
-	j_message_append_n(message, collection_name, collection_len);
-	j_message_add_operation(message, item_len);
-	j_message_append_n(message, item_name, item_len);
+	if (background_data->u.write.create_message != NULL)
+	{
+		/* FIXME reply? */
+		j_connection_send(background_data->connection, background_data->index, background_data->u.write.create_message);
+	}
 
-	j_connection_send(background_data->connection, background_data->index, message);
-	j_message_unref(message);
-	*/
-
+	/* FIXME reply? */
 	j_connection_send(background_data->connection, background_data->index, background_data->message);
 
 	if (background_data->u.write.sync_message != NULL)
@@ -988,12 +1050,20 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* background_data;
+		JMessage* create_message = NULL;
 		JMessage* sync_message = NULL;
 
 		if (messages[i] == NULL)
 		{
 			continue;
 		}
+
+		/* FIXME temporary workaround */
+		create_message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
+		j_message_append_n(create_message, store_name, store_len);
+		j_message_append_n(create_message, collection_name, collection_len);
+		j_message_add_operation(create_message, item_len);
+		j_message_append_n(create_message, item_name, item_len);
 
 		if (j_semantics_get(j_operation_get_semantics(operation), J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 		{
@@ -1021,6 +1091,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 			background_data = j_background_operation_wait(background_operations[i]);
 			j_background_operation_unref(background_operations[i]);
+
+			if (background_data->u.write.create_message != NULL)
+			{
+				j_message_unref(background_data->u.write.create_message);
+			}
 
 			if (background_data->u.write.sync_message != NULL)
 			{

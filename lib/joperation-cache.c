@@ -48,15 +48,39 @@
  * @{
  **/
 
+/**
+ * An operation cache.
+ */
 struct JOperationCache
 {
+	/**
+	 * The cache.
+	 */
 	JCache* cache;
+
+	/**
+	 * The queue of operations.
+	 */
 	GAsyncQueue* queue;
+
+	/**
+	 * The thread executing operations in the background.
+	 */
 	GThread* thread;
 
+	/**
+	 * Whether #thread is currently working.
+	 */
 	gboolean working;
 
+	/**
+	 * The mutex for #working.
+	 */
 	GMutex mutex[1];
+
+	/**
+	 * The condition for #working.
+	 */
 	GCond cond[1];
 };
 

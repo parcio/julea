@@ -43,13 +43,42 @@
  * @{
  **/
 
+/**
+ * A cache.
+ */
 struct JCache
 {
+	/**
+	* The size.
+	*/
 	guint64 size;
+
+	/**
+	* The data.
+	*/
 	gchar* data;
+
+	/**
+	* The current position within #data.
+	*/
 	gchar* current;
 };
 
+/**
+ * Creates a new cache.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCache* cache;
+ *
+ * cache = j_cache_new(1024);
+ * \endcode
+ *
+ * \param size A size.
+ *
+ * \return A new cache. Should be freed with j_cache_free().
+ **/
 JCache*
 j_cache_new (guint64 size)
 {
@@ -69,6 +98,21 @@ j_cache_new (guint64 size)
 	return cache;
 }
 
+/**
+ * Frees the memory allocated for the cache.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCache* cache;
+ *
+ * ...
+ *
+ * j_cache_free(cache);
+ * \endcode
+ *
+ * \param cache A cache.
+ **/
 void
 j_cache_free (JCache* cache)
 {
@@ -86,10 +130,28 @@ j_cache_free (JCache* cache)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
+/**
+ * Gets a new segment from the cache.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCache* cache;
+ *
+ * ...
+ *
+ * j_cache_get(cache, 1024);
+ * \endcode
+ *
+ * \param cache  A cache.
+ * \param length A length.
+ *
+ * \return A pointer to a segment of the cache, NULL if not enough space is available.
+ **/
 gpointer
 j_cache_get (JCache* cache, guint64 length)
 {
-	gpointer ret;
+	gpointer ret = NULL;
 
 	g_return_val_if_fail(cache != NULL, NULL);
 
@@ -103,7 +165,6 @@ j_cache_get (JCache* cache, guint64 length)
 
 	if (cache->current + length > cache->data + cache->size)
 	{
-		ret = NULL;
 		goto end;
 	}
 
@@ -116,6 +177,26 @@ end:
 	return ret;
 }
 
+/**
+ * Puts data into a new segment from the cache.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCache* cache;
+ * gpointer data;
+ *
+ * ...
+ *
+ * j_cache_put(cache, data, 1024);
+ * \endcode
+ *
+ * \param cache  A cache.
+ * \param data   Data.
+ * \param length A length.
+ *
+ * \return A pointer to the used segment of the cache, NULL if not enough space is available.
+ **/
 gpointer
 j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 {
@@ -138,6 +219,21 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 	return ret;
 }
 
+/**
+ * Clears the cache.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCache* cache;
+ *
+ * ...
+ *
+ * j_cache_clear(cache);
+ * \endcode
+ *
+ * \param cache A cache.
+ **/
 void
 j_cache_clear (JCache* cache)
 {

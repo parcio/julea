@@ -45,20 +45,48 @@
  * @{
  **/
 
+/**
+ * Additional message data.
+ **/
 struct JMessageData
 {
+	/**
+	 * The data.
+	 **/
 	gconstpointer data;
+
+	/**
+	 * The data length.
+	 **/
 	guint64 length;
 };
 
 typedef struct JMessageData JMessageData;
 
 #pragma pack(4)
+/**
+ * A message header.
+ **/
 struct JMessageHeader
 {
+	/**
+	 * The message length.
+	 **/
 	guint32 length;
+
+	/**
+	 * The message ID.
+	 **/
 	guint32 id;
+
+	/**
+	 * The operation type.
+	 **/
 	guint32 op_type;
+
+	/**
+	 * The operation count.
+	 **/
 	guint32 op_count;
 };
 #pragma pack()
@@ -70,10 +98,14 @@ typedef struct JMessageHeader JMessageHeader;
  **/
 struct JMessage
 {
+	/**
+	 * The current size.
+	 **/
 	gsize size;
 
 	/**
-	 * The message's data.
+	 * The data.
+	 * This also contains a JMessageHeader.
 	 **/
 	gchar* data;
 
@@ -82,9 +114,21 @@ struct JMessage
 	 **/
 	gchar* current;
 
+	/**
+	 * The list of additional data to send in j_message_write().
+	 * Contains JMessageData elements.
+	 **/
 	JList* send_list;
+
+	/**
+	 * The original message.
+	 * Set if the message is a reply, NULL otherwise.
+	 **/
 	JMessage* original_message;
 
+	/**
+	 * The reference count.
+	 **/
 	gint ref_count;
 };
 

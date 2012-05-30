@@ -62,8 +62,14 @@ struct JOperation
 	 **/
 	JList* list;
 
+	/**
+	 * The semantics.
+	 **/
 	JSemantics* semantics;
 
+	/**
+	 * The background operation used for j_operation_execute_async().
+	 **/
 	JBackgroundOperation* background_operation;
 
 	/**
