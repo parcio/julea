@@ -246,7 +246,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JOperation* o
  * \endcode
  *
  * \param store      A store.
- * \param collection A collection.
+ * \param collection A pointer to a collection.
  * \param name       A name.
  * \param operation  An operation.
  **/

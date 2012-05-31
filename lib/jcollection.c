@@ -259,7 +259,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JOperation* oper
  * \endcode
  *
  * \param collection A collection.
- * \param item       An item.
+ * \param item       A pointer to an item.
  * \param name       A name.
  * \param operation  An operation.
  **/

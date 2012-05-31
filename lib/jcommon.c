@@ -57,15 +57,34 @@
  * @{
  **/
 
+/**
+ * Common structure.
+ */
 struct JCommon
 {
+	/**
+	 * The configuration.
+	 */
 	JConfiguration* configuration;
+
+	/**
+	 * The connection.
+	 */
 	JConnection* connection;
 };
 
 static JCommon* j_common = NULL;
 static JThread* j_thread_global = NULL;
 
+/**
+ * Returns whether JULEA has been initialized.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \return TRUE if JULEA has been initialized, FALSE otherwise.
+ */
 static
 gboolean
 j_is_initialized (void)
@@ -77,6 +96,14 @@ j_is_initialized (void)
 	return (p != NULL);
 }
 
+/**
+ * Initializes JULEA.
+ *
+ * \author Michael Kuhn
+ *
+ * \param argc A pointer to \c argc.
+ * \param argv A pointer to \c argv.
+ */
 void
 j_init (gint* argc, gchar*** argv)
 {
@@ -142,6 +169,11 @@ error:
 	g_error("%s: Failed to initialize JULEA.", G_STRLOC);
 }
 
+/**
+ * Shuts down JULEA.
+ *
+ * \author Michael Kuhn
+ */
 void
 j_fini (void)
 {
@@ -171,6 +203,17 @@ j_fini (void)
 	g_slice_free(JCommon, common);
 }
 
+/**
+ * Creates a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store      A store.
+ * \param operation  An operation.
+ **/
 void
 j_create_store (JStore* store, JOperation* operation)
 {
@@ -185,6 +228,17 @@ j_create_store (JStore* store, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Deletes a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store      A store.
+ * \param operation  An operation.
+ **/
 void
 j_delete_store (JStore* store, JOperation* operation)
 {
@@ -199,6 +253,18 @@ j_delete_store (JStore* store, JOperation* operation)
 	j_operation_add(operation, part);
 }
 
+/**
+ * Gets a store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store     A pointer to a store.
+ * \param name      A name.
+ * \param operation An operation.
+ **/
 void
 j_get_store (JStore** store, gchar const* name, JOperation* operation)
 {
@@ -217,6 +283,15 @@ j_get_store (JStore** store, gchar const* name, JOperation* operation)
 
 /* Internal */
 
+/**
+ * Returns the configuration.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \return The configuration.
+ */
 JConfiguration*
 j_configuration (void)
 {
@@ -229,6 +304,15 @@ j_configuration (void)
 	return common->configuration;
 }
 
+/**
+ * Returns the connection.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \return The connection.
+ */
 JConnection*
 j_connection (void)
 {
@@ -241,6 +325,18 @@ j_connection (void)
 	return common->connection;
 }
 
+/**
+ * Creates stores.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_create_store_internal (JOperation* operation, JList* parts)
 {
@@ -269,6 +365,18 @@ j_create_store_internal (JOperation* operation, JList* parts)
 	return TRUE;
 }
 
+/**
+ * Deletes stores.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_delete_store_internal (JOperation* operation, JList* parts)
 {
@@ -296,6 +404,18 @@ j_delete_store_internal (JOperation* operation, JList* parts)
 	return TRUE;
 }
 
+/**
+ * Gets stores.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_get_store_internal (JOperation* operation, JList* parts)
 {
