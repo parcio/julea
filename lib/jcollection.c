@@ -361,6 +361,15 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	return collection;
 }
 
+/**
+ * Returns the MongoDB collection used for items.
+ *
+ * \author Michael Kuhn
+ *
+ * \param collection A collection.
+ *
+ * \return The MongoDB collection.
+ */
 gchar const*
 j_collection_collection_items (JCollection* collection)
 {

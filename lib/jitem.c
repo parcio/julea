@@ -298,7 +298,7 @@ j_item_write_background_operation (gpointer data)
  * i = j_item_new("JULEA");
  * \endcode
  *
- * \param name       An item name.
+ * \param name An item name.
  *
  * \return A new item. Should be freed with j_item_unref().
  **/
@@ -397,7 +397,7 @@ j_item_unref (JItem* item)
  *
  * \param item An item.
  *
- * \return An item name.
+ * \return The name.
  **/
 gchar const*
 j_item_get_name (JItem* item)

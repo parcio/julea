@@ -82,7 +82,19 @@ struct JStore
 };
 
 /**
- * Creates a new JStore.
+ * Creates a new store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JStore* s;
+ *
+ * s = j_store_new("JULEA");
+ * \endcode
+ *
+ * \param name A store name.
+ *
+ * \return A new store. Should be freed with j_store_unref().
  **/
 JStore*
 j_store_new (gchar const* name)
@@ -103,6 +115,23 @@ j_store_new (gchar const* name)
 	return store;
 }
 
+/**
+ * Increases an store's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JStore* s;
+ *
+ * ...
+ *
+ * j_store_ref(s);
+ * \endcode
+ *
+ * \param store A store.
+ *
+ * \return #store.
+ **/
 JStore*
 j_store_ref (JStore* store)
 {
@@ -113,6 +142,17 @@ j_store_ref (JStore* store)
 	return store;
 }
 
+/**
+ * Decreases a store's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store A store.
+ **/
 void
 j_store_unref (JStore* store)
 {
@@ -129,6 +169,18 @@ j_store_unref (JStore* store)
 	}
 }
 
+/**
+ * Returns a store's name.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store A store.
+ *
+ * \return The name.
+ **/
 gchar const*
 j_store_get_name (JStore* store)
 {
@@ -137,6 +189,18 @@ j_store_get_name (JStore* store)
 	return store->name;
 }
 
+/**
+ * Returns a store's connection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param store A store.
+ *
+ * \return The connection.
+ **/
 JConnection*
 j_store_get_connection (JStore* store)
 {
@@ -234,6 +298,15 @@ j_store_delete_collection (JStore* store, JCollection* collection, JOperation* o
 
 /* Internal */
 
+/**
+ * Returns the MongoDB collection used for collections.
+ *
+ * \author Michael Kuhn
+ *
+ * \param store A store.
+ *
+ * \return The MongoDB collection.
+ */
 gchar const*
 j_store_collection_collections (JStore* store)
 {
@@ -251,6 +324,18 @@ j_store_collection_collections (JStore* store)
 	return store->collection.collections;
 }
 
+/**
+ * Creates collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_store_create_collection_internal (JOperation* operation, JList* parts)
 {
@@ -351,6 +436,18 @@ end:
 	return TRUE;
 }
 
+/**
+ * Deletes collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_store_delete_collection_internal (JOperation* operation, JList* parts)
 {
@@ -415,6 +512,18 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	return TRUE;
 }
 
+/**
+ * Gets collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param operation An operation.
+ * \param parts     A list of operation parts.
+ *
+ * \return TRUE.
+ */
 gboolean
 j_store_get_collection_internal (JOperation* operation, JList* parts)
 {

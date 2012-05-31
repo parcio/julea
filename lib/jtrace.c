@@ -112,6 +112,9 @@ struct JTrace
 	gint ref_count;
 };
 
+/**
+ * Flags used to enable specific trace back-ends.
+ */
 enum JTraceFlags
 {
 	J_TRACE_OFF     = 0,
@@ -284,6 +287,17 @@ j_trace_file_operation_name (JTraceFileOperation op)
 	}
 }
 
+/**
+ * Checks whether a function should be traced.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param name A function name.
+ *
+ * \return TRUE if the function should be traced, FALSE otherwise.
+ **/
 static
 gboolean
 j_trace_function_check (gchar const* name)
@@ -498,12 +512,26 @@ j_trace_fini (void)
 	g_free(j_trace_name);
 }
 
+/**
+ * Returns the thread-default trace.
+ *
+ * \author Michael Kuhn
+ *
+ * \return The thread-default trace.
+ **/
 JTrace*
 j_trace_get_thread_default (void)
 {
 	return g_private_get(&j_trace_thread_default);
 }
 
+/**
+ * Sets the thread-default trace.
+ *
+ * \author Michael Kuhn
+ *
+ * \param trace A trace.
+ **/
 void
 j_trace_set_thread_default (JTrace* trace)
 {
@@ -516,16 +544,16 @@ j_trace_set_thread_default (JTrace* trace)
 }
 
 /**
- * Traces the entering of a thread.
+ * Creates a new trace.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param thread         A thread.
+ * \param thread A thread.
  *
- * \return A new trace. Should be freed with j_trace_thread_leave().
+ * \return A new trace. Should be freed with j_trace_unref().
  **/
 JTrace*
 j_trace_new (GThread* thread)
