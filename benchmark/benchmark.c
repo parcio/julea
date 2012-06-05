@@ -176,22 +176,30 @@ j_benchmark_timer_elapsed (void)
 void
 j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 {
+	GTimer* func_timer;
 	gchar* left;
 	gchar* ret;
+	gdouble elapsed;
 
 	if (opt_path != NULL && !g_str_has_prefix(name, opt_path))
 	{
 		return;
 	}
 
+	func_timer = g_timer_new();
+
 	left = g_strconcat(name, ":", NULL);
 	g_print("%-60s ", left);
 	g_free(left);
 
+	g_timer_start(func_timer);
 	ret = (*benchmark_func)();
+	elapsed = g_timer_elapsed(func_timer, NULL);
 
-	g_print("%s\n", ret);
+	g_print("%s [%f seconds]\n", ret, elapsed);
 	g_free(ret);
+
+	g_timer_destroy(func_timer);
 }
 
 int
