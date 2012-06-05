@@ -1080,6 +1080,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		background_data->connection = connection;
 		background_data->message = messages[i];
 		background_data->index = i;
+		background_data->u.write.create_message = create_message;
 		background_data->u.write.sync_message = sync_message;
 
 		background_operations[i] = j_background_operation_new(j_item_write_background_operation, background_data);
