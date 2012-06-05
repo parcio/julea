@@ -29,6 +29,8 @@
  * \file
  **/
 
+#include <julea-config.h>
+
 #include <glib.h>
 
 #include <juri.h>

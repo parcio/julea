@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <julea-config.h>
+
 #include "juleafs.h"
 
 void jfs_destroy (void* data)

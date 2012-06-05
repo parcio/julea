@@ -28,6 +28,8 @@
 #ifndef H_BENCHMARK
 #define H_BENCHMARK
 
+#include <glib.h>
+
 typedef gchar* (*BenchmarkFunc) (void);
 
 void j_benchmark_timer_start (void);

@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <julea-config.h>
+
 #include <glib.h>
 #include <glib-object.h>
 

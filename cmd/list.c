@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <julea-config.h>
+
 #include "julea.h"
 
 #include <juri.h>

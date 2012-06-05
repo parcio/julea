@@ -143,6 +143,10 @@ def configure (ctx):
 	else:
 		ctx.env.CFLAGS += ['-O2']
 
+	ctx.define('JULEAD_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
+
+	ctx.write_config_header('include/julea-config.h')
+
 def build (ctx):
 	# Headers
 	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl = 'include/*-internal.h'))
@@ -201,10 +205,7 @@ def build (ctx):
 		target = 'julead/julead',
 		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
-		defines = [
-			'J_ENABLE_INTERNAL',
-			'JULEAD_BACKEND_PATH="%s"' % (Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env),)
-		],
+		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
 	)
 

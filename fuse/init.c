@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <julea-config.h>
+
 #include "juleafs.h"
 
 void* jfs_init (struct fuse_conn_info* conn)
