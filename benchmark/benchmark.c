@@ -49,17 +49,17 @@ j_benchmark_get_semantics (void)
 	gchar** parts;
 	guint parts_len;
 
-	if (opt_template == NULL || g_strcmp0(opt_template, "default") == 0)
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	}
-	else if (g_strcmp0(opt_template, "posix") == 0)
+	if (g_strcmp0(opt_template, "posix") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
 	}
 	else if (g_strcmp0(opt_template, "checkpoint") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
+	}
+	else
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	}
 
 	if (opt_semantics == NULL)
