@@ -34,19 +34,19 @@
 
 #include <glib.h>
 
-enum JMessageOperationType
+enum JMessageType
 {
-	J_MESSAGE_OPERATION_NONE,
-	J_MESSAGE_OPERATION_CREATE,
-	J_MESSAGE_OPERATION_DELETE,
-	J_MESSAGE_OPERATION_READ,
-	J_MESSAGE_OPERATION_REPLY,
-	J_MESSAGE_OPERATION_STATISTICS,
-	J_MESSAGE_OPERATION_SYNC,
-	J_MESSAGE_OPERATION_WRITE
+	J_MESSAGE_NONE,
+	J_MESSAGE_CREATE,
+	J_MESSAGE_DELETE,
+	J_MESSAGE_READ,
+	J_MESSAGE_REPLY,
+	J_MESSAGE_STATISTICS,
+	J_MESSAGE_SYNC,
+	J_MESSAGE_WRITE
 };
 
-typedef enum JMessageOperationType JMessageOperationType;
+typedef enum JMessageType JMessageType;
 
 struct JMessage;
 
@@ -54,10 +54,14 @@ typedef struct JMessage JMessage;
 
 #include <gio/gio.h>
 
-JMessage* j_message_new (JMessageOperationType, gsize);
+JMessage* j_message_new (JMessageType, gsize);
 JMessage* j_message_new_reply (JMessage*);
 JMessage* j_message_ref (JMessage*);
 void j_message_unref (JMessage*);
+
+guint32 j_message_get_id (JMessage const*);
+JMessageType j_message_get_type (JMessage const*);
+guint32 j_message_get_count (JMessage const*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
 gboolean j_message_append_4 (JMessage*, gconstpointer);
@@ -71,10 +75,6 @@ gchar const* j_message_get_string (JMessage*);
 
 gboolean j_message_read (JMessage*, GInputStream*);
 gboolean j_message_write (JMessage*, GOutputStream*);
-
-guint32 j_message_id (JMessage const*);
-JMessageOperationType j_message_operation_type (JMessage const*);
-guint32 j_message_operation_count (JMessage const*);
 
 void j_message_add_send (JMessage*, gconstpointer, guint64);
 void j_message_add_operation (JMessage*, gsize);

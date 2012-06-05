@@ -78,7 +78,7 @@ main (int argc, char** argv)
 	configuration = j_configuration();
 	statistics_total = j_statistics_new(NULL);
 
-	message = j_message_new(J_MESSAGE_OPERATION_STATISTICS, sizeof(gchar));
+	message = j_message_new(J_MESSAGE_STATISTICS, sizeof(gchar));
 	j_message_add_operation(message, 0);
 	j_message_append_1(message, &get_all);
 

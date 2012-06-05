@@ -275,12 +275,12 @@ j_message_ensure_size (JMessage* message, gsize length)
  * \return A new message. Should be freed with j_message_unref().
  **/
 JMessage*
-j_message_new (JMessageOperationType op_type, gsize length)
+j_message_new (JMessageType op_type, gsize length)
 {
 	JMessage* message;
 	guint32 rand;
 
-	//g_return_val_if_fail(op_type != J_MESSAGE_OPERATION_NONE, NULL);
+	//g_return_val_if_fail(op_type != J_MESSAGE_NONE, NULL);
 
 	rand = g_random_int();
 
@@ -329,7 +329,7 @@ j_message_new_reply (JMessage* message)
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->op_type = GUINT32_TO_LE(J_MESSAGE_OPERATION_REPLY);
+	j_message_header(reply)->op_type = GUINT32_TO_LE(J_MESSAGE_REPLY);
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
 	return reply;
@@ -392,6 +392,78 @@ j_message_unref (JMessage* message)
 
 		g_slice_free(JMessage, message);
 	}
+}
+
+/**
+ * Returns a message's ID.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's ID.
+ **/
+guint32
+j_message_get_id (JMessage const* message)
+{
+	guint32 id;
+
+	g_return_val_if_fail(message != NULL, 0);
+
+	id = j_message_header(message)->id;
+
+	return GUINT32_FROM_LE(id);
+}
+
+/**
+ * Returns a message's type.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's operation type.
+ **/
+JMessageType
+j_message_get_type (JMessage const* message)
+{
+	JMessageType op_type;
+
+	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
+
+	op_type = j_message_header(message)->op_type;
+
+	return GUINT32_FROM_LE(op_type);
+}
+
+/**
+ * Returns a message's count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's operation count.
+ **/
+guint32
+j_message_get_count (JMessage const* message)
+{
+	guint32 op_count;
+
+	g_return_val_if_fail(message != NULL, 0);
+
+	op_count = j_message_header(message)->op_count;
+
+	return GUINT32_FROM_LE(op_count);
 }
 
 /**
@@ -650,7 +722,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (j_message_operation_type(message) == J_MESSAGE_OPERATION_REPLY)
+	if (j_message_get_type(message) == J_MESSAGE_REPLY)
 	{
 		g_return_val_if_fail(message->original_message != NULL, FALSE);
 	}
@@ -674,7 +746,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	if (j_message_operation_type(message) == J_MESSAGE_OPERATION_REPLY)
+	if (j_message_get_type(message) == J_MESSAGE_REPLY)
 	{
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
@@ -737,78 +809,6 @@ j_message_write (JMessage* message, GOutputStream* stream)
 }
 
 /**
- * Returns a message's ID.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's ID.
- **/
-guint32
-j_message_id (JMessage const* message)
-{
-	guint32 id;
-
-	g_return_val_if_fail(message != NULL, 0);
-
-	id = j_message_header(message)->id;
-
-	return GUINT32_FROM_LE(id);
-}
-
-/**
- * Returns a message's operation type.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation type.
- **/
-JMessageOperationType
-j_message_operation_type (JMessage const* message)
-{
-	JMessageOperationType op_type;
-
-	g_return_val_if_fail(message != NULL, J_MESSAGE_OPERATION_NONE);
-
-	op_type = j_message_header(message)->op_type;
-
-	return GUINT32_FROM_LE(op_type);
-}
-
-/**
- * Returns a message's operation count.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation count.
- **/
-guint32
-j_message_operation_count (JMessage const* message)
-{
-	guint32 op_count;
-
-	g_return_val_if_fail(message != NULL, 0);
-
-	op_count = j_message_header(message)->op_count;
-
-	return GUINT32_FROM_LE(op_count);
-}
-
-/**
  * Adds new data to send to a message.
  *
  * \author Michael Kuhn
@@ -854,7 +854,7 @@ j_message_add_operation (JMessage* message, gsize length)
 
 	g_return_if_fail(message != NULL);
 
-	new_op_count = j_message_operation_count(message) + 1;
+	new_op_count = j_message_get_count(message) + 1;
 	j_message_header(message)->op_count = GUINT32_TO_LE(new_op_count);
 
 	j_message_extend(message, length);

@@ -44,7 +44,7 @@ test_message_new_ref_unref (void)
 {
 	JMessage* message;
 
-	message = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
+	message = j_message_new(J_MESSAGE_NONE, 0);
 	g_assert(message != NULL);
 	j_message_ref(message);
 	j_message_unref(message);
@@ -57,15 +57,15 @@ test_message_header (void)
 {
 	JMessage* message;
 
-	message = j_message_new(J_MESSAGE_OPERATION_READ, 42);
+	message = j_message_new(J_MESSAGE_READ, 42);
 	g_assert(message != NULL);
 
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 
-	g_assert(j_message_operation_type(message) == J_MESSAGE_OPERATION_READ);
-	g_assert_cmpuint(j_message_operation_count(message), ==, 3);
+	g_assert(j_message_get_type(message) == J_MESSAGE_READ);
+	g_assert_cmpuint(j_message_get_count(message), ==, 3);
 
 	j_message_unref(message);
 }
@@ -78,7 +78,7 @@ test_message_append (void)
 	gboolean ret;
 	guint64 dummy = 42;
 
-	message = j_message_new(J_MESSAGE_OPERATION_NONE, 20);
+	message = j_message_new(J_MESSAGE_NONE, 20);
 	g_assert(message != NULL);
 
 	ret = j_message_append_1(message, &dummy);
@@ -114,9 +114,9 @@ test_message_write_read (void)
 	output = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
 	input = g_memory_input_stream_new();
 
-	message[0] = j_message_new(J_MESSAGE_OPERATION_NONE, 16);
+	message[0] = j_message_new(J_MESSAGE_NONE, 16);
 	g_assert(message[0] != NULL);
-	message[1] = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
+	message[1] = j_message_new(J_MESSAGE_NONE, 0);
 	g_assert(message[1] != NULL);
 
 	ret = j_message_append_1(message[0], &dummy_1);

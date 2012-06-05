@@ -209,7 +209,7 @@ j_item_read_background_operation (gpointer data)
 	iterator = j_list_iterator_new(background_data->u.read.buffer_list);
 
 	operations_done = 0;
-	operation_count = j_message_operation_count(background_data->message);
+	operation_count = j_message_get_count(background_data->message);
 
 	while (operations_done < operation_count)
 	{
@@ -217,7 +217,7 @@ j_item_read_background_operation (gpointer data)
 
 		j_connection_receive(background_data->connection, background_data->index, reply);
 
-		reply_operation_count = j_message_operation_count(reply);
+		reply_operation_count = j_message_get_count(reply);
 
 		for (guint j = 0; j < reply_operation_count && j_list_iterator_next(iterator); j++)
 		{
@@ -871,7 +871,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		{
 			if (messages[index] == NULL)
 			{
-				messages[index] = j_message_new(J_MESSAGE_OPERATION_READ, store_len + collection_len + item_len);
+				messages[index] = j_message_new(J_MESSAGE_READ, store_len + collection_len + item_len);
 				j_message_append_n(messages[index], store_name, store_len);
 				j_message_append_n(messages[index], collection_name, collection_len);
 				j_message_append_n(messages[index], item_name, item_len);
@@ -1026,7 +1026,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			if (messages[index] == NULL)
 			{
 				/* FIXME */
-				messages[index] = j_message_new(J_MESSAGE_OPERATION_WRITE, store_len + collection_len + item_len);
+				messages[index] = j_message_new(J_MESSAGE_WRITE, store_len + collection_len + item_len);
 				j_message_append_n(messages[index], store_name, store_len);
 				j_message_append_n(messages[index], collection_name, collection_len);
 				j_message_append_n(messages[index], item_name, item_len);
@@ -1061,7 +1061,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		}
 
 		/* FIXME temporary workaround */
-		create_message = j_message_new(J_MESSAGE_OPERATION_CREATE, store_len + collection_len);
+		create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
 		j_message_append_n(create_message, store_name, store_len);
 		j_message_append_n(create_message, collection_name, collection_len);
 		j_message_add_operation(create_message, item_len);
@@ -1069,7 +1069,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 		if (j_semantics_get(j_operation_get_semantics(operation), J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 		{
-			sync_message = j_message_new(J_MESSAGE_OPERATION_SYNC, store_len + collection_len + item_len);
+			sync_message = j_message_new(J_MESSAGE_SYNC, store_len + collection_len + item_len);
 			j_message_add_operation(sync_message, 0);
 			j_message_append_n(sync_message, store_name, store_len);
 			j_message_append_n(sync_message, collection_name, collection_len);

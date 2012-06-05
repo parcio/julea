@@ -75,7 +75,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	cache = j_cache_new(J_MIB(50));
 
-	message = j_message_new(J_MESSAGE_OPERATION_NONE, 0);
+	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 
@@ -88,13 +88,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		guint32 operation_count;
 		guint i;
 
-		operation_count = j_message_operation_count(message);
+		operation_count = j_message_get_count(message);
 
-		switch (j_message_operation_type(message))
+		switch (j_message_get_type(message))
 		{
-			case J_MESSAGE_OPERATION_NONE:
+			case J_MESSAGE_NONE:
 				break;
-			case J_MESSAGE_OPERATION_CREATE:
+			case J_MESSAGE_CREATE:
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -111,7 +111,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_OPERATION_DELETE:
+			case J_MESSAGE_DELETE:
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -136,7 +136,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_OPERATION_READ:
+			case J_MESSAGE_READ:
 				{
 					JMessage* reply;
 
@@ -182,7 +182,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_cache_clear(cache);
 				}
 				break;
-			case J_MESSAGE_OPERATION_SYNC:
+			case J_MESSAGE_SYNC:
 				{
 					JMessage* reply;
 
@@ -200,7 +200,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-			case J_MESSAGE_OPERATION_WRITE:
+			case J_MESSAGE_WRITE:
 				{
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
@@ -232,7 +232,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_close(&bf);
 				}
 				break;
-			case J_MESSAGE_OPERATION_STATISTICS:
+			case J_MESSAGE_STATISTICS:
 				{
 					JMessage* reply;
 					JStatistics* statistics;
@@ -275,7 +275,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-			case J_MESSAGE_OPERATION_REPLY:
+			case J_MESSAGE_REPLY:
 			default:
 				g_warn_if_reached();
 				break;
