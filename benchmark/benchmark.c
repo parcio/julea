@@ -124,25 +124,6 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "redundancy:"))
-		{
-			if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NONE);
-			}
-			else if (g_strcmp0(value, "one-copy") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_ONE_COPY);
-			}
-			else if (g_strcmp0(value, "two-copies") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_TWO_COPIES);
-			}
-			else if (g_strcmp0(value, "three-copies") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_THREE_COPIES);
-			}
-		}
 		else if (g_str_has_prefix(parts[i], "security:"))
 		{
 			if (g_strcmp0(value, "strict") == 0)
