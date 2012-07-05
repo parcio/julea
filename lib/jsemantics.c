@@ -61,6 +61,11 @@ struct JSemantics
 	gint concurrency;
 
 	/**
+	 * The redundancy semantics.
+	 **/
+	gint redundancy;
+
+	/**
 	 * The security semantics.
 	 **/
 	gint security;
@@ -96,6 +101,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+	semantics->redundancy = J_SEMANTICS_REDUNDANCY_NO;
 	semantics->security = J_SEMANTICS_SECURITY_STRICT;
 	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
@@ -108,12 +114,14 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NO;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
 		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_ON_CLOSE;
+			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NO;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
 		default:
@@ -204,6 +212,9 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 		case J_SEMANTICS_PERSISTENCY:
 			semantics->persistency = value;
 			break;
+		case J_SEMANTICS_REDUNDANCY:
+			semantics->redundancy = value;
+			break;
 		case J_SEMANTICS_SECURITY:
 			semantics->security = value;
 			break;
@@ -241,6 +252,8 @@ j_semantics_get (JSemantics* semantics, JSemanticsType key)
 			return semantics->consistency;
 		case J_SEMANTICS_PERSISTENCY:
 			return semantics->persistency;
+		case J_SEMANTICS_REDUNDANCY:
+			return semantics->redundancy;
 		case J_SEMANTICS_SECURITY:
 			return semantics->security;
 		default:

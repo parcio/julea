@@ -124,6 +124,17 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
 			}
 		}
+		else if (g_str_has_prefix(parts[i], "redundancy:"))
+		{
+			if (g_strcmp0(value, "no") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NO);
+			}
+			else if (g_strcmp0(value, "yes") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_YES);
+			}
+		}
 		else if (g_str_has_prefix(parts[i], "security:"))
 		{
 			if (g_strcmp0(value, "strict") == 0)
