@@ -51,8 +51,8 @@
  **/
 struct JCredentials
 {
-	uid_t user;
-	uid_t group;
+	guint64 user;
+	guint64 group;
 
 	gint ref_count;
 };
@@ -103,22 +103,33 @@ j_credentials_unref (JCredentials* credentials)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
-/*
-	Credentials::Credentials (int user, int group)
-		: m_user(user), m_group(group)
-	{
-	}
+guint64
+j_credentials_get_user (JCredentials* credentials)
+{
+	guint64 ret;
 
-	int Credentials::User ()
-	{
-		return m_user;
-	}
+	g_return_val_if_fail(credentials != NULL, 0);
 
-	int Credentials::Group ()
-	{
-		return m_group;
-	}
-*/
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	ret = credentials->user;
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return ret;
+}
+
+guint64
+j_credentials_get_group (JCredentials* credentials)
+{
+	guint64 ret;
+
+	g_return_val_if_fail(credentials != NULL, 0);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	ret = credentials->group;
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return ret;
+}
 
 /**
  * @}

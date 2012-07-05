@@ -42,11 +42,7 @@ JCredentials* j_credentials_new (void);
 JCredentials* j_credentials_ref (JCredentials*);
 void j_credentials_unref (JCredentials*);
 
-/*
-			Credentials (int, int);
-
-			int User ();
-			int Group ();
-*/
+guint64 j_credentials_get_user (JCredentials*);
+guint64 j_credentials_get_group (JCredentials*);
 
 #endif
