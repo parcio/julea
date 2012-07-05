@@ -37,10 +37,7 @@
 
 #include <mongo.h>
 
-/* FIXME */
-#define J_USE_NODELAY 0
-
-#if J_USE_NODELAY
+#ifdef J_USE_NODELAY
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -257,7 +254,7 @@ j_connection_connect (JConnection* connection)
 
 	for (i = 0; i < connection->sockets_len; i++)
 	{
-#if J_USE_NODELAY
+#ifdef J_USE_NODELAY
 		GSocket* socket_;
 		gint fd;
 		gint flag = 1;
@@ -270,7 +267,7 @@ j_connection_connect (JConnection* connection)
 			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
 		}
 
-#if J_USE_NODELAY
+#ifdef J_USE_NODELAY
 		socket_ = g_socket_connection_get_socket(connection->sockets[i]);
 		fd = g_socket_get_fd(socket_);
 
