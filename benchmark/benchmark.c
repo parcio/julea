@@ -79,37 +79,7 @@ j_benchmark_get_semantics (void)
 			continue;
 		}
 
-		if (g_str_has_prefix(parts[i], "consistency:"))
-		{
-			if (g_strcmp0(value, "immediate") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
-			}
-			else if (g_strcmp0(value, "eventual") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "persistency:"))
-		{
-			if (g_strcmp0(value, "immediate") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
-			}
-			else if (g_strcmp0(value, "eventual") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
-			}
-			else if (g_strcmp0(value, "on-close") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_ON_CLOSE);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "concurrency:"))
+		if (g_str_has_prefix(parts[i], "concurrency:"))
 		{
 			if (g_strcmp0(value, "overlapping") == 0)
 			{
@@ -124,15 +94,45 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
 			}
 		}
+		else if (g_str_has_prefix(parts[i], "consistency:"))
+		{
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "persistency:"))
+		{
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
+			}
+		}
 		else if (g_str_has_prefix(parts[i], "redundancy:"))
 		{
-			if (g_strcmp0(value, "no") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NO);
-			}
-			else if (g_strcmp0(value, "yes") == 0)
+			if (g_strcmp0(value, "yes") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_YES);
+			}
+			else if (g_strcmp0(value, "no") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NO);
 			}
 		}
 		else if (g_str_has_prefix(parts[i], "security:"))

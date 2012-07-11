@@ -120,7 +120,7 @@ j_semantics_new (JSemanticsTemplate template)
 		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_ON_CLOSE;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
 			semantics->redundancy = J_SEMANTICS_REDUNDANCY_NO;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
