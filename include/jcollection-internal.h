@@ -47,6 +47,7 @@ J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
 
 J_GNUC_INTERNAL gchar const* j_collection_collection_items (JCollection*);
 J_GNUC_INTERNAL gchar const* j_collection_collection_item_statuses (JCollection*);
+J_GNUC_INTERNAL gchar const* j_collection_collection_locks (JCollection*);
 
 J_GNUC_INTERNAL JStore* j_collection_get_store (JCollection*);
 

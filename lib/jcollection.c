@@ -80,6 +80,7 @@ struct JCollection
 	struct
 	{
 		gchar* items;
+		gchar* locks;
 	}
 	collection;
 
@@ -126,6 +127,7 @@ j_collection_new (gchar const* name)
 	bson_oid_gen(&(collection->id));
 	collection->name = g_strdup(name);
 	collection->collection.items = NULL;
+	collection->collection.locks = NULL;
 	collection->store = NULL;
 	collection->ref_count = 1;
 
@@ -189,6 +191,7 @@ j_collection_unref (JCollection* collection)
 		}
 
 		g_free(collection->collection.items);
+		g_free(collection->collection.locks);
 		g_free(collection->name);
 
 		g_slice_free(JCollection, collection);
@@ -353,6 +356,7 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->collection.items = NULL;
+	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
@@ -388,6 +392,33 @@ j_collection_collection_items (JCollection* collection)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return collection->collection.items;
+}
+
+/**
+ * Returns the MongoDB collection used for locks.
+ *
+ * \author Michael Kuhn
+ *
+ * \param collection A collection.
+ *
+ * \return The MongoDB collection.
+ */
+gchar const*
+j_collection_collection_locks (JCollection* collection)
+{
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(collection->store != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	if (G_UNLIKELY(collection->collection.locks == NULL))
+	{
+		collection->collection.locks = g_strdup_printf("%s.Locks", j_store_get_name(collection->store));
+	}
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return collection->collection.locks;
 }
 
 /**

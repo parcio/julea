@@ -25,40 +25,27 @@
  * SUCH DAMAGE.
  */
 
-#include <julea-config.h>
+/**
+ * \file
+ **/
+
+#ifndef H_LOCK_INTERNAL
+#define H_LOCK_INTERNAL
 
 #include <glib.h>
 
-#include <julea.h>
+#include <julea-internal.h>
 
-#include "test.h"
+struct JLock;
 
-int
-main (int argc, char** argv)
-{
-	gint ret;
+typedef struct JLock JLock;
 
-	g_test_init(&argc, &argv, NULL);
+#include <jitem.h>
 
-	j_init(&argc, &argv);
+J_GNUC_INTERNAL JLock* j_lock_new (JItem*);
+J_GNUC_INTERNAL void j_lock_free (JLock*);
 
-	test_background_operation();
-	test_cache();
-	test_collection();
-	test_configuration();
-	test_distribution();
-	test_item();
-	test_list();
-	test_list_iterator();
-	test_lock();
-	test_message();
-	test_operation();
-	test_semantics();
-	test_uri();
+J_GNUC_INTERNAL gboolean j_lock_acquire (JLock*);
+J_GNUC_INTERNAL gboolean j_lock_release (JLock*);
 
-	ret = g_test_run();
-
-	j_fini();
-
-	return ret;
-}
+#endif
