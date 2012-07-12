@@ -44,6 +44,8 @@
 
 J_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson const*);
 
+J_GNUC_INTERNAL JCollection* j_item_get_collection (JItem*);
+
 J_GNUC_INTERNAL bson* j_item_serialize (JItem*);
 J_GNUC_INTERNAL void j_item_deserialize (JItem*, bson const*);
 

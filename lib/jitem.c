@@ -656,6 +656,31 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 }
 
 /**
+ * Returns an item's collection.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A collection.
+ **/
+JCollection*
+j_item_get_collection (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return item->collection;
+}
+
+/**
  * Serializes an item.
  *
  * \private
