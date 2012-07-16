@@ -41,7 +41,7 @@ static
 gchar*
 _benchmark_lock (gboolean acquire)
 {
-	guint const n = (acquire) ? 2000 : 4000;
+	guint const n = 3000;
 
 	JCollection* collection;
 	JItem* item;
