@@ -29,42 +29,78 @@
 
 #include <glib.h>
 
+#include <string.h>
+
 #include <julea.h>
 
 #include <jlock-internal.h>
 
-#include "test.h"
+#include "benchmark.h"
 
 static
-void
-test_lock_new_free (void)
+gchar*
+_benchmark_lock (gboolean acquire)
 {
-	guint const n = 100;
+	guint const n = (acquire) ? 2000 : 4000;
 
 	JCollection* collection;
 	JItem* item;
+	JList* list;
+	JListIterator* iterator;
+	JLock* lock;
 	JOperation* operation;
 	JStore* store;
+	gdouble elapsed;
 
+	list = j_list_new((JListFreeFunc)j_lock_free);
 	operation = j_operation_new(NULL);
 
-	store = j_store_new("test-store");
-	collection = j_collection_new("test-collection");
-	item = j_item_new("test-item");
+	store = j_store_new("benchmark-store");
+	collection = j_collection_new("benchmark-collection");
+	item = j_item_new("benchmark-item");
 
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
 	j_operation_execute(operation);
 
+	if (acquire)
+	{
+		j_benchmark_timer_start();
+	}
+
 	for (guint i = 0; i < n; i++)
 	{
-		JLock* lock;
-
 		lock = j_lock_new(item);
-		g_assert(lock != NULL);
-		j_lock_free(lock);
+		j_lock_acquire(lock);
+		j_list_append(list, lock);
 	}
+
+	if (acquire)
+	{
+		elapsed = j_benchmark_timer_elapsed();
+	}
+
+	iterator = j_list_iterator_new(list);
+
+	if (!acquire)
+	{
+		j_benchmark_timer_start();
+	}
+
+	while (j_list_iterator_next(iterator))
+	{
+		lock = j_list_iterator_get(iterator);
+
+		j_lock_release(lock);
+	}
+
+	if (!acquire)
+	{
+		elapsed = j_benchmark_timer_elapsed();
+	}
+
+	j_list_iterator_free(iterator);
 
 	j_collection_delete_item(collection, item, operation);
 	j_store_delete_collection(store, collection, operation);
@@ -75,59 +111,28 @@ test_lock_new_free (void)
 	j_collection_unref(collection);
 	j_store_unref(store);
 	j_operation_unref(operation);
+	j_list_unref(list);
+
+	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
 
 static
-void
-test_lock_acquire_release (void)
+gchar*
+benchmark_lock_acquire (void)
 {
-	guint const n = 1000;
+	return _benchmark_lock(TRUE);
+}
 
-	JCollection* collection;
-	JItem* item;
-	JOperation* operation;
-	JStore* store;
-
-	operation = j_operation_new(NULL);
-
-	store = j_store_new("test-store");
-	collection = j_collection_new("test-collection");
-	item = j_item_new("test-item");
-
-	j_create_store(store, operation);
-	j_store_create_collection(store, collection, operation);
-	j_collection_create_item(collection, item, operation);
-	j_operation_execute(operation);
-
-	for (guint i = 0; i < n; i++)
-	{
-		JLock* lock;
-		gboolean ret;
-
-		lock = j_lock_new(item);
-
-		ret = j_lock_acquire(lock);
-		g_assert(ret);
-		ret = j_lock_release(lock);
-		g_assert(ret);
-
-		j_lock_free(lock);
-	}
-
-	j_collection_delete_item(collection, item, operation);
-	j_store_delete_collection(store, collection, operation);
-	j_delete_store(store, operation);
-	j_operation_execute(operation);
-
-	j_item_unref(item);
-	j_collection_unref(collection);
-	j_store_unref(store);
-	j_operation_unref(operation);
+static
+gchar*
+benchmark_lock_release (void)
+{
+	return _benchmark_lock(FALSE);
 }
 
 void
-test_lock (void)
+benchmark_lock (void)
 {
-	g_test_add_func("/lock/new_free", test_lock_new_free);
-	g_test_add_func("/lock/acquire_release", test_lock_acquire_release);
+	j_benchmark_run("/lock/acquire", benchmark_lock_acquire);
+	j_benchmark_run("/lock/release", benchmark_lock_release);
 }

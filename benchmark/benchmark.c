@@ -235,6 +235,7 @@ main (int argc, char** argv)
 	benchmark_cache();
 	benchmark_collection();
 	benchmark_item();
+	benchmark_lock();
 
 	g_timer_destroy(j_benchmark_timer);
 	j_semantics_unref(semantics);
