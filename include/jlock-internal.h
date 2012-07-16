@@ -48,4 +48,6 @@ J_GNUC_INTERNAL void j_lock_free (JLock*);
 J_GNUC_INTERNAL gboolean j_lock_acquire (JLock*);
 J_GNUC_INTERNAL gboolean j_lock_release (JLock*);
 
+J_GNUC_INTERNAL void j_lock_add (JLock*, guint64);
+
 #endif

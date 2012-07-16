@@ -68,6 +68,8 @@ struct JLock
 	 * The parent item.
 	 **/
 	JItem* item;
+
+	GArray* blocks;
 };
 
 /**
@@ -88,6 +90,8 @@ static
 bson*
 j_lock_serialize (JLock* lock)
 {
+	// FIXME might be too small
+	gchar numstr[10];
 	bson* b;
 
 	g_return_val_if_fail(lock != NULL, NULL);
@@ -98,6 +102,17 @@ j_lock_serialize (JLock* lock)
 	bson_init(b);
 	bson_append_oid(b, "_id", &(lock->id));
 	bson_append_oid(b, "Item", j_item_get_id(lock->item));
+
+	bson_append_start_array(b, "Blocks");
+
+	for (guint i = 0; i < lock->blocks->len; i++)
+	{
+		bson_numstr(numstr, i);
+		bson_append_long(b, numstr, g_array_index(lock->blocks, guint64, i));
+	}
+
+	bson_append_finish_array(b);
+
 	bson_finish(b);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -135,6 +150,7 @@ j_lock_new (JItem* item)
 	lock = g_slice_new(JLock);
 	bson_oid_gen(&(lock->id));
 	lock->item = j_item_ref(item);
+	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -168,6 +184,8 @@ j_lock_free (JLock* lock)
 		j_item_unref(lock->item);
 	}
 
+	g_array_free(lock->blocks, TRUE);
+
 	g_slice_free(JLock, lock);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -196,6 +214,8 @@ j_lock_acquire (JLock* lock)
 
 	bson_init(&index);
 	bson_append_int(&index, "Item", 1);
+	// FIXME speed
+	//bson_append_int(&index, "Blocks", 1);
 	bson_finish(&index);
 
 	mongo_create_index(connection, j_collection_collection_locks(collection), &index, 0, NULL);
@@ -238,6 +258,14 @@ j_lock_release (JLock* lock)
 	mongo_write_concern_destroy(write_concern);
 
 	return TRUE;
+}
+
+void
+j_lock_add (JLock* lock, guint64 block)
+{
+	g_return_if_fail(lock != NULL);
+
+	g_array_append_val(lock->blocks, block);
 }
 
 /**

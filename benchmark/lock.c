@@ -39,9 +39,9 @@
 
 static
 gchar*
-_benchmark_lock (gboolean acquire)
+_benchmark_lock (gboolean acquire, gboolean add)
 {
-	guint const n = 3000;
+	guint const n = (add) ? 1500 : 3000;
 
 	JCollection* collection;
 	JItem* item;
@@ -72,6 +72,15 @@ _benchmark_lock (gboolean acquire)
 	for (guint i = 0; i < n; i++)
 	{
 		lock = j_lock_new(item);
+
+		if (add)
+		{
+			for (guint j = 0; j < n; j++)
+			{
+				j_lock_add(lock, j);
+			}
+		}
+
 		j_lock_acquire(lock);
 		j_list_append(list, lock);
 	}
@@ -120,14 +129,21 @@ static
 gchar*
 benchmark_lock_acquire (void)
 {
-	return _benchmark_lock(TRUE);
+	return _benchmark_lock(TRUE, FALSE);
 }
 
 static
 gchar*
 benchmark_lock_release (void)
 {
-	return _benchmark_lock(FALSE);
+	return _benchmark_lock(FALSE, FALSE);
+}
+
+static
+gchar*
+benchmark_lock_add (void)
+{
+	return _benchmark_lock(TRUE, TRUE);
 }
 
 void
@@ -135,4 +151,5 @@ benchmark_lock (void)
 {
 	j_benchmark_run("/lock/acquire", benchmark_lock_acquire);
 	j_benchmark_run("/lock/release", benchmark_lock_release);
+	j_benchmark_run("/lock/add", benchmark_lock_add);
 }
