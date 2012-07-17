@@ -68,41 +68,45 @@ test_distribution_round_robin (JConfiguration** configuration, gconstpointer dat
 {
 	JDistribution* distribution;
 	gboolean ret;
+	guint64 block_size;
 	guint64 length;
 	guint64 offset;
 	guint index;
 
-	distribution = j_distribution_new(*configuration, J_DISTRIBUTION_ROUND_ROBIN, 4 * 512 * 1024, 42);
+	block_size = J_KIB(512);
+
+	distribution = j_distribution_new(*configuration, J_DISTRIBUTION_ROUND_ROBIN, 4 * block_size, 42);
+	j_distribution_set_round_robin_block_size(distribution, block_size);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
-	g_assert_cmpuint(length, ==, (512 * 1024) - 42);
+	g_assert_cmpuint(length, ==, block_size - 42);
 	g_assert_cmpuint(offset, ==, 42);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
-	g_assert_cmpuint(length, ==, 512 * 1024);
+	g_assert_cmpuint(length, ==, block_size);
 	g_assert_cmpuint(offset, ==, 0);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
-	g_assert_cmpuint(length, ==, 512 * 1024);
-	g_assert_cmpuint(offset, ==, 512 * 1024);
+	g_assert_cmpuint(length, ==, block_size);
+	g_assert_cmpuint(offset, ==, block_size);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
-	g_assert_cmpuint(length, ==, 512 * 1024);
-	g_assert_cmpuint(offset, ==, 512 * 1024);
+	g_assert_cmpuint(length, ==, block_size);
+	g_assert_cmpuint(offset, ==, block_size);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 0);
 	g_assert_cmpuint(length, ==, 42);
-	g_assert_cmpuint(offset, ==, 2 * 512 * 1024);
+	g_assert_cmpuint(offset, ==, 2 * block_size);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset);
 	g_assert(!ret);

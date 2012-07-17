@@ -71,6 +71,16 @@ struct JDistribution
 	 * The offset.
 	 **/
 	guint64 offset;
+
+	union
+	{
+		struct
+		{
+			guint64 block_size;
+		}
+		round_robin;
+	}
+	u;
 };
 
 /**
@@ -94,8 +104,6 @@ static
 gboolean
 j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
-	guint64 const block_size = 512 * 1024;
-
 	gboolean ret = TRUE;
 	guint64 block;
 	guint64 displacement;
@@ -109,13 +117,13 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 		goto end;
 	}
 
-	block = distribution->offset / block_size;
+	block = distribution->offset / distribution->u.round_robin.block_size;
 	round = block / j_configuration_get_data_server_count(distribution->configuration);
-	displacement = distribution->offset % block_size;
+	displacement = distribution->offset % distribution->u.round_robin.block_size;
 
 	*index = block % j_configuration_get_data_server_count(distribution->configuration);
-	*new_length = MIN(distribution->length, block_size - displacement);
-	*new_offset = (round * block_size) + displacement;
+	*new_length = MIN(distribution->length, distribution->u.round_robin.block_size - displacement);
+	*new_offset = (round * distribution->u.round_robin.block_size) + displacement;
 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
@@ -155,6 +163,15 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 	distribution->type = type;
 	distribution->length = length;
 	distribution->offset = offset;
+
+	switch (distribution->type)
+	{
+		case J_DISTRIBUTION_ROUND_ROBIN:
+			distribution->u.round_robin.block_size = J_KIB(512);
+			break;
+		default:
+			g_warn_if_reached();
+	}
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -224,6 +241,27 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
+}
+
+/**
+ * Sets the block size for the round robin distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param block_size   A block size.
+ */
+void
+j_distribution_set_round_robin_block_size (JDistribution* distribution, guint64 block_size)
+{
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(block_size > 0);
+	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
+
+	distribution->u.round_robin.block_size = block_size;
 }
 
 /**
