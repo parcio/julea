@@ -114,8 +114,34 @@ test_distribution_round_robin (JConfiguration** configuration, gconstpointer dat
 	j_distribution_free(distribution);
 }
 
+static
+void
+test_distribution_single_server (JConfiguration** configuration, gconstpointer data)
+{
+	JDistribution* distribution;
+	gboolean ret;
+	guint64 length;
+	guint64 offset;
+	guint index;
+
+	distribution = j_distribution_new(*configuration, J_DISTRIBUTION_SINGLE_SERVER, J_KIB(512), 42);
+	j_distribution_set_single_server_index(distribution, 1);
+
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
+	g_assert(ret);
+	g_assert_cmpuint(index, ==, 1);
+	g_assert_cmpuint(length, ==, J_KIB(512));
+	g_assert_cmpuint(offset, ==, 42);
+
+	ret = j_distribution_distribute(distribution, &index, &length, &offset);
+	g_assert(!ret);
+
+	j_distribution_free(distribution);
+}
+
 void
 test_distribution (void)
 {
 	g_test_add("/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
+	g_test_add("/distribution/single_server", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_single_server, test_distribution_fixture_teardown);
 }

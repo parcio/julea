@@ -79,6 +79,12 @@ struct JDistribution
 			guint64 block_size;
 		}
 		round_robin;
+
+		struct
+		{
+			guint index;
+		}
+		single_server;
 	}
 	u;
 };
@@ -102,7 +108,7 @@ struct JDistribution
  **/
 static
 gboolean
-j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_distribute_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
 {
 	gboolean ret = TRUE;
 	guint64 block;
@@ -124,6 +130,50 @@ j_distribution_round_robin (JDistribution* distribution, guint* index, guint64* 
 	*index = block % j_configuration_get_data_server_count(distribution->configuration);
 	*new_length = MIN(distribution->length, distribution->u.round_robin.block_size - displacement);
 	*new_offset = (round * distribution->u.round_robin.block_size) + displacement;
+
+	distribution->length -= *new_length;
+	distribution->offset += *new_length;
+
+end:
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return ret;
+}
+
+/**
+ * Distributes data to a single server.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        A server index.
+ * \param new_length   A new length.
+ * \param new_offset   A new offset.
+ *
+ * \return TRUE on success, FALSE if the distribution is finished.
+ **/
+static
+gboolean
+j_distribution_distribute_single_server (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+{
+	gboolean ret = TRUE;
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	if (distribution->length == 0)
+	{
+		ret = FALSE;
+		goto end;
+	}
+
+	*index = distribution->u.single_server.index;
+	*new_length = distribution->length;
+	*new_offset = distribution->offset;
 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
@@ -168,6 +218,9 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
 			distribution->u.round_robin.block_size = J_KIB(512);
+			break;
+		case J_DISTRIBUTION_SINGLE_SERVER:
+			distribution->u.single_server.index = 0;
 			break;
 		default:
 			g_warn_if_reached();
@@ -232,7 +285,10 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			ret = j_distribution_round_robin(distribution, index, new_length, new_offset);
+			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset);
+			break;
+		case J_DISTRIBUTION_SINGLE_SERVER:
+			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset);
 			break;
 		default:
 			g_warn_if_reached();
@@ -262,6 +318,27 @@ j_distribution_set_round_robin_block_size (JDistribution* distribution, guint64 
 	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
 
 	distribution->u.round_robin.block_size = block_size;
+}
+
+/**
+ * Sets the index for the single server distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        An index.
+ */
+void
+j_distribution_set_single_server_index (JDistribution* distribution, guint index)
+{
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(index < j_configuration_get_data_server_count(distribution->configuration));
+	g_return_if_fail(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
+
+	distribution->u.single_server.index = index;
 }
 
 /**
