@@ -586,6 +586,7 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 	bson index;
 	mongo* connection;
 	mongo_write_concern write_concern[1];
+	gboolean ret = FALSE;
 	guint i;
 	guint length;
 
@@ -644,7 +645,7 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 
 	mongo_create_index(connection, j_collection_collection_items(collection), &index, MONGO_INDEX_UNIQUE, NULL);
 	/* FIXME MONGO_CONTINUE_ON_ERROR */
-	mongo_insert_batch(connection, j_collection_collection_items(collection), (bson const**)obj, length, write_concern, 0);
+	ret = (mongo_insert_batch(connection, j_collection_collection_items(collection), (bson const**)obj, length, write_concern, 0) == MONGO_OK);
 
 	bson_destroy(&index);
 
@@ -659,16 +660,9 @@ end:
 
 	g_free(obj);
 
-	/*
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-	*/
-
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 gboolean
@@ -679,6 +673,7 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 	JSemantics* semantics;
 	mongo* connection;
 	mongo_write_concern write_concern[1];
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -718,31 +713,27 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 
 		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
 		/* FIXME do not send write_concern on each remove */
-		mongo_remove(connection, j_collection_collection_items(collection), &b, write_concern);
+		ret = (mongo_remove(connection, j_collection_collection_items(collection), &b, write_concern) == MONGO_OK) && ret;
 
 		bson_destroy(&b);
+
+		/* FIXME also delete data */
 	}
 
 	j_list_iterator_free(it);
 
 	mongo_write_concern_destroy(write_concern);
 
-	/*
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-	*/
-
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 gboolean
 j_collection_get_item_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -798,6 +789,7 @@ j_collection_get_item_internal (JOperation* operation, JList* parts)
 
 		*item = NULL;
 
+		// FIXME ret
 		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
 			*item = j_item_new_from_bson(collection, mongo_cursor_bson(cursor));
@@ -810,7 +802,7 @@ j_collection_get_item_internal (JOperation* operation, JList* parts)
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 /*

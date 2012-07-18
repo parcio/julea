@@ -246,7 +246,7 @@ j_operation_execute_same (JOperation* operation, JList* list)
 {
 	JOperationPart* part;
 	JOperationType type;
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -299,7 +299,6 @@ j_operation_execute_same (JOperation* operation, JList* list)
 			break;
 		case J_OPERATION_NONE:
 		default:
-			ret = FALSE;
 			g_warn_if_reached();
 	}
 

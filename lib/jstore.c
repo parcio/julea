@@ -348,6 +348,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 	bson index;
 	mongo* connection;
 	mongo_write_concern write_concern[1];
+	gboolean ret = FALSE;
 	guint i;
 	guint length;
 
@@ -403,7 +404,7 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 
 	mongo_create_index(connection, j_store_collection_collections(store), &index, MONGO_INDEX_UNIQUE, NULL);
 	/* FIXME MONGO_CONTINUE_ON_ERROR */
-	mongo_insert_batch(connection, j_store_collection_collections(store), (bson const**)obj, length, write_concern, 0);
+	ret = (mongo_insert_batch(connection, j_store_collection_collections(store), (bson const**)obj, length, write_concern, 0) == MONGO_OK);
 
 	bson_destroy(&index);
 
@@ -428,14 +429,7 @@ end:
 	}
 	*/
 
-	/*
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-	*/
-
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -458,6 +452,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 	JStore* store = NULL;
 	mongo* connection;
 	mongo_write_concern write_concern[1];
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -495,7 +490,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 
 		connection = j_connection_get_connection(j_store_get_connection(store));
 		/* FIXME do not send write_concern on each remove */
-		mongo_remove(connection, j_store_collection_collections(store), &b, write_concern);
+		ret = (mongo_remove(connection, j_store_collection_collections(store), &b, write_concern) == MONGO_OK) && ret;
 
 		bson_destroy(&b);
 	}
@@ -504,14 +499,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
 
 	mongo_write_concern_destroy(write_concern);
 
-	/*
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
-	{
-		mongo_simple_int_command(connection, "admin", "fsync", 1, NULL);
-	}
-	*/
-
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -530,6 +518,7 @@ gboolean
 j_store_get_collection_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* it;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -562,6 +551,7 @@ j_store_get_collection_internal (JOperation* operation, JList* parts)
 
 		*collection = NULL;
 
+		// FIXME ret
 		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
 			*collection = j_collection_new_from_bson(store, mongo_cursor_bson(cursor));
@@ -572,7 +562,7 @@ j_store_get_collection_internal (JOperation* operation, JList* parts)
 
 	j_list_iterator_free(it);
 
-	return TRUE;
+	return ret;
 }
 
 /*

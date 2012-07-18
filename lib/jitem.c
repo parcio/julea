@@ -167,6 +167,8 @@ struct JItem
 		guint64 size;
 
 		gint64 modification_time;
+
+		gboolean* created;
 	}
 	status;
 
@@ -319,6 +321,7 @@ j_item_new (gchar const* name)
 	item->status.flags = J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
+	item->status.created = NULL;
 	item->collection = NULL;
 	item->ref_count = 1;
 
@@ -381,6 +384,7 @@ j_item_unref (JItem* item)
 			j_collection_unref(item->collection);
 		}
 
+		g_free(item->status.created);
 		g_free(item->name);
 
 		g_slice_free(JItem, item);
@@ -974,6 +978,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
+	JItem* item;
 	JListIterator* iterator;
 	JMessage** messages;
 	guint n;
@@ -1000,7 +1005,6 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	}
 
 	{
-		JItem* item;
 		JOperationPart* part;
 
 		part = j_list_get_first(parts);
@@ -1085,12 +1089,27 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		/* FIXME temporary workaround */
-		create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
-		j_message_append_n(create_message, store_name, store_len);
-		j_message_append_n(create_message, collection_name, collection_len);
-		j_message_add_operation(create_message, item_len);
-		j_message_append_n(create_message, item_name, item_len);
+		if (item->status.created == NULL)
+		{
+			item->status.created = g_new(gboolean, n);
+
+			for (guint j = 0; j < n; j++)
+			{
+				item->status.created[j] = FALSE;
+			}
+		}
+
+		if (!item->status.created[i])
+		{
+			/* FIXME better solution? */
+			create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
+			j_message_append_n(create_message, store_name, store_len);
+			j_message_append_n(create_message, collection_name, collection_len);
+			j_message_add_operation(create_message, item_len);
+			j_message_append_n(create_message, item_name, item_len);
+
+			item->status.created[i] = TRUE;
+		}
 
 		if (j_semantics_get(j_operation_get_semantics(operation), J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 		{
@@ -1151,6 +1170,7 @@ gboolean
 j_item_get_status_internal (JOperation* operation, JList* parts)
 {
 	JListIterator* iterator;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
@@ -1198,6 +1218,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		bson_destroy(&fields);
 		bson_destroy(&b);
 
+		// FIXME ret
 		while (mongo_cursor_next(cursor) == MONGO_OK)
 		{
 			j_item_deserialize(item, mongo_cursor_bson(cursor));
@@ -1210,7 +1231,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 /*
