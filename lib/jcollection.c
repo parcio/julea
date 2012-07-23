@@ -599,6 +599,8 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 	IsInitialized(true);
 	*/
 
+	semantics = j_operation_get_semantics(operation);
+
 	i = 0;
 	length = j_list_length(parts);
 	obj = g_new(bson*, length);
@@ -612,7 +614,7 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 
 		collection = part->u.collection_create_item.collection;
 		j_item_set_collection(item, collection);
-		b = j_item_serialize(item);
+		b = j_item_serialize(item, semantics);
 
 		obj[i] = b;
 		i++;
@@ -626,7 +628,6 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 	}
 
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
-	semantics = j_operation_get_semantics(operation);
 
 	mongo_write_concern_init(write_concern);
 

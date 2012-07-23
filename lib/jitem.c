@@ -603,8 +603,8 @@ j_item_get_modification_time (JItem* item)
  * \code
  * \endcode
  *
- * \param item An item.
- * \param size A modification time.
+ * \param item              An item.
+ * \param modification_time A modification time.
  **/
 void
 j_item_set_modification_time (JItem* item, gint64 modification_time)
@@ -694,12 +694,13 @@ j_item_get_collection (JItem* item)
  * \code
  * \endcode
  *
- * \param item An item.
+ * \param item      An item.
+ * \param semantics A semantics object.
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
 bson*
-j_item_serialize (JItem* item)
+j_item_serialize (JItem* item, JSemantics* semantics)
 {
 	bson* b;
 
@@ -712,8 +713,13 @@ j_item_serialize (JItem* item)
 	bson_append_oid(b, "_id", &(item->id));
 	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
-	bson_append_long(b, "Size", item->status.size);
-	bson_append_long(b, "ModificationTime", item->status.modification_time);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
+	{
+		bson_append_long(b, "Size", item->status.size);
+		bson_append_long(b, "ModificationTime", item->status.modification_time);
+	}
+
 	bson_finish(b);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
