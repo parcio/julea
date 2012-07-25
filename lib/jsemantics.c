@@ -45,6 +45,8 @@
  **/
 struct JSemantics
 {
+	gint atomicity;
+
 	/**
 	 * The consistency semantics.
 	 **/
@@ -98,6 +100,7 @@ j_semantics_new (JSemanticsTemplate template)
 	JSemantics* semantics;
 
 	semantics = g_slice_new(JSemantics);
+	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
@@ -111,6 +114,7 @@ j_semantics_new (JSemanticsTemplate template)
 		case J_SEMANTICS_TEMPLATE_DEFAULT:
 			break;
 		case J_SEMANTICS_TEMPLATE_POSIX:
+			semantics->atomicity = J_SEMANTICS_ATOMICITY_SUB_OPERATION;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
@@ -118,6 +122,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
 		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
+			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
@@ -203,6 +208,9 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 
 	switch (key)
 	{
+		case J_SEMANTICS_ATOMICITY:
+			semantics->atomicity = value;
+			break;
 		case J_SEMANTICS_CONCURRENCY:
 			semantics->concurrency = value;
 			break;
@@ -246,6 +254,8 @@ j_semantics_get (JSemantics* semantics, JSemanticsType key)
 
 	switch (key)
 	{
+		case J_SEMANTICS_ATOMICITY:
+			return semantics->atomicity;
 		case J_SEMANTICS_CONCURRENCY:
 			return semantics->concurrency;
 		case J_SEMANTICS_CONSISTENCY:

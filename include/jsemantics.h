@@ -45,6 +45,7 @@ typedef enum JSemanticsTemplate JSemanticsTemplate;
 
 enum JSemanticsType
 {
+	J_SEMANTICS_ATOMICITY,
 	J_SEMANTICS_CONCURRENCY,
 	J_SEMANTICS_CONSISTENCY,
 	J_SEMANTICS_PERSISTENCY,
@@ -53,6 +54,14 @@ enum JSemanticsType
 };
 
 typedef enum JSemanticsType JSemanticsType;
+
+enum
+{
+	J_SEMANTICS_ATOMICITY_OPERATION,
+	/* FIXME name */
+	J_SEMANTICS_ATOMICITY_SUB_OPERATION,
+	J_SEMANTICS_ATOMICITY_NONE
+};
 
 enum
 {

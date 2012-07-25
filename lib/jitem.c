@@ -49,6 +49,7 @@
 #include <jdistribution.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <jlock-internal.h>
 #include <jmessage.h>
 #include <joperation.h>
 #include <joperation-internal.h>
@@ -986,7 +987,9 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	JConnection* connection;
 	JItem* item;
 	JListIterator* iterator;
+	JLock* lock = NULL;
 	JMessage** messages;
+	JSemantics* semantics;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
@@ -1000,6 +1003,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
+	semantics = j_operation_get_semantics(operation);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1026,6 +1030,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		store_len = strlen(store_name) + 1;
 		collection_len = strlen(collection_name) + 1;
 		item_len = strlen(item->name) + 1;
+	}
+
+	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
+	{
+		lock = j_lock_new(item);
 	}
 
 	iterator = j_list_iterator_new(parts);
@@ -1072,6 +1081,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			j_message_append_8(messages[index], &new_offset);
 			j_message_add_send(messages[index], d, new_length);
 
+			if (lock != NULL)
+			{
+				j_lock_add(lock, 0);
+			}
+
 			d += new_length;
 			/* FIXME */
 			*bytes_written += new_length;
@@ -1083,6 +1097,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(iterator);
+
+	if (lock != NULL)
+	{
+		j_lock_acquire(lock);
+	}
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -1117,7 +1136,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			item->status.created[i] = TRUE;
 		}
 
-		if (j_semantics_get(j_operation_get_semantics(operation), J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
 		{
 			sync_message = j_message_new(J_MESSAGE_SYNC, store_len + collection_len + item_len);
 			j_message_add_operation(sync_message, 0);
@@ -1162,6 +1181,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		{
 			j_message_unref(messages[i]);
 		}
+	}
+
+	if (lock != NULL)
+	{
+		j_lock_free(lock);
 	}
 
 	g_free(background_operations);
