@@ -136,6 +136,7 @@ test_lock_add (void)
 	JLock* lock;
 	JOperation* operation;
 	JStore* store;
+	gboolean ret;
 
 	operation = j_operation_new(NULL);
 
@@ -155,8 +156,10 @@ test_lock_add (void)
 		j_lock_add(lock, i);
 	}
 
-	j_lock_acquire(lock);
-	j_lock_release(lock);
+	ret = j_lock_acquire(lock);
+	g_assert(ret);
+	ret = j_lock_release(lock);
+	g_assert(ret);
 
 	j_lock_free(lock);
 

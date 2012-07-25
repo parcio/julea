@@ -70,6 +70,8 @@ struct JLock
 	JItem* item;
 
 	GArray* blocks;
+
+	gboolean acquired;
 };
 
 /**
@@ -151,6 +153,7 @@ j_lock_new (JItem* item)
 	bson_oid_gen(&(lock->id));
 	lock->item = j_item_ref(item);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
+	lock->acquired = FALSE;
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -178,6 +181,11 @@ j_lock_free (JLock* lock)
 	g_return_if_fail(lock != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	if (lock->acquired)
+	{
+		j_lock_release(lock);
+	}
 
 	if (lock->item != NULL)
 	{
@@ -219,7 +227,7 @@ j_lock_acquire (JLock* lock)
 	bson_finish(&index);
 
 	mongo_create_index(connection, j_collection_collection_locks(collection), &index, 0, NULL);
-	mongo_insert(connection, j_collection_collection_locks(collection), obj, write_concern);
+	lock->acquired = (mongo_insert(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	bson_destroy(&index);
 
@@ -227,7 +235,7 @@ j_lock_acquire (JLock* lock)
 
 	g_slice_free(bson, obj);
 
-	return TRUE;
+	return lock->acquired;
 }
 
 gboolean
@@ -239,6 +247,7 @@ j_lock_release (JLock* lock)
 	mongo_write_concern write_concern[1];
 
 	g_return_val_if_fail(lock != NULL, FALSE);
+	g_return_val_if_fail(lock->acquired, FALSE);
 
 	collection = j_item_get_collection(lock->item);
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
@@ -252,12 +261,12 @@ j_lock_release (JLock* lock)
 	bson_append_oid(obj, "_id", &(lock->id));
 	bson_finish(obj);
 
-	mongo_remove(connection, j_collection_collection_locks(collection), obj, write_concern);
+	lock->acquired = !(mongo_remove(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	bson_destroy(obj);
 	mongo_write_concern_destroy(write_concern);
 
-	return TRUE;
+	return !(lock->acquired);
 }
 
 void
