@@ -47,7 +47,7 @@ int jfs_rmdir (char const* path)
 		goto end;
 	}
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_item(uri) != NULL)
 	{

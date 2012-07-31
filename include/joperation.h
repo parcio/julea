@@ -43,6 +43,7 @@ typedef void (*JOperationCompletedFunc) (JOperation*, gboolean, gpointer);
 #include <jsemantics.h>
 
 JOperation* j_operation_new (JSemantics*);
+JOperation* j_operation_new_for_template (JSemanticsTemplate);
 JOperation* j_operation_ref (JOperation*);
 void j_operation_unref (JOperation*);
 

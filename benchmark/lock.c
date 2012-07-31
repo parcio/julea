@@ -53,7 +53,7 @@ _benchmark_lock (gboolean acquire, gboolean add)
 	gdouble elapsed;
 
 	list = j_list_new((JListFreeFunc)j_lock_free);
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("benchmark-store");
 	collection = j_collection_new("benchmark-collection");

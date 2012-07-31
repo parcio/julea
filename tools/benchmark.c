@@ -55,7 +55,7 @@ main (int argc, char** argv)
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 //	j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
 
-	delete_operation = j_operation_new(NULL);
+	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	operation = j_operation_new(semantics);
 
 	store = j_store_new("JULEA");

@@ -363,7 +363,7 @@ j_uri_get (JURI* uri, GError** error)
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (uri->store_name != NULL)
 	{

@@ -46,7 +46,7 @@ test_lock_new_free (void)
 	JOperation* operation;
 	JStore* store;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
@@ -88,7 +88,7 @@ test_lock_acquire_release (void)
 	JOperation* operation;
 	JStore* store;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
@@ -138,7 +138,7 @@ test_lock_add (void)
 	JStore* store;
 	gboolean ret;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");

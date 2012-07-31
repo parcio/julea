@@ -52,7 +52,7 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 	{
 		JOperation* operation;
 
-		operation = j_operation_new(NULL);
+		operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_item_write(j_uri_get_item(uri), buf, size, offset, &bytes_written, operation);
 		j_operation_execute(operation);
 		j_operation_unref(operation);

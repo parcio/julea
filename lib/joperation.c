@@ -89,24 +89,6 @@ struct JOperationAsync
 
 typedef struct JOperationAsync JOperationAsync;
 
-static JSemantics* j_operation_default_semantics = NULL;
-
-static
-JSemantics*
-j_operation_get_default_semantics (void)
-{
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-
-	if (G_UNLIKELY(j_operation_default_semantics == NULL))
-	{
-		j_operation_default_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	}
-
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-
-	return j_operation_default_semantics;
-}
-
 static
 gpointer
 j_operation_background_operation (gpointer data)
@@ -147,19 +129,47 @@ j_operation_new (JSemantics* semantics)
 {
 	JOperation* operation;
 
+	g_return_val_if_fail(semantics != NULL, NULL);
+
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	operation = g_slice_new(JOperation);
 	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
+	operation->semantics = j_semantics_ref(semantics);
 	operation->background_operation = NULL;
 	operation->ref_count = 1;
 
-	if (semantics == NULL)
-	{
-		semantics = j_operation_get_default_semantics();
-	}
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation->semantics = j_semantics_ref(semantics);
+	return operation;
+}
+
+/**
+ * Creates a new operation for a semantics template.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JOperation* operation;
+ *
+ * operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+ * \endcode
+ *
+ * \param template A semantics template.
+ *
+ * \return A new operation. Should be freed with j_operation_unref().
+ **/
+JOperation*
+j_operation_new_for_template (JSemanticsTemplate template)
+{
+	JOperation* operation;
+	JSemantics* semantics;
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	semantics = j_semantics_new(template);
+	operation = j_operation_new(semantics);
+	j_semantics_unref(semantics);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 

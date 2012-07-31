@@ -44,8 +44,8 @@ _benchmark_collection_create (gboolean batch)
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new(NULL);
-	operation = j_operation_new(NULL);
+	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);
@@ -113,7 +113,7 @@ _benchmark_collection_delete (gboolean batch)
 	JStore* store;
 	gdouble elapsed;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);
@@ -196,8 +196,8 @@ benchmark_collection_delete_batch_without_get (void)
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new(NULL);
-	operation = j_operation_new(NULL);
+	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);

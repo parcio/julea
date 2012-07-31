@@ -50,7 +50,7 @@ test_operation_new_free (void)
 {
 	JOperation* operation;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_assert(operation != NULL);
 
 	j_operation_unref(operation);
@@ -63,7 +63,7 @@ test_operation_semantics (void)
 	JOperation* operation;
 	JSemantics* semantics;
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	g_assert(j_operation_get_semantics(operation) != NULL);
 
@@ -92,7 +92,7 @@ _test_operation_execute (gboolean async)
 		g_atomic_int_set(&test_operation_flag, 0);
 	}
 
-	operation = j_operation_new(NULL);
+	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
