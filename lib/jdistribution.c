@@ -108,7 +108,7 @@ struct JDistribution
  **/
 static
 gboolean
-j_distribution_distribute_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_distribute_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	gboolean ret = TRUE;
 	guint64 block;
@@ -130,6 +130,7 @@ j_distribution_distribute_round_robin (JDistribution* distribution, guint* index
 	*index = block % j_configuration_get_data_server_count(distribution->configuration);
 	*new_length = MIN(distribution->length, distribution->u.round_robin.block_size - displacement);
 	*new_offset = (round * distribution->u.round_robin.block_size) + displacement;
+	*block_id = block;
 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
@@ -159,7 +160,7 @@ end:
  **/
 static
 gboolean
-j_distribution_distribute_single_server (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_distribute_single_server (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	gboolean ret = TRUE;
 
@@ -174,6 +175,7 @@ j_distribution_distribute_single_server (JDistribution* distribution, guint* ind
 	*index = distribution->u.single_server.index;
 	*new_length = distribution->length;
 	*new_offset = distribution->offset;
+	*block_id = 0;
 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
@@ -271,7 +273,7 @@ j_distribution_free (JDistribution* distribution)
  * \return TRUE on success, FALSE if the distribution is finished.
  **/
 gboolean
-j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset)
+j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	gboolean ret = FALSE;
 
@@ -285,10 +287,10 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset);
+			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset, block_id);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset);
+			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
 			break;
 		default:
 			g_warn_if_reached();

@@ -889,6 +889,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		gchar* d;
 		guint64 new_length;
 		guint64 new_offset;
+		guint64 block_id;
 		guint index;
 
 		*bytes_read = 0;
@@ -903,7 +904,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
-		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
+		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))
 		{
 			if (messages[index] == NULL)
 			{
@@ -1051,6 +1052,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		gchar const* d;
 		guint64 new_length;
 		guint64 new_offset;
+		guint64 block_id;
 		guint index;
 
 		*bytes_written = 0;
@@ -1065,7 +1067,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
 		d = data;
 
-		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset))
+		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))
 		{
 			if (messages[index] == NULL)
 			{
@@ -1083,7 +1085,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 			if (lock != NULL)
 			{
-				j_lock_add(lock, 0);
+				j_lock_add(lock, block_id);
 			}
 
 			d += new_length;
@@ -1100,7 +1102,8 @@ j_item_write_internal (JOperation* operation, JList* parts)
 
 	if (lock != NULL)
 	{
-		j_lock_acquire(lock);
+		/* FIXME busy wait */
+		while (!j_lock_acquire(lock));
 	}
 
 	for (guint i = 0; i < n; i++)
