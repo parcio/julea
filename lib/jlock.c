@@ -274,6 +274,7 @@ j_lock_add (JLock* lock, guint64 block)
 {
 	g_return_if_fail(lock != NULL);
 
+	/* FIXME handle duplicates */
 	g_array_append_val(lock->blocks, block);
 }
 

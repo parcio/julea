@@ -827,9 +827,12 @@ j_item_read_internal (JOperation* operation, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
+	JItem* item;
 	JList** buffer_list;
 	JListIterator* iterator;
+	JLock* lock = NULL;
 	JMessage** messages;
+	JSemantics* semantics;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
@@ -843,6 +846,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
+	semantics = j_operation_get_semantics(operation);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -856,7 +860,6 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	}
 
 	{
-		JItem* item;
 		JOperationPart* part;
 
 		part = j_list_get_first(parts);
@@ -872,6 +875,11 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		item_len = strlen(item_name) + 1;
 		collection_len = strlen(collection_name) + 1;
 		store_len = strlen(store_name) + 1;
+	}
+
+	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
+	{
+		lock = j_lock_new(item);
 	}
 
 	iterator = j_list_iterator_new(parts);
@@ -924,6 +932,11 @@ j_item_read_internal (JOperation* operation, JList* parts)
 
 			j_list_append(buffer_list[index], buffer);
 
+			if (lock != NULL)
+			{
+				j_lock_add(lock, block_id);
+			}
+
 			d += new_length;
 		}
 
@@ -933,6 +946,12 @@ j_item_read_internal (JOperation* operation, JList* parts)
 	}
 
 	j_list_iterator_free(iterator);
+
+	if (lock != NULL)
+	{
+		/* FIXME busy wait */
+		while (!j_lock_acquire(lock));
+	}
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -970,6 +989,11 @@ j_item_read_internal (JOperation* operation, JList* parts)
 		}
 
 		j_list_unref(buffer_list[i]);
+	}
+
+	if (lock != NULL)
+	{
+		j_lock_free(lock);
 	}
 
 	g_free(background_operations);
