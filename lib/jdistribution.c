@@ -82,6 +82,7 @@ struct JDistribution
 
 		struct
 		{
+			guint64 block_size;
 			guint index;
 		}
 		single_server;
@@ -163,6 +164,8 @@ gboolean
 j_distribution_distribute_single_server (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	gboolean ret = TRUE;
+	guint64 block;
+	guint64 displacement;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -172,10 +175,13 @@ j_distribution_distribute_single_server (JDistribution* distribution, guint* ind
 		goto end;
 	}
 
+	block = distribution->offset / distribution->u.single_server.block_size;
+	displacement = distribution->offset % distribution->u.single_server.block_size;
+
 	*index = distribution->u.single_server.index;
-	*new_length = distribution->length;
+	*new_length = MIN(distribution->length, distribution->u.single_server.block_size - displacement);
 	*new_offset = distribution->offset;
-	*block_id = 0;
+	*block_id = block;
 
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
@@ -222,6 +228,7 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 			distribution->u.round_robin.block_size = J_KIB(512);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
+			distribution->u.single_server.block_size = J_KIB(512);
 			distribution->u.single_server.index = 0;
 			break;
 		default:
@@ -320,6 +327,27 @@ j_distribution_set_round_robin_block_size (JDistribution* distribution, guint64 
 	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
 
 	distribution->u.round_robin.block_size = block_size;
+}
+
+/**
+ * Sets the block size for the single server distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param block_size   A block size.
+ */
+void
+j_distribution_set_single_server_block_size (JDistribution* distribution, guint64 block_size)
+{
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(block_size > 0);
+	g_return_if_fail(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
+
+	distribution->u.single_server.block_size = block_size;
 }
 
 /**
