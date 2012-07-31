@@ -41,7 +41,6 @@ gchar* opt_template = NULL;
 
 GTimer* j_benchmark_timer = NULL;
 
-static
 JSemantics*
 j_benchmark_get_semantics (void)
 {
@@ -79,7 +78,22 @@ j_benchmark_get_semantics (void)
 			continue;
 		}
 
-		if (g_str_has_prefix(parts[i], "concurrency:"))
+		if (g_str_has_prefix(parts[i], "atomicity:"))
+		{
+			if (g_strcmp0(value, "operation") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
+			}
+			else if (g_strcmp0(value, "sub-operation") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_SUB_OPERATION);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_NONE);
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "concurrency:"))
 		{
 			if (g_strcmp0(value, "overlapping") == 0)
 			{
@@ -244,6 +258,7 @@ main (int argc, char** argv)
 
 	g_free(opt_path);
 	g_free(opt_semantics);
+	g_free(opt_template);
 
 	return 0;
 }

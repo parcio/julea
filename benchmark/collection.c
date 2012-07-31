@@ -41,11 +41,13 @@ _benchmark_collection_create (gboolean batch)
 
 	JOperation* delete_operation;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	delete_operation = j_operation_new(semantics);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);
@@ -85,6 +87,7 @@ _benchmark_collection_create (gboolean batch)
 
 	j_operation_unref(delete_operation);
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -110,10 +113,12 @@ _benchmark_collection_delete (gboolean batch)
 	guint const n = 10000;
 
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);
@@ -167,6 +172,7 @@ _benchmark_collection_delete (gboolean batch)
 	j_operation_execute(operation);
 
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -193,11 +199,13 @@ benchmark_collection_delete_batch_without_get (void)
 
 	JOperation* delete_operation;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	delete_operation = j_operation_new(semantics);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	j_create_store(store, operation);
@@ -231,6 +239,7 @@ benchmark_collection_delete_batch_without_get (void)
 
 	j_operation_unref(delete_operation);
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }

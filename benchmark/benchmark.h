@@ -30,7 +30,11 @@
 
 #include <glib.h>
 
+#include <jsemantics.h>
+
 typedef gchar* (*BenchmarkFunc) (void);
+
+JSemantics* j_benchmark_get_semantics (void);
 
 void j_benchmark_timer_start (void);
 gdouble j_benchmark_timer_elapsed (void);

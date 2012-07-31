@@ -44,11 +44,13 @@ _benchmark_item_create (gboolean batch)
 	JCollection* collection;
 	JOperation* delete_operation;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	delete_operation = j_operation_new(semantics);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
@@ -92,6 +94,7 @@ _benchmark_item_create (gboolean batch)
 
 	j_operation_unref(delete_operation);
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -119,11 +122,13 @@ _benchmark_item_delete (gboolean batch)
 	JCollection* collection;
 	JOperation* get_operation;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	get_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	get_operation = j_operation_new(semantics);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
@@ -182,6 +187,7 @@ _benchmark_item_delete (gboolean batch)
 
 	j_operation_unref(get_operation);
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -209,11 +215,13 @@ benchmark_item_delete_batch_without_get (void)
 	JCollection* collection;
 	JOperation* delete_operation;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
 
-	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	delete_operation = j_operation_new(semantics);
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
@@ -251,6 +259,7 @@ benchmark_item_delete_batch_without_get (void)
 
 	j_operation_unref(delete_operation);
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
 }
@@ -264,6 +273,7 @@ _benchmark_item_read (gboolean batch, guint block_size)
 	JCollection* collection;
 	JItem* item;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];
 	gchar* ret;
@@ -273,7 +283,8 @@ _benchmark_item_read (gboolean batch, guint block_size)
 
 	memset(dummy, 0, block_size);
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
@@ -317,6 +328,7 @@ _benchmark_item_read (gboolean batch, guint block_size)
 	j_operation_execute(operation);
 
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	size = g_format_size((n * block_size) / elapsed);
 	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
@@ -348,6 +360,7 @@ _benchmark_item_write (gboolean batch, guint block_size)
 	JCollection* collection;
 	JItem* item;
 	JOperation* operation;
+	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];
 	gchar* ret;
@@ -356,7 +369,8 @@ _benchmark_item_write (gboolean batch, guint block_size)
 
 	memset(dummy, 0, block_size);
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	semantics = j_benchmark_get_semantics();
+	operation = j_operation_new(semantics);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
@@ -396,6 +410,7 @@ _benchmark_item_write (gboolean batch, guint block_size)
 	j_operation_execute(operation);
 
 	j_operation_unref(operation);
+	j_semantics_unref(semantics);
 
 	size = g_format_size((n * block_size) / elapsed);
 	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
