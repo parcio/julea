@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import Utils
+from waflib import Utils
 
 top = '.'
 out = 'build'
