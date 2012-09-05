@@ -32,6 +32,7 @@
 #ifndef H_BACKEND
 #define H_BACKEND
 
+#include <jitem.h>
 #include <jtrace-internal.h>
 
 struct JBackendFile
@@ -51,6 +52,7 @@ gboolean (*jd_backend_delete) (JBackendFile*) = NULL;
 gboolean (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
 gboolean (*jd_backend_close) (JBackendFile*) = NULL;
 
+gboolean (*jd_backend_status) (JBackendFile*, JItemStatusFlags, gint64*, guint64*) = NULL;
 gboolean (*jd_backend_sync) (JBackendFile*) = NULL;
 
 gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, guint64*) = NULL;

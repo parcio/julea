@@ -149,6 +149,8 @@ def configure (ctx):
 
 	ctx.define('JULEAD_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
+	ctx.env.JULEA_FUSE = ctx.env.HAVE_FUSE
+
 	ctx.write_config_header('include/julea-config.h')
 
 def build (ctx):
@@ -244,7 +246,7 @@ def build (ctx):
 		)
 
 	# FUSE
-	if ctx.env.HAVE_FUSE:
+	if ctx.env.JULEA_FUSE:
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/juleafs',

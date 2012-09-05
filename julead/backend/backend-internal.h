@@ -43,6 +43,7 @@ gboolean backend_delete (JBackendFile*);
 gboolean backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*);
 gboolean backend_close (JBackendFile*);
 
+gboolean backend_status (JBackendFile*, JItemStatusFlags, gint64*, guint64*);
 gboolean backend_sync (JBackendFile*);
 
 gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, guint64*);

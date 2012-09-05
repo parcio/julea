@@ -232,6 +232,63 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					jd_backend_close(&bf);
 				}
 				break;
+			case J_MESSAGE_STATUS:
+				{
+					JMessage* reply;
+
+					reply = j_message_new_reply(message);
+
+					store = j_message_get_string(message);
+					collection = j_message_get_string(message);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						guint count = 0;
+						guint32 flags;
+						gint64 modification_time = 0;
+						guint64 size = 0;
+
+						item = j_message_get_string(message);
+						flags = j_message_get_4(message);
+
+						jd_backend_open(&bf, store, collection, item);
+
+						if (jd_backend_status(&bf, flags, &modification_time, &size))
+						{
+							// FIXME
+							j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_FILES_CREATED, 1);
+						}
+
+						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+						{
+							count++;
+						}
+
+						if (flags & J_ITEM_STATUS_SIZE)
+						{
+							count++;
+						}
+
+						j_message_add_operation(reply, count * sizeof(guint64));
+
+						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+						{
+							g_print("LALA %ld\n", modification_time);
+							j_message_append_8(reply, &modification_time);
+						}
+
+						if (flags & J_ITEM_STATUS_SIZE)
+						{
+							j_message_append_8(reply, &size);
+						}
+
+						jd_backend_close(&bf);
+					}
+
+					j_message_write(reply, output);
+					j_message_unref(reply);
+				}
+				break;
 			case J_MESSAGE_STATISTICS:
 				{
 					JMessage* reply;
@@ -392,6 +449,7 @@ main (int argc, char** argv)
 	g_module_symbol(backend, "backend_delete", (gpointer*)&jd_backend_delete);
 	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
 	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
+	g_module_symbol(backend, "backend_status", (gpointer*)&jd_backend_status);
 	g_module_symbol(backend, "backend_sync", (gpointer*)&jd_backend_sync);
 	g_module_symbol(backend, "backend_read", (gpointer*)&jd_backend_read);
 	g_module_symbol(backend, "backend_write", (gpointer*)&jd_backend_write);
@@ -402,6 +460,7 @@ main (int argc, char** argv)
 	g_assert(jd_backend_delete != NULL);
 	g_assert(jd_backend_open != NULL);
 	g_assert(jd_backend_close != NULL);
+	g_assert(jd_backend_status != NULL);
 	g_assert(jd_backend_sync != NULL);
 	g_assert(jd_backend_read != NULL);
 	g_assert(jd_backend_write != NULL);

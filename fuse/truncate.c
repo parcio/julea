@@ -50,7 +50,7 @@ jfs_truncate (char const* path, off_t size)
 	if (j_uri_get_item(uri) != NULL)
 	{
 		/* FIXME */
-		j_item_set_size(j_uri_get_item(uri), size);
+		//j_item_set_size(j_uri_get_item(uri), size);
 
 		ret = 0;
 	}

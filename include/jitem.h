@@ -37,8 +37,8 @@
 enum JItemStatusFlags
 {
 	J_ITEM_STATUS_NONE              = 0,
-	J_ITEM_STATUS_SIZE              = 1 << 0,
-	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 1
+	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 0,
+	J_ITEM_STATUS_SIZE              = 1 << 1
 };
 
 typedef enum JItemStatusFlags JItemStatusFlags;
@@ -62,10 +62,8 @@ void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation
 void j_item_get_status (JItem*, JItemStatusFlags, JOperation*);
 
 guint64 j_item_get_size (JItem*);
-void j_item_set_size (JItem*, guint64);
 
 gint64 j_item_get_modification_time (JItem*);
-void j_item_set_modification_time (JItem*, gint64);
 
 /*
 		private:

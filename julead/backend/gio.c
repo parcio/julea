@@ -148,6 +148,34 @@ backend_close (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
+backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+{
+	GFileIOStream* stream = bf->user_data;
+	//GOutputStream* output;
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	if (stream != NULL)
+	{
+		//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+
+		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS);
+		// FIXME
+		//g_output_stream_flush(output, NULL, NULL);
+		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
+
+		// FIXME
+		*modification_time = 0;
+		*size = 0;
+	}
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return (stream != NULL);
+}
+
+G_MODULE_EXPORT
+gboolean
 backend_sync (JBackendFile* bf)
 {
 	GFileIOStream* stream = bf->user_data;

@@ -101,6 +101,23 @@ backend_close (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
+backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+{
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS);
+	j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
+
+	*modification_time = 0;
+	*size = 0;
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return TRUE;
+}
+
+G_MODULE_EXPORT
+gboolean
 backend_sync (JBackendFile* bf)
 {
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);

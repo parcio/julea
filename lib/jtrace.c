@@ -279,6 +279,8 @@ j_trace_file_operation_name (JTraceFileOperation op)
 			return "read";
 		case J_TRACE_FILE_SEEK:
 			return "seek";
+		case J_TRACE_FILE_STATUS:
+			return "status";
 		case J_TRACE_FILE_SYNC:
 			return "sync";
 		case J_TRACE_FILE_WRITE:
@@ -964,6 +966,9 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 				break;
 			case J_TRACE_FILE_SEEK:
 				otf_op = OTF_FILEOP_SEEK;
+				break;
+			case J_TRACE_FILE_STATUS:
+				otf_op = OTF_FILEOP_OTHER;
 				break;
 			case J_TRACE_FILE_SYNC:
 				otf_op = OTF_FILEOP_SYNC;

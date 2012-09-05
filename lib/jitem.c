@@ -104,6 +104,19 @@ struct JItemBackgroundData
 		read;
 
 		/**
+		 * The read status part.
+		 */
+		struct
+		{
+			/**
+			 * The list of items.
+			 * Contains #JItemReadStatusData elements.
+			 */
+			JList* buffer_list;
+		}
+		read_status;
+
+		/**
 		 * The write part.
 		 */
 		struct
@@ -142,6 +155,24 @@ struct JItemReadData
 };
 
 typedef struct JItemReadData JItemReadData;
+
+/**
+ * Data for buffers.
+ */
+struct JItemReadStatusData
+{
+	/**
+	 * The item.
+	 */
+	JItem* item;
+
+	/**
+	 * The item status flags.
+	 */
+	JItemStatusFlags flags;
+};
+
+typedef struct JItemReadStatusData JItemReadStatusData;
 
 /**
  * A JItem.
@@ -293,6 +324,62 @@ j_item_write_background_operation (gpointer data)
 }
 
 /**
+ * Executes get status operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_item_get_status_background_operation (gpointer data)
+{
+	JItemBackgroundData* background_data = data;
+	JListIterator* iterator;
+	JMessage* reply;
+
+	/* FIXME reply? */
+	j_connection_send(background_data->connection, background_data->index, background_data->message);
+
+	reply = j_message_new_reply(background_data->message);
+	iterator = j_list_iterator_new(background_data->u.read_status.buffer_list);
+
+	j_connection_receive(background_data->connection, background_data->index, reply);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JItemReadStatusData* buffer = j_list_iterator_get(iterator);
+
+		if (buffer->flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		{
+			gint64 modification_time;
+
+			modification_time = j_message_get_8(reply);
+			// FIXME thread-safety
+			j_item_set_modification_time(buffer->item, modification_time);
+		}
+
+		if (buffer->flags & J_ITEM_STATUS_SIZE)
+		{
+			guint64 size;
+
+			size = j_message_get_8(reply);
+			// FIXME thread-safety
+			j_item_add_size(buffer->item, size);
+		}
+	}
+
+	j_list_iterator_free(iterator);
+	j_message_unref(reply);
+
+	return data;
+}
+
+/**
  * Creates a new item.
  *
  * \author Michael Kuhn
@@ -321,7 +408,7 @@ j_item_new (gchar const* name)
 	item->name = g_strdup(name);
 	item->status.flags = J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.size = 0;
-	item->status.modification_time = g_get_real_time();
+	item->status.modification_time = g_get_real_time() / G_USEC_PER_SEC;
 	item->status.created = NULL;
 	item->collection = NULL;
 	item->ref_count = 1;
@@ -551,28 +638,6 @@ j_item_get_size (JItem* item)
 }
 
 /**
- * Sets an item's size.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- * \param size A size.
- **/
-void
-j_item_set_size (JItem* item, guint64 size)
-{
-	g_return_if_fail(item != NULL);
-
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	item->status.flags |= J_ITEM_STATUS_SIZE;
-	item->status.size = size;
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-}
-
-/**
  * Returns an item's modification time.
  *
  * \author Michael Kuhn
@@ -594,28 +659,6 @@ j_item_get_modification_time (JItem* item)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return item->status.modification_time;
-}
-
-/**
- * Sets an item's modification time.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item              An item.
- * \param modification_time A modification time.
- **/
-void
-j_item_set_modification_time (JItem* item, gint64 modification_time)
-{
-	g_return_if_fail(item != NULL);
-
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
-	item->status.modification_time = modification_time;
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /* Internal */
@@ -650,6 +693,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item->status.flags = J_ITEM_STATUS_NONE;
 	item->status.size = 0;
 	item->status.modification_time = 0;
+	item->status.created = NULL;
 	item->collection = j_collection_ref(collection);
 	item->ref_count = 1;
 
@@ -819,6 +863,50 @@ j_item_set_collection (JItem* item, JCollection* collection)
 
 	item->collection = j_collection_ref(collection);
 
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+}
+
+/**
+ * Sets an item's modification time.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item              An item.
+ * \param modification_time A modification time.
+ **/
+void
+j_item_set_modification_time (JItem* item, gint64 modification_time)
+{
+	g_return_if_fail(item != NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
+	item->status.modification_time = MAX(item->status.modification_time, modification_time);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+}
+
+/**
+ * Adds to an item's size.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param size A size.
+ **/
+void
+j_item_add_size (JItem* item, guint64 size)
+{
+	g_return_if_fail(item != NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	item->status.flags |= J_ITEM_STATUS_SIZE;
+	item->status.size += size;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
@@ -1226,13 +1314,42 @@ j_item_write_internal (JOperation* operation, JList* parts)
 gboolean
 j_item_get_status_internal (JOperation* operation, JList* parts)
 {
-	JListIterator* iterator;
 	gboolean ret = TRUE;
+	JBackgroundOperation** background_operations;
+	JConnection* connection = NULL;
+	JList** buffer_list;
+	JListIterator* iterator;
+	JMessage** messages;
+	guint n;
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	n = j_configuration_get_data_server_count(j_configuration());
+	background_operations = g_new(JBackgroundOperation*, n);
+	messages = g_new(JMessage*, n);
+	buffer_list = g_new(JList*, n);
+
+	for (guint i = 0; i < n; i++)
+	{
+		background_operations[i] = NULL;
+		messages[i] = NULL;
+		buffer_list[i] = j_list_new(NULL);
+	}
+
+	{
+		JItem* item;
+		JOperationPart* part;
+
+		part = j_list_get_first(parts);
+		g_assert(part != NULL);
+		item = part->u.item_get_status.item;
+
+		// FIXME
+		connection = j_store_get_connection(j_collection_get_store(item->collection));
+	}
 
 	iterator = j_list_iterator_new(parts);
 
@@ -1243,7 +1360,6 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		JItemStatusFlags flags = part->u.item_get_status.flags;
 		bson b;
 		bson fields;
-		mongo* connection;
 		mongo_cursor* cursor;
 
 		if (flags == J_ITEM_STATUS_NONE)
@@ -1251,38 +1367,117 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 			continue;
 		}
 
-		bson_init(&fields);
-
-		if (flags & J_ITEM_STATUS_SIZE)
+		if (FALSE)
 		{
-			bson_append_int(&fields, "Size", 1);
-		}
+			bson_init(&fields);
 
-		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+			if (flags & J_ITEM_STATUS_SIZE)
+			{
+				bson_append_int(&fields, "Size", 1);
+			}
+
+			if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+			{
+				bson_append_int(&fields, "ModificationTime", 1);
+			}
+
+			bson_finish(&fields);
+
+			bson_init(&b);
+			bson_append_oid(&b, "_id", &(item->id));
+			bson_finish(&b);
+
+			cursor = mongo_find(j_connection_get_connection(connection), j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
+
+			bson_destroy(&fields);
+			bson_destroy(&b);
+
+			// FIXME ret
+			while (mongo_cursor_next(cursor) == MONGO_OK)
+			{
+				j_item_deserialize(item, mongo_cursor_bson(cursor));
+			}
+
+			mongo_cursor_destroy(cursor);
+		}
+		else
 		{
-			bson_append_int(&fields, "ModificationTime", 1);
+			for (guint i = 0; i < n; i++)
+			{
+				JItemReadStatusData* buffer;
+				gchar const* item_name;
+				gsize item_len;
+
+				item_name = item->name;
+				item_len = strlen(item->name) + 1;
+
+				if (messages[i] == NULL)
+				{
+					gchar const* collection_name;
+					gchar const* store_name;
+					gsize collection_len;
+					gsize store_len;
+
+					collection_name = j_collection_get_name(item->collection);
+					store_name = j_store_get_name(j_collection_get_store(item->collection));
+
+					store_len = strlen(store_name) + 1;
+					collection_len = strlen(collection_name) + 1;
+
+					messages[i] = j_message_new(J_MESSAGE_STATUS, store_len + collection_len);
+					j_message_append_n(messages[i], store_name, store_len);
+					j_message_append_n(messages[i], collection_name, collection_len);
+				}
+
+				j_message_add_operation(messages[i], item_len + sizeof(guint32));
+				j_message_append_n(messages[i], item_name, item_len);
+				j_message_append_4(messages[i], &flags);
+
+				buffer = g_slice_new(JItemReadStatusData);
+				buffer->item = item;
+				buffer->flags = flags;
+
+				j_list_append(buffer_list[i], buffer);
+			}
 		}
-
-		bson_finish(&fields);
-
-		bson_init(&b);
-		bson_append_oid(&b, "_id", &(item->id));
-		bson_finish(&b);
-
-		connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(item->collection)));
-		cursor = mongo_find(connection, j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
-
-		bson_destroy(&fields);
-		bson_destroy(&b);
-
-		// FIXME ret
-		while (mongo_cursor_next(cursor) == MONGO_OK)
-		{
-			j_item_deserialize(item, mongo_cursor_bson(cursor));
-		}
-
-		mongo_cursor_destroy(cursor);
 	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		JItemBackgroundData* background_data;
+
+		if (messages[i] == NULL)
+		{
+			continue;
+		}
+
+		background_data = g_slice_new(JItemBackgroundData);
+		background_data->connection = connection;
+		background_data->message = messages[i];
+		background_data->index = i;
+		background_data->u.read_status.buffer_list = buffer_list[i];
+
+		background_operations[i] = j_background_operation_new(j_item_get_status_background_operation, background_data);
+	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (background_operations[i] != NULL)
+		{
+			JItemBackgroundData* background_data;
+
+			background_data = j_background_operation_wait(background_operations[i]);
+			j_background_operation_unref(background_operations[i]);
+
+			g_slice_free(JItemBackgroundData, background_data);
+		}
+
+		if (messages[i] != NULL)
+		{
+			j_message_unref(messages[i]);
+		}
+	}
+
 
 	j_list_iterator_free(iterator);
 

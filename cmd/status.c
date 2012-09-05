@@ -65,17 +65,23 @@ j_cmd_status (gchar const** arguments)
 
 	if (j_uri_get_item(uri) != NULL)
 	{
+		GDateTime* date_time;
+		gchar* modification_time;
 		gchar* size;
 
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME, operation);
+		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
 		j_operation_execute(operation);
 
+		date_time = g_date_time_new_from_unix_local(j_item_get_modification_time(j_uri_get_item(uri)));
+		modification_time = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
 		size = g_format_size(j_item_get_size(j_uri_get_item(uri)));
 
+		g_print("Modification time: %s\n", modification_time);
 		g_print("Size:              %s\n", size);
-		/* FIXME format modification time */
-		g_print("Modification time: %" G_GINT64_FORMAT  "\n", j_item_get_modification_time(j_uri_get_item(uri)));
 
+		g_date_time_unref(date_time);
+
+		g_free(modification_time);
 		g_free(size);
 	}
 	else
