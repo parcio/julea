@@ -427,7 +427,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	j_trace_init("julead");
+	j_trace_init("julea-daemon");
 
 	thread = j_thread_new(NULL, G_STRFUNC);
 
@@ -439,7 +439,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	path = g_module_build_path(JULEAD_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
+	path = g_module_build_path(DAEMON_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
 	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
 	g_free(path);
 

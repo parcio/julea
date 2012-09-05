@@ -76,12 +76,12 @@ struct JConnection
 	mongo connection;
 
 	/**
-	 * The julead connections.
+	 * The julea-daemon connections.
 	 **/
 	GSocketConnection** sockets;
 
 	/**
-	 * The number of julead connections.
+	 * The number of julea-daemon connections.
 	 **/
 	guint sockets_len;
 
@@ -356,7 +356,7 @@ j_connection_get_connection (JConnection* connection)
 }
 
 /**
- * Sends a message via the julead connections.
+ * Sends a message via the julea-daemon connections.
  *
  * \private
  *
@@ -391,7 +391,7 @@ j_connection_send (JConnection* connection, guint i, JMessage* message)
 }
 
 /**
- * Receives a message via the julead connections.
+ * Receives a message via the julea-daemon connections.
  *
  * \private
  *
@@ -427,7 +427,7 @@ j_connection_receive (JConnection* connection, guint i, JMessage* reply)
 }
 
 /**
- * Receives data via the julead connections.
+ * Receives data via the julea-daemon connections.
  *
  * \private
  *

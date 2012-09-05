@@ -147,7 +147,7 @@ def configure (ctx):
 	if ctx.options.use_nodelay:
 		ctx.define('J_USE_NODELAY', 1)
 
-	ctx.define('JULEAD_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
+	ctx.define('DAEMON_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
 	ctx.env.JULEA_FUSE = ctx.env.HAVE_FUSE
 
@@ -207,8 +207,8 @@ def build (ctx):
 
 	# Daemon
 	ctx.program(
-		source = ctx.path.ant_glob('julead/*.c'),
-		target = 'julead/julead',
+		source = ctx.path.ant_glob('daemon/*.c'),
+		target = 'daemon/julea-daemon',
 		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
@@ -218,8 +218,8 @@ def build (ctx):
 	# Daemon backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['julead/backend/%s.c' % (backend,)],
-			target = 'julead/backend/%s' % (backend,),
+			source = ['daemon/backend/%s.c' % (backend,)],
+			target = 'daemon/backend/%s' % (backend,),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
