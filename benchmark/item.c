@@ -266,6 +266,89 @@ benchmark_item_delete_batch_without_get (void)
 
 static
 gchar*
+_benchmark_item_get_status (gboolean batch)
+{
+	guint const n = (batch) ? 1000 : 1000;
+
+	JCollection* collection;
+	JItem* item;
+	JOperation* operation;
+	JSemantics* semantics;
+	JStore* store;
+	gchar dummy[1];
+	gchar* ret;
+	gchar* size;
+	gdouble elapsed;
+	guint64 nb;
+
+	memset(dummy, 0, 1);
+
+	semantics = j_benchmark_get_semantics();
+	operation = j_operation_new(semantics);
+
+	store = j_store_new("test");
+	collection = j_collection_new("test");
+	item = j_item_new("test");
+	j_create_store(store, operation);
+	j_store_create_collection(store, collection, operation);
+	j_collection_create_item(collection, item, operation);
+	j_item_write(item, dummy, 1, 0, &nb, operation);
+
+	j_operation_execute(operation);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		j_item_get_status(item, J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
+
+		if (!batch)
+		{
+			j_operation_execute(operation);
+		}
+	}
+
+	if (batch)
+	{
+		j_operation_execute(operation);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	j_collection_delete_item(collection, item, operation);
+	j_store_delete_collection(store, collection, operation);
+	j_delete_store(store, operation);
+	j_item_unref(item);
+	j_collection_unref(collection);
+	j_store_unref(store);
+	j_operation_execute(operation);
+
+	j_operation_unref(operation);
+	j_semantics_unref(semantics);
+
+	size = g_format_size(n / elapsed);
+	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
+	g_free(size);
+
+	return ret;
+}
+
+static
+gchar*
+benchmark_item_get_status (void)
+{
+	return _benchmark_item_get_status(FALSE);
+}
+
+static
+gchar*
+benchmark_item_get_status_batch (void)
+{
+	return _benchmark_item_get_status(TRUE);
+}
+
+static
+gchar*
 _benchmark_item_read (gboolean batch, guint block_size)
 {
 	guint const n = (batch) ? 1000 : 1000;
@@ -441,6 +524,8 @@ benchmark_item (void)
 	j_benchmark_run("/item/delete", benchmark_item_delete);
 	j_benchmark_run("/item/delete-batch", benchmark_item_delete_batch);
 	j_benchmark_run("/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
+	j_benchmark_run("/item/get-status", benchmark_item_get_status);
+	j_benchmark_run("/item/get-status-batch", benchmark_item_get_status_batch);
 	/* FIXME get */
 	j_benchmark_run("/item/read", benchmark_item_read);
 	j_benchmark_run("/item/read-batch", benchmark_item_read_batch);
