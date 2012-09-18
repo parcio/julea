@@ -264,6 +264,8 @@ j_item_read_background_operation (gpointer data)
 			{
 				j_connection_receive_data(background_data->connection, background_data->index, buffer->data, nbytes);
 			}
+
+			g_slice_free(JItemReadData, buffer);
 		}
 
 		operations_done += reply_operation_count;
@@ -371,6 +373,8 @@ j_item_get_status_background_operation (gpointer data)
 			// FIXME thread-safety
 			j_item_add_size(buffer->item, size);
 		}
+
+		g_slice_free(JItemReadStatusData, buffer);
 	}
 
 	j_list_iterator_free(iterator);
@@ -1442,6 +1446,8 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		}
 	}
 
+	j_list_iterator_free(iterator);
+
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* background_data;
@@ -1476,10 +1482,13 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		{
 			j_message_unref(messages[i]);
 		}
+
+		j_list_unref(buffer_list[i]);
 	}
 
-
-	j_list_iterator_free(iterator);
+	g_free(background_operations);
+	g_free(messages);
+	g_free(buffer_list);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 

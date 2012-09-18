@@ -105,6 +105,8 @@ j_operation_background_operation (gpointer data)
 		(*async->func)(async->operation, ret, async->user_data);
 	}
 
+	j_operation_unref(async->operation);
+
 	g_slice_free(JOperationAsync, async);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);

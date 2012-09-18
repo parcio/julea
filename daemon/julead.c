@@ -273,7 +273,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
 						{
-							g_print("LALA %ld\n", modification_time);
 							j_message_append_8(reply, &modification_time);
 						}
 

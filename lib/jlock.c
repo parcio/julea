@@ -89,18 +89,17 @@ struct JLock
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
 static
-bson*
-j_lock_serialize (JLock* lock)
+void
+j_lock_serialize (JLock* lock, bson* b)
 {
 	// FIXME might be too small
 	gchar numstr[10];
-	bson* b;
 
-	g_return_val_if_fail(lock != NULL, NULL);
+	g_return_if_fail(lock != NULL);
+	g_return_if_fail(b != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	b = g_slice_new(bson);
 	bson_init(b);
 	bson_append_oid(b, "_id", &(lock->id));
 	bson_append_oid(b, "Item", j_item_get_id(lock->item));
@@ -118,8 +117,6 @@ j_lock_serialize (JLock* lock)
 	bson_finish(b);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-
-	return b;
 }
 
 /**
@@ -203,14 +200,14 @@ gboolean
 j_lock_acquire (JLock* lock)
 {
 	JCollection* collection;
-	bson* obj;
-	bson index;
+	bson obj[1];
+	bson index[1];
 	mongo* connection;
 	mongo_write_concern write_concern[1];
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 
-	obj = j_lock_serialize(lock);
+	j_lock_serialize(lock, obj);
 
 	collection = j_item_get_collection(lock->item);
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
@@ -220,20 +217,19 @@ j_lock_acquire (JLock* lock)
 	write_concern->w = 1;
 	mongo_write_concern_finish(write_concern);
 
-	bson_init(&index);
-	bson_append_int(&index, "Item", 1);
+	bson_init(index);
+	bson_append_int(index, "Item", 1);
 	// FIXME speed
-	//bson_append_int(&index, "Blocks", 1);
-	bson_finish(&index);
+	//bson_append_int(index, "Blocks", 1);
+	bson_finish(index);
 
-	mongo_create_index(connection, j_collection_collection_locks(collection), &index, 0, NULL);
+	mongo_create_index(connection, j_collection_collection_locks(collection), index, 0, NULL);
 	lock->acquired = (mongo_insert(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
-	bson_destroy(&index);
+	bson_destroy(index);
+	bson_destroy(obj);
 
 	mongo_write_concern_destroy(write_concern);
-
-	g_slice_free(bson, obj);
 
 	return lock->acquired;
 }
