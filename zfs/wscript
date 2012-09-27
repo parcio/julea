@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+
+from waflib import Utils
+
+top = '.'
+out = 'build'
+
+def options (ctx):
+	ctx.load('compiler_c')
+
+	ctx.add_option('--zfs', action='store', default='/usr', help='Use ZFS')
+
+def configure (ctx):
+	ctx.load('compiler_c')
+	ctx.load('gnu_dirs')
+
+	ctx.env.CFLAGS += ['-std=c99']
+
+	ctx.check_cfg(
+		package = 'gio-2.0',
+		args = ['--cflags', '--libs'],
+		atleast_version = '2.30',
+		uselib_store = 'GIO'
+	)
+
+	ctx.check_cfg(
+		package = 'glib-2.0',
+		args = ['--cflags', '--libs'],
+		atleast_version = '2.30',
+		uselib_store = 'GLIB'
+	)
+
+	ctx.check_cfg(
+		package = 'gmodule-2.0',
+		args = ['--cflags', '--libs'],
+		atleast_version = '2.30',
+		uselib_store = 'GMODULE'
+	)
+
+	ctx.check_cfg(
+		package = 'gobject-2.0',
+		args = ['--cflags', '--libs'],
+		atleast_version = '2.30',
+		uselib_store = 'GOBJECT'
+	)
+
+	ctx.check_cfg(
+		package = 'gthread-2.0',
+		args = ['--cflags', '--libs'],
+		atleast_version = '2.30',
+		uselib_store = 'GTHREAD'
+	)
+
+	# ZFS
+	ctx.check_cc(
+		header_name = 'libzfs.h',
+		lib = ['zpool', 'nvpair', 'uutil', 'zfs'],
+		includes = ['%s/include/libspl' % (ctx.options.zfs,), '%s/include/libzfs' % (ctx.options.zfs,)],
+		defines = ['HAVE_IOCTL_IN_SYS_IOCTL_H'],
+		libpath = ['%s/lib' % (ctx.options.zfs,)],
+		rpath = ['%s/lib' % (ctx.options.zfs,)],
+		uselib_store = 'ZFS',
+		define_name = 'HAVE_ZFS'
+	)
+
+	ctx.env.CFLAGS += ['-O2']
+
+def build (ctx):
+	# Library
+	ctx.shlib(
+		source = ctx.path.ant_glob('jzfs.c'),
+		target = 'zfs/jzfs',
+		use = ['GIO', 'GLIB', 'GOBJECT', 'ZFS'],
+		includes = ['.'],
+		defines = ['_GNU_SOURCE'],
+		install_path = '${LIBDIR}'
+	)
+
+	ctx.program(
+		source = ['benchmark.c'],
+		target = 'zfs/jzfs-benchmark',
+		use = ['GIO', 'GLIB', 'GOBJECT', 'zfs/jzfs'],
+		includes = ['.'],
+		install_path = '${BINDIR}'
+	)
