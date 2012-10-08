@@ -485,6 +485,12 @@ j_zfs_object_write_internal(JZFSObject* object, void* buf, guint64 length, guint
 	dmu_buf_rele(db, FTAG);
 }
 
+guint64
+j_zfs_get_object_id(JZFSObject * object)
+{
+	return object->object;
+}
+
 /*Creates an object */
 JZFSObject*
 j_zfs_object_create(JZFSObjectSet* object_set)

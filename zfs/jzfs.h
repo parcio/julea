@@ -29,3 +29,4 @@ void j_zfs_object_read (JZFSObject*, void*, guint64, guint64);
 void j_zfs_object_write (JZFSObject*, void*, guint64, guint64);
 void j_zfs_object_close (JZFSObject*);
 void j_zfs_object_destroy (JZFSObject*);
+guint64 j_zfs_get_object_id(JZFSObject*);

@@ -127,7 +127,6 @@ j_zfs_test_objset_object_create_destroy(JZFSPool* pool, gint number_objsets, gin
 }
 
 /* Writes to an array of the size of "size" and reads the same content.
-Max.: 3.670.008 Byte
 Time is measured for writing and reading separately. */
 void
 j_zfs_test_object_write_read(JZFSPool* pool, gint size)
@@ -260,24 +259,53 @@ j_zfs_test_object_read_write(JZFSPool* pool, gint size, gint count)
   	printf("Time spent in j_zfs_test_object_read_write: %" PRId64 " microseconds\n\n", mseconds);
 }
 
+/* Opens and closes "count" number of objects in an object array.
+Time is measured for opening and closing separately. */
 void
 j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 {
-	struct timeval start_time, end_time;
+	struct timeval start_open, end_open, start_close, end_close;
 	JZFSObjectSet* object_set;
+	JZFSObject* object_array[count];
 	JZFSObject* object;
 	gint i;
+	gint64 mseconds_open, mseconds_close;
 	object_set = j_zfs_object_set_create(pool, "object_set");
 
-	gettimeofday(&start_time, NULL);
-
 	for(i = 0; i < count; i++)
-		object = j_zfs_object_open(object_set, i);
+		{
+			object_array[i] = j_zfs_object_create(object_set);
+		}
 
-	gettimeofday(&end_time, NULL);
-	gint64 mseconds = (end_time.tv_sec - start_time.tv_sec) * 1000000
-				+ (end_time.tv_usec - start_time.tv_usec);
-	printf("Time spent in j_zfs_test_object_open: %" PRId64 " microseconds\n", mseconds);
+	gettimeofday(&start_open, NULL);
+	for(i = 0; i < count; i++)
+		{
+			j_zfs_object_open(object_set, j_zfs_get_object_id(object_array[i]));
+		}
+	gettimeofday(&end_open, NULL);
+	mseconds_open = (end_open.tv_sec - start_open.tv_sec) * 1000000
+				+ (end_open.tv_usec - start_open.tv_usec);
+
+	gettimeofday(&start_close, NULL);
+	for(i = 0; i < count; i++)
+		{
+			j_zfs_object_close(object_array[i]);
+		}
+	gettimeofday(&end_close, NULL);
+	mseconds_close = (end_close.tv_sec - start_close.tv_sec) * 1000000
+				+ (end_close.tv_usec - start_close.tv_usec);
+
+	/*for(i = 0; i < count; i++)
+		{
+			printf("i: %d\n", i);
+			j_zfs_object_destroy(object_array[i]);
+			printf("object %d destroyed\n", i);
+		}*/
+
+	j_zfs_object_set_destroy(object_set);
+	//printf("Opened and closed: %d objects.\n", count);
+	printf("Time spent in j_zfs_test_object_open_close opening %d objects: %" PRId64 " microseconds\n", count, mseconds_open);
+	printf("Time spent in j_zfs_test_object_open_close closing %d objects: %" PRId64 " microseconds\n", count, mseconds_close);
 }
 
 
@@ -358,7 +386,7 @@ main (gint argc, gchar **argv)
 	//j_zfs_test_object_create_destroy(pool, 10000);//(pool, number of objects)
 	//j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
 	//j_zfs_test_object_write_read(pool, 8000550); //(pool, array size)
-	//j_zfs_test_object_open_close(pool, 100); //(pool, number of objects)
+	//j_zfs_test_object_open_close(pool, 5); //(pool, number of objects)
 
 
 
