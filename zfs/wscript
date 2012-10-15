@@ -83,3 +83,6 @@ def build (ctx):
 		includes = ['.'],
 		install_path = '${BINDIR}'
 	)
+
+	ctx.install_files('${INCLUDEDIR}', 'jzfs.h')
+
