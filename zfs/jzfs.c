@@ -222,11 +222,15 @@ j_zfs_pool_open(gchar* name)
 	JZFSPool* pool;
 	gint ret;
 
-	assert(jzfs != NULL);
+	//assert(jzfs != NULL);
+	if(jzfs == NULL)
+		return 0;
 
 	pool = j_zfs_pool_new(jzfs, name);
-	ret = spa_open(name, &(pool->spa), jzfs);
-	assert(ret == 0);
+	//ret = spa_open(name, &(pool->spa), jzfs);
+	//assert(ret == 0);
+	if(spa_open(name, &(pool->spa), jzfs) != 0)
+		return 0;
 
 	printf("Pool opened.\n\n");
 
@@ -310,8 +314,10 @@ j_zfs_object_set_create(JZFSPool* pool, gchar* name)
 
 	fullname = g_strdup_printf("%s/%s", pool->spa->spa_name, name);
 
-	ret = dmu_objset_create(fullname, DMU_OST_OTHER, 0, NULL, NULL);
-	assert(ret == 0);
+	//ret = dmu_objset_create(fullname, DMU_OST_OTHER, 0, NULL, NULL);
+	//assert(ret == 0);
+	if(dmu_objset_create(fullname, DMU_OST_OTHER, 0, NULL, NULL) != 0)
+		return 0;
 
 	dmu_objset_hold(fullname, object_set, &object_set->object_set);
 
@@ -336,9 +342,11 @@ j_zfs_object_set_open(JZFSPool* pool, gchar* name)
 
 	fullname = g_strdup_printf("%s/%s", pool->spa->spa_name, name);
 
-	ret = dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set,
-		&object_set->object_set);
-	assert(ret == 0);
+	//ret = dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set);
+	//assert(ret == 0);
+	if(dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set) != 0)
+		return 0;
+
 	guint64 id2 = dmu_objset_id(object_set->object_set);
 
 	printf("object_set %s ID %" PRId64 " opened.\n", fullname, id2);
@@ -426,9 +434,7 @@ j_zfs_object_read_internal(JZFSObject* object, void* buf, guint64 length, guint6
 {
 	gint ret;
 
-	//printf("Reading...\n");
-	ret = dmu_read(object->object_set->object_set, object->object, offset, length, buf,
-			 DMU_READ_NO_PREFETCH);
+	ret = dmu_read(object->object_set->object_set, object->object, offset, length, buf, DMU_READ_NO_PREFETCH);
 	assert(ret == 0);
 	//printf("Read %" PRId64 " Bytes from Object %" PRId64 " at offset %" PRId64 "\n",
 	//		length, object->object, offset);
@@ -517,9 +523,12 @@ j_zfs_object_create(JZFSObjectSet* object_set)
 	if (txg == 0) {
 		// FIXME
 		ret = ENOSPC;
+		return 0;
 	}
 
-	ASSERT(dmu_objset_zil(object_set->object_set)->zl_replay == !!object->object);
+	//ASSERT(dmu_objset_zil(object_set->object_set)->zl_replay == !!object->object);
+	if(dmu_objset_zil(object_set->object_set)->zl_replay != !!object->object)
+		return 0;
 
 	object->object = dmu_object_alloc(object_set->object_set,
 	    DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER,
@@ -530,15 +539,23 @@ j_zfs_object_create(JZFSObjectSet* object_set)
 		dmu_tx_commit(tx);
 		// FIXME
 		ret = error;
+		return 0;
 	}
 
-	ASSERT(object->object != 0);
+	if(object->object == 0)
+		return 0;
 
-	VERIFY3U(0, ==, dmu_object_set_blocksize(object_set->object_set, object->object,
-	    4096, 0, tx));
+	if(dmu_object_set_blocksize(object_set->object_set, object->object, 4096, 0, tx) != 0)
+		return 0;
+		
+	//VERIFY3U(0, ==, dmu_object_set_blocksize(object_set->object_set, object->object,
+	  //  4096, 0, tx));
 
-	VERIFY3U(0, ==, dmu_bonus_hold(object_set->object_set, object->object,
-		object_set->name, &db));
+	//VERIFY3U(0, ==, dmu_bonus_hold(object_set->object_set, object->object,
+	//	object_set->name, &db));
+	if(dmu_bonus_hold(object_set->object_set, object->object, object_set->name, &db) != 0)
+		return 0;
+
 	dmu_buf_will_dirty(db, tx);
 	dmu_buf_rele(db, object_set->name);
 
@@ -567,16 +584,26 @@ j_zfs_object_open(JZFSObjectSet* object_set, guint64 id)
 	dmu_tx_hold_bonus(tx, DMU_NEW_OBJECT);
 	txg = ztest_tx_assign(tx, TXG_WAIT, object_set->name);
 	if (txg == 0)
-		ret = ENOSPC;
-	ret = dmu_object_reclaim(object_set->object_set, id, 					DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max());
-	assert(ret == 0);
-	object->object = id;
-	ASSERT(object->object != 0);
-	VERIFY3U(0, ==, dmu_object_set_blocksize(object_set->object_set, object->object,
-	    4096, 0, tx));
+		return 0;
 
-	VERIFY3U(0, ==, dmu_bonus_hold(object_set->object_set, object->object,
-		object_set->name, &db));
+	if(dmu_object_reclaim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max()) != 0)
+		return 0;
+	//if(dmu_object_claim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max(), tx) != 0)
+	//	return 0;
+
+	object->object = id;
+	//ASSERT(object->object != 0);
+	if(object->object == 0)
+		return 0;
+
+	//VERIFY3U(0, ==, dmu_object_set_blocksize(object_set->object_set, object->object, 4096, 0, tx));
+	if(dmu_object_set_blocksize(object_set->object_set, object->object, 4096, 0, tx) != 0)
+		return 0;
+
+	//VERIFY3U(0, ==, dmu_bonus_hold(object_set->object_set, object->object, object_set->name, &db));
+	if(dmu_bonus_hold(object_set->object_set, object->object, object_set->name, &db) != 0)
+		return 0;
+
 	//dmu_buf_will_dirty(db, tx);
 	dmu_buf_rele(db, object_set->name);
 
@@ -585,6 +612,7 @@ j_zfs_object_open(JZFSObjectSet* object_set, guint64 id)
 	os_id= dmu_objset_id(object_set->object_set);
 	printf("object %"PRId64" of object_set %"PRId64" opened.\n", object->object, os_id);
 	j_zfs_object_read_internal(object, &object->object_header, sizeof(JZFSObjectHeader), 0);
+
 	return object;
 }
 
@@ -690,17 +718,17 @@ j_zfs_object_destroy(JZFSObject* object)
 	dmu_tx_t *tx;
 	guint64 txg;
 	//guint64 os_id= dmu_objset_id(object->object_set->object_set);
+	//printf("object_set: %u \n", os_id);
 
 	tx = dmu_tx_create(object->object_set->object_set);
-
 	dmu_tx_hold_free(tx, object->object, 0, DMU_OBJECT_END);
-
+	
 	txg = ztest_tx_assign(tx, TXG_WAIT, FTAG);
 	if (txg == 0) {
 		// FIXME
 		ret = ENOSPC;
 	}
-
+	
 	ret = dmu_object_free(object->object_set->object_set, object->object, tx);
 	assert(ret == 0);
 
