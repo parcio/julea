@@ -21,7 +21,6 @@ void
 j_zfs_test_object_set_create_destroy (JZFSPool* pool, gint count)
 {
 	struct timeval start_time, end_time;
-	//JZFSObjectSet* object_set;
 	JZFSObjectSet* object_set_array[count];
 	gchar s[100];
 	gint i = 0;
@@ -48,6 +47,7 @@ j_zfs_test_object_set_create_destroy (JZFSPool* pool, gint count)
 	gint64 mseconds_destroy = (end_time.tv_sec - start_time.tv_sec) * 1000000
 				+ (end_time.tv_usec - start_time.tv_usec);
   	printf("Time spent in j_zfs_test_object_set_create_destroy destroying: %" PRId64 " microseconds\n", mseconds_destroy);
+
 	gint64 mseconds_total = mseconds_create + mseconds_destroy;
 	printf("Created and destroyed: %d object_sets in %" PRId64 " microseconds.\n\n", count, mseconds_total);
 }
@@ -84,6 +84,7 @@ j_zfs_test_object_create_destroy(JZFSPool* pool, gint count)
 	gettimeofday(&end_time, NULL);
 	gint64 mseconds_destroy = (end_time.tv_sec - start_time.tv_sec) * 1000000
 				+ (end_time.tv_usec - start_time.tv_usec);
+
   	printf("Time spent in j_zfs_test_object_create_destroy destroying: %" PRId64 " microseconds\n", mseconds_destroy);
 	gint64 mseconds_total = mseconds_create + mseconds_destroy;
 	printf("Created and destroyed: %d objects in %" PRId64 " microseconds.\n\n", count, mseconds_total);
@@ -263,7 +264,7 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	JZFSObject* object_array[count];
 	JZFSObject* object;
 	gint i;
-	gint64 mseconds_open, mseconds_close;
+	gint64 mseconds_open, mseconds_close, mseconds_total;
 	object_set = j_zfs_object_set_create(pool, "object_set");
 
 	for(i = 0; i < count; i++)
@@ -287,24 +288,17 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	for(i = 0; i < count; i++)
 		{
 			j_zfs_object_close(object_array[i]);
-			//guint64 object_id = j_zfs_get_object_id(object_array[i]);
-			//printf("object_id nach close: %u \n", object_id);
 		}
 	gettimeofday(&end_close, NULL);
 	mseconds_close = (end_close.tv_sec - start_close.tv_sec) * 1000000
 				+ (end_close.tv_usec - start_close.tv_usec);
 
-	/*for(i = 0; i < count; i++)
-		{
-			guint64 object_id = j_zfs_get_object_id(object_array[i]);
-			printf("object id: %u \n", object_id);
-			j_zfs_object_destroy(object_array[i]);
-			printf("object %u destroyed\n", object_id);
-		}*/
-
 	j_zfs_object_set_destroy(object_set);
 	printf("Time spent in j_zfs_test_object_open_close opening %d objects: %" PRId64 " microseconds\n", count, mseconds_open);
 	printf("Time spent in j_zfs_test_object_open_close closing %d objects: %" PRId64 " microseconds\n", count, mseconds_close);
+	
+	mseconds_total = mseconds_open + mseconds_close;
+	printf("Opened and closed: %d objects in %" PRId64 " microseconds\n\n", count, mseconds_total);
 }
 
 
@@ -319,9 +313,9 @@ main (gint argc, gchar **argv)
 
 	//JZFS variables
 	JZFSPool* pool;
-	//JZFSObjectSet* object_set;
+	JZFSObjectSet* object_set;
 	//JZFSObjectSet* object_set2;
-	//JZFSObject* object1;
+	JZFSObject* object1;
 	//JZFSObject* object2;
 	//void* buf;
 
@@ -379,20 +373,25 @@ main (gint argc, gchar **argv)
 	/**************/
 	/* Benchmarks */
 	/**************/
-	//j_zfs_test_object_set_create_destroy(pool, 100); //(pool, number of object sets)
-	//j_zfs_test_objset_object_create_destroy(pool, 10, 1000); //(pool, number of object sets, number of objects
-	//j_zfs_test_object_create_destroy(pool, 10000);//(pool, number of objects)
-	//j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
-	//j_zfs_test_object_write_read(pool, 8000550); //(pool, array size)
-	j_zfs_test_object_open_close(pool, 5); //(pool, number of objects)
+	j_zfs_test_object_set_create_destroy(pool, 100); //(pool, number of object sets)
+	j_zfs_test_objset_object_create_destroy(pool, 10, 1000); //(pool, number of object sets, number of objects
+	j_zfs_test_object_create_destroy(pool, 1000);//(pool, number of objects)
+	j_zfs_test_object_open_close(pool, 1000); //(pool, number of objects)
+	j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
+	j_zfs_test_object_write_read(pool, 9000000); //(pool, array size)
+	
 
 
 
-	/*object_set = j_zfs_object_set_create(pool, "object_set");
+	object_set = j_zfs_object_set_create(pool, "object_set");
 	object1 = j_zfs_object_create(object_set);
 	j_zfs_object_get_size(object1);
+	j_zfs_object_set_size(object1, 15); //object, offset
+	j_zfs_object_get_size(object1);
+	j_zfs_object_set_size(object1, 5);
+	j_zfs_object_get_size(object1);
 	j_zfs_object_close(object1);
-	j_zfs_object_set_destroy(object_set);*/
+	j_zfs_object_set_destroy(object_set);
 
 
 	/*Close the pool*/
