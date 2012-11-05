@@ -38,6 +38,7 @@
 #include <libnvpair.h>
 #include <sys/time.h>
 #include <time.h>
+//#include <sys/dsl_dir.h>
 
 static guint64
 ztest_tx_assign(dmu_tx_t *tx, guint64 txg_how, const gchar *tag)
@@ -723,3 +724,13 @@ j_zfs_object_destroy(JZFSObject* object)
 
 	j_zfs_object_unref(object);
 }
+
+
+/*guint64
+j_zfs_dsl_dir_space_available(dsl_dataset_t *ds)
+{	
+	guint64 size;	
+	size = dsl_dir_space_available(ds->ds_dir, NULL, 0, TRUE);
+	printf("Space available: %" PRId64" Bytes\n", size);
+	return size;	
+}*/
