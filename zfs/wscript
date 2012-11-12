@@ -84,5 +84,13 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
+	# Tests
+	ctx.program(
+		source = ctx.path.ant_glob('test/*.c'),
+		target = 'test/test',
+		use = ['zfs/jzfs', 'GLIB'],
+		install_path = None
+	)
+
 	ctx.install_files('${INCLUDEDIR}', 'jzfs.h')
 
