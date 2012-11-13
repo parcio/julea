@@ -170,6 +170,8 @@ struct JItemReadStatusData
 	 * The item status flags.
 	 */
 	JItemStatusFlags flags;
+
+	guint64* sizes;
 };
 
 typedef struct JItemReadStatusData JItemReadStatusData;
@@ -371,10 +373,9 @@ j_item_get_status_background_operation (gpointer data)
 
 			size = j_message_get_8(reply);
 			// FIXME thread-safety
-			j_item_add_size(buffer->item, size);
+			//j_item_add_size(buffer->item, size);
+			buffer->sizes[background_data->index] = size;
 		}
-
-		g_slice_free(JItemReadStatusData, buffer);
 	}
 
 	j_list_iterator_free(iterator);
@@ -893,7 +894,7 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 }
 
 /**
- * Adds to an item's size.
+ * Sets an item's size.
  *
  * \author Michael Kuhn
  *
@@ -904,13 +905,13 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
  * \param size A size.
  **/
 void
-j_item_add_size (JItem* item, guint64 size)
+j_item_set_size (JItem* item, guint64 size)
 {
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	item->status.flags |= J_ITEM_STATUS_SIZE;
-	item->status.size += size;
+	item->status.size = size;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
@@ -1321,7 +1322,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 	gboolean ret = TRUE;
 	JBackgroundOperation** background_operations;
 	JConnection* connection = NULL;
-	JList** buffer_list;
+	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
 	guint n;
@@ -1334,13 +1335,12 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
-	buffer_list = g_new(JList*, n);
+	buffer_list = j_list_new(NULL);
 
 	for (guint i = 0; i < n; i++)
 	{
 		background_operations[i] = NULL;
 		messages[i] = NULL;
-		buffer_list[i] = j_list_new(NULL);
 	}
 
 	{
@@ -1406,9 +1406,10 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		}
 		else
 		{
+			JItemReadStatusData* buffer;
+
 			for (guint i = 0; i < n; i++)
 			{
-				JItemReadStatusData* buffer;
 				gchar const* item_name;
 				gsize item_len;
 
@@ -1436,13 +1437,14 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 				j_message_add_operation(messages[i], item_len + sizeof(guint32));
 				j_message_append_n(messages[i], item_name, item_len);
 				j_message_append_4(messages[i], &flags);
-
-				buffer = g_slice_new(JItemReadStatusData);
-				buffer->item = item;
-				buffer->flags = flags;
-
-				j_list_append(buffer_list[i], buffer);
 			}
+
+			buffer = g_slice_new(JItemReadStatusData);
+			buffer->item = item;
+			buffer->flags = flags;
+			buffer->sizes = g_slice_alloc0(n * sizeof(guint64));
+
+			j_list_append(buffer_list, buffer);
 		}
 	}
 
@@ -1461,7 +1463,7 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 		background_data->connection = connection;
 		background_data->message = messages[i];
 		background_data->index = i;
-		background_data->u.read_status.buffer_list = buffer_list[i];
+		background_data->u.read_status.buffer_list = buffer_list;
 
 		background_operations[i] = j_background_operation_new(j_item_get_status_background_operation, background_data);
 	}
@@ -1483,12 +1485,32 @@ j_item_get_status_internal (JOperation* operation, JList* parts)
 			j_message_unref(messages[i]);
 		}
 
-		j_list_unref(buffer_list[i]);
 	}
+
+	iterator = j_list_iterator_new(buffer_list);
+
+	while (j_list_iterator_next(iterator))
+	{
+		JItemReadStatusData* buffer = j_list_iterator_get(iterator);
+		guint64 size = 0;
+
+		for (guint i = 0; i < n; i++)
+		{
+			size += buffer->sizes[i];
+		}
+
+		j_item_set_size(buffer->item, size);
+
+		g_slice_free1(n * sizeof(guint64), buffer->sizes);
+		g_slice_free(JItemReadStatusData, buffer);
+	}
+
+	j_list_iterator_free(iterator);
+
+	j_list_unref(buffer_list);
 
 	g_free(background_operations);
 	g_free(messages);
-	g_free(buffer_list);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
