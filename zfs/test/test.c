@@ -39,7 +39,7 @@ main (int argc, char** argv)
 
 	//j_init(&argc, &argv);
 	j_zfs_init();
-
+	
 	test_pool();
 	test_object_set();
 	test_object();	

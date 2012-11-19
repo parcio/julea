@@ -229,7 +229,7 @@ j_zfs_pool_open(gchar* name)
 	if(spa_open(name, &(pool->spa), jzfs) != 0)
 		return 0;
 
-	printf("Pool opened.\n\n");
+	//printf("Pool opened.\n\n");
 
 	return pool;
 }
@@ -239,13 +239,13 @@ void
 j_zfs_pool_close(JZFSPool* pool)
 {
 	//printf("Minref: %i \n", pool->spa->spa_minref);
-	printf("\nClosing %s...\n", spa_name(pool->spa));
-	printf("refcount: %p %" PRId64 "\n", &pool->spa->spa_refcount,
-		refcount_count(&pool->spa->spa_refcount));
+	//printf("\nClosing %s...\n", spa_name(pool->spa));
+	//printf("refcount: %p %" PRId64 "\n", &pool->spa->spa_refcount,
+		//refcount_count(&pool->spa->spa_refcount));
 
 	spa_close(pool->spa, pool->zfs);
 
-	printf("Pool closed.\n");
+	//printf("Pool closed.\n");
 
 	j_zfs_pool_unref(pool);
 }
@@ -342,7 +342,7 @@ j_zfs_object_set_open(JZFSPool* pool, gchar* name)
 
 	guint64 id2 = dmu_objset_id(object_set->object_set);
 
-	printf("object_set %s ID %" PRId64 " opened.\n", fullname, id2);
+	//printf("object_set %s ID %" PRId64 " opened.\n", fullname, id2);
 
 	g_free(fullname);
 
@@ -357,8 +357,8 @@ j_zfs_object_set_close(JZFSObjectSet* object_set)
 	guint64 os_id= dmu_objset_id(object_set->object_set);
 	dmu_objset_disown(object_set->object_set, object_set);
 
-	printf("object_set %s/%s ID %" PRId64 " closed.\n", object_set->pool->spa->spa_name,
-		object_set->name, os_id);
+	//printf("object_set %s/%s ID %" PRId64 " closed.\n", object_set->pool->spa->spa_name,
+		//object_set->name, os_id);
 
 	j_zfs_object_set_unref(object_set);
 }
@@ -602,7 +602,7 @@ j_zfs_object_get_size(JZFSObject* object)
 {
 	guint64 size;
 	size = object->object_header.object_size;
-	printf("size of object %" PRId64 ": %" PRId64" Byte\n", object->object, size);
+	//printf("size of object %" PRId64 ": %" PRId64" Byte\n", object->object, size);
 	return size;
 }
 
@@ -630,7 +630,7 @@ j_zfs_object_set_size(JZFSObject* object, guint64 offset)
 	VERIFY(dmu_free_range(object->object_set->object_set, object->object, offset /* FIXME offset */, size, tx) == 0);
 	object->object_header.object_size = offset; //object->object_header.object_size = offset + size;
 
-	printf("Size of object %"PRId64" set. New size: %" PRId64 "\n", object->object, object->object_header.object_size);
+	//printf("Size of object %"PRId64" set. New size: %" PRId64 "\n", object->object, object->object_header.object_size);
 
 	dmu_tx_commit(tx);
 }

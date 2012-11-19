@@ -39,13 +39,13 @@ test_object_set_create_destroy (void)
 	JZFSObjectSet* object_set;
 
 	pool = j_zfs_pool_open("jzfs");
+	g_assert(pool != 0);
 	object_set = j_zfs_object_set_create(pool, "object_set");
 	g_assert(object_set != 0);
 
 	j_zfs_object_set_destroy(object_set);
-	g_assert(object_set == NULL); 
-	j_zfs_pool_close(pool);
-	
+	//g_assert(object_set == NULL); 
+	j_zfs_pool_close(pool);	
 }
 
 static
@@ -56,6 +56,7 @@ test_object_set_open(void)
 	JZFSObjectSet* object_set;
 
 	pool = j_zfs_pool_open("jzfs");
+	g_assert(pool != 0);
 	object_set = j_zfs_object_set_create(pool, "object_set");
 
 	object_set = j_zfs_object_set_open(pool, "object_set");
