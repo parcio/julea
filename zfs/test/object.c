@@ -29,80 +29,94 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdio.h>
 #include "../jzfs.h"
 #include "test.h"
 
 
-static
-void
-test_object_create_destroy (void)
+struct Arg //arguments
 {
 	JZFSPool* pool;
 	JZFSObjectSet* object_set;
+};
+
+typedef struct Arg Arg;
+
+static
+void
+test_object_setup(Arg* arg, gconstpointer data)
+{
+	JZFSPool* pool;
+	JZFSObjectSet* object_set;
+
+	pool = j_zfs_pool_open("jzfs");
+	g_assert(pool != 0);
+
+	object_set = j_zfs_object_set_create(pool, "object_set");
+	g_assert(object_set != 0);
+
+	arg->pool = pool;
+	arg->object_set = object_set;
+}
+
+static 
+void
+test_object_teardown(Arg* arg, gconstpointer data)
+{
+	j_zfs_object_set_destroy(arg->object_set);
+	j_zfs_pool_close(arg->pool);	
+}
+
+static
+void
+test_object_create_destroy (Arg* arg, gconstpointer data)
+{
 	JZFSObject* object1;
 	JZFSObject* object2;
 	guint64 object_id1, object_id2, size;
 
-	pool = j_zfs_pool_open("jzfs");
-	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	g_assert(object_set != 0);
-
-	object1 = j_zfs_object_create(object_set);
+	object1 = j_zfs_object_create(arg->object_set);
 	g_assert(object1 != 0);
 	size = j_zfs_object_get_size(object1);
-	g_assert(size == 0);
+	g_assert(size == 0); //new object has size 0
 	object_id1 = j_zfs_get_object_id(object1);	
-	g_assert(object_id1 != 0);
+	g_assert(object_id1 != 0); //id of new object != 0
 	
-	object2 = j_zfs_object_create(object_set);
+	object2 = j_zfs_object_create(arg->object_set);
 	g_assert(object2 != 0);	
 	object_id2 = j_zfs_get_object_id(object2);	
 	g_assert(object_id2 != 0);
 	
-	g_assert(object_id1 != object_id2);
+	g_assert(object_id1 != object_id2); //two different objects have different object ids
 
 	j_zfs_object_destroy(object1);
 	j_zfs_object_destroy(object2);
-	j_zfs_object_set_destroy(object_set);
-
-	object1 = j_zfs_object_create(object_set);
-	g_assert(object1 == 0);
-	
-	j_zfs_pool_close(pool);
 }
 
 static
 void
-test_object_open_close(void)
+test_object_open_close(Arg* arg, gconstpointer data)
 {
-	JZFSPool* pool;
-	JZFSObjectSet* object_set;
 	JZFSObject* object;
+	JZFSObject* object2;
 
-	pool = j_zfs_pool_open("jzfs");
-	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	object = j_zfs_object_create(object_set);
+	object = j_zfs_object_create(arg->object_set);
 	
 	guint64 object_id = j_zfs_get_object_id(object);
-	object = j_zfs_object_open(object_set, object_id);
+	object = j_zfs_object_open(arg->object_set, object_id);
 	g_assert(object != 0);
+	j_zfs_object_destroy(object);
 
-	object = j_zfs_object_open(object_set, 1234567);
-	g_assert(object == 0);	
-
-	j_zfs_object_close(object);
-	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);
+	object2 = j_zfs_object_open(arg->object_set, 1234567); //open object with unknown object id
+	g_assert(object2 == 0);		
+	object2 = j_zfs_object_open(arg->object_set, 1234567);
+	g_assert(object2 == 0);	
 }
 
 static
 void
-test_object_read_write(void)
+test_object_read_write(Arg* arg, gconstpointer data)
 {
-	JZFSPool* pool;
-	JZFSObjectSet* object_set;
 	JZFSObject* object;
 	gchar dummy[] = "abcdefghij";
 	gchar dummy2[] = "\0\0\0\0\0\0\0\0\0\0";
@@ -110,65 +124,56 @@ test_object_read_write(void)
 	int ret;
 	guint64 size;
 
-	pool = j_zfs_pool_open("jzfs");
-	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	object = j_zfs_object_create(object_set);
+	object = j_zfs_object_create(arg->object_set);
 
-	j_zfs_object_read(object, dummy, 10, 0); //read new object
+	j_zfs_object_read(object, dummy, 10, 0); //read empty object, content should be zeroes
 	ret = memcmp(dummy, dummy2, 10); 
 	g_assert(ret == 0);	
 
 	j_zfs_object_write(object, dummy3, 12, 0);
 	size = j_zfs_object_get_size(object);
-	g_assert(size == 12);
+	g_assert(size == 12);	// size = bytes written
 
 	j_zfs_object_read(object, dummy, 12, 0);
-	ret = memcmp(dummy, dummy3, 12);
+	ret = memcmp(dummy, dummy3, 12); //read non-empty object, should be "Hello World."
 	g_assert(ret==0);
 
-	j_zfs_object_set_size(object, 8); 
-	size = j_zfs_object_get_size(object);
-	g_assert(size == 8);
-
-	j_zfs_object_destroy(object);
-	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);	
+	j_zfs_object_destroy(object);	
 }
 
 static 
 void
-test_object_truncate(void)
+test_object_truncate(Arg* arg, gconstpointer data)
 {
-	JZFSPool* pool;
-	JZFSObjectSet* object_set;
 	JZFSObject* object;
 	int i, ret;
+	guint64 size;
 
 	gchar dummy[] = "Hello world.";
-	gchar dummy2[] = "\0\0\0\0\0\0\0\0\0\0";
-	pool = j_zfs_pool_open("jzfs");
-	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	object = j_zfs_object_create(object_set);
+	gchar dummy2[] = "\0\0\0\0\0\0\0\0\0\0\0";
+	object = j_zfs_object_create(arg->object_set);
+
+	j_zfs_object_set_size(object, 8); //truncate
+	size = j_zfs_object_get_size(object);
+	g_assert(size == 8); // assert correct size
 
 	j_zfs_object_write(object, dummy, 10, 0);
-	j_zfs_object_set_size(object, 0); 
+	j_zfs_object_set_size(object, 0); //truncate
 	j_zfs_object_read(object, dummy, 10, 0);
 	
 	ret = memcmp(dummy, dummy2, 10); 
+	if(ret!=0)
+		printf("Dummy: %s\n", dummy);	
 	g_assert(ret == 0);	
 
 	j_zfs_object_destroy(object);
-	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);	
 }
 
 void
 test_object (void)
 {
-	g_test_add_func("/object/create_destroy", test_object_create_destroy);
-	g_test_add_func("/object/open_close", test_object_open_close);
-	g_test_add_func("/object/read_write", test_object_read_write);
-	g_test_add_func("/object/truncate", test_object_truncate);
+	g_test_add("/object/create_destroy", Arg, NULL, test_object_setup, test_object_create_destroy, test_object_teardown);
+	g_test_add("/object/open_close", Arg, NULL, test_object_setup, test_object_open_close, test_object_teardown);
+	g_test_add("/object/read_write", Arg, NULL, test_object_setup, test_object_read_write, test_object_teardown);
+	g_test_add("/object/truncate", Arg, NULL, test_object_setup, test_object_truncate, test_object_teardown);
 }

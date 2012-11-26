@@ -30,54 +30,54 @@
 #include "../jzfs.h"
 #include "test.h"
 
-
 static
 void
-test_object_set_create_destroy (void)
+test_object_set_setup(JZFSPool** pool, gconstpointer data)
 {
-	JZFSPool* pool;
-	JZFSObjectSet* object_set;
-
-	pool = j_zfs_pool_open("jzfs");
+	*pool = j_zfs_pool_open("jzfs");
 	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	g_assert(object_set != 0);
+}
 
-	j_zfs_object_set_destroy(object_set);
-	//g_assert(object_set == NULL); 
-	j_zfs_pool_close(pool);	
+static 
+void
+test_object_set_teardown(JZFSPool** pool, gconstpointer data)
+{
+	j_zfs_pool_close(*pool);	
 }
 
 static
 void
-test_object_set_open(void)
+test_object_set_create_destroy (JZFSPool** pool, gconstpointer data)
 {
-	JZFSPool* pool;
 	JZFSObjectSet* object_set;
 
-	pool = j_zfs_pool_open("jzfs");
-	g_assert(pool != 0);
-	object_set = j_zfs_object_set_create(pool, "object_set");
-
-	object_set = j_zfs_object_set_open(pool, "object_set");
+	object_set = j_zfs_object_set_create(*pool, "object_set");
 	g_assert(object_set != 0);
-	j_zfs_object_set_close(object_set);
-
-	object_set = j_zfs_object_set_open(pool, "object_set");
-	g_assert(object_set != 0);
-	j_zfs_object_set_close(object_set);
-
-	object_set = j_zfs_object_set_open(pool, "irgendwas");
-	g_assert(object_set == 0);
-	j_zfs_object_set_close(object_set);
 
 	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);
+}
+
+static
+void
+test_object_set_open(JZFSPool** pool, gconstpointer data)
+{
+	JZFSObjectSet* object_set;
+	JZFSObjectSet* object_set2;
+
+	object_set = j_zfs_object_set_create(*pool, "object_set");
+	j_zfs_object_set_close(object_set);
+
+	object_set = j_zfs_object_set_open(*pool, "object_set");
+	g_assert(object_set != 0);
+	j_zfs_object_set_destroy(object_set);
+
+	object_set2 = j_zfs_object_set_open(*pool, "irgendwas"); //open with unknown name
+	g_assert(object_set2 == 0);
 }
 
 void
 test_object_set (void)
 {
-	g_test_add_func("/object_set/create_destroy", test_object_set_create_destroy);
-	g_test_add_func("/object_set/open", test_object_set_open);	
+	g_test_add("/object_set/create_destroy", JZFSPool*, NULL, test_object_set_setup, test_object_set_create_destroy, test_object_set_teardown);
+	g_test_add("/object_set/open", JZFSPool*, NULL, test_object_set_setup, test_object_set_open, test_object_set_teardown);	
 }

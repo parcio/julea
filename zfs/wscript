@@ -63,7 +63,7 @@ def configure (ctx):
 		define_name = 'HAVE_ZFS'
 	)
 
-	ctx.env.CFLAGS += ['-O2']
+	ctx.env.CFLAGS += ['-O2', '-ggdb']
 
 def build (ctx):
 	# Library

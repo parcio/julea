@@ -336,13 +336,13 @@ j_zfs_object_set_open(JZFSPool* pool, gchar* name)
 	object_set = j_zfs_object_set_new(pool, name);
 
 	fullname = g_strdup_printf("%s/%s", pool->spa->spa_name, name);
-
+	
 	if(dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set) != 0)
 		return 0;
 
 	guint64 id2 = dmu_objset_id(object_set->object_set);
 
-	//printf("object_set %s ID %" PRId64 " opened.\n", fullname, id2);
+//	printf("object_set %s ID %" PRId64 " opened.\n", fullname, id2);
 
 	g_free(fullname);
 
@@ -569,21 +569,30 @@ j_zfs_object_open(JZFSObjectSet* object_set, guint64 id)
 	tx = dmu_tx_create(object_set->object_set);
 	dmu_tx_hold_bonus(tx, DMU_NEW_OBJECT);
 	txg = ztest_tx_assign(tx, TXG_WAIT, object_set->name);
+	
 	if (txg == 0)
 		return 0;
 
-	if(dmu_object_reclaim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max()) != 0)
+	if(dmu_object_reclaim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max()) != 0) 
+	{	dmu_tx_commit(tx);
 		return 0;
+	}
 
 	object->object = id;
 	if(object->object == 0)
+	{	dmu_tx_commit(tx);
 		return 0;
+	}
 
 	if(dmu_object_set_blocksize(object_set->object_set, object->object, 4096, 0, tx) != 0)
+	{	dmu_tx_commit(tx);
 		return 0;
+	}
 
 	if(dmu_bonus_hold(object_set->object_set, object->object, object_set->name, &db) != 0)
+	{	dmu_tx_commit(tx);
 		return 0;
+	}
 
 	dmu_buf_rele(db, object_set->name);
 
@@ -617,7 +626,7 @@ j_zfs_object_set_size(JZFSObject* object, guint64 offset)
 	guint64 size = object->object_header.object_size;
 
 	tx = dmu_tx_create(object->object_set->object_set);
-	dmu_tx_hold_free(tx, object->object, offset /* FIXME offset */, size);
+	dmu_tx_hold_free(tx, object->object, offset + sizeof(JZFSObjectHeader)/* FIXME offset */, size);
 
 	txg = ztest_tx_assign(tx, TXG_WAIT, FTAG);
 	if (txg == 0) {
@@ -627,7 +636,7 @@ j_zfs_object_set_size(JZFSObject* object, guint64 offset)
 	}
 	assert(error==0);
 
-	VERIFY(dmu_free_range(object->object_set->object_set, object->object, offset /* FIXME offset */, size, tx) == 0);
+	VERIFY(dmu_free_range(object->object_set->object_set, object->object, offset+ sizeof(JZFSObjectHeader) /* FIXME offset */, size, tx) == 0);
 	object->object_header.object_size = offset; //object->object_header.object_size = offset + size;
 
 	//printf("Size of object %"PRId64" set. New size: %" PRId64 "\n", object->object, object->object_header.object_size);
