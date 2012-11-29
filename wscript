@@ -195,7 +195,7 @@ def build (ctx):
 		install_path = None
 	)
 
-	# Benchmarks
+	# Benchmark
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/benchmark',
@@ -204,6 +204,15 @@ def build (ctx):
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
+
+	for benchmark in ('mongodb',):
+		# Benchmarks
+		ctx.program(
+			source = 'benchmarks/%s.c' % (benchmark,),
+			target = 'benchmarks/%s' % (benchmark,),
+			use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB'],
+			install_path = None
+		)
 
 	# Daemon
 	ctx.program(
