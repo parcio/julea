@@ -26,11 +26,14 @@
  */
 
 #include <glib.h>
+#include <glib-unix.h>
 
 #include <bson.h>
 #include <mongo.h>
 
 #include <string.h>
+
+static guint kill_threads = 0;
 
 static guint stat_delete = 0;
 static guint stat_read = 0;
@@ -42,7 +45,21 @@ static gint opt_threads = 1;
 
 static
 gboolean
-print_statistics (gpointer user_data)
+handle_signal (gpointer data)
+{
+	GMainLoop* main_loop = data;
+
+	if (g_main_loop_is_running(main_loop))
+	{
+		g_main_loop_quit(main_loop);
+	}
+
+	return FALSE;
+}
+
+static
+gboolean
+print_statistics (G_GNUC_UNUSED gpointer user_data)
 {
 	static guint counter = 0;
 
@@ -76,7 +93,7 @@ benchmark_write (mongo* connection)
 	bson** objects;
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 2000) + 1;
+	guint32 const num = (g_random_int() % 5000) + 1;
 
 	gint ret;
 
@@ -145,7 +162,7 @@ benchmark_read (mongo* connection)
 	bson fields[1];
 	mongo_cursor* cursor;
 
-	guint32 const num = (g_random_int() % 1000) + 1;
+	guint32 const num = (g_random_int() % 5000) + 1;
 
 	guint count = 0;
 
@@ -186,7 +203,7 @@ benchmark_update (mongo* connection)
 	bson_iterator iterator[1];
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 1000) + 1;
+	guint32 const num = (g_random_int() % 5000) + 1;
 
 	guint count;
 	gint ret;
@@ -207,7 +224,7 @@ benchmark_update (mongo* connection)
 
 	bson_init(op);
 	bson_append_start_object(op, "$set");
-	bson_append_string(op, "Text", "foobar");
+	bson_append_string(op, "Text", "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.");
 	bson_append_finish_object(op);
 	bson_finish(op);
 
@@ -236,7 +253,7 @@ benchmark_delete (mongo* connection)
 	bson_iterator iterator[1];
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 1000) + 1;
+	guint32 const num = (g_random_int() % 5000) + 1;
 
 	guint count;
 	gint ret;
@@ -272,7 +289,7 @@ benchmark_delete (mongo* connection)
 
 static
 gpointer
-benchmark_thread (gpointer data)
+benchmark_thread (G_GNUC_UNUSED gpointer data)
 {
 	mongo connection[1];
 
@@ -287,12 +304,17 @@ benchmark_thread (gpointer data)
 	{
 		guint32 op;
 
+		if (g_atomic_int_get(&kill_threads) == 1)
+		{
+			goto end;
+		}
+
 		op = g_random_int() % 4;
 
 		switch (op)
 		{
 			case 0:
-				benchmark_write(connection);
+				benchmark_delete(connection);
 				break;
 			case 1:
 				benchmark_read(connection);
@@ -301,7 +323,7 @@ benchmark_thread (gpointer data)
 				benchmark_update(connection);
 				break;
 			case 3:
-				benchmark_delete(connection);
+				benchmark_write(connection);
 				break;
 			default:
 				g_warn_if_reached();
@@ -329,7 +351,7 @@ main (int argc, char** argv)
 	GOptionEntry entries[] = {
 		{ "sync", 's', 0, G_OPTION_ARG_NONE, &opt_sync, "Whether to sync", NULL },
 		{ "threads", 't', 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
-		{ NULL }
+		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
 	GMainLoop* main_loop;
@@ -363,12 +385,17 @@ main (int argc, char** argv)
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_timeout_add_seconds(1, print_statistics, NULL);
 
+	g_unix_signal_add(SIGHUP, handle_signal, main_loop);
+	g_unix_signal_add(SIGINT, handle_signal, main_loop);
+	g_unix_signal_add(SIGTERM, handle_signal, main_loop);
+
 	g_main_loop_run(main_loop);
+
+	g_atomic_int_set(&kill_threads, 1);
 
 	for (gint i = 0; i < opt_threads; i++)
 	{
 		g_thread_join(threads[i]);
-		g_thread_unref(threads[i]);
 	}
 
 	g_main_loop_unref(main_loop);
