@@ -33,7 +33,17 @@
 
 #include <string.h>
 
+struct MongoNS
+{
+	gchar* db;
+	gchar* collection;
+	gchar* full;
+};
+
+typedef struct MongoNS MongoNS;
+
 static guint kill_threads = 0;
+static guint thread_id = 0;
 
 static guint stat_delete = 0;
 static guint stat_read = 0;
@@ -87,7 +97,7 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 
 static
 void
-benchmark_write (mongo* connection)
+benchmark_write (mongo* connection, MongoNS* ns)
 {
 	bson index[1];
 	bson** objects;
@@ -111,7 +121,7 @@ benchmark_write (mongo* connection)
 	bson_append_int(index, "Number", 1);
 	bson_finish(index);
 
-	mongo_create_index(connection, "JULEA.Benchmark", index, 0, NULL);
+	mongo_create_index(connection, ns->full, index, 0, NULL);
 	bson_destroy(index);
 
 	objects = g_new(bson*, num);
@@ -128,13 +138,13 @@ benchmark_write (mongo* connection)
 		bson_finish(objects[i]);
 	}
 
-	ret = mongo_insert_batch(connection, "JULEA.Benchmark", (bson const**)objects, num, write_concern, 0);
+	ret = mongo_insert_batch(connection, ns->full, (bson const**)objects, num, write_concern, 0);
 
 	if (ret != MONGO_OK)
 	{
 		bson error[1];
 
-		mongo_cmd_get_last_error(connection, "JULEA", error);
+		mongo_cmd_get_last_error(connection, ns->db, error);
 		bson_print(error);
 		bson_destroy(error);
 	}
@@ -156,7 +166,7 @@ benchmark_write (mongo* connection)
 
 static
 void
-benchmark_read (mongo* connection)
+benchmark_read (mongo* connection, MongoNS* ns)
 {
 	bson query[1];
 	bson fields[1];
@@ -177,7 +187,7 @@ benchmark_read (mongo* connection)
 	bson_append_int(query, "Number", num);
 	bson_finish(query);
 
-	cursor = mongo_find(connection, "JULEA.Benchmark", query, fields, num, 0, 0);
+	cursor = mongo_find(connection, ns->full, query, fields, num, 0, 0);
 
 	bson_destroy(fields);
 	bson_destroy(query);
@@ -195,7 +205,7 @@ benchmark_read (mongo* connection)
 
 static
 void
-benchmark_update (mongo* connection)
+benchmark_update (mongo* connection, MongoNS* ns)
 {
 	bson cond[1];
 	bson error[1];
@@ -228,10 +238,10 @@ benchmark_update (mongo* connection)
 	bson_append_finish_object(op);
 	bson_finish(op);
 
-	ret = mongo_update(connection, "JULEA.Benchmark", cond, op, MONGO_UPDATE_MULTI, write_concern);
+	ret = mongo_update(connection, ns->full, cond, op, MONGO_UPDATE_MULTI, write_concern);
 	g_assert(ret == MONGO_OK);
 
-	mongo_cmd_get_last_error(connection, "JULEA", error);
+	mongo_cmd_get_last_error(connection, ns->db, error);
 	bson_find(iterator, error, "n");
 	count = bson_iterator_int(iterator);
 	bson_destroy(error);
@@ -246,7 +256,7 @@ benchmark_update (mongo* connection)
 
 static
 void
-benchmark_delete (mongo* connection)
+benchmark_delete (mongo* connection, MongoNS* ns)
 {
 	bson cond[1];
 	bson error[1];
@@ -272,10 +282,10 @@ benchmark_delete (mongo* connection)
 	bson_append_int(cond, "Number", num);
 	bson_finish(cond);
 
-	ret = mongo_remove(connection, "JULEA.Benchmark", cond, write_concern);
+	ret = mongo_remove(connection, ns->full, cond, write_concern);
 	g_assert(ret == MONGO_OK);
 
-	mongo_cmd_get_last_error(connection, "JULEA", error);
+	mongo_cmd_get_last_error(connection, ns->db, error);
 	bson_find(iterator, error, "n");
 	count = bson_iterator_int(iterator);
 	bson_destroy(error);
@@ -293,12 +303,24 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 {
 	mongo connection[1];
 
+	MongoNS ns;
+	guint id;
+
+	id = g_atomic_int_add(&thread_id, 1);
+
+	ns.db = g_strdup_printf("JULEA%d", id);
+	ns.collection = g_strdup_printf("Benchmark%d", id);
+	ns.full = g_strdup_printf("%s.%s", ns.db, ns.collection);
+
 	mongo_init(connection);
 
 	if (mongo_client(connection, "localhost", 27017) != MONGO_OK)
 	{
 		goto end;
 	}
+
+	mongo_cmd_drop_collection(connection, ns.db, ns.collection, NULL);
+	mongo_cmd_drop_db(connection, ns.db);
 
 	while (TRUE)
 	{
@@ -314,16 +336,16 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 		switch (op)
 		{
 			case 0:
-				benchmark_delete(connection);
+				benchmark_delete(connection, &ns);
 				break;
 			case 1:
-				benchmark_read(connection);
+				benchmark_read(connection, &ns);
 				break;
 			case 2:
-				benchmark_update(connection);
+				benchmark_update(connection, &ns);
 				break;
 			case 3:
-				benchmark_write(connection);
+				benchmark_write(connection, &ns);
 				break;
 			default:
 				g_warn_if_reached();
@@ -338,6 +360,10 @@ end:
 	}
 
 	mongo_destroy(connection);
+
+	g_free(ns.full);
+	g_free(ns.collection);
+	g_free(ns.db);
 
 	return NULL;
 }
