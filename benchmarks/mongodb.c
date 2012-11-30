@@ -295,7 +295,7 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 
 	mongo_init(connection);
 
-	if (mongo_connect(connection, "localhost", 27017) != MONGO_OK)
+	if (mongo_client(connection, "localhost", 27017) != MONGO_OK)
 	{
 		goto end;
 	}

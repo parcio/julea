@@ -243,7 +243,7 @@ j_connection_connect (JConnection* connection)
 		goto end;
 	}
 
-	ret = (mongo_connect(&(connection->connection), j_configuration_get_metadata_server(connection->configuration, 0), 27017) == MONGO_OK);
+	ret = (mongo_client(&(connection->connection), j_configuration_get_metadata_server(connection->configuration, 0), 27017) == MONGO_OK);
 
 	if (!ret)
 	{
