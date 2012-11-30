@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from waflib import Utils
+from waflib import Context, Utils
 
 top = '.'
 out = 'build'
@@ -11,7 +11,7 @@ def options (ctx):
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--use-nodelay', action='store_true', default=False, help='Use TCP_NODELAY flag')
 
-	ctx.add_option('--mongodb', action='store', default='/usr', help='Use MongoDB')
+	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb' % (Context.run_dir,), help='MongoDB prefix')
 
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
