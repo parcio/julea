@@ -42,6 +42,16 @@ struct MongoNS
 
 typedef struct MongoNS MongoNS;
 
+struct ThreadData
+{
+	guint id;
+	mongo connection[1];
+	MongoNS ns;
+	GRand* rand;
+};
+
+typedef struct ThreadData ThreadData;
+
 static guint kill_threads = 0;
 static guint thread_id = 0;
 
@@ -97,13 +107,13 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 
 static
 void
-benchmark_write (mongo* connection, MongoNS* ns)
+benchmark_write (ThreadData* thread_data)
 {
 	bson index[1];
 	bson** objects;
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 5000) + 1;
+	guint32 const num = g_rand_int_range(thread_data->rand, 1, 5000);
 
 	gint ret;
 
@@ -121,7 +131,7 @@ benchmark_write (mongo* connection, MongoNS* ns)
 	bson_append_int(index, "Number", 1);
 	bson_finish(index);
 
-	mongo_create_index(connection, ns->full, index, 0, NULL);
+	mongo_create_index(thread_data->connection, thread_data->ns.full, index, 0, NULL);
 	bson_destroy(index);
 
 	objects = g_new(bson*, num);
@@ -138,13 +148,13 @@ benchmark_write (mongo* connection, MongoNS* ns)
 		bson_finish(objects[i]);
 	}
 
-	ret = mongo_insert_batch(connection, ns->full, (bson const**)objects, num, write_concern, 0);
+	ret = mongo_insert_batch(thread_data->connection, thread_data->ns.full, (bson const**)objects, num, write_concern, 0);
 
 	if (ret != MONGO_OK)
 	{
 		bson error[1];
 
-		mongo_cmd_get_last_error(connection, ns->db, error);
+		mongo_cmd_get_last_error(thread_data->connection, thread_data->ns.db, error);
 		bson_print(error);
 		bson_destroy(error);
 	}
@@ -166,13 +176,13 @@ benchmark_write (mongo* connection, MongoNS* ns)
 
 static
 void
-benchmark_read (mongo* connection, MongoNS* ns)
+benchmark_read (ThreadData* thread_data)
 {
 	bson query[1];
 	bson fields[1];
 	mongo_cursor* cursor;
 
-	guint32 const num = (g_random_int() % 5000) + 1;
+	guint32 const num = g_rand_int_range(thread_data->rand, 1, 5000);
 
 	guint count = 0;
 
@@ -187,7 +197,7 @@ benchmark_read (mongo* connection, MongoNS* ns)
 	bson_append_int(query, "Number", num);
 	bson_finish(query);
 
-	cursor = mongo_find(connection, ns->full, query, fields, num, 0, 0);
+	cursor = mongo_find(thread_data->connection, thread_data->ns.full, query, fields, num, 0, 0);
 
 	bson_destroy(fields);
 	bson_destroy(query);
@@ -205,7 +215,7 @@ benchmark_read (mongo* connection, MongoNS* ns)
 
 static
 void
-benchmark_update (mongo* connection, MongoNS* ns)
+benchmark_update (ThreadData* thread_data)
 {
 	bson cond[1];
 	bson error[1];
@@ -213,7 +223,7 @@ benchmark_update (mongo* connection, MongoNS* ns)
 	bson_iterator iterator[1];
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 5000) + 1;
+	guint32 const num = g_rand_int_range(thread_data->rand, 1, 5000);
 
 	guint count;
 	gint ret;
@@ -238,10 +248,10 @@ benchmark_update (mongo* connection, MongoNS* ns)
 	bson_append_finish_object(op);
 	bson_finish(op);
 
-	ret = mongo_update(connection, ns->full, cond, op, MONGO_UPDATE_MULTI, write_concern);
+	ret = mongo_update(thread_data->connection, thread_data->ns.full, cond, op, MONGO_UPDATE_MULTI, write_concern);
 	g_assert(ret == MONGO_OK);
 
-	mongo_cmd_get_last_error(connection, ns->db, error);
+	mongo_cmd_get_last_error(thread_data->connection, thread_data->ns.db, error);
 	bson_find(iterator, error, "n");
 	count = bson_iterator_int(iterator);
 	bson_destroy(error);
@@ -256,14 +266,14 @@ benchmark_update (mongo* connection, MongoNS* ns)
 
 static
 void
-benchmark_delete (mongo* connection, MongoNS* ns)
+benchmark_delete (ThreadData* thread_data)
 {
 	bson cond[1];
 	bson error[1];
 	bson_iterator iterator[1];
 	mongo_write_concern write_concern[1];
 
-	guint32 const num = (g_random_int() % 5000) + 1;
+	guint32 const num = g_rand_int_range(thread_data->rand, 1, 5000);
 
 	guint count;
 	gint ret;
@@ -282,10 +292,10 @@ benchmark_delete (mongo* connection, MongoNS* ns)
 	bson_append_int(cond, "Number", num);
 	bson_finish(cond);
 
-	ret = mongo_remove(connection, ns->full, cond, write_concern);
+	ret = mongo_remove(thread_data->connection, thread_data->ns.full, cond, write_concern);
 	g_assert(ret == MONGO_OK);
 
-	mongo_cmd_get_last_error(connection, ns->db, error);
+	mongo_cmd_get_last_error(thread_data->connection, thread_data->ns.db, error);
 	bson_find(iterator, error, "n");
 	count = bson_iterator_int(iterator);
 	bson_destroy(error);
@@ -301,26 +311,25 @@ static
 gpointer
 benchmark_thread (G_GNUC_UNUSED gpointer data)
 {
-	mongo connection[1];
+	ThreadData thread_data;
 
-	MongoNS ns;
-	guint id;
+	thread_data.id = g_atomic_int_add(&thread_id, 1);
 
-	id = g_atomic_int_add(&thread_id, 1);
+	thread_data.ns.db = g_strdup_printf("JULEA%d", thread_data.id);
+	thread_data.ns.collection = g_strdup_printf("Benchmark%d", thread_data.id);
+	thread_data.ns.full = g_strdup_printf("%s.%s", thread_data.ns.db, thread_data.ns.collection);
 
-	ns.db = g_strdup_printf("JULEA%d", id);
-	ns.collection = g_strdup_printf("Benchmark%d", id);
-	ns.full = g_strdup_printf("%s.%s", ns.db, ns.collection);
+	thread_data.rand = g_rand_new_with_seed(42 + thread_data.id);
 
-	mongo_init(connection);
+	mongo_init(thread_data.connection);
 
-	if (mongo_client(connection, "localhost", 27017) != MONGO_OK)
+	if (mongo_client(thread_data.connection, "localhost", 27017) != MONGO_OK)
 	{
 		goto end;
 	}
 
-	mongo_cmd_drop_collection(connection, ns.db, ns.collection, NULL);
-	mongo_cmd_drop_db(connection, ns.db);
+	mongo_cmd_drop_collection(thread_data.connection, thread_data.ns.db, thread_data.ns.collection, NULL);
+	mongo_cmd_drop_db(thread_data.connection, thread_data.ns.db);
 
 	while (TRUE)
 	{
@@ -331,21 +340,21 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 			goto end;
 		}
 
-		op = g_random_int() % 4;
+		op = g_rand_int_range(thread_data.rand, 0, 4);
 
 		switch (op)
 		{
 			case 0:
-				benchmark_delete(connection, &ns);
+				benchmark_delete(&thread_data);
 				break;
 			case 1:
-				benchmark_read(connection, &ns);
+				benchmark_read(&thread_data);
 				break;
 			case 2:
-				benchmark_update(connection, &ns);
+				benchmark_update(&thread_data);
 				break;
 			case 3:
-				benchmark_write(connection, &ns);
+				benchmark_write(&thread_data);
 				break;
 			default:
 				g_warn_if_reached();
@@ -354,16 +363,18 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 	}
 
 end:
-	if (mongo_check_connection(connection) == MONGO_OK)
+	if (mongo_check_connection(thread_data.connection) == MONGO_OK)
 	{
-		mongo_disconnect(connection);
+		mongo_disconnect(thread_data.connection);
 	}
 
-	mongo_destroy(connection);
+	mongo_destroy(thread_data.connection);
 
-	g_free(ns.full);
-	g_free(ns.collection);
-	g_free(ns.db);
+	g_rand_free(thread_data.rand);
+
+	g_free(thread_data.ns.full);
+	g_free(thread_data.ns.collection);
+	g_free(thread_data.ns.db);
 
 	return NULL;
 }
