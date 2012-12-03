@@ -566,6 +566,13 @@ j_zfs_object_open(JZFSObjectSet* object_set, guint64 id)
 
 	object = j_zfs_object_new(object_set);
 
+	if(dmu_object_reclaim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max()) != 0) 
+		return 0;
+	
+	object->object = id;
+	if(object->object == 0)
+		return 0;
+	
 	tx = dmu_tx_create(object_set->object_set);
 	dmu_tx_hold_bonus(tx, DMU_NEW_OBJECT);
 	txg = ztest_tx_assign(tx, TXG_WAIT, object_set->name);
@@ -573,19 +580,8 @@ j_zfs_object_open(JZFSObjectSet* object_set, guint64 id)
 	if (txg == 0)
 		return 0;
 
-	if(dmu_object_reclaim(object_set->object_set, id, DMU_OT_UINT64_OTHER, 0, DMU_OT_UINT64_OTHER, dmu_bonus_max()) != 0) 
-	{	dmu_tx_commit(tx);
-		return 0;
-	}
-
-	object->object = id;
-	if(object->object == 0)
-	{	dmu_tx_commit(tx);
-		return 0;
-	}
-
 	if(dmu_object_set_blocksize(object_set->object_set, object->object, 4096, 0, tx) != 0)
-	{	dmu_tx_commit(tx);
+	{	dmu_tx_commit(tx);		
 		return 0;
 	}
 

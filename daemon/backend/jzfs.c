@@ -29,6 +29,8 @@
 
 #include <julea-config.h>
 
+#include <jzfs.h>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
@@ -44,6 +46,8 @@
 #include "backend-internal.h"
 
 static gchar* jd_backend_path = NULL;
+static JZFSPool* pool = NULL;
+static JZFSObjectSet* object_set = NULL;
 
 G_MODULE_EXPORT
 gboolean
@@ -52,23 +56,25 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	gchar* parent;
 	gchar* path;
 	gint fd;
+	JZFSObject* object;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
 	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE);
+	
+	object = j_zfs_object_create(object_set); 
+	//parent = g_path_get_dirname(path);
+	//g_mkdir_with_parents(parent, 0700);
+	//g_free(parent);
 
-	parent = g_path_get_dirname(path);
-	g_mkdir_with_parents(parent, 0700);
-	g_free(parent);
-
-	fd = open(path, O_RDWR | O_CREAT, 0600);
+	//fd = open(path, O_RDWR | O_CREAT, 0600);
 
 	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE, 0, 0);
 
 	bf->path = path;
-	bf->user_data = GINT_TO_POINTER(fd);
+	//bf->user_data = GINT_TO_POINTER(fd);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -85,6 +91,7 @@ backend_delete (JBackendFile* bf)
 
 	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE);
 	ret = (g_unlink(bf->path) == 0);
+	//j_zfs_object_destroy(object); 
 	j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -238,7 +245,12 @@ G_MODULE_EXPORT
 void
 backend_init (gchar const* path)
 {
+	gchar* poolname = "jzfs";
+	gchar* object_set_name = "object_set";
+
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	pool = j_zfs_pool_open(poolname);
+	object_set = j_zfs_object_set_create(pool, object_set_name);
 
 	jd_backend_path = g_strdup(path);
 
@@ -252,6 +264,9 @@ void
 backend_fini (void)
 {
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	
+	j_zfs_object_set_destroy(object_set);
+	j_zfs_pool_close(pool);	
 
 	g_free(jd_backend_path);
 
