@@ -13,6 +13,8 @@ def options (ctx):
 
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb' % (Context.run_dir,), help='MongoDB prefix')
 
+	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
+
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 	#ctx.add_option('--rados', action='store', default='/usr', help='Use RADOS')
@@ -61,6 +63,7 @@ def configure (ctx):
 		uselib_store = 'GTHREAD'
 	)
 
+	ctx.env.JULEA_FUSE = \
 	ctx.check_cfg(
 		package = 'fuse',
 		args = ['--cflags', '--libs'],
@@ -89,6 +92,20 @@ def configure (ctx):
 		uselib_store = 'MONGODB',
 		define_name = 'HAVE_MONGODB'
 	)
+
+	if ctx.options.jzfs:
+		# JZFS
+		ctx.env.JULEA_JZFS = \
+		ctx.check_cc(
+			header_name = 'jzfs.h',
+			lib = 'jzfs',
+			use = ['GLIB'],
+			includes = ['%s/include/jzfs' % (ctx.options.jzfs,)],
+			libpath = ['%s/lib' % (ctx.options.jzfs,)],
+			rpath = ['%s/lib' % (ctx.options.jzfs,)],
+			uselib_store = 'JZFS',
+			define_name = 'HAVE_JZFS'
+		)
 
 	if ctx.options.hdtrace:
 		ctx.check_cc(
@@ -148,8 +165,6 @@ def configure (ctx):
 		ctx.define('J_USE_NODELAY', 1)
 
 	ctx.define('DAEMON_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
-
-	ctx.env.JULEA_FUSE = ctx.env.HAVE_FUSE
 
 	ctx.write_config_header('include/julea-config.h')
 
@@ -230,6 +245,15 @@ def build (ctx):
 			source = ['daemon/backend/%s.c' % (backend,)],
 			target = 'daemon/backend/%s' % (backend,),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
+			includes = ['include'],
+			install_path = '${LIBDIR}/julea/backend'
+		)
+
+	if ctx.env.JULEA_JZFS:
+		ctx.shlib(
+			source = ['daemon/backend/jzfs.c'],
+			target = 'daemon/backend/jzfs',
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
