@@ -277,7 +277,6 @@ _benchmark_item_get_status (gboolean batch)
 	JStore* store;
 	gchar dummy[1];
 	gchar* ret;
-	gchar* size;
 	gdouble elapsed;
 	guint64 nb;
 
@@ -326,9 +325,7 @@ _benchmark_item_get_status (gboolean batch)
 	j_operation_unref(operation);
 	j_semantics_unref(semantics);
 
-	size = g_format_size(n / elapsed);
-	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
-	g_free(size);
+	ret = g_strdup_printf("%f seconds (%f/s)", elapsed, n / elapsed);
 
 	return ret;
 }

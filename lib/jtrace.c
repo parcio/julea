@@ -578,6 +578,7 @@ j_trace_new (GThread* thread)
 	}
 	else
 	{
+		/* FIXME use name? */
 		trace->thread_name = g_strdup_printf("Thread %d", j_trace_thread_id);
 		j_trace_thread_id++;
 	}

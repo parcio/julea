@@ -43,6 +43,7 @@
 #include <joperation.h>
 #include <joperation-internal.h>
 #include <joperation-part-internal.h>
+#include <jthread-internal.h>
 
 /**
  * \defgroup JOperationCache Operation Cache
@@ -96,6 +97,9 @@ j_operation_cache_thread (gpointer data)
 {
 	JOperationCache* cache = data;
 	JOperation* operation;
+	JThread* thread;
+
+	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -126,6 +130,8 @@ j_operation_cache_thread (gpointer data)
 	j_cache_clear(cache->cache);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	j_thread_free(thread);
 
 	return NULL;
 }

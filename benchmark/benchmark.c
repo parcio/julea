@@ -78,6 +78,8 @@ j_benchmark_get_semantics (void)
 			continue;
 		}
 
+		value++;
+
 		if (g_str_has_prefix(parts[i], "atomicity:"))
 		{
 			if (g_strcmp0(value, "operation") == 0)
