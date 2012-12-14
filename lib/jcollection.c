@@ -631,7 +631,7 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 
 	mongo_write_concern_init(write_concern);
 
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
 	{
 		write_concern->j = 1;
 		write_concern->w = 1;
@@ -689,7 +689,7 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 
 	mongo_write_concern_init(write_concern);
 
-	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
 	{
 		write_concern->j = 1;
 		write_concern->w = 1;

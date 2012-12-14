@@ -1256,7 +1256,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			item->status.created[i] = TRUE;
 		}
 
-		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_IMMEDIATE)
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
 		{
 			sync_message = j_message_new(J_MESSAGE_SYNC, store_len + collection_len + item_len);
 			j_message_add_operation(sync_message, 0);

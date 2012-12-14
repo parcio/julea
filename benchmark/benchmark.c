@@ -138,15 +138,15 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "redundancy:"))
+		else if (g_str_has_prefix(parts[i], "safety:"))
 		{
-			if (g_strcmp0(value, "yes") == 0)
+			if (g_strcmp0(value, "high") == 0)
 			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_YES);
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_HIGH);
 			}
-			else if (g_strcmp0(value, "no") == 0)
+			else if (g_strcmp0(value, "none") == 0)
 			{
-				j_semantics_set(semantics, J_SEMANTICS_REDUNDANCY, J_SEMANTICS_REDUNDANCY_NO);
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
 			}
 		}
 		else if (g_str_has_prefix(parts[i], "security:"))

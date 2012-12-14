@@ -35,14 +35,14 @@
 
 static
 void
-test_semantics_fixture_setup (JSemantics** semantics, gconstpointer data)
+test_semantics_fixture_setup (JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 {
 	*semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 }
 
 static
 void
-test_semantics_fixture_teardown (JSemantics** semantics, gconstpointer data)
+test_semantics_fixture_teardown (JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 {
 	j_semantics_unref(*semantics);
 }
@@ -68,9 +68,13 @@ test_semantics_new_ref_unref (void)
 
 static
 void
-test_semantics_set_get (JSemantics** semantics, gconstpointer data)
+test_semantics_set_get (JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 {
 	gint s;
+
+	j_semantics_set(*semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_SUB_OPERATION);
+	s = j_semantics_get(*semantics, J_SEMANTICS_ATOMICITY);
+	g_assert_cmpint(s, ==, J_SEMANTICS_ATOMICITY_SUB_OPERATION);
 
 	j_semantics_set(*semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONCURRENCY);
@@ -83,6 +87,10 @@ test_semantics_set_get (JSemantics** semantics, gconstpointer data)
 	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 	s = j_semantics_get(*semantics, J_SEMANTICS_PERSISTENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+
+	j_semantics_set(*semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_HIGH);
+	s = j_semantics_get(*semantics, J_SEMANTICS_SAFETY);
+	g_assert_cmpint(s, ==, J_SEMANTICS_SAFETY_HIGH);
 
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);
