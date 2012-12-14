@@ -66,23 +66,28 @@ j_cmd_status (gchar const** arguments)
 	if (j_uri_get_item(uri) != NULL)
 	{
 		GDateTime* date_time;
-		gchar* modification_time;
-		gchar* size;
+		gchar* modification_time_string;
+		gchar* size_string;
+		guint64 modification_time;
+		guint64 size;
 
 		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
 		j_operation_execute(operation);
 
-		date_time = g_date_time_new_from_unix_local(j_item_get_modification_time(j_uri_get_item(uri)));
-		modification_time = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
-		size = g_format_size(j_item_get_size(j_uri_get_item(uri)));
+		modification_time = j_item_get_modification_time(j_uri_get_item(uri));
+		size = j_item_get_size(j_uri_get_item(uri));
 
-		g_print("Modification time: %s\n", modification_time);
-		g_print("Size:              %s\n", size);
+		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
+		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
+		size_string = g_format_size(size);
+
+		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
+		g_print("Size:              %s\n", size_string);
 
 		g_date_time_unref(date_time);
 
-		g_free(modification_time);
-		g_free(size);
+		g_free(modification_time_string);
+		g_free(size_string);
 	}
 	else
 	{

@@ -198,8 +198,16 @@ struct JItem
 	{
 		guint flags;
 
+		/**
+		 * The size.
+		 * Stored in bytes.
+		 */
 		guint64 size;
 
+		/**
+		 * The time of the last modification.
+		 * Stored in microseconds since the Epoch.
+		 */
 		gint64 modification_time;
 
 		gboolean* created;
@@ -413,7 +421,7 @@ j_item_new (gchar const* name)
 	item->name = g_strdup(name);
 	item->status.flags = J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.size = 0;
-	item->status.modification_time = g_get_real_time() / G_USEC_PER_SEC;
+	item->status.modification_time = g_get_real_time();
 	item->status.created = NULL;
 	item->collection = NULL;
 	item->ref_count = 1;

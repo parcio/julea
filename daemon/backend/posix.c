@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#define _XOPEN_SOURCE 500
+#define _POSIX_C_SOURCE 200809L
 
 #include <julea-config.h>
 
@@ -153,8 +153,19 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 		fstat(fd, &buf);
 		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
-		*modification_time = buf.st_mtime;
-		*size = buf.st_size;
+		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		{
+			*modification_time = buf.st_mtime * G_USEC_PER_SEC;
+
+#ifdef HAVE_STMTIM_TVNSEC
+			*modification_time += buf.st_mtim.tv_nsec / 1000;
+#endif
+		}
+
+		if (flags & J_ITEM_STATUS_SIZE)
+		{
+			*size = buf.st_size;
+		}
 	}
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);

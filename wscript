@@ -152,6 +152,29 @@ def configure (ctx):
 	#		define_name = 'HAVE_ZOOKEEPER'
 	#	)
 
+	# stat.st_mtim.tv_nsec
+	ctx.check_cc(
+		fragment = '''
+		#define _POSIX_C_SOURCE 200809L
+
+		#include <sys/types.h>
+		#include <sys/stat.h>
+		#include <unistd.h>
+
+		int main (void)
+		{
+			struct stat stbuf;
+
+			(void)stbuf.st_mtim.tv_nsec;
+
+			return 0;
+		}
+		''',
+		define_name = 'HAVE_STMTIM_TVNSEC',
+		msg = 'Checking for stat.st_mtim.tv_nsec',
+		mandatory = False
+	)
+
 	if ctx.options.debug:
 		ctx.env.CFLAGS += ['-pedantic', '-Wall', '-Wextra']
 		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
