@@ -31,6 +31,8 @@
 
 #include <jzfs.h>
 
+#include <leveldb/c.h>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
@@ -86,7 +88,6 @@ backend_delete (JBackendFile* bf)
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE);
-	//ret = (g_unlink(bf->path) == 0);
 	j_zfs_object_destroy(bf->user_data);	
 	j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
@@ -100,8 +101,9 @@ gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* path;
-	JZFSObject* object = bf->user_data;
+	JZFSObject* object = bf->user_data; //funktioniert so nicht
 	guint64 object_id = j_zfs_get_object_id(object);
+	//Datenbank: store,collection,item -> id
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -123,7 +125,7 @@ G_MODULE_EXPORT
 gboolean
 backend_close (JBackendFile* bf)
 {
-	JZFSObject* object = bf->user_data;
+	JZFSObject* object = bf->user_data; 
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -158,7 +160,7 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
 		*/
 	
-		*modification_time = 0;
+		*modification_time = 0; // evtl. zu object_header hinzufügen
 		*size = j_zfs_object_get_size(object);
 	}
 
@@ -205,7 +207,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 		if (bytes_read != NULL)
 		{
-			*bytes_read = length;
+			*bytes_read = length; //check: bytes read in ZFS
 		}
 	}
 
@@ -230,7 +232,7 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 
 		if (bytes_written != NULL)
 		{
-			*bytes_written = length;
+			*bytes_written = length; //check: bytes written in ZFS
 		}
 	}
 
@@ -247,8 +249,12 @@ backend_init (gchar const* path)
 	gchar* object_set_name = "object_set";
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
 	object_set = j_zfs_object_set_create(pool, object_set_name);
+
+	if (object_set == NULL)
+		object_set = j_zfs_object_set_open(pool, object_set_name);
 
 	jd_backend_path = g_strdup(path);
 
@@ -265,6 +271,7 @@ backend_fini (void)
 	
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);	
+	j_zfs_fini();
 
 	g_free(jd_backend_path);
 
