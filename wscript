@@ -15,6 +15,8 @@ def options (ctx):
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
+	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
+
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 
@@ -103,6 +105,16 @@ def configure (ctx):
 			rpath = ['%s/lib' % (ctx.options.jzfs,)],
 			uselib_store = 'JZFS',
 			define_name = 'HAVE_JZFS'
+		)
+
+		ctx.check_cc(
+			header_name = 'leveldb/c.h',
+			lib = 'leveldb',
+			includes = ['%s/include' % (ctx.options.leveldb,)],
+			libpath = ['%s/lib' % (ctx.options.leveldb,)],
+			rpath = ['%s/lib' % (ctx.options.leveldb,)],
+			uselib_store = 'LEVELDB',
+			define_name = 'HAVE_LEVELDB'
 		)
 
 	if ctx.options.hdtrace:
@@ -251,7 +263,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['daemon/backend/jzfs.c'],
 			target = 'daemon/backend/jzfs',
-			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
