@@ -57,15 +57,17 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 {
 	//gchar* parent;
 	gchar* path;
-	JZFSObject* object;
-
+	JZFSObject* object;	
+	//printf("\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
 	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE);
-	
+	printf("**********************vor object created.**************************\n");
 	object = j_zfs_object_create(object_set); 
+	printf("**********************object created.**************************\n");
+	
 	
 	/*parent = g_path_get_dirname(path);
 	g_mkdir_with_parents(parent, 0700);
@@ -247,7 +249,7 @@ backend_init (gchar const* path)
 {
 	gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
-
+	
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);

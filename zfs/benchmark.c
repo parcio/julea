@@ -301,7 +301,6 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	printf("Opened and closed: %d objects in %" PRId64 " microseconds\n\n", count, mseconds_total);
 }
 
-
 gint
 main (gint argc, gchar **argv)
 {
@@ -373,24 +372,28 @@ main (gint argc, gchar **argv)
 	/**************/
 	/* Benchmarks */
 	/**************/
-	j_zfs_test_object_set_create_destroy(pool, 100); //(pool, number of object sets)
-	j_zfs_test_objset_object_create_destroy(pool, 10, 1000); //(pool, number of object sets, number of objects
-	j_zfs_test_object_create_destroy(pool, 1000);//(pool, number of objects)
-	j_zfs_test_object_open_close(pool, 1000); //(pool, number of objects)
-	j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
-	j_zfs_test_object_write_read(pool, 9000000); //(pool, array size)
+	//j_zfs_test_object_set_create_destroy(pool, 100); //(pool, number of object sets)
+	//j_zfs_test_objset_object_create_destroy(pool, 10, 1000); //(pool, number of object sets, number of objects
+	//j_zfs_test_object_create_destroy(pool, 1000);//(pool, number of objects)
+	//j_zfs_test_object_open_close(pool, 1000); //(pool, number of objects)
+	//j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
+	//j_zfs_test_object_write_read(pool, 9000000); //(pool, array size)
+	
 	
 
 
 
 	object_set = j_zfs_object_set_create(pool, "object_set");
+	//j_zfs_object_set_close(object_set);
+	//object_set = j_zfs_object_set_open(pool, "object_set");
 	object1 = j_zfs_object_create(object_set);
-	j_zfs_object_get_size(object1);
-	j_zfs_object_set_size(object1, 15); //object, offset
-	j_zfs_object_get_size(object1);
-	j_zfs_object_set_size(object1, 5);
-	j_zfs_object_get_size(object1);
-	j_zfs_object_close(object1);
+	//j_zfs_object_get_size(object1);
+	//j_zfs_object_set_size(object1, 15); //object, offset
+	//j_zfs_object_get_size(object1);
+	//j_zfs_object_set_size(object1, 5);
+	//j_zfs_object_get_size(object1);
+	j_zfs_object_destroy(object1);
+	//j_zfs_object_set_close(object_set);
 	j_zfs_object_set_destroy(object_set);
 
 
