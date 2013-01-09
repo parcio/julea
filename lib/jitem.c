@@ -310,6 +310,7 @@ gpointer
 j_item_write_background_operation (gpointer data)
 {
 	JItemBackgroundData* background_data = data;
+	JMessage* reply;
 
 	if (background_data->u.write.create_message != NULL)
 	{
@@ -317,13 +318,16 @@ j_item_write_background_operation (gpointer data)
 		j_connection_send(background_data->connection, background_data->index, background_data->u.write.create_message);
 	}
 
-	/* FIXME reply? */
 	j_connection_send(background_data->connection, background_data->index, background_data->message);
+
+	reply = j_message_new_reply(background_data->message);
+	j_connection_receive(background_data->connection, background_data->index, reply);
+
+	/* FIXME do something with reply */
+	j_message_unref(reply);
 
 	if (background_data->u.write.sync_message != NULL)
 	{
-		JMessage* reply;
-
 		j_connection_send(background_data->connection, background_data->index, background_data->u.write.sync_message);
 
 		reply = j_message_new_reply(background_data->u.write.sync_message);

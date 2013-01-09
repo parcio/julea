@@ -206,6 +206,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_WRITE:
 				{
+					JMessage* reply;
+
+					reply = j_message_new_reply(message);
+
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
@@ -230,10 +234,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						jd_backend_write(&bf, buf, length, offset, &bytes_written);
 						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
+						j_message_add_operation(reply, sizeof(guint64));
+						j_message_append_8(reply, &bytes_written);
+
 						j_cache_clear(cache);
 					}
 
 					jd_backend_close(&bf);
+
+					j_message_write(reply, output);
+
+					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_STATUS:

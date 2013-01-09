@@ -109,6 +109,8 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 	JBackgroundOperation* background_operation = data;
 	JThread* thread;
 
+	(void)user_data;
+
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 
 	background_operation->result = (*(background_operation->func))(background_operation->data);

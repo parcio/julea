@@ -41,6 +41,8 @@ static
 gpointer
 on_background_operation_completed (gpointer data)
 {
+	(void)data;
+
 	g_atomic_int_inc(&benchmark_background_operation_counter);
 
 	return NULL;
