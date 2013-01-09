@@ -73,14 +73,14 @@ j_benchmark_get_semantics (void)
 	{
 		gchar const* value;
 
-		if ((value = strchr(parts[i], ':')) == NULL)
+		if ((value = strchr(parts[i], '=')) == NULL)
 		{
 			continue;
 		}
 
 		value++;
 
-		if (g_str_has_prefix(parts[i], "atomicity:"))
+		if (g_str_has_prefix(parts[i], "atomicity="))
 		{
 			if (g_strcmp0(value, "operation") == 0)
 			{
@@ -95,7 +95,7 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "concurrency:"))
+		else if (g_str_has_prefix(parts[i], "concurrency="))
 		{
 			if (g_strcmp0(value, "overlapping") == 0)
 			{
@@ -110,7 +110,7 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "consistency:"))
+		else if (g_str_has_prefix(parts[i], "consistency="))
 		{
 			if (g_strcmp0(value, "immediate") == 0)
 			{
@@ -125,7 +125,7 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "persistency:"))
+		else if (g_str_has_prefix(parts[i], "persistency="))
 		{
 			if (g_strcmp0(value, "immediate") == 0)
 			{
@@ -140,7 +140,7 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "safety:"))
+		else if (g_str_has_prefix(parts[i], "safety="))
 		{
 			if (g_strcmp0(value, "high") == 0)
 			{
@@ -151,7 +151,7 @@ j_benchmark_get_semantics (void)
 				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "security:"))
+		else if (g_str_has_prefix(parts[i], "security="))
 		{
 			if (g_strcmp0(value, "strict") == 0)
 			{
