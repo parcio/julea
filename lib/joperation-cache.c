@@ -268,15 +268,15 @@ j_operation_cache_add (JOperation* operation)
 
 		if (!can_cache)
 		{
+			ret = FALSE;
 			break;
 		}
 	}
 
 	j_list_iterator_free(iterator);
 
-	if (!can_cache)
+	if (!ret)
 	{
-		ret = FALSE;
 		goto end;
 	}
 
@@ -290,12 +290,13 @@ j_operation_cache_add (JOperation* operation)
 		{
 			gpointer data;
 
+			// FIXME never cleared
 			data = j_cache_put(j_operation_cache->cache, part->u.item_write.data, part->u.item_write.length);
 
 			if (data == NULL)
 			{
 				ret = FALSE;
-				goto end;
+				break;
 			}
 
 			part->u.item_write.data = data;
@@ -303,6 +304,11 @@ j_operation_cache_add (JOperation* operation)
 	}
 
 	j_list_iterator_free(iterator);
+
+	if (!ret)
+	{
+		goto end;
+	}
 
 	g_async_queue_push(j_operation_cache->queue, j_operation_ref(operation));
 

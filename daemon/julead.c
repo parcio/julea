@@ -72,6 +72,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	GInputStream* input;
 	GOutputStream* output;
 
+	(void)service;
+	(void)source_object;
+	(void)user_data;
+
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	cache = j_cache_new(J_MIB(50));
 
@@ -388,7 +392,7 @@ main (int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
-		{ NULL }
+		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
 	g_type_init();
