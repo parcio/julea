@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2012 Michael Kuhn
+# Copyright (c) 2012-2013 Michael Kuhn
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

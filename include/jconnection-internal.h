@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012 Michael Kuhn
+ * Copyright (c) 2010-2013 Michael Kuhn
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
