@@ -221,7 +221,7 @@ main (int argc, char** argv)
 		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", "/" },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
 		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
-		{ NULL }
+		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
 	context = g_option_context_new(NULL);
@@ -252,6 +252,7 @@ main (int argc, char** argv)
 	benchmark_collection();
 	benchmark_item();
 	benchmark_lock();
+	benchmark_message();
 
 	g_timer_destroy(j_benchmark_timer);
 	j_semantics_unref(semantics);
