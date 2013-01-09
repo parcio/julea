@@ -12,13 +12,12 @@ def options (ctx):
 	ctx.add_option('--use-nodelay', action='store_true', default=False, help='Use TCP_NODELAY flag')
 
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb' % (Context.run_dir,), help='MongoDB prefix')
+	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
-
 	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
-	ctx.add_option('--otf', action='store', default=None, help='Use OTF')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -136,7 +135,8 @@ def configure (ctx):
 			libpath = ['%s/lib' % (ctx.options.otf,)],
 			rpath = ['%s/lib' % (ctx.options.otf,)],
 			uselib_store = 'OTF',
-			define_name = 'HAVE_OTF'
+			define_name = 'HAVE_OTF',
+			mandatory = False
 		)
 
 	# stat.st_mtim.tv_nsec
