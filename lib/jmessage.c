@@ -40,6 +40,7 @@
 
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <jsemantics.h>
 
 /**
  * \defgroup JMessage Message
@@ -133,6 +134,8 @@ struct JMessage
 	 **/
 	gint ref_count;
 };
+
+static JMessageType const J_MESSAGE_MODIFIER_MASK = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE);
 
 /**
  * Returns a message's header.
@@ -281,6 +284,7 @@ j_message_new (JMessageType op_type, gsize length)
 	guint32 rand;
 
 	//g_return_val_if_fail(op_type != J_MESSAGE_NONE, NULL);
+	g_return_val_if_fail((op_type & J_MESSAGE_MODIFIER_MASK) == 0, NULL);
 
 	rand = g_random_int();
 
@@ -329,7 +333,7 @@ j_message_new_reply (JMessage* message)
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->op_type = GUINT32_TO_LE(J_MESSAGE_REPLY);
+	j_message_header(reply)->op_type = GUINT32_TO_LE(j_message_get_type(message) | J_MESSAGE_REPLY);
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
 	return reply;
@@ -438,8 +442,36 @@ j_message_get_type (JMessage const* message)
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
 	op_type = j_message_header(message)->op_type;
+	op_type = GUINT32_FROM_LE(op_type);
+	op_type &= ~J_MESSAGE_MODIFIER_MASK;
 
-	return GUINT32_FROM_LE(op_type);
+	return op_type;
+}
+
+/**
+ * Returns a message's type modifier.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's operation type.
+ **/
+JMessageType
+j_message_get_type_modifier (JMessage const* message)
+{
+	JMessageType op_type;
+
+	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
+
+	op_type = j_message_header(message)->op_type;
+	op_type = GUINT32_FROM_LE(op_type);
+	op_type &= J_MESSAGE_MODIFIER_MASK;
+
+	return op_type;
 }
 
 /**
@@ -722,7 +754,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (j_message_get_type(message) == J_MESSAGE_REPLY)
+	if (j_message_get_type_modifier(message) & J_MESSAGE_REPLY)
 	{
 		g_return_val_if_fail(message->original_message != NULL, FALSE);
 	}
@@ -746,7 +778,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	if (j_message_get_type(message) == J_MESSAGE_REPLY)
+	if (j_message_get_type_modifier(message) & J_MESSAGE_REPLY)
 	{
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
@@ -858,6 +890,28 @@ j_message_add_operation (JMessage* message, gsize length)
 	j_message_header(message)->op_count = GUINT32_TO_LE(new_op_count);
 
 	j_message_extend(message, length);
+}
+
+void
+j_message_set_safety (JMessage* message, JSemantics* semantics)
+{
+	guint32 op_type;
+
+	g_return_if_fail(message != NULL);
+	g_return_if_fail(semantics != NULL);
+
+	op_type = j_message_get_type(message) | j_message_get_type_modifier(message);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NETWORK)
+	{
+		op_type |= J_MESSAGE_SAFETY_NETWORK;
+	}
+	else if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+	{
+		op_type |= J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE;
+	}
+
+	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 }
 
 /**

@@ -125,11 +125,6 @@ struct JItemBackgroundData
 			 * The create message.
 			 */
 			JMessage* create_message;
-
-			/**
-			 * The sync message.
-			 */
-			JMessage* sync_message;
 		}
 		write;
 	}
@@ -325,16 +320,6 @@ j_item_write_background_operation (gpointer data)
 
 	/* FIXME do something with reply */
 	j_message_unref(reply);
-
-	if (background_data->u.write.sync_message != NULL)
-	{
-		j_connection_send(background_data->connection, background_data->index, background_data->u.write.sync_message);
-
-		reply = j_message_new_reply(background_data->u.write.sync_message);
-		j_connection_receive(background_data->connection, background_data->index, reply);
-
-		j_message_unref(reply);
-	}
 
 	return data;
 }
@@ -1202,6 +1187,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			{
 				/* FIXME */
 				messages[index] = j_message_new(J_MESSAGE_WRITE, store_len + collection_len + item_len);
+				j_message_set_safety(messages[index], semantics);
 				j_message_append_n(messages[index], store_name, store_len);
 				j_message_append_n(messages[index], collection_name, collection_len);
 				j_message_append_n(messages[index], item_name, item_len);
@@ -1239,7 +1225,6 @@ j_item_write_internal (JOperation* operation, JList* parts)
 	{
 		JItemBackgroundData* background_data;
 		JMessage* create_message = NULL;
-		JMessage* sync_message = NULL;
 
 		if (messages[i] == NULL)
 		{
@@ -1268,21 +1253,11 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			item->status.created[i] = TRUE;
 		}
 
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
-		{
-			sync_message = j_message_new(J_MESSAGE_SYNC, store_len + collection_len + item_len);
-			j_message_add_operation(sync_message, 0);
-			j_message_append_n(sync_message, store_name, store_len);
-			j_message_append_n(sync_message, collection_name, collection_len);
-			j_message_append_n(sync_message, item_name, item_len);
-		}
-
 		background_data = g_slice_new(JItemBackgroundData);
 		background_data->connection = connection;
 		background_data->message = messages[i];
 		background_data->index = i;
 		background_data->u.write.create_message = create_message;
-		background_data->u.write.sync_message = sync_message;
 
 		background_operations[i] = j_background_operation_new(j_item_write_background_operation, background_data);
 	}
@@ -1299,11 +1274,6 @@ j_item_write_internal (JOperation* operation, JList* parts)
 			if (background_data->u.write.create_message != NULL)
 			{
 				j_message_unref(background_data->u.write.create_message);
-			}
-
-			if (background_data->u.write.sync_message != NULL)
-			{
-				j_message_unref(background_data->u.write.sync_message);
 			}
 
 			g_slice_free(JItemBackgroundData, background_data);

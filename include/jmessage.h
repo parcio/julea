@@ -36,15 +36,16 @@
 
 enum JMessageType
 {
-	J_MESSAGE_NONE,
-	J_MESSAGE_CREATE,
-	J_MESSAGE_DELETE,
-	J_MESSAGE_READ,
-	J_MESSAGE_REPLY,
-	J_MESSAGE_STATISTICS,
-	J_MESSAGE_STATUS,
-	J_MESSAGE_SYNC,
-	J_MESSAGE_WRITE
+	J_MESSAGE_NONE           = 0,
+	J_MESSAGE_CREATE         = 1 << 0,
+	J_MESSAGE_DELETE         = 1 << 1,
+	J_MESSAGE_READ           = 1 << 2,
+	J_MESSAGE_STATISTICS     = 1 << 3,
+	J_MESSAGE_STATUS         = 1 << 4,
+	J_MESSAGE_WRITE          = 1 << 5,
+	J_MESSAGE_REPLY          = 1 << 6,
+	J_MESSAGE_SAFETY_NETWORK = 1 << 7,
+	J_MESSAGE_SAFETY_STORAGE = 1 << 8
 };
 
 typedef enum JMessageType JMessageType;
@@ -55,6 +56,8 @@ typedef struct JMessage JMessage;
 
 #include <gio/gio.h>
 
+#include <jsemantics.h>
+
 JMessage* j_message_new (JMessageType, gsize);
 JMessage* j_message_new_reply (JMessage*);
 JMessage* j_message_ref (JMessage*);
@@ -62,6 +65,7 @@ void j_message_unref (JMessage*);
 
 guint32 j_message_get_id (JMessage const*);
 JMessageType j_message_get_type (JMessage const*);
+JMessageType j_message_get_type_modifier (JMessage const*);
 guint32 j_message_get_count (JMessage const*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
@@ -79,5 +83,7 @@ gboolean j_message_write (JMessage*, GOutputStream*);
 
 void j_message_add_send (JMessage*, gconstpointer, guint64);
 void j_message_add_operation (JMessage*, gsize);
+
+void j_message_set_safety (JMessage*, JSemantics*);
 
 #endif

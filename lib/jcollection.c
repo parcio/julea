@@ -631,10 +631,14 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 
 	mongo_write_concern_init(write_concern);
 
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
 	{
-		write_concern->j = 1;
 		write_concern->w = 1;
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			write_concern->j = 1;
+		}
 	}
 
 	mongo_write_concern_finish(write_concern);
@@ -688,10 +692,14 @@ j_collection_delete_item_internal (JOperation* operation, JList* parts)
 
 	mongo_write_concern_init(write_concern);
 
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_HIGH)
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
 	{
-		write_concern->j = 1;
 		write_concern->w = 1;
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			write_concern->j = 1;
+		}
 	}
 
 	mongo_write_concern_finish(write_concern);

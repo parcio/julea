@@ -90,9 +90,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* collection;
 		gchar const* item;
 		guint32 operation_count;
+		JMessageType type_modifier;
 		guint i;
 
 		operation_count = j_message_get_count(message);
+		type_modifier = j_message_get_type_modifier(message);
 
 		switch (j_message_get_type(message))
 		{
@@ -186,24 +188,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_cache_clear(cache);
 				}
 				break;
-			case J_MESSAGE_SYNC:
-				{
-					JMessage* reply;
-
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-					item = j_message_get_string(message);
-
-					jd_backend_open(&bf, store, collection, item);
-					jd_backend_sync(&bf);
-					j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
-					reply = j_message_new_reply(message);
-					j_message_write(reply, output);
-					jd_backend_close(&bf);
-
-					j_message_unref(reply);
-				}
-				break;
 			case J_MESSAGE_WRITE:
 				{
 					JMessage* reply;
@@ -238,6 +222,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_message_append_8(reply, &bytes_written);
 
 						j_cache_clear(cache);
+					}
+
+					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
+					{
+						jd_backend_sync(&bf);
+						j_statistics_add(j_thread_get_statistics(thread), J_STATISTICS_SYNC, 1);
 					}
 
 					jd_backend_close(&bf);
@@ -347,6 +337,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_REPLY:
+			case J_MESSAGE_SAFETY_NETWORK:
+			case J_MESSAGE_SAFETY_STORAGE:
 			default:
 				g_warn_if_reached();
 				break;

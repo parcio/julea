@@ -142,9 +142,13 @@ j_benchmark_get_semantics (void)
 		}
 		else if (g_str_has_prefix(parts[i], "safety="))
 		{
-			if (g_strcmp0(value, "high") == 0)
+			if (g_strcmp0(value, "storage") == 0)
 			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_HIGH);
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_STORAGE);
+			}
+			else if (g_strcmp0(value, "network") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NETWORK);
 			}
 			else if (g_strcmp0(value, "none") == 0)
 			{
