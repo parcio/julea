@@ -320,6 +320,7 @@ JMessage*
 j_message_new_reply (JMessage* message)
 {
 	JMessage* reply;
+	JMessageType op_type;
 
 	g_return_val_if_fail(message != NULL, NULL);
 
@@ -331,9 +332,11 @@ j_message_new_reply (JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
+	op_type = j_message_get_type(message) | J_MESSAGE_REPLY;
+
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->op_type = GUINT32_TO_LE(j_message_get_type(message) | J_MESSAGE_REPLY);
+	j_message_header(reply)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
 	return reply;

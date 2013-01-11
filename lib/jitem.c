@@ -315,11 +315,14 @@ j_item_write_background_operation (gpointer data)
 
 	j_connection_send(background_data->connection, background_data->index, background_data->message);
 
-	reply = j_message_new_reply(background_data->message);
-	j_connection_receive(background_data->connection, background_data->index, reply);
+	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	{
+		reply = j_message_new_reply(background_data->message);
+		j_connection_receive(background_data->connection, background_data->index, reply);
 
-	/* FIXME do something with reply */
-	j_message_unref(reply);
+		/* FIXME do something with reply */
+		j_message_unref(reply);
+	}
 
 	return data;
 }
