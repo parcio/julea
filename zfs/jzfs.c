@@ -314,6 +314,8 @@ j_zfs_object_set_create(JZFSPool* pool, gchar* name)
 	if(dmu_objset_create(fullname, DMU_OST_OTHER, 0, NULL, NULL) != 0)
 		return 0;
 
+	//if(dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set) != 0)
+	//	return 0;
 	dmu_objset_hold(fullname, object_set, &object_set->object_set);
 
 	/*guint64 id = dmu_objset_id(object_set->object_set);
@@ -337,8 +339,9 @@ j_zfs_object_set_open(JZFSPool* pool, gchar* name)
 
 	fullname = g_strdup_printf("%s/%s", pool->spa->spa_name, name);
 	
-	if(dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set) != 0)
-		return 0;
+	dmu_objset_hold(fullname, object_set, &object_set->object_set);
+	//if(dmu_objset_own(fullname, DMU_OST_OTHER, B_FALSE, object_set, &object_set->object_set) != 0)
+	//	return 0;
 
 	guint64 id2 = dmu_objset_id(object_set->object_set);
 
@@ -355,7 +358,7 @@ j_zfs_object_set_close(JZFSObjectSet* object_set)
 {
 
 	guint64 os_id= dmu_objset_id(object_set->object_set);
-	dmu_objset_disown(object_set->object_set, object_set);
+	dmu_objset_rele(object_set->object_set, object_set);
 
 	//printf("object_set %s/%s ID %" PRId64 " closed.\n", object_set->pool->spa->spa_name,
 		//object_set->name, os_id);

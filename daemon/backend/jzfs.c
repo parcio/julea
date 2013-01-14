@@ -58,7 +58,7 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	//gchar* parent;
 	gchar* path;
 	JZFSObject* object;	
-	//printf("\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*");
+	
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
@@ -256,7 +256,10 @@ backend_init (gchar const* path)
 	object_set = j_zfs_object_set_create(pool, object_set_name);
 
 	if (object_set == NULL)
+	{
+		printf("zfs_open\n");
 		object_set = j_zfs_object_set_open(pool, object_set_name);
+	}
 
 	jd_backend_path = g_strdup(path);
 

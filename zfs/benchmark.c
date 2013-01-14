@@ -14,6 +14,11 @@
 #include <math.h>
 #include <sys/time.h>
 #include <time.h>
+#include <pthread.h>
+#define NUM_THREADS	1
+
+static JZFSPool* pool = NULL;
+static JZFSObjectSet* object_set = NULL;
 
 /* Creates and destroys "count" number of object sets in an object set array.
 Time is measured for creating and destroying separately. */
@@ -301,6 +306,36 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	printf("Opened and closed: %d objects in %" PRId64 " microseconds\n\n", count, mseconds_total);
 }
 
+void
+test_object_set_create(JZFSPool* pool)
+{
+	object_set = j_zfs_object_set_create(pool, "object_set");
+	if (object_set == NULL)
+	{
+		printf("object_set == NULL\n");
+		object_set = j_zfs_object_set_open(pool, "object_set");
+	}
+}
+
+//JZFSObject*
+void test_object_create()
+{
+	JZFSObject* object;
+	j_zfs_init();
+	pool = j_zfs_pool_open("jzfs");
+	object_set = j_zfs_object_set_create(pool, "object_set");
+	if (object_set == NULL)
+	{
+		object_set = j_zfs_object_set_open(pool, "object_set");
+	}	
+	object = j_zfs_object_create(object_set);
+	j_zfs_object_destroy(object);
+	j_zfs_object_set_destroy(object_set);
+	j_zfs_pool_close(pool);
+	j_zfs_fini();
+	//return object;
+}
+
 gint
 main (gint argc, gchar **argv)
 {
@@ -311,14 +346,17 @@ main (gint argc, gchar **argv)
 	time_t curtime;
 
 	//JZFS variables
-	JZFSPool* pool;
-	JZFSObjectSet* object_set;
+	//JZFSPool* pool;
+	//JZFSObjectSet* object_set;
 	//JZFSObjectSet* object_set2;
 	JZFSObject* object1;
 	//JZFSObject* object2;
 	//void* buf;
+	pthread_t threads[NUM_THREADS];
+	int rc;
+	void* status;
 
-	j_zfs_init();
+	//j_zfs_init();
 
 	printf("\n***\n");
 
@@ -330,7 +368,7 @@ main (gint argc, gchar **argv)
 	//start = gethrtime(); //for nanoseconds
 
 	/*Open the pool*/
-	pool = j_zfs_pool_open("jzfs");
+	//pool = j_zfs_pool_open("jzfs");
 
 	/*gint i, j, k = 0;
 	for(i = 0; i < 10; i++)
@@ -379,26 +417,44 @@ main (gint argc, gchar **argv)
 	//j_zfs_test_object_read_write(pool, 3000000, 10); //(pool, array size, how many times)
 	//j_zfs_test_object_write_read(pool, 9000000); //(pool, array size)
 	
+
 	
-
-
-
-	object_set = j_zfs_object_set_create(pool, "object_set");
+	//object_set = j_zfs_object_set_create(pool, "object_set");
 	//j_zfs_object_set_close(object_set);
+	//printf("set_open\n");
 	//object_set = j_zfs_object_set_open(pool, "object_set");
-	object1 = j_zfs_object_create(object_set);
+	//printf("obj_create\n");
+	//object1 = j_zfs_object_create(object_set);
 	//j_zfs_object_get_size(object1);
 	//j_zfs_object_set_size(object1, 15); //object, offset
 	//j_zfs_object_get_size(object1);
 	//j_zfs_object_set_size(object1, 5);
 	//j_zfs_object_get_size(object1);
-	j_zfs_object_destroy(object1);
+	//j_zfs_object_destroy(object1);
 	//j_zfs_object_set_close(object_set);
-	j_zfs_object_set_destroy(object_set);
+	//j_zfs_object_set_destroy(object_set);
 
+	//printf("object_set_create\n");
+	//test_object_set_create(pool);
+	printf("object_set create + object_create\n");
+	//object1 = test_object_create(object_set);	
+	
+	// create thread
+	rc = pthread_create(&threads[0], NULL, test_object_create, NULL);
+	if(rc)
+		printf("Error creating thread\n"); 
+	rc = pthread_join(threads[0], &status);
+	if(rc)
+		printf("Error joining.\n");
+	printf("Threads joined.\n");
+	
+	printf("object_destroy\n");
+	//j_zfs_object_destroy(object1);
+	printf("object_set_destroy\n");
+	//j_zfs_object_set_destroy(object_set);
 
 	/*Close the pool*/
-	j_zfs_pool_close(pool);
+	//j_zfs_pool_close(pool);
 
 	/*Calculate end_time */
 	gettimeofday(&end_time, NULL);
@@ -417,7 +473,7 @@ main (gint argc, gchar **argv)
 
 	printf("***\n\n");
 
-	j_zfs_fini();
-
+	//j_zfs_fini();
+	pthread_exit(NULL); //exit threads
 	return 0;
 }
