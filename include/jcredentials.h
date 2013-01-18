@@ -44,8 +44,8 @@ JCredentials* j_credentials_new (void);
 JCredentials* j_credentials_ref (JCredentials*);
 void j_credentials_unref (JCredentials*);
 
-guint64 j_credentials_get_user (JCredentials*);
-guint64 j_credentials_get_group (JCredentials*);
+guint32 j_credentials_get_user (JCredentials*);
+guint32 j_credentials_get_group (JCredentials*);
 
 bson* j_credentials_serialize (JCredentials*);
 void j_credentials_deserialize (JCredentials*, bson const*);

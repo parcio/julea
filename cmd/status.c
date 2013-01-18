@@ -84,8 +84,8 @@ j_cmd_status (gchar const** arguments)
 		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
 		size_string = g_format_size(size);
 
-		g_print("User:              %" G_GUINT64_FORMAT "\n", j_credentials_get_user(credentials));
-		g_print("Group:             %" G_GUINT64_FORMAT "\n", j_credentials_get_group(credentials));
+		g_print("User:              %" G_GUINT32_FORMAT "\n", j_credentials_get_user(credentials));
+		g_print("Group:             %" G_GUINT32_FORMAT "\n", j_credentials_get_group(credentials));
 		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
 		g_print("Size:              %s\n", size_string);
 

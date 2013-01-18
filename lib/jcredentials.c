@@ -53,8 +53,8 @@
  **/
 struct JCredentials
 {
-	guint64 user;
-	guint64 group;
+	guint32 user;
+	guint32 group;
 
 	gint ref_count;
 };
@@ -105,32 +105,26 @@ j_credentials_unref (JCredentials* credentials)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
-guint64
+guint32
 j_credentials_get_user (JCredentials* credentials)
 {
-	guint64 ret;
-
 	g_return_val_if_fail(credentials != NULL, 0);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	ret = credentials->user;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return ret;
+	return credentials->user;
 }
 
-guint64
+guint32
 j_credentials_get_group (JCredentials* credentials)
 {
-	guint64 ret;
-
 	g_return_val_if_fail(credentials != NULL, 0);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	ret = credentials->group;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return ret;
+	return credentials->group;
 }
 
 /* Internal */
@@ -160,8 +154,8 @@ j_credentials_serialize (JCredentials* credentials)
 
 	b = g_slice_new(bson);
 	bson_init(b);
-	bson_append_long(b, "User", credentials->user);
-	bson_append_long(b, "Group", credentials->group);
+	bson_append_int(b, "User", credentials->user);
+	bson_append_int(b, "Group", credentials->group);
 	bson_finish(b);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -202,11 +196,11 @@ j_credentials_deserialize (JCredentials* credentials, bson const* b)
 
 		if (g_strcmp0(key, "User") == 0)
 		{
-			credentials->user = bson_iterator_long(&iterator);
+			credentials->user = bson_iterator_int(&iterator);
 		}
 		else if (g_strcmp0(key, "Group") == 0)
 		{
-			credentials->group = bson_iterator_long(&iterator);
+			credentials->group = bson_iterator_int(&iterator);
 		}
 	}
 
