@@ -135,8 +135,6 @@ struct JMessage
 	gint ref_count;
 };
 
-static JMessageType const J_MESSAGE_MODIFIER_MASK = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE);
-
 /**
  * Returns a message's header.
  *

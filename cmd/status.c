@@ -71,7 +71,7 @@ j_cmd_status (gchar const** arguments)
 		guint64 modification_time;
 		guint64 size;
 
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
+		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, operation);
 		j_operation_execute(operation);
 
 		modification_time = j_item_get_modification_time(j_uri_get_item(uri));

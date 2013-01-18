@@ -299,7 +299,7 @@ _benchmark_item_get_status (gboolean batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		j_item_get_status(item, J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
+		j_item_get_status(item, J_ITEM_STATUS_ALL, operation);
 
 		if (!batch)
 		{

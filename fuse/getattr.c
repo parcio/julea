@@ -53,7 +53,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		JOperation* operation;
 
 		operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE, operation);
+		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, operation);
 		j_operation_execute(operation);
 		j_operation_unref(operation);
 

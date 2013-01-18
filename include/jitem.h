@@ -38,7 +38,8 @@ enum JItemStatusFlags
 {
 	J_ITEM_STATUS_NONE              = 0,
 	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 0,
-	J_ITEM_STATUS_SIZE              = 1 << 1
+	J_ITEM_STATUS_SIZE              = 1 << 1,
+	J_ITEM_STATUS_ALL               = (J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE)
 };
 
 typedef enum JItemStatusFlags JItemStatusFlags;

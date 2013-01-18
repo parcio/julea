@@ -350,6 +350,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_REPLY:
 			case J_MESSAGE_SAFETY_NETWORK:
 			case J_MESSAGE_SAFETY_STORAGE:
+			case J_MESSAGE_MODIFIER_MASK:
 			default:
 				g_warn_if_reached();
 				break;

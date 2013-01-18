@@ -411,7 +411,7 @@ j_item_new (gchar const* name)
 	item = g_slice_new(JItem);
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
-	item->status.flags = J_ITEM_STATUS_SIZE | J_ITEM_STATUS_MODIFICATION_TIME;
+	item->status.flags = J_ITEM_STATUS_ALL;
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
 	item->status.created = NULL;
