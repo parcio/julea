@@ -409,7 +409,9 @@ main (int argc, char** argv)
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
+#if !GLIB_CHECK_VERSION(2,35,1)
 	g_type_init();
+#endif
 
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);

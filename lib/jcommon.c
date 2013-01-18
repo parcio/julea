@@ -119,7 +119,9 @@ j_init (gint* argc, gchar*** argv)
 	common->configuration = NULL;
 	common->connection = NULL;
 
+#if !GLIB_CHECK_VERSION(2,35,1)
 	g_type_init();
+#endif
 
 	basename = g_path_get_basename((*argv)[0]);
 	j_trace_init(basename);

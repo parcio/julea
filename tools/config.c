@@ -139,10 +139,12 @@ main (gint argc, gchar** argv)
 		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
 		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
 		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp/julea" },
-		{ NULL }
+		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
+#if !GLIB_CHECK_VERSION(2,35,1)
 	g_type_init();
+#endif
 
 	context = g_option_context_new("[FILE]");
 	g_option_context_add_main_entries(context, entries, NULL);

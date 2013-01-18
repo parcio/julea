@@ -144,12 +144,12 @@ j_background_operation_init (void)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-#ifdef _SC_NPROCESSORS_ONLN
+#if GLIB_CHECK_VERSION(2,35,4)
+	thread_count = g_get_num_processors();
+#elif defined(_SC_NPROCESSORS_ONLN)
 	thread_count = sysconf(_SC_NPROCESSORS_ONLN);
-#else
-#ifdef _SC_NPROCESSORS_CONF
+#elif defined(_SC_NPROCESSORS_CONF)
 	thread_count = sysconf(_SC_NPROCESSORS_CONF);
-#endif
 #endif
 
 	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, thread_count, FALSE, NULL);
