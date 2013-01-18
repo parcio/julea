@@ -136,9 +136,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							jd_backend_close(&bf);
 						}
 
-						reply = j_message_new_reply(message);
-						j_message_write(reply, output);
-						j_message_unref(reply);
+						if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+						{
+							reply = j_message_new_reply(message);
+							j_message_write(reply, output);
+							j_message_unref(reply);
+						}
 					}
 				}
 				break;
