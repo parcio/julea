@@ -254,6 +254,8 @@ j_collection_create_item (JCollection* collection, JItem* item, JOperation* oper
 	part->u.collection_create_item.collection = j_collection_ref(collection);
 	part->u.collection_create_item.item = j_item_ref(item);
 
+	j_item_set_collection(item, collection);
+
 	j_operation_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -632,7 +634,6 @@ j_collection_create_item_internal (JOperation* operation, JList* parts)
 		bson* b;
 
 		collection = part->u.collection_create_item.collection;
-		j_item_set_collection(item, collection);
 		b = j_item_serialize(item, semantics);
 
 		obj[i] = b;

@@ -188,11 +188,11 @@ j_fini (void)
 
 	g_return_if_fail(j_is_initialized());
 
-	common = g_atomic_pointer_get(&j_common);
-	g_atomic_pointer_set(&j_common, NULL);
-
 	j_operation_cache_fini();
 	j_background_operation_fini();
+
+	common = g_atomic_pointer_get(&j_common);
+	g_atomic_pointer_set(&j_common, NULL);
 
 	j_connection_disconnect(common->connection);
 

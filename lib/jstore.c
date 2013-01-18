@@ -236,6 +236,8 @@ j_store_create_collection (JStore* store, JCollection* collection, JOperation* o
 	part->u.store_create_collection.store = j_store_ref(store);
 	part->u.store_create_collection.collection = j_collection_ref(collection);
 
+	j_collection_set_store(collection, store);
+
 	j_operation_add(operation, part);
 }
 
@@ -371,7 +373,6 @@ j_store_create_collection_internal (JOperation* operation, JList* parts)
 		bson* b;
 
 		store = part->u.store_create_collection.store;
-		j_collection_set_store(collection, store);
 		b = j_collection_serialize(collection);
 
 		obj[i] = b;
