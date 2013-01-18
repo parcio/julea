@@ -40,6 +40,8 @@
 
 #include <joperation-part-internal.h>
 
+J_GNUC_INTERNAL JOperation* j_operation_copy (JOperation*);
+
 J_GNUC_INTERNAL JList* j_operation_get_parts (JOperation*);
 J_GNUC_INTERNAL JSemantics* j_operation_get_semantics (JOperation*);
 

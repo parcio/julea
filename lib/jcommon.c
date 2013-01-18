@@ -113,6 +113,8 @@ j_init (gint* argc, gchar*** argv)
 	JThread* thread;
 	gchar* basename;
 
+	(void)argc;
+
 	g_return_if_fail(!j_is_initialized());
 
 	common = g_slice_new(JCommon);

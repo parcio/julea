@@ -310,7 +310,11 @@ j_operation_cache_add (JOperation* operation)
 		goto end;
 	}
 
-	g_async_queue_push(j_operation_cache->queue, j_operation_ref(operation));
+	g_mutex_lock(j_operation_cache->mutex);
+	j_operation_cache->working = TRUE;
+	g_mutex_unlock(j_operation_cache->mutex);
+
+	g_async_queue_push(j_operation_cache->queue, j_operation_copy(operation));
 
 end:
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);

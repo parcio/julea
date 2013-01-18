@@ -352,6 +352,7 @@ j_operation_execute (JOperation* operation)
 	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
 	    && j_operation_cache_add(operation))
 	{
+		operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
 		ret = TRUE;
 		goto end;
 	}
@@ -415,6 +416,40 @@ j_operation_wait (JOperation* operation)
 }
 
 /* Internal */
+
+/**
+ * Copies an operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param old_operation An operation.
+ *
+ * \return A new operation.
+ */
+JOperation*
+j_operation_copy (JOperation* old_operation)
+{
+	JOperation* operation;
+
+	g_return_val_if_fail(old_operation != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	operation = g_slice_new(JOperation);
+	operation->list = old_operation->list;
+	operation->semantics = j_semantics_ref(old_operation->semantics);
+	operation->background_operation = NULL;
+	operation->ref_count = 1;
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return operation;
+}
 
 /**
  * Returns an operation's parts.
