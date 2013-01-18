@@ -46,6 +46,7 @@
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-internal.h>
+#include <jcredentials.h>
 #include <jdistribution.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
@@ -185,6 +186,8 @@ struct JItem
 	 * The name.
 	 **/
 	gchar* name;
+
+	JCredentials* credentials;
 
 	/**
 	 * The status.
@@ -411,6 +414,7 @@ j_item_new (gchar const* name)
 	item = g_slice_new(JItem);
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
+	item->credentials = j_credentials_new();
 	item->status.flags = J_ITEM_STATUS_ALL;
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
@@ -695,6 +699,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
+	item->credentials = j_credentials_new();
 	item->status.flags = J_ITEM_STATUS_NONE;
 	item->status.size = 0;
 	item->status.modification_time = 0;
@@ -735,6 +740,31 @@ j_item_get_collection (JItem* item)
 }
 
 /**
+ * Returns an item's credentials.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A collection.
+ **/
+JCredentials*
+j_item_get_credentials (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return item->credentials;
+}
+
+/**
  * Serializes an item.
  *
  * \private
@@ -753,16 +783,20 @@ bson*
 j_item_serialize (JItem* item, JSemantics* semantics)
 {
 	bson* b;
+	bson* b_cred;
 
 	g_return_val_if_fail(item != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	b_cred = j_credentials_serialize(item->credentials);
 
 	b = g_slice_new(bson);
 	bson_init(b);
 	bson_append_oid(b, "_id", &(item->id));
 	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
+	bson_append_bson(b, "Credentials", b_cred);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
@@ -771,6 +805,9 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	}
 
 	bson_finish(b);
+
+	bson_destroy(b_cred);
+	g_slice_free(bson, b_cred);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -816,6 +853,13 @@ j_item_deserialize (JItem* item, bson const* b)
 		{
 			g_free(item->name);
 			item->name = g_strdup(bson_iterator_string(&iterator));
+		}
+		else if (g_strcmp0(key, "Credentials") == 0)
+		{
+			bson b_cred[1];
+
+			bson_iterator_subobject(&iterator, b_cred);
+			j_credentials_deserialize(item->credentials, b_cred);
 		}
 		else if (g_strcmp0(key, "Size") == 0)
 		{

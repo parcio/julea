@@ -36,6 +36,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <bson.h>
+
 #include <jcredentials.h>
 
 #include <jcommon-internal.h>
@@ -129,6 +131,86 @@ j_credentials_get_group (JCredentials* credentials)
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
+}
+
+/* Internal */
+
+/**
+ * Serializes credentials.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param credentials Credentials.
+ *
+ * \return A new BSON object. Should be freed with g_slice_free().
+ **/
+bson*
+j_credentials_serialize (JCredentials* credentials)
+{
+	bson* b;
+
+	g_return_val_if_fail(credentials != NULL, NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	b = g_slice_new(bson);
+	bson_init(b);
+	bson_append_long(b, "User", credentials->user);
+	bson_append_long(b, "Group", credentials->group);
+	bson_finish(b);
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+
+	return b;
+}
+
+/**
+ * Deserializes credentials.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param credentials credentials.
+ * \param b           A BSON object.
+ **/
+void
+j_credentials_deserialize (JCredentials* credentials, bson const* b)
+{
+	bson_iterator iterator;
+
+	g_return_if_fail(credentials != NULL);
+	g_return_if_fail(b != NULL);
+
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+
+	bson_iterator_init(&iterator, b);
+
+	while (bson_iterator_next(&iterator))
+	{
+		gchar const* key;
+
+		key = bson_iterator_key(&iterator);
+
+		if (g_strcmp0(key, "User") == 0)
+		{
+			credentials->user = bson_iterator_long(&iterator);
+		}
+		else if (g_strcmp0(key, "Group") == 0)
+		{
+			credentials->group = bson_iterator_long(&iterator);
+		}
+	}
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**

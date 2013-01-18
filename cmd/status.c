@@ -29,6 +29,7 @@
 
 #include "julea.h"
 
+#include <jitem-internal.h>
 #include <juri.h>
 
 gboolean
@@ -65,6 +66,7 @@ j_cmd_status (gchar const** arguments)
 
 	if (j_uri_get_item(uri) != NULL)
 	{
+		JCredentials* credentials;
 		GDateTime* date_time;
 		gchar* modification_time_string;
 		gchar* size_string;
@@ -74,6 +76,7 @@ j_cmd_status (gchar const** arguments)
 		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, operation);
 		j_operation_execute(operation);
 
+		credentials = j_item_get_credentials(j_uri_get_item(uri));
 		modification_time = j_item_get_modification_time(j_uri_get_item(uri));
 		size = j_item_get_size(j_uri_get_item(uri));
 
@@ -81,13 +84,21 @@ j_cmd_status (gchar const** arguments)
 		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
 		size_string = g_format_size(size);
 
+		g_print("User:              %" G_GUINT64_FORMAT "\n", j_credentials_get_user(credentials));
+		g_print("Group:             %" G_GUINT64_FORMAT "\n", j_credentials_get_group(credentials));
 		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
 		g_print("Size:              %s\n", size_string);
+
+		j_credentials_unref(credentials);
 
 		g_date_time_unref(date_time);
 
 		g_free(modification_time_string);
 		g_free(size_string);
+	}
+	else if (j_uri_get_collection(uri) != NULL)
+	{
+
 	}
 	else
 	{

@@ -39,6 +39,7 @@
 #include <jitem.h>
 
 #include <jcollection.h>
+#include <jcredentials.h>
 #include <jsemantics.h>
 
 #include <bson.h>
@@ -46,6 +47,7 @@
 J_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson const*);
 
 J_GNUC_INTERNAL JCollection* j_item_get_collection (JItem*);
+J_GNUC_INTERNAL JCredentials* j_item_get_credentials (JItem*);
 
 J_GNUC_INTERNAL bson* j_item_serialize (JItem*, JSemantics*);
 J_GNUC_INTERNAL void j_item_deserialize (JItem*, bson const*);

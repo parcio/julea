@@ -272,8 +272,9 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('cmd/*.c'),
 		target = 'cmd/julea',
-		use = ['lib/julea', 'GIO', 'GLIB', 'GOBJECT'],
+		use = ['lib/julea-private', 'GLIB'],
 		includes = ['include'],
+		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
 	)
 

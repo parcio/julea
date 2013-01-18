@@ -34,6 +34,8 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 struct JCredentials;
 
 typedef struct JCredentials JCredentials;
@@ -44,5 +46,8 @@ void j_credentials_unref (JCredentials*);
 
 guint64 j_credentials_get_user (JCredentials*);
 guint64 j_credentials_get_group (JCredentials*);
+
+bson* j_credentials_serialize (JCredentials*);
+void j_credentials_deserialize (JCredentials*, bson const*);
 
 #endif

@@ -42,6 +42,7 @@
 #include <jcommon-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <jcredentials.h>
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <jlist.h>
@@ -76,6 +77,8 @@ struct JCollection
 	 * The name.
 	 **/
 	gchar* name;
+
+	JCredentials* credentials;
 
 	struct
 	{
@@ -126,6 +129,7 @@ j_collection_new (gchar const* name)
 	collection = g_slice_new(JCollection);
 	bson_oid_gen(&(collection->id));
 	collection->name = g_strdup(name);
+	collection->credentials = j_credentials_new();
 	collection->collection.items = NULL;
 	collection->collection.locks = NULL;
 	collection->store = NULL;
@@ -355,6 +359,7 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
+	collection->credentials = j_credentials_new();
 	collection->collection.items = NULL;
 	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
@@ -469,16 +474,23 @@ j_collection_serialize (JCollection* collection)
 	*/
 
 	bson* b;
+	bson* b_cred;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
+	b_cred = j_credentials_serialize(collection->credentials);
+
 	b = g_slice_new(bson);
 	bson_init(b);
 	bson_append_oid(b, "_id", &(collection->id));
 	bson_append_string(b, "Name", collection->name);
+	bson_append_bson(b, "Credentials", b_cred);
 	bson_finish(b);
+
+	bson_destroy(b_cred);
+	g_slice_free(bson, b_cred);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -531,6 +543,13 @@ j_collection_deserialize (JCollection* collection, bson const* b)
 		{
 			g_free(collection->name);
 			collection->name = g_strdup(bson_iterator_string(&iterator));
+		}
+		else if (g_strcmp0(key, "Credentials") == 0)
+		{
+			bson b_cred[1];
+
+			bson_iterator_subobject(&iterator, b_cred);
+			j_credentials_deserialize(collection->credentials, b_cred);
 		}
 	}
 
