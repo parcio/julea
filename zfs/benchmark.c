@@ -15,10 +15,11 @@
 #include <sys/time.h>
 #include <time.h>
 #include <pthread.h>
-#define NUM_THREADS	1
+#define NUM_THREADS	2
 
 static JZFSPool* pool = NULL;
 static JZFSObjectSet* object_set = NULL;
+pthread_mutex_t pool_mutex;
 
 /* Creates and destroys "count" number of object sets in an object set array.
 Time is measured for creating and destroying separately. */
@@ -306,34 +307,28 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	printf("Opened and closed: %d objects in %" PRId64 " microseconds\n\n", count, mseconds_total);
 }
 
-void
-test_object_set_create(JZFSPool* pool)
-{
-	object_set = j_zfs_object_set_create(pool, "object_set");
-	if (object_set == NULL)
-	{
-		printf("object_set == NULL\n");
-		object_set = j_zfs_object_set_open(pool, "object_set");
-	}
-}
-
 //JZFSObject*
-void test_object_create()
+void test_with_threads()
 {
 	JZFSObject* object;
+	printf("in test_with_threads\n");
 	j_zfs_init();
+	
+	pthread_mutex_lock (&pool_mutex);
 	pool = j_zfs_pool_open("jzfs");
-	object_set = j_zfs_object_set_create(pool, "object_set");
+	printf("pool opened. \n");
+	/*object_set = j_zfs_object_set_create(pool, "object_set");
 	if (object_set == NULL)
 	{
 		object_set = j_zfs_object_set_open(pool, "object_set");
 	}	
 	object = j_zfs_object_create(object_set);
 	j_zfs_object_destroy(object);
-	j_zfs_object_set_destroy(object_set);
+	j_zfs_object_set_destroy(object_set);*/
 	j_zfs_pool_close(pool);
+	pthread_mutex_unlock (&pool_mutex);
 	j_zfs_fini();
-	//return object;
+
 }
 
 gint
@@ -354,6 +349,7 @@ main (gint argc, gchar **argv)
 	//void* buf;
 	pthread_t threads[NUM_THREADS];
 	int rc;
+	long t;
 	void* status;
 
 	//j_zfs_init();
@@ -434,24 +430,19 @@ main (gint argc, gchar **argv)
 	//j_zfs_object_set_close(object_set);
 	//j_zfs_object_set_destroy(object_set);
 
-	//printf("object_set_create\n");
-	//test_object_set_create(pool);
-	printf("object_set create + object_create\n");
-	//object1 = test_object_create(object_set);	
-	
-	// create thread
-	rc = pthread_create(&threads[0], NULL, test_object_create, NULL);
-	if(rc)
-		printf("Error creating thread\n"); 
+	pthread_mutex_init(&pool_mutex, NULL);
+	// create threads
+	for(t=0; t < NUM_THREADS; t++)
+	{
+		rc = pthread_create(&threads[t], NULL, test_with_threads, NULL);
+		if(rc)
+			printf("Error creating threads\n");
+	} 
+	printf("Threads created.\n");
 	rc = pthread_join(threads[0], &status);
 	if(rc)
 		printf("Error joining.\n");
 	printf("Threads joined.\n");
-	
-	printf("object_destroy\n");
-	//j_zfs_object_destroy(object1);
-	printf("object_set_destroy\n");
-	//j_zfs_object_set_destroy(object_set);
 
 	/*Close the pool*/
 	//j_zfs_pool_close(pool);

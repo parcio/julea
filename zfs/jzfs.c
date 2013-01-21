@@ -129,10 +129,13 @@ j_zfs_unref (JZFS* zfs)
 void
 j_zfs_init (void)
 {
-	assert(jzfs == NULL);
-
+	if (jzfs == NULL)
+	{
 	jzfs = g_slice_new(JZFS);
 	jzfs->ref_count = 1;
+	}
+	else
+	j_zfs_ref(jzfs);
 
 	kernel_init(FREAD | FWRITE);
 }
