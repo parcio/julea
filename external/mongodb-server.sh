@@ -27,7 +27,8 @@
 
 set -e
 
-PREFIX="${PWD}/mongodb"
+PREFIX="${PWD}/mongodb-server"
+VERSION='2.2.2'
 
 if [ -d "${PREFIX}" ]
 then
@@ -35,14 +36,17 @@ then
 	exit 1
 fi
 
-if [ ! -d mongo-c-driver ]
-then
-	git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver
-fi
+TEMP=$(mktemp -d)
 
-cd mongo-c-driver
-git clean -x -d -f
-git pull
+trap "rm -rf ${TEMP}" HUP INT TERM 0
+cd "${TEMP}"
 
-make
-make install INSTALL_INCLUDE_PATH="${PREFIX}/include" INSTALL_LIBRARY_PATH="${PREFIX}/lib"
+wget -O "mongodb-server-${VERSION}.tar.gz" "http://downloads.mongodb.org/src/mongodb-src-r${VERSION}.tar.gz"
+tar xf "mongodb-server-${VERSION}.tar.gz"
+
+cd "mongodb-src-r${VERSION}"
+
+scons all
+scons --prefix="${PREFIX}" install
+
+rm -rf "${TEMP}"

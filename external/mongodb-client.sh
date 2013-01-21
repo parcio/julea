@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2013 Michael Kuhn
+# Copyright (c) 2012-2013 Michael Kuhn
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 
 set -e
 
-PREFIX="${PWD}/otf"
-VERSION='1.12.2salmon'
+PREFIX="${PWD}/mongodb-client"
+VERSION='0.7.1'
 
 if [ -d "${PREFIX}" ]
 then
@@ -41,13 +41,12 @@ TEMP=$(mktemp -d)
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget -O "otf-${VERSION}.tar.gz" "http://wwwpub.zih.tu-dresden.de/~mlieber/dcount/dcount.php?package=otf&get=OTF-${VERSION}.tar.gz"
-tar xf "otf-${VERSION}.tar.gz"
+wget -O "mongodb-client-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/archive/v${VERSION}.tar.gz"
+tar xf "mongodb-client-${VERSION}.tar.gz"
 
-cd "OTF-${VERSION}"
+cd "mongo-c-driver-${VERSION}"
 
-./configure --prefix="${PREFIX}"
 make
-make install
+make install INSTALL_INCLUDE_PATH="${PREFIX}/include" INSTALL_LIBRARY_PATH="${PREFIX}/lib"
 
 rm -rf "${TEMP}"
