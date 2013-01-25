@@ -63,7 +63,7 @@ typedef enum JOperationType JOperationType;
 /**
  * An operation part.
  **/
-struct JOperationPart
+struct JOperation
 {
 	/**
 	 * The type.
@@ -168,9 +168,9 @@ struct JOperationPart
 	u;
 };
 
-typedef struct JOperationPart JOperationPart;
+typedef struct JOperation JOperation;
 
-J_GNUC_INTERNAL JOperationPart* j_operation_part_new (JOperationType);
-J_GNUC_INTERNAL void j_operation_part_free (JOperationPart*);
+J_GNUC_INTERNAL JOperation* j_operation_part_new (JOperationType);
+J_GNUC_INTERNAL void j_operation_part_free (JOperation*);
 
 #endif

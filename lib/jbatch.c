@@ -256,7 +256,7 @@ static
 gboolean
 j_batch_execute_same (JBatch* batch, JList* list)
 {
-	JOperationPart* part;
+	JOperation* part;
 	JOperationType type;
 	gboolean ret = FALSE;
 
@@ -521,7 +521,7 @@ j_batch_get_semantics (JBatch* batch)
  * \param part      A batch part.
  **/
 void
-j_batch_add (JBatch* batch, JOperationPart* part)
+j_batch_add (JBatch* batch, JOperation* part)
 {
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(part != NULL);
@@ -565,7 +565,7 @@ j_batch_execute_internal (JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 
 		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
 		{

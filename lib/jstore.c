@@ -226,7 +226,7 @@ j_store_get_connection (JStore* store)
 void
 j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
@@ -257,7 +257,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch
 void
 j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
@@ -287,7 +287,7 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 void
 j_store_delete_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
@@ -368,7 +368,7 @@ j_store_create_collection_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.store_create_collection.collection;
 		bson* b;
 
@@ -486,7 +486,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* parts)
 	/* FIXME do some optimizations for len(parts) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.store_delete_collection.collection;
 		bson b;
 
@@ -540,7 +540,7 @@ j_store_get_collection_internal (JBatch* batch, JList* parts)
 	/* FIXME do some optimizations for len(parts) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JCollection** collection = part->u.store_get_collection.collection;
 		JStore* store = part->u.store_get_collection.store;
 		bson b;

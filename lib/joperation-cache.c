@@ -138,7 +138,7 @@ j_operation_cache_thread (gpointer data)
 
 static
 gboolean
-j_operation_cache_test (JOperationPart* part)
+j_operation_cache_test (JOperation* part)
 {
 	gboolean ret = FALSE;
 
@@ -262,7 +262,7 @@ j_operation_cache_add (JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 
 		can_cache = j_operation_cache_test(part) && can_cache;
 
@@ -284,7 +284,7 @@ j_operation_cache_add (JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 
 		if (part->type == J_OPERATION_ITEM_WRITE)
 		{

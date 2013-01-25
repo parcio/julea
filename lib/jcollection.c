@@ -242,7 +242,7 @@ j_collection_get_name (JCollection* collection)
 void
 j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
@@ -277,7 +277,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 void
 j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
@@ -312,7 +312,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 void
 j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
@@ -629,7 +629,7 @@ j_collection_create_item_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JItem* item = part->u.collection_create_item.item;
 		bson* b;
 
@@ -729,7 +729,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* parts)
 	/* FIXME do some optimizations for len(parts) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JItem* item = part->u.collection_delete_item.item;
 		bson b;
 
@@ -777,7 +777,7 @@ j_collection_get_item_internal (JBatch* batch, JList* parts)
 	/* FIXME do some optimizations for len(parts) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JCollection* collection = part->u.collection_get_item.collection;
 		JItem** item = part->u.collection_get_item.item;
 		JItemStatusFlags flags = part->u.collection_get_item.flags;

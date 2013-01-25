@@ -36,7 +36,7 @@
 #include <joperation-part-internal.h>
 
 /**
- * \defgroup JOperationPart Operation Part
+ * \defgroup JOperation Operation
  *
  * @{
  **/
@@ -51,12 +51,12 @@
  *
  * \return A new operation part. Should be freed with j_operation_part_free().
  **/
-JOperationPart*
+JOperation*
 j_operation_part_new (JOperationType type)
 {
-	JOperationPart* part;
+	JOperation* part;
 
-	part = g_slice_new(JOperationPart);
+	part = g_slice_new(JOperation);
 	part->type = type;
 	part->key = NULL;
 
@@ -77,7 +77,7 @@ j_operation_part_new (JOperationType type)
  **/
 /* FIXME */
 void
-j_operation_part_free (JOperationPart* part)
+j_operation_part_free (JOperation* part)
 {
 	switch (part->type)
 	{
@@ -128,7 +128,7 @@ j_operation_part_free (JOperationPart* part)
 			g_warn_if_reached();
 	}
 
-	g_slice_free(JOperationPart, part);
+	g_slice_free(JOperation, part);
 }
 
 /**

@@ -45,7 +45,7 @@ J_GNUC_INTERNAL JBatch* j_batch_copy (JBatch*);
 J_GNUC_INTERNAL JList* j_batch_get_parts (JBatch*);
 J_GNUC_INTERNAL JSemantics* j_batch_get_semantics (JBatch*);
 
-J_GNUC_INTERNAL void j_batch_add (JBatch*, JOperationPart*);
+J_GNUC_INTERNAL void j_batch_add (JBatch*, JOperation*);
 
 J_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
 

@@ -531,7 +531,7 @@ j_item_get_name (JItem* item)
 void
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(data != NULL);
@@ -570,7 +570,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(data != NULL);
@@ -606,7 +606,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 void
 j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(item != NULL);
 
@@ -997,7 +997,7 @@ j_item_read_internal (JBatch* batch, JList* parts)
 	}
 
 	{
-		JOperationPart* part;
+		JOperation* part;
 
 		part = j_list_get_first(parts);
 		g_assert(part != NULL);
@@ -1023,7 +1023,7 @@ j_item_read_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 		gpointer data = part->u.item_read.data;
 		guint64 length = part->u.item_read.length;
 		guint64 offset = part->u.item_read.offset;
@@ -1177,7 +1177,7 @@ j_item_write_internal (JBatch* batch, JList* parts)
 	}
 
 	{
-		JOperationPart* part;
+		JOperation* part;
 
 		part = j_list_get_first(parts);
 		g_assert(part != NULL);
@@ -1203,7 +1203,7 @@ j_item_write_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 		gconstpointer data = part->u.item_write.data;
 		guint64 length = part->u.item_write.length;
 		guint64 offset = part->u.item_write.offset;
@@ -1374,7 +1374,7 @@ j_item_get_status_internal (JBatch* batch, JList* parts)
 
 	{
 		JItem* item;
-		JOperationPart* part;
+		JOperation* part;
 
 		part = j_list_get_first(parts);
 		g_assert(part != NULL);
@@ -1388,7 +1388,7 @@ j_item_get_status_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperationPart* part = j_list_iterator_get(iterator);
+		JOperation* part = j_list_iterator_get(iterator);
 		JItem* item = part->u.item_get_status.item;
 		JItemStatusFlags flags = part->u.item_get_status.flags;
 		bson b;

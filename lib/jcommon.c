@@ -223,7 +223,7 @@ j_fini (void)
 void
 j_create_store (JStore* store, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 
@@ -248,7 +248,7 @@ j_create_store (JStore* store, JBatch* batch)
 void
 j_delete_store (JStore* store, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 
@@ -274,7 +274,7 @@ j_delete_store (JStore* store, JBatch* batch)
 void
 j_get_store (JStore** store, gchar const* name, JBatch* batch)
 {
-	JOperationPart* part;
+	JOperation* part;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(name != NULL);
@@ -359,7 +359,7 @@ j_create_store_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JStore* store = part->u.create_store.store;
 
 		(void)store;
@@ -399,7 +399,7 @@ j_delete_store_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JStore* store = part->u.delete_store.store;
 
 		mongo_cmd_drop_db(j_connection_get_connection(j_store_get_connection(store)), j_store_get_name(store));
@@ -438,7 +438,7 @@ j_get_store_internal (JBatch* batch, JList* parts)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperationPart* part = j_list_iterator_get(it);
+		JOperation* part = j_list_iterator_get(it);
 		JStore** store = part->u.get_store.store;
 		gchar const* name = part->u.get_store.name;
 
