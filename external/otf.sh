@@ -36,7 +36,7 @@ then
 	exit 1
 fi
 
-TEMP=$(mktemp -d)
+TEMP=$(mktemp -d --tmpdir="${PWD}")
 
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
