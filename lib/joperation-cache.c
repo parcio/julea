@@ -111,8 +111,8 @@ j_operation_cache_thread (gpointer data)
 			return NULL;
 		}
 
-		j_operation_execute_internal(operation);
-		j_operation_unref(operation);
+		j_batch_execute_internal(operation);
+		j_batch_unref(operation);
 
 		g_mutex_lock(cache->mutex);
 
@@ -185,7 +185,7 @@ j_operation_cache_init (void)
 
 	cache = g_slice_new(JOperationCache);
 	cache->cache = j_cache_new(J_MIB(50));
-	cache->queue = g_async_queue_new_full((GDestroyNotify)j_operation_unref);
+	cache->queue = g_async_queue_new_full((GDestroyNotify)j_batch_unref);
 	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
 	cache->working = FALSE;
 
@@ -257,7 +257,7 @@ j_operation_cache_add (JBatch* operation)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation_parts = j_operation_get_parts(operation);
+	operation_parts = j_batch_get_parts(operation);
 	iterator = j_list_iterator_new(operation_parts);
 
 	while (j_list_iterator_next(iterator))
@@ -314,7 +314,7 @@ j_operation_cache_add (JBatch* operation)
 	j_operation_cache->working = TRUE;
 	g_mutex_unlock(j_operation_cache->mutex);
 
-	g_async_queue_push(j_operation_cache->queue, j_operation_copy(operation));
+	g_async_queue_push(j_operation_cache->queue, j_batch_copy(operation));
 
 end:
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);

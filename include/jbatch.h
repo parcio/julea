@@ -42,14 +42,14 @@ typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
 
 #include <jsemantics.h>
 
-JBatch* j_operation_new (JSemantics*);
-JBatch* j_operation_new_for_template (JSemanticsTemplate);
-JBatch* j_operation_ref (JBatch*);
-void j_operation_unref (JBatch*);
+JBatch* j_batch_new (JSemantics*);
+JBatch* j_batch_new_for_template (JSemanticsTemplate);
+JBatch* j_batch_ref (JBatch*);
+void j_batch_unref (JBatch*);
 
-gboolean j_operation_execute (JBatch*);
+gboolean j_batch_execute (JBatch*);
 
-void j_operation_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
-void j_operation_wait (JBatch*);
+void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
+void j_batch_wait (JBatch*);
 
 #endif

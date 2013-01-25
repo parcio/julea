@@ -55,7 +55,7 @@ _benchmark_lock (gboolean acquire, gboolean add)
 
 	list = j_list_new((JListFreeFunc)j_lock_free);
 	semantics = j_benchmark_get_semantics();
-	operation = j_operation_new(semantics);
+	operation = j_batch_new(semantics);
 
 	store = j_store_new("benchmark-store");
 	collection = j_collection_new("benchmark-collection");
@@ -64,7 +64,7 @@ _benchmark_lock (gboolean acquire, gboolean add)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	if (acquire)
 	{
@@ -116,12 +116,12 @@ _benchmark_lock (gboolean acquire, gboolean add)
 	j_collection_delete_item(collection, item, operation);
 	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 	j_semantics_unref(semantics);
 	j_list_unref(list);
 

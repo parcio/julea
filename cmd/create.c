@@ -85,7 +85,7 @@ j_cmd_create (gchar const** arguments)
 		g_error_free(error);
 	}
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
@@ -93,7 +93,7 @@ j_cmd_create (gchar const** arguments)
 
 		item = j_item_new(j_uri_get_item_name(uri));
 		j_collection_create_item(j_uri_get_collection(uri), item, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 	}
 	else if (j_uri_get_store(uri) != NULL)
 	{
@@ -101,7 +101,7 @@ j_cmd_create (gchar const** arguments)
 
 		collection = j_collection_new(j_uri_get_collection_name(uri));
 		j_store_create_collection(j_uri_get_store(uri), collection, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 	}
 	else
 	{
@@ -109,10 +109,10 @@ j_cmd_create (gchar const** arguments)
 
 		store = j_store_new(j_uri_get_store_name(uri));
 		j_create_store(store, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 	}
 
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 
 end:
 	if (uri != NULL)

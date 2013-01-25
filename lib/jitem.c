@@ -547,7 +547,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	part->u.item_read.offset = offset;
 	part->u.item_read.bytes_read = bytes_read;
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -586,7 +586,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	part->u.item_write.offset = offset;
 	part->u.item_write.bytes_written = bytes_written;
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -617,7 +617,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* operation)
 	part->u.item_get_status.item = j_item_ref(item);
 	part->u.item_get_status.flags = flags;
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -983,7 +983,7 @@ j_item_read_internal (JBatch* operation, JList* parts)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1165,7 +1165,7 @@ j_item_write_internal (JBatch* operation, JList* parts)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);

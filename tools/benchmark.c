@@ -55,13 +55,13 @@ main (int argc, char** argv)
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 //	j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
 
-	delete_operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_operation_new(semantics);
+	delete_operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new(semantics);
 
 	store = j_store_new("JULEA");
 	j_create_store(store, operation);
 
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -75,7 +75,7 @@ main (int argc, char** argv)
 
 		g_free(name);
 
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 
 		for (guint j = 0; j < 10000; j++)
 		{
@@ -94,7 +94,7 @@ main (int argc, char** argv)
 		j_store_delete_collection(store, collection, delete_operation);
 		j_collection_unref(collection);
 
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 	}
 
 	j_delete_store(store, delete_operation);
@@ -151,11 +151,11 @@ main (int argc, char** argv)
 				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
 				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
 
-				j_operation_execute_async(operation, on_operation_completed, NULL);
-				j_operation_wait(operation);
+				j_batch_execute_async(operation, on_operation_completed, NULL);
+				j_batch_wait(operation);
 
 				j_item_get_status(item, J_ITEM_STATUS_SIZE, operation);
-				j_operation_execute(operation);
+				j_batch_execute(operation);
 
 				g_print("(%" G_GUINT64_FORMAT ") ", j_item_get_size(item));
 
@@ -170,13 +170,13 @@ main (int argc, char** argv)
 		j_collection_iterator_free(citerator);
 	}
 
-	j_operation_execute(delete_operation);
+	j_batch_execute(delete_operation);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
 
-	j_operation_unref(delete_operation);
-	j_operation_unref(operation);
+	j_batch_unref(delete_operation);
+	j_batch_unref(operation);
 
 	j_fini();
 

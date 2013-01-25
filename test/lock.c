@@ -46,7 +46,7 @@ test_lock_new_free (void)
 	JBatch* operation;
 	JStore* store;
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
@@ -55,7 +55,7 @@ test_lock_new_free (void)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -69,12 +69,12 @@ test_lock_new_free (void)
 	j_collection_delete_item(collection, item, operation);
 	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 }
 
 static
@@ -88,7 +88,7 @@ test_lock_acquire_release (void)
 	JBatch* operation;
 	JStore* store;
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
@@ -97,7 +97,7 @@ test_lock_acquire_release (void)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -117,12 +117,12 @@ test_lock_acquire_release (void)
 	j_collection_delete_item(collection, item, operation);
 	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 }
 
 static
@@ -138,7 +138,7 @@ test_lock_add (void)
 	JStore* store;
 	gboolean ret;
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
@@ -147,7 +147,7 @@ test_lock_add (void)
 	j_create_store(store, operation);
 	j_store_create_collection(store, collection, operation);
 	j_collection_create_item(collection, item, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	lock = j_lock_new(item);
 
@@ -166,12 +166,12 @@ test_lock_add (void)
 	j_collection_delete_item(collection, item, operation);
 	j_store_delete_collection(store, collection, operation);
 	j_delete_store(store, operation);
-	j_operation_execute(operation);
+	j_batch_execute(operation);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 }
 
 void

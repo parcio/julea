@@ -51,7 +51,7 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 		goto end;
 	}
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
@@ -59,12 +59,12 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 
 		item = j_item_new(j_uri_get_item_name(uri));
 		j_collection_create_item(j_uri_get_collection(uri), item, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 
 		ret = 0;
 	}
 
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 
 end:
 	if (uri != NULL)

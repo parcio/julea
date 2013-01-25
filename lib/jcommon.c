@@ -231,7 +231,7 @@ j_create_store (JStore* store, JBatch* operation)
 	part->key = NULL;
 	part->u.create_store.store = j_store_ref(store);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /**
@@ -256,7 +256,7 @@ j_delete_store (JStore* store, JBatch* operation)
 	part->key = NULL;
 	part->u.delete_store.store = j_store_ref(store);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /**
@@ -284,7 +284,7 @@ j_get_store (JStore** store, gchar const* name, JBatch* operation)
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /* Internal */

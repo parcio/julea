@@ -51,7 +51,7 @@ int jfs_mkdir(char const* path, mode_t mode)
 		goto end;
 	}
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
@@ -62,7 +62,7 @@ int jfs_mkdir(char const* path, mode_t mode)
 
 		collection = j_collection_new(j_uri_get_collection_name(uri));
 		j_store_create_collection(j_uri_get_store(uri), collection, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 
 		ret = 0;
 	}
@@ -72,12 +72,12 @@ int jfs_mkdir(char const* path, mode_t mode)
 
 		store = j_store_new(j_uri_get_store_name(uri));
 		j_create_store(store, operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 
 		ret = 0;
 	}
 
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 
 end:
 	if (uri != NULL)

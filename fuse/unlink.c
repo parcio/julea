@@ -47,17 +47,17 @@ int jfs_unlink (char const* path)
 		goto end;
 	}
 
-	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_item(uri) != NULL)
 	{
 		j_collection_delete_item(j_uri_get_collection(uri), j_uri_get_item(uri), operation);
-		j_operation_execute(operation);
+		j_batch_execute(operation);
 
 		ret = 0;
 	}
 
-	j_operation_unref(operation);
+	j_batch_unref(operation);
 
 end:
 	if (uri != NULL)

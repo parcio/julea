@@ -256,7 +256,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* operatio
 
 	j_item_set_collection(item, collection);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -292,7 +292,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	part->u.collection_get_item.name = g_strdup(name);
 	part->u.collection_get_item.flags = flags;
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -324,7 +324,7 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* operatio
 	part->u.collection_delete_item.collection = j_collection_ref(collection);
 	part->u.collection_delete_item.item = j_item_ref(item);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -620,7 +620,7 @@ j_collection_create_item_internal (JBatch* operation, JList* parts)
 	IsInitialized(true);
 	*/
 
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 
 	i = 0;
 	length = j_list_length(parts);
@@ -708,7 +708,7 @@ j_collection_delete_item_internal (JBatch* operation, JList* parts)
 		IsInitialized(true);
 	*/
 
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 
 	mongo_write_concern_init(write_concern);
 

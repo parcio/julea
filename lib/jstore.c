@@ -238,7 +238,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JBatch* opera
 
 	j_collection_set_store(collection, store);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /**
@@ -269,7 +269,7 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 	part->u.store_get_collection.collection = collection;
 	part->u.store_get_collection.name = g_strdup(name);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /**
@@ -297,7 +297,7 @@ j_store_delete_collection (JStore* store, JCollection* collection, JBatch* opera
 	part->u.store_delete_collection.store = j_store_ref(store);
 	part->u.store_delete_collection.collection = j_collection_ref(collection);
 
-	j_operation_add(operation, part);
+	j_batch_add(operation, part);
 }
 
 /* Internal */
@@ -387,7 +387,7 @@ j_store_create_collection_internal (JBatch* operation, JList* parts)
 	}
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 
 	mongo_write_concern_init(write_concern);
 
@@ -465,7 +465,7 @@ j_store_delete_collection_internal (JBatch* operation, JList* parts)
 		IsInitialized(true);
 	*/
 
-	semantics = j_operation_get_semantics(operation);
+	semantics = j_batch_get_semantics(operation);
 
 	mongo_write_concern_init(write_concern);
 
