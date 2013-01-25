@@ -223,15 +223,15 @@ j_fini (void)
 void
 j_create_store (JStore* store, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 
-	part = j_operation_new(J_OPERATION_CREATE_STORE);
-	part->key = NULL;
-	part->u.create_store.store = j_store_ref(store);
+	operation = j_operation_new(J_OPERATION_CREATE_STORE);
+	operation->key = NULL;
+	operation->u.create_store.store = j_store_ref(store);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /**
@@ -248,15 +248,15 @@ j_create_store (JStore* store, JBatch* batch)
 void
 j_delete_store (JStore* store, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 
-	part = j_operation_new(J_OPERATION_DELETE_STORE);
-	part->key = NULL;
-	part->u.delete_store.store = j_store_ref(store);
+	operation = j_operation_new(J_OPERATION_DELETE_STORE);
+	operation->key = NULL;
+	operation->u.delete_store.store = j_store_ref(store);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /**
@@ -274,17 +274,17 @@ j_delete_store (JStore* store, JBatch* batch)
 void
 j_get_store (JStore** store, gchar const* name, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(name != NULL);
 
-	part = j_operation_new(J_OPERATION_GET_STORE);
-	part->key = NULL;
-	part->u.get_store.store = store;
-	part->u.get_store.name = g_strdup(name);
+	operation = j_operation_new(J_OPERATION_GET_STORE);
+	operation->key = NULL;
+	operation->u.get_store.store = store;
+	operation->u.get_store.name = g_strdup(name);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /* Internal */
@@ -338,29 +338,29 @@ j_connection (void)
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_create_store_internal (JBatch* batch, JList* parts)
+j_create_store_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JStore* store = part->u.create_store.store;
+		JOperation* operation = j_list_iterator_get(it);
+		JStore* store = operation->u.create_store.store;
 
 		(void)store;
 		//store = j_store_new();
@@ -378,29 +378,29 @@ j_create_store_internal (JBatch* batch, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_delete_store_internal (JBatch* batch, JList* parts)
+j_delete_store_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JStore* store = part->u.delete_store.store;
+		JOperation* operation = j_list_iterator_get(it);
+		JStore* store = operation->u.delete_store.store;
 
 		mongo_cmd_drop_db(j_connection_get_connection(j_store_get_connection(store)), j_store_get_name(store));
 	}
@@ -417,30 +417,30 @@ j_delete_store_internal (JBatch* batch, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_get_store_internal (JBatch* batch, JList* parts)
+j_get_store_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JStore** store = part->u.get_store.store;
-		gchar const* name = part->u.get_store.name;
+		JOperation* operation = j_list_iterator_get(it);
+		JStore** store = operation->u.get_store.store;
+		gchar const* name = operation->u.get_store.name;
 
 		*store = j_store_new(name);
 	}

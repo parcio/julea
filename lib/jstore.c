@@ -226,19 +226,19 @@ j_store_get_connection (JStore* store)
 void
 j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
 
-	part = j_operation_new(J_OPERATION_STORE_CREATE_COLLECTION);
-	part->key = store;
-	part->u.store_create_collection.store = j_store_ref(store);
-	part->u.store_create_collection.collection = j_collection_ref(collection);
+	operation = j_operation_new(J_OPERATION_STORE_CREATE_COLLECTION);
+	operation->key = store;
+	operation->u.store_create_collection.store = j_store_ref(store);
+	operation->u.store_create_collection.collection = j_collection_ref(collection);
 
 	j_collection_set_store(collection, store);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /**
@@ -257,19 +257,19 @@ j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch
 void
 j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(name != NULL);
 
-	part = j_operation_new(J_OPERATION_STORE_GET_COLLECTION);
-	part->key = store;
-	part->u.store_get_collection.store = j_store_ref(store);
-	part->u.store_get_collection.collection = collection;
-	part->u.store_get_collection.name = g_strdup(name);
+	operation = j_operation_new(J_OPERATION_STORE_GET_COLLECTION);
+	operation->key = store;
+	operation->u.store_get_collection.store = j_store_ref(store);
+	operation->u.store_get_collection.collection = collection;
+	operation->u.store_get_collection.name = g_strdup(name);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /**
@@ -287,17 +287,17 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 void
 j_store_delete_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(collection != NULL);
 
-	part = j_operation_new(J_OPERATION_STORE_DELETE_COLLECTION);
-	part->key = store;
-	part->u.store_delete_collection.store = j_store_ref(store);
-	part->u.store_delete_collection.collection = j_collection_ref(collection);
+	operation = j_operation_new(J_OPERATION_STORE_DELETE_COLLECTION);
+	operation->key = store;
+	operation->u.store_delete_collection.store = j_store_ref(store);
+	operation->u.store_delete_collection.collection = j_collection_ref(collection);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 }
 
 /* Internal */
@@ -335,13 +335,13 @@ j_store_collection_collections (JStore* store)
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_store_create_collection_internal (JBatch* batch, JList* parts)
+j_store_create_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -355,24 +355,24 @@ j_store_create_collection_internal (JBatch* batch, JList* parts)
 	guint length;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 	IsInitialized(true);
 	*/
 
 	i = 0;
-	length = j_list_length(parts);
+	length = j_list_length(operations);
 	obj = g_new(bson*, length);
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.store_create_collection.collection;
+		JOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.store_create_collection.collection;
 		bson* b;
 
-		store = part->u.store_create_collection.store;
+		store = operation->u.store_create_collection.store;
 		b = j_collection_serialize(collection);
 
 		obj[i] = b;
@@ -443,13 +443,13 @@ end:
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_store_delete_collection_internal (JBatch* batch, JList* parts)
+j_store_delete_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -459,7 +459,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* parts)
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
@@ -481,16 +481,16 @@ j_store_delete_collection_internal (JBatch* batch, JList* parts)
 
 	mongo_write_concern_finish(write_concern);
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
-	/* FIXME do some optimizations for len(parts) > 1 */
+	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.store_delete_collection.collection;
+		JOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.store_delete_collection.collection;
 		bson b;
 
-		store = part->u.store_delete_collection.store;
+		store = operation->u.store_delete_collection.store;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", j_collection_get_id(collection));
@@ -517,36 +517,36 @@ j_store_delete_collection_internal (JBatch* batch, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param batch     A batch.
- * \param parts     A list of batch parts.
+ * \param batch      A batch.
+ * \param operations A list of operations.
  *
  * \return TRUE.
  */
 gboolean
-j_store_get_collection_internal (JBatch* batch, JList* parts)
+j_store_get_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
-	/* FIXME do some optimizations for len(parts) > 1 */
+	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JCollection** collection = part->u.store_get_collection.collection;
-		JStore* store = part->u.store_get_collection.store;
+		JOperation* operation = j_list_iterator_get(it);
+		JCollection** collection = operation->u.store_get_collection.collection;
+		JStore* store = operation->u.store_get_collection.store;
 		bson b;
 		mongo* connection;
 		mongo_cursor* cursor;
-		gchar const* name = part->u.store_get_collection.name;
+		gchar const* name = operation->u.store_get_collection.name;
 
 		bson_init(&b);
 		bson_append_string(&b, "Name", name);

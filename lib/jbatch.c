@@ -60,7 +60,7 @@
 struct JBatch
 {
 	/**
-	 * The list of pending operation parts.
+	 * The list of pending operations.
 	 **/
 	JList* list;
 
@@ -466,7 +466,7 @@ j_batch_copy (JBatch* old_batch)
  * \return A list of parts.
  **/
 JList*
-j_batch_get_parts (JBatch* batch)
+j_batch_get_operations (JBatch* batch)
 {
 	JList* ret;
 

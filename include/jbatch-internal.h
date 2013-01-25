@@ -42,7 +42,7 @@
 
 J_GNUC_INTERNAL JBatch* j_batch_copy (JBatch*);
 
-J_GNUC_INTERNAL JList* j_batch_get_parts (JBatch*);
+J_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
 J_GNUC_INTERNAL JSemantics* j_batch_get_semantics (JBatch*);
 
 J_GNUC_INTERNAL void j_batch_add (JBatch*, JOperation*);

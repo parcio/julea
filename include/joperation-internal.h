@@ -29,8 +29,8 @@
  * \file
  **/
 
-#ifndef H_OPERATION_PART_INTERNAL
-#define H_OPERATION_PART_INTERNAL
+#ifndef H_OPERATION_INTERNAL
+#define H_OPERATION_INTERNAL
 
 #include <glib.h>
 
@@ -61,7 +61,7 @@ enum JOperationType
 typedef enum JOperationType JOperationType;
 
 /**
- * An operation part.
+ * An operation.
  **/
 struct JOperation
 {

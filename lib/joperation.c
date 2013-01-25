@@ -42,29 +42,29 @@
  **/
 
 /**
- * Creates a new operation part.
+ * Creates a new operation.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \return A new operation part. Should be freed with j_operation_free().
+ * \return A new operation. Should be freed with j_operation_free().
  **/
 JOperation*
 j_operation_new (JOperationType type)
 {
-	JOperation* part;
+	JOperation* operation;
 
-	part = g_slice_new(JOperation);
-	part->type = type;
-	part->key = NULL;
+	operation = g_slice_new(JOperation);
+	operation->type = type;
+	operation->key = NULL;
 
-	return part;
+	return operation;
 }
 
 /**
- * Frees the memory allocated by an operation part.
+ * Frees the memory allocated by an operation.
  *
  * \private
  *
@@ -73,62 +73,62 @@ j_operation_new (JOperationType type)
  * \code
  * \endcode
  *
- * \param data An operation part.
+ * \param data An operation.
  **/
 /* FIXME */
 void
-j_operation_free (JOperation* part)
+j_operation_free (JOperation* operation)
 {
-	switch (part->type)
+	switch (operation->type)
 	{
 		case J_OPERATION_CREATE_STORE:
-			j_store_unref(part->u.create_store.store);
+			j_store_unref(operation->u.create_store.store);
 			break;
 		case J_OPERATION_DELETE_STORE:
-			j_store_unref(part->u.delete_store.store);
+			j_store_unref(operation->u.delete_store.store);
 			break;
 		case J_OPERATION_GET_STORE:
-			g_free(part->u.get_store.name);
+			g_free(operation->u.get_store.name);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:
-			j_store_unref(part->u.store_create_collection.store);
-			j_collection_unref(part->u.store_create_collection.collection);
+			j_store_unref(operation->u.store_create_collection.store);
+			j_collection_unref(operation->u.store_create_collection.collection);
 			break;
 		case J_OPERATION_STORE_DELETE_COLLECTION:
-			j_store_unref(part->u.store_delete_collection.store);
-			j_collection_unref(part->u.store_delete_collection.collection);
+			j_store_unref(operation->u.store_delete_collection.store);
+			j_collection_unref(operation->u.store_delete_collection.collection);
 			break;
 		case J_OPERATION_STORE_GET_COLLECTION:
-			j_store_unref(part->u.store_get_collection.store);
-			g_free(part->u.store_get_collection.name);
+			j_store_unref(operation->u.store_get_collection.store);
+			g_free(operation->u.store_get_collection.name);
 			break;
 		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			j_collection_unref(part->u.collection_create_item.collection);
-			j_item_unref(part->u.collection_create_item.item);
+			j_collection_unref(operation->u.collection_create_item.collection);
+			j_item_unref(operation->u.collection_create_item.item);
 			break;
 		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			j_collection_unref(part->u.collection_delete_item.collection);
-			j_item_unref(part->u.collection_delete_item.item);
+			j_collection_unref(operation->u.collection_delete_item.collection);
+			j_item_unref(operation->u.collection_delete_item.item);
 			break;
 		case J_OPERATION_COLLECTION_GET_ITEM:
-			j_collection_unref(part->u.collection_get_item.collection);
-			g_free(part->u.collection_get_item.name);
+			j_collection_unref(operation->u.collection_get_item.collection);
+			g_free(operation->u.collection_get_item.name);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
-			j_item_unref(part->u.item_get_status.item);
+			j_item_unref(operation->u.item_get_status.item);
 			break;
 		case J_OPERATION_ITEM_READ:
-			j_item_unref(part->u.item_read.item);
+			j_item_unref(operation->u.item_read.item);
 			break;
 		case J_OPERATION_ITEM_WRITE:
-			j_item_unref(part->u.item_write.item);
+			j_item_unref(operation->u.item_write.item);
 			break;
 		case J_OPERATION_NONE:
 		default:
 			g_warn_if_reached();
 	}
 
-	g_slice_free(JOperation, part);
+	g_slice_free(JOperation, operation);
 }
 
 /**

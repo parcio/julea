@@ -138,13 +138,13 @@ j_operation_cache_thread (gpointer data)
 
 static
 gboolean
-j_operation_cache_test (JOperation* part)
+j_operation_cache_test (JOperation* operation)
 {
 	gboolean ret = FALSE;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	switch (part->type)
+	switch (operation->type)
 	{
 		case J_OPERATION_CREATE_STORE:
 		case J_OPERATION_DELETE_STORE:
@@ -251,20 +251,20 @@ gboolean
 j_operation_cache_add (JBatch* batch)
 {
 	gboolean ret = TRUE;
-	JList* operation_parts;
+	JList* operations;
 	JListIterator* iterator;
 	gboolean can_cache = TRUE;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation_parts = j_batch_get_parts(batch);
-	iterator = j_list_iterator_new(operation_parts);
+	operations = j_batch_get_operations(batch);
+	iterator = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* part = j_list_iterator_get(iterator);
+		JOperation* operation = j_list_iterator_get(iterator);
 
-		can_cache = j_operation_cache_test(part) && can_cache;
+		can_cache = j_operation_cache_test(operation) && can_cache;
 
 		if (!can_cache)
 		{
@@ -280,18 +280,18 @@ j_operation_cache_add (JBatch* batch)
 		goto end;
 	}
 
-	iterator = j_list_iterator_new(operation_parts);
+	iterator = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* part = j_list_iterator_get(iterator);
+		JOperation* operation = j_list_iterator_get(iterator);
 
-		if (part->type == J_OPERATION_ITEM_WRITE)
+		if (operation->type == J_OPERATION_ITEM_WRITE)
 		{
 			gpointer data;
 
 			// FIXME never cleared
-			data = j_cache_put(j_operation_cache->cache, part->u.item_write.data, part->u.item_write.length);
+			data = j_cache_put(j_operation_cache->cache, operation->u.item_write.data, operation->u.item_write.length);
 
 			if (data == NULL)
 			{
@@ -299,7 +299,7 @@ j_operation_cache_add (JBatch* batch)
 				break;
 			}
 
-			part->u.item_write.data = data;
+			operation->u.item_write.data = data;
 		}
 	}
 

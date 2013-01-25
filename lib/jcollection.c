@@ -242,21 +242,21 @@ j_collection_get_name (JCollection* collection)
 void
 j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
-	part->key = collection;
-	part->u.collection_create_item.collection = j_collection_ref(collection);
-	part->u.collection_create_item.item = j_item_ref(item);
+	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
+	operation->key = collection;
+	operation->u.collection_create_item.collection = j_collection_ref(collection);
+	operation->u.collection_create_item.item = j_item_ref(item);
 
 	j_item_set_collection(item, collection);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -277,7 +277,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 void
 j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
@@ -285,14 +285,14 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_new(J_OPERATION_COLLECTION_GET_ITEM);
-	part->key = collection;
-	part->u.collection_get_item.collection = j_collection_ref(collection);
-	part->u.collection_get_item.item = item;
-	part->u.collection_get_item.name = g_strdup(name);
-	part->u.collection_get_item.flags = flags;
+	operation = j_operation_new(J_OPERATION_COLLECTION_GET_ITEM);
+	operation->key = collection;
+	operation->u.collection_get_item.collection = j_collection_ref(collection);
+	operation->u.collection_get_item.item = item;
+	operation->u.collection_get_item.name = g_strdup(name);
+	operation->u.collection_get_item.flags = flags;
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -312,19 +312,19 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 void
 j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 {
-	JOperation* part;
+	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_new(J_OPERATION_COLLECTION_DELETE_ITEM);
-	part->key = collection;
-	part->u.collection_delete_item.collection = j_collection_ref(collection);
-	part->u.collection_delete_item.item = j_item_ref(item);
+	operation = j_operation_new(J_OPERATION_COLLECTION_DELETE_ITEM);
+	operation->key = collection;
+	operation->u.collection_delete_item.collection = j_collection_ref(collection);
+	operation->u.collection_delete_item.item = j_item_ref(item);
 
-	j_batch_add(batch, part);
+	j_batch_add(batch, operation);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -598,7 +598,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 }
 
 gboolean
-j_collection_create_item_internal (JBatch* batch, JList* parts)
+j_collection_create_item_internal (JBatch* batch, JList* operations)
 {
 	JCollection* collection = NULL;
 	JListIterator* it;
@@ -612,7 +612,7 @@ j_collection_create_item_internal (JBatch* batch, JList* parts)
 	guint length;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -623,17 +623,17 @@ j_collection_create_item_internal (JBatch* batch, JList* parts)
 	semantics = j_batch_get_semantics(batch);
 
 	i = 0;
-	length = j_list_length(parts);
+	length = j_list_length(operations);
 	obj = g_new(bson*, length);
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JItem* item = part->u.collection_create_item.item;
+		JOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.collection_create_item.item;
 		bson* b;
 
-		collection = part->u.collection_create_item.collection;
+		collection = operation->u.collection_create_item.collection;
 		b = j_item_serialize(item, semantics);
 
 		obj[i] = b;
@@ -690,7 +690,7 @@ end:
 }
 
 gboolean
-j_collection_delete_item_internal (JBatch* batch, JList* parts)
+j_collection_delete_item_internal (JBatch* batch, JList* operations)
 {
 	JCollection* collection = NULL;
 	JListIterator* it;
@@ -700,7 +700,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* parts)
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -724,16 +724,16 @@ j_collection_delete_item_internal (JBatch* batch, JList* parts)
 
 	mongo_write_concern_finish(write_concern);
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
-	/* FIXME do some optimizations for len(parts) > 1 */
+	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JItem* item = part->u.collection_delete_item.item;
+		JOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.collection_delete_item.item;
 		bson b;
 
-		collection = part->u.collection_delete_item.collection;
+		collection = operation->u.collection_delete_item.collection;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", j_item_get_id(item));
@@ -758,13 +758,13 @@ j_collection_delete_item_internal (JBatch* batch, JList* parts)
 }
 
 gboolean
-j_collection_get_item_internal (JBatch* batch, JList* parts)
+j_collection_get_item_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
-	g_return_val_if_fail(parts != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -772,20 +772,20 @@ j_collection_get_item_internal (JBatch* batch, JList* parts)
 		IsInitialized(true);
 	*/
 
-	it = j_list_iterator_new(parts);
+	it = j_list_iterator_new(operations);
 
-	/* FIXME do some optimizations for len(parts) > 1 */
+	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* part = j_list_iterator_get(it);
-		JCollection* collection = part->u.collection_get_item.collection;
-		JItem** item = part->u.collection_get_item.item;
-		JItemStatusFlags flags = part->u.collection_get_item.flags;
+		JOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.collection_get_item.collection;
+		JItem** item = operation->u.collection_get_item.item;
+		JItemStatusFlags flags = operation->u.collection_get_item.flags;
 		bson b;
 		bson fields;
 		mongo* connection;
 		mongo_cursor* cursor;
-		gchar const* name = part->u.collection_get_item.name;
+		gchar const* name = operation->u.collection_get_item.name;
 
 		bson_init(&fields);
 
