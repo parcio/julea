@@ -46,8 +46,8 @@
 J_GNUC_INTERNAL JConfiguration* j_configuration (void);
 J_GNUC_INTERNAL JConnection* j_connection (void);
 
-J_GNUC_INTERNAL gboolean j_create_store_internal (JOperation*, JList*);
-J_GNUC_INTERNAL gboolean j_delete_store_internal (JOperation*, JList*);
-J_GNUC_INTERNAL gboolean j_get_store_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_create_store_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_delete_store_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_get_store_internal (JBatch*, JList*);
 
 #endif

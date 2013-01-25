@@ -29,27 +29,27 @@
  * \file
  **/
 
-#ifndef H_OPERATION
-#define H_OPERATION
+#ifndef H_BATCH
+#define H_BATCH
 
 #include <glib.h>
 
-struct JOperation;
+struct JBatch;
 
-typedef struct JOperation JOperation;
+typedef struct JBatch JBatch;
 
-typedef void (*JOperationCompletedFunc) (JOperation*, gboolean, gpointer);
+typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
 
 #include <jsemantics.h>
 
-JOperation* j_operation_new (JSemantics*);
-JOperation* j_operation_new_for_template (JSemanticsTemplate);
-JOperation* j_operation_ref (JOperation*);
-void j_operation_unref (JOperation*);
+JBatch* j_operation_new (JSemantics*);
+JBatch* j_operation_new_for_template (JSemanticsTemplate);
+JBatch* j_operation_ref (JBatch*);
+void j_operation_unref (JBatch*);
 
-gboolean j_operation_execute (JOperation*);
+gboolean j_operation_execute (JBatch*);
 
-void j_operation_execute_async (JOperation*, JOperationCompletedFunc, gpointer);
-void j_operation_wait (JOperation*);
+void j_operation_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
+void j_operation_wait (JBatch*);
 
 #endif

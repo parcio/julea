@@ -37,7 +37,7 @@ gboolean
 j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri[2] = { NULL, NULL };
 	GError* error;
 	GFile* file;

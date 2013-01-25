@@ -33,7 +33,7 @@
 
 int jfs_rmdir (char const* path)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri;
 	int ret = -ENOENT;
 

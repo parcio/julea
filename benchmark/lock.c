@@ -48,7 +48,7 @@ _benchmark_lock (gboolean acquire, gboolean add)
 	JList* list;
 	JListIterator* iterator;
 	JLock* lock;
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;

@@ -40,8 +40,8 @@
 #include <jcommon-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <joperation.h>
-#include <joperation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 #include <joperation-part-internal.h>
 #include <jthread-internal.h>
 
@@ -96,7 +96,7 @@ gpointer
 j_operation_cache_thread (gpointer data)
 {
 	JOperationCache* cache = data;
-	JOperation* operation;
+	JBatch* operation;
 	JThread* thread;
 
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
@@ -248,7 +248,7 @@ j_operation_cache_flush (void)
 }
 
 gboolean
-j_operation_cache_add (JOperation* operation)
+j_operation_cache_add (JBatch* operation)
 {
 	gboolean ret = TRUE;
 	JList* operation_parts;

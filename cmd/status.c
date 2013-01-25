@@ -36,7 +36,7 @@ gboolean
 j_cmd_status (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri = NULL;
 	GError* error = NULL;
 

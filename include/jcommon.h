@@ -38,14 +38,14 @@ struct JCommon;
 
 typedef struct JCommon JCommon;
 
-#include <joperation.h>
+#include <jbatch.h>
 #include <jstore.h>
 
 void j_init (gint*, gchar***);
 void j_fini (void);
 
-void j_create_store (JStore*, JOperation*);
-void j_delete_store (JStore*, JOperation*);
-void j_get_store (JStore**, gchar const*, JOperation*);
+void j_create_store (JStore*, JBatch*);
+void j_delete_store (JStore*, JBatch*);
+void j_get_store (JStore**, gchar const*, JBatch*);
 
 #endif

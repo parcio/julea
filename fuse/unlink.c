@@ -33,7 +33,7 @@
 
 int jfs_unlink (char const* path)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri;
 	int ret = -ENOENT;
 

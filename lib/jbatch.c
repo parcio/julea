@@ -33,8 +33,8 @@
 
 #include <glib.h>
 
-#include <joperation.h>
-#include <joperation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 
 #include <jbackground-operation-internal.h>
 #include <jcache-internal.h>
@@ -49,7 +49,7 @@
 #include <jstore-internal.h>
 
 /**
- * \defgroup JOperation Operation
+ * \defgroup JBatch Batch
  *
  * @{
  **/
@@ -57,7 +57,7 @@
 /**
  * An operation.
  **/
-struct JOperation
+struct JBatch
 {
 	/**
 	 * The list of pending operation parts.
@@ -82,7 +82,7 @@ struct JOperation
 
 struct JOperationAsync
 {
-	JOperation* operation;
+	JBatch* operation;
 	JOperationCompletedFunc func;
 	gpointer user_data;
 };
@@ -126,16 +126,16 @@ j_operation_background_operation (gpointer data)
  *
  * \return A new operation. Should be freed with j_operation_unref().
  **/
-JOperation*
+JBatch*
 j_operation_new (JSemantics* semantics)
 {
-	JOperation* operation;
+	JBatch* operation;
 
 	g_return_val_if_fail(semantics != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation = g_slice_new(JOperation);
+	operation = g_slice_new(JBatch);
 	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
 	operation->semantics = j_semantics_ref(semantics);
 	operation->background_operation = NULL;
@@ -152,7 +152,7 @@ j_operation_new (JSemantics* semantics)
  * \author Michael Kuhn
  *
  * \code
- * JOperation* operation;
+ * JBatch* operation;
  *
  * operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
  * \endcode
@@ -161,10 +161,10 @@ j_operation_new (JSemantics* semantics)
  *
  * \return A new operation. Should be freed with j_operation_unref().
  **/
-JOperation*
+JBatch*
 j_operation_new_for_template (JSemanticsTemplate template)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
@@ -187,8 +187,8 @@ j_operation_new_for_template (JSemanticsTemplate template)
  *
  * \return The operation.
  **/
-JOperation*
-j_operation_ref (JOperation* operation)
+JBatch*
+j_operation_ref (JBatch* operation)
 {
 	g_return_val_if_fail(operation != NULL, NULL);
 
@@ -213,7 +213,7 @@ j_operation_ref (JOperation* operation)
  * \param operation An operation.
  **/
 void
-j_operation_unref (JOperation* operation)
+j_operation_unref (JBatch* operation)
 {
 	g_return_if_fail(operation != NULL);
 
@@ -233,7 +233,7 @@ j_operation_unref (JOperation* operation)
 
 		j_list_unref(operation->list);
 
-		g_slice_free(JOperation, operation);
+		g_slice_free(JBatch, operation);
 	}
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -254,7 +254,7 @@ j_operation_unref (JOperation* operation)
  **/
 static
 gboolean
-j_operation_execute_same (JOperation* operation, JList* list)
+j_operation_execute_same (JBatch* operation, JList* list)
 {
 	JOperationPart* part;
 	JOperationType type;
@@ -335,7 +335,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_operation_execute (JOperation* operation)
+j_operation_execute (JBatch* operation)
 {
 	gboolean ret;
 
@@ -381,7 +381,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 void
-j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, gpointer user_data)
+j_operation_execute_async (JBatch* operation, JOperationCompletedFunc func, gpointer user_data)
 {
 	JOperationAsync* async;
 
@@ -401,7 +401,7 @@ j_operation_execute_async (JOperation* operation, JOperationCompletedFunc func, 
 }
 
 void
-j_operation_wait (JOperation* operation)
+j_operation_wait (JBatch* operation)
 {
 	g_return_if_fail(operation != NULL);
 
@@ -431,16 +431,16 @@ j_operation_wait (JOperation* operation)
  *
  * \return A new operation.
  */
-JOperation*
-j_operation_copy (JOperation* old_operation)
+JBatch*
+j_operation_copy (JBatch* old_operation)
 {
-	JOperation* operation;
+	JBatch* operation;
 
 	g_return_val_if_fail(old_operation != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation = g_slice_new(JOperation);
+	operation = g_slice_new(JBatch);
 	operation->list = old_operation->list;
 	operation->semantics = j_semantics_ref(old_operation->semantics);
 	operation->background_operation = NULL;
@@ -466,7 +466,7 @@ j_operation_copy (JOperation* old_operation)
  * \return A list of parts.
  **/
 JList*
-j_operation_get_parts (JOperation* operation)
+j_operation_get_parts (JBatch* operation)
 {
 	JList* ret;
 
@@ -494,7 +494,7 @@ j_operation_get_parts (JOperation* operation)
  * \return A semantics object.
  **/
 JSemantics*
-j_operation_get_semantics (JOperation* operation)
+j_operation_get_semantics (JBatch* operation)
 {
 	JSemantics* ret;
 
@@ -521,7 +521,7 @@ j_operation_get_semantics (JOperation* operation)
  * \param part      An operation part.
  **/
 void
-j_operation_add (JOperation* operation, JOperationPart* part)
+j_operation_add (JBatch* operation, JOperationPart* part)
 {
 	g_return_if_fail(operation != NULL);
 	g_return_if_fail(part != NULL);
@@ -548,7 +548,7 @@ j_operation_add (JOperation* operation, JOperationPart* part)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_operation_execute_internal (JOperation* operation)
+j_operation_execute_internal (JBatch* operation)
 {
 	JList* same_list;
 	JListIterator* iterator;

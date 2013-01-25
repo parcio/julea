@@ -43,8 +43,8 @@
 
 J_GNUC_INTERNAL gchar const* j_store_collection_collections (JStore*);
 
-J_GNUC_INTERNAL gboolean j_store_create_collection_internal (JOperation*, JList*);
-J_GNUC_INTERNAL gboolean j_store_delete_collection_internal (JOperation*, JList*);
-J_GNUC_INTERNAL gboolean j_store_get_collection_internal (JOperation*, JList*);
+J_GNUC_INTERNAL gboolean j_store_create_collection_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_store_delete_collection_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_store_get_collection_internal (JBatch*, JList*);
 
 #endif

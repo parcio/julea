@@ -40,7 +40,7 @@ typedef struct JCollection JCollection;
 
 #include <jitem.h>
 #include <jlist.h>
-#include <joperation.h>
+#include <jbatch.h>
 #include <jsemantics.h>
 #include <jstore.h>
 
@@ -50,9 +50,9 @@ void j_collection_unref (JCollection*);
 
 gchar const* j_collection_get_name (JCollection*);
 
-void j_collection_create_item (JCollection*, JItem*, JOperation*);
-void j_collection_delete_item (JCollection*, JItem*, JOperation*);
-void j_collection_get_item (JCollection*, JItem**, gchar const*, JItemStatusFlags, JOperation*);
+void j_collection_create_item (JCollection*, JItem*, JBatch*);
+void j_collection_delete_item (JCollection*, JItem*, JBatch*);
+void j_collection_get_item (JCollection*, JItem**, gchar const*, JItemStatusFlags, JBatch*);
 
 /*
 #include "credentials.h"

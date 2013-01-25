@@ -48,7 +48,7 @@ struct JItem;
 
 typedef struct JItem JItem;
 
-#include <joperation.h>
+#include <jbatch.h>
 #include <jsemantics.h>
 
 JItem* j_item_new (gchar const*);
@@ -57,10 +57,10 @@ void j_item_unref (JItem*);
 
 gchar const* j_item_get_name (JItem*);
 
-void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JOperation*);
-void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JOperation*);
+void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
+void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_item_get_status (JItem*, JItemStatusFlags, JOperation*);
+void j_item_get_status (JItem*, JItemStatusFlags, JBatch*);
 
 guint64 j_item_get_size (JItem*);
 

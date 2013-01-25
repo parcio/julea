@@ -36,7 +36,7 @@
 
 #include <julea-internal.h>
 
-#include <joperation.h>
+#include <jbatch.h>
 
 #include <jitem.h>
 #include <jstore.h>

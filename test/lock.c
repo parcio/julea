@@ -43,7 +43,7 @@ test_lock_new_free (void)
 
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JStore* store;
 
 	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -85,7 +85,7 @@ test_lock_acquire_release (void)
 
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JStore* store;
 
 	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -134,7 +134,7 @@ test_lock_add (void)
 	JCollection* collection;
 	JItem* item;
 	JLock* lock;
-	JOperation* operation;
+	JBatch* operation;
 	JStore* store;
 	gboolean ret;
 

@@ -42,8 +42,8 @@ _benchmark_item_create (gboolean batch)
 	guint const n = (batch) ? 100000 : 1000;
 
 	JCollection* collection;
-	JOperation* delete_operation;
-	JOperation* operation;
+	JBatch* delete_operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
@@ -120,8 +120,8 @@ _benchmark_item_delete (gboolean batch)
 	guint const n = 10000;
 
 	JCollection* collection;
-	JOperation* get_operation;
-	JOperation* operation;
+	JBatch* get_operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
@@ -213,8 +213,8 @@ benchmark_item_delete_batch_without_get (void)
 	guint const n = 100000;
 
 	JCollection* collection;
-	JOperation* delete_operation;
-	JOperation* operation;
+	JBatch* delete_operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
@@ -272,7 +272,7 @@ _benchmark_item_get_status (gboolean batch)
 
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[1];
@@ -352,7 +352,7 @@ _benchmark_item_read (gboolean batch, guint block_size)
 
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];
@@ -439,7 +439,7 @@ _benchmark_item_write (gboolean batch, guint block_size)
 
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];

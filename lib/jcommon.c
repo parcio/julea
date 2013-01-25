@@ -45,8 +45,8 @@
 #include <jconnection-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <joperation.h>
-#include <joperation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
 #include <joperation-part-internal.h>
 #include <jstore.h>
@@ -221,7 +221,7 @@ j_fini (void)
  * \param operation  An operation.
  **/
 void
-j_create_store (JStore* store, JOperation* operation)
+j_create_store (JStore* store, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -246,7 +246,7 @@ j_create_store (JStore* store, JOperation* operation)
  * \param operation  An operation.
  **/
 void
-j_delete_store (JStore* store, JOperation* operation)
+j_delete_store (JStore* store, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -272,7 +272,7 @@ j_delete_store (JStore* store, JOperation* operation)
  * \param operation An operation.
  **/
 void
-j_get_store (JStore** store, gchar const* name, JOperation* operation)
+j_get_store (JStore** store, gchar const* name, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -344,7 +344,7 @@ j_connection (void)
  * \return TRUE.
  */
 gboolean
-j_create_store_internal (JOperation* operation, JList* parts)
+j_create_store_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 
@@ -384,7 +384,7 @@ j_create_store_internal (JOperation* operation, JList* parts)
  * \return TRUE.
  */
 gboolean
-j_delete_store_internal (JOperation* operation, JList* parts)
+j_delete_store_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 
@@ -423,7 +423,7 @@ j_delete_store_internal (JOperation* operation, JList* parts)
  * \return TRUE.
  */
 gboolean
-j_get_store_internal (JOperation* operation, JList* parts)
+j_get_store_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 

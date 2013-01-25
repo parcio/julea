@@ -40,7 +40,7 @@ typedef struct JStore JStore;
 
 #include <jcollection.h>
 #include <jconnection.h>
-#include <joperation.h>
+#include <jbatch.h>
 
 JStore* j_store_new (gchar const*);
 JStore* j_store_ref (JStore*);
@@ -50,9 +50,9 @@ gchar const* j_store_get_name (JStore*);
 
 JConnection* j_store_get_connection (JStore*);
 
-void j_store_create_collection (JStore*, JCollection*, JOperation*);
-void j_store_get_collection (JStore*, JCollection**, gchar const*, JOperation*);
-void j_store_delete_collection (JStore*, JCollection*, JOperation*);
+void j_store_create_collection (JStore*, JCollection*, JBatch*);
+void j_store_get_collection (JStore*, JCollection**, gchar const*, JBatch*);
+void j_store_delete_collection (JStore*, JCollection*, JBatch*);
 
 /*
 #include "collection.h"

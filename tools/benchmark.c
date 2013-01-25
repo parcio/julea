@@ -34,7 +34,7 @@
 
 static
 void
-on_operation_completed (JOperation* operation, gboolean ret, gpointer user_data)
+on_operation_completed (JBatch* operation, gboolean ret, gpointer user_data)
 {
 	g_print("Operation %p completed! (ret=%d, user_data=%p)\n", (gpointer)operation, ret, user_data);
 }
@@ -46,8 +46,8 @@ main (int argc, char** argv)
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
-	JOperation* delete_operation;
-	JOperation* operation;
+	JBatch* delete_operation;
+	JBatch* operation;
 
 	j_init(&argc, &argv);
 

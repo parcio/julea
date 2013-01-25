@@ -38,7 +38,7 @@
 #include <jcollection.h>
 #include <jcommon.h>
 #include <jitem.h>
-#include <joperation.h>
+#include <jbatch.h>
 #include <jstore.h>
 
 #include <string.h>
@@ -357,7 +357,7 @@ j_uri_get_item_name (JURI* uri)
 gboolean
 j_uri_get (JURI* uri, GError** error)
 {
-	JOperation* operation;
+	JBatch* operation;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(uri != NULL, FALSE);

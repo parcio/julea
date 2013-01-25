@@ -50,7 +50,7 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 
 	if (j_uri_get_item(uri) != NULL)
 	{
-		JOperation* operation;
+		JBatch* operation;
 
 		operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_item_read(j_uri_get_item(uri), buf, size, offset, &bytes_read, operation);

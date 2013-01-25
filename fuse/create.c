@@ -33,7 +33,7 @@
 
 int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri;
 	int ret = -ENOENT;
 

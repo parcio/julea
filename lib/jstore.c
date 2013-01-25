@@ -43,8 +43,8 @@
 #include <jconnection-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <joperation.h>
-#include <joperation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 #include <joperation-part-internal.h>
 #include <jsemantics.h>
 
@@ -224,7 +224,7 @@ j_store_get_connection (JStore* store)
  * \param operation  An operation.
  **/
 void
-j_store_create_collection (JStore* store, JCollection* collection, JOperation* operation)
+j_store_create_collection (JStore* store, JCollection* collection, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -255,7 +255,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JOperation* o
  * \param operation  An operation.
  **/
 void
-j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JOperation* operation)
+j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -285,7 +285,7 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
  * \param operation  An operation.
  **/
 void
-j_store_delete_collection (JStore* store, JCollection* collection, JOperation* operation)
+j_store_delete_collection (JStore* store, JCollection* collection, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -341,7 +341,7 @@ j_store_collection_collections (JStore* store)
  * \return TRUE.
  */
 gboolean
-j_store_create_collection_internal (JOperation* operation, JList* parts)
+j_store_create_collection_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -449,7 +449,7 @@ end:
  * \return TRUE.
  */
 gboolean
-j_store_delete_collection_internal (JOperation* operation, JList* parts)
+j_store_delete_collection_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -523,7 +523,7 @@ j_store_delete_collection_internal (JOperation* operation, JList* parts)
  * \return TRUE.
  */
 gboolean
-j_store_get_collection_internal (JOperation* operation, JList* parts)
+j_store_get_collection_internal (JBatch* operation, JList* parts)
 {
 	JListIterator* it;
 	gboolean ret = TRUE;

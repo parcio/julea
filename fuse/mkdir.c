@@ -33,7 +33,7 @@
 
 int jfs_mkdir(char const* path, mode_t mode)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri;
 	int ret = -ENOENT;
 

@@ -31,7 +31,7 @@
 
 #include <julea.h>
 
-#include <joperation-internal.h>
+#include <jbatch-internal.h>
 
 #include "test.h"
 
@@ -39,7 +39,7 @@ static gint test_operation_flag;
 
 static
 void
-on_operation_completed (JOperation* operation, gboolean ret, gpointer user_data)
+on_operation_completed (JBatch* operation, gboolean ret, gpointer user_data)
 {
 	g_atomic_int_set(&test_operation_flag, 1);
 }
@@ -48,7 +48,7 @@ static
 void
 test_operation_new_free (void)
 {
-	JOperation* operation;
+	JBatch* operation;
 
 	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_assert(operation != NULL);
@@ -60,7 +60,7 @@ static
 void
 test_operation_semantics (void)
 {
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 
 	operation = j_operation_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -84,7 +84,7 @@ _test_operation_execute (gboolean async)
 {
 	JCollection* collection;
 	JItem* item;
-	JOperation* operation;
+	JBatch* operation;
 	JStore* store;
 
 	if (async)

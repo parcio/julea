@@ -35,7 +35,7 @@ gboolean
 j_cmd_delete (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JOperation* operation;
+	JBatch* operation;
 	JURI* uri = NULL;
 	GError* error = NULL;
 

@@ -44,7 +44,7 @@
 #include <jconnection-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
-#include <joperation-internal.h>
+#include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
 
 /**

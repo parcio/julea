@@ -39,8 +39,8 @@ _benchmark_collection_create (gboolean batch)
 {
 	guint const n = (batch) ? 100000 : 1000;
 
-	JOperation* delete_operation;
-	JOperation* operation;
+	JBatch* delete_operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
@@ -112,7 +112,7 @@ _benchmark_collection_delete (gboolean batch)
 {
 	guint const n = 10000;
 
-	JOperation* operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;
@@ -197,8 +197,8 @@ benchmark_collection_delete_batch_without_get (void)
 {
 	guint const n = 100000;
 
-	JOperation* delete_operation;
-	JOperation* operation;
+	JBatch* delete_operation;
+	JBatch* operation;
 	JSemantics* semantics;
 	JStore* store;
 	gdouble elapsed;

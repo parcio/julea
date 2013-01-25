@@ -52,8 +52,8 @@
 #include <jlist-iterator.h>
 #include <jlock-internal.h>
 #include <jmessage.h>
-#include <joperation.h>
-#include <joperation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 #include <joperation-part-internal.h>
 #include <jsemantics.h>
 #include <jtrace-internal.h>
@@ -529,7 +529,7 @@ j_item_get_name (JItem* item)
  * \param operation  An operation.
  **/
 void
-j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JOperation* operation)
+j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -568,7 +568,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
  * \param operation     An operation.
  **/
 void
-j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JOperation* operation)
+j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -604,7 +604,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
  * \param operation An operation.
  **/
 void
-j_item_get_status (JItem* item, JItemStatusFlags flags, JOperation* operation)
+j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* operation)
 {
 	JOperationPart* part;
 
@@ -960,7 +960,7 @@ j_item_set_size (JItem* item, guint64 size)
 }
 
 gboolean
-j_item_read_internal (JOperation* operation, JList* parts)
+j_item_read_internal (JBatch* operation, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
@@ -1143,7 +1143,7 @@ j_item_read_internal (JOperation* operation, JList* parts)
 }
 
 gboolean
-j_item_write_internal (JOperation* operation, JList* parts)
+j_item_write_internal (JBatch* operation, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
@@ -1346,7 +1346,7 @@ j_item_write_internal (JOperation* operation, JList* parts)
 }
 
 gboolean
-j_item_get_status_internal (JOperation* operation, JList* parts)
+j_item_get_status_internal (JBatch* operation, JList* parts)
 {
 	gboolean ret = TRUE;
 	JBackgroundOperation** background_operations;
