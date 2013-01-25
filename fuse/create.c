@@ -33,7 +33,7 @@
 
 int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 {
-	JBatch* operation;
+	JBatch* batch;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -51,20 +51,20 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 		goto end;
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
 		JItem* item;
 
 		item = j_item_new(j_uri_get_item_name(uri));
-		j_collection_create_item(j_uri_get_collection(uri), item, operation);
-		j_batch_execute(operation);
+		j_collection_create_item(j_uri_get_collection(uri), item, batch);
+		j_batch_execute(batch);
 
 		ret = 0;
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

@@ -33,7 +33,7 @@
 
 int jfs_rmdir (char const* path)
 {
-	JBatch* operation;
+	JBatch* batch;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -47,27 +47,27 @@ int jfs_rmdir (char const* path)
 		goto end;
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_item(uri) != NULL)
 	{
 	}
 	else if (j_uri_get_collection(uri) != NULL)
 	{
-		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), operation);
-		j_batch_execute(operation);
+		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), batch);
+		j_batch_execute(batch);
 
 		ret = 0;
 	}
 	else if (j_uri_get_store(uri) != NULL)
 	{
-		j_delete_store(j_uri_get_store(uri), operation);
-		j_batch_execute(operation);
+		j_delete_store(j_uri_get_store(uri), batch);
+		j_batch_execute(batch);
 
 		ret = 0;
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

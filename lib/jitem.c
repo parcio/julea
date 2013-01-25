@@ -526,10 +526,10 @@ j_item_get_name (JItem* item)
  * \param length     Number of bytes to read.
  * \param offset     An offset within #item.
  * \param bytes_read Number of bytes read.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* operation)
+j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -547,7 +547,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	part->u.item_read.offset = offset;
 	part->u.item_read.bytes_read = bytes_read;
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -565,10 +565,10 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
  * \param length        Number of bytes to write.
  * \param offset        An offset within #item.
  * \param bytes_written Number of bytes written.
- * \param operation     An operation.
+ * \param batch         A batch.
  **/
 void
-j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* operation)
+j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -586,7 +586,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	part->u.item_write.offset = offset;
 	part->u.item_write.bytes_written = bytes_written;
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -601,10 +601,10 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
  *
  * \param item      An item.
  * \param flags     Status flags.
- * \param operation An operation.
+ * \param batch     A batch.
  **/
 void
-j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* operation)
+j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -617,7 +617,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* operation)
 	part->u.item_get_status.item = j_item_ref(item);
 	part->u.item_get_status.flags = flags;
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -960,7 +960,7 @@ j_item_set_size (JItem* item, guint64 size)
 }
 
 gboolean
-j_item_read_internal (JBatch* operation, JList* parts)
+j_item_read_internal (JBatch* batch, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
@@ -978,12 +978,12 @@ j_item_read_internal (JBatch* operation, JList* parts)
 	gsize collection_len;
 	gsize store_len;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1143,7 +1143,7 @@ j_item_read_internal (JBatch* operation, JList* parts)
 }
 
 gboolean
-j_item_write_internal (JBatch* operation, JList* parts)
+j_item_write_internal (JBatch* batch, JList* parts)
 {
 	JBackgroundOperation** background_operations;
 	JConnection* connection;
@@ -1160,12 +1160,12 @@ j_item_write_internal (JBatch* operation, JList* parts)
 	gsize collection_len;
 	gsize store_len;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1346,7 +1346,7 @@ j_item_write_internal (JBatch* operation, JList* parts)
 }
 
 gboolean
-j_item_get_status_internal (JBatch* operation, JList* parts)
+j_item_get_status_internal (JBatch* batch, JList* parts)
 {
 	gboolean ret = TRUE;
 	JBackgroundOperation** background_operations;
@@ -1356,7 +1356,7 @@ j_item_get_status_internal (JBatch* operation, JList* parts)
 	JMessage** messages;
 	guint n;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);

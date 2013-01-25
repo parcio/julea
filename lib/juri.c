@@ -357,13 +357,13 @@ j_uri_get_item_name (JURI* uri)
 gboolean
 j_uri_get (JURI* uri, GError** error)
 {
-	JBatch* operation;
+	JBatch* batch;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (uri->store_name != NULL)
 	{
@@ -373,8 +373,8 @@ j_uri_get (JURI* uri, GError** error)
 			uri->store = NULL;
 		}
 
-		j_get_store(&(uri->store), uri->store_name, operation);
-		j_batch_execute(operation);
+		j_get_store(&(uri->store), uri->store_name, batch);
+		j_batch_execute(batch);
 
 		if (uri->store == NULL)
 		{
@@ -393,8 +393,8 @@ j_uri_get (JURI* uri, GError** error)
 			uri->collection = NULL;
 		}
 
-		j_store_get_collection(uri->store, &(uri->collection), uri->collection_name, operation);
-		j_batch_execute(operation);
+		j_store_get_collection(uri->store, &(uri->collection), uri->collection_name, batch);
+		j_batch_execute(batch);
 
 		if (uri->collection == NULL)
 		{
@@ -413,8 +413,8 @@ j_uri_get (JURI* uri, GError** error)
 			uri->item = NULL;
 		}
 
-		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, J_ITEM_STATUS_NONE, operation);
-		j_batch_execute(operation);
+		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, J_ITEM_STATUS_NONE, batch);
+		j_batch_execute(batch);
 
 		if (uri->item == NULL)
 		{
@@ -426,7 +426,7 @@ j_uri_get (JURI* uri, GError** error)
 	}
 
 end:
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 	return ret;
 }

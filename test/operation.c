@@ -39,7 +39,7 @@ static gint test_operation_flag;
 
 static
 void
-on_operation_completed (JBatch* operation, gboolean ret, gpointer user_data)
+on_operation_completed (JBatch* batch, gboolean ret, gpointer user_data)
 {
 	g_atomic_int_set(&test_operation_flag, 1);
 }
@@ -48,34 +48,34 @@ static
 void
 test_operation_new_free (void)
 {
-	JBatch* operation;
+	JBatch* batch;
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	g_assert(operation != NULL);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	g_assert(batch != NULL);
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 }
 
 static
 void
 test_operation_semantics (void)
 {
-	JBatch* operation;
+	JBatch* batch;
 	JSemantics* semantics;
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	g_assert(j_batch_get_semantics(operation) != NULL);
+	g_assert(j_batch_get_semantics(batch) != NULL);
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_batch_new(semantics);
+	batch = j_batch_new(semantics);
 
-	g_assert(j_batch_get_semantics(operation) == semantics);
+	g_assert(j_batch_get_semantics(batch) == semantics);
 
 	j_semantics_unref(semantics);
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 }
 
 static
@@ -84,7 +84,7 @@ _test_operation_execute (gboolean async)
 {
 	JCollection* collection;
 	JItem* item;
-	JBatch* operation;
+	JBatch* batch;
 	JStore* store;
 
 	if (async)
@@ -92,18 +92,18 @@ _test_operation_execute (gboolean async)
 		g_atomic_int_set(&test_operation_flag, 0);
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
 	item = j_item_new("item");
 
-	j_create_store(store, operation);
-	j_store_create_collection(store, collection, operation);
-	j_collection_create_item(collection, item, operation);
-	j_collection_delete_item(collection, item, operation);
-	j_store_delete_collection(store, collection, operation);
-	j_delete_store(store, operation);
+	j_create_store(store, batch);
+	j_store_create_collection(store, collection, batch);
+	j_collection_create_item(collection, item, batch);
+	j_collection_delete_item(collection, item, batch);
+	j_store_delete_collection(store, collection, batch);
+	j_delete_store(store, batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
@@ -111,14 +111,14 @@ _test_operation_execute (gboolean async)
 
 	if (async)
 	{
-		j_batch_execute_async(operation, on_operation_completed, NULL);
+		j_batch_execute_async(batch, on_operation_completed, NULL);
 	}
 	else
 	{
-		j_batch_execute(operation);
+		j_batch_execute(batch);
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 	if (async)
 	{
@@ -146,8 +146,8 @@ test_operation_execute_async (void)
 void
 test_operation (void)
 {
-	g_test_add_func("/operation/new_free", test_operation_new_free);
-	g_test_add_func("/operation/semantics", test_operation_semantics);
-	g_test_add_func("/operation/execute", test_operation_execute);
-	g_test_add_func("/operation/execute_async", test_operation_execute_async);
+	g_test_add_func("/batch/new_free", test_operation_new_free);
+	g_test_add_func("/batch/semantics", test_operation_semantics);
+	g_test_add_func("/batch/execute", test_operation_execute);
+	g_test_add_func("/batch/execute_async", test_operation_execute_async);
 }

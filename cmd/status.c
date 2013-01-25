@@ -36,7 +36,7 @@ gboolean
 j_cmd_status (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JBatch* operation;
+	JBatch* batch;
 	JURI* uri = NULL;
 	GError* error = NULL;
 
@@ -62,7 +62,7 @@ j_cmd_status (gchar const** arguments)
 		goto end;
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_item(uri) != NULL)
 	{
@@ -73,8 +73,8 @@ j_cmd_status (gchar const** arguments)
 		guint64 modification_time;
 		guint64 size;
 
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, operation);
-		j_batch_execute(operation);
+		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, batch);
+		j_batch_execute(batch);
 
 		credentials = j_item_get_credentials(j_uri_get_item(uri));
 		modification_time = j_item_get_modification_time(j_uri_get_item(uri));
@@ -106,7 +106,7 @@ j_cmd_status (gchar const** arguments)
 		j_cmd_usage();
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

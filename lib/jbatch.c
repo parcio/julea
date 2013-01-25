@@ -82,7 +82,7 @@ struct JBatch
 
 struct JOperationAsync
 {
-	JBatch* operation;
+	JBatch* batch;
 	JOperationCompletedFunc func;
 	gpointer user_data;
 };
@@ -98,14 +98,14 @@ j_batch_background_operation (gpointer data)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	ret = j_batch_execute(async->operation);
+	ret = j_batch_execute(async->batch);
 
 	if (async->func != NULL)
 	{
-		(*async->func)(async->operation, ret, async->user_data);
+		(*async->func)(async->batch, ret, async->user_data);
 	}
 
-	j_batch_unref(async->operation);
+	j_batch_unref(async->batch);
 
 	g_slice_free(JOperationAsync, async);
 
@@ -115,7 +115,7 @@ j_batch_background_operation (gpointer data)
 }
 
 /**
- * Creates a new operation.
+ * Creates a new batch.
  *
  * \author Michael Kuhn
  *
@@ -124,123 +124,123 @@ j_batch_background_operation (gpointer data)
  *
  * \param semantics A semantics object.
  *
- * \return A new operation. Should be freed with j_batch_unref().
+ * \return A new batch. Should be freed with j_batch_unref().
  **/
 JBatch*
 j_batch_new (JSemantics* semantics)
 {
-	JBatch* operation;
+	JBatch* batch;
 
 	g_return_val_if_fail(semantics != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation = g_slice_new(JBatch);
-	operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
-	operation->semantics = j_semantics_ref(semantics);
-	operation->background_operation = NULL;
-	operation->ref_count = 1;
+	batch = g_slice_new(JBatch);
+	batch->list = j_list_new((JListFreeFunc)j_operation_part_free);
+	batch->semantics = j_semantics_ref(semantics);
+	batch->background_operation = NULL;
+	batch->ref_count = 1;
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return operation;
+	return batch;
 }
 
 /**
- * Creates a new operation for a semantics template.
+ * Creates a new batch for a semantics template.
  *
  * \author Michael Kuhn
  *
  * \code
- * JBatch* operation;
+ * JBatch* batch;
  *
- * operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+ * batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
  * \endcode
  *
  * \param template A semantics template.
  *
- * \return A new operation. Should be freed with j_batch_unref().
+ * \return A new batch. Should be freed with j_batch_unref().
  **/
 JBatch*
 j_batch_new_for_template (JSemanticsTemplate template)
 {
-	JBatch* operation;
+	JBatch* batch;
 	JSemantics* semantics;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	semantics = j_semantics_new(template);
-	operation = j_batch_new(semantics);
+	batch = j_batch_new(semantics);
 	j_semantics_unref(semantics);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return operation;
+	return batch;
 }
 
 /**
- * Increases the operation's reference count.
+ * Increases the batch's reference count.
  *
  * \author Michael Kuhn
  *
- * \param list An operation.
+ * \param list A batch.
  *
- * \return The operation.
+ * \return The batch.
  **/
 JBatch*
-j_batch_ref (JBatch* operation)
+j_batch_ref (JBatch* batch)
 {
-	g_return_val_if_fail(operation != NULL, NULL);
+	g_return_val_if_fail(batch != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	g_atomic_int_inc(&(operation->ref_count));
+	g_atomic_int_inc(&(batch->ref_count));
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return operation;
+	return batch;
 }
 
 /**
- * Decreases the operation's reference count.
- * When the reference count reaches zero, frees the memory allocated for the operation.
+ * Decreases the batch's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the batch.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch A batch.
  **/
 void
-j_batch_unref (JBatch* operation)
+j_batch_unref (JBatch* batch)
 {
-	g_return_if_fail(operation != NULL);
+	g_return_if_fail(batch != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	if (g_atomic_int_dec_and_test(&(operation->ref_count)))
+	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{
-		if (operation->background_operation != NULL)
+		if (batch->background_operation != NULL)
 		{
-			j_background_operation_unref(operation->background_operation);
+			j_background_operation_unref(batch->background_operation);
 		}
 
-		if (operation->semantics != NULL)
+		if (batch->semantics != NULL)
 		{
-			j_semantics_unref(operation->semantics);
+			j_semantics_unref(batch->semantics);
 		}
 
-		j_list_unref(operation->list);
+		j_list_unref(batch->list);
 
-		g_slice_free(JBatch, operation);
+		g_slice_free(JBatch, batch);
 	}
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
- * Executes the operation parts of a given operation type.
+ * Executes the batch parts of a given batch type.
  *
  * \private
  *
@@ -250,11 +250,11 @@ j_batch_unref (JBatch* operation)
  * \endcode
  *
  * \param type An operation type.
- * \param list A list of operation parts.
+ * \param list A list of batch parts.
  **/
 static
 gboolean
-j_batch_execute_same (JBatch* operation, JList* list)
+j_batch_execute_same (JBatch* batch, JList* list)
 {
 	JOperationPart* part;
 	JOperationType type;
@@ -274,40 +274,40 @@ j_batch_execute_same (JBatch* operation, JList* list)
 	switch (type)
 	{
 		case J_OPERATION_CREATE_STORE:
-			ret = j_create_store_internal(operation, list);
+			ret = j_create_store_internal(batch, list);
 			break;
 		case J_OPERATION_DELETE_STORE:
-			ret = j_delete_store_internal(operation, list);
+			ret = j_delete_store_internal(batch, list);
 			break;
 		case J_OPERATION_GET_STORE:
-			ret = j_get_store_internal(operation, list);
+			ret = j_get_store_internal(batch, list);
 			break;
 		case J_OPERATION_STORE_CREATE_COLLECTION:
-			ret = j_store_create_collection_internal(operation, list);
+			ret = j_store_create_collection_internal(batch, list);
 			break;
 		case J_OPERATION_STORE_DELETE_COLLECTION:
-			ret = j_store_delete_collection_internal(operation, list);
+			ret = j_store_delete_collection_internal(batch, list);
 			break;
 		case J_OPERATION_STORE_GET_COLLECTION:
-			ret = j_store_get_collection_internal(operation, list);
+			ret = j_store_get_collection_internal(batch, list);
 			break;
 		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			ret = j_collection_create_item_internal(operation, list);
+			ret = j_collection_create_item_internal(batch, list);
 			break;
 		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			ret = j_collection_delete_item_internal(operation, list);
+			ret = j_collection_delete_item_internal(batch, list);
 			break;
 		case J_OPERATION_COLLECTION_GET_ITEM:
-			ret = j_collection_get_item_internal(operation, list);
+			ret = j_collection_get_item_internal(batch, list);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
-			ret = j_item_get_status_internal(operation, list);
+			ret = j_item_get_status_internal(batch, list);
 			break;
 		case J_OPERATION_ITEM_READ:
-			ret = j_item_read_internal(operation, list);
+			ret = j_item_read_internal(batch, list);
 			break;
 		case J_OPERATION_ITEM_WRITE:
-			ret = j_item_write_internal(operation, list);
+			ret = j_item_write_internal(batch, list);
 			break;
 		case J_OPERATION_NONE:
 		default:
@@ -323,43 +323,43 @@ end:
 }
 
 /**
- * Executes the operation.
+ * Executes the batch.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch A batch.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_batch_execute (JBatch* operation)
+j_batch_execute (JBatch* batch)
 {
 	gboolean ret;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	if (j_list_length(operation->list) == 0)
+	if (j_list_length(batch->list) == 0)
 	{
 		ret = FALSE;
 		goto end;
 	}
 
-	if (j_semantics_get(operation->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
-	    && j_operation_cache_add(operation))
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
+	    && j_operation_cache_add(batch))
 	{
-		operation->list = j_list_new((JListFreeFunc)j_operation_part_free);
+		batch->list = j_list_new((JListFreeFunc)j_operation_part_free);
 		ret = TRUE;
 		goto end;
 	}
 
 	j_operation_cache_flush();
 
-	ret = j_batch_execute_internal(operation);
+	ret = j_batch_execute_internal(batch);
 
 end:
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -368,48 +368,48 @@ end:
 }
 
 /**
- * Executes the operation asynchronously.
+ * Executes the batch asynchronously.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch     A batch.
  * \param func      A complete function.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 void
-j_batch_execute_async (JBatch* operation, JOperationCompletedFunc func, gpointer user_data)
+j_batch_execute_async (JBatch* batch, JOperationCompletedFunc func, gpointer user_data)
 {
 	JOperationAsync* async;
 
-	g_return_if_fail(operation != NULL);
-	g_return_if_fail(operation->background_operation == NULL);
+	g_return_if_fail(batch != NULL);
+	g_return_if_fail(batch->background_operation == NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	async = g_slice_new(JOperationAsync);
-	async->operation = j_batch_ref(operation);
+	async->batch = j_batch_ref(batch);
 	async->func = func;
 	async->user_data = user_data;
 
-	operation->background_operation = j_background_operation_new(j_batch_background_operation, async);
+	batch->background_operation = j_background_operation_new(j_batch_background_operation, async);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 void
-j_batch_wait (JBatch* operation)
+j_batch_wait (JBatch* batch)
 {
-	g_return_if_fail(operation != NULL);
+	g_return_if_fail(batch != NULL);
 
-	if (operation->background_operation != NULL)
+	if (batch->background_operation != NULL)
 	{
-		j_background_operation_wait(operation->background_operation);
-		j_background_operation_unref(operation->background_operation);
-		operation->background_operation = NULL;
+		j_background_operation_wait(batch->background_operation);
+		j_background_operation_unref(batch->background_operation);
+		batch->background_operation = NULL;
 	}
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
@@ -418,7 +418,7 @@ j_batch_wait (JBatch* operation)
 /* Internal */
 
 /**
- * Copies an operation.
+ * Copies a batch.
  *
  * \private
  *
@@ -427,32 +427,32 @@ j_batch_wait (JBatch* operation)
  * \code
  * \endcode
  *
- * \param old_operation An operation.
+ * \param old_batch A batch.
  *
- * \return A new operation.
+ * \return A new batch.
  */
 JBatch*
-j_batch_copy (JBatch* old_operation)
+j_batch_copy (JBatch* old_batch)
 {
-	JBatch* operation;
+	JBatch* batch;
 
-	g_return_val_if_fail(old_operation != NULL, NULL);
+	g_return_val_if_fail(old_batch != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	operation = g_slice_new(JBatch);
-	operation->list = old_operation->list;
-	operation->semantics = j_semantics_ref(old_operation->semantics);
-	operation->background_operation = NULL;
-	operation->ref_count = 1;
+	batch = g_slice_new(JBatch);
+	batch->list = old_batch->list;
+	batch->semantics = j_semantics_ref(old_batch->semantics);
+	batch->background_operation = NULL;
+	batch->ref_count = 1;
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
-	return operation;
+	return batch;
 }
 
 /**
- * Returns an operation's parts.
+ * Returns a batch's parts.
  *
  * \private
  *
@@ -461,26 +461,26 @@ j_batch_copy (JBatch* old_operation)
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch A batch.
  *
  * \return A list of parts.
  **/
 JList*
-j_batch_get_parts (JBatch* operation)
+j_batch_get_parts (JBatch* batch)
 {
 	JList* ret;
 
-	g_return_val_if_fail(operation != NULL, NULL);
+	g_return_val_if_fail(batch != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	ret = operation->list;
+	ret = batch->list;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
 
 /**
- * Returns an operation's semantics.
+ * Returns a batch's semantics.
  *
  * \private
  *
@@ -489,26 +489,26 @@ j_batch_get_parts (JBatch* operation)
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch A batch.
  *
  * \return A semantics object.
  **/
 JSemantics*
-j_batch_get_semantics (JBatch* operation)
+j_batch_get_semantics (JBatch* batch)
 {
 	JSemantics* ret;
 
-	g_return_val_if_fail(operation != NULL, NULL);
+	g_return_val_if_fail(batch != NULL, NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	ret = operation->semantics;
+	ret = batch->semantics;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
 }
 
 /**
- * Adds a new part to the operation.
+ * Adds a new part to the batch.
  *
  * \private
  *
@@ -517,24 +517,24 @@ j_batch_get_semantics (JBatch* operation)
  * \code
  * \endcode
  *
- * \param operation An operation.
- * \param part      An operation part.
+ * \param batch     A batch.
+ * \param part      A batch part.
  **/
 void
-j_batch_add (JBatch* operation, JOperationPart* part)
+j_batch_add (JBatch* batch, JOperationPart* part)
 {
-	g_return_if_fail(operation != NULL);
+	g_return_if_fail(batch != NULL);
 	g_return_if_fail(part != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	j_list_append(operation->list, part);
+	j_list_append(batch->list, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 /**
- * Executes the operation.
+ * Executes the batch.
  *
  * \private
  *
@@ -543,12 +543,12 @@ j_batch_add (JBatch* operation, JOperationPart* part)
  * \code
  * \endcode
  *
- * \param operation An operation.
+ * \param batch A batch.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_batch_execute_internal (JBatch* operation)
+j_batch_execute_internal (JBatch* batch)
 {
 	JList* same_list;
 	JListIterator* iterator;
@@ -558,7 +558,7 @@ j_batch_execute_internal (JBatch* operation)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	iterator = j_list_iterator_new(operation->list);
+	iterator = j_list_iterator_new(batch->list);
 	same_list = j_list_new(NULL);
 	last_key = NULL;
 	last_type = J_OPERATION_NONE;
@@ -569,7 +569,7 @@ j_batch_execute_internal (JBatch* operation)
 
 		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
 		{
-			ret = j_batch_execute_same(operation, same_list) && ret;
+			ret = j_batch_execute_same(batch, same_list) && ret;
 		}
 
 		last_key = part->key;
@@ -577,12 +577,12 @@ j_batch_execute_internal (JBatch* operation)
 		j_list_append(same_list, part);
 	}
 
-	ret = j_batch_execute_same(operation, same_list) && ret;
+	ret = j_batch_execute_same(batch, same_list) && ret;
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);
 
-	j_list_delete_all(operation->list);
+	j_list_delete_all(batch->list);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 

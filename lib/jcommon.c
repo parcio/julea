@@ -218,10 +218,10 @@ j_fini (void)
  * \endcode
  *
  * \param store      A store.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_create_store (JStore* store, JBatch* operation)
+j_create_store (JStore* store, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -231,7 +231,7 @@ j_create_store (JStore* store, JBatch* operation)
 	part->key = NULL;
 	part->u.create_store.store = j_store_ref(store);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /**
@@ -243,10 +243,10 @@ j_create_store (JStore* store, JBatch* operation)
  * \endcode
  *
  * \param store      A store.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_delete_store (JStore* store, JBatch* operation)
+j_delete_store (JStore* store, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -256,7 +256,7 @@ j_delete_store (JStore* store, JBatch* operation)
 	part->key = NULL;
 	part->u.delete_store.store = j_store_ref(store);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /**
@@ -269,10 +269,10 @@ j_delete_store (JStore* store, JBatch* operation)
  *
  * \param store     A pointer to a store.
  * \param name      A name.
- * \param operation An operation.
+ * \param batch     A batch.
  **/
 void
-j_get_store (JStore** store, gchar const* name, JBatch* operation)
+j_get_store (JStore** store, gchar const* name, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -284,7 +284,7 @@ j_get_store (JStore** store, gchar const* name, JBatch* operation)
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /* Internal */
@@ -338,17 +338,17 @@ j_connection (void)
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_create_store_internal (JBatch* operation, JList* parts)
+j_create_store_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
@@ -378,17 +378,17 @@ j_create_store_internal (JBatch* operation, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_delete_store_internal (JBatch* operation, JList* parts)
+j_delete_store_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
@@ -417,17 +417,17 @@ j_delete_store_internal (JBatch* operation, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_get_store_internal (JBatch* operation, JList* parts)
+j_get_store_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*

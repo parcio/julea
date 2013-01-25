@@ -34,9 +34,9 @@
 
 static
 void
-on_operation_completed (JBatch* operation, gboolean ret, gpointer user_data)
+on_operation_completed (JBatch* batch, gboolean ret, gpointer user_data)
 {
-	g_print("Operation %p completed! (ret=%d, user_data=%p)\n", (gpointer)operation, ret, user_data);
+	g_print("Operation %p completed! (ret=%d, user_data=%p)\n", (gpointer)batch, ret, user_data);
 }
 
 int
@@ -46,8 +46,8 @@ main (int argc, char** argv)
 	JStore* store;
 	JStoreIterator* siterator;
 	JSemantics* semantics;
-	JBatch* delete_operation;
-	JBatch* operation;
+	JBatch* delete_batch;
+	JBatch* batch;
 
 	j_init(&argc, &argv);
 
@@ -55,13 +55,13 @@ main (int argc, char** argv)
 	j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
 //	j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
 
-	delete_operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	operation = j_batch_new(semantics);
+	delete_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(semantics);
 
 	store = j_store_new("JULEA");
-	j_create_store(store, operation);
+	j_create_store(store, batch);
 
-	j_batch_execute(operation);
+	j_batch_execute(batch);
 
 	for (guint i = 0; i < 10; i++)
 	{
@@ -71,11 +71,11 @@ main (int argc, char** argv)
 		name = g_strdup_printf("test-%u", i);
 
 		collection = j_collection_new(name);
-		j_store_create_collection(store, collection, operation);
+		j_store_create_collection(store, collection, batch);
 
 		g_free(name);
 
-		j_batch_execute(operation);
+		j_batch_execute(batch);
 
 		for (guint j = 0; j < 10000; j++)
 		{
@@ -84,20 +84,20 @@ main (int argc, char** argv)
 			name = g_strdup_printf("test-%u", j);
 
 			item = j_item_new(name);
-			j_collection_create_item(collection, item, operation);
-			j_collection_delete_item(collection, item, delete_operation);
+			j_collection_create_item(collection, item, batch);
+			j_collection_delete_item(collection, item, delete_batch);
 			j_item_unref(item);
 
 			g_free(name);
 		}
 
-		j_store_delete_collection(store, collection, delete_operation);
+		j_store_delete_collection(store, collection, delete_batch);
 		j_collection_unref(collection);
 
-		j_batch_execute(operation);
+		j_batch_execute(batch);
 	}
 
-	j_delete_store(store, delete_operation);
+	j_delete_store(store, delete_batch);
 
 	{
 		JCollection* first_collection = NULL;
@@ -146,16 +146,16 @@ main (int argc, char** argv)
 
 				buf = g_new0(gchar, 1024 * 1024 + 1);
 
-				j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
-				j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
-				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, operation);
-				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, operation);
+				j_item_write(item, buf, 1024 * 1024 + 1, 0, &bytes, batch);
+				j_item_write(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, batch);
+				j_item_read(item, buf, 1024 * 1024 + 1, 1024 * 1024 + 1, &bytes, batch);
+				j_item_read(item, buf, 1024 * 1024 + 1, 0, &bytes, batch);
 
-				j_batch_execute_async(operation, on_operation_completed, NULL);
-				j_batch_wait(operation);
+				j_batch_execute_async(batch, on_operation_completed, NULL);
+				j_batch_wait(batch);
 
-				j_item_get_status(item, J_ITEM_STATUS_SIZE, operation);
-				j_batch_execute(operation);
+				j_item_get_status(item, J_ITEM_STATUS_SIZE, batch);
+				j_batch_execute(batch);
 
 				g_print("(%" G_GUINT64_FORMAT ") ", j_item_get_size(item));
 
@@ -170,13 +170,13 @@ main (int argc, char** argv)
 		j_collection_iterator_free(citerator);
 	}
 
-	j_batch_execute(delete_operation);
+	j_batch_execute(delete_batch);
 
 	j_semantics_unref(semantics);
 	j_store_unref(store);
 
-	j_batch_unref(delete_operation);
-	j_batch_unref(operation);
+	j_batch_unref(delete_batch);
+	j_batch_unref(batch);
 
 	j_fini();
 

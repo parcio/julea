@@ -43,19 +43,19 @@ test_lock_new_free (void)
 
 	JCollection* collection;
 	JItem* item;
-	JBatch* operation;
+	JBatch* batch;
 	JStore* store;
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
 	item = j_item_new("test-item");
 
-	j_create_store(store, operation);
-	j_store_create_collection(store, collection, operation);
-	j_collection_create_item(collection, item, operation);
-	j_batch_execute(operation);
+	j_create_store(store, batch);
+	j_store_create_collection(store, collection, batch);
+	j_collection_create_item(collection, item, batch);
+	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -66,15 +66,15 @@ test_lock_new_free (void)
 		j_lock_free(lock);
 	}
 
-	j_collection_delete_item(collection, item, operation);
-	j_store_delete_collection(store, collection, operation);
-	j_delete_store(store, operation);
-	j_batch_execute(operation);
+	j_collection_delete_item(collection, item, batch);
+	j_store_delete_collection(store, collection, batch);
+	j_delete_store(store, batch);
+	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 }
 
 static
@@ -85,19 +85,19 @@ test_lock_acquire_release (void)
 
 	JCollection* collection;
 	JItem* item;
-	JBatch* operation;
+	JBatch* batch;
 	JStore* store;
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
 	item = j_item_new("test-item");
 
-	j_create_store(store, operation);
-	j_store_create_collection(store, collection, operation);
-	j_collection_create_item(collection, item, operation);
-	j_batch_execute(operation);
+	j_create_store(store, batch);
+	j_store_create_collection(store, collection, batch);
+	j_collection_create_item(collection, item, batch);
+	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -114,15 +114,15 @@ test_lock_acquire_release (void)
 		j_lock_free(lock);
 	}
 
-	j_collection_delete_item(collection, item, operation);
-	j_store_delete_collection(store, collection, operation);
-	j_delete_store(store, operation);
-	j_batch_execute(operation);
+	j_collection_delete_item(collection, item, batch);
+	j_store_delete_collection(store, collection, batch);
+	j_delete_store(store, batch);
+	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 }
 
 static
@@ -134,20 +134,20 @@ test_lock_add (void)
 	JCollection* collection;
 	JItem* item;
 	JLock* lock;
-	JBatch* operation;
+	JBatch* batch;
 	JStore* store;
 	gboolean ret;
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
 	item = j_item_new("test-item");
 
-	j_create_store(store, operation);
-	j_store_create_collection(store, collection, operation);
-	j_collection_create_item(collection, item, operation);
-	j_batch_execute(operation);
+	j_create_store(store, batch);
+	j_store_create_collection(store, collection, batch);
+	j_collection_create_item(collection, item, batch);
+	j_batch_execute(batch);
 
 	lock = j_lock_new(item);
 
@@ -163,15 +163,15 @@ test_lock_add (void)
 
 	j_lock_free(lock);
 
-	j_collection_delete_item(collection, item, operation);
-	j_store_delete_collection(store, collection, operation);
-	j_delete_store(store, operation);
-	j_batch_execute(operation);
+	j_collection_delete_item(collection, item, batch);
+	j_store_delete_collection(store, collection, batch);
+	j_delete_store(store, batch);
+	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
 	j_store_unref(store);
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 }
 
 void

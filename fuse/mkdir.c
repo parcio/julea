@@ -33,7 +33,7 @@
 
 int jfs_mkdir(char const* path, mode_t mode)
 {
-	JBatch* operation;
+	JBatch* batch;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -51,7 +51,7 @@ int jfs_mkdir(char const* path, mode_t mode)
 		goto end;
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
@@ -61,8 +61,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 		JCollection* collection;
 
 		collection = j_collection_new(j_uri_get_collection_name(uri));
-		j_store_create_collection(j_uri_get_store(uri), collection, operation);
-		j_batch_execute(operation);
+		j_store_create_collection(j_uri_get_store(uri), collection, batch);
+		j_batch_execute(batch);
 
 		ret = 0;
 	}
@@ -71,13 +71,13 @@ int jfs_mkdir(char const* path, mode_t mode)
 		JStore* store;
 
 		store = j_store_new(j_uri_get_store_name(uri));
-		j_create_store(store, operation);
-		j_batch_execute(operation);
+		j_create_store(store, batch);
+		j_batch_execute(batch);
 
 		ret = 0;
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

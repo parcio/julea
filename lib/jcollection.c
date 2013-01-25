@@ -237,10 +237,10 @@ j_collection_get_name (JCollection* collection)
  *
  * \param collection A collection.
  * \param item       An item.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_collection_create_item (JCollection* collection, JItem* item, JBatch* operation)
+j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -256,7 +256,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* operatio
 
 	j_item_set_collection(item, collection);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -272,10 +272,10 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* operatio
  * \param collection A collection.
  * \param item       A pointer to an item.
  * \param name       A name.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JBatch* operation)
+j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -292,7 +292,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	part->u.collection_get_item.name = g_strdup(name);
 	part->u.collection_get_item.flags = flags;
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -307,10 +307,10 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
  *
  * \param collection A collection.
  * \param item       An item.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_collection_delete_item (JCollection* collection, JItem* item, JBatch* operation)
+j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -324,7 +324,7 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* operatio
 	part->u.collection_delete_item.collection = j_collection_ref(collection);
 	part->u.collection_delete_item.item = j_item_ref(item);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -598,7 +598,7 @@ j_collection_set_store (JCollection* collection, JStore* store)
 }
 
 gboolean
-j_collection_create_item_internal (JBatch* operation, JList* parts)
+j_collection_create_item_internal (JBatch* batch, JList* parts)
 {
 	JCollection* collection = NULL;
 	JListIterator* it;
@@ -611,7 +611,7 @@ j_collection_create_item_internal (JBatch* operation, JList* parts)
 	guint i;
 	guint length;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
@@ -620,7 +620,7 @@ j_collection_create_item_internal (JBatch* operation, JList* parts)
 	IsInitialized(true);
 	*/
 
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 
 	i = 0;
 	length = j_list_length(parts);
@@ -690,7 +690,7 @@ end:
 }
 
 gboolean
-j_collection_delete_item_internal (JBatch* operation, JList* parts)
+j_collection_delete_item_internal (JBatch* batch, JList* parts)
 {
 	JCollection* collection = NULL;
 	JListIterator* it;
@@ -699,7 +699,7 @@ j_collection_delete_item_internal (JBatch* operation, JList* parts)
 	mongo_write_concern write_concern[1];
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
@@ -708,7 +708,7 @@ j_collection_delete_item_internal (JBatch* operation, JList* parts)
 		IsInitialized(true);
 	*/
 
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 
 	mongo_write_concern_init(write_concern);
 
@@ -758,12 +758,12 @@ j_collection_delete_item_internal (JBatch* operation, JList* parts)
 }
 
 gboolean
-j_collection_get_item_internal (JBatch* operation, JList* parts)
+j_collection_get_item_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);

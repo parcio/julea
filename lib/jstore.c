@@ -221,10 +221,10 @@ j_store_get_connection (JStore* store)
  *
  * \param store      A store.
  * \param collection A collection.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_store_create_collection (JStore* store, JCollection* collection, JBatch* operation)
+j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -238,7 +238,7 @@ j_store_create_collection (JStore* store, JCollection* collection, JBatch* opera
 
 	j_collection_set_store(collection, store);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /**
@@ -252,10 +252,10 @@ j_store_create_collection (JStore* store, JCollection* collection, JBatch* opera
  * \param store      A store.
  * \param collection A pointer to a collection.
  * \param name       A name.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JBatch* operation)
+j_store_get_collection (JStore* store, JCollection** collection, gchar const* name, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -269,7 +269,7 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
 	part->u.store_get_collection.collection = collection;
 	part->u.store_get_collection.name = g_strdup(name);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /**
@@ -282,10 +282,10 @@ j_store_get_collection (JStore* store, JCollection** collection, gchar const* na
  *
  * \param store      A store.
  * \param collection A collection.
- * \param operation  An operation.
+ * \param batch      A batch.
  **/
 void
-j_store_delete_collection (JStore* store, JCollection* collection, JBatch* operation)
+j_store_delete_collection (JStore* store, JCollection* collection, JBatch* batch)
 {
 	JOperationPart* part;
 
@@ -297,7 +297,7 @@ j_store_delete_collection (JStore* store, JCollection* collection, JBatch* opera
 	part->u.store_delete_collection.store = j_store_ref(store);
 	part->u.store_delete_collection.collection = j_collection_ref(collection);
 
-	j_batch_add(operation, part);
+	j_batch_add(batch, part);
 }
 
 /* Internal */
@@ -335,13 +335,13 @@ j_store_collection_collections (JStore* store)
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_store_create_collection_internal (JBatch* operation, JList* parts)
+j_store_create_collection_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -354,7 +354,7 @@ j_store_create_collection_internal (JBatch* operation, JList* parts)
 	guint i;
 	guint length;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
@@ -387,7 +387,7 @@ j_store_create_collection_internal (JBatch* operation, JList* parts)
 	}
 
 	connection = j_connection_get_connection(j_store_get_connection(store));
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 
 	mongo_write_concern_init(write_concern);
 
@@ -443,13 +443,13 @@ end:
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_store_delete_collection_internal (JBatch* operation, JList* parts)
+j_store_delete_collection_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 	JSemantics* semantics;
@@ -458,14 +458,14 @@ j_store_delete_collection_internal (JBatch* operation, JList* parts)
 	mongo_write_concern write_concern[1];
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	semantics = j_batch_get_semantics(operation);
+	semantics = j_batch_get_semantics(batch);
 
 	mongo_write_concern_init(write_concern);
 
@@ -517,18 +517,18 @@ j_store_delete_collection_internal (JBatch* operation, JList* parts)
  *
  * \author Michael Kuhn
  *
- * \param operation An operation.
- * \param parts     A list of operation parts.
+ * \param batch     A batch.
+ * \param parts     A list of batch parts.
  *
  * \return TRUE.
  */
 gboolean
-j_store_get_collection_internal (JBatch* operation, JList* parts)
+j_store_get_collection_internal (JBatch* batch, JList* parts)
 {
 	JListIterator* it;
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(operation != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(parts != NULL, FALSE);
 
 	/*

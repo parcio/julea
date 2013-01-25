@@ -37,7 +37,7 @@ gboolean
 j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JBatch* operation;
+	JBatch* batch;
 	JURI* uri[2] = { NULL, NULL };
 	GError* error;
 	GFile* file;
@@ -104,15 +104,15 @@ j_cmd_copy (gchar const** arguments)
 					g_error_free(error);
 				}
 
-				operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 				item = j_item_new(j_uri_get_item_name(uri[i]));
-				j_collection_create_item(j_uri_get_collection(uri[i]), item, operation);
+				j_collection_create_item(j_uri_get_collection(uri[i]), item, batch);
 				j_item_unref(item);
 
-				j_batch_execute(operation);
+				j_batch_execute(batch);
 
-				j_batch_unref(operation);
+				j_batch_unref(batch);
 
 				j_uri_get(uri[i], NULL);
 			}
@@ -150,7 +150,7 @@ j_cmd_copy (gchar const** arguments)
 		}
 	}
 
-	operation = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	offset = 0;
 	buffer = g_new(gchar, 1024 * 1024);
 
@@ -162,8 +162,8 @@ j_cmd_copy (gchar const** arguments)
 		{
 			guint64 nbytes;
 
-			j_item_read(j_uri_get_item(uri[0]), buffer, 1024 * 1024, offset, &nbytes, operation);
-			j_batch_execute(operation);
+			j_item_read(j_uri_get_item(uri[0]), buffer, 1024 * 1024, offset, &nbytes, batch);
+			j_batch_execute(batch);
 
 			bytes_read = nbytes;
 		}
@@ -182,8 +182,8 @@ j_cmd_copy (gchar const** arguments)
 		{
 			guint64 dummy;
 
-			j_item_write(j_uri_get_item(uri[1]), buffer, bytes_read, offset, &dummy, operation);
-			j_batch_execute(operation);
+			j_item_write(j_uri_get_item(uri[1]), buffer, bytes_read, offset, &dummy, batch);
+			j_batch_execute(batch);
 		}
 		else if (stream[1] != NULL)
 		{
@@ -202,7 +202,7 @@ j_cmd_copy (gchar const** arguments)
 		}
 	}
 
-	j_batch_unref(operation);
+	j_batch_unref(batch);
 
 	g_free(buffer);
 
