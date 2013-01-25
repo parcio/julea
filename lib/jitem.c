@@ -54,7 +54,7 @@
 #include <jmessage.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <joperation-part-internal.h>
+#include <joperation-internal.h>
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 

@@ -48,7 +48,7 @@
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
-#include <joperation-part-internal.h>
+#include <joperation-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
 #include <jthread-internal.h>

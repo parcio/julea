@@ -49,7 +49,7 @@
 #include <jlist-iterator.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <joperation-part-internal.h>
+#include <joperation-internal.h>
 #include <jsemantics.h>
 #include <jstore.h>
 #include <jstore-internal.h>

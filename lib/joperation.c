@@ -33,7 +33,7 @@
 
 #include <glib.h>
 
-#include <joperation-part-internal.h>
+#include <joperation-internal.h>
 
 /**
  * \defgroup JOperation Operation

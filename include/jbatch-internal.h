@@ -38,7 +38,7 @@
 
 #include <jbatch.h>
 
-#include <joperation-part-internal.h>
+#include <joperation-internal.h>
 
 J_GNUC_INTERNAL JBatch* j_batch_copy (JBatch*);
 
