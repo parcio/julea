@@ -227,7 +227,7 @@ j_create_store (JStore* store, JBatch* batch)
 
 	g_return_if_fail(store != NULL);
 
-	part = j_operation_part_new(J_OPERATION_CREATE_STORE);
+	part = j_operation_new(J_OPERATION_CREATE_STORE);
 	part->key = NULL;
 	part->u.create_store.store = j_store_ref(store);
 
@@ -252,7 +252,7 @@ j_delete_store (JStore* store, JBatch* batch)
 
 	g_return_if_fail(store != NULL);
 
-	part = j_operation_part_new(J_OPERATION_DELETE_STORE);
+	part = j_operation_new(J_OPERATION_DELETE_STORE);
 	part->key = NULL;
 	part->u.delete_store.store = j_store_ref(store);
 
@@ -279,7 +279,7 @@ j_get_store (JStore** store, gchar const* name, JBatch* batch)
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(name != NULL);
 
-	part = j_operation_part_new(J_OPERATION_GET_STORE);
+	part = j_operation_new(J_OPERATION_GET_STORE);
 	part->key = NULL;
 	part->u.get_store.store = store;
 	part->u.get_store.name = g_strdup(name);

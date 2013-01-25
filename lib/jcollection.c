@@ -249,7 +249,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_COLLECTION_CREATE_ITEM);
+	part = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
 	part->key = collection;
 	part->u.collection_create_item.collection = j_collection_ref(collection);
 	part->u.collection_create_item.item = j_item_ref(item);
@@ -285,7 +285,7 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_COLLECTION_GET_ITEM);
+	part = j_operation_new(J_OPERATION_COLLECTION_GET_ITEM);
 	part->key = collection;
 	part->u.collection_get_item.collection = j_collection_ref(collection);
 	part->u.collection_get_item.item = item;
@@ -319,7 +319,7 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_COLLECTION_DELETE_ITEM);
+	part = j_operation_new(J_OPERATION_COLLECTION_DELETE_ITEM);
 	part->key = collection;
 	part->u.collection_delete_item.collection = j_collection_ref(collection);
 	part->u.collection_delete_item.item = j_item_ref(item);

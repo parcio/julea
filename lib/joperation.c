@@ -49,10 +49,10 @@
  * \code
  * \endcode
  *
- * \return A new operation part. Should be freed with j_operation_part_free().
+ * \return A new operation part. Should be freed with j_operation_free().
  **/
 JOperation*
-j_operation_part_new (JOperationType type)
+j_operation_new (JOperationType type)
 {
 	JOperation* part;
 
@@ -77,7 +77,7 @@ j_operation_part_new (JOperationType type)
  **/
 /* FIXME */
 void
-j_operation_part_free (JOperation* part)
+j_operation_free (JOperation* part)
 {
 	switch (part->type)
 	{

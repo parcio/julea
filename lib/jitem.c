@@ -539,7 +539,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_ITEM_READ);
+	part = j_operation_new(J_OPERATION_ITEM_READ);
 	part->key = item;
 	part->u.item_read.item = j_item_ref(item);
 	part->u.item_read.data = data;
@@ -578,7 +578,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_ITEM_WRITE);
+	part = j_operation_new(J_OPERATION_ITEM_WRITE);
 	part->key = item;
 	part->u.item_write.item = j_item_ref(item);
 	part->u.item_write.data = data;
@@ -612,7 +612,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_operation_part_new(J_OPERATION_ITEM_GET_STATUS);
+	part = j_operation_new(J_OPERATION_ITEM_GET_STATUS);
 	part->key = NULL;
 	part->u.item_get_status.item = j_item_ref(item);
 	part->u.item_get_status.flags = flags;

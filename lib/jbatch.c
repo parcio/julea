@@ -136,7 +136,7 @@ j_batch_new (JSemantics* semantics)
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	batch = g_slice_new(JBatch);
-	batch->list = j_list_new((JListFreeFunc)j_operation_part_free);
+	batch->list = j_list_new((JListFreeFunc)j_operation_free);
 	batch->semantics = j_semantics_ref(semantics);
 	batch->background_operation = NULL;
 	batch->ref_count = 1;
@@ -256,20 +256,20 @@ static
 gboolean
 j_batch_execute_same (JBatch* batch, JList* list)
 {
-	JOperation* part;
+	JOperation* operation;
 	JOperationType type;
 	gboolean ret = FALSE;
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	part = j_list_get_first(list);
+	operation = j_list_get_first(list);
 
-	if (part == NULL)
+	if (operation == NULL)
 	{
 		goto end;
 	}
 
-	type = part->type;
+	type = operation->type;
 
 	switch (type)
 	{
@@ -352,7 +352,7 @@ j_batch_execute (JBatch* batch)
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
-		batch->list = j_list_new((JListFreeFunc)j_operation_part_free);
+		batch->list = j_list_new((JListFreeFunc)j_operation_free);
 		ret = TRUE;
 		goto end;
 	}
@@ -508,7 +508,7 @@ j_batch_get_semantics (JBatch* batch)
 }
 
 /**
- * Adds a new part to the batch.
+ * Adds a new operation to the batch.
  *
  * \private
  *
@@ -518,17 +518,17 @@ j_batch_get_semantics (JBatch* batch)
  * \endcode
  *
  * \param batch     A batch.
- * \param part      A batch part.
+ * \param operation An operation.
  **/
 void
-j_batch_add (JBatch* batch, JOperation* part)
+j_batch_add (JBatch* batch, JOperation* operation)
 {
 	g_return_if_fail(batch != NULL);
-	g_return_if_fail(part != NULL);
+	g_return_if_fail(operation != NULL);
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
-	j_list_append(batch->list, part);
+	j_list_append(batch->list, operation);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -565,16 +565,16 @@ j_batch_execute_internal (JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* part = j_list_iterator_get(iterator);
+		JOperation* operation = j_list_iterator_get(iterator);
 
-		if ((part->type != last_type || part->key != last_key) && last_type != J_OPERATION_NONE)
+		if ((operation->type != last_type || operation->key != last_key) && last_type != J_OPERATION_NONE)
 		{
 			ret = j_batch_execute_same(batch, same_list) && ret;
 		}
 
-		last_key = part->key;
-		last_type = part->type;
-		j_list_append(same_list, part);
+		last_key = operation->key;
+		last_type = operation->type;
+		j_list_append(same_list, operation);
 	}
 
 	ret = j_batch_execute_same(batch, same_list) && ret;
