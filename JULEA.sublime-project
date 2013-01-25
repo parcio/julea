@@ -1,0 +1,24 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"name": "JULEA",
+			"folder_exclude_patterns": [".waf-*", "build", "external/*", "html"],
+			"file_exclude_patterns": [".lock-*", "*.sublime-*"]
+		}
+	],
+	"settings":
+	{
+	    "sublimeclang_options":
+	    [
+	        "-I/usr/include/glib-2.0",
+	        "-I/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+	        "-I${home}/Projekte/julea/include",
+	        "-I${home}/Projekte/julea/build/include",
+	        "-I${home}/Projekte/julea/external/mongodb-client/include",
+	        "-I${home}/Projekte/julea/external/otf/include",
+	        "-I${home}/Projekte/julea/hdtrace/include"
+	    ]
+	}
+}
