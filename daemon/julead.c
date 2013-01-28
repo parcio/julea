@@ -79,7 +79,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	cache = j_cache_new(J_MIB(50));
 
-	jd_backend_thread_init();
+	if (jd_backend_thread_init != NULL)
+	{
+		jd_backend_thread_init();
+	}
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
@@ -390,7 +393,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	j_cache_free(cache);
 	j_thread_free(thread);
 
-	jd_backend_thread_fini();
+	if (jd_backend_thread_fini != NULL)
+	{
+		jd_backend_thread_fini();
+	}
 
 	return TRUE;
 }
