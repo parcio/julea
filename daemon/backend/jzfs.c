@@ -75,6 +75,9 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	*/
 	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE, 0, 0);
 
+	//Object-ID in Datenbank:	
+	guint64 object_id = j_zfs_get_object_id(object);
+
 	bf->path = path;
 	bf->user_data = object;
 
@@ -105,7 +108,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	gchar* path;
 	JZFSObject* object = bf->user_data; //funktioniert so nicht
 	guint64 object_id = j_zfs_get_object_id(object);
-	//Datenbank: store,collection,item -> id
+	//Datenbank: key: store_collection_item -> value: id
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
@@ -247,7 +250,7 @@ G_MODULE_EXPORT
 void
 backend_init (gchar const* path)
 {
-	gchar* poolname = "jzfs";
+	/*gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
 	
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
@@ -263,14 +266,52 @@ backend_init (gchar const* path)
 
 	jd_backend_path = g_strdup(path);
 
-	//g_mkdir_with_parents(path, 0700); 
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);*/
+	jd_backend_path = g_strdup(path);
+}
+
+G_MODULE_EXPORT
+void
+backend_fini (void)
+{
+	/*j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	
+	j_zfs_object_set_destroy(object_set);
+	j_zfs_pool_close(pool);	
+	j_zfs_fini();
+
+	g_free(jd_backend_path);
+
+	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);*/
+}
+
+G_MODULE_EXPORT
+void
+backend_thread_init (void)
+{
+	gchar* poolname = "jzfs";
+	gchar* object_set_name = "object_set";
+	
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_zfs_init();
+	pool = j_zfs_pool_open(poolname);
+	object_set = j_zfs_object_set_create(pool, object_set_name);
+
+	if (object_set == NULL)
+	{
+		printf("zfs_open\n");
+		object_set = j_zfs_object_set_open(pool, object_set_name);
+	}
+
+	//jd_backend_path = g_strdup(path);
+
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
-backend_fini (void)
+backend_thread_fini (void)
 {
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	
@@ -281,16 +322,4 @@ backend_fini (void)
 	g_free(jd_backend_path);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
-}
-
-G_MODULE_EXPORT
-void
-backend_thread_init (void)
-{
-}
-
-G_MODULE_EXPORT
-void
-backend_thread_fini (void)
-{
 }

@@ -122,7 +122,10 @@ j_zfs_unref (JZFS* zfs)
 {
 	if (g_atomic_int_dec_and_test(&(zfs->ref_count)))
 	{
+		kernel_fini();
+
 		g_slice_free(JZFS, zfs);
+		jzfs = NULL;
 	}
 }
 
@@ -131,13 +134,15 @@ j_zfs_init (void)
 {
 	if (jzfs == NULL)
 	{
-	jzfs = g_slice_new(JZFS);
-	jzfs->ref_count = 1;
+		jzfs = g_slice_new(JZFS);
+		jzfs->ref_count = 1;
+
+		kernel_init(FREAD | FWRITE);
 	}
 	else
-	j_zfs_ref(jzfs);
-
-	kernel_init(FREAD | FWRITE);
+	{
+		j_zfs_ref(jzfs);
+	}
 }
 
 void
@@ -145,11 +150,7 @@ j_zfs_fini (void)
 {
 	assert(jzfs != NULL);
 
-	kernel_fini();
-
 	j_zfs_unref(jzfs);
-
-	jzfs = NULL;
 }
 
 static

@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <pthread.h>
-#define NUM_THREADS	2
+#define NUM_THREADS	1
 
 static JZFSPool* pool = NULL;
 static JZFSObjectSet* object_set = NULL;
@@ -312,10 +312,12 @@ void test_with_threads()
 {
 	JZFSObject* object;
 	printf("in test_with_threads\n");
-	j_zfs_init();
 	
+	j_zfs_init();
 	pthread_mutex_lock (&pool_mutex);
 	pool = j_zfs_pool_open("jzfs");
+	if (pool == NULL)
+		g_error("pool could not be opened\n");
 	printf("pool opened. \n");
 	/*object_set = j_zfs_object_set_create(pool, "object_set");
 	if (object_set == NULL)
@@ -326,6 +328,7 @@ void test_with_threads()
 	j_zfs_object_destroy(object);
 	j_zfs_object_set_destroy(object_set);*/
 	j_zfs_pool_close(pool);
+	printf("Pool closed.\n");
 	pthread_mutex_unlock (&pool_mutex);
 	j_zfs_fini();
 
@@ -439,9 +442,12 @@ main (gint argc, gchar **argv)
 			printf("Error creating threads\n");
 	} 
 	printf("Threads created.\n");
-	rc = pthread_join(threads[0], &status);
-	if(rc)
+	for(t=0; t < NUM_THREADS; t++)
+	{
+		rc = pthread_join(threads[t], &status);
+		if(rc)
 		printf("Error joining.\n");
+	}
 	printf("Threads joined.\n");
 
 	/*Close the pool*/
