@@ -282,3 +282,15 @@ backend_fini (void)
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
+
+G_MODULE_EXPORT
+void
+backend_thread_init (void)
+{
+}
+
+G_MODULE_EXPORT
+void
+backend_thread_fini (void)
+{
+}

@@ -37,6 +37,9 @@
 void backend_init (gchar const*);
 void backend_fini (void);
 
+void backend_thread_init (void);
+void backend_thread_fini (void);
+
 gboolean backend_create (JBackendFile*, gchar const*, gchar const*, gchar const*);
 gboolean backend_delete (JBackendFile*);
 

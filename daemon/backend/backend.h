@@ -46,6 +46,9 @@ typedef struct JBackendFile JBackendFile;
 void (*jd_backend_init) (gchar const*) = NULL;
 void (*jd_backend_fini) (void) = NULL;
 
+void (*jd_backend_thread_init) (void) = NULL;
+void (*jd_backend_thread_fini) (void) = NULL;
+
 gboolean (*jd_backend_create) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
 gboolean (*jd_backend_delete) (JBackendFile*) = NULL;
 
