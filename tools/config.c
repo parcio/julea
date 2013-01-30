@@ -35,9 +35,10 @@
 
 static gboolean opt_local = FALSE;
 static gboolean opt_global = FALSE;
+static gboolean opt_print = FALSE;
 static gchar const* opt_data = NULL;
 static gchar const* opt_metadata = NULL;
-static gchar const* opt_storage_backend = "gio";
+static gchar const* opt_storage_backend = NULL;
 static gchar const* opt_storage_path = NULL;
 
 static
@@ -61,6 +62,35 @@ string_split (gchar const* string)
 
 static
 gboolean
+read_config (gchar* path)
+{
+	gboolean ret = TRUE;
+	GFile* file;
+	gchar* buf;
+
+	if (path == NULL)
+	{
+		ret = FALSE;
+		goto end;
+	}
+
+	file = g_file_new_for_commandline_arg(path);
+	ret = g_file_load_contents(file, NULL, &buf, NULL, NULL, NULL);
+
+	if (ret)
+	{
+		g_print("%s", buf);
+		g_free(buf);
+	}
+
+	g_object_unref(file);
+
+end:
+	return ret;
+}
+
+static
+gboolean
 write_config (gchar* path)
 {
 	GKeyFile* key_file;
@@ -72,22 +102,6 @@ write_config (gchar* path)
 
 	data = string_split(opt_data);
 	metadata = string_split(opt_metadata);
-
-	if (opt_storage_path == NULL)
-	{
-		if (strcmp(opt_storage_backend, "null") == 0)
-		{
-			opt_storage_path = "";
-		}
-		else if (strcmp(opt_storage_backend, "gio") == 0)
-		{
-			opt_storage_path = "/tmp/julea";
-		}
-		else if (strcmp(opt_storage_backend, "posix") == 0)
-		{
-			opt_storage_path = "/tmp/julea";
-		}
-	}
 
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)data, g_strv_length(data));
@@ -108,8 +122,6 @@ write_config (gchar* path)
 
 		g_object_unref(file);
 		g_object_unref(parent);
-
-		g_free(path);
 	}
 	else
 	{
@@ -130,15 +142,17 @@ main (gint argc, gchar** argv)
 {
 	GError* error = NULL;
 	GOptionContext* context;
+	gboolean ret;
 	gchar* path = NULL;
 
 	GOptionEntry entries[] = {
-		{ "local", 'l', 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
-		{ "global", 'g', 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
-		{ "data", 'd', 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
-		{ "metadata", 'm', 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
-		{ "storage-backend", 'b', 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
-		{ "storage-path", 'p', 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp/julea" },
+		{ "local", 0, 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
+		{ "global", 0, 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
+		{ "print", 0, 0, G_OPTION_ARG_NONE, &opt_print, "Print configuration", NULL },
+		{ "data", 0, 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
+		{ "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
+		{ "storage-backend", 0, 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
+		{ "storage-path", 0, 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp/julea" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -146,7 +160,7 @@ main (gint argc, gchar** argv)
 	g_type_init();
 #endif
 
-	context = g_option_context_new("[FILE]");
+	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
 	if (!g_option_context_parse(context, &argc, &argv, &error))
@@ -162,10 +176,12 @@ main (gint argc, gchar** argv)
 		return 1;
 	}
 
-	if (opt_data == NULL
-	    || opt_metadata == NULL
+	if ((!opt_local && !opt_global)
 	    || (opt_local && opt_global)
-	    || (strcmp(opt_storage_backend, "null") != 0 && strcmp(opt_storage_backend, "gio") != 0 && strcmp(opt_storage_backend, "posix") != 0)
+	    || (opt_print && (opt_data != NULL || opt_metadata != NULL || opt_storage_backend != NULL || opt_storage_path != NULL))
+	    || (!opt_print && (opt_data == NULL || opt_metadata == NULL || opt_storage_path == NULL
+	    	|| (g_strcmp0(opt_storage_backend, "null") != 0 && g_strcmp0(opt_storage_backend, "gio") != 0 && g_strcmp0(opt_storage_backend, "posix") != 0))
+	    )
 	)
 	{
 		gchar* help;
@@ -189,15 +205,17 @@ main (gint argc, gchar** argv)
 	{
 		path = g_build_filename(g_get_system_config_dirs()[0], "julea", "julea", NULL);
 	}
-	else if (argc > 1)
+
+	if (opt_print)
 	{
-		path = g_strdup(argv[1]);
+		ret = read_config(path);
+	}
+	else
+	{
+		ret = write_config(path);
 	}
 
-	if (!write_config(path))
-	{
-		return 1;
-	}
+	g_free(path);
 
-	return 0;
+	return (ret) ? 0 : 1;
 }
