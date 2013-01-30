@@ -28,6 +28,7 @@
 #include <julea-config.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <glib-unix.h>
 #include <glib-object.h>
 #include <gio/gio.h>
@@ -401,9 +402,58 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	return TRUE;
 }
 
+static
+gboolean
+jd_daemon (void)
+{
+	gint fd;
+	pid_t pid;
+
+	pid = fork();
+
+	if (pid > 0)
+	{
+		_exit(0);
+	}
+	else if (pid == -1)
+	{
+		return FALSE;
+	}
+
+	if (setsid() == -1)
+	{
+		return FALSE;
+	}
+
+	if (g_chdir("/") == -1)
+	{
+		return FALSE;
+	}
+
+	fd = open("/dev/null", O_RDWR);
+
+	if (fd == -1)
+	{
+		return FALSE;
+	}
+
+	if (dup2(fd, STDIN_FILENO) == -1 || dup2(fd, STDOUT_FILENO) == -1 || dup2(fd, STDERR_FILENO) == -1)
+	{
+		return FALSE;
+	}
+
+	if (fd > 2)
+	{
+		close(fd);
+	}
+
+	return TRUE;
+}
+
 int
 main (int argc, char** argv)
 {
+	gboolean opt_daemon = FALSE;
 	gint opt_port = 4711;
 
 	JConfiguration* configuration;
@@ -416,7 +466,8 @@ main (int argc, char** argv)
 	gchar* path;
 
 	GOptionEntry entries[] = {
-		{ "port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
+		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
+		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -441,6 +492,11 @@ main (int argc, char** argv)
 	}
 
 	g_option_context_free(context);
+
+	if (opt_daemon && !jd_daemon())
+	{
+		return 1;
+	}
 
 	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
 
