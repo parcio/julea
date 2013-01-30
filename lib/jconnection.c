@@ -37,12 +37,10 @@
 
 #include <mongo.h>
 
-#ifdef J_USE_NODELAY
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#endif
 
 #include <jconfiguration.h>
 #include <jconnection.h>
@@ -254,12 +252,6 @@ j_connection_connect (JConnection* connection)
 
 	for (i = 0; i < connection->sockets_len; i++)
 	{
-#ifdef J_USE_NODELAY
-		GSocket* socket_;
-		gint fd;
-		gint flag = 1;
-#endif
-
 		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, NULL);
 
 		if (connection->sockets[i] == NULL)
@@ -267,12 +259,7 @@ j_connection_connect (JConnection* connection)
 			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
 		}
 
-#ifdef J_USE_NODELAY
-		socket_ = g_socket_connection_get_socket(connection->sockets[i]);
-		fd = g_socket_get_fd(socket_);
-
-		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
-#endif
+		j_connection_use_nodelay(connection->sockets[i]);
 
 		ret = ret && (connection->sockets[i] != NULL);
 	}
@@ -462,6 +449,20 @@ j_connection_receive_data (JConnection* connection, guint i, gpointer data, gsiz
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 
 	return ret;
+}
+
+void
+j_connection_use_nodelay (GSocketConnection* connection)
+{
+	gint const flag = 1;
+
+	GSocket* socket_;
+	gint fd;
+
+	socket_ = g_socket_connection_get_socket(connection);
+	fd = g_socket_get_fd(socket_);
+
+	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
 }
 
 /**

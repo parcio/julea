@@ -50,4 +50,6 @@ J_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpoin
 J_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*);
 J_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
 
+J_GNUC_INTERNAL void j_connection_use_nodelay (GSocketConnection*);
+
 #endif

@@ -38,6 +38,7 @@
 
 #include <jcache-internal.h>
 #include <jconfiguration.h>
+#include <jconnection-internal.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
 #include <jthread-internal.h>
@@ -76,6 +77,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	(void)service;
 	(void)source_object;
 	(void)user_data;
+
+	j_connection_use_nodelay(connection);
 
 	thread = j_thread_new(g_thread_self(), G_STRFUNC);
 	cache = j_cache_new(J_MIB(50));
