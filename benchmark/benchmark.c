@@ -82,13 +82,13 @@ j_benchmark_get_semantics (void)
 
 		if (g_str_has_prefix(parts[i], "atomicity="))
 		{
-			if (g_strcmp0(value, "operation") == 0)
+			if (g_strcmp0(value, "batch") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_BATCH);
+			}
+			else if (g_strcmp0(value, "operation") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
-			}
-			else if (g_strcmp0(value, "sub-operation") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_SUB_OPERATION);
 			}
 			else if (g_strcmp0(value, "none") == 0)
 			{

@@ -114,7 +114,7 @@ j_semantics_new (JSemanticsTemplate template)
 		case J_SEMANTICS_TEMPLATE_DEFAULT:
 			break;
 		case J_SEMANTICS_TEMPLATE_POSIX:
-			semantics->atomicity = J_SEMANTICS_ATOMICITY_SUB_OPERATION;
+			semantics->atomicity = J_SEMANTICS_ATOMICITY_OPERATION;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
