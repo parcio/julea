@@ -195,6 +195,7 @@ struct JItem
 	struct
 	{
 		guint flags;
+		guint64 age;
 
 		/**
 		 * The size.
@@ -416,6 +417,7 @@ j_item_new (gchar const* name)
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
 	item->status.flags = J_ITEM_STATUS_ALL;
+	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
 	item->status.created = NULL;
@@ -701,6 +703,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item->name = NULL;
 	item->credentials = j_credentials_new();
 	item->status.flags = J_ITEM_STATUS_NONE;
+	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;
 	item->status.created = NULL;
@@ -865,11 +868,13 @@ j_item_deserialize (JItem* item, bson const* b)
 		{
 			item->status.size = bson_iterator_long(&iterator);
 			item->status.flags |= J_ITEM_STATUS_SIZE;
+			item->status.age = g_get_real_time();
 		}
 		else if (g_strcmp0(key, "ModificationTime") == 0)
 		{
 			item->status.modification_time = bson_iterator_long(&iterator);
 			item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
+			item->status.age = g_get_real_time();
 		}
 	}
 
@@ -933,6 +938,7 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
+	item->status.age = g_get_real_time();
 	item->status.modification_time = MAX(item->status.modification_time, modification_time);
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -955,6 +961,7 @@ j_item_set_size (JItem* item, guint64 size)
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	item->status.flags |= J_ITEM_STATUS_SIZE;
+	item->status.age = g_get_real_time();
 	item->status.size = size;
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -1354,6 +1361,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
+	JSemantics* semantics;
+	gint semantics_consistency;
 	guint n;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -1385,6 +1394,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	}
 
 	iterator = j_list_iterator_new(operations);
+	semantics = j_batch_get_semantics(batch);
+	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
 
 	while (j_list_iterator_next(iterator))
 	{
@@ -1398,6 +1409,14 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		if (flags == J_ITEM_STATUS_NONE)
 		{
 			continue;
+		}
+
+		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
+		{
+			if ((flags & item->status.flags) == flags && item->status.age >= (guint64)g_get_real_time() - G_USEC_PER_SEC)
+			{
+				continue;
+			}
 		}
 
 		if (FALSE)
