@@ -29,7 +29,7 @@ set -e
 
 usage ()
 {
-	echo "Usage: $0 root start|stop"
+	echo "Usage: ${0##*/} root start|stop"
 	exit 1
 }
 
@@ -39,11 +39,11 @@ test -n "$2" || usage
 ROOT="$1"
 MODE="$2"
 
-BUILD="${ROOT}/build"
+BUILD_PATH="${ROOT}/build"
 MONGO_PATH='/tmp/julea-mongo'
 
-export PATH="${BUILD}/daemon:${BUILD}/tools:${ROOT}/external/mongodb-server/bin:${PATH}"
-export LD_LIBRARY_PATH="${BUILD}/lib"
+export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:${ROOT}/external/mongodb-server/bin:${PATH}"
+export LD_LIBRARY_PATH="${BUILD_PATH}/lib"
 
 DATA=$(julea-config --local --print | grep ^data=)
 METADATA=$(julea-config --local --print | grep ^metadata=)
