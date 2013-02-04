@@ -41,7 +41,7 @@ static
 gchar*
 _benchmark_lock (gboolean acquire, gboolean add)
 {
-	guint const n = (add) ? 1500 : 3000;
+	guint const n = 3000;
 
 	JCollection* collection;
 	JItem* item;
@@ -77,12 +77,14 @@ _benchmark_lock (gboolean acquire, gboolean add)
 
 		if (add)
 		{
-			for (guint j = 0; j < n; j++)
+			for (guint j = 0; j < 10; j++)
 			{
-				j_lock_add(lock, j);
+				/* Avoid overlap. */
+				j_lock_add(lock, n + (i * 10) + j);
 			}
 		}
 
+		j_lock_add(lock, i);
 		j_lock_acquire(lock);
 		j_list_append(list, lock);
 	}

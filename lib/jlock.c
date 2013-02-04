@@ -220,10 +220,10 @@ j_lock_acquire (JLock* lock)
 	bson_init(index);
 	bson_append_int(index, "Item", 1);
 	// FIXME speed
-	//bson_append_int(index, "Blocks", 1);
+	bson_append_int(index, "Blocks", 1);
 	bson_finish(index);
 
-	mongo_create_index(connection, j_collection_collection_locks(collection), index, 0, NULL);
+	mongo_create_index(connection, j_collection_collection_locks(collection), index, MONGO_INDEX_UNIQUE, NULL);
 	lock->acquired = (mongo_insert(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	bson_destroy(index);
