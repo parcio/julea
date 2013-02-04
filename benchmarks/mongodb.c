@@ -66,12 +66,11 @@ static guint stat_read = 0;
 static guint stat_update = 0;
 static guint stat_write = 0;
 
+static gchar* opt_host = NULL;
 static gboolean opt_sync = FALSE;
 static gint opt_threads = 1;
 
-#ifdef HAVE_MPI
-static gint mpi_rank;
-#endif
+static gint process_id = 0;
 
 static
 gboolean
@@ -103,20 +102,17 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 	update = g_atomic_int_and(&stat_update, 0);
 	write = g_atomic_int_and(&stat_write, 0);
 
-	if (counter == 0)
+	if (counter == 0 && process_id == 0)
 	{
 #ifdef HAVE_MPI
-		if (mpi_rank == 0)
-		{
-			printf("rank    delete      read    update     write     total\n");
-		}
+		printf("process    delete      read    update     write     total\n");
 #else
 		printf("    delete      read    update     write     total\n");
 #endif
 	}
 
 #ifdef HAVE_MPI
-	printf("%4d%10d%10d%10d%10d%10d\n", mpi_rank, delete, read, update, write, delete + read + update + write);
+	printf("%7d%10d%10d%10d%10d%10d\n", process_id, delete, read, update, write, delete + read + update + write);
 #else
 	printf("%10d%10d%10d%10d%10d\n", delete, read, update, write, delete + read + update + write);
 #endif
@@ -336,15 +332,15 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 
 	thread_data.id = g_atomic_int_add(&thread_id, 1);
 
-	thread_data.ns.db = g_strdup_printf("JULEA%d", thread_data.id);
-	thread_data.ns.collection = g_strdup_printf("Benchmark%d", thread_data.id);
+	thread_data.ns.db = g_strdup_printf("benchmark%d", process_id);
+	thread_data.ns.collection = g_strdup_printf("benchmark%d", thread_data.id);
 	thread_data.ns.full = g_strdup_printf("%s.%s", thread_data.ns.db, thread_data.ns.collection);
 
 	thread_data.rand = g_rand_new_with_seed(42 + thread_data.id);
 
 	mongo_init(thread_data.connection);
 
-	if (mongo_client(thread_data.connection, "localhost", 27017) != MONGO_OK)
+	if (mongo_client(thread_data.connection, opt_host, 27017) != MONGO_OK)
 	{
 		goto end;
 	}
@@ -407,6 +403,7 @@ main (int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
+		{ "host", 'h', 0, G_OPTION_ARG_STRING, &opt_host, "MongoDB host", "localhost" },
 		{ "sync", 's', 0, G_OPTION_ARG_NONE, &opt_sync, "Whether to sync", NULL },
 		{ "threads", 't', 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
@@ -426,7 +423,7 @@ main (int argc, char** argv)
 			return 1;
 		}
 
-		MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+		MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
 	}
 #endif
 
@@ -447,6 +444,11 @@ main (int argc, char** argv)
 	}
 
 	g_option_context_free(context);
+
+	if (opt_host == NULL)
+	{
+		opt_host = g_strdup("localhost");
+	}
 
 	threads = g_new(GThread*, opt_threads);
 
@@ -474,6 +476,8 @@ main (int argc, char** argv)
 	g_main_loop_unref(main_loop);
 
 	g_free(threads);
+
+	g_free(opt_host);
 
 #ifdef HAVE_MPI
 	MPI_Finalize();
