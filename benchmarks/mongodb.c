@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <julea-config.h>
+
 #include <glib.h>
 #include <glib-unix.h>
 
@@ -32,6 +34,10 @@
 #include <mongo.h>
 
 #include <string.h>
+
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 
 struct MongoNS
 {
@@ -62,6 +68,10 @@ static guint stat_write = 0;
 
 static gboolean opt_sync = FALSE;
 static gint opt_threads = 1;
+
+#ifdef HAVE_MPI
+static gint mpi_rank;
+#endif
 
 static
 gboolean
@@ -95,10 +105,21 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 
 	if (counter == 0)
 	{
+#ifdef HAVE_MPI
+		if (mpi_rank == 0)
+		{
+			printf("rank    delete      read    update     write     total\n");
+		}
+#else
 		printf("    delete      read    update     write     total\n");
+#endif
 	}
 
+#ifdef HAVE_MPI
+	printf("%4d%10d%10d%10d%10d%10d\n", mpi_rank, delete, read, update, write, delete + read + update + write);
+#else
 	printf("%10d%10d%10d%10d%10d\n", delete, read, update, write, delete + read + update + write);
+#endif
 
 	counter = (counter + 1) % 20;
 
@@ -394,6 +415,21 @@ main (int argc, char** argv)
 	GMainLoop* main_loop;
 	GThread** threads;
 
+#ifdef HAVE_MPI
+	{
+		gint thread_provided;
+
+		MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &thread_provided);
+
+		if (thread_provided != MPI_THREAD_FUNNELED)
+		{
+			return 1;
+		}
+
+		MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+	}
+#endif
+
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
@@ -438,6 +474,10 @@ main (int argc, char** argv)
 	g_main_loop_unref(main_loop);
 
 	g_free(threads);
+
+#ifdef HAVE_MPI
+	MPI_Finalize();
+#endif
 
 	return 0;
 }

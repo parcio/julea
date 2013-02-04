@@ -2,6 +2,8 @@
 
 from waflib import Context, Utils
 
+import os
+
 top = '.'
 out = 'build'
 
@@ -25,6 +27,15 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-std=c99']
 
 	#ctx.check_large_file()
+
+	ctx.find_program(
+		'mpicc',
+		var = 'MPICC',
+		mandatory = False
+	)
+
+	if ctx.env.MPICC:
+		ctx.define('HAVE_MPI', 1)
 
 	ctx.check_cfg(
 		package = 'gio-2.0',
@@ -226,12 +237,22 @@ def build (ctx):
 		install_path = None
 	)
 
+	benchmark_env = ctx.env.derive()
+
+	if ctx.env.MPICC:
+		benchmark_env.CC = ctx.env.MPICC
+		benchmark_env.LINK_CC = ctx.env.MPICC
+		benchmark_env.CC_NAME = os.path.basename(benchmark_env.CC)
+		benchmark_env.COMPILER_CC = os.path.basename(benchmark_env.CC)
+
 	for benchmark in ('mongodb',):
 		# Benchmarks
 		ctx.program(
 			source = 'benchmarks/%s.c' % (benchmark,),
 			target = 'benchmarks/%s' % (benchmark,),
 			use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB'],
+			includes = ['include'],
+			env = benchmark_env,
 			install_path = None
 		)
 

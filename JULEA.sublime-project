@@ -14,6 +14,7 @@
 	    [
 	        "-I/usr/include/glib-2.0",
 	        "-I/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+	        "-I/usr/include/openmpi",
 	        "-I${home}/Projekte/julea/include",
 	        "-I${home}/Projekte/julea/build/include",
 	        "-I${home}/Projekte/julea/external/mongodb-client/include",
