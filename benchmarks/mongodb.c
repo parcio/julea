@@ -380,6 +380,9 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 	}
 
 end:
+	mongo_cmd_drop_collection(thread_data.connection, thread_data.ns.db, thread_data.ns.collection, NULL);
+	mongo_cmd_drop_db(thread_data.connection, thread_data.ns.db);
+
 	if (mongo_check_connection(thread_data.connection) == MONGO_OK)
 	{
 		mongo_disconnect(thread_data.connection);

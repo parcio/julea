@@ -1,0 +1,301 @@
+/*
+ * Copyright (c) 2010-2013 Michael Kuhn
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <julea-config.h>
+
+#include <glib.h>
+#include <glib-unix.h>
+
+#include <julea.h>
+
+#include <jsemantics-internal.h>
+
+#include <string.h>
+
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
+
+static gchar* opt_semantics = NULL;
+static gchar* opt_template = NULL;
+static gint opt_threads = 1;
+
+static JSemantics* semantics = NULL;
+
+static guint kill_threads = 0;
+static guint thread_id = 0;
+
+static guint stat_read = 0;
+static guint stat_update = 0;
+static guint stat_write = 0;
+
+static gint process_id = 0;
+static gint process_num = 1;
+
+static
+gboolean
+handle_signal (gpointer data)
+{
+	GMainLoop* main_loop = data;
+
+	if (g_main_loop_is_running(main_loop))
+	{
+		g_main_loop_quit(main_loop);
+	}
+
+	return FALSE;
+}
+
+static
+gboolean
+print_statistics (G_GNUC_UNUSED gpointer user_data)
+{
+	static guint counter = 0;
+
+	guint read;
+	guint update;
+	guint write;
+
+	read = g_atomic_int_and(&stat_read, 0);
+	update = g_atomic_int_and(&stat_update, 0);
+	write = g_atomic_int_and(&stat_write, 0);
+
+	if (counter == 0 && process_id == 0)
+	{
+#ifdef HAVE_MPI
+		printf("process      read    update     write     total\n");
+#else
+		printf("      read    update     write     total\n");
+#endif
+	}
+
+#ifdef HAVE_MPI
+	printf("%7d%10d%10d%10d%10d\n", process_id, read, update, write, read + update + write);
+#else
+	printf("%10d%10d%10d%10d\n", read, update, write, read + update + write);
+#endif
+
+	counter = (counter + 1) % 20;
+
+	return TRUE;
+}
+
+static
+gpointer
+benchmark_thread (G_GNUC_UNUSED gpointer data)
+{
+	guint64 const block_size = 4096;
+	gchar buf[block_size];
+
+	JBatch* batch;
+	JCollection* collection;
+	JItem* item;
+	JStore* store;
+	guint id;
+	guint64 offset = 0;
+
+	id = g_atomic_int_add(&thread_id, 1);
+
+#ifdef HAVE_MPI
+	if (id == 0)
+	{
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+#endif
+
+	batch = j_batch_new(semantics);
+
+	j_get_store(&store, "benchmark", batch);
+	j_batch_execute(batch);
+
+	j_store_get_collection(store, &collection, "benchmark", batch);
+	j_batch_execute(batch);
+
+	j_collection_get_item(collection, &item, "benchmark", J_ITEM_STATUS_NONE, batch);
+	j_batch_execute(batch);
+
+	if (item == NULL)
+	{
+		g_error("ERROR %d\n", process_id);
+	}
+
+	while (TRUE)
+	{
+		if (g_atomic_int_get(&kill_threads) == 1)
+		{
+			goto end;
+		}
+
+		for (guint i = 0; i < 100; i++)
+		{
+			guint64 bytes;
+
+			j_item_write(item, buf, block_size, block_size * ((process_num * opt_threads * offset) + ((process_id * opt_threads) + id)), &bytes, batch);
+			j_batch_execute(batch);
+
+			g_atomic_int_add(&stat_write, bytes);
+
+			offset++;
+		}
+
+#ifdef HAVE_MPI
+		if (id == 0)
+		{
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
+#endif
+	}
+
+end:
+	j_store_delete_collection(store, collection, batch);
+	j_delete_store(store, batch);
+	j_collection_unref(collection);
+
+	j_store_unref(store);
+	j_collection_unref(collection);
+	j_item_unref(item);
+
+	j_batch_execute(batch);
+
+	return NULL;
+}
+
+int
+main (int argc, char** argv)
+{
+	GError* error = NULL;
+	GOptionContext* context;
+
+	GOptionEntry entries[] = {
+		{ "semantics", 0, 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
+		{ "template", 0, 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
+		{ "threads", 0, 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
+		{ NULL, 0, 0, 0, NULL, NULL, NULL }
+	};
+
+	GMainLoop* main_loop;
+	GThread** threads;
+
+#ifdef HAVE_MPI
+	{
+		gint thread_provided;
+
+		MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &thread_provided);
+
+		if (thread_provided != MPI_THREAD_SERIALIZED)
+		{
+			return 1;
+		}
+
+		MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
+		MPI_Comm_size(MPI_COMM_WORLD, &process_num);
+	}
+#endif
+
+	context = g_option_context_new(NULL);
+	g_option_context_add_main_entries(context, entries, NULL);
+
+	if (!g_option_context_parse(context, &argc, &argv, &error))
+	{
+		g_option_context_free(context);
+
+		if (error)
+		{
+			g_printerr("%s\n", error->message);
+			g_error_free(error);
+		}
+
+		return 1;
+	}
+
+	g_option_context_free(context);
+
+	semantics = j_semantics_parse(opt_template, opt_semantics);
+
+	j_init(&argc, &argv);
+
+	if (process_id == 0)
+	{
+		JBatch* batch;
+		JCollection* collection;
+		JItem* item;
+		JStore* store;
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+		store = j_store_new("benchmark");
+		collection = j_collection_new("benchmark");
+		item = j_item_new("benchmark");
+
+		j_create_store(store, batch);
+		j_store_create_collection(store, collection, batch);
+		j_collection_create_item(collection, item, batch);
+
+		j_item_unref(item);
+		j_collection_unref(collection);
+		j_store_unref(store);
+
+		j_batch_execute(batch);
+
+		j_batch_unref(batch);
+	}
+
+	threads = g_new(GThread*, opt_threads);
+
+	for (gint i = 0; i < opt_threads; i++)
+	{
+		threads[i] = g_thread_new("test", benchmark_thread, NULL);
+	}
+
+	main_loop = g_main_loop_new(NULL, FALSE);
+	g_timeout_add_seconds(1, print_statistics, NULL);
+
+	g_unix_signal_add(SIGHUP, handle_signal, main_loop);
+	g_unix_signal_add(SIGINT, handle_signal, main_loop);
+	g_unix_signal_add(SIGTERM, handle_signal, main_loop);
+
+	g_main_loop_run(main_loop);
+
+	g_atomic_int_set(&kill_threads, 1);
+
+	for (gint i = 0; i < opt_threads; i++)
+	{
+		g_thread_join(threads[i]);
+	}
+
+	g_main_loop_unref(main_loop);
+
+	g_free(threads);
+
+	j_fini();
+
+#ifdef HAVE_MPI
+	MPI_Finalize();
+#endif
+
+	return 0;
+}

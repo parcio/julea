@@ -245,13 +245,14 @@ def build (ctx):
 		benchmark_env.CC_NAME = os.path.basename(benchmark_env.CC)
 		benchmark_env.COMPILER_CC = os.path.basename(benchmark_env.CC)
 
-	for benchmark in ('mongodb',):
+	for benchmark in ('mongodb', 'small-access'):
 		# Benchmarks
 		ctx.program(
 			source = 'benchmarks/%s.c' % (benchmark,),
 			target = 'benchmarks/%s' % (benchmark,),
-			use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB'],
+			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB'],
 			includes = ['include'],
+			defines = ['J_ENABLE_INTERNAL'],
 			env = benchmark_env,
 			install_path = None
 		)

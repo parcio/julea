@@ -33,144 +33,22 @@
 
 #include <julea.h>
 
+#include <jsemantics-internal.h>
+
 #include "benchmark.h"
 
 gchar* opt_path = NULL;
 gchar* opt_semantics = NULL;
 gchar* opt_template = NULL;
 
+JSemantics* j_benchmark_semantics = NULL;
+
 GTimer* j_benchmark_timer = NULL;
 
 JSemantics*
 j_benchmark_get_semantics (void)
 {
-	JSemantics* semantics;
-	gchar** parts;
-	guint parts_len;
-
-	if (g_strcmp0(opt_template, "posix") == 0)
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
-	}
-	else if (g_strcmp0(opt_template, "checkpoint") == 0)
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
-	}
-	else
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	}
-
-	if (opt_semantics == NULL)
-	{
-		return semantics;
-	}
-
-	parts = g_strsplit(opt_semantics, ",", 0);
-	parts_len = g_strv_length(parts);
-
-	for (guint i = 0; i < parts_len; i++)
-	{
-		gchar const* value;
-
-		if ((value = strchr(parts[i], '=')) == NULL)
-		{
-			continue;
-		}
-
-		value++;
-
-		if (g_str_has_prefix(parts[i], "atomicity="))
-		{
-			if (g_strcmp0(value, "batch") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_BATCH);
-			}
-			else if (g_strcmp0(value, "operation") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "concurrency="))
-		{
-			if (g_strcmp0(value, "overlapping") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
-			}
-			else if (g_strcmp0(value, "non-overlapping") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "consistency="))
-		{
-			if (g_strcmp0(value, "immediate") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
-			}
-			else if (g_strcmp0(value, "eventual") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "persistency="))
-		{
-			if (g_strcmp0(value, "immediate") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
-			}
-			else if (g_strcmp0(value, "eventual") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "safety="))
-		{
-			if (g_strcmp0(value, "storage") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_STORAGE);
-			}
-			else if (g_strcmp0(value, "network") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NETWORK);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "security="))
-		{
-			if (g_strcmp0(value, "strict") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_NONE);
-			}
-		}
-	}
-
-	g_strfreev(parts);
-
-	return semantics;
+	return j_benchmark_semantics;
 }
 
 void
@@ -217,7 +95,6 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 int
 main (int argc, char** argv)
 {
-	JSemantics* semantics;
 	GError* error = NULL;
 	GOptionContext* context;
 
@@ -248,7 +125,7 @@ main (int argc, char** argv)
 
 	j_init(&argc, &argv);
 
-	semantics = j_benchmark_get_semantics();
+	j_benchmark_semantics = j_semantics_parse(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();
 
 	benchmark_background_operation();
@@ -259,7 +136,7 @@ main (int argc, char** argv)
 	benchmark_message();
 
 	g_timer_destroy(j_benchmark_timer);
-	j_semantics_unref(semantics);
+	j_semantics_unref(j_benchmark_semantics);
 
 	j_fini();
 
