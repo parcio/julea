@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <jtrace-internal.h>
 
@@ -50,6 +51,10 @@
 static gchar* jd_backend_path = NULL;
 static JZFSPool* pool = NULL;
 static JZFSObjectSet* object_set = NULL;
+leveldb_t *db;
+leveldb_options_t *options;
+leveldb_readoptions_t *roptions;
+leveldb_writeoptions_t *woptions;
 
 G_MODULE_EXPORT
 gboolean
@@ -57,27 +62,42 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 {
 	//gchar* parent;
 	gchar* path;
-	JZFSObject* object;	
-	
+	JZFSObject* object;
+	int key_len;
+	int value_len;
+	char *err = NULL;
+	char *key = NULL;
+	char *value = NULL;
+		
+	printf("in backend_create\n");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
 	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE);
-	printf("**********************vor object created.**************************\n");
 	object = j_zfs_object_create(object_set); 
-	printf("**********************object created.**************************\n");
-	
-	
-	/*parent = g_path_get_dirname(path);
-	g_mkdir_with_parents(parent, 0700);
-	g_free(parent);
-	*/
 	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE, 0, 0);
 
-	//Object-ID in Datenbank:	
 	guint64 object_id = j_zfs_get_object_id(object);
+	printf("Object created.\n");
 
+	//write object_id in db:
+	key = path; 
+	key_len = strlen(key);	
+	value = g_strdup_printf("%" G_GUINT64_FORMAT, object_id);
+	value_len = strlen(value);
+
+	woptions = leveldb_writeoptions_create();
+	leveldb_put(db, woptions, key, key_len, value, value_len, &err);
+	if(err != NULL) {
+		fprintf(stderr, "Write failed.\n");
+		return(1);
+	}
+	leveldb_free(err);
+	err = NULL;
+	printf("Wrote in db: \n key: %s, value: %s\n", key, value);	
+	g_free(value);
+	
 	bf->path = path;
 	bf->user_data = object;
 
@@ -90,6 +110,7 @@ G_MODULE_EXPORT
 gboolean
 backend_delete (JBackendFile* bf)
 {
+	printf("in backend_delete\n");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE);
@@ -106,13 +127,34 @@ gboolean
 backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* path;
-	JZFSObject* object = bf->user_data; //funktioniert so nicht
-	guint64 object_id = j_zfs_get_object_id(object);
-	//Datenbank: key: store_collection_item -> value: id
+	char *err = NULL;
+	JZFSObject* object; 
+	guint64 object_id; 
+	char *value;
+	char *key; 
+	int key_len; 
+	size_t read_len; 
+	printf("in backend_open\n");
 
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+	key = path;
+	key_len = strlen(key);
+
+	//read from db
+	roptions = leveldb_readoptions_create();
+	value = leveldb_get(db, roptions, key, key_len, &read_len, &err);
+	
+	if(err != NULL) {
+		fprintf(stderr, "Read failed.\n");
+		return(1);
+	}
+	
+	printf("Read from db:\n key: %s, value: %s \n", key, value);
+	leveldb_free(err);
+	err = NULL;
+	object_id = g_ascii_strtoull(value, NULL, 10);
 
 	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_OPEN);
 	object = j_zfs_object_open(object_set, object_id);	
@@ -131,8 +173,8 @@ gboolean
 backend_close (JBackendFile* bf)
 {
 	JZFSObject* object = bf->user_data; 
-
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	printf("in backend_close\n");
+	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);	
 
 	if(object != 0)
 	{
@@ -140,6 +182,8 @@ backend_close (JBackendFile* bf)
 		j_zfs_object_close(object);
 		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
+
+	
 
 	g_free(bf->path);
 
@@ -153,7 +197,7 @@ gboolean
 backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	JZFSObject* object = bf->user_data;
-
+	printf("in backend_status\n");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (object != 0)
@@ -201,7 +245,7 @@ gboolean
 backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JZFSObject* object = bf->user_data;
-
+	printf("in backend_read\n");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if (object != 0)
@@ -226,7 +270,7 @@ gboolean
 backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JZFSObject* object = bf->user_data;
-
+	printf("in backend_write\n");
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 
 	if(object != 0)
@@ -280,9 +324,11 @@ backend_fini (void)
 	j_zfs_pool_close(pool);	
 	j_zfs_fini();
 
-	g_free(jd_backend_path);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);*/
+	//close and destroy db
+	
+	g_free(jd_backend_path);
 }
 
 G_MODULE_EXPORT
@@ -291,7 +337,8 @@ backend_thread_init (void)
 {
 	gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
-	
+	char *err = NULL;
+
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
@@ -304,7 +351,15 @@ backend_thread_init (void)
 	}
 
 	//jd_backend_path = g_strdup(path);
-
+	//Open db
+	options = leveldb_options_create();
+	leveldb_options_set_create_if_missing(options, 1);
+	db = leveldb_open(options, "testdb", &err);
+	if(err != NULL) {
+		fprintf(stderr, "Open failed.\n");
+	}
+	leveldb_free(err);
+	err = NULL;
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
@@ -313,13 +368,23 @@ G_MODULE_EXPORT
 void
 backend_thread_fini (void)
 {
+	char *err = NULL;
 	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
 	
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);	
 	j_zfs_fini();
+	
+	//close and destroy db
+	leveldb_close(db);
+	leveldb_destroy_db(options, "testdb", &err);
+	if (err != NULL) {
+		fprintf(stderr, "Destroy failed.\n");
+	}
+	leveldb_free(err);
+	err = NULL;
 
-	g_free(jd_backend_path);
+	//g_free(jd_backend_path);
 
 	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
 }
