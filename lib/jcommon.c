@@ -51,7 +51,6 @@
 #include <joperation-internal.h>
 #include <jstore.h>
 #include <jstore-internal.h>
-#include <jthread-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -76,7 +75,6 @@ struct JCommon
 };
 
 static JCommon* j_common = NULL;
-static JThread* j_thread_global = NULL;
 
 /**
  * Returns whether JULEA has been initialized.
@@ -110,7 +108,6 @@ void
 j_init (gint* argc, gchar*** argv)
 {
 	JCommon* common;
-	JThread* thread;
 	gchar* basename;
 
 	(void)argc;
@@ -129,8 +126,7 @@ j_init (gint* argc, gchar*** argv)
 	j_trace_init(basename);
 	g_free(basename);
 
-	thread = j_thread_new("main");
-	g_atomic_pointer_set(&j_thread_global, thread);
+	j_trace_enter(G_STRFUNC);
 
 	common->configuration = j_configuration_new();
 
@@ -164,9 +160,7 @@ error:
 		j_configuration_unref(common->configuration);
 	}
 
-	g_atomic_pointer_set(&j_thread_global, NULL);
-
-	j_thread_free(thread);
+	j_trace_leave(G_STRFUNC);
 
 	j_trace_fini();
 
@@ -184,7 +178,6 @@ void
 j_fini (void)
 {
 	JCommon* common;
-	JThread* thread;
 
 	g_return_if_fail(j_is_initialized());
 
@@ -199,10 +192,7 @@ j_fini (void)
 	j_connection_unref(common->connection);
 	j_configuration_unref(common->configuration);
 
-	thread = g_atomic_pointer_get(&j_thread_global);
-	g_atomic_pointer_set(&j_thread_global, NULL);
-
-	j_thread_free(thread);
+	j_trace_leave(G_STRFUNC);
 
 	j_trace_fini();
 
