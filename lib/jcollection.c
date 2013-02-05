@@ -42,7 +42,7 @@
 #include <jcommon-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
-#include <jcredentials.h>
+#include <jcredentials-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <jlist.h>

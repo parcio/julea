@@ -38,7 +38,7 @@
 
 #include <bson.h>
 
-#include <jcredentials.h>
+#include <jcredentials-internal.h>
 
 #include <jcommon-internal.h>
 #include <jtrace-internal.h>

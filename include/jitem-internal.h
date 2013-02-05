@@ -39,7 +39,7 @@
 #include <jitem.h>
 
 #include <jcollection.h>
-#include <jcredentials.h>
+#include <jcredentials-internal.h>
 #include <jsemantics.h>
 
 #include <bson.h>

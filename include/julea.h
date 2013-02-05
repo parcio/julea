@@ -45,7 +45,6 @@
 #include <jcollection-iterator.h>
 #include <jcommon.h>
 #include <jconnection.h>
-#include <jcredentials.h>
 #include <jitem.h>
 #include <jlist.h>
 #include <jlist-iterator.h>

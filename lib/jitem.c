@@ -46,7 +46,7 @@
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-internal.h>
-#include <jcredentials.h>
+#include <jcredentials-internal.h>
 #include <jdistribution.h>
 #include <jlist.h>
 #include <jlist-iterator.h>

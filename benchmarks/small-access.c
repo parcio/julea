@@ -85,16 +85,16 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 	if (counter == 0 && process_id == 0)
 	{
 #ifdef HAVE_MPI
-		printf("process     write      read    update     total\n");
+		g_print("process     write      read    update     total\n");
 #else
-		printf("     write      read    update     total\n");
+		g_print("     write      read    update     total\n");
 #endif
 	}
 
 #ifdef HAVE_MPI
-	printf("%7d%10d%10d%10d%10d\n", process_id, write, read, update, write + read + update);
+	g_print("%7d%10d%10d%10d%10d\n", process_id, write, read, update, write + read + update);
 #else
-	printf("%10d%10d%10d%10d\n", write, read, update, write + read + update);
+	g_print("%10d%10d%10d%10d\n", write, read, update, write + read + update);
 #endif
 
 	counter = (counter + 1) % 20;
