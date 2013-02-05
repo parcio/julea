@@ -75,7 +75,7 @@ do
 			julea-daemon --daemon ${PORT_OPTION}
 		elif [ "${MODE}" = 'stop' ]
 		then
-			killall julea-daemon || true
+			killall --verbose julea-daemon || true
 		fi
 	fi
 done

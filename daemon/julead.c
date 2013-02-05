@@ -416,6 +416,7 @@ jd_daemon (void)
 
 	if (pid > 0)
 	{
+		g_printerr("Daemon started as process %d.\n", pid);
 		_exit(0);
 	}
 	else if (pid == -1)
