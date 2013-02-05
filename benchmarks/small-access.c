@@ -42,12 +42,10 @@
 
 static gchar* opt_semantics = NULL;
 static gchar* opt_template = NULL;
-static gint opt_threads = 1;
 
 static JSemantics* semantics = NULL;
 
-static guint kill_threads = 0;
-static guint thread_id = 0;
+static guint kill_thread = 0;
 
 static guint stat_read = 0;
 static guint stat_update = 0;
@@ -87,16 +85,16 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 	if (counter == 0 && process_id == 0)
 	{
 #ifdef HAVE_MPI
-		printf("process      read    update     write     total\n");
+		printf("process     write      read    update     total\n");
 #else
-		printf("      read    update     write     total\n");
+		printf("     write      read    update     total\n");
 #endif
 	}
 
 #ifdef HAVE_MPI
-	printf("%7d%10d%10d%10d%10d\n", process_id, read, update, write, read + update + write);
+	printf("%7d%10d%10d%10d%10d\n", process_id, write, read, update, write + read + update);
 #else
-	printf("%10d%10d%10d%10d\n", read, update, write, read + update + write);
+	printf("%10d%10d%10d%10d\n", write, read, update, write + read + update);
 #endif
 
 	counter = (counter + 1) % 20;
@@ -115,16 +113,10 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 	JCollection* collection;
 	JItem* item;
 	JStore* store;
-	guint id;
 	guint64 offset = 0;
 
-	id = g_atomic_int_add(&thread_id, 1);
-
 #ifdef HAVE_MPI
-	if (id == 0)
-	{
-		MPI_Barrier(MPI_COMM_WORLD);
-	}
+	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 	batch = j_batch_new(semantics);
@@ -145,41 +137,64 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 
 	while (TRUE)
 	{
-		if (g_atomic_int_get(&kill_threads) == 1)
+		if (g_atomic_int_get(&kill_thread) == 1)
 		{
 			goto end;
 		}
 
-		for (guint i = 0; i < 100; i++)
+		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
 
-			j_item_write(item, buf, block_size, block_size * ((process_num * opt_threads * offset) + ((process_id * opt_threads) + id)), &bytes, batch);
+			j_item_write(item, buf, block_size, block_size * ((process_num * (offset + i)) + process_id), &bytes, batch);
 			j_batch_execute(batch);
 
 			g_atomic_int_add(&stat_write, bytes);
-
-			offset++;
 		}
 
 #ifdef HAVE_MPI
-		if (id == 0)
-		{
-			MPI_Barrier(MPI_COMM_WORLD);
-		}
+		MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+		for (guint i = 0; i < 1000; i++)
+		{
+			guint64 bytes;
+			gint other_process = (process_id + 1) % process_num;
+
+			j_item_read(item, buf, block_size, block_size * ((process_num * (offset + i)) + other_process), &bytes, batch);
+			j_batch_execute(batch);
+
+			g_atomic_int_add(&stat_read, bytes);
+		}
+
+#ifdef HAVE_MPI
+		MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+		for (guint i = 0; i < 1000; i++)
+		{
+			guint64 bytes;
+			gint other_process = (process_id + 1) % process_num;
+
+			j_item_write(item, buf, block_size, block_size * ((process_num * (offset + i)) + other_process), &bytes, batch);
+			j_batch_execute(batch);
+
+			g_atomic_int_add(&stat_update, bytes);
+		}
+
+#ifdef HAVE_MPI
+		MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+		offset += 1000;
 	}
 
 end:
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
-	j_collection_unref(collection);
-
 	j_store_unref(store);
 	j_collection_unref(collection);
 	j_item_unref(item);
 
-	j_batch_execute(batch);
+	j_batch_unref(batch);
 
 	return NULL;
 }
@@ -193,12 +208,15 @@ main (int argc, char** argv)
 	GOptionEntry entries[] = {
 		{ "semantics", 0, 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
 		{ "template", 0, 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
-		{ "threads", 0, 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
+	JBatch* batch;
+	JCollection* collection;
+	JItem* item;
+	JStore* store;
 	GMainLoop* main_loop;
-	GThread** threads;
+	GThread* thread;
 
 #ifdef HAVE_MPI
 	{
@@ -240,11 +258,6 @@ main (int argc, char** argv)
 
 	if (process_id == 0)
 	{
-		JBatch* batch;
-		JCollection* collection;
-		JItem* item;
-		JStore* store;
-
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 		store = j_store_new("benchmark");
@@ -255,21 +268,10 @@ main (int argc, char** argv)
 		j_store_create_collection(store, collection, batch);
 		j_collection_create_item(collection, item, batch);
 
-		j_item_unref(item);
-		j_collection_unref(collection);
-		j_store_unref(store);
-
 		j_batch_execute(batch);
-
-		j_batch_unref(batch);
 	}
 
-	threads = g_new(GThread*, opt_threads);
-
-	for (gint i = 0; i < opt_threads; i++)
-	{
-		threads[i] = g_thread_new("test", benchmark_thread, NULL);
-	}
+	thread = g_thread_new("test", benchmark_thread, NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_timeout_add_seconds(1, print_statistics, NULL);
@@ -280,16 +282,26 @@ main (int argc, char** argv)
 
 	g_main_loop_run(main_loop);
 
-	g_atomic_int_set(&kill_threads, 1);
+	g_atomic_int_set(&kill_thread, 1);
 
-	for (gint i = 0; i < opt_threads; i++)
-	{
-		g_thread_join(threads[i]);
-	}
+	g_thread_join(thread);
 
 	g_main_loop_unref(main_loop);
 
-	g_free(threads);
+	if (process_id == 0)
+	{
+		j_collection_delete_item(collection, item, batch);
+		j_store_delete_collection(store, collection, batch);
+		j_delete_store(store, batch);
+
+		j_item_unref(item);
+		j_collection_unref(collection);
+		j_store_unref(store);
+
+		j_batch_execute(batch);
+
+		j_batch_unref(batch);
+	}
 
 	j_fini();
 
