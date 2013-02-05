@@ -80,7 +80,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	j_connection_use_nodelay(connection);
 
-	thread = j_thread_new(g_thread_self(), G_STRFUNC);
+	thread = j_thread_new(G_STRFUNC);
 	cache = j_cache_new(J_MIB(50));
 
 	if (jd_backend_thread_init != NULL)
@@ -518,7 +518,7 @@ main (int argc, char** argv)
 
 	j_trace_init("julea-daemon");
 
-	thread = j_thread_new(NULL, G_STRFUNC);
+	thread = j_thread_new(G_STRFUNC);
 
 	configuration = j_configuration_new();
 
@@ -560,7 +560,7 @@ main (int argc, char** argv)
 
 	j_configuration_unref(configuration);
 
-	jd_statistics = j_statistics_new(NULL);
+	jd_statistics = j_statistics_new(FALSE);
 
 	g_socket_service_start(G_SOCKET_SERVICE(listener));
 	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);

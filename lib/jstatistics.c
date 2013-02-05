@@ -49,9 +49,9 @@
 struct JStatistics
 {
 	/**
-	 * The trace.
+	 * Whether to trace.
 	 **/
-	JTrace* trace;
+	gboolean trace;
 
 	/**
 	 * The number of created files.
@@ -125,17 +125,17 @@ j_statistics_get_type_name (JStatisticsType type)
  * \code
  * JStatistics* s;
  *
- * s = j_statistics_new();
+ * s = j_statistics_new(FALSE);
  * \endcode
  *
  * \return A new statistics. Should be freed with j_statistics_free().
  **/
 JStatistics*
-j_statistics_new (JTrace* trace)
+j_statistics_new (gboolean trace)
 {
 	JStatistics* statistics;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	statistics = g_slice_new(JStatistics);
 	statistics->trace = trace;
@@ -147,7 +147,7 @@ j_statistics_new (JTrace* trace)
 	statistics->bytes_received = 0;
 	statistics->bytes_sent = 0;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return statistics;
 }
@@ -169,11 +169,11 @@ j_statistics_free (JStatistics* statistics)
 {
 	g_return_if_fail(statistics != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	g_slice_free(JStatistics, statistics);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 guint64
@@ -183,7 +183,7 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 
 	g_return_val_if_fail(statistics != NULL, 0);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	switch (type)
 	{
@@ -213,7 +213,7 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 			break;
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return value;
 }
@@ -223,7 +223,7 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
 	g_return_if_fail(statistics != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	switch (type)
 	{
@@ -253,12 +253,12 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 			break;
 	}
 
-	if (statistics->trace != NULL)
+	if (statistics->trace)
 	{
-		j_trace_counter(statistics->trace, j_statistics_get_type_name(type), value);
+		j_trace_counter(j_statistics_get_type_name(type), value);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**

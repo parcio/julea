@@ -48,12 +48,12 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	GFileIOStream* stream;
 	gchar* path;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
 
-	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE);
+	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
 
 	parent = g_file_get_parent(file);
 	g_file_make_directory_with_parents(parent, NULL, NULL);
@@ -61,14 +61,14 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 
 	stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
 
-	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE, 0, 0);
+	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	bf->path = path;
 	bf->user_data = stream;
 
 	g_object_unref(file);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -80,17 +80,17 @@ backend_delete (JBackendFile* bf)
 	gboolean ret = FALSE;
 	GFile* file;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	file = g_file_new_for_path(bf->path);
 
-	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	ret = g_file_delete(file, NULL, NULL);
-	j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE, 0, 0);
+	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	g_object_unref(file);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -103,21 +103,21 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	GFileIOStream* stream;
 	gchar* path;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	file = g_file_new_for_path(path);
 
-	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_OPEN);
+	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
 	stream = g_file_open_readwrite(file, NULL, NULL);
-	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_OPEN, 0, 0);
+	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;
 	bf->user_data = stream;
 
 	g_object_unref(file);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -128,20 +128,20 @@ backend_close (JBackendFile* bf)
 {
 	GFileIOStream* stream = bf->user_data;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
 	{
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_CLOSE);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 		g_io_stream_close(G_IO_STREAM(stream), NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
 
 	g_object_unref(stream);
 
 	g_free(bf->path);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -153,23 +153,23 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 	GFileIOStream* stream = bf->user_data;
 	//GOutputStream* output;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
 	{
 		//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
 		// FIXME
 		//g_output_stream_flush(output, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
 		// FIXME
 		*modification_time = 0;
 		*size = 0;
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -181,18 +181,18 @@ backend_sync (JBackendFile* bf)
 	GFileIOStream* stream = bf->user_data;
 	GOutputStream* output;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
 	{
 		output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SYNC);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
 		g_output_stream_flush(output, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SYNC, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -205,19 +205,19 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 	GInputStream* input;
 	gsize nbytes;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
 	{
 		input = g_io_stream_get_input_stream(G_IO_STREAM(stream));
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SEEK);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
 		g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SEEK, 0, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_READ);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
 		g_input_stream_read_all(input, buffer, length, &nbytes, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_READ, nbytes, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_READ, nbytes, offset);
 
 		if (bytes_read != NULL)
 		{
@@ -225,7 +225,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 		}
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -238,19 +238,19 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 	GOutputStream* output;
 	gsize nbytes;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
 	{
 		output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SEEK);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
 		g_seekable_seek(G_SEEKABLE(stream), offset, G_SEEK_SET, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SEEK, 0, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_WRITE);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
 		g_output_stream_write_all(output, buffer, length, &nbytes, NULL, NULL);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
 
 		if (bytes_written != NULL)
 		{
@@ -258,7 +258,7 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 		}
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (stream != NULL);
 }
@@ -269,7 +269,7 @@ backend_init (gchar const* path)
 {
 	GFile* file;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	jd_backend_path = g_strdup(path);
 
@@ -277,16 +277,16 @@ backend_init (gchar const* path)
 	g_file_make_directory_with_parents(file, NULL, NULL);
 	g_object_unref(file);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 G_MODULE_EXPORT
 void
 backend_fini (void)
 {
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	g_free(jd_backend_path);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }

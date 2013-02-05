@@ -98,7 +98,7 @@ j_lock_serialize (JLock* lock, bson* b)
 	g_return_if_fail(lock != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	bson_init(b);
 	bson_append_oid(b, "_id", &(lock->id));
@@ -116,7 +116,7 @@ j_lock_serialize (JLock* lock, bson* b)
 
 	bson_finish(b);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -144,7 +144,7 @@ j_lock_new (JItem* item)
 
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	lock = g_slice_new(JLock);
 	bson_oid_gen(&(lock->id));
@@ -152,7 +152,7 @@ j_lock_new (JItem* item)
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return lock;
 }
@@ -177,7 +177,7 @@ j_lock_free (JLock* lock)
 {
 	g_return_if_fail(lock != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (lock->acquired)
 	{
@@ -193,7 +193,7 @@ j_lock_free (JLock* lock)
 
 	g_slice_free(JLock, lock);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 gboolean

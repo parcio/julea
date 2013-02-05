@@ -64,14 +64,14 @@ j_credentials_new (void)
 {
 	JCredentials* credentials;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	credentials = g_slice_new(JCredentials);
 	credentials->user = geteuid();
 	credentials->group = getegid();
 	credentials->ref_count = 1;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return credentials;
 }
@@ -81,11 +81,11 @@ j_credentials_ref (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	g_atomic_int_inc(&(credentials->ref_count));
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return credentials;
 }
@@ -95,14 +95,14 @@ j_credentials_unref (JCredentials* credentials)
 {
 	g_return_if_fail(credentials != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
 		g_slice_free(JCredentials, credentials);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 guint32
@@ -110,8 +110,8 @@ j_credentials_get_user (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, 0);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return credentials->user;
 }
@@ -121,8 +121,8 @@ j_credentials_get_group (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, 0);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return credentials->group;
 }
@@ -150,7 +150,7 @@ j_credentials_serialize (JCredentials* credentials)
 
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	b = g_slice_new(bson);
 	bson_init(b);
@@ -158,7 +158,7 @@ j_credentials_serialize (JCredentials* credentials)
 	bson_append_int(b, "Group", credentials->group);
 	bson_finish(b);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -184,7 +184,7 @@ j_credentials_deserialize (JCredentials* credentials, bson const* b)
 	g_return_if_fail(credentials != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	bson_iterator_init(&iterator, b);
 
@@ -204,7 +204,7 @@ j_credentials_deserialize (JCredentials* credentials, bson const* b)
 		}
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**

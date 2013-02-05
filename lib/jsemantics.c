@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include <jsemantics.h>
+#include <jsemantics-internal.h>
 
 /**
  * \defgroup JSemantics Semantics

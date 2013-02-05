@@ -129,7 +129,7 @@ j_init (gint* argc, gchar*** argv)
 	j_trace_init(basename);
 	g_free(basename);
 
-	thread = j_thread_new(NULL, "main");
+	thread = j_thread_new("main");
 	g_atomic_pointer_set(&j_thread_global, thread);
 
 	common->configuration = j_configuration_new();

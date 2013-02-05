@@ -526,25 +526,17 @@ j_trace_fini (void)
 JTrace*
 j_trace_get_thread_default (void)
 {
-	return g_private_get(&j_trace_thread_default);
-}
+	JTrace* trace;
 
-/**
- * Sets the thread-default trace.
- *
- * \author Michael Kuhn
- *
- * \param trace A trace.
- **/
-void
-j_trace_set_thread_default (JTrace* trace)
-{
-	if (trace != NULL)
+	trace = g_private_get(&j_trace_thread_default);
+
+	if (G_UNLIKELY(trace == NULL))
 	{
-		j_trace_ref(trace);
+		trace = j_trace_new(g_thread_self());
+		g_private_replace(&j_trace_thread_default, trace);
 	}
 
-	g_private_replace(&j_trace_thread_default, trace);
+	return trace;
 }
 
 /**
@@ -686,12 +678,12 @@ j_trace_unref (JTrace* trace)
  * \code
  * \endcode
  *
- * \param trace A trace.
  * \param name  A function name.
  **/
 void
-j_trace_enter (JTrace* trace, gchar const* name)
+j_trace_enter (gchar const* name)
 {
+	JTrace* trace;
 	guint64 timestamp;
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -699,8 +691,9 @@ j_trace_enter (JTrace* trace, gchar const* name)
 		return;
 	}
 
-	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
+
+	trace = j_trace_get_thread_default();
 
 	if (!j_trace_function_check(name))
 	{
@@ -759,12 +752,12 @@ j_trace_enter (JTrace* trace, gchar const* name)
  * \code
  * \endcode
  *
- * \param trace A trace.
  * \param name  A function name.
  **/
 void
-j_trace_leave (JTrace* trace, gchar const* name)
+j_trace_leave (gchar const* name)
 {
+	JTrace* trace;
 	guint64 timestamp;
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -772,8 +765,9 @@ j_trace_leave (JTrace* trace, gchar const* name)
 		return;
 	}
 
-	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
+
+	trace = j_trace_get_thread_default();
 
 	if (!j_trace_function_check(name))
 	{
@@ -832,8 +826,9 @@ j_trace_leave (JTrace* trace, gchar const* name)
  * \param op    A file operation.
  **/
 void
-j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
+j_trace_file_begin (gchar const* path, JTraceFileOperation op)
 {
+	JTrace* trace;
 	guint64 timestamp;
 
 	g_return_if_fail(path != NULL);
@@ -843,6 +838,7 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
 		return;
 	}
 
+	trace = j_trace_get_thread_default();
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
@@ -902,8 +898,9 @@ j_trace_file_begin (JTrace* trace, gchar const* path, JTraceFileOperation op)
  * \param offset An offset.
  **/
 void
-j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset)
+j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset)
 {
+	JTrace* trace;
 	guint64 timestamp;
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -911,6 +908,7 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
 		return;
 	}
 
+	trace = j_trace_get_thread_default();
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
@@ -1003,8 +1001,9 @@ j_trace_file_end (JTrace* trace, gchar const* path, JTraceFileOperation op, guin
  * \param counter_value A counter value.
  **/
 void
-j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
+j_trace_counter (gchar const* name, guint64 counter_value)
 {
+	JTrace* trace;
 	guint64 timestamp;
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -1012,9 +1011,9 @@ j_trace_counter (JTrace* trace, gchar const* name, guint64 counter_value)
 		return;
 	}
 
-	g_return_if_fail(trace != NULL);
 	g_return_if_fail(name != NULL);
 
+	trace = j_trace_get_thread_default();
 	timestamp = j_trace_get_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)

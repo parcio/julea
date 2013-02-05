@@ -116,7 +116,7 @@ j_distribution_distribute_round_robin (JDistribution* distribution, guint* index
 	guint64 displacement;
 	guint64 round;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (distribution->length == 0)
 	{
@@ -137,7 +137,7 @@ j_distribution_distribute_round_robin (JDistribution* distribution, guint* index
 	distribution->offset += *new_length;
 
 end:
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -167,7 +167,7 @@ j_distribution_distribute_single_server (JDistribution* distribution, guint* ind
 	guint64 block;
 	guint64 displacement;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (distribution->length == 0)
 	{
@@ -187,7 +187,7 @@ j_distribution_distribute_single_server (JDistribution* distribution, guint* ind
 	distribution->offset += *new_length;
 
 end:
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -214,7 +214,7 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 {
 	JDistribution* distribution;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	distribution = g_slice_new(JDistribution);
 	distribution->configuration = j_configuration_ref(configuration);
@@ -235,7 +235,7 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 			g_warn_if_reached();
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -255,13 +255,13 @@ j_distribution_free (JDistribution* distribution)
 {
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	j_configuration_unref(distribution->configuration);
 
 	g_slice_free(JDistribution, distribution);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -289,7 +289,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	switch (distribution->type)
 	{
@@ -303,7 +303,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 			g_warn_if_reached();
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }

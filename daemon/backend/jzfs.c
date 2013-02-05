@@ -70,13 +70,13 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	char *value = NULL;
 		
 	printf("in backend_create\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
-	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE);
+	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
 	object = j_zfs_object_create(object_set); 
-	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_CREATE, 0, 0);
+	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	guint64 object_id = j_zfs_get_object_id(object);
 	printf("Object created.\n");
@@ -101,7 +101,7 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	bf->path = path;
 	bf->user_data = object;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (object != 0);
 }
@@ -111,13 +111,13 @@ gboolean
 backend_delete (JBackendFile* bf)
 {
 	printf("in backend_delete\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
-	j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	j_zfs_object_destroy(bf->user_data);	
-	j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_DELETE, 0, 0);
+	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -136,7 +136,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	size_t read_len; 
 	printf("in backend_open\n");
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	key = path;
@@ -156,14 +156,14 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	err = NULL;
 	object_id = g_ascii_strtoull(value, NULL, 10);
 
-	j_trace_file_begin(j_trace_get_thread_default(), path, J_TRACE_FILE_OPEN);
+	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
 	object = j_zfs_object_open(object_set, object_id);	
-	j_trace_file_end(j_trace_get_thread_default(), path, J_TRACE_FILE_OPEN, 0, 0);
+	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;
 	bf->user_data = object;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (object != 0);
 }
@@ -174,20 +174,20 @@ backend_close (JBackendFile* bf)
 {
 	JZFSObject* object = bf->user_data; 
 	printf("in backend_close\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);	
+	j_trace_enter(G_STRFUNC);	
 
 	if(object != 0)
 	{
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_CLOSE);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 		j_zfs_object_close(object);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
 
 	
 
 	g_free(bf->path);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -198,22 +198,22 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_status\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (object != 0)
 	{
 		/*struct stat buf;
 
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
 		fstat(fd, &buf);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_STATUS, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 		*/
 	
 		*modification_time = 0; // evtl. zu object_header hinzufügen
 		*size = j_zfs_object_get_size(object);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (object != 0);
 }
@@ -224,16 +224,16 @@ backend_sync (JBackendFile* bf)
 {
 	/*gint fd = GPOINTER_TO_INT(bf->user_data);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (fd != -1)
 	{
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SYNC);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
 		fsync(fd);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_SYNC, 0, 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
 	*/
@@ -246,13 +246,13 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_read\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (object != 0)
 	{
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_READ);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
 		j_zfs_object_read(object, buffer, length, offset); 
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_READ, length, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
 
 		if (bytes_read != NULL)
 		{
@@ -260,7 +260,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 		}
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (object != 0); 
 }
@@ -271,13 +271,13 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_write\n");
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if(object != 0)
 	{
-		j_trace_file_begin(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_WRITE);
+		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
 		j_zfs_object_write(object, buffer, length, offset);
-		j_trace_file_end(j_trace_get_thread_default(), bf->path, J_TRACE_FILE_WRITE, length, offset);
+		j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
 
 		if (bytes_written != NULL)
 		{
@@ -285,7 +285,7 @@ backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 o
 		}
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return (object != 0);
 }
@@ -297,7 +297,7 @@ backend_init (gchar const* path)
 	/*gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
 	
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
 	object_set = j_zfs_object_set_create(pool, object_set_name);
@@ -310,7 +310,7 @@ backend_init (gchar const* path)
 
 	jd_backend_path = g_strdup(path);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);*/
+	j_trace_leave(G_STRFUNC);*/
 	jd_backend_path = g_strdup(path);
 }
 
@@ -318,14 +318,14 @@ G_MODULE_EXPORT
 void
 backend_fini (void)
 {
-	/*j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	/*j_trace_enter(G_STRFUNC);
 	
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);	
 	j_zfs_fini();
 
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);*/
+	j_trace_leave(G_STRFUNC);*/
 	//close and destroy db
 	
 	g_free(jd_backend_path);
@@ -339,7 +339,7 @@ backend_thread_init (void)
 	gchar* object_set_name = "object_set";
 	char *err = NULL;
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
 	object_set = j_zfs_object_set_create(pool, object_set_name);
@@ -361,7 +361,7 @@ backend_thread_init (void)
 	leveldb_free(err);
 	err = NULL;
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 G_MODULE_EXPORT
@@ -369,7 +369,7 @@ void
 backend_thread_fini (void)
 {
 	char *err = NULL;
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 	
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);	
@@ -386,5 +386,5 @@ backend_thread_fini (void)
 
 	//g_free(jd_backend_path);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }

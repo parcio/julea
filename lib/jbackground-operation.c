@@ -111,7 +111,7 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 
 	(void)user_data;
 
-	thread = j_thread_new(g_thread_self(), G_STRFUNC);
+	thread = j_thread_new(G_STRFUNC);
 
 	background_operation->result = (*(background_operation->func))(background_operation->data);
 
@@ -142,7 +142,7 @@ j_background_operation_init (void)
 
 	g_return_if_fail(j_thread_pool == NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 #if GLIB_CHECK_VERSION(2,35,4)
 	thread_count = g_get_num_processors();
@@ -155,7 +155,7 @@ j_background_operation_init (void)
 	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, thread_count, FALSE, NULL);
 	g_atomic_pointer_set(&j_thread_pool, thread_pool);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -174,14 +174,14 @@ j_background_operation_fini (void)
 
 	g_return_if_fail(j_thread_pool != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	thread_pool = g_atomic_pointer_get(&j_thread_pool);
 	g_atomic_pointer_set(&j_thread_pool, NULL);
 
 	g_thread_pool_free(thread_pool, FALSE, TRUE);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -214,7 +214,7 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 
 	g_return_val_if_fail(func != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	background_operation = g_slice_new(JBackgroundOperation);
 	background_operation->func = func;
@@ -228,7 +228,7 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 
 	g_thread_pool_push(j_thread_pool, background_operation, NULL);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return background_operation;
 }
@@ -253,11 +253,11 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 {
 	g_return_val_if_fail(background_operation != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	g_atomic_int_inc(&(background_operation->ref_count));
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return background_operation;
 }
@@ -281,7 +281,7 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 {
 	g_return_if_fail(background_operation != NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
@@ -291,7 +291,7 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 		g_slice_free(JBackgroundOperation, background_operation);
 	}
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -314,7 +314,7 @@ j_background_operation_wait (JBackgroundOperation* background_operation)
 {
 	g_return_val_if_fail(background_operation != NULL, NULL);
 
-	j_trace_enter(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_enter(G_STRFUNC);
 
 	g_mutex_lock(background_operation->mutex);
 
@@ -325,7 +325,7 @@ j_background_operation_wait (JBackgroundOperation* background_operation)
 
 	g_mutex_unlock(background_operation->mutex);
 
-	j_trace_leave(j_trace_get_thread_default(), G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
 
 	return background_operation->result;
 }
