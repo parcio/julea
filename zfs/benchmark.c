@@ -311,6 +311,8 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 void test_with_threads()
 {
 	JZFSObject* object;
+	int i;
+	int counter = 1000;
 	printf("in test_with_threads\n");
 	
 	j_zfs_init();
@@ -319,14 +321,33 @@ void test_with_threads()
 	if (pool == NULL)
 		g_error("pool could not be opened\n");
 	printf("pool opened. \n");
-	/*object_set = j_zfs_object_set_create(pool, "object_set");
+	
+	object_set = j_zfs_object_set_create(pool, "object_set");
 	if (object_set == NULL)
 	{
 		object_set = j_zfs_object_set_open(pool, "object_set");
-	}	
+	}
+	
 	object = j_zfs_object_create(object_set);
+	guint64 id = j_zfs_get_object_id(object);
+	//j_zfs_object_open(object_set, id);
+	
+	//object write x 1000
+	/*for(i=0; i < counter; i++){
+		gchar dummy[] = "Hello world.";
+		gint size = strlen(dummy);
+		j_zfs_object_write(object, dummy, size, 0);
+	}*/
+	
+	//j_zfs_object_close(object);
+
+	//Case 1: open, read x 1000, close
+	//j_zfs_object_open(object_set, id);
+	//j_zfs_object_close(object);
+	//Case 2: (open, read, close) x 4000
+	
 	j_zfs_object_destroy(object);
-	j_zfs_object_set_destroy(object_set);*/
+	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);
 	printf("Pool closed.\n");
 	pthread_mutex_unlock (&pool_mutex);

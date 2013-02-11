@@ -81,6 +81,7 @@ j_list_iterator_new (JList* list)
 
 	g_return_val_if_fail(list != NULL, NULL);
 
+	g_print("XXX %d\n", sizeof(JListIterator));
 	iterator = g_slice_new(JListIterator);
 	iterator->list = j_list_ref(list);
 	iterator->current = j_list_head(iterator->list);
