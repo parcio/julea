@@ -48,7 +48,7 @@ GTimer* j_benchmark_timer = NULL;
 JSemantics*
 j_benchmark_get_semantics (void)
 {
-	return j_benchmark_semantics;
+	return j_semantics_ref(j_benchmark_semantics);
 }
 
 void

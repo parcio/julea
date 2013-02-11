@@ -39,6 +39,8 @@ test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 {
 	JList* list;
 
+	(void)data;
+
 	list = j_list_new(g_free);
 
 	j_list_append(list, g_strdup("0"));
@@ -54,6 +56,8 @@ static
 void
 test_list_iterator_fixture_teardown (JListIterator** iterator, gconstpointer data)
 {
+	(void)data;
+
 	j_list_iterator_free(*iterator);
 }
 
@@ -85,6 +89,8 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 {
 	gchar const* s;
 	gboolean next;
+
+	(void)data;
 
 	next = j_list_iterator_next(*iterator);
 	g_assert(next);
