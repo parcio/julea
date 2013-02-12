@@ -615,7 +615,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 	j_trace_enter(G_STRFUNC);
 
 	operation = j_operation_new(J_OPERATION_ITEM_GET_STATUS);
-	operation->key = NULL;
+	operation->key = item->collection;
 	operation->u.item_get_status.item = j_item_ref(item);
 	operation->u.item_get_status.flags = flags;
 
@@ -1362,6 +1362,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	JListIterator* iterator;
 	JMessage** messages;
 	JSemantics* semantics;
+	gint semantics_concurrency;
 	gint semantics_consistency;
 	guint n;
 
@@ -1395,6 +1396,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 	iterator = j_list_iterator_new(operations);
 	semantics = j_batch_get_semantics(batch);
+	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
 	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
 
 	while (j_list_iterator_next(iterator))
@@ -1419,7 +1421,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			}
 		}
 
-		if (FALSE)
+		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
 		{
 			bson_init(&fields);
 
