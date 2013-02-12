@@ -281,8 +281,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (jd_backend_status(&bf, flags, &modification_time, &size))
 						{
-							// FIXME
-							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
+							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
 
 						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
@@ -331,11 +330,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					reply = j_message_new_reply(message);
-					j_message_add_operation(reply, 7 * sizeof(guint64));
+					j_message_add_operation(reply, 8 * sizeof(guint64));
 
 					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_CREATED);
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_DELETED);
+					j_message_append_8(reply, &value);
+					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_STATED);
 					j_message_append_8(reply, &value);
 					value = j_statistics_get(r_statistics, J_STATISTICS_SYNC);
 					j_message_append_8(reply, &value);

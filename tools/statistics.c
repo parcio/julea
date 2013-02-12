@@ -52,6 +52,7 @@ print_statistics (JStatistics* statistics)
 
 	g_print("  %" G_GUINT64_FORMAT " files created\n", j_statistics_get(statistics, J_STATISTICS_FILES_CREATED));
 	g_print("  %" G_GUINT64_FORMAT " files deleted\n", j_statistics_get(statistics, J_STATISTICS_FILES_DELETED));
+	g_print("  %" G_GUINT64_FORMAT " files stat'ed\n", j_statistics_get(statistics, J_STATISTICS_FILES_STATED));
 	g_print("  %" G_GUINT64_FORMAT " syncs\n", j_statistics_get(statistics, J_STATISTICS_SYNC));
 	g_print("  %s read\n", size_read);
 	g_print("  %s written\n", size_written);
@@ -104,6 +105,10 @@ main (int argc, char** argv)
 		j_statistics_add(statistics_total, J_STATISTICS_FILES_DELETED, value);
 
 		value = j_message_get_8(reply);
+		j_statistics_add(statistics, J_STATISTICS_FILES_STATED, value);
+		j_statistics_add(statistics_total, J_STATISTICS_FILES_STATED, value);
+
+		value = j_message_get_8(reply);
 		j_statistics_add(statistics, J_STATISTICS_SYNC, value);
 		j_statistics_add(statistics_total, J_STATISTICS_SYNC, value);
 
@@ -142,7 +147,6 @@ main (int argc, char** argv)
 		g_print("Total\n");
 		print_statistics(statistics_total);
 	}
-
 
 	j_message_unref(message);
 	j_statistics_free(statistics_total);

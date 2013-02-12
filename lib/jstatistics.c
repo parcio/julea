@@ -64,6 +64,11 @@ struct JStatistics
 	guint64 files_deleted;
 
 	/**
+	 * The number of stat'ed files.
+	 */
+	guint64 files_stated;
+
+	/**
 	 * The number of sync operations.
 	 **/
 	guint64 sync_count;
@@ -99,6 +104,8 @@ j_statistics_get_type_name (JStatisticsType type)
 			return "files_created";
 		case J_STATISTICS_FILES_DELETED:
 			return "files_deleted";
+		case J_STATISTICS_FILES_STATED:
+			return "files_stated";
 		case J_STATISTICS_SYNC:
 			return "sync";
 		case J_STATISTICS_BYTES_READ:
@@ -141,6 +148,7 @@ j_statistics_new (gboolean trace)
 	statistics->trace = trace;
 	statistics->files_created = 0;
 	statistics->files_deleted = 0;
+	statistics->files_stated = 0;
 	statistics->sync_count = 0;
 	statistics->bytes_read = 0;
 	statistics->bytes_written = 0;
@@ -193,6 +201,9 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 		case J_STATISTICS_FILES_DELETED:
 			value = statistics->files_deleted;
 			break;
+		case J_STATISTICS_FILES_STATED:
+			value = statistics->files_stated;
+			break;
 		case J_STATISTICS_SYNC:
 			value = statistics->sync_count;
 			break;
@@ -232,6 +243,9 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 			break;
 		case J_STATISTICS_FILES_DELETED:
 			statistics->files_deleted += value;
+			break;
+		case J_STATISTICS_FILES_STATED:
+			statistics->files_stated += value;
 			break;
 		case J_STATISTICS_SYNC:
 			statistics->sync_count += value;
