@@ -172,7 +172,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						gchar* buf;
 						guint64 length;
 						guint64 offset;
-						guint64 bytes_read;
+						guint64 bytes_read = 0;
 
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
@@ -189,7 +189,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						j_message_add_operation(reply, sizeof(guint64));
 						j_message_append_8(reply, &bytes_read);
-						j_message_add_send(reply, buf, bytes_read);
+
+						if (bytes_read > 0)
+						{
+							j_message_add_send(reply, buf, bytes_read);
+						}
+
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
