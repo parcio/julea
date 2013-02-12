@@ -1167,6 +1167,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	gsize item_len;
 	gsize collection_len;
 	gsize store_len;
+	guint64 max_offset = 0;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1230,6 +1231,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		{
 			continue;
 		}
+
+		max_offset = MAX(max_offset, offset + length);
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_WRITE);
 
@@ -1338,6 +1341,67 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		{
 			j_message_unref(messages[i]);
 		}
+	}
+
+	if (item->status.flags != J_ITEM_STATUS_NONE && FALSE)
+	{
+		bson cond[1];
+		bson op[1];
+		mongo_write_concern write_concern[1];
+		gboolean do_update = FALSE;
+
+		mongo_write_concern_init(write_concern);
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
+		{
+			write_concern->w = 1;
+
+			if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+			{
+				write_concern->j = 1;
+			}
+		}
+
+		mongo_write_concern_finish(write_concern);
+
+		bson_init(cond);
+		bson_append_oid(cond, "_id", &(item->id));
+		bson_finish(cond);
+
+		bson_init(op);
+		bson_append_start_object(op, "$set");
+
+		if (item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		{
+			j_item_set_modification_time(item, g_get_real_time());
+			bson_append_long(op, "ModificationTime", item->status.modification_time);
+			do_update = TRUE;
+			g_print("HAI MTIME\n");
+		}
+
+		if (item->status.flags & J_ITEM_STATUS_SIZE)
+		{
+			if (max_offset > item->status.size)
+			{
+				j_item_set_size(item, max_offset);
+				bson_append_long(op, "Size", item->status.size);
+				do_update = TRUE;
+				g_print("HAI SIZE\n");
+			}
+		}
+
+		bson_append_finish_object(op);
+		bson_finish(op);
+
+		if (do_update)
+		{
+			mongo_update(j_connection_get_connection(connection), j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
+		}
+
+		bson_destroy(cond);
+		bson_destroy(op);
+
+		mongo_write_concern_destroy(write_concern);
 	}
 
 	if (lock != NULL)
