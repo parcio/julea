@@ -69,7 +69,7 @@ j_cmd_list (gchar const** arguments)
 	{
 		JCollectionIterator* iterator;
 
-		iterator = j_collection_iterator_new(j_uri_get_collection(uri), J_ITEM_STATUS_NONE);
+		iterator = j_collection_iterator_new(j_uri_get_collection(uri));
 
 		while (j_collection_iterator_next(iterator))
 		{
