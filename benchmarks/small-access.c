@@ -127,7 +127,7 @@ benchmark_thread (G_GNUC_UNUSED gpointer data)
 	j_store_get_collection(store, &collection, "benchmark", batch);
 	j_batch_execute(batch);
 
-	j_collection_get_item(collection, &item, "benchmark", J_ITEM_STATUS_NONE, batch);
+	j_collection_get_item(collection, &item, "benchmark", batch);
 	j_batch_execute(batch);
 
 	if (item == NULL)

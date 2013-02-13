@@ -52,7 +52,7 @@ gchar const* j_collection_get_name (JCollection*);
 
 void j_collection_create_item (JCollection*, JItem*, JBatch*);
 void j_collection_delete_item (JCollection*, JItem*, JBatch*);
-void j_collection_get_item (JCollection*, JItem**, gchar const*, JItemStatusFlags, JBatch*);
+void j_collection_get_item (JCollection*, JItem**, gchar const*, JBatch*);
 
 /*
 #include "credentials.h"

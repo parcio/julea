@@ -126,7 +126,7 @@ main (int argc, char** argv)
 
 		j_store_iterator_free(siterator);
 
-		citerator = j_collection_iterator_new(first_collection, J_ITEM_STATUS_MODIFICATION_TIME);
+		citerator = j_collection_iterator_new(first_collection);
 		j_collection_unref(first_collection);
 
 		is_first = TRUE;
@@ -134,6 +134,9 @@ main (int argc, char** argv)
 		while (j_collection_iterator_next(citerator))
 		{
 			JItem* item = j_collection_iterator_get(citerator);
+
+			j_item_get_status(item, J_ITEM_STATUS_MODIFICATION_TIME, batch);
+			j_batch_execute(batch);
 
 			g_print("%s (%" G_GUINT64_FORMAT ") ", j_item_get_name(item), j_item_get_modification_time(item));
 

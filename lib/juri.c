@@ -413,7 +413,7 @@ j_uri_get (JURI* uri, GError** error)
 			uri->item = NULL;
 		}
 
-		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, J_ITEM_STATUS_NONE, batch);
+		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, batch);
 		j_batch_execute(batch);
 
 		if (uri->item == NULL)

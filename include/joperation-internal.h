@@ -134,7 +134,6 @@ struct JOperation
 			JCollection* collection;
 			JItem** item;
 			gchar* name;
-			JItemStatusFlags flags;
 		}
 		collection_get_item;
 

@@ -159,7 +159,7 @@ _benchmark_item_delete (gboolean use_batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		j_collection_get_item(collection, &item, name, J_ITEM_STATUS_NONE, get_batch);
+		j_collection_get_item(collection, &item, name, get_batch);
 		j_batch_execute(get_batch);
 		g_free(name);
 

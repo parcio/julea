@@ -275,7 +275,7 @@ j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
  * \param batch      A batch.
  **/
 void
-j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JItemStatusFlags flags, JBatch* batch)
+j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
 	JOperation* operation;
 
@@ -290,7 +290,6 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
 	operation->u.collection_get_item.collection = j_collection_ref(collection);
 	operation->u.collection_get_item.item = item;
 	operation->u.collection_get_item.name = g_strdup(name);
-	operation->u.collection_get_item.flags = flags;
 
 	j_batch_add(batch, operation);
 
@@ -780,7 +779,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.collection_get_item.collection;
 		JItem** item = operation->u.collection_get_item.item;
-		JItemStatusFlags flags = operation->u.collection_get_item.flags;
 		bson b;
 		bson fields;
 		mongo* connection;
@@ -788,20 +786,8 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		gchar const* name = operation->u.collection_get_item.name;
 
 		bson_init(&fields);
-
 		bson_append_int(&fields, "_id", 1);
 		bson_append_int(&fields, "Name", 1);
-
-		if (flags & J_ITEM_STATUS_SIZE)
-		{
-			bson_append_int(&fields, "Size", 1);
-		}
-
-		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-		{
-			bson_append_int(&fields, "ModificationTime", 1);
-		}
-
 		bson_finish(&fields);
 
 		bson_init(&b);

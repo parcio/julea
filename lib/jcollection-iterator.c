@@ -72,7 +72,7 @@ struct JCollectionIterator
  * \return A new JCollectionIterator.
  **/
 JCollectionIterator*
-j_collection_iterator_new (JCollection* collection, JItemStatusFlags flags)
+j_collection_iterator_new (JCollection* collection)
 {
 	JCollectionIterator* iterator;
 	bson b;
@@ -89,20 +89,8 @@ j_collection_iterator_new (JCollection* collection, JItemStatusFlags flags)
 	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(iterator->collection)));
 
 	bson_init(&fields);
-
 	bson_append_int(&fields, "_id", 1);
 	bson_append_int(&fields, "Name", 1);
-
-	if (flags & J_ITEM_STATUS_SIZE)
-	{
-		bson_append_int(&fields, "Size", 1);
-	}
-
-	if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-	{
-		bson_append_int(&fields, "ModificationTime", 1);
-	}
-
 	bson_finish(&fields);
 
 	bson_init(&b);
