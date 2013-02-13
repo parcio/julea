@@ -42,6 +42,7 @@
 #include <jcollection-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <jtrace-internal.h>
@@ -200,9 +201,10 @@ gboolean
 j_lock_acquire (JLock* lock)
 {
 	JCollection* collection;
+	JConnection* connection;
 	bson obj[1];
 	bson index[1];
-	mongo* connection;
+	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 
 	g_return_val_if_fail(lock != NULL, FALSE);
@@ -210,7 +212,8 @@ j_lock_acquire (JLock* lock)
 	j_lock_serialize(lock, obj);
 
 	collection = j_item_get_collection(lock->item);
-	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	mongo_write_concern_init(write_concern);
 	//write_concern->j = 1;
@@ -223,13 +226,15 @@ j_lock_acquire (JLock* lock)
 	bson_append_int(index, "Blocks", 1);
 	bson_finish(index);
 
-	mongo_create_index(connection, j_collection_collection_locks(collection), index, MONGO_INDEX_UNIQUE, NULL);
-	lock->acquired = (mongo_insert(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
+	mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, MONGO_INDEX_UNIQUE, NULL);
+	lock->acquired = (mongo_insert(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	bson_destroy(index);
 	bson_destroy(obj);
 
 	mongo_write_concern_destroy(write_concern);
+
+	j_connection_pool_push(connection);
 
 	return lock->acquired;
 }
@@ -238,15 +243,17 @@ gboolean
 j_lock_release (JLock* lock)
 {
 	JCollection* collection;
+	JConnection* connection;
 	bson obj[1];
-	mongo* connection;
+	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 	g_return_val_if_fail(lock->acquired, FALSE);
 
 	collection = j_item_get_collection(lock->item);
-	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(collection)));
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	mongo_write_concern_init(write_concern);
 	//write_concern->j = 1;
@@ -257,10 +264,12 @@ j_lock_release (JLock* lock)
 	bson_append_oid(obj, "_id", &(lock->id));
 	bson_finish(obj);
 
-	lock->acquired = !(mongo_remove(connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
+	lock->acquired = !(mongo_remove(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	bson_destroy(obj);
 	mongo_write_concern_destroy(write_concern);
+
+	j_connection_pool_push(connection);
 
 	return !(lock->acquired);
 }

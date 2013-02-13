@@ -43,6 +43,7 @@
 #include <jconfiguration.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <jconnection-pool-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jbatch.h>
@@ -67,11 +68,6 @@ struct JCommon
 	 * The configuration.
 	 */
 	JConfiguration* configuration;
-
-	/**
-	 * The connection.
-	 */
-	JConnection* connection;
 };
 
 static JCommon* j_common = NULL;
@@ -116,7 +112,6 @@ j_init (gint* argc, gchar*** argv)
 
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
-	common->connection = NULL;
 
 #if !GLIB_CHECK_VERSION(2,35,1)
 	g_type_init();
@@ -135,14 +130,8 @@ j_init (gint* argc, gchar*** argv)
 		goto error;
 	}
 
-	common->connection = j_connection_new(common->configuration);
-
-	if (!j_connection_connect(common->connection))
-	{
-		goto error;
-	}
-
 	j_background_operation_init();
+	j_connection_pool_init(common->configuration);
 	j_operation_cache_init();
 
 	g_atomic_pointer_set(&j_common, common);
@@ -150,11 +139,6 @@ j_init (gint* argc, gchar*** argv)
 	return;
 
 error:
-	if (common->connection != NULL)
-	{
-		j_connection_unref(common->connection);
-	}
-
 	if (common->configuration != NULL)
 	{
 		j_configuration_unref(common->configuration);
@@ -187,9 +171,6 @@ j_fini (void)
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
 
-	j_connection_disconnect(common->connection);
-
-	j_connection_unref(common->connection);
 	j_configuration_unref(common->configuration);
 
 	j_trace_leave(G_STRFUNC);
@@ -301,27 +282,6 @@ j_configuration (void)
 }
 
 /**
- * Returns the connection.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \return The connection.
- */
-JConnection*
-j_connection (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->connection;
-}
-
-/**
  * Creates stores.
  *
  * \private
@@ -376,6 +336,7 @@ j_create_store_internal (JBatch* batch, JList* operations)
 gboolean
 j_delete_store_internal (JBatch* batch, JList* operations)
 {
+	JConnection* connection;
 	JListIterator* it;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -385,6 +346,7 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 		IsInitialized(true);
 	*/
 
+	connection = j_connection_pool_pop();
 	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
@@ -392,10 +354,11 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JStore* store = operation->u.delete_store.store;
 
-		mongo_cmd_drop_db(j_connection_get_connection(j_store_get_connection(store)), j_store_get_name(store));
+		mongo_cmd_drop_db(j_connection_get_connection(connection), j_store_get_name(store));
 	}
 
 	j_list_iterator_free(it);
+	j_connection_pool_push(connection);
 
 	return TRUE;
 }

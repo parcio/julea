@@ -42,6 +42,7 @@
 #include <jcollection-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <jconnection-pool-internal.h>
 #include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
 #include <jstore.h>
@@ -80,9 +81,10 @@ struct JStoreIterator
 JStoreIterator*
 j_store_iterator_new (JStore* store)
 {
+	JConnection* connection;
 	JStoreIterator* iterator;
 	bson empty;
-	mongo* connection;
+	mongo* mongo_connection;
 
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -91,11 +93,14 @@ j_store_iterator_new (JStore* store)
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
 
-	connection = j_connection_get_connection(j_store_get_connection(iterator->store));
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	bson_empty(&empty);
 
-	iterator->cursor = mongo_find(connection, j_store_collection_collections(iterator->store), &empty, NULL, 0, 0, 0);
+	iterator->cursor = mongo_find(mongo_connection, j_store_collection_collections(iterator->store), &empty, NULL, 0, 0, 0);
+
+	j_connection_pool_push(connection);
 
 	return iterator;
 }

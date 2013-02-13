@@ -46,6 +46,7 @@
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-internal.h>
+#include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
 #include <jdistribution.h>
 #include <jlist.h>
@@ -1011,7 +1012,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		g_assert(operation != NULL);
 		item = operation->u.item_read.item;
 
-		connection = j_store_get_connection(j_collection_get_store(item->collection));
+		connection = j_connection_pool_pop();
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1141,6 +1142,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		j_lock_free(lock);
 	}
 
+	j_connection_pool_push(connection);
+
 	g_free(background_operations);
 	g_free(messages);
 	g_free(buffer_list);
@@ -1192,7 +1195,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		g_assert(operation != NULL);
 		item = operation->u.item_write.item;
 
-		connection = j_store_get_connection(j_collection_get_store(item->collection));
+		connection = j_connection_pool_pop();
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1409,6 +1412,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		j_lock_free(lock);
 	}
 
+	j_connection_pool_push(connection);
+
 	g_free(background_operations);
 	g_free(messages);
 
@@ -1447,17 +1452,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		messages[i] = NULL;
 	}
 
-	{
-		JItem* item;
-		JOperation* operation;
-
-		operation = j_list_get_first(operations);
-		g_assert(operation != NULL);
-		item = operation->u.item_get_status.item;
-
-		// FIXME
-		connection = j_store_get_connection(j_collection_get_store(item->collection));
-	}
+	// FIXME
+	connection = j_connection_pool_pop();
 
 	iterator = j_list_iterator_new(operations);
 	semantics = j_batch_get_semantics(batch);
@@ -1623,6 +1619,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	j_list_iterator_free(iterator);
 
 	j_list_unref(buffer_list);
+
+	j_connection_pool_push(connection);
 
 	g_free(background_operations);
 	g_free(messages);

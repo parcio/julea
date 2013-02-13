@@ -29,72 +29,20 @@
  * \file
  **/
 
-#ifndef H_STORE
-#define H_STORE
+#ifndef H_CONNECTION_POOL_INTERNAL
+#define H_CONNECTION_POOL_INTERNAL
 
 #include <glib.h>
 
-struct JStore;
+#include <julea-internal.h>
 
-typedef struct JStore JStore;
-
-#include <jcollection.h>
+#include <jconfiguration.h>
 #include <jconnection.h>
-#include <jbatch.h>
 
-JStore* j_store_new (gchar const*);
-JStore* j_store_ref (JStore*);
-void j_store_unref (JStore*);
+J_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
+J_GNUC_INTERNAL void j_connection_pool_fini (void);
 
-gchar const* j_store_get_name (JStore*);
-
-void j_store_create_collection (JStore*, JCollection*, JBatch*);
-void j_store_get_collection (JStore*, JCollection**, gchar const*, JBatch*);
-void j_store_delete_collection (JStore*, JCollection*, JBatch*);
-
-/*
-#include "collection.h"
-#include "connection.h"
-#include "public.h"
-#include "ref_counted.h"
-#include "semantics.h"
-
-namespace JULEA
-{
-	class _Store : public RefCounted<_Store>
-	{
-		friend class RefCounted<_Store>;
-
-		friend class Store;
-
-		friend class Collection;
-		friend class _Collection;
-
-		private:
-			_Store (string const&);
-
-			void IsInitialized (bool) const;
-
-			bool m_initialized;
-	};
-
-	class Store : public Public<_Store>
-	{
-		friend class _Connection;
-
-		public:
-			Store (string const& name)
-			{
-				m_p = new _Store(name);
-			}
-
-		private:
-			Store (_Connection* connection, string const& name)
-			{
-				m_p = new _Store(connection, name);
-			}
-	};
-}
-*/
+J_GNUC_INTERNAL JConnection* j_connection_pool_pop (void);
+J_GNUC_INTERNAL void j_connection_pool_push (JConnection*);
 
 #endif

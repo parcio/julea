@@ -42,6 +42,7 @@
 #include <jcollection-internal.h>
 #include <jconnection.h>
 #include <jconnection-internal.h>
+#include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <jbatch-internal.h>
@@ -75,9 +76,10 @@ JCollectionIterator*
 j_collection_iterator_new (JCollection* collection)
 {
 	JCollectionIterator* iterator;
+	JConnection* connection;
 	bson b;
 	bson fields;
-	mongo* connection;
+	mongo* mongo_connection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -86,7 +88,8 @@ j_collection_iterator_new (JCollection* collection)
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
 
-	connection = j_connection_get_connection(j_store_get_connection(j_collection_get_store(iterator->collection)));
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	bson_init(&fields);
 	bson_append_int(&fields, "_id", 1);
@@ -97,10 +100,12 @@ j_collection_iterator_new (JCollection* collection)
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->cursor = mongo_find(connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
+	iterator->cursor = mongo_find(mongo_connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
 
 	bson_destroy(&fields);
 	bson_destroy(&b);
+
+	j_connection_pool_push(connection);
 
 	return iterator;
 }
