@@ -156,7 +156,7 @@ j_cmd_copy (gchar const** arguments)
 
 	while (TRUE)
 	{
-		guint64 bytes_read;
+		guint64 bytes_read = 0;
 
 		if (uri[0] != NULL)
 		{

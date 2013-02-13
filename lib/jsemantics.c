@@ -104,11 +104,11 @@ j_semantics_new (JSemanticsTemplate template)
 
 	semantics = g_slice_new(JSemantics);
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
-	semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
-	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
+	semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
+	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
-	semantics->safety = J_SEMANTICS_SAFETY_NONE;
-	semantics->security = J_SEMANTICS_SECURITY_STRICT;
+	semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
+	semantics->security = J_SEMANTICS_SECURITY_NONE;
 	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
 
@@ -120,8 +120,8 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_OPERATION;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
-			semantics->safety = J_SEMANTICS_SAFETY_NONE;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
+			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
 		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
@@ -129,7 +129,15 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
-			semantics->safety = J_SEMANTICS_SAFETY_NONE;
+			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
+			semantics->security = J_SEMANTICS_SECURITY_NONE;
+			break;
+		case J_SEMANTICS_TEMPLATE_SERIAL:
+			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
+			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
+			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
 		default:
@@ -290,6 +298,10 @@ j_semantics_parse (gchar const* template_str, gchar const* semantics_str)
 	else if (g_strcmp0(template_str, "checkpoint") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
+	}
+	else if (g_strcmp0(template_str, "serial") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_SERIAL);
 	}
 	else
 	{
