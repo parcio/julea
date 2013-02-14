@@ -58,6 +58,8 @@
 
 struct JStoreIterator
 {
+	JConnection* connection;
+
 	/**
 	 * The store.
 	 **/
@@ -81,10 +83,8 @@ struct JStoreIterator
 JStoreIterator*
 j_store_iterator_new (JStore* store)
 {
-	JConnection* connection;
 	JStoreIterator* iterator;
 	bson empty;
-	mongo* mongo_connection;
 
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -92,15 +92,11 @@ j_store_iterator_new (JStore* store)
 
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
-
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	iterator->connection = j_connection_pool_pop();
 
 	bson_empty(&empty);
 
-	iterator->cursor = mongo_find(mongo_connection, j_store_collection_collections(iterator->store), &empty, NULL, 0, 0, 0);
-
-	j_connection_pool_push(connection);
+	iterator->cursor = mongo_find(j_connection_get_connection(iterator->connection), j_store_collection_collections(iterator->store), &empty, NULL, 0, 0, 0);
 
 	return iterator;
 }
@@ -118,6 +114,7 @@ j_store_iterator_free (JStoreIterator* iterator)
 	g_return_if_fail(iterator != NULL);
 
 	mongo_cursor_destroy(iterator->cursor);
+	j_connection_pool_push(iterator->connection);
 
 	j_store_unref(iterator->store);
 

@@ -61,6 +61,7 @@ struct JCollectionIterator
 	mongo_cursor* cursor;
 
 	JCollection* collection;
+	JConnection* connection;
 };
 
 /**
@@ -76,10 +77,8 @@ JCollectionIterator*
 j_collection_iterator_new (JCollection* collection)
 {
 	JCollectionIterator* iterator;
-	JConnection* connection;
 	bson b;
 	bson fields;
-	mongo* mongo_connection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -87,9 +86,7 @@ j_collection_iterator_new (JCollection* collection)
 
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
-
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	iterator->connection = j_connection_pool_pop();
 
 	bson_init(&fields);
 	bson_append_int(&fields, "_id", 1);
@@ -100,12 +97,10 @@ j_collection_iterator_new (JCollection* collection)
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->cursor = mongo_find(mongo_connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
+	iterator->cursor = mongo_find(j_connection_get_connection(iterator->connection), j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
 
 	bson_destroy(&fields);
 	bson_destroy(&b);
-
-	j_connection_pool_push(connection);
 
 	return iterator;
 }
@@ -123,6 +118,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 	g_return_if_fail(iterator != NULL);
 
 	mongo_cursor_destroy(iterator->cursor);
+	j_connection_pool_push(iterator->connection);
 
 	j_collection_unref(iterator->collection);
 

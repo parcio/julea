@@ -1012,8 +1012,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		g_assert(operation != NULL);
 		item = operation->u.item_read.item;
 
-		connection = j_connection_pool_pop();
-
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
 		store_name = j_store_get_name(j_collection_get_store(item->collection));
@@ -1099,6 +1097,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		while (!j_lock_acquire(lock));
 	}
 
+	connection = j_connection_pool_pop();
+
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* background_data;
@@ -1137,12 +1137,12 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		j_list_unref(buffer_list[i]);
 	}
 
+	j_connection_pool_push(connection);
+
 	if (lock != NULL)
 	{
 		j_lock_free(lock);
 	}
-
-	j_connection_pool_push(connection);
 
 	g_free(background_operations);
 	g_free(messages);
@@ -1194,8 +1194,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
 		item = operation->u.item_write.item;
-
-		connection = j_connection_pool_pop();
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1281,6 +1279,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		/* FIXME busy wait */
 		while (!j_lock_acquire(lock));
 	}
+
+	connection = j_connection_pool_pop();
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -1407,12 +1407,12 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		mongo_write_concern_destroy(write_concern);
 	}
 
+	j_connection_pool_push(connection);
+
 	if (lock != NULL)
 	{
 		j_lock_free(lock);
 	}
-
-	j_connection_pool_push(connection);
 
 	g_free(background_operations);
 	g_free(messages);
@@ -1452,13 +1452,12 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		messages[i] = NULL;
 	}
 
-	// FIXME
-	connection = j_connection_pool_pop();
-
 	iterator = j_list_iterator_new(operations);
 	semantics = j_batch_get_semantics(batch);
 	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
 	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
+
+	connection = j_connection_pool_pop();
 
 	while (j_list_iterator_next(iterator))
 	{
@@ -1598,6 +1597,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 	}
 
+	j_connection_pool_push(connection);
+
 	iterator = j_list_iterator_new(buffer_list);
 
 	while (j_list_iterator_next(iterator))
@@ -1619,8 +1620,6 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	j_list_iterator_free(iterator);
 
 	j_list_unref(buffer_list);
-
-	j_connection_pool_push(connection);
 
 	g_free(background_operations);
 	g_free(messages);

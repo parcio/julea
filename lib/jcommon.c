@@ -338,6 +338,7 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 {
 	JConnection* connection;
 	JListIterator* it;
+	mongo* mongo_connection;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -346,19 +347,20 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 		IsInitialized(true);
 	*/
 
-	connection = j_connection_pool_pop();
 	it = j_list_iterator_new(operations);
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JStore* store = operation->u.delete_store.store;
 
-		mongo_cmd_drop_db(j_connection_get_connection(connection), j_store_get_name(store));
+		mongo_cmd_drop_db(mongo_connection, j_store_get_name(store));
 	}
 
-	j_list_iterator_free(it);
 	j_connection_pool_push(connection);
+	j_list_iterator_free(it);
 
 	return TRUE;
 }

@@ -648,9 +648,6 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 		goto end;
 	}
 
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
-
 	mongo_write_concern_init(write_concern);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
@@ -670,14 +667,17 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	bson_append_int(&index, "Name", 1);
 	bson_finish(&index);
 
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
+
 	mongo_create_index(mongo_connection, j_collection_collection_items(collection), &index, MONGO_INDEX_UNIQUE, NULL);
 	ret = (mongo_insert_batch(mongo_connection, j_collection_collection_items(collection), (bson const**)obj, length, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK);
+
+	j_connection_pool_push(connection);
 
 	bson_destroy(&index);
 
 	mongo_write_concern_destroy(write_concern);
-
-	j_connection_pool_push(connection);
 
 end:
 	for (i = 0; i < length; i++)
@@ -730,6 +730,8 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	mongo_write_concern_finish(write_concern);
 
 	it = j_list_iterator_new(operations);
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -744,18 +746,15 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		bson_append_oid(&b, "_id", j_item_get_id(item));
 		bson_finish(&b);
 
-		connection = j_connection_pool_pop();
-		mongo_connection = j_connection_get_connection(connection);
 		/* FIXME do not send write_concern on each remove */
 		ret = (mongo_remove(mongo_connection, j_collection_collection_items(collection), &b, write_concern) == MONGO_OK) && ret;
 
 		bson_destroy(&b);
 
-		j_connection_pool_push(connection);
-
 		/* FIXME also delete data */
 	}
 
+	j_connection_pool_push(connection);
 	j_list_iterator_free(it);
 
 	mongo_write_concern_destroy(write_concern);
@@ -768,7 +767,9 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 gboolean
 j_collection_get_item_internal (JBatch* batch, JList* operations)
 {
+	JConnection* connection;
 	JListIterator* it;
+	mongo* mongo_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -781,6 +782,8 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	*/
 
 	it = j_list_iterator_new(operations);
+	connection = j_connection_pool_pop();
+	mongo_connection = j_connection_get_connection(connection);
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -788,10 +791,8 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.collection_get_item.collection;
 		JItem** item = operation->u.collection_get_item.item;
-		JConnection* connection;
 		bson b;
 		bson fields;
-		mongo* mongo_connection;
 		mongo_cursor* cursor;
 		gchar const* name = operation->u.collection_get_item.name;
 
@@ -805,8 +806,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		bson_append_string(&b, "Name", name);
 		bson_finish(&b);
 
-		connection = j_connection_pool_pop();
-		mongo_connection = j_connection_get_connection(connection);
 		cursor = mongo_find(mongo_connection, j_collection_collection_items(collection), &b, &fields, 1, 0, 0);
 
 		bson_destroy(&fields);
@@ -821,10 +820,9 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		}
 
 		mongo_cursor_destroy(cursor);
-
-		j_connection_pool_push(connection);
 	}
 
+	j_connection_pool_push(connection);
 	j_list_iterator_free(it);
 
 	j_trace_leave(G_STRFUNC);
