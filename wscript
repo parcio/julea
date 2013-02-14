@@ -214,7 +214,7 @@ def build (ctx):
 		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
-		install_path = None
+		install_path = '${LIBDIR}'
 	)
 
 	# Tests
