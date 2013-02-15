@@ -29,25 +29,76 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#include <julea-config.h>
 
 #include <glib.h>
-
-#include <julea-internal.h>
-
-#include <jconnection.h>
-
-#include <jmessage.h>
+#include <gio/gio.h>
 
 #include <mongo.h>
 
-J_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
-J_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*);
-J_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpointer, gsize);
+#include <jhelper-internal.h>
 
-J_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*);
-J_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
+#include <jsemantics.h>
+#include <jtrace-internal.h>
 
-#endif
+/**
+ * \defgroup JHelper Helper
+ *
+ * Helper data structures and functions.
+ *
+ * @{
+ **/
+
+void
+j_helper_use_nodelay (GSocketConnection* connection)
+{
+	gint const flag = 1;
+
+	GSocket* socket_;
+	gint fd;
+
+	g_return_if_fail(connection != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	socket_ = g_socket_connection_get_socket(connection);
+	fd = g_socket_get_fd(socket_);
+
+	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
+
+	j_trace_leave(G_STRFUNC);
+}
+
+void
+j_helper_set_write_concern (mongo_write_concern* write_concern, JSemantics* semantics)
+{
+	g_return_if_fail(write_concern != NULL);
+	g_return_if_fail(semantics != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	mongo_write_concern_init(write_concern);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
+	{
+		write_concern->w = 1;
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			write_concern->j = 1;
+		}
+	}
+
+	mongo_write_concern_finish(write_concern);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * @}
+ **/

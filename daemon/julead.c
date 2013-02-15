@@ -39,6 +39,7 @@
 #include <jcache-internal.h>
 #include <jconfiguration.h>
 #include <jconnection-internal.h>
+#include <jhelper-internal.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
@@ -79,7 +80,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	j_trace_enter(G_STRFUNC);
 
-	j_connection_use_nodelay(connection);
+	j_helper_use_nodelay(connection);
 
 	statistics = j_statistics_new(TRUE);
 	cache = j_cache_new(J_MIB(50));

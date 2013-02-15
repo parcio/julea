@@ -49,6 +49,7 @@
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
 #include <jdistribution.h>
+#include <jhelper-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>
@@ -1353,19 +1354,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		mongo_write_concern write_concern[1];
 		gboolean do_update = FALSE;
 
-		mongo_write_concern_init(write_concern);
-
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
-		{
-			write_concern->w = 1;
-
-			if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
-			{
-				write_concern->j = 1;
-			}
-		}
-
-		mongo_write_concern_finish(write_concern);
+		j_helper_set_write_concern(write_concern, semantics);
 
 		bson_init(cond);
 		bson_append_oid(cond, "_id", &(item->id));

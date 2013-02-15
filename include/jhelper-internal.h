@@ -29,25 +29,20 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_INTERNAL
-#define H_CONNECTION_INTERNAL
+#ifndef H_HELPER_INTERNAL
+#define H_HELPER_INTERNAL
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <julea-internal.h>
 
-#include <jconnection.h>
-
-#include <jmessage.h>
+#include <jsemantics.h>
 
 #include <mongo.h>
 
-J_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
+J_GNUC_INTERNAL void j_helper_use_nodelay (GSocketConnection*);
 
-J_GNUC_INTERNAL gboolean j_connection_send (JConnection*, guint, JMessage*);
-J_GNUC_INTERNAL gboolean j_connection_send_data (JConnection*, guint, gconstpointer, gsize);
-
-J_GNUC_INTERNAL gboolean j_connection_receive (JConnection*, guint, JMessage*);
-J_GNUC_INTERNAL gboolean j_connection_receive_data (JConnection*, guint, gpointer, gsize);
+J_GNUC_INTERNAL void j_helper_set_write_concern (mongo_write_concern*, JSemantics*);
 
 #endif

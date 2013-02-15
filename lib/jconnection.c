@@ -47,6 +47,7 @@
 #include <jconnection-internal.h>
 
 #include <jcommon-internal.h>
+#include <jhelper-internal.h>
 #include <jmessage.h>
 #include <jtrace-internal.h>
 
@@ -259,7 +260,7 @@ j_connection_connect (JConnection* connection)
 			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
 		}
 
-		j_connection_use_nodelay(connection->sockets[i]);
+		j_helper_use_nodelay(connection->sockets[i]);
 
 		ret = ret && (connection->sockets[i] != NULL);
 	}
@@ -449,20 +450,6 @@ j_connection_receive_data (JConnection* connection, guint i, gpointer data, gsiz
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
-}
-
-void
-j_connection_use_nodelay (GSocketConnection* connection)
-{
-	gint const flag = 1;
-
-	GSocket* socket_;
-	gint fd;
-
-	socket_ = g_socket_connection_get_socket(connection);
-	fd = g_socket_get_fd(socket_);
-
-	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
 }
 
 /**

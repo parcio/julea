@@ -44,6 +44,7 @@
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
+#include <jhelper-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <jlist.h>
@@ -648,19 +649,7 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 		goto end;
 	}
 
-	mongo_write_concern_init(write_concern);
-
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
-	{
-		write_concern->w = 1;
-
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
-		{
-			write_concern->j = 1;
-		}
-	}
-
-	mongo_write_concern_finish(write_concern);
+	j_helper_set_write_concern(write_concern, semantics);
 
 	bson_init(&index);
 	bson_append_int(&index, "Collection", 1);
@@ -699,7 +688,6 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	JCollection* collection = NULL;
 	JConnection* connection;
 	JListIterator* it;
-	JSemantics* semantics;
 	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 	gboolean ret = TRUE;
@@ -713,21 +701,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		IsInitialized(true);
 	*/
 
-	semantics = j_batch_get_semantics(batch);
-
-	mongo_write_concern_init(write_concern);
-
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
-	{
-		write_concern->w = 1;
-
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
-		{
-			write_concern->j = 1;
-		}
-	}
-
-	mongo_write_concern_finish(write_concern);
+	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	it = j_list_iterator_new(operations);
 	connection = j_connection_pool_pop();
