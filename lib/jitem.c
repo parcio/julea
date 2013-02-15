@@ -196,7 +196,6 @@ struct JItem
 	 **/
 	struct
 	{
-		guint flags;
 		guint64 age;
 
 		/**
@@ -419,7 +418,6 @@ j_item_new (gchar const* name)
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
-	item->status.flags = J_ITEM_STATUS_ALL;
 	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
@@ -643,7 +641,6 @@ guint64
 j_item_get_size (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, 0);
-	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_SIZE) == J_ITEM_STATUS_SIZE, 0);
 
 	j_trace_enter(G_STRFUNC);
 	j_trace_leave(G_STRFUNC);
@@ -667,7 +664,6 @@ gint64
 j_item_get_modification_time (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, 0);
-	g_return_val_if_fail((item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME) == J_ITEM_STATUS_MODIFICATION_TIME, 0);
 
 	j_trace_enter(G_STRFUNC);
 	j_trace_leave(G_STRFUNC);
@@ -705,7 +701,6 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item = g_slice_new(JItem);
 	item->name = NULL;
 	item->credentials = j_credentials_new();
-	item->status.flags = J_ITEM_STATUS_NONE;
 	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;
@@ -799,16 +794,22 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 	b = g_slice_new(bson);
 	bson_init(b);
+
 	bson_append_oid(b, "_id", &(item->id));
 	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
-	bson_append_bson(b, "Credentials", b_cred);
+
+	bson_append_start_object(b, "Status");
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
 		bson_append_long(b, "Size", item->status.size);
 		bson_append_long(b, "ModificationTime", item->status.modification_time);
 	}
+
+	bson_append_finish_object(b);
+
+	bson_append_bson(b, "Credentials", b_cred);
 
 	bson_finish(b);
 
@@ -818,6 +819,40 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	j_trace_leave(G_STRFUNC);
 
 	return b;
+}
+
+static
+void
+j_item_deserialize_status (JItem* item, bson const* b)
+{
+	bson_iterator iterator;
+
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(b != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	bson_iterator_init(&iterator, b);
+
+	while (bson_iterator_next(&iterator))
+	{
+		gchar const* key;
+
+		key = bson_iterator_key(&iterator);
+
+		if (g_strcmp0(key, "Size") == 0)
+		{
+			item->status.size = bson_iterator_long(&iterator);
+			item->status.age = g_get_real_time();
+		}
+		else if (g_strcmp0(key, "ModificationTime") == 0)
+		{
+			item->status.modification_time = bson_iterator_long(&iterator);
+			item->status.age = g_get_real_time();
+		}
+	}
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -867,17 +902,12 @@ j_item_deserialize (JItem* item, bson const* b)
 			bson_iterator_subobject(&iterator, b_cred);
 			j_credentials_deserialize(item->credentials, b_cred);
 		}
-		else if (g_strcmp0(key, "Size") == 0)
+		else if (g_strcmp0(key, "Status") == 0)
 		{
-			item->status.size = bson_iterator_long(&iterator);
-			item->status.flags |= J_ITEM_STATUS_SIZE;
-			item->status.age = g_get_real_time();
-		}
-		else if (g_strcmp0(key, "ModificationTime") == 0)
-		{
-			item->status.modification_time = bson_iterator_long(&iterator);
-			item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
-			item->status.age = g_get_real_time();
+			bson b_status[1];
+
+			bson_iterator_subobject(&iterator, b_status);
+			j_item_deserialize_status(item, b_status);
 		}
 	}
 
@@ -940,7 +970,6 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(G_STRFUNC);
-	item->status.flags |= J_ITEM_STATUS_MODIFICATION_TIME;
 	item->status.age = g_get_real_time();
 	item->status.modification_time = MAX(item->status.modification_time, modification_time);
 	j_trace_leave(G_STRFUNC);
@@ -963,7 +992,6 @@ j_item_set_size (JItem* item, guint64 size)
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(G_STRFUNC);
-	item->status.flags |= J_ITEM_STATUS_SIZE;
 	item->status.age = g_get_real_time();
 	item->status.size = size;
 	j_trace_leave(G_STRFUNC);
@@ -1347,47 +1375,43 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		}
 	}
 
-	if (item->status.flags != J_ITEM_STATUS_NONE && FALSE)
+	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE && FALSE)
 	{
 		bson cond[1];
 		bson op[1];
 		mongo_write_concern write_concern[1];
-		gboolean do_update = FALSE;
+		gint ret;
 
 		j_helper_set_write_concern(write_concern, semantics);
 
 		bson_init(cond);
 		bson_append_oid(cond, "_id", &(item->id));
+		bson_append_int(cond, "Status.ModificationTime", item->status.modification_time);
 		bson_finish(cond);
 
+		j_item_set_modification_time(item, g_get_real_time());
+
 		bson_init(op);
+
 		bson_append_start_object(op, "$set");
 
-		if (item->status.flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		if (max_offset > item->status.size)
 		{
-			j_item_set_modification_time(item, g_get_real_time());
-			bson_append_long(op, "ModificationTime", item->status.modification_time);
-			do_update = TRUE;
-			g_print("HAI MTIME\n");
+			j_item_set_size(item, max_offset);
+			bson_append_long(op, "Status.Size", item->status.size);
 		}
 
-		if (item->status.flags & J_ITEM_STATUS_SIZE)
-		{
-			if (max_offset > item->status.size)
-			{
-				j_item_set_size(item, max_offset);
-				bson_append_long(op, "Size", item->status.size);
-				do_update = TRUE;
-				g_print("HAI SIZE\n");
-			}
-		}
-
+		bson_append_long(op, "Status.ModificationTime", item->status.modification_time);
 		bson_append_finish_object(op);
+
 		bson_finish(op);
 
-		if (do_update)
+		ret = mongo_update(j_connection_get_connection(connection), j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
+		g_assert(ret == MONGO_OK);
+
+		if (ret != MONGO_OK)
 		{
-			mongo_update(j_connection_get_connection(connection), j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
+
 		}
 
 		bson_destroy(cond);
@@ -1464,7 +1488,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
 		{
-			if ((flags & item->status.flags) == flags && item->status.age >= (guint64)g_get_real_time() - G_USEC_PER_SEC)
+			if (item->status.age >= (guint64)g_get_real_time() - G_USEC_PER_SEC)
 			{
 				continue;
 			}
@@ -1476,12 +1500,12 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 			if (flags & J_ITEM_STATUS_SIZE)
 			{
-				bson_append_int(&fields, "Size", 1);
+				bson_append_int(&fields, "Status.Size", 1);
 			}
 
 			if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
 			{
-				bson_append_int(&fields, "ModificationTime", 1);
+				bson_append_int(&fields, "Status.ModificationTime", 1);
 			}
 
 			bson_finish(&fields);

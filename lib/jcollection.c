@@ -744,6 +744,7 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	JConnection* connection;
 	JListIterator* it;
 	mongo* mongo_connection;
+	gint semantics_concurrency;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -759,6 +760,8 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	connection = j_connection_pool_pop();
 	mongo_connection = j_connection_get_connection(connection);
 
+	semantics_concurrency = j_semantics_get(j_batch_get_semantics(batch), J_SEMANTICS_CONCURRENCY);
+
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
@@ -773,6 +776,12 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		bson_init(&fields);
 		bson_append_int(&fields, "_id", 1);
 		bson_append_int(&fields, "Name", 1);
+
+		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
+		{
+			bson_append_int(&fields, "Status", 1);
+		}
+
 		bson_finish(&fields);
 
 		bson_init(&b);
