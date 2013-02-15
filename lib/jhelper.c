@@ -106,6 +106,8 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 	gchar** parts;
 	guint parts_len;
 
+	j_trace_enter(G_STRFUNC);
+
 	if (g_strcmp0(template_str, "posix") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
@@ -125,7 +127,7 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 
 	if (semantics_str == NULL)
 	{
-		return semantics;
+		goto end;
 	}
 
 	parts = g_strsplit(semantics_str, ",", 0);
@@ -231,6 +233,9 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 	}
 
 	g_strfreev(parts);
+
+end:
+	j_trace_leave(G_STRFUNC);
 
 	return semantics;
 }

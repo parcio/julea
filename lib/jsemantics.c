@@ -105,7 +105,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-	semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+	semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 	semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 	semantics->security = J_SEMANTICS_SECURITY_NONE;
 	semantics->immutable = FALSE;
@@ -127,7 +127,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
@@ -135,7 +135,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_EVENTUAL;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
