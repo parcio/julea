@@ -136,10 +136,11 @@ benchmark_write (ThreadData* thread_data)
 
 	mongo_write_concern_init(write_concern);
 
+	write_concern->w = 1;
+
 	if (opt_sync)
 	{
 		write_concern->j = 1;
-		write_concern->w = 1;
 	}
 
 	mongo_write_concern_finish(write_concern);
@@ -160,7 +161,18 @@ benchmark_write (ThreadData* thread_data)
 
 		bson_append_int(objects[i], "Number", num);
 		bson_append_int(objects[i], "Index", i);
-		bson_append_string(objects[i], "Text", "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.");
+
+		bson_append_string(objects[i], "Name", "Lorem ipsum dolor sit amet.");
+
+		bson_append_start_object(objects[i], "Status");
+		bson_append_long(objects[i], "ModificationTime", g_get_real_time());
+		bson_append_long(objects[i], "Size", num);
+		bson_append_finish_object(objects[i]);
+
+		bson_append_start_object(objects[i], "Credentials");
+		bson_append_int(objects[i], "User", num);
+		bson_append_int(objects[i], "Group", num);
+		bson_append_finish_object(objects[i]);
 
 		bson_finish(objects[i]);
 	}
@@ -196,27 +208,18 @@ void
 benchmark_read (ThreadData* thread_data)
 {
 	bson query[1];
-	bson fields[1];
 	mongo_cursor* cursor;
 
 	guint32 const num = g_rand_int_range(thread_data->rand, 1, 5000);
 
 	guint count = 0;
 
-	bson_init(fields);
-	bson_append_int(fields, "_id", 1);
-	bson_append_int(fields, "Number", 1);
-	bson_append_int(fields, "Index", 1);
-	bson_append_int(fields, "Text", 1);
-	bson_finish(fields);
-
 	bson_init(query);
 	bson_append_int(query, "Number", num);
 	bson_finish(query);
 
-	cursor = mongo_find(thread_data->connection, thread_data->ns.full, query, fields, num, 0, 0);
+	cursor = mongo_find(thread_data->connection, thread_data->ns.full, query, NULL, num, 0, 0);
 
-	bson_destroy(fields);
 	bson_destroy(query);
 
 	while (mongo_cursor_next(cursor) == MONGO_OK)
@@ -247,10 +250,11 @@ benchmark_update (ThreadData* thread_data)
 
 	mongo_write_concern_init(write_concern);
 
+	write_concern->w = 1;
+
 	if (opt_sync)
 	{
 		write_concern->j = 1;
-		write_concern->w = 1;
 	}
 
 	mongo_write_concern_finish(write_concern);
@@ -260,12 +264,27 @@ benchmark_update (ThreadData* thread_data)
 	bson_finish(cond);
 
 	bson_init(op);
+
 	bson_append_start_object(op, "$set");
-	bson_append_string(op, "Text", "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.");
+	bson_append_string(op, "Name", "At vero eos et accusam et justo duo dolores et ea rebum.");
+	bson_append_long(op, "Status.ModificationTime", g_get_real_time());
 	bson_append_finish_object(op);
+
+	bson_append_start_object(op, "$inc");
+	bson_append_long(op, "Status.Size", 1);
+	bson_append_finish_object(op);
+
 	bson_finish(op);
 
 	ret = mongo_update(thread_data->connection, thread_data->ns.full, cond, op, MONGO_UPDATE_MULTI, write_concern);
+
+	if (ret != MONGO_OK)
+	{
+		mongo_cmd_get_last_error(thread_data->connection, thread_data->ns.db, error);
+		bson_print(error);
+		bson_destroy(error);
+	}
+
 	g_assert(ret == MONGO_OK);
 
 	mongo_cmd_get_last_error(thread_data->connection, thread_data->ns.db, error);
@@ -297,10 +316,11 @@ benchmark_delete (ThreadData* thread_data)
 
 	mongo_write_concern_init(write_concern);
 
+	write_concern->w = 1;
+
 	if (opt_sync)
 	{
 		write_concern->j = 1;
-		write_concern->w = 1;
 	}
 
 	mongo_write_concern_finish(write_concern);
@@ -406,9 +426,9 @@ main (int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
-		{ "host", 'h', 0, G_OPTION_ARG_STRING, &opt_host, "MongoDB host", "localhost" },
-		{ "sync", 's', 0, G_OPTION_ARG_NONE, &opt_sync, "Whether to sync", NULL },
-		{ "threads", 't', 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
+		{ "host", 0, 0, G_OPTION_ARG_STRING, &opt_host, "MongoDB host", "localhost" },
+		{ "sync", 0, 0, G_OPTION_ARG_NONE, &opt_sync, "Whether to sync", NULL },
+		{ "threads", 0, 0, G_OPTION_ARG_INT, &opt_threads, "Number of threads to use", "1" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
