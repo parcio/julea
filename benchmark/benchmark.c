@@ -33,7 +33,7 @@
 
 #include <julea.h>
 
-#include <jsemantics-internal.h>
+#include <jhelper-internal.h>
 
 #include "benchmark.h"
 
@@ -125,7 +125,7 @@ main (int argc, char** argv)
 
 	j_init(&argc, &argv);
 
-	j_benchmark_semantics = j_semantics_parse(opt_template, opt_semantics);
+	j_benchmark_semantics = j_helper_parse_semantics(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();
 
 	benchmark_background_operation();

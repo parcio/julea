@@ -32,7 +32,7 @@
 
 #include <julea.h>
 
-#include <jsemantics-internal.h>
+#include <jhelper-internal.h>
 
 #include <string.h>
 
@@ -252,7 +252,7 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
-	semantics = j_semantics_parse(opt_template, opt_semantics);
+	semantics = j_helper_parse_semantics(opt_template, opt_semantics);
 
 	j_init(&argc, &argv);
 
