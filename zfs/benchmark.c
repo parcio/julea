@@ -307,12 +307,12 @@ j_zfs_test_object_open_close(JZFSPool* pool, gint count)
 	printf("Opened and closed: %d objects in %" PRId64 " microseconds\n\n", count, mseconds_total);
 }
 
-//JZFSObject*
-void test_with_threads()
+// for Threads
+void 
+test_with_threads()
 {
 	JZFSObject* object;
 	int i;
-	int counter = 1000;
 	printf("in test_with_threads\n");
 	
 	j_zfs_init();
@@ -330,23 +330,37 @@ void test_with_threads()
 	
 	object = j_zfs_object_create(object_set);
 	guint64 id = j_zfs_get_object_id(object);
-	//j_zfs_object_open(object_set, id);
+	j_zfs_object_close(object);
+	object = j_zfs_object_open(object_set, id);
 	
 	//object write x 1000
-	/*for(i=0; i < counter; i++){
-		gchar dummy[] = "Hello world.";
-		gint size = strlen(dummy);
-		j_zfs_object_write(object, dummy, size, 0);
-	}*/
-	
-	//j_zfs_object_close(object);
+	for(i=0; i < 1000; i++){
+		gchar dummy_w[] = "Hello world.";
+		gint size = strlen(dummy_w);
+		j_zfs_object_write(object, dummy_w, size, 0);
+	}
+	j_zfs_object_close(object);
 
 	//Case 1: open, read x 1000, close
-	//j_zfs_object_open(object_set, id);
-	//j_zfs_object_close(object);
-	//Case 2: (open, read, close) x 4000
-	
-	j_zfs_object_destroy(object);
+	object = j_zfs_object_open(object_set, id);
+	for(i=0; i < 1000; i++){
+		guint64 length = strlen("Hello world.");
+		gchar dummy_r[length];
+		j_zfs_object_read(object, dummy_r, length, 0);
+	}
+	j_zfs_object_close(object);
+
+	//Case 2: (open, read, close) x 1000
+	for (i=0; i < 311; i++){ // fehleranfällig bei i > 311, s. out.txt
+		printf("i: %i\n", i);
+		object = j_zfs_object_open(object_set, id); 
+		guint64 length = strlen("Hello world.");
+		gchar dummy_r[length];
+		j_zfs_object_read(object, dummy_r, length, 0);
+		j_zfs_object_close(object);
+	}
+
+	//j_zfs_object_destroy(object);
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);
 	printf("Pool closed.\n");
