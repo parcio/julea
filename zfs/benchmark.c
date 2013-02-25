@@ -351,7 +351,7 @@ test_with_threads()
 	j_zfs_object_close(object);
 
 	//Case 2: (open, read, close) x 1000
-	for (i=0; i < 311; i++){ // fehleranfällig bei i > 311, s. out.txt
+	for (i=0; i < 400; i++){ // fehleranfällig bei i > 311
 		printf("i: %i\n", i);
 		object = j_zfs_object_open(object_set, id); 
 		guint64 length = strlen("Hello world.");

@@ -683,11 +683,12 @@ j_zfs_object_close(JZFSObject* object)
 	txg = ztest_tx_assign(tx, TXG_WAIT, object->object_set->name);
 	if (txg == 0) {
 		ret = ENOSPC;
+		printf("txg\n");
 	}
+	printf("in close\n");
 	//ret = dmu_object_free(object->object_set->object_set, object->object, tx);
-	ret = dmu_object_set_blocksize(object->object_set->object_set, object->object,
-					0, DN_MIN_INDBLKSHIFT ,tx);
-	assert(ret == 0);
+	//ret = dmu_object_set_blocksize(object->object_set->object_set, object->object, 0, DN_MIN_INDBLKSHIFT ,tx);
+	//assert(ret == 0);
 	dmu_tx_commit(tx);
 	ASSERT(object->object != 0);
 
