@@ -43,7 +43,7 @@
 #endif
 
 static gboolean opt_julea = FALSE;
-static gboolean opt_mpi_io = FALSE;
+static gboolean opt_mpi = FALSE;
 static gboolean opt_posix = FALSE;
 
 static gint opt_block_size = 4096;
@@ -52,7 +52,8 @@ static gboolean opt_shared = FALSE;
 static gchar* opt_julea_semantics = NULL;
 static gchar* opt_julea_template = NULL;
 
-static gchar* opt_mpi_io_path = NULL;
+static gboolean opt_mpi_atomic = FALSE;
+static gchar* opt_mpi_path = NULL;
 
 static gchar* opt_posix_path = NULL;
 
@@ -302,7 +303,7 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 
 	if (!opt_shared || process_id == 0)
 	{
-		path = g_build_filename(opt_mpi_io_path, get_name(), NULL);
+		path = g_build_filename(opt_mpi_path, get_name(), NULL);
 		MPI_File_open(comm, path, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, file);
 
 		MPI_File_close(file);
@@ -317,6 +318,11 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 	if (ret != MPI_SUCCESS)
 	{
 		g_error("ERROR %d\n", process_id);
+	}
+
+	if (opt_mpi_atomic)
+	{
+		MPI_File_set_atomicity(file, 1);
 	}
 
 	while (TRUE)
@@ -484,7 +490,7 @@ main (int argc, char** argv)
 	GOptionEntry entries[] = {
 		{ "julea", 0, 0, G_OPTION_ARG_NONE, &opt_julea, "Use JULEA I/O", NULL },
 #ifdef HAVE_MPI
-		{ "mpi-io", 0, 0, G_OPTION_ARG_NONE, &opt_mpi_io, "Use MPI-I/O", NULL },
+		{ "mpi", 0, 0, G_OPTION_ARG_NONE, &opt_mpi, "Use MPI-I/O", NULL },
 #endif
 		{ "posix", 0, 0, G_OPTION_ARG_NONE, &opt_posix, "Use POSIX I/O", NULL },
 		{ "block-size", 0, 0, G_OPTION_ARG_INT, &opt_block_size, "Block size", "4096" },
@@ -499,7 +505,8 @@ main (int argc, char** argv)
 	};
 
 	GOptionEntry entries_mpi_io[] = {
-		{ "mpi-io-path", 0, 0, G_OPTION_ARG_STRING, &opt_mpi_io_path, "Path to use", NULL },
+		{ "mpi-atomic", 0, 0, G_OPTION_ARG_NONE, &opt_mpi_atomic, "Use atomic mode", NULL },
+		{ "mpi-path", 0, 0, G_OPTION_ARG_STRING, &opt_mpi_path, "Path to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -534,7 +541,7 @@ main (int argc, char** argv)
 	g_option_group_add_entries(group, entries_julea);
 	g_option_context_add_group(context, group);
 
-	group = g_option_group_new("mpi-io", "MPI-I/O Options", "Show MPI-I/O help options", NULL, NULL);
+	group = g_option_group_new("mpi", "MPI-I/O Options", "Show MPI-I/O help options", NULL, NULL);
 	g_option_group_add_entries(group, entries_mpi_io);
 	g_option_context_add_group(context, group);
 
@@ -555,8 +562,8 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((!opt_julea && !opt_mpi_io && !opt_posix)
-	    || (opt_mpi_io && opt_mpi_io_path == NULL)
+	if ((!opt_julea && !opt_mpi && !opt_posix)
+	    || (opt_mpi && opt_mpi_path == NULL)
 	    || (opt_posix && opt_posix_path == NULL)
 	)
 	{
@@ -577,7 +584,7 @@ main (int argc, char** argv)
 	{
 		thread = g_thread_new("test", thread_julea, NULL);
 	}
-	else if (opt_mpi_io)
+	else if (opt_mpi)
 	{
 		thread = g_thread_new("test", thread_mpi_io, NULL);
 	}
