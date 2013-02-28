@@ -322,7 +322,7 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 
 	if (opt_mpi_atomic)
 	{
-		MPI_File_set_atomicity(file, 1);
+		MPI_File_set_atomicity(file[0], 1);
 	}
 
 	while (TRUE)
@@ -524,10 +524,7 @@ main (int argc, char** argv)
 
 		MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &thread_provided);
 
-		if (thread_provided != MPI_THREAD_SERIALIZED)
-		{
-			return 1;
-		}
+		g_assert(thread_provided == MPI_THREAD_SERIALIZED);
 
 		MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
 		MPI_Comm_size(MPI_COMM_WORLD, &process_num);

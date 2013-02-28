@@ -441,10 +441,7 @@ main (int argc, char** argv)
 
 		MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &thread_provided);
 
-		if (thread_provided != MPI_THREAD_FUNNELED)
-		{
-			return 1;
-		}
+		g_assert(thread_provided == MPI_THREAD_FUNNELED);
 
 		MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
 	}
