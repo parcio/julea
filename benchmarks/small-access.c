@@ -312,7 +312,7 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	path = g_build_filename(opt_posix_path, get_name(), NULL);
+	path = g_build_filename(opt_mpi_path, get_name(), NULL);
 	ret = MPI_File_open(comm, path, MPI_MODE_RDWR, MPI_INFO_NULL, file);
 
 	if (ret != MPI_SUCCESS)
@@ -374,12 +374,13 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 	}
 
 end:
+	MPI_File_close(file);
+
 	if (!opt_shared || process_id == 0)
 	{
-		unlink(path);
+		MPI_File_delete(path, MPI_INFO_NULL);
 	}
 
-	MPI_File_close(file);
 	g_free(path);
 
 #endif
@@ -469,12 +470,13 @@ thread_posix (G_GNUC_UNUSED gpointer data)
 	}
 
 end:
+	close(fd);
+
 	if (!opt_shared || process_id == 0)
 	{
 		unlink(path);
 	}
 
-	close(fd);
 	g_free(path);
 
 	return NULL;
