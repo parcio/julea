@@ -14,6 +14,7 @@ def options (ctx):
 
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb-client' % (Context.run_dir,), help='MongoDB client prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
+	ctx.add_option('--openmpi', action='store', default='%s/external/openmpi' % (Context.run_dir,), help='OpenMPI prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
@@ -31,11 +32,9 @@ def configure (ctx):
 	ctx.find_program(
 		'mpicc',
 		var = 'MPICC',
+		path_list = ['%s/bin' % (ctx.options.openmpi,)],
 		mandatory = False
 	)
-
-	if ctx.env.MPICC:
-		ctx.define('HAVE_MPI', 1)
 
 	ctx.check_cfg(
 		package = 'gio-2.0',
@@ -79,6 +78,26 @@ def configure (ctx):
 		uselib_store = 'FUSE',
 		mandatory = False
 	)
+
+	if ctx.env.MPICC:
+		mpi_env = ctx.env.derive()
+
+		mpi_env.CC = ctx.env.MPICC
+		mpi_env.LINK_CC = ctx.env.MPICC
+		mpi_env.CC_NAME = os.path.basename(mpi_env.CC)
+		mpi_env.COMPILER_CC = os.path.basename(mpi_env.CC)
+
+		# MPI
+		ctx.check_cc(
+			header_name = 'mpi.h',
+			lib = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libs']).strip()),
+			includes = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:incdirs']).strip()),
+			libpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
+			rpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
+			uselib_store = 'MPI',
+			define_name = 'HAVE_MPI',
+			env = mpi_env
+		)
 
 	# BSON
 	ctx.check_cc(
@@ -137,17 +156,16 @@ def configure (ctx):
 			define_name = 'HAVE_HDTRACE'
 		)
 
-	if ctx.options.otf:
-		ctx.check_cc(
-			header_name = 'otf.h',
-			lib = 'otf',
-			includes = ['%s/include' % (ctx.options.otf,)],
-			libpath = ['%s/lib' % (ctx.options.otf,)],
-			rpath = ['%s/lib' % (ctx.options.otf,)],
-			uselib_store = 'OTF',
-			define_name = 'HAVE_OTF',
-			mandatory = False
-		)
+	ctx.check_cc(
+		header_name = 'otf.h',
+		lib = 'otf',
+		includes = ['%s/include' % (ctx.options.otf,)],
+		libpath = ['%s/lib' % (ctx.options.otf,)],
+		rpath = ['%s/lib' % (ctx.options.otf,)],
+		uselib_store = 'OTF',
+		define_name = 'HAVE_OTF',
+		mandatory = False
+	)
 
 	# stat.st_mtim.tv_nsec
 	ctx.check_cc(
@@ -237,23 +255,14 @@ def build (ctx):
 		install_path = None
 	)
 
-	benchmark_env = ctx.env.derive()
-
-	if ctx.env.MPICC:
-		benchmark_env.CC = ctx.env.MPICC
-		benchmark_env.LINK_CC = ctx.env.MPICC
-		benchmark_env.CC_NAME = os.path.basename(benchmark_env.CC)
-		benchmark_env.COMPILER_CC = os.path.basename(benchmark_env.CC)
-
 	for benchmark in ('mongodb', 'small-access'):
 		# Benchmarks
 		ctx.program(
 			source = 'benchmarks/%s.c' % (benchmark,),
 			target = 'benchmarks/%s' % (benchmark,),
-			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB'],
+			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'MPI'],
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
-			env = benchmark_env,
 			install_path = None
 		)
 
