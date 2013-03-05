@@ -60,7 +60,6 @@ static gchar* opt_posix_path = NULL;
 static guint kill_thread = 0;
 
 static guint stat_read = 0;
-static guint stat_update = 0;
 static guint stat_write = 0;
 
 static gint process_id = 0;
@@ -87,26 +86,24 @@ print_statistics (G_GNUC_UNUSED gpointer user_data)
 	static guint counter = 0;
 
 	guint read;
-	guint update;
 	guint write;
 
 	read = g_atomic_int_and(&stat_read, 0);
-	update = g_atomic_int_and(&stat_update, 0);
 	write = g_atomic_int_and(&stat_write, 0);
 
 	if (counter == 0 && process_id == 0)
 	{
 #ifdef HAVE_MPI
-		g_print("process     write      read    update     total\n");
+		g_print("process     write      read    total\n");
 #else
-		g_print("     write      read    update     total\n");
+		g_print("     write      read    total\n");
 #endif
 	}
 
 #ifdef HAVE_MPI
-	g_print("%7d%10d%10d%10d%10d\n", process_id, write, read, update, write + read + update);
+	g_print("%7d%10d%10d%10d\n", process_id, write, read, write + read);
 #else
-	g_print("%10d%10d%10d%10d\n", write, read, update, write + read + update);
+	g_print("%10d%10d%10d\n", write, read, write + read);
 #endif
 
 	counter = (counter + 1) % 20;
@@ -229,27 +226,11 @@ thread_julea (G_GNUC_UNUSED gpointer data)
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
-			gint other_process = (process_id + 1) % process_num;
 
-			j_item_read(item, buf, opt_block_size, opt_block_size * ((process_num * (iteration + i)) + other_process), &bytes, batch);
+			j_item_read(item, buf, opt_block_size, get_offset(iteration + i), &bytes, batch);
 			j_batch_execute(batch);
 
 			g_atomic_int_add(&stat_read, bytes);
-		}
-
-#ifdef HAVE_MPI
-		MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
-		for (guint i = 0; i < 1000; i++)
-		{
-			guint64 bytes;
-			gint other_process = (process_id + 1) % process_num;
-
-			j_item_write(item, buf, opt_block_size, opt_block_size * ((process_num * (iteration + i)) + other_process), &bytes, batch);
-			j_batch_execute(batch);
-
-			g_atomic_int_add(&stat_update, bytes);
 		}
 
 #ifdef HAVE_MPI
@@ -287,7 +268,7 @@ end:
 
 static
 gpointer
-thread_mpi_io (G_GNUC_UNUSED gpointer data)
+thread_mpi (G_GNUC_UNUSED gpointer data)
 {
 #ifdef HAVE_MPI
 	gchar buf[opt_block_size];
@@ -347,25 +328,11 @@ thread_mpi_io (G_GNUC_UNUSED gpointer data)
 		for (guint i = 0; i < 1000; i++)
 		{
 			gint bytes;
-			gint other_process = (process_id + 1) % process_num;
 
-			MPI_File_write_at(file[0], opt_block_size * ((process_num * (iteration + i)) + other_process), buf, opt_block_size, MPI_CHAR, status);
+			MPI_File_read_at(file[0], get_offset(iteration + i), buf, opt_block_size, MPI_CHAR, status);
 			MPI_Get_count(status, MPI_CHAR, &bytes);
 
 			g_atomic_int_add(&stat_read, bytes);
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
-
-		for (guint i = 0; i < 1000; i++)
-		{
-			gint bytes;
-			gint other_process = (process_id + 1) % process_num;
-
-			MPI_File_write_at(file[0], opt_block_size * ((process_num * (iteration + i)) + other_process), buf, opt_block_size, MPI_CHAR, status);
-			MPI_Get_count(status, MPI_CHAR, &bytes);
-
-			g_atomic_int_add(&stat_update, bytes);
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -441,25 +408,10 @@ thread_posix (G_GNUC_UNUSED gpointer data)
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
-			gint other_process = (process_id + 1) % process_num;
 
-			bytes = pread(fd, buf, opt_block_size, opt_block_size * ((process_num * (iteration + i)) + other_process));
+			bytes = pread(fd, buf, opt_block_size, get_offset(iteration + i));
 
 			g_atomic_int_add(&stat_read, bytes);
-		}
-
-#ifdef HAVE_MPI
-		MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
-		for (guint i = 0; i < 1000; i++)
-		{
-			guint64 bytes;
-			gint other_process = (process_id + 1) % process_num;
-
-			bytes = pwrite(fd, buf, opt_block_size, opt_block_size * ((process_num * (iteration + i)) + other_process));
-
-			g_atomic_int_add(&stat_update, bytes);
 		}
 
 #ifdef HAVE_MPI
@@ -506,7 +458,7 @@ main (int argc, char** argv)
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
-	GOptionEntry entries_mpi_io[] = {
+	GOptionEntry entries_mpi[] = {
 		{ "mpi-atomic", 0, 0, G_OPTION_ARG_NONE, &opt_mpi_atomic, "Use atomic mode", NULL },
 		{ "mpi-path", 0, 0, G_OPTION_ARG_STRING, &opt_mpi_path, "Path to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
@@ -541,7 +493,7 @@ main (int argc, char** argv)
 	g_option_context_add_group(context, group);
 
 	group = g_option_group_new("mpi", "MPI-I/O Options", "Show MPI-I/O help options", NULL, NULL);
-	g_option_group_add_entries(group, entries_mpi_io);
+	g_option_group_add_entries(group, entries_mpi);
 	g_option_context_add_group(context, group);
 
 	group = g_option_group_new("posix", "POSIX Options", "Show POSIX help options", NULL, NULL);
@@ -585,12 +537,14 @@ main (int argc, char** argv)
 	}
 	else if (opt_mpi)
 	{
-		thread = g_thread_new("test", thread_mpi_io, NULL);
+		thread = g_thread_new("test", thread_mpi, NULL);
 	}
 	else if (opt_posix)
 	{
 		thread = g_thread_new("test", thread_posix, NULL);
 	}
+
+	g_assert(thread != NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 	g_timeout_add_seconds(1, print_statistics, NULL);
