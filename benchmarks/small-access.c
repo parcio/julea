@@ -42,10 +42,19 @@
 #include <mpi.h>
 #endif
 
+struct BenchmarkResult
+{
+	gdouble read;
+	gdouble write;
+};
+
+typedef struct BenchmarkResult BenchmarkResult;
+
 static gboolean opt_julea = FALSE;
 static gboolean opt_mpi = FALSE;
 static gboolean opt_posix = FALSE;
 
+static gint opt_block_count = 1000000;
 static gint opt_block_size = 4096;
 static gboolean opt_shared = FALSE;
 
@@ -57,59 +66,8 @@ static gchar* opt_mpi_path = NULL;
 
 static gchar* opt_posix_path = NULL;
 
-static guint kill_thread = 0;
-
-static guint stat_read = 0;
-static guint stat_write = 0;
-
 static gint process_id = 0;
 static gint process_num = 1;
-
-static
-gboolean
-handle_signal (gpointer data)
-{
-	GMainLoop* main_loop = data;
-
-	if (g_main_loop_is_running(main_loop))
-	{
-		g_main_loop_quit(main_loop);
-	}
-
-	return FALSE;
-}
-
-static
-gboolean
-print_statistics (G_GNUC_UNUSED gpointer user_data)
-{
-	static guint counter = 0;
-
-	guint read;
-	guint write;
-
-	read = g_atomic_int_and(&stat_read, 0);
-	write = g_atomic_int_and(&stat_write, 0);
-
-	if (counter == 0 && process_id == 0)
-	{
-#ifdef HAVE_MPI
-		g_print("process     write      read    total\n");
-#else
-		g_print("     write      read    total\n");
-#endif
-	}
-
-#ifdef HAVE_MPI
-	g_print("%7d%10d%10d%10d\n", process_id, write, read, write + read);
-#else
-	g_print("%10d%10d%10d\n", write, read, write + read);
-#endif
-
-	counter = (counter + 1) % 20;
-
-	return TRUE;
-}
 
 static
 guint64
@@ -148,8 +106,9 @@ get_name (void)
 
 static
 gpointer
-thread_julea (G_GNUC_UNUSED gpointer data)
+thread_julea (gpointer data)
 {
+	BenchmarkResult* result = data;
 	gchar buf[opt_block_size];
 
 	JBatch* batch;
@@ -157,7 +116,8 @@ thread_julea (G_GNUC_UNUSED gpointer data)
 	JItem* item;
 	JSemantics* semantics;
 	JStore* store;
-	guint64 iteration = 0;
+	GTimer* timer;
+	guint64 iteration;
 
 	j_init(NULL, NULL);
 
@@ -202,45 +162,50 @@ thread_julea (G_GNUC_UNUSED gpointer data)
 		g_error("ERROR %d\n", process_id);
 	}
 
-	while (TRUE)
-	{
-		if (g_atomic_int_get(&kill_thread) == 1)
-		{
-			goto end;
-		}
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
+	timer = g_timer_new();
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
 
 			j_item_write(item, buf, opt_block_size, get_offset(iteration + i), &bytes, batch);
 			j_batch_execute(batch);
-
-			g_atomic_int_add(&stat_write, bytes);
+			g_assert(bytes == (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
+	}
 
+	result->write = g_timer_elapsed(timer, NULL);
+	g_timer_start(timer);
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
 
 			j_item_read(item, buf, opt_block_size, get_offset(iteration + i), &bytes, batch);
 			j_batch_execute(batch);
-
-			g_atomic_int_add(&stat_read, bytes);
+			g_assert(bytes == (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-		iteration += 1000;
 	}
 
-end:
+	result->read = g_timer_elapsed(timer, NULL);
+	g_timer_destroy(timer);
+
 	j_batch_unref(batch);
 
 	j_semantics_unref(semantics);
@@ -268,16 +233,18 @@ end:
 
 static
 gpointer
-thread_mpi (G_GNUC_UNUSED gpointer data)
+thread_mpi (gpointer data)
 {
 #ifdef HAVE_MPI
+	BenchmarkResult* result = data;
 	gchar buf[opt_block_size];
 
 	MPI_Comm comm;
 	MPI_File file[1];
 	MPI_Status status[1];
+	GTimer* timer;
 	gchar* path;
-	guint64 iteration = 0;
+	guint64 iteration;
 	gint ret;
 
 	comm = (opt_shared) ? MPI_COMM_WORLD : MPI_COMM_SELF;
@@ -306,41 +273,44 @@ thread_mpi (G_GNUC_UNUSED gpointer data)
 		MPI_File_set_atomicity(file[0], 1);
 	}
 
-	while (TRUE)
-	{
-		if (g_atomic_int_get(&kill_thread) == 1)
-		{
-			goto end;
-		}
+	MPI_Barrier(MPI_COMM_WORLD);
 
+	timer = g_timer_new();
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			gint bytes;
 
 			MPI_File_write_at(file[0], get_offset(iteration + i), buf, opt_block_size, MPI_CHAR, status);
 			MPI_Get_count(status, MPI_CHAR, &bytes);
-
-			g_atomic_int_add(&stat_write, bytes);
+			g_assert(bytes == opt_block_size);
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
+	}
 
+	result->write = g_timer_elapsed(timer, NULL);
+	g_timer_start(timer);
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			gint bytes;
 
 			MPI_File_read_at(file[0], get_offset(iteration + i), buf, opt_block_size, MPI_CHAR, status);
 			MPI_Get_count(status, MPI_CHAR, &bytes);
-
-			g_atomic_int_add(&stat_read, bytes);
+			g_assert(bytes == opt_block_size);
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
-
-		iteration += 1000;
 	}
 
-end:
+	result->read = g_timer_elapsed(timer, NULL);
+	g_timer_destroy(timer);
+
 	MPI_File_close(file);
 
 	if (!opt_shared || process_id == 0)
@@ -350,16 +320,20 @@ end:
 
 	g_free(path);
 
+#else
+	(void)data;
 #endif
 	return NULL;
 }
 
 static
 gpointer
-thread_posix (G_GNUC_UNUSED gpointer data)
+thread_posix (gpointer data)
 {
+	BenchmarkResult* result = data;
 	gchar buf[opt_block_size];
 
+	GTimer* timer;
 	gchar* path;
 	gint fd;
 	guint64 iteration = 0;
@@ -385,43 +359,48 @@ thread_posix (G_GNUC_UNUSED gpointer data)
 		g_error("ERROR %d\n", process_id);
 	}
 
-	while (TRUE)
-	{
-		if (g_atomic_int_get(&kill_thread) == 1)
-		{
-			goto end;
-		}
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
+	timer = g_timer_new();
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
 
 			bytes = pwrite(fd, buf, opt_block_size, get_offset(iteration + i));
-
-			g_atomic_int_add(&stat_write, bytes);
+			g_assert(bytes == (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
+	}
 
+	result->write = g_timer_elapsed(timer, NULL);
+	g_timer_start(timer);
+
+	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
+	{
 		for (guint i = 0; i < 1000; i++)
 		{
 			guint64 bytes;
 
 			bytes = pread(fd, buf, opt_block_size, get_offset(iteration + i));
-
-			g_atomic_int_add(&stat_read, bytes);
+			g_assert(bytes == (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-		iteration += 1000;
 	}
 
-end:
+	result->read = g_timer_elapsed(timer, NULL);
+	g_timer_destroy(timer);
+
 	close(fd);
 
 	if (!opt_shared || process_id == 0)
@@ -447,6 +426,7 @@ main (int argc, char** argv)
 		{ "mpi", 0, 0, G_OPTION_ARG_NONE, &opt_mpi, "Use MPI-I/O", NULL },
 #endif
 		{ "posix", 0, 0, G_OPTION_ARG_NONE, &opt_posix, "Use POSIX I/O", NULL },
+		{ "block-count", 0, 0, G_OPTION_ARG_INT, &opt_block_count, "Block count", "1000000" },
 		{ "block-size", 0, 0, G_OPTION_ARG_INT, &opt_block_size, "Block size", "4096" },
 		{ "shared", 0, 0, G_OPTION_ARG_NONE, &opt_shared, "Use shared access", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
@@ -469,8 +449,8 @@ main (int argc, char** argv)
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
-	GMainLoop* main_loop;
 	GThread* thread = NULL;
+	BenchmarkResult result;
 
 #ifdef HAVE_MPI
 	{
@@ -533,36 +513,47 @@ main (int argc, char** argv)
 
 	if (opt_julea)
 	{
-		thread = g_thread_new("test", thread_julea, NULL);
+		thread = g_thread_new("test", thread_julea, &result);
 	}
 	else if (opt_mpi)
 	{
-		thread = g_thread_new("test", thread_mpi, NULL);
+		thread = g_thread_new("test", thread_mpi, &result);
 	}
 	else if (opt_posix)
 	{
-		thread = g_thread_new("test", thread_posix, NULL);
+		thread = g_thread_new("test", thread_posix, &result);
 	}
 
 	g_assert(thread != NULL);
 
-	main_loop = g_main_loop_new(NULL, FALSE);
-	g_timeout_add_seconds(1, print_statistics, NULL);
+	g_thread_join(thread);
 
-	g_unix_signal_add(SIGHUP, handle_signal, main_loop);
-	g_unix_signal_add(SIGINT, handle_signal, main_loop);
-	g_unix_signal_add(SIGTERM, handle_signal, main_loop);
-
-	g_main_loop_run(main_loop);
-
-	g_atomic_int_set(&kill_thread, 1);
-
-	if (thread != NULL)
+#ifdef HAVE_MPI
 	{
-		g_thread_join(thread);
-	}
+		gdouble read;
+		gdouble write;
 
-	g_main_loop_unref(main_loop);
+		MPI_Reduce(&(result.read), &read, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&(result.write), &write, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	}
+#endif
+
+	if (process_id == 0)
+	{
+		gchar* read_str;
+		gchar* write_str;
+		guint64 bytes;
+
+		bytes = opt_block_count * opt_block_count * process_num;
+		read_str = g_format_size(bytes / result.read);
+		write_str = g_format_size(bytes / result.write);
+
+		g_print("Write: %s/s\n", write_str);
+		g_print("Read:  %s/s\n", read_str);
+
+		g_free(read_str);
+		g_free(write_str);
+	}
 
 #ifdef HAVE_MPI
 	MPI_Finalize();
