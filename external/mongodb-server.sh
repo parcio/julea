@@ -28,7 +28,8 @@
 set -e
 
 PREFIX="${PWD}/mongodb-server"
-VERSION='2.2.2'
+BASE='mongodb-src-r2.2.3'
+FILE="${BASE}.tar.gz"
 
 if [ -d "${PREFIX}" ]
 then
@@ -41,10 +42,10 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget -O "mongodb-server-${VERSION}.tar.gz" "http://downloads.mongodb.org/src/mongodb-src-r${VERSION}.tar.gz"
-tar xf "mongodb-server-${VERSION}.tar.gz"
+wget "http://downloads.mongodb.org/src/${FILE}"
+tar xf "${FILE}"
 
-cd "mongodb-src-r${VERSION}"
+cd "${BASE}"
 
 scons all
 scons --prefix="${PREFIX}" install
