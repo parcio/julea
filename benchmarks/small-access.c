@@ -58,6 +58,7 @@ static gint opt_block_count = 1000000;
 static gint opt_block_size = 4096;
 static gboolean opt_shared = FALSE;
 
+static gboolean opt_julea_batch = FALSE;
 static gchar* opt_julea_semantics = NULL;
 static gchar* opt_julea_template = NULL;
 
@@ -93,11 +94,11 @@ get_name (void)
 	{
 		if (opt_shared)
 		{
-			name = g_strdup("benchmark");
+			name = g_strdup("small-access");
 		}
 		else
 		{
-			name = g_strdup_printf("benchmark%d", process_id);
+			name = g_strdup_printf("small-access-%d", process_id);
 		}
 	}
 
@@ -125,8 +126,8 @@ thread_julea (gpointer data)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		store = j_store_new("benchmark");
-		collection = j_collection_new("benchmark");
+		store = j_store_new("small-access");
+		collection = j_collection_new("small-access");
 		item = j_item_new(get_name());
 
 		j_create_store(store, batch);
@@ -148,10 +149,10 @@ thread_julea (gpointer data)
 	semantics = j_helper_parse_semantics(opt_julea_template, opt_julea_semantics);
 	batch = j_batch_new(semantics);
 
-	j_get_store(&store, "benchmark", batch);
+	j_get_store(&store, "small-access", batch);
 	j_batch_execute(batch);
 
-	j_store_get_collection(store, &collection, "benchmark", batch);
+	j_store_get_collection(store, &collection, "small-access", batch);
 	j_batch_execute(batch);
 
 	j_collection_get_item(collection, &item, get_name(), batch);
@@ -170,13 +171,26 @@ thread_julea (gpointer data)
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
+		guint64 bytes[1000];
+
 		for (guint i = 0; i < 1000; i++)
 		{
-			guint64 bytes;
+			j_item_write(item, buf, opt_block_size, get_offset(iteration + i), &(bytes[i]), batch);
 
-			j_item_write(item, buf, opt_block_size, get_offset(iteration + i), &bytes, batch);
+			if (!opt_julea_batch)
+			{
+				j_batch_execute(batch);
+			}
+		}
+
+		if (opt_julea_batch)
+		{
 			j_batch_execute(batch);
-			g_assert(bytes == (guint)opt_block_size);
+		}
+
+		for (guint i = 0; i < 1000; i++)
+		{
+			g_assert_cmpuint(bytes[i], ==, (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
@@ -189,13 +203,26 @@ thread_julea (gpointer data)
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
+		guint64 bytes[1000];
+
 		for (guint i = 0; i < 1000; i++)
 		{
-			guint64 bytes;
+			j_item_read(item, buf, opt_block_size, get_offset(iteration + i), &(bytes[i]), batch);
 
-			j_item_read(item, buf, opt_block_size, get_offset(iteration + i), &bytes, batch);
+			if (!opt_julea_batch)
+			{
+				j_batch_execute(batch);
+			}
+		}
+
+		if (opt_julea_batch)
+		{
 			j_batch_execute(batch);
-			g_assert(bytes == (guint)opt_block_size);
+		}
+
+		for (guint i = 0; i < 1000; i++)
+		{
+			g_assert_cmpuint(bytes[i], ==, (guint)opt_block_size);
 		}
 
 #ifdef HAVE_MPI
@@ -433,6 +460,7 @@ main (int argc, char** argv)
 	};
 
 	GOptionEntry entries_julea[] = {
+		{ "julea-batch", 0, 0, G_OPTION_ARG_NONE, &opt_julea_batch, "Use batch mode", NULL },
 		{ "julea-semantics", 0, 0, G_OPTION_ARG_STRING, &opt_julea_semantics, "Semantics to use", NULL },
 		{ "julea-template", 0, 0, G_OPTION_ARG_STRING, &opt_julea_template, "Semantics template to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
