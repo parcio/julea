@@ -142,12 +142,14 @@ thread_julea (gpointer data)
 		j_batch_unref(batch);
 	}
 
+	semantics = j_helper_parse_semantics(opt_julea_template, opt_julea_semantics);
+	batch = j_batch_new(semantics);
+
 #ifdef HAVE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-	semantics = j_helper_parse_semantics(opt_julea_template, opt_julea_semantics);
-	batch = j_batch_new(semantics);
+	timer = g_timer_new();
 
 	j_get_store(&store, "small-access", batch);
 	j_batch_execute(batch);
@@ -166,8 +168,6 @@ thread_julea (gpointer data)
 #ifdef HAVE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-	timer = g_timer_new();
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -198,8 +198,35 @@ thread_julea (gpointer data)
 #endif
 	}
 
+	j_store_unref(store);
+	j_collection_unref(collection);
+	j_item_unref(item);
+
 	result->write = g_timer_elapsed(timer, NULL);
+
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
 	g_timer_start(timer);
+
+	j_get_store(&store, "small-access", batch);
+	j_batch_execute(batch);
+
+	j_store_get_collection(store, &collection, "small-access", batch);
+	j_batch_execute(batch);
+
+	j_collection_get_item(collection, &item, get_name(), batch);
+	j_batch_execute(batch);
+
+	if (item == NULL)
+	{
+		g_error("ERROR %d\n", process_id);
+	}
+
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -230,6 +257,10 @@ thread_julea (gpointer data)
 #endif
 	}
 
+	j_store_unref(store);
+	j_collection_unref(collection);
+	j_item_unref(item);
+
 	result->read = g_timer_elapsed(timer, NULL);
 	g_timer_destroy(timer);
 
@@ -241,6 +272,15 @@ thread_julea (gpointer data)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
+		j_get_store(&store, "small-access", batch);
+		j_batch_execute(batch);
+
+		j_store_get_collection(store, &collection, "small-access", batch);
+		j_batch_execute(batch);
+
+		j_collection_get_item(collection, &item, get_name(), batch);
+		j_batch_execute(batch);
+
 		j_collection_delete_item(collection, item, batch);
 		j_store_delete_collection(store, collection, batch);
 		j_delete_store(store, batch);
@@ -248,10 +288,6 @@ thread_julea (gpointer data)
 		j_batch_execute(batch);
 		j_batch_unref(batch);
 	}
-
-	j_store_unref(store);
-	j_collection_unref(collection);
-	j_item_unref(item);
 
 	j_fini();
 
@@ -285,9 +321,11 @@ thread_mpi (gpointer data)
 		g_free(path);
 	}
 
+	path = g_build_filename(opt_mpi_path, get_name(), NULL);
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	path = g_build_filename(opt_mpi_path, get_name(), NULL);
+	timer = g_timer_new();
 	ret = MPI_File_open(comm, path, MPI_MODE_RDWR, MPI_INFO_NULL, file);
 
 	if (ret != MPI_SUCCESS)
@@ -301,8 +339,6 @@ thread_mpi (gpointer data)
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	timer = g_timer_new();
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -318,8 +354,25 @@ thread_mpi (gpointer data)
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
+	MPI_File_close(file);
 	result->write = g_timer_elapsed(timer, NULL);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	g_timer_start(timer);
+	ret = MPI_File_open(comm, path, MPI_MODE_RDWR, MPI_INFO_NULL, file);
+
+	if (ret != MPI_SUCCESS)
+	{
+		g_error("ERROR %d\n", process_id);
+	}
+
+	if (opt_mpi_atomic)
+	{
+		MPI_File_set_atomicity(file[0], 1);
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -335,10 +388,10 @@ thread_mpi (gpointer data)
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
+	MPI_File_close(file);
+
 	result->read = g_timer_elapsed(timer, NULL);
 	g_timer_destroy(timer);
-
-	MPI_File_close(file);
 
 	if (!opt_shared || process_id == 0)
 	{
@@ -374,11 +427,13 @@ thread_posix (gpointer data)
 		g_free(path);
 	}
 
+	path = g_build_filename(opt_posix_path, get_name(), NULL);
+
 #ifdef HAVE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-	path = g_build_filename(opt_posix_path, get_name(), NULL);
+	timer = g_timer_new();
 	fd = open(path, O_RDWR);
 
 	if (fd == -1)
@@ -389,8 +444,6 @@ thread_posix (gpointer data)
 #ifdef HAVE_MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-	timer = g_timer_new();
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -407,8 +460,24 @@ thread_posix (gpointer data)
 #endif
 	}
 
+	close(fd);
 	result->write = g_timer_elapsed(timer, NULL);
+
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
 	g_timer_start(timer);
+	fd = open(path, O_RDWR);
+
+	if (fd == -1)
+	{
+		g_error("ERROR %d\n", process_id);
+	}
+
+#ifdef HAVE_MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 	for (iteration = 0; iteration < (guint)opt_block_count; iteration += 1000)
 	{
@@ -425,10 +494,10 @@ thread_posix (gpointer data)
 #endif
 	}
 
+	close(fd);
+
 	result->read = g_timer_elapsed(timer, NULL);
 	g_timer_destroy(timer);
-
-	close(fd);
 
 	if (!opt_shared || process_id == 0)
 	{
