@@ -65,12 +65,62 @@ jd_signal (gpointer data)
 }
 
 static
+JBackendFile*
+jd_create_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
+{
+	JBackendFile* file;
+	gchar* key;
+
+	key = g_strdup_printf("%s.%s.%s", store, collection, item);
+	file = g_slice_new(JBackendFile);
+
+	jd_backend_create(file, store, collection, item);
+	g_hash_table_insert(hash_table, key, file);
+
+	return file;
+}
+
+static
+JBackendFile*
+jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
+{
+	JBackendFile* file;
+	gchar* key;
+
+	key = g_strdup_printf("%s.%s.%s", store, collection, item);
+
+	if ((file = g_hash_table_lookup(hash_table, key)) == NULL)
+	{
+		file = g_slice_new(JBackendFile);
+
+		jd_backend_open(file, store, collection, item);
+		g_hash_table_insert(hash_table, key, file);
+	}
+	else
+	{
+		g_free(key);
+	}
+
+	return file;
+}
+
+static
+void
+jd_close_file (gpointer data)
+{
+	JBackendFile* file = data;
+
+	jd_backend_close(file);
+}
+
+static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JCache* cache;
 	JMessage* message;
 	JStatistics* statistics;
+	GHashTable* files;
 	GInputStream* input;
 	GOutputStream* output;
 
@@ -93,10 +143,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, jd_close_file);
 
 	while (j_message_read(message, input))
 	{
-		JBackendFile bf;
+		JBackendFile* bf;
 		gchar const* store;
 		gchar const* collection;
 		gchar const* item;
@@ -113,6 +164,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_CREATE:
 				{
+					JBackendFile file[1];
+
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 
@@ -120,10 +173,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						item = j_message_get_string(message);
 
-						if (jd_backend_create(&bf, store, collection, item))
+						if (jd_backend_create(file, store, collection, item))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
-							jd_backend_close(&bf);
+							jd_backend_close(file);
 						}
 					}
 				}
@@ -139,12 +192,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						item = j_message_get_string(message);
 
-						jd_backend_open(&bf, store, collection, item);
+						bf = jd_open_file(files, store, collection, item);
 
-						if (jd_backend_delete(&bf))
+						if (jd_backend_delete(bf))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							jd_backend_close(&bf);
+							//jd_backend_close(bf);
 						}
 
 						if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -166,7 +219,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
-					jd_backend_open(&bf, store, collection, item);
+					bf = jd_open_file(files, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -185,7 +238,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							// FIXME send smaller reply
 						}
 
-						jd_backend_read(&bf, buf, length, offset, &bytes_read);
+						jd_backend_read(bf, buf, length, offset, &bytes_read);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -199,7 +252,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					jd_backend_close(&bf);
+					//jd_backend_close(bf);
 
 					j_message_write(reply, output);
 					j_message_unref(reply);
@@ -220,7 +273,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
-					jd_backend_open(&bf, store, collection, item);
+					bf = jd_open_file(files, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -237,7 +290,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
 
-						jd_backend_write(&bf, buf, length, offset, &bytes_written);
+						jd_backend_write(bf, buf, length, offset, &bytes_written);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 						if (reply != NULL)
@@ -251,11 +304,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						jd_backend_sync(&bf);
+						jd_backend_sync(bf);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					jd_backend_close(&bf);
+					//jd_backend_close(bf);
 
 					if (reply != NULL)
 					{
@@ -283,9 +336,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						item = j_message_get_string(message);
 						flags = j_message_get_4(message);
 
-						jd_backend_open(&bf, store, collection, item);
+						bf = jd_open_file(files, store, collection, item);
 
-						if (jd_backend_status(&bf, flags, &modification_time, &size))
+						if (jd_backend_status(bf, flags, &modification_time, &size))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -312,7 +365,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &size);
 						}
 
-						jd_backend_close(&bf);
+						//jd_backend_close(bf);
 					}
 
 					j_message_write(reply, output);
@@ -398,6 +451,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 		G_UNLOCK(jd_statistics);
 	}
+
+	g_hash_table_destroy(files);
 
 	if (jd_backend_thread_fini != NULL)
 	{
