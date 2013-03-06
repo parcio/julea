@@ -106,7 +106,7 @@ main (int argc, char** argv)
 
 	command = argv[1];
 
-	j_init(&argc, &argv);
+	j_init();
 
 	arguments = g_new(gchar const*, argc - 1);
 
