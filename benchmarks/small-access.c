@@ -569,17 +569,24 @@ main (int argc, char** argv)
 	if (process_id == 0)
 	{
 		gchar* read_str;
+		gchar* size_str;
+		gchar* total_size_str;
 		gchar* write_str;
 		guint64 bytes;
 
-		bytes = opt_block_count * opt_block_count * process_num;
+		bytes = opt_block_size * opt_block_count * process_num;
+		size_str = g_format_size(opt_block_size);
+		total_size_str = g_format_size(bytes);
 		read_str = g_format_size(bytes / result.read);
 		write_str = g_format_size(bytes / result.write);
 
-		g_print("Write: %s/s\n", write_str);
-		g_print("Read:  %s/s\n", read_str);
+		g_print("Size:  %s * %d = %s\n", size_str, opt_block_count, total_size_str);
+		g_print("Write: %.3fs = %s/s\n", result.write, write_str);
+		g_print("Read:  %.3fs = %s/s\n", result.read, read_str);
 
 		g_free(read_str);
+		g_free(size_str);
+		g_free(total_size_str);
 		g_free(write_str);
 	}
 
