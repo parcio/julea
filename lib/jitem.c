@@ -1008,6 +1008,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	JLock* lock = NULL;
 	JMessage** messages;
 	JSemantics* semantics;
+	guint m;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
@@ -1128,6 +1129,17 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 	connection = j_connection_pool_pop();
 
+	// FIXME ugly
+	m = 0;
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (messages[i] != NULL)
+		{
+			m++;
+		}
+	}
+
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* background_data;
@@ -1143,7 +1155,15 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		background_data->index = i;
 		background_data->u.read.buffer_list = buffer_list[i];
 
-		background_operations[i] = j_background_operation_new(j_item_read_background_operation, background_data);
+		// FIXME ugly
+		if (m > 1)
+		{
+			background_operations[i] = j_background_operation_new(j_item_read_background_operation, background_data);
+		}
+		else
+		{
+			j_item_read_background_operation(background_data);
+		}
 	}
 
 	for (guint i = 0; i < n; i++)
@@ -1192,6 +1212,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	JLock* lock = NULL;
 	JMessage** messages;
 	JSemantics* semantics;
+	guint m;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
@@ -1311,6 +1332,16 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 	connection = j_connection_pool_pop();
 
+	m = 0;
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (messages[i] != NULL)
+		{
+			m++;
+		}
+	}
+
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* background_data;
@@ -1349,7 +1380,14 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		background_data->index = i;
 		background_data->u.write.create_message = create_message;
 
-		background_operations[i] = j_background_operation_new(j_item_write_background_operation, background_data);
+		if (m > 1)
+		{
+			background_operations[i] = j_background_operation_new(j_item_write_background_operation, background_data);
+		}
+		else
+		{
+			j_item_write_background_operation(background_data);
+		}
 	}
 
 	for (guint i = 0; i < n; i++)
