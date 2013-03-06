@@ -235,7 +235,14 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (buf == NULL)
 						{
-							// FIXME send smaller reply
+							// FIXME ugly
+							j_message_write(reply, output);
+							j_message_unref(reply);
+
+							reply = j_message_new_reply(message);
+
+							j_cache_clear(cache);
+							buf = j_cache_get(cache, length);
 						}
 
 						jd_backend_read(bf, buf, length, offset, &bytes_read);

@@ -348,7 +348,7 @@ static
 gchar*
 _benchmark_item_read (gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 1000 : 1000;
+	guint const n = (use_batch) ? 25000 : 25000;
 
 	JCollection* collection;
 	JItem* item;
@@ -435,7 +435,7 @@ static
 gchar*
 _benchmark_item_write (gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 1000 : 1000;
+	guint const n = (use_batch) ? 25000 : 25000;
 
 	JCollection* collection;
 	JItem* item;
