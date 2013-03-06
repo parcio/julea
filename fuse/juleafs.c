@@ -88,7 +88,7 @@ main (int argc, char** argv)
 {
 	gint ret;
 
-	j_init(&argc, &argv);
+	j_init();
 
 	ret = fuse_main(argc, argv, &jfs_vtable, NULL);
 

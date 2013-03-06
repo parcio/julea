@@ -41,7 +41,7 @@ typedef struct JCommon JCommon;
 #include <jbatch.h>
 #include <jstore.h>
 
-void j_init (gint*, gchar***);
+void j_init (void);
 void j_fini (void);
 
 void j_create_store (JStore*, JBatch*);

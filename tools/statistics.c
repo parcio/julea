@@ -75,7 +75,7 @@ main (int argc, char** argv)
 	JStatistics* statistics_total;
 	gchar get_all;
 
-	j_init(&argc, &argv);
+	j_init();
 
 	get_all = 1;
 	configuration = j_configuration();

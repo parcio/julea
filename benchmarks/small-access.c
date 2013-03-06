@@ -119,7 +119,7 @@ thread_julea (gpointer data)
 	GTimer* timer;
 	guint64 iteration;
 
-	j_init(NULL, NULL);
+	j_init();
 
 	if (!opt_shared || process_id == 0)
 	{

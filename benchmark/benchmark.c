@@ -123,7 +123,7 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
-	j_init(&argc, &argv);
+	j_init();
 
 	j_benchmark_semantics = j_helper_parse_semantics(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();

@@ -93,6 +93,40 @@ j_is_initialized (void)
 }
 
 /**
+ * Returns the program name.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param default_name Default name
+ *
+ * \return The progran name if it can be determined, default_name otherwise.
+ */
+static
+gchar*
+j_get_program_name (gchar const* default_name)
+{
+	gchar* program_name;
+
+	if ((program_name = g_file_read_link("/proc/self/exe", NULL)) != NULL)
+	{
+		gchar* basename;
+
+		basename = g_path_get_basename(program_name);
+		g_free(program_name);
+		program_name = basename;
+	}
+
+	if (program_name == NULL)
+	{
+		program_name = g_strdup(default_name);
+	}
+
+	return program_name;
+}
+
+/**
  * Initializes JULEA.
  *
  * \author Michael Kuhn
@@ -101,12 +135,10 @@ j_is_initialized (void)
  * \param argv A pointer to \c argv.
  */
 void
-j_init (gint* argc, gchar*** argv)
+j_init (void)
 {
 	JCommon* common;
 	gchar* basename;
-
-	(void)argc;
 
 	g_return_if_fail(!j_is_initialized());
 
@@ -117,7 +149,7 @@ j_init (gint* argc, gchar*** argv)
 	g_type_init();
 #endif
 
-	basename = g_path_get_basename((*argv)[0]);
+	basename = j_get_program_name("julea");
 	j_trace_init(basename);
 	g_free(basename);
 

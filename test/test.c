@@ -40,7 +40,7 @@ main (int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-	j_init(&argc, &argv);
+	j_init();
 
 	test_background_operation();
 	test_cache();
