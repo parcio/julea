@@ -41,6 +41,7 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JMessage Message
@@ -284,6 +285,8 @@ j_message_new (JMessageType op_type, gsize length)
 	//g_return_val_if_fail(op_type != J_MESSAGE_NONE, NULL);
 	g_return_val_if_fail((op_type & J_MESSAGE_MODIFIER_MASK) == 0, NULL);
 
+	j_trace_enter(G_STRFUNC);
+
 	rand = g_random_int();
 
 	message = g_slice_new(JMessage);
@@ -298,6 +301,8 @@ j_message_new (JMessageType op_type, gsize length)
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(message)->op_count = GUINT32_TO_LE(0);
+
+	j_trace_leave(G_STRFUNC);
 
 	return message;
 }
@@ -322,6 +327,8 @@ j_message_new_reply (JMessage* message)
 
 	g_return_val_if_fail(message != NULL, NULL);
 
+	j_trace_enter(G_STRFUNC);
+
 	reply = g_slice_new(JMessage);
 	reply->size = sizeof(JMessageHeader);
 	reply->data = g_malloc(reply->size);
@@ -336,6 +343,8 @@ j_message_new_reply (JMessage* message)
 	j_message_header(reply)->id = j_message_header(message)->id;
 	j_message_header(reply)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
+
+	j_trace_leave(G_STRFUNC);
 
 	return reply;
 }
@@ -360,7 +369,9 @@ j_message_ref (JMessage* message)
 {
 	g_return_val_if_fail(message != NULL, NULL);
 
+	j_trace_enter(G_STRFUNC);
 	g_atomic_int_inc(&(message->ref_count));
+	j_trace_leave(G_STRFUNC);
 
 	return message;
 }
@@ -381,6 +392,8 @@ j_message_unref (JMessage* message)
 {
 	g_return_if_fail(message != NULL);
 
+	j_trace_enter(G_STRFUNC);
+
 	if (g_atomic_int_dec_and_test(&(message->ref_count)))
 	{
 		if (message->original_message != NULL)
@@ -397,6 +410,8 @@ j_message_unref (JMessage* message)
 
 		g_slice_free(JMessage, message);
 	}
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -418,9 +433,14 @@ j_message_get_id (JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	id = j_message_header(message)->id;
+	j_trace_enter(G_STRFUNC);
 
-	return GUINT32_FROM_LE(id);
+	id = j_message_header(message)->id;
+	id = GUINT32_FROM_LE(id);
+
+	j_trace_leave(G_STRFUNC);
+
+	return id;
 }
 
 /**
@@ -442,9 +462,13 @@ j_message_get_type (JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
+	j_trace_enter(G_STRFUNC);
+
 	op_type = j_message_header(message)->op_type;
 	op_type = GUINT32_FROM_LE(op_type);
 	op_type &= ~J_MESSAGE_MODIFIER_MASK;
+
+	j_trace_leave(G_STRFUNC);
 
 	return op_type;
 }
@@ -468,9 +492,13 @@ j_message_get_type_modifier (JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
+	j_trace_enter(G_STRFUNC);
+
 	op_type = j_message_header(message)->op_type;
 	op_type = GUINT32_FROM_LE(op_type);
 	op_type &= J_MESSAGE_MODIFIER_MASK;
+
+	j_trace_leave(G_STRFUNC);
 
 	return op_type;
 }
@@ -494,9 +522,14 @@ j_message_get_count (JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	op_count = j_message_header(message)->op_count;
+	j_trace_enter(G_STRFUNC);
 
-	return GUINT32_FROM_LE(op_count);
+	op_count = j_message_header(message)->op_count;
+	op_count = GUINT32_FROM_LE(op_count);
+
+	j_trace_leave(G_STRFUNC);
+
+	return op_count;
 }
 
 /**
@@ -521,11 +554,15 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 1), FALSE);
 
+	j_trace_enter(G_STRFUNC);
+
 	*(message->current) = *((gchar const*)data);
 	message->current += 1;
 
 	new_length = j_message_length(message) + 1;
 	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -553,11 +590,15 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 4), FALSE);
 
+	j_trace_enter(G_STRFUNC);
+
 	*((gint32*)(message->current)) = GINT32_TO_LE(*((gint32 const*)data));
 	message->current += 4;
 
 	new_length = j_message_length(message) + 4;
 	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -585,11 +626,15 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, 8), FALSE);
 
+	j_trace_enter(G_STRFUNC);
+
 	*((gint64*)(message->current)) = GINT64_TO_LE(*((gint64 const*)data));
 	message->current += 8;
 
 	new_length = j_message_length(message) + 8;
 	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -620,11 +665,15 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(j_message_can_append(message, length), FALSE);
 
+	j_trace_enter(G_STRFUNC);
+
 	memcpy(message->current, data, length);
 	message->current += length;
 
 	new_length = j_message_length(message) + length;
 	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+
+	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -649,8 +698,12 @@ j_message_get_1 (JMessage* message)
 	g_return_val_if_fail(message != NULL, '\0');
 	g_return_val_if_fail(j_message_can_get(message, 1), '\0');
 
+	j_trace_enter(G_STRFUNC);
+
 	ret = *((gchar const*)(message->current));
 	message->current += 1;
+
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -676,8 +729,12 @@ j_message_get_4 (JMessage* message)
 	g_return_val_if_fail(message != NULL, 0);
 	g_return_val_if_fail(j_message_can_get(message, 4), 0);
 
+	j_trace_enter(G_STRFUNC);
+
 	ret = GINT32_FROM_LE(*((gint32 const*)(message->current)));
 	message->current += 4;
+
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -703,8 +760,12 @@ j_message_get_8 (JMessage* message)
 	g_return_val_if_fail(message != NULL, 0);
 	g_return_val_if_fail(j_message_can_get(message, 8), 0);
 
+	j_trace_enter(G_STRFUNC);
+
 	ret = GINT64_FROM_LE(*((gint64 const*)(message->current)));
 	message->current += 8;
+
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -728,8 +789,12 @@ j_message_get_string (JMessage* message)
 
 	g_return_val_if_fail(message != NULL, NULL);
 
+	j_trace_enter(G_STRFUNC);
+
 	ret = message->current;
 	message->current += strlen(ret) + 1;
+
+	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -750,10 +815,13 @@ j_message_get_string (JMessage* message)
 gboolean
 j_message_read (JMessage* message, GInputStream* stream)
 {
+	gboolean ret = FALSE;
 	gsize bytes_read;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
 
 	if (j_message_get_type_modifier(message) & J_MESSAGE_REPLY)
 	{
@@ -762,19 +830,19 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, NULL))
 	{
-		return FALSE;
+		goto end;
 	}
 
 	if (bytes_read == 0)
 	{
-		return FALSE;
+		goto end;
 	}
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
 	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, NULL))
 	{
-		return FALSE;
+		goto end;
 	}
 
 	message->current = message->data + sizeof(JMessageHeader);
@@ -784,7 +852,12 @@ j_message_read (JMessage* message, GInputStream* stream)
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
 
-	return TRUE;
+	ret = TRUE;
+
+end:
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -803,20 +876,23 @@ j_message_read (JMessage* message, GInputStream* stream)
 gboolean
 j_message_write (JMessage* message, GOutputStream* stream)
 {
+	gboolean ret = FALSE;
 	JListIterator* iterator;
 	gsize bytes_written;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
+	j_trace_enter(G_STRFUNC);
+
 	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, NULL))
 	{
-		return FALSE;
+		goto end;
 	}
 
 	if (bytes_written == 0)
 	{
-		return FALSE;
+		goto end;
 	}
 
 	if (message->send_list != NULL)
@@ -829,7 +905,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 
 			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, NULL))
 			{
-				return FALSE;
+				goto end;
 			}
 		}
 
@@ -838,7 +914,12 @@ j_message_write (JMessage* message, GOutputStream* stream)
 
 	g_output_stream_flush(stream, NULL, NULL);
 
-	return TRUE;
+	ret = TRUE;
+
+end:
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
 }
 
 /**
@@ -862,11 +943,15 @@ j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 
+	j_trace_enter(G_STRFUNC);
+
 	message_data = g_slice_new(JMessageData);
 	message_data->data = data;
 	message_data->length = length;
 
 	j_list_append(message->send_list, message_data);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -887,10 +972,14 @@ j_message_add_operation (JMessage* message, gsize length)
 
 	g_return_if_fail(message != NULL);
 
+	j_trace_enter(G_STRFUNC);
+
 	new_op_count = j_message_get_count(message) + 1;
 	j_message_header(message)->op_count = GUINT32_TO_LE(new_op_count);
 
 	j_message_extend(message, length);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 void
@@ -900,6 +989,8 @@ j_message_set_safety (JMessage* message, JSemantics* semantics)
 
 	g_return_if_fail(message != NULL);
 	g_return_if_fail(semantics != NULL);
+
+	j_trace_enter(G_STRFUNC);
 
 	op_type = j_message_get_type(message) | j_message_get_type_modifier(message);
 
@@ -913,6 +1004,8 @@ j_message_set_safety (JMessage* message, JSemantics* semantics)
 	}
 
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
