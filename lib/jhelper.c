@@ -74,6 +74,22 @@ j_helper_use_nodelay (GSocketConnection* connection)
 	j_trace_leave(G_STRFUNC);
 }
 
+guint
+j_helper_get_processor_count (void)
+{
+	guint thread_count = 8;
+
+#if GLIB_CHECK_VERSION(2,35,4)
+	thread_count = g_get_num_processors();
+#elif defined(_SC_NPROCESSORS_ONLN)
+	thread_count = sysconf(_SC_NPROCESSORS_ONLN);
+#elif defined(_SC_NPROCESSORS_CONF)
+	thread_count = sysconf(_SC_NPROCESSORS_CONF);
+#endif
+
+	return thread_count;
+}
+
 void
 j_helper_set_write_concern (mongo_write_concern* write_concern, JSemantics* semantics)
 {

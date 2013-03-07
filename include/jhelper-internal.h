@@ -43,6 +43,8 @@
 
 J_GNUC_INTERNAL void j_helper_use_nodelay (GSocketConnection*);
 
+J_GNUC_INTERNAL guint j_helper_get_processor_count (void);
+
 J_GNUC_INTERNAL void j_helper_set_write_concern (mongo_write_concern*, JSemantics*);
 
 J_GNUC_INTERNAL JSemantics* j_helper_parse_semantics (gchar const*, gchar const*);
