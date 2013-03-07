@@ -74,10 +74,20 @@ jd_create_file (GHashTable* hash_table, gchar const* store, gchar const* collect
 	key = g_strdup_printf("%s.%s.%s", store, collection, item);
 	file = g_slice_new(JBackendFile);
 
-	jd_backend_create(file, store, collection, item);
+	if (!jd_backend_create(file, store, collection, item))
+	{
+		goto error;
+	}
+
 	g_hash_table_insert(hash_table, key, file);
 
 	return file;
+
+error:
+	g_free(key);
+	g_slice_free(JBackendFile, file);
+
+	return NULL;
 }
 
 static
@@ -93,7 +103,11 @@ jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collectio
 	{
 		file = g_slice_new(JBackendFile);
 
-		jd_backend_open(file, store, collection, item);
+		if (!jd_backend_open(file, store, collection, item))
+		{
+			goto error;
+		}
+
 		g_hash_table_insert(hash_table, key, file);
 	}
 	else
@@ -102,6 +116,12 @@ jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collectio
 	}
 
 	return file;
+
+error:
+	g_free(key);
+	g_slice_free(JBackendFile, file);
+
+	return NULL;
 }
 
 static
@@ -164,8 +184,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_CREATE:
 				{
-					JBackendFile file[1];
-
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 
@@ -173,10 +191,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						item = j_message_get_string(message);
 
-						if (jd_backend_create(file, store, collection, item))
+						if (jd_create_file(files, store, collection, item) != NULL)
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
-							jd_backend_close(file);
 						}
 					}
 				}
