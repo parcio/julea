@@ -55,9 +55,9 @@
  **/
 
 void
-j_helper_use_nodelay (GSocketConnection* connection)
+j_helper_set_nodelay (GSocketConnection* connection, gboolean enable)
 {
-	gint const flag = 1;
+	gint const flag = (enable) ? 1 : 0;
 
 	GSocket* socket_;
 	gint fd;

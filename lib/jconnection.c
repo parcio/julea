@@ -260,7 +260,7 @@ j_connection_connect (JConnection* connection)
 			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
 		}
 
-		j_helper_use_nodelay(connection->sockets[i]);
+		j_helper_set_nodelay(connection->sockets[i], TRUE);
 
 		ret = ret && (connection->sockets[i] != NULL);
 	}

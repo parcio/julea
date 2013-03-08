@@ -150,7 +150,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	j_trace_enter(G_STRFUNC);
 
-	j_helper_use_nodelay(connection);
+	j_helper_set_nodelay(connection, TRUE);
 
 	statistics = j_statistics_new(TRUE);
 	cache = j_cache_new(J_MIB(50));

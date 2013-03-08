@@ -643,7 +643,7 @@ main (int argc, char** argv)
 		gchar* write_str;
 		guint64 bytes;
 
-		bytes = opt_block_size * opt_block_count * process_num;
+		bytes = (guint64)opt_block_size * opt_block_count * process_num;
 		size_str = g_format_size(opt_block_size);
 		total_size_str = g_format_size(bytes);
 		read_str = g_format_size(bytes / result.read);
