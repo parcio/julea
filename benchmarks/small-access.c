@@ -126,12 +126,14 @@ thread_julea (gpointer data)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		store = j_store_new("small-access");
-		collection = j_collection_new("small-access");
+		j_get_store(&store, "small-access", batch);
+		j_batch_execute(batch);
+
+		j_store_get_collection(store, &collection, "small-access", batch);
+		j_batch_execute(batch);
+
 		item = j_item_new(get_name());
 
-		j_create_store(store, batch);
-		j_store_create_collection(store, collection, batch);
 		j_collection_create_item(collection, item, batch);
 
 		j_item_unref(item);
@@ -162,7 +164,7 @@ thread_julea (gpointer data)
 
 	if (item == NULL)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not write.\n", process_id);
 	}
 
 #ifdef HAVE_MPI
@@ -221,7 +223,7 @@ thread_julea (gpointer data)
 
 	if (item == NULL)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not read.\n", process_id);
 	}
 
 #ifdef HAVE_MPI
@@ -282,8 +284,10 @@ thread_julea (gpointer data)
 		j_batch_execute(batch);
 
 		j_collection_delete_item(collection, item, batch);
-		j_store_delete_collection(store, collection, batch);
-		j_delete_store(store, batch);
+
+		j_store_unref(store);
+		j_collection_unref(collection);
+		j_item_unref(item);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);
@@ -330,7 +334,7 @@ thread_mpi (gpointer data)
 
 	if (ret != MPI_SUCCESS)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not write.\n", process_id);
 	}
 
 	if (opt_mpi_atomic)
@@ -364,7 +368,7 @@ thread_mpi (gpointer data)
 
 	if (ret != MPI_SUCCESS)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not read.\n", process_id);
 	}
 
 	if (opt_mpi_atomic)
@@ -438,7 +442,7 @@ thread_posix (gpointer data)
 
 	if (fd == -1)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not write.\n", process_id);
 	}
 
 #ifdef HAVE_MPI
@@ -472,7 +476,7 @@ thread_posix (gpointer data)
 
 	if (fd == -1)
 	{
-		g_error("ERROR %d\n", process_id);
+		g_error("Process %d can not read.\n", process_id);
 	}
 
 #ifdef HAVE_MPI
