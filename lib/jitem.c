@@ -671,6 +671,36 @@ j_item_get_modification_time (JItem* item)
 	return item->status.modification_time;
 }
 
+/**
+ * Returns the item's optimal access size.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JItem* item;
+ * guint64 optimal_size;
+ *
+ * ...
+ * optimal_size = j_item_get_optimal_access_size(item);
+ * j_item_write(item, buffer, optimal_size, 0, &dummy, batch);
+ * ...
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return An access size.
+ */
+guint64
+j_item_get_optimal_access_size (JItem* item)
+{
+	g_return_val_if_fail(item != NULL, 0);
+
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
+
+	return J_KIB(512);
+}
+
 /* Internal */
 
 /**
