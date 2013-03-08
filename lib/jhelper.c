@@ -124,7 +124,11 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 
 	j_trace_enter(G_STRFUNC);
 
-	if (g_strcmp0(template_str, "posix") == 0)
+	if (template_str == NULL || g_strcmp0(template_str, "default") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
+	else if (g_strcmp0(template_str, "posix") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
 	}
@@ -138,7 +142,7 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 	}
 	else
 	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+		g_assert_not_reached();
 	}
 
 	if (semantics_str == NULL)
@@ -174,6 +178,10 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_NONE);
 			}
+			else
+			{
+				g_assert_not_reached();
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "concurrency="))
 		{
@@ -188,6 +196,10 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			else if (g_strcmp0(value, "none") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
 			}
 		}
 		else if (g_str_has_prefix(parts[i], "consistency="))
@@ -204,6 +216,10 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
 			}
+			else
+			{
+				g_assert_not_reached();
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "persistency="))
 		{
@@ -218,6 +234,10 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			else if (g_strcmp0(value, "none") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
 			}
 		}
 		else if (g_str_has_prefix(parts[i], "safety="))
@@ -234,6 +254,10 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
 			}
+			else
+			{
+				g_assert_not_reached();
+			}
 		}
 		else if (g_str_has_prefix(parts[i], "security="))
 		{
@@ -245,6 +269,14 @@ j_helper_parse_semantics (gchar const* template_str, gchar const* semantics_str)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_NONE);
 			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else
+		{
+			g_assert_not_reached();
 		}
 	}
 

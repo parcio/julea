@@ -349,7 +349,7 @@ j_batch_execute (JBatch* batch)
 		goto end;
 	}
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
 		batch->list = j_list_new((JListFreeFunc)j_operation_free);
