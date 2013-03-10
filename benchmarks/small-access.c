@@ -634,8 +634,11 @@ main (int argc, char** argv)
 		gdouble read;
 		gdouble write;
 
-		MPI_Reduce(&(result.read), &read, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-		MPI_Reduce(&(result.write), &write, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&(result.read), &read, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&(result.write), &write, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+		result.read = read / process_num;
+		result.write = write / process_num;
 	}
 #endif
 
@@ -653,7 +656,7 @@ main (int argc, char** argv)
 		read_str = g_format_size(bytes / result.read);
 		write_str = g_format_size(bytes / result.write);
 
-		g_print("Size:  %s * %d = %s\n", size_str, opt_block_count, total_size_str);
+		g_print("Size:  %s * %d * %d = %s\n", size_str, opt_block_count, process_num, total_size_str);
 		g_print("Write: %.3fs = %s/s\n", result.write, write_str);
 		g_print("Read:  %.3fs = %s/s\n", result.read, read_str);
 
