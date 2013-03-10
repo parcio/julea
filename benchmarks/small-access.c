@@ -74,7 +74,7 @@ static
 guint64
 get_offset (guint64 iteration)
 {
-	if (opt_shared)
+	if (!opt_shared)
 	{
 		return opt_block_size * iteration;
 	}
