@@ -657,8 +657,8 @@ main (int argc, char** argv)
 		write_str = g_format_size(bytes / result.write);
 
 		g_print("Size:  %s * %d * %d = %s\n", size_str, opt_block_count, process_num, total_size_str);
-		g_print("Write: %.3fs = %s/s\n", result.write, write_str);
-		g_print("Read:  %.3fs = %s/s\n", result.read, read_str);
+		g_print("Write: %.3fs = %s/s = %" G_GUINT64_FORMAT "\n", result.write, write_str, (guint64)(bytes / result.write));
+		g_print("Read:  %.3fs = %s/s = %" G_GUINT64_FORMAT "\n", result.read, read_str, (guint64)(bytes / result.read));
 
 		g_free(read_str);
 		g_free(size_str);
