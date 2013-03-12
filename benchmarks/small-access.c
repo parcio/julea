@@ -315,17 +315,10 @@ thread_mpi (gpointer data)
 	gint ret;
 
 	comm = (opt_shared) ? MPI_COMM_WORLD : MPI_COMM_SELF;
-
-	if (!opt_shared || process_id == 0)
-	{
-		path = g_build_filename(opt_mpi_path, get_name(), NULL);
-		MPI_File_open(comm, path, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, file);
-
-		MPI_File_close(file);
-		g_free(path);
-	}
-
 	path = g_build_filename(opt_mpi_path, get_name(), NULL);
+
+	MPI_File_open(comm, path, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, file);
+	MPI_File_close(file);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -397,10 +390,7 @@ thread_mpi (gpointer data)
 	result->read = g_timer_elapsed(timer, NULL);
 	g_timer_destroy(timer);
 
-	if (!opt_shared || process_id == 0)
-	{
-		MPI_File_delete(path, MPI_INFO_NULL);
-	}
+	MPI_File_delete(path, MPI_INFO_NULL);
 
 	g_free(path);
 
