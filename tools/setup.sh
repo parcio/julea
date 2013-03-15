@@ -47,11 +47,11 @@ export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DATA=$(julea-config --local --print | grep ^data=)
 METADATA=$(julea-config --local --print | grep ^metadata=)
-PATH=$(julea-config --local --print | grep ^path=)
+STORAGE_PATH=$(julea-config --local --print | grep ^path=)
 
 DATA="${DATA#data=}"
 METADATA="${METADATA#metadata=}"
-PATH="${PATH#path=}"
+STORAGE_PATH="${STORAGE_PATH#path=}"
 
 DATA="${DATA%;}"
 METADATA="${METADATA%;}"
@@ -79,7 +79,7 @@ do
 		elif [ "${MODE}" = 'stop' ]
 		then
 			killall --verbose julea-daemon || true
-			rm -rf "${PATH}"
+			rm -rf "${STORAGE_PATH}"
 		fi
 	fi
 done
