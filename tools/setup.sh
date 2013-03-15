@@ -62,6 +62,7 @@ HOSTNAME=$(hostname)
 for SERVER in ${DATA}
 do
 	HOST="${SERVER%:*}"
+	HOST="${HOST%.*}"
 	PORT="${SERVER#*:}"
 	test "${PORT}" = "${SERVER}" && PORT=''
 
@@ -83,6 +84,7 @@ done
 for SERVER in ${METADATA}
 do
 	HOST="${SERVER%:*}"
+	HOST="${HOST%.*}"
 	PORT="${SERVER#*:}"
 	test "${PORT}" = "${SERVER}" && PORT=''
 
