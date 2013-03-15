@@ -43,13 +43,15 @@ BUILD_PATH="${ROOT}/build"
 MONGO_PATH='/tmp/julea-mongo'
 
 export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:${ROOT}/external/mongodb-server/bin:${PATH}"
-export LD_LIBRARY_PATH="${BUILD_PATH}/lib"
+export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DATA=$(julea-config --local --print | grep ^data=)
 METADATA=$(julea-config --local --print | grep ^metadata=)
+PATH=$(julea-config --local --print | grep ^path=)
 
 DATA="${DATA#data=}"
 METADATA="${METADATA#metadata=}"
+PATH="${PATH#path=}"
 
 DATA="${DATA%;}"
 METADATA="${METADATA%;}"
@@ -77,6 +79,7 @@ do
 		elif [ "${MODE}" = 'stop' ]
 		then
 			killall --verbose julea-daemon || true
+			rm -rf "${PATH}"
 		fi
 	fi
 done
@@ -92,13 +95,12 @@ do
 	then
 		if [ "${MODE}" = 'start' ]
 		then
-			mkdir -p "${MONGO_PATH}"
 			mkdir -p "${MONGO_PATH}/db"
-
 			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
 		elif [ "${MODE}" = 'stop' ]
 		then
 			mongod --shutdown --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal || true
+			rm -rf "${MONGO_PATH}"
 		fi
 	fi
 done
