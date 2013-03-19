@@ -195,7 +195,7 @@ static
 gchar*
 benchmark_collection_delete_batch_without_get (void)
 {
-	guint const n = 100000;
+	guint const n = 10000;
 
 	JBatch* delete_batch;
 	JBatch* batch;
