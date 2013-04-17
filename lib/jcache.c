@@ -132,6 +132,17 @@ j_cache_free (JCache* cache)
 	j_trace_leave(G_STRFUNC);
 }
 
+guint64
+j_cache_size (JCache* cache)
+{
+	g_return_val_if_fail(cache != NULL, 0);
+
+	j_trace_enter(G_STRFUNC);
+	j_trace_leave(G_STRFUNC);
+
+	return cache->size;
+}
+
 /**
  * Gets a new segment from the cache.
  *
