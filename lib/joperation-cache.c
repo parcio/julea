@@ -168,6 +168,44 @@ j_operation_cache_test (JOperation* operation)
 	return ret;
 }
 
+static
+guint64
+j_operation_cache_get_required_size (JOperation* operation)
+{
+	guint64 ret = 0;
+
+	j_trace_enter(G_STRFUNC);
+
+	switch (operation->type)
+	{
+		case J_OPERATION_ITEM_WRITE:
+			ret = operation->u.item_write.length;
+			break;
+
+		case J_OPERATION_CREATE_STORE:
+		case J_OPERATION_DELETE_STORE:
+		case J_OPERATION_STORE_CREATE_COLLECTION:
+		case J_OPERATION_STORE_DELETE_COLLECTION:
+		case J_OPERATION_COLLECTION_CREATE_ITEM:
+		case J_OPERATION_COLLECTION_DELETE_ITEM:
+		case J_OPERATION_GET_STORE:
+		case J_OPERATION_STORE_GET_COLLECTION:
+		case J_OPERATION_COLLECTION_GET_ITEM:
+		case J_OPERATION_ITEM_GET_STATUS:
+		case J_OPERATION_ITEM_READ:
+			ret = 0;
+			break;
+
+		case J_OPERATION_NONE:
+		default:
+			g_warn_if_reached();
+	}
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
 void
 j_operation_cache_init (void)
 {
@@ -248,6 +286,7 @@ j_operation_cache_add (JBatch* batch)
 	JList* operations;
 	JListIterator* iterator;
 	gboolean can_cache = TRUE;
+	guint64 required_size = 0;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -265,9 +304,16 @@ j_operation_cache_add (JBatch* batch)
 			ret = FALSE;
 			break;
 		}
+
+		required_size += j_operation_cache_get_required_size(operation);
 	}
 
 	j_list_iterator_free(iterator);
+
+	if (required_size > j_cache_size(j_operation_cache->cache))
+	{
+		ret = FALSE;
+	}
 
 	if (!ret)
 	{
