@@ -1417,6 +1417,13 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		else
 		{
 			j_item_write_background_operation(background_data);
+
+			if (create_message != NULL)
+			{
+				j_message_unref(create_message);
+			}
+
+			g_slice_free(JItemBackgroundData, background_data);
 		}
 	}
 
