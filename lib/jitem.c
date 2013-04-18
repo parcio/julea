@@ -558,6 +558,9 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 /**
  * Writes an item.
  *
+ * \note
+ * j_item_write() modifies bytes_written even if j_batch_execute() is not called.
+ *
  * \author Michael Kuhn
  *
  * \code
@@ -588,6 +591,8 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	operation->u.item_write.length = length;
 	operation->u.item_write.offset = offset;
 	operation->u.item_write.bytes_written = bytes_written;
+
+	*bytes_written = 0;
 
 	j_batch_add(batch, operation);
 
@@ -1306,8 +1311,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		guint64 block_id;
 		guint index;
 
-		*bytes_written = 0;
-
 		if (length == 0)
 		{
 			continue;
@@ -1343,8 +1346,12 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			}
 
 			d += new_length;
+
 			/* FIXME */
-			*bytes_written += new_length;
+			if (bytes_written != NULL)
+			{
+				*bytes_written += new_length;
+			}
 		}
 
 		j_distribution_free(distribution);

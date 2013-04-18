@@ -359,7 +359,7 @@ _benchmark_item_read (gboolean use_batch, guint block_size)
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
-	guint64 nb;
+	guint64 nb = 0;
 
 	memset(dummy, 0, block_size);
 
@@ -389,12 +389,16 @@ _benchmark_item_read (gboolean use_batch, guint block_size)
 		if (!use_batch)
 		{
 			j_batch_execute(batch);
+
+			g_assert_cmpuint(nb, ==, block_size);
 		}
 	}
 
 	if (use_batch)
 	{
 		j_batch_execute(batch);
+
+		g_assert_cmpuint(nb, ==, n * block_size);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
@@ -446,6 +450,7 @@ _benchmark_item_write (gboolean use_batch, guint block_size)
 	gchar* ret;
 	gchar* size;
 	gdouble elapsed;
+	guint64 nb = 0;
 
 	memset(dummy, 0, block_size);
 
@@ -464,19 +469,21 @@ _benchmark_item_write (gboolean use_batch, guint block_size)
 
 	for (guint i = 0; i < n; i++)
 	{
-		guint64 nb;
-
 		j_item_write(item, &dummy, block_size, i * block_size, &nb, batch);
 
 		if (!use_batch)
 		{
 			j_batch_execute(batch);
+
+			g_assert_cmpuint(nb, ==, block_size);
 		}
 	}
 
 	if (use_batch)
 	{
 		j_batch_execute(batch);
+
+		g_assert_cmpuint(nb, ==, n * block_size);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();

@@ -335,11 +335,15 @@ j_operation_cache_add (JBatch* batch)
 
 			if (data == NULL)
 			{
+				// FIXME
+				//j_cache_clear(j_operation_cache->cache);
 				ret = FALSE;
 				break;
 			}
 
 			operation->u.item_write.data = data;
+			*(operation->u.item_write.bytes_written) += operation->u.item_write.length;
+			operation->u.item_write.bytes_written = NULL;
 		}
 	}
 
