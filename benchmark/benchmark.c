@@ -82,31 +82,65 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	result.operations = 0;
 	result.bytes = 0;
 
-	left = g_strconcat(name, ":", NULL);
-	g_print("%-60s ", left);
-	g_free(left);
+	if (!opt_machine_readable)
+	{
+		left = g_strconcat(name, ":", NULL);
+		g_print("%-60s ", left);
+		g_free(left);
+	}
+	else
+	{
+		g_print("%s", name);
+	}
 
 	g_timer_start(func_timer);
 	(*benchmark_func)(&result);
 	elapsed = g_timer_elapsed(func_timer, NULL);
 
-	g_print("%f seconds", result.elapsed_time);
-
-	if (result.operations != 0)
+	if (!opt_machine_readable)
 	{
-		g_print(" (%f/s)", (gdouble)result.operations / result.elapsed_time);
-	}
+		g_print("%f seconds", result.elapsed_time);
 
-	if (result.bytes != 0)
+		if (result.operations != 0)
+		{
+			g_print(" (%f/s)", (gdouble)result.operations / result.elapsed_time);
+		}
+
+		if (result.bytes != 0)
+		{
+			gchar* size;
+
+			size = g_format_size((gdouble)result.bytes / result.elapsed_time);
+			g_print(" (%s/s)", size);
+			g_free(size);
+		}
+
+		g_print(" [%f seconds]\n", elapsed);
+	}
+	else
 	{
-		gchar* size;
+		g_print("  %f", result.elapsed_time);
 
-		size = g_format_size((gdouble)result.bytes / result.elapsed_time);
-		g_print(" (%s/s)", size);
-		g_free(size);
+		if (result.operations != 0)
+		{
+			g_print("  %f", (gdouble)result.operations / result.elapsed_time);
+		}
+		else
+		{
+			g_print("  -");
+		}
+
+		if (result.bytes != 0)
+		{
+			g_print("  %f", (gdouble)result.bytes / result.elapsed_time);
+		}
+		else
+		{
+			g_print("  -");
+		}
+
+		g_print("  %f\n", elapsed);
 	}
-
-	g_print(" [%f seconds]\n", elapsed);
 
 	g_timer_destroy(func_timer);
 }
@@ -147,6 +181,11 @@ main (int argc, char** argv)
 
 	j_benchmark_semantics = j_helper_parse_semantics(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();
+
+	if (opt_machine_readable)
+	{
+		g_print("name  elapsed  operations  bytes  total_elapsed\n");
+	}
 
 	benchmark_background_operation();
 	benchmark_cache();
