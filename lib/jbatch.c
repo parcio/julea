@@ -352,7 +352,6 @@ j_batch_execute (JBatch* batch)
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
-		batch->list = j_list_new((JListFreeFunc)j_operation_free);
 		ret = TRUE;
 		goto end;
 	}
@@ -432,7 +431,7 @@ j_batch_wait (JBatch* batch)
  * \return A new batch.
  */
 JBatch*
-j_batch_copy (JBatch* old_batch)
+j_batch_new_from_batch (JBatch* old_batch)
 {
 	JBatch* batch;
 
@@ -445,6 +444,8 @@ j_batch_copy (JBatch* old_batch)
 	batch->semantics = j_semantics_ref(old_batch->semantics);
 	batch->background_operation = NULL;
 	batch->ref_count = 1;
+
+	old_batch->list = j_list_new((JListFreeFunc)j_operation_free);
 
 	j_trace_leave(G_STRFUNC);
 

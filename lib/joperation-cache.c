@@ -358,7 +358,7 @@ j_operation_cache_add (JBatch* batch)
 	j_operation_cache->working = TRUE;
 	g_mutex_unlock(j_operation_cache->mutex);
 
-	g_async_queue_push(j_operation_cache->queue, j_batch_copy(batch));
+	g_async_queue_push(j_operation_cache->queue, j_batch_new_from_batch(batch));
 
 end:
 	j_trace_leave(G_STRFUNC);

@@ -40,7 +40,7 @@
 
 #include <joperation-internal.h>
 
-J_GNUC_INTERNAL JBatch* j_batch_copy (JBatch*);
+J_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
 
 J_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
 J_GNUC_INTERNAL JSemantics* j_batch_get_semantics (JBatch*);
