@@ -34,8 +34,8 @@
 #include "benchmark.h"
 
 static
-gchar*
-_benchmark_collection_create (gboolean use_batch)
+void
+_benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 100000 : 1000;
 
@@ -89,26 +89,27 @@ _benchmark_collection_create (gboolean use_batch)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_collection_create (void)
+void
+benchmark_collection_create (BenchmarkResult* result)
 {
-	return _benchmark_collection_create(FALSE);
+	_benchmark_collection_create(result, FALSE);
 }
 
 static
-gchar*
-benchmark_collection_create_batch (void)
+void
+benchmark_collection_create_batch (BenchmarkResult* result)
 {
-	return _benchmark_collection_create(TRUE);
+	_benchmark_collection_create(result, TRUE);
 }
 
 static
-gchar*
-_benchmark_collection_delete (gboolean use_batch)
+void
+_benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 10000;
 
@@ -174,26 +175,27 @@ _benchmark_collection_delete (gboolean use_batch)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_collection_delete (void)
+void
+benchmark_collection_delete (BenchmarkResult* result)
 {
-	return _benchmark_collection_delete(FALSE);
+	_benchmark_collection_delete(result, FALSE);
 }
 
 static
-gchar*
-benchmark_collection_delete_batch (void)
+void
+benchmark_collection_delete_batch (BenchmarkResult* result)
 {
-	return _benchmark_collection_delete(TRUE);
+	_benchmark_collection_delete(result, TRUE);
 }
 
 static
-gchar*
-benchmark_collection_delete_batch_without_get (void)
+void
+benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 {
 	guint const n = 10000;
 
@@ -241,7 +243,8 @@ benchmark_collection_delete_batch_without_get (void)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 void

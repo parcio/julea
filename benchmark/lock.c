@@ -38,8 +38,8 @@
 #include "benchmark.h"
 
 static
-gchar*
-_benchmark_lock (gboolean acquire, gboolean add)
+void
+_benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 {
 	guint const n = 3000;
 
@@ -127,28 +127,29 @@ _benchmark_lock (gboolean acquire, gboolean add)
 	j_semantics_unref(semantics);
 	j_list_unref(list);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_lock_acquire (void)
+void
+benchmark_lock_acquire (BenchmarkResult* result)
 {
-	return _benchmark_lock(TRUE, FALSE);
+	_benchmark_lock(result, TRUE, FALSE);
 }
 
 static
-gchar*
-benchmark_lock_release (void)
+void
+benchmark_lock_release (BenchmarkResult* result)
 {
-	return _benchmark_lock(FALSE, FALSE);
+	_benchmark_lock(result, FALSE, FALSE);
 }
 
 static
-gchar*
-benchmark_lock_add (void)
+void
+benchmark_lock_add (BenchmarkResult* result)
 {
-	return _benchmark_lock(TRUE, TRUE);
+	_benchmark_lock(result, TRUE, TRUE);
 }
 
 void

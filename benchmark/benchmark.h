@@ -30,9 +30,18 @@
 
 #include <glib.h>
 
+struct BenchmarkResult
+{
+	gdouble elapsed_time;
+	guint64 operations;
+	guint64 bytes;
+};
+
+typedef struct BenchmarkResult BenchmarkResult;
+
 #include <jsemantics.h>
 
-typedef gchar* (*BenchmarkFunc) (void);
+typedef void (*BenchmarkFunc) (BenchmarkResult*);
 
 JSemantics* j_benchmark_get_semantics (void);
 

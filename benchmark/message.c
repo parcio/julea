@@ -36,8 +36,8 @@
 #include "benchmark.h"
 
 static
-gchar*
-benchmark_message_new (void)
+void
+benchmark_message_new (BenchmarkResult* result)
 {
 	guint const n = 500000;
 	guint const m = 100;
@@ -62,12 +62,13 @@ benchmark_message_new (void)
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_message_add_operation (void)
+void
+benchmark_message_add_operation (BenchmarkResult* result)
 {
 	guint const n = 500000;
 	guint const m = 100;
@@ -93,7 +94,8 @@ benchmark_message_add_operation (void)
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 void

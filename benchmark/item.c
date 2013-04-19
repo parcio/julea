@@ -36,8 +36,8 @@
 #include "benchmark.h"
 
 static
-gchar*
-_benchmark_item_create (gboolean use_batch)
+void
+_benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 100000 : 1000;
 
@@ -96,26 +96,27 @@ _benchmark_item_create (gboolean use_batch)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_item_create (void)
+void
+benchmark_item_create (BenchmarkResult* result)
 {
-	return _benchmark_item_create(FALSE);
+	_benchmark_item_create(result, FALSE);
 }
 
 static
-gchar*
-benchmark_item_create_batch (void)
+void
+benchmark_item_create_batch (BenchmarkResult* result)
 {
-	return _benchmark_item_create(TRUE);
+	_benchmark_item_create(result, TRUE);
 }
 
 static
-gchar*
-_benchmark_item_delete (gboolean use_batch)
+void
+_benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 10000;
 
@@ -189,26 +190,27 @@ _benchmark_item_delete (gboolean use_batch)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_item_delete (void)
+void
+benchmark_item_delete (BenchmarkResult* result)
 {
-	return _benchmark_item_delete(FALSE);
+	_benchmark_item_delete(result, FALSE);
 }
 
 static
-gchar*
-benchmark_item_delete_batch (void)
+void
+benchmark_item_delete_batch (BenchmarkResult* result)
 {
-	return _benchmark_item_delete(TRUE);
+	_benchmark_item_delete(result, TRUE);
 }
 
 static
-gchar*
-benchmark_item_delete_batch_without_get (void)
+void
+benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 {
 	guint const n = 10000;
 
@@ -261,12 +263,13 @@ benchmark_item_delete_batch_without_get (void)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-_benchmark_item_get_status (gboolean use_batch)
+void
+_benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 1000 : 1000;
 
@@ -276,7 +279,6 @@ _benchmark_item_get_status (gboolean use_batch)
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[1];
-	gchar* ret;
 	gdouble elapsed;
 	guint64 nb;
 
@@ -325,28 +327,27 @@ _benchmark_item_get_status (gboolean use_batch)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	ret = g_strdup_printf("%f seconds (%f/s)", elapsed, n / elapsed);
-
-	return ret;
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static
-gchar*
-benchmark_item_get_status (void)
+void
+benchmark_item_get_status (BenchmarkResult* result)
 {
-	return _benchmark_item_get_status(FALSE);
+	_benchmark_item_get_status(result, FALSE);
 }
 
 static
-gchar*
-benchmark_item_get_status_batch (void)
+void
+benchmark_item_get_status_batch (BenchmarkResult* result)
 {
-	return _benchmark_item_get_status(TRUE);
+	_benchmark_item_get_status(result, TRUE);
 }
 
 static
-gchar*
-_benchmark_item_read (gboolean use_batch, guint block_size)
+void
+_benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
@@ -356,8 +357,6 @@ _benchmark_item_read (gboolean use_batch, guint block_size)
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];
-	gchar* ret;
-	gchar* size;
 	gdouble elapsed;
 	guint64 nb = 0;
 
@@ -414,30 +413,27 @@ _benchmark_item_read (gboolean use_batch, guint block_size)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	size = g_format_size((n * block_size) / elapsed);
-	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
-	g_free(size);
-
-	return ret;
+	result->elapsed_time = elapsed;
+	result->bytes = n * block_size;
 }
 
 static
-gchar*
-benchmark_item_read (void)
+void
+benchmark_item_read (BenchmarkResult* result)
 {
-	return _benchmark_item_read(FALSE, 4 * 1024);
+	_benchmark_item_read(result, FALSE, 4 * 1024);
 }
 
 static
-gchar*
-benchmark_item_read_batch (void)
+void
+benchmark_item_read_batch (BenchmarkResult* result)
 {
-	return _benchmark_item_read(TRUE, 4 * 1024);
+	_benchmark_item_read(result, TRUE, 4 * 1024);
 }
 
 static
-gchar*
-_benchmark_item_write (gboolean use_batch, guint block_size)
+void
+_benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
@@ -447,8 +443,6 @@ _benchmark_item_write (gboolean use_batch, guint block_size)
 	JSemantics* semantics;
 	JStore* store;
 	gchar dummy[block_size];
-	gchar* ret;
-	gchar* size;
 	gdouble elapsed;
 	guint64 nb = 0;
 
@@ -499,25 +493,22 @@ _benchmark_item_write (gboolean use_batch, guint block_size)
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
-	size = g_format_size((n * block_size) / elapsed);
-	ret = g_strdup_printf("%f seconds (%s/s)", elapsed, size);
-	g_free(size);
-
-	return ret;
+	result->elapsed_time = elapsed;
+	result->bytes = n * block_size;
 }
 
 static
-gchar*
-benchmark_item_write (void)
+void
+benchmark_item_write (BenchmarkResult* result)
 {
-	return _benchmark_item_write(FALSE, 4 * 1024);
+	_benchmark_item_write(result, FALSE, 4 * 1024);
 }
 
 static
-gchar*
-benchmark_item_write_batch (void)
+void
+benchmark_item_write_batch (BenchmarkResult* result)
 {
-	return _benchmark_item_write(TRUE, 4 * 1024);
+	_benchmark_item_write(result, TRUE, 4 * 1024);
 }
 
 void

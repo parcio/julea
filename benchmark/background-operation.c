@@ -49,8 +49,8 @@ on_background_operation_completed (gpointer data)
 }
 
 static
-gchar*
-benchmark_background_operation_new_ref_unref (void)
+void
+benchmark_background_operation_new_ref_unref (BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -72,7 +72,8 @@ benchmark_background_operation_new_ref_unref (void)
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 void

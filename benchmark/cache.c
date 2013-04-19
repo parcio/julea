@@ -36,8 +36,8 @@
 #include "benchmark.h"
 
 static
-gchar*
-benchmark_cache_put (void)
+void
+benchmark_cache_put (BenchmarkResult* result)
 {
 	guint const n = J_MIB(50);
 
@@ -58,7 +58,8 @@ benchmark_cache_put (void)
 
 	j_cache_free(cache);
 
-	return g_strdup_printf("%f seconds (%f/s)", elapsed, (gdouble)n / elapsed);
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 void

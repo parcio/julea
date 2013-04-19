@@ -37,13 +37,14 @@
 
 #include "benchmark.h"
 
-gchar* opt_path = NULL;
-gchar* opt_semantics = NULL;
-gchar* opt_template = NULL;
+static gboolean opt_machine_readable = FALSE;
+static gchar* opt_path = NULL;
+static gchar* opt_semantics = NULL;
+static gchar* opt_template = NULL;
 
-JSemantics* j_benchmark_semantics = NULL;
+static JSemantics* j_benchmark_semantics = NULL;
 
-GTimer* j_benchmark_timer = NULL;
+static GTimer* j_benchmark_timer = NULL;
 
 JSemantics*
 j_benchmark_get_semantics (void)
@@ -66,9 +67,9 @@ j_benchmark_timer_elapsed (void)
 void
 j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 {
+	BenchmarkResult result;
 	GTimer* func_timer;
 	gchar* left;
-	gchar* ret;
 	gdouble elapsed;
 
 	if (opt_path != NULL && !g_str_has_prefix(name, opt_path))
@@ -77,17 +78,34 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	}
 
 	func_timer = g_timer_new();
+	result.elapsed_time = 0.0;
+	result.operations = 0;
+	result.bytes = 0;
 
 	left = g_strconcat(name, ":", NULL);
 	g_print("%-60s ", left);
 	g_free(left);
 
 	g_timer_start(func_timer);
-	ret = (*benchmark_func)();
+	(*benchmark_func)(&result);
 	elapsed = g_timer_elapsed(func_timer, NULL);
 
-	g_print("%s [%f seconds]\n", ret, elapsed);
-	g_free(ret);
+	g_print("%f seconds", result.elapsed_time);
+
+	if (result.operations != 0)
+	{
+		g_print(" (%f/s)", (gdouble)result.operations / result.elapsed_time);
+	}
+	else if (result.bytes != 0)
+	{
+		gchar* size;
+
+		size = g_format_size((gdouble)result.bytes / result.elapsed_time);
+		g_print(" (%s/s)", size);
+		g_free(size);
+	}
+
+	g_print(" [%f seconds]\n", elapsed);
 
 	g_timer_destroy(func_timer);
 }
@@ -99,6 +117,7 @@ main (int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
+		{ "machine-readable", 0, 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
 		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", "/" },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
 		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
