@@ -96,7 +96,8 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	{
 		g_print(" (%f/s)", (gdouble)result.operations / result.elapsed_time);
 	}
-	else if (result.bytes != 0)
+
+	if (result.bytes != 0)
 	{
 		gchar* size;
 

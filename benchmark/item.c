@@ -414,6 +414,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
+	result->operations = n;
 	result->bytes = n * block_size;
 }
 
@@ -494,6 +495,7 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
+	result->operations = n;
 	result->bytes = n * block_size;
 }
 
