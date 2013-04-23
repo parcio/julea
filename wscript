@@ -297,8 +297,8 @@ def build (ctx):
 
 	# Command line
 	ctx.program(
-		source = ctx.path.ant_glob('cmd/*.c'),
-		target = 'cmd/julea',
+		source = ctx.path.ant_glob('cli/*.c'),
+		target = 'cli/julea-cli',
 		use = ['lib/julea-private', 'GLIB'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
