@@ -306,7 +306,7 @@ def build (ctx):
 	)
 
 	# Tools
-	for tool in ('benchmark', 'config', 'statistics'):
+	for tool in ('config', 'statistics'):
 		ctx.program(
 			source = ['tools/%s.c' % (tool,)],
 			target = 'tools/julea-%s' % (tool,),
