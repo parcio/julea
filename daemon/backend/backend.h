@@ -35,13 +35,13 @@
 #include <jitem.h>
 #include <jtrace-internal.h>
 
-struct JBackendFile
+struct JBackendItem
 {
 	gchar* path;
 	gpointer user_data;
 };
 
-typedef struct JBackendFile JBackendFile;
+typedef struct JBackendItem JBackendItem;
 
 void (*jd_backend_init) (gchar const*) = NULL;
 void (*jd_backend_fini) (void) = NULL;
@@ -49,16 +49,16 @@ void (*jd_backend_fini) (void) = NULL;
 void (*jd_backend_thread_init) (void) = NULL;
 void (*jd_backend_thread_fini) (void) = NULL;
 
-gboolean (*jd_backend_create) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
-gboolean (*jd_backend_delete) (JBackendFile*) = NULL;
+gboolean (*jd_backend_create) (JBackendItem*, gchar const*, gchar const*, gchar const*) = NULL;
+gboolean (*jd_backend_delete) (JBackendItem*) = NULL;
 
-gboolean (*jd_backend_open) (JBackendFile*, gchar const*, gchar const*, gchar const*) = NULL;
-gboolean (*jd_backend_close) (JBackendFile*) = NULL;
+gboolean (*jd_backend_open) (JBackendItem*, gchar const*, gchar const*, gchar const*) = NULL;
+gboolean (*jd_backend_close) (JBackendItem*) = NULL;
 
-gboolean (*jd_backend_status) (JBackendFile*, JItemStatusFlags, gint64*, guint64*) = NULL;
-gboolean (*jd_backend_sync) (JBackendFile*) = NULL;
+gboolean (*jd_backend_status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*) = NULL;
+gboolean (*jd_backend_sync) (JBackendItem*) = NULL;
 
-gboolean (*jd_backend_read) (JBackendFile*, gpointer, guint64, guint64, guint64*) = NULL;
-gboolean (*jd_backend_write) (JBackendFile*, gconstpointer, guint64, guint64, guint64*) = NULL;
+gboolean (*jd_backend_read) (JBackendItem*, gpointer, guint64, guint64, guint64*) = NULL;
+gboolean (*jd_backend_write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*) = NULL;
 
 #endif

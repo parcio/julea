@@ -47,7 +47,7 @@ static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* parent;
 	gchar* path;
@@ -77,7 +77,7 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 
 G_MODULE_EXPORT
 gboolean
-backend_delete (JBackendFile* bf)
+backend_delete (JBackendItem* bf)
 {
 	gboolean ret;
 
@@ -94,7 +94,7 @@ backend_delete (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* path;
 	gint fd;
@@ -117,7 +117,7 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 
 G_MODULE_EXPORT
 gboolean
-backend_close (JBackendFile* bf)
+backend_close (JBackendItem* bf)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
@@ -139,7 +139,7 @@ backend_close (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
@@ -175,7 +175,7 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 
 G_MODULE_EXPORT
 gboolean
-backend_sync (JBackendFile* bf)
+backend_sync (JBackendItem* bf)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
@@ -195,7 +195,7 @@ backend_sync (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;
@@ -221,7 +221,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;

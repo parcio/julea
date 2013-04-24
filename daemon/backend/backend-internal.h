@@ -40,16 +40,16 @@ void backend_fini (void);
 void backend_thread_init (void);
 void backend_thread_fini (void);
 
-gboolean backend_create (JBackendFile*, gchar const*, gchar const*, gchar const*);
-gboolean backend_delete (JBackendFile*);
+gboolean backend_create (JBackendItem*, gchar const*, gchar const*, gchar const*);
+gboolean backend_delete (JBackendItem*);
 
-gboolean backend_open (JBackendFile*, gchar const*, gchar const*, gchar const*);
-gboolean backend_close (JBackendFile*);
+gboolean backend_open (JBackendItem*, gchar const*, gchar const*, gchar const*);
+gboolean backend_close (JBackendItem*);
 
-gboolean backend_status (JBackendFile*, JItemStatusFlags, gint64*, guint64*);
-gboolean backend_sync (JBackendFile*);
+gboolean backend_status (JBackendItem*, JItemStatusFlags, gint64*, guint64*);
+gboolean backend_sync (JBackendItem*);
 
-gboolean backend_read (JBackendFile*, gpointer, guint64, guint64, guint64*);
-gboolean backend_write (JBackendFile*, gconstpointer, guint64, guint64, guint64*);
+gboolean backend_read (JBackendItem*, gpointer, guint64, guint64, guint64*);
+gboolean backend_write (JBackendItem*, gconstpointer, guint64, guint64, guint64*);
 
 #endif

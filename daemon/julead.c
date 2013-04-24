@@ -65,14 +65,14 @@ jd_signal (gpointer data)
 }
 
 static
-JBackendFile*
+JBackendItem*
 jd_create_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
 {
-	JBackendFile* file;
+	JBackendItem* file;
 	gchar* key;
 
 	key = g_strdup_printf("%s.%s.%s", store, collection, item);
-	file = g_slice_new(JBackendFile);
+	file = g_slice_new(JBackendItem);
 
 	if (!jd_backend_create(file, store, collection, item))
 	{
@@ -85,23 +85,23 @@ jd_create_file (GHashTable* hash_table, gchar const* store, gchar const* collect
 
 error:
 	g_free(key);
-	g_slice_free(JBackendFile, file);
+	g_slice_free(JBackendItem, file);
 
 	return NULL;
 }
 
 static
-JBackendFile*
+JBackendItem*
 jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
 {
-	JBackendFile* file;
+	JBackendItem* file;
 	gchar* key;
 
 	key = g_strdup_printf("%s.%s.%s", store, collection, item);
 
 	if ((file = g_hash_table_lookup(hash_table, key)) == NULL)
 	{
-		file = g_slice_new(JBackendFile);
+		file = g_slice_new(JBackendItem);
 
 		if (!jd_backend_open(file, store, collection, item))
 		{
@@ -119,7 +119,7 @@ jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collectio
 
 error:
 	g_free(key);
-	g_slice_free(JBackendFile, file);
+	g_slice_free(JBackendItem, file);
 
 	return NULL;
 }
@@ -128,7 +128,7 @@ static
 void
 jd_close_file (gpointer data)
 {
-	JBackendFile* file = data;
+	JBackendItem* file = data;
 
 	jd_backend_close(file);
 }
@@ -167,7 +167,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	while (j_message_read(message, input))
 	{
-		JBackendFile* bf;
+		JBackendItem* bf;
 		gchar const* store;
 		gchar const* collection;
 		gchar const* item;

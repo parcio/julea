@@ -58,7 +58,7 @@ leveldb_writeoptions_t *woptions;
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	//gchar* parent;
 	gchar* path;
@@ -68,22 +68,22 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	char *err = NULL;
 	char *key = NULL;
 	char *value = NULL;
-		
+
 	printf("in backend_create\n");
 	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
-	object = j_zfs_object_create(object_set); 
+	object = j_zfs_object_create(object_set);
 	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	guint64 object_id = j_zfs_get_object_id(object);
 	printf("Object created.\n");
 
 	//write object_id in db:
-	key = path; 
-	key_len = strlen(key);	
+	key = path;
+	key_len = strlen(key);
 	value = g_strdup_printf("%" G_GUINT64_FORMAT, object_id);
 	value_len = strlen(value);
 
@@ -95,9 +95,9 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 	}
 	leveldb_free(err);
 	err = NULL;
-	printf("Wrote in db: \n key: %s, value: %s\n", key, value);	
+	printf("Wrote in db: \n key: %s, value: %s\n", key, value);
 	g_free(value);
-	
+
 	bf->path = path;
 	bf->user_data = object;
 
@@ -108,13 +108,13 @@ backend_create (JBackendFile* bf, gchar const* store, gchar const* collection, g
 
 G_MODULE_EXPORT
 gboolean
-backend_delete (JBackendFile* bf)
+backend_delete (JBackendItem* bf)
 {
 	printf("in backend_delete\n");
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-	j_zfs_object_destroy(bf->user_data);	
+	j_zfs_object_destroy(bf->user_data);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	j_trace_leave(G_STRFUNC);
@@ -124,16 +124,16 @@ backend_delete (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
 	gchar* path;
 	char *err = NULL;
-	JZFSObject* object; 
-	guint64 object_id; 
+	JZFSObject* object;
+	guint64 object_id;
 	char *value;
-	char *key; 
-	int key_len; 
-	size_t read_len; 
+	char *key;
+	int key_len;
+	size_t read_len;
 	printf("in backend_open\n");
 
 	j_trace_enter(G_STRFUNC);
@@ -145,19 +145,19 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 	//read from db
 	roptions = leveldb_readoptions_create();
 	value = leveldb_get(db, roptions, key, key_len, &read_len, &err);
-	
+
 	if(err != NULL) {
 		fprintf(stderr, "Read failed.\n");
 		return(1);
 	}
-	
+
 	printf("Read from db:\n key: %s, value: %s \n", key, value);
 	leveldb_free(err);
 	err = NULL;
 	object_id = g_ascii_strtoull(value, NULL, 10);
 
 	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
-	object = j_zfs_object_open(object_set, object_id);	
+	object = j_zfs_object_open(object_set, object_id);
 	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;
@@ -170,11 +170,11 @@ backend_open (JBackendFile* bf, gchar const* store, gchar const* collection, gch
 
 G_MODULE_EXPORT
 gboolean
-backend_close (JBackendFile* bf)
+backend_close (JBackendItem* bf)
 {
-	JZFSObject* object = bf->user_data; 
+	JZFSObject* object = bf->user_data;
 	printf("in backend_close\n");
-	j_trace_enter(G_STRFUNC);	
+	j_trace_enter(G_STRFUNC);
 
 	if(object != 0)
 	{
@@ -183,7 +183,7 @@ backend_close (JBackendFile* bf)
 		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
 
-	
+
 
 	g_free(bf->path);
 
@@ -194,7 +194,7 @@ backend_close (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_status\n");
@@ -208,7 +208,7 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 		fstat(fd, &buf);
 		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 		*/
-	
+
 		*modification_time = 0; // evtl. zu object_header hinzufügen
 		*size = j_zfs_object_get_size(object);
 	}
@@ -220,7 +220,7 @@ backend_status (JBackendFile* bf, JItemStatusFlags flags, gint64* modification_t
 
 G_MODULE_EXPORT
 gboolean
-backend_sync (JBackendFile* bf)
+backend_sync (JBackendItem* bf)
 {
 	/*gint fd = GPOINTER_TO_INT(bf->user_data);
 
@@ -242,7 +242,7 @@ backend_sync (JBackendFile* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_read\n");
@@ -251,7 +251,7 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 	if (object != 0)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-		j_zfs_object_read(object, buffer, length, offset); 
+		j_zfs_object_read(object, buffer, length, offset);
 		j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
 
 		if (bytes_read != NULL)
@@ -262,12 +262,12 @@ backend_read (JBackendFile* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0); 
+	return (object != 0);
 }
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendFile* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JZFSObject* object = bf->user_data;
 	printf("in backend_write\n");
@@ -296,7 +296,7 @@ backend_init (gchar const* path)
 {
 	/*gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
-	
+
 	j_trace_enter(G_STRFUNC);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
@@ -319,15 +319,15 @@ void
 backend_fini (void)
 {
 	/*j_trace_enter(G_STRFUNC);
-	
+
 	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);	
+	j_zfs_pool_close(pool);
 	j_zfs_fini();
 
 
 	j_trace_leave(G_STRFUNC);*/
 	//close and destroy db
-	
+
 	g_free(jd_backend_path);
 }
 
@@ -370,11 +370,11 @@ backend_thread_fini (void)
 {
 	char *err = NULL;
 	j_trace_enter(G_STRFUNC);
-	
+
 	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);	
+	j_zfs_pool_close(pool);
 	j_zfs_fini();
-	
+
 	//close and destroy db
 	leveldb_close(db);
 	leveldb_destroy_db(options, "testdb", &err);
