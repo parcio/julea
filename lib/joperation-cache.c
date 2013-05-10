@@ -96,6 +96,8 @@ j_operation_cache_thread (gpointer data)
 {
 	JOperationCache* cache = data;
 	JBatch* batch;
+	JList* operations;
+	JListIterator* iterator;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -108,6 +110,22 @@ j_operation_cache_thread (gpointer data)
 		}
 
 		j_batch_execute_internal(batch);
+
+		operations = j_batch_get_operations(batch);
+		iterator = j_list_iterator_new(operations);
+
+		while (j_list_iterator_next(iterator))
+		{
+			JOperation* operation = j_list_iterator_get(iterator);
+
+			if (operation->type == J_OPERATION_ITEM_WRITE)
+			{
+				j_cache_release(j_operation_cache->cache, (gpointer)operation->u.item_write.data);
+			}
+		}
+
+		j_list_iterator_free(iterator);
+
 		j_batch_unref(batch);
 
 		g_mutex_lock(cache->mutex);
@@ -121,9 +139,6 @@ j_operation_cache_thread (gpointer data)
 
 		g_mutex_unlock(cache->mutex);
 	}
-
-	// FIXME clears all
-	j_cache_clear(cache->cache);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -310,7 +325,7 @@ j_operation_cache_add (JBatch* batch)
 
 	j_list_iterator_free(iterator);
 
-	if (required_size > j_cache_size(j_operation_cache->cache))
+	if (required_size > j_cache_remaining(j_operation_cache->cache))
 	{
 		ret = FALSE;
 	}
@@ -335,8 +350,6 @@ j_operation_cache_add (JBatch* batch)
 
 			if (data == NULL)
 			{
-				// FIXME
-				//j_cache_clear(j_operation_cache->cache);
 				ret = FALSE;
 				break;
 			}

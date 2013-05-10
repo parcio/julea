@@ -55,6 +55,9 @@ struct JCache
 	*/
 	guint64 size;
 
+	guint64 remaining;
+
+#if 0
 	/**
 	* The data.
 	*/
@@ -64,6 +67,7 @@ struct JCache
 	* The current position within #data.
 	*/
 	gchar* current;
+#endif
 };
 
 /**
@@ -84,6 +88,7 @@ struct JCache
 JCache*
 j_cache_new (guint64 size)
 {
+	/* FIXME mode? */
 	JCache* cache;
 
 	g_return_val_if_fail(size > 0, NULL);
@@ -92,8 +97,11 @@ j_cache_new (guint64 size)
 
 	cache = g_slice_new(JCache);
 	cache->size = size;
+	cache->remaining = size;
+#if 0
 	cache->data = NULL;
 	cache->current = NULL;
+#endif
 
 	j_trace_leave(G_STRFUNC);
 
@@ -122,10 +130,12 @@ j_cache_free (JCache* cache)
 
 	j_trace_enter(G_STRFUNC);
 
+#if 0
 	if (cache->data != NULL)
 	{
 		g_free(cache->data);
 	}
+#endif
 
 	g_slice_free(JCache, cache);
 
@@ -141,6 +151,12 @@ j_cache_size (JCache* cache)
 	j_trace_leave(G_STRFUNC);
 
 	return cache->size;
+}
+
+guint64
+j_cache_remaining (JCache* cache)
+{
+	return cache->remaining;
 }
 
 /**
@@ -170,6 +186,7 @@ j_cache_get (JCache* cache, guint64 length)
 
 	j_trace_enter(G_STRFUNC);
 
+#if 0
 	if (G_UNLIKELY(cache->data == NULL))
 	{
 		cache->data = g_malloc(cache->size);
@@ -183,6 +200,15 @@ j_cache_get (JCache* cache, guint64 length)
 
 	ret = cache->current;
 	cache->current += length;
+#endif
+
+	if (cache->remaining < length)
+	{
+		goto end;
+	}
+
+	ret = g_malloc(length);
+	cache->remaining -= length;
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -232,6 +258,14 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 	return ret;
 }
 
+void
+j_cache_release (JCache* cache, gpointer data)
+{
+	(void)cache;
+
+	g_free(data);
+}
+
 /**
  * Clears the cache.
  *
@@ -254,7 +288,9 @@ j_cache_clear (JCache* cache)
 
 	j_trace_enter(G_STRFUNC);
 
+#if 0
 	cache->current = cache->data;
+#endif
 
 	j_trace_leave(G_STRFUNC);
 }

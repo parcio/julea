@@ -359,6 +359,7 @@ j_batch_execute (JBatch* batch)
 	j_operation_cache_flush();
 
 	ret = j_batch_execute_internal(batch);
+	j_list_delete_all(batch->list);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -582,8 +583,6 @@ j_batch_execute_internal (JBatch* batch)
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);
-
-	j_list_delete_all(batch->list);
 
 	j_trace_leave(G_STRFUNC);
 
