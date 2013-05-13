@@ -37,21 +37,20 @@
 
 static
 void
-benchmark_cache_put (BenchmarkResult* result)
+benchmark_cache_get (JCacheImplementation implementation, BenchmarkResult* result)
 {
 	guint const n = J_MIB(50);
 
 	JCache* cache;
-	gchar dummy[1];
 	gdouble elapsed;
 
-	cache = j_cache_new(J_MIB(50));
+	cache = j_cache_new(implementation, J_MIB(50));
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
-		j_cache_put(cache, dummy, 1);
+		j_cache_get(cache, 1);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
@@ -62,8 +61,23 @@ benchmark_cache_put (BenchmarkResult* result)
 	result->operations = n;
 }
 
+static
+void
+benchmark_cache_chunk (BenchmarkResult* result)
+{
+	benchmark_cache_get(J_CACHE_CHUNK, result);
+}
+
+static
+void
+benchmark_cache_malloc (BenchmarkResult* result)
+{
+	benchmark_cache_get(J_CACHE_MALLOC, result);
+}
+
 void
 benchmark_cache (void)
 {
-	j_benchmark_run("/cache", benchmark_cache_put);
+	j_benchmark_run("/cache/chunk", benchmark_cache_chunk);
+	j_benchmark_run("/cache/malloc", benchmark_cache_malloc);
 }

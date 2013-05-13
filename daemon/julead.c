@@ -40,6 +40,7 @@
 #include <jconfiguration.h>
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
+#include <jlist.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
@@ -153,7 +154,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	j_helper_set_nodelay(connection, TRUE);
 
 	statistics = j_statistics_new(TRUE);
-	cache = j_cache_new(J_MIB(50));
+	cache = j_cache_new(J_CACHE_CHUNK, J_MIB(50));
 
 	if (jd_backend_thread_init != NULL)
 	{
@@ -228,12 +229,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_READ:
 				{
+					JList* buffers;
 					JMessage* reply;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
+					// FIXME
+					buffers = j_list_new(NULL);
 					reply = j_message_new_reply(message);
 
 					bf = jd_open_file(files, store, collection, item);
@@ -249,6 +253,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						offset = j_message_get_8(message);
 
 						buf = j_cache_get(cache, length);
+						j_list_append(buffers, buf);
 
 						if (buf == NULL)
 						{
@@ -258,7 +263,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 							reply = j_message_new_reply(message);
 
-							j_cache_clear(cache);
+							j_list_delete_all(buffers);
 							buf = j_cache_get(cache, length);
 						}
 
@@ -281,7 +286,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_write(reply, output);
 					j_message_unref(reply);
 
-					j_cache_clear(cache);
+					j_list_unref(buffers);
 				}
 				break;
 			case J_MESSAGE_WRITE:
@@ -323,7 +328,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &bytes_written);
 						}
 
-						j_cache_clear(cache);
+						j_cache_release(cache, buf);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)

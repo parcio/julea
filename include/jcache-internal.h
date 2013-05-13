@@ -36,18 +36,21 @@
 
 #include <julea-internal.h>
 
+enum JCacheImplementation
+{
+	J_CACHE_CHUNK,
+	J_CACHE_MALLOC
+};
+
+typedef enum JCacheImplementation JCacheImplementation;
+
 struct JCache;
 
 typedef struct JCache JCache;
 
-J_GNUC_INTERNAL JCache* j_cache_new (guint64);
+J_GNUC_INTERNAL JCache* j_cache_new (JCacheImplementation, guint64);
 J_GNUC_INTERNAL void j_cache_free (JCache*);
 
-J_GNUC_INTERNAL guint64 j_cache_size (JCache*);
-J_GNUC_INTERNAL guint64 j_cache_remaining (JCache*);
-
 J_GNUC_INTERNAL gpointer j_cache_get (JCache*, guint64);
-J_GNUC_INTERNAL gpointer j_cache_put (JCache*, gconstpointer, guint64);
 J_GNUC_INTERNAL void j_cache_release (JCache*, gpointer);
-J_GNUC_INTERNAL void j_cache_clear (JCache*);
 #endif

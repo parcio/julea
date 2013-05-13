@@ -44,6 +44,8 @@
 #include <jbatch-internal.h>
 #include <joperation-internal.h>
 
+#include <string.h>
+
 /**
  * \defgroup JOperationCache Operation Cache
  *
@@ -231,7 +233,7 @@ j_operation_cache_init (void)
 	j_trace_enter(G_STRFUNC);
 
 	cache = g_slice_new(JOperationCache);
-	cache->cache = j_cache_new(J_MIB(50));
+	cache->cache = j_cache_new(J_CACHE_MALLOC, J_MIB(50));
 	cache->queue = g_async_queue_new_full((GDestroyNotify)j_batch_unref);
 	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
 	cache->working = FALSE;
@@ -301,6 +303,8 @@ j_operation_cache_add (JBatch* batch)
 	JList* operations;
 	JListIterator* iterator;
 	gboolean can_cache = TRUE;
+	gchar* data;
+	gpointer buffer;
 	guint64 required_size = 0;
 
 	j_trace_enter(G_STRFUNC);
@@ -325,7 +329,8 @@ j_operation_cache_add (JBatch* batch)
 
 	j_list_iterator_free(iterator);
 
-	if (required_size > j_cache_remaining(j_operation_cache->cache))
+	// FIXME never cleared
+	if ((buffer = j_cache_get(j_operation_cache->cache, required_size)) == NULL)
 	{
 		ret = FALSE;
 	}
@@ -335,6 +340,7 @@ j_operation_cache_add (JBatch* batch)
 		goto end;
 	}
 
+	data = buffer;
 	iterator = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(iterator))
@@ -343,20 +349,13 @@ j_operation_cache_add (JBatch* batch)
 
 		if (operation->type == J_OPERATION_ITEM_WRITE)
 		{
-			gpointer data;
-
-			// FIXME never cleared
-			data = j_cache_put(j_operation_cache->cache, operation->u.item_write.data, operation->u.item_write.length);
-
-			if (data == NULL)
-			{
-				ret = FALSE;
-				break;
-			}
+			memcpy(data, operation->u.item_write.data, operation->u.item_write.length);
 
 			operation->u.item_write.data = data;
 			*(operation->u.item_write.bytes_written) += operation->u.item_write.length;
 			operation->u.item_write.bytes_written = NULL;
+
+			data += operation->u.item_write.length;
 		}
 	}
 

@@ -55,19 +55,33 @@ struct JCache
 	*/
 	guint64 size;
 
-	guint64 remaining;
+	JCacheImplementation implementation;
 
-#if 0
-	/**
-	* The data.
-	*/
-	gchar* data;
+	GHashTable* buffers;
 
-	/**
-	* The current position within #data.
-	*/
-	gchar* current;
-#endif
+	union
+	{
+		struct
+		{
+			/**
+			* The data.
+			*/
+			gchar* data;
+
+			/**
+			* The current position within #data.
+			*/
+			gchar* current;
+		}
+		chunk;
+
+		struct
+		{
+			guint64 used;
+		}
+		malloc;
+	}
+	u;
 };
 
 /**
@@ -86,9 +100,8 @@ struct JCache
  * \return A new cache. Should be freed with j_cache_free().
  **/
 JCache*
-j_cache_new (guint64 size)
+j_cache_new (JCacheImplementation implementation, guint64 size)
 {
-	/* FIXME mode? */
 	JCache* cache;
 
 	g_return_val_if_fail(size > 0, NULL);
@@ -97,11 +110,21 @@ j_cache_new (guint64 size)
 
 	cache = g_slice_new(JCache);
 	cache->size = size;
-	cache->remaining = size;
-#if 0
-	cache->data = NULL;
-	cache->current = NULL;
-#endif
+	cache->implementation = implementation;
+	cache->buffers = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
+
+	switch (cache->implementation)
+	{
+		case J_CACHE_CHUNK:
+			cache->u.chunk.data = g_malloc(cache->size);
+			cache->u.chunk.current = cache->u.chunk.data;
+			break;
+		case J_CACHE_MALLOC:
+			cache->u.malloc.used = 0;
+			break;
+		default:
+			g_warn_if_reached();
+	}
 
 	j_trace_leave(G_STRFUNC);
 
@@ -126,37 +149,49 @@ j_cache_new (guint64 size)
 void
 j_cache_free (JCache* cache)
 {
+	GHashTableIter iter[1];
+	gpointer key;
+	gpointer value;
+
 	g_return_if_fail(cache != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-#if 0
-	if (cache->data != NULL)
+	g_hash_table_iter_init(iter, cache->buffers);
+
+	while (g_hash_table_iter_next(iter, &key, &value))
 	{
-		g_free(cache->data);
+		switch (cache->implementation)
+		{
+			case J_CACHE_CHUNK:
+				break;
+			case J_CACHE_MALLOC:
+				g_free(key);
+				break;
+			default:
+				g_warn_if_reached();
+		}
 	}
-#endif
+
+	g_hash_table_unref(cache->buffers);
+
+	switch (cache->implementation)
+	{
+		case J_CACHE_CHUNK:
+			if (cache->u.chunk.data != NULL)
+			{
+				g_free(cache->u.chunk.data);
+			}
+			break;
+		case J_CACHE_MALLOC:
+			break;
+		default:
+			g_warn_if_reached();
+	}
 
 	g_slice_free(JCache, cache);
 
 	j_trace_leave(G_STRFUNC);
-}
-
-guint64
-j_cache_size (JCache* cache)
-{
-	g_return_val_if_fail(cache != NULL, 0);
-
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
-
-	return cache->size;
-}
-
-guint64
-j_cache_remaining (JCache* cache)
-{
-	return cache->remaining;
 }
 
 /**
@@ -186,73 +221,35 @@ j_cache_get (JCache* cache, guint64 length)
 
 	j_trace_enter(G_STRFUNC);
 
-#if 0
-	if (G_UNLIKELY(cache->data == NULL))
+	switch (cache->implementation)
 	{
-		cache->data = g_malloc(cache->size);
-		cache->current = cache->data;
+		case J_CACHE_CHUNK:
+			if (cache->u.chunk.current + length > cache->u.chunk.data + cache->size)
+			{
+				goto end;
+			}
+
+			ret = cache->u.chunk.current;
+			cache->u.chunk.current += length;
+
+			break;
+		case J_CACHE_MALLOC:
+			if (cache->u.malloc.used + length > cache->size)
+			{
+				goto end;
+			}
+
+			ret = g_malloc(length);
+			cache->u.malloc.used += length;
+
+			break;
+		default:
+			g_warn_if_reached();
 	}
 
-	if (cache->current + length > cache->data + cache->size)
-	{
-		goto end;
-	}
-
-	ret = cache->current;
-	cache->current += length;
-#endif
-
-	if (cache->remaining < length)
-	{
-		goto end;
-	}
-
-	ret = g_malloc(length);
-	cache->remaining -= length;
+	g_hash_table_insert(cache->buffers, ret, GSIZE_TO_POINTER(length));
 
 end:
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-/**
- * Puts data into a new segment from the cache.
- *
- * \author Michael Kuhn
- *
- * \code
- * JCache* cache;
- * gpointer data;
- *
- * ...
- *
- * j_cache_put(cache, data, 1024);
- * \endcode
- *
- * \param cache  A cache.
- * \param data   Data.
- * \param length A length.
- *
- * \return A pointer to the used segment of the cache, NULL if not enough space is available.
- **/
-gpointer
-j_cache_put (JCache* cache, gconstpointer data, guint64 length)
-{
-	gpointer ret;
-
-	g_return_val_if_fail(cache != NULL, NULL);
-	g_return_val_if_fail(data != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	ret = j_cache_get(cache, length);
-
-	if (ret != NULL)
-	{
-		memcpy(ret, data, length);
-	}
-
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -261,38 +258,34 @@ j_cache_put (JCache* cache, gconstpointer data, guint64 length)
 void
 j_cache_release (JCache* cache, gpointer data)
 {
-	(void)cache;
+	gpointer size;
 
-	g_free(data);
-}
-
-/**
- * Clears the cache.
- *
- * \author Michael Kuhn
- *
- * \code
- * JCache* cache;
- *
- * ...
- *
- * j_cache_clear(cache);
- * \endcode
- *
- * \param cache A cache.
- **/
-void
-j_cache_clear (JCache* cache)
-{
 	g_return_if_fail(cache != NULL);
+	g_return_if_fail(data != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	if ((size = g_hash_table_lookup(cache->buffers, data)) == NULL)
+	{
+		g_warn_if_reached();
+		return;
+	}
 
-#if 0
-	cache->current = cache->data;
-#endif
+	g_hash_table_remove(cache->buffers, data);
 
-	j_trace_leave(G_STRFUNC);
+	switch (cache->implementation)
+	{
+		case J_CACHE_CHUNK:
+			if (g_hash_table_size(cache->buffers) == 0)
+			{
+				cache->u.chunk.current = cache->u.chunk.data;
+			}
+			break;
+		case J_CACHE_MALLOC:
+			cache->u.malloc.used -= GPOINTER_TO_SIZE(size);
+			g_free(data);
+			break;
+		default:
+			g_warn_if_reached();
+	}
 }
 
 /**
