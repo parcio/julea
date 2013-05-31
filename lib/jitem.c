@@ -484,6 +484,8 @@ j_item_unref (JItem* item)
 			j_collection_unref(item->collection);
 		}
 
+		j_credentials_unref(item->credentials);
+
 		g_free(item->status.created);
 		g_free(item->name);
 

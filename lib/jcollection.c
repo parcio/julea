@@ -196,6 +196,8 @@ j_collection_unref (JCollection* collection)
 			j_store_unref(collection->store);
 		}
 
+		j_credentials_unref(collection->credentials);
+
 		g_free(collection->collection.items);
 		g_free(collection->collection.locks);
 		g_free(collection->name);
