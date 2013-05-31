@@ -34,6 +34,8 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 enum JDistributionType
 {
 	J_DISTRIBUTION_ROUND_ROBIN,
@@ -48,13 +50,18 @@ typedef struct JDistribution JDistribution;
 
 #include <jconfiguration.h>
 
-JDistribution* j_distribution_new (JConfiguration*, JDistributionType, guint64, guint64);
+JDistribution* j_distribution_new (JConfiguration*, JDistributionType);
 void j_distribution_free (JDistribution*);
 
+void j_distribution_init (JDistribution*, guint64, guint64);
+gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
+
 void j_distribution_set_round_robin_block_size (JDistribution*, guint64);
+void j_distribution_set_round_robin_start_index (JDistribution*, guint);
 void j_distribution_set_single_server_block_size (JDistribution*, guint64);
 void j_distribution_set_single_server_index (JDistribution*, guint);
 
-gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
+bson* j_distribution_serialize (JDistribution*);
+void j_distribution_deserialize (JDistribution*, bson const*);
 
 #endif

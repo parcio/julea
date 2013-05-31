@@ -33,7 +33,11 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
 #include <jdistribution.h>
+
+#include <julea-internal.h>
 
 #include <jcommon-internal.h>
 #include <jconfiguration.h>
@@ -77,6 +81,7 @@ struct JDistribution
 		struct
 		{
 			guint64 block_size;
+			guint start_index;
 		}
 		round_robin;
 
@@ -204,13 +209,11 @@ end:
  * \endcode
  *
  * \param type   A distribution type.
- * \param length A length.
- * \param offset An offset.
  *
  * \return A new distribution. Should be freed with j_distribution_free().
  **/
 JDistribution*
-j_distribution_new (JConfiguration* configuration, JDistributionType type, guint64 length, guint64 offset)
+j_distribution_new (JConfiguration* configuration, JDistributionType type)
 {
 	JDistribution* distribution;
 
@@ -219,16 +222,17 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type, guint
 	distribution = g_slice_new(JDistribution);
 	distribution->configuration = j_configuration_ref(configuration);
 	distribution->type = type;
-	distribution->length = length;
-	distribution->offset = offset;
+	distribution->length = 0;
+	distribution->offset = 0;
 
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			distribution->u.round_robin.block_size = J_KIB(512);
+			distribution->u.round_robin.block_size = J_STRIPE_SIZE;
+			distribution->u.round_robin.start_index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			distribution->u.single_server.block_size = J_KIB(512);
+			distribution->u.single_server.block_size = J_STRIPE_SIZE;
 			distribution->u.single_server.index = 0;
 			break;
 		default:
@@ -260,6 +264,35 @@ j_distribution_free (JDistribution* distribution)
 	j_configuration_unref(distribution->configuration);
 
 	g_slice_free(JDistribution, distribution);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * Initializes a distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * j_distribution_init(d, 0, 0);
+ * \endcode
+ *
+ * \param length A length.
+ * \param offset An offset.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
+void
+j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
+{
+	g_return_if_fail(distribution != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution->length = length;
+	distribution->offset = offset;
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -330,6 +363,27 @@ j_distribution_set_round_robin_block_size (JDistribution* distribution, guint64 
 }
 
 /**
+ * Sets the start index for the round robin distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param start_index  An index.
+ */
+void
+j_distribution_set_round_robin_start_index (JDistribution* distribution, guint start_index)
+{
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(start_index < j_configuration_get_data_server_count(distribution->configuration));
+	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
+
+	distribution->u.round_robin.start_index = start_index;
+}
+
+/**
  * Sets the block size for the single server distribution.
  *
  * \author Michael Kuhn
@@ -369,6 +423,132 @@ j_distribution_set_single_server_index (JDistribution* distribution, guint index
 	g_return_if_fail(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
 
 	distribution->u.single_server.index = index;
+}
+
+/* Internal */
+
+/**
+ * Serializes distribution.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution Credentials.
+ *
+ * \return A new BSON object. Should be freed with g_slice_free().
+ **/
+bson*
+j_distribution_serialize (JDistribution* distribution)
+{
+	bson* b;
+
+	g_return_val_if_fail(distribution != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	b = g_slice_new(bson);
+	bson_init(b);
+
+	switch (distribution->type)
+	{
+		case J_DISTRIBUTION_ROUND_ROBIN:
+			bson_append_string(b, "Type", "RoundRobin");
+			bson_append_int(b, "BlockSize", distribution->u.round_robin.block_size);
+			bson_append_int(b, "StartIndex", distribution->u.round_robin.start_index);
+			break;
+		case J_DISTRIBUTION_SINGLE_SERVER:
+			bson_append_string(b, "Type", "SingleServer");
+			bson_append_int(b, "BlockSize", distribution->u.single_server.block_size);
+			bson_append_int(b, "Index", distribution->u.single_server.index);
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	bson_finish(b);
+
+	j_trace_leave(G_STRFUNC);
+
+	return b;
+}
+
+/**
+ * Deserializes distribution.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution distribution.
+ * \param b           A BSON object.
+ **/
+void
+j_distribution_deserialize (JDistribution* distribution, bson const* b)
+{
+	bson_iterator iterator;
+
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(b != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	bson_iterator_init(&iterator, b);
+
+	while (bson_iterator_next(&iterator))
+	{
+		gchar const* key;
+
+		key = bson_iterator_key(&iterator);
+
+		if (g_strcmp0(key, "Type") == 0)
+		{
+			gchar const* type = bson_iterator_string(&iterator);
+
+			if (g_strcmp0(type, "RoundRobin") == 0)
+			{
+				distribution->type = J_DISTRIBUTION_ROUND_ROBIN;
+			}
+			else if (g_strcmp0(type, "SingleServer") == 0)
+			{
+				distribution->type = J_DISTRIBUTION_SINGLE_SERVER;
+			}
+		}
+		else if (g_strcmp0(key, "BlockSize") == 0)
+		{
+			switch (distribution->type)
+			{
+				case J_DISTRIBUTION_ROUND_ROBIN:
+					distribution->u.round_robin.block_size = bson_iterator_int(&iterator);
+					break;
+				case J_DISTRIBUTION_SINGLE_SERVER:
+					distribution->u.single_server.block_size = bson_iterator_int(&iterator);
+					break;
+				default:
+					g_warn_if_reached();
+			}
+		}
+		else if (g_strcmp0(key, "StartIndex") == 0)
+		{
+			g_assert(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
+
+			distribution->u.round_robin.start_index = bson_iterator_int(&iterator);
+		}
+		else if (g_strcmp0(key, "Index") == 0)
+		{
+			g_assert(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
+
+			distribution->u.single_server.index = bson_iterator_int(&iterator);
+		}
+	}
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**

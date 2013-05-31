@@ -1118,7 +1118,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_READ);
 
-		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
+		j_distribution_init(distribution, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))
@@ -1320,7 +1321,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_WRITE);
 
-		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN, length, offset);
+		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
+		j_distribution_init(distribution, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))

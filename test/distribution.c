@@ -30,6 +30,7 @@
 #include <glib.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 #include <jcommon.h>
 #include <jconfiguration-internal.h>
@@ -43,6 +44,8 @@ test_distribution_fixture_setup (JConfiguration** configuration, gconstpointer d
 {
 	GKeyFile* key_file;
 	gchar const* servers[] = { "localhost", "localhost", NULL };
+
+	(void)data;
 
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
@@ -59,6 +62,8 @@ static
 void
 test_distribution_fixture_teardown (JConfiguration** configuration, gconstpointer data)
 {
+	(void)data;
+
 	j_configuration_unref(*configuration);
 }
 
@@ -74,9 +79,12 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	guint64 block_id;
 	guint index;
 
-	block_size = J_KIB(512);
+	(void)data;
 
-	distribution = j_distribution_new(*configuration, type, 4 * block_size, 42);
+	block_size = J_STRIPE_SIZE;
+
+	distribution = j_distribution_new(*configuration, type);
+	j_distribution_init(distribution, 4 * block_size, 42);
 
 	switch (type)
 	{

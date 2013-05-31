@@ -42,6 +42,8 @@
 #define J_MIB(n) ((n) * J_KIB(1024))
 #define J_GIB(n) ((n) * J_MIB(1024))
 
+#define J_STRIPE_SIZE J_MIB(4)
+
 /* FIXME j_sync() for benchmarks */
 
 #endif
