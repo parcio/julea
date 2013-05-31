@@ -95,6 +95,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 			j_distribution_set_single_server_block_size(distribution, block_size);
 			j_distribution_set_single_server_index(distribution, 1);
 			break;
+		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}

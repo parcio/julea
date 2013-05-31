@@ -190,6 +190,7 @@ struct JItem
 	gchar* name;
 
 	JCredentials* credentials;
+	JDistribution* distribution;
 
 	/**
 	 * The status.
@@ -418,6 +419,7 @@ j_item_new (gchar const* name)
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
+	item->distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
 	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
@@ -485,6 +487,7 @@ j_item_unref (JItem* item)
 		}
 
 		j_credentials_unref(item->credentials);
+		j_distribution_free(item->distribution);
 
 		g_free(item->status.created);
 		g_free(item->name);
@@ -738,6 +741,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item = g_slice_new(JItem);
 	item->name = NULL;
 	item->credentials = j_credentials_new();
+	item->distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_NONE);
 	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;
@@ -822,12 +826,14 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 {
 	bson* b;
 	bson* b_cred;
+	bson* b_distribution;
 
 	g_return_val_if_fail(item != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
 	b_cred = j_credentials_serialize(item->credentials);
+	b_distribution = j_distribution_serialize(item->distribution);
 
 	b = g_slice_new(bson);
 	bson_init(b);
@@ -847,11 +853,14 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	bson_append_finish_object(b);
 
 	bson_append_bson(b, "Credentials", b_cred);
+	bson_append_bson(b, "Distribution", b_distribution);
 
 	bson_finish(b);
 
 	bson_destroy(b_cred);
+	bson_destroy(b_distribution);
 	g_slice_free(bson, b_cred);
+	g_slice_free(bson, b_distribution);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -932,6 +941,13 @@ j_item_deserialize (JItem* item, bson const* b)
 			g_free(item->name);
 			item->name = g_strdup(bson_iterator_string(&iterator));
 		}
+		else if (g_strcmp0(key, "Status") == 0)
+		{
+			bson b_status[1];
+
+			bson_iterator_subobject(&iterator, b_status);
+			j_item_deserialize_status(item, b_status);
+		}
 		else if (g_strcmp0(key, "Credentials") == 0)
 		{
 			bson b_cred[1];
@@ -939,12 +955,12 @@ j_item_deserialize (JItem* item, bson const* b)
 			bson_iterator_subobject(&iterator, b_cred);
 			j_credentials_deserialize(item->credentials, b_cred);
 		}
-		else if (g_strcmp0(key, "Status") == 0)
+		else if (g_strcmp0(key, "Distribution") == 0)
 		{
-			bson b_status[1];
+			bson b_distribution[1];
 
-			bson_iterator_subobject(&iterator, b_status);
-			j_item_deserialize_status(item, b_status);
+			bson_iterator_subobject(&iterator, b_distribution);
+			j_distribution_deserialize(item->distribution, b_distribution);
 		}
 	}
 
@@ -1103,7 +1119,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		guint64 offset = operation->u.item_read.offset;
 		guint64* bytes_read = operation->u.item_read.bytes_read;
 
-		JDistribution* distribution;
 		JItemReadData* buffer;
 		gchar* d;
 		guint64 new_length;
@@ -1120,11 +1135,10 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_READ);
 
-		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
-		j_distribution_init(distribution, length, offset);
+		j_distribution_init(item->distribution, length, offset);
 		d = data;
 
-		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))
+		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))
 		{
 			if (messages[index] == NULL)
 			{
@@ -1151,8 +1165,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 			d += new_length;
 		}
-
-		j_distribution_free(distribution);
 
 		j_trace_file_end(item_name, J_TRACE_FILE_READ, length, offset);
 	}
@@ -1307,7 +1319,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		guint64 offset = operation->u.item_write.offset;
 		guint64* bytes_written = operation->u.item_write.bytes_written;
 
-		JDistribution* distribution;
 		gchar const* d;
 		guint64 new_length;
 		guint64 new_offset;
@@ -1323,11 +1334,10 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_WRITE);
 
-		distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
-		j_distribution_init(distribution, length, offset);
+		j_distribution_init(item->distribution, length, offset);
 		d = data;
 
-		while (j_distribution_distribute(distribution, &index, &new_length, &new_offset, &block_id))
+		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))
 		{
 			if (messages[index] == NULL)
 			{
@@ -1357,8 +1367,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 				*bytes_written += new_length;
 			}
 		}
-
-		j_distribution_free(distribution);
 
 		j_trace_file_end(item_name, J_TRACE_FILE_WRITE, length, offset);
 	}

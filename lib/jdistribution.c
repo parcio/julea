@@ -235,6 +235,7 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type)
 			distribution->u.single_server.block_size = J_STRIPE_SIZE;
 			distribution->u.single_server.index = 0;
 			break;
+		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}
@@ -332,6 +333,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
 			break;
+		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}
@@ -457,14 +459,15 @@ j_distribution_serialize (JDistribution* distribution)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
 			bson_append_string(b, "Type", "RoundRobin");
-			bson_append_int(b, "BlockSize", distribution->u.round_robin.block_size);
+			bson_append_long(b, "BlockSize", distribution->u.round_robin.block_size);
 			bson_append_int(b, "StartIndex", distribution->u.round_robin.start_index);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			bson_append_string(b, "Type", "SingleServer");
-			bson_append_int(b, "BlockSize", distribution->u.single_server.block_size);
+			bson_append_long(b, "BlockSize", distribution->u.single_server.block_size);
 			bson_append_int(b, "Index", distribution->u.single_server.index);
 			break;
+		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}
@@ -530,6 +533,7 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 				case J_DISTRIBUTION_SINGLE_SERVER:
 					distribution->u.single_server.block_size = bson_iterator_int(&iterator);
 					break;
+				case J_DISTRIBUTION_NONE:
 				default:
 					g_warn_if_reached();
 			}
