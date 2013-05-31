@@ -29,8 +29,99 @@ set -e
 
 usage ()
 {
-	echo "Usage: ${0##*/} root start|stop"
+	echo "Usage: ${0##*/} root start|stop|restart"
 	exit 1
+}
+
+get_host ()
+{
+	local SERVER
+	local HOST
+
+	SERVER="$1"
+
+	HOST="${SERVER%:*}"
+	HOST="${HOST%.*}"
+
+	echo "${HOST}"
+}
+
+get_port ()
+{
+	local SERVER
+	local PORT
+
+	SERVER="$1"
+
+	PORT="${SERVER#*:}"
+
+	if [ "${PORT}" = "${SERVER}" ]
+	then
+		PORT=''
+	fi
+
+	echo "${PORT}"
+}
+
+do_start ()
+{
+	local SERVER
+	local PORT_OPTION
+
+	for SERVER in ${DATA}
+	do
+		HOST=$(get_host "${SERVER}")
+		PORT=$(get_port "${SERVER}")
+
+		if [ "${HOST}" = "${HOSTNAME}" ]
+		then
+			PORT_OPTION=''
+			test -n "${PORT}" && PORT_OPTION="--port ${PORT}"
+
+			julea-daemon --daemon ${PORT_OPTION}
+		fi
+	done
+
+	for SERVER in ${METADATA}
+	do
+		HOST=$(get_host "${SERVER}")
+		PORT=$(get_port "${SERVER}")
+
+		if [ "${HOST}" = "${HOSTNAME}" ]
+		then
+			mkdir -p "${MONGO_PATH}/db"
+			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
+		fi
+	done
+}
+
+do_stop ()
+{
+	local SERVER
+
+	for SERVER in ${DATA}
+	do
+		HOST=$(get_host "${SERVER}")
+		PORT=$(get_port "${SERVER}")
+
+		if [ "${HOST}" = "${HOSTNAME}" ]
+		then
+			killall --verbose julea-daemon || true
+			rm -rf "${STORAGE_PATH}"
+		fi
+	done
+
+	for SERVER in ${METADATA}
+	do
+		HOST=$(get_host "${SERVER}")
+		PORT=$(get_port "${SERVER}")
+
+		if [ "${HOST}" = "${HOSTNAME}" ]
+		then
+			mongod --shutdown --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal || true
+			rm -rf "${MONGO_PATH}"
+		fi
+	done
 }
 
 test -n "$1" || usage
@@ -39,8 +130,11 @@ test -n "$2" || usage
 ROOT="$1"
 MODE="$2"
 
+HOSTNAME=$(hostname)
+USER=$(id -nu)
+
 BUILD_PATH="${ROOT}/build"
-MONGO_PATH='/tmp/julea-mongo'
+MONGO_PATH="/tmp/julea-mongo-${USER}"
 
 export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:${ROOT}/external/mongodb-server/bin:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
@@ -56,51 +150,21 @@ STORAGE_PATH="${STORAGE_PATH#path=}"
 DATA="${DATA%;}"
 METADATA="${METADATA%;}"
 
-DATA=$(echo ${DATA%;} | sed 's/;/ /g')
-METADATA=$(echo ${METADATA%;} | sed 's/;/ /g')
+DATA=$(echo ${DATA} | sed 's/;/ /g')
+METADATA=$(echo ${METADATA} | sed 's/;/ /g')
 
-HOSTNAME=$(hostname)
-
-for SERVER in ${DATA}
-do
-	HOST="${SERVER%:*}"
-	HOST="${HOST%.*}"
-	PORT="${SERVER#*:}"
-	test "${PORT}" = "${SERVER}" && PORT=''
-
-	if [ "${HOST}" = "${HOSTNAME}" ]
-	then
-		if [ "${MODE}" = 'start' ]
-		then
-			PORT_OPTION=''
-			test -n "${PORT}" && PORT_OPTION="--port ${PORT}"
-
-			julea-daemon --daemon ${PORT_OPTION}
-		elif [ "${MODE}" = 'stop' ]
-		then
-			killall --verbose julea-daemon || true
-			rm -rf "${STORAGE_PATH}"
-		fi
-	fi
-done
-
-for SERVER in ${METADATA}
-do
-	HOST="${SERVER%:*}"
-	HOST="${HOST%.*}"
-	PORT="${SERVER#*:}"
-	test "${PORT}" = "${SERVER}" && PORT=''
-
-	if [ "${HOST}" = "${HOSTNAME}" ]
-	then
-		if [ "${MODE}" = 'start' ]
-		then
-			mkdir -p "${MONGO_PATH}/db"
-			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
-		elif [ "${MODE}" = 'stop' ]
-		then
-			mongod --shutdown --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal || true
-			rm -rf "${MONGO_PATH}"
-		fi
-	fi
-done
+case "${MODE}" in
+	start)
+		do_start
+		;;
+	stop)
+		do_stop
+		;;
+	restart)
+		do_stop
+		do_start
+		;;
+	*)
+		usage
+		;;
+esac
