@@ -58,7 +58,7 @@ echo Templates
 for template in default posix checkpoint serial
 do
 	setup.sh "${ROOT}" start
-	benchmark --template "${template}" | tee "benchmark-template-${template}.log"
+	benchmark --template "${template}" 2>&1 | tee "benchmark-template-${template}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -67,7 +67,7 @@ echo Atomicity
 for atomicity in operation none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics atomicity="${atomicity}" | tee "benchmark-atomicity-${atomicity}.log"
+	benchmark --semantics atomicity="${atomicity}" 2>&1 | tee "benchmark-atomicity-${atomicity}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -76,7 +76,7 @@ echo Concurrency
 for concurrency in overlapping non-overlapping none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics concurrency="${concurrency}" | tee "benchmark-concurrency-${concurrency}.log"
+	benchmark --semantics concurrency="${concurrency}" 2>&1 | tee "benchmark-concurrency-${concurrency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -85,7 +85,7 @@ echo Consistency
 for consistency in immediate eventual
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics consistency="${consistency}" | tee "benchmark-consistency-${consistency}.log"
+	benchmark --semantics consistency="${consistency}" 2>&1 | tee "benchmark-consistency-${consistency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -94,7 +94,7 @@ echo Persistency
 for persistency in immediate eventual
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics persistency="${persistency}" | tee "benchmark-persistency-${persistency}.log"
+	benchmark --semantics persistency="${persistency}" 2>&1 | tee "benchmark-persistency-${persistency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -103,6 +103,6 @@ echo Safety
 for safety in storage network none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics safety="${safety}" | tee "benchmark-safety-${safety}.log"
+	benchmark --semantics safety="${safety}" 2>&1 | tee "benchmark-safety-${safety}.log"
 	setup.sh "${ROOT}" stop
 done

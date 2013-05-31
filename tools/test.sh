@@ -53,5 +53,5 @@ cd "${DIRECTORY}"
 trap "setup.sh ${ROOT} stop" HUP INT TERM 0
 
 setup.sh "${ROOT}" start
-gtester --keep-going --verbose "${BUILD_PATH}/test/test" | tee "test.log"
+gtester --keep-going --verbose "${BUILD_PATH}/test/test" 2>&1 | tee "test.log"
 setup.sh "${ROOT}" stop
