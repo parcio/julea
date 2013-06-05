@@ -86,13 +86,13 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	distribution = j_distribution_new(*configuration, type);
 	j_distribution_init(distribution, 4 * block_size, 42);
 
+	j_distribution_set_block_size(distribution, block_size);
+
 	switch (type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			j_distribution_set_round_robin_block_size(distribution, block_size);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			j_distribution_set_single_server_block_size(distribution, block_size);
 			j_distribution_set_single_server_index(distribution, 1);
 			break;
 		case J_DISTRIBUTION_NONE:

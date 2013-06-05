@@ -57,9 +57,8 @@ void j_distribution_free (JDistribution*);
 void j_distribution_init (JDistribution*, guint64, guint64);
 gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
 
-void j_distribution_set_round_robin_block_size (JDistribution*, guint64);
+void j_distribution_set_block_size (JDistribution*, guint64);
 void j_distribution_set_round_robin_start_index (JDistribution*, guint);
-void j_distribution_set_single_server_block_size (JDistribution*, guint64);
 void j_distribution_set_single_server_index (JDistribution*, guint);
 
 bson* j_distribution_serialize (JDistribution*);

@@ -76,18 +76,21 @@ struct JDistribution
 	 **/
 	guint64 offset;
 
+	/**
+	 * The block size.
+	 */
+	guint64 block_size;
+
 	union
 	{
 		struct
 		{
-			guint64 block_size;
 			guint start_index;
 		}
 		round_robin;
 
 		struct
 		{
-			guint64 block_size;
 			guint index;
 		}
 		single_server;
@@ -129,13 +132,13 @@ j_distribution_distribute_round_robin (JDistribution* distribution, guint* index
 		goto end;
 	}
 
-	block = distribution->offset / distribution->u.round_robin.block_size;
+	block = distribution->offset / distribution->block_size;
 	round = block / j_configuration_get_data_server_count(distribution->configuration);
-	displacement = distribution->offset % distribution->u.round_robin.block_size;
+	displacement = distribution->offset % distribution->block_size;
 
 	*index = block % j_configuration_get_data_server_count(distribution->configuration);
-	*new_length = MIN(distribution->length, distribution->u.round_robin.block_size - displacement);
-	*new_offset = (round * distribution->u.round_robin.block_size) + displacement;
+	*new_length = MIN(distribution->length, distribution->block_size - displacement);
+	*new_offset = (round * distribution->block_size) + displacement;
 	*block_id = block;
 
 	distribution->length -= *new_length;
@@ -180,11 +183,11 @@ j_distribution_distribute_single_server (JDistribution* distribution, guint* ind
 		goto end;
 	}
 
-	block = distribution->offset / distribution->u.single_server.block_size;
-	displacement = distribution->offset % distribution->u.single_server.block_size;
+	block = distribution->offset / distribution->block_size;
+	displacement = distribution->offset % distribution->block_size;
 
 	*index = distribution->u.single_server.index;
-	*new_length = MIN(distribution->length, distribution->u.single_server.block_size - displacement);
+	*new_length = MIN(distribution->length, distribution->block_size - displacement);
 	*new_offset = distribution->offset;
 	*block_id = block;
 
@@ -225,17 +228,18 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type)
 	distribution->length = 0;
 	distribution->offset = 0;
 
+	distribution->block_size = J_STRIPE_SIZE;
+
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			distribution->u.round_robin.block_size = J_STRIPE_SIZE;
 			distribution->u.round_robin.start_index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			distribution->u.single_server.block_size = J_STRIPE_SIZE;
 			distribution->u.single_server.index = 0;
 			break;
 		case J_DISTRIBUTION_NONE:
+			break;
 		default:
 			g_warn_if_reached();
 	}
@@ -344,7 +348,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 }
 
 /**
- * Sets the block size for the round robin distribution.
+ * Sets the block size for the distribution.
  *
  * \author Michael Kuhn
  *
@@ -355,13 +359,12 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
  * \param block_size   A block size.
  */
 void
-j_distribution_set_round_robin_block_size (JDistribution* distribution, guint64 block_size)
+j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 {
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(block_size > 0);
-	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
 
-	distribution->u.round_robin.block_size = block_size;
+	distribution->block_size = MIN(block_size, J_STRIPE_SIZE);
 }
 
 /**
@@ -383,27 +386,6 @@ j_distribution_set_round_robin_start_index (JDistribution* distribution, guint s
 	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
 
 	distribution->u.round_robin.start_index = start_index;
-}
-
-/**
- * Sets the block size for the single server distribution.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param block_size   A block size.
- */
-void
-j_distribution_set_single_server_block_size (JDistribution* distribution, guint64 block_size)
-{
-	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(block_size > 0);
-	g_return_if_fail(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
-
-	distribution->u.single_server.block_size = block_size;
 }
 
 /**
@@ -455,16 +437,15 @@ j_distribution_serialize (JDistribution* distribution)
 	b = g_slice_new(bson);
 	bson_init(b);
 
+	bson_append_int(b, "Type", distribution->type);
+	bson_append_long(b, "BlockSize", distribution->block_size);
+
 	switch (distribution->type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			bson_append_string(b, "Type", "RoundRobin");
-			bson_append_long(b, "BlockSize", distribution->u.round_robin.block_size);
 			bson_append_int(b, "StartIndex", distribution->u.round_robin.start_index);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			bson_append_string(b, "Type", "SingleServer");
-			bson_append_long(b, "BlockSize", distribution->u.single_server.block_size);
 			bson_append_int(b, "Index", distribution->u.single_server.index);
 			break;
 		case J_DISTRIBUTION_NONE:
@@ -512,31 +493,11 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 
 		if (g_strcmp0(key, "Type") == 0)
 		{
-			gchar const* type = bson_iterator_string(&iterator);
-
-			if (g_strcmp0(type, "RoundRobin") == 0)
-			{
-				distribution->type = J_DISTRIBUTION_ROUND_ROBIN;
-			}
-			else if (g_strcmp0(type, "SingleServer") == 0)
-			{
-				distribution->type = J_DISTRIBUTION_SINGLE_SERVER;
-			}
+			distribution->type = bson_iterator_int(&iterator);
 		}
 		else if (g_strcmp0(key, "BlockSize") == 0)
 		{
-			switch (distribution->type)
-			{
-				case J_DISTRIBUTION_ROUND_ROBIN:
-					distribution->u.round_robin.block_size = bson_iterator_int(&iterator);
-					break;
-				case J_DISTRIBUTION_SINGLE_SERVER:
-					distribution->u.single_server.block_size = bson_iterator_int(&iterator);
-					break;
-				case J_DISTRIBUTION_NONE:
-				default:
-					g_warn_if_reached();
-			}
+			distribution->block_size = bson_iterator_int(&iterator);
 		}
 		else if (g_strcmp0(key, "StartIndex") == 0)
 		{
