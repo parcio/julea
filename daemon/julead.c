@@ -39,7 +39,6 @@
 #include <jconfiguration.h>
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
-#include <jlist.h>
 #include <jmemory-chunk-internal.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
@@ -229,15 +228,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_READ:
 				{
-					JList* buffers;
 					JMessage* reply;
 
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
-					// FIXME
-					buffers = j_list_new(NULL);
 					reply = j_message_new_reply(message);
 
 					bf = jd_open_file(files, store, collection, item);
@@ -253,7 +249,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						offset = j_message_get_8(message);
 
 						buf = j_memory_chunk_get(memory_chunk, length);
-						j_list_append(buffers, buf);
 
 						if (buf == NULL)
 						{
@@ -263,7 +258,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 							reply = j_message_new_reply(message);
 
-							j_list_delete_all(buffers);
+							j_memory_chunk_reset(memory_chunk);
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
@@ -286,7 +281,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_write(reply, output);
 					j_message_unref(reply);
 
-					j_list_unref(buffers);
+					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
 			case J_MESSAGE_WRITE:
