@@ -37,22 +37,22 @@
 
 static
 void
-test_cache_new_free (JCacheImplementation implementation)
+test_cache_new_free (void)
 {
 	JCache* cache;
 
-	cache = j_cache_new(implementation, J_MIB(50));
+	cache = j_cache_new(J_MIB(50));
 	j_cache_free(cache);
 }
 
 static
 void
-test_cache_get (JCacheImplementation implementation)
+test_cache_get (void)
 {
 	JCache* cache;
 	gpointer ret;
 
-	cache = j_cache_new(implementation, 3);
+	cache = j_cache_new(3);
 
 	ret = j_cache_get(cache, 1);
 	g_assert(ret != NULL);
@@ -68,13 +68,13 @@ test_cache_get (JCacheImplementation implementation)
 
 static
 void
-test_cache_release (JCacheImplementation implementation)
+test_cache_release (void)
 {
 	JCache* cache;
 	gpointer ret1;
 	gpointer ret2;
 
-	cache = j_cache_new(implementation, 1);
+	cache = j_cache_new(1);
 
 	ret1 = j_cache_get(cache, 1);
 	g_assert(ret1 != NULL);
@@ -91,56 +91,10 @@ test_cache_release (JCacheImplementation implementation)
 	j_cache_free(cache);
 }
 
-static
-void
-test_cache_chunk_new_free (void)
-{
-	test_cache_new_free(J_CACHE_CHUNK);
-}
-
-static
-void
-test_cache_chunk_get (void)
-{
-	test_cache_get(J_CACHE_CHUNK);
-}
-
-static
-void
-test_cache_chunk_release (void)
-{
-	test_cache_release(J_CACHE_CHUNK);
-}
-
-static
-void
-test_cache_malloc_new_free (void)
-{
-	test_cache_new_free(J_CACHE_MALLOC);
-}
-
-static
-void
-test_cache_malloc_get (void)
-{
-	test_cache_get(J_CACHE_MALLOC);
-}
-
-static
-void
-test_cache_malloc_release (void)
-{
-	test_cache_release(J_CACHE_MALLOC);
-}
-
 void
 test_cache (void)
 {
-	g_test_add_func("/cache/chunk/new_free", test_cache_chunk_new_free);
-	g_test_add_func("/cache/chunk/get", test_cache_chunk_get);
-	g_test_add_func("/cache/chunk/release", test_cache_chunk_release);
-
-	g_test_add_func("/cache/malloc/new_free", test_cache_malloc_new_free);
-	g_test_add_func("/cache/malloc/get", test_cache_malloc_get);
-	g_test_add_func("/cache/malloc/release", test_cache_malloc_release);
+	g_test_add_func("/cache/new_free", test_cache_new_free);
+	g_test_add_func("/cache/get", test_cache_get);
+	g_test_add_func("/cache/release", test_cache_release);
 }

@@ -25,37 +25,24 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_BENCHMARK
-#define H_BENCHMARK
+/**
+ * \file
+ **/
+
+#ifndef H_CACHE_INTERNAL
+#define H_CACHE_INTERNAL
 
 #include <glib.h>
 
-struct BenchmarkResult
-{
-	gdouble elapsed_time;
-	guint64 operations;
-	guint64 bytes;
-};
+#include <julea-internal.h>
 
-typedef struct BenchmarkResult BenchmarkResult;
+struct JMemoryChunk;
 
-#include <jsemantics.h>
+typedef struct JMemoryChunk JMemoryChunk;
 
-typedef void (*BenchmarkFunc) (BenchmarkResult*);
+J_GNUC_INTERNAL JMemoryChunk* j_memory_chunk_new (guint64);
+J_GNUC_INTERNAL void j_memory_chunk_free (JMemoryChunk*);
 
-JSemantics* j_benchmark_get_semantics (void);
-
-void j_benchmark_timer_start (void);
-gdouble j_benchmark_timer_elapsed (void);
-
-void j_benchmark_run (gchar const*, BenchmarkFunc);
-
-void benchmark_background_operation (void);
-void benchmark_cache (void);
-void benchmark_collection (void);
-void benchmark_item (void);
-void benchmark_lock (void);
-void benchmark_memory_chunk (void);
-void benchmark_message (void);
-
+J_GNUC_INTERNAL gpointer j_memory_chunk_get (JMemoryChunk*, guint64);
+J_GNUC_INTERNAL void j_memory_chunk_release (JMemoryChunk*, gpointer);
 #endif

@@ -35,20 +35,20 @@
 
 #include <string.h>
 
-#include <jcache-internal.h>
+#include <jmemory-chunk-internal.h>
 
 #include <jcommon-internal.h>
 #include <jtrace-internal.h>
 
 /**
- * \defgroup JCache Cache
+ * \defgroup JMemoryChunk Cache
  * @{
  **/
 
 /**
  * A cache.
  */
-struct JCache
+struct JMemoryChunk
 {
 	/**
 	* The size.
@@ -57,7 +57,15 @@ struct JCache
 
 	GHashTable* buffers;
 
-	guint64 used;
+	/**
+	* The data.
+	*/
+	gchar* data;
+
+	/**
+	* The current position within #data.
+	*/
+	gchar* current;
 };
 
 /**
@@ -66,28 +74,29 @@ struct JCache
  * \author Michael Kuhn
  *
  * \code
- * JCache* cache;
+ * JMemoryChunk* cache;
  *
- * cache = j_cache_new(1024);
+ * cache = j_memory_chunk_new(1024);
  * \endcode
  *
  * \param size A size.
  *
- * \return A new cache. Should be freed with j_cache_free().
+ * \return A new cache. Should be freed with j_memory_chunk_free().
  **/
-JCache*
-j_cache_new (guint64 size)
+JMemoryChunk*
+j_memory_chunk_new (guint64 size)
 {
-	JCache* cache;
+	JMemoryChunk* cache;
 
 	g_return_val_if_fail(size > 0, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	cache = g_slice_new(JCache);
+	cache = g_slice_new(JMemoryChunk);
 	cache->size = size;
 	cache->buffers = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
-	cache->used = 0;
+	cache->data = g_malloc(cache->size);
+	cache->current = cache->data;
 
 	j_trace_leave(G_STRFUNC);
 
@@ -100,36 +109,30 @@ j_cache_new (guint64 size)
  * \author Michael Kuhn
  *
  * \code
- * JCache* cache;
+ * JMemoryChunk* cache;
  *
  * ...
  *
- * j_cache_free(cache);
+ * j_memory_chunk_free(cache);
  * \endcode
  *
  * \param cache A cache.
  **/
 void
-j_cache_free (JCache* cache)
+j_memory_chunk_free (JMemoryChunk* cache)
 {
-	GHashTableIter iter[1];
-	gpointer key;
-	gpointer value;
-
 	g_return_if_fail(cache != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	g_hash_table_iter_init(iter, cache->buffers);
-
-	while (g_hash_table_iter_next(iter, &key, &value))
-	{
-		g_free(key);
-	}
-
 	g_hash_table_unref(cache->buffers);
 
-	g_slice_free(JCache, cache);
+	if (cache->data != NULL)
+	{
+		g_free(cache->data);
+	}
+
+	g_slice_free(JMemoryChunk, cache);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -140,11 +143,11 @@ j_cache_free (JCache* cache)
  * \author Michael Kuhn
  *
  * \code
- * JCache* cache;
+ * JMemoryChunk* cache;
  *
  * ...
  *
- * j_cache_get(cache, 1024);
+ * j_memory_chunk_get(cache, 1024);
  * \endcode
  *
  * \param cache  A cache.
@@ -153,7 +156,7 @@ j_cache_free (JCache* cache)
  * \return A pointer to a segment of the cache, NULL if not enough space is available.
  **/
 gpointer
-j_cache_get (JCache* cache, guint64 length)
+j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 {
 	gpointer ret = NULL;
 
@@ -161,13 +164,13 @@ j_cache_get (JCache* cache, guint64 length)
 
 	j_trace_enter(G_STRFUNC);
 
-	if (cache->used + length > cache->size)
+	if (cache->current + length > cache->data + cache->size)
 	{
 		goto end;
 	}
 
-	ret = g_malloc(length);
-	cache->used += length;
+	ret = cache->current;
+	cache->current += length;
 
 	g_hash_table_insert(cache->buffers, ret, GSIZE_TO_POINTER(length));
 
@@ -178,7 +181,7 @@ end:
 }
 
 void
-j_cache_release (JCache* cache, gpointer data)
+j_memory_chunk_release (JMemoryChunk* cache, gpointer data)
 {
 	gpointer size;
 
@@ -193,8 +196,10 @@ j_cache_release (JCache* cache, gpointer data)
 
 	g_hash_table_remove(cache->buffers, data);
 
-	cache->used -= GPOINTER_TO_SIZE(size);
-	g_free(data);
+	if (g_hash_table_size(cache->buffers) == 0)
+	{
+		cache->current = cache->data;
+	}
 }
 
 /**

@@ -36,11 +36,11 @@
 
 #include <string.h>
 
-#include <jcache-internal.h>
 #include <jconfiguration.h>
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
 #include <jlist.h>
+#include <jmemory-chunk-internal.h>
 #include <jmessage.h>
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
@@ -138,7 +138,7 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
-	JCache* cache;
+	JMemoryChunk* memory_chunk;
 	JMessage* message;
 	JStatistics* statistics;
 	GHashTable* files;
@@ -154,7 +154,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	j_helper_set_nodelay(connection, TRUE);
 
 	statistics = j_statistics_new(TRUE);
-	cache = j_cache_new(J_CACHE_CHUNK, J_MIB(50));
+	memory_chunk = j_memory_chunk_new(J_MIB(50));
 
 	if (jd_backend_thread_init != NULL)
 	{
@@ -252,7 +252,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
-						buf = j_cache_get(cache, length);
+						buf = j_memory_chunk_get(memory_chunk, length);
 						j_list_append(buffers, buf);
 
 						if (buf == NULL)
@@ -264,7 +264,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							reply = j_message_new_reply(message);
 
 							j_list_delete_all(buffers);
-							buf = j_cache_get(cache, length);
+							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
 						jd_backend_read(bf, buf, length, offset, &bytes_read);
@@ -314,7 +314,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
-						buf = j_cache_get(cache, length);
+						buf = j_memory_chunk_get(memory_chunk, length);
 
 						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
@@ -328,7 +328,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &bytes_written);
 						}
 
-						j_cache_release(cache, buf);
+						j_memory_chunk_release(memory_chunk, buf);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
@@ -488,7 +488,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		jd_backend_thread_fini();
 	}
 
-	j_cache_free(cache);
+	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
 
 	j_trace_leave(G_STRFUNC);

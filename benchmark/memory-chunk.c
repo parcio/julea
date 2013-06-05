@@ -25,37 +25,44 @@
  * SUCH DAMAGE.
  */
 
-#ifndef H_BENCHMARK
-#define H_BENCHMARK
+#include <julea-config.h>
 
 #include <glib.h>
 
-struct BenchmarkResult
+#include <julea.h>
+
+#include <jmemory-chunk-internal.h>
+
+#include "benchmark.h"
+
+static
+void
+benchmark_memory_chunk_get (BenchmarkResult* result)
 {
-	gdouble elapsed_time;
-	guint64 operations;
-	guint64 bytes;
-};
+	guint const n = J_MIB(50);
 
-typedef struct BenchmarkResult BenchmarkResult;
+	JMemoryChunk* memory_chunk;
+	gdouble elapsed;
 
-#include <jsemantics.h>
+	memory_chunk = j_memory_chunk_new(J_MIB(50));
 
-typedef void (*BenchmarkFunc) (BenchmarkResult*);
+	j_benchmark_timer_start();
 
-JSemantics* j_benchmark_get_semantics (void);
+	for (guint i = 0; i < n; i++)
+	{
+		j_memory_chunk_get(memory_chunk, 1);
+	}
 
-void j_benchmark_timer_start (void);
-gdouble j_benchmark_timer_elapsed (void);
+	elapsed = j_benchmark_timer_elapsed();
 
-void j_benchmark_run (gchar const*, BenchmarkFunc);
+	j_memory_chunk_free(memory_chunk);
 
-void benchmark_background_operation (void);
-void benchmark_cache (void);
-void benchmark_collection (void);
-void benchmark_item (void);
-void benchmark_lock (void);
-void benchmark_memory_chunk (void);
-void benchmark_message (void);
+	result->elapsed_time = elapsed;
+	result->operations = n;
+}
 
-#endif
+void
+benchmark_memory_chunk (void)
+{
+	j_benchmark_run("/memory_chunk", benchmark_memory_chunk_get);
+}

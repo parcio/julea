@@ -233,7 +233,7 @@ j_operation_cache_init (void)
 	j_trace_enter(G_STRFUNC);
 
 	cache = g_slice_new(JOperationCache);
-	cache->cache = j_cache_new(J_CACHE_MALLOC, J_MIB(50));
+	cache->cache = j_cache_new(J_MIB(50));
 	cache->queue = g_async_queue_new_full((GDestroyNotify)j_batch_unref);
 	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
 	cache->working = FALSE;

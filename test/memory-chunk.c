@@ -31,35 +31,70 @@
 
 #include <julea.h>
 
+#include <jmemory-chunk-internal.h>
+
 #include "test.h"
 
-int
-main (int argc, char** argv)
+static
+void
+test_memory_chunk_new_free (void)
 {
-	gint ret;
+	JMemoryChunk* memory_chunk;
 
-	g_test_init(&argc, &argv, NULL);
+	memory_chunk = j_memory_chunk_new(J_MIB(50));
+	j_memory_chunk_free(memory_chunk);
+}
 
-	j_init();
+static
+void
+test_memory_chunk_get (void)
+{
+	JMemoryChunk* memory_chunk;
+	gpointer ret;
 
-	test_background_operation();
-	test_cache();
-	test_collection();
-	test_configuration();
-	test_distribution();
-	test_item();
-	test_list();
-	test_list_iterator();
-	test_lock();
-	test_memory_chunk();
-	test_message();
-	test_operation();
-	test_semantics();
-	test_uri();
+	memory_chunk = j_memory_chunk_new(3);
 
-	ret = g_test_run();
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret != NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret != NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret != NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret == NULL);
 
-	j_fini();
+	j_memory_chunk_free(memory_chunk);
+}
 
-	return ret;
+static
+void
+test_memory_chunk_release (void)
+{
+	JMemoryChunk* memory_chunk;
+	gpointer ret1;
+	gpointer ret2;
+
+	memory_chunk = j_memory_chunk_new(1);
+
+	ret1 = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret1 != NULL);
+	ret2 = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret2 == NULL);
+
+	j_memory_chunk_release(memory_chunk, ret1);
+
+	ret1 = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret1 != NULL);
+	ret2 = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret2 == NULL);
+
+	j_memory_chunk_free(memory_chunk);
+}
+
+void
+test_memory_chunk (void)
+{
+	g_test_add_func("/memory-chunk/new_free", test_memory_chunk_new_free);
+	g_test_add_func("/memory-chunk/get", test_memory_chunk_get);
+	g_test_add_func("/memory-chunk/release", test_memory_chunk_release);
 }

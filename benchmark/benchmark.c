@@ -192,6 +192,7 @@ main (int argc, char** argv)
 	benchmark_collection();
 	benchmark_item();
 	benchmark_lock();
+	benchmark_memory_chunk();
 	benchmark_message();
 
 	g_timer_destroy(j_benchmark_timer);
