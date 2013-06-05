@@ -41,7 +41,9 @@ test_memory_chunk_new_free (void)
 {
 	JMemoryChunk* memory_chunk;
 
-	memory_chunk = j_memory_chunk_new(J_MIB(50));
+	memory_chunk = j_memory_chunk_new(42);
+	g_assert(memory_chunk != NULL);
+
 	j_memory_chunk_free(memory_chunk);
 }
 
@@ -68,25 +70,24 @@ test_memory_chunk_get (void)
 
 static
 void
-test_memory_chunk_release (void)
+test_memory_chunk_reset (void)
 {
 	JMemoryChunk* memory_chunk;
-	gpointer ret1;
-	gpointer ret2;
+	gpointer ret;
 
 	memory_chunk = j_memory_chunk_new(1);
 
-	ret1 = j_memory_chunk_get(memory_chunk, 1);
-	g_assert(ret1 != NULL);
-	ret2 = j_memory_chunk_get(memory_chunk, 1);
-	g_assert(ret2 == NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret != NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret == NULL);
 
-	j_memory_chunk_release(memory_chunk, ret1);
+	j_memory_chunk_reset(memory_chunk);
 
-	ret1 = j_memory_chunk_get(memory_chunk, 1);
-	g_assert(ret1 != NULL);
-	ret2 = j_memory_chunk_get(memory_chunk, 1);
-	g_assert(ret2 == NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret != NULL);
+	ret = j_memory_chunk_get(memory_chunk, 1);
+	g_assert(ret == NULL);
 
 	j_memory_chunk_free(memory_chunk);
 }
@@ -96,5 +97,5 @@ test_memory_chunk (void)
 {
 	g_test_add_func("/memory-chunk/new_free", test_memory_chunk_new_free);
 	g_test_add_func("/memory-chunk/get", test_memory_chunk_get);
-	g_test_add_func("/memory-chunk/release", test_memory_chunk_release);
+	g_test_add_func("/memory-chunk/reset", test_memory_chunk_reset);
 }

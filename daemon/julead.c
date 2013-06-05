@@ -328,7 +328,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &bytes_written);
 						}
 
-						j_memory_chunk_release(memory_chunk, buf);
+						j_memory_chunk_reset(memory_chunk);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)

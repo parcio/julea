@@ -55,8 +55,6 @@ struct JMemoryChunk
 	*/
 	guint64 size;
 
-	GHashTable* buffers;
-
 	/**
 	* The data.
 	*/
@@ -94,7 +92,6 @@ j_memory_chunk_new (guint64 size)
 
 	cache = g_slice_new(JMemoryChunk);
 	cache->size = size;
-	cache->buffers = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
 	cache->data = g_malloc(cache->size);
 	cache->current = cache->data;
 
@@ -124,8 +121,6 @@ j_memory_chunk_free (JMemoryChunk* cache)
 	g_return_if_fail(cache != NULL);
 
 	j_trace_enter(G_STRFUNC);
-
-	g_hash_table_unref(cache->buffers);
 
 	if (cache->data != NULL)
 	{
@@ -172,8 +167,6 @@ j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 	ret = cache->current;
 	cache->current += length;
 
-	g_hash_table_insert(cache->buffers, ret, GSIZE_TO_POINTER(length));
-
 end:
 	j_trace_leave(G_STRFUNC);
 
@@ -181,25 +174,11 @@ end:
 }
 
 void
-j_memory_chunk_release (JMemoryChunk* cache, gpointer data)
+j_memory_chunk_reset (JMemoryChunk* cache)
 {
-	gpointer size;
-
 	g_return_if_fail(cache != NULL);
-	g_return_if_fail(data != NULL);
 
-	if ((size = g_hash_table_lookup(cache->buffers, data)) == NULL)
-	{
-		g_warn_if_reached();
-		return;
-	}
-
-	g_hash_table_remove(cache->buffers, data);
-
-	if (g_hash_table_size(cache->buffers) == 0)
-	{
-		cache->current = cache->data;
-	}
+	cache->current = cache->data;
 }
 
 /**

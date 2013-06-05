@@ -44,7 +44,7 @@ benchmark_memory_chunk_get (BenchmarkResult* result)
 	JMemoryChunk* memory_chunk;
 	gdouble elapsed;
 
-	memory_chunk = j_memory_chunk_new(J_MIB(50));
+	memory_chunk = j_memory_chunk_new(n);
 
 	j_benchmark_timer_start();
 

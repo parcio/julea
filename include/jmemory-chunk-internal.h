@@ -44,5 +44,6 @@ J_GNUC_INTERNAL JMemoryChunk* j_memory_chunk_new (guint64);
 J_GNUC_INTERNAL void j_memory_chunk_free (JMemoryChunk*);
 
 J_GNUC_INTERNAL gpointer j_memory_chunk_get (JMemoryChunk*, guint64);
-J_GNUC_INTERNAL void j_memory_chunk_release (JMemoryChunk*, gpointer);
+J_GNUC_INTERNAL void j_memory_chunk_reset (JMemoryChunk*);
+
 #endif
