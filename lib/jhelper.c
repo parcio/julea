@@ -90,6 +90,37 @@ j_helper_get_processor_count (void)
 	return thread_count;
 }
 
+gboolean
+j_helper_insert_batch (mongo* connection, gchar const* ns, bson** obj, guint length, mongo_write_concern* write_concern)
+{
+	guint32 const max_obj_size = J_MIB(16);
+
+	gboolean ret = TRUE;
+	guint offset = 0;
+	guint32 obj_size = 0;
+
+	for (guint i = 0; i < length; i++)
+	{
+		guint32 size;
+
+		size = bson_size(obj[i]);
+
+		if (G_UNLIKELY(obj_size + size > max_obj_size))
+		{
+			ret = (mongo_insert_batch(connection, ns, (bson const**)obj + offset, i - offset, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK) && ret;
+
+			offset = i;
+			obj_size = 0;
+		}
+
+		obj_size += size;
+	}
+
+	ret = (mongo_insert_batch(connection, ns, (bson const**)obj + offset, length - offset, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK) && ret;
+
+	return ret;
+}
+
 void
 j_helper_set_write_concern (mongo_write_concern* write_concern, JSemantics* semantics)
 {

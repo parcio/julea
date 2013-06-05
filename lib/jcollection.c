@@ -662,7 +662,7 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	mongo_connection = j_connection_get_connection(connection);
 
 	mongo_create_index(mongo_connection, j_collection_collection_items(collection), &index, MONGO_INDEX_UNIQUE, NULL);
-	ret = (mongo_insert_batch(mongo_connection, j_collection_collection_items(collection), (bson const**)obj, length, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK);
+	ret = j_helper_insert_batch(mongo_connection, j_collection_collection_items(collection), obj, length, write_concern);
 
 	/*
 	if (ret != MONGO_OK)
