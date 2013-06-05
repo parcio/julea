@@ -44,7 +44,7 @@ benchmark_cache_get (BenchmarkResult* result)
 	JCache* cache;
 	gdouble elapsed;
 
-	cache = j_cache_new(J_MIB(50));
+	cache = j_cache_new(n);
 
 	j_benchmark_timer_start();
 

@@ -41,7 +41,9 @@ test_cache_new_free (void)
 {
 	JCache* cache;
 
-	cache = j_cache_new(J_MIB(50));
+	cache = j_cache_new(42);
+	g_assert(cache != NULL);
+
 	j_cache_free(cache);
 }
 
