@@ -90,6 +90,14 @@ struct JOperationCache
 
 typedef struct JOperationCache JOperationCache;
 
+struct JCachedBatch
+{
+	JBatch* batch;
+	gpointer data;
+};
+
+typedef struct JCachedBatch JCachedBatch;
+
 static JOperationCache* j_operation_cache = NULL;
 
 static
@@ -97,38 +105,23 @@ gpointer
 j_operation_cache_thread (gpointer data)
 {
 	JOperationCache* cache = data;
-	JBatch* batch;
-	JList* operations;
-	JListIterator* iterator;
+	JCachedBatch* cached_batch;
 
 	j_trace_enter(G_STRFUNC);
 
-	while ((batch = g_async_queue_pop(cache->queue)) != NULL)
+	while ((cached_batch = g_async_queue_pop(cache->queue)) != NULL)
 	{
 		/* data == cache, terminate */
-		if (batch == data)
+		if (cached_batch == data)
 		{
 			return NULL;
 		}
 
-		j_batch_execute_internal(batch);
+		j_batch_execute_internal(cached_batch->batch);
 
-		operations = j_batch_get_operations(batch);
-		iterator = j_list_iterator_new(operations);
-
-		while (j_list_iterator_next(iterator))
-		{
-			JOperation* operation = j_list_iterator_get(iterator);
-
-			if (operation->type == J_OPERATION_ITEM_WRITE)
-			{
-				j_cache_release(j_operation_cache->cache, (gpointer)operation->u.item_write.data);
-			}
-		}
-
-		j_list_iterator_free(iterator);
-
-		j_batch_unref(batch);
+		j_batch_unref(cached_batch->batch);
+		j_cache_release(j_operation_cache->cache, cached_batch->data);
+		g_slice_free(JCachedBatch, cached_batch);
 
 		g_mutex_lock(cache->mutex);
 
@@ -234,7 +227,7 @@ j_operation_cache_init (void)
 
 	cache = g_slice_new(JOperationCache);
 	cache->cache = j_cache_new(J_MIB(50));
-	cache->queue = g_async_queue_new_full((GDestroyNotify)j_batch_unref);
+	cache->queue = g_async_queue_new_full(NULL);
 	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
 	cache->working = FALSE;
 
@@ -260,7 +253,7 @@ j_operation_cache_fini (void)
 	cache = g_atomic_pointer_get(&j_operation_cache);
 	g_atomic_pointer_set(&j_operation_cache, NULL);
 
-	/* push fake batch */
+	/* push fake cached batch */
 	g_async_queue_push(cache->queue, cache);
 	g_thread_join(cache->thread);
 
@@ -300,6 +293,7 @@ gboolean
 j_operation_cache_add (JBatch* batch)
 {
 	gboolean ret = TRUE;
+	JCachedBatch* cached_batch;
 	JList* operations;
 	JListIterator* iterator;
 	gboolean can_cache = TRUE;
@@ -370,7 +364,11 @@ j_operation_cache_add (JBatch* batch)
 	j_operation_cache->working = TRUE;
 	g_mutex_unlock(j_operation_cache->mutex);
 
-	g_async_queue_push(j_operation_cache->queue, j_batch_new_from_batch(batch));
+	cached_batch = g_slice_new(JCachedBatch);
+	cached_batch->batch = j_batch_new_from_batch(batch);
+	cached_batch->data = buffer;
+
+	g_async_queue_push(j_operation_cache->queue, cached_batch);
 
 end:
 	j_trace_leave(G_STRFUNC);
