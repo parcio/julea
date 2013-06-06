@@ -91,6 +91,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	switch (type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
+			j_distribution_set_round_robin_start_index(distribution, 1);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			j_distribution_set_single_server_index(distribution, 1);
@@ -102,55 +103,32 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(ret);
+	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, block_size - 42);
 	g_assert_cmpuint(offset, ==, 42);
 	g_assert_cmpuint(block_id, ==, 0);
 
-	if (type == J_DISTRIBUTION_ROUND_ROBIN)
-	{
-		g_assert_cmpuint(index, ==, 0);
-	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
-	{
-		g_assert_cmpuint(index, ==, 1);
-	}
-
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(ret);
-	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, block_size);
 	g_assert_cmpuint(block_id, ==, 1);
 
 	if (type == J_DISTRIBUTION_ROUND_ROBIN)
 	{
+		g_assert_cmpuint(index, ==, 0);
 		g_assert_cmpuint(offset, ==, 0);
 	}
 	else if (J_DISTRIBUTION_SINGLE_SERVER)
 	{
-		g_assert_cmpuint(offset, ==, block_size);
-	}
-
-	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
-	g_assert_cmpuint(length, ==, block_size);
-	g_assert_cmpuint(block_id, ==, 2);
-
-	if (type == J_DISTRIBUTION_ROUND_ROBIN)
-	{
-		g_assert_cmpuint(index, ==, 0);
-		g_assert_cmpuint(offset, ==, block_size);
-	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
-	{
 		g_assert_cmpuint(index, ==, 1);
-		g_assert_cmpuint(offset, ==, 2 * block_size);
+		g_assert_cmpuint(offset, ==, block_size);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, block_size);
-	g_assert_cmpuint(block_id, ==, 3);
+	g_assert_cmpuint(block_id, ==, 2);
 
 	if (type == J_DISTRIBUTION_ROUND_ROBIN)
 	{
@@ -158,22 +136,37 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 	else if (J_DISTRIBUTION_SINGLE_SERVER)
 	{
+		g_assert_cmpuint(offset, ==, 2 * block_size);
+	}
+
+	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
+	g_assert(ret);
+	g_assert_cmpuint(length, ==, block_size);
+	g_assert_cmpuint(block_id, ==, 3);
+
+	if (type == J_DISTRIBUTION_ROUND_ROBIN)
+	{
+		g_assert_cmpuint(index, ==, 0);
+		g_assert_cmpuint(offset, ==, block_size);
+	}
+	else if (J_DISTRIBUTION_SINGLE_SERVER)
+	{
+		g_assert_cmpuint(index, ==, 1);
 		g_assert_cmpuint(offset, ==, 3 * block_size);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(ret);
+	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, 42);
 	g_assert_cmpuint(block_id, ==, 4);
 
 	if (type == J_DISTRIBUTION_ROUND_ROBIN)
 	{
-		g_assert_cmpuint(index, ==, 0);
 		g_assert_cmpuint(offset, ==, 2 * block_size);
 	}
 	else if (J_DISTRIBUTION_SINGLE_SERVER)
 	{
-		g_assert_cmpuint(index, ==, 1);
 		g_assert_cmpuint(offset, ==, 4 * block_size);
 	}
 
