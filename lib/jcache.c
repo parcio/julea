@@ -58,6 +58,8 @@ struct JCache
 	GHashTable* buffers;
 
 	guint64 used;
+
+	GMutex mutex[1];
 };
 
 /**
@@ -88,6 +90,8 @@ j_cache_new (guint64 size)
 	cache->size = size;
 	cache->buffers = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
 	cache->used = 0;
+
+	g_mutex_init(cache->mutex);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -129,6 +133,8 @@ j_cache_free (JCache* cache)
 
 	g_hash_table_unref(cache->buffers);
 
+	g_mutex_clear(cache->mutex);
+
 	g_slice_free(JCache, cache);
 
 	j_trace_leave(G_STRFUNC);
@@ -161,6 +167,8 @@ j_cache_get (JCache* cache, guint64 length)
 
 	j_trace_enter(G_STRFUNC);
 
+	g_mutex_lock(cache->mutex);
+
 	if (cache->used + length > cache->size)
 	{
 		goto end;
@@ -172,6 +180,8 @@ j_cache_get (JCache* cache, guint64 length)
 	g_hash_table_insert(cache->buffers, ret, GSIZE_TO_POINTER(length));
 
 end:
+	g_mutex_unlock(cache->mutex);
+
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -185,6 +195,8 @@ j_cache_release (JCache* cache, gpointer data)
 	g_return_if_fail(cache != NULL);
 	g_return_if_fail(data != NULL);
 
+	g_mutex_lock(cache->mutex);
+
 	if ((size = g_hash_table_lookup(cache->buffers, data)) == NULL)
 	{
 		g_warn_if_reached();
@@ -195,6 +207,8 @@ j_cache_release (JCache* cache, gpointer data)
 
 	cache->used -= GPOINTER_TO_SIZE(size);
 	g_free(data);
+
+	g_mutex_unlock(cache->mutex);
 }
 
 /**
