@@ -36,6 +36,7 @@
 
 #include <string.h>
 
+#include <julea-internal.h>
 #include <jconfiguration.h>
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
@@ -153,7 +154,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	j_helper_set_nodelay(connection, TRUE);
 
 	statistics = j_statistics_new(TRUE);
-	memory_chunk = j_memory_chunk_new(J_MIB(50));
+	memory_chunk = j_memory_chunk_new(J_STRIPE_SIZE);
 
 	if (jd_backend_thread_init != NULL)
 	{
