@@ -37,6 +37,7 @@ usage ()
 test -n "$1" || usage
 
 ROOT="$1"
+shift
 
 BUILD_PATH="${ROOT}/build"
 
@@ -57,7 +58,7 @@ echo Templates
 for template in default posix checkpoint serial
 do
 	setup.sh "${ROOT}" start
-	benchmark --template "${template}" 2>&1 | tee --append "template-${template}.log"
+	benchmark --template "${template}" "$@" 2>&1 | tee --append "template-${template}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -66,7 +67,7 @@ echo Atomicity
 for atomicity in operation none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics atomicity="${atomicity}" 2>&1 | tee --append "atomicity-${atomicity}.log"
+	benchmark --semantics atomicity="${atomicity}" "$@" 2>&1 | tee --append "atomicity-${atomicity}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -75,7 +76,7 @@ echo Concurrency
 for concurrency in overlapping non-overlapping none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics concurrency="${concurrency}" 2>&1 | tee --append "concurrency-${concurrency}.log"
+	benchmark --semantics concurrency="${concurrency}" "$@" 2>&1 | tee --append "concurrency-${concurrency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -84,7 +85,7 @@ echo Consistency
 for consistency in immediate eventual
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics consistency="${consistency}" 2>&1 | tee --append "consistency-${consistency}.log"
+	benchmark --semantics consistency="${consistency}" "$@" 2>&1 | tee --append "consistency-${consistency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -93,7 +94,7 @@ echo Persistency
 for persistency in immediate eventual
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics persistency="${persistency}" 2>&1 | tee --append "persistency-${persistency}.log"
+	benchmark --semantics persistency="${persistency}" "$@" 2>&1 | tee --append "persistency-${persistency}.log"
 	setup.sh "${ROOT}" stop
 done
 
@@ -102,6 +103,6 @@ echo Safety
 for safety in storage network none
 do
 	setup.sh "${ROOT}" start
-	benchmark --semantics safety="${safety}" 2>&1 | tee --append "safety-${safety}.log"
+	benchmark --semantics safety="${safety}" "$@" 2>&1 | tee --append "safety-${safety}.log"
 	setup.sh "${ROOT}" stop
 done

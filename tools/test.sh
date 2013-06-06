@@ -36,6 +36,7 @@ usage ()
 test -n "$1" || usage
 
 ROOT="$1"
+shift
 
 BUILD_PATH="${ROOT}/build"
 
@@ -52,5 +53,5 @@ cd "${DIRECTORY}"
 trap "setup.sh ${ROOT} stop" HUP INT TERM 0
 
 setup.sh "${ROOT}" start
-gtester --keep-going --verbose "${BUILD_PATH}/test/test" 2>&1 | tee --append "test.log"
+gtester --keep-going --verbose "${BUILD_PATH}/test/test" "$@" 2>&1 | tee --append "test.log"
 setup.sh "${ROOT}" stop
