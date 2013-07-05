@@ -842,15 +842,15 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
 	bson_append_string(b, "Name", item->name);
 
-	bson_append_start_object(b, "Status");
-
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
+		bson_append_start_object(b, "Status");
+
 		bson_append_long(b, "Size", item->status.size);
 		bson_append_long(b, "ModificationTime", item->status.modification_time);
-	}
 
-	bson_append_finish_object(b);
+		bson_append_finish_object(b);
+	}
 
 	bson_append_bson(b, "Credentials", b_cred);
 	bson_append_bson(b, "Distribution", b_distribution);

@@ -14,7 +14,6 @@ def options (ctx):
 
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb-client' % (Context.run_dir,), help='MongoDB client prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
-	ctx.add_option('--openmpi', action='store', default='%s/external/openmpi' % (Context.run_dir,), help='OpenMPI prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
@@ -32,7 +31,6 @@ def configure (ctx):
 	ctx.find_program(
 		'mpicc',
 		var = 'MPICC',
-		path_list = ['%s/bin' % (ctx.options.openmpi,)],
 		mandatory = False
 	)
 
@@ -88,6 +86,7 @@ def configure (ctx):
 		mpi_env.COMPILER_CC = os.path.basename(mpi_env.CC)
 
 		# MPI
+		ctx.env.JULEA_MPI = \
 		ctx.check_cc(
 			header_name = 'mpi.h',
 			lib = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libs']).strip()),
