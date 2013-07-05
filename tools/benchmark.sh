@@ -44,7 +44,7 @@ BUILD_PATH="${ROOT}/build"
 export PATH="${BUILD_PATH}/benchmark:${ROOT}/tools:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
-DIRECTORY="${PWD}/results/benchmark/$(date --iso-8601)-$(git describe --always)"
+DIRECTORY="${PWD}/results/benchmark/$(date '+%Y-%m')/$(date --iso-8601)-$(git describe --always)"
 
 mkdir -p "${DIRECTORY}"
 

@@ -43,7 +43,7 @@ BUILD_PATH="${ROOT}/build"
 export PATH="${BUILD_PATH}/test:${ROOT}/tools:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
-DIRECTORY="${PWD}/results/test/$(date --iso-8601)-$(git describe --always)"
+DIRECTORY="${PWD}/results/test/$(date '+%Y-%m')"
 
 mkdir -p "${DIRECTORY}"
 
@@ -53,5 +53,5 @@ cd "${DIRECTORY}"
 trap "setup.sh ${ROOT} stop" HUP INT TERM 0
 
 setup.sh "${ROOT}" start
-gtester --keep-going --verbose "${BUILD_PATH}/test/test" "$@" 2>&1 | tee --append "test.log"
+gtester --keep-going --verbose "${BUILD_PATH}/test/test" "$@" 2>&1 | tee --append "$(date --iso-8601)-$(git describe --always).log"
 setup.sh "${ROOT}" stop
