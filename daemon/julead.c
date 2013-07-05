@@ -288,6 +288,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_WRITE:
 				{
 					JMessage* reply = NULL;
+					gchar* buf;
+					guint64 bytes_written;
+					guint64 merge_length = 0;
+					guint64 merge_offset = 0;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
 					{
@@ -298,33 +302,55 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					collection = j_message_get_string(message);
 					item = j_message_get_string(message);
 
+					/* Guaranteed to work, because memory_chunk is not shared. */
+					buf = j_memory_chunk_get(memory_chunk, J_STRIPE_SIZE);
 					bf = jd_open_file(files, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
 					{
-						gchar* buf;
 						guint64 length;
 						guint64 offset;
-						guint64 bytes_written;
 
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
-						buf = j_memory_chunk_get(memory_chunk, length);
+						/* Check whether we can merge two consecutive operations. */
+						if (merge_length > 0 && merge_offset + merge_length == offset && merge_length + length <= J_STRIPE_SIZE)
+						{
+							merge_length += length;
+						}
+						else if (merge_length > 0)
+						{
+							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
+							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
+							jd_backend_write(bf, buf, merge_length, merge_offset, &bytes_written);
+							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
-						jd_backend_write(bf, buf, length, offset, &bytes_written);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+							merge_length = 0;
+							merge_offset = 0;
+						}
+
+						if (merge_length == 0)
+						{
+							merge_length = length;
+							merge_offset = offset;
+						}
 
 						if (reply != NULL)
 						{
 							j_message_add_operation(reply, sizeof(guint64));
 							j_message_append_8(reply, &bytes_written);
 						}
+					}
 
-						j_memory_chunk_reset(memory_chunk);
+					if (merge_length > 0)
+					{
+						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
+						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
+
+						jd_backend_write(bf, buf, merge_length, merge_offset, &bytes_written);
+						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
@@ -340,6 +366,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_message_write(reply, output);
 						j_message_unref(reply);
 					}
+
+					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
 			case J_MESSAGE_STATUS:
