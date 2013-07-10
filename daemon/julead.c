@@ -304,6 +304,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					/* Guaranteed to work, because memory_chunk is not shared. */
 					buf = j_memory_chunk_get(memory_chunk, J_STRIPE_SIZE);
+					g_assert(buf != NULL);
+
 					bf = jd_open_file(files, store, collection, item);
 
 					for (i = 0; i < operation_count; i++)
