@@ -65,6 +65,34 @@ static MPI_File mpi_file[1];
 static JItem* julea_item;
 
 static
+guint64
+pwrite_all (gint fd, gpointer buf, guint64 count, guint64 offset)
+{
+	guint64 nb = 0;
+
+	while (nb < count)
+	{
+		nb += pwrite(fd, (gchar*)buf + nb, count - nb, offset + nb);
+	}
+
+	return nb;
+}
+
+static
+guint64
+pread_all (gint fd, gpointer buf, guint64 count, guint64 offset)
+{
+	guint64 nb = 0;
+
+	while (nb < count)
+	{
+		nb += pread(fd, (gchar*)buf + nb, count - nb, offset + nb);
+	}
+
+	return nb;
+}
+
+static
 gchar const*
 get_name (void)
 {
@@ -209,7 +237,7 @@ write_file (void)
 			{
 				guint64 bytes;
 
-				bytes = pwrite(posix_fd, buf, opt_block_size, opt_block_size * (iteration + i));
+				bytes = pwrite_all(posix_fd, buf, opt_block_size, opt_block_size * (iteration + i));
 				g_assert(bytes == (guint)opt_block_size);
 			}
 
@@ -286,7 +314,7 @@ read_file (void)
 			{
 				guint64 bytes;
 
-				bytes = pread(posix_fd, buf, opt_block_size, opt_block_size * (iteration + i));
+				bytes = pread_all(posix_fd, buf, opt_block_size, opt_block_size * (iteration + i));
 				g_assert(bytes == (guint)opt_block_size);
 			}
 
