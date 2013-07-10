@@ -517,8 +517,6 @@ main (int argc, char** argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
 	MPI_Comm_size(MPI_COMM_WORLD, &process_num);
 
-	g_assert(process_num == 2);
-
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
@@ -565,6 +563,11 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
+	if (process_num != 2)
+	{
+		MPI_Abort(MPI_COMM_WORLD, 1);
+	}
+
 	if (opt_julea)
 	{
 		j_init();
@@ -584,11 +587,7 @@ main (int argc, char** argv)
 		j_fini();
 	}
 
-	//gdouble read;
-	//gdouble write;
-
-	//MPI_Reduce(&read_result, &read, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	//MPI_Reduce(&write_result, &write, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Sendrecv(&read_result, 1, MPI_DOUBLE, 0, 0, &read_result, 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 	if (process_id == 0)
 	{
@@ -598,13 +597,13 @@ main (int argc, char** argv)
 		gchar* write_str;
 		guint64 bytes;
 
-		bytes = (guint64)opt_block_size * opt_block_count * process_num;
+		bytes = (guint64)opt_block_size * opt_block_count;
 		size_str = g_format_size(opt_block_size);
 		total_size_str = g_format_size(bytes);
 		read_str = g_format_size(bytes / read_result);
 		write_str = g_format_size(bytes / write_result);
 
-		g_print("Size:  %s * %d * %d = %s\n", size_str, opt_block_count, process_num, total_size_str);
+		g_print("Size:  %s * %d = %s\n", size_str, opt_block_count, total_size_str);
 		g_print("Write: %.3fs = %s/s = %" G_GUINT64_FORMAT "\n", write_result, write_str, (guint64)(bytes / write_result));
 		g_print("Read:  %.3fs = %s/s = %" G_GUINT64_FORMAT "\n", read_result, read_str, (guint64)(bytes / read_result));
 
