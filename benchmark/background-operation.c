@@ -79,5 +79,5 @@ benchmark_background_operation_new_ref_unref (BenchmarkResult* result)
 void
 benchmark_background_operation (void)
 {
-	j_benchmark_run("/background_operation", benchmark_background_operation_new_ref_unref);
+	j_benchmark_run("/background-operation", benchmark_background_operation_new_ref_unref);
 }
