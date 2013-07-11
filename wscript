@@ -157,7 +157,7 @@ def configure (ctx):
 
 	ctx.check_cc(
 		header_name = 'otf.h',
-		lib = 'otf',
+		lib = 'open-trace-format',
 		includes = ['%s/include' % (ctx.options.otf,)],
 		libpath = ['%s/lib' % (ctx.options.otf,)],
 		rpath = ['%s/lib' % (ctx.options.otf,)],

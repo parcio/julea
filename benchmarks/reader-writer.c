@@ -66,13 +66,13 @@ static JItem* julea_item;
 
 static
 guint64
-pwrite_all (gint fd, gpointer buf, guint64 count, guint64 offset)
+pwrite_all (gint fd, gconstpointer buf, guint64 count, guint64 offset)
 {
 	guint64 nb = 0;
 
 	while (nb < count)
 	{
-		nb += pwrite(fd, (gchar*)buf + nb, count - nb, offset + nb);
+		nb += pwrite(fd, (gchar const*)buf + nb, count - nb, offset + nb);
 	}
 
 	return nb;

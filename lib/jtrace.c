@@ -39,7 +39,7 @@
 #endif
 
 #ifdef HAVE_OTF
-#include <otf.h>
+#include <open-trace-format/otf.h>
 #endif
 
 #include <jtrace-internal.h>
