@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/otf"
-VERSION='1.12.2salmon'
+VERSION='1.12.3salmon'
 
 if [ -d "${PREFIX}" ]
 then
