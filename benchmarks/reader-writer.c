@@ -615,7 +615,14 @@ main (int argc, char** argv)
 		j_fini();
 	}
 
-	MPI_Sendrecv(&read_result, 1, MPI_DOUBLE, 0, 0, &read_result, 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	if (process_id == 0)
+	{
+		MPI_Recv(&read_result, 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+	else if (process_id == 1)
+	{
+		MPI_Send(&read_result, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+	}
 
 	if (process_id == 0)
 	{
