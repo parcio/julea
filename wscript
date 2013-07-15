@@ -78,13 +78,6 @@ def configure (ctx):
 	)
 
 	if ctx.env.MPICC:
-		mpi_env = ctx.env.derive()
-
-		mpi_env.CC = ctx.env.MPICC
-		mpi_env.LINK_CC = ctx.env.MPICC
-		mpi_env.CC_NAME = os.path.basename(mpi_env.CC)
-		mpi_env.COMPILER_CC = os.path.basename(mpi_env.CC)
-
 		# MPI
 		ctx.env.JULEA_MPI = \
 		ctx.check_cc(
@@ -94,8 +87,7 @@ def configure (ctx):
 			libpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
 			rpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
 			uselib_store = 'MPI',
-			define_name = 'HAVE_MPI',
-			env = mpi_env
+			define_name = 'HAVE_MPI'
 		)
 
 	# BSON
