@@ -246,29 +246,6 @@ def build (ctx):
 		install_path = None
 	)
 
-	for benchmark in ('mongodb', 'small-access'):
-		# Benchmarks
-		ctx.program(
-			source = 'benchmarks/%s.c' % (benchmark,),
-			target = 'benchmarks/%s' % (benchmark,),
-			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'MPI'],
-			includes = ['include'],
-			defines = ['J_ENABLE_INTERNAL'],
-			install_path = None
-		)
-
-	if ctx.env.JULEA_MPI:
-		for benchmark in ('reader-writer',):
-			# Benchmarks
-			ctx.program(
-				source = 'benchmarks/%s.c' % (benchmark,),
-				target = 'benchmarks/%s' % (benchmark,),
-				use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'MPI'],
-				includes = ['include'],
-				defines = ['J_ENABLE_INTERNAL'],
-				install_path = None
-			)
-
 	# Daemon
 	ctx.program(
 		source = ctx.path.ant_glob('daemon/*.c'),
