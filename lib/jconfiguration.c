@@ -35,7 +35,6 @@
 
 #include <string.h>
 
-#include <jconfiguration.h>
 #include <jconfiguration-internal.h>
 
 /**

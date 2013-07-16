@@ -36,11 +36,32 @@
 
 #include <julea-internal.h>
 
-#include <jconnection.h>
-
+#include <jconfiguration-internal.h>
 #include <jmessage.h>
 
 #include <mongo.h>
+
+#define J_CONNECTION_ERROR j_connection_error_quark()
+
+enum JConnectionError
+{
+	J_CONNECTION_ERROR_FAILED
+};
+
+typedef enum JConnectionError JConnectionError;
+
+struct JConnection;
+
+typedef struct JConnection JConnection;
+
+J_GNUC_INTERNAL GQuark j_connection_error_quark (void);
+
+J_GNUC_INTERNAL JConnection* j_connection_new (JConfiguration*);
+J_GNUC_INTERNAL JConnection* j_connection_ref (JConnection*);
+J_GNUC_INTERNAL void j_connection_unref (JConnection*);
+
+J_GNUC_INTERNAL gboolean j_connection_connect (JConnection*);
+J_GNUC_INTERNAL gboolean j_connection_disconnect (JConnection*);
 
 J_GNUC_INTERNAL mongo* j_connection_get_connection (JConnection*);
 

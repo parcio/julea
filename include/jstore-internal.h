@@ -38,7 +38,7 @@
 
 #include <jstore.h>
 
-#include <jconnection.h>
+#include <jconnection-internal.h>
 #include <jlist.h>
 
 J_GNUC_INTERNAL gchar const* j_store_collection_collections (JStore*);

@@ -36,6 +36,23 @@
 
 #include <julea-internal.h>
 
+struct JConfiguration;
+
+typedef struct JConfiguration JConfiguration;
+
+J_GNUC_INTERNAL JConfiguration* j_configuration_new (void);
+J_GNUC_INTERNAL JConfiguration* j_configuration_ref (JConfiguration*);
+J_GNUC_INTERNAL void j_configuration_unref (JConfiguration*);
+
+J_GNUC_INTERNAL gchar const* j_configuration_get_data_server (JConfiguration*, guint);
+J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_server (JConfiguration*, guint);
+
+J_GNUC_INTERNAL guint j_configuration_get_data_server_count (JConfiguration*);
+J_GNUC_INTERNAL guint j_configuration_get_metadata_server_count (JConfiguration*);
+
+J_GNUC_INTERNAL gchar const* j_configuration_get_storage_backend (JConfiguration*);
+J_GNUC_INTERNAL gchar const* j_configuration_get_storage_path (JConfiguration*);
+
 J_GNUC_INTERNAL JConfiguration* j_configuration_new_for_data (GKeyFile*);
 
 #endif

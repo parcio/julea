@@ -420,7 +420,7 @@ j_item_new (gchar const* name)
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
-	item->distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_ROUND_ROBIN);
+	item->distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
@@ -742,7 +742,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item = g_slice_new(JItem);
 	item->name = NULL;
 	item->credentials = j_credentials_new();
-	item->distribution = j_distribution_new(j_configuration(), J_DISTRIBUTION_NONE);
+	item->distribution = j_distribution_new(J_DISTRIBUTION_NONE);
 	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;

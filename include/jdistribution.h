@@ -47,9 +47,7 @@ struct JDistribution;
 
 typedef struct JDistribution JDistribution;
 
-#include <jconfiguration.h>
-
-JDistribution* j_distribution_new (JConfiguration*, JDistributionType);
+JDistribution* j_distribution_new (JDistributionType);
 void j_distribution_free (JDistribution*);
 
 void j_distribution_init (JDistribution*, guint64, guint64);

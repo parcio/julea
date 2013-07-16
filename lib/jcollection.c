@@ -40,7 +40,6 @@
 #include <jcollection-internal.h>
 
 #include <jcommon-internal.h>
-#include <jconnection.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>

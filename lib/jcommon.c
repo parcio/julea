@@ -40,8 +40,7 @@
 #include <jcommon-internal.h>
 
 #include <jbackground-operation-internal.h>
-#include <jconfiguration.h>
-#include <jconnection.h>
+#include <jconfiguration-internal.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jlist.h>

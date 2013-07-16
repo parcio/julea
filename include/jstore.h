@@ -39,7 +39,6 @@ struct JStore;
 typedef struct JStore JStore;
 
 #include <jcollection.h>
-#include <jconnection.h>
 #include <jbatch.h>
 
 JStore* j_store_new (gchar const*);

@@ -42,8 +42,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <jconfiguration.h>
-#include <jconnection.h>
+#include <jconfiguration-internal.h>
 #include <jconnection-internal.h>
 
 #include <jcommon-internal.h>
@@ -94,6 +93,8 @@ struct JConnection
 	 **/
 	gint ref_count;
 };
+
+/* Internal */
 
 GQuark
 j_connection_error_quark (void)
@@ -315,8 +316,6 @@ end:
 
 	return ret;
 }
-
-/* Internal */
 
 /**
  * Returns a MongoDB connection.

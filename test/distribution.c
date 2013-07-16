@@ -34,7 +34,7 @@
 
 #include <jcommon.h>
 #include <jconfiguration-internal.h>
-#include <jdistribution.h>
+#include <jdistribution-internal.h>
 
 #include "test.h"
 
@@ -83,7 +83,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 
 	block_size = J_STRIPE_SIZE;
 
-	distribution = j_distribution_new(*configuration, type);
+	distribution = j_distribution_new_for_configuration(type, *configuration);
 	j_distribution_init(distribution, 4 * block_size, 42);
 
 	j_distribution_set_block_size(distribution, block_size);

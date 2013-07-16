@@ -37,7 +37,7 @@
 
 #include <jconnection-pool-internal.h>
 
-#include <jconnection.h>
+#include <jconnection-internal.h>
 #include <jtrace-internal.h>
 
 /**

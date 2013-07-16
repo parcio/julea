@@ -40,7 +40,6 @@
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
-#include <jconnection.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jbatch-internal.h>

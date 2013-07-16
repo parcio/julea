@@ -35,8 +35,6 @@
 
 #include <glib.h>
 
-extern JConnection* jfs_connection;
-
 int jfs_access (char const*, int);
 int jfs_chmod (char const*, mode_t);
 int jfs_chown (char const*, uid_t, gid_t);

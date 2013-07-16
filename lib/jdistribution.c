@@ -41,7 +41,7 @@
 #include <julea-internal.h>
 
 #include <jcommon-internal.h>
-#include <jconfiguration.h>
+#include <jconfiguration-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -201,23 +201,9 @@ end:
 	return ret;
 }
 
-/**
- * Creates a new distribution.
- *
- * \author Michael Kuhn
- *
- * \code
- * JDistribution* d;
- *
- * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN, 0, 0);
- * \endcode
- *
- * \param type   A distribution type.
- *
- * \return A new distribution. Should be freed with j_distribution_free().
- **/
+static
 JDistribution*
-j_distribution_new (JConfiguration* configuration, JDistributionType type)
+j_distribution_new_common (JDistributionType type, JConfiguration* configuration)
 {
 	JDistribution* distribution;
 
@@ -237,13 +223,71 @@ j_distribution_new (JConfiguration* configuration, JDistributionType type)
 			distribution->u.round_robin.start_index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			distribution->u.single_server.index = 0;
+			distribution->u.single_server.index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
 			break;
 		case J_DISTRIBUTION_NONE:
 			break;
 		default:
 			g_warn_if_reached();
 	}
+
+	j_trace_leave(G_STRFUNC);
+
+	return distribution;
+}
+
+/**
+ * Creates a new distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+ * \endcode
+ *
+ * \param type   A distribution type.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
+JDistribution*
+j_distribution_new (JDistributionType type)
+{
+	JDistribution* distribution;
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution = j_distribution_new_common(type, j_configuration());
+
+	j_trace_leave(G_STRFUNC);
+
+	return distribution;
+}
+
+/**
+ * Creates a new distribution for a given configuration.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+ * \endcode
+ *
+ * \param type   A distribution type.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
+JDistribution*
+j_distribution_new_for_configuration (JDistributionType type, JConfiguration* configuration)
+{
+	JDistribution* distribution;
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution = j_distribution_new_common(type, configuration);
 
 	j_trace_leave(G_STRFUNC);
 

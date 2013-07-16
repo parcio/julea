@@ -37,7 +37,7 @@
 #include <string.h>
 
 #include <julea-internal.h>
-#include <jconfiguration.h>
+#include <jconfiguration-internal.h>
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
 #include <jmemory-chunk-internal.h>

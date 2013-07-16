@@ -36,8 +36,8 @@
 
 #include <julea-internal.h>
 
-#include <jconfiguration.h>
-#include <jconnection.h>
+#include <jconfiguration-internal.h>
+#include <jconnection-internal.h>
 
 J_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
 J_GNUC_INTERNAL void j_connection_pool_fini (void);
