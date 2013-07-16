@@ -179,7 +179,7 @@ main (int argc, char** argv)
 
 	j_init();
 
-	j_benchmark_semantics = j_helper_parse_semantics(opt_template, opt_semantics);
+	j_benchmark_semantics = j_semantics_new_from_string(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();
 
 	if (opt_machine_readable)

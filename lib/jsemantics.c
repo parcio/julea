@@ -37,6 +37,8 @@
 
 #include <jsemantics.h>
 
+#include <jtrace-internal.h>
+
 /**
  * \defgroup JSemantics Semantics
  * @{
@@ -142,6 +144,196 @@ j_semantics_new (JSemanticsTemplate template)
 		default:
 			g_warn_if_reached();
 	}
+
+	return semantics;
+}
+
+/**
+ * Creates a new semantics object from two strings.
+ * Semantics objects become immutable after the first call to j_semantics_ref().
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JSemantics* semantics;
+ *
+ * semantics = j_semantics_new_from_string("default", "atomicity=operation");
+ * \endcode
+ *
+ * \param template_str  A string specifying the template.
+ * \param semantics_str A string specifying the semantics.
+ *
+ * \return A new semantics object. Should be freed with j_semantics_unref().
+ **/
+JSemantics*
+j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_str)
+{
+	JSemantics* semantics;
+	gchar** parts;
+	guint parts_len;
+
+	j_trace_enter(G_STRFUNC);
+
+	if (template_str == NULL || g_strcmp0(template_str, "default") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
+	else if (g_strcmp0(template_str, "posix") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
+	}
+	else if (g_strcmp0(template_str, "checkpoint") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
+	}
+	else if (g_strcmp0(template_str, "serial") == 0)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_SERIAL);
+	}
+	else
+	{
+		g_assert_not_reached();
+	}
+
+	if (semantics_str == NULL)
+	{
+		goto end;
+	}
+
+	parts = g_strsplit(semantics_str, ",", 0);
+	parts_len = g_strv_length(parts);
+
+	for (guint i = 0; i < parts_len; i++)
+	{
+		gchar const* value;
+
+		if ((value = strchr(parts[i], '=')) == NULL)
+		{
+			continue;
+		}
+
+		value++;
+
+		if (g_str_has_prefix(parts[i], "atomicity="))
+		{
+			if (g_strcmp0(value, "batch") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_BATCH);
+			}
+			else if (g_strcmp0(value, "operation") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "concurrency="))
+		{
+			if (g_strcmp0(value, "overlapping") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
+			}
+			else if (g_strcmp0(value, "non-overlapping") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "consistency="))
+		{
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "persistency="))
+		{
+			if (g_strcmp0(value, "immediate") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
+			}
+			else if (g_strcmp0(value, "eventual") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "safety="))
+		{
+			if (g_strcmp0(value, "storage") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_STORAGE);
+			}
+			else if (g_strcmp0(value, "network") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NETWORK);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "security="))
+		{
+			if (g_strcmp0(value, "strict") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
+			}
+			else if (g_strcmp0(value, "none") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else
+		{
+			g_assert_not_reached();
+		}
+	}
+
+	g_strfreev(parts);
+
+end:
+	j_trace_leave(G_STRFUNC);
 
 	return semantics;
 }

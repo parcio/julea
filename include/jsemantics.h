@@ -102,6 +102,8 @@ struct JSemantics;
 typedef struct JSemantics JSemantics;
 
 JSemantics* j_semantics_new (JSemanticsTemplate);
+JSemantics* j_semantics_new_from_string (gchar const*, gchar const*);
+
 JSemantics* j_semantics_ref (JSemantics*);
 void j_semantics_unref (JSemantics*);
 
