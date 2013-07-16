@@ -49,6 +49,7 @@
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
 #include <jdistribution.h>
+#include <jdistribution-internal.h>
 #include <jhelper-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>

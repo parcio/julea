@@ -36,6 +36,7 @@
 #include <bson.h>
 
 #include <jdistribution.h>
+#include <jdistribution-internal.h>
 
 #include <julea-internal.h>
 

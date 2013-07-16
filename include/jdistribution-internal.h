@@ -29,32 +29,18 @@
  * \file
  **/
 
-#ifndef H_JULEA
-#define H_JULEA
+#ifndef H_DISTRIBUTION_INTERNAL
+#define H_DISTRIBUTION_INTERNAL
 
-/**
- * \mainpage
- *
- * JULEA is a distributed file system with a newly designed application programming interface.
- * It also allows to change the file system semantics at runtime.
- *
- * The name JULEA is a play on ROMIO.
- **/
+#include <glib.h>
 
-#include <jbatch.h>
-#include <jcollection.h>
-#include <jcollection-iterator.h>
-#include <jcommon.h>
-#include <jconfiguration.h>
-#include <jconnection.h>
+#include <julea-internal.h>
+
 #include <jdistribution.h>
-#include <jitem.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jmessage.h>
-#include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-iterator.h>
-#include <juri.h>
+
+#include <bson.h>
+
+J_GNUC_INTERNAL bson* j_distribution_serialize (JDistribution*);
+J_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson const*);
 
 #endif

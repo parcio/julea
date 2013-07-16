@@ -34,8 +34,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 enum JDistributionType
 {
 	J_DISTRIBUTION_NONE,
@@ -60,8 +58,5 @@ gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, 
 void j_distribution_set_block_size (JDistribution*, guint64);
 void j_distribution_set_round_robin_start_index (JDistribution*, guint);
 void j_distribution_set_single_server_index (JDistribution*, guint);
-
-bson* j_distribution_serialize (JDistribution*);
-void j_distribution_deserialize (JDistribution*, bson const*);
 
 #endif
