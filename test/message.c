@@ -34,7 +34,7 @@
 
 #include <julea.h>
 
-#include <jmessage.h>
+#include <jmessage-internal.h>
 
 #include "test.h"
 

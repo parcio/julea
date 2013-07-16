@@ -29,10 +29,12 @@
  * \file
  **/
 
-#ifndef H_MESSAGE
-#define H_MESSAGE
+#ifndef H_MESSAGE_INTERNAL
+#define H_MESSAGE_INTERNAL
 
 #include <glib.h>
+
+#include <julea-internal.h>
 
 enum JMessageType
 {
@@ -59,32 +61,32 @@ typedef struct JMessage JMessage;
 
 #include <jsemantics.h>
 
-JMessage* j_message_new (JMessageType, gsize);
-JMessage* j_message_new_reply (JMessage*);
-JMessage* j_message_ref (JMessage*);
-void j_message_unref (JMessage*);
+J_GNUC_INTERNAL JMessage* j_message_new (JMessageType, gsize);
+J_GNUC_INTERNAL JMessage* j_message_new_reply (JMessage*);
+J_GNUC_INTERNAL JMessage* j_message_ref (JMessage*);
+J_GNUC_INTERNAL void j_message_unref (JMessage*);
 
-guint32 j_message_get_id (JMessage const*);
-JMessageType j_message_get_type (JMessage const*);
-JMessageType j_message_get_type_modifier (JMessage const*);
-guint32 j_message_get_count (JMessage const*);
+J_GNUC_INTERNAL guint32 j_message_get_id (JMessage const*);
+J_GNUC_INTERNAL JMessageType j_message_get_type (JMessage const*);
+J_GNUC_INTERNAL JMessageType j_message_get_type_modifier (JMessage const*);
+J_GNUC_INTERNAL guint32 j_message_get_count (JMessage const*);
 
-gboolean j_message_append_1 (JMessage*, gconstpointer);
-gboolean j_message_append_4 (JMessage*, gconstpointer);
-gboolean j_message_append_8 (JMessage*, gconstpointer);
-gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
+J_GNUC_INTERNAL gboolean j_message_append_1 (JMessage*, gconstpointer);
+J_GNUC_INTERNAL gboolean j_message_append_4 (JMessage*, gconstpointer);
+J_GNUC_INTERNAL gboolean j_message_append_8 (JMessage*, gconstpointer);
+J_GNUC_INTERNAL gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
 
-gchar j_message_get_1 (JMessage*);
-gint32 j_message_get_4 (JMessage*);
-gint64 j_message_get_8 (JMessage*);
-gchar const* j_message_get_string (JMessage*);
+J_GNUC_INTERNAL gchar j_message_get_1 (JMessage*);
+J_GNUC_INTERNAL gint32 j_message_get_4 (JMessage*);
+J_GNUC_INTERNAL gint64 j_message_get_8 (JMessage*);
+J_GNUC_INTERNAL gchar const* j_message_get_string (JMessage*);
 
-gboolean j_message_read (JMessage*, GInputStream*);
-gboolean j_message_write (JMessage*, GOutputStream*);
+J_GNUC_INTERNAL gboolean j_message_read (JMessage*, GInputStream*);
+J_GNUC_INTERNAL gboolean j_message_write (JMessage*, GOutputStream*);
 
-void j_message_add_send (JMessage*, gconstpointer, guint64);
-void j_message_add_operation (JMessage*, gsize);
+J_GNUC_INTERNAL void j_message_add_send (JMessage*, gconstpointer, guint64);
+J_GNUC_INTERNAL void j_message_add_operation (JMessage*, gsize);
 
-void j_message_set_safety (JMessage*, JSemantics*);
+J_GNUC_INTERNAL void j_message_set_safety (JMessage*, JSemantics*);
 
 #endif

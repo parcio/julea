@@ -36,7 +36,7 @@
 
 #include <string.h>
 
-#include <jmessage.h>
+#include <jmessage-internal.h>
 
 #include <jlist.h>
 #include <jlist-iterator.h>

@@ -41,7 +41,7 @@
 #include <jconnection-internal.h>
 #include <jhelper-internal.h>
 #include <jmemory-chunk-internal.h>
-#include <jmessage.h>
+#include <jmessage-internal.h>
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
 

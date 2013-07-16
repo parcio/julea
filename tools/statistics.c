@@ -34,7 +34,7 @@
 #include <jcommon-internal.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
-#include <jmessage.h>
+#include <jmessage-internal.h>
 #include <jstatistics-internal.h>
 
 static

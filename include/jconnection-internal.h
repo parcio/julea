@@ -37,7 +37,7 @@
 #include <julea-internal.h>
 
 #include <jconfiguration-internal.h>
-#include <jmessage.h>
+#include <jmessage-internal.h>
 
 #include <mongo.h>
 

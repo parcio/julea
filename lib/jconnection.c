@@ -47,7 +47,7 @@
 
 #include <jcommon-internal.h>
 #include <jhelper-internal.h>
-#include <jmessage.h>
+#include <jmessage-internal.h>
 #include <jtrace-internal.h>
 
 /**

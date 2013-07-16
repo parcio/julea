@@ -54,7 +54,7 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>
-#include <jmessage.h>
+#include <jmessage-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <joperation-internal.h>

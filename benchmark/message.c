@@ -31,7 +31,7 @@
 
 #include <julea.h>
 
-#include <jmessage.h>
+#include <jmessage-internal.h>
 
 #include "benchmark.h"
 
