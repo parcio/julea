@@ -39,7 +39,7 @@
 #endif
 
 #ifdef HAVE_OTF
-#include <open-trace-format/otf.h>
+#include <otf.h>
 #endif
 
 #include <jtrace-internal.h>
@@ -970,7 +970,7 @@ j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, gui
 				otf_op = OTF_FILEOP_WRITE;
 				break;
 			default:
-				otf = OTF_FILEOP_OTHER;
+				otf_op = OTF_FILEOP_OTHER;
 				g_warn_if_reached();
 				break;
 		}

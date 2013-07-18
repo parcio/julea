@@ -150,7 +150,7 @@ def configure (ctx):
 	ctx.check_cc(
 		header_name = 'otf.h',
 		lib = 'open-trace-format',
-		includes = ['%s/include' % (ctx.options.otf,)],
+		includes = ['%s/include/open-trace-format' % (ctx.options.otf,)],
 		libpath = ['%s/lib' % (ctx.options.otf,)],
 		rpath = ['%s/lib' % (ctx.options.otf,)],
 		uselib_store = 'OTF',
