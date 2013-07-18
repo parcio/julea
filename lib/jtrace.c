@@ -145,10 +145,10 @@ static GHashTable* hdtrace_counter_table = NULL;
 static OTF_FileManager* otf_manager = NULL;
 static OTF_Writer* otf_writer = NULL;
 
-static guint32 otf_process_id = 0;
-static guint32 otf_function_id = 0;
-static guint32 otf_file_id = 0;
-static guint32 otf_counter_id = 0;
+static guint32 otf_process_id = 1;
+static guint32 otf_function_id = 1;
+static guint32 otf_file_id = 1;
+static guint32 otf_counter_id = 1;
 
 static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_file_table = NULL;
@@ -427,15 +427,10 @@ j_trace_init (gchar const* name)
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
-		otf_process_id = 1;
-		otf_function_id = 1;
-		otf_file_id = 1;
-		otf_counter_id = 1;
-
 		otf_manager = OTF_FileManager_open(1);
 		g_assert(otf_manager != NULL);
 
-		otf_writer = OTF_Writer_open(name, 1, otf_manager);
+		otf_writer = OTF_Writer_open(name, 0, otf_manager);
 		g_assert(otf_writer != NULL);
 
 		otf_function_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
@@ -570,9 +565,11 @@ j_trace_new (GThread* thread)
 	}
 	else
 	{
+		guint thread_id;
+
 		/* FIXME use name? */
-		trace->thread_name = g_strdup_printf("Thread %d", j_trace_thread_id);
-		j_trace_thread_id++;
+		thread_id = g_atomic_int_add(&j_trace_thread_id, 1);
+		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
 #ifdef HAVE_HDTRACE
@@ -591,8 +588,7 @@ j_trace_new (GThread* thread)
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
-		trace->otf.process_id = otf_process_id;
-		otf_process_id++;
+		trace->otf.process_id = g_atomic_int_add(&otf_process_id, 1);
 
 		OTF_Writer_writeDefProcess(otf_writer, 1, trace->otf.process_id, trace->thread_name, 0);
 	}
@@ -726,8 +722,7 @@ j_trace_enter (gchar const* name)
 
 		if ((value = g_hash_table_lookup(otf_function_table, name)) == NULL)
 		{
-			function_id = otf_function_id;
-			otf_function_id++;
+			function_id = g_atomic_int_add(&otf_function_id, 1);
 
 			OTF_Writer_writeDefFunction(otf_writer, 1, function_id, name, 0, 0);
 			g_hash_table_insert(otf_function_table, g_strdup(name), GUINT_TO_POINTER(function_id));
@@ -865,8 +860,7 @@ j_trace_file_begin (gchar const* path, JTraceFileOperation op)
 
 		if ((value = g_hash_table_lookup(otf_file_table, path)) == NULL)
 		{
-			file_id = otf_file_id;
-			otf_file_id++;
+			file_id = g_atomic_int_add(&otf_file_id, 1);
 
 			OTF_Writer_writeDefFile(otf_writer, 1, file_id, path, 0);
 			g_hash_table_insert(otf_file_table, g_strdup(path), GUINT_TO_POINTER(file_id));
@@ -976,7 +970,9 @@ j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, gui
 				otf_op = OTF_FILEOP_WRITE;
 				break;
 			default:
-				g_return_if_reached();
+				otf = OTF_FILEOP_OTHER;
+				g_warn_if_reached();
+				break;
 		}
 
 		value = g_hash_table_lookup(otf_file_table, path);
@@ -1051,10 +1047,9 @@ j_trace_counter (gchar const* name, guint64 counter_value)
 
 		if ((value = g_hash_table_lookup(otf_counter_table, name)) == NULL)
 		{
-			counter_id = otf_counter_id;
-			otf_counter_id++;
+			counter_id = g_atomic_int_add(&otf_counter_id, 1);
 
-			OTF_Writer_writeDefCounter(otf_writer, 1, counter_id, name, OTF_COUNTER_TYPE_ABS + OTF_COUNTER_SCOPE_LAST, 0, NULL);
+			OTF_Writer_writeDefCounter(otf_writer, 1, counter_id, name, OTF_COUNTER_TYPE_ACC + OTF_COUNTER_SCOPE_START, 0, NULL);
 			g_hash_table_insert(otf_counter_table, g_strdup(name), GUINT_TO_POINTER(counter_id));
 		}
 		else
