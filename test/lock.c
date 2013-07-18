@@ -50,7 +50,7 @@ test_lock_new_free (void)
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
@@ -92,7 +92,7 @@ test_lock_acquire_release (void)
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
@@ -142,7 +142,7 @@ test_lock_add (void)
 
 	store = j_store_new("test-store");
 	collection = j_collection_new("test-collection");
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);

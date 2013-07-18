@@ -338,6 +338,7 @@ void
 j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
 {
 	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(distribution->type != J_DISTRIBUTION_NONE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -368,6 +369,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(distribution != NULL, FALSE);
+	g_return_val_if_fail(distribution->type != J_DISTRIBUTION_NONE, FALSE);
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
@@ -476,6 +478,7 @@ j_distribution_serialize (JDistribution* distribution)
 	bson* b;
 
 	g_return_val_if_fail(distribution != NULL, NULL);
+	g_return_val_if_fail(distribution->type != J_DISTRIBUTION_NONE, NULL);
 
 	j_trace_enter(G_STRFUNC);
 

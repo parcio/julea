@@ -408,7 +408,7 @@ j_item_get_status_background_operation (gpointer data)
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_new (gchar const* name)
+j_item_new (gchar const* name, JDistribution* distribution)
 {
 	JItem* item;
 
@@ -416,11 +416,16 @@ j_item_new (gchar const* name)
 
 	j_trace_enter(G_STRFUNC);
 
+	if (distribution == NULL)
+	{
+		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+	}
+
 	item = g_slice_new(JItem);
 	bson_oid_gen(&(item->id));
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
-	item->distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+	item->distribution = distribution;
 	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();

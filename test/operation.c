@@ -96,7 +96,7 @@ _test_operation_execute (gboolean async)
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
-	item = j_item_new("item");
+	item = j_item_new("item", NULL);
 
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);

@@ -91,7 +91,7 @@ j_cmd_create (gchar const** arguments)
 	{
 		JItem* item;
 
-		item = j_item_new(j_uri_get_item_name(uri));
+		item = j_item_new(j_uri_get_item_name(uri), NULL);
 		j_collection_create_item(j_uri_get_collection(uri), item, batch);
 		j_batch_execute(batch);
 	}

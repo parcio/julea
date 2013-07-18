@@ -43,7 +43,7 @@ test_item_new_free (void)
 	{
 		JItem* item;
 
-		item = j_item_new("test-item");
+		item = j_item_new("test-item", NULL);
 		g_assert(item != NULL);
 		j_item_unref(item);
 	}
@@ -55,7 +55,7 @@ test_item_name (void)
 {
 	JItem* item;
 
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	g_assert_cmpstr(j_item_get_name(item), ==, "test-item");
 
@@ -68,7 +68,7 @@ test_item_size (void)
 {
 	JItem* item;
 
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	g_assert_cmpuint(j_item_get_size(item), ==, 0);
 
@@ -81,7 +81,7 @@ test_item_modification_time (void)
 {
 	JItem* item;
 
-	item = j_item_new("test-item");
+	item = j_item_new("test-item", NULL);
 
 	g_assert_cmpuint(j_item_get_modification_time(item), >, 0);
 

@@ -66,7 +66,7 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		item = j_item_new(name);
+		item = j_item_new(name, NULL);
 		g_free(name);
 
 		j_collection_create_item(collection, item, batch);
@@ -143,7 +143,7 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		item = j_item_new(name);
+		item = j_item_new(name, NULL);
 		g_free(name);
 
 		j_collection_create_item(collection, item, batch);
@@ -237,7 +237,7 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		item = j_item_new(name);
+		item = j_item_new(name, NULL);
 		g_free(name);
 
 		j_collection_create_item(collection, item, batch);
@@ -289,7 +289,7 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
-	item = j_item_new("test");
+	item = j_item_new("test", NULL);
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
 	j_collection_create_item(collection, item, batch);
@@ -367,7 +367,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
-	item = j_item_new("test");
+	item = j_item_new("test", NULL);
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
 	j_collection_create_item(collection, item, batch);
@@ -454,7 +454,7 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 
 	store = j_store_new("test");
 	collection = j_collection_new("test");
-	item = j_item_new("test");
+	item = j_item_new("test", NULL);
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
 	j_collection_create_item(collection, item, batch);

@@ -57,7 +57,7 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	{
 		JItem* item;
 
-		item = j_item_new(j_uri_get_item_name(uri));
+		item = j_item_new(j_uri_get_item_name(uri), NULL);
 		j_collection_create_item(j_uri_get_collection(uri), item, batch);
 		j_batch_execute(batch);
 

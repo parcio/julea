@@ -59,7 +59,7 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 
 	store = j_store_new("benchmark-store");
 	collection = j_collection_new("benchmark-collection");
-	item = j_item_new("benchmark-item");
+	item = j_item_new("benchmark-item", NULL);
 
 	j_create_store(store, batch);
 	j_store_create_collection(store, collection, batch);
