@@ -12,13 +12,13 @@ def options (ctx):
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 
+	ctx.add_option('--hdtrace', action='store', default='%s/external/hdtrace' % (Context.run_dir,), help='HDTrace prefix')
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb-client' % (Context.run_dir,), help='MongoDB client prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
-	ctx.add_option('--hdtrace', action='store', default=None, help='Use HDTrace')
 
 def configure (ctx):
 	ctx.load('compiler_c')
