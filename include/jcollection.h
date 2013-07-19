@@ -39,6 +39,7 @@ struct JCollection;
 typedef struct JCollection JCollection;
 
 #include <jitem.h>
+#include <jdistribution.h>
 #include <jlist.h>
 #include <jbatch.h>
 #include <jsemantics.h>
@@ -50,7 +51,7 @@ void j_collection_unref (JCollection*);
 
 gchar const* j_collection_get_name (JCollection*);
 
-void j_collection_create_item (JCollection*, JItem*, JBatch*);
+JItem* j_collection_create_item (JCollection*, gchar const*, JDistribution*, JBatch*);
 void j_collection_delete_item (JCollection*, JItem*, JBatch*);
 void j_collection_get_item (JCollection*, JItem**, gchar const*, JBatch*);
 

@@ -52,7 +52,6 @@ typedef struct JItem JItem;
 #include <jdistribution.h>
 #include <jsemantics.h>
 
-JItem* j_item_new (gchar const*, JDistribution*);
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 

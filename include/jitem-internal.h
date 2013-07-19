@@ -44,6 +44,7 @@
 
 #include <bson.h>
 
+J_GNUC_INTERNAL JItem* j_item_new (JCollection*, gchar const*, JDistribution*);
 J_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson const*);
 
 J_GNUC_INTERNAL JCollection* j_item_get_collection (JItem*);
@@ -53,8 +54,6 @@ J_GNUC_INTERNAL bson* j_item_serialize (JItem*, JSemantics*);
 J_GNUC_INTERNAL void j_item_deserialize (JItem*, bson const*);
 
 J_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
-
-J_GNUC_INTERNAL void j_item_set_collection (JItem*, JCollection*);
 
 J_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
 J_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);

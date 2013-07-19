@@ -393,52 +393,6 @@ j_item_get_status_background_operation (gpointer data)
 }
 
 /**
- * Creates a new item.
- *
- * \author Michael Kuhn
- *
- * \code
- * JItem* i;
- *
- * i = j_item_new("JULEA");
- * \endcode
- *
- * \param name An item name.
- *
- * \return A new item. Should be freed with j_item_unref().
- **/
-JItem*
-j_item_new (gchar const* name, JDistribution* distribution)
-{
-	JItem* item;
-
-	g_return_val_if_fail(name != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	if (distribution == NULL)
-	{
-		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
-	}
-
-	item = g_slice_new(JItem);
-	bson_oid_gen(&(item->id));
-	item->name = g_strdup(name);
-	item->credentials = j_credentials_new();
-	item->distribution = distribution;
-	item->status.age = g_get_real_time();
-	item->status.size = 0;
-	item->status.modification_time = g_get_real_time();
-	item->status.created = NULL;
-	item->collection = NULL;
-	item->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
-
-	return item;
-}
-
-/**
  * Increases an item's reference count.
  *
  * \author Michael Kuhn
@@ -720,6 +674,55 @@ j_item_get_optimal_access_size (JItem* item)
 /* Internal */
 
 /**
+ * Creates a new item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JItem* i;
+ *
+ * i = j_item_new("JULEA");
+ * \endcode
+ *
+ * \param collection   A collection.
+ * \param name         An item name.
+ * \param distribution A distribution.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
+JItem*
+j_item_new (JCollection* collection, gchar const* name, JDistribution* distribution)
+{
+	JItem* item;
+
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	if (distribution == NULL)
+	{
+		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+	}
+
+	item = g_slice_new(JItem);
+	bson_oid_gen(&(item->id));
+	item->name = g_strdup(name);
+	item->credentials = j_credentials_new();
+	item->distribution = distribution;
+	item->status.age = g_get_real_time();
+	item->status.size = 0;
+	item->status.modification_time = g_get_real_time();
+	item->status.created = NULL;
+	item->collection = j_collection_ref(collection);
+	item->ref_count = 1;
+
+	j_trace_leave(G_STRFUNC);
+
+	return item;
+}
+
+/**
  * Creates a new item from a BSON object.
  *
  * \private
@@ -996,20 +999,6 @@ j_item_get_id (JItem* item)
 	j_trace_leave(G_STRFUNC);
 
 	return &(item->id);
-}
-
-void
-j_item_set_collection (JItem* item, JCollection* collection)
-{
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item->collection == NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	item->collection = j_collection_ref(collection);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

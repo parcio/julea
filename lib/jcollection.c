@@ -238,30 +238,36 @@ j_collection_get_name (JCollection* collection)
  * \code
  * \endcode
  *
- * \param collection A collection.
- * \param item       An item.
- * \param batch      A batch.
+ * \param collection   A collection.
+ * \param name         A name.
+ * \param distribution A distribution.
+ * \param batch        A batch.
+ *
+ * \return A new item. Should be freed with j_item_unref().
  **/
-void
-j_collection_create_item (JCollection* collection, JItem* item, JBatch* batch)
+JItem*
+j_collection_create_item (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
+	JItem* item;
 	JOperation* operation;
 
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item != NULL);
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
+
+	item = j_item_new(collection, name, distribution);
 
 	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
 	operation->key = collection;
 	operation->u.collection_create_item.collection = j_collection_ref(collection);
 	operation->u.collection_create_item.item = j_item_ref(item);
 
-	j_item_set_collection(item, collection);
-
 	j_batch_add(batch, operation);
 
 	j_trace_leave(G_STRFUNC);
+
+	return item;
 }
 
 /**
