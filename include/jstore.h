@@ -41,7 +41,6 @@ typedef struct JStore JStore;
 #include <jcollection.h>
 #include <jbatch.h>
 
-JStore* j_store_new (gchar const*);
 JStore* j_store_ref (JStore*);
 void j_store_unref (JStore*);
 

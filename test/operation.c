@@ -94,9 +94,7 @@ _test_operation_execute (gboolean async)
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	store = j_store_new("test");
-
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "item", NULL, batch);
 	j_collection_delete_item(collection, item, batch);

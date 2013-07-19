@@ -43,7 +43,7 @@ test_collection_fixture_setup (JCollection** collection, gconstpointer data)
 	(void)data;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	store = j_store_new("test-store");
+	store = j_create_store("test-store", batch);
 	*collection = j_store_create_collection(store, "test-collection", batch);
 
 	j_store_unref(store);
@@ -72,7 +72,7 @@ test_collection_new_free (void)
 		JStore* store;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		store = j_store_new("test-store");
+		store = j_create_store("test-store", batch);
 		collection = j_store_create_collection(store, "test-collection", batch);
 		j_collection_unref(collection);
 		j_batch_unref(batch);

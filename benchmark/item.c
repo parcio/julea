@@ -52,8 +52,7 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
@@ -129,8 +128,7 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	get_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
@@ -221,8 +219,7 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
@@ -281,8 +278,7 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 	j_item_write(item, dummy, 1, 0, &nb, batch);
@@ -357,8 +353,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 
@@ -442,8 +437,7 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 	j_batch_execute(batch);

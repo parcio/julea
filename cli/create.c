@@ -108,8 +108,8 @@ j_cmd_create (gchar const** arguments)
 	{
 		JStore* store;
 
-		store = j_store_new(j_uri_get_store_name(uri));
-		j_create_store(store, batch);
+		store = j_create_store(j_uri_get_store_name(uri), batch);
+		j_store_unref(store);
 		j_batch_execute(batch);
 	}
 

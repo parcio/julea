@@ -100,50 +100,6 @@ struct JCollection
 };
 
 /**
- * Creates a new collection.
- *
- * \author Michael Kuhn
- *
- * \code
- * JCollection* c;
- *
- * c = j_collection_new("JULEA");
- * \endcode
- *
- * \param store A store.
- * \param name  A collection name.
- *
- * \return A new collection. Should be freed with j_collection_unref().
- **/
-JCollection*
-j_collection_new (JStore* store, gchar const* name)
-{
-	JCollection* collection;
-
-	g_return_val_if_fail(store != NULL, NULL);
-	g_return_val_if_fail(name != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	/*
-	: m_initialized(false),
-	*/
-
-	collection = g_slice_new(JCollection);
-	bson_oid_gen(&(collection->id));
-	collection->name = g_strdup(name);
-	collection->credentials = j_credentials_new();
-	collection->collection.items = NULL;
-	collection->collection.locks = NULL;
-	collection->store = j_store_ref(store);
-	collection->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
-
-	return collection;
-}
-
-/**
  * Increases a collection's reference count.
  *
  * \author Michael Kuhn
@@ -340,6 +296,50 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 }
 
 /* Internal */
+
+/**
+ * Creates a new collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JCollection* c;
+ *
+ * c = j_collection_new("JULEA");
+ * \endcode
+ *
+ * \param store A store.
+ * \param name  A collection name.
+ *
+ * \return A new collection. Should be freed with j_collection_unref().
+ **/
+JCollection*
+j_collection_new (JStore* store, gchar const* name)
+{
+	JCollection* collection;
+
+	g_return_val_if_fail(store != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	/*
+	: m_initialized(false),
+	*/
+
+	collection = g_slice_new(JCollection);
+	bson_oid_gen(&(collection->id));
+	collection->name = g_strdup(name);
+	collection->credentials = j_credentials_new();
+	collection->collection.items = NULL;
+	collection->collection.locks = NULL;
+	collection->store = j_store_ref(store);
+	collection->ref_count = 1;
+
+	j_trace_leave(G_STRFUNC);
+
+	return collection;
+}
 
 /**
  * Creates a new collection from a BSON object.

@@ -44,7 +44,7 @@ typedef struct JCommon JCommon;
 void j_init (void);
 void j_fini (void);
 
-void j_create_store (JStore*, JBatch*);
+JStore* j_create_store (gchar const*, JBatch*);
 void j_delete_store (JStore*, JBatch*);
 void j_get_store (JStore**, gchar const*, JBatch*);
 

@@ -80,39 +80,6 @@ struct JStore
 };
 
 /**
- * Creates a new store.
- *
- * \author Michael Kuhn
- *
- * \code
- * JStore* s;
- *
- * s = j_store_new("JULEA");
- * \endcode
- *
- * \param name A store name.
- *
- * \return A new store. Should be freed with j_store_unref().
- **/
-JStore*
-j_store_new (gchar const* name)
-{
-	JStore* store;
-	/*
-	: m_initialized(true),
-	*/
-
-	g_return_val_if_fail(name != NULL, NULL);
-
-	store = g_slice_new(JStore);
-	store->name = g_strdup(name);
-	store->collection.collections = NULL;
-	store->ref_count = 1;
-
-	return store;
-}
-
-/**
  * Increases an store's reference count.
  *
  * \author Michael Kuhn
@@ -277,6 +244,39 @@ j_store_delete_collection (JStore* store, JCollection* collection, JBatch* batch
 }
 
 /* Internal */
+
+/**
+ * Creates a new store.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JStore* s;
+ *
+ * s = j_store_new("JULEA");
+ * \endcode
+ *
+ * \param name A store name.
+ *
+ * \return A new store. Should be freed with j_store_unref().
+ **/
+JStore*
+j_store_new (gchar const* name)
+{
+	JStore* store;
+	/*
+	: m_initialized(true),
+	*/
+
+	g_return_val_if_fail(name != NULL, NULL);
+
+	store = g_slice_new(JStore);
+	store->name = g_strdup(name);
+	store->collection.collections = NULL;
+	store->ref_count = 1;
+
+	return store;
+}
 
 /**
  * Returns the MongoDB collection used for collections.

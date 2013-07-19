@@ -57,9 +57,7 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("benchmark-store");
-
-	j_create_store(store, batch);
+	store = j_create_store("benchmark-store", batch);
 	collection = j_store_create_collection(store, "benchmark-collection", batch);
 	item = j_collection_create_item(collection, "benchmark-item", NULL, batch);
 	j_batch_execute(batch);

@@ -41,6 +41,8 @@
 #include <jconnection-internal.h>
 #include <jlist.h>
 
+J_GNUC_INTERNAL JStore* j_store_new (gchar const*);
+
 J_GNUC_INTERNAL gchar const* j_store_collection_collections (JStore*);
 
 J_GNUC_INTERNAL gboolean j_store_create_collection_internal (JBatch*, JList*);

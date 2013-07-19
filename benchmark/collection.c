@@ -49,8 +49,7 @@ _benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	j_batch_execute(batch);
 
 	j_benchmark_timer_start();
@@ -120,8 +119,7 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
@@ -207,8 +205,7 @@ benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	store = j_store_new("test");
-	j_create_store(store, batch);
+	store = j_create_store("test", batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)

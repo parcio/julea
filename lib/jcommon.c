@@ -248,18 +248,21 @@ j_fini (void)
  * \param store      A store.
  * \param batch      A batch.
  **/
-void
-j_create_store (JStore* store, JBatch* batch)
+JStore*
+j_create_store (gchar const* name, JBatch* batch)
 {
 	JOperation* operation;
+	JStore* store;
 
-	g_return_if_fail(store != NULL);
+	store = j_store_new(name);
 
 	operation = j_operation_new(J_OPERATION_CREATE_STORE);
 	operation->key = NULL;
 	operation->u.create_store.store = j_store_ref(store);
 
 	j_batch_add(batch, operation);
+
+	return store;
 }
 
 /**
