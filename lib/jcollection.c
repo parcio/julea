@@ -110,15 +110,17 @@ struct JCollection
  * c = j_collection_new("JULEA");
  * \endcode
  *
+ * \param store A store.
  * \param name  A collection name.
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new (gchar const* name)
+j_collection_new (JStore* store, gchar const* name)
 {
 	JCollection* collection;
 
+	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
@@ -133,7 +135,7 @@ j_collection_new (gchar const* name)
 	collection->credentials = j_credentials_new();
 	collection->collection.items = NULL;
 	collection->collection.locks = NULL;
-	collection->store = NULL;
+	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
 	j_trace_leave(G_STRFUNC);
@@ -589,20 +591,6 @@ j_collection_get_id (JCollection* collection)
 	j_trace_leave(G_STRFUNC);
 
 	return &(collection->id);
-}
-
-void
-j_collection_set_store (JCollection* collection, JStore* store)
-{
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(store != NULL);
-	g_return_if_fail(collection->store == NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	collection->store = j_store_ref(store);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 gboolean

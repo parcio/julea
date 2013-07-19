@@ -49,10 +49,9 @@ test_lock_new_free (void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
-	collection = j_collection_new("test-collection");
 
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test-collection", batch);
 	item = j_collection_create_item(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 
@@ -90,10 +89,9 @@ test_lock_acquire_release (void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
-	collection = j_collection_new("test-collection");
 
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test-collection", batch);
 	item = j_collection_create_item(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 
@@ -139,10 +137,9 @@ test_lock_add (void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	store = j_store_new("test-store");
-	collection = j_collection_new("test-collection");
 
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test-collection", batch);
 	item = j_collection_create_item(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 

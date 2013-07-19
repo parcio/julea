@@ -61,10 +61,9 @@ _benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		collection = j_store_create_collection(store, name, batch);
 		g_free(name);
 
-		j_store_create_collection(store, collection, batch);
 		j_store_delete_collection(store, collection, delete_batch);
 		j_collection_unref(collection);
 
@@ -131,10 +130,9 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		collection = j_store_create_collection(store, name, batch);
 		g_free(name);
 
-		j_store_create_collection(store, collection, batch);
 		j_collection_unref(collection);
 	}
 
@@ -219,10 +217,9 @@ benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 		gchar* name;
 
 		name = g_strdup_printf("test-%d", i);
-		collection = j_collection_new(name);
+		collection = j_store_create_collection(store, name, batch);
 		g_free(name);
 
-		j_store_create_collection(store, collection, batch);
 		j_store_delete_collection(store, collection, delete_batch);
 		j_collection_unref(collection);
 	}

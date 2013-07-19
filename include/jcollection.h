@@ -45,7 +45,6 @@ typedef struct JCollection JCollection;
 #include <jsemantics.h>
 #include <jstore.h>
 
-JCollection* j_collection_new (gchar const*);
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 

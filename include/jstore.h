@@ -47,7 +47,7 @@ void j_store_unref (JStore*);
 
 gchar const* j_store_get_name (JStore*);
 
-void j_store_create_collection (JStore*, JCollection*, JBatch*);
+JCollection* j_store_create_collection (JStore*, gchar const*, JBatch*);
 void j_store_get_collection (JStore*, JCollection**, gchar const*, JBatch*);
 void j_store_delete_collection (JStore*, JCollection*, JBatch*);
 

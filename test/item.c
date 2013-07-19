@@ -39,14 +39,17 @@ test_item_fixture_setup (JItem** item, gconstpointer data)
 {
 	JBatch* batch;
 	JCollection* collection;
+	JStore* store;
 
 	(void)data;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	collection = j_collection_new("test-collection");
+	store = j_store_new("test-store");
+	collection = j_store_create_collection(store, "test-collection", batch);
 	*item = j_collection_create_item(collection, "test-item", NULL, batch);
 
 	j_collection_unref(collection);
+	j_store_unref(store);
 	j_batch_unref(batch);
 }
 
@@ -70,11 +73,14 @@ test_item_new_free (void)
 		JBatch* batch;
 		JCollection* collection;
 		JItem* item;
+		JStore* store;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		collection = j_collection_new("test-collection");
+		store = j_store_new("test-store");
+		collection = j_store_create_collection(store, "test-collection", batch);
 		item = j_collection_create_item(collection, "test-item", NULL, batch);
 		j_collection_unref(collection);
+		j_store_unref(store);
 		j_batch_unref(batch);
 
 		g_assert(item != NULL);

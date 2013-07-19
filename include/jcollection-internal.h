@@ -43,6 +43,7 @@
 #include <jlist.h>
 #include <jstore.h>
 
+J_GNUC_INTERNAL JCollection* j_collection_new (JStore*, gchar const*);
 J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
 
 J_GNUC_INTERNAL gchar const* j_collection_collection_items (JCollection*);
@@ -55,8 +56,6 @@ J_GNUC_INTERNAL bson* j_collection_serialize (JCollection*);
 J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson const*);
 
 J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
-
-J_GNUC_INTERNAL void j_collection_set_store (JCollection*, JStore*);
 
 J_GNUC_INTERNAL gboolean j_collection_create_item_internal (JBatch*, JList*);
 J_GNUC_INTERNAL gboolean j_collection_delete_item_internal (JBatch*, JList*);

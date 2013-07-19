@@ -100,8 +100,8 @@ j_cmd_create (gchar const** arguments)
 	{
 		JCollection* collection;
 
-		collection = j_collection_new(j_uri_get_collection_name(uri));
-		j_store_create_collection(j_uri_get_store(uri), collection, batch);
+		collection = j_store_create_collection(j_uri_get_store(uri), j_uri_get_collection_name(uri), batch);
+		j_collection_unref(collection);
 		j_batch_execute(batch);
 	}
 	else

@@ -53,9 +53,8 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
 	j_benchmark_timer_start();
@@ -131,9 +130,8 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
@@ -224,9 +222,8 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
@@ -285,9 +282,8 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 	j_item_write(item, dummy, 1, 0, &nb, batch);
 
@@ -362,9 +358,8 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 
 	for (guint i = 0; i < n; i++)
@@ -448,9 +443,8 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 	batch = j_batch_new(semantics);
 
 	store = j_store_new("test");
-	collection = j_collection_new("test");
 	j_create_store(store, batch);
-	j_store_create_collection(store, collection, batch);
+	collection = j_store_create_collection(store, "test", batch);
 	item = j_collection_create_item(collection, "test", NULL, batch);
 	j_batch_execute(batch);
 

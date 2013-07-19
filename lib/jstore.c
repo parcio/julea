@@ -196,22 +196,25 @@ j_store_get_name (JStore* store)
  * \param collection A collection.
  * \param batch      A batch.
  **/
-void
-j_store_create_collection (JStore* store, JCollection* collection, JBatch* batch)
+JCollection*
+j_store_create_collection (JStore* store, gchar const* name, JBatch* batch)
 {
+	JCollection* collection;
 	JOperation* operation;
 
-	g_return_if_fail(store != NULL);
-	g_return_if_fail(collection != NULL);
+	g_return_val_if_fail(store != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
+	collection = j_collection_new(store, name);
 
 	operation = j_operation_new(J_OPERATION_STORE_CREATE_COLLECTION);
 	operation->key = store;
 	operation->u.store_create_collection.store = j_store_ref(store);
 	operation->u.store_create_collection.collection = j_collection_ref(collection);
 
-	j_collection_set_store(collection, store);
-
 	j_batch_add(batch, operation);
+
+	return collection;
 }
 
 /**

@@ -35,36 +35,65 @@
 
 static
 void
+test_collection_fixture_setup (JCollection** collection, gconstpointer data)
+{
+	JBatch* batch;
+	JStore* store;
+
+	(void)data;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	store = j_store_new("test-store");
+	*collection = j_store_create_collection(store, "test-collection", batch);
+
+	j_store_unref(store);
+	j_batch_unref(batch);
+}
+
+static
+void
+test_collection_fixture_teardown (JCollection** collection, gconstpointer data)
+{
+	(void)data;
+
+	j_collection_unref(*collection);
+}
+
+static
+void
 test_collection_new_free (void)
 {
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
 	{
+		JBatch* batch;
 		JCollection* collection;
+		JStore* store;
 
-		collection = j_collection_new("test-collection");
-		g_assert(collection != NULL);
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		store = j_store_new("test-store");
+		collection = j_store_create_collection(store, "test-collection", batch);
 		j_collection_unref(collection);
+		j_batch_unref(batch);
+
+		g_assert(collection != NULL);
+		j_store_unref(store);
 	}
 }
 
 static
 void
-test_collection_name (void)
+test_collection_name (JCollection** collection, gconstpointer data)
 {
-	JCollection* collection;
+	(void)data;
 
-	collection = j_collection_new("test-collection");
-
-	g_assert_cmpstr(j_collection_get_name(collection), ==, "test-collection");
-
-	j_collection_unref(collection);
+	g_assert_cmpstr(j_collection_get_name(*collection), ==, "test-collection");
 }
 
 void
 test_collection (void)
 {
 	g_test_add_func("/collection/new_free", test_collection_new_free);
-	g_test_add_func("/collection/name", test_collection_name);
+	g_test_add("/collection/name", JCollection*, NULL, test_collection_fixture_setup, test_collection_name, test_collection_fixture_teardown);
 }
