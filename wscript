@@ -136,16 +136,16 @@ def configure (ctx):
 			define_name = 'HAVE_LEVELDB'
 		)
 
-	if ctx.options.hdtrace:
-		ctx.check_cc(
-			header_name = 'hdTrace.h',
-			lib = 'hdTracing',
-			includes = ['%s/include' % (ctx.options.hdtrace,)],
-			libpath = ['%s/lib' % (ctx.options.hdtrace,)],
-			rpath = ['%s/lib' % (ctx.options.hdtrace,)],
-			uselib_store = 'HDTRACE',
-			define_name = 'HAVE_HDTRACE'
-		)
+	ctx.check_cc(
+		header_name = 'hdTrace.h',
+		lib = 'hdTracing',
+		includes = ['%s/include' % (ctx.options.hdtrace,)],
+		libpath = ['%s/lib' % (ctx.options.hdtrace,)],
+		rpath = ['%s/lib' % (ctx.options.hdtrace,)],
+		uselib_store = 'HDTRACE',
+		define_name = 'HAVE_HDTRACE',
+		mandatory = False
+	)
 
 	ctx.check_cc(
 		header_name = 'otf.h',
