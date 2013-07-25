@@ -99,6 +99,7 @@ struct JDistribution
 		struct
 		{
 			guint* weights;
+			guint sum;
 		}
 		weighted;
 	}
@@ -229,8 +230,11 @@ gboolean
 j_distribution_distribute_weighted (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	gboolean ret = TRUE;
+	guint const count = j_configuration_get_data_server_count(distribution->configuration);
 	guint64 block;
 	guint64 displacement;
+	guint64 round;
+	guint block_offset;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -241,11 +245,26 @@ j_distribution_distribute_weighted (JDistribution* distribution, guint* index, g
 	}
 
 	block = distribution->offset / distribution->block_size;
+	round = block / distribution->u.weighted.sum;
 	displacement = distribution->offset % distribution->block_size;
 
-	*index = distribution->u.single_server.index;
+	*index = 0;
+
+	block_offset = block % distribution->u.weighted.sum;
+
+	for (guint i = 0; i < count; i++)
+	{
+		if (block_offset < distribution->u.weighted.weights[i])
+		{
+			*index = i;
+			break;
+		}
+
+		block_offset -= distribution->u.weighted.weights[i];
+	}
+
 	*new_length = MIN(distribution->length, distribution->block_size - displacement);
-	*new_offset = distribution->offset;
+	*new_offset = (((round * distribution->u.weighted.weights[*index]) + block_offset) * distribution->block_size) + displacement;
 	*block_id = block;
 
 	distribution->length -= *new_length;
@@ -285,6 +304,7 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 			{
 				guint const count = j_configuration_get_data_server_count(distribution->configuration);
 
+				distribution->u.weighted.sum = 0;
 				distribution->u.weighted.weights = g_new(guint, count);
 
 				for (guint i = 0; i < count; i++)
@@ -533,7 +553,9 @@ j_distribution_set_weight (JDistribution* distribution, guint index, guint weigh
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(index < j_configuration_get_data_server_count(distribution->configuration));
 	g_return_if_fail(distribution->type == J_DISTRIBUTION_WEIGHTED);
+	g_return_if_fail(weight > 0 && weight <= 256);
 
+	distribution->u.weighted.sum += weight - distribution->u.weighted.weights[index];
 	distribution->u.weighted.weights[index] = weight;
 }
 
@@ -578,7 +600,20 @@ j_distribution_serialize (JDistribution* distribution)
 			bson_append_int(b, "Index", distribution->u.single_server.index);
 			break;
 		case J_DISTRIBUTION_WEIGHTED:
-			// FIXME
+			{
+				guint const count = j_configuration_get_data_server_count(distribution->configuration);
+				gchar numstr[16];
+
+				bson_append_start_array(b, "Weights");
+
+				for (guint i = 0; i < count; i++)
+				{
+					bson_numstr(numstr, i);
+					bson_append_int(b, numstr, distribution->u.weighted.weights[i]);
+				}
+
+				bson_append_finish_array(b);
+			}
 			break;
 		case J_DISTRIBUTION_NONE:
 		default:
@@ -645,10 +680,19 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 		}
 		else if (g_strcmp0(key, "Weights") == 0)
 		{
+			bson_iterator siterator;
+
 			g_assert(distribution->type == J_DISTRIBUTION_WEIGHTED);
 
-			// FIXME
-			//distribution->u.weighted.weights = bson_iterator_int(&iterator);
+			bson_iterator_subiterator(&iterator, &siterator);
+
+			distribution->u.weighted.sum = 0;
+
+			for (guint i = 0; bson_iterator_next(&siterator); i++)
+			{
+				distribution->u.weighted.weights[i] = bson_iterator_int(&siterator);
+				distribution->u.weighted.sum += distribution->u.weighted.weights[i];
+			}
 		}
 	}
 

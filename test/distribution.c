@@ -97,8 +97,8 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 			j_distribution_set_single_server_index(distribution, 1);
 			break;
 		case J_DISTRIBUTION_WEIGHTED:
-			j_distribution_set_weight(distribution, 1, 2);
 			j_distribution_set_weight(distribution, 0, 1);
+			j_distribution_set_weight(distribution, 1, 2);
 			break;
 		case J_DISTRIBUTION_NONE:
 		default:
@@ -107,7 +107,16 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(ret);
-	g_assert_cmpuint(index, ==, 1);
+
+	if (type == J_DISTRIBUTION_WEIGHTED)
+	{
+		g_assert_cmpuint(index, ==, 0);
+	}
+	else
+	{
+		g_assert_cmpuint(index, ==, 1);
+	}
+
 	g_assert_cmpuint(length, ==, block_size - 42);
 	g_assert_cmpuint(offset, ==, 42);
 	g_assert_cmpuint(block_id, ==, 0);
@@ -122,10 +131,15 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 		g_assert_cmpuint(index, ==, 0);
 		g_assert_cmpuint(offset, ==, 0);
 	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
+	else if (type == J_DISTRIBUTION_SINGLE_SERVER)
 	{
 		g_assert_cmpuint(index, ==, 1);
 		g_assert_cmpuint(offset, ==, block_size);
+	}
+	else if (type == J_DISTRIBUTION_WEIGHTED)
+	{
+		g_assert_cmpuint(index, ==, 1);
+		g_assert_cmpuint(offset, ==, 0);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
@@ -138,9 +152,13 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	{
 		g_assert_cmpuint(offset, ==, block_size);
 	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
+	else if (type == J_DISTRIBUTION_SINGLE_SERVER)
 	{
 		g_assert_cmpuint(offset, ==, 2 * block_size);
+	}
+	else if (type == J_DISTRIBUTION_WEIGHTED)
+	{
+		g_assert_cmpuint(offset, ==, block_size);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
@@ -153,10 +171,15 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 		g_assert_cmpuint(index, ==, 0);
 		g_assert_cmpuint(offset, ==, block_size);
 	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
+	else if (type == J_DISTRIBUTION_SINGLE_SERVER)
 	{
 		g_assert_cmpuint(index, ==, 1);
 		g_assert_cmpuint(offset, ==, 3 * block_size);
+	}
+	else if (type == J_DISTRIBUTION_WEIGHTED)
+	{
+		g_assert_cmpuint(index, ==, 0);
+		g_assert_cmpuint(offset, ==, block_size);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
@@ -169,9 +192,13 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	{
 		g_assert_cmpuint(offset, ==, 2 * block_size);
 	}
-	else if (J_DISTRIBUTION_SINGLE_SERVER)
+	else if (type == J_DISTRIBUTION_SINGLE_SERVER)
 	{
 		g_assert_cmpuint(offset, ==, 4 * block_size);
+	}
+	else if (type == J_DISTRIBUTION_WEIGHTED)
+	{
+		g_assert_cmpuint(offset, ==, 2 * block_size);
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
