@@ -38,7 +38,8 @@ enum JDistributionType
 {
 	J_DISTRIBUTION_NONE,
 	J_DISTRIBUTION_ROUND_ROBIN,
-	J_DISTRIBUTION_SINGLE_SERVER
+	J_DISTRIBUTION_SINGLE_SERVER,
+	J_DISTRIBUTION_WEIGHTED
 };
 
 typedef enum JDistributionType JDistributionType;
@@ -56,5 +57,6 @@ gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, 
 void j_distribution_set_block_size (JDistribution*, guint64);
 void j_distribution_set_round_robin_start_index (JDistribution*, guint);
 void j_distribution_set_single_server_index (JDistribution*, guint);
+void j_distribution_set_weight (JDistribution*, guint, guint);
 
 #endif

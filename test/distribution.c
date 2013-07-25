@@ -96,6 +96,10 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			j_distribution_set_single_server_index(distribution, 1);
 			break;
+		case J_DISTRIBUTION_WEIGHTED:
+			j_distribution_set_weight(distribution, 1, 2);
+			j_distribution_set_weight(distribution, 0, 1);
+			break;
 		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
@@ -190,9 +194,17 @@ test_distribution_single_server (JConfiguration** configuration, gconstpointer d
 	test_distribution_distribute(J_DISTRIBUTION_SINGLE_SERVER, configuration, data);
 }
 
+static
+void
+test_distribution_weighted (JConfiguration** configuration, gconstpointer data)
+{
+	test_distribution_distribute(J_DISTRIBUTION_WEIGHTED, configuration, data);
+}
+
 void
 test_distribution (void)
 {
 	g_test_add("/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
 	g_test_add("/distribution/single_server", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_single_server, test_distribution_fixture_teardown);
+	g_test_add("/distribution/weighted", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_weighted, test_distribution_fixture_teardown);
 }

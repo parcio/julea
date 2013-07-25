@@ -95,6 +95,12 @@ struct JDistribution
 			guint index;
 		}
 		single_server;
+
+		struct
+		{
+			guint* weights;
+		}
+		weighted;
 	}
 	u;
 };
@@ -201,6 +207,56 @@ end:
 	return ret;
 }
 
+/**
+ * Distributes data to a weighted list of servers.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        A server index.
+ * \param new_length   A new length.
+ * \param new_offset   A new offset.
+ *
+ * \return TRUE on success, FALSE if the distribution is finished.
+ **/
+static
+gboolean
+j_distribution_distribute_weighted (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
+{
+	gboolean ret = TRUE;
+	guint64 block;
+	guint64 displacement;
+
+	j_trace_enter(G_STRFUNC);
+
+	if (distribution->length == 0)
+	{
+		ret = FALSE;
+		goto end;
+	}
+
+	block = distribution->offset / distribution->block_size;
+	displacement = distribution->offset % distribution->block_size;
+
+	*index = distribution->u.single_server.index;
+	*new_length = MIN(distribution->length, distribution->block_size - displacement);
+	*new_offset = distribution->offset;
+	*block_id = block;
+
+	distribution->length -= *new_length;
+	distribution->offset += *new_length;
+
+end:
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
 static
 JDistribution*
 j_distribution_new_common (JDistributionType type, JConfiguration* configuration)
@@ -224,6 +280,18 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			distribution->u.single_server.index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
+			break;
+		case J_DISTRIBUTION_WEIGHTED:
+			{
+				guint const count = j_configuration_get_data_server_count(distribution->configuration);
+
+				distribution->u.weighted.weights = g_new(guint, count);
+
+				for (guint i = 0; i < count; i++)
+				{
+					distribution->u.weighted.weights[i] = 0;
+				}
+			}
 			break;
 		case J_DISTRIBUTION_NONE:
 			break;
@@ -384,6 +452,9 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
 			break;
+		case J_DISTRIBUTION_WEIGHTED:
+			ret = j_distribution_distribute_weighted(distribution, index, new_length, new_offset, block_id);
+			break;
 		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
@@ -456,6 +527,16 @@ j_distribution_set_single_server_index (JDistribution* distribution, guint index
 	distribution->u.single_server.index = index;
 }
 
+void
+j_distribution_set_weight (JDistribution* distribution, guint index, guint weight)
+{
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(index < j_configuration_get_data_server_count(distribution->configuration));
+	g_return_if_fail(distribution->type == J_DISTRIBUTION_WEIGHTED);
+
+	distribution->u.weighted.weights[index] = weight;
+}
+
 /* Internal */
 
 /**
@@ -495,6 +576,9 @@ j_distribution_serialize (JDistribution* distribution)
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
 			bson_append_int(b, "Index", distribution->u.single_server.index);
+			break;
+		case J_DISTRIBUTION_WEIGHTED:
+			// FIXME
 			break;
 		case J_DISTRIBUTION_NONE:
 		default:
@@ -558,6 +642,13 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 			g_assert(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
 
 			distribution->u.single_server.index = bson_iterator_int(&iterator);
+		}
+		else if (g_strcmp0(key, "Weights") == 0)
+		{
+			g_assert(distribution->type == J_DISTRIBUTION_WEIGHTED);
+
+			// FIXME
+			//distribution->u.weighted.weights = bson_iterator_int(&iterator);
 		}
 	}
 
