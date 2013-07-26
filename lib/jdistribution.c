@@ -409,82 +409,6 @@ j_distribution_unref (JDistribution* distribution)
 }
 
 /**
- * Initializes a distribution.
- *
- * \author Michael Kuhn
- *
- * \code
- * JDistribution* d;
- *
- * j_distribution_init(d, 0, 0);
- * \endcode
- *
- * \param length A length.
- * \param offset An offset.
- *
- * \return A new distribution. Should be freed with j_distribution_unref().
- **/
-void
-j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
-{
-	g_return_if_fail(distribution != NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	distribution->length = length;
-	distribution->offset = offset;
-
-	j_trace_leave(G_STRFUNC);
-}
-
-/**
- * Calculates a new length and a new offset based on a distribution.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        A server index.
- * \param new_length   A new length.
- * \param new_offset   A new offset.
- *
- * \return TRUE on success, FALSE if the distribution is finished.
- **/
-gboolean
-j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
-{
-	gboolean ret = FALSE;
-
-	g_return_val_if_fail(distribution != NULL, FALSE);
-	g_return_val_if_fail(index != NULL, FALSE);
-	g_return_val_if_fail(new_length != NULL, FALSE);
-	g_return_val_if_fail(new_offset != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
-
-	switch (distribution->type)
-	{
-		case J_DISTRIBUTION_ROUND_ROBIN:
-			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset, block_id);
-			break;
-		case J_DISTRIBUTION_SINGLE_SERVER:
-			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
-			break;
-		case J_DISTRIBUTION_WEIGHTED:
-			ret = j_distribution_distribute_weighted(distribution, index, new_length, new_offset, block_id);
-			break;
-		default:
-			g_warn_if_reached();
-	}
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-/**
  * Sets the block size for the distribution.
  *
  * \author Michael Kuhn
@@ -751,6 +675,82 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 	}
 
 	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * Initializes a distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * j_distribution_init(d, 0, 0);
+ * \endcode
+ *
+ * \param length A length.
+ * \param offset An offset.
+ *
+ * \return A new distribution. Should be freed with j_distribution_unref().
+ **/
+void
+j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
+{
+	g_return_if_fail(distribution != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution->length = length;
+	distribution->offset = offset;
+
+	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * Calculates a new length and a new offset based on a distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param index        A server index.
+ * \param new_length   A new length.
+ * \param new_offset   A new offset.
+ *
+ * \return TRUE on success, FALSE if the distribution is finished.
+ **/
+gboolean
+j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail(distribution != NULL, FALSE);
+	g_return_val_if_fail(index != NULL, FALSE);
+	g_return_val_if_fail(new_length != NULL, FALSE);
+	g_return_val_if_fail(new_offset != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	switch (distribution->type)
+	{
+		case J_DISTRIBUTION_ROUND_ROBIN:
+			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset, block_id);
+			break;
+		case J_DISTRIBUTION_SINGLE_SERVER:
+			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
+			break;
+		case J_DISTRIBUTION_WEIGHTED:
+			ret = j_distribution_distribute_weighted(distribution, index, new_length, new_offset, block_id);
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
 }
 
 /**

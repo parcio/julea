@@ -46,4 +46,7 @@ J_GNUC_INTERNAL JDistribution* j_distribution_new_from_bson (bson const*);
 J_GNUC_INTERNAL bson* j_distribution_serialize (JDistribution*);
 J_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson const*);
 
+J_GNUC_INTERNAL void j_distribution_init (JDistribution*, guint64, guint64);
+J_GNUC_INTERNAL gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
+
 #endif
