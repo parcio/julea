@@ -750,7 +750,7 @@ j_item_new_from_bson (JCollection* collection, bson const* b)
 	item = g_slice_new(JItem);
 	item->name = NULL;
 	item->credentials = j_credentials_new();
-	item->distribution = j_distribution_new(J_DISTRIBUTION_NONE);
+	item->distribution = NULL;
 	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;
@@ -968,8 +968,13 @@ j_item_deserialize (JItem* item, bson const* b)
 		{
 			bson b_distribution[1];
 
+			if (item->distribution != NULL)
+			{
+				j_distribution_free(item->distribution);
+			}
+
 			bson_iterator_subobject(&iterator, b_distribution);
-			j_distribution_deserialize(item->distribution, b_distribution);
+			item->distribution = j_distribution_new_from_bson(b_distribution);
 		}
 	}
 

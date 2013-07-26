@@ -41,6 +41,7 @@
 #include <bson.h>
 
 J_GNUC_INTERNAL JDistribution* j_distribution_new_for_configuration (JDistributionType, JConfiguration*);
+J_GNUC_INTERNAL JDistribution* j_distribution_new_from_bson (bson const*);
 
 J_GNUC_INTERNAL bson* j_distribution_serialize (JDistribution*);
 J_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson const*);

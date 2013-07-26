@@ -313,8 +313,6 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 				}
 			}
 			break;
-		case J_DISTRIBUTION_NONE:
-			break;
 		default:
 			g_warn_if_reached();
 	}
@@ -347,35 +345,6 @@ j_distribution_new (JDistributionType type)
 	j_trace_enter(G_STRFUNC);
 
 	distribution = j_distribution_new_common(type, j_configuration());
-
-	j_trace_leave(G_STRFUNC);
-
-	return distribution;
-}
-
-/**
- * Creates a new distribution for a given configuration.
- *
- * \author Michael Kuhn
- *
- * \code
- * JDistribution* d;
- *
- * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
- * \endcode
- *
- * \param type   A distribution type.
- *
- * \return A new distribution. Should be freed with j_distribution_free().
- **/
-JDistribution*
-j_distribution_new_for_configuration (JDistributionType type, JConfiguration* configuration)
-{
-	JDistribution* distribution;
-
-	j_trace_enter(G_STRFUNC);
-
-	distribution = j_distribution_new_common(type, configuration);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -426,7 +395,6 @@ void
 j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
 {
 	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(distribution->type != J_DISTRIBUTION_NONE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -457,7 +425,6 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(distribution != NULL, FALSE);
-	g_return_val_if_fail(distribution->type != J_DISTRIBUTION_NONE, FALSE);
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
@@ -475,7 +442,6 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 		case J_DISTRIBUTION_WEIGHTED:
 			ret = j_distribution_distribute_weighted(distribution, index, new_length, new_offset, block_id);
 			break;
-		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}
@@ -562,6 +528,63 @@ j_distribution_set_weight (JDistribution* distribution, guint index, guint weigh
 /* Internal */
 
 /**
+ * Creates a new distribution from a BSON object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param b A BSON object.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
+JDistribution*
+j_distribution_new_from_bson (bson const* b)
+{
+	JDistribution* distribution;
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution = j_distribution_new_common(J_DISTRIBUTION_ROUND_ROBIN, j_configuration());
+
+	j_distribution_deserialize(distribution, b);
+
+	j_trace_leave(G_STRFUNC);
+
+	return distribution;
+}
+
+/**
+ * Creates a new distribution for a given configuration.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JDistribution* d;
+ *
+ * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+ * \endcode
+ *
+ * \param type   A distribution type.
+ *
+ * \return A new distribution. Should be freed with j_distribution_free().
+ **/
+JDistribution*
+j_distribution_new_for_configuration (JDistributionType type, JConfiguration* configuration)
+{
+	JDistribution* distribution;
+
+	j_trace_enter(G_STRFUNC);
+
+	distribution = j_distribution_new_common(type, configuration);
+
+	j_trace_leave(G_STRFUNC);
+
+	return distribution;
+}
+
+/**
  * Serializes distribution.
  *
  * \private
@@ -581,7 +604,6 @@ j_distribution_serialize (JDistribution* distribution)
 	bson* b;
 
 	g_return_val_if_fail(distribution != NULL, NULL);
-	g_return_val_if_fail(distribution->type != J_DISTRIBUTION_NONE, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -615,7 +637,6 @@ j_distribution_serialize (JDistribution* distribution)
 				bson_append_finish_array(b);
 			}
 			break;
-		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}

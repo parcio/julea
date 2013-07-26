@@ -100,7 +100,6 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 			j_distribution_set_weight(distribution, 0, 1);
 			j_distribution_set_weight(distribution, 1, 2);
 			break;
-		case J_DISTRIBUTION_NONE:
 		default:
 			g_warn_if_reached();
 	}
