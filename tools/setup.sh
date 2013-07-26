@@ -27,9 +27,12 @@
 
 set -e
 
+# Maybe hacky.
+. "${0%/*}/common.sh"
+
 usage ()
 {
-	echo "Usage: ${0##*/} root start|stop|restart"
+	echo "Usage: ${0##*/} start|stop|restart"
 	exit 1
 }
 
@@ -125,18 +128,16 @@ do_stop ()
 }
 
 test -n "$1" || usage
-test -n "$2" || usage
 
-ROOT="$1"
-MODE="$2"
+MODE="$1"
 
 HOSTNAME=$(hostname)
 USER=$(id -nu)
 
-BUILD_PATH="${ROOT}/build"
+BUILD_PATH="$(get_self_dir)/../build"
 MONGO_PATH="/tmp/julea-mongo-${USER}"
 
-export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:${ROOT}/external/mongodb-server/bin:${PATH}"
+export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:$(get_self_dir)/../external/mongodb-server/bin:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DATA=$(julea-config --local --print | grep ^data=)

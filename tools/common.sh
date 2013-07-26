@@ -25,31 +25,27 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-set -e
-
-# Maybe hacky.
-. "${0%/*}/common.sh"
-
-usage ()
+get_self_path ()
 {
-	echo "Usage: ${0##*/}"
-	exit 1
+	local PREFIX
+	local SELF
+
+	SELF="$0"
+	PREFIX=''
+
+	# Check whether SELF contains a slash.
+	test "${SELF#*/}" = "${SELF}" && SELF=$(which "${SELF}")
+	# Check whether SELF is an absolute path.
+	test "${SELF#/}" = "${SELF}" && PREFIX="$(pwd)/"
+
+	echo "${PREFIX}${SELF}"
 }
 
-BUILD_PATH="$(get_self_dir)/../build"
+get_self_dir ()
+{
+	local SELF
 
-export PATH="${BUILD_PATH}/test:$(get_self_dir):${PATH}"
-export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
+	SELF=$(get_self_path)
 
-DIRECTORY="${PWD}/results/test/$(date '+%Y-%m')"
-
-mkdir -p "${DIRECTORY}"
-
-echo "Writing results to: ${DIRECTORY}"
-cd "${DIRECTORY}"
-
-trap "setup.sh stop" HUP INT TERM 0
-
-setup.sh start
-gtester --keep-going --verbose "${BUILD_PATH}/test/test" "$@" 2>&1 | tee --append "$(date --iso-8601)-$(git describe --always).log"
-setup.sh stop
+	echo "${SELF%/*}"
+}

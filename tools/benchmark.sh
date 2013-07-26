@@ -28,20 +28,18 @@
 
 set -e
 
+# Maybe hacky.
+. "${0%/*}/common.sh"
+
 usage ()
 {
-	echo "Usage: ${0##*/} root"
+	echo "Usage: ${0##*/}"
 	exit 1
 }
 
-test -n "$1" || usage
+BUILD_PATH="$(get_self_dir)/../build"
 
-ROOT="$1"
-shift
-
-BUILD_PATH="${ROOT}/build"
-
-export PATH="${BUILD_PATH}/benchmark:${ROOT}/tools:${PATH}"
+export PATH="${BUILD_PATH}/benchmark:$(get_self_dir):${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DIRECTORY="${PWD}/results/benchmark/$(date '+%Y-%m')/$(date --iso-8601)-$(git describe --always)"
@@ -51,58 +49,58 @@ mkdir -p "${DIRECTORY}"
 echo "Writing results to: ${DIRECTORY}"
 cd "${DIRECTORY}"
 
-trap "setup.sh ${ROOT} stop" HUP INT TERM 0
+trap "setup.sh stop" HUP INT TERM 0
 
 echo Templates
 
 for template in default posix checkpoint serial
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --template "${template}" "$@" 2>&1 | tee --append "template-${template}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
 
 echo Atomicity
 
 for atomicity in operation none
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --semantics atomicity="${atomicity}" "$@" 2>&1 | tee --append "atomicity-${atomicity}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
 
 echo Concurrency
 
 for concurrency in overlapping non-overlapping none
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --semantics concurrency="${concurrency}" "$@" 2>&1 | tee --append "concurrency-${concurrency}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
 
 echo Consistency
 
 for consistency in immediate eventual
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --semantics consistency="${consistency}" "$@" 2>&1 | tee --append "consistency-${consistency}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
 
 echo Persistency
 
 for persistency in immediate eventual
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --semantics persistency="${persistency}" "$@" 2>&1 | tee --append "persistency-${persistency}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
 
 echo Safety
 
 for safety in storage network none
 do
-	setup.sh "${ROOT}" start
+	setup.sh start
 	benchmark --semantics safety="${safety}" "$@" 2>&1 | tee --append "safety-${safety}.log"
-	setup.sh "${ROOT}" stop
+	setup.sh stop
 done
