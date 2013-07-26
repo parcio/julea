@@ -104,6 +104,11 @@ struct JDistribution
 		weighted;
 	}
 	u;
+
+	/**
+	 * The reference count.
+	 **/
+	guint ref_count;
 };
 
 /**
@@ -289,8 +294,8 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 	distribution->type = type;
 	distribution->length = 0;
 	distribution->offset = 0;
-
 	distribution->block_size = J_STRIPE_SIZE;
+	distribution->ref_count = 1;
 
 	switch (distribution->type)
 	{
@@ -335,7 +340,7 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
  *
  * \param type   A distribution type.
  *
- * \return A new distribution. Should be freed with j_distribution_free().
+ * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 JDistribution*
 j_distribution_new (JDistributionType type)
@@ -352,7 +357,32 @@ j_distribution_new (JDistributionType type)
 }
 
 /**
- * Frees the memory allocated by a distribution.
+ * Increases a distribution's reference count.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ **/
+JDistribution*
+j_distribution_ref (JDistribution* distribution)
+{
+	g_return_val_if_fail(distribution != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	g_atomic_int_inc(&(distribution->ref_count));
+
+	j_trace_leave(G_STRFUNC);
+
+	return distribution;
+}
+
+/**
+ * Decreases a distribution's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the distribution.
  *
  * \author Michael Kuhn
  *
@@ -362,15 +392,18 @@ j_distribution_new (JDistributionType type)
  * \param distribution A distribution.
  **/
 void
-j_distribution_free (JDistribution* distribution)
+j_distribution_unref (JDistribution* distribution)
 {
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	j_configuration_unref(distribution->configuration);
+	if (g_atomic_int_dec_and_test(&(distribution->ref_count)))
+	{
+		j_configuration_unref(distribution->configuration);
 
-	g_slice_free(JDistribution, distribution);
+		g_slice_free(JDistribution, distribution);
+	}
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -389,7 +422,7 @@ j_distribution_free (JDistribution* distribution)
  * \param length A length.
  * \param offset An offset.
  *
- * \return A new distribution. Should be freed with j_distribution_free().
+ * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 void
 j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
@@ -537,7 +570,7 @@ j_distribution_set_weight (JDistribution* distribution, guint index, guint weigh
  *
  * \param b A BSON object.
  *
- * \return A new distribution. Should be freed with j_distribution_free().
+ * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 JDistribution*
 j_distribution_new_from_bson (bson const* b)
@@ -568,7 +601,7 @@ j_distribution_new_from_bson (bson const* b)
  *
  * \param type   A distribution type.
  *
- * \return A new distribution. Should be freed with j_distribution_free().
+ * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 JDistribution*
 j_distribution_new_for_configuration (JDistributionType type, JConfiguration* configuration)

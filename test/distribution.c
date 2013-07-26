@@ -203,7 +203,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(!ret);
 
-	j_distribution_free(distribution);
+	j_distribution_unref(distribution);
 }
 
 static

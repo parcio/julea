@@ -447,7 +447,7 @@ j_item_unref (JItem* item)
 		}
 
 		j_credentials_unref(item->credentials);
-		j_distribution_free(item->distribution);
+		j_distribution_unref(item->distribution);
 
 		g_free(item->status.created);
 		g_free(item->name);
@@ -970,7 +970,7 @@ j_item_deserialize (JItem* item, bson const* b)
 
 			if (item->distribution != NULL)
 			{
-				j_distribution_free(item->distribution);
+				j_distribution_unref(item->distribution);
 			}
 
 			bson_iterator_subobject(&iterator, b_distribution);
