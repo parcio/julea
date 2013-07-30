@@ -106,11 +106,28 @@ j_configuration_new (void)
 {
 	JConfiguration* configuration = NULL;
 	GKeyFile* key_file;
-	gchar* path;
+	gchar const* env_path;
+	gchar* path = NULL;
 	gchar const* const* dirs;
 	guint i;
 
 	key_file = g_key_file_new();
+
+	if ((env_path = g_getenv("JULEA_CONFIG")) != NULL)
+	{
+		if (g_key_file_load_from_file(key_file, env_path, G_KEY_FILE_NONE, NULL))
+		{
+			configuration = j_configuration_new_for_data(key_file);
+		}
+		else
+		{
+			g_critical("%s: Can not open configuration file %s.", G_STRLOC, env_path);
+		}
+
+		/* If we do not find the configuration file, stop searching. */
+		goto out;
+	}
+
 	path = g_build_filename(g_get_user_config_dir(), "julea", "julea", NULL);
 
 	if (g_key_file_load_from_file(key_file, path, G_KEY_FILE_NONE, NULL))
