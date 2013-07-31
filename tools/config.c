@@ -143,7 +143,7 @@ main (gint argc, gchar** argv)
 	GError* error = NULL;
 	GOptionContext* context;
 	gboolean ret;
-	gchar* path = NULL;
+	gchar* path;
 
 	GOptionEntry entries[] = {
 		{ "local", 0, 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
@@ -152,7 +152,7 @@ main (gint argc, gchar** argv)
 		{ "data", 0, 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
 		{ "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
 		{ "storage-backend", 0, 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "null|gio|posix" },
-		{ "storage-path", 0, 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/tmp/julea" },
+		{ "storage-path", 0, 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/path/to/storage" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -176,11 +176,11 @@ main (gint argc, gchar** argv)
 		return 1;
 	}
 
-	if ((!opt_local && !opt_global)
-	    || (opt_local && opt_global)
+	if ((opt_local && opt_global)
 	    || (opt_print && (opt_data != NULL || opt_metadata != NULL || opt_storage_backend != NULL || opt_storage_path != NULL))
+	    || (opt_print && !opt_local && !opt_global)
 	    || (!opt_print && (opt_data == NULL || opt_metadata == NULL || opt_storage_path == NULL
-	    	|| (g_strcmp0(opt_storage_backend, "null") != 0 && g_strcmp0(opt_storage_backend, "gio") != 0 && g_strcmp0(opt_storage_backend, "posix") != 0))
+	        || (g_strcmp0(opt_storage_backend, "null") != 0 && g_strcmp0(opt_storage_backend, "gio") != 0 && g_strcmp0(opt_storage_backend, "posix") != 0))
 	    )
 	)
 	{
@@ -204,6 +204,10 @@ main (gint argc, gchar** argv)
 	else if (opt_global)
 	{
 		path = g_build_filename(g_get_system_config_dirs()[0], "julea", "julea", NULL);
+	}
+	else
+	{
+		path = NULL;
 	}
 
 	if (opt_print)
