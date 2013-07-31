@@ -37,70 +37,110 @@ usage ()
 	exit 1
 }
 
+test -n "$1" || usage
+test -n "$2" || usage
+
+CASE="$1"
+DIR="$2"
+shift 2
+
 BUILD_PATH="$(get_self_dir)/../build"
 
 export PATH="${BUILD_PATH}/benchmark:$(get_self_dir):${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
-DIRECTORY="${PWD}/results/benchmark/$(date '+%Y-%m')/$(date --iso-8601)-$(git describe --always)"
+DIRECTORY="$DIR/$(date '+%Y-%m')/$(date --iso-8601)-$(git describe --always)"
+
+if [ -n "${SLURM_JOB_NODELIST}" ]
+then
+  data_servers=$(nodeset -e -S , ${SLURM_JOB_NODELIST})
+  metadata_servers=$(nodeset -e ${SLURM_JOB_NODELIST} | cut -d' ' -f1)
+else
+  data_servers=$(hostname)
+  metadata_servers=$(hostname)
+fi
+
+config_file=$(mktemp --tmpdir=${HOME})
+julea-config --data=${data_servers} --metadata=${metadata_servers} --storage-backend=posix --storage-path=/tmp/julea-fuchs > "${config_file}"
+
+export JULEA_CONFIG="${config_file}"
+
+ssh-setup.sh stop
 
 mkdir -p "${DIRECTORY}"
 
 echo "Writing results to: ${DIRECTORY}"
 cd "${DIRECTORY}"
 
-trap "setup.sh stop" HUP INT TERM 0
+trap "ssh-setup.sh stop; rm -f ${config_file}" HUP INT TERM 0
+   
+if [ "$CASE" = "templates" -o "$CASE" = "all" ]
+then
+  echo Templates
 
-echo Templates
+  for template in default posix checkpoint serial
+  do
+    ssh-setup.sh start
+    benchmark --template "${template}" "$@" 2>&1 --machine-readable| tee --append "template-${template}.log"
+    ssh-setup.sh stop
+  done
+fi
 
-for template in default posix checkpoint serial
-do
-	setup.sh start
-	benchmark --template "${template}" "$@" 2>&1 | tee --append "template-${template}.log"
-	setup.sh stop
-done
+if [ "$CASE" = "default" ]
+then
+  echo Templates
+  ssh-setup.sh start
+  benchmark --template "default" "$@" 2>&1 --machine-readable| tee --append "template-default.log"
+  ssh-setup.sh stop
+fi
 
-echo Atomicity
+if [ "$CASE" = "all" ]
+then 
+  
+  echo Atomicity
 
-for atomicity in operation none
-do
-	setup.sh start
-	benchmark --semantics atomicity="${atomicity}" "$@" 2>&1 | tee --append "atomicity-${atomicity}.log"
-	setup.sh stop
-done
+  for atomicity in operation none
+  do
+    ssh-setup.sh start
+    benchmark --semantics atomicity="${atomicity}" "$@" 2>&1 | tee --append "atomicity-${atomicity}.log"
+    ssh-setup.sh stop
+  done
 
-echo Concurrency
+  echo Concurrency
 
-for concurrency in overlapping non-overlapping none
-do
-	setup.sh start
-	benchmark --semantics concurrency="${concurrency}" "$@" 2>&1 | tee --append "concurrency-${concurrency}.log"
-	setup.sh stop
-done
+  for concurrency in overlapping non-overlapping none
+  do
+		ssh-setup.sh start
+		benchmark --semantics concurrency="${concurrency}" "$@" 2>&1 | tee --append "concurrency-${concurrency}.log"
+		ssh-setup.sh stop
+	done
 
-echo Consistency
+  echo Consistency
 
-for consistency in immediate eventual
-do
-	setup.sh start
-	benchmark --semantics consistency="${consistency}" "$@" 2>&1 | tee --append "consistency-${consistency}.log"
-	setup.sh stop
-done
+  for consistency in immediate eventual
+  do
+		ssh-setup.sh start
+		benchmark --semantics consistency="${consistency}" "$@" 2>&1 | tee --append "consistency-${consistency}.log"
+		ssh-setup.sh stop
+  done
 
-echo Persistency
+  echo Persistency
 
-for persistency in immediate eventual
-do
-	setup.sh start
-	benchmark --semantics persistency="${persistency}" "$@" 2>&1 | tee --append "persistency-${persistency}.log"
-	setup.sh stop
-done
+  for persistency in immediate eventual
+  do
+		ssh-setup.sh start
+		benchmark --semantics persistency="${persistency}" "$@" 2>&1 | tee --append "persistency-${persistency}.log"
+		ssh-setup.sh stop
+  done
 
-echo Safety
+  echo Safety
 
-for safety in storage network none
-do
-	setup.sh start
-	benchmark --semantics safety="${safety}" "$@" 2>&1 | tee --append "safety-${safety}.log"
-	setup.sh stop
-done
+  for safety in storage network none
+  do
+		ssh-setup.sh start
+		benchmark --semantics safety="${safety}" "$@" 2>&1 | tee --append "safety-${safety}.log"
+		ssh-setup.sh stop
+  done
+fi
+
+rm -f "${config_file}"
