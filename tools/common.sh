@@ -49,3 +49,36 @@ get_self_dir ()
 
 	echo "${SELF%/*}"
 }
+
+get_config ()
+{
+	local CONFIG_DIR
+
+	if [ -n "${JULEA_CONFIG}" ]
+	then
+		if [ ! -f "${JULEA_CONFIG}" ]
+		then
+			return 1
+		fi
+
+		cat "${JULEA_CONFIG}"
+		return 0
+	fi
+
+	if [ -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea" ]
+	then
+		cat "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
+		return 0
+	fi
+
+	for CONFIG_DIR in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
+	do
+		if [ -f "${CONFIG_DIR}/julea/julea" ]
+		then
+			cat "${CONFIG_DIR}/julea/julea"
+			return 0
+		fi
+	done
+
+	return 1
+}
