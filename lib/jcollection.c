@@ -750,7 +750,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	JConnection* connection;
 	JListIterator* it;
 	mongo* mongo_connection;
-	gint semantics_concurrency;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -766,8 +765,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	connection = j_connection_pool_pop();
 	mongo_connection = j_connection_get_connection(connection);
 
-	semantics_concurrency = j_semantics_get(j_batch_get_semantics(batch), J_SEMANTICS_CONCURRENCY);
-
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
@@ -775,29 +772,16 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		JCollection* collection = operation->u.collection_get_item.collection;
 		JItem** item = operation->u.collection_get_item.item;
 		bson b;
-		bson fields;
 		mongo_cursor* cursor;
 		gchar const* name = operation->u.collection_get_item.name;
-
-		bson_init(&fields);
-		bson_append_int(&fields, "_id", 1);
-		bson_append_int(&fields, "Name", 1);
-
-		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
-		{
-			bson_append_int(&fields, "Status", 1);
-		}
-
-		bson_finish(&fields);
 
 		bson_init(&b);
 		bson_append_oid(&b, "Collection", &(collection->id));
 		bson_append_string(&b, "Name", name);
 		bson_finish(&b);
 
-		cursor = mongo_find(mongo_connection, j_collection_collection_items(collection), &b, &fields, 1, 0, 0);
+		cursor = mongo_find(mongo_connection, j_collection_collection_items(collection), &b, NULL, 1, 0, 0);
 
-		bson_destroy(&fields);
 		bson_destroy(&b);
 
 		*item = NULL;
