@@ -954,14 +954,14 @@ j_item_deserialize (JItem* item, bson const* b)
 		{
 			bson b_status[1];
 
-			bson_iterator_subobject(&iterator, b_status);
+			bson_iterator_subobject_init(&iterator, b_status, 0);
 			j_item_deserialize_status(item, b_status);
 		}
 		else if (g_strcmp0(key, "Credentials") == 0)
 		{
 			bson b_cred[1];
 
-			bson_iterator_subobject(&iterator, b_cred);
+			bson_iterator_subobject_init(&iterator, b_cred, 0);
 			j_credentials_deserialize(item->credentials, b_cred);
 		}
 		else if (g_strcmp0(key, "Distribution") == 0)
@@ -973,7 +973,7 @@ j_item_deserialize (JItem* item, bson const* b)
 				j_distribution_unref(item->distribution);
 			}
 
-			bson_iterator_subobject(&iterator, b_distribution);
+			bson_iterator_subobject_init(&iterator, b_distribution, 0);
 			item->distribution = j_distribution_new_from_bson(b_distribution);
 		}
 	}
