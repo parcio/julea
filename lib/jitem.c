@@ -956,6 +956,7 @@ j_item_deserialize (JItem* item, bson const* b)
 
 			bson_iterator_subobject_init(&iterator, b_status, 0);
 			j_item_deserialize_status(item, b_status);
+			bson_destroy(b_status);
 		}
 		else if (g_strcmp0(key, "Credentials") == 0)
 		{
@@ -963,6 +964,7 @@ j_item_deserialize (JItem* item, bson const* b)
 
 			bson_iterator_subobject_init(&iterator, b_cred, 0);
 			j_credentials_deserialize(item->credentials, b_cred);
+			bson_destroy(b_cred);
 		}
 		else if (g_strcmp0(key, "Distribution") == 0)
 		{
@@ -975,6 +977,7 @@ j_item_deserialize (JItem* item, bson const* b)
 
 			bson_iterator_subobject_init(&iterator, b_distribution, 0);
 			item->distribution = j_distribution_new_from_bson(b_distribution);
+			bson_destroy(b_distribution);
 		}
 	}
 

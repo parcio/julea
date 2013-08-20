@@ -562,6 +562,7 @@ j_collection_deserialize (JCollection* collection, bson const* b)
 
 			bson_iterator_subobject_init(&iterator, b_cred, 0);
 			j_credentials_deserialize(collection->credentials, b_cred);
+			bson_destroy(b_cred);
 		}
 	}
 
