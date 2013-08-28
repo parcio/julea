@@ -126,15 +126,25 @@ def configure (ctx):
 			define_name = 'HAVE_JZFS'
 		)
 
-		ctx.check_cc(
-			header_name = 'leveldb/c.h',
-			lib = 'leveldb',
-			includes = ['%s/include' % (ctx.options.leveldb,)],
-			libpath = ['%s/lib' % (ctx.options.leveldb,)],
-			rpath = ['%s/lib' % (ctx.options.leveldb,)],
-			uselib_store = 'LEVELDB',
-			define_name = 'HAVE_LEVELDB'
-		)
+	ctx.env.JULEA_LEVELDB = \
+	ctx.check_cc(
+		header_name = 'leveldb/c.h',
+		lib = 'leveldb',
+		includes = ['%s/include' % (ctx.options.leveldb,)],
+		libpath = ['%s/lib' % (ctx.options.leveldb,)],
+		rpath = ['%s/lib' % (ctx.options.leveldb,)],
+		uselib_store = 'LEVELDB',
+		define_name = 'HAVE_LEVELDB',
+		mandatory = False
+	)
+
+	ctx.env.JULEA_LEXOS = \
+	ctx.check_cfg(
+		package = 'lexos',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'LEXOS',
+		mandatory = False
+	)
 
 	ctx.check_cc(
 		header_name = 'hdTrace.h',
@@ -266,11 +276,20 @@ def build (ctx):
 			install_path = '${LIBDIR}/julea/backend'
 		)
 
-	if ctx.env.JULEA_JZFS:
+	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
 			source = ['daemon/backend/jzfs.c'],
 			target = 'daemon/backend/jzfs',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
+			includes = ['include'],
+			install_path = '${LIBDIR}/julea/backend'
+		)
+
+	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
+		ctx.shlib(
+			source = ['daemon/backend/lexos.c'],
+			target = 'daemon/backend/lexos',
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
 		)
