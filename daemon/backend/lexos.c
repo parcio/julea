@@ -19,6 +19,13 @@
 #include "backend.h"
 #include "backend-internal.h"
 
+ObjectStore* objectstore = NULL;
+
+leveldb_t *db;
+leveldb_options_t *options;
+leveldb_readoptions_t *roptions;
+leveldb_writeoptions_t *woptions;
+
 G_MODULE_EXPORT
 gboolean
 backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
@@ -269,23 +276,24 @@ G_MODULE_EXPORT
 void
 backend_init (gchar const* path)
 {
-	/*gchar* poolname = "jzfs";
-	gchar* object_set_name = "object_set";
+	//gchar* poolname = "jzfs";
+	//gchar* object_set_name = "object_set";
 
 	j_trace_enter(G_STRFUNC);
-	j_zfs_init();
-	pool = j_zfs_pool_open(poolname);
-	object_set = j_zfs_object_set_create(pool, object_set_name);
+	//j_zfs_init();
+	//pool = j_zfs_pool_open(poolname);
+	//object_set = j_zfs_object_set_create(pool, object_set_name);
+	objectstore = lstore_create(path,blocksize,number_of_inodes,NULL);
 
-	if (object_set == NULL)
+	/*if (object_set == NULL)
 	{
 		printf("zfs_open\n");
-		object_set = j_zfs_object_set_open(pool, object_set_name);
-	}
+		//object_set = j_zfs_object_set_open(pool, object_set_name);
+	}*/
 
 	jd_backend_path = g_strdup(path);
 
-	j_trace_leave(G_STRFUNC);*/
+	j_trace_leave(G_STRFUNC);
 	jd_backend_path = g_strdup(path);
 }
 
@@ -302,6 +310,11 @@ backend_fini (void)
 
 	j_trace_leave(G_STRFUNC);*/
 	//close and destroy db
+	j_trace_enter(G_STRFUNC);
+
+	lstore_close(objectstore, NULL);
+
+	j_trace_leave(G_STRFUNC)
 
 	g_free(jd_backend_path);
 }
