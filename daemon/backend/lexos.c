@@ -266,6 +266,8 @@ G_MODULE_EXPORT
 void
 backend_init (gchar const* path)
 {
+	char *err = NULL;
+
 	//gchar* poolname = "jzfs";
 	//gchar* object_set_name = "object_set";
 
@@ -274,6 +276,16 @@ backend_init (gchar const* path)
 	//pool = j_zfs_pool_open(poolname);
 	//object_set = j_zfs_object_set_create(pool, object_set_name);
 	objectstore = lstore_open(path,NULL);
+
+	//Open db
+	options = leveldb_options_create();
+	leveldb_options_set_create_if_missing(options, 1);
+	db = leveldb_open(options, "testdb", &err);
+	if(err != NULL) {
+		fprintf(stderr, "Open failed.\n");
+	}
+	leveldb_free(err);
+	err = NULL;
 
 	/*if (object_set == NULL)
 	{
@@ -291,6 +303,8 @@ G_MODULE_EXPORT
 void
 backend_fini (void)
 {
+	char *err = NULL;
+
 	/*j_trace_enter(G_STRFUNC);
 
 	j_zfs_object_set_destroy(object_set);
@@ -303,6 +317,15 @@ backend_fini (void)
 	j_trace_enter(G_STRFUNC);
 
 	lstore_close(objectstore, NULL);
+
+	//close and destroy db
+	leveldb_close(db);
+	leveldb_destroy_db(options, "testdb", &err);
+	if (err != NULL) {
+		fprintf(stderr, "Destroy failed.\n");
+	}
+	leveldb_free(err);
+	err = NULL;
 
 	j_trace_leave(G_STRFUNC);
 
