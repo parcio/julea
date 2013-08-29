@@ -103,6 +103,8 @@ G_MODULE_EXPORT
 gboolean
 backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
+	(void)flags;
+
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
@@ -134,6 +136,8 @@ G_MODULE_EXPORT
 gboolean
 backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
+	(void)buffer;
+
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
@@ -153,6 +157,8 @@ G_MODULE_EXPORT
 gboolean
 backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
+	(void)buffer;
+
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
@@ -169,11 +175,15 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_init (gchar const* path)
 {
+	(void)path;
+
 	j_trace_enter(G_STRFUNC);
 	j_trace_leave(G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT

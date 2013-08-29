@@ -246,7 +246,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_init (gchar const* path)
 {
 	j_trace_enter(G_STRFUNC);
@@ -256,6 +256,8 @@ backend_init (gchar const* path)
 	g_mkdir_with_parents(path, 0700);
 
 	j_trace_leave(G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT

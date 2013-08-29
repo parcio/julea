@@ -158,6 +158,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	if (jd_backend_thread_init != NULL)
 	{
+		/* FIXME return value */
 		jd_backend_thread_init();
 	}
 
@@ -673,7 +674,11 @@ main (int argc, char** argv)
 	g_assert(jd_backend_read != NULL);
 	g_assert(jd_backend_write != NULL);
 
-	jd_backend_init(j_configuration_get_storage_path(configuration));
+	if (!jd_backend_init(j_configuration_get_storage_path(configuration)))
+	{
+		g_printerr("Could not initialize backend.\n");
+		return 1;
+	}
 
 	j_configuration_unref(configuration);
 

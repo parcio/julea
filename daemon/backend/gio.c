@@ -153,6 +153,8 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	GFileIOStream* stream = bf->user_data;
 	//GOutputStream* output;
 
+	(void)flags;
+
 	j_trace_enter(G_STRFUNC);
 
 	if (stream != NULL)
@@ -264,7 +266,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_init (gchar const* path)
 {
 	GFile* file;
@@ -278,6 +280,8 @@ backend_init (gchar const* path)
 	g_object_unref(file);
 
 	j_trace_leave(G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT

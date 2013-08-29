@@ -34,10 +34,10 @@
 
 #include "backend.h"
 
-void backend_init (gchar const*);
+gboolean backend_init (gchar const*);
 void backend_fini (void);
 
-void backend_thread_init (void);
+gboolean backend_thread_init (void);
 void backend_thread_fini (void);
 
 gboolean backend_create (JBackendItem*, gchar const*, gchar const*, gchar const*);

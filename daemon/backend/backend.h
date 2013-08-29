@@ -43,10 +43,10 @@ struct JBackendItem
 
 typedef struct JBackendItem JBackendItem;
 
-void (*jd_backend_init) (gchar const*) = NULL;
+gboolean (*jd_backend_init) (gchar const*) = NULL;
 void (*jd_backend_fini) (void) = NULL;
 
-void (*jd_backend_thread_init) (void) = NULL;
+gboolean (*jd_backend_thread_init) (void) = NULL;
 void (*jd_backend_thread_fini) (void) = NULL;
 
 gboolean (*jd_backend_create) (JBackendItem*, gchar const*, gchar const*, gchar const*) = NULL;

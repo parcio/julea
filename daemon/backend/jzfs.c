@@ -29,13 +29,13 @@
 
 #include <julea-config.h>
 
-#include <jzfs.h>
-
-#include <leveldb/c.h>
-
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
+
+#include <jzfs.h>
+
+#include <leveldb/c.h>
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -291,7 +291,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_init (gchar const* path)
 {
 	/*gchar* poolname = "jzfs";
@@ -312,6 +312,8 @@ backend_init (gchar const* path)
 
 	j_trace_leave(G_STRFUNC);*/
 	jd_backend_path = g_strdup(path);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT
@@ -332,7 +334,7 @@ backend_fini (void)
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_thread_init (void)
 {
 	gchar* poolname = "jzfs";
@@ -362,6 +364,8 @@ backend_thread_init (void)
 	err = NULL;
 
 	j_trace_leave(G_STRFUNC);
+
+	return TRUE;
 }
 
 G_MODULE_EXPORT

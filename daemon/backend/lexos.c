@@ -1,93 +1,106 @@
-#define _XOPEN_SOURCE 500
+/*
+ * Copyright (c) 2013 Sandra Schröder
+ * Copyright (c) 2013 Michael Kuhn
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
-#include <leveldb/c.h>
+#include <julea-config.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
 
+#include <leveldb/c.h>
+
 #include <lexos.h>
 
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <string.h>
 
 #include <jtrace-internal.h>
 
 #include "backend.h"
 #include "backend-internal.h"
 
-ObjectStore* objectstore = NULL;
+ObjectStore* object_store = NULL;
 
-static gchar* jd_backend_path = NULL; //FIXME: required?
-
-leveldb_t *db;
-leveldb_options_t *options;
-leveldb_readoptions_t *roptions;
-leveldb_writeoptions_t *woptions;
+leveldb_t* db;
+leveldb_options_t* options;
+leveldb_readoptions_t* roptions;
+leveldb_writeoptions_t* woptions;
 
 G_MODULE_EXPORT
 gboolean
 backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
-	//gchar* parent;
-	gchar* path;
 	Object* object;
-	guint64 object_id; 
-	int key_len;
-	int value_len;
-	char *err = NULL;
-	char *key = NULL;
-	char *value = NULL;
+	gchar* path;
+	guint64 object_id;
+	gchar* err = NULL;
 
-	printf("in backend_create\n");
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+	path = g_build_filename(store, collection, item, NULL);
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
-	object = lobject_create(objectstore);
+	object = lobject_create(object_store);
 	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	object_id = lobject_get_id(object);
-	printf("Object created.\n");
 
-	//write object_id in db:
-	key = path;
-	key_len = strlen(key);
-	value = g_strdup_printf("%" G_GUINT64_FORMAT, object_id);
-	value_len = strlen(value);
+	g_print("XXX %ld\n", object_id);
+	leveldb_put(db, woptions, path, strlen(path), (gpointer)&object_id, sizeof(object_id), &err);
 
-	woptions = leveldb_writeoptions_create();
-	leveldb_put(db, woptions, key, key_len, value, value_len, &err);
-	if(err != NULL) {
-		fprintf(stderr, "Write failed.\n");
+	if (err != NULL)
+	{
 		return(1);
 	}
+
 	leveldb_free(err);
 	err = NULL;
-	printf("Wrote in db: \n key: %s, value: %s\n", key, value);
-	g_free(value);
 
 	bf->path = path;
 	bf->user_data = object;
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0);
+	return (object != NULL);
 }
 
 G_MODULE_EXPORT
 gboolean
 backend_delete (JBackendItem* bf)
 {
-	printf("in backend_delete\n");
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-	lobject_delete(bf->user_data,NULL); /*FIXME GError*/
+	/*FIXME GError*/
+	lobject_delete(bf->user_data, NULL);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	j_trace_leave(G_STRFUNC);
@@ -99,38 +112,33 @@ G_MODULE_EXPORT
 gboolean
 backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
-	gchar* path;
-	char *err = NULL;
 	Object* object;
+	gchar* path;
 	guint64 object_id;
-	char *value;
-	char *key;
-	int key_len;
-	size_t read_len;
-	printf("in backend_open\n");
+	gchar* err = NULL;
+	gchar* value = NULL;
+	gsize value_len;
 
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
-	key = path;
-	key_len = strlen(key);
+	path = g_build_filename(store, collection, item, NULL);
 
-	//read from db
-	roptions = leveldb_readoptions_create();
-	value = leveldb_get(db, roptions, key, key_len, &read_len, &err);
+	value = leveldb_get(db, roptions, path, strlen(path), &value_len, &err);
+	memcpy(&object_id, value, value_len);
+	leveldb_free(value);
 
-	if(err != NULL) {
-		fprintf(stderr, "Read failed.\n");
+	g_print("XXX %ld\n", object_id);
+
+	if (err != NULL)
+	{
 		return(1);
 	}
 
-	printf("Read from db:\n key: %s, value: %s \n", key, value);
 	leveldb_free(err);
 	err = NULL;
-	object_id = g_ascii_strtoull(value, NULL, 10);
 
 	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
-	object = lobject_open(objectstore, object_id);
+	object = lobject_open(object_store, object_id);
 	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
 	bf->path = path;
@@ -138,7 +146,7 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0);
+	return (object != NULL);
 }
 
 G_MODULE_EXPORT
@@ -146,13 +154,14 @@ gboolean
 backend_close (JBackendItem* bf)
 {
 	Object* object = bf->user_data;
-	printf("in backend_close\n");
+
 	j_trace_enter(G_STRFUNC);
 
-	if(object != 0)
+	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-		lobject_close(object,NULL); //FIXME GError
+		//FIXME GError
+		lobject_close(object, NULL);
 		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
 
@@ -168,10 +177,10 @@ gboolean
 backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	Object* object = bf->user_data;
-	printf("in backend_status\n");
+
 	j_trace_enter(G_STRFUNC);
 
-	if (object != 0)
+	if (object != NULL)
 	{
 		/*struct stat buf;
 
@@ -186,7 +195,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0);
+	return (object != NULL);
 }
 
 G_MODULE_EXPORT
@@ -215,12 +224,11 @@ G_MODULE_EXPORT
 gboolean
 backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
-	//JZFSObject* object = bf->user_data;
 	Object* object = bf->user_data;
-	printf("in backend_read\n");
+
 	j_trace_enter(G_STRFUNC);
 
-	if (object != 0)
+	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
 		lobject_read(object,offset,length,buffer);
@@ -234,7 +242,7 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0);
+	return (object != NULL);
 }
 
 G_MODULE_EXPORT
@@ -242,13 +250,13 @@ gboolean
 backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	Object* object = bf->user_data;
-	printf("in backend_write\n");
+
 	j_trace_enter(G_STRFUNC);
 
 	if(object != 0)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-		lobject_write(object,offset,length,(void*)buffer,LOBJECT_NO_SYNC);/*FIXME what about sync?*/
+		lobject_write(object, offset, length, (gpointer)buffer, LOBJECT_NO_SYNC);/*FIXME what about sync?*/
 		j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
 
 		if (bytes_written != NULL)
@@ -263,71 +271,48 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
-void
+gboolean
 backend_init (gchar const* path)
 {
-	char *err = NULL;
-
-	//gchar* poolname = "jzfs";
-	//gchar* object_set_name = "object_set";
+	gboolean ret = TRUE;
+	gchar* err = NULL;
 
 	j_trace_enter(G_STRFUNC);
-	//j_zfs_init();
-	//pool = j_zfs_pool_open(poolname);
-	//object_set = j_zfs_object_set_create(pool, object_set_name);
-	objectstore = lstore_open(path,NULL);
 
-	//Open db
+	if ((object_store = lstore_open(path, NULL)) == NULL)
+	{
+		goto end;
+	}
+
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);
-	db = leveldb_open(options, "testdb", &err);
-	if(err != NULL) {
-		fprintf(stderr, "Open failed.\n");
-	}
-	leveldb_free(err);
-	err = NULL;
 
-	/*if (object_set == NULL)
+	roptions = leveldb_readoptions_create();
+	woptions = leveldb_writeoptions_create();
+
+	db = leveldb_open(options, "julea-lexos", &err);
+
+	if (err != NULL)
 	{
-		printf("zfs_open\n");
-		//object_set = j_zfs_object_set_open(pool, object_set_name);
-	}*/
+		leveldb_free(err);
+		ret = FALSE;
+		goto end;
+	}
 
-	//jd_backend_path = g_strdup(path);
-
+end:
 	j_trace_leave(G_STRFUNC);
-	jd_backend_path = g_strdup(path);
+
+	return ret;
 }
 
 G_MODULE_EXPORT
 void
 backend_fini (void)
 {
-	char *err = NULL;
-
-	/*j_trace_enter(G_STRFUNC);
-
-	j_zfs_object_set_destroy(object_set);
-	j_zfs_pool_close(pool);
-	j_zfs_fini();
-
-
-	j_trace_leave(G_STRFUNC);*/
-	//close and destroy db
 	j_trace_enter(G_STRFUNC);
 
-	lstore_close(objectstore, NULL);
-
-	//close and destroy db
+	lstore_close(object_store, NULL);
 	leveldb_close(db);
-	leveldb_destroy_db(options, "testdb", &err);
-	if (err != NULL) {
-		fprintf(stderr, "Destroy failed.\n");
-	}
-	leveldb_free(err);
-	err = NULL;
 
 	j_trace_leave(G_STRFUNC);
-
-	g_free(jd_backend_path);
 }
