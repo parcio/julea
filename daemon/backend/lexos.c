@@ -98,6 +98,9 @@ G_MODULE_EXPORT
 gboolean
 backend_delete (JBackendItem* bf)
 {
+	gboolean ret = TRUE;
+	gchar* err = NULL;
+
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
@@ -105,9 +108,19 @@ backend_delete (JBackendItem* bf)
 	lobject_delete(bf->user_data, NULL);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
+	leveldb_delete(db, woptions, bf->path, strlen(bf->path), &err);
+
+	if (err != NULL)
+	{
+		ret = FALSE;
+		leveldb_free(err);
+		goto end;
+	}
+
+end:
 	j_trace_leave(G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 G_MODULE_EXPORT
