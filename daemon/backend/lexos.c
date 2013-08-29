@@ -58,7 +58,7 @@ G_MODULE_EXPORT
 gboolean
 backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
-	Object* object;
+	Object* object = NULL;
 	gchar* path;
 	guint64 object_id;
 	gchar* err = NULL;
@@ -71,22 +71,24 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	object = lobject_create(object_store);
 	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
-	object_id = lobject_get_id(object);
+	if (object == NULL)
+	{
+		goto end;
+	}
 
-	g_print("XXX %ld\n", object_id);
+	object_id = lobject_get_id(object);
 	leveldb_put(db, woptions, path, strlen(path), (gpointer)&object_id, sizeof(object_id), &err);
 
 	if (err != NULL)
 	{
-		return(1);
+		leveldb_free(err);
+		goto end;
 	}
-
-	leveldb_free(err);
-	err = NULL;
 
 	bf->path = path;
 	bf->user_data = object;
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return (object != NULL);
@@ -112,7 +114,7 @@ G_MODULE_EXPORT
 gboolean
 backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
 {
-	Object* object;
+	Object* object = NULL;
 	gchar* path;
 	guint64 object_id;
 	gchar* err = NULL;
@@ -127,23 +129,25 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	memcpy(&object_id, value, value_len);
 	leveldb_free(value);
 
-	g_print("XXX %ld\n", object_id);
-
 	if (err != NULL)
 	{
-		return(1);
+		leveldb_free(err);
+		goto end;
 	}
-
-	leveldb_free(err);
-	err = NULL;
 
 	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
 	object = lobject_open(object_store, object_id);
 	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
+	if (object == NULL)
+	{
+		goto end;
+	}
+
 	bf->path = path;
 	bf->user_data = object;
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return (object != NULL);
@@ -253,7 +257,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_enter(G_STRFUNC);
 
-	if(object != 0)
+	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
 		lobject_write(object, offset, length, (gpointer)buffer, LOBJECT_NO_SYNC);/*FIXME what about sync?*/
@@ -267,7 +271,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	j_trace_leave(G_STRFUNC);
 
-	return (object != 0);
+	return (object != NULL);
 }
 
 G_MODULE_EXPORT
