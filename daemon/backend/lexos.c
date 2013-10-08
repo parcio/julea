@@ -68,7 +68,7 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	path = g_build_filename(store, collection, item, NULL);
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
-	object = lobject_create(object_store);
+	object = lobject_create(object_store, NULL);
 	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	if (object == NULL)
@@ -149,7 +149,7 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	}
 
 	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
-	object = lobject_open(object_store, object_id);
+	object = lobject_open(object_store, object_id, NULL);
 	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
 
 	if (object == NULL)
@@ -178,7 +178,7 @@ backend_close (JBackendItem* bf)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 		//FIXME GError
-		lobject_close(object, NULL);
+		lobject_close(object, LOBJECT_NO_SYNC, NULL);
 		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 	}
 
