@@ -29,30 +29,34 @@
  * \file
  **/
 
-#ifndef H_DISTRIBUTION
-#define H_DISTRIBUTION
+#ifndef H_DISTRIBUTION_DISTRIBUTION
+#define H_DISTRIBUTION_DISTRIBUTION
 
 #include <glib.h>
 
-enum JDistributionType
+#include <bson.h>
+
+#include <jconfiguration-internal.h>
+
+struct JDistributionVTable
 {
-	J_DISTRIBUTION_ROUND_ROBIN,
-	J_DISTRIBUTION_SINGLE_SERVER,
-	J_DISTRIBUTION_WEIGHTED
+	gpointer (*distribution_new) (JConfiguration*);
+	void (*distribution_free) (gpointer);
+
+	void (*distribution_set) (gpointer, gchar const*, guint64);
+	void (*distribution_set2) (gpointer, gchar const*, guint64, guint64);
+
+	void (*distribution_serialize) (gpointer, bson*);
+	void (*distribution_deserialize) (gpointer, bson const*);
+
+	void (*distribution_reset) (gpointer, guint64, guint64);
+	gboolean (*distribution_distribute) (gpointer, guint*, guint64*, guint64*, guint64*);
 };
 
-typedef enum JDistributionType JDistributionType;
+typedef struct JDistributionVTable JDistributionVTable;
 
-struct JDistribution;
-
-typedef struct JDistribution JDistribution;
-
-JDistribution* j_distribution_new (JDistributionType);
-JDistribution* j_distribution_ref (JDistribution*);
-void j_distribution_unref (JDistribution*);
-
-void j_distribution_set_block_size (JDistribution*, guint64);
-void j_distribution_set (JDistribution*, gchar const*, guint64);
-void j_distribution_set2 (JDistribution*, gchar const*, guint64, guint64);
+void j_distribution_round_robin_get_vtable (JDistributionVTable*);
+void j_distribution_single_server_get_vtable (JDistributionVTable*);
+void j_distribution_weighted_get_vtable (JDistributionVTable*);
 
 #endif

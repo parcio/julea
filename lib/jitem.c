@@ -1138,7 +1138,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_READ);
 
-		j_distribution_init(item->distribution, length, offset);
+		j_distribution_reset(item->distribution, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))
@@ -1337,7 +1337,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		j_trace_file_begin(item_name, J_TRACE_FILE_WRITE);
 
-		j_distribution_init(item->distribution, length, offset);
+		j_distribution_reset(item->distribution, length, offset);
 		d = data;
 
 		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))

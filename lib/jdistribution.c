@@ -44,6 +44,8 @@
 #include <jconfiguration-internal.h>
 #include <jtrace-internal.h>
 
+#include "distribution/distribution.h"
+
 /**
  * \defgroup JDistribution Distribution
  *
@@ -58,52 +60,11 @@
 struct JDistribution
 {
 	/**
-	 * The configuration.
-	 **/
-	JConfiguration* configuration;
-
-	/**
 	 * The type.
 	 **/
 	JDistributionType type;
 
-	/**
-	 * The length.
-	 **/
-	guint64 length;
-
-	/**
-	 * The offset.
-	 **/
-	guint64 offset;
-
-	/**
-	 * The block size.
-	 */
-	guint64 block_size;
-
-	union
-	{
-		struct
-		{
-			guint start_index;
-		}
-		round_robin;
-
-		struct
-		{
-			guint index;
-		}
-		single_server;
-
-		struct
-		{
-			guint* weights;
-			guint sum;
-		}
-		weighted;
-	}
-	u;
+	gpointer distribution;
 
 	/**
 	 * The reference count.
@@ -111,175 +72,7 @@ struct JDistribution
 	guint ref_count;
 };
 
-/**
- * Distributes data in a round robin fashion.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        A server index.
- * \param new_length   A new length.
- * \param new_offset   A new offset.
- *
- * \return TRUE on success, FALSE if the distribution is finished.
- **/
-static
-gboolean
-j_distribution_distribute_round_robin (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
-{
-	gboolean ret = TRUE;
-	guint64 block;
-	guint64 displacement;
-	guint64 round;
-
-	j_trace_enter(G_STRFUNC);
-
-	if (distribution->length == 0)
-	{
-		ret = FALSE;
-		goto end;
-	}
-
-	block = distribution->offset / distribution->block_size;
-	round = block / j_configuration_get_data_server_count(distribution->configuration);
-	displacement = distribution->offset % distribution->block_size;
-
-	*index = (distribution->u.round_robin.start_index + block) % j_configuration_get_data_server_count(distribution->configuration);
-	*new_length = MIN(distribution->length, distribution->block_size - displacement);
-	*new_offset = (round * distribution->block_size) + displacement;
-	*block_id = block;
-
-	distribution->length -= *new_length;
-	distribution->offset += *new_length;
-
-end:
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-/**
- * Distributes data to a single server.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        A server index.
- * \param new_length   A new length.
- * \param new_offset   A new offset.
- *
- * \return TRUE on success, FALSE if the distribution is finished.
- **/
-static
-gboolean
-j_distribution_distribute_single_server (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
-{
-	gboolean ret = TRUE;
-	guint64 block;
-	guint64 displacement;
-
-	j_trace_enter(G_STRFUNC);
-
-	if (distribution->length == 0)
-	{
-		ret = FALSE;
-		goto end;
-	}
-
-	block = distribution->offset / distribution->block_size;
-	displacement = distribution->offset % distribution->block_size;
-
-	*index = distribution->u.single_server.index;
-	*new_length = MIN(distribution->length, distribution->block_size - displacement);
-	*new_offset = distribution->offset;
-	*block_id = block;
-
-	distribution->length -= *new_length;
-	distribution->offset += *new_length;
-
-end:
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-/**
- * Distributes data to a weighted list of servers.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        A server index.
- * \param new_length   A new length.
- * \param new_offset   A new offset.
- *
- * \return TRUE on success, FALSE if the distribution is finished.
- **/
-static
-gboolean
-j_distribution_distribute_weighted (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
-{
-	gboolean ret = TRUE;
-	guint const count = j_configuration_get_data_server_count(distribution->configuration);
-	guint64 block;
-	guint64 displacement;
-	guint64 round;
-	guint block_offset;
-
-	j_trace_enter(G_STRFUNC);
-
-	if (distribution->length == 0)
-	{
-		ret = FALSE;
-		goto end;
-	}
-
-	block = distribution->offset / distribution->block_size;
-	round = block / distribution->u.weighted.sum;
-	displacement = distribution->offset % distribution->block_size;
-
-	*index = 0;
-
-	block_offset = block % distribution->u.weighted.sum;
-
-	for (guint i = 0; i < count; i++)
-	{
-		if (block_offset < distribution->u.weighted.weights[i])
-		{
-			*index = i;
-			break;
-		}
-
-		block_offset -= distribution->u.weighted.weights[i];
-	}
-
-	*new_length = MIN(distribution->length, distribution->block_size - displacement);
-	*new_offset = (((round * distribution->u.weighted.weights[*index]) + block_offset) * distribution->block_size) + displacement;
-	*block_id = block;
-
-	distribution->length -= *new_length;
-	distribution->offset += *new_length;
-
-end:
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
+static JDistributionVTable j_distribution_vtables[3];
 
 static
 JDistribution*
@@ -290,37 +83,9 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 	j_trace_enter(G_STRFUNC);
 
 	distribution = g_slice_new(JDistribution);
-	distribution->configuration = j_configuration_ref(configuration);
 	distribution->type = type;
-	distribution->length = 0;
-	distribution->offset = 0;
-	distribution->block_size = J_STRIPE_SIZE;
+	distribution->distribution = j_distribution_vtables[type].distribution_new(configuration);
 	distribution->ref_count = 1;
-
-	switch (distribution->type)
-	{
-		case J_DISTRIBUTION_ROUND_ROBIN:
-			distribution->u.round_robin.start_index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
-			break;
-		case J_DISTRIBUTION_SINGLE_SERVER:
-			distribution->u.single_server.index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
-			break;
-		case J_DISTRIBUTION_WEIGHTED:
-			{
-				guint const count = j_configuration_get_data_server_count(distribution->configuration);
-
-				distribution->u.weighted.sum = 0;
-				distribution->u.weighted.weights = g_new(guint, count);
-
-				for (guint i = 0; i < count; i++)
-				{
-					distribution->u.weighted.weights[i] = 0;
-				}
-			}
-			break;
-		default:
-			g_warn_if_reached();
-	}
 
 	j_trace_leave(G_STRFUNC);
 
@@ -400,7 +165,7 @@ j_distribution_unref (JDistribution* distribution)
 
 	if (g_atomic_int_dec_and_test(&(distribution->ref_count)))
 	{
-		j_configuration_unref(distribution->configuration);
+		j_distribution_vtables[distribution->type].distribution_free(distribution->distribution);
 
 		g_slice_free(JDistribution, distribution);
 	}
@@ -425,7 +190,7 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(block_size > 0);
 
-	distribution->block_size = MIN(block_size, J_STRIPE_SIZE);
+	//distribution->block_size = MIN(block_size, J_STRIPE_SIZE);
 }
 
 /**
@@ -440,49 +205,38 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
  * \param start_index  An index.
  */
 void
-j_distribution_set_round_robin_start_index (JDistribution* distribution, guint start_index)
+j_distribution_set (JDistribution* distribution, gchar const* key, guint64 value)
 {
 	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(start_index < j_configuration_get_data_server_count(distribution->configuration));
-	g_return_if_fail(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
+	g_return_if_fail(key != NULL);
 
-	distribution->u.round_robin.start_index = start_index;
-}
-
-/**
- * Sets the index for the single server distribution.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        An index.
- */
-void
-j_distribution_set_single_server_index (JDistribution* distribution, guint index)
-{
-	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(index < j_configuration_get_data_server_count(distribution->configuration));
-	g_return_if_fail(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
-
-	distribution->u.single_server.index = index;
+	if (j_distribution_vtables[distribution->type].distribution_set != NULL)
+	{
+		j_distribution_vtables[distribution->type].distribution_set(distribution->distribution, key, value);
+	}
 }
 
 void
-j_distribution_set_weight (JDistribution* distribution, guint index, guint weight)
+j_distribution_set2 (JDistribution* distribution, gchar const* key, guint64 value1, guint64 value2)
 {
 	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(index < j_configuration_get_data_server_count(distribution->configuration));
-	g_return_if_fail(distribution->type == J_DISTRIBUTION_WEIGHTED);
-	g_return_if_fail(weight > 0 && weight <= 256);
+	g_return_if_fail(key != NULL);
 
-	distribution->u.weighted.sum += weight - distribution->u.weighted.weights[index];
-	distribution->u.weighted.weights[index] = weight;
+	if (j_distribution_vtables[distribution->type].distribution_set2 != NULL)
+	{
+		j_distribution_vtables[distribution->type].distribution_set2(distribution->distribution, key, value1, value2);
+	}
 }
 
 /* Internal */
+
+void
+j_distribution_init (void)
+{
+	j_distribution_round_robin_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_ROUND_ROBIN]));
+	j_distribution_single_server_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_SINGLE_SERVER]));
+	j_distribution_weighted_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_WEIGHTED]));
+}
 
 /**
  * Creates a new distribution from a BSON object.
@@ -568,35 +322,9 @@ j_distribution_serialize (JDistribution* distribution)
 	bson_init(b);
 
 	bson_append_int(b, "Type", distribution->type);
-	bson_append_long(b, "BlockSize", distribution->block_size);
+	//bson_append_long(b, "BlockSize", distribution->block_size);
 
-	switch (distribution->type)
-	{
-		case J_DISTRIBUTION_ROUND_ROBIN:
-			bson_append_int(b, "StartIndex", distribution->u.round_robin.start_index);
-			break;
-		case J_DISTRIBUTION_SINGLE_SERVER:
-			bson_append_int(b, "Index", distribution->u.single_server.index);
-			break;
-		case J_DISTRIBUTION_WEIGHTED:
-			{
-				guint const count = j_configuration_get_data_server_count(distribution->configuration);
-				gchar numstr[16];
-
-				bson_append_start_array(b, "Weights");
-
-				for (guint i = 0; i < count; i++)
-				{
-					bson_numstr(numstr, i);
-					bson_append_int(b, numstr, distribution->u.weighted.weights[i]);
-				}
-
-				bson_append_finish_array(b);
-			}
-			break;
-		default:
-			g_warn_if_reached();
-	}
+	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
 
 	bson_finish(b);
 
@@ -640,39 +368,9 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 		{
 			distribution->type = bson_iterator_int(&iterator);
 		}
-		else if (g_strcmp0(key, "BlockSize") == 0)
-		{
-			distribution->block_size = bson_iterator_int(&iterator);
-		}
-		else if (g_strcmp0(key, "StartIndex") == 0)
-		{
-			g_assert(distribution->type == J_DISTRIBUTION_ROUND_ROBIN);
-
-			distribution->u.round_robin.start_index = bson_iterator_int(&iterator);
-		}
-		else if (g_strcmp0(key, "Index") == 0)
-		{
-			g_assert(distribution->type == J_DISTRIBUTION_SINGLE_SERVER);
-
-			distribution->u.single_server.index = bson_iterator_int(&iterator);
-		}
-		else if (g_strcmp0(key, "Weights") == 0)
-		{
-			bson_iterator siterator;
-
-			g_assert(distribution->type == J_DISTRIBUTION_WEIGHTED);
-
-			bson_iterator_subiterator(&iterator, &siterator);
-
-			distribution->u.weighted.sum = 0;
-
-			for (guint i = 0; bson_iterator_next(&siterator); i++)
-			{
-				distribution->u.weighted.weights[i] = bson_iterator_int(&siterator);
-				distribution->u.weighted.sum += distribution->u.weighted.weights[i];
-			}
-		}
 	}
+
+	j_distribution_vtables[distribution->type].distribution_deserialize(distribution->distribution, b);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -685,7 +383,7 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
  * \code
  * JDistribution* d;
  *
- * j_distribution_init(d, 0, 0);
+ * j_distribution_reset(d, 0, 0);
  * \endcode
  *
  * \param length A length.
@@ -694,14 +392,13 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
  * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 void
-j_distribution_init (JDistribution* distribution, guint64 length, guint64 offset)
+j_distribution_reset (JDistribution* distribution, guint64 length, guint64 offset)
 {
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	distribution->length = length;
-	distribution->offset = offset;
+	j_distribution_vtables[distribution->type].distribution_reset(distribution->distribution, length, offset);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -733,20 +430,7 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 
 	j_trace_enter(G_STRFUNC);
 
-	switch (distribution->type)
-	{
-		case J_DISTRIBUTION_ROUND_ROBIN:
-			ret = j_distribution_distribute_round_robin(distribution, index, new_length, new_offset, block_id);
-			break;
-		case J_DISTRIBUTION_SINGLE_SERVER:
-			ret = j_distribution_distribute_single_server(distribution, index, new_length, new_offset, block_id);
-			break;
-		case J_DISTRIBUTION_WEIGHTED:
-			ret = j_distribution_distribute_weighted(distribution, index, new_length, new_offset, block_id);
-			break;
-		default:
-			g_warn_if_reached();
-	}
+	ret = j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
 
 	j_trace_leave(G_STRFUNC);
 

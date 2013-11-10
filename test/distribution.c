@@ -84,21 +84,21 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	block_size = J_STRIPE_SIZE;
 
 	distribution = j_distribution_new_for_configuration(type, *configuration);
-	j_distribution_init(distribution, 4 * block_size, 42);
+	j_distribution_reset(distribution, 4 * block_size, 42);
 
 	j_distribution_set_block_size(distribution, block_size);
 
 	switch (type)
 	{
 		case J_DISTRIBUTION_ROUND_ROBIN:
-			j_distribution_set_round_robin_start_index(distribution, 1);
+			j_distribution_set(distribution, "start-index", 1);
 			break;
 		case J_DISTRIBUTION_SINGLE_SERVER:
-			j_distribution_set_single_server_index(distribution, 1);
+			j_distribution_set(distribution, "index", 1);
 			break;
 		case J_DISTRIBUTION_WEIGHTED:
-			j_distribution_set_weight(distribution, 0, 1);
-			j_distribution_set_weight(distribution, 1, 2);
+			j_distribution_set2(distribution, "weight", 0, 1);
+			j_distribution_set2(distribution, "weight", 1, 2);
 			break;
 		default:
 			g_warn_if_reached();

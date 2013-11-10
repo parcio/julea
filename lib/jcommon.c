@@ -43,6 +43,7 @@
 #include <jconfiguration-internal.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
+#include <jdistribution-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jbatch.h>
@@ -185,6 +186,7 @@ j_init (void)
 	}
 
 	j_connection_pool_init(common->configuration);
+	j_distribution_init();
 	j_background_operation_init();
 	j_operation_cache_init();
 

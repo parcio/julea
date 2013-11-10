@@ -219,7 +219,7 @@ def build (ctx):
 
 	# Library
 	ctx.shlib(
-		source = ctx.path.ant_glob('lib/*.c'),
+		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea',
 		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
@@ -228,7 +228,7 @@ def build (ctx):
 
 	# Library (internal)
 	ctx.shlib(
-		source = ctx.path.ant_glob('lib/*.c'),
+		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea-private',
 		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
 		includes = ['include'],
