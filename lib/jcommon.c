@@ -184,8 +184,8 @@ j_init (void)
 		goto error;
 	}
 
-	j_background_operation_init();
 	j_connection_pool_init(common->configuration);
+	j_background_operation_init();
 	j_operation_cache_init();
 
 	bson_set_oid_fuzz(j_common_oid_fuzz);
@@ -223,8 +223,8 @@ j_fini (void)
 	g_return_if_fail(j_is_initialized());
 
 	j_operation_cache_fini();
-	j_connection_pool_fini();
 	j_background_operation_fini();
+	j_connection_pool_fini();
 
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
