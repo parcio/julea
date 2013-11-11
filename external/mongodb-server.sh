@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/mongodb-server"
-BASE='mongodb-src-r2.4.5'
+BASE='mongodb-src-r2.4.8'
 FILE="${BASE}.tar.gz"
 
 if [ -d "${PREFIX}" ]
@@ -42,7 +42,7 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget "http://downloads.mongodb.org/src/${FILE}"
+wget "http://fastdl.mongodb.org/src/${FILE}"
 tar xf "${FILE}"
 
 cd "${BASE}"
