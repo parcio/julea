@@ -206,6 +206,31 @@ distribution_free (gpointer data)
 	j_trace_leave(G_STRFUNC);
 }
 
+/**
+ * Sets the start index for the round robin distribution.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param distribution A distribution.
+ * \param start_index  An index.
+ */
+static
+void
+distribution_set (gpointer data, gchar const* key, guint64 value)
+{
+	JDistributionWeighted* distribution = data;
+
+	g_return_if_fail(distribution != NULL);
+
+	if (g_strcmp0(key, "block-size") == 0)
+	{
+		distribution->block_size = value;
+	}
+}
+
 static
 void
 distribution_set2 (gpointer data, gchar const* key, guint64 value1, guint64 value2)
@@ -361,7 +386,7 @@ j_distribution_weighted_get_vtable (JDistributionVTable* vtable)
 {
 	vtable->distribution_new = distribution_new;
 	vtable->distribution_free = distribution_free;
-	vtable->distribution_set = NULL;
+	vtable->distribution_set = distribution_set;
 	vtable->distribution_set2 = distribution_set2;
 	vtable->distribution_serialize = distribution_serialize;
 	vtable->distribution_deserialize = distribution_deserialize;

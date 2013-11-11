@@ -196,7 +196,11 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
 
 	g_return_if_fail(distribution != NULL);
 
-	if (g_strcmp0(key, "index") == 0)
+	if (g_strcmp0(key, "block-size") == 0)
+	{
+		distribution->block_size = value;
+	}
+	else if (g_strcmp0(key, "index") == 0)
 	{
 		g_return_if_fail(value < j_configuration_get_data_server_count(distribution->configuration));
 

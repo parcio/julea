@@ -81,7 +81,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 
 	(void)data;
 
-	block_size = J_STRIPE_SIZE;
+	block_size = J_STRIPE_SIZE - 1;
 
 	distribution = j_distribution_new_for_configuration(type, *configuration);
 	j_distribution_reset(distribution, 4 * block_size, 42);

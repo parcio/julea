@@ -190,7 +190,10 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(block_size > 0);
 
-	//distribution->block_size = MIN(block_size, J_STRIPE_SIZE);
+	if (j_distribution_vtables[distribution->type].distribution_set != NULL)
+	{
+		j_distribution_vtables[distribution->type].distribution_set(distribution->distribution, "block-size", MIN(block_size, J_STRIPE_SIZE));
+	}
 }
 
 /**
