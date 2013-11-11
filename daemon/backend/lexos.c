@@ -248,7 +248,7 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-		lobject_read(object,offset,length,buffer);
+		lobject_read(object,offset,length,buffer, NULL);
 		j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
 
 		if (bytes_read != NULL)
@@ -273,7 +273,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-		lobject_write(object, offset, length, (gpointer)buffer, LOBJECT_NO_SYNC);/*FIXME what about sync?*/
+		lobject_write(object, offset, length, (gpointer)buffer, LOBJECT_NO_SYNC, NULL);/*FIXME what about sync?*/
 		j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
 
 		if (bytes_written != NULL)
