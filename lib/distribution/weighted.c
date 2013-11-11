@@ -202,6 +202,7 @@ distribution_free (gpointer data)
 	j_trace_enter(G_STRFUNC);
 
 	j_configuration_unref(distribution->configuration);
+	g_free(distribution->weights);
 
 	j_trace_leave(G_STRFUNC);
 }
