@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/mongodb-client"
-VERSION='0.8'
+VERSION='0.8.1'
 
 if [ -d "${PREFIX}" ]
 then
