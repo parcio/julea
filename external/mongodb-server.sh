@@ -47,6 +47,11 @@ tar xf "${FILE}"
 
 cd "${BASE}"
 
+if [ -f "${PREFIX}.patch" ]
+then
+	patch -p1 < "${PREFIX}.patch"
+fi
+
 scons all
 scons --prefix="${PREFIX}" install
 
