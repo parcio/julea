@@ -64,6 +64,9 @@ struct JDistribution
 	 **/
 	JDistributionType type;
 
+	/**
+	 * The actual distribution.
+	 */
 	gpointer distribution;
 
 	/**
@@ -379,7 +382,7 @@ j_distribution_deserialize (JDistribution* distribution, bson const* b)
 }
 
 /**
- * Initializes a distribution.
+ * Resets a distribution.
  *
  * \author Michael Kuhn
  *
