@@ -371,7 +371,7 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 	connection = j_connection_pool_pop();
 	mongo_connection = j_connection_get_connection(connection);
 
-	mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, NULL);
+	mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 	ret = j_helper_insert_batch(mongo_connection, j_store_collection_collections(store), obj, length, write_concern);
 
 	/*

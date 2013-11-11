@@ -226,7 +226,7 @@ j_lock_acquire (JLock* lock)
 	connection = j_connection_pool_pop();
 	mongo_connection = j_connection_get_connection(connection);
 
-	mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, NULL);
+	mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 	lock->acquired = (mongo_insert(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	j_connection_pool_push(connection);
