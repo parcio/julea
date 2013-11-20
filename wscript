@@ -319,7 +319,7 @@ def build (ctx):
 	if ctx.env.JULEA_FUSE:
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
-			target = 'fuse/juleafs',
+			target = 'fuse/julea-fuse',
 			use = ['lib/julea', 'GLIB', 'GOBJECT', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
