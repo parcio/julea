@@ -40,7 +40,7 @@
 
 struct JDistributionVTable
 {
-	gpointer (*distribution_new) (JConfiguration*);
+	gpointer (*distribution_new) (guint);
 	void (*distribution_free) (gpointer);
 
 	void (*distribution_set) (gpointer, gchar const*, guint64);

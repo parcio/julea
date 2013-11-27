@@ -82,12 +82,15 @@ JDistribution*
 j_distribution_new_common (JDistributionType type, JConfiguration* configuration)
 {
 	JDistribution* distribution;
+	guint server_count;
 
 	j_trace_enter(G_STRFUNC);
 
+	server_count = j_configuration_get_data_server_count(configuration);
+
 	distribution = g_slice_new(JDistribution);
 	distribution->type = type;
-	distribution->distribution = j_distribution_vtables[type].distribution_new(configuration);
+	distribution->distribution = j_distribution_vtables[type].distribution_new(server_count);
 	distribution->ref_count = 1;
 
 	j_trace_leave(G_STRFUNC);

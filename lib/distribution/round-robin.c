@@ -54,9 +54,9 @@
 struct JDistributionRoundRobin
 {
 	/**
-	 * The configuration.
+	 * The server count.
 	 **/
-	JConfiguration* configuration;
+	guint server_count;
 
 	/**
 	 * The length.
@@ -115,10 +115,10 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	}
 
 	block = distribution->offset / distribution->block_size;
-	round = block / j_configuration_get_data_server_count(distribution->configuration);
+	round = block / distribution->server_count;
 	displacement = distribution->offset % distribution->block_size;
 
-	*index = (distribution->start_index + block) % j_configuration_get_data_server_count(distribution->configuration);
+	*index = (distribution->start_index + block) % distribution->server_count;
 	*new_length = MIN(distribution->length, distribution->block_size - displacement);
 	*new_offset = (round * distribution->block_size) + displacement;
 	*block_id = block;
@@ -134,19 +134,19 @@ end:
 
 static
 gpointer
-distribution_new (JConfiguration* configuration)
+distribution_new (guint server_count)
 {
 	JDistributionRoundRobin* distribution;
 
 	j_trace_enter(G_STRFUNC);
 
 	distribution = g_slice_new(JDistributionRoundRobin);
-	distribution->configuration = j_configuration_ref(configuration);
+	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
 	distribution->block_size = J_STRIPE_SIZE;
 
-	distribution->start_index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
+	distribution->start_index = g_random_int_range(0, distribution->server_count);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -173,8 +173,6 @@ distribution_free (gpointer data)
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC);
-
-	j_configuration_unref(distribution->configuration);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -204,7 +202,7 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
 	}
 	else if (g_strcmp0(key, "start-index") == 0)
 	{
-		g_return_if_fail(value < j_configuration_get_data_server_count(distribution->configuration));
+		g_return_if_fail(value < distribution->server_count);
 
 		distribution->start_index = value;
 	}

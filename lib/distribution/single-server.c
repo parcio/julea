@@ -54,9 +54,9 @@
 struct JDistributionSingleServer
 {
 	/**
-	 * The configuration.
+	 * The server count.
 	 **/
-	JConfiguration* configuration;
+	guint server_count;
 
 	/**
 	 * The length.
@@ -132,19 +132,19 @@ end:
 
 static
 gpointer
-distribution_new (JConfiguration* configuration)
+distribution_new (guint server_count)
 {
 	JDistributionSingleServer* distribution;
 
 	j_trace_enter(G_STRFUNC);
 
 	distribution = g_slice_new(JDistributionSingleServer);
-	distribution->configuration = j_configuration_ref(configuration);
+	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
 	distribution->block_size = J_STRIPE_SIZE;
 
-	distribution->index = g_random_int_range(0, j_configuration_get_data_server_count(distribution->configuration));
+	distribution->index = g_random_int_range(0, distribution->server_count);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -171,8 +171,6 @@ distribution_free (gpointer data)
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC);
-
-	j_configuration_unref(distribution->configuration);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -202,7 +200,7 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
 	}
 	else if (g_strcmp0(key, "index") == 0)
 	{
-		g_return_if_fail(value < j_configuration_get_data_server_count(distribution->configuration));
+		g_return_if_fail(value < distribution->server_count);
 
 		distribution->index = value;
 	}

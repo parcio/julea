@@ -54,9 +54,9 @@
 struct JDistributionWeighted
 {
 	/**
-	 * The configuration.
+	 * The server count.
 	 **/
-	JConfiguration* configuration;
+	guint server_count;
 
 	/**
 	 * The length.
@@ -103,7 +103,6 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	JDistributionWeighted* distribution = data;
 
 	gboolean ret = TRUE;
-	guint const count = j_configuration_get_data_server_count(distribution->configuration);
 	guint64 block;
 	guint64 displacement;
 	guint64 round;
@@ -125,7 +124,7 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 
 	block_offset = block % distribution->sum;
 
-	for (guint i = 0; i < count; i++)
+	for (guint i = 0; i < distribution->server_count; i++)
 	{
 		if (block_offset < distribution->weights[i])
 		{
@@ -151,26 +150,22 @@ end:
 
 static
 gpointer
-distribution_new (JConfiguration* configuration)
+distribution_new (guint server_count)
 {
 	JDistributionWeighted* distribution;
-
-	guint count;
 
 	j_trace_enter(G_STRFUNC);
 
 	distribution = g_slice_new(JDistributionWeighted);
-	distribution->configuration = j_configuration_ref(configuration);
+	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
 	distribution->block_size = J_STRIPE_SIZE;
 
-	count = j_configuration_get_data_server_count(distribution->configuration);
-
 	distribution->sum = 0;
-	distribution->weights = g_new(guint, count);
+	distribution->weights = g_new(guint, distribution->server_count);
 
-	for (guint i = 0; i < count; i++)
+	for (guint i = 0; i < distribution->server_count; i++)
 	{
 		distribution->weights[i] = 0;
 	}
@@ -201,7 +196,6 @@ distribution_free (gpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
-	j_configuration_unref(distribution->configuration);
 	g_free(distribution->weights);
 
 	j_trace_leave(G_STRFUNC);
@@ -242,7 +236,7 @@ distribution_set2 (gpointer data, gchar const* key, guint64 value1, guint64 valu
 
 	if (g_strcmp0(key, "weight") == 0)
 	{
-		g_return_if_fail(value1 < j_configuration_get_data_server_count(distribution->configuration));
+		g_return_if_fail(value1 < distribution->server_count);
 		g_return_if_fail(value2 > 0 && value2 <= 256);
 
 		distribution->sum += value2 - distribution->weights[value1];
@@ -270,7 +264,6 @@ distribution_serialize (gpointer data, bson* b)
 {
 	JDistributionWeighted* distribution = data;
 
-	guint count;
 	gchar numstr[16];
 
 	g_return_if_fail(distribution != NULL);
@@ -279,11 +272,9 @@ distribution_serialize (gpointer data, bson* b)
 
 	bson_append_long(b, "BlockSize", distribution->block_size);
 
-	count = j_configuration_get_data_server_count(distribution->configuration);
-
 	bson_append_start_array(b, "Weights");
 
-	for (guint i = 0; i < count; i++)
+	for (guint i = 0; i < distribution->server_count; i++)
 	{
 		bson_numstr(numstr, i);
 		bson_append_int(b, numstr, distribution->weights[i]);
