@@ -28,11 +28,11 @@ def options (ctx):
 
 def test (ctx):
 	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
-	command = '%s --keep-going --verbose %s/test/test' % (gtester, Context.out_dir)
+	command = 'LD_LIBRARY_PATH=%s/lib %s --keep-going --verbose %s/test/test' % (Context.out_dir, gtester, Context.out_dir)
 
-	subprocess.call('./tools/setup.sh start', stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
-	subprocess.call(command, stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
-	subprocess.call('./tools/setup.sh stop', stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
+	subprocess.call('./tools/setup.sh start', close_fds=True, shell=True)
+	subprocess.call(command, close_fds=True, shell=True)
+	subprocess.call('./tools/setup.sh stop', close_fds=True, shell=True)
 
 def configure (ctx):
 	ctx.load('compiler_c')
