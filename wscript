@@ -9,6 +9,10 @@ import subprocess
 top = '.'
 out = 'build'
 
+class BenchmarkContext (BuildContext):
+	cmd = 'benchmark'
+	fun = 'benchmark'
+
 class TestContext (BuildContext):
 	cmd = 'test'
 	fun = 'test'
@@ -26,13 +30,22 @@ def options (ctx):
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
 
+def benchmark (ctx):
+	setup = '%s/tools/setup.sh' % (Context.top_dir,)
+	command = 'LD_LIBRARY_PATH=%s/lib %s/benchmark/benchmark' % (Context.out_dir, Context.out_dir)
+
+	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
+	subprocess.call(command, close_fds=True, shell=True)
+	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
+
 def test (ctx):
+	setup = '%s/tools/setup.sh' % (Context.top_dir,)
 	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
 	command = 'LD_LIBRARY_PATH=%s/lib %s --keep-going --verbose %s/test/test' % (Context.out_dir, gtester, Context.out_dir)
 
-	subprocess.call('./tools/setup.sh start', close_fds=True, shell=True)
+	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
-	subprocess.call('./tools/setup.sh stop', close_fds=True, shell=True)
+	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
 
 def configure (ctx):
 	ctx.load('compiler_c')
