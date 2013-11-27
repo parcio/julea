@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 
 from waflib import Context, Utils
+from waflib.Build import BuildContext
 
 import os
+import subprocess
 
 top = '.'
 out = 'build'
+
+class TestContext (BuildContext):
+	cmd = 'test'
+	fun = 'test'
 
 def options (ctx):
 	ctx.load('compiler_c')
@@ -20,6 +26,14 @@ def options (ctx):
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
 
+def test (ctx):
+	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
+	command = '%s --keep-going --verbose %s/test/test' % (gtester, Context.out_dir)
+
+	subprocess.call('./tools/setup.sh start', stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
+	subprocess.call(command, stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
+	subprocess.call('./tools/setup.sh stop', stdout=os.sys.stdout, stderr=os.sys.stderr, close_fds=True, shell=True)
+
 def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
@@ -27,6 +41,12 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-std=c99']
 
 	#ctx.check_large_file()
+
+	ctx.find_program(
+		'gtester',
+		var = 'GTESTER',
+		mandatory = False
+	)
 
 	ctx.find_program(
 		'mpicc',
