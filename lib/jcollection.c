@@ -39,6 +39,7 @@
 #include <jcollection.h>
 #include <jcollection-internal.h>
 
+#include <jbackground-operation-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
@@ -63,6 +64,29 @@
  *
  * @{
  **/
+
+/**
+ * Data for background operations.
+ */
+struct JCollectionBackgroundData
+{
+	/**
+	 * The connection.
+	 */
+	JConnection* connection;
+
+	/**
+	 * The message to send.
+	 */
+	JMessage* message;
+
+	/**
+	 * The data server's index.
+	 */
+	guint index;
+};
+
+typedef struct JCollectionBackgroundData JCollectionBackgroundData;
 
 /**
  * A collection of items.
@@ -98,6 +122,38 @@ struct JCollection
 	 **/
 	gint ref_count;
 };
+
+/**
+ * Executes delete operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_collection_delete_item_background_operation (gpointer data)
+{
+	JCollectionBackgroundData* background_data = data;
+	JMessage* reply;
+
+	j_connection_send(background_data->connection, background_data->index, background_data->message);
+
+	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	{
+		reply = j_message_new_reply(background_data->message);
+		j_connection_receive(background_data->connection, background_data->index, reply);
+
+		/* FIXME do something with reply */
+		j_message_unref(reply);
+	}
+
+	return data;
+}
 
 /**
  * Increases a collection's reference count.
@@ -692,12 +748,23 @@ end:
 gboolean
 j_collection_delete_item_internal (JBatch* batch, JList* operations)
 {
+	JBackgroundOperation** background_operations;
 	JCollection* collection = NULL;
 	JConnection* connection;
 	JListIterator* it;
+	JMessage** messages;
+	JSemantics* semantics;
 	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 	gboolean ret = TRUE;
+	guint m;
+	guint n;
+	gchar const* item_name;
+	gchar const* collection_name;
+	gchar const* store_name;
+	gsize item_len;
+	gsize collection_len;
+	gsize store_len;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -707,6 +774,31 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	/*
 		IsInitialized(true);
 	*/
+
+	semantics = j_batch_get_semantics(batch);
+	n = j_configuration_get_data_server_count(j_configuration());
+	background_operations = g_new(JBackgroundOperation*, n);
+	messages = g_new(JMessage*, n);
+
+	for (guint i = 0; i < n; i++)
+	{
+		background_operations[i] = NULL;
+		messages[i] = NULL;
+	}
+
+	{
+		JOperation* operation;
+
+		operation = j_list_get_first(operations);
+		g_assert(operation != NULL);
+		collection = operation->u.collection_delete_item.collection;
+
+		collection_name = collection->name;
+		store_name = j_store_get_name(collection->store);
+
+		store_len = strlen(store_name) + 1;
+		collection_len = strlen(collection_name) + 1;
+	}
 
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
@@ -721,7 +813,8 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		JItem* item = operation->u.collection_delete_item.item;
 		bson b;
 
-		collection = operation->u.collection_delete_item.collection;
+		item_name = j_item_get_name(item);
+		item_len = strlen(item_name) + 1;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", j_item_get_id(item));
@@ -732,13 +825,83 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 
 		bson_destroy(&b);
 
-		/* FIXME also delete data */
+		for (guint i = 0; i < n; i++)
+		{
+			if (messages[i] == NULL)
+			{
+				/* FIXME */
+				messages[i] = j_message_new(J_MESSAGE_DELETE, store_len + collection_len);
+				j_message_set_safety(messages[i], semantics);
+				j_message_append_n(messages[i], store_name, store_len);
+				j_message_append_n(messages[i], collection_name, collection_len);
+			}
+
+			j_message_add_operation(messages[i], item_len);
+			j_message_append_n(messages[i], item_name, item_len);
+		}
+	}
+
+	m = 0;
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (messages[i] != NULL)
+		{
+			m++;
+		}
+	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		JCollectionBackgroundData* background_data;
+
+		if (messages[i] == NULL)
+		{
+			continue;
+		}
+
+		background_data = g_slice_new(JCollectionBackgroundData);
+		background_data->connection = connection;
+		background_data->message = messages[i];
+		background_data->index = i;
+
+		if (m > 1)
+		{
+			background_operations[i] = j_background_operation_new(j_collection_delete_item_background_operation, background_data);
+		}
+		else
+		{
+			j_collection_delete_item_background_operation(background_data);
+
+			g_slice_free(JCollectionBackgroundData, background_data);
+		}
+	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (background_operations[i] != NULL)
+		{
+			JCollectionBackgroundData* background_data;
+
+			background_data = j_background_operation_wait(background_operations[i]);
+			j_background_operation_unref(background_operations[i]);
+
+			g_slice_free(JCollectionBackgroundData, background_data);
+		}
+
+		if (messages[i] != NULL)
+		{
+			j_message_unref(messages[i]);
+		}
 	}
 
 	j_connection_pool_push(connection);
 	j_list_iterator_free(it);
 
 	mongo_write_concern_destroy(write_concern);
+
+	g_free(background_operations);
+	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
 
