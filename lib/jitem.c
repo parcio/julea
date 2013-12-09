@@ -1216,6 +1216,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		else
 		{
 			j_item_read_background_operation(background_data);
+
+			g_slice_free(JItemBackgroundData, background_data);
 		}
 	}
 
