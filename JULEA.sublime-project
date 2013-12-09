@@ -19,7 +19,7 @@
 	        "-I${home}/Projekte/julea/build/include",
 	        "-I${home}/Projekte/julea/external/mongodb-client/include",
 	        "-I${home}/Projekte/julea/external/otf/include/open-trace-format",
-	        "-I${home}/Projekte/julea/hdtrace/include"
+	        "-I${home}/Projekte/julea/external/hdtrace/include"
 	    ]
 	}
 }

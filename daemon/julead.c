@@ -202,29 +202,38 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_DELETE:
 				{
+					JMessage* reply = NULL;
+
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
 
+					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					{
+						reply = j_message_new_reply(message);
+					}
+
 					for (i = 0; i < operation_count; i++)
 					{
-						JMessage* reply;
-
 						item = j_message_get_string(message);
 
 						bf = jd_open_file(files, store, collection, item);
 
-						if (jd_backend_delete(bf))
+						if (bf != NULL && jd_backend_delete(bf))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
 							//jd_backend_close(bf);
 						}
 
-						if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+						if (reply != NULL)
 						{
-							reply = j_message_new_reply(message);
-							j_message_write(reply, output);
-							j_message_unref(reply);
+							j_message_add_operation(reply, 0);
 						}
+					}
+
+					if (reply != NULL)
+					{
+						j_message_write(reply, output);
+						j_message_unref(reply);
 					}
 				}
 				break;
