@@ -41,10 +41,10 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget -O "mongodb-client-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver-legacy/archive/v${VERSION}.tar.gz"
+wget -O "mongodb-client-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/archive/v${VERSION}.tar.gz"
 tar xf "mongodb-client-${VERSION}.tar.gz"
 
-cd "mongo-c-driver-legacy-${VERSION}"
+cd "mongo-c-driver-${VERSION}"
 
 make
 make install INSTALL_INCLUDE_PATH="${PREFIX}/include" INSTALL_LIBRARY_PATH="${PREFIX}/lib"
