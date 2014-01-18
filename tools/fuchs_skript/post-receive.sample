@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# (c) Anna Fuchs 2013
+
+# for debug only
+set -ex
+
+name=$(hostname)
+
+perf=$(git config --local test.performance-test-remote)
+
+if echo $perf | grep "Performance-Test: no"
+then
+  echo "No performance test"
+  exit 0
+fi
+
+DIR_PATH=$(git rev-parse --show-toplevel)
+RESULTS_PATH=$(git config --local test.results-path)
+
+DIR_PATH/waf
+
+sbatch << EOF 
+#!/bin/sh
+# 
+#SBATCH -N 1 --ntasks-per-node 1
+# Output goes to job.out, error messages to job.err.
+#SBATCH --error=job.err --output=job.out
+
+rc=0
+
+srun $dir/tools/benchmop.sh $perf $RESULTS_PATH/benchmark_remote_$name --machine-readable || rc=\$?
+
+if [ \${rc} -ne 0 ]
+then
+  echo 'Running program failed'
+  exit 1
+fi
+
+ssh $name << __EOF
+pwd=$PWD
+
+$dir/tools/gnuplot.sh $RESULTS_PATH/benchmark_remote_$name
+
+cd $RESULTS_PATH/benchmark_remote_$name
+
+rm -rf toplot/
+
+env_arg=''
+
+for var in \$(env | grep '^GIT' | sed 's/=.*$//')
+do
+	env_arg="\${env_arg} -u \${var}"
+done
+
+env \$env_arg git checkout gnuplot/remote/$name || rc=\$?
+if [ \$rc -ne 0 ]
+then 
+  env \$env_arg git checkout --orphan gnuplot/remote/$name
+fi
+
+env \$env_arg git add -A .
+env \$env_arg git commit -m "results"
+git push
+
+cd \$pwd
+__EOF
+EOF
+
+exit 0
+
