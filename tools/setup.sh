@@ -96,6 +96,9 @@ do_start ()
 			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
 		fi
 	done
+
+	# Give the servers enough time to initialize properly.
+	sleep 5
 }
 
 do_stop ()
