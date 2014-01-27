@@ -163,6 +163,7 @@ case "${MODE}" in
 		;;
 	restart)
 		do_stop
+		sleep 10
 		do_start
 		;;
 	*)
