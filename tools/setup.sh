@@ -124,7 +124,7 @@ do_stop ()
 
 		if [ "${HOST}" = "${HOSTNAME}" ]
 		then
-			mongod --shutdown --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal || true
+			mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
 			rm -rf "${MONGO_PATH}"
 		fi
 	done
