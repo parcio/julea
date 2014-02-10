@@ -38,6 +38,7 @@
 #include <jconnection-pool-internal.h>
 
 #include <jconnection-internal.h>
+#include <jhelper-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -56,6 +57,7 @@ struct JConnectionPool
 	JConfiguration* configuration;
 	GAsyncQueue* queue;
 	guint count;
+	guint max_count;
 };
 
 typedef struct JConnectionPool JConnectionPool;
@@ -75,6 +77,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	pool->configuration = j_configuration_ref(configuration);
 	pool->queue = g_async_queue_new();
 	pool->count = 0;
+	pool->max_count = j_helper_get_processor_count();
 
 	g_atomic_pointer_set(&j_connection_pool, pool);
 
@@ -86,6 +89,8 @@ j_connection_pool_fini (void)
 {
 	JConnection* connection;
 	JConnectionPool* pool;
+
+	g_return_if_fail(j_connection_pool != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -111,6 +116,8 @@ j_connection_pool_pop (void)
 {
 	JConnection* connection;
 
+	g_return_val_if_fail(j_connection_pool != NULL, NULL);
+
 	j_trace_enter(G_STRFUNC);
 
 	connection = g_async_queue_try_pop(j_connection_pool->queue);
@@ -120,22 +127,30 @@ j_connection_pool_pop (void)
 		goto end;
 	}
 
-	if (g_atomic_int_get(&(j_connection_pool->count)) < 8)
+	if ((guint)g_atomic_int_get(&(j_connection_pool->count)) < j_connection_pool->max_count)
 	{
-		connection = j_connection_new(j_connection_pool->configuration);
-
-		// FIXME
-		if (!j_connection_connect(connection))
+		if ((guint)g_atomic_int_add(&(j_connection_pool->count), 1) < j_connection_pool->max_count)
 		{
-			g_critical("%s: Failed to connect.", G_STRLOC);
-		}
+			connection = j_connection_new(j_connection_pool->configuration);
 
-		g_atomic_int_inc(&(j_connection_pool->count));
+			// FIXME
+			if (!j_connection_connect(connection))
+			{
+				g_critical("%s: Failed to connect.", G_STRLOC);
+			}
+		}
+		else
+		{
+			g_atomic_int_add(&(j_connection_pool->count), -1);
+		}
 	}
-	else
+
+	if (connection != NULL)
 	{
-		connection = g_async_queue_pop(j_connection_pool->queue);
+		goto end;
 	}
+
+	connection = g_async_queue_pop(j_connection_pool->queue);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -146,6 +161,8 @@ end:
 void
 j_connection_pool_push (JConnection* connection)
 {
+	g_return_if_fail(j_connection_pool != NULL);
+
 	j_trace_enter(G_STRFUNC);
 
 	g_async_queue_push(j_connection_pool->queue, connection);
