@@ -816,6 +816,8 @@ gboolean
 j_message_read (JMessage* message, GInputStream* stream)
 {
 	gboolean ret = FALSE;
+
+	GError* error = NULL;
 	gsize bytes_read;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -828,7 +830,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 		g_return_val_if_fail(message->original_message != NULL, FALSE);
 	}
 
-	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, NULL))
+	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, &error))
 	{
 		goto end;
 	}
@@ -840,7 +842,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
-	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, NULL))
+	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, &error))
 	{
 		goto end;
 	}
@@ -855,6 +857,12 @@ j_message_read (JMessage* message, GInputStream* stream)
 	ret = TRUE;
 
 end:
+	if (error != NULL)
+	{
+		g_critical("%s: %s", G_STRFUNC, error->message);
+		g_error_free(error);
+	}
+
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -877,7 +885,9 @@ gboolean
 j_message_write (JMessage* message, GOutputStream* stream)
 {
 	gboolean ret = FALSE;
+
 	JListIterator* iterator;
+	GError* error = NULL;
 	gsize bytes_written;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -885,7 +895,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 
 	j_trace_enter(G_STRFUNC);
 
-	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, NULL))
+	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, &error))
 	{
 		goto end;
 	}
@@ -903,7 +913,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, NULL))
+			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, &error))
 			{
 				goto end;
 			}
@@ -917,6 +927,12 @@ j_message_write (JMessage* message, GOutputStream* stream)
 	ret = TRUE;
 
 end:
+	if (error != NULL)
+	{
+		g_critical("%s: %s", G_STRFUNC, error->message);
+		g_error_free(error);
+	}
+
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
