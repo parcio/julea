@@ -230,6 +230,7 @@ gboolean
 j_connection_connect (JConnection* connection)
 {
 	gboolean ret;
+	GError* error = NULL;
 	GSocketClient* client;
 	guint i;
 
@@ -254,7 +255,13 @@ j_connection_connect (JConnection* connection)
 
 	for (i = 0; i < connection->sockets_len; i++)
 	{
-		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, NULL);
+		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, &error);
+
+		if (error != NULL)
+		{
+			g_critical("%s: %s", G_STRLOC, error->message);
+			g_error_free(error);
+		}
 
 		if (connection->sockets[i] == NULL)
 		{

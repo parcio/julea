@@ -859,7 +859,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 end:
 	if (error != NULL)
 	{
-		g_critical("%s: %s", G_STRFUNC, error->message);
+		g_critical("%s: %s", G_STRLOC, error->message);
 		g_error_free(error);
 	}
 

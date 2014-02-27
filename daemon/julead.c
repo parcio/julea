@@ -592,7 +592,7 @@ main (int argc, char** argv)
 	GMainLoop* main_loop;
 	GModule* backend;
 	GOptionContext* context;
-	GSocketListener* listener;
+	GSocketService* socket_service;
 	gchar* path;
 
 	GOptionEntry entries[] = {
@@ -628,13 +628,15 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	listener = G_SOCKET_LISTENER(g_threaded_socket_service_new(-1));
+	socket_service = g_threaded_socket_service_new(-1);
 
-	if (!g_socket_listener_add_inet_port(listener, opt_port, NULL, &error))
+	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
+
+	if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
 	{
-		g_object_unref(listener);
+		g_object_unref(socket_service);
 
-		if (error)
+		if (error != NULL)
 		{
 			g_printerr("%s\n", error->message);
 			g_error_free(error);
@@ -693,8 +695,8 @@ main (int argc, char** argv)
 
 	jd_statistics = j_statistics_new(FALSE);
 
-	g_socket_service_start(G_SOCKET_SERVICE(listener));
-	g_signal_connect(G_THREADED_SOCKET_SERVICE(listener), "run", G_CALLBACK(jd_on_run), NULL);
+	g_socket_service_start(socket_service);
+	g_signal_connect(socket_service, "run", G_CALLBACK(jd_on_run), NULL);
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -705,8 +707,8 @@ main (int argc, char** argv)
 	g_main_loop_run(main_loop);
 	g_main_loop_unref(main_loop);
 
-	g_socket_service_stop(G_SOCKET_SERVICE(listener));
-	g_object_unref(listener);
+	g_socket_service_stop(socket_service);
+	g_object_unref(socket_service);
 
 	j_statistics_free(jd_statistics);
 
