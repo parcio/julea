@@ -136,7 +136,7 @@ j_connection_pool_pop (void)
 			// FIXME
 			if (!j_connection_connect(connection))
 			{
-				g_critical("%s: Failed to connect.", G_STRLOC);
+				J_CRITICAL("Failed to connect [%d].", g_atomic_int_get(&(j_connection_pool->count)));
 			}
 		}
 		else

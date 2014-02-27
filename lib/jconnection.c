@@ -248,7 +248,7 @@ j_connection_connect (JConnection* connection)
 
 	if (!ret)
 	{
-		g_critical("%s: Can not connect to MongoDB.", G_STRLOC);
+		J_CRITICAL("Can not connect to MongoDB %s.", j_configuration_get_metadata_server(connection->configuration, 0));
 	}
 
 	client = g_socket_client_new();
@@ -259,13 +259,13 @@ j_connection_connect (JConnection* connection)
 
 		if (error != NULL)
 		{
-			g_critical("%s: %s", G_STRLOC, error->message);
+			J_CRITICAL("%s", error->message);
 			g_error_free(error);
 		}
 
 		if (connection->sockets[i] == NULL)
 		{
-			g_critical("%s: Can not connect to %s.", G_STRLOC, j_configuration_get_data_server(connection->configuration, i));
+			J_CRITICAL("Can not connect to %s.", j_configuration_get_data_server(connection->configuration, i));
 		}
 
 		j_helper_set_nodelay(connection->sockets[i], TRUE);

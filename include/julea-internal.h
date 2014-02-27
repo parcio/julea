@@ -44,6 +44,8 @@
 
 #define J_STRIPE_SIZE J_MIB(4)
 
+#define J_CRITICAL(format, ...) g_critical("%s: " format, G_STRFUNC, __VA_ARGS__);
+
 /* FIXME j_sync() for benchmarks */
 
 #endif

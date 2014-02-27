@@ -121,7 +121,7 @@ j_configuration_new (void)
 		}
 		else
 		{
-			g_critical("%s: Can not open configuration file %s.", G_STRLOC, env_path);
+			J_CRITICAL("Can not open configuration file %s.", env_path);
 		}
 
 		/* If we do not find the configuration file, stop searching. */
