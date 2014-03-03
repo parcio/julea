@@ -127,11 +127,24 @@ error:
 
 static
 void
-jd_close_file (gpointer data)
+jd_close_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
+{
+	gchar* key;
+
+	key = g_strdup_printf("%s.%s.%s", store, collection, item);
+	g_hash_table_remove(hash_table, key);
+	g_free(key);
+}
+
+static
+void
+jd_file_hash_free (gpointer data)
 {
 	JBackendItem* file = data;
 
 	jd_backend_close(file);
+
+	g_slice_free(JBackendItem, file);
 }
 
 static
@@ -165,7 +178,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, jd_close_file);
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, jd_file_hash_free);
 
 	while (j_message_read(message, input))
 	{
@@ -218,10 +231,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						bf = jd_open_file(files, store, collection, item);
 
-						if (bf != NULL && jd_backend_delete(bf))
+						if (bf != NULL)
 						{
+							jd_backend_delete(bf);
+							jd_close_file(files, store, collection, item);
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							//jd_backend_close(bf);
 						}
 
 						if (reply != NULL)
@@ -351,8 +365,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						if (reply != NULL)
 						{
+							// FIXME the reply is faked (length should be bytes_written)
 							j_message_add_operation(reply, sizeof(guint64));
-							j_message_append_8(reply, &bytes_written);
+							j_message_append_8(reply, &length);
 						}
 					}
 
