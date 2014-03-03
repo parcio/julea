@@ -255,6 +255,11 @@ j_connection_connect (JConnection* connection)
 
 	for (i = 0; i < connection->sockets_len; i++)
 	{
+#if 0
+		JMessage* message;
+		JMessage* reply;
+#endif
+
 		connection->sockets[i] = g_socket_client_connect_to_host(client, j_configuration_get_data_server(connection->configuration, i), 4711, NULL, &error);
 
 		if (error != NULL)
@@ -271,6 +276,17 @@ j_connection_connect (JConnection* connection)
 		j_helper_set_nodelay(connection->sockets[i], TRUE);
 
 		ret = ret && (connection->sockets[i] != NULL);
+
+#if 0
+		message = j_message_new(J_MESSAGE_HELLO, 0);
+		j_message_write(message, g_io_stream_get_output_stream(G_IO_STREAM(connection->sockets[i])));
+
+		reply = j_message_new_reply(message);
+		j_message_read(reply, g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i])));
+
+		j_message_unref(message);
+		j_message_unref(reply);
+#endif
 	}
 
 	g_object_unref(client);

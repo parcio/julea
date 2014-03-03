@@ -147,6 +147,10 @@ jd_file_hash_free (gpointer data)
 	g_slice_free(JBackendItem, file);
 }
 
+#if 0
+static guint jd_thread_num = 0;
+#endif
+
 static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
@@ -497,6 +501,19 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
+#if 0
+			case J_MESSAGE_HELLO:
+				{
+					JMessage* reply;
+
+					g_atomic_int_add(&jd_thread_num, 1);
+
+					reply = j_message_new_reply(message);
+					j_message_write(reply, output);
+					j_message_unref(reply);
+				}
+				break;
+#endif
 			case J_MESSAGE_REPLY:
 			case J_MESSAGE_SAFETY_NETWORK:
 			case J_MESSAGE_SAFETY_STORAGE:
