@@ -886,7 +886,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 {
 	gboolean ret = FALSE;
 
-	JListIterator* iterator;
+	JListIterator* iterator = NULL;
 	GError* error = NULL;
 	gsize bytes_written;
 
@@ -927,6 +927,11 @@ j_message_write (JMessage* message, GOutputStream* stream)
 	ret = TRUE;
 
 end:
+	if (iterator != NULL)
+	{
+		j_list_iterator_free(iterator);
+	}
+
 	if (error != NULL)
 	{
 		J_CRITICAL("%s", error->message);
