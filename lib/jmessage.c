@@ -918,8 +918,6 @@ j_message_write (JMessage* message, GOutputStream* stream)
 				goto end;
 			}
 		}
-
-		j_list_iterator_free(iterator);
 	}
 
 	g_output_stream_flush(stream, NULL, NULL);
