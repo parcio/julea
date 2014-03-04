@@ -174,6 +174,8 @@ distribution_free (gpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
+	g_slice_free(JDistributionRoundRobin, distribution);
+
 	j_trace_leave(G_STRFUNC);
 }
 

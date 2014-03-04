@@ -198,6 +198,8 @@ distribution_free (gpointer data)
 
 	g_free(distribution->weights);
 
+	g_slice_free(JDistributionWeighted, distribution);
+
 	j_trace_leave(G_STRFUNC);
 }
 
