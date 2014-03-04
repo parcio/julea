@@ -87,7 +87,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	pool->data_len = j_configuration_get_data_server_count(configuration);
 	pool->data_queues = g_new(JConnectionPoolQueue, pool->data_len);
 	pool->meta_len = j_configuration_get_metadata_server_count(configuration);
-	pool->meta_queues = g_new(JConnectionPoolQueue, pool->data_len);
+	pool->meta_queues = g_new(JConnectionPoolQueue, pool->meta_len);
 	pool->max_count = j_helper_get_processor_count();
 
 	for (guint i = 0; i < pool->data_len; i++)
@@ -239,6 +239,7 @@ j_connection_pool_push_data (guint index, GSocketConnection* connection)
 {
 	g_return_if_fail(j_connection_pool != NULL);
 	g_return_if_fail(index < j_connection_pool->data_len);
+	g_return_if_fail(connection != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -273,11 +274,11 @@ j_connection_pool_pop_meta (guint index)
 			connection = g_slice_new(mongo);
 			mongo_init(connection);
 
-			ret = (mongo_client(connection, j_configuration_get_metadata_server(j_connection_pool->configuration, 0), 27017) == MONGO_OK);
+			ret = (mongo_client(connection, j_configuration_get_metadata_server(j_connection_pool->configuration, index), 27017) == MONGO_OK);
 
 			if (!ret)
 			{
-				J_CRITICAL("Can not connect to MongoDB %s [%d].", j_configuration_get_metadata_server(j_connection_pool->configuration, 0), g_atomic_int_get(&(j_connection_pool->meta_queues[index].count)));
+				J_CRITICAL("Can not connect to MongoDB %s [%d].", j_configuration_get_metadata_server(j_connection_pool->configuration, index), g_atomic_int_get(&(j_connection_pool->meta_queues[index].count)));
 			}
 		}
 		else
@@ -304,6 +305,7 @@ j_connection_pool_push_meta (guint index, mongo* connection)
 {
 	g_return_if_fail(j_connection_pool != NULL);
 	g_return_if_fail(index < j_connection_pool->meta_len);
+	g_return_if_fail(connection != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
