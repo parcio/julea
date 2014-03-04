@@ -50,6 +50,10 @@ static JStatistics* jd_statistics;
 
 G_LOCK_DEFINE_STATIC(jd_statistics);
 
+#ifdef J_USE_HELLO
+static guint jd_thread_num = 0;
+#endif
+
 static
 gboolean
 jd_signal (gpointer data)
@@ -145,10 +149,6 @@ jd_file_hash_free (gpointer data)
 
 	g_slice_free(JBackendItem, file);
 }
-
-#if 0
-static guint jd_thread_num = 0;
-#endif
 
 static
 gboolean
@@ -498,12 +498,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-#if 0
+#ifdef J_USE_HELLO
 			case J_MESSAGE_HELLO:
 				{
 					JMessage* reply;
+					guint num;
 
-					g_atomic_int_add(&jd_thread_num, 1);
+					num = g_atomic_int_add(&jd_thread_num, 1);
+
+					g_print("HELLO %d\n", num);
 
 					reply = j_message_new_reply(message);
 					j_message_send(reply, connection);

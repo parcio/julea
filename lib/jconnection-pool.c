@@ -38,6 +38,7 @@
 #include <jconnection-pool-internal.h>
 
 #include <jhelper-internal.h>
+#include <jmessage-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -180,9 +181,9 @@ j_connection_pool_pop_data (guint index)
 			GError* error = NULL;
 			GSocketClient* client;
 
-#if 0
-				JMessage* message;
-				JMessage* reply;
+#ifdef J_USE_HELLO
+			JMessage* message;
+			JMessage* reply;
 #endif
 
 			client = g_socket_client_new();
@@ -202,12 +203,12 @@ j_connection_pool_pop_data (guint index)
 
 			j_helper_set_nodelay(connection, TRUE);
 
-#if 0
+#ifdef J_USE_HELLO
 				message = j_message_new(J_MESSAGE_HELLO, 0);
 				j_message_send(message, connection);
 
 				reply = j_message_new_reply(message);
-				j_message_receive(reply, g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i])));
+				j_message_receive(reply, connection);
 
 				j_message_unref(message);
 				j_message_unref(reply);

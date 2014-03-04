@@ -21,6 +21,7 @@ def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
+	ctx.add_option('--use-hello', action='store_true', default=False, help='Use hello message')
 
 	ctx.add_option('--hdtrace', action='store', default='%s/external/hdtrace' % (Context.run_dir,), help='HDTrace prefix')
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb-client' % (Context.run_dir,), help='MongoDB client prefix')
@@ -232,6 +233,9 @@ def configure (ctx):
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 	else:
 		ctx.env.CFLAGS += ['-O2']
+
+	if ctx.options.use_hello:
+		ctx.define('J_USE_HELLO', 1)
 
 	ctx.define('DAEMON_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
