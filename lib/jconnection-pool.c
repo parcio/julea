@@ -37,7 +37,6 @@
 
 #include <jconnection-pool-internal.h>
 
-#include <jconnection-internal.h>
 #include <jhelper-internal.h>
 #include <jtrace-internal.h>
 
@@ -49,14 +48,24 @@
  * @{
  **/
 
+struct JConnectionPoolQueue
+{
+	GAsyncQueue* queue;
+	guint count;
+};
+
+typedef struct JConnectionPoolQueue JConnectionPoolQueue;
+
 /**
  * A connection.
  **/
 struct JConnectionPool
 {
 	JConfiguration* configuration;
-	GAsyncQueue* queue;
-	guint count;
+	JConnectionPoolQueue* data_queues;
+	JConnectionPoolQueue* meta_queues;
+	guint data_len;
+	guint meta_len;
 	guint max_count;
 };
 
@@ -75,9 +84,23 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	pool = g_slice_new(JConnectionPool);
 	pool->configuration = j_configuration_ref(configuration);
-	pool->queue = g_async_queue_new();
-	pool->count = 0;
+	pool->data_len = j_configuration_get_data_server_count(configuration);
+	pool->data_queues = g_new(JConnectionPoolQueue, pool->data_len);
+	pool->meta_len = j_configuration_get_metadata_server_count(configuration);
+	pool->meta_queues = g_new(JConnectionPoolQueue, pool->data_len);
 	pool->max_count = j_helper_get_processor_count();
+
+	for (guint i = 0; i < pool->data_len; i++)
+	{
+		pool->data_queues[i].queue = g_async_queue_new();
+		pool->data_queues[i].count = 0;
+	}
+
+	for (guint i = 0; i < pool->meta_len; i++)
+	{
+		pool->meta_queues[i].queue = g_async_queue_new();
+		pool->meta_queues[i].count = 0;
+	}
 
 	g_atomic_pointer_set(&j_connection_pool, pool);
 
@@ -87,7 +110,6 @@ j_connection_pool_init (JConfiguration* configuration)
 void
 j_connection_pool_fini (void)
 {
-	JConnection* connection;
 	JConnectionPool* pool;
 
 	g_return_if_fail(j_connection_pool != NULL);
@@ -97,51 +119,105 @@ j_connection_pool_fini (void)
 	pool = g_atomic_pointer_get(&j_connection_pool);
 	g_atomic_pointer_set(&j_connection_pool, NULL);
 
-	while ((connection = g_async_queue_try_pop(pool->queue)) != NULL)
+	for (guint i = 0; i < pool->data_len; i++)
 	{
-		j_connection_disconnect(connection);
-		j_connection_unref(connection);
+		GSocketConnection* connection;
+
+		while ((connection = g_async_queue_try_pop(pool->data_queues[i].queue)) != NULL)
+		{
+			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
+			g_object_unref(connection);
+		}
+
+		g_async_queue_unref(pool->data_queues[i].queue);
 	}
 
-	g_async_queue_unref(pool->queue);
+	for (guint i = 0; i < pool->meta_len; i++)
+	{
+		mongo* connection;
+
+		while ((connection = g_async_queue_try_pop(pool->meta_queues[i].queue)) != NULL)
+		{
+			mongo_disconnect(connection);
+			mongo_destroy(connection);
+			g_slice_free(mongo, connection);
+		}
+
+		g_async_queue_unref(pool->meta_queues[i].queue);
+	}
+
 	j_configuration_unref(pool->configuration);
+
+	g_free(pool->data_queues);
+	g_free(pool->meta_queues);
 
 	g_slice_free(JConnectionPool, pool);
 
 	j_trace_leave(G_STRFUNC);
 }
 
-JConnection*
-j_connection_pool_pop (void)
+GSocketConnection*
+j_connection_pool_pop_data (guint index)
 {
-	JConnection* connection;
+	GSocketConnection* connection;
 
 	g_return_val_if_fail(j_connection_pool != NULL, NULL);
+	g_return_val_if_fail(index < j_connection_pool->data_len, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	connection = g_async_queue_try_pop(j_connection_pool->queue);
+	connection = g_async_queue_try_pop(j_connection_pool->data_queues[index].queue);
 
 	if (connection != NULL)
 	{
 		goto end;
 	}
 
-	if ((guint)g_atomic_int_get(&(j_connection_pool->count)) < j_connection_pool->max_count)
+	if ((guint)g_atomic_int_get(&(j_connection_pool->data_queues[index].count)) < j_connection_pool->max_count)
 	{
-		if ((guint)g_atomic_int_add(&(j_connection_pool->count), 1) < j_connection_pool->max_count)
+		if ((guint)g_atomic_int_add(&(j_connection_pool->data_queues[index].count), 1) < j_connection_pool->max_count)
 		{
-			connection = j_connection_new(j_connection_pool->configuration);
+			GError* error = NULL;
+			GSocketClient* client;
 
-			// FIXME
-			if (!j_connection_connect(connection))
+#if 0
+				JMessage* message;
+				JMessage* reply;
+#endif
+
+			client = g_socket_client_new();
+
+			connection = g_socket_client_connect_to_host(client, j_configuration_get_data_server(j_connection_pool->configuration, index), 4711, NULL, &error);
+
+			if (error != NULL)
 			{
-				J_CRITICAL("Failed to connect [%d].", g_atomic_int_get(&(j_connection_pool->count)));
+				J_CRITICAL("%s", error->message);
+				g_error_free(error);
 			}
+
+			if (connection == NULL)
+			{
+				J_CRITICAL("Can not connect to %s [%d].", j_configuration_get_data_server(j_connection_pool->configuration, index), g_atomic_int_get(&(j_connection_pool->data_queues[index].count)));
+			}
+
+			j_helper_set_nodelay(connection, TRUE);
+
+#if 0
+				message = j_message_new(J_MESSAGE_HELLO, 0);
+				j_message_send(message, connection);
+
+				reply = j_message_new_reply(message);
+				j_message_receive(reply, g_io_stream_get_input_stream(G_IO_STREAM(connection->sockets[i])));
+
+				j_message_unref(message);
+				j_message_unref(reply);
+#endif
+
+			g_object_unref(client);
 		}
 		else
 		{
-			g_atomic_int_add(&(j_connection_pool->count), -1);
+			g_atomic_int_add(&(j_connection_pool->data_queues[index].count), -1);
 		}
 	}
 
@@ -150,7 +226,7 @@ j_connection_pool_pop (void)
 		goto end;
 	}
 
-	connection = g_async_queue_pop(j_connection_pool->queue);
+	connection = g_async_queue_pop(j_connection_pool->data_queues[index].queue);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -159,13 +235,79 @@ end:
 }
 
 void
-j_connection_pool_push (JConnection* connection)
+j_connection_pool_push_data (guint index, GSocketConnection* connection)
 {
 	g_return_if_fail(j_connection_pool != NULL);
+	g_return_if_fail(index < j_connection_pool->data_len);
 
 	j_trace_enter(G_STRFUNC);
 
-	g_async_queue_push(j_connection_pool->queue, connection);
+	g_async_queue_push(j_connection_pool->data_queues[index].queue, connection);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+mongo*
+j_connection_pool_pop_meta (guint index)
+{
+	mongo* connection;
+
+	g_return_val_if_fail(j_connection_pool != NULL, NULL);
+	g_return_val_if_fail(index < j_connection_pool->meta_len, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	connection = g_async_queue_try_pop(j_connection_pool->meta_queues[index].queue);
+
+	if (connection != NULL)
+	{
+		goto end;
+	}
+
+	if ((guint)g_atomic_int_get(&(j_connection_pool->meta_queues[index].count)) < j_connection_pool->max_count)
+	{
+		if ((guint)g_atomic_int_add(&(j_connection_pool->meta_queues[index].count), 1) < j_connection_pool->max_count)
+		{
+			gboolean ret;
+
+			connection = g_slice_new(mongo);
+			mongo_init(connection);
+
+			ret = (mongo_client(connection, j_configuration_get_metadata_server(j_connection_pool->configuration, 0), 27017) == MONGO_OK);
+
+			if (!ret)
+			{
+				J_CRITICAL("Can not connect to MongoDB %s [%d].", j_configuration_get_metadata_server(j_connection_pool->configuration, 0), g_atomic_int_get(&(j_connection_pool->meta_queues[index].count)));
+			}
+		}
+		else
+		{
+			g_atomic_int_add(&(j_connection_pool->meta_queues[index].count), -1);
+		}
+	}
+
+	if (connection != NULL)
+	{
+		goto end;
+	}
+
+	connection = g_async_queue_pop(j_connection_pool->meta_queues[index].queue);
+
+end:
+	j_trace_leave(G_STRFUNC);
+
+	return connection;
+}
+
+void
+j_connection_pool_push_meta (guint index, mongo* connection)
+{
+	g_return_if_fail(j_connection_pool != NULL);
+	g_return_if_fail(index < j_connection_pool->meta_len);
+
+	j_trace_enter(G_STRFUNC);
+
+	g_async_queue_push(j_connection_pool->meta_queues[index].queue, connection);
 
 	j_trace_leave(G_STRFUNC);
 }

@@ -39,7 +39,6 @@
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
 #include <jlist.h>
@@ -319,7 +318,6 @@ j_store_collection_collections (JStore* store)
 gboolean
 j_store_create_collection_internal (JBatch* batch, JList* operations)
 {
-	JConnection* connection;
 	JListIterator* it;
 	JStore* store = NULL;
 	bson** obj;
@@ -368,8 +366,7 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 	bson_append_int(&index, "Name", 1);
 	bson_finish(&index);
 
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 	ret = j_helper_insert_batch(mongo_connection, j_store_collection_collections(store), obj, length, write_concern);
@@ -385,7 +382,7 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 	}
 	*/
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 
 	bson_destroy(&index);
 
@@ -428,7 +425,6 @@ end:
 gboolean
 j_store_delete_collection_internal (JBatch* batch, JList* operations)
 {
-	JConnection* connection;
 	JListIterator* it;
 	JStore* store = NULL;
 	mongo* mongo_connection;
@@ -445,8 +441,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	it = j_list_iterator_new(operations);
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -467,7 +462,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 		bson_destroy(&b);
 	}
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	mongo_write_concern_destroy(write_concern);
@@ -490,7 +485,6 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 gboolean
 j_store_get_collection_internal (JBatch* batch, JList* operations)
 {
-	JConnection* connection;
 	JListIterator* it;
 	mongo* mongo_connection;
 	gboolean ret = TRUE;
@@ -503,8 +497,7 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 	*/
 
 	it = j_list_iterator_new(operations);
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -535,7 +528,7 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 		mongo_cursor_destroy(cursor);
 	}
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	return ret;

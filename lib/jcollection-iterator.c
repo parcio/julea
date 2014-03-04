@@ -40,7 +40,6 @@
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
@@ -60,7 +59,7 @@ struct JCollectionIterator
 	mongo_cursor* cursor;
 
 	JCollection* collection;
-	JConnection* connection;
+	mongo* connection;
 };
 
 /**
@@ -85,7 +84,7 @@ j_collection_iterator_new (JCollection* collection)
 
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
-	iterator->connection = j_connection_pool_pop();
+	iterator->connection = j_connection_pool_pop_meta(0);
 
 	bson_init(&fields);
 	bson_append_int(&fields, "_id", 1);
@@ -96,7 +95,7 @@ j_collection_iterator_new (JCollection* collection)
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->cursor = mongo_find(j_connection_get_connection(iterator->connection), j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
+	iterator->cursor = mongo_find(iterator->connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
 
 	bson_destroy(&fields);
 	bson_destroy(&b);
@@ -117,7 +116,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 	g_return_if_fail(iterator != NULL);
 
 	mongo_cursor_destroy(iterator->cursor);
-	j_connection_pool_push(iterator->connection);
+	j_connection_pool_push_meta(0, iterator->connection);
 
 	j_collection_unref(iterator->collection);
 

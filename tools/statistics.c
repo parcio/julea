@@ -32,7 +32,6 @@
 #include <julea.h>
 
 #include <jcommon-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jmessage-internal.h>
 #include <jstatistics-internal.h>
@@ -70,16 +69,17 @@ int
 main (int argc, char** argv)
 {
 	JConfiguration* configuration;
-	JConnection* connection;
 	JMessage* message;
 	JStatistics* statistics_total;
 	gchar get_all;
+
+	(void)argc;
+	(void)argv;
 
 	j_init();
 
 	get_all = 1;
 	configuration = j_configuration();
-	connection = j_connection_pool_pop();
 	statistics_total = j_statistics_new(FALSE);
 
 	message = j_message_new(J_MESSAGE_STATISTICS, sizeof(gchar));
@@ -90,14 +90,16 @@ main (int argc, char** argv)
 	{
 		JMessage* reply;
 		JStatistics* statistics;
+		GSocketConnection* connection;
 		guint64 value;
 
+		connection = j_connection_pool_pop_data(i);
 		statistics = j_statistics_new(FALSE);
 
-		j_connection_send(connection, i, message);
+		j_message_send(message, connection);
 
 		reply = j_message_new_reply(message);
-		j_connection_receive(connection, i, reply);
+		j_message_receive(reply, connection);
 
 		value = j_message_get_8(reply);
 		j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, value);
@@ -142,6 +144,7 @@ main (int argc, char** argv)
 		}
 
 		j_statistics_free(statistics);
+		j_connection_pool_push_data(i, connection);
 	}
 
 	if (j_configuration_get_data_server_count(configuration) > 1)
@@ -152,7 +155,6 @@ main (int argc, char** argv)
 	}
 
 	j_message_unref(message);
-	j_connection_pool_push(connection);
 	j_statistics_free(statistics_total);
 
 	j_fini();

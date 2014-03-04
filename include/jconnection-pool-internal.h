@@ -33,16 +33,21 @@
 #define H_CONNECTION_POOL_INTERNAL
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <julea-internal.h>
 
 #include <jconfiguration-internal.h>
-#include <jconnection-internal.h>
+
+#include <mongo.h>
 
 J_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
 J_GNUC_INTERNAL void j_connection_pool_fini (void);
 
-J_GNUC_INTERNAL JConnection* j_connection_pool_pop (void);
-J_GNUC_INTERNAL void j_connection_pool_push (JConnection*);
+J_GNUC_INTERNAL GSocketConnection* j_connection_pool_pop_data (guint);
+J_GNUC_INTERNAL void j_connection_pool_push_data (guint, GSocketConnection*);
+
+J_GNUC_INTERNAL mongo* j_connection_pool_pop_meta (guint);
+J_GNUC_INTERNAL void j_connection_pool_push_meta (guint, mongo*);
 
 #endif

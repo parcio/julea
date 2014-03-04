@@ -33,6 +33,7 @@
 #define H_MESSAGE_INTERNAL
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <julea-internal.h>
 
@@ -60,8 +61,6 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
-#include <gio/gio.h>
-
 #include <jsemantics.h>
 
 J_GNUC_INTERNAL JMessage* j_message_new (JMessageType, gsize);
@@ -83,6 +82,9 @@ J_GNUC_INTERNAL gchar j_message_get_1 (JMessage*);
 J_GNUC_INTERNAL gint32 j_message_get_4 (JMessage*);
 J_GNUC_INTERNAL gint64 j_message_get_8 (JMessage*);
 J_GNUC_INTERNAL gchar const* j_message_get_string (JMessage*);
+
+J_GNUC_INTERNAL gboolean j_message_send (JMessage*, GSocketConnection*);
+J_GNUC_INTERNAL gboolean j_message_receive (JMessage*, GSocketConnection*);
 
 J_GNUC_INTERNAL gboolean j_message_read (JMessage*, GInputStream*);
 J_GNUC_INTERNAL gboolean j_message_write (JMessage*, GOutputStream*);

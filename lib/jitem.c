@@ -45,7 +45,6 @@
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
 #include <jdistribution.h>
@@ -77,16 +76,13 @@ struct JItemBackgroundData
 	/**
 	 * The connection.
 	 */
-	JConnection* connection;
+	GSocketConnection* connection;
 
 	/**
 	 * The message to send.
 	 */
 	JMessage* message;
 
-	/**
-	 * The data server's index.
-	 */
 	guint index;
 
 	/**
@@ -249,7 +245,7 @@ j_item_read_background_operation (gpointer data)
 	guint32 operation_count;
 	guint64 nbytes;
 
-	j_connection_send(background_data->connection, background_data->index, background_data->message);
+	j_message_send(background_data->message, background_data->connection);
 
 	reply = j_message_new_reply(background_data->message);
 	iterator = j_list_iterator_new(background_data->u.read.buffer_list);
@@ -261,7 +257,7 @@ j_item_read_background_operation (gpointer data)
 	{
 		guint32 reply_operation_count;
 
-		j_connection_receive(background_data->connection, background_data->index, reply);
+		j_message_receive(reply, background_data->connection);
 
 		reply_operation_count = j_message_get_count(reply);
 
@@ -275,7 +271,10 @@ j_item_read_background_operation (gpointer data)
 
 			if (nbytes > 0)
 			{
-				j_connection_receive_data(background_data->connection, background_data->index, buffer->data, nbytes);
+				GInputStream* input;
+
+				input = g_io_stream_get_input_stream(G_IO_STREAM(background_data->connection));
+				g_input_stream_read_all(input, buffer->data, nbytes, NULL, NULL, NULL);
 			}
 
 			g_slice_free(JItemReadData, buffer);
@@ -318,15 +317,19 @@ j_item_write_background_operation (gpointer data)
 	if (background_data->u.write.create_message != NULL)
 	{
 		/* FIXME reply? */
-		j_connection_send(background_data->connection, background_data->index, background_data->u.write.create_message);
+		j_message_send(background_data->u.write.create_message, background_data->connection);
 	}
 
-	j_connection_send(background_data->connection, background_data->index, background_data->message);
+	j_message_send(background_data->message, background_data->connection);
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
+		guint64 nbytes;
+
 		reply = j_message_new_reply(background_data->message);
-		j_connection_receive(background_data->connection, background_data->index, reply);
+		j_message_receive(reply, background_data->connection);
+
+		nbytes = j_message_get_8(reply);
 
 		/* FIXME do something with reply */
 		j_message_unref(reply);
@@ -355,12 +358,12 @@ j_item_get_status_background_operation (gpointer data)
 	JMessage* reply;
 
 	/* FIXME reply? */
-	j_connection_send(background_data->connection, background_data->index, background_data->message);
+	j_message_send(background_data->message, background_data->connection);
 
 	reply = j_message_new_reply(background_data->message);
 	iterator = j_list_iterator_new(background_data->u.read_status.buffer_list);
 
-	j_connection_receive(background_data->connection, background_data->index, reply);
+	j_message_receive(reply, background_data->connection);
 
 	while (j_list_iterator_next(iterator))
 	{
@@ -1057,7 +1060,6 @@ gboolean
 j_item_read_internal (JBatch* batch, JList* operations)
 {
 	JBackgroundOperation** background_operations;
-	JConnection* connection;
 	JItem* item;
 	JList** buffer_list;
 	JListIterator* iterator;
@@ -1180,8 +1182,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		while (!j_lock_acquire(lock));
 	}
 
-	connection = j_connection_pool_pop();
-
 	// FIXME ugly
 	m = 0;
 
@@ -1203,7 +1203,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		}
 
 		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = connection;
+		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
 		background_data->u.read.buffer_list = buffer_list[i];
@@ -1216,6 +1216,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		else
 		{
 			j_item_read_background_operation(background_data);
+
+			j_connection_pool_push_data(i, background_data->connection);
 
 			g_slice_free(JItemBackgroundData, background_data);
 		}
@@ -1230,6 +1232,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 			background_data = j_background_operation_wait(background_operations[i]);
 			j_background_operation_unref(background_operations[i]);
 
+			j_connection_pool_push_data(i, background_data->connection);
+
 			g_slice_free(JItemBackgroundData, background_data);
 		}
 
@@ -1240,8 +1244,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		j_list_unref(buffer_list[i]);
 	}
-
-	j_connection_pool_push(connection);
 
 	if (lock != NULL)
 	{
@@ -1261,7 +1263,6 @@ gboolean
 j_item_write_internal (JBatch* batch, JList* operations)
 {
 	JBackgroundOperation** background_operations;
-	JConnection* connection;
 	JItem* item;
 	JListIterator* iterator;
 	JLock* lock = NULL;
@@ -1384,8 +1385,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		while (!j_lock_acquire(lock));
 	}
 
-	connection = j_connection_pool_pop();
-
 	m = 0;
 
 	for (guint i = 0; i < n; i++)
@@ -1429,7 +1428,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		}
 
 		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = connection;
+		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
 		background_data->u.write.create_message = create_message;
@@ -1446,6 +1445,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			{
 				j_message_unref(create_message);
 			}
+
+			j_connection_pool_push_data(i, background_data->connection);
 
 			g_slice_free(JItemBackgroundData, background_data);
 		}
@@ -1465,6 +1466,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 				j_message_unref(background_data->u.write.create_message);
 			}
 
+			j_connection_pool_push_data(i, background_data->connection);
+
 			g_slice_free(JItemBackgroundData, background_data);
 		}
 
@@ -1478,6 +1481,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	{
 		bson cond[1];
 		bson op[1];
+		mongo* mongo_connection;
 		mongo_write_concern write_concern[1];
 		gint ret;
 
@@ -1505,8 +1509,12 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		bson_finish(op);
 
-		ret = mongo_update(j_connection_get_connection(connection), j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
+		mongo_connection = j_connection_pool_pop_meta(0);
+
+		ret = mongo_update(mongo_connection, j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
 		g_assert(ret == MONGO_OK);
+
+		j_connection_pool_push_meta(0, mongo_connection);
 
 		if (ret != MONGO_OK)
 		{
@@ -1518,8 +1526,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		mongo_write_concern_destroy(write_concern);
 	}
-
-	j_connection_pool_push(connection);
 
 	if (lock != NULL)
 	{
@@ -1539,11 +1545,11 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 {
 	gboolean ret = TRUE;
 	JBackgroundOperation** background_operations;
-	JConnection* connection = NULL;
 	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
 	JSemantics* semantics;
+	mongo* mongo_connection = NULL;
 	gint semantics_concurrency;
 	gint semantics_consistency;
 	guint n;
@@ -1565,11 +1571,10 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	}
 
 	iterator = j_list_iterator_new(operations);
+	mongo_connection = j_connection_pool_pop_meta(0);
 	semantics = j_batch_get_semantics(batch);
 	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
 	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
-
-	connection = j_connection_pool_pop();
 
 	while (j_list_iterator_next(iterator))
 	{
@@ -1613,7 +1618,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			bson_append_oid(&b, "_id", &(item->id));
 			bson_finish(&b);
 
-			cursor = mongo_find(j_connection_get_connection(connection), j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
+			cursor = mongo_find(mongo_connection, j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
 
 			bson_destroy(&fields);
 			bson_destroy(&b);
@@ -1671,6 +1676,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	}
 
 	j_list_iterator_free(iterator);
+	j_connection_pool_push_meta(0, mongo_connection);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -1682,7 +1688,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		}
 
 		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = connection;
+		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
 		background_data->u.read_status.buffer_list = buffer_list;
@@ -1699,6 +1705,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			background_data = j_background_operation_wait(background_operations[i]);
 			j_background_operation_unref(background_operations[i]);
 
+			j_connection_pool_push_data(i, background_data->connection);
+
 			g_slice_free(JItemBackgroundData, background_data);
 		}
 
@@ -1708,8 +1716,6 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		}
 
 	}
-
-	j_connection_pool_push(connection);
 
 	iterator = j_list_iterator_new(buffer_list);
 

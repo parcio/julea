@@ -38,7 +38,6 @@
 
 #include <jstore.h>
 
-#include <jconnection-internal.h>
 #include <jlist.h>
 
 J_GNUC_INTERNAL JStore* j_store_new (gchar const*);

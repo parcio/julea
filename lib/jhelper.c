@@ -74,6 +74,26 @@ j_helper_set_nodelay (GSocketConnection* connection, gboolean enable)
 	j_trace_leave(G_STRFUNC);
 }
 
+void
+j_helper_set_cork (GSocketConnection* connection, gboolean enable)
+{
+	gint const flag = (enable) ? 1 : 0;
+
+	GSocket* socket_;
+	gint fd;
+
+	g_return_if_fail(connection != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	socket_ = g_socket_connection_get_socket(connection);
+	fd = g_socket_get_fd(socket_);
+
+	setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(gint));
+
+	j_trace_leave(G_STRFUNC);
+}
+
 guint
 j_helper_get_processor_count (void)
 {

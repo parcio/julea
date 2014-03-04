@@ -39,7 +39,6 @@
 #include <jcommon.h>
 
 #include <jconfiguration-internal.h>
-#include <jconnection-internal.h>
 #include <jlist.h>
 #include <jtrace-internal.h>
 

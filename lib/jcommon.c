@@ -41,7 +41,6 @@
 
 #include <jbackground-operation-internal.h>
 #include <jconfiguration-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jdistribution-internal.h>
 #include <jlist.h>
@@ -399,7 +398,6 @@ j_create_store_internal (JBatch* batch, JList* operations)
 gboolean
 j_delete_store_internal (JBatch* batch, JList* operations)
 {
-	JConnection* connection;
 	JListIterator* it;
 	mongo* mongo_connection;
 
@@ -411,8 +409,7 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 	*/
 
 	it = j_list_iterator_new(operations);
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	while (j_list_iterator_next(it))
 	{
@@ -422,7 +419,7 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 		mongo_cmd_drop_db(mongo_connection, j_store_get_name(store));
 	}
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	return TRUE;

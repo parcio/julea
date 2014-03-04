@@ -42,6 +42,7 @@
 #include <mongo.h>
 
 J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
+J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
 J_GNUC_INTERNAL guint j_helper_get_processor_count (void);
 

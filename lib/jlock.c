@@ -40,7 +40,6 @@
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
-#include <jconnection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
@@ -200,7 +199,6 @@ gboolean
 j_lock_acquire (JLock* lock)
 {
 	JCollection* collection;
-	JConnection* connection;
 	bson obj[1];
 	bson index[1];
 	mongo* mongo_connection;
@@ -223,13 +221,12 @@ j_lock_acquire (JLock* lock)
 	bson_append_int(index, "Blocks", 1);
 	bson_finish(index);
 
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 	lock->acquired = (mongo_insert(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 
 	bson_destroy(index);
 	bson_destroy(obj);
@@ -243,7 +240,6 @@ gboolean
 j_lock_release (JLock* lock)
 {
 	JCollection* collection;
-	JConnection* connection;
 	bson obj[1];
 	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
@@ -262,12 +258,11 @@ j_lock_release (JLock* lock)
 	bson_append_oid(obj, "_id", &(lock->id));
 	bson_finish(obj);
 
-	connection = j_connection_pool_pop();
-	mongo_connection = j_connection_get_connection(connection);
+	mongo_connection = j_connection_pool_pop_meta(0);
 
 	lock->acquired = !(mongo_remove(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
-	j_connection_pool_push(connection);
+	j_connection_pool_push_meta(0, mongo_connection);
 
 	bson_destroy(obj);
 	mongo_write_concern_destroy(write_concern);

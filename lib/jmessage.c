@@ -38,6 +38,7 @@
 
 #include <jmessage-internal.h>
 
+#include <jhelper-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
@@ -793,6 +794,76 @@ j_message_get_string (JMessage* message)
 
 	ret = message->current;
 	message->current += strlen(ret) + 1;
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+/**
+ * Reads a message from the network.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \parem stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_message_receive (JMessage* message, GSocketConnection* connection)
+{
+	gboolean ret;
+
+	GInputStream* stream;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(connection != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	stream = g_io_stream_get_input_stream(G_IO_STREAM(connection));
+	ret = j_message_read(message, stream);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+/**
+ * Writes a message to the network.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \parem stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_message_send (JMessage* message, GSocketConnection* connection)
+{
+	gboolean ret;
+
+	GOutputStream* stream;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(connection != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	j_helper_set_cork(connection, TRUE);
+
+	stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
+	ret = j_message_write(message, stream);
+
+	j_helper_set_cork(connection, FALSE);
 
 	j_trace_leave(G_STRFUNC);
 

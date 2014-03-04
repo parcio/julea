@@ -38,7 +38,6 @@
 
 #include <julea-internal.h>
 #include <jconfiguration-internal.h>
-#include <jconnection-internal.h>
 #include <jhelper-internal.h>
 #include <jmemory-chunk-internal.h>
 #include <jmessage-internal.h>
@@ -160,7 +159,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	JStatistics* statistics;
 	GHashTable* files;
 	GInputStream* input;
-	GOutputStream* output;
 
 	(void)service;
 	(void)source_object;
@@ -181,10 +179,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-	output = g_io_stream_get_output_stream(G_IO_STREAM(connection));
 	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, jd_file_hash_free);
 
-	while (j_message_read(message, input))
+	while (j_message_receive(message, connection))
 	{
 		JBackendItem* bf;
 		gchar const* store;
@@ -250,7 +247,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					if (reply != NULL)
 					{
-						j_message_write(reply, output);
+						j_message_send(reply, connection);
 						j_message_unref(reply);
 					}
 				}
@@ -282,7 +279,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						if (buf == NULL)
 						{
 							// FIXME ugly
-							j_message_write(reply, output);
+							j_message_send(reply, connection);
 							j_message_unref(reply);
 
 							reply = j_message_new_reply(message);
@@ -307,7 +304,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					//jd_backend_close(bf);
 
-					j_message_write(reply, output);
+					j_message_send(reply, connection);
 					j_message_unref(reply);
 
 					j_memory_chunk_reset(memory_chunk);
@@ -394,7 +391,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					if (reply != NULL)
 					{
-						j_message_write(reply, output);
+						j_message_send(reply, connection);
 						j_message_unref(reply);
 					}
 
@@ -452,7 +449,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						//jd_backend_close(bf);
 					}
 
-					j_message_write(reply, output);
+					j_message_send(reply, connection);
 					j_message_unref(reply);
 				}
 				break;
@@ -497,7 +494,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						G_UNLOCK(jd_statistics);
 					}
 
-					j_message_write(reply, output);
+					j_message_send(reply, connection);
 					j_message_unref(reply);
 				}
 				break;
@@ -509,7 +506,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_atomic_int_add(&jd_thread_num, 1);
 
 					reply = j_message_new_reply(message);
-					j_message_write(reply, output);
+					j_message_send(reply, connection);
 					j_message_unref(reply);
 				}
 				break;
