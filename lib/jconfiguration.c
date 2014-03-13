@@ -85,6 +85,8 @@ struct JConfiguration
 	}
 	storage;
 
+	guint max_connections;
+
 	/**
 	 * The reference count.
 	 */
@@ -184,9 +186,11 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	gchar** metadata;
 	gchar* storage_backend;
 	gchar* storage_path;
+	guint max_connections;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
+	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
 	metadata = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
 	storage_backend = g_key_file_get_string(key_file, "storage", "backend", NULL);
@@ -212,6 +216,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->metadata_len = g_strv_length(metadata);
 	configuration->storage.backend = storage_backend;
 	configuration->storage.path = storage_path;
+	configuration->max_connections = max_connections;
 	configuration->ref_count = 1;
 
 	return configuration;
@@ -316,6 +321,14 @@ j_configuration_get_storage_path (JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->storage.path;
+}
+
+guint
+j_configuration_get_max_connections (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->max_connections;
 }
 
 /**

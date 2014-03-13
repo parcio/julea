@@ -40,6 +40,7 @@ static gchar const* opt_data = NULL;
 static gchar const* opt_metadata = NULL;
 static gchar const* opt_storage_backend = NULL;
 static gchar const* opt_storage_path = NULL;
+static gint opt_max_connections = 0;
 
 static
 gchar**
@@ -104,6 +105,7 @@ write_config (gchar* path)
 	metadata = string_split(opt_metadata);
 
 	key_file = g_key_file_new();
+	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
 	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)data, g_strv_length(data));
 	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)metadata, g_strv_length(metadata));
 	g_key_file_set_string(key_file, "storage", "backend", opt_storage_backend);
@@ -153,6 +155,7 @@ main (gint argc, gchar** argv)
 		{ "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
 		{ "storage-backend", 0, 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "posix|null|gio|…" },
 		{ "storage-path", 0, 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/path/to/storage" },
+		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -180,6 +183,7 @@ main (gint argc, gchar** argv)
 	    || (opt_print && (opt_data != NULL || opt_metadata != NULL || opt_storage_backend != NULL || opt_storage_path != NULL))
 	    || (opt_print && !opt_local && !opt_global)
 	    || (!opt_print && (opt_data == NULL || opt_metadata == NULL || opt_storage_backend == NULL || opt_storage_path == NULL))
+	    || opt_max_connections < 0
 	)
 	{
 		gchar* help;

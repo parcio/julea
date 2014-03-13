@@ -89,7 +89,12 @@ j_connection_pool_init (JConfiguration* configuration)
 	pool->data_queues = g_new(JConnectionPoolQueue, pool->data_len);
 	pool->meta_len = j_configuration_get_metadata_server_count(configuration);
 	pool->meta_queues = g_new(JConnectionPoolQueue, pool->meta_len);
-	pool->max_count = j_helper_get_processor_count();
+	pool->max_count = j_configuration_get_max_connections(configuration);
+
+	if (pool->max_count == 0)
+	{
+		pool->max_count = j_helper_get_processor_count();
+	}
 
 	for (guint i = 0; i < pool->data_len; i++)
 	{
