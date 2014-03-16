@@ -56,19 +56,21 @@ leveldb_writeoptions_t* woptions;
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
 {
 	Object* object = NULL;
 	gchar* path;
 	guint64 object_id;
 	gchar* err = NULL;
 
+	(void)data;
+
 	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(store, collection, item, NULL);
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
-	object = lobject_create(object_store, NULL);
+	object = lobject_create(object_store, 0, NULL);
 	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
 
 	if (object == NULL)
@@ -96,10 +98,12 @@ end:
 
 G_MODULE_EXPORT
 gboolean
-backend_delete (JBackendItem* bf)
+backend_delete (JBackendItem* bf, gpointer data)
 {
 	gboolean ret = TRUE;
 	gchar* err = NULL;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -125,7 +129,7 @@ end:
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
 {
 	Object* object = NULL;
 	gchar* path;
@@ -133,6 +137,8 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	gchar* err = NULL;
 	gchar* value = NULL;
 	gsize value_len;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -168,9 +174,11 @@ end:
 
 G_MODULE_EXPORT
 gboolean
-backend_close (JBackendItem* bf)
+backend_close (JBackendItem* bf, gpointer data)
 {
 	Object* object = bf->user_data;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -191,9 +199,11 @@ backend_close (JBackendItem* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
 {
 	Object* object = bf->user_data;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -217,8 +227,10 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 G_MODULE_EXPORT
 gboolean
-backend_sync (JBackendItem* bf)
+backend_sync (JBackendItem* bf, gpointer data)
 {
+	(void)data;
+
 	/*gint fd = GPOINTER_TO_INT(bf->user_data);
 
 	j_trace_enter(G_STRFUNC);
@@ -239,9 +251,11 @@ backend_sync (JBackendItem* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
 {
 	Object* object = bf->user_data;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -264,9 +278,11 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
 {
 	Object* object = bf->user_data;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 

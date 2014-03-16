@@ -43,12 +43,88 @@
 #include "backend.h"
 #include "backend-internal.h"
 
+struct JBackendFile
+{
+	JBackendItem item;
+	guint ref_count;
+};
+
+typedef struct JBackendFile JBackendFile;
+
+static GHashTable* jd_backend_file_cache = NULL;
 static gchar* jd_backend_path = NULL;
+
+G_LOCK_DEFINE_STATIC(jd_backend_file_cache);
+
+static
+void
+backend_file_unref (gpointer data)
+{
+	JBackendFile* file = data;
+
+	G_LOCK(jd_backend_file_cache);
+
+	if (g_atomic_int_dec_and_test(&(file->ref_count)))
+	{
+		g_hash_table_remove(jd_backend_file_cache, file->item.path);
+
+		jd_backend_close(&(file->item), NULL);
+
+		g_slice_free(JBackendFile, file);
+	}
+
+	G_UNLOCK(jd_backend_file_cache);
+}
+
+static
+JBackendFile*
+backend_file_get (GHashTable* files, gchar const* key)
+{
+	JBackendFile* file = NULL;
+
+	if ((file = g_hash_table_lookup(files, key)) != NULL)
+	{
+		goto end;
+	}
+
+	G_LOCK(jd_backend_file_cache);
+
+	if ((file = g_hash_table_lookup(jd_backend_file_cache, key)) != NULL)
+	{
+		g_atomic_int_inc(&(file->ref_count));
+		g_hash_table_insert(files, file->item.path, file);
+		G_UNLOCK(jd_backend_file_cache);
+	}
+
+	/* Attention: The caller must call backend_file_add() if NULL is returned! */
+
+end:
+	return file;
+}
+
+static
+void
+backend_file_add (GHashTable* files, JBackendItem* backend_item)
+{
+	JBackendFile* file;
+
+	file = g_slice_new(JBackendFile);
+	file->item = *backend_item;
+	file->ref_count = 1;
+
+	g_hash_table_insert(jd_backend_file_cache, file->item.path, file);
+	g_hash_table_insert(files, file->item.path, file);
+
+	G_UNLOCK(jd_backend_file_cache);
+}
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
 {
+	GHashTable* files = data;
+
+	JBackendFile* file;
 	gchar* parent;
 	gchar* path;
 	gint fd;
@@ -56,6 +132,17 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+
+	if ((file = backend_file_get(files, path)) != NULL)
+	{
+		g_free(path);
+
+		// FIXME
+		fd = 0;
+		*bf = file->item;
+
+		goto end;
+	}
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
 
@@ -70,6 +157,9 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	bf->path = path;
 	bf->user_data = GINT_TO_POINTER(fd);
 
+	backend_file_add(files, bf);
+
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
@@ -77,8 +167,10 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 
 G_MODULE_EXPORT
 gboolean
-backend_delete (JBackendItem* bf)
+backend_delete (JBackendItem* bf, gpointer data)
 {
+	GHashTable* files = data;
+
 	gboolean ret;
 
 	j_trace_enter(G_STRFUNC);
@@ -87,6 +179,8 @@ backend_delete (JBackendItem* bf)
 	ret = (g_unlink(bf->path) == 0);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
+	g_hash_table_remove(files, bf->path);
+
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -94,14 +188,28 @@ backend_delete (JBackendItem* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item)
+backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
 {
+	GHashTable* files = data;
+
+	JBackendFile* file;
 	gchar* path;
 	gint fd;
 
 	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+
+	if ((file = backend_file_get(files, path)) != NULL)
+	{
+		g_free(path);
+
+		// FIXME
+		fd = 0;
+		*bf = file->item;
+
+		goto end;
+	}
 
 	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
 	fd = open(path, O_RDWR);
@@ -110,6 +218,9 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	bf->path = path;
 	bf->user_data = GINT_TO_POINTER(fd);
 
+	backend_file_add(files, bf);
+
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
@@ -117,11 +228,16 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 
 G_MODULE_EXPORT
 gboolean
-backend_close (JBackendItem* bf)
+backend_close (JBackendItem* bf, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
 	j_trace_enter(G_STRFUNC);
+
+	if (data != NULL)
+	{
+		goto end;
+	}
 
 	if (fd != -1)
 	{
@@ -132,6 +248,7 @@ backend_close (JBackendItem* bf)
 
 	g_free(bf->path);
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
@@ -139,9 +256,11 @@ backend_close (JBackendItem* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -175,9 +294,11 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 G_MODULE_EXPORT
 gboolean
-backend_sync (JBackendItem* bf)
+backend_sync (JBackendItem* bf, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -195,10 +316,12 @@ backend_sync (JBackendItem* bf)
 
 G_MODULE_EXPORT
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -221,10 +344,12 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 G_MODULE_EXPORT
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;
+
+	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
@@ -246,12 +371,35 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 G_MODULE_EXPORT
+gpointer
+backend_thread_init (void)
+{
+	GHashTable* files;
+
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, backend_file_unref);
+
+	return files;
+}
+
+G_MODULE_EXPORT
+void
+backend_thread_fini (gpointer data)
+{
+	GHashTable* files = data;
+
+	g_return_if_fail(data != NULL);
+
+	g_hash_table_destroy(files);
+}
+
+G_MODULE_EXPORT
 gboolean
 backend_init (gchar const* path)
 {
 	j_trace_enter(G_STRFUNC);
 
 	jd_backend_path = g_strdup(path);
+	jd_backend_file_cache = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
 	g_mkdir_with_parents(path, 0700);
 
@@ -265,6 +413,9 @@ void
 backend_fini (void)
 {
 	j_trace_enter(G_STRFUNC);
+
+	g_assert(g_hash_table_size(jd_backend_file_cache) == 0);
+	g_hash_table_destroy(jd_backend_file_cache);
 
 	g_free(jd_backend_path);
 

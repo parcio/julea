@@ -46,19 +46,19 @@ typedef struct JBackendItem JBackendItem;
 gboolean (*jd_backend_init) (gchar const*) = NULL;
 void (*jd_backend_fini) (void) = NULL;
 
-gboolean (*jd_backend_thread_init) (void) = NULL;
-void (*jd_backend_thread_fini) (void) = NULL;
+gpointer (*jd_backend_thread_init) (void) = NULL;
+void (*jd_backend_thread_fini) (gpointer) = NULL;
 
-gboolean (*jd_backend_create) (JBackendItem*, gchar const*, gchar const*, gchar const*) = NULL;
-gboolean (*jd_backend_delete) (JBackendItem*) = NULL;
+gboolean (*jd_backend_create) (JBackendItem*, gchar const*, gchar const*, gchar const*, gpointer) = NULL;
+gboolean (*jd_backend_delete) (JBackendItem*, gpointer) = NULL;
 
-gboolean (*jd_backend_open) (JBackendItem*, gchar const*, gchar const*, gchar const*) = NULL;
-gboolean (*jd_backend_close) (JBackendItem*) = NULL;
+gboolean (*jd_backend_open) (JBackendItem*, gchar const*, gchar const*, gchar const*, gpointer) = NULL;
+gboolean (*jd_backend_close) (JBackendItem*, gpointer) = NULL;
 
-gboolean (*jd_backend_status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*) = NULL;
-gboolean (*jd_backend_sync) (JBackendItem*) = NULL;
+gboolean (*jd_backend_status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer) = NULL;
+gboolean (*jd_backend_sync) (JBackendItem*, gpointer) = NULL;
 
-gboolean (*jd_backend_read) (JBackendItem*, gpointer, guint64, guint64, guint64*) = NULL;
-gboolean (*jd_backend_write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*) = NULL;
+gboolean (*jd_backend_read) (JBackendItem*, gpointer, guint64, guint64, guint64*, gpointer) = NULL;
+gboolean (*jd_backend_write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*, gpointer) = NULL;
 
 #endif

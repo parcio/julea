@@ -69,96 +69,14 @@ jd_signal (gpointer data)
 }
 
 static
-JBackendItem*
-jd_create_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
-{
-	JBackendItem* file;
-	gchar* key;
-
-	key = g_strdup_printf("%s.%s.%s", store, collection, item);
-	file = g_slice_new(JBackendItem);
-
-	if (!jd_backend_create(file, store, collection, item))
-	{
-		goto error;
-	}
-
-	g_hash_table_insert(hash_table, key, file);
-
-	return file;
-
-error:
-	g_free(key);
-	g_slice_free(JBackendItem, file);
-
-	return NULL;
-}
-
-static
-JBackendItem*
-jd_open_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
-{
-	JBackendItem* file;
-	gchar* key;
-
-	key = g_strdup_printf("%s.%s.%s", store, collection, item);
-
-	if ((file = g_hash_table_lookup(hash_table, key)) == NULL)
-	{
-		file = g_slice_new(JBackendItem);
-
-		if (!jd_backend_open(file, store, collection, item))
-		{
-			goto error;
-		}
-
-		g_hash_table_insert(hash_table, key, file);
-	}
-	else
-	{
-		g_free(key);
-	}
-
-	return file;
-
-error:
-	g_free(key);
-	g_slice_free(JBackendItem, file);
-
-	return NULL;
-}
-
-static
-void
-jd_close_file (GHashTable* hash_table, gchar const* store, gchar const* collection, gchar const* item)
-{
-	gchar* key;
-
-	key = g_strdup_printf("%s.%s.%s", store, collection, item);
-	g_hash_table_remove(hash_table, key);
-	g_free(key);
-}
-
-static
-void
-jd_file_hash_free (gpointer data)
-{
-	JBackendItem* file = data;
-
-	jd_backend_close(file);
-
-	g_slice_free(JBackendItem, file);
-}
-
-static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JMemoryChunk* memory_chunk;
 	JMessage* message;
 	JStatistics* statistics;
-	GHashTable* files;
 	GInputStream* input;
+	gpointer backend_data = NULL;
 
 	(void)service;
 	(void)source_object;
@@ -173,17 +91,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	if (jd_backend_thread_init != NULL)
 	{
-		/* FIXME return value */
-		jd_backend_thread_init();
+		backend_data = jd_backend_thread_init();
 	}
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, jd_file_hash_free);
 
 	while (j_message_receive(message, connection))
 	{
-		JBackendItem* bf;
+		JBackendItem backend_item[1];
 		gchar const* store;
 		gchar const* collection;
 		gchar const* item;
@@ -207,9 +123,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						item = j_message_get_string(message);
 
-						if (jd_create_file(files, store, collection, item) != NULL)
+						if (jd_backend_create(backend_item, store, collection, item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
+							jd_backend_close(backend_item, backend_data);
 						}
 					}
 				}
@@ -230,13 +147,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						item = j_message_get_string(message);
 
-						bf = jd_open_file(files, store, collection, item);
-
-						if (bf != NULL)
+						if (jd_backend_open(backend_item, store, collection, item, backend_data)
+						    && jd_backend_delete(backend_item, backend_data))
 						{
-							jd_backend_delete(bf);
-							jd_close_file(files, store, collection, item);
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
+							jd_backend_close(backend_item, backend_data);
 						}
 
 						if (reply != NULL)
@@ -262,7 +177,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
-					bf = jd_open_file(files, store, collection, item);
+					// FIXME return value
+					jd_backend_open(backend_item, store, collection, item, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -288,7 +204,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						jd_backend_read(bf, buf, length, offset, &bytes_read);
+						jd_backend_read(backend_item, buf, length, offset, &bytes_read, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -302,7 +218,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					//jd_backend_close(bf);
+					jd_backend_close(backend_item, backend_data);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -331,7 +247,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					buf = j_memory_chunk_get(memory_chunk, J_STRIPE_SIZE);
 					g_assert(buf != NULL);
 
-					bf = jd_open_file(files, store, collection, item);
+					// FIXME return value
+					jd_backend_open(backend_item, store, collection, item, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -351,7 +268,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							jd_backend_write(bf, buf, merge_length, merge_offset, &bytes_written);
+							jd_backend_write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -377,17 +294,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						jd_backend_write(bf, buf, merge_length, merge_offset, &bytes_written);
+						jd_backend_write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						jd_backend_sync(bf);
+						jd_backend_sync(backend_item, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					//jd_backend_close(bf);
+					jd_backend_close(backend_item, backend_data);
 
 					if (reply != NULL)
 					{
@@ -417,9 +334,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						item = j_message_get_string(message);
 						flags = j_message_get_4(message);
 
-						bf = jd_open_file(files, store, collection, item);
+						// FIXME return value
+						jd_backend_open(backend_item, store, collection, item, backend_data);
 
-						if (jd_backend_status(bf, flags, &modification_time, &size))
+						if (jd_backend_status(backend_item, flags, &modification_time, &size, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -446,7 +364,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &size);
 						}
 
-						//jd_backend_close(bf);
+						jd_backend_close(backend_item, backend_data);
 					}
 
 					j_message_send(reply, connection);
@@ -549,11 +467,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		G_UNLOCK(jd_statistics);
 	}
 
-	g_hash_table_destroy(files);
-
 	if (jd_backend_thread_fini != NULL)
 	{
-		jd_backend_thread_fini();
+		jd_backend_thread_fini(backend_data);
 	}
 
 	j_memory_chunk_free(memory_chunk);
