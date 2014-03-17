@@ -116,8 +116,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_CREATE:
 				{
+					JMessage* reply = NULL;
+
 					store = j_message_get_string(message);
 					collection = j_message_get_string(message);
+
+					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					{
+						reply = j_message_new_reply(message);
+					}
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -126,8 +133,26 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						if (jd_backend_create(backend_item, store, collection, item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
+
+							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
+							{
+								jd_backend_sync(backend_item, backend_data);
+								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
+							}
+
 							jd_backend_close(backend_item, backend_data);
 						}
+
+						if (reply != NULL)
+						{
+							j_message_add_operation(reply, 0);
+						}
+					}
+
+					if (reply != NULL)
+					{
+						j_message_send(reply, connection);
+						j_message_unref(reply);
 					}
 				}
 				break;
@@ -230,7 +255,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply = NULL;
 					gchar* buf;
-					guint64 bytes_written;
 					guint64 merge_length = 0;
 					guint64 merge_offset = 0;
 
@@ -265,6 +289,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 						else if (merge_length > 0)
 						{
+							guint64 bytes_written = 0;
+
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
@@ -291,6 +317,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					if (merge_length > 0)
 					{
+						guint64 bytes_written = 0;
+
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 

@@ -316,8 +316,15 @@ j_item_write_background_operation (gpointer data)
 
 	if (background_data->u.write.create_message != NULL)
 	{
-		/* FIXME reply? */
 		j_message_send(background_data->u.write.create_message, background_data->connection);
+
+		/* This will always be true, see j_item_write_internal(). */
+		if (j_message_get_type_modifier(background_data->u.write.create_message) & J_MESSAGE_SAFETY_NETWORK)
+		{
+			reply = j_message_new_reply(background_data->u.write.create_message);
+			j_message_receive(reply, background_data->connection);
+			j_message_unref(reply);
+		}
 	}
 
 	j_message_send(background_data->message, background_data->connection);
@@ -1419,6 +1426,15 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		{
 			/* FIXME better solution? */
 			create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
+			/**
+			 * Force safe semantics to make the daemon send a reply.
+			 * Otherwise, nasty races can occur when using unsafe semantics:
+			 * - The client creates the item and sends its first write.
+			 * - The client sends another operation using another connection from the pool.
+			 * - The second operation is executed first and fails because the item does not exist.
+			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
+			 **/
+			j_message_force_safety(create_message, J_SEMANTICS_SAFETY_NETWORK);
 			j_message_append_n(create_message, store_name, store_len);
 			j_message_append_n(create_message, collection_name, collection_len);
 			j_message_add_operation(create_message, item_len);

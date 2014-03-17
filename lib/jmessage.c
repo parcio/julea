@@ -1075,20 +1075,33 @@ j_message_add_operation (JMessage* message, gsize length)
 void
 j_message_set_safety (JMessage* message, JSemantics* semantics)
 {
-	guint32 op_type;
-
 	g_return_if_fail(message != NULL);
 	g_return_if_fail(semantics != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	op_type = j_message_get_type(message) | j_message_get_type_modifier(message);
+	j_message_force_safety(message, j_semantics_get(semantics, J_SEMANTICS_SAFETY));
 
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NETWORK)
+	j_trace_leave(G_STRFUNC);
+}
+
+void
+j_message_force_safety (JMessage* message, gint safety)
+{
+	guint32 op_type;
+
+	g_return_if_fail(message != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	op_type = j_message_header(message)->op_type;
+	op_type = GUINT32_FROM_LE(op_type);
+
+	if (safety == J_SEMANTICS_SAFETY_NETWORK)
 	{
 		op_type |= J_MESSAGE_SAFETY_NETWORK;
 	}
-	else if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+	else if (safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		op_type |= J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE;
 	}

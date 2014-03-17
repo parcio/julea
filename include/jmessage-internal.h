@@ -93,5 +93,6 @@ J_GNUC_INTERNAL void j_message_add_send (JMessage*, gconstpointer, guint64);
 J_GNUC_INTERNAL void j_message_add_operation (JMessage*, gsize);
 
 J_GNUC_INTERNAL void j_message_set_safety (JMessage*, JSemantics*);
+J_GNUC_INTERNAL void j_message_force_safety (JMessage*, gint);
 
 #endif
