@@ -565,10 +565,25 @@ j_batch_execute_internal (JBatch* batch)
 	last_key = NULL;
 	last_type = J_OPERATION_NONE;
 
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
+	{
+		/* FIXME: perform some optimizations */
+		/**
+		 * It is important to consider dependencies:
+		 * - Operations have to be performed before their dependent ones.
+		 *   For example, a collection has to be created before items in it can be created.
+		 */
+	}
+
+	/**
+	 * Try to combine as many operations of the same type as possible.
+	 * These are temporarily stored in same_list.
+	 */
 	while (j_list_iterator_next(iterator))
 	{
 		JOperation* operation = j_list_iterator_get(iterator);
 
+		/* We only combine operations with the same type and the same key. */
 		if ((operation->type != last_type || operation->key != last_key) && last_type != J_OPERATION_NONE)
 		{
 			ret = j_batch_execute_same(batch, same_list) && ret;

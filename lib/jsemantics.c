@@ -77,6 +77,11 @@ struct JSemantics
 	gint security;
 
 	/**
+	 * The ordering semantics.
+	 */
+	gint ordering;
+
+	/**
 	 * Whether the semantics object is immutable.
 	 **/
 	gboolean immutable;
@@ -107,6 +112,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+	semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 	semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 	semantics->security = J_SEMANTICS_SECURITY_NONE;
@@ -121,6 +127,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_OPERATION;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
+			semantics->ordering = J_SEMANTICS_ORDERING_STRICT;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
@@ -129,6 +136,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
@@ -137,6 +145,7 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
@@ -265,6 +274,21 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 			else if (g_strcmp0(value, "none") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
+			}
+			else
+			{
+				g_assert_not_reached();
+			}
+		}
+		else if (g_str_has_prefix(parts[i], "ordering="))
+		{
+			if (g_strcmp0(value, "strict") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ORDERING, J_SEMANTICS_ORDERING_STRICT);
+			}
+			else if (g_strcmp0(value, "relaxed") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_ORDERING, J_SEMANTICS_ORDERING_RELAXED);
 			}
 			else
 			{
@@ -419,6 +443,9 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 		case J_SEMANTICS_CONSISTENCY:
 			semantics->consistency = value;
 			break;
+		case J_SEMANTICS_ORDERING:
+			semantics->ordering = value;
+			break;
 		case J_SEMANTICS_PERSISTENCY:
 			semantics->persistency = value;
 			break;
@@ -462,6 +489,8 @@ j_semantics_get (JSemantics* semantics, JSemanticsType key)
 			return semantics->concurrency;
 		case J_SEMANTICS_CONSISTENCY:
 			return semantics->consistency;
+		case J_SEMANTICS_ORDERING:
+			return semantics->ordering;
 		case J_SEMANTICS_PERSISTENCY:
 			return semantics->persistency;
 		case J_SEMANTICS_SAFETY:
