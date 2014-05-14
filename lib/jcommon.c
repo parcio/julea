@@ -186,7 +186,7 @@ j_init (void)
 
 	j_connection_pool_init(common->configuration);
 	j_distribution_init();
-	j_background_operation_init();
+	j_background_operation_init(0);
 	j_operation_cache_init();
 
 	bson_set_oid_fuzz(j_common_oid_fuzz);

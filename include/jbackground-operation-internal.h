@@ -42,7 +42,7 @@ typedef struct JBackgroundOperation JBackgroundOperation;
 
 typedef gpointer (*JBackgroundOperationFunc) (gpointer);
 
-J_GNUC_INTERNAL void j_background_operation_init (void);
+J_GNUC_INTERNAL void j_background_operation_init (guint count);
 J_GNUC_INTERNAL void j_background_operation_fini (void);
 
 J_GNUC_INTERNAL JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);

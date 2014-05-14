@@ -134,7 +134,7 @@ j_background_operation_thread (gpointer data, gpointer user_data)
  * \endcode
  **/
 void
-j_background_operation_init (void)
+j_background_operation_init (guint count)
 {
 	GThreadPool* thread_pool;
 
@@ -142,7 +142,12 @@ j_background_operation_init (void)
 
 	j_trace_enter(G_STRFUNC);
 
-	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, j_helper_get_processor_count(), FALSE, NULL);
+	if (count == 0)
+	{
+		count = j_helper_get_processor_count();
+	}
+
+	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, count, FALSE, NULL);
 	g_atomic_pointer_set(&j_thread_pool, thread_pool);
 
 	j_trace_leave(G_STRFUNC);
