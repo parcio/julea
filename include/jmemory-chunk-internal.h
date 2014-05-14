@@ -29,8 +29,8 @@
  * \file
  **/
 
-#ifndef H_CACHE_INTERNAL
-#define H_CACHE_INTERNAL
+#ifndef H_MEMORY_CHUNK_INTERNAL
+#define H_MEMORY_CHUNK_INTERNAL
 
 #include <glib.h>
 
