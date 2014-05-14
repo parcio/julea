@@ -179,6 +179,12 @@ j_background_operation_fini (void)
 	j_trace_leave(G_STRFUNC);
 }
 
+guint
+j_background_operation_get_num_threads (void)
+{
+	return g_thread_pool_get_max_threads(j_thread_pool);
+}
+
 /**
  * Creates a new background operation.
  *
