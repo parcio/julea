@@ -17,6 +17,10 @@ class TestContext (BuildContext):
 	cmd = 'test'
 	fun = 'test'
 
+class TestContext (BuildContext):
+	cmd = 'environment'
+	fun = 'environment'
+
 def options (ctx):
 	ctx.load('compiler_c')
 
@@ -47,6 +51,19 @@ def test (ctx):
 	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
 	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
+
+def environment (ctx):
+	path = 'PATH="%s:${PATH}"' % (Utils.subst_vars('${PREFIX}/bin', ctx.env),)
+	ld_library_path = 'LD_LIBRARY_PATH="%s:${LD_LIBRARY_PATH}"' % (Utils.subst_vars('${PREFIX}/lib', ctx.env),)
+	pkg_config_path = 'PKG_CONFIG_PATH="%s:${PKG_CONFIG_PATH}"' % (Utils.subst_vars('${PREFIX}/lib/pkgconfig', ctx.env),)
+
+	print(path)
+	print(ld_library_path)
+	print(pkg_config_path)
+	print('')
+	print('export PATH')
+	print('export LD_LIBRARY_PATH')
+	print('export PKG_CONFIG_PATH')
 
 def configure (ctx):
 	ctx.load('compiler_c')
