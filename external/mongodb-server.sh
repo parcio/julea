@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/mongodb-server"
-BASE='mongodb-src-r2.4.9'
+BASE='mongodb-src-r2.6.1'
 FILE="${BASE}.tar.gz"
 
 if [ -d "${PREFIX}" ]
@@ -42,7 +42,7 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget "http://fastdl.mongodb.org/src/${FILE}"
+wget "https://fastdl.mongodb.org/src/${FILE}"
 tar xf "${FILE}"
 
 cd "${BASE}"
@@ -52,7 +52,7 @@ then
 	patch -p1 < "${PREFIX}.patch"
 fi
 
-scons all
+scons --jobs=$(nproc) all
 scons --prefix="${PREFIX}" install
 
 rm -rf "${TEMP}"
