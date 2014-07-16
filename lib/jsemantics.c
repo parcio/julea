@@ -112,7 +112,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 	semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-	semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
+	semantics->ordering = J_SEMANTICS_ORDERING_SEMI_RELAXED;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
 	semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 	semantics->security = J_SEMANTICS_SECURITY_NONE;
@@ -132,20 +132,11 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
-		case J_SEMANTICS_TEMPLATE_CHECKPOINT:
-			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
-			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
-			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-			semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
-			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
-			semantics->security = J_SEMANTICS_SECURITY_NONE;
-			break;
 		case J_SEMANTICS_TEMPLATE_TEMPORARY_LOCAL:
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_NONE;
-			semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
+			semantics->ordering = J_SEMANTICS_ORDERING_SEMI_RELAXED;
 			semantics->persistency = J_SEMANTICS_PERSISTENCY_NONE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
@@ -190,10 +181,6 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 	else if (g_strcmp0(template_str, "posix") == 0)
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
-	}
-	else if (g_strcmp0(template_str, "checkpoint") == 0)
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
 	}
 	else if (g_strcmp0(template_str, "temporary-local") == 0)
 	{
