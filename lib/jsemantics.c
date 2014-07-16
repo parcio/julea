@@ -141,12 +141,12 @@ j_semantics_new (JSemanticsTemplate template)
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
-		case J_SEMANTICS_TEMPLATE_SERIAL:
+		case J_SEMANTICS_TEMPLATE_TEMPORARY_LOCAL:
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
-			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->consistency = J_SEMANTICS_CONSISTENCY_NONE;
 			semantics->ordering = J_SEMANTICS_ORDERING_RELAXED;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_NONE;
 			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
@@ -195,9 +195,9 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 	{
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_CHECKPOINT);
 	}
-	else if (g_strcmp0(template_str, "serial") == 0)
+	else if (g_strcmp0(template_str, "temporary-local") == 0)
 	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_SERIAL);
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_TEMPORARY_LOCAL);
 	}
 	else
 	{
