@@ -32,10 +32,9 @@
 #include <juri.h>
 
 gboolean
-j_cmd_create (gchar const** arguments)
+j_cmd_create (gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
-	JBatch* batch;
 	JURI* uri = NULL;
 	GError* error = NULL;
 
@@ -53,67 +52,12 @@ j_cmd_create (gchar const** arguments)
 		goto end;
 	}
 
-	if (j_uri_get(uri, &error))
+	if (!j_uri_create(uri, with_parents, &error))
 	{
 		ret = FALSE;
-
-		if (j_uri_get_item(uri) != NULL)
-		{
-			g_print("Error: Item “%s” already exists.\n", j_item_get_name(j_uri_get_item(uri)));
-		}
-		else if (j_uri_get_collection(uri) != NULL)
-		{
-			g_print("Error: Collection “%s” already exists.\n", j_collection_get_name(j_uri_get_collection(uri)));
-		}
-		else if (j_uri_get_store(uri) != NULL)
-		{
-			g_print("Error: Store “%s” already exists.\n", j_store_get_name(j_uri_get_store(uri)));
-		}
-
-		goto end;
-	}
-	else
-	{
-		if (!j_cmd_error_last(uri))
-		{
-			ret = FALSE;
-			g_print("Error: %s\n", error->message);
-			g_error_free(error);
-			goto end;
-		}
-
+		g_print("Error: %s\n", error->message);
 		g_error_free(error);
 	}
-
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	if (j_uri_get_collection(uri) != NULL)
-	{
-		JItem* item;
-
-		item = j_collection_create_item(j_uri_get_collection(uri), j_uri_get_item_name(uri), NULL, batch);
-		j_item_unref(item);
-
-		j_batch_execute(batch);
-	}
-	else if (j_uri_get_store(uri) != NULL)
-	{
-		JCollection* collection;
-
-		collection = j_store_create_collection(j_uri_get_store(uri), j_uri_get_collection_name(uri), batch);
-		j_collection_unref(collection);
-		j_batch_execute(batch);
-	}
-	else
-	{
-		JStore* store;
-
-		store = j_create_store(j_uri_get_store_name(uri), batch);
-		j_store_unref(store);
-		j_batch_execute(batch);
-	}
-
-	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

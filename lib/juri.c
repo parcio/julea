@@ -166,6 +166,30 @@ error:
 	return FALSE;
 }
 
+static
+gboolean
+j_uri_only_last_component_not_found (JURI* uri)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail(uri != NULL, FALSE);
+
+	if (uri->store == NULL && uri->store_name != NULL)
+	{
+		ret = (uri->collection_name == NULL && uri->item_name == NULL);
+	}
+	else if (uri->collection == NULL && uri->collection_name != NULL)
+	{
+		ret = (uri->item_name == NULL);
+	}
+	else if (uri->item == NULL && uri->item_name != NULL)
+	{
+		ret = TRUE;
+	}
+
+	return ret;
+}
+
 /**
  * Returns the URI error quark.
  *
@@ -364,16 +388,28 @@ j_uri_get (JURI* uri, GError** error)
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	if (uri->store != NULL)
+	{
+		j_store_unref(uri->store);
+		uri->store = NULL;
+	}
+
+	if (uri->collection != NULL)
+	{
+		j_collection_unref(uri->collection);
+		uri->collection = NULL;
+	}
+
+	if (uri->item != NULL)
+	{
+		j_item_unref(uri->item);
+		uri->item = NULL;
+	}
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	if (uri->store_name != NULL)
 	{
-		if (uri->store != NULL)
-		{
-			j_store_unref(uri->store);
-			uri->store = NULL;
-		}
-
 		j_get_store(&(uri->store), uri->store_name, batch);
 		j_batch_execute(batch);
 
@@ -388,12 +424,6 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->collection_name != NULL)
 	{
-		if (uri->collection != NULL)
-		{
-			j_collection_unref(uri->collection);
-			uri->collection = NULL;
-		}
-
 		j_store_get_collection(uri->store, &(uri->collection), uri->collection_name, batch);
 		j_batch_execute(batch);
 
@@ -408,12 +438,6 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->item_name != NULL)
 	{
-		if (uri->item != NULL)
-		{
-			j_item_unref(uri->item);
-			uri->item = NULL;
-		}
-
 		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, batch);
 		j_batch_execute(batch);
 
@@ -428,6 +452,97 @@ j_uri_get (JURI* uri, GError** error)
 
 end:
 	j_batch_unref(batch);
+
+	return ret;
+}
+
+/**
+ * Creates the store, collection and item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_create(uri, FALSE, &error);
+ * \endcode
+ *
+ * \param uri          A URI.
+ * \param with_parents Whether to create the parent objects, too.
+ * \param error        An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_uri_create (JURI* uri, gboolean with_parents, GError** error)
+{
+	JBatch* batch = NULL;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail(uri != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	if (j_uri_get(uri, error))
+	{
+		if (!with_parents)
+		{
+			ret = FALSE;
+
+			if (uri->item != NULL)
+			{
+				g_set_error(error, J_URI_ERROR, J_URI_ERROR_ITEM_EXISTS, "Item “%s” already exists.", j_item_get_name(uri->item));
+			}
+			else if (uri->collection != NULL)
+			{
+				g_set_error(error, J_URI_ERROR, J_URI_ERROR_COLLECTION_EXISTS, "Collection “%s” already exists.", j_collection_get_name(uri->collection));
+			}
+			else if (uri->store != NULL)
+			{
+				g_set_error(error, J_URI_ERROR, J_URI_ERROR_STORE_EXISTS, "Store “%s” already exists.", j_store_get_name(uri->store));
+			}
+		}
+
+		goto end;
+	}
+	else
+	{
+		if (!with_parents && !j_uri_only_last_component_not_found(uri))
+		{
+			ret = FALSE;
+			goto end;
+		}
+
+		g_clear_error(error);
+	}
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	if (uri->store == NULL && uri->store_name != NULL)
+	{
+		uri->store = j_create_store(uri->store_name, batch);
+		j_batch_execute(batch);
+	}
+
+	if (uri->collection == NULL && uri->collection_name != NULL)
+	{
+		uri->collection = j_store_create_collection(uri->store, uri->collection_name, batch);
+		j_batch_execute(batch);
+	}
+
+	if (uri->item == NULL && uri->item_name != NULL)
+	{
+		uri->item = j_collection_create_item(uri->collection, uri->item_name, NULL, batch);
+		j_batch_execute(batch);
+	}
+
+end:
+	if (batch != NULL)
+	{
+		j_batch_unref(batch);
+	}
 
 	return ret;
 }

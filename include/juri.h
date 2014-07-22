@@ -50,7 +50,10 @@ typedef enum
 {
 	J_URI_ERROR_STORE_NOT_FOUND,
 	J_URI_ERROR_COLLECTION_NOT_FOUND,
-	J_URI_ERROR_ITEM_NOT_FOUND
+	J_URI_ERROR_ITEM_NOT_FOUND,
+	J_URI_ERROR_STORE_EXISTS,
+	J_URI_ERROR_COLLECTION_EXISTS,
+	J_URI_ERROR_ITEM_EXISTS
 }
 JURIError;
 
@@ -77,6 +80,7 @@ gchar const* j_uri_get_collection_name (JURI*);
 gchar const* j_uri_get_item_name (JURI*);
 
 gboolean j_uri_get (JURI*, GError**);
+gboolean j_uri_create (JURI*, gboolean, GError**);
 
 JStore* j_uri_get_store (JURI*);
 JCollection* j_uri_get_collection (JURI*);

@@ -37,7 +37,7 @@ guint j_cmd_arguments_length (gchar const**);
 
 gboolean j_cmd_error_last (JURI*);
 
-gboolean j_cmd_create (gchar const**);
+gboolean j_cmd_create (gchar const**, gboolean);
 gboolean j_cmd_copy (gchar const**);
 gboolean j_cmd_delete (gchar const**);
 gboolean j_cmd_list (gchar const**);
