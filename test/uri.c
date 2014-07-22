@@ -128,10 +128,59 @@ test_uri_invalid (void)
 	g_assert(uri == NULL);
 }
 
+static
+void
+test_uri_create (void)
+{
+	JURI* uri;
+	gboolean ret;
+
+	uri = j_uri_new("julea://uri-create-0/uri-create-0/uri-create-0");
+	ret = j_uri_create(uri, FALSE, NULL);
+	g_assert_false(ret);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://uri-create-1/uri-create-1");
+	ret = j_uri_create(uri, FALSE, NULL);
+	// FIXME should return FALSE
+	g_assert_true(ret);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://uri-create-2");
+	ret = j_uri_create(uri, FALSE, NULL);
+	// FIXME should return TRUE
+	g_assert_false(ret);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://uri-create-3/uri-create-3/uri-create-3");
+	ret = j_uri_create(uri, TRUE, NULL);
+	g_assert_true(ret);
+	j_uri_free(uri);
+}
+
+static
+void
+test_uri_get (void)
+{
+	JURI* uri;
+	gboolean ret;
+
+	uri = j_uri_new("julea://uri-get-0/uri-get-0/uri-get-0");
+	j_uri_create(uri, TRUE, NULL);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://uri-get-0/uri-get-0/uri-get-0");
+	ret = j_uri_get(uri, NULL);
+	g_assert_true(ret);
+	j_uri_free(uri);
+}
+
 void
 test_uri (void)
 {
 	g_test_add_func("/uri/new_free", test_uri_new_free);
 	g_test_add_func("/uri/valid", test_uri_valid);
 	g_test_add_func("/uri/invalid", test_uri_invalid);
+	g_test_add_func("/uri/create", test_uri_create);
+	g_test_add_func("/uri/get", test_uri_get);
 }
