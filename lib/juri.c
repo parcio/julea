@@ -108,6 +108,7 @@ gboolean
 j_uri_parse (JURI* uri, gchar const* uri_)
 {
 	gchar** parts = NULL;
+	gchar const* illegal[3] = { "./", "/", "/" };
 	guint parts_len;
 	guint i;
 
@@ -132,9 +133,9 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 		}
 	}
 
-	for (i = 0; i < MIN(parts_len, 1); i++)
+	for (i = 0; i < parts_len; i++)
 	{
-		if (strchr(parts[i], '.') != NULL)
+		if (strpbrk(parts[i], illegal[i]) != NULL)
 		{
 			goto error;
 		}
