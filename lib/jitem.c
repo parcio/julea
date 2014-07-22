@@ -703,12 +703,17 @@ j_item_get_optimal_access_size (JItem* item)
 JItem*
 j_item_new (JCollection* collection, gchar const* name, JDistribution* distribution)
 {
-	JItem* item;
+	JItem* item = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
+
+	if (strpbrk(name, "/") != NULL)
+	{
+		goto end;
+	}
 
 	if (distribution == NULL)
 	{
@@ -727,6 +732,7 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	item->collection = j_collection_ref(collection);
 	item->ref_count = 1;
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return item;

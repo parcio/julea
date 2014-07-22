@@ -265,7 +265,10 @@ j_collection_create_item (JCollection* collection, gchar const* name, JDistribut
 
 	j_trace_enter(G_STRFUNC);
 
-	item = j_item_new(collection, name, distribution);
+	if ((item = j_item_new(collection, name, distribution)) == NULL)
+	{
+		goto end;
+	}
 
 	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
 	operation->key = collection;
@@ -274,6 +277,7 @@ j_collection_create_item (JCollection* collection, gchar const* name, JDistribut
 
 	j_batch_add(batch, operation);
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return item;
@@ -367,12 +371,17 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
 JCollection*
 j_collection_new (JStore* store, gchar const* name)
 {
-	JCollection* collection;
+	JCollection* collection = NULL;
 
 	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
+
+	if (strpbrk(name, "/") != NULL)
+	{
+		goto end;
+	}
 
 	/*
 	: m_initialized(false),
@@ -387,6 +396,7 @@ j_collection_new (JStore* store, gchar const* name)
 	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
+end:
 	j_trace_leave(G_STRFUNC);
 
 	return collection;

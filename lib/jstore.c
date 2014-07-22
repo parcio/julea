@@ -171,7 +171,10 @@ j_store_create_collection (JStore* store, gchar const* name, JBatch* batch)
 	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	collection = j_collection_new(store, name);
+	if ((collection = j_collection_new(store, name)) == NULL)
+	{
+		goto end;
+	}
 
 	operation = j_operation_new(J_OPERATION_STORE_CREATE_COLLECTION);
 	operation->key = store;
@@ -180,6 +183,7 @@ j_store_create_collection (JStore* store, gchar const* name, JBatch* batch)
 
 	j_batch_add(batch, operation);
 
+end:
 	return collection;
 }
 
@@ -262,18 +266,24 @@ j_store_delete_collection (JStore* store, JCollection* collection, JBatch* batch
 JStore*
 j_store_new (gchar const* name)
 {
-	JStore* store;
+	JStore* store = NULL;
 	/*
 	: m_initialized(true),
 	*/
 
 	g_return_val_if_fail(name != NULL, NULL);
 
+	if (strpbrk(name, "./") != NULL)
+	{
+		goto end;
+	}
+
 	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
 	store->ref_count = 1;
 
+end:
 	return store;
 }
 

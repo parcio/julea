@@ -256,7 +256,10 @@ j_create_store (gchar const* name, JBatch* batch)
 	JOperation* operation;
 	JStore* store;
 
-	store = j_store_new(name);
+	if ((store = j_store_new(name)) == NULL)
+	{
+		goto end;
+	}
 
 	operation = j_operation_new(J_OPERATION_CREATE_STORE);
 	operation->key = NULL;
@@ -264,6 +267,7 @@ j_create_store (gchar const* name, JBatch* batch)
 
 	j_batch_add(batch, operation);
 
+end:
 	return store;
 }
 
