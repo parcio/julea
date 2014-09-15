@@ -239,12 +239,31 @@ j_distribution_set2 (JDistribution* distribution, gchar const* key, guint64 valu
 
 /* Internal */
 
+static
+void
+j_distribution_check_vtables (void)
+{
+	for (guint i = 0; i < G_N_ELEMENTS(j_distribution_vtables); i++)
+	{
+		g_return_if_fail(j_distribution_vtables[i].distribution_new != NULL);
+		g_return_if_fail(j_distribution_vtables[i].distribution_free != NULL);
+
+		g_return_if_fail(j_distribution_vtables[i].distribution_serialize != NULL);
+		g_return_if_fail(j_distribution_vtables[i].distribution_deserialize != NULL);
+
+		g_return_if_fail(j_distribution_vtables[i].distribution_reset != NULL);
+		g_return_if_fail(j_distribution_vtables[i].distribution_distribute != NULL);
+	}
+}
+
 void
 j_distribution_init (void)
 {
 	j_distribution_round_robin_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_ROUND_ROBIN]));
 	j_distribution_single_server_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_SINGLE_SERVER]));
 	j_distribution_weighted_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_WEIGHTED]));
+
+	j_distribution_check_vtables();
 }
 
 /**
