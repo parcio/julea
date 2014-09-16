@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/mongodb-server"
-BASE='mongodb-src-r2.6.1'
+BASE='mongodb-src-r2.6.4'
 FILE="${BASE}.tar.gz"
 
 if [ -d "${PREFIX}" ]
