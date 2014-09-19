@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/otf"
-VERSION='1.12.4salmon'
+VERSION='1.12.5salmon'
 
 if [ -d "${PREFIX}" ]
 then
@@ -47,7 +47,7 @@ tar xf "otf-${VERSION}.tar.gz"
 cd "OTF-${VERSION}"
 
 ./configure --prefix="${PREFIX}"
-make
+make --jobs=$(nproc)
 make install
 
 rm -rf "${TEMP}"
