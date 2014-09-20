@@ -223,6 +223,8 @@ j_fini (void)
 
 	g_return_if_fail(j_is_initialized());
 
+	j_trace_enter(G_STRFUNC);
+
 	j_operation_cache_fini();
 	j_background_operation_fini();
 	j_connection_pool_fini();
