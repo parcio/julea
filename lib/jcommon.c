@@ -194,6 +194,8 @@ j_init (void)
 
 	g_atomic_pointer_set(&j_common, common);
 
+	j_trace_leave(G_STRFUNC);
+
 	return;
 
 error:
