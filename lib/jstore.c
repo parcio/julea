@@ -368,6 +368,7 @@ void
 j_store_create_index (JStore* store, JStoreCollection collection, mongo* connection, bson const* index)
 {
 	g_return_if_fail(store != NULL);
+	g_return_if_fail(connection != NULL);
 	g_return_if_fail(index != NULL);
 
 	j_trace_enter(G_STRFUNC);
@@ -375,21 +376,21 @@ j_store_create_index (JStore* store, JStoreCollection collection, mongo* connect
 	switch (collection)
 	{
 		case J_STORE_COLLECTION_COLLECTIONS:
-			if (!store->index.collections)
+			if (G_UNLIKELY(!store->index.collections))
 			{
 				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 				store->index.collections = TRUE;
 			}
 			break;
 		case J_STORE_COLLECTION_ITEMS:
-			if (!store->index.items)
+			if (G_UNLIKELY(!store->index.items))
 			{
 				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 				store->index.items = TRUE;
 			}
 			break;
 		case J_STORE_COLLECTION_LOCKS:
-			if (!store->index.locks)
+			if (G_UNLIKELY(!store->index.locks))
 			{
 				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
 				store->index.locks = TRUE;
