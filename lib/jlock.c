@@ -43,6 +43,7 @@
 #include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
+#include <jstore-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -71,11 +72,6 @@ struct JLock
 	GArray* blocks;
 
 	gboolean acquired;
-
-	/**
-	 * Whether the index has been created.
-	 **/
-	gboolean index_created;
 };
 
 /**
@@ -155,7 +151,6 @@ j_lock_new (JItem* item)
 	lock->item = j_item_ref(item);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
-	lock->index_created = FALSE;
 
 	j_trace_leave(G_STRFUNC);
 
@@ -229,13 +224,8 @@ j_lock_acquire (JLock* lock)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	if (!lock->index_created)
-	{
-		mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
-		lock->index_created = TRUE;
-	}
-
-	lock->acquired = (mongo_insert(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
+	j_store_create_index(j_collection_get_store(collection), J_STORE_COLLECTION_LOCKS, mongo_connection, index);
+	lock->acquired = (mongo_insert(mongo_connection, j_store_collection(j_collection_get_store(collection), J_STORE_COLLECTION_LOCKS), obj, write_concern) == MONGO_OK);
 
 	j_connection_pool_push_meta(0, mongo_connection);
 
@@ -271,7 +261,7 @@ j_lock_release (JLock* lock)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	lock->acquired = !(mongo_remove(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
+	lock->acquired = !(mongo_remove(mongo_connection, j_store_collection(j_collection_get_store(collection), J_STORE_COLLECTION_LOCKS), obj, write_concern) == MONGO_OK);
 
 	j_connection_pool_push_meta(0, mongo_connection);
 

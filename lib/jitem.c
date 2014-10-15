@@ -42,6 +42,8 @@
 #include <jitem-internal.h>
 
 #include <jbackground-operation-internal.h>
+#include <jbatch.h>
+#include <jbatch-internal.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
@@ -54,10 +56,9 @@
 #include <jlist-iterator.h>
 #include <jlock-internal.h>
 #include <jmessage-internal.h>
-#include <jbatch.h>
-#include <jbatch-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
+#include <jstore-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -1533,7 +1534,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		mongo_connection = j_connection_pool_pop_meta(0);
 
-		ret = mongo_update(mongo_connection, j_collection_collection_items(item->collection), cond, op, MONGO_UPDATE_BASIC, write_concern);
+		ret = mongo_update(mongo_connection, j_store_collection(j_collection_get_store(item->collection), J_STORE_COLLECTION_ITEMS), cond, op, MONGO_UPDATE_BASIC, write_concern);
 		g_assert(ret == MONGO_OK);
 
 		j_connection_pool_push_meta(0, mongo_connection);
@@ -1640,7 +1641,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			bson_append_oid(&b, "_id", &(item->id));
 			bson_finish(&b);
 
-			cursor = mongo_find(mongo_connection, j_collection_collection_items(item->collection), &b, &fields, 1, 0, 0);
+			cursor = mongo_find(mongo_connection, j_store_collection(j_collection_get_store(item->collection), J_STORE_COLLECTION_ITEMS), &b, &fields, 1, 0, 0);
 
 			bson_destroy(&fields);
 			bson_destroy(&b);

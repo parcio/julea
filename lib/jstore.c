@@ -69,13 +69,21 @@ struct JStore
 	struct
 	{
 		gchar* collections;
+		gchar* items;
+		gchar* locks;
 	}
 	collection;
 
 	/**
 	 * Whether the index has been created.
 	 **/
-	gboolean index_created;
+	struct
+	{
+		gboolean collections;
+		gboolean items;
+		gboolean locks;
+	}
+	index;
 
 	/**
 	 * The reference count.
@@ -129,6 +137,8 @@ j_store_unref (JStore* store)
 	if (g_atomic_int_dec_and_test(&(store->ref_count)))
 	{
 		g_free(store->collection.collections);
+		g_free(store->collection.items);
+		g_free(store->collection.locks);
 		g_free(store->name);
 
 		g_slice_free(JStore, store);
@@ -286,7 +296,11 @@ j_store_new (gchar const* name)
 	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
-	store->index_created = FALSE;
+	store->collection.items = NULL;
+	store->collection.locks = NULL;
+	store->index.collections = FALSE;
+	store->index.items = FALSE;
+	store->index.locks = FALSE;
 	store->ref_count = 1;
 
 end:
@@ -303,20 +317,89 @@ end:
  * \return The MongoDB collection.
  */
 gchar const*
-j_store_collection_collections (JStore* store)
+j_store_collection (JStore* store, JStoreCollection collection)
 {
+	gchar const* m_collection = NULL;
+
 	g_return_val_if_fail(store != NULL, NULL);
 
 	/*
 		IsInitialized(true);
 	*/
 
-	if (G_UNLIKELY(store->collection.collections == NULL))
+	j_trace_enter(G_STRFUNC);
+
+	switch (collection)
 	{
-		store->collection.collections = g_strdup_printf("%s.Collections", store->name);
+		case J_STORE_COLLECTION_COLLECTIONS:
+			if (G_UNLIKELY(store->collection.collections == NULL))
+			{
+				store->collection.collections = g_strdup_printf("%s.Collections", store->name);
+			}
+
+			m_collection = store->collection.collections;
+			break;
+		case J_STORE_COLLECTION_ITEMS:
+			if (G_UNLIKELY(store->collection.items == NULL))
+			{
+				store->collection.items = g_strdup_printf("%s.Items", store->name);
+			}
+
+			m_collection = store->collection.items;
+			break;
+		case J_STORE_COLLECTION_LOCKS:
+			if (G_UNLIKELY(store->collection.locks == NULL))
+			{
+				store->collection.locks = g_strdup_printf("%s.Locks", store->name);
+			}
+
+			m_collection = store->collection.locks;
+			break;
+		default:
+			g_warn_if_reached();
 	}
 
-	return store->collection.collections;
+	j_trace_leave(G_STRFUNC);
+
+	return m_collection;
+}
+
+void
+j_store_create_index (JStore* store, JStoreCollection collection, mongo* connection, bson const* index)
+{
+	g_return_if_fail(store != NULL);
+	g_return_if_fail(index != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	switch (collection)
+	{
+		case J_STORE_COLLECTION_COLLECTIONS:
+			if (!store->index.collections)
+			{
+				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				store->index.collections = TRUE;
+			}
+			break;
+		case J_STORE_COLLECTION_ITEMS:
+			if (!store->index.items)
+			{
+				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				store->index.items = TRUE;
+			}
+			break;
+		case J_STORE_COLLECTION_LOCKS:
+			if (!store->index.locks)
+			{
+				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				store->index.locks = TRUE;
+			}
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -337,7 +420,7 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 	JListIterator* it;
 	JStore* store = NULL;
 	bson** obj;
-	bson index;
+	bson index[1];
 	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 	gboolean ret = FALSE;
@@ -378,19 +461,14 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
-	bson_init(&index);
-	bson_append_int(&index, "Name", 1);
-	bson_finish(&index);
+	bson_init(index);
+	bson_append_int(index, "Name", 1);
+	bson_finish(index);
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	if (!store->index_created)
-	{
-		mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
-		store->index_created= TRUE;
-	}
-
-	ret = j_helper_insert_batch(mongo_connection, j_store_collection_collections(store), obj, length, write_concern);
+	j_store_create_index(store, J_STORE_COLLECTION_COLLECTIONS, mongo_connection, index);
+	ret = j_helper_insert_batch(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), obj, length, write_concern);
 
 	/*
 	if (ret != MONGO_OK)
@@ -405,7 +483,7 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 
 	j_connection_pool_push_meta(0, mongo_connection);
 
-	bson_destroy(&index);
+	bson_destroy(index);
 
 	mongo_write_concern_destroy(write_concern);
 
@@ -478,7 +556,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 		bson_finish(&b);
 
 		/* FIXME do not send write_concern on each remove */
-		ret = (mongo_remove(mongo_connection, j_store_collection_collections(store), &b, write_concern) == MONGO_OK) && ret;
+		ret = (mongo_remove(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), &b, write_concern) == MONGO_OK) && ret;
 
 		bson_destroy(&b);
 	}
@@ -534,7 +612,7 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 		bson_append_string(&b, "Name", name);
 		bson_finish(&b);
 
-		cursor = mongo_find(mongo_connection, j_store_collection_collections(store), &b, NULL, 1, 0, 0);
+		cursor = mongo_find(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), &b, NULL, 1, 0, 0);
 
 		bson_destroy(&b);
 

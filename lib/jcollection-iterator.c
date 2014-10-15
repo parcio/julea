@@ -38,13 +38,14 @@
 
 #include <jcollection-iterator.h>
 
+#include <jbatch-internal.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
-#include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
+#include <jstore-internal.h>
 
 /**
  * \defgroup JCollectionIterator Collection Iterator
@@ -95,7 +96,7 @@ j_collection_iterator_new (JCollection* collection)
 	bson_append_oid(&b, "Collection", j_collection_get_id(iterator->collection));
 	bson_finish(&b);
 
-	iterator->cursor = mongo_find(iterator->connection, j_collection_collection_items(iterator->collection), &b, &fields, 0, 0, 0);
+	iterator->cursor = mongo_find(iterator->connection, j_store_collection(j_collection_get_store(iterator->collection), J_STORE_COLLECTION_ITEMS), &b, &fields, 0, 0, 0);
 
 	bson_destroy(&fields);
 	bson_destroy(&b);

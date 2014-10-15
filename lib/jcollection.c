@@ -100,22 +100,10 @@ struct JCollection
 
 	JCredentials* credentials;
 
-	struct
-	{
-		gchar* items;
-		gchar* locks;
-	}
-	collection;
-
 	/**
 	 * The parent store.
 	 **/
 	JStore* store;
-
-	/**
-	 * Whether the index has been created.
-	 **/
-	gboolean index_created;
 
 	/**
 	 * The reference count.
@@ -211,8 +199,6 @@ j_collection_unref (JCollection* collection)
 
 		j_credentials_unref(collection->credentials);
 
-		g_free(collection->collection.items);
-		g_free(collection->collection.locks);
 		g_free(collection->name);
 
 		g_slice_free(JCollection, collection);
@@ -396,10 +382,7 @@ j_collection_new (JStore* store, gchar const* name)
 	bson_oid_gen(&(collection->id));
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
-	collection->collection.items = NULL;
-	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
-	collection->index_created = FALSE;
 	collection->ref_count = 1;
 
 end:
@@ -439,10 +422,7 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->credentials = j_credentials_new();
-	collection->collection.items = NULL;
-	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
-	collection->index_created = FALSE;
 	collection->ref_count = 1;
 
 	j_collection_deserialize(collection, b);
@@ -450,60 +430,6 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	j_trace_leave(G_STRFUNC);
 
 	return collection;
-}
-
-/**
- * Returns the MongoDB collection used for items.
- *
- * \author Michael Kuhn
- *
- * \param collection A collection.
- *
- * \return The MongoDB collection.
- */
-gchar const*
-j_collection_collection_items (JCollection* collection)
-{
-	g_return_val_if_fail(collection != NULL, NULL);
-	g_return_val_if_fail(collection->store != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	if (G_UNLIKELY(collection->collection.items == NULL))
-	{
-		collection->collection.items = g_strdup_printf("%s.Items", j_store_get_name(collection->store));
-	}
-
-	j_trace_leave(G_STRFUNC);
-
-	return collection->collection.items;
-}
-
-/**
- * Returns the MongoDB collection used for locks.
- *
- * \author Michael Kuhn
- *
- * \param collection A collection.
- *
- * \return The MongoDB collection.
- */
-gchar const*
-j_collection_collection_locks (JCollection* collection)
-{
-	g_return_val_if_fail(collection != NULL, NULL);
-	g_return_val_if_fail(collection->store != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	if (G_UNLIKELY(collection->collection.locks == NULL))
-	{
-		collection->collection.locks = g_strdup_printf("%s.Locks", j_store_get_name(collection->store));
-	}
-
-	j_trace_leave(G_STRFUNC);
-
-	return collection->collection.locks;
 }
 
 /**
@@ -669,7 +595,7 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	JListIterator* it;
 	JSemantics* semantics;
 	bson** obj;
-	bson index;
+	bson index[1];
 	mongo* mongo_connection;
 	mongo_write_concern write_concern[1];
 	gboolean ret = FALSE;
@@ -714,20 +640,15 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	j_helper_set_write_concern(write_concern, semantics);
 
-	bson_init(&index);
-	bson_append_int(&index, "Collection", 1);
-	bson_append_int(&index, "Name", 1);
-	bson_finish(&index);
+	bson_init(index);
+	bson_append_int(index, "Collection", 1);
+	bson_append_int(index, "Name", 1);
+	bson_finish(index);
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	if (!collection->index_created)
-	{
-		mongo_create_index(mongo_connection, j_collection_collection_items(collection), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
-		collection->index_created = TRUE;
-	}
-
-	ret = j_helper_insert_batch(mongo_connection, j_collection_collection_items(collection), obj, length, write_concern);
+	j_store_create_index(collection->store, J_STORE_COLLECTION_ITEMS, mongo_connection, index);
+	ret = j_helper_insert_batch(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), obj, length, write_concern);
 
 	/*
 	if (ret != MONGO_OK)
@@ -742,7 +663,7 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	j_connection_pool_push_meta(0, mongo_connection);
 
-	bson_destroy(&index);
+	bson_destroy(index);
 
 	mongo_write_concern_destroy(write_concern);
 
@@ -834,7 +755,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		bson_finish(&b);
 
 		/* FIXME do not send write_concern on each remove */
-		ret = (mongo_remove(mongo_connection, j_collection_collection_items(collection), &b, write_concern) == MONGO_OK) && ret;
+		ret = (mongo_remove(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), &b, write_concern) == MONGO_OK) && ret;
 
 		bson_destroy(&b);
 
@@ -959,7 +880,7 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		bson_append_string(&b, "Name", name);
 		bson_finish(&b);
 
-		cursor = mongo_find(mongo_connection, j_collection_collection_items(collection), &b, NULL, 1, 0, 0);
+		cursor = mongo_find(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), &b, NULL, 1, 0, 0);
 
 		bson_destroy(&b);
 

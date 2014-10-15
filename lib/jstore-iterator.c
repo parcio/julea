@@ -94,7 +94,7 @@ j_store_iterator_new (JStore* store)
 
 	empty = bson_shared_empty();
 
-	iterator->cursor = mongo_find(iterator->connection, j_store_collection_collections(iterator->store), empty, NULL, 0, 0, 0);
+	iterator->cursor = mongo_find(iterator->connection, j_store_collection(iterator->store, J_STORE_COLLECTION_COLLECTIONS), empty, NULL, 0, 0, 0);
 
 	return iterator;
 }
