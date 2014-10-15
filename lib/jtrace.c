@@ -557,7 +557,6 @@ JTrace*
 j_trace_new (GThread* thread)
 {
 	JTrace* trace;
-	guint64 timestamp;
 
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -580,8 +579,6 @@ j_trace_new (GThread* thread)
 		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
-	timestamp = j_trace_get_time();
-
 #ifdef HAVE_HDTRACE
 	if (j_trace_flags & J_TRACE_HDTRACE)
 	{
@@ -601,7 +598,7 @@ j_trace_new (GThread* thread)
 		trace->otf.process_id = g_atomic_int_add(&otf_process_id, 1);
 
 		OTF_Writer_writeDefProcess(otf_writer, 0, trace->otf.process_id, trace->thread_name, 0);
-		OTF_Writer_writeBeginProcess(otf_writer, timestamp, trace->otf.process_id);
+		OTF_Writer_writeBeginProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
 	}
 #endif
 
@@ -663,10 +660,6 @@ j_trace_unref (JTrace* trace)
 
 	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
 	{
-		guint64 timestamp;
-
-		timestamp = j_trace_get_time();
-
 #ifdef HAVE_HDTRACE
 		if (j_trace_flags & J_TRACE_HDTRACE)
 		{
@@ -678,7 +671,7 @@ j_trace_unref (JTrace* trace)
 #ifdef HAVE_OTF
 		if (j_trace_flags & J_TRACE_OTF)
 		{
-			OTF_Writer_writeEndProcess(otf_writer, timestamp, trace->otf.process_id);
+			OTF_Writer_writeEndProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
 		}
 #endif
 

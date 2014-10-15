@@ -331,14 +331,14 @@ j_item_write_background_operation (gpointer data)
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
-		guint64 nbytes;
+		/* guint64 nbytes; */
 
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, background_data->connection);
 
-		nbytes = j_message_get_8(reply);
+		/* FIXME do something with nbytes */
+		/* nbytes = j_message_get_8(reply); */
 
-		/* FIXME do something with reply */
 		j_message_unref(reply);
 	}
 

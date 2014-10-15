@@ -239,7 +239,7 @@ distribution_set2 (gpointer data, gchar const* key, guint64 value1, guint64 valu
 	if (g_strcmp0(key, "weight") == 0)
 	{
 		g_return_if_fail(value1 < distribution->server_count);
-		g_return_if_fail(value2 >= 0 && value2 < 256);
+		g_return_if_fail(value2 < 256);
 		g_return_if_fail(distribution->sum + value2 - distribution->weights[value1] > 0);
 
 		distribution->sum += value2 - distribution->weights[value1];
