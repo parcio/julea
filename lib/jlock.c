@@ -71,6 +71,11 @@ struct JLock
 	GArray* blocks;
 
 	gboolean acquired;
+
+	/**
+	 * Whether the index has been created.
+	 **/
+	gboolean index_created;
 };
 
 /**
@@ -150,6 +155,7 @@ j_lock_new (JItem* item)
 	lock->item = j_item_ref(item);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
+	lock->index_created = FALSE;
 
 	j_trace_leave(G_STRFUNC);
 
@@ -223,7 +229,12 @@ j_lock_acquire (JLock* lock)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+	if (!lock->index_created)
+	{
+		mongo_create_index(mongo_connection, j_collection_collection_locks(collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+		lock->index_created = TRUE;
+	}
+
 	lock->acquired = (mongo_insert(mongo_connection, j_collection_collection_locks(collection), obj, write_concern) == MONGO_OK);
 
 	j_connection_pool_push_meta(0, mongo_connection);

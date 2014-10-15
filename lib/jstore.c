@@ -73,6 +73,11 @@ struct JStore
 	collection;
 
 	/**
+	 * Whether the index has been created.
+	 **/
+	gboolean index_created;
+
+	/**
 	 * The reference count.
 	 **/
 	gint ref_count;
@@ -281,6 +286,7 @@ j_store_new (gchar const* name)
 	store = g_slice_new(JStore);
 	store->name = g_strdup(name);
 	store->collection.collections = NULL;
+	store->index_created = FALSE;
 	store->ref_count = 1;
 
 end:
@@ -378,7 +384,12 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+	if (!store->index_created)
+	{
+		mongo_create_index(mongo_connection, j_store_collection_collections(store), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+		store->index_created= TRUE;
+	}
+
 	ret = j_helper_insert_batch(mongo_connection, j_store_collection_collections(store), obj, length, write_concern);
 
 	/*

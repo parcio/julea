@@ -113,6 +113,11 @@ struct JCollection
 	JStore* store;
 
 	/**
+	 * Whether the index has been created.
+	 **/
+	gboolean index_created;
+
+	/**
 	 * The reference count.
 	 **/
 	gint ref_count;
@@ -394,6 +399,7 @@ j_collection_new (JStore* store, gchar const* name)
 	collection->collection.items = NULL;
 	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
+	collection->index_created = FALSE;
 	collection->ref_count = 1;
 
 end:
@@ -436,6 +442,7 @@ j_collection_new_from_bson (JStore* store, bson const* b)
 	collection->collection.items = NULL;
 	collection->collection.locks = NULL;
 	collection->store = j_store_ref(store);
+	collection->index_created = FALSE;
 	collection->ref_count = 1;
 
 	j_collection_deserialize(collection, b);
@@ -714,7 +721,12 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
-	mongo_create_index(mongo_connection, j_collection_collection_items(collection), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+	if (!collection->index_created)
+	{
+		mongo_create_index(mongo_connection, j_collection_collection_items(collection), &index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+		collection->index_created = TRUE;
+	}
+
 	ret = j_helper_insert_batch(mongo_connection, j_collection_collection_items(collection), obj, length, write_concern);
 
 	/*
