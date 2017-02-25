@@ -44,6 +44,8 @@
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
 
+#include "server.h"
+
 #include "backend/backend.h"
 
 static JStatistics* jd_statistics;
