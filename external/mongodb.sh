@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2012-2013 Michael Kuhn
+# Copyright (c) 2012-2017 Michael Kuhn
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 set -e
 
 PREFIX="${PWD}/mongodb-server"
-BASE='mongodb-src-r2.6.5'
+BASE='mongodb-src-r3.4.2'
 FILE="${BASE}.tar.gz"
 
 if [ -d "${PREFIX}" ]
@@ -47,12 +47,7 @@ tar xf "${FILE}"
 
 cd "${BASE}"
 
-if [ -f "${PREFIX}.patch" ]
-then
-	patch -p1 < "${PREFIX}.patch"
-fi
-
-scons --jobs=$(nproc) all
+scons --jobs="$(nproc)" all
 scons --prefix="${PREFIX}" install
 
 rm -rf "${TEMP}"
