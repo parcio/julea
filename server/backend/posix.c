@@ -68,7 +68,7 @@ backend_file_unref (gpointer data)
 	{
 		g_hash_table_remove(jd_backend_file_cache, file->item.path);
 
-		jd_backend_close(&(file->item), NULL);
+		backend_close(&(file->item), NULL);
 
 		g_slice_free(JBackendFile, file);
 	}
@@ -120,22 +120,22 @@ backend_file_add (GHashTable* files, JBackendItem* backend_item)
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	GHashTable* files = data;
 
 	JBackendFile* file;
 	gchar* parent;
-	gchar* path;
+	gchar* full_path;
 	gint fd;
 
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+	full_path = g_build_filename(jd_backend_path, path, NULL);
 
-	if ((file = backend_file_get(files, path)) != NULL)
+	if ((file = backend_file_get(files, full_path)) != NULL)
 	{
-		g_free(path);
+		g_free(full_path);
 
 		// FIXME
 		fd = 0;
@@ -144,17 +144,17 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 		goto end;
 	}
 
-	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
+	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
 
-	parent = g_path_get_dirname(path);
+	parent = g_path_get_dirname(full_path);
 	g_mkdir_with_parents(parent, 0700);
 	g_free(parent);
 
-	fd = open(path, O_RDWR | O_CREAT, 0600);
+	fd = open(full_path, O_RDWR | O_CREAT, 0600);
 
-	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
+	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	bf->path = path;
+	bf->path = full_path;
 	bf->user_data = GINT_TO_POINTER(fd);
 
 	backend_file_add(files, bf);
@@ -188,21 +188,21 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	GHashTable* files = data;
 
 	JBackendFile* file;
-	gchar* path;
+	gchar* full_path;
 	gint fd;
 
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
+	full_path = g_build_filename(jd_backend_path, path, NULL);
 
-	if ((file = backend_file_get(files, path)) != NULL)
+	if ((file = backend_file_get(files, full_path)) != NULL)
 	{
-		g_free(path);
+		g_free(full_path);
 
 		// FIXME
 		fd = 0;
@@ -211,11 +211,11 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 		goto end;
 	}
 
-	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
-	fd = open(path, O_RDWR);
-	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
+	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
+	fd = open(full_path, O_RDWR);
+	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
-	bf->path = path;
+	bf->path = full_path;
 	bf->user_data = GINT_TO_POINTER(fd);
 
 	backend_file_add(files, bf);

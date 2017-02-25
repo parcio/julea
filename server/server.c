@@ -102,9 +102,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	while (j_message_receive(message, connection))
 	{
 		JBackendItem backend_item[1];
-		gchar const* store;
-		gchar const* collection;
-		gchar const* item;
+		gchar const* path;
 		guint32 operation_count;
 		JMessageType type_modifier;
 		guint i;
@@ -120,9 +118,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply = NULL;
 
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
@@ -130,9 +125,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
-						item = j_message_get_string(message);
+						path = j_message_get_string(message);
 
-						if (jd_backend_create(backend_item, store, collection, item, backend_data))
+						if (jd_backend_create(backend_item, path, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
@@ -162,9 +157,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply = NULL;
 
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
@@ -172,9 +164,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
-						item = j_message_get_string(message);
+						path = j_message_get_string(message);
 
-						if (jd_backend_open(backend_item, store, collection, item, backend_data)
+						if (jd_backend_open(backend_item, path, backend_data)
 						    && jd_backend_delete(backend_item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
@@ -198,14 +190,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply;
 
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-					item = j_message_get_string(message);
+					path = j_message_get_string(message);
 
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					jd_backend_open(backend_item, store, collection, item, backend_data);
+					jd_backend_open(backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -265,16 +255,14 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						reply = j_message_new_reply(message);
 					}
 
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-					item = j_message_get_string(message);
+					path = j_message_get_string(message);
 
 					/* Guaranteed to work, because memory_chunk is not shared. */
 					buf = j_memory_chunk_get(memory_chunk, J_STRIPE_SIZE);
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					jd_backend_open(backend_item, store, collection, item, backend_data);
+					jd_backend_open(backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -351,9 +339,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
-					store = j_message_get_string(message);
-					collection = j_message_get_string(message);
-
 					for (i = 0; i < operation_count; i++)
 					{
 						guint count = 0;
@@ -361,11 +346,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						gint64 modification_time = 0;
 						guint64 size = 0;
 
-						item = j_message_get_string(message);
+						path = j_message_get_string(message);
 						flags = j_message_get_4(message);
 
 						// FIXME return value
-						jd_backend_open(backend_item, store, collection, item, backend_data);
+						jd_backend_open(backend_item, path, backend_data);
 
 						if (jd_backend_status(backend_item, flags, &modification_time, &size, backend_data))
 						{

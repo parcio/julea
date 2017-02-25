@@ -52,26 +52,27 @@ def benchmark (ctx):
 	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
 
 def test (ctx):
-	setup = '%s/tools/setup.sh' % (Context.top_dir,)
+	setup = '{0}/tools/setup.sh'.format(Context.top_dir)
 	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
-	command = '%s %s --keep-going --verbose %s/test/test' % (get_library_path(), gtester, Context.out_dir)
+	command = '{0} {1} {2} --keep-going --verbose {3}/test/test'.format(get_library_path(), 'gdb --args ' if ctx.options.debug else '', gtester, Context.out_dir)
 
-	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
+	subprocess.call('{0} start'.format(setup), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
-	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
+	subprocess.call('{0} stop'.format(setup), close_fds=True, shell=True)
 
 def environment (ctx):
 	path = get_path()
 	ld_library_path = get_library_path()
 	pkg_config_path = get_pkg_config_path()
 
-	print(path)
-	print(ld_library_path)
-	print(pkg_config_path)
-	print('')
-	print('export PATH')
-	print('export LD_LIBRARY_PATH')
-	print('export PKG_CONFIG_PATH')
+	with open('julea-environment', 'w') as f:
+		f.write(path + '\n')
+		f.write(ld_library_path + '\n')
+		f.write(pkg_config_path + '\n')
+		f.write('\n')
+		f.write('export PATH\n')
+		f.write('export LD_LIBRARY_PATH\n')
+		f.write('export PKG_CONFIG_PATH\n')
 
 def configure (ctx):
 	ctx.load('compiler_c')

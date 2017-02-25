@@ -704,9 +704,6 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	gchar const* item_name;
 	gchar const* collection_name;
 	gchar const* store_name;
-	gsize item_len;
-	gsize collection_len;
-	gsize store_len;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -737,9 +734,6 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 
 		collection_name = collection->name;
 		store_name = j_store_get_name(collection->store);
-
-		store_len = strlen(store_name) + 1;
-		collection_len = strlen(collection_name) + 1;
 	}
 
 	write_concern = mongoc_write_concern_new();
@@ -757,7 +751,6 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		mongoc_collection_t* m_collection;
 
 		item_name = j_item_get_name(item);
-		item_len = strlen(item_name) + 1;
 
 		bson_init(&b);
 		bson_append_oid(&b, "_id", -1, j_item_get_id(item));
@@ -772,17 +765,23 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 
 		for (guint i = 0; i < n; i++)
 		{
+			gchar* path;
+			gsize path_len;
+
+			path = g_build_path("/", store_name, collection_name, item_name, NULL);
+			path_len = strlen(path) + 1;
+
 			if (messages[i] == NULL)
 			{
 				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DELETE, store_len + collection_len);
+				messages[i] = j_message_new(J_MESSAGE_DELETE, 0);
 				j_message_set_safety(messages[i], semantics);
-				j_message_append_n(messages[i], store_name, store_len);
-				j_message_append_n(messages[i], collection_name, collection_len);
 			}
 
-			j_message_add_operation(messages[i], item_len);
-			j_message_append_n(messages[i], item_name, item_len);
+			j_message_add_operation(messages[i], path_len);
+			j_message_append_n(messages[i], path, path_len);
+
+			g_free(path);
 		}
 	}
 

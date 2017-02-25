@@ -40,10 +40,10 @@ void backend_fini (void);
 gpointer backend_thread_init (void);
 void backend_thread_fini (gpointer);
 
-gboolean backend_create (JBackendItem*, gchar const*, gchar const*, gchar const*, gpointer);
+gboolean backend_create (JBackendItem*, gchar const*, gpointer);
 gboolean backend_delete (JBackendItem*, gpointer);
 
-gboolean backend_open (JBackendItem*, gchar const*, gchar const*, gchar const*, gpointer);
+gboolean backend_open (JBackendItem*, gchar const*, gpointer);
 gboolean backend_close (JBackendItem*, gpointer);
 
 gboolean backend_status (JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);

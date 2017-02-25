@@ -41,21 +41,21 @@ static gchar* jd_backend_path = NULL;
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	GFile* file;
 	GFile* parent;
 	GFileIOStream* stream;
-	gchar* path;
+	gchar* full_path;
 
 	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
-	file = g_file_new_for_path(path);
+	full_path = g_build_filename(jd_backend_path, path, NULL);
+	file = g_file_new_for_path(full_path);
 
-	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
+	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
 
 	parent = g_file_get_parent(file);
 	g_file_make_directory_with_parents(parent, NULL, NULL);
@@ -63,9 +63,9 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 
 	stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
 
-	j_trace_file_end(path, J_TRACE_FILE_CREATE, 0, 0);
+	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	bf->path = path;
+	bf->path = full_path;
 	bf->user_data = stream;
 
 	g_object_unref(file);
@@ -101,24 +101,24 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	GFile* file;
 	GFileIOStream* stream;
-	gchar* path;
+	gchar* full_path;
 
 	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
-	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
-	file = g_file_new_for_path(path);
+	full_path = g_build_filename(jd_backend_path, path, NULL);
+	file = g_file_new_for_path(full_path);
 
-	j_trace_file_begin(path, J_TRACE_FILE_OPEN);
+	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
 	stream = g_file_open_readwrite(file, NULL, NULL);
-	j_trace_file_end(path, J_TRACE_FILE_OPEN, 0, 0);
+	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
-	bf->path = path;
+	bf->path = full_path;
 	bf->user_data = stream;
 
 	g_object_unref(file);

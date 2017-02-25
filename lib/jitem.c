@@ -1095,9 +1095,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	gchar const* item_name;
 	gchar const* collection_name;
 	gchar const* store_name;
-	gsize item_len;
-	gsize collection_len;
-	gsize store_len;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1127,10 +1124,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
 		store_name = j_store_get_name(j_collection_get_store(item->collection));
-
-		item_len = strlen(item_name) + 1;
-		collection_len = strlen(collection_name) + 1;
-		store_len = strlen(store_name) + 1;
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
@@ -1171,10 +1164,16 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		{
 			if (messages[index] == NULL)
 			{
-				messages[index] = j_message_new(J_MESSAGE_READ, store_len + collection_len + item_len);
-				j_message_append_n(messages[index], store_name, store_len);
-				j_message_append_n(messages[index], collection_name, collection_len);
-				j_message_append_n(messages[index], item_name, item_len);
+				gchar* path;
+				gsize path_len;
+
+				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path_len = strlen(path) + 1;
+
+				messages[index] = j_message_new(J_MESSAGE_READ, path_len);
+				j_message_append_n(messages[index], path, path_len);
+
+				g_free(path);
 			}
 
 			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
@@ -1297,9 +1296,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	gchar const* item_name;
 	gchar const* collection_name;
 	gchar const* store_name;
-	gsize item_len;
-	gsize collection_len;
-	gsize store_len;
 	guint64 max_offset = 0;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -1328,10 +1324,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
 		store_name = j_store_get_name(j_collection_get_store(item->collection));
-
-		store_len = strlen(store_name) + 1;
-		collection_len = strlen(collection_name) + 1;
-		item_len = strlen(item->name) + 1;
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
@@ -1371,12 +1363,18 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		{
 			if (messages[index] == NULL)
 			{
+				gchar* path;
+				gsize path_len;
+
+				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path_len = strlen(path) + 1;
+
 				/* FIXME */
-				messages[index] = j_message_new(J_MESSAGE_WRITE, store_len + collection_len + item_len);
+				messages[index] = j_message_new(J_MESSAGE_WRITE, path_len);
 				j_message_set_safety(messages[index], semantics);
-				j_message_append_n(messages[index], store_name, store_len);
-				j_message_append_n(messages[index], collection_name, collection_len);
-				j_message_append_n(messages[index], item_name, item_len);
+				j_message_append_n(messages[index], path, path_len);
+
+				g_free(path);
 			}
 
 			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
@@ -1441,8 +1439,14 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		if (!item->status.created[i])
 		{
+			gchar* path;
+			gsize path_len;
+
+			path = g_build_path("/", store_name, collection_name, item_name, NULL);
+			path_len = strlen(path) + 1;
+
 			/* FIXME better solution? */
-			create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
+			create_message = j_message_new(J_MESSAGE_CREATE, 0);
 			/**
 			 * Force safe semantics to make the server send a reply.
 			 * Otherwise, nasty races can occur when using unsafe semantics:
@@ -1452,10 +1456,10 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 			 **/
 			j_message_force_safety(create_message, J_SEMANTICS_SAFETY_NETWORK);
-			j_message_append_n(create_message, store_name, store_len);
-			j_message_append_n(create_message, collection_name, collection_len);
-			j_message_add_operation(create_message, item_len);
-			j_message_append_n(create_message, item_name, item_len);
+			j_message_add_operation(create_message, path_len);
+			j_message_append_n(create_message, path, path_len);
+
+			g_free(path);
 
 			item->status.created[i] = TRUE;
 		}
@@ -1680,35 +1684,34 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		{
 			JItemReadStatusData* buffer;
 
+			gchar const* collection_name;
+			gchar const* store_name;
+
+			collection_name = j_collection_get_name(item->collection);
+			store_name = j_store_get_name(j_collection_get_store(item->collection));
+
 			for (guint i = 0; i < n; i++)
 			{
+				gchar* path;
+				gsize path_len;
+
 				gchar const* item_name;
-				gsize item_len;
 
 				item_name = item->name;
-				item_len = strlen(item->name) + 1;
+
+				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path_len = strlen(path) + 1;
 
 				if (messages[i] == NULL)
 				{
-					gchar const* collection_name;
-					gchar const* store_name;
-					gsize collection_len;
-					gsize store_len;
-
-					collection_name = j_collection_get_name(item->collection);
-					store_name = j_store_get_name(j_collection_get_store(item->collection));
-
-					store_len = strlen(store_name) + 1;
-					collection_len = strlen(collection_name) + 1;
-
-					messages[i] = j_message_new(J_MESSAGE_STATUS, store_len + collection_len);
-					j_message_append_n(messages[i], store_name, store_len);
-					j_message_append_n(messages[i], collection_name, collection_len);
+					messages[i] = j_message_new(J_MESSAGE_STATUS, 0);
 				}
 
-				j_message_add_operation(messages[i], item_len + sizeof(guint32));
-				j_message_append_n(messages[i], item_name, item_len);
+				j_message_add_operation(messages[i], path_len + sizeof(guint32));
+				j_message_append_n(messages[i], path, path_len);
 				j_message_append_4(messages[i], &flags);
+
+				g_free(path);
 			}
 
 			buffer = g_slice_new(JItemReadStatusData);

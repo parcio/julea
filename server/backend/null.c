@@ -37,13 +37,13 @@
 
 G_MODULE_EXPORT
 gboolean
-backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
-	bf->path = g_strdup_printf("%s.%s.%s", store, collection, item);
+	bf->path = g_strdup(path);
 	bf->user_data = NULL;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CREATE);
@@ -72,13 +72,13 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 G_MODULE_EXPORT
 gboolean
-backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gchar const* item, gpointer data)
+backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 {
 	(void)data;
 
 	j_trace_enter(G_STRFUNC);
 
-	bf->path = g_strdup_printf("%s.%s.%s", store, collection, item);
+	bf->path = g_strdup(path);
 	bf->user_data = NULL;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_OPEN);
