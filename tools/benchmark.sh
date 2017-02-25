@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Copyright (c) 2013 Christina Janssen
-# Copyright (c) 2013 Michael Kuhn
+# Copyright (c) 2013-2017 Michael Kuhn
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ echo "Writing results to: ${DIRECTORY}"
 cd "${DIRECTORY}"
 
 trap "ssh-setup.sh stop; rm -f ${config_file}" HUP INT TERM 0
-   
+
 if [ "$CASE" = "templates" -o "$CASE" = "all" ]
 then
   echo Templates
@@ -95,8 +95,8 @@ then
 fi
 
 if [ "$CASE" = "all" ]
-then 
-  
+then
+
   echo Atomicity
 
   for atomicity in operation none
