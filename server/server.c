@@ -566,7 +566,7 @@ main (int argc, char** argv)
 	JConfiguration* configuration;
 	GError* error = NULL;
 	GMainLoop* main_loop;
-	GModule* backend;
+	GModule* backend = NULL;
 	GOptionContext* context;
 	GSocketService* socket_service;
 	gchar* path;
@@ -633,9 +633,18 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	path = g_module_build_path(SERVER_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
+#ifdef SERVER_BACKEND_PATH_BUILD
+	path = g_module_build_path(SERVER_BACKEND_PATH_BUILD, j_configuration_get_storage_backend(configuration));
 	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
 	g_free(path);
+#endif
+
+	if (backend == NULL)
+	{
+		path = g_module_build_path(SERVER_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
+		backend = g_module_open(path, G_MODULE_BIND_LOCAL);
+		g_free(path);
+	}
 
 	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
 	g_module_symbol(backend, "backend_fini", (gpointer*)&jd_backend_fini);

@@ -218,6 +218,9 @@ def configure (ctx):
 	if ctx.options.use_hello:
 		ctx.define('J_USE_HELLO', 1)
 
+	if ctx.options.debug:
+		ctx.define('SERVER_BACKEND_PATH_BUILD', '{0}/server/backend'.format(Context.out_dir))
+
 	ctx.define('SERVER_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
 	ctx.write_config_header('include/julea-config.h')
