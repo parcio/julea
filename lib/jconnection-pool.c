@@ -140,13 +140,11 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->meta_len; i++)
 	{
-		mongo* connection;
+		mongoc_client_t* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->meta_queues[i].queue)) != NULL)
 		{
-			mongo_disconnect(connection);
-			mongo_destroy(connection);
-			g_slice_free(mongo, connection);
+			mongoc_client_destroy(connection);
 		}
 
 		g_async_queue_unref(pool->meta_queues[i].queue);
@@ -254,10 +252,10 @@ j_connection_pool_push_data (guint index, GSocketConnection* connection)
 	j_trace_leave(G_STRFUNC);
 }
 
-mongo*
+mongoc_client_t*
 j_connection_pool_pop_meta (guint index)
 {
-	mongo* connection;
+	mongoc_client_t* connection;
 
 	g_return_val_if_fail(j_connection_pool != NULL, NULL);
 	g_return_val_if_fail(index < j_connection_pool->meta_len, NULL);
@@ -276,11 +274,11 @@ j_connection_pool_pop_meta (guint index)
 		if ((guint)g_atomic_int_add(&(j_connection_pool->meta_queues[index].count), 1) < j_connection_pool->max_count)
 		{
 			gboolean ret;
+			mongoc_uri_t* uri;
 
-			connection = g_slice_new(mongo);
-			mongo_init(connection);
+			uri = mongoc_uri_new_for_host_port(j_configuration_get_metadata_server(j_connection_pool->configuration, index), 27017);
 
-			ret = (mongo_client(connection, j_configuration_get_metadata_server(j_connection_pool->configuration, index), 27017) == MONGO_OK);
+			ret = ((connection = mongoc_client_new_from_uri(uri)) != NULL);
 
 			if (!ret)
 			{
@@ -307,7 +305,7 @@ end:
 }
 
 void
-j_connection_pool_push_meta (guint index, mongo* connection)
+j_connection_pool_push_meta (guint index, mongoc_client_t* connection)
 {
 	g_return_if_fail(j_connection_pool != NULL);
 	g_return_if_fail(index < j_connection_pool->meta_len);

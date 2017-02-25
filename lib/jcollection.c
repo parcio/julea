@@ -34,7 +34,7 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
@@ -379,7 +379,7 @@ j_collection_new (JStore* store, gchar const* name)
 	*/
 
 	collection = g_slice_new(JCollection);
-	bson_oid_gen(&(collection->id));
+	bson_oid_init(&(collection->id), bson_context_get_default());
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
 	collection->store = j_store_ref(store);
@@ -407,7 +407,7 @@ end:
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new_from_bson (JStore* store, bson const* b)
+j_collection_new_from_bson (JStore* store, bson_t const* b)
 {
 	/*
 		: m_initialized(true),
@@ -471,7 +471,7 @@ j_collection_get_store (JCollection* collection)
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-bson*
+bson_t*
 j_collection_serialize (JCollection* collection)
 {
 	/*
@@ -479,8 +479,8 @@ j_collection_serialize (JCollection* collection)
 			.append("Group", m_owner.Group())
 	*/
 
-	bson* b;
-	bson* b_cred;
+	bson_t* b;
+	bson_t* b_cred;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -488,15 +488,15 @@ j_collection_serialize (JCollection* collection)
 
 	b_cred = j_credentials_serialize(collection->credentials);
 
-	b = g_slice_new(bson);
+	b = g_slice_new(bson_t);
 	bson_init(b);
-	bson_append_oid(b, "_id", &(collection->id));
-	bson_append_string(b, "Name", collection->name);
-	bson_append_bson(b, "Credentials", b_cred);
-	bson_finish(b);
+	bson_append_oid(b, "_id", -1, &(collection->id));
+	bson_append_utf8(b, "Name", -1, collection->name, -1);
+	bson_append_document(b, "Credentials", -1, b_cred);
+	//bson_finish(b);
 
 	bson_destroy(b_cred);
-	g_slice_free(bson, b_cred);
+	g_slice_free(bson_t, b_cred);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -517,44 +517,47 @@ j_collection_serialize (JCollection* collection)
  * \param b          A BSON object.
  **/
 void
-j_collection_deserialize (JCollection* collection, bson const* b)
+j_collection_deserialize (JCollection* collection, bson_t const* b)
 {
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	//j_bson_print(bson);
+	//j_bson_print(bson_t);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
 	/*
 		m_owner.m_user = o.getField("User").Int();
 		m_owner.m_group = o.getField("Group").Int();
 	*/
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "_id") == 0)
 		{
-			collection->id = *bson_iterator_oid(&iterator);
+			collection->id = *bson_iter_oid(&iterator);
 		}
 		else if (g_strcmp0(key, "Name") == 0)
 		{
 			g_free(collection->name);
-			collection->name = g_strdup(bson_iterator_string(&iterator));
+			collection->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
 		}
 		else if (g_strcmp0(key, "Credentials") == 0)
 		{
-			bson b_cred[1];
+			guint8 const* data;
+			guint32 len;
+			bson_t b_cred[1];
 
-			bson_iterator_subobject_init(&iterator, b_cred, 0);
+			bson_iter_document(&iterator, &len, &data);
+			bson_init_static(b_cred, data, len);
 			j_credentials_deserialize(collection->credentials, b_cred);
 			bson_destroy(b_cred);
 		}
@@ -594,10 +597,11 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JSemantics* semantics;
-	bson** obj;
-	bson index[1];
-	mongo* mongo_connection;
-	mongo_write_concern write_concern[1];
+	bson_t** obj;
+	bson_t index[1];
+	mongoc_client_t* mongo_connection;
+	mongoc_collection_t* mongo_collection;
+	mongoc_write_concern_t* write_concern;
 	gboolean ret = FALSE;
 	guint i;
 	guint length;
@@ -615,14 +619,14 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	i = 0;
 	length = j_list_length(operations);
-	obj = g_new(bson*, length);
+	obj = g_new(bson_t*, length);
 	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JItem* item = operation->u.collection_create_item.item;
-		bson* b;
+		bson_t* b;
 
 		collection = operation->u.collection_create_item.collection;
 		b = j_item_serialize(item, semantics);
@@ -638,22 +642,25 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 		goto end;
 	}
 
+	write_concern = mongoc_write_concern_new();
 	j_helper_set_write_concern(write_concern, semantics);
 
 	bson_init(index);
-	bson_append_int(index, "Collection", 1);
-	bson_append_int(index, "Name", 1);
-	bson_finish(index);
+	bson_append_int32(index, "Collection", -1, 1);
+	bson_append_int32(index, "Name", -1, 1);
+	//bson_finish(index);
 
 	mongo_connection = j_connection_pool_pop_meta(0);
+	/* FIXME */
+	mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
 
 	j_store_create_index(collection->store, J_STORE_COLLECTION_ITEMS, mongo_connection, index);
-	ret = j_helper_insert_batch(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), obj, length, write_concern);
+	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
 
 	/*
-	if (ret != MONGO_OK)
+	if (!ret)
 	{
-		bson error[1];
+		bson_t error[1];
 
 		mongo_cmd_get_last_error(mongo_connection, j_store_get_name(collection->store), error);
 		bson_print(error);
@@ -665,13 +672,13 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	bson_destroy(index);
 
-	mongo_write_concern_destroy(write_concern);
+	mongoc_write_concern_destroy(write_concern);
 
 end:
 	for (i = 0; i < length; i++)
 	{
 		bson_destroy(obj[i]);
-		g_slice_free(bson, obj[i]);
+		g_slice_free(bson_t, obj[i]);
 	}
 
 	g_free(obj);
@@ -689,8 +696,8 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	JListIterator* it;
 	JMessage** messages;
 	JSemantics* semantics;
-	mongo* mongo_connection;
-	mongo_write_concern write_concern[1];
+	mongoc_client_t* mongo_connection;
+	mongoc_write_concern_t* write_concern;
 	gboolean ret = TRUE;
 	guint m;
 	guint n;
@@ -735,6 +742,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 		collection_len = strlen(collection_name) + 1;
 	}
 
+	write_concern = mongoc_write_concern_new();
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	it = j_list_iterator_new(operations);
@@ -745,17 +753,20 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JItem* item = operation->u.collection_delete_item.item;
-		bson b;
+		bson_t b;
+		mongoc_collection_t* m_collection;
 
 		item_name = j_item_get_name(item);
 		item_len = strlen(item_name) + 1;
 
 		bson_init(&b);
-		bson_append_oid(&b, "_id", j_item_get_id(item));
-		bson_finish(&b);
+		bson_append_oid(&b, "_id", -1, j_item_get_id(item));
+		//bson_finish(&b);
 
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
 		/* FIXME do not send write_concern on each remove */
-		ret = (mongo_remove(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), &b, write_concern) == MONGO_OK) && ret;
+		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL) && ret;
 
 		bson_destroy(&b);
 
@@ -836,7 +847,7 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 
 	j_list_iterator_free(it);
 
-	mongo_write_concern_destroy(write_concern);
+	mongoc_write_concern_destroy(write_concern);
 
 	g_free(background_operations);
 	g_free(messages);
@@ -850,7 +861,7 @@ gboolean
 j_collection_get_item_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
-	mongo* mongo_connection;
+	mongoc_client_t* mongo_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -871,28 +882,32 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.collection_get_item.collection;
 		JItem** item = operation->u.collection_get_item.item;
-		bson b;
-		mongo_cursor* cursor;
+		bson_t b;
+		bson_t const* b_cur;
+		mongoc_cursor_t* cursor;
+		mongoc_collection_t* m_collection;
 		gchar const* name = operation->u.collection_get_item.name;
 
 		bson_init(&b);
-		bson_append_oid(&b, "Collection", &(collection->id));
-		bson_append_string(&b, "Name", name);
-		bson_finish(&b);
+		bson_append_oid(&b, "Collection", -1, &(collection->id));
+		bson_append_utf8(&b, "Name", -1, name, -1);
+		//bson_finish(&b);
 
-		cursor = mongo_find(mongo_connection, j_store_collection(collection->store, J_STORE_COLLECTION_ITEMS), &b, NULL, 1, 0, 0);
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
+		cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 1, 1, &b, NULL, NULL);
 
 		bson_destroy(&b);
 
 		*item = NULL;
 
 		// FIXME ret
-		while (mongo_cursor_next(cursor) == MONGO_OK)
+		while (mongoc_cursor_next(cursor, &b_cur))
 		{
-			*item = j_item_new_from_bson(collection, mongo_cursor_bson(cursor));
+			*item = j_item_new_from_bson(collection, b_cur);
 		}
 
-		mongo_cursor_destroy(cursor);
+		mongoc_cursor_destroy(cursor);
 	}
 
 	j_connection_pool_push_meta(0, mongo_connection);

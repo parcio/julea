@@ -279,7 +279,7 @@ j_distribution_init (void)
  * \return A new distribution. Should be freed with j_distribution_unref().
  **/
 JDistribution*
-j_distribution_new_from_bson (bson const* b)
+j_distribution_new_from_bson (bson_t const* b)
 {
 	JDistribution* distribution;
 
@@ -337,24 +337,24 @@ j_distribution_new_for_configuration (JDistributionType type, JConfiguration* co
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-bson*
+bson_t*
 j_distribution_serialize (JDistribution* distribution)
 {
-	bson* b;
+	bson_t* b;
 
 	g_return_val_if_fail(distribution != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	b = g_slice_new(bson);
+	b = g_slice_new(bson_t);
 	bson_init(b);
 
-	bson_append_int(b, "Type", distribution->type);
-	//bson_append_long(b, "BlockSize", distribution->block_size);
+	bson_append_int32(b, "Type", -1, distribution->type);
+	//bson_append_int64(b, "BlockSize", -1, distribution->block_size);
 
 	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
 
-	bson_finish(b);
+	//bson_finish(b);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -375,26 +375,26 @@ j_distribution_serialize (JDistribution* distribution)
  * \param b           A BSON object.
  **/
 void
-j_distribution_deserialize (JDistribution* distribution, bson const* b)
+j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 {
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "Type") == 0)
 		{
-			distribution->type = bson_iterator_int(&iterator);
+			distribution->type = bson_iter_int32(&iterator);
 		}
 	}
 

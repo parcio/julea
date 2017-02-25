@@ -34,7 +34,7 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <jstore-iterator.h>
 
@@ -56,7 +56,7 @@
 
 struct JStoreIterator
 {
-	mongo* connection;
+	mongoc_client_t* connection;
 
 	/**
 	 * The store.
@@ -66,7 +66,7 @@ struct JStoreIterator
 	/**
 	 * The MongoDB cursor.
 	 **/
-	mongo_cursor* cursor;
+	mongoc_cursor_t* cursor;
 };
 
 /**
@@ -82,7 +82,8 @@ JStoreIterator*
 j_store_iterator_new (JStore* store)
 {
 	JStoreIterator* iterator;
-	bson const* empty;
+	bson_t empty[1];
+	mongoc_collection_t* m_collection;
 
 	g_return_val_if_fail(store != NULL, NULL);
 
@@ -92,9 +93,13 @@ j_store_iterator_new (JStore* store)
 	iterator->store = j_store_ref(store);
 	iterator->connection = j_connection_pool_pop_meta(0);
 
-	empty = bson_shared_empty();
+	bson_init(empty);
 
-	iterator->cursor = mongo_find(iterator->connection, j_store_collection(iterator->store, J_STORE_COLLECTION_COLLECTIONS), empty, NULL, 0, 0, 0);
+	/* FIXME */
+	m_collection = mongoc_client_get_collection(iterator->connection, j_store_get_name(iterator->store), "Collections");
+	iterator->cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 0, 1, empty, NULL, NULL);
+
+	bson_destroy(empty);
 
 	return iterator;
 }
@@ -111,7 +116,7 @@ j_store_iterator_free (JStoreIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
-	mongo_cursor_destroy(iterator->cursor);
+	mongoc_cursor_destroy(iterator->cursor);
 	j_connection_pool_push_meta(0, iterator->connection);
 
 	j_store_unref(iterator->store);
@@ -136,7 +141,7 @@ j_store_iterator_next (JStoreIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return (mongo_cursor_next(iterator->cursor) == MONGO_OK);
+	return mongoc_cursor_more(iterator->cursor);
 }
 
 /**
@@ -155,10 +160,12 @@ JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
 {
 	JCollection* collection;
+	bson_t const* b_cur;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	collection = j_collection_new_from_bson(iterator->store, mongo_cursor_bson(iterator->cursor));
+	mongoc_cursor_next(iterator->cursor, &b_cur);
+	collection = j_collection_new_from_bson(iterator->store, b_cur);
 
 	return collection;
 }

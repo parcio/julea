@@ -39,14 +39,17 @@
 
 #include <jsemantics.h>
 
-#include <mongo.h>
+#include <bson.h>
+#include <mongoc.h>
 
 J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
 J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
 J_GNUC_INTERNAL guint j_helper_get_processor_count (void);
 
-J_GNUC_INTERNAL gboolean j_helper_insert_batch (mongo*, gchar const*, bson**, guint, mongo_write_concern*);
-J_GNUC_INTERNAL void j_helper_set_write_concern (mongo_write_concern*, JSemantics*);
+J_GNUC_INTERNAL gboolean j_helper_insert_batch (mongoc_collection_t*, bson_t**, guint, mongoc_write_concern_t*);
+J_GNUC_INTERNAL void j_helper_set_write_concern (mongoc_write_concern_t*, JSemantics*);
+
+J_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
 
 #endif

@@ -44,12 +44,12 @@
 #include <jstore.h>
 
 J_GNUC_INTERNAL JCollection* j_collection_new (JStore*, gchar const*);
-J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson const*);
+J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (JStore*, bson_t const*);
 
 J_GNUC_INTERNAL JStore* j_collection_get_store (JCollection*);
 
-J_GNUC_INTERNAL bson* j_collection_serialize (JCollection*);
-J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson const*);
+J_GNUC_INTERNAL bson_t* j_collection_serialize (JCollection*);
+J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson_t const*);
 
 J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 

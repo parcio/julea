@@ -21,6 +21,15 @@ class TestContext (BuildContext):
 	cmd = 'environment'
 	fun = 'environment'
 
+def get_library_path ():
+	return 'LD_LIBRARY_PATH=%s/lib:%s/external/mongodb-client/lib' % (Context.out_dir, Context.run_dir)
+
+def prepend_path (key, value):
+	if os.environ.has_key(key) and os.environ[key]:
+		os.environ[key] = '%s:%s' % (value, os.environ[key])
+	else:
+		os.environ[key] = '%s' % (value,)
+
 def options (ctx):
 	ctx.load('compiler_c')
 
@@ -37,7 +46,7 @@ def options (ctx):
 
 def benchmark (ctx):
 	setup = '%s/tools/setup.sh' % (Context.top_dir,)
-	command = 'LD_LIBRARY_PATH=%s/lib %s/benchmark/benchmark' % (Context.out_dir, Context.out_dir)
+	command = '%s %s/benchmark/benchmark' % (get_library_path(), Context.out_dir)
 
 	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
@@ -46,7 +55,7 @@ def benchmark (ctx):
 def test (ctx):
 	setup = '%s/tools/setup.sh' % (Context.top_dir,)
 	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
-	command = 'LD_LIBRARY_PATH=%s/lib %s --keep-going --verbose %s/test/test' % (Context.out_dir, gtester, Context.out_dir)
+	command = '%s %s --keep-going --verbose %s/test/test' % (get_library_path(), gtester, Context.out_dir)
 
 	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
@@ -120,6 +129,20 @@ def configure (ctx):
 		uselib_store = 'GTHREAD'
 	)
 
+	prepend_path('PKG_CONFIG_PATH', '%s/lib/pkgconfig' % (ctx.options.mongodb,))
+
+	ctx.check_cfg(
+		package = 'libbson-1.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'BSON'
+	)
+
+	ctx.check_cfg(
+		package = 'libmongoc-1.0',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'MONGOC'
+	)
+
 	ctx.env.JULEA_FUSE = \
 	ctx.check_cfg(
 		package = 'fuse',
@@ -140,29 +163,6 @@ def configure (ctx):
 			uselib_store = 'MPI',
 			define_name = 'HAVE_MPI'
 		)
-
-	# BSON
-	ctx.check_cc(
-		header_name = 'bson.h',
-		lib = 'bson-1.0',
-		includes = ['%s/include/libbson-1.0' % (ctx.options.mongodb,)],
-		libpath = ['%s/lib' % (ctx.options.mongodb,)],
-		rpath = ['%s/lib' % (ctx.options.mongodb,)],
-		uselib_store = 'BSON',
-		define_name = 'HAVE_BSON'
-	)
-
-	# MongoDB
-	ctx.check_cc(
-		header_name = 'mongoc.h',
-		lib = 'mongoc-1.0',
-		use = ['BSON'],
-		includes = ['%s/include/libmongoc-1.0' % (ctx.options.mongodb,)],
-		libpath = ['%s/lib' % (ctx.options.mongodb,)],
-		rpath = ['%s/lib' % (ctx.options.mongodb,)],
-		uselib_store = 'MONGODB',
-		define_name = 'HAVE_MONGODB'
-	)
 
 	if ctx.options.jzfs:
 		# JZFS
@@ -252,6 +252,9 @@ def configure (ctx):
 	else:
 		ctx.env.CFLAGS += ['-O2']
 
+	ctx.env.CFLAGS += ['-fdiagnostics-color']
+	#ctx.define('_POSIX_C_SOURCE', '200809L')
+
 	if ctx.options.use_hello:
 		ctx.define('J_USE_HELLO', 1)
 
@@ -276,7 +279,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		install_path = '${LIBDIR}'
 	)
@@ -285,7 +288,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea-private',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGODB', 'HDTRACE', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'HDTRACE', 'OTF'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${LIBDIR}'

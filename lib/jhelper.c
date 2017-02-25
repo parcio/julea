@@ -34,7 +34,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -111,7 +111,7 @@ j_helper_get_processor_count (void)
 }
 
 gboolean
-j_helper_insert_batch (mongo* connection, gchar const* ns, bson** obj, guint length, mongo_write_concern* write_concern)
+j_helper_insert_batch (mongoc_collection_t* collection, bson_t** obj, guint length, mongoc_write_concern_t* write_concern)
 {
 	guint32 const max_obj_size = J_MIB(16);
 
@@ -123,11 +123,11 @@ j_helper_insert_batch (mongo* connection, gchar const* ns, bson** obj, guint len
 	{
 		guint32 size;
 
-		size = bson_size(obj[i]);
+		size = obj[i]->len;
 
 		if (G_UNLIKELY(obj_size + size > max_obj_size))
 		{
-			ret = (mongo_insert_batch(connection, ns, (bson const**)obj + offset, i - offset, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK) && ret;
+			ret = mongoc_collection_insert_bulk(collection, MONGOC_INSERT_CONTINUE_ON_ERROR, (bson_t const**)obj + offset, i - offset, write_concern, NULL) && ret;
 
 			offset = i;
 			obj_size = 0;
@@ -136,34 +136,44 @@ j_helper_insert_batch (mongo* connection, gchar const* ns, bson** obj, guint len
 		obj_size += size;
 	}
 
-	ret = (mongo_insert_batch(connection, ns, (bson const**)obj + offset, length - offset, write_concern, MONGO_CONTINUE_ON_ERROR) == MONGO_OK) && ret;
+	ret = mongoc_collection_insert_bulk(collection, MONGOC_INSERT_CONTINUE_ON_ERROR, (bson_t const**)obj + offset, length - offset, write_concern, NULL) && ret;
 
 	return ret;
 }
 
 void
-j_helper_set_write_concern (mongo_write_concern* write_concern, JSemantics* semantics)
+j_helper_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* semantics)
 {
 	g_return_if_fail(write_concern != NULL);
 	g_return_if_fail(semantics != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	mongo_write_concern_init(write_concern);
+	//mongo_write_concern_init(write_concern);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
 	{
-		write_concern->w = 1;
+		mongoc_write_concern_set_w(write_concern, 1);
 
 		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
 		{
-			write_concern->j = 1;
+			mongoc_write_concern_set_journal(write_concern, TRUE);
 		}
 	}
 
-	mongo_write_concern_finish(write_concern);
+	//mongo_write_concern_finish(write_concern);
 
 	j_trace_leave(G_STRFUNC);
+}
+
+void
+j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
+{
+	gint ret;
+
+	/* FIXME improve */
+	ret = g_snprintf(string, length, "%d", number);
+	g_return_if_fail((guint)ret <= length);
 }
 
 /**

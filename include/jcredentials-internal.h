@@ -47,7 +47,7 @@ void j_credentials_unref (JCredentials*);
 guint32 j_credentials_get_user (JCredentials*);
 guint32 j_credentials_get_group (JCredentials*);
 
-bson* j_credentials_serialize (JCredentials*);
-void j_credentials_deserialize (JCredentials*, bson const*);
+bson_t* j_credentials_serialize (JCredentials*);
+void j_credentials_deserialize (JCredentials*, bson_t const*);
 
 #endif

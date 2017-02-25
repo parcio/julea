@@ -224,7 +224,7 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
  **/
 static
 void
-distribution_serialize (gpointer data, bson* b)
+distribution_serialize (gpointer data, bson_t* b)
 {
 	JDistributionSingleServer* distribution = data;
 
@@ -232,8 +232,8 @@ distribution_serialize (gpointer data, bson* b)
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_append_long(b, "BlockSize", distribution->block_size);
-	bson_append_int(b, "Index", distribution->index);
+	bson_append_int64(b, "BlockSize", -1, distribution->block_size);
+	bson_append_int32(b, "Index", -1, distribution->index);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -253,32 +253,32 @@ distribution_serialize (gpointer data, bson* b)
  **/
 static
 void
-distribution_deserialize (gpointer data, bson const* b)
+distribution_deserialize (gpointer data, bson_t const* b)
 {
 	JDistributionSingleServer* distribution = data;
 
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "BlockSize") == 0)
 		{
-			distribution->block_size = bson_iterator_int(&iterator);
+			distribution->block_size = bson_iter_int32(&iterator);
 		}
 		else if (g_strcmp0(key, "Index") == 0)
 		{
-			distribution->index = bson_iterator_int(&iterator);
+			distribution->index = bson_iter_int32(&iterator);
 		}
 	}
 

@@ -35,7 +35,7 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <julea-internal.h>
 
@@ -55,7 +55,7 @@ typedef enum JStoreCollection JStoreCollection;
 J_GNUC_INTERNAL JStore* j_store_new (gchar const*);
 
 J_GNUC_INTERNAL gchar const* j_store_collection (JStore*, JStoreCollection);
-J_GNUC_INTERNAL void j_store_create_index (JStore*, JStoreCollection, mongo*, bson const*);
+J_GNUC_INTERNAL void j_store_create_index (JStore*, JStoreCollection, mongoc_client_t*, bson_t const*);
 
 J_GNUC_INTERNAL gboolean j_store_create_collection_internal (JBatch*, JList*);
 J_GNUC_INTERNAL gboolean j_store_delete_collection_internal (JBatch*, JList*);

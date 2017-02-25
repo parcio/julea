@@ -46,8 +46,8 @@ struct JDistributionVTable
 	void (*distribution_set) (gpointer, gchar const*, guint64);
 	void (*distribution_set2) (gpointer, gchar const*, guint64, guint64);
 
-	void (*distribution_serialize) (gpointer, bson*);
-	void (*distribution_deserialize) (gpointer, bson const*);
+	void (*distribution_serialize) (gpointer, bson_t*);
+	void (*distribution_deserialize) (gpointer, bson_t const*);
 
 	void (*distribution_reset) (gpointer, guint64, guint64);
 	gboolean (*distribution_distribute) (gpointer, guint*, guint64*, guint64*, guint64*);

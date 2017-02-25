@@ -43,10 +43,10 @@
 J_GNUC_INTERNAL void j_distribution_init (void);
 
 J_GNUC_INTERNAL JDistribution* j_distribution_new_for_configuration (JDistributionType, JConfiguration*);
-J_GNUC_INTERNAL JDistribution* j_distribution_new_from_bson (bson const*);
+J_GNUC_INTERNAL JDistribution* j_distribution_new_from_bson (bson_t const*);
 
-J_GNUC_INTERNAL bson* j_distribution_serialize (JDistribution*);
-J_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson const*);
+J_GNUC_INTERNAL bson_t* j_distribution_serialize (JDistribution*);
+J_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson_t const*);
 
 J_GNUC_INTERNAL void j_distribution_reset (JDistribution*, guint64, guint64);
 J_GNUC_INTERNAL gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);

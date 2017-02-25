@@ -365,7 +365,7 @@ j_store_collection (JStore* store, JStoreCollection collection)
 }
 
 void
-j_store_create_index (JStore* store, JStoreCollection collection, mongo* connection, bson const* index)
+j_store_create_index (JStore* store, JStoreCollection collection, mongoc_client_t* connection, bson_t const* index)
 {
 	g_return_if_fail(store != NULL);
 	g_return_if_fail(connection != NULL);
@@ -378,21 +378,45 @@ j_store_create_index (JStore* store, JStoreCollection collection, mongo* connect
 		case J_STORE_COLLECTION_COLLECTIONS:
 			if (G_UNLIKELY(!store->index.collections))
 			{
-				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, store->name, "Collections");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
 				store->index.collections = TRUE;
 			}
 			break;
 		case J_STORE_COLLECTION_ITEMS:
 			if (G_UNLIKELY(!store->index.items))
 			{
-				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, store->name, "Items");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
 				store->index.items = TRUE;
 			}
 			break;
 		case J_STORE_COLLECTION_LOCKS:
 			if (G_UNLIKELY(!store->index.locks))
 			{
-				mongo_create_index(connection, j_store_collection(store, collection), index, NULL, MONGO_INDEX_UNIQUE, -1, NULL);
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, store->name, "Locks");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
 				store->index.locks = TRUE;
 			}
 			break;
@@ -420,10 +444,11 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	JStore* store = NULL;
-	bson** obj;
-	bson index[1];
-	mongo* mongo_connection;
-	mongo_write_concern write_concern[1];
+	bson_t** obj;
+	bson_t index[1];
+	mongoc_client_t* mongo_connection;
+	mongoc_collection_t* mongo_collection;
+	mongoc_write_concern_t* write_concern;
 	gboolean ret = FALSE;
 	guint i;
 	guint length;
@@ -437,14 +462,14 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 
 	i = 0;
 	length = j_list_length(operations);
-	obj = g_new(bson*, length);
+	obj = g_new(bson_t*, length);
 	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.store_create_collection.collection;
-		bson* b;
+		bson_t* b;
 
 		store = operation->u.store_create_collection.store;
 		b = j_collection_serialize(collection);
@@ -460,21 +485,24 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 		goto end;
 	}
 
+	write_concern = mongoc_write_concern_new();
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	bson_init(index);
-	bson_append_int(index, "Name", 1);
-	bson_finish(index);
+	bson_append_int32(index, "Name", -1, 1);
+	//bson_finish(index);
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 
 	j_store_create_index(store, J_STORE_COLLECTION_COLLECTIONS, mongo_connection, index);
-	ret = j_helper_insert_batch(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), obj, length, write_concern);
+	/* FIXME */
+	mongo_collection = mongoc_client_get_collection(mongo_connection, store->name, "Collections");
+	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
 
 	/*
-	if (ret != MONGO_OK)
+	if (!ret)
 	{
-		bson error[1];
+		bson_t error[1];
 
 		mongo_cmd_get_last_error(mongo_connection, store->name, error);
 		bson_print(error);
@@ -486,20 +514,20 @@ j_store_create_collection_internal (JBatch* batch, JList* operations)
 
 	bson_destroy(index);
 
-	mongo_write_concern_destroy(write_concern);
+	mongoc_write_concern_destroy(write_concern);
 
 end:
 	for (i = 0; i < length; i++)
 	{
 		bson_destroy(obj[i]);
-		g_slice_free(bson, obj[i]);
+		g_slice_free(bson_t, obj[i]);
 	}
 
 	g_free(obj);
 
 	/*
 	{
-		bson oerr;
+		bson_t oerr;
 
 		mongo_cmd_get_last_error(mc, store->name, &oerr);
 		bson_print(&oerr);
@@ -527,8 +555,8 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	JStore* store = NULL;
-	mongo* mongo_connection;
-	mongo_write_concern write_concern[1];
+	mongoc_client_t* mongo_connection;
+	mongoc_write_concern_t* write_concern;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -538,6 +566,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 		IsInitialized(true);
 	*/
 
+	write_concern = mongoc_write_concern_new();
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	it = j_list_iterator_new(operations);
@@ -548,16 +577,19 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.store_delete_collection.collection;
-		bson b;
+		bson_t b;
+		mongoc_collection_t* m_collection;
 
 		store = operation->u.store_delete_collection.store;
 
 		bson_init(&b);
-		bson_append_oid(&b, "_id", j_collection_get_id(collection));
-		bson_finish(&b);
+		bson_append_oid(&b, "_id", -1, j_collection_get_id(collection));
+		//bson_finish(&b);
 
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, store->name, "Collections");
 		/* FIXME do not send write_concern on each remove */
-		ret = (mongo_remove(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), &b, write_concern) == MONGO_OK) && ret;
+		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL)&& ret;
 
 		bson_destroy(&b);
 	}
@@ -565,7 +597,7 @@ j_store_delete_collection_internal (JBatch* batch, JList* operations)
 	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
-	mongo_write_concern_destroy(write_concern);
+	mongoc_write_concern_destroy(write_concern);
 
 	return ret;
 }
@@ -586,7 +618,7 @@ gboolean
 j_store_get_collection_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
-	mongo* mongo_connection;
+	mongoc_client_t* mongo_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -605,27 +637,31 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection** collection = operation->u.store_get_collection.collection;
 		JStore* store = operation->u.store_get_collection.store;
-		bson b;
-		mongo_cursor* cursor;
+		bson_t b;
+		bson_t const* b_cur;
+		mongoc_collection_t* m_collection;
+		mongoc_cursor_t* cursor;
 		gchar const* name = operation->u.store_get_collection.name;
 
 		bson_init(&b);
-		bson_append_string(&b, "Name", name);
-		bson_finish(&b);
+		bson_append_utf8(&b, "Name", -1, name, -1);
+		//bson_finish(&b);
 
-		cursor = mongo_find(mongo_connection, j_store_collection(store, J_STORE_COLLECTION_COLLECTIONS), &b, NULL, 1, 0, 0);
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, store->name, "Collections");
+		cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 1, 1, &b, NULL, NULL);
 
 		bson_destroy(&b);
 
 		*collection = NULL;
 
 		// FIXME ret
-		while (mongo_cursor_next(cursor) == MONGO_OK)
+		while (mongoc_cursor_next(cursor, &b_cur))
 		{
-			*collection = j_collection_new_from_bson(store, mongo_cursor_bson(cursor));
+			*collection = j_collection_new_from_bson(store, b_cur);
 		}
 
-		mongo_cursor_destroy(cursor);
+		mongoc_cursor_destroy(cursor);
 	}
 
 	j_connection_pool_push_meta(0, mongo_connection);

@@ -143,20 +143,20 @@ j_credentials_get_group (JCredentials* credentials)
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-bson*
+bson_t*
 j_credentials_serialize (JCredentials* credentials)
 {
-	bson* b;
+	bson_t* b;
 
 	g_return_val_if_fail(credentials != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	b = g_slice_new(bson);
+	b = g_slice_new(bson_t);
 	bson_init(b);
-	bson_append_int(b, "User", credentials->user);
-	bson_append_int(b, "Group", credentials->group);
-	bson_finish(b);
+	bson_append_int32(b, "User", -1, credentials->user);
+	bson_append_int32(b, "Group", -1, credentials->group);
+	//bson_finish(b);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -177,30 +177,30 @@ j_credentials_serialize (JCredentials* credentials)
  * \param b           A BSON object.
  **/
 void
-j_credentials_deserialize (JCredentials* credentials, bson const* b)
+j_credentials_deserialize (JCredentials* credentials, bson_t const* b)
 {
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(credentials != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "User") == 0)
 		{
-			credentials->user = bson_iterator_int(&iterator);
+			credentials->user = bson_iter_int32(&iterator);
 		}
 		else if (g_strcmp0(key, "Group") == 0)
 		{
-			credentials->group = bson_iterator_int(&iterator);
+			credentials->group = bson_iter_int32(&iterator);
 		}
 	}
 

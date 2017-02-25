@@ -34,7 +34,7 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <jcommon.h>
 #include <jcommon-internal.h>
@@ -71,6 +71,7 @@ struct JCommon
 
 static JCommon* j_common = NULL;
 
+/*
 static
 gint
 j_common_oid_fuzz (void)
@@ -92,6 +93,14 @@ j_common_oid_inc (void)
 	static gint32 counter = 0;
 
 	return g_atomic_int_add(&counter, 1);
+}
+*/
+
+static
+void
+j_common_mongoc_log_handler (mongoc_log_level_t log_level, gchar const* log_domain, gchar const* message, gpointer data)
+{
+	return;
 }
 
 /**
@@ -189,8 +198,11 @@ j_init (void)
 	j_background_operation_init(0);
 	j_operation_cache_init();
 
-	bson_set_oid_fuzz(j_common_oid_fuzz);
-	bson_set_oid_inc(j_common_oid_inc);
+	//bson_set_oid_fuzz(j_common_oid_fuzz);
+	//bson_set_oid_inc(j_common_oid_inc);
+
+	/* We do not want the mongoc output. */
+	mongoc_log_set_handler(j_common_mongoc_log_handler, NULL);
 
 	g_atomic_pointer_set(&j_common, common);
 
@@ -407,7 +419,7 @@ gboolean
 j_delete_store_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
-	mongo* mongo_connection;
+	mongoc_client_t* mongo_connection;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -424,7 +436,10 @@ j_delete_store_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JStore* store = operation->u.delete_store.store;
 
-		mongo_cmd_drop_db(mongo_connection, j_store_get_name(store));
+		mongoc_database_t* m_database;
+
+		m_database = mongoc_client_get_database(mongo_connection, j_store_get_name(store));
+		mongoc_database_drop(m_database, NULL);
 	}
 
 	j_connection_pool_push_meta(0, mongo_connection);

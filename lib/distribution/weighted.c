@@ -36,6 +36,7 @@
 #include <bson.h>
 
 #include <jconfiguration-internal.h>
+#include <jhelper-internal.h>
 #include <jtrace-internal.h>
 
 #include "distribution.h"
@@ -263,27 +264,29 @@ distribution_set2 (gpointer data, gchar const* key, guint64 value1, guint64 valu
  **/
 static
 void
-distribution_serialize (gpointer data, bson* b)
+distribution_serialize (gpointer data, bson_t* b)
 {
 	JDistributionWeighted* distribution = data;
 
+	bson_t b_array[1];
 	gchar numstr[16];
 
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_append_long(b, "BlockSize", distribution->block_size);
+	bson_append_int64(b, "BlockSize", -1, distribution->block_size);
 
-	bson_append_start_array(b, "Weights");
+	bson_append_array_begin(b, "Weights", -1, b_array);
 
 	for (guint i = 0; i < distribution->server_count; i++)
 	{
-		bson_numstr(numstr, i);
-		bson_append_int(b, numstr, distribution->weights[i]);
+		// FIXME
+		j_helper_get_number_string(numstr, sizeof(numstr), i);
+		bson_append_int32(b_array, numstr, -1, distribution->weights[i]);
 	}
 
-	bson_append_finish_array(b);
+	bson_append_array_end(b, b_array);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -303,39 +306,39 @@ distribution_serialize (gpointer data, bson* b)
  **/
 static
 void
-distribution_deserialize (gpointer data, bson const* b)
+distribution_deserialize (gpointer data, bson_t const* b)
 {
 	JDistributionWeighted* distribution = data;
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "BlockSize") == 0)
 		{
-			distribution->block_size = bson_iterator_int(&iterator);
+			distribution->block_size = bson_iter_int32(&iterator);
 		}
 		else if (g_strcmp0(key, "Weights") == 0)
 		{
-			bson_iterator siterator;
+			bson_iter_t siterator;
 
-			bson_iterator_subiterator(&iterator, &siterator);
+			bson_iter_recurse(&iterator, &siterator);
 
 			distribution->sum = 0;
 
-			for (guint i = 0; bson_iterator_next(&siterator); i++)
+			for (guint i = 0; bson_iter_next(&siterator); i++)
 			{
-				distribution->weights[i] = bson_iterator_int(&siterator);
+				distribution->weights[i] = bson_iter_int32(&siterator);
 				distribution->sum += distribution->weights[i];
 			}
 		}

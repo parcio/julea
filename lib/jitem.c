@@ -36,7 +36,7 @@
 #include <string.h>
 
 #include <bson.h>
-#include <mongo.h>
+#include <mongoc.h>
 
 #include <jitem.h>
 #include <jitem-internal.h>
@@ -722,7 +722,7 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	}
 
 	item = g_slice_new(JItem);
-	bson_oid_gen(&(item->id));
+	bson_oid_init(&(item->id), bson_context_get_default());
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
 	item->distribution = distribution;
@@ -755,7 +755,7 @@ end:
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_new_from_bson (JCollection* collection, bson const* b)
+j_item_new_from_bson (JCollection* collection, bson_t const* b)
 {
 	JItem* item;
 
@@ -847,12 +847,13 @@ j_item_get_credentials (JItem* item)
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-bson*
+bson_t*
 j_item_serialize (JItem* item, JSemantics* semantics)
 {
-	bson* b;
-	bson* b_cred;
-	bson* b_distribution;
+	bson_t b_document[1];
+	bson_t* b;
+	bson_t* b_cred;
+	bson_t* b_distribution;
 
 	g_return_val_if_fail(item != NULL, NULL);
 
@@ -861,32 +862,32 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	b_cred = j_credentials_serialize(item->credentials);
 	b_distribution = j_distribution_serialize(item->distribution);
 
-	b = g_slice_new(bson);
+	b = g_slice_new(bson_t);
 	bson_init(b);
 
-	bson_append_oid(b, "_id", &(item->id));
-	bson_append_oid(b, "Collection", j_collection_get_id(item->collection));
-	bson_append_string(b, "Name", item->name);
+	bson_append_oid(b, "_id", -1, &(item->id));
+	bson_append_oid(b, "Collection", -1, j_collection_get_id(item->collection));
+	bson_append_utf8(b, "Name", -1, item->name, -1);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
-		bson_append_start_object(b, "Status");
+		bson_append_document_begin(b, "Status", -1, b_document);
 
-		bson_append_long(b, "Size", item->status.size);
-		bson_append_long(b, "ModificationTime", item->status.modification_time);
+		bson_append_int64(b_document, "Size", -1, item->status.size);
+		bson_append_int64(b_document, "ModificationTime", -1, item->status.modification_time);
 
-		bson_append_finish_object(b);
+		bson_append_document_end(b, b_document);
 	}
 
-	bson_append_bson(b, "Credentials", b_cred);
-	bson_append_bson(b, "Distribution", b_distribution);
+	bson_append_document(b, "Credentials", -1, b_cred);
+	bson_append_document(b, "Distribution", -1, b_distribution);
 
-	bson_finish(b);
+	//bson_finish(b);
 
 	bson_destroy(b_cred);
 	bson_destroy(b_distribution);
-	g_slice_free(bson, b_cred);
-	g_slice_free(bson, b_distribution);
+	g_slice_free(bson_t, b_cred);
+	g_slice_free(bson_t, b_distribution);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -895,31 +896,31 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 static
 void
-j_item_deserialize_status (JItem* item, bson const* b)
+j_item_deserialize_status (JItem* item, bson_t const* b)
 {
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "Size") == 0)
 		{
-			item->status.size = bson_iterator_long(&iterator);
+			item->status.size = bson_iter_int64(&iterator);
 			item->status.age = g_get_real_time();
 		}
 		else if (g_strcmp0(key, "ModificationTime") == 0)
 		{
-			item->status.modification_time = bson_iterator_long(&iterator);
+			item->status.modification_time = bson_iter_int64(&iterator);
 			item->status.age = g_get_real_time();
 		}
 	}
@@ -941,58 +942,67 @@ j_item_deserialize_status (JItem* item, bson const* b)
  * \param b    A BSON object.
  **/
 void
-j_item_deserialize (JItem* item, bson const* b)
+j_item_deserialize (JItem* item, bson_t const* b)
 {
-	bson_iterator iterator;
+	bson_iter_t iterator;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_iterator_init(&iterator, b);
+	bson_iter_init(&iterator, b);
 
-	while (bson_iterator_next(&iterator))
+	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
-		key = bson_iterator_key(&iterator);
+		key = bson_iter_key(&iterator);
 
 		if (g_strcmp0(key, "_id") == 0)
 		{
-			item->id = *bson_iterator_oid(&iterator);
+			item->id = *bson_iter_oid(&iterator);
 		}
 		else if (g_strcmp0(key, "Name") == 0)
 		{
 			g_free(item->name);
-			item->name = g_strdup(bson_iterator_string(&iterator));
+			item->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
 		}
 		else if (g_strcmp0(key, "Status") == 0)
 		{
-			bson b_status[1];
+			guint8 const* data;
+			guint32 len;
+			bson_t b_status[1];
 
-			bson_iterator_subobject_init(&iterator, b_status, 0);
+			bson_iter_document(&iterator, &len, &data);
+			bson_init_static(b_status, data, len);
 			j_item_deserialize_status(item, b_status);
 			bson_destroy(b_status);
 		}
 		else if (g_strcmp0(key, "Credentials") == 0)
 		{
-			bson b_cred[1];
+			guint8 const* data;
+			guint32 len;
+			bson_t b_cred[1];
 
-			bson_iterator_subobject_init(&iterator, b_cred, 0);
+			bson_iter_document(&iterator, &len, &data);
+			bson_init_static(b_cred, data, len);
 			j_credentials_deserialize(item->credentials, b_cred);
 			bson_destroy(b_cred);
 		}
 		else if (g_strcmp0(key, "Distribution") == 0)
 		{
-			bson b_distribution[1];
+			guint8 const* data;
+			guint32 len;
+			bson_t b_distribution[1];
 
 			if (item->distribution != NULL)
 			{
 				j_distribution_unref(item->distribution);
 			}
 
-			bson_iterator_subobject_init(&iterator, b_distribution, 0);
+			bson_iter_document(&iterator, &len, &data);
+			bson_init_static(b_distribution, data, len);
 			item->distribution = j_distribution_new_from_bson(b_distribution);
 			bson_destroy(b_distribution);
 		}
@@ -1502,44 +1512,47 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE && FALSE)
 	{
-		bson cond[1];
-		bson op[1];
-		mongo* mongo_connection;
-		mongo_write_concern write_concern[1];
+		bson_t b_document[1];
+		bson_t cond[1];
+		bson_t op[1];
+		mongoc_client_t* mongo_connection;
+		mongoc_collection_t* mongo_collection;
+		mongoc_write_concern_t* write_concern;
 		gint ret;
 
 		j_helper_set_write_concern(write_concern, semantics);
 
 		bson_init(cond);
-		bson_append_oid(cond, "_id", &(item->id));
-		bson_append_int(cond, "Status.ModificationTime", item->status.modification_time);
-		bson_finish(cond);
+		bson_append_oid(cond, "_id", -1, &(item->id));
+		bson_append_int32(cond, "Status.ModificationTime", -1, item->status.modification_time);
+		//bson_finish(cond);
 
 		j_item_set_modification_time(item, g_get_real_time());
 
 		bson_init(op);
 
-		bson_append_start_object(op, "$set");
+		bson_append_document_begin(op, "$set", -1, b_document);
 
 		if (max_offset > item->status.size)
 		{
 			j_item_set_size(item, max_offset);
-			bson_append_long(op, "Status.Size", item->status.size);
+			bson_append_int64(b_document, "Status.Size", -1, item->status.size);
 		}
 
-		bson_append_long(op, "Status.ModificationTime", item->status.modification_time);
-		bson_append_finish_object(op);
+		bson_append_int64(b_document, "Status.ModificationTime", -1, item->status.modification_time);
+		bson_append_document_end(op, b_document);
 
-		bson_finish(op);
+		//bson_finish(op);
 
 		mongo_connection = j_connection_pool_pop_meta(0);
+		/* FIXME */
+		mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(item->collection)), "Items");
 
-		ret = mongo_update(mongo_connection, j_store_collection(j_collection_get_store(item->collection), J_STORE_COLLECTION_ITEMS), cond, op, MONGO_UPDATE_BASIC, write_concern);
-		g_assert(ret == MONGO_OK);
+		ret = mongoc_collection_update(mongo_collection, MONGOC_UPDATE_NONE, cond, op, write_concern, NULL);
 
 		j_connection_pool_push_meta(0, mongo_connection);
 
-		if (ret != MONGO_OK)
+		if (!ret)
 		{
 
 		}
@@ -1547,7 +1560,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		bson_destroy(cond);
 		bson_destroy(op);
 
-		mongo_write_concern_destroy(write_concern);
+		mongoc_write_concern_destroy(write_concern);
 	}
 
 	if (lock != NULL)
@@ -1572,7 +1585,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	JListIterator* iterator;
 	JMessage** messages;
 	JSemantics* semantics;
-	mongo* mongo_connection = NULL;
+	mongoc_client_t* mongo_connection = NULL;
 	gint semantics_concurrency;
 	gint semantics_consistency;
 	guint n;
@@ -1604,9 +1617,9 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(iterator);
 		JItem* item = operation->u.item_get_status.item;
 		JItemStatusFlags flags = operation->u.item_get_status.flags;
-		bson b;
-		bson fields;
-		mongo_cursor* cursor;
+		bson_t b;
+		bson_t fields;
+		mongoc_cursor_t* cursor;
 
 		if (flags == J_ITEM_STATUS_NONE)
 		{
@@ -1623,36 +1636,41 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
 		{
+			bson_t const* b_cur;
+			mongoc_collection_t* m_collection;
+
 			bson_init(&fields);
 
 			if (flags & J_ITEM_STATUS_SIZE)
 			{
-				bson_append_int(&fields, "Status.Size", 1);
+				bson_append_int32(&fields, "Status.Size", -1, 1);
 			}
 
 			if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
 			{
-				bson_append_int(&fields, "Status.ModificationTime", 1);
+				bson_append_int32(&fields, "Status.ModificationTime", -1, 1);
 			}
 
-			bson_finish(&fields);
+			//bson_finish(&fields);
 
 			bson_init(&b);
-			bson_append_oid(&b, "_id", &(item->id));
-			bson_finish(&b);
+			bson_append_oid(&b, "_id", -1, &(item->id));
+			//bson_finish(&b);
 
-			cursor = mongo_find(mongo_connection, j_store_collection(j_collection_get_store(item->collection), J_STORE_COLLECTION_ITEMS), &b, &fields, 1, 0, 0);
+			/* FIXME */
+			m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(item->collection)), "Items");
+			cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 1, 1, &b, &fields, NULL);
 
 			bson_destroy(&fields);
 			bson_destroy(&b);
 
 			// FIXME ret
-			while (mongo_cursor_next(cursor) == MONGO_OK)
+			while (mongoc_cursor_next(cursor, &b_cur))
 			{
-				j_item_deserialize(item, mongo_cursor_bson(cursor));
+				j_item_deserialize(item, b_cur);
 			}
 
-			mongo_cursor_destroy(cursor);
+			mongoc_cursor_destroy(cursor);
 		}
 		else
 		{

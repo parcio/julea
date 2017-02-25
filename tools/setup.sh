@@ -138,10 +138,11 @@ HOSTNAME=$(hostname)
 USER=$(id -nu)
 
 BUILD_PATH="$(get_self_dir)/../build"
+EXTERNAL_PATH="$(get_self_dir)/../external"
 MONGO_PATH="/tmp/julea-mongo-${USER}"
 
-export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:$(get_self_dir)/../external/mongodb-server/bin:${PATH}"
-export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
+export PATH="${BUILD_PATH}/daemon:${BUILD_PATH}/tools:${EXTERNAL_PATH}/mongodb-server/bin:${PATH}"
+export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${EXTERNAL_PATH}/mongodb-client/lib:${LD_LIBRARY_PATH}"
 
 DATA=$(get_config | grep ^data=)
 METADATA=$(get_config | grep ^metadata=)
