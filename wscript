@@ -93,9 +93,10 @@ def configure (ctx):
 		)
 
 	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
+		# CentOS 7 has GLib 2.42
 		ctx.check_cfg(
 			package = '{0}-2.0'.format(module),
-			args = ['--cflags', '--libs', '{0}-2.0 >= 2.32'.format(module)],
+			args = ['--cflags', '--libs', '{0}-2.0 >= 2.42'.format(module)],
 			uselib_store = module.upper()
 		)
 
@@ -201,6 +202,9 @@ def configure (ctx):
 		ctx.env.CFLAGS += ['-ggdb']
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
+		# CentOS 7 has GLib 2.42
+		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_42', quote=False)
+		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_42', quote=False)
 	else:
 		ctx.env.CFLAGS += ['-O2']
 
