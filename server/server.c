@@ -621,7 +621,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	j_trace_init("julea-daemon");
+	j_trace_init("julea-server");
 
 	j_trace_enter(G_STRFUNC);
 
@@ -633,7 +633,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	path = g_module_build_path(DAEMON_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
+	path = g_module_build_path(SERVER_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
 	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
 	g_free(path);
 

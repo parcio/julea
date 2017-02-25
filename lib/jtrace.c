@@ -1061,7 +1061,7 @@ j_trace_counter (gchar const* name, guint64 counter_value)
 		if ((stats_group = g_hash_table_lookup(hdtrace_counter_table, name)) == NULL)
 		{
 			stats_group = hdS_createGroup(name, hdtrace_topo_node, 2);
-			hdS_addValue(stats_group, name, UINT64, "B", "julea-daemon");
+			hdS_addValue(stats_group, name, UINT64, "B", "julea-server");
 			hdS_commitGroup(stats_group);
 			hdS_enableGroup(stats_group);
 

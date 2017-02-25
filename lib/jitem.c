@@ -1444,7 +1444,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			/* FIXME better solution? */
 			create_message = j_message_new(J_MESSAGE_CREATE, store_len + collection_len);
 			/**
-			 * Force safe semantics to make the daemon send a reply.
+			 * Force safe semantics to make the server send a reply.
 			 * Otherwise, nasty races can occur when using unsafe semantics:
 			 * - The client creates the item and sends its first write.
 			 * - The client sends another operation using another connection from the pool.

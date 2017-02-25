@@ -22,7 +22,7 @@ class TestContext (BuildContext):
 	fun = 'environment'
 
 def get_path ():
-	return 'PATH=%s/daemon:%s/tools:%s/external/mongo-c-driver/bin:${PATH}' % (Context.out_dir, Context.out_dir, Context.run_dir)
+	return 'PATH=%s/server:%s/tools:%s/external/mongo-c-driver/bin:${PATH}' % (Context.out_dir, Context.out_dir, Context.run_dir)
 
 def get_library_path ():
 	return 'LD_LIBRARY_PATH=%s/lib:%s/external/mongo-c-driver/lib:${LD_LIBRARY_PATH}' % (Context.out_dir, Context.run_dir)
@@ -218,7 +218,7 @@ def configure (ctx):
 	if ctx.options.use_hello:
 		ctx.define('J_USE_HELLO', 1)
 
-	ctx.define('DAEMON_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
+	ctx.define('SERVER_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
 	ctx.write_config_header('include/julea-config.h')
 
@@ -274,21 +274,21 @@ def build (ctx):
 		install_path = None
 	)
 
-	# Daemon
+	# Server
 	ctx.program(
-		source = ctx.path.ant_glob('daemon/*.c'),
-		target = 'daemon/julea-daemon',
+		source = ctx.path.ant_glob('server/*.c'),
+		target = 'server/julea-server',
 		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
 	)
 
-	# Daemon backends
+	# Server backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['daemon/backend/%s.c' % (backend,)],
-			target = 'daemon/backend/%s' % (backend,),
+			source = ['server/backend/%s.c' % (backend,)],
+			target = 'server/backend/%s' % (backend,),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
@@ -296,8 +296,8 @@ def build (ctx):
 
 	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['daemon/backend/jzfs.c'],
-			target = 'daemon/backend/jzfs',
+			source = ['server/backend/jzfs.c'],
+			target = 'server/backend/jzfs',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
@@ -305,8 +305,8 @@ def build (ctx):
 
 	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['daemon/backend/lexos.c'],
-			target = 'daemon/backend/lexos',
+			source = ['server/backend/lexos.c'],
+			target = 'server/backend/lexos',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'

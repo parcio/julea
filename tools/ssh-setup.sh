@@ -43,16 +43,16 @@ nodes=${SLURM_JOB_NODELIST}
 if [ -z "$nodes" ]
 then
   setup.sh $command
-else 
+else
   list=$(nodeset -e $nodes)
 
   for node in ${list}
-  do 
+  do
     ssh ${node} $(get_self_dir)/setup.sh $command || rc=$?
-  
+
      if [ $rc -ne 0 ]
      then
-       echo "$command daemon failed on node ${node}"
+       echo "$command server failed on node ${node}"
        exit 1
      fi
   done
