@@ -253,7 +253,7 @@ def configure (ctx):
 		ctx.env.CFLAGS += ['-O2']
 
 	ctx.env.CFLAGS += ['-fdiagnostics-color']
-	#ctx.define('_POSIX_C_SOURCE', '200809L')
+	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	if ctx.options.use_hello:
 		ctx.define('J_USE_HELLO', 1)

@@ -113,30 +113,23 @@ j_helper_get_processor_count (void)
 gboolean
 j_helper_insert_batch (mongoc_collection_t* collection, bson_t** obj, guint length, mongoc_write_concern_t* write_concern)
 {
-	guint32 const max_obj_size = J_MIB(16);
-
 	gboolean ret = TRUE;
-	guint offset = 0;
-	guint32 obj_size = 0;
+
+	bson_t reply[1];
+	mongoc_bulk_operation_t* bulk_op;
+
+	bulk_op = mongoc_collection_create_bulk_operation(collection, FALSE, write_concern);
 
 	for (guint i = 0; i < length; i++)
 	{
-		guint32 size;
-
-		size = obj[i]->len;
-
-		if (G_UNLIKELY(obj_size + size > max_obj_size))
-		{
-			ret = mongoc_collection_insert_bulk(collection, MONGOC_INSERT_CONTINUE_ON_ERROR, (bson_t const**)obj + offset, i - offset, write_concern, NULL) && ret;
-
-			offset = i;
-			obj_size = 0;
-		}
-
-		obj_size += size;
+		mongoc_bulk_operation_insert(bulk_op, obj[i]);
 	}
 
-	ret = mongoc_collection_insert_bulk(collection, MONGOC_INSERT_CONTINUE_ON_ERROR, (bson_t const**)obj + offset, length - offset, write_concern, NULL) && ret;
+	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
+	/* FIXME do something with reply */
+
+	mongoc_bulk_operation_destroy(bulk_op);
+	bson_destroy(reply);
 
 	return ret;
 }

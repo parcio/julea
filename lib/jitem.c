@@ -1618,7 +1618,6 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		JItem* item = operation->u.item_get_status.item;
 		JItemStatusFlags flags = operation->u.item_get_status.flags;
 		bson_t b;
-		bson_t fields;
 		mongoc_cursor_t* cursor;
 
 		if (flags == J_ITEM_STATUS_NONE)
@@ -1637,21 +1636,26 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
 		{
 			bson_t const* b_cur;
+			bson_t opts;
+			bson_t projection;
 			mongoc_collection_t* m_collection;
 
-			bson_init(&fields);
+			bson_init(&opts);
+			bson_append_int32(&opts, "limit", -1, 1);
+			bson_append_document_begin(&opts, "projection", -1, &projection);
 
 			if (flags & J_ITEM_STATUS_SIZE)
 			{
-				bson_append_int32(&fields, "Status.Size", -1, 1);
+				bson_append_bool(&projection, "Status.Size", -1, TRUE);
 			}
 
 			if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
 			{
-				bson_append_int32(&fields, "Status.ModificationTime", -1, 1);
+				bson_append_bool(&projection, "Status.ModificationTime", -1, TRUE);
 			}
 
-			//bson_finish(&fields);
+			bson_append_document_end(&opts, &projection);
+			//bson_finish(&opts);
 
 			bson_init(&b);
 			bson_append_oid(&b, "_id", -1, &(item->id));
@@ -1659,9 +1663,9 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 			/* FIXME */
 			m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(item->collection)), "Items");
-			cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 1, 1, &b, &fields, NULL);
+			cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
 
-			bson_destroy(&fields);
+			bson_destroy(&opts);
 			bson_destroy(&b);
 
 			// FIXME ret

@@ -639,6 +639,7 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 		JStore* store = operation->u.store_get_collection.store;
 		bson_t b;
 		bson_t const* b_cur;
+		bson_t opts;
 		mongoc_collection_t* m_collection;
 		mongoc_cursor_t* cursor;
 		gchar const* name = operation->u.store_get_collection.name;
@@ -647,10 +648,14 @@ j_store_get_collection_internal (JBatch* batch, JList* operations)
 		bson_append_utf8(&b, "Name", -1, name, -1);
 		//bson_finish(&b);
 
+		bson_init(&opts);
+		bson_append_int32(&opts, "limit", -1, 1);
+
 		/* FIXME */
 		m_collection = mongoc_client_get_collection(mongo_connection, store->name, "Collections");
-		cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 1, 1, &b, NULL, NULL);
+		cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
 
+		bson_destroy(&opts);
 		bson_destroy(&b);
 
 		*collection = NULL;

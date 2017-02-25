@@ -97,7 +97,7 @@ j_store_iterator_new (JStore* store)
 
 	/* FIXME */
 	m_collection = mongoc_client_get_collection(iterator->connection, j_store_get_name(iterator->store), "Collections");
-	iterator->cursor = mongoc_collection_find(m_collection, MONGOC_QUERY_NONE, 0, 0, 1, empty, NULL, NULL);
+	iterator->cursor = mongoc_collection_find_with_opts(m_collection, empty, NULL, NULL);
 
 	bson_destroy(empty);
 
