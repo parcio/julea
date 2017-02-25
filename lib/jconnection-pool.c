@@ -184,10 +184,8 @@ j_connection_pool_pop_data (guint index)
 			GError* error = NULL;
 			GSocketClient* client;
 
-#ifdef J_USE_HELLO
 			JMessage* message;
 			JMessage* reply;
-#endif
 
 			client = g_socket_client_new();
 
@@ -206,16 +204,14 @@ j_connection_pool_pop_data (guint index)
 
 			j_helper_set_nodelay(connection, TRUE);
 
-#ifdef J_USE_HELLO
-				message = j_message_new(J_MESSAGE_HELLO, 0);
-				j_message_send(message, connection);
+			message = j_message_new(J_MESSAGE_PING, 0);
+			j_message_send(message, connection);
 
-				reply = j_message_new_reply(message);
-				j_message_receive(reply, connection);
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, connection);
 
-				j_message_unref(message);
-				j_message_unref(reply);
-#endif
+			j_message_unref(message);
+			j_message_unref(reply);
 
 			g_object_unref(client);
 		}

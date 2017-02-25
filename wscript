@@ -3,11 +3,13 @@
 from waflib import Context, Utils
 from waflib.Build import BuildContext
 
-import os
 import subprocess
 
 top = '.'
 out = 'build'
+
+# CentOS 7 has GLib 2.42
+glib_version = '2.42'
 
 class BenchmarkContext (BuildContext):
 	cmd = 'benchmark'
@@ -34,7 +36,6 @@ def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
-	ctx.add_option('--use-hello', action='store_true', default=False, help='Use hello message')
 
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongo-c-driver' % (Context.run_dir,), help='MongoDB driver prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
@@ -93,10 +94,9 @@ def configure (ctx):
 		)
 
 	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
-		# CentOS 7 has GLib 2.42
 		ctx.check_cfg(
 			package = '{0}-2.0'.format(module),
-			args = ['--cflags', '--libs', '{0}-2.0 >= 2.42'.format(module)],
+			args = ['--cflags', '--libs', '{0}-2.0 >= {1}'.format(module, glib_version)],
 			uselib_store = module.upper()
 		)
 
@@ -202,14 +202,10 @@ def configure (ctx):
 		ctx.env.CFLAGS += ['-ggdb']
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
-		# CentOS 7 has GLib 2.42
-		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_42', quote=False)
-		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_42', quote=False)
+		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
+		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 	else:
 		ctx.env.CFLAGS += ['-O2']
-
-	if ctx.options.use_hello:
-		ctx.define('J_USE_HELLO', 1)
 
 	if ctx.options.debug:
 		ctx.define('SERVER_BACKEND_PATH_BUILD', '{0}/server/backend'.format(Context.out_dir))

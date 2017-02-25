@@ -42,16 +42,14 @@ enum JMessageType
 	J_MESSAGE_NONE           = 0,
 	J_MESSAGE_CREATE         = 1 << 0,
 	J_MESSAGE_DELETE         = 1 << 1,
-	J_MESSAGE_READ           = 1 << 2,
-	J_MESSAGE_STATISTICS     = 1 << 3,
-	J_MESSAGE_STATUS         = 1 << 4,
-	J_MESSAGE_WRITE          = 1 << 5,
-	J_MESSAGE_REPLY          = 1 << 6,
-	J_MESSAGE_SAFETY_NETWORK = 1 << 7,
-	J_MESSAGE_SAFETY_STORAGE = 1 << 8,
-#ifdef J_USE_HELLO
-	J_MESSAGE_HELLO          = 1 << 30,
-#endif
+	J_MESSAGE_PING           = 1 << 2,
+	J_MESSAGE_READ           = 1 << 3,
+	J_MESSAGE_STATISTICS     = 1 << 4,
+	J_MESSAGE_STATUS         = 1 << 5,
+	J_MESSAGE_WRITE          = 1 << 6,
+	J_MESSAGE_REPLY          = 1 << 7,
+	J_MESSAGE_SAFETY_NETWORK = 1 << 8,
+	J_MESSAGE_SAFETY_STORAGE = 1 << 9,
 	J_MESSAGE_MODIFIER_MASK  = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE)
 };
 
