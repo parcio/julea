@@ -30,12 +30,6 @@ def get_library_path ():
 def get_pkg_config_path ():
 	return 'PKG_CONFIG_PATH=%s/pkg-config:%s/external/mongo-c-driver/lib:${PKG_CONFIG_PATH}' % (Context.out_dir, Context.run_dir)
 
-def prepend_path (key, value):
-	if os.environ.has_key(key) and os.environ[key]:
-		os.environ[key] = '%s:%s' % (value, os.environ[key])
-	else:
-		os.environ[key] = '%s' % (value,)
-
 def options (ctx):
 	ctx.load('compiler_c')
 
@@ -102,51 +96,46 @@ def configure (ctx):
 
 	ctx.check_cfg(
 		package = 'gio-2.0',
-		args = ['--cflags', '--libs'],
-		atleast_version = '2.32',
+		args = ['--cflags', '--libs', 'gio-2.0 >= 2.32'],
 		uselib_store = 'GIO'
 	)
 
 	ctx.check_cfg(
 		package = 'glib-2.0',
-		args = ['--cflags', '--libs'],
-		atleast_version = '2.32',
+		args = ['--cflags', '--libs', 'glib-2.0 >= 2.32'],
 		uselib_store = 'GLIB'
 	)
 
 	ctx.check_cfg(
 		package = 'gmodule-2.0',
-		args = ['--cflags', '--libs'],
-		atleast_version = '2.32',
+		args = ['--cflags', '--libs', 'gmodule-2.0 >= 2.32'],
 		uselib_store = 'GMODULE'
 	)
 
 	ctx.check_cfg(
 		package = 'gobject-2.0',
-		args = ['--cflags', '--libs'],
-		atleast_version = '2.32',
+		args = ['--cflags', '--libs', 'gobject-2.0 >= 2.32'],
 		uselib_store = 'GOBJECT'
 	)
 
 	ctx.check_cfg(
 		package = 'gthread-2.0',
-		args = ['--cflags', '--libs'],
-		atleast_version = '2.32',
+		args = ['--cflags', '--libs', 'gthread-2.0 >= 2.32'],
 		uselib_store = 'GTHREAD'
 	)
-
-	prepend_path('PKG_CONFIG_PATH', '%s/lib/pkgconfig' % (ctx.options.mongodb,))
 
 	ctx.check_cfg(
 		package = 'libbson-1.0',
 		args = ['--cflags', '--libs'],
-		uselib_store = 'BSON'
+		uselib_store = 'BSON',
+		pkg_config_path = '%s/lib/pkgconfig' % (ctx.options.mongodb,)
 	)
 
 	ctx.check_cfg(
 		package = 'libmongoc-1.0',
 		args = ['--cflags', '--libs'],
-		uselib_store = 'MONGOC'
+		uselib_store = 'MONGOC',
+		pkg_config_path = '%s/lib/pkgconfig' % (ctx.options.mongodb,)
 	)
 
 	ctx.env.JULEA_FUSE = \
