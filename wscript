@@ -36,7 +36,6 @@ def options (ctx):
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--use-hello', action='store_true', default=False, help='Use hello message')
 
-	ctx.add_option('--hdtrace', action='store', default='%s/external/hdtrace' % (Context.run_dir,), help='HDTrace prefix')
 	ctx.add_option('--mongodb', action='store', default='%s/external/mongo-c-driver' % (Context.run_dir,), help='MongoDB driver prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
 
@@ -163,17 +162,6 @@ def configure (ctx):
 	)
 
 	ctx.check_cc(
-		header_name = 'hdTrace.h',
-		lib = 'hdTracing',
-		includes = ['%s/include' % (ctx.options.hdtrace,)],
-		libpath = ['%s/lib' % (ctx.options.hdtrace,)],
-		rpath = ['%s/lib' % (ctx.options.hdtrace,)],
-		uselib_store = 'HDTRACE',
-		define_name = 'HAVE_HDTRACE',
-		mandatory = False
-	)
-
-	ctx.check_cc(
 		header_name = 'otf.h',
 		lib = 'open-trace-format',
 		includes = ['%s/include/open-trace-format' % (ctx.options.otf,)],
@@ -233,7 +221,7 @@ def build (ctx):
 #	ctx.shlib(
 #		source = ['lib/jtrace.c'],
 #		target = 'lib/jtrace',
-#		use = ['GLIB', 'HDTRACE', 'OTF'],
+#		use = ['GLIB', 'OTF'],
 #		includes = ['include'],
 #		install_path = '${LIBDIR}'
 #	)
@@ -242,7 +230,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'HDTRACE', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF'],
 		includes = ['include'],
 		install_path = '${LIBDIR}'
 	)
@@ -251,7 +239,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea-private',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'HDTRACE', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${LIBDIR}'

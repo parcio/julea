@@ -33,11 +33,6 @@
 
 #include <glib.h>
 
-#ifdef HAVE_HDTRACE
-#include <hdTrace.h>
-#include <hdStats.h>
-#endif
-
 #ifdef HAVE_OTF
 #include <otf.h>
 #endif
@@ -48,7 +43,7 @@
  * \defgroup JTrace Trace
  *
  * The JTrace framework offers abstracted trace capabilities.
- * It can use normal terminal output, HDTrace and OTF.
+ * It can use normal terminal output and OTF.
  *
  * @{
  **/
@@ -74,25 +69,6 @@ struct JTrace
 	 * Function depth within the current thread.
 	 **/
 	guint function_depth;
-
-#ifdef HAVE_HDTRACE
-	/**
-	 * HDTrace-specific structure.
-	 **/
-	struct
-	{
-		/**
-		 * Thread's topology node.
-		 **/
-		hdTopoNode* topo_node;
-
-		/**
-		 * Thread's trace.
-		 **/
-		hdTrace* trace;
-	}
-	hdtrace;
-#endif
 
 #ifdef HAVE_OTF
 	/**
@@ -121,8 +97,7 @@ enum JTraceFlags
 {
 	J_TRACE_OFF     = 0,
 	J_TRACE_ECHO    = 1 << 0,
-	J_TRACE_HDTRACE = 1 << 1,
-	J_TRACE_OTF     = 1 << 2
+	J_TRACE_OTF     = 1 << 1
 };
 
 typedef enum JTraceFlags JTraceFlags;
@@ -133,15 +108,6 @@ static gchar* j_trace_name = NULL;
 static gint j_trace_thread_id = 1;
 
 static GPatternSpec** j_trace_function_patterns = NULL;
-
-#ifdef HAVE_HDTRACE
-static hdTopology* hdtrace_topology = NULL;
-static hdTopoNode* hdtrace_topo_node = NULL;
-
-static GHashTable* hdtrace_counter_table = NULL;
-
-G_LOCK_DEFINE_STATIC(j_trace_hdtrace);
-#endif
 
 #ifdef HAVE_OTF
 static OTF_FileManager* otf_manager = NULL;
@@ -198,30 +164,6 @@ j_trace_echo_printerr (JTrace* trace, guint64 timestamp)
 		g_printerr("  ");
 	}
 }
-
-#ifdef HAVE_HDTRACE
-/**
- * Frees the memory allocated by a HDTrace stats group.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param data A HDTrace stats group.
- **/
-static
-void
-j_trace_hdtrace_counter_free (gpointer data)
-{
-	hdStatsGroup* stats_group = data;
-
-	hdS_disableGroup(stats_group);
-	hdS_finalize(stats_group);
-}
-#endif
 
 /**
  * Returns the current time.
@@ -332,7 +274,7 @@ j_trace_function_check (gchar const* name)
  * Initializes the trace framework.
  * Tracing is disabled by default.
  * Set the \c J_TRACE environment variable to enable it.
- * Valid values are \e echo, \e hdtrace and \e otf.
+ * Valid values are \e echo and \e otf.
  * Multiple values can be combined with commas.
  *
  * \author Michael Kuhn
@@ -371,10 +313,6 @@ j_trace_init (gchar const* name)
 			{
 				j_trace_flags |= J_TRACE_ECHO;
 			}
-			else if (g_strcmp0(p[i], "hdtrace") == 0)
-			{
-				j_trace_flags |= J_TRACE_HDTRACE;
-			}
 			else if (g_strcmp0(p[i], "otf") == 0)
 			{
 				j_trace_flags |= J_TRACE_OTF;
@@ -409,24 +347,6 @@ j_trace_init (gchar const* name)
 
 		g_strfreev(p);
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		gchar const* levels[] = { "Host", "Process", "Thread" };
-		gchar const* topo_path[] = { g_get_host_name(), name };
-
-		hdTrace_init();
-
-		hdtrace_topology = hdT_createTopology("JULEA", levels, 3);
-		g_assert(hdtrace_topology != NULL);
-
-		hdtrace_topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 2);
-		g_assert(hdtrace_topo_node != NULL);
-
-		hdtrace_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, j_trace_hdtrace_counter_free);
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -466,20 +386,6 @@ j_trace_fini (void)
 	{
 		return;
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		g_hash_table_unref(hdtrace_counter_table);
-		hdtrace_counter_table = NULL;
-
-		hdT_destroyTopoNode(hdtrace_topo_node);
-		hdtrace_topo_node = NULL;
-
-		hdT_destroyTopology(hdtrace_topology);
-		hdtrace_topology = NULL;
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -579,19 +485,6 @@ j_trace_new (GThread* thread)
 		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		gchar const* topo_path[] = { g_get_host_name(), j_trace_name, trace->thread_name };
-
-		trace->hdtrace.topo_node = hdT_createTopoNode(hdtrace_topology, topo_path, 3);
-		trace->hdtrace.trace = hdT_createTrace(trace->hdtrace.topo_node);
-
-		hdT_enableTrace(trace->hdtrace.trace);
-		hdT_setNestedDepth(trace->hdtrace.trace, 3);
-	}
-#endif
-
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
@@ -660,14 +553,6 @@ j_trace_unref (JTrace* trace)
 
 	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
 	{
-#ifdef HAVE_HDTRACE
-		if (j_trace_flags & J_TRACE_HDTRACE)
-		{
-			hdT_finalize(trace->hdtrace.trace);
-			hdT_destroyTopoNode(trace->hdtrace.topo_node);
-		}
-#endif
-
 #ifdef HAVE_OTF
 		if (j_trace_flags & J_TRACE_OTF)
 		{
@@ -721,13 +606,6 @@ j_trace_enter (gchar const* name)
 		g_printerr("ENTER %s\n", name);
 		G_UNLOCK(j_trace_echo);
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		hdT_logStateStart(trace->hdtrace.trace, name);
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -805,13 +683,6 @@ j_trace_leave (gchar const* name)
 		G_UNLOCK(j_trace_echo);
 	}
 
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		hdT_logStateEnd(trace->hdtrace.trace);
-	}
-#endif
-
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
@@ -866,14 +737,6 @@ j_trace_file_begin (gchar const* path, JTraceFileOperation op)
 		g_printerr("BEGIN %s %s\n", j_trace_file_operation_name(op), path);
 		G_UNLOCK(j_trace_echo);
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		hdT_logStateStart(trace->hdtrace.trace, j_trace_file_operation_name(op));
-		hdT_logAttributes(trace->hdtrace.trace, "path='%s'", path);
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -946,19 +809,6 @@ j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, gui
 		g_printerr("\n");
 		G_UNLOCK(j_trace_echo);
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		if (op == J_TRACE_FILE_READ || op == J_TRACE_FILE_WRITE)
-		{
-			hdT_logAttributes(trace->hdtrace.trace, "length='%" G_GUINT64_FORMAT "'", length);
-			hdT_logAttributes(trace->hdtrace.trace, "offset='%" G_GUINT64_FORMAT "'", offset);
-		}
-
-		hdT_logStateEnd(trace->hdtrace.trace);
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -1050,29 +900,6 @@ j_trace_counter (gchar const* name, guint64 counter_value)
 		g_printerr("COUNTER %s %" G_GUINT64_FORMAT "\n", name, counter_value);
 		G_UNLOCK(j_trace_echo);
 	}
-
-#ifdef HAVE_HDTRACE
-	if (j_trace_flags & J_TRACE_HDTRACE)
-	{
-		hdStatsGroup* stats_group;
-
-		G_LOCK(j_trace_hdtrace);
-
-		if ((stats_group = g_hash_table_lookup(hdtrace_counter_table, name)) == NULL)
-		{
-			stats_group = hdS_createGroup(name, hdtrace_topo_node, 2);
-			hdS_addValue(stats_group, name, UINT64, "B", "julea-server");
-			hdS_commitGroup(stats_group);
-			hdS_enableGroup(stats_group);
-
-			g_hash_table_insert(hdtrace_counter_table, g_strdup(name), stats_group);
-		}
-
-		G_UNLOCK(j_trace_hdtrace);
-
-		hdS_writeUInt64Value(stats_group, counter_value);
-	}
-#endif
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
