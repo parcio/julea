@@ -79,64 +79,33 @@ def configure (ctx):
 	ctx.load('gnu_dirs')
 
 	ctx.env.CFLAGS += ['-std=c99']
+	ctx.env.CFLAGS += ['-fdiagnostics-color']
+	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
+	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
-	#ctx.check_large_file()
+	ctx.check_large_file()
 
-	ctx.find_program(
-		'gtester',
-		var = 'GTESTER',
-		mandatory = False
-	)
+	for program in ('gtester', 'mpicc'):
+		ctx.find_program(
+			program,
+			var = program.upper(),
+			mandatory = False
+		)
 
-	ctx.find_program(
-		'mpicc',
-		var = 'MPICC',
-		mandatory = False
-	)
+	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
+		ctx.check_cfg(
+			package = '{0}-2.0'.format(module),
+			args = ['--cflags', '--libs', '{0}-2.0 >= 2.32'.format(module)],
+			uselib_store = module.upper()
+		)
 
-	ctx.check_cfg(
-		package = 'gio-2.0',
-		args = ['--cflags', '--libs', 'gio-2.0 >= 2.32'],
-		uselib_store = 'GIO'
-	)
-
-	ctx.check_cfg(
-		package = 'glib-2.0',
-		args = ['--cflags', '--libs', 'glib-2.0 >= 2.32'],
-		uselib_store = 'GLIB'
-	)
-
-	ctx.check_cfg(
-		package = 'gmodule-2.0',
-		args = ['--cflags', '--libs', 'gmodule-2.0 >= 2.32'],
-		uselib_store = 'GMODULE'
-	)
-
-	ctx.check_cfg(
-		package = 'gobject-2.0',
-		args = ['--cflags', '--libs', 'gobject-2.0 >= 2.32'],
-		uselib_store = 'GOBJECT'
-	)
-
-	ctx.check_cfg(
-		package = 'gthread-2.0',
-		args = ['--cflags', '--libs', 'gthread-2.0 >= 2.32'],
-		uselib_store = 'GTHREAD'
-	)
-
-	ctx.check_cfg(
-		package = 'libbson-1.0',
-		args = ['--cflags', '--libs'],
-		uselib_store = 'BSON',
-		pkg_config_path = '%s/lib/pkgconfig' % (ctx.options.mongodb,)
-	)
-
-	ctx.check_cfg(
-		package = 'libmongoc-1.0',
-		args = ['--cflags', '--libs'],
-		uselib_store = 'MONGOC',
-		pkg_config_path = '%s/lib/pkgconfig' % (ctx.options.mongodb,)
-	)
+	for module in ('bson', 'mongoc'):
+		ctx.check_cfg(
+			package = 'lib{0}-1.0'.format(module),
+			args = ['--cflags', '--libs'],
+			uselib_store = module.upper(),
+			pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.mongodb)
+		)
 
 	ctx.env.JULEA_FUSE = \
 	ctx.check_cfg(
@@ -239,16 +208,12 @@ def configure (ctx):
 	)
 
 	if ctx.options.debug:
-		ctx.env.CFLAGS += ['-pedantic', '-Wall', '-Wextra']
 		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 		ctx.env.CFLAGS += ['-ggdb']
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 	else:
 		ctx.env.CFLAGS += ['-O2']
-
-	ctx.env.CFLAGS += ['-fdiagnostics-color']
-	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	if ctx.options.use_hello:
 		ctx.define('J_USE_HELLO', 1)
