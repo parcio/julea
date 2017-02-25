@@ -28,7 +28,7 @@ def options (ctx):
 	ctx.add_option('--use-hello', action='store_true', default=False, help='Use hello message')
 
 	ctx.add_option('--hdtrace', action='store', default='%s/external/hdtrace' % (Context.run_dir,), help='HDTrace prefix')
-	ctx.add_option('--mongodb', action='store', default='%s/external/mongodb-client' % (Context.run_dir,), help='MongoDB client prefix')
+	ctx.add_option('--mongodb', action='store', default='%s/external/mongo-c-driver' % (Context.run_dir,), help='MongoDB driver prefix')
 	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
@@ -144,8 +144,8 @@ def configure (ctx):
 	# BSON
 	ctx.check_cc(
 		header_name = 'bson.h',
-		lib = 'bson',
-		includes = ['%s/include' % (ctx.options.mongodb,)],
+		lib = 'bson-1.0',
+		includes = ['%s/include/libbson-1.0' % (ctx.options.mongodb,)],
 		libpath = ['%s/lib' % (ctx.options.mongodb,)],
 		rpath = ['%s/lib' % (ctx.options.mongodb,)],
 		uselib_store = 'BSON',
@@ -154,9 +154,10 @@ def configure (ctx):
 
 	# MongoDB
 	ctx.check_cc(
-		header_name = 'mongo.h',
-		lib = 'mongoc',
-		includes = ['%s/include' % (ctx.options.mongodb,)],
+		header_name = 'mongoc.h',
+		lib = 'mongoc-1.0',
+		use = ['BSON'],
+		includes = ['%s/include/libmongoc-1.0' % (ctx.options.mongodb,)],
 		libpath = ['%s/lib' % (ctx.options.mongodb,)],
 		rpath = ['%s/lib' % (ctx.options.mongodb,)],
 		uselib_store = 'MONGODB',

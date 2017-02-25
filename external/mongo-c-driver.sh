@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2012-2013 Michael Kuhn
+# Copyright (c) 2012-2017 Michael Kuhn
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 
 set -e
 
-PREFIX="${PWD}/mongodb-client"
-VERSION='0.8.1'
+PREFIX="${PWD}/mongo-c-driver"
+VERSION='1.6.0'
 
 if [ -d "${PREFIX}" ]
 then
@@ -41,12 +41,13 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget -O "mongodb-client-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/archive/v${VERSION}.tar.gz"
-tar xf "mongodb-client-${VERSION}.tar.gz"
+wget -O "mongo-c-driver-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/releases/download/1.6.0/mongo-c-driver-${VERSION}.tar.gz"
+tar xf "mongo-c-driver-${VERSION}.tar.gz"
 
 cd "mongo-c-driver-${VERSION}"
 
-make
-make install INSTALL_INCLUDE_PATH="${PREFIX}/include" INSTALL_LIBRARY_PATH="${PREFIX}/lib"
+./configure --prefix="${PREFIX}" --disable-automatic-init-and-cleanup
+make --jobs="$(nproc)"
+make install
 
 rm -rf "${TEMP}"
