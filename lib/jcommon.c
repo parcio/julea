@@ -180,6 +180,8 @@ j_init (void)
 	g_type_init();
 #endif
 
+	mongoc_init();
+
 	basename = j_get_program_name("julea");
 	j_trace_init(basename);
 	g_free(basename);
@@ -247,6 +249,8 @@ j_fini (void)
 	g_atomic_pointer_set(&j_common, NULL);
 
 	j_configuration_unref(common->configuration);
+
+	mongoc_cleanup();
 
 	j_trace_leave(G_STRFUNC);
 

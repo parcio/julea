@@ -273,12 +273,17 @@ j_connection_pool_pop_meta (guint index)
 	{
 		if ((guint)g_atomic_int_add(&(j_connection_pool->meta_queues[index].count), 1) < j_connection_pool->max_count)
 		{
-			gboolean ret;
+			gboolean ret = FALSE;
 			mongoc_uri_t* uri;
 
 			uri = mongoc_uri_new_for_host_port(j_configuration_get_metadata_server(j_connection_pool->configuration, index), 27017);
 
-			ret = ((connection = mongoc_client_new_from_uri(uri)) != NULL);
+			connection = mongoc_client_new_from_uri(uri);
+
+			if (connection != NULL)
+			{
+				ret = mongoc_client_get_server_status(connection, NULL, NULL, NULL);
+			}
 
 			if (!ret)
 			{

@@ -61,6 +61,11 @@ struct JCollectionIterator
 
 	JCollection* collection;
 	mongoc_client_t* connection;
+
+	/**
+	 * The current document.
+	 **/
+	bson_t const* current;
 };
 
 /**
@@ -78,8 +83,6 @@ j_collection_iterator_new (JCollection* collection)
 	JCollectionIterator* iterator;
 	mongoc_collection_t* m_collection;
 	bson_t b;
-	bson_t opts;
-	bson_t projection;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -88,13 +91,7 @@ j_collection_iterator_new (JCollection* collection)
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->collection = j_collection_ref(collection);
 	iterator->connection = j_connection_pool_pop_meta(0);
-
-	bson_init(&opts);
-	bson_append_document_begin(&opts, "projection", -1, &projection);
-	bson_append_bool(&projection, "_id", -1, TRUE);
-	bson_append_bool(&projection, "Name", -1, TRUE);
-	bson_append_document_end(&opts, &projection);
-	//bson_finish(&opts);
+	iterator->current = NULL;
 
 	bson_init(&b);
 	bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
@@ -102,9 +99,8 @@ j_collection_iterator_new (JCollection* collection)
 
 	/* FIXME */
 	m_collection = mongoc_client_get_collection(iterator->connection, j_store_get_name(j_collection_get_store(iterator->collection)), "Items");
-	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
+	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, NULL, NULL);
 
-	bson_destroy(&opts);
 	bson_destroy(&b);
 
 	return iterator;
@@ -147,7 +143,9 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return mongoc_cursor_more(iterator->cursor);
+	mongoc_cursor_next(iterator->cursor, &(iterator->current));
+
+	return (iterator->current != NULL);
 }
 
 /**
@@ -166,12 +164,11 @@ JItem*
 j_collection_iterator_get (JCollectionIterator* iterator)
 {
 	JItem* item;
-	bson_t const* b_cur;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
+	g_return_val_if_fail(iterator->current != NULL, NULL);
 
-	mongoc_cursor_next(iterator->cursor, &b_cur);
-	item = j_item_new_from_bson(iterator->collection, b_cur);
+	item = j_item_new_from_bson(iterator->collection, iterator->current);
 
 	return item;
 }

@@ -21,8 +21,14 @@ class TestContext (BuildContext):
 	cmd = 'environment'
 	fun = 'environment'
 
+def get_path ():
+	return 'PATH=%s/daemon:%s/tools:%s/external/mongo-c-driver/bin:${PATH}' % (Context.out_dir, Context.out_dir, Context.run_dir)
+
 def get_library_path ():
-	return 'LD_LIBRARY_PATH=%s/lib:%s/external/mongodb-client/lib' % (Context.out_dir, Context.run_dir)
+	return 'LD_LIBRARY_PATH=%s/lib:%s/external/mongo-c-driver/lib:${LD_LIBRARY_PATH}' % (Context.out_dir, Context.run_dir)
+
+def get_pkg_config_path ():
+	return 'PKG_CONFIG_PATH=%s/pkg-config:%s/external/mongo-c-driver/lib:${PKG_CONFIG_PATH}' % (Context.out_dir, Context.run_dir)
 
 def prepend_path (key, value):
 	if os.environ.has_key(key) and os.environ[key]:
@@ -62,9 +68,9 @@ def test (ctx):
 	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
 
 def environment (ctx):
-	path = 'PATH="%s:${PATH}"' % (Utils.subst_vars('${PREFIX}/bin', ctx.env),)
-	ld_library_path = 'LD_LIBRARY_PATH="%s:${LD_LIBRARY_PATH}"' % (Utils.subst_vars('${PREFIX}/lib', ctx.env),)
-	pkg_config_path = 'PKG_CONFIG_PATH="%s:${PKG_CONFIG_PATH}"' % (Utils.subst_vars('${PREFIX}/lib/pkgconfig', ctx.env),)
+	path = get_path()
+	ld_library_path = get_library_path()
+	pkg_config_path = get_pkg_config_path()
 
 	print(path)
 	print(ld_library_path)

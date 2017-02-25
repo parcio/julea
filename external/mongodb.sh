@@ -27,7 +27,7 @@
 
 set -e
 
-PREFIX="${PWD}/mongodb-server"
+PREFIX="${PWD}/mongodb"
 BASE='mongodb-src-r3.4.2'
 FILE="${BASE}.tar.gz"
 

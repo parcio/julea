@@ -67,6 +67,11 @@ struct JStoreIterator
 	 * The MongoDB cursor.
 	 **/
 	mongoc_cursor_t* cursor;
+
+	/**
+	 * The current document.
+	 **/
+	bson_t const* current;
 };
 
 /**
@@ -92,6 +97,7 @@ j_store_iterator_new (JStore* store)
 	iterator = g_slice_new(JStoreIterator);
 	iterator->store = j_store_ref(store);
 	iterator->connection = j_connection_pool_pop_meta(0);
+	iterator->current = NULL;
 
 	bson_init(empty);
 
@@ -141,7 +147,9 @@ j_store_iterator_next (JStoreIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	return mongoc_cursor_more(iterator->cursor);
+	mongoc_cursor_next(iterator->cursor, &(iterator->current));
+
+	return (iterator->current != NULL);
 }
 
 /**
@@ -160,12 +168,11 @@ JCollection*
 j_store_iterator_get (JStoreIterator* iterator)
 {
 	JCollection* collection;
-	bson_t const* b_cur;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
+	g_return_val_if_fail(iterator->current != NULL, NULL);
 
-	mongoc_cursor_next(iterator->cursor, &b_cur);
-	collection = j_collection_new_from_bson(iterator->store, b_cur);
+	collection = j_collection_new_from_bson(iterator->store, iterator->current);
 
 	return collection;
 }
