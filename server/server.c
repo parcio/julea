@@ -613,13 +613,13 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((backend = j_backend_load(j_configuration_get_storage_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_backend)) == NULL)
+	if ((backend = j_backend_load(j_configuration_get_data_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_backend)) == NULL)
 	{
 		g_printerr("Could not load backend.\n");
 		return 1;
 	}
 
-	if (!jd_backend->u.data.init(j_configuration_get_storage_path(configuration)))
+	if (!jd_backend->u.data.init(j_configuration_get_data_path(configuration)))
 	{
 		g_printerr("Could not initialize backend.\n");
 		return 1;

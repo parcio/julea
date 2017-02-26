@@ -52,8 +52,11 @@ J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_server (JConfiguration
 J_GNUC_INTERNAL guint j_configuration_get_data_server_count (JConfiguration*);
 J_GNUC_INTERNAL guint j_configuration_get_metadata_server_count (JConfiguration*);
 
-J_GNUC_INTERNAL gchar const* j_configuration_get_storage_backend (JConfiguration*);
-J_GNUC_INTERNAL gchar const* j_configuration_get_storage_path (JConfiguration*);
+J_GNUC_INTERNAL gchar const* j_configuration_get_data_backend (JConfiguration*);
+J_GNUC_INTERNAL gchar const* j_configuration_get_data_path (JConfiguration*);
+
+J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_backend (JConfiguration*);
+J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_path (JConfiguration*);
 
 J_GNUC_INTERNAL guint j_configuration_get_max_connections (JConfiguration*);
 

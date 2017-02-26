@@ -48,28 +48,32 @@
  */
 struct JConfiguration
 {
-	/**
-	 * The data servers.
-	 */
-	gchar** data;
+	struct
+	{
+		/**
+		 * The data servers.
+		 */
+		gchar** data;
+
+		/**
+		 * The metadata servers.
+		 */
+		gchar** metadata;
+
+		/**
+		 * The number of data servers.
+		 */
+		guint data_len;
+
+		/**
+		 * The number of metadata servers.
+		 */
+		guint metadata_len;
+	}
+	servers;
 
 	/**
-	 * The metadata servers.
-	 */
-	gchar** metadata;
-
-	/**
-	 * The number of data servers.
-	 */
-	guint data_len;
-
-	/**
-	 * The number of metadata servers.
-	 */
-	guint metadata_len;
-
-	/**
-	 * The storage configuration.
+	 * The data configuration.
 	 */
 	struct
 	{
@@ -83,7 +87,24 @@ struct JConfiguration
 		 */
 		gchar* path;
 	}
-	storage;
+	data;
+
+	/**
+	 * The metadata configuration.
+	 */
+	struct
+	{
+		/**
+		 * The backend.
+		 */
+		gchar* backend;
+
+		/**
+		 * The path.
+		 */
+		gchar* path;
+	}
+	meta;
 
 	guint max_connections;
 
@@ -182,40 +203,50 @@ JConfiguration*
 j_configuration_new_for_data (GKeyFile* key_file)
 {
 	JConfiguration* configuration;
-	gchar** data;
-	gchar** metadata;
-	gchar* storage_backend;
-	gchar* storage_path;
+	gchar** servers_data;
+	gchar** servers_meta;
+	gchar* data_backend;
+	gchar* data_path;
+	gchar* meta_backend;
+	gchar* meta_path;
 	guint max_connections;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
-	data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
-	metadata = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
-	storage_backend = g_key_file_get_string(key_file, "storage", "backend", NULL);
-	storage_path = g_key_file_get_string(key_file, "storage", "path", NULL);
+	servers_data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
+	servers_meta = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
+	data_backend = g_key_file_get_string(key_file, "data", "backend", NULL);
+	data_path = g_key_file_get_string(key_file, "data", "path", NULL);
+	meta_backend = g_key_file_get_string(key_file, "metadata", "backend", NULL);
+	meta_path = g_key_file_get_string(key_file, "metadata", "path", NULL);
 
-	if (data == NULL || data[0] == NULL
-	    || metadata == NULL || metadata[0] == NULL
-	    || storage_backend == NULL
-	    || storage_path == NULL)
+	if (servers_data == NULL || servers_data[0] == NULL
+	    || servers_meta == NULL || servers_meta[0] == NULL
+	    || data_backend == NULL
+	    || data_path == NULL
+	    || meta_backend == NULL
+	    || meta_path == NULL)
 	{
-		g_free(storage_backend);
-		g_free(storage_path);
-		g_strfreev(data);
-		g_strfreev(metadata);
+		g_free(meta_backend);
+		g_free(meta_path);
+		g_free(data_backend);
+		g_free(data_path);
+		g_strfreev(servers_data);
+		g_strfreev(servers_meta);
 
 		return NULL;
 	}
 
 	configuration = g_slice_new(JConfiguration);
-	configuration->data = data;
-	configuration->metadata = metadata;
-	configuration->data_len = g_strv_length(data);
-	configuration->metadata_len = g_strv_length(metadata);
-	configuration->storage.backend = storage_backend;
-	configuration->storage.path = storage_path;
+	configuration->servers.data = servers_data;
+	configuration->servers.metadata = servers_meta;
+	configuration->servers.data_len = g_strv_length(servers_data);
+	configuration->servers.metadata_len = g_strv_length(servers_meta);
+	configuration->data.backend = data_backend;
+	configuration->data.path = data_path;
+	configuration->meta.backend = meta_backend;
+	configuration->meta.path = meta_path;
 	configuration->max_connections = max_connections;
 	configuration->ref_count = 1;
 
@@ -263,11 +294,14 @@ j_configuration_unref (JConfiguration* configuration)
 {
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
-		g_free(configuration->storage.backend);
-		g_free(configuration->storage.path);
+		g_free(configuration->meta.backend);
+		g_free(configuration->meta.path);
 
-		g_strfreev(configuration->data);
-		g_strfreev(configuration->metadata);
+		g_free(configuration->data.backend);
+		g_free(configuration->data.path);
+
+		g_strfreev(configuration->servers.data);
+		g_strfreev(configuration->servers.metadata);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -277,18 +311,18 @@ gchar const*
 j_configuration_get_data_server (JConfiguration* configuration, guint index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
-	g_return_val_if_fail(index < configuration->data_len, NULL);
+	g_return_val_if_fail(index < configuration->servers.data_len, NULL);
 
-	return configuration->data[index];
+	return configuration->servers.data[index];
 }
 
 gchar const*
 j_configuration_get_metadata_server (JConfiguration* configuration, guint index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
-	g_return_val_if_fail(index < configuration->metadata_len, NULL);
+	g_return_val_if_fail(index < configuration->servers.metadata_len, NULL);
 
-	return configuration->metadata[index];
+	return configuration->servers.metadata[index];
 }
 
 guint
@@ -296,7 +330,7 @@ j_configuration_get_data_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->data_len;
+	return configuration->servers.data_len;
 }
 
 guint
@@ -304,23 +338,39 @@ j_configuration_get_metadata_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->metadata_len;
+	return configuration->servers.metadata_len;
 }
 
 gchar const*
-j_configuration_get_storage_backend (JConfiguration* configuration)
+j_configuration_get_data_backend (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	return configuration->storage.backend;
+	return configuration->data.backend;
 }
 
 gchar const*
-j_configuration_get_storage_path (JConfiguration* configuration)
+j_configuration_get_data_path (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	return configuration->storage.path;
+	return configuration->data.path;
+}
+
+gchar const*
+j_configuration_get_metadata_backend (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->meta.backend;
+}
+
+gchar const*
+j_configuration_get_metadata_path (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->meta.path;
 }
 
 guint

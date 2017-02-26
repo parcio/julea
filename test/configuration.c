@@ -59,8 +59,10 @@ test_configuration_new_for_data (void)
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 1);
-	g_key_file_set_string(key_file, "storage", "backend", "null");
-	g_key_file_set_string(key_file, "storage", "path", "");
+	g_key_file_set_string(key_file, "data", "backend", "null");
+	g_key_file_set_string(key_file, "data", "path", "");
+	g_key_file_set_string(key_file, "metadata", "backend", "null");
+	g_key_file_set_string(key_file, "metadata", "path", "");
 
 	configuration = j_configuration_new_for_data(key_file);
 	g_assert(configuration != NULL);
@@ -81,8 +83,10 @@ test_configuration_get (void)
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "data", data_servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "metadata", metadata_servers, 1);
-	g_key_file_set_string(key_file, "storage", "backend", "null");
-	g_key_file_set_string(key_file, "storage", "path", "NULL");
+	g_key_file_set_string(key_file, "data", "backend", "null");
+	g_key_file_set_string(key_file, "data", "path", "NULL");
+	g_key_file_set_string(key_file, "metadata", "backend", "null2");
+	g_key_file_set_string(key_file, "metadata", "path", "NULL2");
 
 	configuration = j_configuration_new_for_data(key_file);
 	g_assert(configuration != NULL);
@@ -94,8 +98,11 @@ test_configuration_get (void)
 	g_assert_cmpstr(j_configuration_get_metadata_server(configuration, 0), ==, "localhost");
 	g_assert_cmpuint(j_configuration_get_metadata_server_count(configuration), ==, 1);
 
-	g_assert_cmpstr(j_configuration_get_storage_backend(configuration), ==, "null");
-	g_assert_cmpstr(j_configuration_get_storage_path(configuration), ==, "NULL");
+	g_assert_cmpstr(j_configuration_get_data_backend(configuration), ==, "null");
+	g_assert_cmpstr(j_configuration_get_data_path(configuration), ==, "NULL");
+
+	g_assert_cmpstr(j_configuration_get_metadata_backend(configuration), ==, "null2");
+	g_assert_cmpstr(j_configuration_get_metadata_path(configuration), ==, "NULL2");
 
 	j_configuration_unref(configuration);
 

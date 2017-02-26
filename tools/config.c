@@ -36,10 +36,12 @@
 static gboolean opt_local = FALSE;
 static gboolean opt_global = FALSE;
 static gboolean opt_print = FALSE;
-static gchar const* opt_data = NULL;
-static gchar const* opt_metadata = NULL;
-static gchar const* opt_storage_backend = NULL;
-static gchar const* opt_storage_path = NULL;
+static gchar const* opt_servers_data = NULL;
+static gchar const* opt_servers_meta = NULL;
+static gchar const* opt_data_backend = NULL;
+static gchar const* opt_data_path = NULL;
+static gchar const* opt_meta_backend = NULL;
+static gchar const* opt_meta_path = NULL;
 static gint opt_max_connections = 0;
 
 static
@@ -98,18 +100,20 @@ write_config (gchar* path)
 	gboolean ret = TRUE;
 	gsize key_file_data_len;
 	gchar* key_file_data;
-	gchar** data;
-	gchar** metadata;
+	gchar** servers_data;
+	gchar** servers_meta;
 
-	data = string_split(opt_data);
-	metadata = string_split(opt_metadata);
+	servers_data = string_split(opt_servers_data);
+	servers_meta = string_split(opt_servers_meta);
 
 	key_file = g_key_file_new();
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
-	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)data, g_strv_length(data));
-	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)metadata, g_strv_length(metadata));
-	g_key_file_set_string(key_file, "storage", "backend", opt_storage_backend);
-	g_key_file_set_string(key_file, "storage", "path", opt_storage_path);
+	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)servers_data, g_strv_length(servers_data));
+	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)servers_meta, g_strv_length(servers_meta));
+	g_key_file_set_string(key_file, "data", "backend", opt_data_backend);
+	g_key_file_set_string(key_file, "data", "path", opt_data_path);
+	g_key_file_set_string(key_file, "metadata", "backend", opt_meta_backend);
+	g_key_file_set_string(key_file, "metadata", "path", opt_meta_path);
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
@@ -133,8 +137,8 @@ write_config (gchar* path)
 	g_free(key_file_data);
 	g_key_file_free(key_file);
 
-	g_strfreev(data);
-	g_strfreev(metadata);
+	g_strfreev(servers_data);
+	g_strfreev(servers_meta);
 
 	return ret;
 }
@@ -151,10 +155,12 @@ main (gint argc, gchar** argv)
 		{ "local", 0, 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
 		{ "global", 0, 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
 		{ "print", 0, 0, G_OPTION_ARG_NONE, &opt_print, "Print configuration", NULL },
-		{ "data", 0, 0, G_OPTION_ARG_STRING, &opt_data, "Data servers to use", "host1,host2" },
-		{ "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Metadata servers to use", "host1,host2" },
-		{ "storage-backend", 0, 0, G_OPTION_ARG_STRING, &opt_storage_backend, "Storage backend to use", "posix|null|gio|…" },
-		{ "storage-path", 0, 0, G_OPTION_ARG_STRING, &opt_storage_path, "Storage path to use", "/path/to/storage" },
+		{ "data-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_data, "Data servers to use", "host1,host2" },
+		{ "metadata-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_meta, "Metadata servers to use", "host1,host2" },
+		{ "data-backend", 0, 0, G_OPTION_ARG_STRING, &opt_data_backend, "Data backend to use", "posix|null|gio|…" },
+		{ "data-path", 0, 0, G_OPTION_ARG_STRING, &opt_data_path, "Data path to use", "/path/to/storage" },
+		{ "metadata-backend", 0, 0, G_OPTION_ARG_STRING, &opt_meta_backend, "Metadata backend to use", "posix|null|gio|…" },
+		{ "metadata-path", 0, 0, G_OPTION_ARG_STRING, &opt_meta_path, "Metadata path to use", "/path/to/storage" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
@@ -176,9 +182,9 @@ main (gint argc, gchar** argv)
 	}
 
 	if ((opt_local && opt_global)
-	    || (opt_print && (opt_data != NULL || opt_metadata != NULL || opt_storage_backend != NULL || opt_storage_path != NULL))
+	    || (opt_print && (opt_servers_data != NULL || opt_servers_meta != NULL || opt_data_backend != NULL || opt_data_path != NULL || opt_meta_backend != NULL || opt_meta_path != NULL))
 	    || (opt_print && !opt_local && !opt_global)
-	    || (!opt_print && (opt_data == NULL || opt_metadata == NULL || opt_storage_backend == NULL || opt_storage_path == NULL))
+	    || (!opt_print && (opt_servers_data == NULL || opt_servers_meta == NULL || opt_data_backend == NULL || opt_data_path == NULL || opt_meta_backend == NULL || opt_meta_path == NULL))
 	    || opt_max_connections < 0
 	)
 	{
