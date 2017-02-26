@@ -45,7 +45,6 @@
 #include <jitem.h>
 #include <jitem-internal.h>
 #include <joperation-cache-internal.h>
-#include <jstore-internal.h>
 
 /**
  * \defgroup JCollectionIterator Collection Iterator
@@ -98,7 +97,7 @@ j_collection_iterator_new (JCollection* collection)
 	//bson_finish(&b);
 
 	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, j_store_get_name(j_collection_get_store(iterator->collection)), "Items");
+	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Items");
 	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, NULL, NULL);
 
 	bson_destroy(&b);

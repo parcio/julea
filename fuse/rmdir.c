@@ -54,14 +54,7 @@ int jfs_rmdir (char const* path)
 	}
 	else if (j_uri_get_collection(uri) != NULL)
 	{
-		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), batch);
-		j_batch_execute(batch);
-
-		ret = 0;
-	}
-	else if (j_uri_get_store(uri) != NULL)
-	{
-		j_delete_store(j_uri_get_store(uri), batch);
+		j_collection_delete(j_uri_get_collection(uri), batch);
 		j_batch_execute(batch);
 
 		ret = 0;

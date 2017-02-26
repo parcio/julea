@@ -56,22 +56,12 @@ int jfs_mkdir(char const* path, mode_t mode)
 	if (j_uri_get_collection(uri) != NULL)
 	{
 	}
-	else if (j_uri_get_store(uri) != NULL)
+	else
 	{
 		JCollection* collection;
 
-		collection = j_store_create_collection(j_uri_get_store(uri), j_uri_get_collection_name(uri), batch);
+		collection = j_collection_create(j_uri_get_collection_name(uri), batch);
 		j_collection_unref(collection);
-		j_batch_execute(batch);
-
-		ret = 0;
-	}
-	else
-	{
-		JStore* store;
-
-		store = j_create_store(j_uri_get_store_name(uri), batch);
-		j_store_unref(store);
 		j_batch_execute(batch);
 
 		ret = 0;

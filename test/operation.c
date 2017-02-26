@@ -85,7 +85,6 @@ _test_operation_execute (gboolean async)
 	JCollection* collection;
 	JItem* item;
 	JBatch* batch;
-	JStore* store;
 
 	if (async)
 	{
@@ -94,16 +93,13 @@ _test_operation_execute (gboolean async)
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	store = j_create_store("test", batch);
-	collection = j_store_create_collection(store, "test", batch);
-	item = j_collection_create_item(collection, "item", NULL, batch);
-	j_collection_delete_item(collection, item, batch);
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
+	collection = j_collection_create("test", batch);
+	item = j_item_create(collection, "item", NULL, batch);
+	j_item_delete(collection, item, batch);
+	j_collection_delete(collection, batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
-	j_store_unref(store);
 
 	if (async)
 	{

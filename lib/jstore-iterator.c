@@ -43,8 +43,6 @@
 #include <jconnection-pool-internal.h>
 #include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
-#include <jstore.h>
-#include <jstore-internal.h>
 
 /**
  * \defgroup JStoreIterator Store Iterator
@@ -57,11 +55,6 @@
 struct JStoreIterator
 {
 	mongoc_client_t* connection;
-
-	/**
-	 * The store.
-	 **/
-	JStore* store;
 
 	/**
 	 * The MongoDB cursor.
@@ -84,25 +77,22 @@ struct JStoreIterator
  * \return A new JStoreIterator.
  **/
 JStoreIterator*
-j_store_iterator_new (JStore* store)
+j_store_iterator_new (void)
 {
 	JStoreIterator* iterator;
 	bson_t empty[1];
 	mongoc_collection_t* m_collection;
 
-	g_return_val_if_fail(store != NULL, NULL);
-
 	j_operation_cache_flush();
 
 	iterator = g_slice_new(JStoreIterator);
-	iterator->store = j_store_ref(store);
 	iterator->connection = j_connection_pool_pop_meta(0);
 	iterator->current = NULL;
 
 	bson_init(empty);
 
 	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, j_store_get_name(iterator->store), "Collections");
+	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Collections");
 	iterator->cursor = mongoc_collection_find_with_opts(m_collection, empty, NULL, NULL);
 
 	bson_destroy(empty);
@@ -124,8 +114,6 @@ j_store_iterator_free (JStoreIterator* iterator)
 
 	mongoc_cursor_destroy(iterator->cursor);
 	j_connection_pool_push_meta(0, iterator->connection);
-
-	j_store_unref(iterator->store);
 
 	g_slice_free(JStoreIterator, iterator);
 }
@@ -172,7 +160,7 @@ j_store_iterator_get (JStoreIterator* iterator)
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(iterator->current != NULL, NULL);
 
-	collection = j_collection_new_from_bson(iterator->store, iterator->current);
+	collection = j_collection_new_from_bson(iterator->current);
 
 	return collection;
 }

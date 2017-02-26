@@ -69,11 +69,11 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 
 		ret = 0;
 	}
-	else if (j_uri_get_store(uri) != NULL)
+	else
 	{
 		JStoreIterator* siterator;
 
-		siterator = j_store_iterator_new(j_uri_get_store(uri));
+		siterator = j_store_iterator_new();
 
 		while (j_store_iterator_next(siterator))
 		{
@@ -84,12 +84,6 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		}
 
 		j_store_iterator_free(siterator);
-
-		ret = 0;
-	}
-	else
-	{
-		filler(buf, "JULEA", NULL, 0);
 
 		ret = 0;
 	}

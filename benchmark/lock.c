@@ -50,16 +50,14 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 	JLock* lock;
 	JBatch* batch;
 	JSemantics* semantics;
-	JStore* store;
 	gdouble elapsed;
 
 	list = j_list_new((JListFreeFunc)j_lock_free);
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	store = j_create_store("benchmark-store", batch);
-	collection = j_store_create_collection(store, "benchmark-collection", batch);
-	item = j_collection_create_item(collection, "benchmark-item", NULL, batch);
+	collection = j_collection_create("benchmark-collection", batch);
+	item = j_item_create(collection, "benchmark-item", NULL, batch);
 	j_batch_execute(batch);
 
 	if (acquire)
@@ -111,14 +109,12 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 
 	j_list_iterator_free(iterator);
 
-	j_collection_delete_item(collection, item, batch);
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
+	j_item_delete(collection, item, batch);
+	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
-	j_store_unref(store);
 	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 	j_list_unref(list);

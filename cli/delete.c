@@ -65,17 +65,12 @@ j_cmd_delete (gchar const** arguments)
 
 	if (j_uri_get_item(uri) != NULL)
 	{
-		j_collection_delete_item(j_uri_get_collection(uri), j_uri_get_item(uri), batch);
+		j_item_delete(j_uri_get_collection(uri), j_uri_get_item(uri), batch);
 		j_batch_execute(batch);
 	}
 	else if (j_uri_get_collection(uri) != NULL)
 	{
-		j_store_delete_collection(j_uri_get_store(uri), j_uri_get_collection(uri), batch);
-		j_batch_execute(batch);
-	}
-	else if (j_uri_get_store(uri) != NULL)
-	{
-		j_delete_store(j_uri_get_store(uri), batch);
+		j_collection_delete(j_uri_get_collection(uri), batch);
 		j_batch_execute(batch);
 	}
 	else

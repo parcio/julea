@@ -44,7 +44,6 @@
 #include <jhelper-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
-#include <jstore-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -201,7 +200,6 @@ j_lock_free (JLock* lock)
 gboolean
 j_lock_acquire (JLock* lock)
 {
-	JCollection* collection;
 	bson_t obj[1];
 	bson_t index[1];
 	mongoc_client_t* mongo_connection;
@@ -211,8 +209,6 @@ j_lock_acquire (JLock* lock)
 	g_return_val_if_fail(lock != NULL, FALSE);
 
 	j_lock_serialize(lock, obj);
-
-	collection = j_item_get_collection(lock->item);
 
 	write_concern = mongoc_write_concern_new();
 	//write_concern->j = 1;
@@ -226,9 +222,9 @@ j_lock_acquire (JLock* lock)
 
 	mongo_connection = j_connection_pool_pop_meta(0);
 	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(collection)), "Locks");
+	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Locks");
 
-	j_store_create_index(j_collection_get_store(collection), J_STORE_COLLECTION_LOCKS, mongo_connection, index);
+	j_helper_create_index(J_STORE_COLLECTION_LOCKS, mongo_connection, index);
 	lock->acquired = mongoc_collection_insert(mongo_collection, MONGOC_INSERT_NONE, obj, write_concern, NULL);
 
 	j_connection_pool_push_meta(0, mongo_connection);
@@ -244,7 +240,6 @@ j_lock_acquire (JLock* lock)
 gboolean
 j_lock_release (JLock* lock)
 {
-	JCollection* collection;
 	bson_t obj[1];
 	mongoc_client_t* mongo_connection;
 	mongoc_collection_t* mongo_collection;
@@ -252,8 +247,6 @@ j_lock_release (JLock* lock)
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 	g_return_val_if_fail(lock->acquired, FALSE);
-
-	collection = j_item_get_collection(lock->item);
 
 	write_concern = mongoc_write_concern_new();
 	//write_concern->j = 1;
@@ -266,7 +259,7 @@ j_lock_release (JLock* lock)
 	mongo_connection = j_connection_pool_pop_meta(0);
 
 	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(collection)), "Locks");
+	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Locks");
 	lock->acquired = !mongoc_collection_remove(mongo_collection, MONGOC_DELETE_SINGLE_REMOVE, obj, write_concern, NULL);
 
 	j_connection_pool_push_meta(0, mongo_connection);

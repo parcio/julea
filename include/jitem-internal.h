@@ -55,6 +55,10 @@ J_GNUC_INTERNAL void j_item_deserialize (JItem*, bson_t const*);
 
 J_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
 
+J_GNUC_INTERNAL gboolean j_item_create_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_item_delete_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_item_get_internal (JBatch*, JList*);
+
 J_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
 J_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);
 

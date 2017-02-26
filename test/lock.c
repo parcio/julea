@@ -44,13 +44,11 @@ test_lock_new_free (void)
 	JCollection* collection;
 	JItem* item;
 	JBatch* batch;
-	JStore* store;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	store = j_create_store("test-store", batch);
-	collection = j_store_create_collection(store, "test-collection", batch);
-	item = j_collection_create_item(collection, "test-item", NULL, batch);
+	collection = j_collection_create("test-collection", batch);
+	item = j_item_create(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
@@ -62,14 +60,12 @@ test_lock_new_free (void)
 		j_lock_free(lock);
 	}
 
-	j_collection_delete_item(collection, item, batch);
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
+	j_item_delete(collection, item, batch);
+	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
-	j_store_unref(store);
 	j_batch_unref(batch);
 }
 
@@ -82,13 +78,11 @@ test_lock_acquire_release (void)
 	JCollection* collection;
 	JItem* item;
 	JBatch* batch;
-	JStore* store;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	store = j_create_store("test-store", batch);
-	collection = j_store_create_collection(store, "test-collection", batch);
-	item = j_collection_create_item(collection, "test-item", NULL, batch);
+	collection = j_collection_create("test-collection", batch);
+	item = j_item_create(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 
 	for (guint i = 0; i < n; i++)
@@ -106,14 +100,12 @@ test_lock_acquire_release (void)
 		j_lock_free(lock);
 	}
 
-	j_collection_delete_item(collection, item, batch);
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
+	j_item_delete(collection, item, batch);
+	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
-	j_store_unref(store);
 	j_batch_unref(batch);
 }
 
@@ -127,14 +119,12 @@ test_lock_add (void)
 	JItem* item;
 	JLock* lock;
 	JBatch* batch;
-	JStore* store;
 	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	store = j_create_store("test-store", batch);
-	collection = j_store_create_collection(store, "test-collection", batch);
-	item = j_collection_create_item(collection, "test-item", NULL, batch);
+	collection = j_collection_create("test-collection", batch);
+	item = j_item_create(collection, "test-item", NULL, batch);
 	j_batch_execute(batch);
 
 	lock = j_lock_new(item);
@@ -151,14 +141,12 @@ test_lock_add (void)
 
 	j_lock_free(lock);
 
-	j_collection_delete_item(collection, item, batch);
-	j_store_delete_collection(store, collection, batch);
-	j_delete_store(store, batch);
+	j_item_delete(collection, item, batch);
+	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
 	j_item_unref(item);
 	j_collection_unref(collection);
-	j_store_unref(store);
 	j_batch_unref(batch);
 }
 

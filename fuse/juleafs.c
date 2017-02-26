@@ -67,11 +67,7 @@ jfs_uri_last (JURI* uri)
 {
 	gboolean ret = FALSE;
 
-	if (j_uri_get_store(uri) == NULL && j_uri_get_store_name(uri) != NULL)
-	{
-		ret = (j_uri_get_collection_name(uri) == NULL && j_uri_get_item_name(uri) == NULL);
-	}
-	else if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
+	if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
 	{
 		ret = (j_uri_get_item_name(uri) == NULL);
 	}

@@ -66,7 +66,6 @@ typedef struct JURI JURI;
 
 #include <jcollection.h>
 #include <jitem.h>
-#include <jstore.h>
 
 #include <glib.h>
 
@@ -75,14 +74,12 @@ GQuark j_uri_error_quark (void);
 JURI* j_uri_new (gchar const*);
 void j_uri_free (JURI*);
 
-gchar const* j_uri_get_store_name (JURI*);
 gchar const* j_uri_get_collection_name (JURI*);
 gchar const* j_uri_get_item_name (JURI*);
 
 gboolean j_uri_get (JURI*, GError**);
 gboolean j_uri_create (JURI*, gboolean, GError**);
 
-JStore* j_uri_get_store (JURI*);
 JCollection* j_uri_get_collection (JURI*);
 JItem* j_uri_get_item (JURI*);
 

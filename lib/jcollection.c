@@ -53,8 +53,6 @@
 #include <jmessage-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
-#include <jstore.h>
-#include <jstore-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -64,24 +62,6 @@
  *
  * @{
  **/
-
-/**
- * Data for background operations.
- */
-struct JCollectionBackgroundData
-{
-	/**
-	 * The connection.
-	 */
-	GSocketConnection* connection;
-
-	/**
-	 * The message to send.
-	 */
-	JMessage* message;
-};
-
-typedef struct JCollectionBackgroundData JCollectionBackgroundData;
 
 /**
  * A collection of items.
@@ -101,47 +81,10 @@ struct JCollection
 	JCredentials* credentials;
 
 	/**
-	 * The parent store.
-	 **/
-	JStore* store;
-
-	/**
 	 * The reference count.
 	 **/
 	gint ref_count;
 };
-
-/**
- * Executes delete operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_collection_delete_item_background_operation (gpointer data)
-{
-	JCollectionBackgroundData* background_data = data;
-	JMessage* reply;
-
-	j_message_send(background_data->message, background_data->connection);
-
-	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
-	{
-		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, background_data->connection);
-
-		/* FIXME do something with reply */
-		j_message_unref(reply);
-	}
-
-	return data;
-}
 
 /**
  * Increases a collection's reference count.
@@ -192,11 +135,6 @@ j_collection_unref (JCollection* collection)
 
 	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
-		if (collection->store != NULL)
-		{
-			j_store_unref(collection->store);
-		}
-
 		j_credentials_unref(collection->credentials);
 
 		g_free(collection->name);
@@ -231,86 +169,69 @@ j_collection_get_name (JCollection* collection)
 }
 
 /**
- * Creates an item in a collection.
+ * Creates a collection.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param collection   A collection.
- * \param name         A name.
- * \param distribution A distribution.
- * \param batch        A batch.
- *
- * \return A new item. Should be freed with j_item_unref().
+ * \param collection A collection.
+ * \param batch      A batch.
  **/
-JItem*
-j_collection_create_item (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
+JCollection*
+j_collection_create (gchar const* name, JBatch* batch)
 {
-	JItem* item;
+	JCollection* collection;
 	JOperation* operation;
 
-	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
-
-	if ((item = j_item_new(collection, name, distribution)) == NULL)
+	if ((collection = j_collection_new(name)) == NULL)
 	{
 		goto end;
 	}
 
-	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE_ITEM);
-	operation->key = collection;
-	operation->u.collection_create_item.collection = j_collection_ref(collection);
-	operation->u.collection_create_item.item = j_item_ref(item);
+	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE);
+	operation->key = NULL;
+	operation->u.collection_create.collection = j_collection_ref(collection);
 
 	j_batch_add(batch, operation);
 
 end:
-	j_trace_leave(G_STRFUNC);
-
-	return item;
+	return collection;
 }
 
 /**
- * Gets an item from a collection.
+ * Gets a collection.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param collection A collection.
- * \param item       A pointer to an item.
+ * \param collection A pointer to a collection.
  * \param name       A name.
  * \param batch      A batch.
  **/
 void
-j_collection_get_item (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
+j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 {
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item != NULL);
 	g_return_if_fail(name != NULL);
 
-	j_trace_enter(G_STRFUNC);
-
-	operation = j_operation_new(J_OPERATION_COLLECTION_GET_ITEM);
-	operation->key = collection;
-	operation->u.collection_get_item.collection = j_collection_ref(collection);
-	operation->u.collection_get_item.item = item;
-	operation->u.collection_get_item.name = g_strdup(name);
+	operation = j_operation_new(J_OPERATION_COLLECTION_GET);
+	operation->key = NULL;
+	operation->u.collection_get.collection = collection;
+	operation->u.collection_get.name = g_strdup(name);
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
- * Deletes an item from a collection.
+ * Deletes a collection.
  *
  * \author Michael Kuhn
  *
@@ -318,27 +239,20 @@ j_collection_get_item (JCollection* collection, JItem** item, gchar const* name,
  * \endcode
  *
  * \param collection A collection.
- * \param item       An item.
  * \param batch      A batch.
  **/
 void
-j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
+j_collection_delete (JCollection* collection, JBatch* batch)
 {
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
-
-	operation = j_operation_new(J_OPERATION_COLLECTION_DELETE_ITEM);
-	operation->key = collection;
-	operation->u.collection_delete_item.collection = j_collection_ref(collection);
-	operation->u.collection_delete_item.item = j_item_ref(item);
+	operation = j_operation_new(J_OPERATION_COLLECTION_DELETE);
+	operation->key = NULL;
+	operation->u.collection_delete.collection = j_collection_ref(collection);
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /* Internal */
@@ -354,17 +268,15 @@ j_collection_delete_item (JCollection* collection, JItem* item, JBatch* batch)
  * c = j_collection_new("JULEA");
  * \endcode
  *
- * \param store A store.
  * \param name  A collection name.
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new (JStore* store, gchar const* name)
+j_collection_new (gchar const* name)
 {
 	JCollection* collection = NULL;
 
-	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
@@ -382,7 +294,6 @@ j_collection_new (JStore* store, gchar const* name)
 	bson_oid_init(&(collection->id), bson_context_get_default());
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
-	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
 end:
@@ -401,20 +312,18 @@ end:
  * \code
  * \endcode
  *
- * \param store A store.
  * \param b     A BSON object.
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_new_from_bson (JStore* store, bson_t const* b)
+j_collection_new_from_bson (bson_t const* b)
 {
 	/*
 		: m_initialized(true),
 	*/
 	JCollection* collection;
 
-	g_return_val_if_fail(store != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC);
@@ -422,7 +331,6 @@ j_collection_new_from_bson (JStore* store, bson_t const* b)
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
 	collection->credentials = j_credentials_new();
-	collection->store = j_store_ref(store);
 	collection->ref_count = 1;
 
 	j_collection_deserialize(collection, b);
@@ -430,31 +338,6 @@ j_collection_new_from_bson (JStore* store, bson_t const* b)
 	j_trace_leave(G_STRFUNC);
 
 	return collection;
-}
-
-/**
- * Returns a collection's store.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- *
- * \return A store.
- **/
-JStore*
-j_collection_get_store (JCollection* collection)
-{
-	g_return_val_if_fail(collection != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC);
-	j_trace_leave(G_STRFUNC);
-
-	return collection->store;
 }
 
 /**
@@ -591,12 +474,22 @@ j_collection_get_id (JCollection* collection)
 	return &(collection->id);
 }
 
+/**
+ * Creates collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param batch      A batch.
+ * \param operations A list of operations.
+ *
+ * \return TRUE.
+ */
 gboolean
-j_collection_create_item_internal (JBatch* batch, JList* operations)
+j_collection_create_internal (JBatch* batch, JList* operations)
 {
-	JCollection* collection = NULL;
 	JListIterator* it;
-	JSemantics* semantics;
 	bson_t** obj;
 	bson_t index[1];
 	mongoc_client_t* mongo_connection;
@@ -609,13 +502,9 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	/*
 	IsInitialized(true);
 	*/
-
-	semantics = j_batch_get_semantics(batch);
 
 	i = 0;
 	length = j_list_length(operations);
@@ -625,11 +514,10 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.collection_create_item.item;
+		JCollection* collection = operation->u.collection_create.collection;
 		bson_t* b;
 
-		collection = operation->u.collection_create_item.collection;
-		b = j_item_serialize(item, semantics);
+		b = j_collection_serialize(collection);
 
 		obj[i] = b;
 		i++;
@@ -637,24 +525,18 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	j_list_iterator_free(it);
 
-	if (collection == NULL)
-	{
-		goto end;
-	}
-
 	write_concern = mongoc_write_concern_new();
-	j_helper_set_write_concern(write_concern, semantics);
+	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	bson_init(index);
-	bson_append_int32(index, "Collection", -1, 1);
 	bson_append_int32(index, "Name", -1, 1);
 	//bson_finish(index);
 
 	mongo_connection = j_connection_pool_pop_meta(0);
-	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
 
-	j_store_create_index(collection->store, J_STORE_COLLECTION_ITEMS, mongo_connection, index);
+	j_helper_create_index(J_STORE_COLLECTION_COLLECTIONS, mongo_connection, index);
+	/* FIXME */
+	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
 	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
 
 	/*
@@ -662,7 +544,7 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 	{
 		bson_t error[1];
 
-		mongo_cmd_get_last_error(mongo_connection, j_store_get_name(collection->store), error);
+		mongo_cmd_get_last_error(mongo_connection, store->name, error);
 		bson_print(error);
 		bson_destroy(error);
 	}
@@ -674,7 +556,6 @@ j_collection_create_item_internal (JBatch* batch, JList* operations)
 
 	mongoc_write_concern_destroy(write_concern);
 
-end:
 	for (i = 0; i < length; i++)
 	{
 		bson_destroy(obj[i]);
@@ -683,58 +564,45 @@ end:
 
 	g_free(obj);
 
-	j_trace_leave(G_STRFUNC);
+	/*
+	{
+		bson_t oerr;
+
+		mongo_cmd_get_last_error(mc, store->name, &oerr);
+		bson_print(&oerr);
+		bson_destroy(&oerr);
+	}
+	*/
 
 	return ret;
 }
 
+/**
+ * Deletes collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param batch      A batch.
+ * \param operations A list of operations.
+ *
+ * \return TRUE.
+ */
 gboolean
-j_collection_delete_item_internal (JBatch* batch, JList* operations)
+j_collection_delete_internal (JBatch* batch, JList* operations)
 {
-	JBackgroundOperation** background_operations;
-	JCollection* collection = NULL;
 	JListIterator* it;
-	JMessage** messages;
-	JSemantics* semantics;
 	mongoc_client_t* mongo_connection;
 	mongoc_write_concern_t* write_concern;
 	gboolean ret = TRUE;
-	guint m;
-	guint n;
-	gchar const* item_name;
-	gchar const* collection_name;
-	gchar const* store_name;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	/*
 		IsInitialized(true);
 	*/
-
-	semantics = j_batch_get_semantics(batch);
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_operations = g_new(JBackgroundOperation*, n);
-	messages = g_new(JMessage*, n);
-
-	for (guint i = 0; i < n; i++)
-	{
-		background_operations[i] = NULL;
-		messages[i] = NULL;
-	}
-
-	{
-		JOperation* operation;
-
-		operation = j_list_get_first(operations);
-		g_assert(operation != NULL);
-		collection = operation->u.collection_delete_item.collection;
-
-		collection_name = collection->name;
-		store_name = j_store_get_name(collection->store);
-	}
 
 	write_concern = mongoc_write_concern_new();
 	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
@@ -746,118 +614,44 @@ j_collection_delete_item_internal (JBatch* batch, JList* operations)
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.collection_delete_item.item;
+		JCollection* collection = operation->u.collection_delete.collection;
 		bson_t b;
 		mongoc_collection_t* m_collection;
 
-		item_name = j_item_get_name(item);
-
 		bson_init(&b);
-		bson_append_oid(&b, "_id", -1, j_item_get_id(item));
+		bson_append_oid(&b, "_id", -1, j_collection_get_id(collection));
 		//bson_finish(&b);
 
 		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
+		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
 		/* FIXME do not send write_concern on each remove */
-		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL) && ret;
+		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL)&& ret;
 
 		bson_destroy(&b);
-
-		for (guint i = 0; i < n; i++)
-		{
-			gchar* path;
-			gsize path_len;
-
-			path = g_build_path("/", store_name, collection_name, item_name, NULL);
-			path_len = strlen(path) + 1;
-
-			if (messages[i] == NULL)
-			{
-				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DELETE, 0);
-				j_message_set_safety(messages[i], semantics);
-			}
-
-			j_message_add_operation(messages[i], path_len);
-			j_message_append_n(messages[i], path, path_len);
-
-			g_free(path);
-		}
 	}
 
 	j_connection_pool_push_meta(0, mongo_connection);
-
-	m = 0;
-
-	for (guint i = 0; i < n; i++)
-	{
-		if (messages[i] != NULL)
-		{
-			m++;
-		}
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		JCollectionBackgroundData* background_data;
-
-		if (messages[i] == NULL)
-		{
-			continue;
-		}
-
-		background_data = g_slice_new(JCollectionBackgroundData);
-		background_data->connection = j_connection_pool_pop_data(i);
-		background_data->message = messages[i];
-
-		if (m > 1)
-		{
-			background_operations[i] = j_background_operation_new(j_collection_delete_item_background_operation, background_data);
-		}
-		else
-		{
-			j_collection_delete_item_background_operation(background_data);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JCollectionBackgroundData, background_data);
-		}
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		if (background_operations[i] != NULL)
-		{
-			JCollectionBackgroundData* background_data;
-
-			background_data = j_background_operation_wait(background_operations[i]);
-			j_background_operation_unref(background_operations[i]);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JCollectionBackgroundData, background_data);
-		}
-
-		if (messages[i] != NULL)
-		{
-			j_message_unref(messages[i]);
-		}
-	}
-
 	j_list_iterator_free(it);
 
 	mongoc_write_concern_destroy(write_concern);
 
-	g_free(background_operations);
-	g_free(messages);
-
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
+/**
+ * Gets collections.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param batch      A batch.
+ * \param operations A list of operations.
+ *
+ * \return TRUE.
+ */
 gboolean
-j_collection_get_item_internal (JBatch* batch, JList* operations)
+j_collection_get_internal (JBatch* batch, JList* operations)
 {
 	JListIterator* it;
 	mongoc_client_t* mongo_connection;
@@ -865,8 +659,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	/*
 		IsInitialized(true);
@@ -879,17 +671,15 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.collection_get_item.collection;
-		JItem** item = operation->u.collection_get_item.item;
+		JCollection** collection = operation->u.collection_get.collection;
 		bson_t b;
 		bson_t const* b_cur;
 		bson_t opts;
-		mongoc_cursor_t* cursor;
 		mongoc_collection_t* m_collection;
-		gchar const* name = operation->u.collection_get_item.name;
+		mongoc_cursor_t* cursor;
+		gchar const* name = operation->u.collection_get.name;
 
 		bson_init(&b);
-		bson_append_oid(&b, "Collection", -1, &(collection->id));
 		bson_append_utf8(&b, "Name", -1, name, -1);
 		//bson_finish(&b);
 
@@ -897,18 +687,18 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 		bson_append_int32(&opts, "limit", -1, 1);
 
 		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(collection->store), "Items");
+		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
 		cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
 
 		bson_destroy(&opts);
 		bson_destroy(&b);
 
-		*item = NULL;
+		*collection = NULL;
 
 		// FIXME ret
 		while (mongoc_cursor_next(cursor, &b_cur))
 		{
-			*item = j_item_new_from_bson(collection, b_cur);
+			*collection = j_collection_new_from_bson(b_cur);
 		}
 
 		mongoc_cursor_destroy(cursor);
@@ -916,8 +706,6 @@ j_collection_get_item_internal (JBatch* batch, JList* operations)
 
 	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
-
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }

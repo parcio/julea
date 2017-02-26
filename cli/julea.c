@@ -52,14 +52,14 @@ j_cmd_usage (void)
 	g_print("  %s COMMAND\n", g_get_prgname());
 	g_print("\n");
 	g_print("Commands:\n");
-	g_print("  create     julea://store/[collection/[item]]\n");
-	g_print("  create-all julea://store/[collection/[item]]\n");
-	g_print("  copy       julea://store/collection/item julea://store/collection/item\n");
-	g_print("             julea://store/collection/item file://file\n");
-	g_print("             file://file julea://store/collection/item\n");
-	g_print("  delete     julea://store/[collection/[item]]\n");
-	g_print("  list       julea://[store/[collection]]\n");
-	g_print("  status     julea://store/collection/item\n");
+	g_print("  create     julea://collection/[item]\n");
+	g_print("  create-all julea://collection/[item]\n");
+	g_print("  copy       julea://collection/item julea://collection/item\n");
+	g_print("             julea://collection/item file://file\n");
+	g_print("             file://file julea://collection/item\n");
+	g_print("  delete     julea://collection/[item]\n");
+	g_print("  list       julea://[collection]\n");
+	g_print("  status     julea://collection/item\n");
 	g_print("\n");
 }
 
@@ -68,11 +68,7 @@ j_cmd_error_last (JURI* uri)
 {
 	gboolean ret = FALSE;
 
-	if (j_uri_get_store(uri) == NULL && j_uri_get_store_name(uri) != NULL)
-	{
-		ret = (j_uri_get_collection_name(uri) == NULL && j_uri_get_item_name(uri) == NULL);
-	}
-	else if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
+	if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
 	{
 		ret = (j_uri_get_item_name(uri) == NULL);
 	}

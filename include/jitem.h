@@ -49,6 +49,7 @@ struct JItem;
 typedef struct JItem JItem;
 
 #include <jbatch.h>
+#include <jcollection.h>
 #include <jdistribution.h>
 #include <jsemantics.h>
 
@@ -56,6 +57,10 @@ JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
 gchar const* j_item_get_name (JItem*);
+
+JItem* j_item_create (JCollection*, gchar const*, JDistribution*, JBatch*);
+void j_item_delete (JCollection*, JItem*, JBatch*);
+void j_item_get (JCollection*, JItem**, gchar const*, JBatch*);
 
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
@@ -66,12 +71,5 @@ guint64 j_item_get_size (JItem*);
 gint64 j_item_get_modification_time (JItem*);
 
 guint64 j_item_get_optimal_access_size (JItem*);
-
-/*
-		private:
-			void IsInitialized (bool);
-
-			bool m_initialized;
-*/
 
 #endif

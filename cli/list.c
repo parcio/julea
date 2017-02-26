@@ -82,11 +82,11 @@ j_cmd_list (gchar const** arguments)
 
 		j_collection_iterator_free(iterator);
 	}
-	else if (j_uri_get_store(uri) != NULL)
+	else
 	{
 		JStoreIterator* iterator;
 
-		iterator = j_store_iterator_new(j_uri_get_store(uri));
+		iterator = j_store_iterator_new();
 
 		while (j_store_iterator_next(iterator))
 		{
@@ -98,10 +98,6 @@ j_cmd_list (gchar const** arguments)
 		}
 
 		j_store_iterator_free(iterator);
-	}
-	else
-	{
-		/* FIXME */
 	}
 
 end:

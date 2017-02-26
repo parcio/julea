@@ -39,20 +39,16 @@
 #include <jbatch.h>
 
 #include <jitem.h>
-#include <jstore.h>
 
 enum JOperationType
 {
 	J_OPERATION_NONE,
-	J_OPERATION_CREATE_STORE,
-	J_OPERATION_DELETE_STORE,
-	J_OPERATION_GET_STORE,
-	J_OPERATION_STORE_CREATE_COLLECTION,
-	J_OPERATION_STORE_DELETE_COLLECTION,
-	J_OPERATION_STORE_GET_COLLECTION,
-	J_OPERATION_COLLECTION_CREATE_ITEM,
-	J_OPERATION_COLLECTION_GET_ITEM,
-	J_OPERATION_COLLECTION_DELETE_ITEM,
+	J_OPERATION_COLLECTION_CREATE,
+	J_OPERATION_COLLECTION_DELETE,
+	J_OPERATION_COLLECTION_GET,
+	J_OPERATION_ITEM_CREATE,
+	J_OPERATION_ITEM_GET,
+	J_OPERATION_ITEM_DELETE,
 	J_OPERATION_ITEM_GET_STATUS,
 	J_OPERATION_ITEM_READ,
 	J_OPERATION_ITEM_WRITE
@@ -76,58 +72,36 @@ struct JOperation
 	{
 		struct
 		{
-			JStore* store;
-		}
-		create_store;
-
-		struct
-		{
-			JStore* store;
-		}
-		delete_store;
-
-		struct
-		{
-			JStore** store;
-			gchar* name;
-		}
-		get_store;
-
-		struct
-		{
-			JStore* store;
 			JCollection* collection;
 		}
-		store_create_collection;
+		collection_create;
 
 		struct
 		{
-			JStore* store;
 			JCollection* collection;
 		}
-		store_delete_collection;
+		collection_delete;
 
 		struct
 		{
-			JStore* store;
 			JCollection** collection;
 			gchar* name;
 		}
-		store_get_collection;
+		collection_get;
 
 		struct
 		{
 			JCollection* collection;
 			JItem* item;
 		}
-		collection_create_item;
+		item_create;
 
 		struct
 		{
 			JCollection* collection;
 			JItem* item;
 		}
-		collection_delete_item;
+		item_delete;
 
 		struct
 		{
@@ -135,7 +109,7 @@ struct JOperation
 			JItem** item;
 			gchar* name;
 		}
-		collection_get_item;
+		item_get;
 
 		struct
 		{

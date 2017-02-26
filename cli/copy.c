@@ -106,7 +106,7 @@ j_cmd_copy (gchar const** arguments)
 
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-				item = j_collection_create_item(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
+				item = j_item_create(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
 				j_item_unref(item);
 
 				j_batch_execute(batch);

@@ -50,7 +50,6 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
-#include <jstore.h>
 #include <jstore-iterator.h>
 #include <juri.h>
 

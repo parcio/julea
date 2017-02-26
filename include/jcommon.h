@@ -39,13 +39,8 @@ struct JCommon;
 typedef struct JCommon JCommon;
 
 #include <jbatch.h>
-#include <jstore.h>
 
 void j_init (void);
 void j_fini (void);
-
-JStore* j_create_store (gchar const*, JBatch*);
-void j_delete_store (JStore*, JBatch*);
-void j_get_store (JStore**, gchar const*, JBatch*);
 
 #endif

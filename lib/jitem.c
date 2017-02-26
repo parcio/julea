@@ -58,7 +58,6 @@
 #include <jmessage-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
-#include <jstore-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -68,6 +67,24 @@
  *
  * @{
  **/
+
+/**
+ * Data for background operations.
+ */
+struct JCollectionBackgroundData
+{
+	/**
+	 * The connection.
+	 */
+	GSocketConnection* connection;
+
+	/**
+	 * The message to send.
+	 */
+	JMessage* message;
+};
+
+typedef struct JCollectionBackgroundData JCollectionBackgroundData;
 
 /**
  * Data for background operations.
@@ -223,6 +240,38 @@ struct JItem
 	 **/
 	gint ref_count;
 };
+
+/**
+ * Executes delete operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_item_delete_background_operation (gpointer data)
+{
+	JCollectionBackgroundData* background_data = data;
+	JMessage* reply;
+
+	j_message_send(background_data->message, background_data->connection);
+
+	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	{
+		reply = j_message_new_reply(background_data->message);
+		j_message_receive(reply, background_data->connection);
+
+		/* FIXME do something with reply */
+		j_message_unref(reply);
+	}
+
+	return data;
+}
 
 /**
  * Executes read operations in a background operation.
@@ -490,6 +539,117 @@ j_item_get_name (JItem* item)
 	j_trace_leave(G_STRFUNC);
 
 	return item->name;
+}
+
+/**
+ * Creates an item in a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection   A collection.
+ * \param name         A name.
+ * \param distribution A distribution.
+ * \param batch        A batch.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
+JItem*
+j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
+{
+	JItem* item;
+	JOperation* operation;
+
+	g_return_val_if_fail(collection != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	if ((item = j_item_new(collection, name, distribution)) == NULL)
+	{
+		goto end;
+	}
+
+	operation = j_operation_new(J_OPERATION_ITEM_CREATE);
+	operation->key = collection;
+	operation->u.item_create.collection = j_collection_ref(collection);
+	operation->u.item_create.item = j_item_ref(item);
+
+	j_batch_add(batch, operation);
+
+end:
+	j_trace_leave(G_STRFUNC);
+
+	return item;
+}
+
+/**
+ * Gets an item from a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param item       A pointer to an item.
+ * \param name       A name.
+ * \param batch      A batch.
+ **/
+void
+j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
+{
+	JOperation* operation;
+
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(item != NULL);
+	g_return_if_fail(name != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	operation = j_operation_new(J_OPERATION_ITEM_GET);
+	operation->key = collection;
+	operation->u.item_get.collection = j_collection_ref(collection);
+	operation->u.item_get.item = item;
+	operation->u.item_get.name = g_strdup(name);
+
+	j_batch_add(batch, operation);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * Deletes an item from a collection.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param item       An item.
+ * \param batch      A batch.
+ **/
+void
+j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
+{
+	JOperation* operation;
+
+	g_return_if_fail(collection != NULL);
+	g_return_if_fail(item != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	operation = j_operation_new(J_OPERATION_ITEM_DELETE);
+	operation->key = collection;
+	operation->u.item_delete.collection = j_collection_ref(collection);
+	operation->u.item_delete.item = j_item_ref(item);
+
+	j_batch_add(batch, operation);
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1036,6 +1196,335 @@ j_item_get_id (JItem* item)
 	return &(item->id);
 }
 
+gboolean
+j_item_create_internal (JBatch* batch, JList* operations)
+{
+	JCollection* collection = NULL;
+	JListIterator* it;
+	JSemantics* semantics;
+	bson_t** obj;
+	bson_t index[1];
+	mongoc_client_t* mongo_connection;
+	mongoc_collection_t* mongo_collection;
+	mongoc_write_concern_t* write_concern;
+	gboolean ret = FALSE;
+	guint i;
+	guint length;
+
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	/*
+	IsInitialized(true);
+	*/
+
+	semantics = j_batch_get_semantics(batch);
+
+	i = 0;
+	length = j_list_length(operations);
+	obj = g_new(bson_t*, length);
+	it = j_list_iterator_new(operations);
+
+	while (j_list_iterator_next(it))
+	{
+		JOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.item_create.item;
+		bson_t* b;
+
+		collection = operation->u.item_create.collection;
+		b = j_item_serialize(item, semantics);
+
+		obj[i] = b;
+		i++;
+	}
+
+	j_list_iterator_free(it);
+
+	if (collection == NULL)
+	{
+		goto end;
+	}
+
+	write_concern = mongoc_write_concern_new();
+	j_helper_set_write_concern(write_concern, semantics);
+
+	bson_init(index);
+	bson_append_int32(index, "Collection", -1, 1);
+	bson_append_int32(index, "Name", -1, 1);
+	//bson_finish(index);
+
+	mongo_connection = j_connection_pool_pop_meta(0);
+	/* FIXME */
+	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
+
+	j_helper_create_index(J_STORE_COLLECTION_ITEMS, mongo_connection, index);
+	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
+
+	/*
+	if (!ret)
+	{
+		bson_t error[1];
+
+		mongo_cmd_get_last_error(mongo_connection, j_store_get_name(collection->store), error);
+		bson_print(error);
+		bson_destroy(error);
+	}
+	*/
+
+	j_connection_pool_push_meta(0, mongo_connection);
+
+	bson_destroy(index);
+
+	mongoc_write_concern_destroy(write_concern);
+
+end:
+	for (i = 0; i < length; i++)
+	{
+		bson_destroy(obj[i]);
+		g_slice_free(bson_t, obj[i]);
+	}
+
+	g_free(obj);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+gboolean
+j_item_delete_internal (JBatch* batch, JList* operations)
+{
+	JBackgroundOperation** background_operations;
+	JCollection* collection = NULL;
+	JListIterator* it;
+	JMessage** messages;
+	JSemantics* semantics;
+	mongoc_client_t* mongo_connection;
+	mongoc_write_concern_t* write_concern;
+	gboolean ret = TRUE;
+	guint m;
+	guint n;
+	gchar const* item_name;
+	gchar const* collection_name;
+
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	semantics = j_batch_get_semantics(batch);
+	n = j_configuration_get_data_server_count(j_configuration());
+	background_operations = g_new(JBackgroundOperation*, n);
+	messages = g_new(JMessage*, n);
+
+	for (guint i = 0; i < n; i++)
+	{
+		background_operations[i] = NULL;
+		messages[i] = NULL;
+	}
+
+	{
+		JOperation* operation;
+
+		operation = j_list_get_first(operations);
+		g_assert(operation != NULL);
+		collection = operation->u.item_delete.collection;
+
+		collection_name = j_collection_get_name(collection);
+	}
+
+	write_concern = mongoc_write_concern_new();
+	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
+
+	it = j_list_iterator_new(operations);
+	mongo_connection = j_connection_pool_pop_meta(0);
+
+	/* FIXME do some optimizations for len(operations) > 1 */
+	while (j_list_iterator_next(it))
+	{
+		JOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.item_delete.item;
+		bson_t b;
+		mongoc_collection_t* m_collection;
+
+		item_name = j_item_get_name(item);
+
+		bson_init(&b);
+		bson_append_oid(&b, "_id", -1, j_item_get_id(item));
+		//bson_finish(&b);
+
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
+		/* FIXME do not send write_concern on each remove */
+		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL) && ret;
+
+		bson_destroy(&b);
+
+		for (guint i = 0; i < n; i++)
+		{
+			gchar* path;
+			gsize path_len;
+
+			path = g_build_path("/", collection_name, item_name, NULL);
+			path_len = strlen(path) + 1;
+
+			if (messages[i] == NULL)
+			{
+				/* FIXME */
+				messages[i] = j_message_new(J_MESSAGE_DELETE, 0);
+				j_message_set_safety(messages[i], semantics);
+			}
+
+			j_message_add_operation(messages[i], path_len);
+			j_message_append_n(messages[i], path, path_len);
+
+			g_free(path);
+		}
+	}
+
+	j_connection_pool_push_meta(0, mongo_connection);
+
+	m = 0;
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (messages[i] != NULL)
+		{
+			m++;
+		}
+	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		JCollectionBackgroundData* background_data;
+
+		if (messages[i] == NULL)
+		{
+			continue;
+		}
+
+		background_data = g_slice_new(JCollectionBackgroundData);
+		background_data->connection = j_connection_pool_pop_data(i);
+		background_data->message = messages[i];
+
+		if (m > 1)
+		{
+			background_operations[i] = j_background_operation_new(j_item_delete_background_operation, background_data);
+		}
+		else
+		{
+			j_item_delete_background_operation(background_data);
+
+			j_connection_pool_push_data(i, background_data->connection);
+
+			g_slice_free(JCollectionBackgroundData, background_data);
+		}
+	}
+
+	for (guint i = 0; i < n; i++)
+	{
+		if (background_operations[i] != NULL)
+		{
+			JCollectionBackgroundData* background_data;
+
+			background_data = j_background_operation_wait(background_operations[i]);
+			j_background_operation_unref(background_operations[i]);
+
+			j_connection_pool_push_data(i, background_data->connection);
+
+			g_slice_free(JCollectionBackgroundData, background_data);
+		}
+
+		if (messages[i] != NULL)
+		{
+			j_message_unref(messages[i]);
+		}
+	}
+
+	j_list_iterator_free(it);
+
+	mongoc_write_concern_destroy(write_concern);
+
+	g_free(background_operations);
+	g_free(messages);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+gboolean
+j_item_get_internal (JBatch* batch, JList* operations)
+{
+	JListIterator* it;
+	mongoc_client_t* mongo_connection;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(operations != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC);
+
+	/*
+		IsInitialized(true);
+	*/
+
+	it = j_list_iterator_new(operations);
+	mongo_connection = j_connection_pool_pop_meta(0);
+
+	/* FIXME do some optimizations for len(operations) > 1 */
+	while (j_list_iterator_next(it))
+	{
+		JOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.item_get.collection;
+		JItem** item = operation->u.item_get.item;
+		bson_t b;
+		bson_t const* b_cur;
+		bson_t opts;
+		mongoc_cursor_t* cursor;
+		mongoc_collection_t* m_collection;
+		gchar const* name = operation->u.item_get.name;
+
+		bson_init(&b);
+		bson_append_oid(&b, "Collection", -1, j_collection_get_id(collection));
+		bson_append_utf8(&b, "Name", -1, name, -1);
+		//bson_finish(&b);
+
+		bson_init(&opts);
+		bson_append_int32(&opts, "limit", -1, 1);
+
+		/* FIXME */
+		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
+		cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
+
+		bson_destroy(&opts);
+		bson_destroy(&b);
+
+		*item = NULL;
+
+		// FIXME ret
+		while (mongoc_cursor_next(cursor, &b_cur))
+		{
+			*item = j_item_new_from_bson(collection, b_cur);
+		}
+
+		mongoc_cursor_destroy(cursor);
+	}
+
+	j_connection_pool_push_meta(0, mongo_connection);
+	j_list_iterator_free(it);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
 /**
  * Sets an item's modification time.
  *
@@ -1094,7 +1583,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
-	gchar const* store_name;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1123,7 +1611,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
-		store_name = j_store_get_name(j_collection_get_store(item->collection));
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
@@ -1167,7 +1654,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 				gchar* path;
 				gsize path_len;
 
-				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path = g_build_path("/", collection_name, item_name, NULL);
 				path_len = strlen(path) + 1;
 
 				messages[index] = j_message_new(J_MESSAGE_READ, path_len);
@@ -1295,7 +1782,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
-	gchar const* store_name;
 	guint64 max_offset = 0;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -1323,7 +1809,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
-		store_name = j_store_get_name(j_collection_get_store(item->collection));
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
@@ -1366,7 +1851,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 				gchar* path;
 				gsize path_len;
 
-				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path = g_build_path("/", collection_name, item_name, NULL);
 				path_len = strlen(path) + 1;
 
 				/* FIXME */
@@ -1442,7 +1927,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			gchar* path;
 			gsize path_len;
 
-			path = g_build_path("/", store_name, collection_name, item_name, NULL);
+			path = g_build_path("/", collection_name, item_name, NULL);
 			path_len = strlen(path) + 1;
 
 			/* FIXME better solution? */
@@ -1550,7 +2035,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		mongo_connection = j_connection_pool_pop_meta(0);
 		/* FIXME */
-		mongo_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(item->collection)), "Items");
+		mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
 
 		ret = mongoc_collection_update(mongo_collection, MONGOC_UPDATE_NONE, cond, op, write_concern, NULL);
 
@@ -1666,7 +2151,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			//bson_finish(&b);
 
 			/* FIXME */
-			m_collection = mongoc_client_get_collection(mongo_connection, j_store_get_name(j_collection_get_store(item->collection)), "Items");
+			m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
 			cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
 
 			bson_destroy(&opts);
@@ -1685,10 +2170,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			JItemReadStatusData* buffer;
 
 			gchar const* collection_name;
-			gchar const* store_name;
 
 			collection_name = j_collection_get_name(item->collection);
-			store_name = j_store_get_name(j_collection_get_store(item->collection));
 
 			for (guint i = 0; i < n; i++)
 			{
@@ -1699,7 +2182,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 				item_name = item->name;
 
-				path = g_build_path("/", store_name, collection_name, item_name, NULL);
+				path = g_build_path("/", collection_name, item_name, NULL);
 				path_len = strlen(path) + 1;
 
 				if (messages[i] == NULL)

@@ -39,9 +39,8 @@ struct JStoreIterator;
 typedef struct JStoreIterator JStoreIterator;
 
 #include <jcollection.h>
-#include <jstore.h>
 
-JStoreIterator* j_store_iterator_new (JStore*);
+JStoreIterator* j_store_iterator_new (void);
 void j_store_iterator_free (JStoreIterator*);
 
 gboolean j_store_iterator_next (JStoreIterator*);

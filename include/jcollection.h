@@ -43,69 +43,14 @@ typedef struct JCollection JCollection;
 #include <jlist.h>
 #include <jbatch.h>
 #include <jsemantics.h>
-#include <jstore.h>
 
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
 gchar const* j_collection_get_name (JCollection*);
 
-JItem* j_collection_create_item (JCollection*, gchar const*, JDistribution*, JBatch*);
-void j_collection_delete_item (JCollection*, JItem*, JBatch*);
-void j_collection_get_item (JCollection*, JItem**, gchar const*, JBatch*);
-
-/*
-#include "credentials.h"
-#include "item.h"
-#include "public.h"
-#include "ref_counted.h"
-#include "semantics.h"
-#include "store.h"
-
-namespace JULEA
-{
-	class _Collection : public RefCounted<_Collection>
-	{
-		friend class RefCounted<_Collection>;
-
-		friend class Collection;
-
-		friend class _Item;
-		friend class _Store;
-
-		public:
-			std::list<Item> Get (std::list<string>);
-		private:
-			_Collection (_Store*, mongo::BSONObj const&);
-
-			void IsInitialized (bool) const;
-
-			void Deserialize (mongo::BSONObj const&);
-
-			mongo::OID const& ID () const;
-
-			bool m_initialized;
-
-			Credentials m_owner;
-	};
-
-	class Collection : public Public<_Collection>
-	{
-		friend class _Store;
-
-		public:
-			Collection (string const& name)
-			{
-				m_p = new _Collection(name);
-			}
-
-		private:
-			Collection (_Store* store, mongo::BSONObj const& obj)
-			{
-				m_p = new _Collection(store, obj);
-			}
-	};
-}
-*/
+JCollection* j_collection_create (gchar const*, JBatch*);
+void j_collection_get (JCollection**, gchar const*, JBatch*);
+void j_collection_delete (JCollection*, JBatch*);
 
 #endif

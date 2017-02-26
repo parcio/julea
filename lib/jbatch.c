@@ -46,7 +46,6 @@
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
-#include <jstore-internal.h>
 
 /**
  * \defgroup JBatch Batch
@@ -273,32 +272,23 @@ j_batch_execute_same (JBatch* batch, JList* list)
 
 	switch (type)
 	{
-		case J_OPERATION_CREATE_STORE:
-			ret = j_create_store_internal(batch, list);
+		case J_OPERATION_COLLECTION_CREATE:
+			ret = j_collection_create_internal(batch, list);
 			break;
-		case J_OPERATION_DELETE_STORE:
-			ret = j_delete_store_internal(batch, list);
+		case J_OPERATION_COLLECTION_DELETE:
+			ret = j_collection_delete_internal(batch, list);
 			break;
-		case J_OPERATION_GET_STORE:
-			ret = j_get_store_internal(batch, list);
+		case J_OPERATION_COLLECTION_GET:
+			ret = j_collection_get_internal(batch, list);
 			break;
-		case J_OPERATION_STORE_CREATE_COLLECTION:
-			ret = j_store_create_collection_internal(batch, list);
+		case J_OPERATION_ITEM_CREATE:
+			ret = j_item_create_internal(batch, list);
 			break;
-		case J_OPERATION_STORE_DELETE_COLLECTION:
-			ret = j_store_delete_collection_internal(batch, list);
+		case J_OPERATION_ITEM_DELETE:
+			ret = j_item_delete_internal(batch, list);
 			break;
-		case J_OPERATION_STORE_GET_COLLECTION:
-			ret = j_store_get_collection_internal(batch, list);
-			break;
-		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			ret = j_collection_create_item_internal(batch, list);
-			break;
-		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			ret = j_collection_delete_item_internal(batch, list);
-			break;
-		case J_OPERATION_COLLECTION_GET_ITEM:
-			ret = j_collection_get_item_internal(batch, list);
+		case J_OPERATION_ITEM_GET:
+			ret = j_item_get_internal(batch, list);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
 			ret = j_item_get_status_internal(batch, list);

@@ -52,39 +52,28 @@ test_uri_valid (void)
 	JURI* uri;
 
 	uri = j_uri_new("julea://");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, NULL);
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, NULL);
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
 	j_uri_free(uri);
 
 	uri = j_uri_new("julea://JULEA");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
-	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, NULL);
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JULEA");
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
+	j_uri_free(uri);
+
+	uri = j_uri_new("julea://JUL.EA");
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JUL.EA");
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
 	j_uri_free(uri);
 
 	uri = j_uri_new("julea://JULEA/foo");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
-	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "foo");
-	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
-	j_uri_free(uri);
-
-	uri = j_uri_new("julea://JULEA/foo/bar");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
-	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "foo");
-	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "bar");
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JULEA");
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "foo");
 	j_uri_free(uri);
 
 	uri = j_uri_new("julea://JULEA/fo.o");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
-	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "fo.o");
-	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
-	j_uri_free(uri);
-
-	uri = j_uri_new("julea://JULEA/fo.o/ba.r");
-	g_assert_cmpstr(j_uri_get_store_name(uri), ==, "JULEA");
-	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "fo.o");
-	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "ba.r");
+	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JULEA");
+	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "fo.o");
 	j_uri_free(uri);
 }
 
@@ -109,22 +98,13 @@ test_uri_invalid (void)
 	uri = j_uri_new("JULEA://JULEA");
 	g_assert(uri == NULL);
 
-	uri = j_uri_new("julea://JULEA/foo/bar/42");
+	uri = j_uri_new("julea://JULEA/foo/bar");
 	g_assert(uri == NULL);
 
 	uri = j_uri_new("julea://JULEA/");
 	g_assert(uri == NULL);
 
 	uri = j_uri_new("julea://JULEA/foo/");
-	g_assert(uri == NULL);
-
-	uri = j_uri_new("julea://JUL.EA");
-	g_assert(uri == NULL);
-
-	uri = j_uri_new("julea://JUL.EA/foo");
-	g_assert(uri == NULL);
-
-	uri = j_uri_new("julea://JUL.EA/foo/bar");
 	g_assert(uri == NULL);
 }
 
@@ -135,24 +115,17 @@ test_uri_create (void)
 	JURI* uri;
 	gboolean ret;
 
-	uri = j_uri_new("julea://uri-create-0/uri-create-0/uri-create-0");
+	uri = j_uri_new("julea://uri-create-0/uri-create-0");
 	ret = j_uri_create(uri, FALSE, NULL);
 	g_assert_false(ret);
 	j_uri_free(uri);
 
-	uri = j_uri_new("julea://uri-create-1/uri-create-1");
+	uri = j_uri_new("julea://uri-create-1");
 	ret = j_uri_create(uri, FALSE, NULL);
-	// FIXME should return FALSE
 	g_assert_true(ret);
 	j_uri_free(uri);
 
-	uri = j_uri_new("julea://uri-create-2");
-	ret = j_uri_create(uri, FALSE, NULL);
-	// FIXME should return TRUE
-	g_assert_false(ret);
-	j_uri_free(uri);
-
-	uri = j_uri_new("julea://uri-create-3/uri-create-3/uri-create-3");
+	uri = j_uri_new("julea://uri-create-2/uri-create-2");
 	ret = j_uri_create(uri, TRUE, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
@@ -165,11 +138,11 @@ test_uri_get (void)
 	JURI* uri;
 	gboolean ret;
 
-	uri = j_uri_new("julea://uri-get-0/uri-get-0/uri-get-0");
+	uri = j_uri_new("julea://uri-get-0/uri-get-0");
 	j_uri_create(uri, TRUE, NULL);
 	j_uri_free(uri);
 
-	uri = j_uri_new("julea://uri-get-0/uri-get-0/uri-get-0");
+	uri = j_uri_new("julea://uri-get-0/uri-get-0");
 	ret = j_uri_get(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);

@@ -39,7 +39,6 @@
 #include <jcommon.h>
 #include <jitem.h>
 #include <jbatch.h>
-#include <jstore.h>
 
 #include <string.h>
 
@@ -55,11 +54,6 @@
 struct JURI
 {
 	/**
-	 * The store name.
-	 **/
-	gchar* store_name;
-
-	/**
 	 * The collection name.
 	 **/
 	gchar* collection_name;
@@ -68,11 +62,6 @@ struct JURI
 	 * The item name.
 	 **/
 	gchar* item_name;
-
-	/**
-	 * The store.
-	 **/
-	JStore* store;
 
 	/**
 	 * The collection.
@@ -108,7 +97,7 @@ gboolean
 j_uri_parse (JURI* uri, gchar const* uri_)
 {
 	gchar** parts = NULL;
-	gchar const* illegal[3] = { "./", "/", "/" };
+	gchar const* illegal[2] = { "/", "/" };
 	guint parts_len;
 	guint i;
 
@@ -120,7 +109,7 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 	parts = g_strsplit(uri_ + 8, "/", 0);
 	parts_len = g_strv_length(parts);
 
-	if (parts_len > 3)
+	if (parts_len > 2)
 	{
 		goto error;
 	}
@@ -143,17 +132,12 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 
 	if (parts_len >= 1)
 	{
-		uri->store_name = g_strdup(parts[0]);
+		uri->collection_name = g_strdup(parts[0]);
 	}
 
 	if (parts_len >= 2)
 	{
-		uri->collection_name = g_strdup(parts[1]);
-	}
-
-	if (parts_len >= 3)
-	{
-		uri->item_name = g_strdup(parts[2]);
+		uri->item_name = g_strdup(parts[1]);
 	}
 
 	g_strfreev(parts);
@@ -174,11 +158,7 @@ j_uri_only_last_component_not_found (JURI* uri)
 
 	g_return_val_if_fail(uri != NULL, FALSE);
 
-	if (uri->store == NULL && uri->store_name != NULL)
-	{
-		ret = (uri->collection_name == NULL && uri->item_name == NULL);
-	}
-	else if (uri->collection == NULL && uri->collection_name != NULL)
+	if (uri->collection == NULL && uri->collection_name != NULL)
 	{
 		ret = (uri->item_name == NULL);
 	}
@@ -225,11 +205,9 @@ j_uri_new (gchar const* uri_)
 
 	uri = g_slice_new(JURI);
 
-	uri->store_name = NULL;
 	uri->collection_name = NULL;
 	uri->item_name = NULL;
 
-	uri->store = NULL;
 	uri->collection = NULL;
 	uri->item = NULL;
 
@@ -273,41 +251,10 @@ j_uri_free (JURI* uri)
 		j_collection_unref(uri->collection);
 	}
 
-	if (uri->store != NULL)
-	{
-		j_store_unref(uri->store);
-	}
-
-	g_free(uri->store_name);
 	g_free(uri->collection_name);
 	g_free(uri->item_name);
 
 	g_slice_free(JURI, uri);
-}
-
-/**
- * Returns the store name.
- *
- * \author Michael Kuhn
- *
- * \code
- * JURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_uri_get_store_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The store name.
- **/
-gchar const*
-j_uri_get_store_name (JURI* uri)
-{
-	g_return_val_if_fail(uri != NULL, NULL);
-
-	return uri->store_name;
 }
 
 /**
@@ -361,7 +308,7 @@ j_uri_get_item_name (JURI* uri)
 }
 
 /**
- * Gets the store, collection and item.
+ * Gets the collection and item.
  *
  * \author Michael Kuhn
  *
@@ -388,12 +335,6 @@ j_uri_get (JURI* uri, GError** error)
 	g_return_val_if_fail(uri != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (uri->store != NULL)
-	{
-		j_store_unref(uri->store);
-		uri->store = NULL;
-	}
-
 	if (uri->collection != NULL)
 	{
 		j_collection_unref(uri->collection);
@@ -408,23 +349,9 @@ j_uri_get (JURI* uri, GError** error)
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	if (uri->store_name != NULL)
-	{
-		j_get_store(&(uri->store), uri->store_name, batch);
-		j_batch_execute(batch);
-
-		if (uri->store == NULL)
-		{
-			ret = FALSE;
-			g_set_error(error, J_URI_ERROR, J_URI_ERROR_STORE_NOT_FOUND, "Store “%s” does not exist.", uri->store_name);
-
-			goto end;
-		}
-	}
-
 	if (uri->collection_name != NULL)
 	{
-		j_store_get_collection(uri->store, &(uri->collection), uri->collection_name, batch);
+		j_collection_get(&(uri->collection), uri->collection_name, batch);
 		j_batch_execute(batch);
 
 		if (uri->collection == NULL)
@@ -438,7 +365,7 @@ j_uri_get (JURI* uri, GError** error)
 
 	if (uri->item_name != NULL)
 	{
-		j_collection_get_item(uri->collection, &(uri->item), uri->item_name, batch);
+		j_item_get(uri->collection, &(uri->item), uri->item_name, batch);
 		j_batch_execute(batch);
 
 		if (uri->item == NULL)
@@ -457,7 +384,7 @@ end:
 }
 
 /**
- * Creates the store, collection and item.
+ * Creates the collection and item.
  *
  * \author Michael Kuhn
  *
@@ -499,10 +426,6 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 			{
 				g_set_error(error, J_URI_ERROR, J_URI_ERROR_COLLECTION_EXISTS, "Collection “%s” already exists.", j_collection_get_name(uri->collection));
 			}
-			else if (uri->store != NULL)
-			{
-				g_set_error(error, J_URI_ERROR, J_URI_ERROR_STORE_EXISTS, "Store “%s” already exists.", j_store_get_name(uri->store));
-			}
 		}
 
 		goto end;
@@ -520,21 +443,15 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	if (uri->store == NULL && uri->store_name != NULL)
-	{
-		uri->store = j_create_store(uri->store_name, batch);
-		j_batch_execute(batch);
-	}
-
 	if (uri->collection == NULL && uri->collection_name != NULL)
 	{
-		uri->collection = j_store_create_collection(uri->store, uri->collection_name, batch);
+		uri->collection = j_collection_create(uri->collection_name, batch);
 		j_batch_execute(batch);
 	}
 
 	if (uri->item == NULL && uri->item_name != NULL)
 	{
-		uri->item = j_collection_create_item(uri->collection, uri->item_name, NULL, batch);
+		uri->item = j_item_create(uri->collection, uri->item_name, NULL, batch);
 		j_batch_execute(batch);
 	}
 
@@ -545,32 +462,6 @@ end:
 	}
 
 	return ret;
-}
-
-/**
- * Returns the store.
- *
- * \author Michael Kuhn
- *
- * \code
- * JStore* store;
- * JURI* uri;
- *
- * ...
- *
- * store = j_uri_get_store(uri);
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The store.
- **/
-JStore*
-j_uri_get_store (JURI* uri)
-{
-	g_return_val_if_fail(uri != NULL, NULL);
-
-	return uri->store;
 }
 
 /**

@@ -81,38 +81,26 @@ j_operation_free (JOperation* operation)
 {
 	switch (operation->type)
 	{
-		case J_OPERATION_CREATE_STORE:
-			j_store_unref(operation->u.create_store.store);
+		case J_OPERATION_COLLECTION_CREATE:
+			j_collection_unref(operation->u.collection_create.collection);
 			break;
-		case J_OPERATION_DELETE_STORE:
-			j_store_unref(operation->u.delete_store.store);
+		case J_OPERATION_COLLECTION_DELETE:
+			j_collection_unref(operation->u.collection_delete.collection);
 			break;
-		case J_OPERATION_GET_STORE:
-			g_free(operation->u.get_store.name);
+		case J_OPERATION_COLLECTION_GET:
+			g_free(operation->u.collection_get.name);
 			break;
-		case J_OPERATION_STORE_CREATE_COLLECTION:
-			j_store_unref(operation->u.store_create_collection.store);
-			j_collection_unref(operation->u.store_create_collection.collection);
+		case J_OPERATION_ITEM_CREATE:
+			j_collection_unref(operation->u.item_create.collection);
+			j_item_unref(operation->u.item_create.item);
 			break;
-		case J_OPERATION_STORE_DELETE_COLLECTION:
-			j_store_unref(operation->u.store_delete_collection.store);
-			j_collection_unref(operation->u.store_delete_collection.collection);
+		case J_OPERATION_ITEM_DELETE:
+			j_collection_unref(operation->u.item_delete.collection);
+			j_item_unref(operation->u.item_delete.item);
 			break;
-		case J_OPERATION_STORE_GET_COLLECTION:
-			j_store_unref(operation->u.store_get_collection.store);
-			g_free(operation->u.store_get_collection.name);
-			break;
-		case J_OPERATION_COLLECTION_CREATE_ITEM:
-			j_collection_unref(operation->u.collection_create_item.collection);
-			j_item_unref(operation->u.collection_create_item.item);
-			break;
-		case J_OPERATION_COLLECTION_DELETE_ITEM:
-			j_collection_unref(operation->u.collection_delete_item.collection);
-			j_item_unref(operation->u.collection_delete_item.item);
-			break;
-		case J_OPERATION_COLLECTION_GET_ITEM:
-			j_collection_unref(operation->u.collection_get_item.collection);
-			g_free(operation->u.collection_get_item.name);
+		case J_OPERATION_ITEM_GET:
+			j_collection_unref(operation->u.item_get.collection);
+			g_free(operation->u.item_get.name);
 			break;
 		case J_OPERATION_ITEM_GET_STATUS:
 			j_item_unref(operation->u.item_get_status.item);

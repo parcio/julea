@@ -34,6 +34,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <bson.h>
 #include <mongoc.h>
 
 #include <netinet/in.h>
@@ -151,6 +152,135 @@ j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 	/* FIXME improve */
 	ret = g_snprintf(string, length, "%d", number);
 	g_return_if_fail((guint)ret <= length);
+}
+
+/**
+ * Returns the MongoDB collection used for collections.
+ *
+ * \author Michael Kuhn
+ *
+ * \param store A store.
+ *
+ * \return The MongoDB collection.
+ */
+/*
+gchar const*
+j_store_collection (JStore* store, JStoreCollection collection)
+{
+	gchar const* m_collection = NULL;
+
+	g_return_val_if_fail(store != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	switch (collection)
+	{
+		case J_STORE_COLLECTION_COLLECTIONS:
+			if (G_UNLIKELY(store->collection.collections == NULL))
+			{
+				store->collection.collections = g_strdup_printf("%s.Collections", store->name);
+			}
+
+			m_collection = store->collection.collections;
+			break;
+		case J_STORE_COLLECTION_ITEMS:
+			if (G_UNLIKELY(store->collection.items == NULL))
+			{
+				store->collection.items = g_strdup_printf("%s.Items", store->name);
+			}
+
+			m_collection = store->collection.items;
+			break;
+		case J_STORE_COLLECTION_LOCKS:
+			if (G_UNLIKELY(store->collection.locks == NULL))
+			{
+				store->collection.locks = g_strdup_printf("%s.Locks", store->name);
+			}
+
+			m_collection = store->collection.locks;
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	j_trace_leave(G_STRFUNC);
+
+	return m_collection;
+}
+*/
+
+void
+j_helper_create_index (JStoreCollection collection, mongoc_client_t* connection, bson_t const* index)
+{
+	static struct
+	{
+		gboolean collections;
+		gboolean items;
+		gboolean locks;
+	}
+	index_created = {
+		.collections = FALSE,
+		.items = FALSE,
+		.locks = FALSE
+	};
+
+	g_return_if_fail(connection != NULL);
+	g_return_if_fail(index != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	switch (collection)
+	{
+		case J_STORE_COLLECTION_COLLECTIONS:
+			if (G_UNLIKELY(!index_created.collections))
+			{
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, "JULEA", "Collections");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
+				index_created.collections = TRUE;
+			}
+			break;
+		case J_STORE_COLLECTION_ITEMS:
+			if (G_UNLIKELY(!index_created.items))
+			{
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, "JULEA", "Items");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
+				index_created.items = TRUE;
+			}
+			break;
+		case J_STORE_COLLECTION_LOCKS:
+			if (G_UNLIKELY(!index_created.locks))
+			{
+				mongoc_collection_t* m_collection;
+				mongoc_index_opt_t m_index_opt[1];
+
+				mongoc_index_opt_init(m_index_opt);
+				m_index_opt->unique = TRUE;
+
+				/* FIXME */
+				m_collection = mongoc_client_get_collection(connection, "JULEA", "Locks");
+				mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
+				index_created.locks = TRUE;
+			}
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	j_trace_leave(G_STRFUNC);
 }
 
 /**
