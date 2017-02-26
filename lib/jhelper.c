@@ -94,22 +94,6 @@ j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 	j_trace_leave(G_STRFUNC);
 }
 
-guint
-j_helper_get_processor_count (void)
-{
-	guint thread_count = 8;
-
-#if GLIB_CHECK_VERSION(2,35,4)
-	thread_count = g_get_num_processors();
-#elif defined(_SC_NPROCESSORS_ONLN)
-	thread_count = sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(_SC_NPROCESSORS_CONF)
-	thread_count = sysconf(_SC_NPROCESSORS_CONF);
-#endif
-
-	return thread_count;
-}
-
 gboolean
 j_helper_insert_batch (mongoc_collection_t* collection, bson_t** obj, guint length, mongoc_write_concern_t* write_concern)
 {

@@ -176,10 +176,6 @@ j_init (void)
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
 
-#if !GLIB_CHECK_VERSION(2,35,1)
-	g_type_init();
-#endif
-
 	mongoc_init();
 
 	basename = j_get_program_name("julea");

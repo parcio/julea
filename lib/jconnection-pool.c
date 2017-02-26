@@ -93,7 +93,7 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	if (pool->max_count == 0)
 	{
-		pool->max_count = j_helper_get_processor_count();
+		pool->max_count = g_get_num_processors();
 	}
 
 	for (guint i = 0; i < pool->data_len; i++)

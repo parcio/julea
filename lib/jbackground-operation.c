@@ -144,7 +144,7 @@ j_background_operation_init (guint count)
 
 	if (count == 0)
 	{
-		count = j_helper_get_processor_count();
+		count = g_get_num_processors();
 	}
 
 	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, count, FALSE, NULL);

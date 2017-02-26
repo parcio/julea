@@ -45,8 +45,6 @@
 J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
 J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
-J_GNUC_INTERNAL guint j_helper_get_processor_count (void);
-
 J_GNUC_INTERNAL gboolean j_helper_insert_batch (mongoc_collection_t*, bson_t**, guint, mongoc_write_concern_t*);
 J_GNUC_INTERNAL void j_helper_set_write_concern (mongoc_write_concern_t*, JSemantics*);
 
