@@ -32,9 +32,8 @@
 #include <gio/gio.h>
 #include <gmodule.h>
 
+#include <jbackend.h>
 #include <jtrace-internal.h>
-
-#include "backend.h"
 
 static gchar* jd_backend_path = NULL;
 

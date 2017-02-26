@@ -30,9 +30,8 @@
 #include <glib.h>
 #include <gmodule.h>
 
+#include <jbackend.h>
 #include <jtrace-internal.h>
-
-#include "backend.h"
 
 static
 gboolean

@@ -38,9 +38,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <jbackend.h>
 #include <jtrace-internal.h>
-
-#include "backend.h"
 
 struct JBackendFile
 {

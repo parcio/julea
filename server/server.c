@@ -37,14 +37,15 @@
 #include <string.h>
 
 #include <julea-internal.h>
+
+#include <jbackend.h>
+#include <jbackend-internal.h>
 #include <jconfiguration-internal.h>
 #include <jhelper-internal.h>
 #include <jmemory-chunk-internal.h>
 #include <jmessage-internal.h>
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
-
-#include "backend/backend.h"
 
 static JStatistics* jd_statistics;
 
@@ -53,65 +54,6 @@ G_LOCK_DEFINE_STATIC(jd_statistics);
 static JBackend* jd_backend;
 
 static guint jd_thread_num = 0;
-
-static
-GModule*
-jd_load_backend (gchar const* name, JBackendComponent component, JBackendType type)
-{
-	JBackend* (*jd_backend_info) (void) = NULL;
-
-	GModule* backend = NULL;
-	gchar* path = NULL;
-
-	/* FIXME */
-	g_return_val_if_fail(component == J_BACKEND_COMPONENT_SERVER, NULL);
-	g_return_val_if_fail(type == J_BACKEND_TYPE_DATA, NULL);
-
-	if (component == J_BACKEND_COMPONENT_SERVER)
-	{
-#ifdef SERVER_BACKEND_PATH_BUILD
-		path = g_module_build_path(SERVER_BACKEND_PATH_BUILD, name);
-		backend = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(path);
-#endif
-
-		if (backend == NULL)
-		{
-			path = g_module_build_path(SERVER_BACKEND_PATH, name);
-			backend = g_module_open(path, G_MODULE_BIND_LOCAL);
-			g_free(path);
-		}
-	}
-
-	if (backend != NULL)
-	{
-		g_module_symbol(backend, "backend_info", (gpointer*)&jd_backend_info);
-
-		g_assert(jd_backend_info != NULL);
-
-		jd_backend = jd_backend_info();
-
-		g_assert(jd_backend != NULL);
-		g_assert(jd_backend->component == component);
-		g_assert(jd_backend->type == type);
-
-		if (type == J_BACKEND_TYPE_DATA)
-		{
-			g_assert(jd_backend->u.data.init != NULL);
-			g_assert(jd_backend->u.data.fini != NULL);
-			g_assert(jd_backend->u.data.create != NULL);
-			g_assert(jd_backend->u.data.delete != NULL);
-			g_assert(jd_backend->u.data.open != NULL);
-			g_assert(jd_backend->u.data.close != NULL);
-			g_assert(jd_backend->u.data.status != NULL);
-			g_assert(jd_backend->u.data.sync != NULL);
-			g_assert(jd_backend->u.data.read != NULL);
-			g_assert(jd_backend->u.data.write != NULL);
-		}
-	}
-
-	return backend;
-}
 
 static
 gboolean
@@ -671,7 +613,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((backend = jd_load_backend(j_configuration_get_storage_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA)) == NULL)
+	if ((backend = j_backend_load(j_configuration_get_storage_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_backend)) == NULL)
 	{
 		g_printerr("Could not load backend.\n");
 		return 1;

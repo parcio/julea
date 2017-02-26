@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017 Michael Kuhn
+ * Copyright (c) 2017 Michael Kuhn
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #define H_BACKEND
 
 #include <jitem.h>
-#include <jtrace-internal.h>
 
 struct JBackendItem
 {
