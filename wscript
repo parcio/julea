@@ -16,42 +16,42 @@ class BenchmarkContext (BuildContext):
 	cmd = 'benchmark'
 	fun = 'benchmark'
 
+class EnvironmentContext (BuildContext):
+	cmd = 'environment'
+	fun = 'environment'
+
 class TestContext (BuildContext):
 	cmd = 'test'
 	fun = 'test'
 
-class TestContext (BuildContext):
-	cmd = 'environment'
-	fun = 'environment'
-
 def get_path ():
-	return 'PATH=%s/server:%s/tools:%s/external/mongo-c-driver/bin:${PATH}' % (Context.out_dir, Context.out_dir, Context.run_dir)
+	return 'PATH={0}/server:{0}/tools:{1}/external/mongo-c-driver/bin:${{PATH}}'.format(Context.out_dir, Context.run_dir)
 
 def get_library_path ():
-	return 'LD_LIBRARY_PATH=%s/lib:%s/external/mongo-c-driver/lib:${LD_LIBRARY_PATH}' % (Context.out_dir, Context.run_dir)
+	return 'LD_LIBRARY_PATH={0}/lib:{1}/external/mongo-c-driver/lib:${{LD_LIBRARY_PATH}}'.format(Context.out_dir, Context.run_dir)
 
 def get_pkg_config_path ():
-	return 'PKG_CONFIG_PATH=%s/pkg-config:%s/external/mongo-c-driver/lib:${PKG_CONFIG_PATH}' % (Context.out_dir, Context.run_dir)
+	return 'PKG_CONFIG_PATH={0}/pkg-config:{1}/external/mongo-c-driver/lib:${{PKG_CONFIG_PATH}}'.format(Context.out_dir, Context.run_dir)
 
 def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 
-	ctx.add_option('--mongodb', action='store', default='%s/external/mongo-c-driver' % (Context.run_dir,), help='MongoDB driver prefix')
-	ctx.add_option('--otf', action='store', default='%s/external/otf' % (Context.run_dir,), help='OTF prefix')
+	ctx.add_option('--mongodb', action='store', default='{0}/external/mongo-c-driver'.format(Context.run_dir), help='MongoDB driver prefix')
+	ctx.add_option('--otf', action='store', default='{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
 
 def benchmark (ctx):
-	setup = '%s/tools/setup.sh' % (Context.top_dir,)
-	command = '%s %s/benchmark/benchmark' % (get_library_path(), Context.out_dir)
+	setup = '{0}/tools/setup.sh'.format(Context.top_dir)
+	command = '{0} {1}/benchmark/benchmark'.format(get_library_path(), Context.out_dir)
 
-	subprocess.call('%s start' % (setup,), close_fds=True, shell=True)
+	subprocess.call('{0} start'.format(setup), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
-	subprocess.call('%s stop' % (setup,), close_fds=True, shell=True)
+	subprocess.call('{0} stop'.format(setup), close_fds=True, shell=True)
 
 def test (ctx):
 	setup = '{0}/tools/setup.sh'.format(Context.top_dir)
@@ -137,9 +137,9 @@ def configure (ctx):
 			header_name = 'jzfs.h',
 			lib = 'jzfs',
 			use = ['GLIB'],
-			includes = ['%s/include/jzfs' % (ctx.options.jzfs,)],
-			libpath = ['%s/lib' % (ctx.options.jzfs,)],
-			rpath = ['%s/lib' % (ctx.options.jzfs,)],
+			includes = ['{0}/include/jzfs'.format(ctx.options.jzfs)],
+			libpath = ['{0}/lib'.format(ctx.options.jzfs)],
+			rpath = ['{0}/lib'.format(ctx.options.jzfs)],
 			uselib_store = 'JZFS',
 			define_name = 'HAVE_JZFS'
 		)
@@ -148,9 +148,9 @@ def configure (ctx):
 	ctx.check_cc(
 		header_name = 'leveldb/c.h',
 		lib = 'leveldb',
-		includes = ['%s/include' % (ctx.options.leveldb,)],
-		libpath = ['%s/lib' % (ctx.options.leveldb,)],
-		rpath = ['%s/lib' % (ctx.options.leveldb,)],
+		includes = ['{0}/include'.format(ctx.options.leveldb)],
+		libpath = ['{0}/lib'.format(ctx.options.leveldb)],
+		rpath = ['{0}/lib'.format(ctx.options.leveldb)],
 		uselib_store = 'LEVELDB',
 		define_name = 'HAVE_LEVELDB',
 		mandatory = False
@@ -167,9 +167,9 @@ def configure (ctx):
 	ctx.check_cc(
 		header_name = 'otf.h',
 		lib = 'open-trace-format',
-		includes = ['%s/include/open-trace-format' % (ctx.options.otf,)],
-		libpath = ['%s/lib' % (ctx.options.otf,)],
-		rpath = ['%s/lib' % (ctx.options.otf,)],
+		includes = ['{0}/include/open-trace-format'.format(ctx.options.otf)],
+		libpath = ['{0}/lib'.format(ctx.options.otf)],
+		rpath = ['{0}/lib'.format(ctx.options.otf)],
 		uselib_store = 'OTF',
 		define_name = 'HAVE_OTF',
 		mandatory = False
@@ -219,7 +219,7 @@ def configure (ctx):
 
 def build (ctx):
 	# Headers
-	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl = 'include/*-internal.h'))
+	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl='include/*-internal.h'))
 
 	# Trace library
 #	ctx.shlib(
@@ -282,8 +282,8 @@ def build (ctx):
 	# Server backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['server/backend/%s.c' % (backend,)],
-			target = 'server/backend/%s' % (backend,),
+			source = ['server/backend/{0}.c'.format(backend)],
+			target = 'server/backend/{0}'.format(backend),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
@@ -320,8 +320,8 @@ def build (ctx):
 	# Tools
 	for tool in ('config', 'statistics'):
 		ctx.program(
-			source = ['tools/%s.c' % (tool,)],
-			target = 'tools/julea-%s' % (tool,),
+			source = ['tools/{0}.c'.format(tool)],
+			target = 'tools/julea-{0}'.format(tool),
 			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT'],
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
