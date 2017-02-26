@@ -39,12 +39,11 @@ struct JCollectionIterator;
 typedef struct JCollectionIterator JCollectionIterator;
 
 #include <jcollection.h>
-#include <jitem.h>
 
-JCollectionIterator* j_collection_iterator_new (JCollection*);
+JCollectionIterator* j_collection_iterator_new (void);
 void j_collection_iterator_free (JCollectionIterator*);
 
 gboolean j_collection_iterator_next (JCollectionIterator*);
-JItem* j_collection_iterator_get (JCollectionIterator*);
+JCollection* j_collection_iterator_get (JCollectionIterator*);
 
 #endif

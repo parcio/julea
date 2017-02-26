@@ -53,37 +53,37 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 	}
 	else if (j_uri_get_collection(uri) != NULL)
 	{
-		JCollectionIterator* citerator;
+		JItemIterator* citerator;
 
-		citerator = j_collection_iterator_new(j_uri_get_collection(uri));
+		citerator = j_item_iterator_new(j_uri_get_collection(uri));
 
-		while (j_collection_iterator_next(citerator))
+		while (j_item_iterator_next(citerator))
 		{
-			JItem* i = j_collection_iterator_get(citerator);
+			JItem* i = j_item_iterator_get(citerator);
 
 			filler(buf, j_item_get_name(i), NULL, 0);
 			j_item_unref(i);
 		}
 
-		j_collection_iterator_free(citerator);
+		j_item_iterator_free(citerator);
 
 		ret = 0;
 	}
 	else
 	{
-		JStoreIterator* siterator;
+		JCollectionIterator* siterator;
 
-		siterator = j_store_iterator_new();
+		siterator = j_collection_iterator_new();
 
-		while (j_store_iterator_next(siterator))
+		while (j_collection_iterator_next(siterator))
 		{
-			JCollection* c = j_store_iterator_get(siterator);
+			JCollection* c = j_collection_iterator_get(siterator);
 
 			filler(buf, j_collection_get_name(c), NULL, 0);
 			j_collection_unref(c);
 		}
 
-		j_store_iterator_free(siterator);
+		j_collection_iterator_free(siterator);
 
 		ret = 0;
 	}

@@ -67,37 +67,37 @@ j_cmd_list (gchar const** arguments)
 	}
 	else if (j_uri_get_collection(uri) != NULL)
 	{
-		JCollectionIterator* iterator;
+		JItemIterator* iterator;
 
-		iterator = j_collection_iterator_new(j_uri_get_collection(uri));
+		iterator = j_item_iterator_new(j_uri_get_collection(uri));
 
-		while (j_collection_iterator_next(iterator))
+		while (j_item_iterator_next(iterator))
 		{
-			JItem* item_ = j_collection_iterator_get(iterator);
+			JItem* item_ = j_item_iterator_get(iterator);
 
 			g_print("%s\n", j_item_get_name(item_));
 
 			j_item_unref(item_);
 		}
 
-		j_collection_iterator_free(iterator);
+		j_item_iterator_free(iterator);
 	}
 	else
 	{
-		JStoreIterator* iterator;
+		JCollectionIterator* iterator;
 
-		iterator = j_store_iterator_new();
+		iterator = j_collection_iterator_new();
 
-		while (j_store_iterator_next(iterator))
+		while (j_collection_iterator_next(iterator))
 		{
-			JCollection* collection_ = j_store_iterator_get(iterator);
+			JCollection* collection_ = j_collection_iterator_get(iterator);
 
 			g_print("%s\n", j_collection_get_name(collection_));
 
 			j_collection_unref(collection_);
 		}
 
-		j_store_iterator_free(iterator);
+		j_collection_iterator_free(iterator);
 	}
 
 end:

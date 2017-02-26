@@ -36,30 +36,29 @@
 #include <bson.h>
 #include <mongoc.h>
 
-#include <jstore-iterator.h>
+#include <jitem-iterator.h>
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jconnection-pool-internal.h>
-#include <jbatch-internal.h>
+#include <jitem.h>
+#include <jitem-internal.h>
 #include <joperation-cache-internal.h>
 
 /**
- * \defgroup JStoreIterator Store Iterator
+ * \defgroup JItemIterator Collection Iterator
  *
- * Data structures and functions for iterating over stores.
+ * Data structures and functions for iterating over collections.
  *
  * @{
  **/
 
-struct JStoreIterator
+struct JItemIterator
 {
-	mongoc_client_t* connection;
-
-	/**
-	 * The MongoDB cursor.
-	 **/
 	mongoc_cursor_t* cursor;
+
+	JCollection* collection;
+	mongoc_client_t* connection;
 
 	/**
 	 * The current document.
@@ -68,70 +67,77 @@ struct JStoreIterator
 };
 
 /**
- * Creates a new JStoreIterator.
+ * Creates a new JItemIterator.
  *
  * \author Michael Kuhn
  *
- * \param store A JStore.
+ * \param collection A JCollection.
  *
- * \return A new JStoreIterator.
+ * \return A new JItemIterator.
  **/
-JStoreIterator*
-j_store_iterator_new (void)
+JItemIterator*
+j_item_iterator_new (JCollection* collection)
 {
-	JStoreIterator* iterator;
-	bson_t empty[1];
+	JItemIterator* iterator;
 	mongoc_collection_t* m_collection;
+	bson_t b;
+
+	g_return_val_if_fail(collection != NULL, NULL);
 
 	j_operation_cache_flush();
 
-	iterator = g_slice_new(JStoreIterator);
+	iterator = g_slice_new(JItemIterator);
+	iterator->collection = j_collection_ref(collection);
 	iterator->connection = j_connection_pool_pop_meta(0);
 	iterator->current = NULL;
 
-	bson_init(empty);
+	bson_init(&b);
+	bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
+	//bson_finish(&b);
 
 	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Collections");
-	iterator->cursor = mongoc_collection_find_with_opts(m_collection, empty, NULL, NULL);
+	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Items");
+	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, NULL, NULL);
 
-	bson_destroy(empty);
+	bson_destroy(&b);
 
 	return iterator;
 }
 
 /**
- * Frees the memory allocated by the JStoreIterator.
+ * Frees the memory allocated by the JItemIterator.
  *
  * \author Michael Kuhn
  *
- * \param iterator A JStoreIterator.
+ * \param iterator A JItemIterator.
  **/
 void
-j_store_iterator_free (JStoreIterator* iterator)
+j_item_iterator_free (JItemIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
 	mongoc_cursor_destroy(iterator->cursor);
 	j_connection_pool_push_meta(0, iterator->connection);
 
-	g_slice_free(JStoreIterator, iterator);
+	j_collection_unref(iterator->collection);
+
+	g_slice_free(JItemIterator, iterator);
 }
 
 /**
- * Checks whether another collection is available.
+ * Checks whether another item is available.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param iterator A store iterator.
+ * \param iterator A collection iterator.
  *
- * \return TRUE on success, FALSE if the end of the store is reached.
+ * \return TRUE on success, FALSE if the end of the collection is reached.
  **/
 gboolean
-j_store_iterator_next (JStoreIterator* iterator)
+j_item_iterator_next (JItemIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
@@ -141,28 +147,28 @@ j_store_iterator_next (JStoreIterator* iterator)
 }
 
 /**
- * Returns the current collection.
+ * Returns the current item.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param iterator A store iterator.
+ * \param iterator A collection iterator.
  *
- * \return A new collection. Should be freed with j_collection_unref().
+ * \return A new item. Should be freed with j_item_unref().
  **/
-JCollection*
-j_store_iterator_get (JStoreIterator* iterator)
+JItem*
+j_item_iterator_get (JItemIterator* iterator)
 {
-	JCollection* collection;
+	JItem* item;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(iterator->current != NULL, NULL);
 
-	collection = j_collection_new_from_bson(iterator->current);
+	item = j_item_new_from_bson(iterator->collection, iterator->current);
 
-	return collection;
+	return item;
 }
 
 /**

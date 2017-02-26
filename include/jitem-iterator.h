@@ -29,21 +29,22 @@
  * \file
  **/
 
-#ifndef H_STORE_ITERATOR
-#define H_STORE_ITERATOR
+#ifndef H_ITEM_ITERATOR
+#define H_ITEM_ITERATOR
 
 #include <glib.h>
 
-struct JStoreIterator;
+struct JItemIterator;
 
-typedef struct JStoreIterator JStoreIterator;
+typedef struct JItemIterator JItemIterator;
 
 #include <jcollection.h>
+#include <jitem.h>
 
-JStoreIterator* j_store_iterator_new (void);
-void j_store_iterator_free (JStoreIterator*);
+JItemIterator* j_item_iterator_new (JCollection*);
+void j_item_iterator_free (JItemIterator*);
 
-gboolean j_store_iterator_next (JStoreIterator*);
-JCollection* j_store_iterator_get (JStoreIterator*);
+gboolean j_item_iterator_next (JItemIterator*);
+JItem* j_item_iterator_get (JItemIterator*);
 
 #endif

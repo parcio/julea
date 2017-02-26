@@ -38,28 +38,27 @@
 
 #include <jcollection-iterator.h>
 
-#include <jbatch-internal.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
 #include <jconnection-pool-internal.h>
-#include <jitem.h>
-#include <jitem-internal.h>
 #include <joperation-cache-internal.h>
 
 /**
- * \defgroup JCollectionIterator Collection Iterator
+ * \defgroup JCollectionIterator Store Iterator
  *
- * Data structures and functions for iterating over collections.
+ * Data structures and functions for iterating over stores.
  *
  * @{
  **/
 
 struct JCollectionIterator
 {
-	mongoc_cursor_t* cursor;
-
-	JCollection* collection;
 	mongoc_client_t* connection;
+
+	/**
+	 * The MongoDB cursor.
+	 **/
+	mongoc_cursor_t* cursor;
 
 	/**
 	 * The current document.
@@ -72,35 +71,30 @@ struct JCollectionIterator
  *
  * \author Michael Kuhn
  *
- * \param collection A JCollection.
+ * \param store A JStore.
  *
  * \return A new JCollectionIterator.
  **/
 JCollectionIterator*
-j_collection_iterator_new (JCollection* collection)
+j_collection_iterator_new (void)
 {
 	JCollectionIterator* iterator;
+	bson_t empty[1];
 	mongoc_collection_t* m_collection;
-	bson_t b;
-
-	g_return_val_if_fail(collection != NULL, NULL);
 
 	j_operation_cache_flush();
 
 	iterator = g_slice_new(JCollectionIterator);
-	iterator->collection = j_collection_ref(collection);
 	iterator->connection = j_connection_pool_pop_meta(0);
 	iterator->current = NULL;
 
-	bson_init(&b);
-	bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
-	//bson_finish(&b);
+	bson_init(empty);
 
 	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Items");
-	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, NULL, NULL);
+	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Collections");
+	iterator->cursor = mongoc_collection_find_with_opts(m_collection, empty, NULL, NULL);
 
-	bson_destroy(&b);
+	bson_destroy(empty);
 
 	return iterator;
 }
@@ -120,22 +114,20 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 	mongoc_cursor_destroy(iterator->cursor);
 	j_connection_pool_push_meta(0, iterator->connection);
 
-	j_collection_unref(iterator->collection);
-
 	g_slice_free(JCollectionIterator, iterator);
 }
 
 /**
- * Checks whether another item is available.
+ * Checks whether another collection is available.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param iterator A collection iterator.
+ * \param iterator A store iterator.
  *
- * \return TRUE on success, FALSE if the end of the collection is reached.
+ * \return TRUE on success, FALSE if the end of the store is reached.
  **/
 gboolean
 j_collection_iterator_next (JCollectionIterator* iterator)
@@ -148,28 +140,28 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 }
 
 /**
- * Returns the current item.
+ * Returns the current collection.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param iterator A collection iterator.
+ * \param iterator A store iterator.
  *
- * \return A new item. Should be freed with j_item_unref().
+ * \return A new collection. Should be freed with j_collection_unref().
  **/
-JItem*
+JCollection*
 j_collection_iterator_get (JCollectionIterator* iterator)
 {
-	JItem* item;
+	JCollection* collection;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(iterator->current != NULL, NULL);
 
-	item = j_item_new_from_bson(iterator->collection, iterator->current);
+	collection = j_collection_new_from_bson(iterator->current);
 
-	return item;
+	return collection;
 }
 
 /**

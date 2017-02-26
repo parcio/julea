@@ -47,10 +47,10 @@
 #include <jcommon.h>
 #include <jdistribution.h>
 #include <jitem.h>
+#include <jitem-iterator.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
-#include <jstore-iterator.h>
 #include <juri.h>
 
 #endif
