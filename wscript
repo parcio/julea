@@ -211,9 +211,9 @@ def configure (ctx):
 	if ctx.options.debug:
 		# Context.out_dir is empty after the first configure
 		out_dir = os.path.abspath(out)
-		ctx.define('SERVER_BACKEND_PATH_BUILD', '{0}/server/backend'.format(out_dir))
+		ctx.define('JULEA_BACKEND_PATH_BUILD', '{0}/backend'.format(out_dir))
 
-	ctx.define('SERVER_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
+	ctx.define('JULEA_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
 	ctx.write_config_header('include/julea-config.h')
 
@@ -279,11 +279,11 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	# Server backends
+	# Backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['server/backend/{0}.c'.format(backend)],
-			target = 'server/backend/{0}'.format(backend),
+			source = ['backend/{0}.c'.format(backend)],
+			target = 'backend/{0}'.format(backend),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
@@ -291,8 +291,8 @@ def build (ctx):
 
 	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['server/backend/jzfs.c'],
-			target = 'server/backend/jzfs',
+			source = ['backend/jzfs.c'],
+			target = 'backend/jzfs',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'
@@ -300,8 +300,8 @@ def build (ctx):
 
 	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['server/backend/lexos.c'],
-			target = 'server/backend/lexos',
+			source = ['backend/lexos.c'],
+			target = 'backend/lexos',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend'

@@ -99,6 +99,6 @@ struct JBackend
 
 typedef struct JBackend JBackend;
 
-JBackend* backend_info (void);
+JBackend* backend_info (JBackendComponent, JBackendType);
 
 #endif

@@ -227,11 +227,18 @@ JBackend null_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info (JBackendComponent component, JBackendType type)
 {
+	JBackend* backend = NULL;
+
 	j_trace_enter(G_STRFUNC);
+
+	if (component == J_BACKEND_COMPONENT_SERVER && type == J_BACKEND_TYPE_DATA)
+	{
+		backend = &null_backend;
+	}
 
 	j_trace_leave(G_STRFUNC);
 
-	return &null_backend;
+	return backend;
 }
