@@ -44,15 +44,74 @@
 #include <jstatistics-internal.h>
 #include <jtrace-internal.h>
 
-#include "server.h"
-
 #include "backend/backend.h"
 
 static JStatistics* jd_statistics;
 
 G_LOCK_DEFINE_STATIC(jd_statistics);
 
+static JBackend* jd_backend;
+
 static guint jd_thread_num = 0;
+
+static
+GModule*
+jd_load_backend (gchar const* name, JBackendComponent component, JBackendType type)
+{
+	JBackend* (*jd_backend_info) (void) = NULL;
+
+	GModule* backend = NULL;
+	gchar* path = NULL;
+
+	/* FIXME */
+	g_return_val_if_fail(component == J_BACKEND_COMPONENT_SERVER, NULL);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_DATA, NULL);
+
+	if (component == J_BACKEND_COMPONENT_SERVER)
+	{
+#ifdef SERVER_BACKEND_PATH_BUILD
+		path = g_module_build_path(SERVER_BACKEND_PATH_BUILD, name);
+		backend = g_module_open(path, G_MODULE_BIND_LOCAL);
+		g_free(path);
+#endif
+
+		if (backend == NULL)
+		{
+			path = g_module_build_path(SERVER_BACKEND_PATH, name);
+			backend = g_module_open(path, G_MODULE_BIND_LOCAL);
+			g_free(path);
+		}
+	}
+
+	if (backend != NULL)
+	{
+		g_module_symbol(backend, "backend_info", (gpointer*)&jd_backend_info);
+
+		g_assert(jd_backend_info != NULL);
+
+		jd_backend = jd_backend_info();
+
+		g_assert(jd_backend != NULL);
+		g_assert(jd_backend->component == component);
+		g_assert(jd_backend->type == type);
+
+		if (type == J_BACKEND_TYPE_DATA)
+		{
+			g_assert(jd_backend->u.data.init != NULL);
+			g_assert(jd_backend->u.data.fini != NULL);
+			g_assert(jd_backend->u.data.create != NULL);
+			g_assert(jd_backend->u.data.delete != NULL);
+			g_assert(jd_backend->u.data.open != NULL);
+			g_assert(jd_backend->u.data.close != NULL);
+			g_assert(jd_backend->u.data.status != NULL);
+			g_assert(jd_backend->u.data.sync != NULL);
+			g_assert(jd_backend->u.data.read != NULL);
+			g_assert(jd_backend->u.data.write != NULL);
+		}
+	}
+
+	return backend;
+}
 
 static
 gboolean
@@ -89,9 +148,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	statistics = j_statistics_new(TRUE);
 	memory_chunk = j_memory_chunk_new(J_STRIPE_SIZE);
 
-	if (jd_backend_thread_init != NULL)
+	if (jd_backend->u.data.thread_init != NULL)
 	{
-		backend_data = jd_backend_thread_init();
+		backend_data = jd_backend->u.data.thread_init();
 	}
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
@@ -125,17 +184,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (jd_backend_create(backend_item, path, backend_data))
+						if (jd_backend->u.data.create(backend_item, path, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
 							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 							{
-								jd_backend_sync(backend_item, backend_data);
+								jd_backend->u.data.sync(backend_item, backend_data);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 							}
 
-							jd_backend_close(backend_item, backend_data);
+							jd_backend->u.data.close(backend_item, backend_data);
 						}
 
 						if (reply != NULL)
@@ -164,11 +223,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (jd_backend_open(backend_item, path, backend_data)
-						    && jd_backend_delete(backend_item, backend_data))
+						if (jd_backend->u.data.open(backend_item, path, backend_data)
+						    && jd_backend->u.data.delete(backend_item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							jd_backend_close(backend_item, backend_data);
+							jd_backend->u.data.close(backend_item, backend_data);
 						}
 
 						if (reply != NULL)
@@ -193,7 +252,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					jd_backend_open(backend_item, path, backend_data);
+					jd_backend->u.data.open(backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -219,7 +278,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						jd_backend_read(backend_item, buf, length, offset, &bytes_read, backend_data);
+						jd_backend->u.data.read(backend_item, buf, length, offset, &bytes_read, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -233,7 +292,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					jd_backend_close(backend_item, backend_data);
+					jd_backend->u.data.close(backend_item, backend_data);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -260,7 +319,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					jd_backend_open(backend_item, path, backend_data);
+					jd_backend->u.data.open(backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -282,7 +341,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							jd_backend_write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+							jd_backend->u.data.write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -310,17 +369,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						jd_backend_write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+						jd_backend->u.data.write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						jd_backend_sync(backend_item, backend_data);
+						jd_backend->u.data.sync(backend_item, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					jd_backend_close(backend_item, backend_data);
+					jd_backend->u.data.close(backend_item, backend_data);
 
 					if (reply != NULL)
 					{
@@ -348,9 +407,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						flags = j_message_get_4(message);
 
 						// FIXME return value
-						jd_backend_open(backend_item, path, backend_data);
+						jd_backend->u.data.open(backend_item, path, backend_data);
 
-						if (jd_backend_status(backend_item, flags, &modification_time, &size, backend_data))
+						if (jd_backend->u.data.status(backend_item, flags, &modification_time, &size, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -377,7 +436,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &size);
 						}
 
-						jd_backend_close(backend_item, backend_data);
+						jd_backend->u.data.close(backend_item, backend_data);
 					}
 
 					j_message_send(reply, connection);
@@ -479,9 +538,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		G_UNLOCK(jd_statistics);
 	}
 
-	if (jd_backend_thread_fini != NULL)
+	if (jd_backend->u.data.thread_fini != NULL)
 	{
-		jd_backend_thread_fini(backend_data);
+		jd_backend->u.data.thread_fini(backend_data);
 	}
 
 	j_memory_chunk_free(memory_chunk);
@@ -553,7 +612,6 @@ main (int argc, char** argv)
 	GModule* backend = NULL;
 	GOptionContext* context;
 	GSocketService* socket_service;
-	gchar* path;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -617,44 +675,13 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-#ifdef SERVER_BACKEND_PATH_BUILD
-	path = g_module_build_path(SERVER_BACKEND_PATH_BUILD, j_configuration_get_storage_backend(configuration));
-	backend = g_module_open(path, G_MODULE_BIND_LOCAL);
-	g_free(path);
-#endif
-
-	if (backend == NULL)
+	if ((backend = jd_load_backend(j_configuration_get_storage_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA)) == NULL)
 	{
-		path = g_module_build_path(SERVER_BACKEND_PATH, j_configuration_get_storage_backend(configuration));
-		backend = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(path);
+		g_printerr("Could not load backend.\n");
+		return 1;
 	}
 
-	g_module_symbol(backend, "backend_init", (gpointer*)&jd_backend_init);
-	g_module_symbol(backend, "backend_fini", (gpointer*)&jd_backend_fini);
-	g_module_symbol(backend, "backend_thread_init", (gpointer*)&jd_backend_thread_init);
-	g_module_symbol(backend, "backend_thread_fini", (gpointer*)&jd_backend_thread_fini);
-	g_module_symbol(backend, "backend_create", (gpointer*)&jd_backend_create);
-	g_module_symbol(backend, "backend_delete", (gpointer*)&jd_backend_delete);
-	g_module_symbol(backend, "backend_open", (gpointer*)&jd_backend_open);
-	g_module_symbol(backend, "backend_close", (gpointer*)&jd_backend_close);
-	g_module_symbol(backend, "backend_status", (gpointer*)&jd_backend_status);
-	g_module_symbol(backend, "backend_sync", (gpointer*)&jd_backend_sync);
-	g_module_symbol(backend, "backend_read", (gpointer*)&jd_backend_read);
-	g_module_symbol(backend, "backend_write", (gpointer*)&jd_backend_write);
-
-	g_assert(jd_backend_init != NULL);
-	g_assert(jd_backend_fini != NULL);
-	g_assert(jd_backend_create != NULL);
-	g_assert(jd_backend_delete != NULL);
-	g_assert(jd_backend_open != NULL);
-	g_assert(jd_backend_close != NULL);
-	g_assert(jd_backend_status != NULL);
-	g_assert(jd_backend_sync != NULL);
-	g_assert(jd_backend_read != NULL);
-	g_assert(jd_backend_write != NULL);
-
-	if (!jd_backend_init(j_configuration_get_storage_path(configuration)))
+	if (!jd_backend->u.data.init(j_configuration_get_storage_path(configuration)))
 	{
 		g_printerr("Could not initialize backend.\n");
 		return 1;
@@ -681,7 +708,7 @@ main (int argc, char** argv)
 
 	j_statistics_free(jd_statistics);
 
-	jd_backend_fini();
+	jd_backend->u.data.fini();
 
 	g_module_close(backend);
 

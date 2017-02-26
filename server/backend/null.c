@@ -33,9 +33,8 @@
 #include <jtrace-internal.h>
 
 #include "backend.h"
-#include "backend-internal.h"
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 {
@@ -54,7 +53,7 @@ backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_delete (JBackendItem* bf, gpointer data)
 {
@@ -70,7 +69,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 {
@@ -89,7 +88,7 @@ backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_close (JBackendItem* bf, gpointer data)
 {
@@ -107,7 +106,7 @@ backend_close (JBackendItem* bf, gpointer data)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
 {
@@ -127,7 +126,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_sync (JBackendItem* bf, gpointer data)
 {
@@ -143,7 +142,7 @@ backend_sync (JBackendItem* bf, gpointer data)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
 {
@@ -165,7 +164,7 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
 {
@@ -187,7 +186,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_init (gchar const* path)
 {
@@ -199,10 +198,41 @@ backend_init (gchar const* path)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 void
 backend_fini (void)
 {
 	j_trace_enter(G_STRFUNC);
 	j_trace_leave(G_STRFUNC);
+}
+
+static
+JBackend null_backend = {
+	.component = J_BACKEND_COMPONENT_SERVER,
+	.type = J_BACKEND_TYPE_DATA,
+	.u.data = {
+		.init = backend_init,
+		.fini = backend_fini,
+		.thread_init = NULL,
+		.thread_fini = NULL,
+		.create = backend_create,
+		.delete = backend_delete,
+		.open = backend_open,
+		.close = backend_close,
+		.status = backend_status,
+		.sync = backend_sync,
+		.read = backend_read,
+		.write = backend_write
+	}
+};
+
+G_MODULE_EXPORT
+JBackend*
+backend_info (void)
+{
+	j_trace_enter(G_STRFUNC);
+
+	j_trace_leave(G_STRFUNC);
+
+	return &null_backend;
 }

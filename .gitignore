@@ -1,6 +1,9 @@
 # External
 external/*/
 
+# Environment
+julea-environment
+
 # Sublime Text
 *.sublime-workspace
 

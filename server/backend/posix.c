@@ -41,7 +41,6 @@
 #include <jtrace-internal.h>
 
 #include "backend.h"
-#include "backend-internal.h"
 
 struct JBackendFile
 {
@@ -55,6 +54,8 @@ static GHashTable* jd_backend_file_cache = NULL;
 static gchar* jd_backend_path = NULL;
 
 G_LOCK_DEFINE_STATIC(jd_backend_file_cache);
+
+static gboolean backend_close (JBackendItem*, gpointer);
 
 static
 void
@@ -118,7 +119,7 @@ backend_file_add (GHashTable* files, JBackendItem* backend_item)
 	G_UNLOCK(jd_backend_file_cache);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 {
@@ -165,7 +166,7 @@ end:
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_delete (JBackendItem* bf, gpointer data)
 {
@@ -186,7 +187,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 	return ret;
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 {
@@ -226,7 +227,7 @@ end:
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_close (JBackendItem* bf, gpointer data)
 {
@@ -254,7 +255,7 @@ end:
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
 {
@@ -292,7 +293,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_sync (JBackendItem* bf, gpointer data)
 {
@@ -314,7 +315,7 @@ backend_sync (JBackendItem* bf, gpointer data)
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
 {
@@ -342,7 +343,7 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
 {
@@ -370,7 +371,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 	return (fd != -1);
 }
 
-G_MODULE_EXPORT
+static
 gpointer
 backend_thread_init (void)
 {
@@ -381,7 +382,7 @@ backend_thread_init (void)
 	return files;
 }
 
-G_MODULE_EXPORT
+static
 void
 backend_thread_fini (gpointer data)
 {
@@ -392,7 +393,7 @@ backend_thread_fini (gpointer data)
 	g_hash_table_destroy(files);
 }
 
-G_MODULE_EXPORT
+static
 gboolean
 backend_init (gchar const* path)
 {
@@ -408,7 +409,7 @@ backend_init (gchar const* path)
 	return TRUE;
 }
 
-G_MODULE_EXPORT
+static
 void
 backend_fini (void)
 {
@@ -420,4 +421,35 @@ backend_fini (void)
 	g_free(jd_backend_path);
 
 	j_trace_leave(G_STRFUNC);
+}
+
+static
+JBackend posix_backend = {
+	.component = J_BACKEND_COMPONENT_SERVER,
+	.type = J_BACKEND_TYPE_DATA,
+	.u.data = {
+		.init = backend_init,
+		.fini = backend_fini,
+		.thread_init = backend_thread_init,
+		.thread_fini = backend_thread_fini,
+		.create = backend_create,
+		.delete = backend_delete,
+		.open = backend_open,
+		.close = backend_close,
+		.status = backend_status,
+		.sync = backend_sync,
+		.read = backend_read,
+		.write = backend_write
+	}
+};
+
+G_MODULE_EXPORT
+JBackend*
+backend_info (void)
+{
+	j_trace_enter(G_STRFUNC);
+
+	j_trace_leave(G_STRFUNC);
+
+	return &posix_backend;
 }

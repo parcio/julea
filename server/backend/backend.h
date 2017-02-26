@@ -43,4 +43,63 @@ struct JBackendItem
 
 typedef struct JBackendItem JBackendItem;
 
+enum JBackendComponent
+{
+	J_BACKEND_COMPONENT_CLIENT,
+	J_BACKEND_COMPONENT_SERVER
+};
+
+typedef enum JBackendComponent JBackendComponent;
+
+enum JBackendType
+{
+	J_BACKEND_TYPE_DATA,
+	J_BACKEND_TYPE_META
+};
+
+typedef enum JBackendType JBackendType;
+
+struct JBackend
+{
+	JBackendComponent component;
+	JBackendType type;
+
+	union
+	{
+		struct
+		{
+			gboolean (*init) (gchar const*);
+			void (*fini) (void);
+
+			gpointer (*thread_init) (void);
+			void (*thread_fini) (gpointer);
+
+			gboolean (*create) (JBackendItem*, gchar const*, gpointer);
+			gboolean (*delete) (JBackendItem*, gpointer);
+
+			gboolean (*open) (JBackendItem*, gchar const*, gpointer);
+			gboolean (*close) (JBackendItem*, gpointer);
+
+			gboolean (*status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);
+			gboolean (*sync) (JBackendItem*, gpointer);
+
+			gboolean (*read) (JBackendItem*, gpointer, guint64, guint64, guint64*, gpointer);
+			gboolean (*write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*, gpointer);
+		}
+		data;
+
+		struct
+		{
+			gboolean (*init) (gchar const*);
+			void (*fini) (void);
+		}
+		meta;
+	}
+	u;
+};
+
+typedef struct JBackend JBackend;
+
+JBackend* backend_info (void);
+
 #endif
