@@ -3,6 +3,7 @@
 from waflib import Context, Utils
 from waflib.Build import BuildContext
 
+import os
 import subprocess
 
 top = '.'
@@ -208,7 +209,9 @@ def configure (ctx):
 		ctx.env.CFLAGS += ['-O2']
 
 	if ctx.options.debug:
-		ctx.define('SERVER_BACKEND_PATH_BUILD', '{0}/server/backend'.format(Context.out_dir))
+		# Context.out_dir is empty after the first configure
+		out_dir = os.path.abspath(out)
+		ctx.define('SERVER_BACKEND_PATH_BUILD', '{0}/server/backend'.format(out_dir))
 
 	ctx.define('SERVER_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
