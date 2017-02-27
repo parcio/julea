@@ -31,12 +31,43 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
-. "${SELF_DIR}/common.sh"
-
 usage ()
 {
 	echo "Usage: ${0##*/} start|stop|restart"
 	exit 1
+}
+
+get_config ()
+{
+	local CONFIG_DIR
+
+	if [ -n "${JULEA_CONFIG}" ]
+	then
+		if [ ! -f "${JULEA_CONFIG}" ]
+		then
+			return 1
+		fi
+
+		cat "${JULEA_CONFIG}"
+		return 0
+	fi
+
+	if [ -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea" ]
+	then
+		cat "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
+		return 0
+	fi
+
+	for CONFIG_DIR in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
+	do
+		if [ -f "${CONFIG_DIR}/julea/julea" ]
+		then
+			cat "${CONFIG_DIR}/julea/julea"
+			return 0
+		fi
+	done
+
+	return 1
 }
 
 get_host ()
@@ -74,10 +105,10 @@ do_start ()
 	local SERVER
 	local PORT_OPTION
 
-	for SERVER in ${DATA}
+	for SERVER in ${SERVERS_DATA}
 	do
-		HOST=$(get_host "${SERVER}")
-		PORT=$(get_port "${SERVER}")
+		HOST="$(get_host "${SERVER}")"
+		PORT="$(get_port "${SERVER}")"
 
 		if [ "${HOST}" = "${HOSTNAME}" ]
 		then
@@ -88,14 +119,14 @@ do_start ()
 		fi
 	done
 
-	for SERVER in ${METADATA}
+	for SERVER in ${SERVERS_META}
 	do
-		HOST=$(get_host "${SERVER}")
-		PORT=$(get_port "${SERVER}")
+		HOST="$(get_host "${SERVER}")"
+		PORT="$(get_port "${SERVER}")"
 
 		if [ "${HOST}" = "${HOSTNAME}" ]
 		then
-			mkdir -p "${MONGO_PATH}/db"
+			mkdir --parents "${MONGO_PATH}/db"
 			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
 		fi
 	done
@@ -108,22 +139,23 @@ do_stop ()
 {
 	local SERVER
 
-	for SERVER in ${DATA}
+	for SERVER in ${SERVERS_DATA}
 	do
-		HOST=$(get_host "${SERVER}")
-		PORT=$(get_port "${SERVER}")
+		HOST="$(get_host "${SERVER}")"
+		PORT="$(get_port "${SERVER}")"
 
 		if [ "${HOST}" = "${HOSTNAME}" ]
 		then
 			killall --verbose julea-server || true
-			rm -rf "${STORAGE_PATH}"
+			rm -rf "${DATA_PATH}"
+			rm -rf "${META_PATH}"
 		fi
 	done
 
-	for SERVER in ${METADATA}
+	for SERVER in ${SERVERS_META}
 	do
-		HOST=$(get_host "${SERVER}")
-		PORT=$(get_port "${SERVER}")
+		HOST="$(get_host "${SERVER}")"
+		PORT="$(get_port "${SERVER}")"
 
 		if [ "${HOST}" = "${HOSTNAME}" ]
 		then
@@ -137,8 +169,8 @@ test -n "$1" || usage
 
 MODE="$1"
 
-HOSTNAME=$(hostname)
-USER=$(id -nu)
+HOSTNAME="$(hostname)"
+USER="$(id -nu)"
 
 BUILD_PATH="${SELF_DIR}/../build"
 EXTERNAL_PATH="${SELF_DIR}/../external"
@@ -147,19 +179,21 @@ MONGO_PATH="/tmp/julea-mongo-${USER}"
 export PATH="${BUILD_PATH}/server:${BUILD_PATH}/tools:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${EXTERNAL_PATH}/mongo-c-driver/lib:${LD_LIBRARY_PATH}"
 
-DATA=$(get_config | grep ^data=)
-METADATA=$(get_config | grep ^metadata=)
-STORAGE_PATH=$(get_config | grep ^path=)
+SERVERS_DATA="$(get_config | grep ^data=)"
+SERVERS_META="$(get_config | grep ^metadata=)"
+DATA_PATH="$(get_config | grep ^path= | head --lines=1)"
+META_PATH="$(get_config | grep ^path= | tail --lines=1)"
 
-DATA="${DATA#data=}"
-METADATA="${METADATA#metadata=}"
-STORAGE_PATH="${STORAGE_PATH#path=}"
+SERVERS_DATA="${SERVERS_DATA#data=}"
+SERVERS_META="${SERVERS_META#metadata=}"
+DATA_PATH="${DATA_PATH#path=}"
+META_PATH="${META_PATH#path=}"
 
-DATA="${DATA%;}"
-METADATA="${METADATA%;}"
+SERVERS_DATA="${SERVERS_DATA%;}"
+SERVERS_META="${SERVERS_META%;}"
 
-DATA=$(echo ${DATA} | sed 's/;/ /g')
-METADATA=$(echo ${METADATA} | sed 's/;/ /g')
+SERVERS_DATA=$(echo ${SERVERS_DATA} | sed 's/;/ /g')
+SERVERS_META=$(echo ${SERVERS_META} | sed 's/;/ /g')
 
 case "${MODE}" in
 	start)
