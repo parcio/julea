@@ -77,27 +77,29 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 		tmp_backend = module_backend_info(component, type);
 
-		g_assert(tmp_backend != NULL);
-		g_assert(tmp_backend->component == component);
-		g_assert(tmp_backend->type == type);
+		if (tmp_backend != NULL)
+		{
+			g_assert(tmp_backend->component == component);
+			g_assert(tmp_backend->type == type);
 
-		if (type == J_BACKEND_TYPE_DATA)
-		{
-			g_assert(tmp_backend->u.data.init != NULL);
-			g_assert(tmp_backend->u.data.fini != NULL);
-			g_assert(tmp_backend->u.data.create != NULL);
-			g_assert(tmp_backend->u.data.delete != NULL);
-			g_assert(tmp_backend->u.data.open != NULL);
-			g_assert(tmp_backend->u.data.close != NULL);
-			g_assert(tmp_backend->u.data.status != NULL);
-			g_assert(tmp_backend->u.data.sync != NULL);
-			g_assert(tmp_backend->u.data.read != NULL);
-			g_assert(tmp_backend->u.data.write != NULL);
-		}
-		else if (type == J_BACKEND_TYPE_META)
-		{
-			g_assert(tmp_backend->u.meta.init != NULL);
-			g_assert(tmp_backend->u.meta.fini != NULL);
+			if (type == J_BACKEND_TYPE_DATA)
+			{
+				g_assert(tmp_backend->u.data.init != NULL);
+				g_assert(tmp_backend->u.data.fini != NULL);
+				g_assert(tmp_backend->u.data.create != NULL);
+				g_assert(tmp_backend->u.data.delete != NULL);
+				g_assert(tmp_backend->u.data.open != NULL);
+				g_assert(tmp_backend->u.data.close != NULL);
+				g_assert(tmp_backend->u.data.status != NULL);
+				g_assert(tmp_backend->u.data.sync != NULL);
+				g_assert(tmp_backend->u.data.read != NULL);
+				g_assert(tmp_backend->u.data.write != NULL);
+			}
+			else if (type == J_BACKEND_TYPE_META)
+			{
+				g_assert(tmp_backend->u.meta.init != NULL);
+				g_assert(tmp_backend->u.meta.fini != NULL);
+			}
 		}
 	}
 

@@ -187,6 +187,8 @@ j_connection_pool_pop_data (guint index)
 			JMessage* message;
 			JMessage* reply;
 
+			guint op_count;
+
 			client = g_socket_client_new();
 
 			connection = g_socket_client_connect_to_host(client, j_configuration_get_data_server(j_connection_pool->configuration, index), 4711, NULL, &error);
@@ -209,6 +211,24 @@ j_connection_pool_pop_data (guint index)
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, connection);
+
+			op_count = j_message_get_count(reply);
+
+			for (guint i = 0; i < op_count; i++)
+			{
+				gchar const* backend;
+
+				backend = j_message_get_string(reply);
+
+				if (g_strcmp0(backend, "data") == 0)
+				{
+					//g_print("Server has data backend.\n");
+				}
+				else if (g_strcmp0(backend, "meta") == 0)
+				{
+					//g_print("Server has metadata backend.\n");
+				}
+			}
 
 			j_message_unref(message);
 			j_message_unref(reply);
