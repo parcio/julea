@@ -566,8 +566,8 @@ main (int argc, char** argv)
 	JConfiguration* configuration;
 	GError* error = NULL;
 	GMainLoop* main_loop;
-	GModule* data_backend = NULL;
-	GModule* meta_backend = NULL;
+	GModule* data_module = NULL;
+	GModule* meta_module = NULL;
 	GOptionContext* context;
 	GSocketService* socket_service;
 
@@ -629,13 +629,13 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((data_backend = j_backend_load(j_configuration_get_data_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_data_backend)) == NULL)
+	if ((data_module = j_backend_load(j_configuration_get_data_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_data_backend)) == NULL)
 	{
 		g_printerr("Could not load data backend.\n");
 		return 1;
 	}
 
-	if ((meta_backend = j_backend_load(j_configuration_get_metadata_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_META, &jd_meta_backend)) == NULL)
+	if ((meta_module = j_backend_load(j_configuration_get_metadata_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_META, &jd_meta_backend)) == NULL)
 	{
 		g_printerr("Could not load metadata backend.\n");
 		return 1;
@@ -684,8 +684,8 @@ main (int argc, char** argv)
 		jd_data_backend->u.data.fini();
 	}
 
-	g_module_close(meta_backend);
-	g_module_close(data_backend);
+	g_module_close(meta_module);
+	g_module_close(data_module);
 
 	j_trace_leave(G_STRFUNC);
 
