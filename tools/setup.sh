@@ -27,8 +27,11 @@
 
 set -e
 
-# Maybe hacky.
-. "${0%/*}/common.sh"
+SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
+
+. "${SELF_DIR}/common.sh"
 
 usage ()
 {
@@ -137,8 +140,8 @@ MODE="$1"
 HOSTNAME=$(hostname)
 USER=$(id -nu)
 
-BUILD_PATH="$(get_self_dir)/../build"
-EXTERNAL_PATH="$(get_self_dir)/../external"
+BUILD_PATH="${SELF_DIR}/../build"
+EXTERNAL_PATH="${SELF_DIR}/../external"
 MONGO_PATH="/tmp/julea-mongo-${USER}"
 
 export PATH="${BUILD_PATH}/server:${BUILD_PATH}/tools:${PATH}"

@@ -27,8 +27,11 @@
 
 set -e
 
-# Maybe hacky.
-. "${0%/*}/common.sh"
+SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
+
+. "${SELF_DIR}/common.sh"
 
 usage ()
 {
@@ -36,9 +39,9 @@ usage ()
 	exit 1
 }
 
-BUILD_PATH="$(get_self_dir)/../build"
+BUILD_PATH="${SELF_DIR}/../build"
 
-export PATH="${BUILD_PATH}/test:$(get_self_dir):${PATH}"
+export PATH="${BUILD_PATH}/test:${SELF_DIR}:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DIRECTORY="${PWD}/results/test/$(date '+%Y-%m')"

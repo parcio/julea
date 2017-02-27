@@ -28,8 +28,11 @@
 
 set -e
 
-# Maybe hacky.
-. "${0%/*}/common.sh"
+SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
+
+. "${SELF_DIR}/common.sh"
 
 usage ()
 {
@@ -44,9 +47,9 @@ CASE="$1"
 DIR="$2"
 shift 2
 
-BUILD_PATH="$(get_self_dir)/../build"
+BUILD_PATH="${SELF_DIR}/../build"
 
-export PATH="${BUILD_PATH}/benchmark:$(get_self_dir):${PATH}"
+export PATH="${BUILD_PATH}/benchmark:${SELF_DIR}:${PATH}"
 export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
 
 DIRECTORY="$DIR/$(date '+%Y-%m')/$(date --iso-8601)-$(git describe --always)"

@@ -25,31 +25,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-get_self_path ()
-{
-	local PREFIX
-	local SELF
-
-	SELF="$0"
-	PREFIX=''
-
-	# Check whether SELF contains a slash.
-	test "${SELF#*/}" = "${SELF}" && SELF=$(which "${SELF}")
-	# Check whether SELF is an absolute path.
-	test "${SELF#/}" = "${SELF}" && PREFIX="$(pwd)/"
-
-	echo "${PREFIX}${SELF}"
-}
-
-get_self_dir ()
-{
-	local SELF
-
-	SELF=$(get_self_path)
-
-	echo "${SELF%/*}"
-}
-
 get_config ()
 {
 	local CONFIG_DIR

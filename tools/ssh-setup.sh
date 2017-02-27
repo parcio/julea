@@ -27,8 +27,11 @@
 
 set -e
 
-# Maybe hacky.
-. "${0%/*}/common.sh"
+SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
+
+. "${SELF_DIR}/common.sh"
 
 usage ()
 {
@@ -48,7 +51,7 @@ else
 
   for node in ${list}
   do
-    ssh ${node} $(get_self_dir)/setup.sh $command || rc=$?
+    ssh ${node} ${SELF_DIR}/setup.sh $command || rc=$?
 
      if [ $rc -ne 0 ]
      then
