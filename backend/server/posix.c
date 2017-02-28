@@ -424,7 +424,6 @@ backend_fini (void)
 
 static
 JBackend posix_backend = {
-	.component = J_BACKEND_COMPONENT_SERVER,
 	.type = J_BACKEND_TYPE_DATA,
 	.u.data = {
 		.init = backend_init,
@@ -444,13 +443,13 @@ JBackend posix_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendComponent component, JBackendType type)
+backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
 	j_trace_enter(G_STRFUNC);
 
-	if (component == J_BACKEND_COMPONENT_SERVER && type == J_BACKEND_TYPE_DATA)
+	if (type == J_BACKEND_TYPE_DATA)
 	{
 		backend = &posix_backend;
 	}

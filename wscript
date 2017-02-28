@@ -282,29 +282,29 @@ def build (ctx):
 	# Backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
-			source = ['backend/{0}.c'.format(backend)],
-			target = 'backend/{0}'.format(backend),
+			source = ['backend/server/{0}.c'.format(backend)],
+			target = 'backend/server/{0}'.format(backend),
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
 			includes = ['include'],
-			install_path = '${LIBDIR}/julea/backend'
+			install_path = '${LIBDIR}/julea/backend/server'
 		)
 
 	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['backend/jzfs.c'],
-			target = 'backend/jzfs',
+			source = ['backend/server/jzfs.c'],
+			target = 'backend/server/jzfs',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
 			includes = ['include'],
-			install_path = '${LIBDIR}/julea/backend'
+			install_path = '${LIBDIR}/julea/backend/server'
 		)
 
 	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
 		ctx.shlib(
-			source = ['backend/lexos.c'],
-			target = 'backend/lexos',
+			source = ['backend/server/lexos.c'],
+			target = 'backend/server/lexos',
 			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB'],
 			includes = ['include'],
-			install_path = '${LIBDIR}/julea/backend'
+			install_path = '${LIBDIR}/julea/backend/server'
 		)
 
 	# Command line

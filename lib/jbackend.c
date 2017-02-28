@@ -47,25 +47,31 @@
  * @{
  **/
 
+static
 GModule*
-j_backend_load (gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
+j_backend_load (gchar const* name, gchar const* component, JBackendType type, JBackend** backend)
 {
-	JBackend* (*module_backend_info) (JBackendComponent, JBackendType) = NULL;
+	JBackend* (*module_backend_info) (JBackendType) = NULL;
 
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
+	gchar* cpath = NULL;
 	gchar* path = NULL;
 
 #ifdef JULEA_BACKEND_PATH_BUILD
-	path = g_module_build_path(JULEA_BACKEND_PATH_BUILD, name);
+	cpath = g_build_filename(JULEA_BACKEND_PATH_BUILD, component, NULL);
+	path = g_module_build_path(cpath, name);
 	module = g_module_open(path, G_MODULE_BIND_LOCAL);
+	g_free(cpath);
 	g_free(path);
 #endif
 
 	if (module == NULL)
 	{
-		path = g_module_build_path(JULEA_BACKEND_PATH, name);
+		cpath = g_build_filename(JULEA_BACKEND_PATH, component, NULL);
+		path = g_module_build_path(cpath, name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
+		g_free(cpath);
 		g_free(path);
 	}
 
@@ -75,11 +81,10 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 		g_assert(module_backend_info != NULL);
 
-		tmp_backend = module_backend_info(component, type);
+		tmp_backend = module_backend_info(type);
 
 		if (tmp_backend != NULL)
 		{
-			g_assert(tmp_backend->component == component);
 			g_assert(tmp_backend->type == type);
 
 			if (type == J_BACKEND_TYPE_DATA)
@@ -106,6 +111,18 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 	*backend = tmp_backend;
 
 	return module;
+}
+
+GModule*
+j_backend_load_client (gchar const* name, JBackendType type, JBackend** backend)
+{
+	return j_backend_load(name, "client", type, backend);
+}
+
+GModule*
+j_backend_load_server (gchar const* name, JBackendType type, JBackend** backend)
+{
+	return j_backend_load(name, "server", type, backend);
 }
 
 /**

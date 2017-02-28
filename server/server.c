@@ -629,13 +629,13 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((data_module = j_backend_load(j_configuration_get_data_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_DATA, &jd_data_backend)) == NULL)
+	if ((data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend)) == NULL)
 	{
 		g_printerr("Could not load data backend.\n");
 		return 1;
 	}
 
-	if ((meta_module = j_backend_load(j_configuration_get_metadata_backend(configuration), J_BACKEND_COMPONENT_SERVER, J_BACKEND_TYPE_META, &jd_meta_backend)) == NULL)
+	if ((meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend)) == NULL)
 	{
 		g_printerr("Could not load metadata backend.\n");
 		return 1;

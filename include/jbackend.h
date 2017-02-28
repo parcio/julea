@@ -42,14 +42,6 @@ struct JBackendItem
 
 typedef struct JBackendItem JBackendItem;
 
-enum JBackendComponent
-{
-	J_BACKEND_COMPONENT_CLIENT,
-	J_BACKEND_COMPONENT_SERVER
-};
-
-typedef enum JBackendComponent JBackendComponent;
-
 enum JBackendType
 {
 	J_BACKEND_TYPE_DATA,
@@ -60,7 +52,6 @@ typedef enum JBackendType JBackendType;
 
 struct JBackend
 {
-	JBackendComponent component;
 	JBackendType type;
 
 	union
@@ -99,6 +90,6 @@ struct JBackend
 
 typedef struct JBackend JBackend;
 
-JBackend* backend_info (JBackendComponent, JBackendType);
+JBackend* backend_info (JBackendType);
 
 #endif

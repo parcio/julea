@@ -39,6 +39,7 @@
 
 #include <jbackend.h>
 
-J_GNUC_INTERNAL GModule* j_backend_load (gchar const*, JBackendComponent, JBackendType, JBackend**);
+J_GNUC_INTERNAL GModule* j_backend_load_client (gchar const*, JBackendType, JBackend**);
+J_GNUC_INTERNAL GModule* j_backend_load_server (gchar const*, JBackendType, JBackend**);
 
 #endif
