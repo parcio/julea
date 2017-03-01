@@ -621,6 +621,7 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 		if (ret)
 		{
 			*collection = j_collection_new_from_bson(result);
+			bson_destroy(result);
 		}
 	}
 

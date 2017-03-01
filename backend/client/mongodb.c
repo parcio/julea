@@ -99,6 +99,8 @@ backend_create (gchar const* namespace, gchar const* key, bson_t const* value)
 	mongoc_bulk_operation_destroy(bulk_op);
 	bson_destroy(reply);
 
+	mongoc_collection_destroy(m_collection);
+
 	bson_destroy(index);
 	bson_destroy(document);
 
@@ -137,6 +139,8 @@ backend_delete (gchar const* namespace, gchar const* key)
 	mongoc_bulk_operation_destroy(bulk_op);
 	bson_destroy(reply);
 
+	mongoc_collection_destroy(m_collection);
+
 	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
@@ -146,7 +150,7 @@ backend_delete (gchar const* namespace, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* value)
+backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
 	gboolean ret = FALSE;
 
@@ -164,22 +168,33 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* value)
 	bson_init(opts);
 	bson_append_int32(opts, "limit", -1, 1);
 
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, opts, NULL);
 
 	while (mongoc_cursor_next(cursor, &result))
 	{
-		ret = TRUE;
-		bson_copy_to(result, value);
-		break;
+		bson_iter_t iter;
+
+		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+		{
+			bson_t tmp[1];
+			bson_value_t const* value;
+
+			value = bson_iter_value(&iter);
+			bson_init_static(tmp, value->value.v_doc.data, value->value.v_doc.data_len);
+
+			ret = TRUE;
+			bson_copy_to(tmp, result_out);
+
+			break;
+		}
 	}
 
 	bson_destroy(opts);
 	bson_destroy(document);
+
+	mongoc_cursor_destroy(cursor);
+	mongoc_collection_destroy(m_collection);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -207,13 +222,15 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);
 
-	bson_destroy(document);
-
 	if (cursor != NULL)
 	{
 		ret = TRUE;
 		*data = cursor;
 	}
+
+	mongoc_collection_destroy(m_collection);
+
+	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -222,9 +239,9 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t const** result)
+backend_iterate (gpointer data, bson_t const** result_out)
 {
-	bson_t const* tmp_result;
+	bson_t const* result;
 	bson_iter_t iter;
 	mongoc_cursor_t* cursor = data;
 
@@ -232,17 +249,24 @@ backend_iterate (gpointer data, bson_t const** result)
 
 	j_trace_enter(G_STRFUNC);
 
-	ret = mongoc_cursor_next(cursor, &tmp_result);
-
 	/* FIXME */
-	if (ret && bson_iter_init_find(&iter, tmp_result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+	if (mongoc_cursor_next(cursor, &result))
 	{
-		bson_value_t const* value;
+		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+		{
+			bson_value_t const* value;
 
-		value = bson_iter_value(&iter);
-		bson_init_static(backend_value, value->value.v_doc.data, value->value.v_doc.data_len);
+			value = bson_iter_value(&iter);
+			/* FIXME global variable */
+			bson_init_static(backend_value, value->value.v_doc.data, value->value.v_doc.data_len);
 
-		*result = backend_value;
+			ret = TRUE;
+			*result_out = backend_value;
+		}
+	}
+	else
+	{
+		mongoc_cursor_destroy(cursor);
 	}
 
 	j_trace_leave(G_STRFUNC);
