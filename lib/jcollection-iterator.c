@@ -34,12 +34,12 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jcollection-iterator.h>
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
+#include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <joperation-cache-internal.h>
 
@@ -53,12 +53,12 @@
 
 struct JCollectionIterator
 {
-	mongoc_client_t* connection;
+	JBackend* meta_backend;
 
 	/**
 	 * The MongoDB cursor.
 	 **/
-	mongoc_cursor_t* cursor;
+	gpointer cursor;
 
 	/**
 	 * The current document.
@@ -79,22 +79,19 @@ JCollectionIterator*
 j_collection_iterator_new (void)
 {
 	JCollectionIterator* iterator;
-	bson_t empty[1];
-	mongoc_collection_t* m_collection;
 
+	/* FIXME still necessary? */
 	j_operation_cache_flush();
 
 	iterator = g_slice_new(JCollectionIterator);
-	iterator->connection = j_connection_pool_pop_meta(0);
+	iterator->meta_backend = j_metadata_backend();
+	iterator->cursor = NULL;
 	iterator->current = NULL;
 
-	bson_init(empty);
-
-	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Collections");
-	iterator->cursor = mongoc_collection_find_with_opts(m_collection, empty, NULL, NULL);
-
-	bson_destroy(empty);
+	if (iterator->meta_backend != NULL)
+	{
+		iterator->meta_backend->u.meta.get_all("collections", &(iterator->cursor));
+	}
 
 	return iterator;
 }
@@ -110,9 +107,6 @@ void
 j_collection_iterator_free (JCollectionIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
-
-	mongoc_cursor_destroy(iterator->cursor);
-	j_connection_pool_push_meta(0, iterator->connection);
 
 	g_slice_free(JCollectionIterator, iterator);
 }
@@ -132,11 +126,16 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 gboolean
 j_collection_iterator_next (JCollectionIterator* iterator)
 {
+	gboolean ret = FALSE;
+
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	mongoc_cursor_next(iterator->cursor, &(iterator->current));
+	if (iterator->meta_backend != NULL)
+	{
+		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, &(iterator->current));
+	}
 
-	return (iterator->current != NULL);
+	return ret;
 }
 
 /**

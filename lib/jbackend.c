@@ -104,6 +104,11 @@ j_backend_load (gchar const* name, gchar const* component, JBackendType type, JB
 			{
 				g_assert(tmp_backend->u.meta.init != NULL);
 				g_assert(tmp_backend->u.meta.fini != NULL);
+				g_assert(tmp_backend->u.meta.create != NULL);
+				g_assert(tmp_backend->u.meta.delete != NULL);
+				g_assert(tmp_backend->u.meta.get != NULL);
+				g_assert(tmp_backend->u.meta.get_all != NULL);
+				g_assert(tmp_backend->u.meta.iterate != NULL);
 			}
 		}
 	}

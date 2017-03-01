@@ -279,7 +279,16 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	# Backends
+	# Client backends
+	ctx.shlib(
+		source = ['backend/client/mongodb.c'],
+		target = 'backend/client/mongodb',
+		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'MONGOC'],
+		includes = ['include'],
+		install_path = '${LIBDIR}/julea/backend/client'
+	)
+
+	# Server backends
 	for backend in ('gio', 'null', 'posix'):
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],

@@ -34,7 +34,6 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jcollection.h>
 #include <jcollection-internal.h>
@@ -489,27 +488,17 @@ j_collection_get_id (JCollection* collection)
 gboolean
 j_collection_create_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JListIterator* it;
-	bson_t** obj;
-	bson_t index[1];
-	mongoc_client_t* mongo_connection;
-	mongoc_collection_t* mongo_collection;
-	mongoc_write_concern_t* write_concern;
 	gboolean ret = FALSE;
-	guint i;
-	guint length;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	/*
-	IsInitialized(true);
-	*/
-
-	i = 0;
-	length = j_list_length(operations);
-	obj = g_new(bson_t*, length);
 	it = j_list_iterator_new(operations);
+
+	//mongo_connection = j_connection_pool_pop_meta(0);
+	meta_backend = j_metadata_backend();
 
 	while (j_list_iterator_next(it))
 	{
@@ -519,50 +508,15 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 		b = j_collection_serialize(collection);
 
-		obj[i] = b;
-		i++;
+		if (meta_backend != NULL)
+		{
+			ret = meta_backend->u.meta.create("collections", collection->name, b) && ret;
+		}
 	}
 
 	j_list_iterator_free(it);
 
-	write_concern = mongoc_write_concern_new();
-	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
-	bson_init(index);
-	bson_append_int32(index, "Name", -1, 1);
-	//bson_finish(index);
-
-	mongo_connection = j_connection_pool_pop_meta(0);
-
-	j_helper_create_index(J_STORE_COLLECTION_COLLECTIONS, mongo_connection, index);
-	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
-	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
-
-	/*
-	if (!ret)
-	{
-		bson_t error[1];
-
-		mongo_cmd_get_last_error(mongo_connection, store->name, error);
-		bson_print(error);
-		bson_destroy(error);
-	}
-	*/
-
-	j_connection_pool_push_meta(0, mongo_connection);
-
-	bson_destroy(index);
-
-	mongoc_write_concern_destroy(write_concern);
-
-	for (i = 0; i < length; i++)
-	{
-		bson_destroy(obj[i]);
-		g_slice_free(bson_t, obj[i]);
-	}
-
-	g_free(obj);
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	/*
 	{
@@ -592,48 +546,32 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 gboolean
 j_collection_delete_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JListIterator* it;
-	mongoc_client_t* mongo_connection;
-	mongoc_write_concern_t* write_concern;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	/*
-		IsInitialized(true);
-	*/
-
-	write_concern = mongoc_write_concern_new();
-	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
 	it = j_list_iterator_new(operations);
-	mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_meta(0);
+	meta_backend = j_metadata_backend();
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.collection_delete.collection;
-		bson_t b;
-		mongoc_collection_t* m_collection;
 
-		bson_init(&b);
-		bson_append_oid(&b, "_id", -1, j_collection_get_id(collection));
-		//bson_finish(&b);
-
-		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
-		/* FIXME do not send write_concern on each remove */
-		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL)&& ret;
-
-		bson_destroy(&b);
+		if (meta_backend != NULL)
+		{
+			ret = meta_backend->u.meta.delete("collections", collection->name) && ret;
+		}
 	}
 
-	j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
-	mongoc_write_concern_destroy(write_concern);
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	return ret;
 }
@@ -653,82 +591,44 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 gboolean
 j_collection_get_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JListIterator* it;
-	mongoc_client_t* mongo_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	/*
-		IsInitialized(true);
-	*/
-
 	it = j_list_iterator_new(operations);
-	mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_meta(0);
+
+	meta_backend = j_metadata_backend();
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection** collection = operation->u.collection_get.collection;
-		bson_t b;
-		bson_t const* b_cur;
-		bson_t opts;
-		mongoc_collection_t* m_collection;
-		mongoc_cursor_t* cursor;
+		bson_t result[1];
 		gchar const* name = operation->u.collection_get.name;
 
-		bson_init(&b);
-		bson_append_utf8(&b, "Name", -1, name, -1);
-		//bson_finish(&b);
-
-		bson_init(&opts);
-		bson_append_int32(&opts, "limit", -1, 1);
-
-		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Collections");
-		cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
-
-		bson_destroy(&opts);
-		bson_destroy(&b);
+		if (meta_backend != NULL)
+		{
+			ret = meta_backend->u.meta.get("collections", name, result) && ret;
+		}
 
 		*collection = NULL;
 
-		// FIXME ret
-		while (mongoc_cursor_next(cursor, &b_cur))
+		if (ret)
 		{
-			*collection = j_collection_new_from_bson(b_cur);
+			*collection = j_collection_new_from_bson(result);
 		}
-
-		mongoc_cursor_destroy(cursor);
 	}
 
-	j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	return ret;
 }
-
-/*
-namespace JULEA
-{
-	void _Collection::IsInitialized (bool check) const
-	{
-		if (m_initialized != check)
-		{
-			if (check)
-			{
-				throw Exception(JULEA_FILELINE ": Collection not initialized.");
-			}
-			else
-			{
-				throw Exception(JULEA_FILELINE ": Collection already initialized.");
-			}
-		}
-	}
-}
-*/
 
 /**
  * @}

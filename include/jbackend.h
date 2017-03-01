@@ -32,6 +32,8 @@
 #ifndef H_BACKEND
 #define H_BACKEND
 
+#include <bson.h>
+
 #include <jitem.h>
 
 struct JBackendItem
@@ -82,6 +84,17 @@ struct JBackend
 		{
 			gboolean (*init) (gchar const*);
 			void (*fini) (void);
+
+			gpointer (*thread_init) (void);
+			void (*thread_fini) (gpointer);
+
+			gboolean (*create) (gchar const*, gchar const*, bson_t const*);
+			gboolean (*delete) (gchar const*, gchar const*);
+
+			gboolean (*get) (gchar const*, gchar const*, bson_t*);
+
+			gboolean (*get_all) (gchar const*, gpointer*);
+			gboolean (*iterate) (gpointer, bson_t const**);
 		}
 		meta;
 	}

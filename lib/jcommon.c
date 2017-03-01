@@ -39,6 +39,8 @@
 #include <jcommon.h>
 #include <jcommon-internal.h>
 
+#include <jbackend.h>
+#include <jbackend-internal.h>
 #include <jbackground-operation-internal.h>
 #include <jconfiguration-internal.h>
 #include <jconnection-pool-internal.h>
@@ -65,6 +67,12 @@ struct JCommon
 	 * The configuration.
 	 */
 	JConfiguration* configuration;
+
+	JBackend* data_backend;
+	JBackend* meta_backend;
+
+	GModule* data_module;
+	GModule* meta_module;
 };
 
 static JCommon* j_common = NULL;
@@ -189,6 +197,19 @@ j_init (void)
 		goto error;
 	}
 
+	common->data_module = j_backend_load_client(j_configuration_get_data_backend(common->configuration), J_BACKEND_TYPE_DATA, &(common->data_backend));
+	common->meta_module = j_backend_load_client(j_configuration_get_metadata_backend(common->configuration), J_BACKEND_TYPE_META, &(common->meta_backend));
+
+	if (common->data_backend != NULL)
+	{
+		common->data_backend->u.data.init(j_configuration_get_data_path(common->configuration));
+	}
+
+	if (common->meta_backend != NULL)
+	{
+		common->meta_backend->u.meta.init(j_configuration_get_metadata_path(common->configuration));
+	}
+
 	j_connection_pool_init(common->configuration);
 	j_distribution_init();
 	j_background_operation_init(0);
@@ -242,6 +263,26 @@ j_fini (void)
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
 
+	if (common->meta_backend != NULL)
+	{
+		common->meta_backend->u.meta.fini();
+	}
+
+	if (common->data_backend != NULL)
+	{
+		common->data_backend->u.data.fini();
+	}
+
+	if (common->meta_module)
+	{
+		g_module_close(common->meta_module);
+	}
+
+	if (common->data_module)
+	{
+		g_module_close(common->data_module);
+	}
+
 	j_configuration_unref(common->configuration);
 
 	mongoc_cleanup();
@@ -274,6 +315,48 @@ j_configuration (void)
 	common = g_atomic_pointer_get(&j_common);
 
 	return common->configuration;
+}
+
+/**
+ * Returns the data backend.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \return The data backend.
+ */
+JBackend*
+j_data_backend (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->data_backend;
+}
+
+/**
+ * Returns the data backend.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \return The data backend.
+ */
+JBackend*
+j_metadata_backend (void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->meta_backend;
 }
 
 /**

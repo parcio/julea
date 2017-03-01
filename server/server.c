@@ -629,17 +629,8 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	if ((data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend)) == NULL)
-	{
-		g_printerr("Could not load data backend.\n");
-		return 1;
-	}
-
-	if ((meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend)) == NULL)
-	{
-		g_printerr("Could not load metadata backend.\n");
-		return 1;
-	}
+	data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend);
+	meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend);
 
 	if (jd_data_backend != NULL && !jd_data_backend->u.data.init(j_configuration_get_data_path(configuration)))
 	{
@@ -684,8 +675,15 @@ main (int argc, char** argv)
 		jd_data_backend->u.data.fini();
 	}
 
-	g_module_close(meta_module);
-	g_module_close(data_module);
+	if (meta_module != NULL)
+	{
+		g_module_close(meta_module);
+	}
+
+	if (data_module)
+	{
+		g_module_close(data_module);
+	}
 
 	j_trace_leave(G_STRFUNC);
 
