@@ -38,8 +38,11 @@
 
 #include <jitem-iterator.h>
 
+#include <jbackend.h>
+#include <jbackend-internal.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
+#include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jitem.h>
 #include <jitem-internal.h>
@@ -55,10 +58,11 @@
 
 struct JItemIterator
 {
-	mongoc_cursor_t* cursor;
+	JBackend* meta_backend;
 
 	JCollection* collection;
-	mongoc_client_t* connection;
+
+	gpointer cursor;
 
 	/**
 	 * The current document.
@@ -79,27 +83,25 @@ JItemIterator*
 j_item_iterator_new (JCollection* collection)
 {
 	JItemIterator* iterator;
-	mongoc_collection_t* m_collection;
-	bson_t b;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
 	j_operation_cache_flush();
 
 	iterator = g_slice_new(JItemIterator);
+	iterator->meta_backend = j_metadata_backend();
 	iterator->collection = j_collection_ref(collection);
-	iterator->connection = j_connection_pool_pop_meta(0);
+	iterator->cursor = NULL;
 	iterator->current = NULL;
 
-	bson_init(&b);
-	bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
-	//bson_finish(&b);
-
-	/* FIXME */
-	m_collection = mongoc_client_get_collection(iterator->connection, "JULEA", "Items");
-	iterator->cursor = mongoc_collection_find_with_opts(m_collection, &b, NULL, NULL);
-
-	bson_destroy(&b);
+	if (iterator->meta_backend != NULL)
+	{
+		/* FIXME */
+		//bson_init(&b);
+		//bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
+		//bson_finish(&b);
+		iterator->meta_backend->u.meta.get_all("items", &(iterator->cursor));
+	}
 
 	return iterator;
 }
@@ -115,9 +117,6 @@ void
 j_item_iterator_free (JItemIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
-
-	mongoc_cursor_destroy(iterator->cursor);
-	j_connection_pool_push_meta(0, iterator->connection);
 
 	j_collection_unref(iterator->collection);
 
@@ -139,11 +138,16 @@ j_item_iterator_free (JItemIterator* iterator)
 gboolean
 j_item_iterator_next (JItemIterator* iterator)
 {
+	gboolean ret = FALSE;
+
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	mongoc_cursor_next(iterator->cursor, &(iterator->current));
+	if (iterator->meta_backend != NULL)
+	{
+		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, &(iterator->current));
+	}
 
-	return (iterator->current != NULL);
+	return ret;
 }
 
 /**

@@ -1199,94 +1199,51 @@ j_item_get_id (JItem* item)
 gboolean
 j_item_create_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JSemantics* semantics;
-	bson_t** obj;
-	bson_t index[1];
-	mongoc_client_t* mongo_connection;
-	mongoc_collection_t* mongo_collection;
-	mongoc_write_concern_t* write_concern;
 	gboolean ret = FALSE;
-	guint i;
-	guint length;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	/*
-	IsInitialized(true);
-	*/
-
 	semantics = j_batch_get_semantics(batch);
 
-	i = 0;
-	length = j_list_length(operations);
-	obj = g_new(bson_t*, length);
 	it = j_list_iterator_new(operations);
+
+	meta_backend = j_metadata_backend();
+	//mongo_connection = j_connection_pool_pop_meta(0);
 
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JItem* item = operation->u.item_create.item;
 		bson_t* b;
+		gchar* path;
 
 		collection = operation->u.item_create.collection;
+
+		if (collection == NULL)
+		{
+			continue;
+		}
+
 		b = j_item_serialize(item, semantics);
 
-		obj[i] = b;
-		i++;
+		if (meta_backend != NULL)
+		{
+			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+			ret = meta_backend->u.meta.create("items", path, b) && ret;
+			g_free(path);
+		}
 	}
 
 	j_list_iterator_free(it);
 
-	if (collection == NULL)
-	{
-		goto end;
-	}
-
-	write_concern = mongoc_write_concern_new();
-	j_helper_set_write_concern(write_concern, semantics);
-
-	bson_init(index);
-	bson_append_int32(index, "Collection", -1, 1);
-	bson_append_int32(index, "Name", -1, 1);
-	//bson_finish(index);
-
-	mongo_connection = j_connection_pool_pop_meta(0);
-	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
-
-	j_helper_create_index(J_STORE_COLLECTION_ITEMS, mongo_connection, index);
-	ret = j_helper_insert_batch(mongo_collection, obj, length, write_concern);
-
-	/*
-	if (!ret)
-	{
-		bson_t error[1];
-
-		mongo_cmd_get_last_error(mongo_connection, j_store_get_name(collection->store), error);
-		bson_print(error);
-		bson_destroy(error);
-	}
-	*/
-
-	j_connection_pool_push_meta(0, mongo_connection);
-
-	bson_destroy(index);
-
-	mongoc_write_concern_destroy(write_concern);
-
-end:
-	for (i = 0; i < length; i++)
-	{
-		bson_destroy(obj[i]);
-		g_slice_free(bson_t, obj[i]);
-	}
-
-	g_free(obj);
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -1296,13 +1253,12 @@ end:
 gboolean
 j_item_delete_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JBackgroundOperation** background_operations;
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage** messages;
 	JSemantics* semantics;
-	mongoc_client_t* mongo_connection;
-	mongoc_write_concern_t* write_concern;
 	gboolean ret = TRUE;
 	guint m;
 	guint n;
@@ -1339,41 +1295,34 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 		collection_name = j_collection_get_name(collection);
 	}
 
-	write_concern = mongoc_write_concern_new();
-	j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
 	it = j_list_iterator_new(operations);
-	mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_meta(0);
+	meta_backend = j_metadata_backend();
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
 		JOperation* operation = j_list_iterator_get(it);
 		JItem* item = operation->u.item_delete.item;
-		bson_t b;
-		mongoc_collection_t* m_collection;
+		gchar* path;
+		gsize path_len;
 
 		item_name = j_item_get_name(item);
 
-		bson_init(&b);
-		bson_append_oid(&b, "_id", -1, j_item_get_id(item));
+		path = g_build_path("/", collection_name, item_name, NULL);
+		path_len = strlen(path) + 1;
+
+		if (meta_backend != NULL)
+		{
+			ret = meta_backend->u.meta.delete("items", path) && ret;
+		}
+
+		//bson_init(&b);
+		//bson_append_oid(&b, "_id", -1, j_item_get_id(item));
 		//bson_finish(&b);
-
-		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
-		/* FIXME do not send write_concern on each remove */
-		ret = mongoc_collection_remove(m_collection, MONGOC_DELETE_SINGLE_REMOVE, &b, write_concern, NULL) && ret;
-
-		bson_destroy(&b);
 
 		for (guint i = 0; i < n; i++)
 		{
-			gchar* path;
-			gsize path_len;
-
-			path = g_build_path("/", collection_name, item_name, NULL);
-			path_len = strlen(path) + 1;
-
 			if (messages[i] == NULL)
 			{
 				/* FIXME */
@@ -1388,7 +1337,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 		}
 	}
 
-	j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	m = 0;
 
@@ -1449,8 +1398,6 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 	j_list_iterator_free(it);
 
-	mongoc_write_concern_destroy(write_concern);
-
 	g_free(background_operations);
 	g_free(messages);
 
@@ -1462,8 +1409,8 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 gboolean
 j_item_get_internal (JBatch* batch, JList* operations)
 {
+	JBackend* meta_backend;
 	JListIterator* it;
-	mongoc_client_t* mongo_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -1471,12 +1418,9 @@ j_item_get_internal (JBatch* batch, JList* operations)
 
 	j_trace_enter(G_STRFUNC);
 
-	/*
-		IsInitialized(true);
-	*/
-
 	it = j_list_iterator_new(operations);
-	mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_meta(0);
+	meta_backend = j_metadata_backend();
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -1484,40 +1428,27 @@ j_item_get_internal (JBatch* batch, JList* operations)
 		JOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->u.item_get.collection;
 		JItem** item = operation->u.item_get.item;
-		bson_t b;
-		bson_t const* b_cur;
-		bson_t opts;
-		mongoc_cursor_t* cursor;
-		mongoc_collection_t* m_collection;
+		bson_t result[1];
 		gchar const* name = operation->u.item_get.name;
+		gchar* path;
 
-		bson_init(&b);
-		bson_append_oid(&b, "Collection", -1, j_collection_get_id(collection));
-		bson_append_utf8(&b, "Name", -1, name, -1);
-		//bson_finish(&b);
-
-		bson_init(&opts);
-		bson_append_int32(&opts, "limit", -1, 1);
-
-		/* FIXME */
-		m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
-		cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
-
-		bson_destroy(&opts);
-		bson_destroy(&b);
+		if (meta_backend != NULL)
+		{
+			path = g_build_path("/", j_collection_get_name(collection), name, NULL);
+			ret = meta_backend->u.meta.get("items", path, result) && ret;
+			g_free(path);
+		}
 
 		*item = NULL;
 
-		// FIXME ret
-		while (mongoc_cursor_next(cursor, &b_cur))
+		if (ret)
 		{
-			*item = j_item_new_from_bson(collection, b_cur);
+			*item = j_item_new_from_bson(collection, result);
+			bson_destroy(result);
 		}
-
-		mongoc_cursor_destroy(cursor);
 	}
 
-	j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	j_trace_leave(G_STRFUNC);
@@ -2277,23 +2208,6 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 	return ret;
 }
-
-/*
-	void _Item::IsInitialized (bool check)
-	{
-		if (m_initialized != check)
-		{
-			if (check)
-			{
-				throw Exception(JULEA_FILELINE ": Item not initialized.");
-			}
-			else
-			{
-				throw Exception(JULEA_FILELINE ": Item already initialized.");
-			}
-		}
-	}
-*/
 
 /**
  * @}
