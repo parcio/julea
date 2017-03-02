@@ -337,8 +337,7 @@ backend_init (gchar const* path)
 	j_trace_enter(G_STRFUNC);
 
 	mongoc_init();
-	/* FIXME */
-	//mongoc_log_set_handler(j_common_mongoc_log_handler, NULL);
+	mongoc_log_set_handler(NULL, NULL);
 
 	split = g_strsplit(path, ":", 0);
 

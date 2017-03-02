@@ -102,13 +102,6 @@ j_common_oid_inc (void)
 }
 */
 
-static
-void
-j_common_mongoc_log_handler (mongoc_log_level_t log_level, gchar const* log_domain, gchar const* message, gpointer data)
-{
-	return;
-}
-
 /**
  * Returns whether JULEA has been initialized.
  *
@@ -219,7 +212,7 @@ j_init (void)
 	//bson_set_oid_inc(j_common_oid_inc);
 
 	/* We do not want the mongoc output. */
-	mongoc_log_set_handler(j_common_mongoc_log_handler, NULL);
+	mongoc_log_set_handler(NULL, NULL);
 
 	g_atomic_pointer_set(&j_common, common);
 
