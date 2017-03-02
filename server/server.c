@@ -115,7 +115,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		{
 			case J_MESSAGE_NONE:
 				break;
-			case J_MESSAGE_CREATE:
+			case J_MESSAGE_DATA_CREATE:
 				{
 					JMessage* reply = NULL;
 
@@ -154,7 +154,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_DELETE:
+			case J_MESSAGE_DATA_DELETE:
 				{
 					JMessage* reply = NULL;
 
@@ -187,7 +187,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_READ:
+			case J_MESSAGE_DATA_READ:
 				{
 					JMessage* reply;
 
@@ -244,7 +244,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
-			case J_MESSAGE_WRITE:
+			case J_MESSAGE_DATA_WRITE:
 				{
 					JMessage* reply = NULL;
 					gchar* buf;
@@ -334,7 +334,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
-			case J_MESSAGE_STATUS:
+			case J_MESSAGE_DATA_STATUS:
 				{
 					JMessage* reply;
 
@@ -460,6 +460,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
+			case J_MESSAGE_META_CREATE:
+			case J_MESSAGE_META_DELETE:
+			case J_MESSAGE_META_GET:
+			case J_MESSAGE_META_GET_ALL:
+			case J_MESSAGE_META_GET_BY_VALUE:
+			case J_MESSAGE_META_ITERATE:
 			case J_MESSAGE_REPLY:
 			case J_MESSAGE_SAFETY_NETWORK:
 			case J_MESSAGE_SAFETY_STORAGE:

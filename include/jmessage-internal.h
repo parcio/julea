@@ -39,18 +39,24 @@
 
 enum JMessageType
 {
-	J_MESSAGE_NONE           = 0,
-	J_MESSAGE_CREATE         = 1 << 0,
-	J_MESSAGE_DELETE         = 1 << 1,
-	J_MESSAGE_PING           = 1 << 2,
-	J_MESSAGE_READ           = 1 << 3,
-	J_MESSAGE_STATISTICS     = 1 << 4,
-	J_MESSAGE_STATUS         = 1 << 5,
-	J_MESSAGE_WRITE          = 1 << 6,
-	J_MESSAGE_REPLY          = 1 << 7,
-	J_MESSAGE_SAFETY_NETWORK = 1 << 8,
-	J_MESSAGE_SAFETY_STORAGE = 1 << 9,
-	J_MESSAGE_MODIFIER_MASK  = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE)
+	J_MESSAGE_NONE              = 0,
+	J_MESSAGE_PING              = 1 << 0,
+	J_MESSAGE_STATISTICS        = 1 << 1,
+	J_MESSAGE_DATA_CREATE       = 1 << 2,
+	J_MESSAGE_DATA_DELETE       = 1 << 3,
+	J_MESSAGE_DATA_READ         = 1 << 4,
+	J_MESSAGE_DATA_STATUS       = 1 << 5,
+	J_MESSAGE_DATA_WRITE        = 1 << 6,
+	J_MESSAGE_META_CREATE       = 1 << 7,
+	J_MESSAGE_META_DELETE       = 1 << 8,
+	J_MESSAGE_META_GET          = 1 << 9,
+	J_MESSAGE_META_GET_ALL      = 1 << 10,
+	J_MESSAGE_META_GET_BY_VALUE = 1 << 11,
+	J_MESSAGE_META_ITERATE      = 1 << 12,
+	J_MESSAGE_REPLY             = 1 << 13,
+	J_MESSAGE_SAFETY_NETWORK    = 1 << 14,
+	J_MESSAGE_SAFETY_STORAGE    = 1 << 15,
+	J_MESSAGE_MODIFIER_MASK     = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE)
 };
 
 typedef enum JMessageType JMessageType;

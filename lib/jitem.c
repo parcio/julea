@@ -1325,7 +1325,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 			if (messages[i] == NULL)
 			{
 				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DELETE, 0);
+				messages[i] = j_message_new(J_MESSAGE_DATA_DELETE, 0);
 				j_message_set_safety(messages[i], semantics);
 			}
 
@@ -1587,7 +1587,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 				path = g_build_path("/", collection_name, item_name, NULL);
 				path_len = strlen(path) + 1;
 
-				messages[index] = j_message_new(J_MESSAGE_READ, path_len);
+				messages[index] = j_message_new(J_MESSAGE_DATA_READ, path_len);
 				j_message_append_n(messages[index], path, path_len);
 
 				g_free(path);
@@ -1785,7 +1785,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 				path_len = strlen(path) + 1;
 
 				/* FIXME */
-				messages[index] = j_message_new(J_MESSAGE_WRITE, path_len);
+				messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, path_len);
 				j_message_set_safety(messages[index], semantics);
 				j_message_append_n(messages[index], path, path_len);
 
@@ -1861,7 +1861,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			path_len = strlen(path) + 1;
 
 			/* FIXME better solution? */
-			create_message = j_message_new(J_MESSAGE_CREATE, 0);
+			create_message = j_message_new(J_MESSAGE_DATA_CREATE, 0);
 			/**
 			 * Force safe semantics to make the server send a reply.
 			 * Otherwise, nasty races can occur when using unsafe semantics:
@@ -2116,7 +2116,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 				if (messages[i] == NULL)
 				{
-					messages[i] = j_message_new(J_MESSAGE_STATUS, 0);
+					messages[i] = j_message_new(J_MESSAGE_DATA_STATUS, 0);
 				}
 
 				j_message_add_operation(messages[i], path_len + sizeof(guint32));
