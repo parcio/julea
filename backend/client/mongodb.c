@@ -239,6 +239,57 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 static
 gboolean
+backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* data)
+{
+	gboolean ret = FALSE;
+
+	bson_t document[1];
+	bson_iter_t iter;
+	mongoc_collection_t* m_collection;
+	mongoc_cursor_t* cursor;
+
+	j_trace_enter(G_STRFUNC);
+
+	bson_init(document);
+
+	if (bson_iter_init(&iter, value))
+	{
+		while (bson_iter_next(&iter))
+		{
+			bson_value_t const* tmp;
+			gchar* key;
+
+			tmp = bson_iter_value(&iter);
+			key = g_strdup_printf("value.%s", bson_iter_key(&iter));
+			bson_append_value(document, key, -1, tmp);
+			g_free(key);
+		}
+	}
+
+	/* FIXME */
+	//write_concern = mongoc_write_concern_new();
+	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
+
+	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);
+
+	if (cursor != NULL)
+	{
+		ret = TRUE;
+		*data = cursor;
+	}
+
+	mongoc_collection_destroy(m_collection);
+
+	bson_destroy(document);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+static
+gboolean
 backend_iterate (gpointer data, bson_t const** result_out)
 {
 	bson_t const* result;
@@ -343,6 +394,7 @@ JBackend mongodb_backend = {
 		.delete = backend_delete,
 		.get = backend_get,
 		.get_all = backend_get_all,
+		.get_by_value = backend_get_by_value,
 		.iterate = backend_iterate
 	}
 };

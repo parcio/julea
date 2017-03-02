@@ -34,7 +34,6 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jitem-iterator.h>
 
@@ -96,11 +95,12 @@ j_item_iterator_new (JCollection* collection)
 
 	if (iterator->meta_backend != NULL)
 	{
-		/* FIXME */
-		//bson_init(&b);
-		//bson_append_oid(&b, "Collection", -1, j_collection_get_id(iterator->collection));
-		//bson_finish(&b);
-		iterator->meta_backend->u.meta.get_all("items", &(iterator->cursor));
+		bson_t query[1];
+
+		bson_init(query);
+		bson_append_oid(query, "Collection", -1, j_collection_get_id(iterator->collection));
+
+		iterator->meta_backend->u.meta.get_by_value("items", query, &(iterator->cursor));
 	}
 
 	return iterator;

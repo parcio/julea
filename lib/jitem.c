@@ -36,7 +36,6 @@
 #include <string.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jitem.h>
 #include <jitem-internal.h>
@@ -1930,6 +1929,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		}
 	}
 
+	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE && FALSE)
 	{
 		bson_t b_document[1];
@@ -1965,7 +1965,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		//bson_finish(op);
 
 		mongo_connection = j_connection_pool_pop_meta(0);
-		/* FIXME */
 		mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
 
 		ret = mongoc_collection_update(mongo_collection, MONGOC_UPDATE_NONE, cond, op, write_concern, NULL);
@@ -1982,6 +1981,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		mongoc_write_concern_destroy(write_concern);
 	}
+	*/
 
 	if (lock != NULL)
 	{
@@ -2000,12 +2000,12 @@ gboolean
 j_item_get_status_internal (JBatch* batch, JList* operations)
 {
 	gboolean ret = TRUE;
+	JBackend* meta_backend;
 	JBackgroundOperation** background_operations;
 	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
 	JSemantics* semantics;
-	mongoc_client_t* mongo_connection = NULL;
 	gint semantics_concurrency;
 	gint semantics_consistency;
 	guint n;
@@ -2027,18 +2027,18 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	}
 
 	iterator = j_list_iterator_new(operations);
-	mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_meta(0);
 	semantics = j_batch_get_semantics(batch);
 	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
 	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
+
+	meta_backend = j_metadata_backend();
 
 	while (j_list_iterator_next(iterator))
 	{
 		JOperation* operation = j_list_iterator_get(iterator);
 		JItem* item = operation->u.item_get_status.item;
 		JItemStatusFlags flags = operation->u.item_get_status.flags;
-		bson_t b;
-		mongoc_cursor_t* cursor;
 
 		if (flags == J_ITEM_STATUS_NONE)
 		{
@@ -2055,11 +2055,10 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
 		{
-			bson_t const* b_cur;
-			bson_t opts;
-			bson_t projection;
-			mongoc_collection_t* m_collection;
+			bson_t result[1];
+			gchar* path;
 
+			/*
 			bson_init(&opts);
 			bson_append_int32(&opts, "limit", -1, 1);
 			bson_append_document_begin(&opts, "projection", -1, &projection);
@@ -2075,26 +2074,25 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			}
 
 			bson_append_document_end(&opts, &projection);
-			//bson_finish(&opts);
+			*/
 
-			bson_init(&b);
-			bson_append_oid(&b, "_id", -1, &(item->id));
-			//bson_finish(&b);
-
-			/* FIXME */
-			m_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
-			cursor = mongoc_collection_find_with_opts(m_collection, &b, &opts, NULL);
-
-			bson_destroy(&opts);
-			bson_destroy(&b);
-
-			// FIXME ret
-			while (mongoc_cursor_next(cursor, &b_cur))
+			if (meta_backend != NULL)
 			{
-				j_item_deserialize(item, b_cur);
+				path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+				ret = meta_backend->u.meta.get("items", path, result) && ret;
+				g_free(path);
 			}
 
-			mongoc_cursor_destroy(cursor);
+			/*
+			bson_init(&b);
+			bson_append_oid(&b, "_id", -1, &(item->id));
+			*/
+
+			if (ret)
+			{
+				j_item_deserialize(item, result);
+				bson_destroy(result);
+			}
 		}
 		else
 		{
@@ -2138,7 +2136,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	}
 
 	j_list_iterator_free(iterator);
-	j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	for (guint i = 0; i < n; i++)
 	{
