@@ -36,7 +36,6 @@
 #include <gio/gio.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <julea-internal.h>
 
@@ -52,16 +51,10 @@ typedef enum JStoreCollection JStoreCollection;
 #include <jsemantics.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
 J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
-J_GNUC_INTERNAL gboolean j_helper_insert_batch (mongoc_collection_t*, bson_t**, guint, mongoc_write_concern_t*);
-J_GNUC_INTERNAL void j_helper_set_write_concern (mongoc_write_concern_t*, JSemantics*);
-
 J_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
-
-J_GNUC_INTERNAL void j_helper_create_index (JStoreCollection, mongoc_client_t*, bson_t const*);
 
 #endif

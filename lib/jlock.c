@@ -38,8 +38,11 @@
 
 #include <jlock-internal.h>
 
+#include <jbackend.h>
+#include <jbackend-internal.h>
 #include <jcollection.h>
 #include <jcollection-internal.h>
+#include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
 #include <jitem.h>
@@ -60,11 +63,6 @@
 struct JLock
 {
 	/**
-	 * The ID.
-	 **/
-	bson_oid_t id;
-
-	/**
 	 * The parent item.
 	 **/
 	JItem* item;
@@ -73,52 +71,6 @@ struct JLock
 
 	gboolean acquired;
 };
-
-/**
- * Serializes a lock.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param lock A lock.
- *
- * \return A new BSON object. Should be freed with g_slice_free().
- **/
-static
-void
-j_lock_serialize (JLock* lock, bson_t* b)
-{
-	bson_t b_array[1];
-	// FIXME might be too small
-	gchar numstr[10];
-
-	g_return_if_fail(lock != NULL);
-	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC);
-
-	bson_init(b);
-	bson_append_oid(b, "_id", -1, &(lock->id));
-	bson_append_oid(b, "Item", -1, j_item_get_id(lock->item));
-
-	bson_append_array_begin(b, "Blocks", -1, b_array);
-
-	for (guint i = 0; i < lock->blocks->len; i++)
-	{
-		j_helper_get_number_string(numstr, sizeof(numstr), i);
-		bson_append_int64(b_array, numstr, -1, g_array_index(lock->blocks, guint64, i));
-	}
-
-	bson_append_array_end(b, b_array);
-
-	//bson_finish(b);
-
-	j_trace_leave(G_STRFUNC);
-}
 
 /**
  * Creates a new lock.
@@ -148,7 +100,6 @@ j_lock_new (JItem* item)
 	j_trace_enter(G_STRFUNC);
 
 	lock = g_slice_new(JLock);
-	bson_oid_init(&(lock->id), bson_context_get_default());
 	lock->item = j_item_ref(item);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
@@ -200,39 +151,54 @@ j_lock_free (JLock* lock)
 gboolean
 j_lock_acquire (JLock* lock)
 {
-	bson_t obj[1];
-	bson_t index[1];
-	mongoc_client_t* mongo_connection;
-	mongoc_collection_t* mongo_collection;
-	mongoc_write_concern_t* write_concern;
+	JBackend* meta_backend;
+	bson_t empty[1];
+	gboolean acquired = TRUE;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 
-	j_lock_serialize(lock, obj);
+	//j_lock_serialize(lock, obj);
 
-	write_concern = mongoc_write_concern_new();
+	//write_concern = mongoc_write_concern_new();
 	//write_concern->j = 1;
-	mongoc_write_concern_set_w(write_concern, 1);
+	//mongoc_write_concern_set_w(write_concern, 1);
 
-	bson_init(index);
-	bson_append_int32(index, "Item", -1, 1);
+	//bson_init(index);
+	//bson_append_int32(index, "item", -1, 1);
 	// FIXME speed
-	bson_append_int32(index, "Blocks", -1, 1);
-	//bson_finish(index);
+	//bson_append_int32(index, "blocks", -1, 1);
 
-	mongo_connection = j_connection_pool_pop_meta(0);
-	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Locks");
+	//j_helper_create_index(J_STORE_COLLECTION_LOCKS, mongo_connection, index);
 
-	j_helper_create_index(J_STORE_COLLECTION_LOCKS, mongo_connection, index);
-	lock->acquired = mongoc_collection_insert(mongo_collection, MONGOC_INSERT_NONE, obj, write_concern, NULL);
+	bson_init(empty);
 
-	j_connection_pool_push_meta(0, mongo_connection);
+	meta_backend = j_metadata_backend();
 
-	bson_destroy(index);
-	bson_destroy(obj);
+	//mongo_connection = j_connection_pool_pop_meta(0);
 
-	mongoc_write_concern_destroy(write_concern);
+	for (guint i = 0; i < lock->blocks->len; i++)
+	{
+		gchar* block_str;
+		guint64 block;
+
+		block = g_array_index(lock->blocks, guint64, i);
+		block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
+
+		if (meta_backend != NULL)
+		{
+			gchar* path;
+
+			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+			acquired = meta_backend->u.meta.create("locks", path, empty) && acquired;
+			g_free(path);
+		}
+	}
+
+	lock->acquired = acquired;
+
+	//j_connection_pool_push_meta(0, mongo_connection);
+
+	bson_destroy(empty);
 
 	return lock->acquired;
 }
@@ -240,32 +206,44 @@ j_lock_acquire (JLock* lock)
 gboolean
 j_lock_release (JLock* lock)
 {
-	bson_t obj[1];
-	mongoc_client_t* mongo_connection;
-	mongoc_collection_t* mongo_collection;
-	mongoc_write_concern_t* write_concern;
+	JBackend* meta_backend;
+	gboolean released = TRUE;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 	g_return_val_if_fail(lock->acquired, FALSE);
 
-	write_concern = mongoc_write_concern_new();
+	//write_concern = mongoc_write_concern_new();
 	//write_concern->j = 1;
-	mongoc_write_concern_set_w(write_concern, 1);
+	//mongoc_write_concern_set_w(write_concern, 1);
 
-	bson_init(obj);
-	bson_append_oid(obj, "_id", -1, &(lock->id));
+	//bson_init(obj);
+	//bson_append_oid(obj, "_id", -1, &(lock->id));
 	//bson_finish(obj);
 
-	mongo_connection = j_connection_pool_pop_meta(0);
+	meta_backend = j_metadata_backend();
+	//mongo_connection = j_connection_pool_pop_meta(0);
 
-	/* FIXME */
-	mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Locks");
-	lock->acquired = !mongoc_collection_remove(mongo_collection, MONGOC_DELETE_SINGLE_REMOVE, obj, write_concern, NULL);
+	for (guint i = 0; i < lock->blocks->len; i++)
+	{
+		gchar* block_str;
+		guint64 block;
 
-	j_connection_pool_push_meta(0, mongo_connection);
+		block = g_array_index(lock->blocks, guint64, i);
+		block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
 
-	bson_destroy(obj);
-	mongoc_write_concern_destroy(write_concern);
+		if (meta_backend != NULL)
+		{
+			gchar* path;
+
+			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+			released = meta_backend->u.meta.delete("items", path) && released;
+			g_free(path);
+		}
+	}
+
+	lock->acquired = !released;
+
+	//j_connection_pool_push_meta(0, mongo_connection);
 
 	return !(lock->acquired);
 }

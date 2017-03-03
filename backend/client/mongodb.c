@@ -36,6 +36,7 @@
 #include <mongoc.h>
 
 #include <jbackend.h>
+#include <jsemantics.h>
 #include <jtrace-internal.h>
 
 mongoc_client_t* backend_connection;
@@ -44,6 +45,30 @@ static gchar* backend_host = NULL;
 static gchar* backend_database = NULL;
 
 static bson_t backend_value[1];
+
+/*
+static
+void
+backend_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* semantics)
+{
+	g_return_if_fail(write_concern != NULL);
+	g_return_if_fail(semantics != NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
+	{
+		mongoc_write_concern_set_w(write_concern, 1);
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			mongoc_write_concern_set_journal(write_concern, TRUE);
+		}
+	}
+
+	j_trace_leave(G_STRFUNC);
+}
+*/
 
 static
 gboolean
