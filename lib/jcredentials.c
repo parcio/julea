@@ -154,8 +154,8 @@ j_credentials_serialize (JCredentials* credentials)
 
 	b = g_slice_new(bson_t);
 	bson_init(b);
-	bson_append_int32(b, "User", -1, credentials->user);
-	bson_append_int32(b, "Group", -1, credentials->group);
+	bson_append_int32(b, "user", -1, credentials->user);
+	bson_append_int32(b, "group", -1, credentials->group);
 	//bson_finish(b);
 
 	j_trace_leave(G_STRFUNC);
@@ -194,11 +194,11 @@ j_credentials_deserialize (JCredentials* credentials, bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		if (g_strcmp0(key, "User") == 0)
+		if (g_strcmp0(key, "user") == 0)
 		{
 			credentials->user = bson_iter_int32(&iterator);
 		}
-		else if (g_strcmp0(key, "Group") == 0)
+		else if (g_strcmp0(key, "group") == 0)
 		{
 			credentials->group = bson_iter_int32(&iterator);
 		}

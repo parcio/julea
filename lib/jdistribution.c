@@ -349,7 +349,7 @@ j_distribution_serialize (JDistribution* distribution)
 	b = g_slice_new(bson_t);
 	bson_init(b);
 
-	bson_append_int32(b, "Type", -1, distribution->type);
+	bson_append_int32(b, "type", -1, distribution->type);
 	//bson_append_int64(b, "BlockSize", -1, distribution->block_size);
 
 	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
@@ -392,7 +392,7 @@ j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		if (g_strcmp0(key, "Type") == 0)
+		if (g_strcmp0(key, "type") == 0)
 		{
 			distribution->type = bson_iter_int32(&iterator);
 		}

@@ -98,7 +98,7 @@ j_item_iterator_new (JCollection* collection)
 		bson_t query[1];
 
 		bson_init(query);
-		bson_append_oid(query, "Collection", -1, j_collection_get_id(iterator->collection));
+		bson_append_oid(query, "collection", -1, j_collection_get_id(iterator->collection));
 
 		iterator->meta_backend->u.meta.get_by_value("items", query, &(iterator->cursor));
 	}

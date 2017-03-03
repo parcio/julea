@@ -275,9 +275,9 @@ distribution_serialize (gpointer data, bson_t* b)
 
 	j_trace_enter(G_STRFUNC);
 
-	bson_append_int64(b, "BlockSize", -1, distribution->block_size);
+	bson_append_int64(b, "block_size", -1, distribution->block_size);
 
-	bson_append_array_begin(b, "Weights", -1, b_array);
+	bson_append_array_begin(b, "weights", -1, b_array);
 
 	for (guint i = 0; i < distribution->server_count; i++)
 	{
@@ -324,11 +324,11 @@ distribution_deserialize (gpointer data, bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		if (g_strcmp0(key, "BlockSize") == 0)
+		if (g_strcmp0(key, "block_size") == 0)
 		{
 			distribution->block_size = bson_iter_int32(&iterator);
 		}
-		else if (g_strcmp0(key, "Weights") == 0)
+		else if (g_strcmp0(key, "weights") == 0)
 		{
 			bson_iter_t siterator;
 

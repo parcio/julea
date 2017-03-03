@@ -1025,21 +1025,21 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	bson_init(b);
 
 	bson_append_oid(b, "_id", -1, &(item->id));
-	bson_append_oid(b, "Collection", -1, j_collection_get_id(item->collection));
-	bson_append_utf8(b, "Name", -1, item->name, -1);
+	bson_append_oid(b, "collection", -1, j_collection_get_id(item->collection));
+	bson_append_utf8(b, "name", -1, item->name, -1);
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
-		bson_append_document_begin(b, "Status", -1, b_document);
+		bson_append_document_begin(b, "status", -1, b_document);
 
-		bson_append_int64(b_document, "Size", -1, item->status.size);
-		bson_append_int64(b_document, "ModificationTime", -1, item->status.modification_time);
+		bson_append_int64(b_document, "size", -1, item->status.size);
+		bson_append_int64(b_document, "modification_time", -1, item->status.modification_time);
 
 		bson_append_document_end(b, b_document);
 	}
 
-	bson_append_document(b, "Credentials", -1, b_cred);
-	bson_append_document(b, "Distribution", -1, b_distribution);
+	bson_append_document(b, "credentials", -1, b_cred);
+	bson_append_document(b, "distribution", -1, b_distribution);
 
 	//bson_finish(b);
 
@@ -1072,12 +1072,12 @@ j_item_deserialize_status (JItem* item, bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		if (g_strcmp0(key, "Size") == 0)
+		if (g_strcmp0(key, "size") == 0)
 		{
 			item->status.size = bson_iter_int64(&iterator);
 			item->status.age = g_get_real_time();
 		}
-		else if (g_strcmp0(key, "ModificationTime") == 0)
+		else if (g_strcmp0(key, "modification_time") == 0)
 		{
 			item->status.modification_time = bson_iter_int64(&iterator);
 			item->status.age = g_get_real_time();
@@ -1122,12 +1122,12 @@ j_item_deserialize (JItem* item, bson_t const* b)
 		{
 			item->id = *bson_iter_oid(&iterator);
 		}
-		else if (g_strcmp0(key, "Name") == 0)
+		else if (g_strcmp0(key, "name") == 0)
 		{
 			g_free(item->name);
 			item->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
 		}
-		else if (g_strcmp0(key, "Status") == 0)
+		else if (g_strcmp0(key, "status") == 0)
 		{
 			guint8 const* data;
 			guint32 len;
@@ -1138,7 +1138,7 @@ j_item_deserialize (JItem* item, bson_t const* b)
 			j_item_deserialize_status(item, b_status);
 			bson_destroy(b_status);
 		}
-		else if (g_strcmp0(key, "Credentials") == 0)
+		else if (g_strcmp0(key, "credentials") == 0)
 		{
 			guint8 const* data;
 			guint32 len;
@@ -1149,7 +1149,7 @@ j_item_deserialize (JItem* item, bson_t const* b)
 			j_credentials_deserialize(item->credentials, b_cred);
 			bson_destroy(b_cred);
 		}
-		else if (g_strcmp0(key, "Distribution") == 0)
+		else if (g_strcmp0(key, "distribution") == 0)
 		{
 			guint8 const* data;
 			guint32 len;

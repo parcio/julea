@@ -373,8 +373,8 @@ j_collection_serialize (JCollection* collection)
 	b = g_slice_new(bson_t);
 	bson_init(b);
 	bson_append_oid(b, "_id", -1, &(collection->id));
-	bson_append_utf8(b, "Name", -1, collection->name, -1);
-	bson_append_document(b, "Credentials", -1, b_cred);
+	bson_append_utf8(b, "name", -1, collection->name, -1);
+	bson_append_document(b, "credentials", -1, b_cred);
 	//bson_finish(b);
 
 	bson_destroy(b_cred);
@@ -427,12 +427,12 @@ j_collection_deserialize (JCollection* collection, bson_t const* b)
 		{
 			collection->id = *bson_iter_oid(&iterator);
 		}
-		else if (g_strcmp0(key, "Name") == 0)
+		else if (g_strcmp0(key, "name") == 0)
 		{
 			g_free(collection->name);
 			collection->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
 		}
-		else if (g_strcmp0(key, "Credentials") == 0)
+		else if (g_strcmp0(key, "credentials") == 0)
 		{
 			guint8 const* data;
 			guint32 len;
