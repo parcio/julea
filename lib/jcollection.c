@@ -491,6 +491,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 	JBackend* meta_backend;
 	JListIterator* it;
 	gboolean ret = FALSE;
+	gpointer meta_batch;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -499,6 +500,11 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 	//mongo_connection = j_connection_pool_pop_meta(0);
 	meta_backend = j_metadata_backend();
+
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_start("collections", &meta_batch);
+	}
 
 	while (j_list_iterator_next(it))
 	{
@@ -510,8 +516,13 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.create("collections", collection->name, b) && ret;
+			ret = meta_backend->u.meta.create("collections", collection->name, b, meta_batch) && ret;
 		}
+	}
+
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_execute("collections", meta_batch);
 	}
 
 	j_list_iterator_free(it);
@@ -565,7 +576,7 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.delete("collections", collection->name) && ret;
+			ret = meta_backend->u.meta.delete("collections", collection->name, NULL) && ret;
 		}
 	}
 

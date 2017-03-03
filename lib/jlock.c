@@ -154,6 +154,7 @@ j_lock_acquire (JLock* lock)
 	JBackend* meta_backend;
 	bson_t empty[1];
 	gboolean acquired = TRUE;
+	gpointer meta_batch;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 
@@ -176,6 +177,11 @@ j_lock_acquire (JLock* lock)
 
 	//mongo_connection = j_connection_pool_pop_meta(0);
 
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_start("locks", &meta_batch);
+	}
+
 	for (guint i = 0; i < lock->blocks->len; i++)
 	{
 		gchar* block_str;
@@ -189,9 +195,14 @@ j_lock_acquire (JLock* lock)
 			gchar* path;
 
 			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-			acquired = meta_backend->u.meta.create("locks", path, empty) && acquired;
+			acquired = meta_backend->u.meta.create("locks", path, empty, meta_batch) && acquired;
 			g_free(path);
 		}
+	}
+
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_execute("locks", meta_batch);
 	}
 
 	lock->acquired = acquired;
@@ -236,7 +247,7 @@ j_lock_release (JLock* lock)
 			gchar* path;
 
 			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-			released = meta_backend->u.meta.delete("locks", path) && released;
+			released = meta_backend->u.meta.delete("locks", path, NULL) && released;
 			g_free(path);
 		}
 	}

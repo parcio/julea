@@ -39,12 +39,12 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
-mongoc_client_t* backend_connection;
+static bson_t backend_value[1];
+
+static mongoc_client_t* backend_connection = NULL;
 
 static gchar* backend_host = NULL;
 static gchar* backend_database = NULL;
-
-static bson_t backend_value[1];
 
 /*
 static
@@ -72,41 +72,55 @@ backend_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* se
 
 static
 gboolean
-backend_create (gchar const* namespace, gchar const* key, bson_t const* value)
+backend_batch_start (gchar const* namespace, gpointer* data)
 {
 	gboolean ret = FALSE;
 
-	bson_t document[1];
 	bson_t index[1];
-	bson_t reply[1];
 	mongoc_bulk_operation_t* bulk_op;
 	mongoc_collection_t* m_collection;
 	mongoc_index_opt_t m_index_opt[1];
 
 	j_trace_enter(G_STRFUNC);
 
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
-	bson_init(document);
-	bson_append_utf8(document, "key", -1, key, -1);
-	bson_append_document(document, "value", -1, value);
-
 	bson_init(index);
 	bson_append_int32(index, "key", -1, 1);
-	//bson_finish(index);
 
 	mongoc_index_opt_init(m_index_opt);
 	m_index_opt->unique = TRUE;
 
+	/* FIXME */
+	//write_concern = mongoc_write_concern_new();
+	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
+
 	/* FIXME cache */
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+
 	mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
 
 	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, NULL /*write_concern*/);
 
-	mongoc_bulk_operation_insert(bulk_op, document);
+	mongoc_collection_destroy(m_collection);
+
+	bson_destroy(index);
+
+	*data = bulk_op;
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+static
+gboolean
+backend_batch_execute (gchar const* namespace, gpointer data)
+{
+	gboolean ret = FALSE;
+
+	bson_t reply[1];
+	mongoc_bulk_operation_t* bulk_op = data;
+
+	j_trace_enter(G_STRFUNC);
 
 	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
 
@@ -124,9 +138,64 @@ backend_create (gchar const* namespace, gchar const* key, bson_t const* value)
 	mongoc_bulk_operation_destroy(bulk_op);
 	bson_destroy(reply);
 
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+static
+gboolean
+backend_create (gchar const* namespace, gchar const* key, bson_t const* value, gpointer data)
+{
+	gboolean ret = FALSE;
+
+	bson_t document[1];
+	bson_t reply[1];
+	mongoc_bulk_operation_t* bulk_op = data;
+	mongoc_collection_t* m_collection;
+
+	gboolean single_op = FALSE;
+
+	j_trace_enter(G_STRFUNC);
+
+	/* FIXME */
+	//write_concern = mongoc_write_concern_new();
+	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
+
+	bson_init(document);
+	bson_append_utf8(document, "key", -1, key, -1);
+	bson_append_document(document, "value", -1, value);
+
+	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+
+	if (bulk_op == NULL)
+	{
+		single_op = TRUE;
+		bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, NULL /*write_concern*/);
+	}
+
+	mongoc_bulk_operation_insert(bulk_op, document);
+
+	if (single_op)
+	{
+		ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
+		mongoc_bulk_operation_destroy(bulk_op);
+		bson_destroy(reply);
+	}
+
+	/*
+	if (!ret)
+	{
+		bson_t error[1];
+
+		mongo_cmd_get_last_error(mongo_connection, store->name, error);
+		bson_print(error);
+		bson_destroy(error);
+	}
+	*/
+
 	mongoc_collection_destroy(m_collection);
 
-	bson_destroy(index);
 	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
@@ -136,7 +205,7 @@ backend_create (gchar const* namespace, gchar const* key, bson_t const* value)
 
 static
 gboolean
-backend_delete (gchar const* namespace, gchar const* key)
+backend_delete (gchar const* namespace, gchar const* key, gpointer data)
 {
 	gboolean ret = FALSE;
 
@@ -414,6 +483,8 @@ JBackend mongodb_backend = {
 		.fini = backend_fini,
 		.thread_init = NULL,
 		.thread_fini = NULL,
+		.batch_start = backend_batch_start,
+		.batch_execute = backend_batch_execute,
 		.create = backend_create,
 		.delete = backend_delete,
 		.get = backend_get,

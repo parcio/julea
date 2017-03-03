@@ -88,8 +88,11 @@ struct JBackend
 			gpointer (*thread_init) (void);
 			void (*thread_fini) (gpointer);
 
-			gboolean (*create) (gchar const*, gchar const*, bson_t const*);
-			gboolean (*delete) (gchar const*, gchar const*);
+			gboolean (*batch_start) (gchar const*, gpointer*);
+			gboolean (*batch_execute) (gchar const*, gpointer);
+
+			gboolean (*create) (gchar const*, gchar const*, bson_t const*, gpointer);
+			gboolean (*delete) (gchar const*, gchar const*, gpointer);
 
 			gboolean (*get) (gchar const*, gchar const*, bson_t*);
 

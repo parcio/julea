@@ -1203,6 +1203,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 	JListIterator* it;
 	JSemantics* semantics;
 	gboolean ret = FALSE;
+	gpointer meta_batch;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1215,6 +1216,11 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 	meta_backend = j_metadata_backend();
 	//mongo_connection = j_connection_pool_pop_meta(0);
+
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_start("items", &meta_batch);
+	}
 
 	while (j_list_iterator_next(it))
 	{
@@ -1235,9 +1241,14 @@ j_item_create_internal (JBatch* batch, JList* operations)
 		if (meta_backend != NULL)
 		{
 			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-			ret = meta_backend->u.meta.create("items", path, b) && ret;
+			ret = meta_backend->u.meta.create("items", path, b, meta_batch) && ret;
 			g_free(path);
 		}
+	}
+
+	if (meta_backend != NULL)
+	{
+		meta_backend->u.meta.batch_execute("items", meta_batch);
 	}
 
 	j_list_iterator_free(it);
@@ -1313,7 +1324,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.delete("items", path) && ret;
+			ret = meta_backend->u.meta.delete("items", path, NULL) && ret;
 		}
 
 		//bson_init(&b);
