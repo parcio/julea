@@ -236,7 +236,7 @@ j_lock_release (JLock* lock)
 			gchar* path;
 
 			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-			released = meta_backend->u.meta.delete("items", path) && released;
+			released = meta_backend->u.meta.delete("locks", path) && released;
 			g_free(path);
 		}
 	}
