@@ -1219,7 +1219,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		meta_backend->u.meta.batch_start("items", &meta_batch);
+		ret = meta_backend->u.meta.batch_start("items", &meta_batch);
 	}
 
 	while (j_list_iterator_next(it))
@@ -1241,14 +1241,14 @@ j_item_create_internal (JBatch* batch, JList* operations)
 		if (meta_backend != NULL)
 		{
 			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-			ret = meta_backend->u.meta.create("items", path, b, meta_batch) && ret;
+			ret = meta_backend->u.meta.create(path, b, meta_batch) && ret;
 			g_free(path);
 		}
 	}
 
 	if (meta_backend != NULL)
 	{
-		meta_backend->u.meta.batch_execute("items", meta_batch);
+		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
 	}
 
 	j_list_iterator_free(it);
@@ -1274,6 +1274,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
+	gpointer meta_batch;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1309,6 +1310,11 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	//mongo_connection = j_connection_pool_pop_meta(0);
 	meta_backend = j_metadata_backend();
 
+	if (meta_backend != NULL)
+	{
+		ret = meta_backend->u.meta.batch_start("items", &meta_batch);
+	}
+
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
@@ -1324,7 +1330,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.delete("items", path, NULL) && ret;
+			ret = meta_backend->u.meta.delete(path, meta_batch) && ret;
 		}
 
 		//bson_init(&b);
@@ -1345,6 +1351,11 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 			g_free(path);
 		}
+	}
+
+	if (meta_backend != NULL)
+	{
+		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);

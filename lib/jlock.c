@@ -177,32 +177,35 @@ j_lock_acquire (JLock* lock)
 
 	//mongo_connection = j_connection_pool_pop_meta(0);
 
-	if (meta_backend != NULL)
+	if (lock->blocks->len > 0)
 	{
-		meta_backend->u.meta.batch_start("locks", &meta_batch);
-	}
+		if (meta_backend != NULL)
+		{
+			acquired = meta_backend->u.meta.batch_start("locks", &meta_batch);
+		}
 
-	for (guint i = 0; i < lock->blocks->len; i++)
-	{
-		gchar* block_str;
-		guint64 block;
+		for (guint i = 0; i < lock->blocks->len; i++)
+		{
+			gchar* block_str;
+			guint64 block;
 
-		block = g_array_index(lock->blocks, guint64, i);
-		block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
+			block = g_array_index(lock->blocks, guint64, i);
+			block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
+
+			if (meta_backend != NULL)
+			{
+				gchar* path;
+
+				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+				acquired = meta_backend->u.meta.create(path, empty, meta_batch) && acquired;
+				g_free(path);
+			}
+		}
 
 		if (meta_backend != NULL)
 		{
-			gchar* path;
-
-			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-			acquired = meta_backend->u.meta.create("locks", path, empty, meta_batch) && acquired;
-			g_free(path);
+			acquired = meta_backend->u.meta.batch_execute(meta_batch) && acquired;
 		}
-	}
-
-	if (meta_backend != NULL)
-	{
-		meta_backend->u.meta.batch_execute("locks", meta_batch);
 	}
 
 	lock->acquired = acquired;
@@ -219,6 +222,7 @@ j_lock_release (JLock* lock)
 {
 	JBackend* meta_backend;
 	gboolean released = TRUE;
+	gpointer meta_batch;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 	g_return_val_if_fail(lock->acquired, FALSE);
@@ -234,21 +238,34 @@ j_lock_release (JLock* lock)
 	meta_backend = j_metadata_backend();
 	//mongo_connection = j_connection_pool_pop_meta(0);
 
-	for (guint i = 0; i < lock->blocks->len; i++)
+	if (lock->blocks->len > 0)
 	{
-		gchar* block_str;
-		guint64 block;
+		if (meta_backend != NULL)
+		{
+			released = meta_backend->u.meta.batch_start("locks", &meta_batch);
+		}
 
-		block = g_array_index(lock->blocks, guint64, i);
-		block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
+		for (guint i = 0; i < lock->blocks->len; i++)
+		{
+			gchar* block_str;
+			guint64 block;
+
+			block = g_array_index(lock->blocks, guint64, i);
+			block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
+
+			if (meta_backend != NULL)
+			{
+				gchar* path;
+
+				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+				released = meta_backend->u.meta.delete(path, meta_batch) && released;
+				g_free(path);
+			}
+		}
 
 		if (meta_backend != NULL)
 		{
-			gchar* path;
-
-			path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-			released = meta_backend->u.meta.delete("locks", path, NULL) && released;
-			g_free(path);
+			released = meta_backend->u.meta.batch_execute(meta_batch) && released;
 		}
 	}
 

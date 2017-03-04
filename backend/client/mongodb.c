@@ -74,8 +74,6 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, gpointer* data)
 {
-	gboolean ret = FALSE;
-
 	bson_t index[1];
 	mongoc_bulk_operation_t* bulk_op;
 	mongoc_collection_t* m_collection;
@@ -108,12 +106,12 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	return TRUE;
 }
 
 static
 gboolean
-backend_batch_execute (gchar const* namespace, gpointer data)
+backend_batch_execute (gpointer data)
 {
 	gboolean ret = FALSE;
 
@@ -145,16 +143,14 @@ backend_batch_execute (gchar const* namespace, gpointer data)
 
 static
 gboolean
-backend_create (gchar const* namespace, gchar const* key, bson_t const* value, gpointer data)
+backend_create (gchar const* key, bson_t const* value, gpointer data)
 {
-	gboolean ret = FALSE;
-
 	bson_t document[1];
-	bson_t reply[1];
 	mongoc_bulk_operation_t* bulk_op = data;
-	mongoc_collection_t* m_collection;
 
-	gboolean single_op = FALSE;
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -166,22 +162,7 @@ backend_create (gchar const* namespace, gchar const* key, bson_t const* value, g
 	bson_append_utf8(document, "key", -1, key, -1);
 	bson_append_document(document, "value", -1, value);
 
-	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
-
-	if (bulk_op == NULL)
-	{
-		single_op = TRUE;
-		bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, NULL /*write_concern*/);
-	}
-
 	mongoc_bulk_operation_insert(bulk_op, document);
-
-	if (single_op)
-	{
-		ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
-		mongoc_bulk_operation_destroy(bulk_op);
-		bson_destroy(reply);
-	}
 
 	/*
 	if (!ret)
@@ -194,25 +175,22 @@ backend_create (gchar const* namespace, gchar const* key, bson_t const* value, g
 	}
 	*/
 
-	mongoc_collection_destroy(m_collection);
-
 	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	return TRUE;
 }
 
 static
 gboolean
-backend_delete (gchar const* namespace, gchar const* key, gpointer data)
+backend_delete (gchar const* key, gpointer data)
 {
-	gboolean ret = FALSE;
-
 	bson_t document[1];
-	bson_t reply[1];
-	mongoc_bulk_operation_t* bulk_op;
-	mongoc_collection_t* m_collection;
+	mongoc_bulk_operation_t* bulk_op = data;
+
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -223,23 +201,13 @@ backend_delete (gchar const* namespace, gchar const* key, gpointer data)
 	//write_concern = mongoc_write_concern_new();
 	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
-	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
-	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, NULL /*write_concern*/);
-
 	mongoc_bulk_operation_remove(bulk_op, document);
-
-	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
-
-	mongoc_bulk_operation_destroy(bulk_op);
-	bson_destroy(reply);
-
-	mongoc_collection_destroy(m_collection);
 
 	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	return TRUE;
 }
 
 static
