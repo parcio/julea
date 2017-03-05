@@ -39,15 +39,13 @@
 
 #include <jconfiguration-internal.h>
 
-#include <mongoc.h>
-
 J_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
 J_GNUC_INTERNAL void j_connection_pool_fini (void);
 
 J_GNUC_INTERNAL GSocketConnection* j_connection_pool_pop_data (guint);
 J_GNUC_INTERNAL void j_connection_pool_push_data (guint, GSocketConnection*);
 
-J_GNUC_INTERNAL mongoc_client_t* j_connection_pool_pop_meta (guint);
-J_GNUC_INTERNAL void j_connection_pool_push_meta (guint, mongoc_client_t*);
+J_GNUC_INTERNAL GSocketConnection* j_connection_pool_pop_meta (guint);
+J_GNUC_INTERNAL void j_connection_pool_push_meta (guint, GSocketConnection*);
 
 #endif

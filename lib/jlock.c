@@ -34,7 +34,6 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jlock-internal.h>
 

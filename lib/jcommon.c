@@ -34,7 +34,6 @@
 #include <glib.h>
 
 #include <bson.h>
-#include <mongoc.h>
 
 #include <jcommon.h>
 #include <jcommon-internal.h>
@@ -175,8 +174,6 @@ j_init (void)
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
 
-	mongoc_init();
-
 	basename = j_get_program_name("julea");
 	j_trace_init(basename);
 	g_free(basename);
@@ -210,9 +207,6 @@ j_init (void)
 
 	//bson_set_oid_fuzz(j_common_oid_fuzz);
 	//bson_set_oid_inc(j_common_oid_inc);
-
-	/* We do not want the mongoc output. */
-	mongoc_log_set_handler(NULL, NULL);
 
 	g_atomic_pointer_set(&j_common, common);
 
@@ -277,8 +271,6 @@ j_fini (void)
 	}
 
 	j_configuration_unref(common->configuration);
-
-	mongoc_cleanup();
 
 	j_trace_leave(G_STRFUNC);
 
