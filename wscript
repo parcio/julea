@@ -24,6 +24,9 @@ class TestContext (BuildContext):
 	cmd = 'test'
 	fun = 'test'
 
+def get_glib_options ():
+	return 'G_SLICE=all'
+
 def get_path ():
 	return 'PATH={0}/server:{0}/tools:{1}/external/mongo-c-driver/bin:${{PATH}}'.format(Context.out_dir, Context.run_dir)
 
@@ -55,9 +58,9 @@ def benchmark (ctx):
 	subprocess.call('{0} stop'.format(setup), close_fds=True, shell=True)
 
 def test (ctx):
-	setup = '{0}/tools/setup.sh'.format(Context.top_dir)
+	setup = '{0} {1}/tools/setup.sh'.format(get_glib_options(), Context.top_dir)
 	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
-	command = '{0} {1} {2} --keep-going --verbose {3}/test/test'.format(get_library_path(), 'gdb --args ' if ctx.options.debug else '', gtester, Context.out_dir)
+	command = '{0} {1} {2} {3} --keep-going --verbose {4}/test/test'.format(get_glib_options(), get_library_path(), 'gdb --args ' if ctx.options.debug else '', gtester, Context.out_dir)
 
 	subprocess.call('{0} start'.format(setup), close_fds=True, shell=True)
 	subprocess.call(command, close_fds=True, shell=True)
