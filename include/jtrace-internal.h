@@ -44,10 +44,6 @@ struct JTrace;
 
 typedef struct JTrace JTrace;
 
-struct JTraceFile;
-
-typedef struct JTraceFile JTraceFile;
-
 void j_trace_init (gchar const*);
 void j_trace_fini (void);
 
