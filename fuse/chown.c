@@ -35,5 +35,9 @@ int jfs_chown (char const* path, uid_t uid, gid_t gid)
 {
 	gint ret = -ENOENT;
 
+	(void)path;
+	(void)uid;
+	(void)gid;
+
 	return ret;
 }

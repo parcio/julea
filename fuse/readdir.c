@@ -38,6 +38,9 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)offset;
+	(void)fi;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

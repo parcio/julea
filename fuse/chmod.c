@@ -35,5 +35,8 @@ int jfs_chmod (char const* path, mode_t mode)
 {
 	gint ret = -ENOENT;
 
+	(void)path;
+	(void)mode;
+
 	return ret;
 }

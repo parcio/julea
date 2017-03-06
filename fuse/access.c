@@ -36,6 +36,8 @@ int jfs_access (char const* path, int mask)
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)mask;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

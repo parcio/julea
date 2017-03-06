@@ -36,6 +36,8 @@ int jfs_utimens (char const* path, const struct timespec ts[2])
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)ts;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

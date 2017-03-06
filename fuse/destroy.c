@@ -31,4 +31,5 @@
 
 void jfs_destroy (void* data)
 {
+	(void)data;
 }

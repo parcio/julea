@@ -37,6 +37,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)mode;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

@@ -41,6 +41,10 @@ static
 void
 on_operation_completed (JBatch* batch, gboolean ret, gpointer user_data)
 {
+	(void)batch;
+	(void)ret;
+	(void)user_data;
+
 	g_atomic_int_set(&test_operation_flag, 1);
 }
 

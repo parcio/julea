@@ -199,6 +199,14 @@ def configure (ctx):
 	)
 
 	if ctx.options.debug:
+		ctx.check_cc(
+			cflags = '-fsanitize=address',
+			ldflags = '-fsanitize=address',
+			uselib_store = 'ASAN',
+			mandatory = False
+		)
+
+	if ctx.options.debug:
 		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 		ctx.env.CFLAGS += ['-ggdb']
 
@@ -234,7 +242,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF', 'ASAN'],
 		includes = ['include'],
 		install_path = '${LIBDIR}'
 	)
@@ -243,7 +251,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ctx.path.ant_glob('lib/**/*.c'),
 		target = 'lib/julea-private',
-		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF'],
+		use = ['GIO', 'GLIB', 'GOBJECT', 'BSON', 'MONGOC', 'OTF', 'ASAN'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${LIBDIR}'
@@ -253,7 +261,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('test/*.c'),
 		target = 'test/test',
-		use = ['lib/julea-private', 'GLIB'],
+		use = ['lib/julea-private', 'GLIB', 'ASAN'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -263,7 +271,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/benchmark',
-		use = ['lib/julea-private', 'GLIB'],
+		use = ['lib/julea-private', 'GLIB', 'ASAN'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -273,7 +281,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('server/*.c'),
 		target = 'server/julea-server',
-		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD'],
+		use = ['lib/julea-private', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'GTHREAD', 'ASAN'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
@@ -283,7 +291,7 @@ def build (ctx):
 	ctx.shlib(
 		source = ['backend/client/mongodb.c'],
 		target = 'backend/client/mongodb',
-		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'MONGOC'],
+		use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'MONGOC', 'ASAN'],
 		includes = ['include'],
 		install_path = '${LIBDIR}/julea/backend/client'
 	)
@@ -293,7 +301,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
 			target = 'backend/server/{0}'.format(backend),
-			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'ASAN'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend/server'
 		)
@@ -302,7 +310,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['backend/server/jzfs.c'],
 			target = 'backend/server/jzfs',
-			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'JZFS', 'LEVELDB', 'ASAN'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend/server'
 		)
@@ -311,7 +319,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ['backend/server/lexos.c'],
 			target = 'backend/server/lexos',
-			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB'],
+			use = ['lib/julea', 'GIO', 'GLIB', 'GMODULE', 'GOBJECT', 'LEXOS', 'LEVELDB', 'ASAN'],
 			includes = ['include'],
 			install_path = '${LIBDIR}/julea/backend/server'
 		)
@@ -320,7 +328,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('cli/*.c'),
 		target = 'cli/julea-cli',
-		use = ['lib/julea-private', 'GLIB'],
+		use = ['lib/julea-private', 'GLIB', 'ASAN'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
@@ -331,7 +339,7 @@ def build (ctx):
 		ctx.program(
 			source = ['tools/{0}.c'.format(tool)],
 			target = 'tools/julea-{0}'.format(tool),
-			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT'],
+			use = ['lib/julea-private', 'GIO', 'GLIB', 'GOBJECT', 'ASAN'],
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${BINDIR}'
@@ -342,7 +350,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/julea-fuse',
-			use = ['lib/julea', 'GLIB', 'GOBJECT', 'FUSE'],
+			use = ['lib/julea', 'GLIB', 'GOBJECT', 'FUSE', 'ASAN'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)

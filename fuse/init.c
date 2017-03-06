@@ -31,5 +31,7 @@
 
 void* jfs_init (struct fuse_conn_info* conn)
 {
+	(void)conn;
+
 	return NULL;
 }

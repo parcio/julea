@@ -37,6 +37,8 @@ jfs_truncate (char const* path, off_t size)
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)size;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

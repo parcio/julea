@@ -38,6 +38,8 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 	guint64 bytes_written;
 	int ret = -ENOENT;
 
+	(void)fi;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

@@ -37,6 +37,8 @@ static
 void
 test_list_fixture_setup (JList** list, gconstpointer data)
 {
+	(void)data;
+
 	*list = j_list_new(g_free);
 }
 
@@ -44,6 +46,8 @@ static
 void
 test_list_fixture_teardown (JList** list, gconstpointer data)
 {
+	(void)data;
+
 	j_list_unref(*list);
 }
 
@@ -70,6 +74,8 @@ test_list_length (JList** list, gconstpointer data)
 	guint const n = 100000;
 	guint l;
 
+	(void)data;
+
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_append(*list, g_strdup("append"));
@@ -85,6 +91,8 @@ test_list_append (JList** list, gconstpointer data)
 {
 	guint const n = 100000;
 
+	(void)data;
+
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_append(*list, g_strdup("append"));
@@ -97,6 +105,8 @@ test_list_prepend (JList** list, gconstpointer data)
 {
 	guint const n = 100000;
 
+	(void)data;
+
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_prepend(*list, g_strdup("append"));
@@ -108,6 +118,8 @@ void
 test_list_get (JList** list, gconstpointer data)
 {
 	gchar const* s;
+
+	(void)data;
 
 	j_list_append(*list, g_strdup("0"));
 	j_list_append(*list, g_strdup("1"));

@@ -38,6 +38,8 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 	guint64 bytes_read;
 	int ret = -ENOENT;
 
+	(void)fi;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

@@ -411,6 +411,7 @@ backend_init (gchar const* path)
 
 	uri = mongoc_uri_new_for_host_port(backend_host, 27017);
 	backend_connection = mongoc_client_new_from_uri(uri);
+	mongoc_uri_destroy(uri);
 
 	if (backend_connection != NULL)
 	{

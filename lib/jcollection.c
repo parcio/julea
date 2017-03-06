@@ -372,6 +372,7 @@ j_collection_serialize (JCollection* collection)
 
 	b = g_slice_new(bson_t);
 	bson_init(b);
+
 	bson_append_oid(b, "_id", -1, &(collection->id));
 	bson_append_utf8(b, "name", -1, collection->name, -1);
 	bson_append_document(b, "credentials", -1, b_cred);
@@ -518,6 +519,9 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 		{
 			ret = meta_backend->u.meta.create(collection->name, b, meta_batch) && ret;
 		}
+
+		bson_destroy(b);
+		g_slice_free(bson_t, b);
 	}
 
 	if (meta_backend != NULL)

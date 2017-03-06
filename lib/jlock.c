@@ -199,6 +199,8 @@ j_lock_acquire (JLock* lock)
 				acquired = meta_backend->u.meta.create(path, empty, meta_batch) && acquired;
 				g_free(path);
 			}
+
+			g_free(block_str);
 		}
 
 		if (meta_backend != NULL)
@@ -260,6 +262,8 @@ j_lock_release (JLock* lock)
 				released = meta_backend->u.meta.delete(path, meta_batch) && released;
 				g_free(path);
 			}
+
+			g_free(block_str);
 		}
 
 		if (meta_backend != NULL)

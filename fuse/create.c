@@ -37,6 +37,9 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	JURI* uri;
 	int ret = -ENOENT;
 
+	(void)mode;
+	(void)fi;
+
 	if ((uri = jfs_get_uri(path)) == NULL)
 	{
 		goto end;

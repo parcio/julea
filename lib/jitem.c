@@ -1009,7 +1009,6 @@ j_item_get_credentials (JItem* item)
 bson_t*
 j_item_serialize (JItem* item, JSemantics* semantics)
 {
-	bson_t b_document[1];
 	bson_t* b;
 	bson_t* b_cred;
 	bson_t* b_distribution;
@@ -1030,12 +1029,16 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
+		bson_t b_document[1];
+
 		bson_append_document_begin(b, "status", -1, b_document);
 
 		bson_append_int64(b_document, "size", -1, item->status.size);
 		bson_append_int64(b_document, "modification_time", -1, item->status.modification_time);
 
 		bson_append_document_end(b, b_document);
+
+		bson_destroy(b_document);
 	}
 
 	bson_append_document(b, "credentials", -1, b_cred);
@@ -1244,6 +1247,9 @@ j_item_create_internal (JBatch* batch, JList* operations)
 			ret = meta_backend->u.meta.create(path, b, meta_batch) && ret;
 			g_free(path);
 		}
+
+		bson_destroy(b);
+		g_slice_free(bson_t, b);
 	}
 
 	if (meta_backend != NULL)
