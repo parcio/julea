@@ -30,7 +30,6 @@
 #include <julea-config.h>
 
 #include <glib.h>
-#include <glib/gstdio.h>
 #include <gmodule.h>
 
 #include <mongoc.h>
