@@ -72,6 +72,9 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	gchar* left;
 	gdouble elapsed;
 
+	g_return_if_fail(name != NULL);
+	g_return_if_fail(benchmark_func != NULL);
+
 	if (opt_path != NULL && !g_str_has_prefix(name, opt_path))
 	{
 		return;
@@ -85,7 +88,7 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	if (!opt_machine_readable)
 	{
 		left = g_strconcat(name, ":", NULL);
-		g_print("%-60s ", left);
+		g_print("%-50s ", left);
 		g_free(left);
 	}
 	else
@@ -99,11 +102,11 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 
 	if (!opt_machine_readable)
 	{
-		g_print("%f seconds", result.elapsed_time);
+		g_print("%.3f seconds", result.elapsed_time);
 
 		if (result.operations != 0)
 		{
-			g_print(" (%f/s)", (gdouble)result.operations / result.elapsed_time);
+			g_print(" (%.0f/s)", (gdouble)result.operations / result.elapsed_time);
 		}
 
 		if (result.bytes != 0)
@@ -115,7 +118,7 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 			g_free(size);
 		}
 
-		g_print(" [%f seconds]\n", elapsed);
+		g_print(" [%.3f seconds]\n", elapsed);
 	}
 	else
 	{
