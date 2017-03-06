@@ -206,6 +206,13 @@ def configure (ctx):
 			mandatory = False
 		)
 
+		ctx.check_cc(
+			cflags = '-fsanitize=undefined',
+			ldflags = '-fsanitize=undefined',
+			uselib_store = 'UBSAN',
+			mandatory = False
+		)
+
 	if ctx.options.debug:
 		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
 		ctx.env.CFLAGS += ['-ggdb']
@@ -238,7 +245,7 @@ def build (ctx):
 #		install_path = '${LIBDIR}'
 #	)
 
-	use_julea_core = ['GLIB', 'ASAN']
+	use_julea_core = ['GLIB', 'ASAN', 'UBSAN']
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'BSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 

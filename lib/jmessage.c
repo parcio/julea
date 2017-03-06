@@ -585,6 +585,7 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 gboolean
 j_message_append_4 (JMessage* message, gconstpointer data)
 {
+	gint32 new_data;
 	guint32 new_length;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -593,7 +594,8 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
-	*((gint32*)(message->current)) = GINT32_TO_LE(*((gint32 const*)data));
+	new_data = GINT32_TO_LE(*((gint32 const*)data));
+	memcpy(message->current, &new_data, 4);
 	message->current += 4;
 
 	new_length = j_message_length(message) + 4;
@@ -621,6 +623,7 @@ j_message_append_4 (JMessage* message, gconstpointer data)
 gboolean
 j_message_append_8 (JMessage* message, gconstpointer data)
 {
+	gint64 new_data;
 	guint32 new_length;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -629,7 +632,8 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
-	*((gint64*)(message->current)) = GINT64_TO_LE(*((gint64 const*)data));
+	new_data = GINT64_TO_LE(*((gint64 const*)data));
+	memcpy(message->current, &new_data, 8);
 	message->current += 8;
 
 	new_length = j_message_length(message) + 8;
@@ -732,7 +736,8 @@ j_message_get_4 (JMessage* message)
 
 	j_trace_enter(G_STRFUNC);
 
-	ret = GINT32_FROM_LE(*((gint32 const*)(message->current)));
+	memcpy(&ret, message->current, 4);
+	ret = GINT32_FROM_LE(ret);
 	message->current += 4;
 
 	j_trace_leave(G_STRFUNC);
@@ -763,7 +768,8 @@ j_message_get_8 (JMessage* message)
 
 	j_trace_enter(G_STRFUNC);
 
-	ret = GINT64_FROM_LE(*((gint64 const*)(message->current)));
+	memcpy(&ret, message->current, 8);
+	ret = GINT64_FROM_LE(ret);
 	message->current += 8;
 
 	j_trace_leave(G_STRFUNC);
