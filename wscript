@@ -37,6 +37,7 @@ def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
+	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 
 	ctx.add_option('--mongodb', action='store', default='{0}/external/mongo-c-driver'.format(Context.run_dir), help='MongoDB driver prefix')
 	ctx.add_option('--otf', action='store', default='{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
@@ -198,7 +199,7 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	if ctx.options.debug:
+	if ctx.options.sanitize:
 		ctx.check_cc(
 			cflags = '-fsanitize=address',
 			ldflags = '-fsanitize=address',
