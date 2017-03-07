@@ -1235,7 +1235,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 		if (meta_backend != NULL)
 		{
 			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-			ret = meta_backend->u.meta.create(path, b, meta_batch) && ret;
+			ret = meta_backend->u.meta.put(path, b, meta_batch) && ret;
 			g_free(path);
 		}
 

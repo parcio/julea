@@ -187,7 +187,7 @@ j_lock_acquire (JLock* lock)
 				gchar* path;
 
 				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-				acquired = meta_backend->u.meta.create(path, empty, meta_batch) && acquired;
+				acquired = meta_backend->u.meta.put(path, empty, meta_batch) && acquired;
 				g_free(path);
 			}
 

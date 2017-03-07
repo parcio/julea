@@ -133,9 +133,10 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_create (gchar const* key, bson_t const* value, gpointer data)
+backend_put (gchar const* key, bson_t const* value, gpointer data)
 {
 	bson_t document[1];
+	bson_t selector[1];
 	mongoc_bulk_operation_t* bulk_op = data;
 
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -152,7 +153,12 @@ backend_create (gchar const* key, bson_t const* value, gpointer data)
 	bson_append_utf8(document, "key", -1, key, -1);
 	bson_append_document(document, "value", -1, value);
 
-	mongoc_bulk_operation_insert(bulk_op, document);
+	bson_init(selector);
+	bson_append_utf8(selector, "key", -1, key, -1);
+
+	/* FIXME use insert when possible */
+	//mongoc_bulk_operation_insert(bulk_op, document);
+	mongoc_bulk_operation_replace_one(bulk_op, selector, document, TRUE);
 
 	/*
 	if (!ret)
@@ -165,6 +171,7 @@ backend_create (gchar const* key, bson_t const* value, gpointer data)
 	}
 	*/
 
+	bson_destroy(selector);
 	bson_destroy(document);
 
 	j_trace_leave(G_STRFUNC);
@@ -444,7 +451,7 @@ JBackend mongodb_backend = {
 		.thread_fini = NULL,
 		.batch_start = backend_batch_start,
 		.batch_execute = backend_batch_execute,
-		.create = backend_create,
+		.put = backend_put,
 		.delete = backend_delete,
 		.get = backend_get,
 		.get_all = backend_get_all,

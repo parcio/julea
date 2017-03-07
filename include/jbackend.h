@@ -82,9 +82,8 @@ struct JBackend
 			gboolean (*batch_start) (gchar const*, gpointer*);
 			gboolean (*batch_execute) (gpointer);
 
-			gboolean (*create) (gchar const*, bson_t const*, gpointer);
+			gboolean (*put) (gchar const*, bson_t const*, gpointer);
 			gboolean (*delete) (gchar const*, gpointer);
-
 			gboolean (*get) (gchar const*, gchar const*, bson_t*);
 
 			gboolean (*get_all) (gchar const*, gpointer*);

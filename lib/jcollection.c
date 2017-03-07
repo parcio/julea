@@ -508,7 +508,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.create(collection->name, b, meta_batch) && ret;
+			ret = meta_backend->u.meta.put(collection->name, b, meta_batch) && ret;
 		}
 
 		bson_destroy(b);

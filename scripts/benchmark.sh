@@ -34,4 +34,4 @@ run_benchmark ()
 	setup.sh stop
 }
 
-run_benchmark
+run_benchmark "$@"

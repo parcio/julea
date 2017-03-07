@@ -39,4 +39,4 @@ run_test ()
 	setup.sh stop
 }
 
-run_test
+run_test "$@"
