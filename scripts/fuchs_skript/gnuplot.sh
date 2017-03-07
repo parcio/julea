@@ -1,6 +1,20 @@
 #!/bin/sh
+
+# JULEA - Flexible storage framework
+# Copyright (C) 2013 Anna Fuchs
 #
-# (c) Anna Fuchs 2013
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set -ex
 
@@ -24,9 +38,9 @@ size=$(ls -tr1 | wc -l)
 mkdir toplot
 
 for result in $list
-do 
+do
   cd $result
-  
+
   case_groups=$(ls -1)
   for group in $case_groups
   do
@@ -36,10 +50,10 @@ do
     while [ $i -le $number ]
     do
       tcase=$(head -n $i $group | tail -n 1 | cut -d' ' -f1 | sed -e 's#^/##' -e 's#/#_#g')
-    
+
       echo -n "$result " | sed -e 's#^....-..-##'>> $ROOT/$month/toplot/${group}_${tcase}.toplot
       head -n $i $group | tail -n 1 >> $ROOT/$month/toplot/${group}_${tcase}.toplot
-   
+
       i=$(expr $i + 1)
     done
   done
@@ -100,7 +114,7 @@ do
   set title "$tit"
   set xlabel "commit [date - hash]"
 
-  set ylabel "runtime [sec]" textcolor rgb "#ef2929" font "Palatino,10" #rotate by 270 
+  set ylabel "runtime [sec]" textcolor rgb "#ef2929" font "Palatino,10" #rotate by 270
   set y2label ($col==4  ? "throughput in [ops/sec]" : "throughput in [MB/sec]") textcolor rgb "#729fcf" font "Palatino,10"
 
   set key outside below samplen 2
@@ -122,7 +136,7 @@ do
   set ytics nomirror
   set y2tics nomirror
 
-  set style fill solid border -1 
+  set style fill solid border -1
 
   set border 11
 
