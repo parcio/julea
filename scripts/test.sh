@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # JULEA - Flexible storage framework
-# Copyright (C) 2013-2017 Michael Kuhn
+# Copyright (C) 2017 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,26 +22,21 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
-usage ()
+. "${SELF_DIR}/common"
+
+set_glib_options
+set_path
+set_library_path
+
+run_test ()
 {
-	echo "Usage: ${0##*/}"
-	exit 1
+	local build_dir
+
+	build_dir="$(get_directory "${SELF_DIR}/../build")"
+
+	setup.sh start
+	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test"
+	setup.sh stop
 }
 
-BUILD_PATH="${SELF_DIR}/../build"
-
-export PATH="${BUILD_PATH}/test:${SELF_DIR}:${PATH}"
-export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${LD_LIBRARY_PATH}"
-
-DIRECTORY="${PWD}/results/test/$(date '+%Y-%m')"
-
-mkdir -p "${DIRECTORY}"
-
-echo "Writing results to: ${DIRECTORY}"
-cd "${DIRECTORY}"
-
-trap "setup.sh stop" HUP INT TERM 0
-
-setup.sh start
-gtester --keep-going --verbose "${BUILD_PATH}/test/test" "$@" 2>&1 | tee --append "$(date --iso-8601)-$(git describe --always).log"
-setup.sh stop
+run_test

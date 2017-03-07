@@ -12,29 +12,9 @@ out = 'build'
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
 
-class BenchmarkContext (BuildContext):
-	cmd = 'benchmark'
-	fun = 'benchmark'
-
 class EnvironmentContext (BuildContext):
 	cmd = 'environment'
 	fun = 'environment'
-
-class TestContext (BuildContext):
-	cmd = 'test'
-	fun = 'test'
-
-def get_glib_options ():
-	return 'G_SLICE=all'
-
-def get_path ():
-	return 'PATH={0}/server:{0}/tools:{1}/external/mongo-c-driver/bin:${{PATH}}'.format(Context.out_dir, Context.run_dir)
-
-def get_library_path ():
-	return 'LD_LIBRARY_PATH={0}/lib:{1}/external/mongo-c-driver/lib:${{LD_LIBRARY_PATH}}'.format(Context.out_dir, Context.run_dir)
-
-def get_pkg_config_path ():
-	return 'PKG_CONFIG_PATH={0}/pkg-config:{1}/external/mongo-c-driver/lib:${{PKG_CONFIG_PATH}}'.format(Context.out_dir, Context.run_dir)
 
 def options (ctx):
 	ctx.load('compiler_c')
@@ -48,23 +28,6 @@ def options (ctx):
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
-
-def benchmark (ctx):
-	setup = '{0}/tools/setup.sh'.format(Context.top_dir)
-	command = '{0} {1}/benchmark/benchmark'.format(get_library_path(), Context.out_dir)
-
-	subprocess.call('{0} start'.format(setup), close_fds=True, shell=True)
-	subprocess.call(command, close_fds=True, shell=True)
-	subprocess.call('{0} stop'.format(setup), close_fds=True, shell=True)
-
-def test (ctx):
-	setup = '{0} {1}/tools/setup.sh'.format(get_glib_options(), Context.top_dir)
-	gtester = Utils.subst_vars('${GTESTER}', ctx.env)
-	command = '{0} {1} {2} {3} --keep-going --verbose {4}/test/test'.format(get_glib_options(), get_library_path(), 'gdb --args ' if ctx.options.debug else '', gtester, Context.out_dir)
-
-	subprocess.call('{0} start'.format(setup), close_fds=True, shell=True)
-	subprocess.call(command, close_fds=True, shell=True)
-	subprocess.call('{0} stop'.format(setup), close_fds=True, shell=True)
 
 def environment (ctx):
 	path = get_path()
@@ -91,7 +54,7 @@ def configure (ctx):
 
 	ctx.check_large_file()
 
-	for program in ('gtester', 'mpicc'):
+	for program in ('mpicc',):
 		ctx.find_program(
 			program,
 			var = program.upper(),
@@ -275,7 +238,7 @@ def build (ctx):
 	# Tests
 	ctx.program(
 		source = ctx.path.ant_glob('test/*.c'),
-		target = 'test/test',
+		target = 'test/julea-test',
 		use = use_julea_core + ['lib/julea-private'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
@@ -285,7 +248,7 @@ def build (ctx):
 	# Benchmark
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
-		target = 'benchmark/benchmark',
+		target = 'benchmark/julea-benchmark',
 		use = use_julea_core + ['lib/julea-private'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
