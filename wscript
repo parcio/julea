@@ -12,10 +12,6 @@ out = 'build'
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
 
-class EnvironmentContext (BuildContext):
-	cmd = 'environment'
-	fun = 'environment'
-
 def options (ctx):
 	ctx.load('compiler_c')
 
@@ -28,20 +24,6 @@ def options (ctx):
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
 	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
-
-def environment (ctx):
-	path = get_path()
-	ld_library_path = get_library_path()
-	pkg_config_path = get_pkg_config_path()
-
-	with open('julea-environment', 'w') as f:
-		f.write(path + '\n')
-		f.write(ld_library_path + '\n')
-		f.write(pkg_config_path + '\n')
-		f.write('\n')
-		f.write('export PATH\n')
-		f.write('export LD_LIBRARY_PATH\n')
-		f.write('export PKG_CONFIG_PATH\n')
 
 def configure (ctx):
 	ctx.load('compiler_c')
