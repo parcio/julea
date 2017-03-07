@@ -42,7 +42,7 @@ def options (ctx):
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
 
-	ctx.add_option('--leveldb', action='store', default='/usr', help='Use LevelDB')
+	ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -113,15 +113,11 @@ def configure (ctx):
 		)
 
 	ctx.env.JULEA_LEVELDB = \
-	ctx.check_cc(
-		header_name = 'leveldb/c.h',
-		lib = 'leveldb',
-		includes = ['{0}/include'.format(ctx.options.leveldb)],
-		libpath = ['{0}/lib'.format(ctx.options.leveldb)],
-		rpath = ['{0}/lib'.format(ctx.options.leveldb)],
+	ctx.check_cfg(
+		package = 'leveldb',
+		args = ['--cflags', '--libs'],
 		uselib_store = 'LEVELDB',
-		define_name = 'HAVE_LEVELDB',
-		mandatory = False
+		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.leveldb) if ctx.options.leveldb else None
 	)
 
 	ctx.env.JULEA_LEXOS = \
@@ -266,8 +262,10 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
+	backends_client = ['mongodb']
+
 	# Client backends
-	for backend in ('mongodb',):
+	for backend in backends_client:
 		use_extra = []
 
 		if backend == 'mongodb':
@@ -283,6 +281,9 @@ def build (ctx):
 
 	backends_server = ['gio', 'null', 'posix']
 
+	if ctx.env.JULEA_LEVELDB:
+		backends_server.append('leveldb')
+
 	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
 		backends_server.append('jzfs')
 
@@ -295,6 +296,8 @@ def build (ctx):
 
 		if backend == 'gio':
 			use_extra = ['GIO', 'GOBJECT']
+		elif backend == 'leveldb':
+			use_extra = ['LEVELDB']
 		elif backend == 'jzfs':
 			use_extra = ['JZFS', 'LEVELDB']
 		elif backend == 'lexos':
