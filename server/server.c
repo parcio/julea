@@ -94,6 +94,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	while (j_message_receive(message, connection))
 	{
 		JBackendItem backend_item[1];
+		gchar const* key;
 		gchar const* path;
 		guint32 operation_count;
 		JMessageType type_modifier;
@@ -451,9 +452,84 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-			case J_MESSAGE_META_CREATE:
+			case J_MESSAGE_META_PUT:
+				{
+					JMessage* reply = NULL;
+					gchar const* namespace;
+					gpointer batch;
+
+					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					{
+						reply = j_message_new_reply(message);
+					}
+
+					namespace = j_message_get_string(message);
+					jd_meta_backend->u.meta.batch_start(namespace, &batch);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						bson_t value[1];
+						gconstpointer data;
+						guint32 len;
+
+						key = j_message_get_string(message);
+						len = j_message_get_4(message);
+						data = j_message_get_n(message, len);
+						bson_init_static(value, data, len);
+
+						jd_meta_backend->u.meta.put(key, value, batch);
+
+						if (reply != NULL)
+						{
+							j_message_add_operation(reply, 0);
+						}
+					}
+
+					jd_meta_backend->u.meta.batch_execute(batch);
+
+					if (reply != NULL)
+					{
+						j_message_send(reply, connection);
+						j_message_unref(reply);
+					}
+				}
+				break;
 			case J_MESSAGE_META_DELETE:
 			case J_MESSAGE_META_GET:
+				{
+					JMessage* reply = NULL;
+					gchar const* namespace;
+
+					reply = j_message_new_reply(message);
+					namespace = j_message_get_string(message);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						bson_t value[1];
+
+						key = j_message_get_string(message);
+
+						if (jd_meta_backend->u.meta.get(namespace, key, value))
+						{
+							j_message_add_operation(reply, 4 + value->len);
+							j_message_append_4(reply, &(value->len));
+							j_message_append_n(reply, bson_get_data(value), value->len);
+						}
+						else
+						{
+							guint32 zero;
+
+							zero = 0;
+
+							j_message_add_operation(reply, 4);
+							j_message_append_4(reply, &zero);
+						}
+					}
+
+					j_message_send(reply, connection);
+					j_message_unref(reply);
+				}
+				break;
 			case J_MESSAGE_META_GET_ALL:
 			case J_MESSAGE_META_GET_BY_VALUE:
 			case J_MESSAGE_META_ITERATE:

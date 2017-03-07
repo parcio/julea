@@ -30,6 +30,8 @@
 #include <jtrace-internal.h>
 
 static leveldb_t* backend_db;
+static leveldb_readoptions_t* backend_roptions;
+static leveldb_writeoptions_t* backend_woptions;
 
 static
 gboolean
@@ -57,7 +59,7 @@ backend_batch_execute (gpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_write(backend_db, NULL, batch, NULL);
+	leveldb_write(backend_db, backend_woptions, batch, NULL);
 	leveldb_writebatch_destroy(batch);
 
 	j_trace_leave(G_STRFUNC);
@@ -106,8 +108,6 @@ static
 gboolean
 backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
-	gboolean ret = FALSE;
-
 	bson_t tmp[1];
 
 	gpointer result;
@@ -115,13 +115,17 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	j_trace_enter(G_STRFUNC);
 
-	result = leveldb_get(backend_db, NULL, key, strlen(key) + 1, &result_len, NULL);
-	bson_init_static(tmp, result, result_len);
-	bson_copy_to(tmp, result_out);
+	result = leveldb_get(backend_db, backend_roptions, key, strlen(key) + 1, &result_len, NULL);
+
+	if (result != NULL)
+	{
+		bson_init_static(tmp, result, result_len);
+		bson_copy_to(tmp, result_out);
+	}
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	return (result != NULL);
 }
 
 static
@@ -174,6 +178,9 @@ backend_init (gchar const* path)
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);
 	leveldb_options_set_compression(options, leveldb_snappy_compression);
+
+	backend_roptions = leveldb_readoptions_create();
+	backend_woptions = leveldb_writeoptions_create();
 
 	backend_db = leveldb_open(options, path, NULL);
 

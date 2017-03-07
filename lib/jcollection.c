@@ -482,6 +482,8 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* meta_connection;
 	gboolean ret = FALSE;
 	gpointer meta_batch;
 
@@ -497,6 +499,12 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 	{
 		ret = meta_backend->u.meta.batch_start("collections", &meta_batch);
 	}
+	else
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+		message = j_message_new(J_MESSAGE_META_PUT, 12);
+		j_message_append_n(message, "collections", 12);
+	}
 
 	while (j_list_iterator_next(it))
 	{
@@ -510,6 +518,17 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 		{
 			ret = meta_backend->u.meta.put(collection->name, b, meta_batch) && ret;
 		}
+		else
+		{
+			gsize name_len;
+
+			name_len = strlen(collection->name) + 1;
+
+			j_message_add_operation(message, name_len + 4 + b->len);
+			j_message_append_n(message, collection->name, name_len);
+			j_message_append_4(message, &(b->len));
+			j_message_append_n(message, bson_get_data(b), b->len);
+		}
 
 		bson_destroy(b);
 		g_slice_free(bson_t, b);
@@ -518,6 +537,12 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 	if (meta_backend != NULL)
 	{
 		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+	}
+	else
+	{
+		j_message_send(message, meta_connection);
+		j_message_unref(message);
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	j_list_iterator_free(it);
@@ -610,6 +635,8 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -619,6 +646,11 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 	//mongo_connection = j_connection_pool_pop_meta(0);
 
 	meta_backend = j_metadata_backend();
+
+	if (meta_backend == NULL)
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+	}
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -632,6 +664,43 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 		{
 			ret = meta_backend->u.meta.get("collections", name, result) && ret;
 		}
+		else
+		{
+			JMessage* reply;
+			gconstpointer data;
+			gsize name_len;
+			guint32 len;
+
+			name_len = strlen(name) + 1;
+
+			message = j_message_new(J_MESSAGE_META_GET, 12);
+			j_message_append_n(message, "collections", 12);
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, name, name_len);
+
+			j_message_send(message, meta_connection);
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, meta_connection);
+
+			len = j_message_get_4(reply);
+
+			if (len > 0)
+			{
+				ret = TRUE;
+
+				data = j_message_get_n(reply, len);
+
+				bson_init_static(result, data, len);
+			}
+			else
+			{
+				ret = FALSE;
+			}
+
+			j_message_unref(reply);
+			j_message_unref(message);
+		}
 
 		*collection = NULL;
 
@@ -640,6 +709,11 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 			*collection = j_collection_new_from_bson(result);
 			bson_destroy(result);
 		}
+	}
+
+	if (meta_backend == NULL)
+	{
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);

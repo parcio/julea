@@ -38,7 +38,7 @@ enum JMessageType
 	J_MESSAGE_DATA_READ         = 1 << 4,
 	J_MESSAGE_DATA_STATUS       = 1 << 5,
 	J_MESSAGE_DATA_WRITE        = 1 << 6,
-	J_MESSAGE_META_CREATE       = 1 << 7,
+	J_MESSAGE_META_PUT          = 1 << 7,
 	J_MESSAGE_META_DELETE       = 1 << 8,
 	J_MESSAGE_META_GET          = 1 << 9,
 	J_MESSAGE_META_GET_ALL      = 1 << 10,
@@ -76,6 +76,7 @@ J_GNUC_INTERNAL gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
 J_GNUC_INTERNAL gchar j_message_get_1 (JMessage*);
 J_GNUC_INTERNAL gint32 j_message_get_4 (JMessage*);
 J_GNUC_INTERNAL gint64 j_message_get_8 (JMessage*);
+J_GNUC_INTERNAL gpointer j_message_get_n (JMessage*, gsize);
 J_GNUC_INTERNAL gchar const* j_message_get_string (JMessage*);
 
 J_GNUC_INTERNAL gboolean j_message_send (JMessage*, GSocketConnection*);

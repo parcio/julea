@@ -769,6 +769,36 @@ j_message_get_8 (JMessage* message)
 }
 
 /**
+ * Gets n bytes from a message.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A pointer to the data.
+ **/
+gpointer
+j_message_get_n (JMessage* message, gsize length)
+{
+	gpointer ret;
+
+	g_return_val_if_fail(message != NULL, NULL);
+	g_return_val_if_fail(j_message_can_get(message, length), NULL);
+
+	j_trace_enter(G_STRFUNC);
+
+	ret = message->current;
+	message->current += length;
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+/**
  * Gets a string from a message.
  *
  * \author Michael Kuhn
