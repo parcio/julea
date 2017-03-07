@@ -1,10 +1,29 @@
 #!/usr/bin/env python
 
+# JULEA - Flexible storage framework
+# Copyright (C) 2010-2017 Michael Kuhn
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from waflib import Context, Utils
 from waflib.Build import BuildContext
 
 import os
 import subprocess
+
+APPNAME = 'julea'
+VERSION = '0.2'
 
 top = '.'
 out = 'build'
@@ -326,6 +345,9 @@ def build (ctx):
 		source = 'pkg-config/julea.pc.in',
 		target = 'pkg-config/julea.pc',
 		install_path = '${LIBDIR}/pkgconfig',
+		APPNAME = APPNAME,
+		VERSION = VERSION,
 		INCLUDEDIR = Utils.subst_vars('${INCLUDEDIR}', ctx.env),
-		LIBDIR = Utils.subst_vars('${LIBDIR}', ctx.env)
+		LIBDIR = Utils.subst_vars('${LIBDIR}', ctx.env),
+		GLIB_VERSION = glib_version
 	)
