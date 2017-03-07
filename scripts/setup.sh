@@ -22,6 +22,8 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
+. "${SELF_DIR}/common"
+
 usage ()
 {
 	echo "Usage: ${0##*/} start|stop|restart"
@@ -30,11 +32,11 @@ usage ()
 
 get_config ()
 {
-	local CONFIG_DIR
+	local config_dir
 
-	if [ -n "${JULEA_CONFIG}" ]
+	if test -n "${JULEA_CONFIG}"
 	then
-		if [ ! -f "${JULEA_CONFIG}" ]
+		if test ! -f "${JULEA_CONFIG}"
 		then
 			return 1
 		fi
@@ -43,17 +45,17 @@ get_config ()
 		return 0
 	fi
 
-	if [ -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea" ]
+	if test -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
 	then
 		cat "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
 		return 0
 	fi
 
-	for CONFIG_DIR in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
+	for config_dir in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
 	do
-		if [ -f "${CONFIG_DIR}/julea/julea" ]
+		if test -f "${config_dir}/julea/julea"
 		then
-			cat "${CONFIG_DIR}/julea/julea"
+			cat "${config_dir}/julea/julea"
 			return 0
 		fi
 	done
@@ -63,62 +65,67 @@ get_config ()
 
 get_host ()
 {
-	local SERVER
-	local HOST
+	local server
+	local host
 
-	SERVER="$1"
+	server="$1"
 
-	HOST="${SERVER%:*}"
-	HOST="${HOST%.*}"
+	host="${server%:*}"
+	host="${host%.*}"
 
-	echo "${HOST}"
+	printf '%s' "${host}"
 }
 
 get_port ()
 {
-	local SERVER
-	local PORT
+	local server
+	local port
 
-	SERVER="$1"
+	server="$1"
 
-	PORT="${SERVER#*:}"
+	port="${server#*:}"
 
-	if [ "${PORT}" = "${SERVER}" ]
+	if test "${port}" = "${server}"
 	then
-		PORT=''
+		port=''
 	fi
 
-	echo "${PORT}"
+	printf '%s' "${port}"
 }
 
 do_start ()
 {
-	local SERVER
-	local PORT_OPTION
+	local host
+	local server
+	local port
+	local port_option
 
-	for SERVER in ${SERVERS_DATA}
+	for server in ${SERVERS_DATA}
 	do
-		HOST="$(get_host "${SERVER}")"
-		PORT="$(get_port "${SERVER}")"
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
 
-		if [ "${HOST}" = "${HOSTNAME}" ]
+		if test "${host}" = "${HOSTNAME}"
 		then
-			PORT_OPTION=''
-			test -n "${PORT}" && PORT_OPTION="--port ${PORT}"
+			port_option=''
+			test -n "${port}" && port_option="--port ${port}"
 
-			julea-server --daemon ${PORT_OPTION}
+			julea-server --daemon ${port_option}
 		fi
 	done
 
-	for SERVER in ${SERVERS_META}
+	for server in ${SERVERS_META}
 	do
-		HOST="$(get_host "${SERVER}")"
-		PORT="$(get_port "${SERVER}")"
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
 
-		if [ "${HOST}" = "${HOSTNAME}" ]
+		if test "${host}" = "${HOSTNAME}"
 		then
-			mkdir --parents "${MONGO_PATH}/db"
-			mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
+			if test "${META_BACKEND}" = 'mongodb'
+			then
+				mkdir --parents "${MONGO_PATH}/db"
+				mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
+			fi
 		fi
 	done
 
@@ -128,30 +135,35 @@ do_start ()
 
 do_stop ()
 {
-	local SERVER
+	local host
+	local port
+	local server
 
-	for SERVER in ${SERVERS_DATA}
+	for server in ${SERVERS_DATA}
 	do
-		HOST="$(get_host "${SERVER}")"
-		PORT="$(get_port "${SERVER}")"
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
 
-		if [ "${HOST}" = "${HOSTNAME}" ]
+		if test "${host}" = "${HOSTNAME}"
 		then
 			killall --verbose julea-server || true
 			rm -rf "${DATA_PATH}"
-			rm -rf "${META_PATH}"
 		fi
 	done
 
-	for SERVER in ${SERVERS_META}
+	for server in ${SERVERS_META}
 	do
-		HOST="$(get_host "${SERVER}")"
-		PORT="$(get_port "${SERVER}")"
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
 
-		if [ "${HOST}" = "${HOSTNAME}" ]
+		if test "${host}" = "${HOSTNAME}"
 		then
-			mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
-			rm -rf "${MONGO_PATH}"
+			if test "${META_BACKEND}" = 'mongodb'
+			then
+				mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
+				rm -rf "${MONGO_PATH}"
+			fi
+			#rm -rf "${META_PATH}"
 		fi
 	done
 }
@@ -161,22 +173,24 @@ test -n "$1" || usage
 MODE="$1"
 
 HOSTNAME="$(hostname)"
-USER="$(id -nu)"
+USER="$(id --name --user)"
 
-BUILD_PATH="${SELF_DIR}/../build"
-EXTERNAL_PATH="${SELF_DIR}/../external"
 MONGO_PATH="/tmp/julea-mongo-${USER}"
 
-export PATH="${BUILD_PATH}/server:${BUILD_PATH}/tools:${PATH}"
-export LD_LIBRARY_PATH="${BUILD_PATH}/lib:${EXTERNAL_PATH}/mongo-c-driver/lib:${LD_LIBRARY_PATH}"
+set_path
+set_library_path
 
 SERVERS_DATA="$(get_config | grep ^data=)"
 SERVERS_META="$(get_config | grep ^metadata=)"
+DATA_BACKEND="$(get_config | grep ^backend= | head --lines=1)"
+META_BACKEND="$(get_config | grep ^backend= | tail --lines=1)"
 DATA_PATH="$(get_config | grep ^path= | head --lines=1)"
 META_PATH="$(get_config | grep ^path= | tail --lines=1)"
 
 SERVERS_DATA="${SERVERS_DATA#data=}"
 SERVERS_META="${SERVERS_META#metadata=}"
+DATA_BACKEND="${DATA_BACKEND#backend=}"
+META_BACKEND="${META_BACKEND#backend=}"
 DATA_PATH="${DATA_PATH#path=}"
 META_PATH="${META_PATH#path=}"
 

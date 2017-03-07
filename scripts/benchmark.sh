@@ -30,7 +30,7 @@ set_library_path
 run_benchmark ()
 {
 	setup.sh start
-	julea-benchmark "$@"
+	julea-benchmark "$@" || true
 	setup.sh stop
 }
 

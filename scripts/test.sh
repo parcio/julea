@@ -35,7 +35,7 @@ run_test ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 
 	setup.sh start
-	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test"
+	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test" || true
 	setup.sh stop
 }
 
