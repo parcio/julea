@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <jcommon.h>
 #include <jcommon-internal.h>
 
@@ -66,31 +64,6 @@ struct JCommon
 };
 
 static JCommon* j_common = NULL;
-
-/*
-static
-gint
-j_common_oid_fuzz (void)
-{
-	static GPid pid = 0;
-
-	if (G_UNLIKELY(pid == 0))
-	{
-		pid = getpid();
-	}
-
-	return pid;
-}
-
-static
-gint
-j_common_oid_inc (void)
-{
-	static gint32 counter = 0;
-
-	return g_atomic_int_add(&counter, 1);
-}
-*/
 
 /**
  * Returns whether JULEA has been initialized.
@@ -195,9 +168,6 @@ j_init (void)
 	j_distribution_init();
 	j_background_operation_init(0);
 	j_operation_cache_init();
-
-	//bson_set_oid_fuzz(j_common_oid_fuzz);
-	//bson_set_oid_inc(j_common_oid_inc);
 
 	g_atomic_pointer_set(&j_common, common);
 
