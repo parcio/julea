@@ -209,7 +209,7 @@ def build (ctx):
 #		install_path = '${LIBDIR}'
 #	)
 
-	use_julea_core = ['GLIB', 'ASAN', 'UBSAN']
+	use_julea_core = ['GLIB', 'ASAN'] # 'UBSAN'
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'BSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 
