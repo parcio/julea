@@ -165,8 +165,9 @@ do_stop ()
 			then
 				mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
 				rm -rf "${MONGO_PATH}"
+			else
+				rm -rf "${META_PATH}"
 			fi
-			#rm -rf "${META_PATH}"
 		fi
 	done
 }

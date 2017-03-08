@@ -158,7 +158,6 @@ j_item_iterator_get (JItemIterator* iterator)
 	JItem* item;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
-	//g_return_val_if_fail(iterator->current != NULL, NULL);
 
 	item = j_item_new_from_bson(iterator->collection, iterator->current);
 
