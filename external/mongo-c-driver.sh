@@ -19,7 +19,7 @@
 set -e
 
 PREFIX="${PWD}/mongo-c-driver"
-VERSION='1.6.0'
+VERSION='1.6.1'
 
 if [ -d "${PREFIX}" ]
 then
@@ -32,7 +32,7 @@ TEMP=$(mktemp -d --tmpdir="${PWD}")
 trap "rm -rf ${TEMP}" HUP INT TERM 0
 cd "${TEMP}"
 
-wget -O "mongo-c-driver-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/releases/download/1.6.0/mongo-c-driver-${VERSION}.tar.gz"
+wget -O "mongo-c-driver-${VERSION}.tar.gz" "https://github.com/mongodb/mongo-c-driver/releases/download/${VERSION}/mongo-c-driver-${VERSION}.tar.gz"
 tar xf "mongo-c-driver-${VERSION}.tar.gz"
 
 cd "mongo-c-driver-${VERSION}"
