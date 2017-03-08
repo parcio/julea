@@ -33,29 +33,32 @@ usage ()
 get_config ()
 {
 	local config_dir
+	local config_name
+
+	config_name='julea'
 
 	if test -n "${JULEA_CONFIG}"
 	then
-		if test ! -f "${JULEA_CONFIG}"
+		if test -f "${JULEA_CONFIG}"
 		then
-			return 1
+			cat "${JULEA_CONFIG}"
+			return 0
+		else
+			config_name="${JULEA_CONFIG}"
 		fi
-
-		cat "${JULEA_CONFIG}"
-		return 0
 	fi
 
-	if test -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
+	if test -f "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/${config_name}"
 	then
-		cat "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/julea"
+		cat "${XDG_CONFIG_HOME:-${HOME}/.config}/julea/${config_name}"
 		return 0
 	fi
 
 	for config_dir in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
 	do
-		if test -f "${config_dir}/julea/julea"
+		if test -f "${config_dir}/julea/${config_name}"
 		then
-			cat "${config_dir}/julea/julea"
+			cat "${config_dir}/julea/${config_name}"
 			return 0
 		fi
 	done

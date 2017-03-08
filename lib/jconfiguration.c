@@ -120,6 +120,7 @@ j_configuration_new (void)
 {
 	JConfiguration* configuration = NULL;
 	GKeyFile* key_file;
+	gchar* config_name = NULL;
 	gchar const* env_path;
 	gchar* path = NULL;
 	gchar const* const* dirs;
@@ -129,20 +130,32 @@ j_configuration_new (void)
 
 	if ((env_path = g_getenv("JULEA_CONFIG")) != NULL)
 	{
-		if (g_key_file_load_from_file(key_file, env_path, G_KEY_FILE_NONE, NULL))
+		if (g_path_is_absolute(env_path))
 		{
-			configuration = j_configuration_new_for_data(key_file);
+			if (g_key_file_load_from_file(key_file, env_path, G_KEY_FILE_NONE, NULL))
+			{
+				configuration = j_configuration_new_for_data(key_file);
+			}
+			else
+			{
+				J_CRITICAL("Can not open configuration file %s.", env_path);
+			}
+
+			/* If we do not find the configuration file, stop searching. */
+			goto out;
 		}
 		else
 		{
-			J_CRITICAL("Can not open configuration file %s.", env_path);
+			config_name = g_path_get_basename(env_path);
 		}
-
-		/* If we do not find the configuration file, stop searching. */
-		goto out;
 	}
 
-	path = g_build_filename(g_get_user_config_dir(), "julea", "julea", NULL);
+	if (config_name == NULL)
+	{
+		config_name = g_strdup("julea");
+	}
+
+	path = g_build_filename(g_get_user_config_dir(), "julea", config_name, NULL);
 
 	if (g_key_file_load_from_file(key_file, path, G_KEY_FILE_NONE, NULL))
 	{
@@ -157,7 +170,7 @@ j_configuration_new (void)
 
 	for (i = 0; dirs[i] != NULL; i++)
 	{
-		path = g_build_filename(dirs[i], "julea", "julea", NULL);
+		path = g_build_filename(dirs[i], "julea", config_name, NULL);
 
 		if (g_key_file_load_from_file(key_file, path, G_KEY_FILE_NONE, NULL))
 		{
@@ -173,7 +186,9 @@ j_configuration_new (void)
 
 out:
 	g_key_file_free(key_file);
+
 	g_free(path);
+	g_free(config_name);
 
 	return configuration;
 }
