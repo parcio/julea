@@ -67,6 +67,9 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 	mongoc_collection_t* m_collection;
 	mongoc_index_opt_t m_index_opt[1];
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	bson_init(index);
@@ -105,6 +108,8 @@ backend_batch_execute (gpointer data)
 
 	bson_t reply[1];
 	mongoc_bulk_operation_t* bulk_op = data;
+
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -217,6 +222,10 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(result_out != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	bson_init(document);
@@ -268,6 +277,9 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	bson_init(document);
@@ -304,6 +316,10 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 	bson_iter_t iter;
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -355,6 +371,9 @@ backend_iterate (gpointer data, bson_t* result_out)
 
 	gboolean ret = FALSE;
 
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(result_out != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	/* FIXME */
@@ -388,6 +407,8 @@ backend_init (gchar const* path)
 
 	gboolean ret = FALSE;
 	gchar** split;
+
+	g_return_val_if_fail(path != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
