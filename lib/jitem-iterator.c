@@ -57,7 +57,7 @@ struct JItemIterator
 	/**
 	 * The current document.
 	 **/
-	bson_t const* current;
+	bson_t current[1];
 };
 
 /**
@@ -82,7 +82,6 @@ j_item_iterator_new (JCollection* collection)
 	iterator->meta_backend = j_metadata_backend();
 	iterator->collection = j_collection_ref(collection);
 	iterator->cursor = NULL;
-	iterator->current = NULL;
 
 	if (iterator->meta_backend != NULL)
 	{
@@ -135,7 +134,7 @@ j_item_iterator_next (JItemIterator* iterator)
 
 	if (iterator->meta_backend != NULL)
 	{
-		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, &(iterator->current));
+		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, iterator->current);
 	}
 
 	return ret;
@@ -159,7 +158,7 @@ j_item_iterator_get (JItemIterator* iterator)
 	JItem* item;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
-	g_return_val_if_fail(iterator->current != NULL, NULL);
+	//g_return_val_if_fail(iterator->current != NULL, NULL);
 
 	item = j_item_new_from_bson(iterator->collection, iterator->current);
 

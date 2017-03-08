@@ -29,8 +29,6 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
-static bson_t backend_value[1];
-
 static mongoc_client_t* backend_connection = NULL;
 
 static gchar* backend_host = NULL;
@@ -349,7 +347,7 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t const** result_out)
+backend_iterate (gpointer data, bson_t* result_out)
 {
 	bson_t const* result;
 	bson_iter_t iter;
@@ -367,11 +365,9 @@ backend_iterate (gpointer data, bson_t const** result_out)
 			bson_value_t const* value;
 
 			value = bson_iter_value(&iter);
-			/* FIXME global variable */
-			bson_init_static(backend_value, value->value.v_doc.data, value->value.v_doc.data_len);
+			bson_init_static(result_out, value->value.v_doc.data, value->value.v_doc.data_len);
 
 			ret = TRUE;
-			*result_out = backend_value;
 		}
 	}
 	else

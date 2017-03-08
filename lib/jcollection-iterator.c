@@ -56,7 +56,7 @@ struct JCollectionIterator
 	/**
 	 * The current document.
 	 **/
-	bson_t const* current;
+	bson_t current[1];
 };
 
 /**
@@ -79,7 +79,6 @@ j_collection_iterator_new (void)
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->meta_backend = j_metadata_backend();
 	iterator->cursor = NULL;
-	iterator->current = NULL;
 
 	if (iterator->meta_backend != NULL)
 	{
@@ -125,7 +124,7 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 
 	if (iterator->meta_backend != NULL)
 	{
-		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, &(iterator->current));
+		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, iterator->current);
 	}
 
 	return ret;
@@ -149,7 +148,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 	JCollection* collection;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
-	g_return_val_if_fail(iterator->current != NULL, NULL);
+	//g_return_val_if_fail(iterator->current != NULL, NULL);
 
 	collection = j_collection_new_from_bson(iterator->current);
 
