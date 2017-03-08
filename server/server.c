@@ -514,12 +514,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_add_operation(reply, 4 + value->len);
 							j_message_append_4(reply, &(value->len));
 							j_message_append_n(reply, bson_get_data(value), value->len);
+
+							bson_destroy(value);
 						}
 						else
 						{
-							guint32 zero;
-
-							zero = 0;
+							guint32 zero = 0;
 
 							j_message_add_operation(reply, 4);
 							j_message_append_4(reply, &zero);
@@ -531,6 +531,33 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_META_GET_ALL:
+				{
+					JMessage* reply = NULL;
+					bson_t value[1];
+					gchar const* namespace;
+					gpointer iterator;
+					guint32 zero = 0;
+
+					reply = j_message_new_reply(message);
+					namespace = j_message_get_string(message);
+
+					jd_meta_backend->u.meta.get_all(namespace, &iterator);
+
+					while (jd_meta_backend->u.meta.iterate(iterator, value))
+					{
+						j_message_add_operation(reply, 4 + value->len);
+						j_message_append_4(reply, &(value->len));
+						j_message_append_n(reply, bson_get_data(value), value->len);
+						bson_destroy(value);
+					}
+
+					j_message_add_operation(reply, 4);
+					j_message_append_4(reply, &zero);
+
+					j_message_send(reply, connection);
+					j_message_unref(reply);
+				}
+				break;
 			case J_MESSAGE_META_GET_BY_VALUE:
 			case J_MESSAGE_META_ITERATE:
 			case J_MESSAGE_REPLY:

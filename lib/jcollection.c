@@ -636,6 +636,7 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 	JBackend* meta_backend;
 	JListIterator* it;
 	JMessage* message;
+	JMessage* reply;
 	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
@@ -666,7 +667,6 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 		}
 		else
 		{
-			JMessage* reply;
 			gconstpointer data;
 			gsize name_len;
 			guint32 len;
@@ -697,9 +697,6 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 			{
 				ret = FALSE;
 			}
-
-			j_message_unref(reply);
-			j_message_unref(message);
 		}
 
 		*collection = NULL;
@@ -708,6 +705,13 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 		{
 			*collection = j_collection_new_from_bson(result);
 			bson_destroy(result);
+		}
+
+		if (meta_backend == NULL)
+		{
+			// result points to reply's memory
+			j_message_unref(reply);
+			j_message_unref(message);
 		}
 	}
 

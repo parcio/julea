@@ -29,15 +29,19 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
-static leveldb_t* backend_db;
-static leveldb_readoptions_t* backend_roptions;
-static leveldb_writeoptions_t* backend_woptions;
+static leveldb_t* backend_db = NULL;
+
+static leveldb_readoptions_t* backend_read_options = NULL;
+static leveldb_writeoptions_t* backend_write_options = NULL;
 
 static
 gboolean
 backend_batch_start (gchar const* namespace, gpointer* data)
 {
 	leveldb_writebatch_t* batch;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
@@ -46,25 +50,26 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 
 	j_trace_leave(G_STRFUNC);
 
-	return TRUE;
+	return (batch != NULL);
 }
 
 static
 gboolean
 backend_batch_execute (gpointer data)
 {
-	gboolean ret = FALSE;
-
 	leveldb_writebatch_t* batch = data;
+
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_write(backend_db, backend_woptions, batch, NULL);
+	leveldb_write(backend_db, backend_write_options, batch, NULL);
 	leveldb_writebatch_destroy(batch);
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	// FIXME
+	return TRUE;
 }
 
 static
@@ -83,6 +88,7 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 
 	j_trace_leave(G_STRFUNC);
 
+	// FIXME
 	return TRUE;
 }
 
@@ -101,6 +107,7 @@ backend_delete (gchar const* key, gpointer data)
 
 	j_trace_leave(G_STRFUNC);
 
+	// FIXME
 	return TRUE;
 }
 
@@ -108,19 +115,25 @@ static
 gboolean
 backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
-	bson_t tmp[1];
-
 	gpointer result;
 	gsize result_len;
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(result_out != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
-	result = leveldb_get(backend_db, backend_roptions, key, strlen(key) + 1, &result_len, NULL);
+	result = leveldb_get(backend_db, backend_read_options, key, strlen(key) + 1, &result_len, NULL);
 
 	if (result != NULL)
 	{
+		bson_t tmp[1];
+
+		// FIXME check whether copies can be avoided
 		bson_init_static(tmp, result, result_len);
 		bson_copy_to(tmp, result_out);
+		g_free(result);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -132,13 +145,24 @@ static
 gboolean
 backend_get_all (gchar const* namespace, gpointer* data)
 {
-	gboolean ret = FALSE;
+	leveldb_iterator_t* iterator;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
+	iterator = leveldb_create_iterator(backend_db, backend_read_options);
+
+	if (iterator != NULL)
+	{
+		leveldb_iter_seek_to_first(iterator);
+		*data = iterator;
+	}
+
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	return (iterator != NULL);
 }
 
 static
@@ -147,6 +171,10 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 {
 	gboolean ret = FALSE;
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	j_trace_leave(G_STRFUNC);
@@ -156,11 +184,34 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t const** result_out)
+backend_iterate (gpointer data, bson_t* result_out)
 {
 	gboolean ret = FALSE;
 
+	leveldb_iterator_t* iterator = data;
+
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(result_out != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
+
+	if (leveldb_iter_valid(iterator))
+	{
+		gconstpointer value;
+		gsize len;
+
+		value = leveldb_iter_value(iterator, &len);
+		bson_init_static(result_out, value, len);
+
+		// FIXME might invalidate value
+		leveldb_iter_next(iterator);
+
+		ret = TRUE;
+	}
+	else
+	{
+		leveldb_iter_destroy(iterator);
+	}
 
 	j_trace_leave(G_STRFUNC);
 
@@ -173,14 +224,16 @@ backend_init (gchar const* path)
 {
 	leveldb_options_t* options;
 
+	g_return_val_if_fail(path != NULL, FALSE);
+
 	j_trace_enter(G_STRFUNC);
 
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);
 	leveldb_options_set_compression(options, leveldb_snappy_compression);
 
-	backend_roptions = leveldb_readoptions_create();
-	backend_woptions = leveldb_writeoptions_create();
+	backend_read_options = leveldb_readoptions_create();
+	backend_write_options = leveldb_writeoptions_create();
 
 	backend_db = leveldb_open(options, path, NULL);
 
@@ -197,7 +250,13 @@ backend_fini (void)
 {
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_close(backend_db);
+	leveldb_readoptions_destroy(backend_read_options);
+	leveldb_writeoptions_destroy(backend_write_options);
+
+	if (backend_db != NULL)
+	{
+		leveldb_close(backend_db);
+	}
 
 	j_trace_leave(G_STRFUNC);
 }

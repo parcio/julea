@@ -34,6 +34,7 @@
 #include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
+#include <jmessage-internal.h>
 #include <joperation-cache-internal.h>
 
 /**
@@ -57,6 +58,8 @@ struct JCollectionIterator
 	 * The current document.
 	 **/
 	bson_t current[1];
+
+	JMessage* reply;
 };
 
 /**
@@ -79,10 +82,28 @@ j_collection_iterator_new (void)
 	iterator = g_slice_new(JCollectionIterator);
 	iterator->meta_backend = j_metadata_backend();
 	iterator->cursor = NULL;
+	iterator->reply = NULL;
 
 	if (iterator->meta_backend != NULL)
 	{
 		iterator->meta_backend->u.meta.get_all("collections", &(iterator->cursor));
+	}
+	else
+	{
+		JMessage* message;
+		GSocketConnection* meta_connection;
+
+		meta_connection = j_connection_pool_pop_meta(0);
+		message = j_message_new(J_MESSAGE_META_GET_ALL, 12);
+		j_message_append_n(message, "collections", 12);
+
+		j_message_send(message, meta_connection);
+
+		iterator->reply = j_message_new_reply(message);
+		j_message_receive(iterator->reply, meta_connection);
+
+		j_message_unref(message);
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	return iterator;
@@ -99,6 +120,11 @@ void
 j_collection_iterator_free (JCollectionIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
+
+	if (iterator->reply != NULL)
+	{
+		j_message_unref(iterator->reply);
+	}
 
 	g_slice_free(JCollectionIterator, iterator);
 }
@@ -126,6 +152,22 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 	{
 		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, iterator->current);
 	}
+	else
+	{
+		guint32 len;
+
+		len = j_message_get_4(iterator->reply);
+
+		if (len > 0)
+		{
+			gconstpointer data;
+
+			data = j_message_get_n(iterator->reply, len);
+			bson_init_static(iterator->current, data, len);
+
+			ret = TRUE;
+		}
+	}
 
 	return ret;
 }
@@ -148,7 +190,6 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 	JCollection* collection;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
-	//g_return_val_if_fail(iterator->current != NULL, NULL);
 
 	collection = j_collection_new_from_bson(iterator->current);
 
