@@ -29,6 +29,14 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
+struct JLevelDBBatch
+{
+	leveldb_writebatch_t* batch;
+	gchar* namespace;
+};
+
+typedef struct JLevelDBBatch JLevelDBBatch;
+
 static leveldb_t* backend_db = NULL;
 
 static leveldb_readoptions_t* backend_read_options = NULL;
@@ -38,14 +46,17 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, gpointer* data)
 {
-	leveldb_writebatch_t* batch;
+	JLevelDBBatch* batch;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	batch = leveldb_writebatch_create();
+	batch = g_slice_new(JLevelDBBatch);
+
+	batch->batch = leveldb_writebatch_create();
+	batch->namespace = g_strdup(namespace);
 	*data = batch;
 
 	j_trace_leave(G_STRFUNC);
@@ -57,14 +68,17 @@ static
 gboolean
 backend_batch_execute (gpointer data)
 {
-	leveldb_writebatch_t* batch = data;
+	JLevelDBBatch* batch = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_write(backend_db, backend_write_options, batch, NULL);
-	leveldb_writebatch_destroy(batch);
+	leveldb_write(backend_db, backend_write_options, batch->batch, NULL);
+
+	g_free(batch->namespace);
+	leveldb_writebatch_destroy(batch->batch);
+	g_slice_free(JLevelDBBatch, batch);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -76,7 +90,8 @@ static
 gboolean
 backend_put (gchar const* key, bson_t const* value, gpointer data)
 {
-	leveldb_writebatch_t* batch = data;
+	JLevelDBBatch* batch = data;
+	gchar* nskey;
 
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
@@ -84,7 +99,9 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_writebatch_put(batch, key, strlen(key) + 1, (gchar*)bson_get_data(value), value->len);
+	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
+	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gchar*)bson_get_data(value), value->len);
+	g_free(nskey);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -96,14 +113,17 @@ static
 gboolean
 backend_delete (gchar const* key, gpointer data)
 {
-	leveldb_writebatch_t* batch = data;
+	JLevelDBBatch* batch = data;
+	gchar* nskey;
 
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	leveldb_writebatch_delete(batch, key, strlen(key) + 1);
+	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
+	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
+	g_free(nskey);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -115,6 +135,7 @@ static
 gboolean
 backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
+	gchar* nskey;
 	gpointer result;
 	gsize result_len;
 
@@ -124,7 +145,9 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	j_trace_enter(G_STRFUNC);
 
-	result = leveldb_get(backend_db, backend_read_options, key, strlen(key) + 1, &result_len, NULL);
+	nskey = g_strdup_printf("%s:%s", namespace, key);
+	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
+	g_free(nskey);
 
 	if (result != NULL)
 	{
@@ -156,7 +179,13 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 	if (iterator != NULL)
 	{
-		leveldb_iter_seek_to_first(iterator);
+		gchar* nskey;
+
+		nskey = g_strdup_printf("%s:", namespace);
+		// FIXME check +1
+		leveldb_iter_seek(iterator, nskey, strlen(nskey) + 1);
+		g_free(nskey);
+
 		*data = iterator;
 	}
 
