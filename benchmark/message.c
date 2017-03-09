@@ -28,11 +28,12 @@
 
 static
 void
-benchmark_message_new (BenchmarkResult* result)
+_benchmark_message_new (BenchmarkResult* result, gboolean append)
 {
 	guint const n = 500000;
 	guint const m = 100;
 	guint64 const dummy = 42;
+	gsize const size = m * sizeof(guint64);
 
 	JMessage* message;
 	gdouble elapsed;
@@ -41,11 +42,14 @@ benchmark_message_new (BenchmarkResult* result)
 
 	for (guint i = 0; i < n; i++)
 	{
-		message = j_message_new(J_MESSAGE_NONE, m * sizeof(guint64));
+		message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
 
-		for (guint j = 0; j < m; j++)
+		if (append)
 		{
-			j_message_append_8(message, &dummy);
+			for (guint j = 0; j < m; j++)
+			{
+				j_message_append_8(message, &dummy);
+			}
 		}
 
 		j_message_unref(message);
@@ -59,10 +63,24 @@ benchmark_message_new (BenchmarkResult* result)
 
 static
 void
-benchmark_message_add_operation (BenchmarkResult* result)
+benchmark_message_new (BenchmarkResult* result)
 {
-	guint const n = 500000;
-	guint const m = 100;
+	_benchmark_message_new(result, FALSE);
+}
+
+static
+void
+benchmark_message_new_append (BenchmarkResult* result)
+{
+	_benchmark_message_new(result, TRUE);
+}
+
+static
+void
+_benchmark_message_add_operation (BenchmarkResult* result, gboolean large)
+{
+	guint const n = (large) ? 100 : 50000;
+	guint const m = (large) ? 50000 : 100;
 	guint64 const dummy = 42;
 
 	JMessage* message;
@@ -89,9 +107,25 @@ benchmark_message_add_operation (BenchmarkResult* result)
 	result->operations = n;
 }
 
+static
+void
+benchmark_message_add_operation_small (BenchmarkResult* result)
+{
+	_benchmark_message_add_operation(result, FALSE);
+}
+
+static
+void
+benchmark_message_add_operation_large (BenchmarkResult* result)
+{
+	_benchmark_message_add_operation(result, TRUE);
+}
+
 void
 benchmark_message (void)
 {
 	j_benchmark_run("/message/new", benchmark_message_new);
-	j_benchmark_run("/message/add_operation", benchmark_message_add_operation);
+	j_benchmark_run("/message/new-append", benchmark_message_new_append);
+	j_benchmark_run("/message/add-operation-small", benchmark_message_add_operation_small);
+	j_benchmark_run("/message/add-operation-large", benchmark_message_add_operation_large);
 }
