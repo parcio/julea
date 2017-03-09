@@ -37,6 +37,14 @@ struct JLevelDBBatch
 
 typedef struct JLevelDBBatch JLevelDBBatch;
 
+struct JLevelDBIterator
+{
+	leveldb_iterator_t* iterator;
+	gchar* prefix;
+};
+
+typedef struct JLevelDBIterator JLevelDBIterator;
+
 static leveldb_t* backend_db = NULL;
 
 static leveldb_readoptions_t* backend_read_options = NULL;
@@ -168,23 +176,24 @@ static
 gboolean
 backend_get_all (gchar const* namespace, gpointer* data)
 {
-	leveldb_iterator_t* iterator;
+	JLevelDBIterator* iterator = NULL;
+	leveldb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	iterator = leveldb_create_iterator(backend_db, backend_read_options);
+	it = leveldb_create_iterator(backend_db, backend_read_options);
 
-	if (iterator != NULL)
+	if (it != NULL)
 	{
-		gchar* nskey;
+		iterator = g_slice_new(JLevelDBIterator);
+		iterator->iterator = it;
+		iterator->prefix = g_strdup_printf("%s:", namespace);
 
-		nskey = g_strdup_printf("%s:", namespace);
 		// FIXME check +1
-		leveldb_iter_seek(iterator, nskey, strlen(nskey) + 1);
-		g_free(nskey);
+		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix) + 1);
 
 		*data = iterator;
 	}
@@ -217,31 +226,43 @@ backend_iterate (gpointer data, bson_t* result_out)
 {
 	gboolean ret = FALSE;
 
-	leveldb_iterator_t* iterator = data;
+	JLevelDBIterator* iterator = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC);
 
-	if (leveldb_iter_valid(iterator))
+	if (leveldb_iter_valid(iterator->iterator))
 	{
+		gchar const* key;
 		gconstpointer value;
 		gsize len;
 
-		value = leveldb_iter_value(iterator, &len);
+		key = leveldb_iter_key(iterator->iterator, &len);
+
+		if (!g_str_has_prefix(key, iterator->prefix))
+		{
+			// FIXME check whether we can completely terminate
+			goto out;
+		}
+
+		value = leveldb_iter_value(iterator->iterator, &len);
 		bson_init_static(result_out, value, len);
 
 		// FIXME might invalidate value
-		leveldb_iter_next(iterator);
+		leveldb_iter_next(iterator->iterator);
 
 		ret = TRUE;
 	}
 	else
 	{
-		leveldb_iter_destroy(iterator);
+		g_free(iterator->prefix);
+		leveldb_iter_destroy(iterator->iterator);
+		g_slice_free(JLevelDBIterator, iterator);
 	}
 
+out:
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
