@@ -1195,7 +1195,9 @@ j_item_create_internal (JBatch* batch, JList* operations)
 	JBackend* meta_backend;
 	JCollection* collection = NULL;
 	JListIterator* it;
+	JMessage* message;
 	JSemantics* semantics;
+	GSocketConnection* meta_connection;
 	gboolean ret = FALSE;
 	gpointer meta_batch;
 
@@ -1215,6 +1217,12 @@ j_item_create_internal (JBatch* batch, JList* operations)
 	{
 		ret = meta_backend->u.meta.batch_start("items", &meta_batch);
 	}
+	else
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+		message = j_message_new(J_MESSAGE_META_PUT, 6);
+		j_message_append_n(message, "items", 6);
+	}
 
 	while (j_list_iterator_next(it))
 	{
@@ -1231,14 +1239,25 @@ j_item_create_internal (JBatch* batch, JList* operations)
 		}
 
 		b = j_item_serialize(item, semantics);
+		path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
 
 		if (meta_backend != NULL)
 		{
-			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
 			ret = meta_backend->u.meta.put(path, b, meta_batch) && ret;
-			g_free(path);
+		}
+		else
+		{
+			gsize path_len;
+
+			path_len = strlen(path) + 1;
+
+			j_message_add_operation(message, path_len + 4 + b->len);
+			j_message_append_n(message, path, path_len);
+			j_message_append_4(message, &(b->len));
+			j_message_append_n(message, bson_get_data(b), b->len);
 		}
 
+		g_free(path);
 		bson_destroy(b);
 		g_slice_free(bson_t, b);
 	}
@@ -1246,6 +1265,12 @@ j_item_create_internal (JBatch* batch, JList* operations)
 	if (meta_backend != NULL)
 	{
 		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+	}
+	else
+	{
+		j_message_send(message, meta_connection);
+		j_message_unref(message);
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	j_list_iterator_free(it);
@@ -1429,6 +1454,9 @@ j_item_get_internal (JBatch* batch, JList* operations)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
+	JMessage* message;
+	JMessage* reply;
+	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -1440,6 +1468,11 @@ j_item_get_internal (JBatch* batch, JList* operations)
 	//mongo_connection = j_connection_pool_pop_meta(0);
 	meta_backend = j_metadata_backend();
 
+	if (meta_backend == NULL)
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+	}
+
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
@@ -1450,12 +1483,47 @@ j_item_get_internal (JBatch* batch, JList* operations)
 		gchar const* name = operation->u.item_get.name;
 		gchar* path;
 
+		path = g_build_path("/", j_collection_get_name(collection), name, NULL);
+
 		if (meta_backend != NULL)
 		{
-			path = g_build_path("/", j_collection_get_name(collection), name, NULL);
 			ret = meta_backend->u.meta.get("items", path, result) && ret;
-			g_free(path);
 		}
+		else
+		{
+			gconstpointer data;
+			gsize path_len;
+			guint32 len;
+
+			path_len = strlen(path) + 1;
+
+			message = j_message_new(J_MESSAGE_META_GET, 6);
+			j_message_append_n(message, "items", 6);
+			j_message_add_operation(message, path_len);
+			j_message_append_n(message, path, path_len);
+
+			j_message_send(message, meta_connection);
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, meta_connection);
+
+			len = j_message_get_4(reply);
+
+			if (len > 0)
+			{
+				ret = TRUE;
+
+				data = j_message_get_n(reply, len);
+
+				bson_init_static(result, data, len);
+			}
+			else
+			{
+				ret = FALSE;
+			}
+		}
+
+		g_free(path);
 
 		*item = NULL;
 
@@ -1464,6 +1532,18 @@ j_item_get_internal (JBatch* batch, JList* operations)
 			*item = j_item_new_from_bson(collection, result);
 			bson_destroy(result);
 		}
+
+		if (meta_backend == NULL)
+		{
+			// result points to reply's memory
+			j_message_unref(reply);
+			j_message_unref(message);
+		}
+	}
+
+	if (meta_backend == NULL)
+	{
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
