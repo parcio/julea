@@ -62,6 +62,11 @@ def configure (ctx):
 			mandatory = False
 		)
 
+	ctx.check_cc(
+		lib = 'm',
+		uselib_store = 'M'
+	)
+
 	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
 		ctx.check_cfg(
 			package = '{0}-2.0'.format(module),
@@ -209,7 +214,7 @@ def build (ctx):
 #		install_path = '${LIBDIR}'
 #	)
 
-	use_julea_core = ['GLIB', 'ASAN'] # 'UBSAN'
+	use_julea_core = ['M', 'GLIB', 'ASAN'] # 'UBSAN'
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'BSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 

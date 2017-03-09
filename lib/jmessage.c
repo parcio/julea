@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <math.h>
 #include <string.h>
 
 #include <jmessage-internal.h>
@@ -229,14 +230,31 @@ static
 void
 j_message_extend (JMessage* message, gsize length)
 {
+	gsize factor = 1;
+	gsize current_length;
 	gsize position;
+	guint32 count;
 
 	if (length == 0)
 	{
 		return;
 	}
 
-	message->size += length;
+	current_length = j_message_length(message);
+
+	if (sizeof(JMessageHeader) + current_length + length <= message->size)
+	{
+		return;
+	}
+
+	count = j_message_get_count(message);
+
+	if (count > 10)
+	{
+		factor = pow(10, floor(log10(count)));
+	}
+
+	message->size += length * factor;
 
 	position = message->current - message->data;
 	message->data = g_realloc(message->data, message->size);
