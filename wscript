@@ -122,7 +122,8 @@ def configure (ctx):
 		package = 'leveldb',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'LEVELDB',
-		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.leveldb) if ctx.options.leveldb else None
+		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.leveldb) if ctx.options.leveldb else None,
+		mandatory = False
 	)
 
 	ctx.env.JULEA_LEXOS = \
