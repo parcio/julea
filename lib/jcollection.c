@@ -579,6 +579,8 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 	gpointer meta_batch;
 
@@ -593,6 +595,12 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 	{
 		ret = meta_backend->u.meta.batch_start("collections", &meta_batch);
 	}
+	else
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+		message = j_message_new(J_MESSAGE_META_DELETE, 12);
+		j_message_append_n(message, "collections", 12);
+	}
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -604,11 +612,26 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 		{
 			ret = meta_backend->u.meta.delete(collection->name, meta_batch) && ret;
 		}
+		else
+		{
+			gsize name_len;
+
+			name_len = strlen(collection->name) + 1;
+
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, collection->name, name_len);
+		}
 	}
 
 	if (meta_backend != NULL)
 	{
 		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+	}
+	else
+	{
+		j_message_send(message, meta_connection);
+		j_message_unref(message);
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	j_list_iterator_free(it);

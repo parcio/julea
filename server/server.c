@@ -495,6 +495,40 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_META_DELETE:
+				{
+					JMessage* reply = NULL;
+					gchar const* namespace;
+					gpointer batch;
+
+					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					{
+						reply = j_message_new_reply(message);
+					}
+
+					namespace = j_message_get_string(message);
+					jd_meta_backend->u.meta.batch_start(namespace, &batch);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						key = j_message_get_string(message);
+
+						jd_meta_backend->u.meta.delete(key, batch);
+
+						if (reply != NULL)
+						{
+							j_message_add_operation(reply, 0);
+						}
+					}
+
+					jd_meta_backend->u.meta.batch_execute(batch);
+
+					if (reply != NULL)
+					{
+						j_message_send(reply, connection);
+						j_message_unref(reply);
+					}
+				}
+				break;
 			case J_MESSAGE_META_GET:
 				{
 					JMessage* reply = NULL;
