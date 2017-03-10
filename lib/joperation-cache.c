@@ -139,6 +139,7 @@ j_operation_cache_test (JOperation* operation)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	/* FIXME
 	switch (operation->type)
 	{
 		case J_OPERATION_COLLECTION_CREATE:
@@ -160,6 +161,7 @@ j_operation_cache_test (JOperation* operation)
 		default:
 			g_warn_if_reached();
 	}
+	*/
 
 	j_trace_leave(G_STRFUNC);
 
@@ -174,6 +176,7 @@ j_operation_cache_get_required_size (JOperation* operation)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	/* FIXME
 	switch (operation->type)
 	{
 		case J_OPERATION_ITEM_WRITE:
@@ -195,6 +198,7 @@ j_operation_cache_get_required_size (JOperation* operation)
 		default:
 			g_warn_if_reached();
 	}
+	*/
 
 	j_trace_leave(G_STRFUNC);
 
@@ -324,6 +328,7 @@ j_operation_cache_add (JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
+		/* FIXME
 		JOperation* operation = j_list_iterator_get(iterator);
 
 		if (operation->type == J_OPERATION_ITEM_WRITE)
@@ -336,6 +341,8 @@ j_operation_cache_add (JBatch* batch)
 
 			data += operation->u.item_write.length;
 		}
+		*/
+		(void)data;
 	}
 
 	j_list_iterator_free(iterator);

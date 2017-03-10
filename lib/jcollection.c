@@ -53,6 +53,34 @@
  * @{
  **/
 
+struct JCollectionOperation
+{
+	union
+	{
+		struct
+		{
+			JCollection* collection;
+		}
+		create;
+
+		struct
+		{
+			JCollection* collection;
+		}
+		delete;
+
+		struct
+		{
+			JCollection** collection;
+			gchar* name;
+		}
+		get;
+	}
+	u;
+};
+
+typedef struct JCollectionOperation JCollectionOperation;
+
 /**
  * A collection of items.
  **/
@@ -75,6 +103,36 @@ struct JCollection
 	 **/
 	gint ref_count;
 };
+
+static
+void
+j_collection_create_free (gpointer data)
+{
+	JCollectionOperation* operation = data;
+
+	j_collection_unref(operation->u.create.collection);
+	g_slice_free(JCollectionOperation, operation);
+}
+
+static
+void
+j_collection_delete_free (gpointer data)
+{
+	JCollectionOperation* operation = data;
+
+	j_collection_unref(operation->u.delete.collection);
+	g_slice_free(JCollectionOperation, operation);
+}
+
+static
+void
+j_collection_get_free (gpointer data)
+{
+	JCollectionOperation* operation = data;
+
+	g_free(operation->u.get.name);
+	g_slice_free(JCollectionOperation, operation);
+}
 
 /**
  * Increases a collection's reference count.
@@ -173,6 +231,7 @@ JCollection*
 j_collection_create (gchar const* name, JBatch* batch)
 {
 	JCollection* collection;
+	JCollectionOperation* cop;
 	JOperation* operation;
 
 	g_return_val_if_fail(name != NULL, NULL);
@@ -182,9 +241,14 @@ j_collection_create (gchar const* name, JBatch* batch)
 		goto end;
 	}
 
-	operation = j_operation_new(J_OPERATION_COLLECTION_CREATE);
+	cop = g_slice_new(JCollectionOperation);
+	cop->u.create.collection = j_collection_ref(collection);
+
+	operation = j_operation_new();
 	operation->key = NULL;
-	operation->u.collection_create.collection = j_collection_ref(collection);
+	operation->data = cop;
+	operation->exec_func = j_collection_create_internal;
+	operation->free_func = j_collection_create_free;
 
 	j_batch_add(batch, operation);
 
@@ -207,15 +271,21 @@ end:
 void
 j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 {
+	JCollectionOperation* cop;
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(name != NULL);
 
-	operation = j_operation_new(J_OPERATION_COLLECTION_GET);
+	cop = g_slice_new(JCollectionOperation);
+	cop->u.get.collection = collection;
+	cop->u.get.name = g_strdup(name);
+
+	operation = j_operation_new();
 	operation->key = NULL;
-	operation->u.collection_get.collection = collection;
-	operation->u.collection_get.name = g_strdup(name);
+	operation->data = cop;
+	operation->exec_func = j_collection_get_internal;
+	operation->free_func = j_collection_get_free;
 
 	j_batch_add(batch, operation);
 }
@@ -234,13 +304,19 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 void
 j_collection_delete (JCollection* collection, JBatch* batch)
 {
+	JCollectionOperation* cop;
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
 
-	operation = j_operation_new(J_OPERATION_COLLECTION_DELETE);
+	cop = g_slice_new(JCollectionOperation);
+	cop->u.delete.collection = j_collection_ref(collection);
+
+	operation = j_operation_new();
 	operation->key = NULL;
-	operation->u.collection_delete.collection = j_collection_ref(collection);
+	operation->data = cop;
+	operation->exec_func = j_collection_delete_internal;
+	operation->free_func = j_collection_delete_free;
 
 	j_batch_add(batch, operation);
 }
@@ -508,8 +584,8 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.collection_create.collection;
+		JCollectionOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.create.collection;
 		bson_t* b;
 
 		b = j_collection_serialize(collection);
@@ -605,8 +681,8 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.collection_delete.collection;
+		JCollectionOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.delete.collection;
 
 		if (meta_backend != NULL)
 		{
@@ -679,10 +755,10 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JCollection** collection = operation->u.collection_get.collection;
+		JCollectionOperation* operation = j_list_iterator_get(it);
+		JCollection** collection = operation->u.get.collection;
 		bson_t result[1];
-		gchar const* name = operation->u.collection_get.name;
+		gchar const* name = operation->u.get.name;
 
 		if (meta_backend != NULL)
 		{

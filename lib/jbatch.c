@@ -244,10 +244,9 @@ j_batch_unref (JBatch* batch)
  **/
 static
 gboolean
-j_batch_execute_same (JBatch* batch, JList* list)
+j_batch_execute_same (JBatch* batch, JOperationExecFunc exec_func, JList* list)
 {
 	JOperation* operation;
-	JOperationType type;
 	gboolean ret = FALSE;
 
 	j_trace_enter(G_STRFUNC, NULL);
@@ -259,40 +258,9 @@ j_batch_execute_same (JBatch* batch, JList* list)
 		goto end;
 	}
 
-	type = operation->type;
-
-	switch (type)
+	if (exec_func != NULL)
 	{
-		case J_OPERATION_COLLECTION_CREATE:
-			ret = j_collection_create_internal(batch, list);
-			break;
-		case J_OPERATION_COLLECTION_DELETE:
-			ret = j_collection_delete_internal(batch, list);
-			break;
-		case J_OPERATION_COLLECTION_GET:
-			ret = j_collection_get_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_CREATE:
-			ret = j_item_create_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_DELETE:
-			ret = j_item_delete_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_GET:
-			ret = j_item_get_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_GET_STATUS:
-			ret = j_item_get_status_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_READ:
-			ret = j_item_read_internal(batch, list);
-			break;
-		case J_OPERATION_ITEM_WRITE:
-			ret = j_item_write_internal(batch, list);
-			break;
-		case J_OPERATION_NONE:
-		default:
-			g_warn_if_reached();
+		ret = exec_func(batch, list);
 	}
 
 	j_list_delete_all(list);
@@ -535,7 +503,7 @@ j_batch_execute_internal (JBatch* batch)
 {
 	JList* same_list;
 	JListIterator* iterator;
-	JOperationType last_type;
+	JOperationExecFunc last_exec_func;
 	gpointer last_key;
 	gboolean ret = TRUE;
 
@@ -544,7 +512,7 @@ j_batch_execute_internal (JBatch* batch)
 	iterator = j_list_iterator_new(batch->list);
 	same_list = j_list_new(NULL);
 	last_key = NULL;
-	last_type = J_OPERATION_NONE;
+	last_exec_func = NULL;
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
 	{
@@ -565,17 +533,17 @@ j_batch_execute_internal (JBatch* batch)
 		JOperation* operation = j_list_iterator_get(iterator);
 
 		/* We only combine operations with the same type and the same key. */
-		if ((operation->type != last_type || operation->key != last_key) && last_type != J_OPERATION_NONE)
+		if ((operation->exec_func != last_exec_func || operation->key != last_key) && last_exec_func != NULL)
 		{
-			ret = j_batch_execute_same(batch, same_list) && ret;
+			ret = j_batch_execute_same(batch, last_exec_func, same_list) && ret;
 		}
 
 		last_key = operation->key;
-		last_type = operation->type;
-		j_list_append(same_list, operation);
+		last_exec_func = operation->exec_func;
+		j_list_append(same_list, operation->data);
 	}
 
-	ret = j_batch_execute_same(batch, same_list) && ret;
+	ret = j_batch_execute_same(batch, last_exec_func, same_list) && ret;
 
 	j_list_unref(same_list);
 	j_list_iterator_free(iterator);

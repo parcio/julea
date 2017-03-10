@@ -31,110 +31,24 @@
 
 #include <jitem.h>
 
-enum JOperationType
-{
-	J_OPERATION_NONE,
-	J_OPERATION_COLLECTION_CREATE,
-	J_OPERATION_COLLECTION_DELETE,
-	J_OPERATION_COLLECTION_GET,
-	J_OPERATION_ITEM_CREATE,
-	J_OPERATION_ITEM_GET,
-	J_OPERATION_ITEM_DELETE,
-	J_OPERATION_ITEM_GET_STATUS,
-	J_OPERATION_ITEM_READ,
-	J_OPERATION_ITEM_WRITE
-};
-
-typedef enum JOperationType JOperationType;
+typedef gboolean (*JOperationExecFunc) (JBatch*, JList*);
+typedef void (*JOperationFreeFunc) (gpointer);
 
 /**
  * An operation.
  **/
 struct JOperation
 {
-	/**
-	 * The type.
-	 **/
-	JOperationType type;
-
 	gpointer key;
+	gpointer data;
 
-	union
-	{
-		struct
-		{
-			JCollection* collection;
-		}
-		collection_create;
-
-		struct
-		{
-			JCollection* collection;
-		}
-		collection_delete;
-
-		struct
-		{
-			JCollection** collection;
-			gchar* name;
-		}
-		collection_get;
-
-		struct
-		{
-			JCollection* collection;
-			JItem* item;
-		}
-		item_create;
-
-		struct
-		{
-			JCollection* collection;
-			JItem* item;
-		}
-		item_delete;
-
-		struct
-		{
-			JCollection* collection;
-			JItem** item;
-			gchar* name;
-		}
-		item_get;
-
-		struct
-		{
-			JItem* item;
-			JItemStatusFlags flags;
-		}
-		item_get_status;
-
-		struct
-		{
-			JItem* item;
-			gpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_read;
-		}
-		item_read;
-
-		struct
-		{
-			JItem* item;
-			gconstpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_written;
-		}
-		item_write;
-	}
-	u;
+	JOperationExecFunc exec_func;
+	JOperationFreeFunc free_func;
 };
 
 typedef struct JOperation JOperation;
 
-J_GNUC_INTERNAL JOperation* j_operation_new (JOperationType);
+J_GNUC_INTERNAL JOperation* j_operation_new (void);
 J_GNUC_INTERNAL void j_operation_free (JOperation*);
 
 #endif

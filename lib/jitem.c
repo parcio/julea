@@ -141,6 +141,64 @@ struct JItemBackgroundData
 
 typedef struct JItemBackgroundData JItemBackgroundData;
 
+struct JItemOperation
+{
+	union
+	{
+		struct
+		{
+			JCollection* collection;
+			JItem* item;
+		}
+		create;
+
+		struct
+		{
+			JCollection* collection;
+			JItem* item;
+		}
+		delete;
+
+		struct
+		{
+			JCollection* collection;
+			JItem** item;
+			gchar* name;
+		}
+		get;
+
+		struct
+		{
+			JItem* item;
+			JItemStatusFlags flags;
+		}
+		get_status;
+
+		struct
+		{
+			JItem* item;
+			gpointer data;
+			guint64 length;
+			guint64 offset;
+			guint64* bytes_read;
+		}
+		read;
+
+		struct
+		{
+			JItem* item;
+			gconstpointer data;
+			guint64 length;
+			guint64 offset;
+			guint64* bytes_written;
+		}
+		write;
+	}
+	u;
+};
+
+typedef struct JItemOperation JItemOperation;
+
 /**
  * Data for buffers.
  */
@@ -230,6 +288,75 @@ struct JItem
 	 **/
 	gint ref_count;
 };
+
+static
+void
+j_item_create_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_collection_unref(operation->u.create.collection);
+	j_item_unref(operation->u.create.item);
+
+	g_slice_free(JItemOperation, operation);
+}
+
+static
+void
+j_item_delete_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_collection_unref(operation->u.delete.collection);
+	j_item_unref(operation->u.delete.item);
+
+	g_slice_free(JItemOperation, operation);
+}
+
+static
+void
+j_item_get_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_collection_unref(operation->u.get.collection);
+	g_free(operation->u.get.name);
+
+	g_slice_free(JItemOperation, operation);
+}
+
+static
+void
+j_item_get_status_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_item_unref(operation->u.get_status.item);
+
+	g_slice_free(JItemOperation, operation);
+}
+
+static
+void
+j_item_read_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_item_unref(operation->u.read.item);
+
+	g_slice_free(JItemOperation, operation);
+}
+
+static
+void
+j_item_write_free (gpointer data)
+{
+	JItemOperation* operation = data;
+
+	j_item_unref(operation->u.write.item);
+
+	g_slice_free(JItemOperation, operation);
+}
 
 /**
  * Executes delete operations in a background operation.
@@ -550,6 +677,7 @@ JItem*
 j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
 	JItem* item;
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -562,10 +690,15 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 		goto end;
 	}
 
-	operation = j_operation_new(J_OPERATION_ITEM_CREATE);
+	iop = g_slice_new(JItemOperation);
+	iop->u.create.collection = j_collection_ref(collection);
+	iop->u.create.item = j_item_ref(item);
+
+	operation = j_operation_new();
 	operation->key = collection;
-	operation->u.item_create.collection = j_collection_ref(collection);
-	operation->u.item_create.item = j_item_ref(item);
+	operation->data = iop;
+	operation->exec_func = j_item_create_internal;
+	operation->free_func = j_item_create_free;
 
 	j_batch_add(batch, operation);
 
@@ -591,6 +724,7 @@ end:
 void
 j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
@@ -599,11 +733,16 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new(J_OPERATION_ITEM_GET);
+	iop = g_slice_new(JItemOperation);
+	iop->u.get.collection = j_collection_ref(collection);
+	iop->u.get.item = item;
+	iop->u.get.name = g_strdup(name);
+
+	operation = j_operation_new();
 	operation->key = collection;
-	operation->u.item_get.collection = j_collection_ref(collection);
-	operation->u.item_get.item = item;
-	operation->u.item_get.name = g_strdup(name);
+	operation->data = iop;
+	operation->exec_func = j_item_get_internal;
+	operation->free_func = j_item_get_free;
 
 	j_batch_add(batch, operation);
 
@@ -625,6 +764,7 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 void
 j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 {
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(collection != NULL);
@@ -632,10 +772,15 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new(J_OPERATION_ITEM_DELETE);
+	iop = g_slice_new(JItemOperation);
+	iop->u.delete.collection = j_collection_ref(collection);
+	iop->u.delete.item = j_item_ref(item);
+
+	operation = j_operation_new();
 	operation->key = collection;
-	operation->u.item_delete.collection = j_collection_ref(collection);
-	operation->u.item_delete.item = j_item_ref(item);
+	operation->data = iop;
+	operation->exec_func = j_item_delete_internal;
+	operation->free_func = j_item_delete_free;
 
 	j_batch_add(batch, operation);
 
@@ -660,6 +805,7 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 void
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(item != NULL);
@@ -668,13 +814,18 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new(J_OPERATION_ITEM_READ);
+	iop = g_slice_new(JItemOperation);
+	iop->u.read.item = j_item_ref(item);
+	iop->u.read.data = data;
+	iop->u.read.length = length;
+	iop->u.read.offset = offset;
+	iop->u.read.bytes_read = bytes_read;
+
+	operation = j_operation_new();
 	operation->key = item;
-	operation->u.item_read.item = j_item_ref(item);
-	operation->u.item_read.data = data;
-	operation->u.item_read.length = length;
-	operation->u.item_read.offset = offset;
-	operation->u.item_read.bytes_read = bytes_read;
+	operation->data = iop;
+	operation->exec_func = j_item_read_internal;
+	operation->free_func = j_item_read_free;
 
 	j_batch_add(batch, operation);
 
@@ -702,6 +853,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(item != NULL);
@@ -710,13 +862,18 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new(J_OPERATION_ITEM_WRITE);
+	iop = g_slice_new(JItemOperation);
+	iop->u.write.item = j_item_ref(item);
+	iop->u.write.data = data;
+	iop->u.write.length = length;
+	iop->u.write.offset = offset;
+	iop->u.write.bytes_written = bytes_written;
+
+	operation = j_operation_new();
 	operation->key = item;
-	operation->u.item_write.item = j_item_ref(item);
-	operation->u.item_write.data = data;
-	operation->u.item_write.length = length;
-	operation->u.item_write.offset = offset;
-	operation->u.item_write.bytes_written = bytes_written;
+	operation->data = iop;
+	operation->exec_func = j_item_write_internal;
+	operation->free_func = j_item_write_free;
 
 	*bytes_written = 0;
 
@@ -740,16 +897,22 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 void
 j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 {
+	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new(J_OPERATION_ITEM_GET_STATUS);
+	iop = g_slice_new(JItemOperation);
+	iop->u.get_status.item = j_item_ref(item);
+	iop->u.get_status.flags = flags;
+
+	operation = j_operation_new();
 	operation->key = item->collection;
-	operation->u.item_get_status.item = j_item_ref(item);
-	operation->u.item_get_status.flags = flags;
+	operation->data = iop;
+	operation->exec_func = j_item_get_status_internal;
+	operation->free_func = j_item_get_status_free;
 
 	j_batch_add(batch, operation);
 
@@ -1226,12 +1389,12 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.item_create.item;
+		JItemOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.create.item;
 		bson_t* b;
 		gchar* path;
 
-		collection = operation->u.item_create.collection;
+		collection = operation->u.create.collection;
 
 		if (collection == NULL)
 		{
@@ -1319,11 +1482,11 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	}
 
 	{
-		JOperation* operation;
+		JItemOperation* operation;
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		collection = operation->u.item_delete.collection;
+		collection = operation->u.delete.collection;
 
 		collection_name = j_collection_get_name(collection);
 	}
@@ -1340,8 +1503,8 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.item_delete.item;
+		JItemOperation* operation = j_list_iterator_get(it);
+		JItem* item = operation->u.delete.item;
 		gchar* path;
 		gsize path_len;
 
@@ -1476,11 +1639,11 @@ j_item_get_internal (JBatch* batch, JList* operations)
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.item_get.collection;
-		JItem** item = operation->u.item_get.item;
+		JItemOperation* operation = j_list_iterator_get(it);
+		JCollection* collection = operation->u.get.collection;
+		JItem** item = operation->u.get.item;
 		bson_t result[1];
-		gchar const* name = operation->u.item_get.name;
+		gchar const* name = operation->u.get.name;
 		gchar* path;
 
 		path = g_build_path("/", j_collection_get_name(collection), name, NULL);
@@ -1632,11 +1795,11 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	}
 
 	{
-		JOperation* operation;
+		JItemOperation* operation;
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		item = operation->u.item_read.item;
+		item = operation->u.read.item;
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1651,11 +1814,11 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* operation = j_list_iterator_get(iterator);
-		gpointer data = operation->u.item_read.data;
-		guint64 length = operation->u.item_read.length;
-		guint64 offset = operation->u.item_read.offset;
-		guint64* bytes_read = operation->u.item_read.bytes_read;
+		JItemOperation* operation = j_list_iterator_get(iterator);
+		gpointer data = operation->u.read.data;
+		guint64 length = operation->u.read.length;
+		guint64 offset = operation->u.read.offset;
+		guint64* bytes_read = operation->u.read.bytes_read;
 
 		JItemReadData* buffer;
 		gchar* d;
@@ -1830,11 +1993,11 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	}
 
 	{
-		JOperation* operation;
+		JItemOperation* operation;
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		item = operation->u.item_write.item;
+		item = operation->u.write.item;
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1849,11 +2012,11 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* operation = j_list_iterator_get(iterator);
-		gconstpointer data = operation->u.item_write.data;
-		guint64 length = operation->u.item_write.length;
-		guint64 offset = operation->u.item_write.offset;
-		guint64* bytes_written = operation->u.item_write.bytes_written;
+		JItemOperation* operation = j_list_iterator_get(iterator);
+		gconstpointer data = operation->u.write.data;
+		guint64 length = operation->u.write.length;
+		guint64 offset = operation->u.write.offset;
+		guint64* bytes_written = operation->u.write.bytes_written;
 
 		gchar const* d;
 		guint64 new_length;
@@ -2135,9 +2298,9 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JOperation* operation = j_list_iterator_get(iterator);
-		JItem* item = operation->u.item_get_status.item;
-		JItemStatusFlags flags = operation->u.item_get_status.flags;
+		JItemOperation* operation = j_list_iterator_get(iterator);
+		JItem* item = operation->u.get_status.item;
+		JItemStatusFlags flags = operation->u.get_status.flags;
 
 		if (flags == J_ITEM_STATUS_NONE)
 		{
