@@ -96,7 +96,7 @@ j_collection_ref (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_atomic_int_inc(&(collection->ref_count));
 
@@ -121,7 +121,7 @@ j_collection_unref (JCollection* collection)
 {
 	g_return_if_fail(collection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
@@ -152,7 +152,7 @@ j_collection_get_name (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return collection->name;
@@ -269,7 +269,7 @@ j_collection_new (gchar const* name)
 
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (strpbrk(name, "/") != NULL)
 	{
@@ -316,7 +316,7 @@ j_collection_new_from_bson (bson_t const* b)
 
 	g_return_val_if_fail(b != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
@@ -357,7 +357,7 @@ j_collection_serialize (JCollection* collection)
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	b_cred = j_credentials_serialize(collection->credentials);
 
@@ -398,7 +398,7 @@ j_collection_deserialize (JCollection* collection, bson_t const* b)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	//j_bson_print(bson_t);
 
@@ -459,7 +459,7 @@ j_collection_get_id (JCollection* collection)
 {
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return &(collection->id);
@@ -497,7 +497,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_start("collections", &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, "collections", &meta_batch);
 	}
 	else
 	{
@@ -516,7 +516,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.put(collection->name, b, meta_batch) && ret;
+			ret = j_backend_meta_put(meta_backend, collection->name, b, meta_batch) && ret;
 		}
 		else
 		{
@@ -536,7 +536,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
 	}
 	else
 	{
@@ -593,7 +593,7 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_start("collections", &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, "collections", &meta_batch);
 	}
 	else
 	{
@@ -610,7 +610,7 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.delete(collection->name, meta_batch) && ret;
+			ret = j_backend_meta_delete(meta_backend, collection->name, meta_batch) && ret;
 		}
 		else
 		{
@@ -625,7 +625,7 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
 	}
 	else
 	{
@@ -686,7 +686,7 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.get("collections", name, result) && ret;
+			ret = j_backend_meta_get(meta_backend, "collections", name, result) && ret;
 		}
 		else
 		{

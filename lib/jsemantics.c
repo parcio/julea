@@ -163,7 +163,7 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 	gchar** parts;
 	guint parts_len;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (template_str == NULL || g_strcmp0(template_str, "default") == 0)
 	{

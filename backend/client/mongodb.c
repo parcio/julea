@@ -27,7 +27,6 @@
 
 #include <jbackend.h>
 #include <jsemantics.h>
-#include <jtrace-internal.h>
 
 static mongoc_client_t* backend_connection = NULL;
 
@@ -42,8 +41,6 @@ backend_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* se
 	g_return_if_fail(write_concern != NULL);
 	g_return_if_fail(semantics != NULL);
 
-	j_trace_enter(G_STRFUNC);
-
 	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
 	{
 		mongoc_write_concern_set_w(write_concern, 1);
@@ -53,8 +50,6 @@ backend_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* se
 			mongoc_write_concern_set_journal(write_concern, TRUE);
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 */
 
@@ -69,8 +64,6 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	bson_init(index);
 	bson_append_int32(index, "key", -1, 1);
@@ -95,8 +88,6 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 
 	*data = bulk_op;
 
-	j_trace_leave(G_STRFUNC);
-
 	return TRUE;
 }
 
@@ -110,8 +101,6 @@ backend_batch_execute (gpointer data)
 	mongoc_bulk_operation_t* bulk_op = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
 
@@ -129,8 +118,6 @@ backend_batch_execute (gpointer data)
 	mongoc_bulk_operation_destroy(bulk_op);
 	bson_destroy(reply);
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -145,8 +132,6 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	/* FIXME */
 	//write_concern = mongoc_write_concern_new();
@@ -177,8 +162,6 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 	bson_destroy(selector);
 	bson_destroy(document);
 
-	j_trace_leave(G_STRFUNC);
-
 	return TRUE;
 }
 
@@ -192,8 +175,6 @@ backend_delete (gchar const* key, gpointer data)
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
 
@@ -204,8 +185,6 @@ backend_delete (gchar const* key, gpointer data)
 	mongoc_bulk_operation_remove(bulk_op, document);
 
 	bson_destroy(document);
-
-	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -225,8 +204,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
@@ -262,8 +239,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	mongoc_cursor_destroy(cursor);
 	mongoc_collection_destroy(m_collection);
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -279,8 +254,6 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	bson_init(document);
 
@@ -301,8 +274,6 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 	bson_destroy(document);
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -320,8 +291,6 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	bson_init(document);
 
@@ -356,8 +325,6 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 
 	bson_destroy(document);
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -373,8 +340,6 @@ backend_iterate (gpointer data, bson_t* result_out)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	/* FIXME */
 	if (mongoc_cursor_next(cursor, &result))
@@ -394,8 +359,6 @@ backend_iterate (gpointer data, bson_t* result_out)
 		mongoc_cursor_destroy(cursor);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -409,8 +372,6 @@ backend_init (gchar const* path)
 	gchar** split;
 
 	g_return_val_if_fail(path != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	mongoc_init();
 	mongoc_log_set_handler(NULL, NULL);
@@ -437,8 +398,6 @@ backend_init (gchar const* path)
 		g_critical("Can not connect to MongoDB %s.", backend_host);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return TRUE;
 }
 
@@ -446,16 +405,12 @@ static
 void
 backend_fini (void)
 {
-	j_trace_enter(G_STRFUNC);
-
 	mongoc_client_destroy(backend_connection);
 
 	g_free(backend_database);
 	g_free(backend_host);
 
 	mongoc_cleanup();
-
-	j_trace_leave(G_STRFUNC);
 }
 
 static
@@ -483,14 +438,10 @@ backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (type == J_BACKEND_TYPE_META)
 	{
 		backend = &mongodb_backend;
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return backend;
 }

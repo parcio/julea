@@ -120,8 +120,6 @@ backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 	gchar* full_path;
 	gint fd;
 
-	j_trace_enter(G_STRFUNC);
-
 	full_path = g_build_filename(jd_backend_path, path, NULL);
 
 	if ((file = backend_file_get(files, full_path)) != NULL)
@@ -151,8 +149,6 @@ backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 	backend_file_add(files, bf);
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return (fd != -1);
 }
 
@@ -164,15 +160,11 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 	gboolean ret;
 
-	j_trace_enter(G_STRFUNC);
-
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	ret = (g_unlink(bf->path) == 0);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	g_hash_table_remove(files, bf->path);
-
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -186,8 +178,6 @@ backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 	JBackendFile* file;
 	gchar* full_path;
 	gint fd;
-
-	j_trace_enter(G_STRFUNC);
 
 	full_path = g_build_filename(jd_backend_path, path, NULL);
 
@@ -212,8 +202,6 @@ backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 	backend_file_add(files, bf);
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return (fd != -1);
 }
 
@@ -222,8 +210,6 @@ gboolean
 backend_close (JBackendItem* bf, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
-
-	j_trace_enter(G_STRFUNC);
 
 	if (data != NULL)
 	{
@@ -240,8 +226,6 @@ backend_close (JBackendItem* bf, gpointer data)
 	g_free(bf->path);
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return (fd != -1);
 }
 
@@ -252,8 +236,6 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
 	(void)data;
-
-	j_trace_enter(G_STRFUNC);
 
 	if (fd != -1)
 	{
@@ -278,8 +260,6 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 		}
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (fd != -1);
 }
 
@@ -291,16 +271,12 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (fd != -1)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
 		fsync(fd);
 		j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
 }
@@ -314,8 +290,6 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (fd != -1)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
@@ -327,8 +301,6 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 			*bytes_read = nbytes;
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
 }
@@ -342,8 +314,6 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (fd != -1)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
@@ -355,8 +325,6 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 			*bytes_written = nbytes;
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
 }
@@ -387,14 +355,10 @@ static
 gboolean
 backend_init (gchar const* path)
 {
-	j_trace_enter(G_STRFUNC);
-
 	jd_backend_path = g_strdup(path);
 	jd_backend_file_cache = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
 	g_mkdir_with_parents(path, 0700);
-
-	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -403,14 +367,10 @@ static
 void
 backend_fini (void)
 {
-	j_trace_enter(G_STRFUNC);
-
 	g_assert(g_hash_table_size(jd_backend_file_cache) == 0);
 	g_hash_table_destroy(jd_backend_file_cache);
 
 	g_free(jd_backend_path);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 static
@@ -438,14 +398,10 @@ backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (type == J_BACKEND_TYPE_DATA)
 	{
 		backend = &posix_backend;
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return backend;
 }

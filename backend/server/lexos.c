@@ -65,8 +65,6 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	path = g_build_filename(store, collection, item, NULL);
 
 	j_trace_file_begin(path, J_TRACE_FILE_CREATE);
@@ -91,8 +89,6 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	bf->user_data = object;
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return (object != NULL);
 }
 
@@ -104,8 +100,6 @@ backend_delete (JBackendItem* bf, gpointer data)
 	gchar* err = NULL;
 
 	(void)data;
-
-	j_trace_enter(G_STRFUNC);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	/*FIXME GError*/
@@ -122,8 +116,6 @@ backend_delete (JBackendItem* bf, gpointer data)
 	}
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -139,8 +131,6 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	gsize value_len;
 
 	(void)data;
-
-	j_trace_enter(G_STRFUNC);
 
 	path = g_build_filename(store, collection, item, NULL);
 
@@ -167,8 +157,6 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 	bf->user_data = object;
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return (object != NULL);
 }
 
@@ -180,8 +168,6 @@ backend_close (JBackendItem* bf, gpointer data)
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
@@ -191,8 +177,6 @@ backend_close (JBackendItem* bf, gpointer data)
 	}
 
 	g_free(bf->path);
-
-	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -204,8 +188,6 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	Object* object = bf->user_data;
 
 	(void)data;
-
-	j_trace_enter(G_STRFUNC);
 
 	if (object != NULL)
 	{
@@ -220,8 +202,6 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 		*size = lobject_get_size(object);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (object != NULL);
 }
 
@@ -233,16 +213,12 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 	/*gint fd = GPOINTER_TO_INT(bf->user_data);
 
-	j_trace_enter(G_STRFUNC);
-
 	if (fd != -1)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
 		fsync(fd);
 		j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return (fd != -1);
 	*/
@@ -257,8 +233,6 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 	(void)data;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (object != NULL)
 	{
 		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
@@ -271,8 +245,6 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 		}
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (object != NULL);
 }
 
@@ -283,8 +255,6 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 	Object* object = bf->user_data;
 
 	(void)data;
-
-	j_trace_enter(G_STRFUNC);
 
 	if (object != NULL)
 	{
@@ -298,8 +268,6 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 		}
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (object != NULL);
 }
 
@@ -309,8 +277,6 @@ backend_init (gchar const* path)
 {
 	gboolean ret = TRUE;
 	gchar* err = NULL;
-
-	j_trace_enter(G_STRFUNC);
 
 	if ((object_store = lstore_open(path, NULL)) == NULL)
 	{
@@ -333,8 +299,6 @@ backend_init (gchar const* path)
 	}
 
 end:
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -342,10 +306,6 @@ G_MODULE_EXPORT
 void
 backend_fini (void)
 {
-	j_trace_enter(G_STRFUNC);
-
 	lstore_close(object_store, NULL);
 	leveldb_close(db);
-
-	j_trace_leave(G_STRFUNC);
 }

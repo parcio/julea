@@ -72,7 +72,7 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	g_return_if_fail(j_connection_pool == NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	pool = g_slice_new(JConnectionPool);
 	pool->configuration = j_configuration_ref(configuration);
@@ -111,7 +111,7 @@ j_connection_pool_fini (void)
 
 	g_return_if_fail(j_connection_pool != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	pool = g_atomic_pointer_get(&j_connection_pool);
 	g_atomic_pointer_set(&j_connection_pool, NULL);
@@ -161,7 +161,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	connection = g_async_queue_try_pop(queue);
 
@@ -254,7 +254,7 @@ j_connection_pool_push_internal (GAsyncQueue* queue, GSocketConnection* connecti
 	g_return_if_fail(queue != NULL);
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_async_queue_push(queue, connection);
 
@@ -269,7 +269,7 @@ j_connection_pool_pop_data (guint index)
 	g_return_val_if_fail(j_connection_pool != NULL, NULL);
 	g_return_val_if_fail(index < j_connection_pool->data_len, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	connection = j_connection_pool_pop_internal(j_connection_pool->data_queues[index].queue, &(j_connection_pool->data_queues[index].count), j_configuration_get_data_server(j_connection_pool->configuration, index));
 
@@ -285,7 +285,7 @@ j_connection_pool_push_data (guint index, GSocketConnection* connection)
 	g_return_if_fail(index < j_connection_pool->data_len);
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_connection_pool_push_internal(j_connection_pool->data_queues[index].queue, connection);
 
@@ -300,7 +300,7 @@ j_connection_pool_pop_meta (guint index)
 	g_return_val_if_fail(j_connection_pool != NULL, NULL);
 	g_return_val_if_fail(index < j_connection_pool->meta_len, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	connection = j_connection_pool_pop_internal(j_connection_pool->meta_queues[index].queue, &(j_connection_pool->meta_queues[index].count), j_configuration_get_metadata_server(j_connection_pool->configuration, index));
 
@@ -316,7 +316,7 @@ j_connection_pool_push_meta (guint index, GSocketConnection* connection)
 	g_return_if_fail(index < j_connection_pool->meta_len);
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_connection_pool_push_internal(j_connection_pool->meta_queues[index].queue, connection);
 

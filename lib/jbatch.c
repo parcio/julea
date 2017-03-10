@@ -86,7 +86,7 @@ j_batch_background_operation (gpointer data)
 	JOperationAsync* async = data;
 	gboolean ret;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	ret = j_batch_execute(async->batch);
 
@@ -123,7 +123,7 @@ j_batch_new (JSemantics* semantics)
 
 	g_return_val_if_fail(semantics != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = g_slice_new(JBatch);
 	batch->list = j_list_new((JListFreeFunc)j_operation_free);
@@ -157,7 +157,7 @@ j_batch_new_for_template (JSemanticsTemplate template)
 	JBatch* batch;
 	JSemantics* semantics;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	semantics = j_semantics_new(template);
 	batch = j_batch_new(semantics);
@@ -182,7 +182,7 @@ j_batch_ref (JBatch* batch)
 {
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_atomic_int_inc(&(batch->ref_count));
 
@@ -207,7 +207,7 @@ j_batch_unref (JBatch* batch)
 {
 	g_return_if_fail(batch != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{
@@ -250,7 +250,7 @@ j_batch_execute_same (JBatch* batch, JList* list)
 	JOperationType type;
 	gboolean ret = FALSE;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_list_get_first(list);
 
@@ -322,7 +322,7 @@ j_batch_execute (JBatch* batch)
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (j_list_length(batch->list) == 0)
 	{
@@ -369,7 +369,7 @@ j_batch_execute_async (JBatch* batch, JOperationCompletedFunc func, gpointer use
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(batch->background_operation == NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	async = g_slice_new(JOperationAsync);
 	async->batch = j_batch_ref(batch);
@@ -419,7 +419,7 @@ j_batch_new_from_batch (JBatch* old_batch)
 
 	g_return_val_if_fail(old_batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = g_slice_new(JBatch);
 	batch->list = old_batch->list;
@@ -455,7 +455,7 @@ j_batch_get_operations (JBatch* batch)
 
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	ret = batch->list;
 	j_trace_leave(G_STRFUNC);
 
@@ -483,7 +483,7 @@ j_batch_get_semantics (JBatch* batch)
 
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	ret = batch->semantics;
 	j_trace_leave(G_STRFUNC);
 
@@ -509,7 +509,7 @@ j_batch_add (JBatch* batch, JOperation* operation)
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(operation != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_list_append(batch->list, operation);
 
@@ -539,7 +539,7 @@ j_batch_execute_internal (JBatch* batch)
 	gpointer last_key;
 	gboolean ret = TRUE;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	iterator = j_list_iterator_new(batch->list);
 	same_list = j_list_new(NULL);

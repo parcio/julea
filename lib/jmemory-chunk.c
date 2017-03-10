@@ -79,7 +79,7 @@ j_memory_chunk_new (guint64 size)
 
 	g_return_val_if_fail(size > 0, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	cache = g_slice_new(JMemoryChunk);
 	cache->size = size;
@@ -111,7 +111,7 @@ j_memory_chunk_free (JMemoryChunk* cache)
 {
 	g_return_if_fail(cache != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (cache->data != NULL)
 	{
@@ -148,7 +148,7 @@ j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 
 	g_return_val_if_fail(cache != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (cache->current + length > cache->data + cache->size)
 	{

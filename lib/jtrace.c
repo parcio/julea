@@ -23,6 +23,7 @@
 #include <julea-config.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #ifdef HAVE_OTF
 #include <otf.h>
@@ -568,10 +569,11 @@ j_trace_unref (JTrace* trace)
  * \param name  A function name.
  **/
 void
-j_trace_enter (gchar const* name)
+j_trace_enter (gchar const* name, gchar const* format, ...)
 {
 	JTrace* trace;
 	guint64 timestamp;
+	va_list args;
 
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -590,11 +592,26 @@ j_trace_enter (gchar const* name)
 
 	timestamp = j_trace_get_time();
 
+	va_start(args, format);
+
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace, timestamp);
-		g_printerr("ENTER %s\n", name);
+
+		if (format != NULL)
+		{
+			gchar* arguments;
+
+			arguments = g_strdup_vprintf(format, args);
+			g_printerr("ENTER %s (%s)\n", name, arguments);
+			g_free(arguments);
+		}
+		else
+		{
+			g_printerr("ENTER %s\n", name);
+		}
+
 		G_UNLOCK(j_trace_echo);
 	}
 
@@ -623,6 +640,8 @@ j_trace_enter (gchar const* name)
 		OTF_Writer_writeEnter(otf_writer, timestamp, function_id, trace->otf.process_id, 0);
 	}
 #endif
+
+	va_end(args);
 
 	trace->function_depth++;
 }

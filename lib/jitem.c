@@ -462,7 +462,7 @@ j_item_ref (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_atomic_int_inc(&(item->ref_count));
 
@@ -487,7 +487,7 @@ j_item_unref (JItem* item)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
@@ -525,7 +525,7 @@ j_item_get_name (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return item->name;
@@ -555,7 +555,7 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if ((item = j_item_new(collection, name, distribution)) == NULL)
 	{
@@ -597,7 +597,7 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(name != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new(J_OPERATION_ITEM_GET);
 	operation->key = collection;
@@ -630,7 +630,7 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new(J_OPERATION_ITEM_DELETE);
 	operation->key = collection;
@@ -666,7 +666,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new(J_OPERATION_ITEM_READ);
 	operation->key = item;
@@ -708,7 +708,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new(J_OPERATION_ITEM_WRITE);
 	operation->key = item;
@@ -744,7 +744,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new(J_OPERATION_ITEM_GET_STATUS);
 	operation->key = item->collection;
@@ -773,7 +773,7 @@ j_item_get_size (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return item->status.size;
@@ -796,7 +796,7 @@ j_item_get_modification_time (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return item->status.modification_time;
@@ -826,7 +826,7 @@ j_item_get_optimal_access_size (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return J_KIB(512);
@@ -859,7 +859,7 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (strpbrk(name, "/") != NULL)
 	{
@@ -912,7 +912,7 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
@@ -951,7 +951,7 @@ j_item_get_collection (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return item->collection;
@@ -976,7 +976,7 @@ j_item_get_credentials (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return item->credentials;
@@ -1006,7 +1006,7 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	b_cred = j_credentials_serialize(item->credentials);
 	b_distribution = j_distribution_serialize(item->distribution);
@@ -1056,7 +1056,7 @@ j_item_deserialize_status (JItem* item, bson_t const* b)
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -1102,7 +1102,7 @@ j_item_deserialize (JItem* item, bson_t const* b)
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -1183,7 +1183,7 @@ j_item_get_id (JItem* item)
 {
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return &(item->id);
@@ -1204,7 +1204,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	semantics = j_batch_get_semantics(batch);
 
@@ -1215,7 +1215,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_start("items", &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
 	}
 	else
 	{
@@ -1243,7 +1243,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.put(path, b, meta_batch) && ret;
+			ret = j_backend_meta_put(meta_backend, path, b, meta_batch) && ret;
 		}
 		else
 		{
@@ -1264,7 +1264,7 @@ j_item_create_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
 	}
 	else
 	{
@@ -1301,7 +1301,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	/*
 		IsInitialized(true);
@@ -1334,7 +1334,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_start("items", &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
 	}
 
 	/* FIXME do some optimizations for len(operations) > 1 */
@@ -1352,7 +1352,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.delete(path, meta_batch) && ret;
+			ret = j_backend_meta_delete(meta_backend, path, meta_batch) && ret;
 		}
 
 		//bson_init(&b);
@@ -1377,7 +1377,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 
 	if (meta_backend != NULL)
 	{
-		ret = meta_backend->u.meta.batch_execute(meta_batch) && ret;
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
@@ -1462,7 +1462,7 @@ j_item_get_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	it = j_list_iterator_new(operations);
 	//mongo_connection = j_connection_pool_pop_meta(0);
@@ -1487,7 +1487,7 @@ j_item_get_internal (JBatch* batch, JList* operations)
 
 		if (meta_backend != NULL)
 		{
-			ret = meta_backend->u.meta.get("items", path, result) && ret;
+			ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
 		}
 		else
 		{
@@ -1570,7 +1570,7 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	item->status.age = g_get_real_time();
 	item->status.modification_time = MAX(item->status.modification_time, modification_time);
 	j_trace_leave(G_STRFUNC);
@@ -1592,7 +1592,7 @@ j_item_set_size (JItem* item, guint64 size)
 {
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	item->status.age = g_get_real_time();
 	item->status.size = size;
 	j_trace_leave(G_STRFUNC);
@@ -1616,7 +1616,7 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
@@ -1816,7 +1816,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
@@ -2112,7 +2112,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
@@ -2178,7 +2178,7 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 			if (meta_backend != NULL)
 			{
 				path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-				ret = meta_backend->u.meta.get("items", path, result) && ret;
+				ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
 				g_free(path);
 			}
 

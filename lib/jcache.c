@@ -75,7 +75,7 @@ j_cache_new (guint64 size)
 
 	g_return_val_if_fail(size > 0, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	cache = g_slice_new(JCache);
 	cache->size = size;
@@ -113,7 +113,7 @@ j_cache_free (JCache* cache)
 
 	g_return_if_fail(cache != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_hash_table_iter_init(iter, cache->buffers);
 
@@ -156,7 +156,7 @@ j_cache_get (JCache* cache, guint64 length)
 
 	g_return_val_if_fail(cache != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_mutex_lock(cache->mutex);
 

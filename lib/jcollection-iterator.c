@@ -86,7 +86,7 @@ j_collection_iterator_new (void)
 
 	if (iterator->meta_backend != NULL)
 	{
-		iterator->meta_backend->u.meta.get_all("collections", &(iterator->cursor));
+		j_backend_meta_get_all(iterator->meta_backend, "collections", &(iterator->cursor));
 	}
 	else
 	{
@@ -150,7 +150,7 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 
 	if (iterator->meta_backend != NULL)
 	{
-		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, iterator->current);
+		ret = j_backend_meta_iterate(iterator->meta_backend, iterator->cursor, iterator->current);
 	}
 	else
 	{

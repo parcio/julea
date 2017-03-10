@@ -142,7 +142,7 @@ j_init (void)
 	j_trace_init(basename);
 	g_free(basename);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	common->configuration = j_configuration_new();
 
@@ -156,12 +156,12 @@ j_init (void)
 
 	if (common->data_backend != NULL)
 	{
-		common->data_backend->u.data.init(j_configuration_get_data_path(common->configuration));
+		j_backend_data_init(common->data_backend, j_configuration_get_data_path(common->configuration));
 	}
 
 	if (common->meta_backend != NULL)
 	{
-		common->meta_backend->u.meta.init(j_configuration_get_metadata_path(common->configuration));
+		j_backend_meta_init(common->meta_backend, j_configuration_get_metadata_path(common->configuration));
 	}
 
 	j_connection_pool_init(common->configuration);
@@ -202,7 +202,7 @@ j_fini (void)
 
 	g_return_if_fail(j_is_initialized());
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_operation_cache_fini();
 	j_background_operation_fini();
@@ -213,12 +213,12 @@ j_fini (void)
 
 	if (common->meta_backend != NULL)
 	{
-		common->meta_backend->u.meta.fini();
+		j_backend_meta_fini(common->meta_backend);
 	}
 
 	if (common->data_backend != NULL)
 	{
-		common->data_backend->u.data.fini();
+		j_backend_data_fini(common->data_backend);
 	}
 
 	if (common->meta_module)

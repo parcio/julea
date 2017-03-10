@@ -75,7 +75,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	(void)source_object;
 	(void)user_data;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_helper_set_nodelay(connection, TRUE);
 
@@ -85,7 +85,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	/* FIXME jd_data_backend might be NULL */
 	if (jd_data_backend->u.data.thread_init != NULL)
 	{
-		backend_data = jd_data_backend->u.data.thread_init();
+		backend_data = j_backend_data_thread_init(jd_data_backend);
 	}
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
@@ -120,17 +120,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (jd_data_backend->u.data.create(backend_item, path, backend_data))
+						if (j_backend_data_create(jd_data_backend, backend_item, path, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
 							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 							{
-								jd_data_backend->u.data.sync(backend_item, backend_data);
+								j_backend_data_sync(jd_data_backend, backend_item, backend_data);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 							}
 
-							jd_data_backend->u.data.close(backend_item, backend_data);
+							j_backend_data_close(jd_data_backend, backend_item, backend_data);
 						}
 
 						if (reply != NULL)
@@ -159,11 +159,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (jd_data_backend->u.data.open(backend_item, path, backend_data)
-						    && jd_data_backend->u.data.delete(backend_item, backend_data))
+						if (j_backend_data_open(jd_data_backend, backend_item, path, backend_data)
+						    && j_backend_data_delete(jd_data_backend, backend_item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							jd_data_backend->u.data.close(backend_item, backend_data);
+							j_backend_data_close(jd_data_backend, backend_item, backend_data);
 						}
 
 						if (reply != NULL)
@@ -188,7 +188,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					jd_data_backend->u.data.open(backend_item, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -214,7 +214,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						jd_data_backend->u.data.read(backend_item, buf, length, offset, &bytes_read, backend_data);
+						j_backend_data_read(jd_data_backend, backend_item, buf, length, offset, &bytes_read, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -228,7 +228,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					jd_data_backend->u.data.close(backend_item, backend_data);
+					j_backend_data_close(jd_data_backend, backend_item, backend_data);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -255,7 +255,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					jd_data_backend->u.data.open(backend_item, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -277,7 +277,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							jd_data_backend->u.data.write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+							j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -305,17 +305,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						jd_data_backend->u.data.write(backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+						j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						jd_data_backend->u.data.sync(backend_item, backend_data);
+						j_backend_data_sync(jd_data_backend, backend_item, backend_data);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					jd_data_backend->u.data.close(backend_item, backend_data);
+					j_backend_data_close(jd_data_backend, backend_item, backend_data);
 
 					if (reply != NULL)
 					{
@@ -343,9 +343,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						flags = j_message_get_4(message);
 
 						// FIXME return value
-						jd_data_backend->u.data.open(backend_item, path, backend_data);
+						j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
 
-						if (jd_data_backend->u.data.status(backend_item, flags, &modification_time, &size, backend_data))
+						if (j_backend_data_status(jd_data_backend, backend_item, flags, &modification_time, &size, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -372,7 +372,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &size);
 						}
 
-						jd_data_backend->u.data.close(backend_item, backend_data);
+						j_backend_data_close(jd_data_backend, backend_item, backend_data);
 					}
 
 					j_message_send(reply, connection);
@@ -464,7 +464,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					jd_meta_backend->u.meta.batch_start(namespace, &batch);
+					j_backend_meta_batch_start(jd_meta_backend, namespace, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -477,7 +477,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						data = j_message_get_n(message, len);
 						bson_init_static(value, data, len);
 
-						jd_meta_backend->u.meta.put(key, value, batch);
+						j_backend_meta_put(jd_meta_backend, key, value, batch);
 
 						if (reply != NULL)
 						{
@@ -485,7 +485,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 					}
 
-					jd_meta_backend->u.meta.batch_execute(batch);
+					j_backend_meta_batch_execute(jd_meta_backend, batch);
 
 					if (reply != NULL)
 					{
@@ -506,13 +506,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					jd_meta_backend->u.meta.batch_start(namespace, &batch);
+					j_backend_meta_batch_start(jd_meta_backend, namespace, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
 						key = j_message_get_string(message);
 
-						jd_meta_backend->u.meta.delete(key, batch);
+						j_backend_meta_delete(jd_meta_backend, key, batch);
 
 						if (reply != NULL)
 						{
@@ -520,7 +520,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 					}
 
-					jd_meta_backend->u.meta.batch_execute(batch);
+					j_backend_meta_batch_execute(jd_meta_backend, batch);
 
 					if (reply != NULL)
 					{
@@ -543,7 +543,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						key = j_message_get_string(message);
 
-						if (jd_meta_backend->u.meta.get(namespace, key, value))
+						if (j_backend_meta_get(jd_meta_backend, namespace, key, value))
 						{
 							j_message_add_operation(reply, 4 + value->len);
 							j_message_append_4(reply, &(value->len));
@@ -575,9 +575,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
 
-					jd_meta_backend->u.meta.get_all(namespace, &iterator);
+					j_backend_meta_get_all(jd_meta_backend, namespace, &iterator);
 
-					while (jd_meta_backend->u.meta.iterate(iterator, value))
+					while (j_backend_meta_iterate(jd_meta_backend, iterator, value))
 					{
 						j_message_add_operation(reply, 4 + value->len);
 						j_message_append_4(reply, &(value->len));
@@ -631,7 +631,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	if (jd_data_backend->u.data.thread_fini != NULL)
 	{
-		jd_data_backend->u.data.thread_fini(backend_data);
+		j_backend_data_thread_fini(jd_data_backend, backend_data);
 	}
 
 	j_memory_chunk_free(memory_chunk);
@@ -753,7 +753,7 @@ main (int argc, char** argv)
 
 	j_trace_init("julea-server");
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	configuration = j_configuration_new();
 
@@ -766,13 +766,13 @@ main (int argc, char** argv)
 	data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend);
 	meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend);
 
-	if (jd_data_backend != NULL && !jd_data_backend->u.data.init(j_configuration_get_data_path(configuration)))
+	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, j_configuration_get_data_path(configuration)))
 	{
 		g_printerr("Could not initialize data backend.\n");
 		return 1;
 	}
 
-	if (jd_meta_backend != NULL && !jd_meta_backend->u.meta.init(j_configuration_get_metadata_path(configuration)))
+	if (jd_meta_backend != NULL && !j_backend_meta_init(jd_meta_backend, j_configuration_get_metadata_path(configuration)))
 	{
 		g_printerr("Could not initialize metadata backend.\n");
 		return 1;
@@ -801,12 +801,12 @@ main (int argc, char** argv)
 
 	if (jd_meta_backend != NULL)
 	{
-		jd_meta_backend->u.meta.fini();
+		j_backend_meta_fini(jd_meta_backend);
 	}
 
 	if (jd_data_backend != NULL)
 	{
-		jd_data_backend->u.data.fini();
+		j_backend_data_fini(jd_data_backend);
 	}
 
 	if (meta_module != NULL)

@@ -72,7 +72,7 @@ backend_create (JBackendItem* bf, gchar const* store, gchar const* collection, g
 	(void)data;
 
 	printf("in backend_create\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 
@@ -115,7 +115,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 	(void)data;
 
 	printf("in backend_delete\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	j_zfs_object_destroy(bf->user_data);
@@ -143,7 +143,7 @@ backend_open (JBackendItem* bf, gchar const* store, gchar const* collection, gch
 
 	printf("in backend_open\n");
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	path = g_build_filename(jd_backend_path, store, collection, item, NULL);
 	key = path;
@@ -184,7 +184,7 @@ backend_close (JBackendItem* bf, gpointer data)
 	(void)data;
 
 	printf("in backend_close\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if(object != 0)
 	{
@@ -211,7 +211,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 	(void)data;
 
 	printf("in backend_status\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (object != 0)
 	{
@@ -239,7 +239,7 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 	/*gint fd = GPOINTER_TO_INT(bf->user_data);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (fd != -1)
 	{
@@ -264,7 +264,7 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 	(void)data;
 
 	printf("in backend_read\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (object != 0)
 	{
@@ -292,7 +292,7 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 	(void)data;
 
 	printf("in backend_write\n");
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if(object != 0)
 	{
@@ -318,7 +318,7 @@ backend_init (gchar const* path)
 	/*gchar* poolname = "jzfs";
 	gchar* object_set_name = "object_set";
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
 	object_set = j_zfs_object_set_create(pool, object_set_name);
@@ -341,7 +341,7 @@ G_MODULE_EXPORT
 void
 backend_fini (void)
 {
-	/*j_trace_enter(G_STRFUNC);
+	/*j_trace_enter(G_STRFUNC, NULL);
 
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);
@@ -362,7 +362,7 @@ backend_thread_init (void)
 	gchar* object_set_name = "object_set";
 	char *err = NULL;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_zfs_init();
 	pool = j_zfs_pool_open(poolname);
 	object_set = j_zfs_object_set_create(pool, object_set_name);
@@ -394,7 +394,7 @@ void
 backend_thread_fini (gpointer data)
 {
 	char *err = NULL;
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	j_zfs_object_set_destroy(object_set);
 	j_zfs_pool_close(pool);

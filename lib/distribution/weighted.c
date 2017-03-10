@@ -100,7 +100,7 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	guint64 round;
 	guint block_offset;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (distribution->length == 0)
 	{
@@ -146,7 +146,7 @@ distribution_new (guint server_count)
 {
 	JDistributionWeighted* distribution;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	distribution = g_slice_new(JDistributionWeighted);
 	distribution->server_count = server_count;
@@ -186,7 +186,7 @@ distribution_free (gpointer data)
 
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_free(distribution->weights);
 
@@ -264,7 +264,7 @@ distribution_serialize (gpointer data, bson_t* b)
 
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_append_int64(b, "block_size", -1, distribution->block_size);
 
@@ -305,7 +305,7 @@ distribution_deserialize (gpointer data, bson_t const* b)
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -362,7 +362,7 @@ distribution_reset (gpointer data, guint64 length, guint64 offset)
 
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	distribution->length = length;
 	distribution->offset = offset;

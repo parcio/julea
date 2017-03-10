@@ -55,7 +55,7 @@ j_credentials_new (void)
 {
 	JCredentials* credentials;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	credentials = g_slice_new(JCredentials);
 	credentials->user = geteuid();
@@ -72,7 +72,7 @@ j_credentials_ref (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_atomic_int_inc(&(credentials->ref_count));
 
@@ -86,7 +86,7 @@ j_credentials_unref (JCredentials* credentials)
 {
 	g_return_if_fail(credentials != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
@@ -101,7 +101,7 @@ j_credentials_get_user (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return credentials->user;
@@ -112,7 +112,7 @@ j_credentials_get_group (JCredentials* credentials)
 {
 	g_return_val_if_fail(credentials != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
 	return credentials->group;
@@ -141,7 +141,7 @@ j_credentials_serialize (JCredentials* credentials)
 
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	b = g_slice_new(bson_t);
 	bson_init(b);
@@ -175,7 +175,7 @@ j_credentials_deserialize (JCredentials* credentials, bson_t const* b)
 	g_return_if_fail(credentials != NULL);
 	g_return_if_fail(b != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 

@@ -27,7 +27,6 @@
 
 #include <jbackend.h>
 #include <jsemantics.h>
-#include <jtrace-internal.h>
 
 struct JLevelDBBatch
 {
@@ -59,15 +58,11 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	batch = g_slice_new(JLevelDBBatch);
 
 	batch->batch = leveldb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
 	*data = batch;
-
-	j_trace_leave(G_STRFUNC);
 
 	return (batch != NULL);
 }
@@ -80,15 +75,11 @@ backend_batch_execute (gpointer data)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	leveldb_write(backend_db, backend_write_options, batch->batch, NULL);
 
 	g_free(batch->namespace);
 	leveldb_writebatch_destroy(batch->batch);
 	g_slice_free(JLevelDBBatch, batch);
-
-	j_trace_leave(G_STRFUNC);
 
 	// FIXME
 	return TRUE;
@@ -105,13 +96,9 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gchar*)bson_get_data(value), value->len);
 	g_free(nskey);
-
-	j_trace_leave(G_STRFUNC);
 
 	// FIXME
 	return TRUE;
@@ -127,13 +114,9 @@ backend_delete (gchar const* key, gpointer data)
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
 	g_free(nskey);
-
-	j_trace_leave(G_STRFUNC);
 
 	// FIXME
 	return TRUE;
@@ -151,8 +134,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC);
-
 	nskey = g_strdup_printf("%s:%s", namespace, key);
 	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
 	g_free(nskey);
@@ -167,8 +148,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 		g_free(result);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (result != NULL);
 }
 
@@ -181,8 +160,6 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	it = leveldb_create_iterator(backend_db, backend_read_options);
 
@@ -198,8 +175,6 @@ backend_get_all (gchar const* namespace, gpointer* data)
 		*data = iterator;
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return (iterator != NULL);
 }
 
@@ -212,10 +187,6 @@ backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* dat
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
-
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -230,8 +201,6 @@ backend_iterate (gpointer data, bson_t* result_out)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	if (leveldb_iter_valid(iterator->iterator))
 	{
@@ -263,8 +232,6 @@ backend_iterate (gpointer data, bson_t* result_out)
 	}
 
 out:
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -275,8 +242,6 @@ backend_init (gchar const* path)
 	leveldb_options_t* options;
 
 	g_return_val_if_fail(path != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC);
 
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);
@@ -289,8 +254,6 @@ backend_init (gchar const* path)
 
 	leveldb_options_destroy(options);
 
-	j_trace_leave(G_STRFUNC);
-
 	return (backend_db != NULL);
 }
 
@@ -298,8 +261,6 @@ static
 void
 backend_fini (void)
 {
-	j_trace_enter(G_STRFUNC);
-
 	leveldb_readoptions_destroy(backend_read_options);
 	leveldb_writeoptions_destroy(backend_write_options);
 
@@ -307,8 +268,6 @@ backend_fini (void)
 	{
 		leveldb_close(backend_db);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 static
@@ -336,14 +295,10 @@ backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
-	j_trace_enter(G_STRFUNC);
-
 	if (type == J_BACKEND_TYPE_META)
 	{
 		backend = &leveldb_backend;
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return backend;
 }

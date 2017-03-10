@@ -133,7 +133,7 @@ j_statistics_new (gboolean trace)
 {
 	JStatistics* statistics;
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	statistics = g_slice_new(JStatistics);
 	statistics->trace = trace;
@@ -168,7 +168,7 @@ j_statistics_free (JStatistics* statistics)
 {
 	g_return_if_fail(statistics != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	g_slice_free(JStatistics, statistics);
 
@@ -182,7 +182,7 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 
 	g_return_val_if_fail(statistics != NULL, 0);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	switch (type)
 	{
@@ -225,7 +225,7 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
 	g_return_if_fail(statistics != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	switch (type)
 	{

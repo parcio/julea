@@ -87,7 +87,7 @@ j_lock_new (JItem* item)
 
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	lock = g_slice_new(JLock);
 	lock->item = j_item_ref(item);
@@ -119,7 +119,7 @@ j_lock_free (JLock* lock)
 {
 	g_return_if_fail(lock != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	if (lock->acquired)
 	{
@@ -171,7 +171,7 @@ j_lock_acquire (JLock* lock)
 	{
 		if (meta_backend != NULL)
 		{
-			acquired = meta_backend->u.meta.batch_start("locks", &meta_batch);
+			acquired = j_backend_meta_batch_start(meta_backend, "locks", &meta_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)
@@ -187,7 +187,7 @@ j_lock_acquire (JLock* lock)
 				gchar* path;
 
 				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-				acquired = meta_backend->u.meta.put(path, empty, meta_batch) && acquired;
+				acquired = j_backend_meta_put(meta_backend, path, empty, meta_batch) && acquired;
 				g_free(path);
 			}
 
@@ -196,7 +196,7 @@ j_lock_acquire (JLock* lock)
 
 		if (meta_backend != NULL)
 		{
-			acquired = meta_backend->u.meta.batch_execute(meta_batch) && acquired;
+			acquired = j_backend_meta_batch_execute(meta_backend, meta_batch) && acquired;
 		}
 	}
 
@@ -234,7 +234,7 @@ j_lock_release (JLock* lock)
 	{
 		if (meta_backend != NULL)
 		{
-			released = meta_backend->u.meta.batch_start("locks", &meta_batch);
+			released = j_backend_meta_batch_start(meta_backend, "locks", &meta_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)
@@ -250,7 +250,7 @@ j_lock_release (JLock* lock)
 				gchar* path;
 
 				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
-				released = meta_backend->u.meta.delete(path, meta_batch) && released;
+				released = j_backend_meta_delete(meta_backend, path, meta_batch) && released;
 				g_free(path);
 			}
 
@@ -259,7 +259,7 @@ j_lock_release (JLock* lock)
 
 		if (meta_backend != NULL)
 		{
-			released = meta_backend->u.meta.batch_execute(meta_batch) && released;
+			released = j_backend_meta_batch_execute(meta_backend, meta_batch) && released;
 		}
 	}
 

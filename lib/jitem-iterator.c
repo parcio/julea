@@ -90,7 +90,7 @@ j_item_iterator_new (JCollection* collection)
 		bson_init(query);
 		bson_append_oid(query, "collection", -1, j_collection_get_id(iterator->collection));
 
-		iterator->meta_backend->u.meta.get_by_value("items", query, &(iterator->cursor));
+		j_backend_meta_get_by_value(iterator->meta_backend, "items", query, &(iterator->cursor));
 	}
 
 	return iterator;
@@ -134,7 +134,7 @@ j_item_iterator_next (JItemIterator* iterator)
 
 	if (iterator->meta_backend != NULL)
 	{
-		ret = iterator->meta_backend->u.meta.iterate(iterator->cursor, iterator->current);
+		ret = j_backend_meta_iterate(iterator->meta_backend, iterator->cursor, iterator->current);
 	}
 
 	return ret;

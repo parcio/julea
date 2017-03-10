@@ -55,7 +55,7 @@ j_helper_set_nodelay (GSocketConnection* connection, gboolean enable)
 
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
@@ -75,7 +75,7 @@ j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC);
+	j_trace_enter(G_STRFUNC, NULL);
 
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
