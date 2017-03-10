@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <julea.h>
+#include <jclient-item.h>
 
 #include "benchmark.h"
 

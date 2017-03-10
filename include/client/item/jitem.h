@@ -39,8 +39,9 @@ struct JItem;
 
 typedef struct JItem JItem;
 
+#include <client/item/jcollection.h>
+
 #include <jbatch.h>
-#include <jcollection.h>
 #include <jdistribution.h>
 #include <jsemantics.h>
 

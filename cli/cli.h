@@ -16,43 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <julea-config.h>
+#include <julea.h>
+#include <jclient-item.h>
 
-#include "cli.h"
+#include <glib.h>
 
-gboolean
-j_cmd_create (gchar const** arguments, gboolean with_parents)
-{
-	gboolean ret = TRUE;
-	JURI* uri = NULL;
-	GError* error = NULL;
+void j_cmd_usage (void);
 
-	if (j_cmd_arguments_length(arguments) != 1)
-	{
-		ret = FALSE;
-		j_cmd_usage();
-		goto end;
-	}
+guint j_cmd_arguments_length (gchar const**);
 
-	if ((uri = j_uri_new(arguments[0])) == NULL)
-	{
-		ret = FALSE;
-		g_print("Error: Invalid argument “%s”.\n", arguments[0]);
-		goto end;
-	}
+gboolean j_cmd_error_last (JURI*);
 
-	if (!j_uri_create(uri, with_parents, &error))
-	{
-		ret = FALSE;
-		g_print("Error: %s\n", error->message);
-		g_error_free(error);
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
-
-	return ret;
-}
+gboolean j_cmd_create (gchar const**, gboolean);
+gboolean j_cmd_copy (gchar const**);
+gboolean j_cmd_delete (gchar const**);
+gboolean j_cmd_list (gchar const**);
+gboolean j_cmd_status (gchar const**);

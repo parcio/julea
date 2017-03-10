@@ -16,20 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <julea.h>
+/**
+ * \file
+ **/
 
-#include <juri.h>
+#ifndef H_ITEM_ITERATOR
+#define H_ITEM_ITERATOR
 
 #include <glib.h>
 
-void j_cmd_usage (void);
+struct JItemIterator;
 
-guint j_cmd_arguments_length (gchar const**);
+typedef struct JItemIterator JItemIterator;
 
-gboolean j_cmd_error_last (JURI*);
+#include <client/item/jcollection.h>
+#include <client/item/jitem.h>
 
-gboolean j_cmd_create (gchar const**, gboolean);
-gboolean j_cmd_copy (gchar const**);
-gboolean j_cmd_delete (gchar const**);
-gboolean j_cmd_list (gchar const**);
-gboolean j_cmd_status (gchar const**);
+JItemIterator* j_item_iterator_new (JCollection*);
+void j_item_iterator_free (JItemIterator*);
+
+gboolean j_item_iterator_next (JItemIterator*);
+JItem* j_item_iterator_get (JItemIterator*);
+
+#endif

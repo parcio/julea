@@ -25,7 +25,8 @@
 
 #include <bson.h>
 
-#include <jitem.h>
+// FIXME
+#include <client/item/jitem.h>
 
 struct JBackendItem
 {

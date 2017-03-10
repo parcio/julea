@@ -28,14 +28,15 @@
 
 #include <bson.h>
 
-#include <jitem.h>
-#include <jitem-internal.h>
+#include <client/item/jitem.h>
+#include <client/item/jitem-internal.h>
+
+#include <client/item/jcollection.h>
+#include <client/item/jcollection-internal.h>
 
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <jcollection.h>
-#include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
@@ -1775,6 +1776,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
+	gchar* path;
+	gsize path_len;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1803,11 +1806,14 @@ j_item_read_internal (JBatch* batch, JList* operations)
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
+
+		path = g_build_path("/", collection_name, item_name, NULL);
+		path_len = strlen(path) + 1;
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
 	{
-		lock = j_lock_new(item);
+		lock = j_lock_new("item", path);
 	}
 
 	iterator = j_list_iterator_new(operations);
@@ -1843,16 +1849,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		{
 			if (messages[index] == NULL)
 			{
-				gchar* path;
-				gsize path_len;
-
-				path = g_build_path("/", collection_name, item_name, NULL);
-				path_len = strlen(path) + 1;
-
 				messages[index] = j_message_new(J_MESSAGE_DATA_READ, path_len);
 				j_message_append_n(messages[index], path, path_len);
-
-				g_free(path);
 			}
 
 			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
@@ -1877,6 +1875,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	}
 
 	j_list_iterator_free(iterator);
+
+	g_free(path);
 
 	if (lock != NULL)
 	{
@@ -1975,6 +1975,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	gchar const* item_name;
 	gchar const* collection_name;
 	guint64 max_offset = 0;
+	gchar* path;
+	gsize path_len;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -2001,11 +2003,14 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
+
+		path = g_build_path("/", collection_name, item_name, NULL);
+		path_len = strlen(path) + 1;
 	}
 
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
 	{
-		lock = j_lock_new(item);
+		lock = j_lock_new("item", path);
 	}
 
 	iterator = j_list_iterator_new(operations);
@@ -2040,18 +2045,10 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		{
 			if (messages[index] == NULL)
 			{
-				gchar* path;
-				gsize path_len;
-
-				path = g_build_path("/", collection_name, item_name, NULL);
-				path_len = strlen(path) + 1;
-
 				/* FIXME */
 				messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, path_len);
 				j_message_set_safety(messages[index], semantics);
 				j_message_append_n(messages[index], path, path_len);
-
-				g_free(path);
 			}
 
 			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
@@ -2116,12 +2113,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 
 		if (!item->status.created[i])
 		{
-			gchar* path;
-			gsize path_len;
-
-			path = g_build_path("/", collection_name, item_name, NULL);
-			path_len = strlen(path) + 1;
-
 			/* FIXME better solution? */
 			create_message = j_message_new(J_MESSAGE_DATA_CREATE, 0);
 			/**
@@ -2135,8 +2126,6 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			j_message_force_safety(create_message, J_SEMANTICS_SAFETY_NETWORK);
 			j_message_add_operation(create_message, path_len);
 			j_message_append_n(create_message, path, path_len);
-
-			g_free(path);
 
 			item->status.created[i] = TRUE;
 		}
@@ -2249,6 +2238,8 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	{
 		j_lock_free(lock);
 	}
+
+	g_free(path);
 
 	g_free(background_operations);
 	g_free(messages);

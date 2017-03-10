@@ -30,13 +30,9 @@
 
 #include <jbackend.h>
 #include <jbackend-internal.h>
-#include <jcollection.h>
-#include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
-#include <jitem.h>
-#include <jitem-internal.h>
 #include <jtrace-internal.h>
 
 /**
@@ -55,7 +51,8 @@ struct JLock
 	/**
 	 * The parent item.
 	 **/
-	JItem* item;
+	gchar* namespace;
+	gchar* path;
 
 	GArray* blocks;
 
@@ -81,16 +78,18 @@ struct JLock
  * \return A new item. Should be freed with j_lock_unref().
  **/
 JLock*
-j_lock_new (JItem* item)
+j_lock_new (gchar const* namespace, gchar const* path)
 {
 	JLock* lock;
 
-	g_return_val_if_fail(item != NULL, NULL);
+	g_return_val_if_fail(namespace != NULL, NULL);
+	g_return_val_if_fail(path != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	lock = g_slice_new(JLock);
-	lock->item = j_item_ref(item);
+	lock->namespace = g_strdup(namespace);
+	lock->path = g_strdup(path);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
 
@@ -126,10 +125,8 @@ j_lock_free (JLock* lock)
 		j_lock_release(lock);
 	}
 
-	if (lock->item != NULL)
-	{
-		j_item_unref(lock->item);
-	}
+	g_free(lock->path);
+	g_free(lock->namespace);
 
 	g_array_free(lock->blocks, TRUE);
 
@@ -186,7 +183,7 @@ j_lock_acquire (JLock* lock)
 			{
 				gchar* path;
 
-				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
 				acquired = j_backend_meta_put(meta_backend, path, empty, meta_batch) && acquired;
 				g_free(path);
 			}
@@ -249,7 +246,7 @@ j_lock_release (JLock* lock)
 			{
 				gchar* path;
 
-				path = g_build_path("/", j_collection_get_name(j_item_get_collection(lock->item)), j_item_get_name(lock->item), block_str, NULL);
+				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
 				released = j_backend_meta_delete(meta_backend, path, meta_batch) && released;
 				g_free(path);
 			}

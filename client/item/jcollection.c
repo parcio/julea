@@ -26,8 +26,11 @@
 
 #include <bson.h>
 
-#include <jcollection.h>
-#include <jcollection-internal.h>
+#include <client/item/jcollection.h>
+#include <client/item/jcollection-internal.h>
+
+#include <client/item/jitem.h>
+#include <client/item/jitem-internal.h>
 
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>
@@ -36,8 +39,6 @@
 #include <jconnection-pool-internal.h>
 #include <jcredentials-internal.h>
 #include <jhelper-internal.h>
-#include <jitem.h>
-#include <jitem-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jmessage-internal.h>

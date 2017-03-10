@@ -33,15 +33,10 @@
  **/
 
 #include <jbatch.h>
-#include <jcollection.h>
-#include <jcollection-iterator.h>
 #include <jcommon.h>
 #include <jdistribution.h>
-#include <jitem.h>
-#include <jitem-iterator.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
-#include <juri.h>
 
 #endif

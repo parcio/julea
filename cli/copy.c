@@ -18,9 +18,7 @@
 
 #include <julea-config.h>
 
-#include "julea.h"
-
-#include <juri.h>
+#include "cli.h"
 
 #include <gio/gio.h>
 

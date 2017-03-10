@@ -32,32 +32,14 @@ test_lock_new_free (void)
 {
 	guint const n = 100;
 
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
-
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	collection = j_collection_create("test-collection", batch);
-	item = j_item_create(collection, "test-item", NULL, batch);
-	j_batch_execute(batch);
-
 	for (guint i = 0; i < n; i++)
 	{
 		JLock* lock;
 
-		lock = j_lock_new(item);
+		lock = j_lock_new("test", "path");
 		g_assert(lock != NULL);
 		j_lock_free(lock);
 	}
-
-	j_item_delete(collection, item, batch);
-	j_collection_delete(collection, batch);
-	j_batch_execute(batch);
-
-	j_item_unref(item);
-	j_collection_unref(collection);
-	j_batch_unref(batch);
 }
 
 static
@@ -66,22 +48,12 @@ test_lock_acquire_release (void)
 {
 	guint const n = 1000;
 
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
-
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	collection = j_collection_create("test-collection", batch);
-	item = j_item_create(collection, "test-item", NULL, batch);
-	j_batch_execute(batch);
-
 	for (guint i = 0; i < n; i++)
 	{
 		JLock* lock;
 		gboolean ret;
 
-		lock = j_lock_new(item);
+		lock = j_lock_new("test", "path");
 
 		ret = j_lock_acquire(lock);
 		g_assert(ret);
@@ -90,14 +62,6 @@ test_lock_acquire_release (void)
 
 		j_lock_free(lock);
 	}
-
-	j_item_delete(collection, item, batch);
-	j_collection_delete(collection, batch);
-	j_batch_execute(batch);
-
-	j_item_unref(item);
-	j_collection_unref(collection);
-	j_batch_unref(batch);
 }
 
 static
@@ -106,19 +70,10 @@ test_lock_add (void)
 {
 	guint const n = 1000;
 
-	JCollection* collection;
-	JItem* item;
 	JLock* lock;
-	JBatch* batch;
 	gboolean ret;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	collection = j_collection_create("test-collection", batch);
-	item = j_item_create(collection, "test-item", NULL, batch);
-	j_batch_execute(batch);
-
-	lock = j_lock_new(item);
+	lock = j_lock_new("test", "path");
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -131,14 +86,6 @@ test_lock_add (void)
 	g_assert(ret);
 
 	j_lock_free(lock);
-
-	j_item_delete(collection, item, batch);
-	j_collection_delete(collection, batch);
-	j_batch_execute(batch);
-
-	j_item_unref(item);
-	j_collection_unref(collection);
-	j_batch_unref(batch);
 }
 
 void

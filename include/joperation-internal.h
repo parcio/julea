@@ -28,8 +28,7 @@
 #include <julea-internal.h>
 
 #include <jbatch.h>
-
-#include <jitem.h>
+#include <jlist.h>
 
 typedef gboolean (*JOperationExecFunc) (JBatch*, JList*);
 typedef void (*JOperationFreeFunc) (gpointer);

@@ -29,7 +29,8 @@ struct JCollection;
 
 typedef struct JCollection JCollection;
 
-#include <jitem.h>
+#include <client/item/jitem.h>
+
 #include <jdistribution.h>
 #include <jlist.h>
 #include <jbatch.h>

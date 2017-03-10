@@ -29,7 +29,7 @@
 
 #include <julea-internal.h>
 
-#include <jcollection.h>
+#include <client/item/jcollection.h>
 
 #include <jlist.h>
 

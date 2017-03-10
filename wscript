@@ -238,11 +238,23 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
+	clients = ['item']
+
+	for client in clients:
+		ctx.shlib(
+			source = ctx.path.ant_glob('client/{0}/**/*.c'.format(client)),
+			target = 'lib/julea-client-{0}'.format(client),
+			use = use_julea_lib + ['lib/julea-private'],
+			includes = ['include'],
+			defines = ['J_ENABLE_INTERNAL'],
+			install_path = '${LIBDIR}'
+		)
+
 	# Tests
 	ctx.program(
 		source = ctx.path.ant_glob('test/*.c'),
 		target = 'test/julea-test',
-		use = use_julea_core + ['lib/julea-private'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -252,7 +264,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/julea-benchmark',
-		use = use_julea_core + ['lib/julea-private'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -321,7 +333,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('cli/*.c'),
 		target = 'cli/julea-cli',
-		use = use_julea_core + ['lib/julea-private'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
@@ -343,7 +355,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/julea-fuse',
-			use = use_julea_core + ['lib/julea', 'FUSE'],
+			use = use_julea_core + ['lib/julea', 'lib/julea-client-item', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)

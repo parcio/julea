@@ -18,10 +18,9 @@
 
 #include <julea-config.h>
 
-#include "julea.h"
+#include "cli.h"
 
-#include <jitem-internal.h>
-#include <juri.h>
+#include <client/item/jitem-internal.h>
 
 gboolean
 j_cmd_status (gchar const** arguments)

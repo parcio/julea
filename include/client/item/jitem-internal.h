@@ -27,9 +27,10 @@
 
 #include <julea-internal.h>
 
-#include <jitem.h>
+#include <client/item/jitem.h>
 
-#include <jcollection.h>
+#include <client/item/jcollection.h>
+
 #include <jcredentials-internal.h>
 #include <jsemantics.h>
 

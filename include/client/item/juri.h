@@ -55,8 +55,8 @@ struct JURI;
  **/
 typedef struct JURI JURI;
 
-#include <jcollection.h>
-#include <jitem.h>
+#include <client/item/jcollection.h>
+#include <client/item/jitem.h>
 
 #include <glib.h>
 

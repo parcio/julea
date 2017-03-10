@@ -26,16 +26,17 @@
 
 #include <bson.h>
 
-#include <jitem-iterator.h>
+#include <client/item/jitem-iterator.h>
+
+#include <client/item/jcollection.h>
+#include <client/item/jcollection-internal.h>
+#include <client/item/jitem.h>
+#include <client/item/jitem-internal.h>
 
 #include <jbackend.h>
 #include <jbackend-internal.h>
-#include <jcollection.h>
-#include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
-#include <jitem.h>
-#include <jitem-internal.h>
 #include <joperation-cache-internal.h>
 
 /**

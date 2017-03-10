@@ -26,12 +26,13 @@
 
 #include <bson.h>
 
-#include <jcollection-iterator.h>
+#include <client/item/jcollection-iterator.h>
+
+#include <client/item/jcollection.h>
+#include <client/item/jcollection-internal.h>
 
 #include <jbackend.h>
 #include <jbackend-internal.h>
-#include <jcollection.h>
-#include <jcollection-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jmessage-internal.h>

@@ -21,6 +21,7 @@
 #include <glib.h>
 
 #include <julea.h>
+#include <jclient-item.h>
 
 #include "test.h"
 

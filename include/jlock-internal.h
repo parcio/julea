@@ -31,9 +31,7 @@ struct JLock;
 
 typedef struct JLock JLock;
 
-#include <jitem.h>
-
-J_GNUC_INTERNAL JLock* j_lock_new (JItem*);
+J_GNUC_INTERNAL JLock* j_lock_new (gchar const*, gchar const*);
 J_GNUC_INTERNAL void j_lock_free (JLock*);
 
 J_GNUC_INTERNAL gboolean j_lock_acquire (JLock*);

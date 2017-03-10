@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "julea.h"
+#include "cli.h"
 
 #include <locale.h>
 #include <stdlib.h>

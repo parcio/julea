@@ -34,22 +34,12 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 {
 	guint const n = 3000;
 
-	JCollection* collection;
-	JItem* item;
 	JList* list;
 	JListIterator* iterator;
 	JLock* lock;
-	JBatch* batch;
-	JSemantics* semantics;
 	gdouble elapsed;
 
 	list = j_list_new((JListFreeFunc)j_lock_free);
-	semantics = j_benchmark_get_semantics();
-	batch = j_batch_new(semantics);
-
-	collection = j_collection_create("benchmark-collection", batch);
-	item = j_item_create(collection, "benchmark-item", NULL, batch);
-	j_batch_execute(batch);
 
 	if (acquire)
 	{
@@ -58,7 +48,7 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 
 	for (guint i = 0; i < n; i++)
 	{
-		lock = j_lock_new(item);
+		lock = j_lock_new("benchmark", "path");
 
 		if (add)
 		{
@@ -100,14 +90,6 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 
 	j_list_iterator_free(iterator);
 
-	j_item_delete(collection, item, batch);
-	j_collection_delete(collection, batch);
-	j_batch_execute(batch);
-
-	j_item_unref(item);
-	j_collection_unref(collection);
-	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 	j_list_unref(list);
 
 	result->elapsed_time = elapsed;
