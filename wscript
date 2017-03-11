@@ -48,9 +48,10 @@ def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
 
-	ctx.env.CFLAGS += ['-std=c99']
+	ctx.env.CFLAGS += ['-std=c11']
 	ctx.env.CFLAGS += ['-fdiagnostics-color']
 	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
+	ctx.env.CFLAGS += ['-Wc99-c11-compat']
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
