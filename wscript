@@ -37,7 +37,8 @@ def options (ctx):
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 
-	ctx.add_option('--mongodb', action='store', default='{0}/external/mongo-c-driver'.format(Context.run_dir), help='MongoDB driver prefix')
+	ctx.add_option('--libbson', action='store', default='{0}/external/libbson'.format(Context.run_dir), help='libbson prefix')
+	ctx.add_option('--libmongoc', action='store', default='{0}/external/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
 	ctx.add_option('--otf', action='store', default='{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
 
 	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
@@ -75,13 +76,21 @@ def configure (ctx):
 			uselib_store = module.upper()
 		)
 
-	for module in ('bson', 'mongoc'):
-		ctx.check_cfg(
-			package = 'lib{0}-1.0'.format(module),
-			args = ['--cflags', '--libs'],
-			uselib_store = module.upper(),
-			pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.mongodb)
-		)
+	ctx.check_cfg(
+		package = 'libbson-1.0',
+		args = ['--cflags', '--libs', 'libbson-1.0 >= 1.6.0'],
+		uselib_store = 'LIBBSON',
+		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.libbson)
+	)
+
+	ctx.env.JULEA_LIBMONGOC = \
+	ctx.check_cfg(
+		package = 'libmongoc-1.0',
+		args = ['--cflags', '--libs', 'libmongoc-1.0 >= 1.6.0'],
+		uselib_store = 'LIBMONGOC',
+		pkg_config_path = '{0}/lib/pkgconfig:{1}/lib/pkgconfig'.format(ctx.options.libbson, ctx.options.libmongoc),
+		mandatory = False
+	)
 
 	ctx.env.JULEA_FUSE = \
 	ctx.check_cfg(
@@ -217,7 +226,7 @@ def build (ctx):
 #	)
 
 	use_julea_core = ['M', 'GLIB', 'ASAN'] # 'UBSAN'
-	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'BSON', 'OTF']
+	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 
 	# Library
@@ -281,14 +290,17 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	backends_client = ['mongodb']
+	backends_client = []
+
+	if ctx.env.JULEA_LIBMONGOC:
+		backends_client.append('mongodb')
 
 	# Client backends
 	for backend in backends_client:
 		use_extra = []
 
 		if backend == 'mongodb':
-			use_extra = ['MONGOC']
+			use_extra = ['LIBMONGOC']
 
 		ctx.shlib(
 			source = ['backend/client/{0}.c'.format(backend)],

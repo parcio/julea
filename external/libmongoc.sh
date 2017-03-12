@@ -18,10 +18,11 @@
 
 set -e
 
-PREFIX="${PWD}/mongo-c-driver"
+PREFIX="${PWD}/libmongoc"
+BSON_PREFIX="${PWD}/libbson"
 VERSION='1.6.1'
 
-if [ -d "${PREFIX}" ]
+if test -d "${PREFIX}"
 then
 	echo "Error: ${PREFIX} exists already." >&2
 	exit 1
@@ -37,7 +38,10 @@ tar xf "mongo-c-driver-${VERSION}.tar.gz"
 
 cd "mongo-c-driver-${VERSION}"
 
-./configure --prefix="${PREFIX}" --disable-automatic-init-and-cleanup
+export PKG_CONFIG_PATH="${BSON_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+autoreconf --force --install --verbose
+./configure --prefix="${PREFIX}" --disable-automatic-init-and-cleanup --with-libbson=system
 make --jobs="$(nproc)"
 make install
 
