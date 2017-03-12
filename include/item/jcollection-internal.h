@@ -20,22 +20,29 @@
  * \file
  **/
 
-#ifndef H_ITEM_ITERATOR
-#define H_ITEM_ITERATOR
+#ifndef H_ITEM_COLLECTION_INTERNAL
+#define H_ITEM_COLLECTION_INTERNAL
 
 #include <glib.h>
 
-struct JItemIterator;
+#include <bson.h>
 
-typedef struct JItemIterator JItemIterator;
+#include <julea-internal.h>
 
-#include <client/item/jcollection.h>
-#include <client/item/jitem.h>
+#include <item/jcollection.h>
 
-JItemIterator* j_item_iterator_new (JCollection*);
-void j_item_iterator_free (JItemIterator*);
+#include <jlist.h>
 
-gboolean j_item_iterator_next (JItemIterator*);
-JItem* j_item_iterator_get (JItemIterator*);
+J_GNUC_INTERNAL JCollection* j_collection_new (gchar const*);
+J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (bson_t const*);
+
+J_GNUC_INTERNAL bson_t* j_collection_serialize (JCollection*);
+J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson_t const*);
+
+J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
+
+J_GNUC_INTERNAL gboolean j_collection_create_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_collection_delete_internal (JBatch*, JList*);
+J_GNUC_INTERNAL gboolean j_collection_get_internal (JBatch*, JList*);
 
 #endif

@@ -20,16 +20,16 @@
  * \file
  **/
 
-#ifndef H_ITEM_INTERNAL
-#define H_ITEM_INTERNAL
+#ifndef H_ITEM_ITEM_INTERNAL
+#define H_ITEM_ITEM_INTERNAL
 
 #include <glib.h>
 
 #include <julea-internal.h>
 
-#include <client/item/jitem.h>
+#include <item/jitem.h>
 
-#include <client/item/jcollection.h>
+#include <item/jcollection.h>
 
 #include <jcredentials-internal.h>
 #include <jsemantics.h>

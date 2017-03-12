@@ -26,10 +26,10 @@
 
 #include <bson.h>
 
-#include <client/item/jcollection-iterator.h>
+#include <item/jcollection-iterator.h>
 
-#include <client/item/jcollection.h>
-#include <client/item/jcollection-internal.h>
+#include <item/jcollection.h>
+#include <item/jcollection-internal.h>
 
 #include <jbackend.h>
 #include <jbackend-internal.h>

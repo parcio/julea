@@ -24,10 +24,10 @@
 
 #include <glib.h>
 
-#include <client/item/juri.h>
+#include <item/juri.h>
 
-#include <client/item/jcollection.h>
-#include <client/item/jitem.h>
+#include <item/jcollection.h>
+#include <item/jitem.h>
 
 #include <jcommon.h>
 #include <jbatch.h>

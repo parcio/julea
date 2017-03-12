@@ -20,13 +20,21 @@
  * \file
  **/
 
-#ifndef H_CLIENT_ITEM
-#define H_CLIENT_ITEM
+#ifndef H_ITEM_COLLECTION_ITERATOR
+#define H_ITEM_COLLECTION_ITERATOR
 
-#include <client/item/jcollection.h>
-#include <client/item/jcollection-iterator.h>
-#include <client/item/jitem.h>
-#include <client/item/jitem-iterator.h>
-#include <client/item/juri.h>
+#include <glib.h>
+
+struct JCollectionIterator;
+
+typedef struct JCollectionIterator JCollectionIterator;
+
+#include <item/jcollection.h>
+
+JCollectionIterator* j_collection_iterator_new (void);
+void j_collection_iterator_free (JCollectionIterator*);
+
+gboolean j_collection_iterator_next (JCollectionIterator*);
+JCollection* j_collection_iterator_get (JCollectionIterator*);
 
 #endif

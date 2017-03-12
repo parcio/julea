@@ -20,7 +20,7 @@
 
 #include "cli.h"
 
-#include <client/item/jitem-internal.h>
+#include <item/jitem-internal.h>
 
 gboolean
 j_cmd_status (gchar const** arguments)

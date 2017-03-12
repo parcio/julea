@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_ITEM
-#define H_ITEM
+#ifndef H_ITEM_ITEM
+#define H_ITEM_ITEM
 
 #include <glib.h>
 
@@ -39,7 +39,7 @@ struct JItem;
 
 typedef struct JItem JItem;
 
-#include <client/item/jcollection.h>
+#include <item/jcollection.h>
 
 #include <jbatch.h>
 #include <jdistribution.h>

@@ -26,11 +26,11 @@
 
 #include <bson.h>
 
-#include <client/item/jcollection.h>
-#include <client/item/jcollection-internal.h>
+#include <item/jcollection.h>
+#include <item/jcollection-internal.h>
 
-#include <client/item/jitem.h>
-#include <client/item/jitem-internal.h>
+#include <item/jitem.h>
+#include <item/jitem-internal.h>
 
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>

@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_URI
-#define H_URI
+#ifndef H_ITEM_URI
+#define H_ITEM_URI
 
 /**
  * \addtogroup JURI
@@ -55,8 +55,8 @@ struct JURI;
  **/
 typedef struct JURI JURI;
 
-#include <client/item/jcollection.h>
-#include <client/item/jitem.h>
+#include <item/jcollection.h>
+#include <item/jitem.h>
 
 #include <glib.h>
 

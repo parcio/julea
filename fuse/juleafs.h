@@ -22,7 +22,7 @@
 #include <fuse.h>
 
 #include <julea.h>
-#include <jclient-item.h>
+#include <julea-item.h>
 
 #include <glib.h>
 

@@ -26,12 +26,12 @@
 
 #include <bson.h>
 
-#include <client/item/jitem-iterator.h>
+#include <item/jitem-iterator.h>
 
-#include <client/item/jcollection.h>
-#include <client/item/jcollection-internal.h>
-#include <client/item/jitem.h>
-#include <client/item/jitem-internal.h>
+#include <item/jcollection.h>
+#include <item/jcollection-internal.h>
+#include <item/jitem.h>
+#include <item/jitem-internal.h>
 
 #include <jbackend.h>
 #include <jbackend-internal.h>

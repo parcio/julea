@@ -214,7 +214,8 @@ def configure (ctx):
 
 def build (ctx):
 	# Headers
-	ctx.install_files('${INCLUDEDIR}/julea', ctx.path.ant_glob('include/*.h', excl='include/*-internal.h'))
+	include_dir = ctx.path.find_dir('include')
+	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl='**/*-internal.h'), cwd=include_dir, relative_trick=True)
 
 	# Trace library
 #	ctx.shlib(
@@ -253,7 +254,7 @@ def build (ctx):
 	for client in clients:
 		ctx.shlib(
 			source = ctx.path.ant_glob('client/{0}/**/*.c'.format(client)),
-			target = 'lib/julea-client-{0}'.format(client),
+			target = 'lib/julea-{0}'.format(client),
 			use = use_julea_lib + ['lib/julea-private'],
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
@@ -264,7 +265,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('test/*.c'),
 		target = 'test/julea-test',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -274,7 +275,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/*.c'),
 		target = 'benchmark/julea-benchmark',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
@@ -346,7 +347,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('cli/*.c'),
 		target = 'cli/julea-cli',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-client-item'],
+		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
@@ -368,7 +369,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/julea-fuse',
-			use = use_julea_core + ['lib/julea', 'lib/julea-client-item', 'FUSE'],
+			use = use_julea_core + ['lib/julea', 'lib/julea-item', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)
