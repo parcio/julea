@@ -81,8 +81,21 @@ test_message_append (void)
 	g_assert(ret);
 	ret = j_message_append_n(message, &dummy, 7);
 	g_assert(ret);
-	/*
-	 * FIXME
+
+	j_message_unref(message);
+
+	message = j_message_new(J_MESSAGE_NONE, 0);
+	g_assert(message != NULL);
+
+	/* Preallocation kicks in after the tenth operation */
+	for (guint i = 0; i <= 10; i++)
+	{
+		j_message_add_operation(message, 1);
+		ret = j_message_append_1(message, &dummy);
+		g_assert(ret);
+	}
+
+	/* FIXME
 	ret = j_message_append_1(message, &dummy);
 	g_assert(!ret);
 	*/
