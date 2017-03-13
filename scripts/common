@@ -40,7 +40,7 @@ set_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	export PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/external/mongo-c-driver/bin:${root_dir}/scripts:${PATH}"
+	export PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/external/libmongoc/bin:${root_dir}/scripts:${PATH}"
 }
 
 set_library_path ()
@@ -51,7 +51,7 @@ set_library_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	export LD_LIBRARY_PATH="${build_dir}/lib:${root_dir}/external/mongo-c-driver/lib:${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH="${build_dir}/lib:${root_dir}/external/libbson/lib:${root_dir}/external/libmongoc/lib:${LD_LIBRARY_PATH}"
 }
 
 set_pkg_config_path ()
@@ -62,5 +62,5 @@ set_pkg_config_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	export PKG_CONFIG_PATH="${build_dir}/pkg-config:${root_dir}/external/mongo-c-driver/lib:${PKG_CONFIG_PATH}"
+	export PKG_CONFIG_PATH="${build_dir}/pkg-config:${root_dir}/external/libbson/lib:${root_dir}/external/libmongoc/lib:${PKG_CONFIG_PATH}"
 }
