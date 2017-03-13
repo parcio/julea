@@ -120,14 +120,6 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	ctx.env.JULEA_LEXOS = \
-	ctx.check_cfg(
-		package = 'lexos',
-		args = ['--cflags', '--libs'],
-		uselib_store = 'LEXOS',
-		mandatory = False
-	)
-
 	ctx.check_cc(
 		header_name = 'otf.h',
 		lib = 'open-trace-format',
@@ -300,9 +292,6 @@ def build (ctx):
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
 
-	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
-		backends_server.append('lexos')
-
 	# Server backends
 	for backend in backends_server:
 		use_extra = []
@@ -311,8 +300,6 @@ def build (ctx):
 			use_extra = ['GIO', 'GOBJECT']
 		elif backend == 'leveldb':
 			use_extra = ['LEVELDB']
-		elif backend == 'lexos':
-			use_extra = ['LEXOS', 'LEVELDB']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
