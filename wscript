@@ -41,8 +41,6 @@ def options (ctx):
 	ctx.add_option('--libmongoc', action='store', default='{0}/external/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
 	ctx.add_option('--otf', action='store', default='{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
 
-	ctx.add_option('--jzfs', action='store', default=None, help='JZFS prefix')
-
 	ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
 
 def configure (ctx):
@@ -111,20 +109,6 @@ def configure (ctx):
 			rpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
 			uselib_store = 'MPI',
 			define_name = 'HAVE_MPI'
-		)
-
-	if ctx.options.jzfs:
-		# JZFS
-		ctx.env.JULEA_JZFS = \
-		ctx.check_cc(
-			header_name = 'jzfs.h',
-			lib = 'jzfs',
-			use = ['GLIB'],
-			includes = ['{0}/include/jzfs'.format(ctx.options.jzfs)],
-			libpath = ['{0}/lib'.format(ctx.options.jzfs)],
-			rpath = ['{0}/lib'.format(ctx.options.jzfs)],
-			uselib_store = 'JZFS',
-			define_name = 'HAVE_JZFS'
 		)
 
 	ctx.env.JULEA_LEVELDB = \
@@ -316,9 +300,6 @@ def build (ctx):
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
 
-	if ctx.env.JULEA_JZFS and ctx.env.JULEA_LEVELDB:
-		backends_server.append('jzfs')
-
 	if ctx.env.JULEA_LEXOS and ctx.env.JULEA_LEVELDB:
 		backends_server.append('lexos')
 
@@ -330,8 +311,6 @@ def build (ctx):
 			use_extra = ['GIO', 'GOBJECT']
 		elif backend == 'leveldb':
 			use_extra = ['LEVELDB']
-		elif backend == 'jzfs':
-			use_extra = ['JZFS', 'LEVELDB']
 		elif backend == 'lexos':
 			use_extra = ['LEXOS', 'LEVELDB']
 
