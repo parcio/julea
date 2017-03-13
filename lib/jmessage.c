@@ -265,12 +265,18 @@ static
 void
 j_message_ensure_size (JMessage* message, gsize length)
 {
+	gsize position;
+
 	if (length <= message->size)
 	{
 		return;
 	}
 
-	j_message_extend(message, length - message->size);
+	message->size = length;
+
+	position = message->current - message->data;
+	message->data = g_realloc(message->data, message->size);
+	message->current = message->data + position;
 }
 
 /**
