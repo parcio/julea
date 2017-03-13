@@ -26,11 +26,11 @@
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	(void)data;
 
-	bf->path = g_strdup(path);
+	bf->path = g_build_filename(namespace, path, NULL);
 	bf->user_data = NULL;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CREATE);
@@ -53,11 +53,11 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	(void)data;
 
-	bf->path = g_strdup(path);
+	bf->path = g_build_filename(namespace, path, NULL);
 	bf->user_data = NULL;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_OPEN);

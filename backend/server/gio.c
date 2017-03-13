@@ -30,7 +30,7 @@ static gchar* jd_backend_path = NULL;
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	GFile* file;
 	GFile* parent;
@@ -39,7 +39,7 @@ backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 
 	(void)data;
 
-	full_path = g_build_filename(jd_backend_path, path, NULL);
+	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
@@ -82,7 +82,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	GFile* file;
 	GFileIOStream* stream;
@@ -90,7 +90,7 @@ backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 
 	(void)data;
 
-	full_path = g_build_filename(jd_backend_path, path, NULL);
+	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);

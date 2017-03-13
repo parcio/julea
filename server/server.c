@@ -95,6 +95,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	{
 		JBackendItem backend_item[1];
 		gchar const* key;
+		gchar const* namespace;
 		gchar const* path;
 		guint32 operation_count;
 		JMessageType type_modifier;
@@ -116,11 +117,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						reply = j_message_new_reply(message);
 					}
 
+					namespace = j_message_get_string(message);
+
 					for (i = 0; i < operation_count; i++)
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_create(jd_data_backend, backend_item, path, backend_data))
+						if (j_backend_data_create(jd_data_backend, backend_item, namespace, path, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
@@ -155,11 +158,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						reply = j_message_new_reply(message);
 					}
 
+					namespace = j_message_get_string(message);
+
 					for (i = 0; i < operation_count; i++)
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_open(jd_data_backend, backend_item, path, backend_data)
+						if (j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data)
 						    && j_backend_data_delete(jd_data_backend, backend_item, backend_data))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
@@ -183,12 +188,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply;
 
+					namespace = j_message_get_string(message);
 					path = j_message_get_string(message);
 
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -248,6 +254,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						reply = j_message_new_reply(message);
 					}
 
+					namespace = j_message_get_string(message);
 					path = j_message_get_string(message);
 
 					/* Guaranteed to work, because memory_chunk is not shared. */
@@ -255,7 +262,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -332,6 +339,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
+					namespace = j_message_get_string(message);
+
 					for (i = 0; i < operation_count; i++)
 					{
 						guint count = 0;
@@ -343,7 +352,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						flags = j_message_get_4(message);
 
 						// FIXME return value
-						j_backend_data_open(jd_data_backend, backend_item, path, backend_data);
+						j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
 
 						if (j_backend_data_status(jd_data_backend, backend_item, flags, &modification_time, &size, backend_data))
 						{
@@ -455,7 +464,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_META_PUT:
 				{
 					JMessage* reply = NULL;
-					gchar const* namespace;
 					gpointer batch;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -497,7 +505,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_META_DELETE:
 				{
 					JMessage* reply = NULL;
-					gchar const* namespace;
 					gpointer batch;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -532,7 +539,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_META_GET:
 				{
 					JMessage* reply = NULL;
-					gchar const* namespace;
 
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
@@ -568,7 +574,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply = NULL;
 					bson_t value[1];
-					gchar const* namespace;
 					gpointer iterator;
 					guint32 zero = 0;
 

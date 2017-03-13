@@ -39,10 +39,10 @@ J_GNUC_INTERNAL void j_backend_data_fini (JBackend*);
 J_GNUC_INTERNAL gpointer j_backend_data_thread_init (JBackend*);
 J_GNUC_INTERNAL void j_backend_data_thread_fini (JBackend*, gpointer);
 
-J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, JBackendItem*, gchar const*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, JBackendItem*, gchar const*, gchar const*, gpointer);
 J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, JBackendItem*, gpointer);
 
-J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gchar const*, gpointer);
 J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, JBackendItem*, gpointer);
 
 J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);

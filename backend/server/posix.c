@@ -111,7 +111,7 @@ backend_file_add (GHashTable* files, JBackendItem* backend_item)
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	GHashTable* files = data;
 
@@ -120,7 +120,7 @@ backend_create (JBackendItem* bf, gchar const* path, gpointer data)
 	gchar* full_path;
 	gint fd;
 
-	full_path = g_build_filename(jd_backend_path, path, NULL);
+	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 
 	if ((file = backend_file_get(files, full_path)) != NULL)
 	{
@@ -171,7 +171,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
 	GHashTable* files = data;
 
@@ -179,7 +179,7 @@ backend_open (JBackendItem* bf, gchar const* path, gpointer data)
 	gchar* full_path;
 	gint fd;
 
-	full_path = g_build_filename(jd_backend_path, path, NULL);
+	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 
 	if ((file = backend_file_get(files, full_path)) != NULL)
 	{

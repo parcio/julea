@@ -58,10 +58,10 @@ struct JBackend
 			gpointer (*thread_init) (void);
 			void (*thread_fini) (gpointer);
 
-			gboolean (*create) (JBackendItem*, gchar const*, gpointer);
+			gboolean (*create) (JBackendItem*, gchar const*, gchar const*, gpointer);
 			gboolean (*delete) (JBackendItem*, gpointer);
 
-			gboolean (*open) (JBackendItem*, gchar const*, gpointer);
+			gboolean (*open) (JBackendItem*, gchar const*, gchar const*, gpointer);
 			gboolean (*close) (JBackendItem*, gpointer);
 
 			gboolean (*status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);

@@ -1528,8 +1528,9 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 			if (messages[i] == NULL)
 			{
 				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DATA_DELETE, 0);
+				messages[i] = j_message_new(J_MESSAGE_DATA_DELETE, 5);
 				j_message_set_safety(messages[i], semantics);
+				j_message_append_n(messages[i], "item", 5);
 			}
 
 			j_message_add_operation(messages[i], path_len);
@@ -1849,7 +1850,8 @@ j_item_read_internal (JBatch* batch, JList* operations)
 		{
 			if (messages[index] == NULL)
 			{
-				messages[index] = j_message_new(J_MESSAGE_DATA_READ, path_len);
+				messages[index] = j_message_new(J_MESSAGE_DATA_READ, 5 + path_len);
+				j_message_append_n(messages[index], "item", 5);
 				j_message_append_n(messages[index], path, path_len);
 			}
 
@@ -2046,8 +2048,9 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			if (messages[index] == NULL)
 			{
 				/* FIXME */
-				messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, path_len);
+				messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, 5 + path_len);
 				j_message_set_safety(messages[index], semantics);
+				j_message_append_n(messages[index], "item", 5);
 				j_message_append_n(messages[index], path, path_len);
 			}
 
@@ -2114,7 +2117,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 		if (!item->status.created[i])
 		{
 			/* FIXME better solution? */
-			create_message = j_message_new(J_MESSAGE_DATA_CREATE, 0);
+			create_message = j_message_new(J_MESSAGE_DATA_CREATE, 5);
 			/**
 			 * Force safe semantics to make the server send a reply.
 			 * Otherwise, nasty races can occur when using unsafe semantics:
@@ -2124,6 +2127,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 			 **/
 			j_message_force_safety(create_message, J_SEMANTICS_SAFETY_NETWORK);
+			j_message_append_n(create_message, "item", 5);
 			j_message_add_operation(create_message, path_len);
 			j_message_append_n(create_message, path, path_len);
 
@@ -2369,7 +2373,8 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 				if (messages[i] == NULL)
 				{
-					messages[i] = j_message_new(J_MESSAGE_DATA_STATUS, 0);
+					messages[i] = j_message_new(J_MESSAGE_DATA_STATUS, 5);
+					j_message_append_n(messages[i], "item", 5);
 				}
 
 				j_message_add_operation(messages[i], path_len + sizeof(guint32));

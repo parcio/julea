@@ -181,17 +181,18 @@ j_backend_data_thread_fini (JBackend* backend, gpointer data)
 }
 
 gboolean
-j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar const* path, gpointer data)
+j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path, gpointer data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
 	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	j_trace_enter("backend_create", "%p, %s, %p", (gpointer)backend_item, path, data);
-	ret = backend->u.data.create(backend_item, path, data);
+	j_trace_enter("backend_create", "%p, %s, %s, %p", (gpointer)backend_item, namespace, path, data);
+	ret = backend->u.data.create(backend_item, namespace, path, data);
 	j_trace_leave("backend_create");
 
 	return ret;
@@ -214,17 +215,18 @@ j_backend_data_delete (JBackend* backend, JBackendItem* backend_item, gpointer d
 }
 
 gboolean
-j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const* path, gpointer data)
+j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path, gpointer data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
 	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	j_trace_enter("backend_open", "%p, %s, %p", (gpointer)backend_item, path, data);
-	ret = backend->u.data.open(backend_item, path, data);
+	j_trace_enter("backend_open", "%p, %s, %s, %p", (gpointer)backend_item, namespace, path, data);
+	ret = backend->u.data.open(backend_item, namespace, path, data);
 	j_trace_leave("backend_open");
 
 	return ret;
