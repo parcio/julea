@@ -593,7 +593,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_META_GET_BY_VALUE:
-			case J_MESSAGE_META_ITERATE:
 			case J_MESSAGE_REPLY:
 			case J_MESSAGE_SAFETY_NETWORK:
 			case J_MESSAGE_SAFETY_STORAGE:
