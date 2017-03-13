@@ -45,6 +45,17 @@ static gchar* jd_backend_path = NULL;
 
 G_LOCK_DEFINE_STATIC(jd_backend_file_cache);
 
+static
+void
+jd_backend_files_free (gpointer data)
+{
+	GHashTable* files = data;
+
+	g_hash_table_destroy(files);
+}
+
+static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
+
 static gboolean backend_close (JBackendItem*, gpointer);
 
 static
@@ -65,6 +76,23 @@ backend_file_unref (gpointer data)
 	}
 
 	G_UNLOCK(jd_backend_file_cache);
+}
+
+static
+GHashTable*
+jd_backend_files_get_thread (void)
+{
+	GHashTable* files;
+
+	files = g_private_get(&jd_backend_files);
+
+	if (G_UNLIKELY(files == NULL))
+	{
+		files = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, backend_file_unref);
+		g_private_replace(&jd_backend_files, files);
+	}
+
+	return files;
 }
 
 static
@@ -113,7 +141,7 @@ static
 gboolean
 backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
-	GHashTable* files = data;
+	GHashTable* files = jd_backend_files_get_thread();
 
 	JBackendFile* file;
 	gchar* parent;
@@ -156,7 +184,7 @@ static
 gboolean
 backend_delete (JBackendItem* bf, gpointer data)
 {
-	GHashTable* files = data;
+	GHashTable* files = jd_backend_files_get_thread();
 
 	gboolean ret;
 
@@ -173,7 +201,7 @@ static
 gboolean
 backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
 {
-	GHashTable* files = data;
+	GHashTable* files = jd_backend_files_get_thread();
 
 	JBackendFile* file;
 	gchar* full_path;
@@ -211,7 +239,7 @@ backend_close (JBackendItem* bf, gpointer data)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
-	if (data != NULL)
+	if (jd_backend_files_get_thread() != NULL)
 	{
 		goto end;
 	}
@@ -330,28 +358,6 @@ backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 o
 }
 
 static
-gpointer
-backend_thread_init (void)
-{
-	GHashTable* files;
-
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, backend_file_unref);
-
-	return files;
-}
-
-static
-void
-backend_thread_fini (gpointer data)
-{
-	GHashTable* files = data;
-
-	g_return_if_fail(data != NULL);
-
-	g_hash_table_destroy(files);
-}
-
-static
 gboolean
 backend_init (gchar const* path)
 {
@@ -379,8 +385,8 @@ JBackend posix_backend = {
 	.u.data = {
 		.init = backend_init,
 		.fini = backend_fini,
-		.thread_init = backend_thread_init,
-		.thread_fini = backend_thread_fini,
+		.thread_init = NULL,
+		.thread_fini = NULL,
 		.create = backend_create,
 		.delete = backend_delete,
 		.open = backend_open,
