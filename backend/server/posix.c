@@ -56,7 +56,7 @@ jd_backend_files_free (gpointer data)
 
 static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
 
-static gboolean backend_close (JBackendItem*, gpointer);
+static gboolean backend_close (JBackendItem*);
 
 static
 void
@@ -70,7 +70,7 @@ backend_file_unref (gpointer data)
 	{
 		g_hash_table_remove(jd_backend_file_cache, file->item.path);
 
-		backend_close(&(file->item), NULL);
+		backend_close(&(file->item));
 
 		g_slice_free(JBackendFile, file);
 	}
@@ -139,7 +139,7 @@ backend_file_add (GHashTable* files, JBackendItem* backend_item)
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
 	GHashTable* files = jd_backend_files_get_thread();
 
@@ -182,7 +182,7 @@ end:
 
 static
 gboolean
-backend_delete (JBackendItem* bf, gpointer data)
+backend_delete (JBackendItem* bf)
 {
 	GHashTable* files = jd_backend_files_get_thread();
 
@@ -199,7 +199,7 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
 	GHashTable* files = jd_backend_files_get_thread();
 
@@ -235,10 +235,11 @@ end:
 
 static
 gboolean
-backend_close (JBackendItem* bf, gpointer data)
+backend_close (JBackendItem* bf)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
+	// FIXME do not goto end if called from backend_file_unref
 	if (jd_backend_files_get_thread() != NULL)
 	{
 		goto end;
@@ -259,11 +260,9 @@ end:
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
-
-	(void)data;
 
 	if (fd != -1)
 	{
@@ -293,11 +292,9 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 static
 gboolean
-backend_sync (JBackendItem* bf, gpointer data)
+backend_sync (JBackendItem* bf)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
-
-	(void)data;
 
 	if (fd != -1)
 	{
@@ -311,12 +308,10 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;
-
-	(void)data;
 
 	if (fd != -1)
 	{
@@ -335,12 +330,10 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 static
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 	gsize nbytes;
-
-	(void)data;
 
 	if (fd != -1)
 	{
@@ -385,8 +378,6 @@ JBackend posix_backend = {
 	.u.data = {
 		.init = backend_init,
 		.fini = backend_fini,
-		.thread_init = NULL,
-		.thread_fini = NULL,
 		.create = backend_create,
 		.delete = backend_delete,
 		.open = backend_open,

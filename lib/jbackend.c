@@ -153,35 +153,8 @@ j_backend_data_fini (JBackend* backend)
 	j_trace_leave("backend_fini");
 }
 
-gpointer
-j_backend_data_thread_init (JBackend* backend)
-{
-	gpointer ret;
-
-	g_return_val_if_fail(backend != NULL, NULL);
-	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, NULL);
-
-	j_trace_enter("backend_thread_init", NULL);
-	ret = backend->u.data.thread_init();
-	j_trace_leave("backend_thread_init");
-
-	return ret;
-}
-
-void
-j_backend_data_thread_fini (JBackend* backend, gpointer data)
-{
-	g_return_if_fail(backend != NULL);
-	g_return_if_fail(backend->type == J_BACKEND_TYPE_DATA);
-	g_return_if_fail(data != NULL);
-
-	j_trace_enter("backend_thread_fini", "%p", data);
-	backend->u.data.thread_fini(data);
-	j_trace_leave("backend_thread_fini");
-}
-
 gboolean
-j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path, gpointer data)
+j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path)
 {
 	gboolean ret;
 
@@ -191,15 +164,15 @@ j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar cons
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	j_trace_enter("backend_create", "%p, %s, %s, %p", (gpointer)backend_item, namespace, path, data);
-	ret = backend->u.data.create(backend_item, namespace, path, data);
+	j_trace_enter("backend_create", "%p, %s, %s", (gpointer)backend_item, namespace, path);
+	ret = backend->u.data.create(backend_item, namespace, path);
 	j_trace_leave("backend_create");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_delete (JBackend* backend, JBackendItem* backend_item, gpointer data)
+j_backend_data_delete (JBackend* backend, JBackendItem* backend_item)
 {
 	gboolean ret;
 
@@ -207,15 +180,15 @@ j_backend_data_delete (JBackend* backend, JBackendItem* backend_item, gpointer d
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
 	g_return_val_if_fail(backend_item != NULL, FALSE);
 
-	j_trace_enter("backend_delete", "%p, %p", (gpointer)backend_item, data);
-	ret = backend->u.data.delete(backend_item, data);
+	j_trace_enter("backend_delete", "%p", (gpointer)backend_item);
+	ret = backend->u.data.delete(backend_item);
 	j_trace_leave("backend_delete");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path, gpointer data)
+j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path)
 {
 	gboolean ret;
 
@@ -225,15 +198,15 @@ j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const*
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	j_trace_enter("backend_open", "%p, %s, %s, %p", (gpointer)backend_item, namespace, path, data);
-	ret = backend->u.data.open(backend_item, namespace, path, data);
+	j_trace_enter("backend_open", "%p, %s, %s", (gpointer)backend_item, namespace, path);
+	ret = backend->u.data.open(backend_item, namespace, path);
 	j_trace_leave("backend_open");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_close (JBackend* backend, JBackendItem* backend_item, gpointer data)
+j_backend_data_close (JBackend* backend, JBackendItem* backend_item)
 {
 	gboolean ret;
 
@@ -241,15 +214,15 @@ j_backend_data_close (JBackend* backend, JBackendItem* backend_item, gpointer da
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
 	g_return_val_if_fail(backend_item != NULL, FALSE);
 
-	j_trace_enter("backend_close", "%p, %p", (gpointer)backend_item, data);
-	ret = backend->u.data.close(backend_item, data);
+	j_trace_enter("backend_close", "%p", (gpointer)backend_item);
+	ret = backend->u.data.close(backend_item);
 	j_trace_leave("backend_close");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_status (JBackend* backend, JBackendItem* backend_item, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
+j_backend_data_status (JBackend* backend, JBackendItem* backend_item, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	gboolean ret;
 
@@ -259,15 +232,15 @@ j_backend_data_status (JBackend* backend, JBackendItem* backend_item, JItemStatu
 	g_return_val_if_fail(modification_time != NULL, FALSE);
 	g_return_val_if_fail(size != NULL, FALSE);
 
-	j_trace_enter("backend_status", "%p, %d, %p, %p, %p", (gpointer)backend_item, flags, (gpointer)modification_time, (gpointer)size, data);
-	ret = backend->u.data.status(backend_item, flags, modification_time, size, data);
+	j_trace_enter("backend_status", "%p, %d, %p, %p", (gpointer)backend_item, flags, (gpointer)modification_time, (gpointer)size);
+	ret = backend->u.data.status(backend_item, flags, modification_time, size);
 	j_trace_leave("backend_status");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_sync (JBackend* backend, JBackendItem* backend_item, gpointer data)
+j_backend_data_sync (JBackend* backend, JBackendItem* backend_item)
 {
 	gboolean ret;
 
@@ -275,15 +248,15 @@ j_backend_data_sync (JBackend* backend, JBackendItem* backend_item, gpointer dat
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
 	g_return_val_if_fail(backend_item != NULL, FALSE);
 
-	j_trace_enter("backend_sync", "%p, %p", (gpointer)backend_item, data);
-	ret = backend->u.data.sync(backend_item, data);
+	j_trace_enter("backend_sync", "%p", (gpointer)backend_item);
+	ret = backend->u.data.sync(backend_item);
 	j_trace_leave("backend_sync");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_read (JBackend* backend, JBackendItem* backend_item, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
+j_backend_data_read (JBackend* backend, JBackendItem* backend_item, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gboolean ret;
 
@@ -293,15 +266,15 @@ j_backend_data_read (JBackend* backend, JBackendItem* backend_item, gpointer buf
 	g_return_val_if_fail(buffer != NULL, FALSE);
 	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
-	j_trace_enter("backend_read", "%p, %p %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT " %p %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_read, data);
-	ret = backend->u.data.read(backend_item, buffer, length, offset, bytes_read, data);
+	j_trace_enter("backend_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_read);
+	ret = backend->u.data.read(backend_item, buffer, length, offset, bytes_read);
 	j_trace_leave("backend_read");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_write (JBackend* backend, JBackendItem* backend_item, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
+j_backend_data_write (JBackend* backend, JBackendItem* backend_item, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gboolean ret;
 
@@ -311,8 +284,8 @@ j_backend_data_write (JBackend* backend, JBackendItem* backend_item, gconstpoint
 	g_return_val_if_fail(buffer != NULL, FALSE);
 	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
-	j_trace_enter("backend_write", "%p, %p %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT " %p %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_written, data);
-	ret = backend->u.data.write(backend_item, buffer, length, offset, bytes_written, data);
+	j_trace_enter("backend_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_written);
+	ret = backend->u.data.write(backend_item, buffer, length, offset, bytes_written);
 	j_trace_leave("backend_write");
 
 	return ret;
@@ -343,33 +316,6 @@ j_backend_meta_fini (JBackend* backend)
 	j_trace_enter("backend_fini", NULL);
 	backend->u.meta.fini();
 	j_trace_leave("backend_fini");
-}
-
-gpointer
-j_backend_meta_thread_init (JBackend* backend)
-{
-	gpointer ret;
-
-	g_return_val_if_fail(backend != NULL, NULL);
-	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_META, NULL);
-
-	j_trace_enter("backend_thread_init", NULL);
-	ret = backend->u.meta.thread_init();
-	j_trace_leave("backend_thread_init");
-
-	return ret;
-}
-
-void
-j_backend_meta_thread_fini (JBackend* backend, gpointer data)
-{
-	g_return_if_fail(backend != NULL);
-	g_return_if_fail(backend->type == J_BACKEND_TYPE_META);
-	g_return_if_fail(data != NULL);
-
-	j_trace_enter("backend_thread_fini", "%p", data);
-	backend->u.meta.thread_fini(data);
-	j_trace_leave("backend_thread_fini");
 }
 
 gboolean

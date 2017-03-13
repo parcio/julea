@@ -55,20 +55,17 @@ struct JBackend
 			gboolean (*init) (gchar const*);
 			void (*fini) (void);
 
-			gpointer (*thread_init) (void);
-			void (*thread_fini) (gpointer);
+			gboolean (*create) (JBackendItem*, gchar const*, gchar const*);
+			gboolean (*delete) (JBackendItem*);
 
-			gboolean (*create) (JBackendItem*, gchar const*, gchar const*, gpointer);
-			gboolean (*delete) (JBackendItem*, gpointer);
+			gboolean (*open) (JBackendItem*, gchar const*, gchar const*);
+			gboolean (*close) (JBackendItem*);
 
-			gboolean (*open) (JBackendItem*, gchar const*, gchar const*, gpointer);
-			gboolean (*close) (JBackendItem*, gpointer);
+			gboolean (*status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*);
+			gboolean (*sync) (JBackendItem*);
 
-			gboolean (*status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);
-			gboolean (*sync) (JBackendItem*, gpointer);
-
-			gboolean (*read) (JBackendItem*, gpointer, guint64, guint64, guint64*, gpointer);
-			gboolean (*write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*, gpointer);
+			gboolean (*read) (JBackendItem*, gpointer, guint64, guint64, guint64*);
+			gboolean (*write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*);
 		}
 		data;
 
@@ -76,9 +73,6 @@ struct JBackend
 		{
 			gboolean (*init) (gchar const*);
 			void (*fini) (void);
-
-			gpointer (*thread_init) (void);
-			void (*thread_fini) (gpointer);
 
 			gboolean (*batch_start) (gchar const*, gpointer*);
 			gboolean (*batch_execute) (gpointer);

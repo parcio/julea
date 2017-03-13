@@ -26,10 +26,8 @@
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
-	(void)data;
-
 	bf->path = g_build_filename(namespace, path, NULL);
 	bf->user_data = NULL;
 
@@ -41,10 +39,8 @@ backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpo
 
 static
 gboolean
-backend_delete (JBackendItem* bf, gpointer data)
+backend_delete (JBackendItem* bf)
 {
-	(void)data;
-
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
@@ -53,10 +49,8 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
-	(void)data;
-
 	bf->path = g_build_filename(namespace, path, NULL);
 	bf->user_data = NULL;
 
@@ -68,10 +62,8 @@ backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpoin
 
 static
 gboolean
-backend_close (JBackendItem* bf, gpointer data)
+backend_close (JBackendItem* bf)
 {
-	(void)data;
-
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 
@@ -82,10 +74,9 @@ backend_close (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	(void)flags;
-	(void)data;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
 	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
@@ -98,10 +89,8 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 static
 gboolean
-backend_sync (JBackendItem* bf, gpointer data)
+backend_sync (JBackendItem* bf)
 {
-	(void)data;
-
 	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
 	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 
@@ -110,10 +99,9 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	(void)buffer;
-	(void)data;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
 	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
@@ -128,10 +116,9 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 static
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	(void)buffer;
-	(void)data;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
 	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
@@ -165,8 +152,6 @@ JBackend null_backend = {
 	.u.data = {
 		.init = backend_init,
 		.fini = backend_fini,
-		.thread_init = NULL,
-		.thread_fini = NULL,
 		.create = backend_create,
 		.delete = backend_delete,
 		.open = backend_open,

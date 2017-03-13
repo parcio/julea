@@ -30,14 +30,12 @@ static gchar* jd_backend_path = NULL;
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
 	GFile* file;
 	GFile* parent;
 	GFileIOStream* stream;
 	gchar* full_path;
-
-	(void)data;
 
 	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
@@ -62,12 +60,10 @@ backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path, gpo
 
 static
 gboolean
-backend_delete (JBackendItem* bf, gpointer data)
+backend_delete (JBackendItem* bf)
 {
 	gboolean ret = FALSE;
 	GFile* file;
-
-	(void)data;
 
 	file = g_file_new_for_path(bf->path);
 
@@ -82,13 +78,11 @@ backend_delete (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpointer data)
+backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path)
 {
 	GFile* file;
 	GFileIOStream* stream;
 	gchar* full_path;
-
-	(void)data;
 
 	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
@@ -107,11 +101,9 @@ backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path, gpoin
 
 static
 gboolean
-backend_close (JBackendItem* bf, gpointer data)
+backend_close (JBackendItem* bf)
 {
 	GFileIOStream* stream = bf->user_data;
-
-	(void)data;
 
 	if (stream != NULL)
 	{
@@ -129,13 +121,12 @@ backend_close (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size, gpointer data)
+backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
 {
 	GFileIOStream* stream = bf->user_data;
 	//GOutputStream* output;
 
 	(void)flags;
-	(void)data;
 
 	if (stream != NULL)
 	{
@@ -156,12 +147,10 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 
 static
 gboolean
-backend_sync (JBackendItem* bf, gpointer data)
+backend_sync (JBackendItem* bf)
 {
 	GFileIOStream* stream = bf->user_data;
 	GOutputStream* output;
-
-	(void)data;
 
 	if (stream != NULL)
 	{
@@ -177,13 +166,11 @@ backend_sync (JBackendItem* bf, gpointer data)
 
 static
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read, gpointer data)
+backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	GFileIOStream* stream = bf->user_data;
 	GInputStream* input;
 	gsize nbytes;
-
-	(void)data;
 
 	if (stream != NULL)
 	{
@@ -208,13 +195,11 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 static
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written, gpointer data)
+backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	GFileIOStream* stream = bf->user_data;
 	GOutputStream* output;
 	gsize nbytes;
-
-	(void)data;
 
 	if (stream != NULL)
 	{
@@ -265,8 +250,6 @@ JBackend gio_backend = {
 	.u.data = {
 		.init = backend_init,
 		.fini = backend_fini,
-		.thread_init = NULL,
-		.thread_fini = NULL,
 		.create = backend_create,
 		.delete = backend_delete,
 		.open = backend_open,

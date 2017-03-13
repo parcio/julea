@@ -69,7 +69,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	JMessage* message;
 	JStatistics* statistics;
 	GInputStream* input;
-	gpointer backend_data = NULL;
 
 	(void)service;
 	(void)source_object;
@@ -81,12 +80,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	statistics = j_statistics_new(TRUE);
 	memory_chunk = j_memory_chunk_new(J_STRIPE_SIZE);
-
-	/* FIXME jd_data_backend might be NULL */
-	if (jd_data_backend->u.data.thread_init != NULL)
-	{
-		backend_data = j_backend_data_thread_init(jd_data_backend);
-	}
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
@@ -123,17 +116,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_create(jd_data_backend, backend_item, namespace, path, backend_data))
+						if (j_backend_data_create(jd_data_backend, backend_item, namespace, path))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
 							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 							{
-								j_backend_data_sync(jd_data_backend, backend_item, backend_data);
+								j_backend_data_sync(jd_data_backend, backend_item);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 							}
 
-							j_backend_data_close(jd_data_backend, backend_item, backend_data);
+							j_backend_data_close(jd_data_backend, backend_item);
 						}
 
 						if (reply != NULL)
@@ -164,11 +157,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data)
-						    && j_backend_data_delete(jd_data_backend, backend_item, backend_data))
+						if (j_backend_data_open(jd_data_backend, backend_item, namespace, path)
+						    && j_backend_data_delete(jd_data_backend, backend_item))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							j_backend_data_close(jd_data_backend, backend_item, backend_data);
+							j_backend_data_close(jd_data_backend, backend_item);
 						}
 
 						if (reply != NULL)
@@ -194,7 +187,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, namespace, path);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -220,7 +213,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						j_backend_data_read(jd_data_backend, backend_item, buf, length, offset, &bytes_read, backend_data);
+						j_backend_data_read(jd_data_backend, backend_item, buf, length, offset, &bytes_read);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -234,7 +227,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					j_backend_data_close(jd_data_backend, backend_item, backend_data);
+					j_backend_data_close(jd_data_backend, backend_item);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -262,7 +255,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
+					j_backend_data_open(jd_data_backend, backend_item, namespace, path);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -284,7 +277,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+							j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -312,17 +305,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written, backend_data);
+						j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						j_backend_data_sync(jd_data_backend, backend_item, backend_data);
+						j_backend_data_sync(jd_data_backend, backend_item);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					j_backend_data_close(jd_data_backend, backend_item, backend_data);
+					j_backend_data_close(jd_data_backend, backend_item);
 
 					if (reply != NULL)
 					{
@@ -352,9 +345,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						flags = j_message_get_4(message);
 
 						// FIXME return value
-						j_backend_data_open(jd_data_backend, backend_item, namespace, path, backend_data);
+						j_backend_data_open(jd_data_backend, backend_item, namespace, path);
 
-						if (j_backend_data_status(jd_data_backend, backend_item, flags, &modification_time, &size, backend_data))
+						if (j_backend_data_status(jd_data_backend, backend_item, flags, &modification_time, &size))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -381,7 +374,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_8(reply, &size);
 						}
 
-						j_backend_data_close(jd_data_backend, backend_item, backend_data);
+						j_backend_data_close(jd_data_backend, backend_item);
 					}
 
 					j_message_send(reply, connection);
@@ -631,11 +624,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
 
 		G_UNLOCK(jd_statistics);
-	}
-
-	if (jd_data_backend->u.data.thread_fini != NULL)
-	{
-		j_backend_data_thread_fini(jd_data_backend, backend_data);
 	}
 
 	j_memory_chunk_free(memory_chunk);

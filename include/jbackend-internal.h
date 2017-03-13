@@ -36,26 +36,20 @@ J_GNUC_INTERNAL GModule* j_backend_load_server (gchar const*, JBackendType, JBac
 J_GNUC_INTERNAL gboolean j_backend_data_init (JBackend*, gchar const*);
 J_GNUC_INTERNAL void j_backend_data_fini (JBackend*);
 
-J_GNUC_INTERNAL gpointer j_backend_data_thread_init (JBackend*);
-J_GNUC_INTERNAL void j_backend_data_thread_fini (JBackend*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, JBackendItem*, gchar const*, gchar const*);
+J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, JBackendItem*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, JBackendItem*, gchar const*, gchar const*, gpointer);
-J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, JBackendItem*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gchar const*);
+J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, JBackendItem*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gchar const*, gpointer);
-J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, JBackendItem*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, JItemStatusFlags, gint64*, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_sync (JBackend*, JBackendItem*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, JItemStatusFlags, gint64*, guint64*, gpointer);
-J_GNUC_INTERNAL gboolean j_backend_data_sync (JBackend*, JBackendItem*, gpointer);
-
-J_GNUC_INTERNAL gboolean j_backend_data_read (JBackend*, JBackendItem*, gpointer, guint64, guint64, guint64*, gpointer);
-J_GNUC_INTERNAL gboolean j_backend_data_write (JBackend*, JBackendItem*, gconstpointer, guint64, guint64, guint64*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_read (JBackend*, JBackendItem*, gpointer, guint64, guint64, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_write (JBackend*, JBackendItem*, gconstpointer, guint64, guint64, guint64*);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_init (JBackend*, gchar const*);
 J_GNUC_INTERNAL void j_backend_meta_fini (JBackend*);
-
-J_GNUC_INTERNAL gpointer j_backend_meta_thread_init (JBackend*);
-J_GNUC_INTERNAL void j_backend_meta_thread_fini (JBackend*, gpointer);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_batch_start (JBackend*, gchar const*, gpointer*);
 J_GNUC_INTERNAL gboolean j_backend_meta_batch_execute (JBackend*, gpointer);
