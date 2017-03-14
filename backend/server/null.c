@@ -74,10 +74,8 @@ backend_close (JBackendItem* bf)
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, gint64* modification_time, guint64* size)
 {
-	(void)flags;
-
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
 	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 

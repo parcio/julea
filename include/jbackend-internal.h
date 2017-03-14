@@ -42,7 +42,7 @@ J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, JBackendItem*);
 J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gchar const*);
 J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, JBackendItem*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, JItemStatusFlags, gint64*, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, gint64*, guint64*);
 J_GNUC_INTERNAL gboolean j_backend_data_sync (JBackend*, JBackendItem*);
 
 J_GNUC_INTERNAL gboolean j_backend_data_read (JBackend*, JBackendItem*, gpointer, guint64, guint64, guint64*);

@@ -44,7 +44,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		JBatch* batch;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, batch);
+		j_item_get_status(j_uri_get_item(uri), batch);
 		j_batch_execute(batch);
 		j_batch_unref(batch);
 

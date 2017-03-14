@@ -121,12 +121,10 @@ backend_close (JBackendItem* bf)
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, gint64* modification_time, guint64* size)
 {
 	GFileIOStream* stream = bf->user_data;
 	//GOutputStream* output;
-
-	(void)flags;
 
 	if (stream != NULL)
 	{

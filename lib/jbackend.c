@@ -222,7 +222,7 @@ j_backend_data_close (JBackend* backend, JBackendItem* backend_item)
 }
 
 gboolean
-j_backend_data_status (JBackend* backend, JBackendItem* backend_item, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+j_backend_data_status (JBackend* backend, JBackendItem* backend_item, gint64* modification_time, guint64* size)
 {
 	gboolean ret;
 
@@ -232,8 +232,8 @@ j_backend_data_status (JBackend* backend, JBackendItem* backend_item, JItemStatu
 	g_return_val_if_fail(modification_time != NULL, FALSE);
 	g_return_val_if_fail(size != NULL, FALSE);
 
-	j_trace_enter("backend_status", "%p, %d, %p, %p", (gpointer)backend_item, flags, (gpointer)modification_time, (gpointer)size);
-	ret = backend->u.data.status(backend_item, flags, modification_time, size);
+	j_trace_enter("backend_status", "%p, %p, %p", (gpointer)backend_item, (gpointer)modification_time, (gpointer)size);
+	ret = backend->u.data.status(backend_item, modification_time, size);
 	j_trace_leave("backend_status");
 
 	return ret;

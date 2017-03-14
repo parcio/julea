@@ -63,7 +63,7 @@ j_cmd_status (gchar const** arguments)
 		guint64 modification_time;
 		guint64 size;
 
-		j_item_get_status(j_uri_get_item(uri), J_ITEM_STATUS_ALL, batch);
+		j_item_get_status(j_uri_get_item(uri), batch);
 		j_batch_execute(batch);
 
 		credentials = j_item_get_credentials(j_uri_get_item(uri));

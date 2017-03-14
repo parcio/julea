@@ -260,7 +260,7 @@ end:
 
 static
 gboolean
-backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_time, guint64* size)
+backend_status (JBackendItem* bf, gint64* modification_time, guint64* size)
 {
 	gint fd = GPOINTER_TO_INT(bf->user_data);
 
@@ -272,7 +272,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 		fstat(fd, &buf);
 		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
-		if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
+		if (modification_time != NULL)
 		{
 			*modification_time = buf.st_mtime * G_USEC_PER_SEC;
 
@@ -281,7 +281,7 @@ backend_status (JBackendItem* bf, JItemStatusFlags flags, gint64* modification_t
 #endif
 		}
 
-		if (flags & J_ITEM_STATUS_SIZE)
+		if (size != NULL)
 		{
 			*size = buf.st_size;
 		}

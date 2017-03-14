@@ -25,16 +25,6 @@
 
 #include <glib.h>
 
-enum JItemStatusFlags
-{
-	J_ITEM_STATUS_NONE              = 0,
-	J_ITEM_STATUS_MODIFICATION_TIME = 1 << 0,
-	J_ITEM_STATUS_SIZE              = 1 << 1,
-	J_ITEM_STATUS_ALL               = (J_ITEM_STATUS_MODIFICATION_TIME | J_ITEM_STATUS_SIZE)
-};
-
-typedef enum JItemStatusFlags JItemStatusFlags;
-
 struct JItem;
 
 typedef struct JItem JItem;
@@ -57,7 +47,7 @@ void j_item_get (JCollection*, JItem**, gchar const*, JBatch*);
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_item_get_status (JItem*, JItemStatusFlags, JBatch*);
+void j_item_get_status (JItem*, JBatch*);
 
 guint64 j_item_get_size (JItem*);
 gint64 j_item_get_modification_time (JItem*);

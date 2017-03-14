@@ -336,43 +336,22 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
-						guint count = 0;
-						guint32 flags;
 						gint64 modification_time = 0;
 						guint64 size = 0;
 
 						path = j_message_get_string(message);
-						flags = j_message_get_4(message);
 
 						// FIXME return value
 						j_backend_data_open(jd_data_backend, backend_item, namespace, path);
 
-						if (j_backend_data_status(jd_data_backend, backend_item, flags, &modification_time, &size))
+						if (j_backend_data_status(jd_data_backend, backend_item, &modification_time, &size))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
 
-						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-						{
-							count++;
-						}
-
-						if (flags & J_ITEM_STATUS_SIZE)
-						{
-							count++;
-						}
-
-						j_message_add_operation(reply, count * sizeof(guint64));
-
-						if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-						{
-							j_message_append_8(reply, &modification_time);
-						}
-
-						if (flags & J_ITEM_STATUS_SIZE)
-						{
-							j_message_append_8(reply, &size);
-						}
+						j_message_add_operation(reply, 2 * sizeof(guint64));
+						j_message_append_8(reply, &modification_time);
+						j_message_append_8(reply, &size);
 
 						j_backend_data_close(jd_data_backend, backend_item);
 					}

@@ -171,7 +171,6 @@ struct JItemOperation
 		struct
 		{
 			JItem* item;
-			JItemStatusFlags flags;
 		}
 		get_status;
 
@@ -227,11 +226,6 @@ struct JItemReadStatusData
 	 * The item.
 	 */
 	JItem* item;
-
-	/**
-	 * The item status flags.
-	 */
-	JItemStatusFlags flags;
 
 	guint64* sizes;
 };
@@ -544,24 +538,17 @@ j_item_get_status_background_operation (gpointer data)
 	{
 		JItemReadStatusData* buffer = j_list_iterator_get(iterator);
 
-		if (buffer->flags & J_ITEM_STATUS_MODIFICATION_TIME)
-		{
-			gint64 modification_time;
+		gint64 modification_time;
+		guint64 size;
 
-			modification_time = j_message_get_8(reply);
-			// FIXME thread-safety
-			j_item_set_modification_time(buffer->item, modification_time);
-		}
+		modification_time = j_message_get_8(reply);
+		size = j_message_get_8(reply);
 
-		if (buffer->flags & J_ITEM_STATUS_SIZE)
-		{
-			guint64 size;
-
-			size = j_message_get_8(reply);
-			// FIXME thread-safety
-			//j_item_add_size(buffer->item, size);
-			buffer->sizes[background_data->index] = size;
-		}
+		// FIXME thread-safety
+		j_item_set_modification_time(buffer->item, modification_time);
+		// FIXME thread-safety
+		//j_item_add_size(buffer->item, size);
+		buffer->sizes[background_data->index] = size;
 	}
 
 	j_list_iterator_free(iterator);
@@ -892,11 +879,10 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
  * \endcode
  *
  * \param item      An item.
- * \param flags     Status flags.
  * \param batch     A batch.
  **/
 void
-j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
+j_item_get_status (JItem* item, JBatch* batch)
 {
 	JItemOperation* iop;
 	JOperation* operation;
@@ -907,7 +893,6 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 
 	iop = g_slice_new(JItemOperation);
 	iop->u.get_status.item = j_item_ref(item);
-	iop->u.get_status.flags = flags;
 
 	operation = j_operation_new();
 	operation->key = item->collection;
@@ -2284,12 +2269,6 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 	{
 		JItemOperation* operation = j_list_iterator_get(iterator);
 		JItem* item = operation->u.get_status.item;
-		JItemStatusFlags flags = operation->u.get_status.flags;
-
-		if (flags == J_ITEM_STATUS_NONE)
-		{
-			continue;
-		}
 
 		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
 		{
@@ -2309,15 +2288,8 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 			bson_append_int32(&opts, "limit", -1, 1);
 			bson_append_document_begin(&opts, "projection", -1, &projection);
 
-			if (flags & J_ITEM_STATUS_SIZE)
-			{
-				bson_append_bool(&projection, "Status.Size", -1, TRUE);
-			}
-
-			if (flags & J_ITEM_STATUS_MODIFICATION_TIME)
-			{
-				bson_append_bool(&projection, "Status.ModificationTime", -1, TRUE);
-			}
+			bson_append_bool(&projection, "Status.Size", -1, TRUE);
+			bson_append_bool(&projection, "Status.ModificationTime", -1, TRUE);
 
 			bson_append_document_end(&opts, &projection);
 			*/
@@ -2368,14 +2340,12 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 
 				j_message_add_operation(messages[i], path_len + sizeof(guint32));
 				j_message_append_n(messages[i], path, path_len);
-				j_message_append_4(messages[i], &flags);
 
 				g_free(path);
 			}
 
 			buffer = g_slice_new(JItemReadStatusData);
 			buffer->item = item;
-			buffer->flags = flags;
 			buffer->sizes = g_slice_alloc0(n * sizeof(guint64));
 
 			j_list_append(buffer_list, buffer);

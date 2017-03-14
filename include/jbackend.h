@@ -25,9 +25,6 @@
 
 #include <bson.h>
 
-// FIXME
-#include <item/jitem.h>
-
 struct JBackendItem
 {
 	gchar* path;
@@ -61,7 +58,7 @@ struct JBackend
 			gboolean (*open) (JBackendItem*, gchar const*, gchar const*);
 			gboolean (*close) (JBackendItem*);
 
-			gboolean (*status) (JBackendItem*, JItemStatusFlags, gint64*, guint64*);
+			gboolean (*status) (JBackendItem*, gint64*, guint64*);
 			gboolean (*sync) (JBackendItem*);
 
 			gboolean (*read) (JBackendItem*, gpointer, guint64, guint64, guint64*);

@@ -267,7 +267,7 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		j_item_get_status(item, J_ITEM_STATUS_ALL, batch);
+		j_item_get_status(item, batch);
 
 		if (!use_batch)
 		{
