@@ -26,58 +26,70 @@
 
 static
 gboolean
-backend_create (JBackendItem* bf, gchar const* namespace, gchar const* path)
+backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
-	bf->path = g_build_filename(namespace, path, NULL);
-	bf->user_data = NULL;
+	gchar* full_path;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_CREATE);
-	j_trace_file_end(bf->path, J_TRACE_FILE_CREATE, 0, 0);
+	full_path = g_build_filename(namespace, path, NULL);
+
+	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
+	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
+
+	*data = full_path;
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_delete (JBackendItem* bf)
+backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 {
-	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
+	gchar* full_path;
+
+	full_path = g_build_filename(namespace, path, NULL);
+
+	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
+	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
+
+	*data = full_path;
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_open (JBackendItem* bf, gchar const* namespace, gchar const* path)
+backend_delete (gpointer data)
 {
-	bf->path = g_build_filename(namespace, path, NULL);
-	bf->user_data = NULL;
+	gchar const* full_path = data;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_OPEN);
-	j_trace_file_end(bf->path, J_TRACE_FILE_OPEN, 0, 0);
+	j_trace_file_begin(full_path, J_TRACE_FILE_DELETE);
+	j_trace_file_end(full_path, J_TRACE_FILE_DELETE, 0, 0);
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_close (JBackendItem* bf)
+backend_close (gpointer data)
 {
-	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	gchar* full_path = data;
 
-	g_free(bf->path);
+	j_trace_file_begin(full_path, J_TRACE_FILE_CLOSE);
+	j_trace_file_end(full_path, J_TRACE_FILE_CLOSE, 0, 0);
+
+	g_free(full_path);
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_status (JBackendItem* bf, gint64* modification_time, guint64* size)
+backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
-	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
+	gchar const* full_path = data;
+
+	j_trace_file_begin(full_path, J_TRACE_FILE_STATUS);
+	j_trace_file_end(full_path, J_TRACE_FILE_STATUS, 0, 0);
 
 	*modification_time = 0;
 	*size = 0;
@@ -87,22 +99,26 @@ backend_status (JBackendItem* bf, gint64* modification_time, guint64* size)
 
 static
 gboolean
-backend_sync (JBackendItem* bf)
+backend_sync (gpointer data)
 {
-	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
-	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
+	gchar const* full_path = data;
+
+	j_trace_file_begin(full_path, J_TRACE_FILE_SYNC);
+	j_trace_file_end(full_path, J_TRACE_FILE_SYNC, 0, 0);
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
+	gchar const* full_path = data;
+
 	(void)buffer;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
+	j_trace_file_begin(full_path, J_TRACE_FILE_READ);
+	j_trace_file_end(full_path, J_TRACE_FILE_READ, length, offset);
 
 	if (bytes_read != NULL)
 	{
@@ -114,12 +130,14 @@ backend_read (JBackendItem* bf, gpointer buffer, guint64 length, guint64 offset,
 
 static
 gboolean
-backend_write (JBackendItem* bf, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
+	gchar const* full_path = data;
+
 	(void)buffer;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
+	j_trace_file_begin(full_path, J_TRACE_FILE_WRITE);
+	j_trace_file_end(full_path, J_TRACE_FILE_WRITE, length, offset);
 
 	if (bytes_written != NULL)
 	{

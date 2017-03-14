@@ -1389,7 +1389,7 @@ j_item_create_exec (JList* operations, JSemantics* semantics)
 
 		if (meta_backend != NULL)
 		{
-			ret = j_backend_meta_put(meta_backend, path, b, meta_batch) && ret;
+			ret = j_backend_meta_put(meta_backend, meta_batch, path, b) && ret;
 		}
 		else
 		{
@@ -1496,7 +1496,7 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 
 		if (meta_backend != NULL)
 		{
-			ret = j_backend_meta_delete(meta_backend, path, meta_batch) && ret;
+			ret = j_backend_meta_delete(meta_backend, meta_batch, path) && ret;
 		}
 
 		//bson_init(&b);

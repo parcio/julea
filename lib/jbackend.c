@@ -154,138 +154,138 @@ j_backend_data_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_data_create (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path)
+j_backend_data_create (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter("backend_create", "%p, %s, %s", (gpointer)backend_item, namespace, path);
-	ret = backend->u.data.create(backend_item, namespace, path);
+	j_trace_enter("backend_create", "%s, %s, %p", namespace, path, (gpointer)data);
+	ret = backend->u.data.create(namespace, path, data);
 	j_trace_leave("backend_create");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_delete (JBackend* backend, JBackendItem* backend_item)
+j_backend_data_open (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
-
-	j_trace_enter("backend_delete", "%p", (gpointer)backend_item);
-	ret = backend->u.data.delete(backend_item);
-	j_trace_leave("backend_delete");
-
-	return ret;
-}
-
-gboolean
-j_backend_data_open (JBackend* backend, JBackendItem* backend_item, gchar const* namespace, gchar const* path)
-{
-	gboolean ret;
-
-	g_return_val_if_fail(backend != NULL, FALSE);
-	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter("backend_open", "%p, %s, %s", (gpointer)backend_item, namespace, path);
-	ret = backend->u.data.open(backend_item, namespace, path);
+	j_trace_enter("backend_open", "%s, %s, %p", namespace, path, (gpointer)data);
+	ret = backend->u.data.open(namespace, path, data);
 	j_trace_leave("backend_open");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_close (JBackend* backend, JBackendItem* backend_item)
+j_backend_data_delete (JBackend* backend, gpointer data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter("backend_close", "%p", (gpointer)backend_item);
-	ret = backend->u.data.close(backend_item);
+	j_trace_enter("backend_delete", "%p", data);
+	ret = backend->u.data.delete(data);
+	j_trace_leave("backend_delete");
+
+	return ret;
+}
+
+gboolean
+j_backend_data_close (JBackend* backend, gpointer data)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+
+	j_trace_enter("backend_close", "%p", data);
+	ret = backend->u.data.close(data);
 	j_trace_leave("backend_close");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_status (JBackend* backend, JBackendItem* backend_item, gint64* modification_time, guint64* size)
+j_backend_data_status (JBackend* backend, gpointer data, gint64* modification_time, guint64* size)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(modification_time != NULL, FALSE);
 	g_return_val_if_fail(size != NULL, FALSE);
 
-	j_trace_enter("backend_status", "%p, %p, %p", (gpointer)backend_item, (gpointer)modification_time, (gpointer)size);
-	ret = backend->u.data.status(backend_item, modification_time, size);
+	j_trace_enter("backend_status", "%p, %p, %p", data, (gpointer)modification_time, (gpointer)size);
+	ret = backend->u.data.status(data, modification_time, size);
 	j_trace_leave("backend_status");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_sync (JBackend* backend, JBackendItem* backend_item)
+j_backend_data_sync (JBackend* backend, gpointer data)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 
-	j_trace_enter("backend_sync", "%p", (gpointer)backend_item);
-	ret = backend->u.data.sync(backend_item);
+	j_trace_enter("backend_sync", "%p", data);
+	ret = backend->u.data.sync(data);
 	j_trace_leave("backend_sync");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_read (JBackend* backend, JBackendItem* backend_item, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+j_backend_data_read (JBackend* backend, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(buffer != NULL, FALSE);
 	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
-	j_trace_enter("backend_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_read);
-	ret = backend->u.data.read(backend_item, buffer, length, offset, bytes_read);
+	j_trace_enter("backend_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_read);
+	ret = backend->u.data.read(data, buffer, length, offset, bytes_read);
 	j_trace_leave("backend_read");
 
 	return ret;
 }
 
 gboolean
-j_backend_data_write (JBackend* backend, JBackendItem* backend_item, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+j_backend_data_write (JBackend* backend, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DATA, FALSE);
-	g_return_val_if_fail(backend_item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(buffer != NULL, FALSE);
 	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
-	j_trace_enter("backend_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", (gpointer)backend_item, buffer, length, offset, (gpointer)bytes_written);
-	ret = backend->u.data.write(backend_item, buffer, length, offset, bytes_written);
+	j_trace_enter("backend_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_written);
+	ret = backend->u.data.write(data, buffer, length, offset, bytes_written);
 	j_trace_leave("backend_write");
 
 	return ret;
@@ -352,35 +352,35 @@ j_backend_meta_batch_execute (JBackend* backend, gpointer batch)
 }
 
 gboolean
-j_backend_meta_put (JBackend* backend, gchar const* key, bson_t const* value, gpointer batch)
+j_backend_meta_put (JBackend* backend, gpointer batch, gchar const* key, bson_t const* value)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_META, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 
-	j_trace_enter("backend_put", "%s, %p, %p", key, (gpointer)value, batch);
-	ret = backend->u.meta.put(key, value, batch);
+	j_trace_enter("backend_put", "%p, %s, %p", batch, key, (gpointer)value);
+	ret = backend->u.meta.put(batch, key, value);
 	j_trace_leave("backend_put");
 
 	return ret;
 }
 
 gboolean
-j_backend_meta_delete (JBackend* backend, gchar const* key, gpointer batch)
+j_backend_meta_delete (JBackend* backend, gpointer batch, gchar const* key)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_META, FALSE);
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
-	j_trace_enter("backend_delete", "%s, %p", key, batch);
-	ret = backend->u.meta.delete(key, batch);
+	j_trace_enter("backend_delete", "%p, %s", batch, key);
+	ret = backend->u.meta.delete(batch, key);
 	j_trace_leave("backend_delete");
 
 	return ret;

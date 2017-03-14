@@ -593,7 +593,7 @@ j_collection_create_exec (JList* operations, JSemantics* semantics)
 
 		if (meta_backend != NULL)
 		{
-			ret = j_backend_meta_put(meta_backend, collection->name, b, meta_batch) && ret;
+			ret = j_backend_meta_put(meta_backend, meta_batch, collection->name, b) && ret;
 		}
 		else
 		{
@@ -687,7 +687,7 @@ j_collection_delete_exec (JList* operations, JSemantics* semantics)
 
 		if (meta_backend != NULL)
 		{
-			ret = j_backend_meta_delete(meta_backend, collection->name, meta_batch) && ret;
+			ret = j_backend_meta_delete(meta_backend, meta_batch, collection->name) && ret;
 		}
 		else
 		{

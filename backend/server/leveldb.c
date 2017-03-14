@@ -87,7 +87,7 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gchar const* key, bson_t const* value, gpointer data)
+backend_put (gpointer data, gchar const* key, bson_t const* value)
 {
 	JLevelDBBatch* batch = data;
 	gchar* nskey;
@@ -106,7 +106,7 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 
 static
 gboolean
-backend_delete (gchar const* key, gpointer data)
+backend_delete (gpointer data, gchar const* key)
 {
 	JLevelDBBatch* batch = data;
 	gchar* nskey;

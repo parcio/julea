@@ -25,14 +25,6 @@
 
 #include <bson.h>
 
-struct JBackendItem
-{
-	gchar* path;
-	gpointer user_data;
-};
-
-typedef struct JBackendItem JBackendItem;
-
 enum JBackendType
 {
 	J_BACKEND_TYPE_DATA,
@@ -52,17 +44,17 @@ struct JBackend
 			gboolean (*init) (gchar const*);
 			void (*fini) (void);
 
-			gboolean (*create) (JBackendItem*, gchar const*, gchar const*);
-			gboolean (*delete) (JBackendItem*);
+			gboolean (*create) (gchar const*, gchar const*, gpointer*);
+			gboolean (*open) (gchar const*, gchar const*, gpointer*);
 
-			gboolean (*open) (JBackendItem*, gchar const*, gchar const*);
-			gboolean (*close) (JBackendItem*);
+			gboolean (*delete) (gpointer);
+			gboolean (*close) (gpointer);
 
-			gboolean (*status) (JBackendItem*, gint64*, guint64*);
-			gboolean (*sync) (JBackendItem*);
+			gboolean (*status) (gpointer, gint64*, guint64*);
+			gboolean (*sync) (gpointer);
 
-			gboolean (*read) (JBackendItem*, gpointer, guint64, guint64, guint64*);
-			gboolean (*write) (JBackendItem*, gconstpointer, guint64, guint64, guint64*);
+			gboolean (*read) (gpointer, gpointer, guint64, guint64, guint64*);
+			gboolean (*write) (gpointer, gconstpointer, guint64, guint64, guint64*);
 		}
 		data;
 
@@ -74,8 +66,9 @@ struct JBackend
 			gboolean (*batch_start) (gchar const*, gpointer*);
 			gboolean (*batch_execute) (gpointer);
 
-			gboolean (*put) (gchar const*, bson_t const*, gpointer);
-			gboolean (*delete) (gchar const*, gpointer);
+			gboolean (*put) (gpointer, gchar const*, bson_t const*);
+			gboolean (*delete) (gpointer, gchar const*);
+
 			gboolean (*get) (gchar const*, gchar const*, bson_t*);
 
 			gboolean (*get_all) (gchar const*, gpointer*);

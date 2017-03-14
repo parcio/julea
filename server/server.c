@@ -86,7 +86,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	while (j_message_receive(message, connection))
 	{
-		JBackendItem backend_item[1];
 		gchar const* key;
 		gchar const* namespace;
 		gchar const* path;
@@ -104,6 +103,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_DATA_CREATE:
 				{
 					JMessage* reply = NULL;
+					gpointer object;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
 					{
@@ -116,17 +116,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_create(jd_data_backend, backend_item, namespace, path))
+						if (j_backend_data_create(jd_data_backend, namespace, path, &object))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
 							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 							{
-								j_backend_data_sync(jd_data_backend, backend_item);
+								j_backend_data_sync(jd_data_backend, object);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 							}
 
-							j_backend_data_close(jd_data_backend, backend_item);
+							j_backend_data_close(jd_data_backend, object);
 						}
 
 						if (reply != NULL)
@@ -145,6 +145,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_DATA_DELETE:
 				{
 					JMessage* reply = NULL;
+					gpointer object;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
 					{
@@ -157,11 +158,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_open(jd_data_backend, backend_item, namespace, path)
-						    && j_backend_data_delete(jd_data_backend, backend_item))
+						if (j_backend_data_open(jd_data_backend, namespace, path, &object)
+						    && j_backend_data_delete(jd_data_backend, object))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							j_backend_data_close(jd_data_backend, backend_item);
+							j_backend_data_close(jd_data_backend, object);
 						}
 
 						if (reply != NULL)
@@ -180,6 +181,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_DATA_READ:
 				{
 					JMessage* reply;
+					gpointer object;
 
 					namespace = j_message_get_string(message);
 					path = j_message_get_string(message);
@@ -187,7 +189,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, namespace, path);
+					j_backend_data_open(jd_data_backend, namespace, path, &object);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -213,7 +215,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						j_backend_data_read(jd_data_backend, backend_item, buf, length, offset, &bytes_read);
+						j_backend_data_read(jd_data_backend, object, buf, length, offset, &bytes_read);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -227,7 +229,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					j_backend_data_close(jd_data_backend, backend_item);
+					j_backend_data_close(jd_data_backend, object);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -239,6 +241,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				{
 					JMessage* reply = NULL;
 					gchar* buf;
+					gpointer object;
 					guint64 merge_length = 0;
 					guint64 merge_offset = 0;
 
@@ -255,7 +258,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, backend_item, namespace, path);
+					j_backend_data_open(jd_data_backend, namespace, path, &object);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -277,7 +280,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written);
+							j_backend_data_write(jd_data_backend, object, buf, merge_length, merge_offset, &bytes_written);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -305,17 +308,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						j_backend_data_write(jd_data_backend, backend_item, buf, merge_length, merge_offset, &bytes_written);
+						j_backend_data_write(jd_data_backend, object, buf, merge_length, merge_offset, &bytes_written);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
 					{
-						j_backend_data_sync(jd_data_backend, backend_item);
+						j_backend_data_sync(jd_data_backend, object);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					j_backend_data_close(jd_data_backend, backend_item);
+					j_backend_data_close(jd_data_backend, object);
 
 					if (reply != NULL)
 					{
@@ -329,6 +332,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_DATA_STATUS:
 				{
 					JMessage* reply;
+					gpointer object;
 
 					reply = j_message_new_reply(message);
 
@@ -342,9 +346,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						path = j_message_get_string(message);
 
 						// FIXME return value
-						j_backend_data_open(jd_data_backend, backend_item, namespace, path);
+						j_backend_data_open(jd_data_backend, namespace, path, &object);
 
-						if (j_backend_data_status(jd_data_backend, backend_item, &modification_time, &size))
+						if (j_backend_data_status(jd_data_backend, object, &modification_time, &size))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -353,7 +357,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_message_append_8(reply, &modification_time);
 						j_message_append_8(reply, &size);
 
-						j_backend_data_close(jd_data_backend, backend_item);
+						j_backend_data_close(jd_data_backend, object);
 					}
 
 					j_message_send(reply, connection);
@@ -457,7 +461,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						data = j_message_get_n(message, len);
 						bson_init_static(value, data, len);
 
-						j_backend_meta_put(jd_meta_backend, key, value, batch);
+						j_backend_meta_put(jd_meta_backend, batch, key, value);
 
 						if (reply != NULL)
 						{
@@ -491,7 +495,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						key = j_message_get_string(message);
 
-						j_backend_meta_delete(jd_meta_backend, key, batch);
+						j_backend_meta_delete(jd_meta_backend, batch, key);
 
 						if (reply != NULL)
 						{

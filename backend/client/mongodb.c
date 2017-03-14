@@ -123,7 +123,7 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gchar const* key, bson_t const* value, gpointer data)
+backend_put (gpointer data, gchar const* key, bson_t const* value)
 {
 	bson_t document[1];
 	bson_t selector[1];
@@ -167,7 +167,7 @@ backend_put (gchar const* key, bson_t const* value, gpointer data)
 
 static
 gboolean
-backend_delete (gchar const* key, gpointer data)
+backend_delete (gpointer data, gchar const* key)
 {
 	bson_t document[1];
 	mongoc_bulk_operation_t* bulk_op = data;

@@ -184,7 +184,7 @@ j_lock_acquire (JLock* lock)
 				gchar* path;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
-				acquired = j_backend_meta_put(meta_backend, path, empty, meta_batch) && acquired;
+				acquired = j_backend_meta_put(meta_backend, meta_batch, path, empty) && acquired;
 				g_free(path);
 			}
 
@@ -247,7 +247,7 @@ j_lock_release (JLock* lock)
 				gchar* path;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
-				released = j_backend_meta_delete(meta_backend, path, meta_batch) && released;
+				released = j_backend_meta_delete(meta_backend, meta_batch, path) && released;
 				g_free(path);
 			}
 

@@ -36,17 +36,17 @@ J_GNUC_INTERNAL GModule* j_backend_load_server (gchar const*, JBackendType, JBac
 J_GNUC_INTERNAL gboolean j_backend_data_init (JBackend*, gchar const*);
 J_GNUC_INTERNAL void j_backend_data_fini (JBackend*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, JBackendItem*, gchar const*, gchar const*);
-J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, JBackendItem*);
+J_GNUC_INTERNAL gboolean j_backend_data_create (JBackend*, gchar const*, gchar const*, gpointer*);
+J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, gchar const*, gchar const*, gpointer*);
 
-J_GNUC_INTERNAL gboolean j_backend_data_open (JBackend*, JBackendItem*, gchar const*, gchar const*);
-J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, JBackendItem*);
+J_GNUC_INTERNAL gboolean j_backend_data_delete (JBackend*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_data_close (JBackend*, gpointer);
 
-J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, JBackendItem*, gint64*, guint64*);
-J_GNUC_INTERNAL gboolean j_backend_data_sync (JBackend*, JBackendItem*);
+J_GNUC_INTERNAL gboolean j_backend_data_status (JBackend*, gpointer, gint64*, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_sync (JBackend*, gpointer);
 
-J_GNUC_INTERNAL gboolean j_backend_data_read (JBackend*, JBackendItem*, gpointer, guint64, guint64, guint64*);
-J_GNUC_INTERNAL gboolean j_backend_data_write (JBackend*, JBackendItem*, gconstpointer, guint64, guint64, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_read (JBackend*, gpointer, gpointer, guint64, guint64, guint64*);
+J_GNUC_INTERNAL gboolean j_backend_data_write (JBackend*, gpointer, gconstpointer, guint64, guint64, guint64*);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_init (JBackend*, gchar const*);
 J_GNUC_INTERNAL void j_backend_meta_fini (JBackend*);
@@ -54,8 +54,9 @@ J_GNUC_INTERNAL void j_backend_meta_fini (JBackend*);
 J_GNUC_INTERNAL gboolean j_backend_meta_batch_start (JBackend*, gchar const*, gpointer*);
 J_GNUC_INTERNAL gboolean j_backend_meta_batch_execute (JBackend*, gpointer);
 
-J_GNUC_INTERNAL gboolean j_backend_meta_put (JBackend*, gchar const*, bson_t const*, gpointer);
-J_GNUC_INTERNAL gboolean j_backend_meta_delete (JBackend*, gchar const*, gpointer);
+J_GNUC_INTERNAL gboolean j_backend_meta_put (JBackend*, gpointer, gchar const*, bson_t const*);
+J_GNUC_INTERNAL gboolean j_backend_meta_delete (JBackend*, gpointer, gchar const*);
+
 J_GNUC_INTERNAL gboolean j_backend_meta_get (JBackend*, gchar const*, gchar const*, bson_t*);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_get_all (JBackend*, gchar const*, gpointer*);
