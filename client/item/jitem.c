@@ -62,31 +62,8 @@
 /**
  * Data for background operations.
  */
-struct JCollectionBackgroundData
-{
-	/**
-	 * The connection.
-	 */
-	GSocketConnection* connection;
-
-	/**
-	 * The message to send.
-	 */
-	JMessage* message;
-};
-
-typedef struct JCollectionBackgroundData JCollectionBackgroundData;
-
-/**
- * Data for background operations.
- */
 struct JItemBackgroundData
 {
-	/**
-	 * The connection.
-	 */
-	GSocketConnection* connection;
-
 	/**
 	 * The message to send.
 	 */
@@ -366,21 +343,30 @@ static
 gpointer
 j_item_delete_background_operation (gpointer data)
 {
-	JCollectionBackgroundData* background_data = data;
+	JItemBackgroundData* background_data = data;
 	JMessage* reply;
+	GSocketConnection* connection;
 
-	j_message_send(background_data->message, background_data->connection);
+	connection = j_connection_pool_pop_data(background_data->index);
+
+	j_message_send(background_data->message, connection);
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
 		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, background_data->connection);
+		j_message_receive(reply, connection);
 
 		/* FIXME do something with reply */
 		j_message_unref(reply);
 	}
 
-	return data;
+	j_connection_pool_push_data(background_data->index, connection);
+
+	j_message_unref(background_data->message);
+
+	g_slice_free(JItemBackgroundData, background_data);
+
+	return NULL;
 }
 
 /**
@@ -401,11 +387,14 @@ j_item_read_background_operation (gpointer data)
 	JItemBackgroundData* background_data = data;
 	JListIterator* iterator;
 	JMessage* reply;
+	GSocketConnection* connection;
 	guint operations_done;
 	guint32 operation_count;
 	guint64 nbytes;
 
-	j_message_send(background_data->message, background_data->connection);
+	connection = j_connection_pool_pop_data(background_data->index);
+
+	j_message_send(background_data->message, connection);
 
 	reply = j_message_new_reply(background_data->message);
 	iterator = j_list_iterator_new(background_data->read.buffer_list);
@@ -417,7 +406,7 @@ j_item_read_background_operation (gpointer data)
 	{
 		guint32 reply_operation_count;
 
-		j_message_receive(reply, background_data->connection);
+		j_message_receive(reply, connection);
 
 		reply_operation_count = j_message_get_count(reply);
 
@@ -433,7 +422,7 @@ j_item_read_background_operation (gpointer data)
 			{
 				GInputStream* input;
 
-				input = g_io_stream_get_input_stream(G_IO_STREAM(background_data->connection));
+				input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 				g_input_stream_read_all(input, buffer->data, nbytes, NULL, NULL, NULL);
 			}
 
@@ -446,6 +435,13 @@ j_item_read_background_operation (gpointer data)
 	j_list_iterator_free(iterator);
 	j_message_unref(reply);
 
+	j_message_unref(background_data->message);
+	j_list_unref(background_data->read.buffer_list);
+
+	j_connection_pool_push_data(background_data->index, connection);
+
+	g_slice_free(JItemBackgroundData, background_data);
+
 	/*
 	if (nbytes < new_length)
 	{
@@ -453,7 +449,7 @@ j_item_read_background_operation (gpointer data)
 	}
 	*/
 
-	return data;
+	return NULL;
 }
 
 /**
@@ -473,28 +469,33 @@ j_item_write_background_operation (gpointer data)
 {
 	JItemBackgroundData* background_data = data;
 	JMessage* reply;
+	GSocketConnection* connection;
+
+	connection = j_connection_pool_pop_data(background_data->index);
 
 	if (background_data->write.create_message != NULL)
 	{
-		j_message_send(background_data->write.create_message, background_data->connection);
+		j_message_send(background_data->write.create_message, connection);
 
 		/* This will always be true, see j_item_write_exec(). */
 		if (j_message_get_type_modifier(background_data->write.create_message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			reply = j_message_new_reply(background_data->write.create_message);
-			j_message_receive(reply, background_data->connection);
+			j_message_receive(reply, connection);
 			j_message_unref(reply);
 		}
+
+		j_message_unref(background_data->write.create_message);
 	}
 
-	j_message_send(background_data->message, background_data->connection);
+	j_message_send(background_data->message, connection);
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
 		/* guint64 nbytes; */
 
 		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, background_data->connection);
+		j_message_receive(reply, connection);
 
 		/* FIXME do something with nbytes */
 		/* nbytes = j_message_get_8(reply); */
@@ -502,7 +503,13 @@ j_item_write_background_operation (gpointer data)
 		j_message_unref(reply);
 	}
 
-	return data;
+	j_connection_pool_push_data(background_data->index, connection);
+
+	j_message_unref(background_data->message);
+
+	g_slice_free(JItemBackgroundData, background_data);
+
+	return NULL;
 }
 
 /**
@@ -523,14 +530,17 @@ j_item_get_status_background_operation (gpointer data)
 	JItemBackgroundData* background_data = data;
 	JListIterator* iterator;
 	JMessage* reply;
+	GSocketConnection* connection;
+
+	connection = j_connection_pool_pop_data(background_data->index);
 
 	/* FIXME reply? */
-	j_message_send(background_data->message, background_data->connection);
+	j_message_send(background_data->message, connection);
 
 	reply = j_message_new_reply(background_data->message);
 	iterator = j_list_iterator_new(background_data->read_status.buffer_list);
 
-	j_message_receive(reply, background_data->connection);
+	j_message_receive(reply, connection);
 
 	while (j_list_iterator_next(iterator))
 	{
@@ -552,7 +562,13 @@ j_item_get_status_background_operation (gpointer data)
 	j_list_iterator_free(iterator);
 	j_message_unref(reply);
 
-	return data;
+	j_connection_pool_push_data(background_data->index, connection);
+
+	j_message_unref(background_data->message);
+
+	g_slice_free(JItemBackgroundData, background_data);
+
+	return NULL;
 }
 
 /**
@@ -1430,15 +1446,14 @@ gboolean
 j_item_delete_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
-	JBackgroundOperation** background_operations;
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage** messages;
 	gboolean ret = TRUE;
-	guint m;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
+	gpointer* background_data;
 	gpointer meta_batch;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1451,12 +1466,11 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	*/
 
 	n = j_configuration_get_data_server_count(j_configuration());
-	background_operations = g_new(JBackgroundOperation*, n);
+	background_data = g_new(gpointer, n);
 	messages = g_new(JMessage*, n);
 
 	for (guint i = 0; i < n; i++)
 	{
-		background_operations[i] = NULL;
 		messages[i] = NULL;
 	}
 
@@ -1518,6 +1532,8 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
+	j_list_iterator_free(it);
+
 	if (meta_backend != NULL)
 	{
 		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
@@ -1525,66 +1541,26 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 
 	//j_connection_pool_push_meta(0, mongo_connection);
 
-	m = 0;
-
 	for (guint i = 0; i < n; i++)
 	{
-		if (messages[i] != NULL)
-		{
-			m++;
-		}
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		JCollectionBackgroundData* background_data;
+		JItemBackgroundData* data;
 
 		if (messages[i] == NULL)
 		{
+			background_data[i] = NULL;
 			continue;
 		}
 
-		background_data = g_slice_new(JCollectionBackgroundData);
-		background_data->connection = j_connection_pool_pop_data(i);
-		background_data->message = messages[i];
+		data = g_slice_new(JItemBackgroundData);
+		data->message = messages[i];
+		data->index = i;
 
-		if (m > 1)
-		{
-			background_operations[i] = j_background_operation_new(j_item_delete_background_operation, background_data);
-		}
-		else
-		{
-			j_item_delete_background_operation(background_data);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JCollectionBackgroundData, background_data);
-		}
+		background_data[i] = data;
 	}
 
-	for (guint i = 0; i < n; i++)
-	{
-		if (background_operations[i] != NULL)
-		{
-			JCollectionBackgroundData* background_data;
+	j_helper_execute_parallel(j_item_delete_background_operation, background_data, n);
 
-			background_data = j_background_operation_wait(background_operations[i]);
-			j_background_operation_unref(background_operations[i]);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JCollectionBackgroundData, background_data);
-		}
-
-		if (messages[i] != NULL)
-		{
-			j_message_unref(messages[i]);
-		}
-	}
-
-	j_list_iterator_free(it);
-
-	g_free(background_operations);
+	g_free(background_data);
 	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
@@ -1744,17 +1720,16 @@ j_item_set_size (JItem* item, guint64 size)
 gboolean
 j_item_read_exec (JList* operations, JSemantics* semantics)
 {
-	JBackgroundOperation** background_operations;
 	JItem* item;
 	JList** buffer_list;
 	JListIterator* iterator;
 	JLock* lock = NULL;
 	JMessage** messages;
-	guint m;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
 	gchar* path;
+	gpointer* background_data;
 	gsize path_len;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1763,13 +1738,12 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	n = j_configuration_get_data_server_count(j_configuration());
-	background_operations = g_new(JBackgroundOperation*, n);
+	background_data = g_new(gpointer, n);
 	messages = g_new(JMessage*, n);
 	buffer_list = g_new(JList*, n);
 
 	for (guint i = 0; i < n; i++)
 	{
-		background_operations[i] = NULL;
 		messages[i] = NULL;
 		buffer_list[i] = j_list_new(NULL);
 	}
@@ -1862,75 +1836,32 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 		while (!j_lock_acquire(lock));
 	}
 
-	// FIXME ugly
-	m = 0;
-
 	for (guint i = 0; i < n; i++)
 	{
-		if (messages[i] != NULL)
-		{
-			m++;
-		}
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		JItemBackgroundData* background_data;
+		JItemBackgroundData* data;
 
 		if (messages[i] == NULL)
 		{
+			background_data[i] = NULL;
 			continue;
 		}
 
-		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = j_connection_pool_pop_data(i);
-		background_data->message = messages[i];
-		background_data->index = i;
-		background_data->read.buffer_list = buffer_list[i];
+		data = g_slice_new(JItemBackgroundData);
+		data->message = messages[i];
+		data->index = i;
+		data->read.buffer_list = buffer_list[i];
 
-		// FIXME ugly
-		if (m > 1)
-		{
-			background_operations[i] = j_background_operation_new(j_item_read_background_operation, background_data);
-		}
-		else
-		{
-			j_item_read_background_operation(background_data);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JItemBackgroundData, background_data);
-		}
+		background_data[i] = data;
 	}
 
-	for (guint i = 0; i < n; i++)
-	{
-		if (background_operations[i] != NULL)
-		{
-			JItemBackgroundData* background_data;
-
-			background_data = j_background_operation_wait(background_operations[i]);
-			j_background_operation_unref(background_operations[i]);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JItemBackgroundData, background_data);
-		}
-
-		if (messages[i] != NULL)
-		{
-			j_message_unref(messages[i]);
-		}
-
-		j_list_unref(buffer_list[i]);
-	}
+	j_helper_execute_parallel(j_item_read_background_operation, background_data, n);
 
 	if (lock != NULL)
 	{
 		j_lock_free(lock);
 	}
 
-	g_free(background_operations);
+	g_free(background_data);
 	g_free(messages);
 	g_free(buffer_list);
 
@@ -1942,17 +1873,16 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 gboolean
 j_item_write_exec (JList* operations, JSemantics* semantics)
 {
-	JBackgroundOperation** background_operations;
 	JItem* item;
 	JListIterator* iterator;
 	JLock* lock = NULL;
 	JMessage** messages;
-	guint m;
 	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
 	guint64 max_offset = 0;
 	gchar* path;
+	gpointer* background_data;
 	gsize path_len;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1961,12 +1891,11 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	n = j_configuration_get_data_server_count(j_configuration());
-	background_operations = g_new(JBackgroundOperation*, n);
+	background_data = g_new(gpointer, n);
 	messages = g_new(JMessage*, n);
 
 	for (guint i = 0; i < n; i++)
 	{
-		background_operations[i] = NULL;
 		messages[i] = NULL;
 	}
 
@@ -2058,23 +1987,14 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 		while (!j_lock_acquire(lock));
 	}
 
-	m = 0;
-
 	for (guint i = 0; i < n; i++)
 	{
-		if (messages[i] != NULL)
-		{
-			m++;
-		}
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		JItemBackgroundData* background_data;
+		JItemBackgroundData* data;
 		JMessage* create_message = NULL;
 
 		if (messages[i] == NULL)
 		{
+			background_data[i] = NULL;
 			continue;
 		}
 
@@ -2108,55 +2028,15 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 			item->status.created[i] = TRUE;
 		}
 
-		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = j_connection_pool_pop_data(i);
-		background_data->message = messages[i];
-		background_data->index = i;
-		background_data->write.create_message = create_message;
+		data = g_slice_new(JItemBackgroundData);
+		data->message = messages[i];
+		data->index = i;
+		data->write.create_message = create_message;
 
-		if (m > 1)
-		{
-			background_operations[i] = j_background_operation_new(j_item_write_background_operation, background_data);
-		}
-		else
-		{
-			j_item_write_background_operation(background_data);
-
-			if (create_message != NULL)
-			{
-				j_message_unref(create_message);
-			}
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JItemBackgroundData, background_data);
-		}
+		background_data[i] = data;
 	}
 
-	for (guint i = 0; i < n; i++)
-	{
-		if (background_operations[i] != NULL)
-		{
-			JItemBackgroundData* background_data;
-
-			background_data = j_background_operation_wait(background_operations[i]);
-			j_background_operation_unref(background_operations[i]);
-
-			if (background_data->write.create_message != NULL)
-			{
-				j_message_unref(background_data->write.create_message);
-			}
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JItemBackgroundData, background_data);
-		}
-
-		if (messages[i] != NULL)
-		{
-			j_message_unref(messages[i]);
-		}
-	}
+	j_helper_execute_parallel(j_item_write_background_operation, background_data, n);
 
 	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE && FALSE)
@@ -2219,7 +2099,7 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 
 	g_free(path);
 
-	g_free(background_operations);
+	g_free(background_data);
 	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
@@ -2232,12 +2112,12 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 	JBackend* meta_backend;
-	JBackgroundOperation** background_operations;
 	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
 	gint semantics_concurrency;
 	gint semantics_consistency;
+	gpointer* background_data;
 	guint n;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -2246,13 +2126,12 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	n = j_configuration_get_data_server_count(j_configuration());
-	background_operations = g_new(JBackgroundOperation*, n);
+	background_data = g_new(gpointer, n);
 	messages = g_new(JMessage*, n);
 	buffer_list = j_list_new(NULL);
 
 	for (guint i = 0; i < n; i++)
 	{
-		background_operations[i] = NULL;
 		messages[i] = NULL;
 	}
 
@@ -2355,42 +2234,23 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItemBackgroundData* background_data;
+		JItemBackgroundData* data;
 
 		if (messages[i] == NULL)
 		{
+			background_data[i] = NULL;
 			continue;
 		}
 
-		background_data = g_slice_new(JItemBackgroundData);
-		background_data->connection = j_connection_pool_pop_data(i);
-		background_data->message = messages[i];
-		background_data->index = i;
-		background_data->read_status.buffer_list = buffer_list;
+		data = g_slice_new(JItemBackgroundData);
+		data->message = messages[i];
+		data->index = i;
+		data->read_status.buffer_list = buffer_list;
 
-		background_operations[i] = j_background_operation_new(j_item_get_status_background_operation, background_data);
+		background_data[i] = data;
 	}
 
-	for (guint i = 0; i < n; i++)
-	{
-		if (background_operations[i] != NULL)
-		{
-			JItemBackgroundData* background_data;
-
-			background_data = j_background_operation_wait(background_operations[i]);
-			j_background_operation_unref(background_operations[i]);
-
-			j_connection_pool_push_data(i, background_data->connection);
-
-			g_slice_free(JItemBackgroundData, background_data);
-		}
-
-		if (messages[i] != NULL)
-		{
-			j_message_unref(messages[i]);
-		}
-
-	}
+	j_helper_execute_parallel(j_item_get_status_background_operation, background_data, n);
 
 	iterator = j_list_iterator_new(buffer_list);
 
@@ -2414,7 +2274,7 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 
 	j_list_unref(buffer_list);
 
-	g_free(background_operations);
+	g_free(background_data);
 	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);

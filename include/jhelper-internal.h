@@ -39,6 +39,7 @@ enum JStoreCollection
 
 typedef enum JStoreCollection JStoreCollection;
 
+#include <jbackground-operation-internal.h>
 #include <jsemantics.h>
 
 #include <bson.h>
@@ -47,5 +48,7 @@ J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
 J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
 J_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
+
+J_GNUC_INTERNAL gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
 #endif

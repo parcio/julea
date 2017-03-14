@@ -95,6 +95,55 @@ j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 	g_return_if_fail((guint)ret <= length);
 }
 
+gboolean
+j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint length)
+{
+	JBackgroundOperation** operations;
+	guint data_count = 0;
+
+	operations = g_new(JBackgroundOperation*, length);
+
+	for (guint i = 0; i < length; i++)
+	{
+		operations[i] = NULL;
+
+		if (data[i] != NULL)
+		{
+			data_count++;
+		}
+	}
+
+	for (guint i = 0; i < length; i++)
+	{
+		if (data[i] == NULL)
+		{
+			continue;
+		}
+
+		if (data_count > 1)
+		{
+			operations[i] = j_background_operation_new(func, data[i]);
+		}
+		else
+		{
+			data[i] = func(data[i]);
+		}
+	}
+
+	for (guint i = 0; i < length; i++)
+	{
+		if (operations[i] != NULL)
+		{
+			data[i] = j_background_operation_wait(operations[i]);
+			j_background_operation_unref(operations[i]);
+		}
+	}
+
+	g_free(operations);
+
+	return TRUE;
+}
+
 /**
  * @}
  **/
