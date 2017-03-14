@@ -57,7 +57,18 @@ jd_backend_files_free (gpointer data)
 
 static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
 
-static gboolean backend_close (gpointer);
+static
+gboolean
+backend_close_internal (JBackendFile* file)
+{
+	gboolean ret;
+
+	j_trace_file_begin(file->path, J_TRACE_FILE_CLOSE);
+	ret = (close(file->fd) == 0);
+	j_trace_file_end(file->path, J_TRACE_FILE_CLOSE, 0, 0);
+
+	return ret;
+}
 
 static
 void
@@ -71,8 +82,9 @@ backend_file_unref (gpointer data)
 	{
 		g_hash_table_remove(jd_backend_file_cache, file->path);
 
-		backend_close(file);
+		backend_close_internal(file);
 
+		g_free(file->path);
 		g_slice_free(JBackendFile, file);
 	}
 
@@ -221,7 +233,6 @@ backend_delete (gpointer data)
 {
 	JBackendFile* file = data;
 	GHashTable* files = jd_backend_files_get_thread();
-
 	gboolean ret;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_DELETE);
@@ -237,25 +248,7 @@ static
 gboolean
 backend_close (gpointer data)
 {
-	JBackendFile* file = data;
-
-	// FIXME do not goto end if called from backend_file_unref
-	if (jd_backend_files_get_thread() != NULL)
-	{
-		goto end;
-	}
-
-	if (file->fd != -1)
-	{
-		j_trace_file_begin(file->path, J_TRACE_FILE_CLOSE);
-		close(file->fd);
-		j_trace_file_end(file->path, J_TRACE_FILE_CLOSE, 0, 0);
-	}
-
-	g_free(file->path);
-
-end:
-	return (file->fd != -1);
+	return TRUE;
 }
 
 static
@@ -263,31 +256,28 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* file = data;
+	gboolean ret;
+	struct stat buf;
 
-	if (file->fd != -1)
+	j_trace_file_begin(file->path, J_TRACE_FILE_STATUS);
+	ret = (fstat(file->fd, &buf) == 0);
+	j_trace_file_end(file->path, J_TRACE_FILE_STATUS, 0, 0);
+
+	if (modification_time != NULL)
 	{
-		struct stat buf;
-
-		j_trace_file_begin(file->path, J_TRACE_FILE_STATUS);
-		fstat(file->fd, &buf);
-		j_trace_file_end(file->path, J_TRACE_FILE_STATUS, 0, 0);
-
-		if (modification_time != NULL)
-		{
-			*modification_time = buf.st_mtime * G_USEC_PER_SEC;
+		*modification_time = buf.st_mtime * G_USEC_PER_SEC;
 
 #ifdef HAVE_STMTIM_TVNSEC
-			*modification_time += buf.st_mtim.tv_nsec / 1000;
+		*modification_time += buf.st_mtim.tv_nsec / 1000;
 #endif
-		}
-
-		if (size != NULL)
-		{
-			*size = buf.st_size;
-		}
 	}
 
-	return (file->fd != -1);
+	if (size != NULL)
+	{
+		*size = buf.st_size;
+	}
+
+	return ret;
 }
 
 static
@@ -295,15 +285,13 @@ gboolean
 backend_sync (gpointer data)
 {
 	JBackendFile* file = data;
+	gboolean ret;
 
-	if (file->fd != -1)
-	{
-		j_trace_file_begin(file->path, J_TRACE_FILE_SYNC);
-		fsync(file->fd);
-		j_trace_file_end(file->path, J_TRACE_FILE_SYNC, 0, 0);
-	}
+	j_trace_file_begin(file->path, J_TRACE_FILE_SYNC);
+	ret = (fsync(file->fd) == 0);
+	j_trace_file_end(file->path, J_TRACE_FILE_SYNC, 0, 0);
 
-	return (file->fd != -1);
+	return ret;
 }
 
 static
@@ -311,21 +299,22 @@ gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* file = data;
+	gboolean ret;
+
 	gsize nbytes;
 
-	if (file->fd != -1)
-	{
-		j_trace_file_begin(file->path, J_TRACE_FILE_READ);
-		nbytes = pread(file->fd, buffer, length, offset);
-		j_trace_file_end(file->path, J_TRACE_FILE_READ, nbytes, offset);
+	j_trace_file_begin(file->path, J_TRACE_FILE_READ);
+	nbytes = pread(file->fd, buffer, length, offset);
+	// FIXME
+	ret = TRUE;
+	j_trace_file_end(file->path, J_TRACE_FILE_READ, nbytes, offset);
 
-		if (bytes_read != NULL)
-		{
-			*bytes_read = nbytes;
-		}
+	if (bytes_read != NULL)
+	{
+		*bytes_read = nbytes;
 	}
 
-	return (file->fd != -1);
+	return ret;
 }
 
 static
@@ -333,21 +322,22 @@ gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* file = data;
+	gboolean ret;
+
 	gsize nbytes;
 
-	if (file->fd != -1)
-	{
-		j_trace_file_begin(file->path, J_TRACE_FILE_WRITE);
-		nbytes = pwrite(file->fd, buffer, length, offset);
-		j_trace_file_end(file->path, J_TRACE_FILE_WRITE, nbytes, offset);
+	j_trace_file_begin(file->path, J_TRACE_FILE_WRITE);
+	nbytes = pwrite(file->fd, buffer, length, offset);
+	// FIXME
+	ret = TRUE;
+	j_trace_file_end(file->path, J_TRACE_FILE_WRITE, nbytes, offset);
 
-		if (bytes_written != NULL)
-		{
-			*bytes_written = nbytes;
-		}
+	if (bytes_written != NULL)
+	{
+		*bytes_written = nbytes;
 	}
 
-	return (file->fd != -1);
+	return ret;
 }
 
 static

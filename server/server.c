@@ -162,7 +162,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						    && j_backend_data_delete(jd_data_backend, object))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-							j_backend_data_close(jd_data_backend, object);
 						}
 
 						if (reply != NULL)

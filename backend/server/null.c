@@ -60,10 +60,12 @@ static
 gboolean
 backend_delete (gpointer data)
 {
-	gchar const* full_path = data;
+	gchar* full_path = data;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_DELETE);
 	j_trace_file_end(full_path, J_TRACE_FILE_DELETE, 0, 0);
+
+	g_free(full_path);
 
 	return TRUE;
 }

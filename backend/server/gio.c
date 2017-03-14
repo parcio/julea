@@ -98,8 +98,8 @@ gboolean
 backend_delete (gpointer data)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
 
-	gboolean ret = FALSE;
 	GFile* file;
 
 	file = g_file_new_for_path(bf->path);
@@ -110,6 +110,10 @@ backend_delete (gpointer data)
 
 	g_object_unref(file);
 
+	g_object_unref(bf->stream);
+	g_free(bf->path);
+	g_slice_free(JBackendFile, bf);
+
 	return ret;
 }
 
@@ -118,19 +122,17 @@ gboolean
 backend_close (gpointer data)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
 
-	if (bf->stream != NULL)
-	{
-		j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-		g_io_stream_close(G_IO_STREAM(bf->stream), NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
-	}
+	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
+	ret = g_io_stream_close(G_IO_STREAM(bf->stream), NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 
 	g_object_unref(bf->stream);
-
 	g_free(bf->path);
+	g_slice_free(JBackendFile, bf);
 
-	return (bf->stream != NULL);
+	return ret;
 }
 
 static
@@ -138,22 +140,21 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
 
-	if (bf->stream != NULL)
-	{
-		//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+	//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
-		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-		// FIXME
-		//g_output_stream_flush(output, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
+	// FIXME
+	//g_output_stream_flush(output, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
-		// FIXME
-		*modification_time = 0;
-		*size = 0;
-	}
+	// FIXME
+	ret = TRUE;
+	*modification_time = 0;
+	*size = 0;
 
-	return (bf->stream != NULL);
+	return ret;
 }
 
 static
@@ -161,18 +162,17 @@ gboolean
 backend_sync (gpointer data)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
+
 	GOutputStream* output;
 
-	if (bf->stream != NULL)
-	{
-		output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
+	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
-		j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
-		g_output_stream_flush(output, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
-	}
+	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
+	ret = g_output_stream_flush(output, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 
-	return (bf->stream != NULL);
+	return ret;
 }
 
 static
@@ -180,28 +180,27 @@ gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
+
 	GInputStream* input;
 	gsize nbytes;
 
-	if (bf->stream != NULL)
+	input = g_io_stream_get_input_stream(G_IO_STREAM(bf->stream));
+
+	j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
+	g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
+
+	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
+	ret = g_input_stream_read_all(input, buffer, length, &nbytes, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_READ, nbytes, offset);
+
+	if (bytes_read != NULL)
 	{
-		input = g_io_stream_get_input_stream(G_IO_STREAM(bf->stream));
-
-		j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
-		g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
-
-		j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-		g_input_stream_read_all(input, buffer, length, &nbytes, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_READ, nbytes, offset);
-
-		if (bytes_read != NULL)
-		{
-			*bytes_read = nbytes;
-		}
+		*bytes_read = nbytes;
 	}
 
-	return (bf->stream != NULL);
+	return ret;
 }
 
 static
@@ -209,28 +208,27 @@ gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* bf = data;
+	gboolean ret;
+
 	GOutputStream* output;
 	gsize nbytes;
 
-	if (bf->stream != NULL)
+	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
+
+	j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
+	g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
+
+	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
+	ret = g_output_stream_write_all(output, buffer, length, &nbytes, NULL, NULL);
+	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
+
+	if (bytes_written != NULL)
 	{
-		output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
-
-		j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
-		g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
-
-		j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-		g_output_stream_write_all(output, buffer, length, &nbytes, NULL, NULL);
-		j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
-
-		if (bytes_written != NULL)
-		{
-			*bytes_written = nbytes;
-		}
+		*bytes_written = nbytes;
 	}
 
-	return (bf->stream != NULL);
+	return ret;
 }
 
 static
