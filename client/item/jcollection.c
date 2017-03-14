@@ -248,7 +248,7 @@ j_collection_create (gchar const* name, JBatch* batch)
 	operation = j_operation_new();
 	operation->key = NULL;
 	operation->data = cop;
-	operation->exec_func = j_collection_create_internal;
+	operation->exec_func = j_collection_create_exec;
 	operation->free_func = j_collection_create_free;
 
 	j_batch_add(batch, operation);
@@ -285,7 +285,7 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 	operation = j_operation_new();
 	operation->key = NULL;
 	operation->data = cop;
-	operation->exec_func = j_collection_get_internal;
+	operation->exec_func = j_collection_get_exec;
 	operation->free_func = j_collection_get_free;
 
 	j_batch_add(batch, operation);
@@ -316,7 +316,7 @@ j_collection_delete (JCollection* collection, JBatch* batch)
 	operation = j_operation_new();
 	operation->key = NULL;
 	operation->data = cop;
-	operation->exec_func = j_collection_delete_internal;
+	operation->exec_func = j_collection_delete_exec;
 	operation->free_func = j_collection_delete_free;
 
 	j_batch_add(batch, operation);
@@ -555,7 +555,7 @@ j_collection_get_id (JCollection* collection)
  * \return TRUE.
  */
 gboolean
-j_collection_create_internal (JBatch* batch, JList* operations)
+j_collection_create_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
@@ -564,8 +564,8 @@ j_collection_create_internal (JBatch* batch, JList* operations)
 	gboolean ret = FALSE;
 	gpointer meta_batch;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	it = j_list_iterator_new(operations);
 
@@ -652,7 +652,7 @@ j_collection_create_internal (JBatch* batch, JList* operations)
  * \return TRUE.
  */
 gboolean
-j_collection_delete_internal (JBatch* batch, JList* operations)
+j_collection_delete_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
@@ -661,8 +661,8 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
 	gboolean ret = TRUE;
 	gpointer meta_batch;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	it = j_list_iterator_new(operations);
 	//mongo_connection = j_connection_pool_pop_meta(0);
@@ -731,7 +731,7 @@ j_collection_delete_internal (JBatch* batch, JList* operations)
  * \return TRUE.
  */
 gboolean
-j_collection_get_internal (JBatch* batch, JList* operations)
+j_collection_get_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
@@ -740,8 +740,8 @@ j_collection_get_internal (JBatch* batch, JList* operations)
 	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	it = j_list_iterator_new(operations);
 	//mongo_connection = j_connection_pool_pop_meta(0);

@@ -258,7 +258,7 @@ j_batch_execute_same (JBatch* batch, JOperationExecFunc exec_func, JList* list)
 
 	if (exec_func != NULL)
 	{
-		ret = exec_func(batch, list);
+		ret = exec_func(list, batch->semantics);
 	}
 
 	j_list_delete_all(list);

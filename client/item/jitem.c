@@ -486,7 +486,7 @@ j_item_write_background_operation (gpointer data)
 	{
 		j_message_send(background_data->u.write.create_message, background_data->connection);
 
-		/* This will always be true, see j_item_write_internal(). */
+		/* This will always be true, see j_item_write_exec(). */
 		if (j_message_get_type_modifier(background_data->u.write.create_message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			reply = j_message_new_reply(background_data->u.write.create_message);
@@ -698,7 +698,7 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 	operation = j_operation_new();
 	operation->key = collection;
 	operation->data = iop;
-	operation->exec_func = j_item_create_internal;
+	operation->exec_func = j_item_create_exec;
 	operation->free_func = j_item_create_free;
 
 	j_batch_add(batch, operation);
@@ -742,7 +742,7 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	operation = j_operation_new();
 	operation->key = collection;
 	operation->data = iop;
-	operation->exec_func = j_item_get_internal;
+	operation->exec_func = j_item_get_exec;
 	operation->free_func = j_item_get_free;
 
 	j_batch_add(batch, operation);
@@ -780,7 +780,7 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 	operation = j_operation_new();
 	operation->key = collection;
 	operation->data = iop;
-	operation->exec_func = j_item_delete_internal;
+	operation->exec_func = j_item_delete_exec;
 	operation->free_func = j_item_delete_free;
 
 	j_batch_add(batch, operation);
@@ -825,7 +825,7 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	operation = j_operation_new();
 	operation->key = item;
 	operation->data = iop;
-	operation->exec_func = j_item_read_internal;
+	operation->exec_func = j_item_read_exec;
 	operation->free_func = j_item_read_free;
 
 	j_batch_add(batch, operation);
@@ -873,7 +873,7 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	operation = j_operation_new();
 	operation->key = item;
 	operation->data = iop;
-	operation->exec_func = j_item_write_internal;
+	operation->exec_func = j_item_write_exec;
 	operation->free_func = j_item_write_free;
 
 	*bytes_written = 0;
@@ -912,7 +912,7 @@ j_item_get_status (JItem* item, JItemStatusFlags flags, JBatch* batch)
 	operation = j_operation_new();
 	operation->key = item->collection;
 	operation->data = iop;
-	operation->exec_func = j_item_get_status_internal;
+	operation->exec_func = j_item_get_status_exec;
 	operation->free_func = j_item_get_status_free;
 
 	j_batch_add(batch, operation);
@@ -1354,23 +1354,20 @@ j_item_get_id (JItem* item)
 }
 
 gboolean
-j_item_create_internal (JBatch* batch, JList* operations)
+j_item_create_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage* message;
-	JSemantics* semantics;
 	GSocketConnection* meta_connection;
 	gboolean ret = FALSE;
 	gpointer meta_batch;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
-
-	semantics = j_batch_get_semantics(batch);
 
 	it = j_list_iterator_new(operations);
 
@@ -1447,14 +1444,13 @@ j_item_create_internal (JBatch* batch, JList* operations)
 }
 
 gboolean
-j_item_delete_internal (JBatch* batch, JList* operations)
+j_item_delete_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JBackgroundOperation** background_operations;
 	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage** messages;
-	JSemantics* semantics;
 	gboolean ret = TRUE;
 	guint m;
 	guint n;
@@ -1462,8 +1458,8 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 	gchar const* collection_name;
 	gpointer meta_batch;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
@@ -1471,7 +1467,6 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 		IsInitialized(true);
 	*/
 
-	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1615,7 +1610,7 @@ j_item_delete_internal (JBatch* batch, JList* operations)
 }
 
 gboolean
-j_item_get_internal (JBatch* batch, JList* operations)
+j_item_get_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	JListIterator* it;
@@ -1624,8 +1619,8 @@ j_item_get_internal (JBatch* batch, JList* operations)
 	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
@@ -1764,7 +1759,7 @@ j_item_set_size (JItem* item, guint64 size)
 }
 
 gboolean
-j_item_read_internal (JBatch* batch, JList* operations)
+j_item_read_exec (JList* operations, JSemantics* semantics)
 {
 	JBackgroundOperation** background_operations;
 	JItem* item;
@@ -1772,7 +1767,6 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	JListIterator* iterator;
 	JLock* lock = NULL;
 	JMessage** messages;
-	JSemantics* semantics;
 	guint m;
 	guint n;
 	gchar const* item_name;
@@ -1780,12 +1774,11 @@ j_item_read_internal (JBatch* batch, JList* operations)
 	gchar* path;
 	gsize path_len;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -1964,14 +1957,13 @@ j_item_read_internal (JBatch* batch, JList* operations)
 }
 
 gboolean
-j_item_write_internal (JBatch* batch, JList* operations)
+j_item_write_exec (JList* operations, JSemantics* semantics)
 {
 	JBackgroundOperation** background_operations;
 	JItem* item;
 	JListIterator* iterator;
 	JLock* lock = NULL;
 	JMessage** messages;
-	JSemantics* semantics;
 	guint m;
 	guint n;
 	gchar const* item_name;
@@ -1980,12 +1972,11 @@ j_item_write_internal (JBatch* batch, JList* operations)
 	gchar* path;
 	gsize path_len;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	semantics = j_batch_get_semantics(batch);
 	n = j_configuration_get_data_server_count(j_configuration());
 	background_operations = g_new(JBackgroundOperation*, n);
 	messages = g_new(JMessage*, n);
@@ -2254,7 +2245,7 @@ j_item_write_internal (JBatch* batch, JList* operations)
 }
 
 gboolean
-j_item_get_status_internal (JBatch* batch, JList* operations)
+j_item_get_status_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 	JBackend* meta_backend;
@@ -2262,13 +2253,12 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 	JList* buffer_list;
 	JListIterator* iterator;
 	JMessage** messages;
-	JSemantics* semantics;
 	gint semantics_concurrency;
 	gint semantics_consistency;
 	guint n;
 
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
@@ -2285,7 +2275,6 @@ j_item_get_status_internal (JBatch* batch, JList* operations)
 
 	iterator = j_list_iterator_new(operations);
 	//mongo_connection = j_connection_pool_pop_meta(0);
-	semantics = j_batch_get_semantics(batch);
 	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
 	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
 

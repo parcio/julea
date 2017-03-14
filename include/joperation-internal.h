@@ -27,10 +27,10 @@
 
 #include <julea-internal.h>
 
-#include <jbatch.h>
 #include <jlist.h>
+#include <jsemantics.h>
 
-typedef gboolean (*JOperationExecFunc) (JBatch*, JList*);
+typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
 typedef void (*JOperationFreeFunc) (gpointer);
 
 /**
