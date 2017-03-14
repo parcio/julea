@@ -50,7 +50,6 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-std=c11']
 	ctx.env.CFLAGS += ['-fdiagnostics-color']
 	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
-	ctx.env.CFLAGS += ['-Wc99-c11-compat']
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()

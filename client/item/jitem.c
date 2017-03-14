@@ -136,8 +136,7 @@ struct JItemBackgroundData
 			JMessage* create_message;
 		}
 		write;
-	}
-	u;
+	};
 };
 
 typedef struct JItemBackgroundData JItemBackgroundData;
@@ -193,8 +192,7 @@ struct JItemOperation
 			guint64* bytes_written;
 		}
 		write;
-	}
-	u;
+	};
 };
 
 typedef struct JItemOperation JItemOperation;
@@ -290,8 +288,8 @@ j_item_create_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_collection_unref(operation->u.create.collection);
-	j_item_unref(operation->u.create.item);
+	j_collection_unref(operation->create.collection);
+	j_item_unref(operation->create.item);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -302,8 +300,8 @@ j_item_delete_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_collection_unref(operation->u.delete.collection);
-	j_item_unref(operation->u.delete.item);
+	j_collection_unref(operation->delete.collection);
+	j_item_unref(operation->delete.item);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -314,8 +312,8 @@ j_item_get_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_collection_unref(operation->u.get.collection);
-	g_free(operation->u.get.name);
+	j_collection_unref(operation->get.collection);
+	g_free(operation->get.name);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -326,7 +324,7 @@ j_item_get_status_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_item_unref(operation->u.get_status.item);
+	j_item_unref(operation->get_status.item);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -337,7 +335,7 @@ j_item_read_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_item_unref(operation->u.read.item);
+	j_item_unref(operation->read.item);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -348,7 +346,7 @@ j_item_write_free (gpointer data)
 {
 	JItemOperation* operation = data;
 
-	j_item_unref(operation->u.write.item);
+	j_item_unref(operation->write.item);
 
 	g_slice_free(JItemOperation, operation);
 }
@@ -410,7 +408,7 @@ j_item_read_background_operation (gpointer data)
 	j_message_send(background_data->message, background_data->connection);
 
 	reply = j_message_new_reply(background_data->message);
-	iterator = j_list_iterator_new(background_data->u.read.buffer_list);
+	iterator = j_list_iterator_new(background_data->read.buffer_list);
 
 	operations_done = 0;
 	operation_count = j_message_get_count(background_data->message);
@@ -476,14 +474,14 @@ j_item_write_background_operation (gpointer data)
 	JItemBackgroundData* background_data = data;
 	JMessage* reply;
 
-	if (background_data->u.write.create_message != NULL)
+	if (background_data->write.create_message != NULL)
 	{
-		j_message_send(background_data->u.write.create_message, background_data->connection);
+		j_message_send(background_data->write.create_message, background_data->connection);
 
 		/* This will always be true, see j_item_write_exec(). */
-		if (j_message_get_type_modifier(background_data->u.write.create_message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_type_modifier(background_data->write.create_message) & J_MESSAGE_SAFETY_NETWORK)
 		{
-			reply = j_message_new_reply(background_data->u.write.create_message);
+			reply = j_message_new_reply(background_data->write.create_message);
 			j_message_receive(reply, background_data->connection);
 			j_message_unref(reply);
 		}
@@ -530,7 +528,7 @@ j_item_get_status_background_operation (gpointer data)
 	j_message_send(background_data->message, background_data->connection);
 
 	reply = j_message_new_reply(background_data->message);
-	iterator = j_list_iterator_new(background_data->u.read_status.buffer_list);
+	iterator = j_list_iterator_new(background_data->read_status.buffer_list);
 
 	j_message_receive(reply, background_data->connection);
 
@@ -679,8 +677,8 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 	}
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.create.collection = j_collection_ref(collection);
-	iop->u.create.item = j_item_ref(item);
+	iop->create.collection = j_collection_ref(collection);
+	iop->create.item = j_item_ref(item);
 
 	operation = j_operation_new();
 	operation->key = collection;
@@ -722,9 +720,9 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.get.collection = j_collection_ref(collection);
-	iop->u.get.item = item;
-	iop->u.get.name = g_strdup(name);
+	iop->get.collection = j_collection_ref(collection);
+	iop->get.item = item;
+	iop->get.name = g_strdup(name);
 
 	operation = j_operation_new();
 	operation->key = collection;
@@ -761,8 +759,8 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.delete.collection = j_collection_ref(collection);
-	iop->u.delete.item = j_item_ref(item);
+	iop->delete.collection = j_collection_ref(collection);
+	iop->delete.item = j_item_ref(item);
 
 	operation = j_operation_new();
 	operation->key = collection;
@@ -803,11 +801,11 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.read.item = j_item_ref(item);
-	iop->u.read.data = data;
-	iop->u.read.length = length;
-	iop->u.read.offset = offset;
-	iop->u.read.bytes_read = bytes_read;
+	iop->read.item = j_item_ref(item);
+	iop->read.data = data;
+	iop->read.length = length;
+	iop->read.offset = offset;
+	iop->read.bytes_read = bytes_read;
 
 	operation = j_operation_new();
 	operation->key = item;
@@ -851,11 +849,11 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.write.item = j_item_ref(item);
-	iop->u.write.data = data;
-	iop->u.write.length = length;
-	iop->u.write.offset = offset;
-	iop->u.write.bytes_written = bytes_written;
+	iop->write.item = j_item_ref(item);
+	iop->write.data = data;
+	iop->write.length = length;
+	iop->write.offset = offset;
+	iop->write.bytes_written = bytes_written;
 
 	operation = j_operation_new();
 	operation->key = item;
@@ -892,7 +890,7 @@ j_item_get_status (JItem* item, JBatch* batch)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JItemOperation);
-	iop->u.get_status.item = j_item_ref(item);
+	iop->get_status.item = j_item_ref(item);
 
 	operation = j_operation_new();
 	operation->key = item->collection;
@@ -1373,11 +1371,11 @@ j_item_create_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JItemOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.create.item;
+		JItem* item = operation->create.item;
 		bson_t* b;
 		gchar* path;
 
-		collection = operation->u.create.collection;
+		collection = operation->create.collection;
 
 		if (collection == NULL)
 		{
@@ -1467,7 +1465,7 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		collection = operation->u.delete.collection;
+		collection = operation->delete.collection;
 
 		collection_name = j_collection_get_name(collection);
 	}
@@ -1485,7 +1483,7 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JItemOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->u.delete.item;
+		JItem* item = operation->delete.item;
 		gchar* path;
 		gsize path_len;
 
@@ -1622,10 +1620,10 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JItemOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.get.collection;
-		JItem** item = operation->u.get.item;
+		JCollection* collection = operation->get.collection;
+		JItem** item = operation->get.item;
 		bson_t result[1];
-		gchar const* name = operation->u.get.name;
+		gchar const* name = operation->get.name;
 		gchar* path;
 
 		path = g_build_path("/", j_collection_get_name(collection), name, NULL);
@@ -1781,7 +1779,7 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		item = operation->u.read.item;
+		item = operation->read.item;
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1800,10 +1798,10 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(iterator))
 	{
 		JItemOperation* operation = j_list_iterator_get(iterator);
-		gpointer data = operation->u.read.data;
-		guint64 length = operation->u.read.length;
-		guint64 offset = operation->u.read.offset;
-		guint64* bytes_read = operation->u.read.bytes_read;
+		gpointer data = operation->read.data;
+		guint64 length = operation->read.length;
+		guint64 offset = operation->read.offset;
+		guint64* bytes_read = operation->read.bytes_read;
 
 		JItemReadData* buffer;
 		gchar* d;
@@ -1888,7 +1886,7 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
-		background_data->u.read.buffer_list = buffer_list[i];
+		background_data->read.buffer_list = buffer_list[i];
 
 		// FIXME ugly
 		if (m > 1)
@@ -1977,7 +1975,7 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 
 		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		item = operation->u.write.item;
+		item = operation->write.item;
 
 		item_name = item->name;
 		collection_name = j_collection_get_name(item->collection);
@@ -1996,10 +1994,10 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(iterator))
 	{
 		JItemOperation* operation = j_list_iterator_get(iterator);
-		gconstpointer data = operation->u.write.data;
-		guint64 length = operation->u.write.length;
-		guint64 offset = operation->u.write.offset;
-		guint64* bytes_written = operation->u.write.bytes_written;
+		gconstpointer data = operation->write.data;
+		guint64 length = operation->write.length;
+		guint64 offset = operation->write.offset;
+		guint64* bytes_written = operation->write.bytes_written;
 
 		gchar const* d;
 		guint64 new_length;
@@ -2114,7 +2112,7 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
-		background_data->u.write.create_message = create_message;
+		background_data->write.create_message = create_message;
 
 		if (m > 1)
 		{
@@ -2144,9 +2142,9 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 			background_data = j_background_operation_wait(background_operations[i]);
 			j_background_operation_unref(background_operations[i]);
 
-			if (background_data->u.write.create_message != NULL)
+			if (background_data->write.create_message != NULL)
 			{
-				j_message_unref(background_data->u.write.create_message);
+				j_message_unref(background_data->write.create_message);
 			}
 
 			j_connection_pool_push_data(i, background_data->connection);
@@ -2268,7 +2266,7 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(iterator))
 	{
 		JItemOperation* operation = j_list_iterator_get(iterator);
-		JItem* item = operation->u.get_status.item;
+		JItem* item = operation->get_status.item;
 
 		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
 		{
@@ -2368,7 +2366,7 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 		background_data->connection = j_connection_pool_pop_data(i);
 		background_data->message = messages[i];
 		background_data->index = i;
-		background_data->u.read_status.buffer_list = buffer_list;
+		background_data->read_status.buffer_list = buffer_list;
 
 		background_operations[i] = j_background_operation_new(j_item_get_status_background_operation, background_data);
 	}

@@ -76,8 +76,7 @@ struct JCollectionOperation
 			gchar* name;
 		}
 		get;
-	}
-	u;
+	};
 };
 
 typedef struct JCollectionOperation JCollectionOperation;
@@ -111,7 +110,7 @@ j_collection_create_free (gpointer data)
 {
 	JCollectionOperation* operation = data;
 
-	j_collection_unref(operation->u.create.collection);
+	j_collection_unref(operation->create.collection);
 	g_slice_free(JCollectionOperation, operation);
 }
 
@@ -121,7 +120,7 @@ j_collection_delete_free (gpointer data)
 {
 	JCollectionOperation* operation = data;
 
-	j_collection_unref(operation->u.delete.collection);
+	j_collection_unref(operation->delete.collection);
 	g_slice_free(JCollectionOperation, operation);
 }
 
@@ -131,7 +130,7 @@ j_collection_get_free (gpointer data)
 {
 	JCollectionOperation* operation = data;
 
-	g_free(operation->u.get.name);
+	g_free(operation->get.name);
 	g_slice_free(JCollectionOperation, operation);
 }
 
@@ -243,7 +242,7 @@ j_collection_create (gchar const* name, JBatch* batch)
 	}
 
 	cop = g_slice_new(JCollectionOperation);
-	cop->u.create.collection = j_collection_ref(collection);
+	cop->create.collection = j_collection_ref(collection);
 
 	operation = j_operation_new();
 	operation->key = NULL;
@@ -279,8 +278,8 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 	g_return_if_fail(name != NULL);
 
 	cop = g_slice_new(JCollectionOperation);
-	cop->u.get.collection = collection;
-	cop->u.get.name = g_strdup(name);
+	cop->get.collection = collection;
+	cop->get.name = g_strdup(name);
 
 	operation = j_operation_new();
 	operation->key = NULL;
@@ -311,7 +310,7 @@ j_collection_delete (JCollection* collection, JBatch* batch)
 	g_return_if_fail(collection != NULL);
 
 	cop = g_slice_new(JCollectionOperation);
-	cop->u.delete.collection = j_collection_ref(collection);
+	cop->delete.collection = j_collection_ref(collection);
 
 	operation = j_operation_new();
 	operation->key = NULL;
@@ -586,7 +585,7 @@ j_collection_create_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.create.collection;
+		JCollection* collection = operation->create.collection;
 		bson_t* b;
 
 		b = j_collection_serialize(collection);
@@ -683,7 +682,7 @@ j_collection_delete_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->u.delete.collection;
+		JCollection* collection = operation->delete.collection;
 
 		if (meta_backend != NULL)
 		{
@@ -757,9 +756,9 @@ j_collection_get_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection** collection = operation->u.get.collection;
+		JCollection** collection = operation->get.collection;
 		bson_t result[1];
-		gchar const* name = operation->u.get.name;
+		gchar const* name = operation->get.name;
 
 		if (meta_backend != NULL)
 		{

@@ -180,7 +180,7 @@ j_operation_cache_get_required_size (JOperation* operation)
 	switch (operation->type)
 	{
 		case J_OPERATION_ITEM_WRITE:
-			ret = operation->u.item_write.length;
+			ret = operation->item_write.length;
 			break;
 
 		case J_OPERATION_COLLECTION_CREATE:
@@ -333,13 +333,13 @@ j_operation_cache_add (JBatch* batch)
 
 		if (operation->type == J_OPERATION_ITEM_WRITE)
 		{
-			memcpy(data, operation->u.item_write.data, operation->u.item_write.length);
+			memcpy(data, operation->item_write.data, operation->item_write.length);
 
-			operation->u.item_write.data = data;
-			*(operation->u.item_write.bytes_written) += operation->u.item_write.length;
-			operation->u.item_write.bytes_written = NULL;
+			operation->item_write.data = data;
+			*(operation->item_write.bytes_written) += operation->item_write.length;
+			operation->item_write.bytes_written = NULL;
 
-			data += operation->u.item_write.length;
+			data += operation->item_write.length;
 		}
 		*/
 		(void)data;

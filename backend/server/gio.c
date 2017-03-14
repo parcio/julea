@@ -256,7 +256,7 @@ backend_fini (void)
 static
 JBackend gio_backend = {
 	.type = J_BACKEND_TYPE_DATA,
-	.u.data = {
+	.data = {
 		.init = backend_init,
 		.fini = backend_fini,
 		.create = backend_create,

@@ -76,8 +76,7 @@ struct JBackend
 			gboolean (*iterate) (gpointer, bson_t*);
 		}
 		meta;
-	}
-	u;
+	};
 };
 
 typedef struct JBackend JBackend;
