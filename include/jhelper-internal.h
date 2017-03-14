@@ -26,23 +26,9 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <bson.h>
-
 #include <julea-internal.h>
 
-enum JStoreCollection
-{
-	J_STORE_COLLECTION_COLLECTIONS,
-	J_STORE_COLLECTION_ITEMS,
-	J_STORE_COLLECTION_LOCKS
-};
-
-typedef enum JStoreCollection JStoreCollection;
-
 #include <jbackground-operation-internal.h>
-#include <jsemantics.h>
-
-#include <bson.h>
 
 J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
 J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
