@@ -54,12 +54,12 @@ struct JConfiguration
 		/**
 		 * The number of data servers.
 		 */
-		guint data_len;
+		guint32 data_len;
 
 		/**
 		 * The number of metadata servers.
 		 */
-		guint metadata_len;
+		guint32 metadata_len;
 	}
 	servers;
 
@@ -97,7 +97,7 @@ struct JConfiguration
 	}
 	meta;
 
-	guint max_connections;
+	guint32 max_connections;
 
 	/**
 	 * The reference count.
@@ -124,7 +124,6 @@ j_configuration_new (void)
 	gchar const* env_path;
 	gchar* path = NULL;
 	gchar const* const* dirs;
-	guint i;
 
 	key_file = g_key_file_new();
 
@@ -168,7 +167,7 @@ j_configuration_new (void)
 
 	dirs = g_get_system_config_dirs();
 
-	for (i = 0; dirs[i] != NULL; i++)
+	for (guint i = 0; dirs[i] != NULL; i++)
 	{
 		path = g_build_filename(dirs[i], "julea", config_name, NULL);
 
@@ -215,7 +214,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	gchar* data_path;
 	gchar* meta_backend;
 	gchar* meta_path;
-	guint max_connections;
+	guint32 max_connections;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
@@ -314,7 +313,7 @@ j_configuration_unref (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_data_server (JConfiguration* configuration, guint index)
+j_configuration_get_data_server (JConfiguration* configuration, guint32 index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.data_len, NULL);
@@ -323,7 +322,7 @@ j_configuration_get_data_server (JConfiguration* configuration, guint index)
 }
 
 gchar const*
-j_configuration_get_metadata_server (JConfiguration* configuration, guint index)
+j_configuration_get_metadata_server (JConfiguration* configuration, guint32 index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.metadata_len, NULL);
@@ -331,7 +330,7 @@ j_configuration_get_metadata_server (JConfiguration* configuration, guint index)
 	return configuration->servers.metadata[index];
 }
 
-guint
+guint32
 j_configuration_get_data_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
@@ -339,7 +338,7 @@ j_configuration_get_data_server_count (JConfiguration* configuration)
 	return configuration->servers.data_len;
 }
 
-guint
+guint32
 j_configuration_get_metadata_server_count (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
@@ -379,7 +378,7 @@ j_configuration_get_metadata_path (JConfiguration* configuration)
 	return configuration->meta.path;
 }
 
-guint
+guint32
 j_configuration_get_max_connections (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);

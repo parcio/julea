@@ -37,11 +37,11 @@ J_GNUC_INTERNAL JConfiguration* j_configuration_new_for_data (GKeyFile*);
 J_GNUC_INTERNAL JConfiguration* j_configuration_ref (JConfiguration*);
 J_GNUC_INTERNAL void j_configuration_unref (JConfiguration*);
 
-J_GNUC_INTERNAL gchar const* j_configuration_get_data_server (JConfiguration*, guint);
-J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_server (JConfiguration*, guint);
+J_GNUC_INTERNAL gchar const* j_configuration_get_data_server (JConfiguration*, guint32);
+J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_server (JConfiguration*, guint32);
 
-J_GNUC_INTERNAL guint j_configuration_get_data_server_count (JConfiguration*);
-J_GNUC_INTERNAL guint j_configuration_get_metadata_server_count (JConfiguration*);
+J_GNUC_INTERNAL guint32 j_configuration_get_data_server_count (JConfiguration*);
+J_GNUC_INTERNAL guint32 j_configuration_get_metadata_server_count (JConfiguration*);
 
 J_GNUC_INTERNAL gchar const* j_configuration_get_data_backend (JConfiguration*);
 J_GNUC_INTERNAL gchar const* j_configuration_get_data_path (JConfiguration*);
@@ -49,6 +49,6 @@ J_GNUC_INTERNAL gchar const* j_configuration_get_data_path (JConfiguration*);
 J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_backend (JConfiguration*);
 J_GNUC_INTERNAL gchar const* j_configuration_get_metadata_path (JConfiguration*);
 
-J_GNUC_INTERNAL guint j_configuration_get_max_connections (JConfiguration*);
+J_GNUC_INTERNAL guint32 j_configuration_get_max_connections (JConfiguration*);
 
 #endif
