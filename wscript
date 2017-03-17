@@ -224,7 +224,7 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
-	clients = ['item']
+	clients = ['object', 'item']
 
 	for client in clients:
 		ctx.shlib(
