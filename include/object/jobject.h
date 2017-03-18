@@ -37,7 +37,7 @@ void j_object_unref (JObject*);
 gchar const* j_object_get_name (JObject*);
 
 JObject* j_object_create (guint32, gchar const*, gchar const*, JBatch*);
-void j_object_delete (JObject*, JBatch*);
+void j_object_delete (guint32, gchar const*, gchar const*, JBatch*);
 void j_object_get (JObject**, gchar const*, JBatch*);
 
 void j_object_read (JObject*, gpointer, guint64, guint64, guint64*, JBatch*);

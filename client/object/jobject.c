@@ -119,12 +119,6 @@ struct JObjectOperation
 	{
 		struct
 		{
-			JObject* object;
-		}
-		delete;
-
-		struct
-		{
 			JObject** object;
 			gchar* namespace;
 			gchar* name;
@@ -258,11 +252,9 @@ static
 void
 j_object_delete_free (gpointer data)
 {
-	JObjectOperation* operation = data;
+	JObject* object = data;
 
-	j_object_unref(operation->delete.object);
-
-	g_slice_free(JObjectOperation, operation);
+	j_object_unref(object);
 }
 
 static
@@ -353,47 +345,6 @@ j_object_set_size (JObject* item, guint64 size)
 	item->status.age = g_get_real_time();
 	item->status.size = size;
 	j_trace_leave(G_STRFUNC);
-}
-
-/**
- * Executes delete operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_object_delete_background_operation (gpointer data)
-{
-	JObjectBackgroundData* background_data = data;
-	JMessage* reply;
-	GSocketConnection* connection;
-
-	connection = j_connection_pool_pop_data(background_data->index);
-
-	j_message_send(background_data->message, connection);
-
-	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
-	{
-		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, connection);
-
-		/* FIXME do something with reply */
-		j_message_unref(reply);
-	}
-
-	j_connection_pool_push_data(background_data->index, connection);
-
-	j_message_unref(background_data->message);
-
-	g_slice_free(JObjectBackgroundData, background_data);
-
-	return NULL;
 }
 
 /**
@@ -678,118 +629,85 @@ static
 gboolean
 j_object_delete_exec (JList* operations, JSemantics* semantics)
 {
-	JBackend* meta_backend;
+	gboolean ret = FALSE;
+
+	JBackend* data_backend;
 	JListIterator* it;
-	JMessage** messages;
-	gboolean ret = TRUE;
-	guint n;
-	gchar const* item_name;
-	gpointer* background_data;
-	gpointer meta_batch;
+	JMessage* message;
+	GSocketConnection* data_connection;
+	gchar const* namespace;
+	gsize namespace_len;
+	guint32 index;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	/*
-		IsInitialized(true);
-	*/
-
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_data = g_new(gpointer, n);
-	messages = g_new(JMessage*, n);
-
-	for (guint i = 0; i < n; i++)
 	{
-		messages[i] = NULL;
-	}
+		JObject* object;
 
-	{
-		JObjectOperation* operation;
+		object = j_list_get_first(operations);
+		g_assert(object != NULL);
 
-		operation = j_list_get_first(operations);
-		g_assert(operation != NULL);
+		namespace = object->namespace;
+		namespace_len = strlen(namespace) + 1;
+		index = object->index;
 	}
 
 	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
+	data_backend = j_data_backend();
 
-	if (meta_backend != NULL)
+	if (data_backend == NULL)
 	{
-		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
+		data_connection = j_connection_pool_pop_data(index);
+		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
+		j_message_set_safety(message, semantics);
+		j_message_append_n(message, namespace, namespace_len);
 	}
 
-	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JObjectOperation* operation = j_list_iterator_get(it);
-		JObject* item = operation->delete.object;
-		gchar* path;
-		gsize path_len;
+		JObject* object = j_list_iterator_get(it);
 
-		item_name = j_object_get_name(item);
-
-		path = g_build_path("/", item_name, NULL);
-		path_len = strlen(path) + 1;
-
-		if (meta_backend != NULL)
+		if (data_backend != NULL)
 		{
-			ret = j_backend_meta_delete(meta_backend, meta_batch, path) && ret;
+			gpointer object_handle;
+
+			ret = j_backend_data_create(data_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_data_close(data_backend, object_handle) && ret;
+		}
+		else
+		{
+			gsize name_len;
+
+			name_len = strlen(object->name) + 1;
+
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, object->name, name_len);
+		}
+	}
+
+	if (data_backend == NULL)
+	{
+		j_message_send(message, data_connection);
+
+		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
+		{
+			JMessage* reply;
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, data_connection);
+
+			/* FIXME do something with reply */
+			j_message_unref(reply);
 		}
 
-		//bson_init(&b);
-		//bson_append_oid(&b, "_id", -1, j_object_get_id(item));
-		//bson_finish(&b);
-
-		for (guint i = 0; i < n; i++)
-		{
-			if (messages[i] == NULL)
-			{
-				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DATA_DELETE, 5);
-				j_message_set_safety(messages[i], semantics);
-				j_message_append_n(messages[i], "item", 5);
-			}
-
-			j_message_add_operation(messages[i], path_len);
-			j_message_append_n(messages[i], path, path_len);
-
-			g_free(path);
-		}
+		j_message_unref(message);
+		j_connection_pool_push_data(index, data_connection);
 	}
 
 	j_list_iterator_free(it);
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
-	}
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	for (guint i = 0; i < n; i++)
-	{
-		JObjectBackgroundData* data;
-
-		if (messages[i] == NULL)
-		{
-			background_data[i] = NULL;
-			continue;
-		}
-
-		data = g_slice_new(JObjectBackgroundData);
-		data->message = messages[i];
-		data->index = i;
-
-		background_data[i] = data;
-	}
-
-	j_helper_execute_parallel(j_object_delete_background_operation, background_data, n);
-
-	g_free(background_data);
-	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -1418,7 +1336,7 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
  **/
 static
 JObject*
-j_object_new (gchar const* namespace, gchar const* name, guint32 index)
+j_object_new (guint32 index, gchar const* namespace, gchar const* name)
 {
 	JObject* object = NULL;
 
@@ -1548,18 +1466,19 @@ j_object_create (guint32 index, gchar const* namespace, gchar const* name, JBatc
 	JObject* object;
 	JOperation* operation;
 
+	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if ((object = j_object_new(namespace, name, index)) == NULL)
+	if ((object = j_object_new(index, namespace, name)) == NULL)
 	{
 		goto end;
 	}
 
 	operation = j_operation_new();
 	// FIXME key = index + namespace
-	operation->key = NULL;
+	operation->key = object;
 	operation->data = j_object_ref(object);
 	operation->exec_func = j_object_create_exec;
 	operation->free_func = j_object_create_free;
@@ -1622,26 +1541,30 @@ j_object_get (JObject** item, gchar const* name, JBatch* batch)
  * \param batch      A batch.
  **/
 void
-j_object_delete (JObject* item, JBatch* batch)
+j_object_delete (guint32 index, gchar const* namespace, gchar const* name, JBatch* batch)
 {
-	JObjectOperation* iop;
+	JObject* object;
 	JOperation* operation;
 
-	g_return_if_fail(item != NULL);
+	g_return_if_fail(namespace != NULL);
+	g_return_if_fail(name != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JObjectOperation);
-	iop->delete.object = j_object_ref(item);
+	if ((object = j_object_new(index, namespace, name)) == NULL)
+	{
+		goto end;
+	}
 
 	operation = j_operation_new();
-	operation->key = NULL;
-	operation->data = iop;
+	operation->key = object;
+	operation->data = j_object_ref(object);
 	operation->exec_func = j_object_delete_exec;
 	operation->free_func = j_object_delete_free;
 
 	j_batch_add(batch, operation);
 
+end:
 	j_trace_leave(G_STRFUNC);
 }
 
