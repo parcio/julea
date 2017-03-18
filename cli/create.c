@@ -45,7 +45,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		j_object_create(j_object_uri_get_namespace(ouri), j_object_uri_get_name(ouri), j_object_uri_get_index(ouri), batch);
+		j_object_create(j_object_uri_get_index(ouri), j_object_uri_get_namespace(ouri), j_object_uri_get_name(ouri), batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);

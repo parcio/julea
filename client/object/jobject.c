@@ -1543,7 +1543,7 @@ j_object_get_name (JObject* item)
  * \return A new item. Should be freed with j_object_unref().
  **/
 JObject*
-j_object_create (gchar const* namespace, gchar const* name, guint32 index, JBatch* batch)
+j_object_create (guint32 index, gchar const* namespace, gchar const* name, JBatch* batch)
 {
 	JObject* object;
 	JOperation* operation;
