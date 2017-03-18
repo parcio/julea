@@ -38,16 +38,10 @@ gchar const* j_object_get_name (JObject*);
 
 JObject* j_object_create (guint32, gchar const*, gchar const*, JBatch*);
 void j_object_delete (guint32, gchar const*, gchar const*, JBatch*);
-void j_object_get (JObject**, gchar const*, JBatch*);
 
 void j_object_read (JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_object_write (JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_object_get_status (JObject*, JBatch*);
-
-guint64 j_object_get_size (JObject*);
-gint64 j_object_get_modification_time (JObject*);
-
-guint64 j_object_get_optimal_access_size (JObject*);
+void j_object_get_status (guint32, gchar const*, gchar const*, gint64*, guint64*, JBatch*);
 
 #endif

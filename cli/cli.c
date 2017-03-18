@@ -52,7 +52,8 @@ j_cmd_usage (void)
 	g_print("  delete     object://index/namespace/name\n");
 	g_print("             julea://collection/[item]\n");
 	g_print("  list       julea://[collection]\n");
-	g_print("  status     julea://collection/item\n");
+	g_print("  status     object://index/namespace/name\n");
+	g_print("             julea://collection/item\n");
 	g_print("\n");
 }
 

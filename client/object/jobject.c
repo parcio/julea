@@ -119,15 +119,9 @@ struct JObjectOperation
 	{
 		struct
 		{
-			JObject** object;
-			gchar* namespace;
-			gchar* name;
-		}
-		get;
-
-		struct
-		{
 			JObject* object;
+			gint64* modification_time;
+			guint64* size;
 		}
 		get_status;
 
@@ -259,17 +253,6 @@ j_object_delete_free (gpointer data)
 
 static
 void
-j_object_get_free (gpointer data)
-{
-	JObjectOperation* operation = data;
-
-	g_free(operation->get.name);
-
-	g_slice_free(JObjectOperation, operation);
-}
-
-static
-void
 j_object_get_status_free (gpointer data)
 {
 	JObjectOperation* operation = data;
@@ -299,52 +282,6 @@ j_object_write_free (gpointer data)
 	j_object_unref(operation->write.object);
 
 	g_slice_free(JObjectOperation, operation);
-}
-
-/**
- * Sets an item's modification time.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item              An item.
- * \param modification_time A modification time.
- **/
-static
-void
-j_object_set_modification_time (JObject* item, gint64 modification_time)
-{
-	g_return_if_fail(item != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	item->status.age = g_get_real_time();
-	item->status.modification_time = MAX(item->status.modification_time, modification_time);
-	j_trace_leave(G_STRFUNC);
-}
-
-/**
- * Sets an item's size.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- * \param size A size.
- **/
-static
-void
-j_object_set_size (JObject* item, guint64 size)
-{
-	g_return_if_fail(item != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	item->status.age = g_get_real_time();
-	item->status.size = size;
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -490,65 +427,6 @@ j_object_write_background_operation (gpointer data)
 	return NULL;
 }
 
-/**
- * Executes get status operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_object_get_status_background_operation (gpointer data)
-{
-	JObjectBackgroundData* background_data = data;
-	JListIterator* iterator;
-	JMessage* reply;
-	GSocketConnection* connection;
-
-	connection = j_connection_pool_pop_data(background_data->index);
-
-	/* FIXME reply? */
-	j_message_send(background_data->message, connection);
-
-	reply = j_message_new_reply(background_data->message);
-	iterator = j_list_iterator_new(background_data->read_status.buffer_list);
-
-	j_message_receive(reply, connection);
-
-	while (j_list_iterator_next(iterator))
-	{
-		JObjectReadStatusData* buffer = j_list_iterator_get(iterator);
-
-		gint64 modification_time;
-		guint64 size;
-
-		modification_time = j_message_get_8(reply);
-		size = j_message_get_8(reply);
-
-		// FIXME thread-safety
-		j_object_set_modification_time(buffer->item, modification_time);
-		// FIXME thread-safety
-		//j_object_add_size(buffer->item, size);
-		buffer->sizes[background_data->index] = size;
-	}
-
-	j_list_iterator_free(iterator);
-	j_message_unref(reply);
-
-	j_connection_pool_push_data(background_data->index, connection);
-
-	j_message_unref(background_data->message);
-
-	g_slice_free(JObjectBackgroundData, background_data);
-
-	return NULL;
-}
-
 static
 gboolean
 j_object_create_exec (JList* operations, JSemantics* semantics)
@@ -674,8 +552,8 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		{
 			gpointer object_handle;
 
-			ret = j_backend_data_create(data_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_data_close(data_backend, object_handle) && ret;
+			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_data_delete(data_backend, object_handle) && ret;
 		}
 		else
 		{
@@ -707,110 +585,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_data(index, data_connection);
 	}
 
-	j_list_iterator_free(it);
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-static
-gboolean
-j_object_get_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	JListIterator* it;
-	JMessage* message;
-	JMessage* reply;
-	GSocketConnection* meta_connection;
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend == NULL)
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-	}
-
-	/* FIXME do some optimizations for len(operations) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JObjectOperation* operation = j_list_iterator_get(it);
-		JObject** item = operation->get.object;
-		bson_t result[1];
-		gchar const* name = operation->get.name;
-		gchar* path;
-
-		path = g_build_path("/", name, NULL);
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
-		}
-		else
-		{
-			gconstpointer data;
-			gsize path_len;
-			guint32 len;
-
-			path_len = strlen(path) + 1;
-
-			message = j_message_new(J_MESSAGE_META_GET, 6);
-			j_message_append_n(message, "items", 6);
-			j_message_add_operation(message, path_len);
-			j_message_append_n(message, path, path_len);
-
-			j_message_send(message, meta_connection);
-
-			reply = j_message_new_reply(message);
-			j_message_receive(reply, meta_connection);
-
-			len = j_message_get_4(reply);
-
-			if (len > 0)
-			{
-				ret = TRUE;
-
-				data = j_message_get_n(reply, len);
-
-				bson_init_static(result, data, len);
-			}
-			else
-			{
-				ret = FALSE;
-			}
-		}
-
-		g_free(path);
-
-		*item = NULL;
-
-		if (ret)
-		{
-			bson_destroy(result);
-		}
-
-		if (meta_backend == NULL)
-		{
-			// result points to reply's memory
-			j_message_unref(reply);
-			j_message_unref(message);
-		}
-	}
-
-	if (meta_backend == NULL)
-	{
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	//j_connection_pool_push_meta(0, mongo_connection);
 	j_list_iterator_free(it);
 
 	j_trace_leave(G_STRFUNC);
@@ -1156,162 +930,105 @@ static
 gboolean
 j_object_get_status_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = TRUE;
-	JBackend* meta_backend;
-	JList* buffer_list;
-	JListIterator* iterator;
-	JMessage** messages;
-	gint semantics_concurrency;
-	gint semantics_consistency;
-	gpointer* background_data;
-	guint n;
+	gboolean ret = FALSE;
+
+	JBackend* data_backend;
+	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* data_connection;
+	gchar const* namespace;
+	gsize namespace_len;
+	guint32 index;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_data = g_new(gpointer, n);
-	messages = g_new(JMessage*, n);
-	buffer_list = j_list_new(NULL);
-
-	for (guint i = 0; i < n; i++)
 	{
-		messages[i] = NULL;
+		JObjectOperation* operation = j_list_get_first(operations);
+		JObject* object = operation->get_status.object;
+
+		g_assert(operation != NULL);
+		g_assert(object != NULL);
+
+		namespace = object->namespace;
+		namespace_len = strlen(namespace) + 1;
+		index = object->index;
 	}
 
-	iterator = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	semantics_concurrency = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
-	semantics_consistency = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
+	it = j_list_iterator_new(operations);
+	data_backend = j_data_backend();
 
-	meta_backend = j_metadata_backend();
-
-	while (j_list_iterator_next(iterator))
+	if (data_backend == NULL)
 	{
-		JObjectOperation* operation = j_list_iterator_get(iterator);
-		JObject* item = operation->get_status.object;
+		data_connection = j_connection_pool_pop_data(index);
+		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
+		j_message_set_safety(message, semantics);
+		j_message_append_n(message, namespace, namespace_len);
+	}
 
-		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
+	while (j_list_iterator_next(it))
+	{
+		JObjectOperation* operation = j_list_iterator_get(it);
+		JObject* object = operation->get_status.object;
+		gint64* modification_time = operation->get_status.modification_time;
+		guint64* size = operation->get_status.size;
+
+		if (data_backend != NULL)
 		{
-			if (item->status.age >= (guint64)g_get_real_time() - G_USEC_PER_SEC)
-			{
-				continue;
-			}
-		}
+			gpointer object_handle;
 
-		if (semantics_concurrency == J_SEMANTICS_CONCURRENCY_NONE)
-		{
-			bson_t result[1];
-			gchar* path;
-
-			/*
-			bson_init(&opts);
-			bson_append_int32(&opts, "limit", -1, 1);
-			bson_append_document_begin(&opts, "projection", -1, &projection);
-
-			bson_append_bool(&projection, "Status.Size", -1, TRUE);
-			bson_append_bool(&projection, "Status.ModificationTime", -1, TRUE);
-
-			bson_append_document_end(&opts, &projection);
-			*/
-
-			if (meta_backend != NULL)
-			{
-				path = g_build_path("/", item->name, NULL);
-				ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
-				g_free(path);
-			}
-
-			if (ret)
-			{
-				bson_destroy(result);
-			}
+			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_data_status(data_backend, object_handle, modification_time, size) && ret;
+			ret = j_backend_data_close(data_backend, object_handle) && ret;
 		}
 		else
 		{
-			JObjectReadStatusData* buffer;
+			gsize name_len;
 
-			for (guint i = 0; i < n; i++)
-			{
-				gchar* path;
-				gsize path_len;
+			name_len = strlen(object->name) + 1;
 
-				gchar const* item_name;
-
-				item_name = item->name;
-
-				path = g_build_path("/", item_name, NULL);
-				path_len = strlen(path) + 1;
-
-				if (messages[i] == NULL)
-				{
-					messages[i] = j_message_new(J_MESSAGE_DATA_STATUS, 5);
-					j_message_append_n(messages[i], "item", 5);
-				}
-
-				j_message_add_operation(messages[i], path_len + sizeof(guint32));
-				j_message_append_n(messages[i], path, path_len);
-
-				g_free(path);
-			}
-
-			buffer = g_slice_new(JObjectReadStatusData);
-			buffer->item = item;
-			buffer->sizes = g_slice_alloc0(n * sizeof(guint64));
-
-			j_list_append(buffer_list, buffer);
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, object->name, name_len);
 		}
 	}
 
-	j_list_iterator_free(iterator);
-	//j_connection_pool_push_meta(0, mongo_connection);
+	j_list_iterator_free(it);
 
-	for (guint i = 0; i < n; i++)
+	if (data_backend == NULL)
 	{
-		JObjectBackgroundData* data;
+		JMessage* reply;
 
-		if (messages[i] == NULL)
+		j_message_send(message, data_connection);
+
+		reply = j_message_new_reply(message);
+		j_message_receive(reply, data_connection);
+
+		it = j_list_iterator_new(operations);
+
+		while (j_list_iterator_next(it))
 		{
-			background_data[i] = NULL;
-			continue;
+			JObjectOperation* operation = j_list_iterator_get(it);
+			gint64* modification_time = operation->get_status.modification_time;
+			guint64* size = operation->get_status.size;
+			gint64 modification_time_;
+			guint64 size_;
+
+			modification_time_ = j_message_get_8(reply);
+			size_ = j_message_get_8(reply);
+
+			*modification_time = modification_time_;
+			*size = size_;
 		}
 
-		data = g_slice_new(JObjectBackgroundData);
-		data->message = messages[i];
-		data->index = i;
-		data->read_status.buffer_list = buffer_list;
+		j_list_iterator_free(it);
 
-		background_data[i] = data;
+		j_message_unref(reply);
+		j_message_unref(message);
+
+		j_connection_pool_push_data(index, data_connection);
 	}
-
-	j_helper_execute_parallel(j_object_get_status_background_operation, background_data, n);
-
-	iterator = j_list_iterator_new(buffer_list);
-
-	while (j_list_iterator_next(iterator))
-	{
-		JObjectReadStatusData* buffer = j_list_iterator_get(iterator);
-		guint64 size = 0;
-
-		for (guint i = 0; i < n; i++)
-		{
-			size += buffer->sizes[i];
-		}
-
-		j_object_set_size(buffer->item, size);
-
-		g_slice_free1(n * sizeof(guint64), buffer->sizes);
-		g_slice_free(JObjectReadStatusData, buffer);
-	}
-
-	j_list_iterator_free(iterator);
-
-	j_list_unref(buffer_list);
-
-	g_free(background_data);
-	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -1492,44 +1209,6 @@ end:
 }
 
 /**
- * Gets an object.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item       A pointer to an item.
- * \param name       A name.
- * \param batch      A batch.
- **/
-void
-j_object_get (JObject** item, gchar const* name, JBatch* batch)
-{
-	JObjectOperation* iop;
-	JOperation* operation;
-
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(name != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	iop = g_slice_new(JObjectOperation);
-	iop->get.object = item;
-	iop->get.name = g_strdup(name);
-
-	operation = j_operation_new();
-	operation->key = NULL;
-	operation->data = iop;
-	operation->exec_func = j_object_get_exec;
-	operation->free_func = j_object_get_free;
-
-	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
-}
-
-/**
  * Deletes an object.
  *
  * \author Michael Kuhn
@@ -1675,103 +1354,37 @@ j_object_write (JObject* item, gconstpointer data, guint64 length, guint64 offse
  * \param batch     A batch.
  **/
 void
-j_object_get_status (JObject* item, JBatch* batch)
+j_object_get_status (guint32 index, gchar const* namespace, gchar const* name, gint64* modification_time, guint64* size, JBatch* batch)
 {
+	JObject* object;
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(item != NULL);
+	g_return_if_fail(namespace != NULL);
+	g_return_if_fail(name != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	if ((object = j_object_new(index, namespace, name)) == NULL)
+	{
+		goto end;
+	}
+
 	iop = g_slice_new(JObjectOperation);
-	iop->get_status.object = j_object_ref(item);
+	iop->get_status.object = j_object_ref(object);
+	iop->get_status.modification_time = modification_time;
+	iop->get_status.size = size;
 
 	operation = j_operation_new();
-	operation->key = NULL;
+	operation->key = object;
 	operation->data = iop;
 	operation->exec_func = j_object_get_status_exec;
 	operation->free_func = j_object_get_status_free;
 
 	j_batch_add(batch, operation);
 
+end:
 	j_trace_leave(G_STRFUNC);
-}
-
-/**
- * Returns an item's size.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A size.
- **/
-guint64
-j_object_get_size (JObject* item)
-{
-	g_return_val_if_fail(item != NULL, 0);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
-
-	return item->status.size;
-}
-
-/**
- * Returns an item's modification time.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A modification time.
- **/
-gint64
-j_object_get_modification_time (JObject* item)
-{
-	g_return_val_if_fail(item != NULL, 0);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
-
-	return item->status.modification_time;
-}
-
-/**
- * Returns the item's optimal access size.
- *
- * \author Michael Kuhn
- *
- * \code
- * JObject* item;
- * guint64 optimal_size;
- *
- * ...
- * optimal_size = j_object_get_optimal_access_size(item);
- * j_object_write(item, buffer, optimal_size, 0, &dummy, batch);
- * ...
- * \endcode
- *
- * \param item An item.
- *
- * \return An access size.
- */
-guint64
-j_object_get_optimal_access_size (JObject* item)
-{
-	g_return_val_if_fail(item != NULL, 0);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
-
-	return J_KIB(512);
 }
 
 /**
