@@ -352,7 +352,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
 
-						j_message_add_operation(reply, 2 * sizeof(guint64));
+						j_message_add_operation(reply, sizeof(gint64) + sizeof(guint64));
 						j_message_append_8(reply, &modification_time);
 						j_message_append_8(reply, &size);
 

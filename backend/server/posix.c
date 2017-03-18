@@ -55,6 +55,7 @@ jd_backend_files_free (gpointer data)
 	g_hash_table_destroy(files);
 }
 
+// FIXME not deleted?
 static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
 
 static
@@ -112,7 +113,7 @@ static
 JBackendFile*
 backend_file_get (GHashTable* files, gchar const* key)
 {
-	JBackendFile* file = NULL;
+	JBackendFile* file;
 
 	if ((file = g_hash_table_lookup(files, key)) != NULL)
 	{
@@ -150,7 +151,7 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	GHashTable* files = jd_backend_files_get_thread();
 
-	JBackendFile* file;
+	JBackendFile* file = NULL;
 	gchar* parent;
 	gchar* full_path;
 	gint fd;
@@ -163,7 +164,6 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 
 		// FIXME
 		fd = 0;
-		*data = file;
 
 		goto end;
 	}
@@ -186,6 +186,8 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	backend_file_add(files, file);
 
 end:
+	*data = file;
+
 	return (fd != -1);
 }
 
@@ -195,7 +197,7 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	GHashTable* files = jd_backend_files_get_thread();
 
-	JBackendFile* file;
+	JBackendFile* file = NULL;
 	gchar* full_path;
 	gint fd;
 
@@ -207,7 +209,6 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 
 		// FIXME
 		fd = 0;
-		*data = file;
 
 		goto end;
 	}
@@ -224,6 +225,8 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 	backend_file_add(files, file);
 
 end:
+	*data = file;
+
 	return (fd != -1);
 }
 
