@@ -26,6 +26,7 @@ gboolean
 j_cmd_create (gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
+	JObjectURI* ouri = NULL;
 	JURI* uri = NULL;
 	GError* error = NULL;
 
@@ -36,51 +37,45 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 		goto end;
 	}
 
-	if (g_str_has_prefix(arguments[0], "object://"))
+	ouri = j_object_uri_new(arguments[0]);
+
+	if (ouri != NULL)
 	{
 		JBatch* batch;
-		gchar** parts = NULL;
-		guint parts_len;
-		guint32 index;
 
-		parts = g_strsplit(arguments[0] + strlen("object://"), "/", 3);
-		parts_len = g_strv_length(parts);
-
-		if (parts_len != 3)
-		{
-			ret = FALSE;
-			j_cmd_usage();
-			goto end;
-		}
-
-		index = g_ascii_strtoull(parts[0], NULL, 10);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		j_object_create(parts[1], parts[2], index, batch);
+		j_object_create(j_object_uri_get_namespace(ouri), j_object_uri_get_name(ouri), j_object_uri_get_index(ouri), batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);
 
-		g_strfreev(parts);
+		goto end;
 	}
-	else
-	{
-		if ((uri = j_uri_new(arguments[0])) == NULL)
-		{
-			ret = FALSE;
-			g_print("Error: Invalid argument “%s”.\n", arguments[0]);
-			goto end;
-		}
 
+	uri = j_uri_new(arguments[0]);
+
+	if (uri != NULL)
+	{
 		if (!j_uri_create(uri, with_parents, &error))
 		{
 			ret = FALSE;
 			g_print("Error: %s\n", error->message);
 			g_error_free(error);
 		}
+
+		goto end;
 	}
 
+	ret = FALSE;
+	g_print("Error: Invalid argument “%s”.\n", arguments[0]);
+
 end:
+	if (ouri != NULL)
+	{
+		j_object_uri_free(ouri);
+	}
+
 	if (uri != NULL)
 	{
 		j_uri_free(uri);

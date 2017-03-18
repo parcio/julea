@@ -20,11 +20,30 @@
  * \file
  **/
 
-#ifndef H_JULEA_OBJECT
-#define H_JULEA_OBJECT
+#ifndef H_OBJECT_OBJECT_URI
+#define H_OBJECT_OBJECT_URI
 
-#include <object/jobject.h>
-#include <object/jobject-iterator.h>
-#include <object/jobject-uri.h>
+/**
+ * \addtogroup JObjectURI
+ *
+ * @{
+ **/
+
+struct JObjectURI;
+
+typedef struct JObjectURI JObjectURI;
+
+#include <glib.h>
+
+JObjectURI* j_object_uri_new (gchar const*);
+void j_object_uri_free (JObjectURI*);
+
+guint32 j_object_uri_get_index (JObjectURI*);
+gchar const* j_object_uri_get_namespace (JObjectURI*);
+gchar const* j_object_uri_get_name (JObjectURI*);
+
+/**
+ * @}
+ **/
 
 #endif
