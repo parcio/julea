@@ -43,7 +43,8 @@ j_cmd_usage (void)
 	g_print("  %s COMMAND\n", g_get_prgname());
 	g_print("\n");
 	g_print("Commands:\n");
-	g_print("  create     julea://collection/[item]\n");
+	g_print("  create     object://index/namespace/name\n");
+	g_print("             julea://collection/[item]\n");
 	g_print("  create-all julea://collection/[item]\n");
 	g_print("  copy       julea://collection/item julea://collection/item\n");
 	g_print("             julea://collection/item file://file\n");

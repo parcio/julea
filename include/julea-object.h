@@ -16,20 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <julea.h>
-#include <julea-object.h>
-#include <julea-item.h>
+/**
+ * \file
+ **/
 
-#include <glib.h>
+#ifndef H_JULEA_OBJECT
+#define H_JULEA_OBJECT
 
-void j_cmd_usage (void);
+#include <object/jobject.h>
+#include <object/jobject-iterator.h>
 
-guint j_cmd_arguments_length (gchar const**);
-
-gboolean j_cmd_error_last (JURI*);
-
-gboolean j_cmd_create (gchar const**, gboolean);
-gboolean j_cmd_copy (gchar const**);
-gboolean j_cmd_delete (gchar const**);
-gboolean j_cmd_list (gchar const**);
-gboolean j_cmd_status (gchar const**);
+#endif
