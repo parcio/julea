@@ -285,89 +285,6 @@ j_object_write_free (gpointer data)
 }
 
 /**
- * Executes read operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_object_read_background_operation (gpointer data)
-{
-	JObjectBackgroundData* background_data = data;
-	JListIterator* iterator;
-	JMessage* reply;
-	GSocketConnection* connection;
-	guint operations_done;
-	guint32 operation_count;
-	guint64 nbytes;
-
-	connection = j_connection_pool_pop_data(background_data->index);
-
-	j_message_send(background_data->message, connection);
-
-	reply = j_message_new_reply(background_data->message);
-	iterator = j_list_iterator_new(background_data->read.buffer_list);
-
-	operations_done = 0;
-	operation_count = j_message_get_count(background_data->message);
-
-	while (operations_done < operation_count)
-	{
-		guint32 reply_operation_count;
-
-		j_message_receive(reply, connection);
-
-		reply_operation_count = j_message_get_count(reply);
-
-		for (guint j = 0; j < reply_operation_count && j_list_iterator_next(iterator); j++)
-		{
-			JObjectReadData* buffer = j_list_iterator_get(iterator);
-
-			nbytes = j_message_get_8(reply);
-			// FIXME thread-safety
-			*(buffer->nbytes) += nbytes;
-
-			if (nbytes > 0)
-			{
-				GInputStream* input;
-
-				input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-				g_input_stream_read_all(input, buffer->data, nbytes, NULL, NULL, NULL);
-			}
-
-			g_slice_free(JObjectReadData, buffer);
-		}
-
-		operations_done += reply_operation_count;
-	}
-
-	j_list_iterator_free(iterator);
-	j_message_unref(reply);
-
-	j_message_unref(background_data->message);
-	j_list_unref(background_data->read.buffer_list);
-
-	j_connection_pool_push_data(background_data->index, connection);
-
-	g_slice_free(JObjectBackgroundData, background_data);
-
-	/*
-	if (nbytes < new_length)
-	{
-		break;
-	}
-	*/
-
-	return NULL;
-}
-
-/**
  * Executes write operations in a background operation.
  *
  * \private
@@ -596,152 +513,158 @@ static
 gboolean
 j_object_read_exec (JList* operations, JSemantics* semantics)
 {
-	JObject* item;
-	JList** buffer_list;
-	JListIterator* iterator;
-	JLock* lock = NULL;
-	JMessage** messages;
-	guint n;
-	gchar const* item_name;
-	gchar* path;
-	gpointer* background_data;
-	gsize path_len;
+	gboolean ret = FALSE;
+
+	JBackend* data_backend;
+	JListIterator* it;
+	JMessage* message;
+	JObject* object;
+	GSocketConnection* data_connection;
+	gpointer object_handle;
+
+	// FIXME
+	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_data = g_new(gpointer, n);
-	messages = g_new(JMessage*, n);
-	buffer_list = g_new(JList*, n);
-
-	for (guint i = 0; i < n; i++)
 	{
-		messages[i] = NULL;
-		buffer_list[i] = j_list_new(NULL);
-	}
+		JObjectOperation* operation = j_list_get_first(operations);
 
-	{
-		JObjectOperation* operation;
+		object = operation->get_status.object;
 
-		operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
-		item = operation->read.object;
-
-		item_name = item->name;
-
-		path = g_build_path("/", item_name, NULL);
-		path_len = strlen(path) + 1;
+		g_assert(object != NULL);
 	}
 
+	it = j_list_iterator_new(operations);
+	data_backend = j_data_backend();
+
+	if (data_backend != NULL)
+	{
+		ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+	}
+	else
+	{
+		gsize name_len;
+		gsize namespace_len;
+
+		namespace_len = strlen(object->namespace) + 1;
+		name_len = strlen(object->name) + 1;
+
+		data_connection = j_connection_pool_pop_data(object->index);
+		message = j_message_new(J_MESSAGE_DATA_READ, namespace_len + name_len);
+		j_message_set_safety(message, semantics);
+		j_message_append_n(message, object->namespace, namespace_len);
+		j_message_append_n(message, object->name, name_len);
+	}
+
+	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
 	{
 		lock = j_lock_new("item", path);
 	}
+	*/
 
-	iterator = j_list_iterator_new(operations);
-
-	while (j_list_iterator_next(iterator))
+	while (j_list_iterator_next(it))
 	{
-		JObjectOperation* operation = j_list_iterator_get(iterator);
+		JObjectOperation* operation = j_list_iterator_get(it);
 		gpointer data = operation->read.data;
 		guint64 length = operation->read.length;
 		guint64 offset = operation->read.offset;
 		guint64* bytes_read = operation->read.bytes_read;
 
-		JObjectReadData* buffer;
-		gchar* d;
-		guint64 new_length;
-		guint64 new_offset;
-		guint64 block_id;
-		guint index;
+		j_trace_file_begin(object->name, J_TRACE_FILE_READ);
 
-		*bytes_read = 0;
-
-		if (length == 0)
+		if (data_backend != NULL)
 		{
-			continue;
+			ret = j_backend_data_read(data_backend, object_handle, data, length, offset, bytes_read) && ret;
+		}
+		else
+		{
+			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
+			j_message_append_8(message, &length);
+			j_message_append_8(message, &offset);
 		}
 
-		j_trace_file_begin(item_name, J_TRACE_FILE_READ);
-
-		j_distribution_reset(item->distribution, length, offset);
-		d = data;
-
-		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))
-		{
-			if (messages[index] == NULL)
-			{
-				messages[index] = j_message_new(J_MESSAGE_DATA_READ, 5 + path_len);
-				j_message_append_n(messages[index], "item", 5);
-				j_message_append_n(messages[index], path, path_len);
-			}
-
-			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(messages[index], &new_length);
-			j_message_append_8(messages[index], &new_offset);
-
-			buffer = g_slice_new(JObjectReadData);
-			buffer->data = d;
-			buffer->nbytes = bytes_read;
-
-			j_list_append(buffer_list[index], buffer);
-
-			if (lock != NULL)
-			{
-				j_lock_add(lock, block_id);
-			}
-
-			d += new_length;
-		}
-
-		j_trace_file_end(item_name, J_TRACE_FILE_READ, length, offset);
+		j_trace_file_end(object->name, J_TRACE_FILE_READ, length, offset);
 	}
 
-	j_list_iterator_free(iterator);
+	j_list_iterator_free(it);
 
-	g_free(path);
+	if (data_backend != NULL)
+	{
+		ret = j_backend_data_close(data_backend, object_handle) && ret;
+	}
+	else
+	{
+		JMessage* reply;
+		guint32 operations_done;
+		guint32 operation_count;
 
+		j_message_send(message, data_connection);
+
+		reply = j_message_new_reply(message);
+
+		operations_done = 0;
+		operation_count = j_message_get_count(message);
+
+		it = j_list_iterator_new(operations);
+
+		while (operations_done < operation_count)
+		{
+			guint32 reply_operation_count;
+
+			j_message_receive(reply, data_connection);
+
+			reply_operation_count = j_message_get_count(reply);
+
+			for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
+			{
+				JObjectOperation* operation = j_list_iterator_get(it);
+				gpointer data = operation->read.data;
+				guint64* bytes_read = operation->read.bytes_read;
+
+				guint64 nbytes;
+
+				nbytes = j_message_get_8(reply);
+				*bytes_read = nbytes;
+
+				if (nbytes > 0)
+				{
+					GInputStream* input;
+
+					input = g_io_stream_get_input_stream(G_IO_STREAM(data_connection));
+					g_input_stream_read_all(input, data, nbytes, NULL, NULL, NULL);
+				}
+			}
+
+			operations_done += reply_operation_count;
+		}
+
+		j_list_iterator_free(it);
+
+		j_message_unref(reply);
+		j_message_unref(message);
+
+		j_connection_pool_push_data(object->index, data_connection);
+	}
+
+	/*
 	if (lock != NULL)
 	{
-		/* FIXME busy wait */
+		// FIXME busy wait
 		while (!j_lock_acquire(lock));
-	}
 
-	for (guint i = 0; i < n; i++)
-	{
-		JObjectBackgroundData* data;
-
-		if (messages[i] == NULL)
-		{
-			background_data[i] = NULL;
-			continue;
-		}
-
-		data = g_slice_new(JObjectBackgroundData);
-		data->message = messages[i];
-		data->index = i;
-		data->read.buffer_list = buffer_list[i];
-
-		background_data[i] = data;
-	}
-
-	j_helper_execute_parallel(j_object_read_background_operation, background_data, n);
-
-	if (lock != NULL)
-	{
 		j_lock_free(lock);
 	}
-
-	g_free(background_data);
-	g_free(messages);
-	g_free(buffer_list);
+	*/
 
 	j_trace_leave(G_STRFUNC);
 
-	return TRUE;
+	return ret;
 }
 
 static
@@ -1241,34 +1164,34 @@ j_object_delete (JObject* object, JBatch* batch)
  * \code
  * \endcode
  *
- * \param item       An item.
+ * \param object     An object.
  * \param data       A buffer to hold the read data.
  * \param length     Number of bytes to read.
- * \param offset     An offset within #item.
+ * \param offset     An offset within #object.
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
 void
-j_object_read (JObject* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
+j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(item != NULL);
+	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JObjectOperation);
-	iop->read.object = j_object_ref(item);
+	iop->read.object = j_object_ref(object);
 	iop->read.data = data;
 	iop->read.length = length;
 	iop->read.offset = offset;
 	iop->read.bytes_read = bytes_read;
 
 	operation = j_operation_new();
-	operation->key = item;
+	operation->key = object;
 	operation->data = iop;
 	operation->exec_func = j_object_read_exec;
 	operation->free_func = j_object_read_free;

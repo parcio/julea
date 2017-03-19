@@ -46,8 +46,11 @@ j_cmd_usage (void)
 	g_print("  create     object://index/namespace/name\n");
 	g_print("             julea://collection/[item]\n");
 	g_print("  create-all julea://collection/[item]\n");
-	g_print("  copy       julea://collection/item julea://collection/item\n");
+	g_print("  copy       object://index/namespace/name object://index/namespace/name\n");
+	g_print("             julea://collection/item julea://collection/item\n");
+	g_print("             object://index/namespace/name file://file\n");
 	g_print("             julea://collection/item file://file\n");
+	g_print("             file://file object://index/namespace/name\n");
 	g_print("             file://file julea://collection/item\n");
 	g_print("  delete     object://index/namespace/name\n");
 	g_print("             julea://collection/[item]\n");

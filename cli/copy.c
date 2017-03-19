@@ -27,6 +27,7 @@ j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	JBatch* batch;
+	JObjectURI* ouri[2] = { NULL, NULL };
 	JURI* uri[2] = { NULL, NULL };
 	GError* error;
 	GFile* file;
@@ -44,7 +45,22 @@ j_cmd_copy (gchar const** arguments)
 
 	for (i = 0; i <= 1; i++)
 	{
-		if ((uri[i] = j_uri_new(arguments[i])) != NULL)
+		if ((ouri[i] = j_object_uri_new(arguments[i])) != NULL)
+		{
+			if (i == 0)
+			{
+			}
+			else if (i == 1)
+			{
+				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+				j_object_create(j_object_uri_get_object(ouri[i]), batch);
+
+				j_batch_execute(batch);
+				j_batch_unref(batch);
+			}
+		}
+		else if ((uri[i] = j_uri_new(arguments[i])) != NULL)
 		{
 			error = NULL;
 
@@ -146,7 +162,16 @@ j_cmd_copy (gchar const** arguments)
 	{
 		guint64 bytes_read = 0;
 
-		if (uri[0] != NULL)
+		if (ouri[0] != NULL)
+		{
+			guint64 nbytes;
+
+			j_object_read(j_object_uri_get_object(ouri[0]), buffer, 1024 * 1024, offset, &nbytes, batch);
+			j_batch_execute(batch);
+
+			bytes_read = nbytes;
+		}
+		else if (uri[0] != NULL)
 		{
 			guint64 nbytes;
 
@@ -166,7 +191,14 @@ j_cmd_copy (gchar const** arguments)
 			bytes_read = nbytes;
 		}
 
-		if (uri[1] != NULL)
+		if (ouri[1] != NULL)
+		{
+			guint64 dummy;
+
+			j_object_write(j_object_uri_get_object(ouri[1]), buffer, bytes_read, offset, &dummy, batch);
+			j_batch_execute(batch);
+		}
+		else if (uri[1] != NULL)
 		{
 			guint64 dummy;
 
@@ -200,6 +232,11 @@ end:
 		if (stream[i] != NULL)
 		{
 			g_object_unref(stream[i]);
+		}
+
+		if (ouri[i] != NULL)
+		{
+			j_object_uri_free(ouri[i]);
 		}
 
 		if (uri[i] != NULL)
