@@ -42,7 +42,7 @@ j_cmd_delete (gchar const** arguments)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		j_object_delete(j_object_uri_get_index(ouri), j_object_uri_get_namespace(ouri), j_object_uri_get_name(ouri), batch);
+		j_object_delete(j_object_uri_get_object(ouri), batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);

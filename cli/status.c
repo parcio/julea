@@ -50,7 +50,7 @@ j_cmd_status (gchar const** arguments)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-		j_object_get_status(j_object_uri_get_index(ouri), j_object_uri_get_namespace(ouri), j_object_uri_get_name(ouri), &modification_time, &size, batch);
+		j_object_get_status(j_object_uri_get_object(ouri), &modification_time, &size, batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);

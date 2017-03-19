@@ -1051,7 +1051,6 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
  *
  * \return A new item. Should be freed with j_object_unref().
  **/
-static
 JObject*
 j_object_new (guint32 index, gchar const* namespace, gchar const* name)
 {
@@ -1066,9 +1065,10 @@ j_object_new (guint32 index, gchar const* namespace, gchar const* name)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	object = g_slice_new(JObject);
+	object->index = index;
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
-	object->index = index;
+	object->distribution = NULL;
 	object->status.age = g_get_real_time();
 	object->status.size = 0;
 	object->status.modification_time = g_get_real_time();
@@ -1129,10 +1129,14 @@ j_object_unref (JObject* item)
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
-		j_distribution_unref(item->distribution);
+		if (item->distribution != NULL)
+		{
+			j_distribution_unref(item->distribution);
+		}
 
 		g_free(item->status.created);
 		g_free(item->name);
+		g_free(item->namespace);
 
 		g_slice_free(JObject, item);
 	}
@@ -1177,21 +1181,14 @@ j_object_get_name (JObject* item)
  *
  * \return A new item. Should be freed with j_object_unref().
  **/
-JObject*
-j_object_create (guint32 index, gchar const* namespace, gchar const* name, JBatch* batch)
+void
+j_object_create (JObject* object, JBatch* batch)
 {
-	JObject* object;
 	JOperation* operation;
 
-	g_return_val_if_fail(namespace != NULL, NULL);
-	g_return_val_if_fail(name != NULL, NULL);
+	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
-
-	if ((object = j_object_new(index, namespace, name)) == NULL)
-	{
-		goto end;
-	}
 
 	operation = j_operation_new();
 	// FIXME key = index + namespace
@@ -1202,10 +1199,7 @@ j_object_create (guint32 index, gchar const* namespace, gchar const* name, JBatc
 
 	j_batch_add(batch, operation);
 
-end:
 	j_trace_leave(G_STRFUNC);
-
-	return object;
 }
 
 /**
@@ -1220,20 +1214,13 @@ end:
  * \param batch      A batch.
  **/
 void
-j_object_delete (guint32 index, gchar const* namespace, gchar const* name, JBatch* batch)
+j_object_delete (JObject* object, JBatch* batch)
 {
-	JObject* object;
 	JOperation* operation;
 
-	g_return_if_fail(namespace != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
-
-	if ((object = j_object_new(index, namespace, name)) == NULL)
-	{
-		goto end;
-	}
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -1243,7 +1230,6 @@ j_object_delete (guint32 index, gchar const* namespace, gchar const* name, JBatc
 
 	j_batch_add(batch, operation);
 
-end:
 	j_trace_leave(G_STRFUNC);
 }
 
@@ -1354,21 +1340,14 @@ j_object_write (JObject* item, gconstpointer data, guint64 length, guint64 offse
  * \param batch     A batch.
  **/
 void
-j_object_get_status (guint32 index, gchar const* namespace, gchar const* name, gint64* modification_time, guint64* size, JBatch* batch)
+j_object_get_status (JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
-	JObject* object;
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(namespace != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
-
-	if ((object = j_object_new(index, namespace, name)) == NULL)
-	{
-		goto end;
-	}
 
 	iop = g_slice_new(JObjectOperation);
 	iop->get_status.object = j_object_ref(object);
@@ -1383,7 +1362,6 @@ j_object_get_status (guint32 index, gchar const* namespace, gchar const* name, g
 
 	j_batch_add(batch, operation);
 
-end:
 	j_trace_leave(G_STRFUNC);
 }
 

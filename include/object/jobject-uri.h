@@ -35,12 +35,16 @@ typedef struct JObjectURI JObjectURI;
 
 #include <glib.h>
 
+#include <object/jobject.h>
+
 JObjectURI* j_object_uri_new (gchar const*);
 void j_object_uri_free (JObjectURI*);
 
 guint32 j_object_uri_get_index (JObjectURI*);
 gchar const* j_object_uri_get_namespace (JObjectURI*);
 gchar const* j_object_uri_get_name (JObjectURI*);
+
+JObject* j_object_uri_get_object (JObjectURI*);
 
 /**
  * @}

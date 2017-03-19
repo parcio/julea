@@ -163,7 +163,7 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 		g_free(full_path);
 
 		// FIXME
-		fd = 0;
+		fd = file->fd;
 
 		goto end;
 	}
@@ -208,7 +208,7 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 		g_free(full_path);
 
 		// FIXME
-		fd = 0;
+		fd = file->fd;
 
 		goto end;
 	}

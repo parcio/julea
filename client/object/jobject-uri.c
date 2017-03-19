@@ -26,6 +26,8 @@
 
 #include <object/jobject-uri.h>
 
+#include <object/jobject.h>
+
 #include <string.h>
 
 /**
@@ -53,6 +55,11 @@ struct JObjectURI
 	 * The name.
 	 **/
 	gchar* name;
+
+	/**
+	 * The object.
+	 **/
+	JObject* object;
 };
 
 /**
@@ -106,6 +113,7 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 	uri->index = g_ascii_strtoull(parts[0], NULL, 10);
 	uri->namespace = g_strdup(parts[1]);
 	uri->name = g_strdup(parts[2]);
+	uri->object = j_object_new(uri->index, uri->namespace, uri->name);
 
 	g_strfreev(parts);
 
@@ -142,6 +150,7 @@ j_object_uri_new (gchar const* uri_)
 	uri->index = 0;
 	uri->namespace = NULL;
 	uri->name = NULL;
+	uri->object = NULL;
 
 	if (!j_object_uri_parse(uri, uri_))
 	{
@@ -172,6 +181,8 @@ void
 j_object_uri_free (JObjectURI* uri)
 {
 	g_return_if_fail(uri != NULL);
+
+	j_object_unref(uri->object);
 
 	g_free(uri->namespace);
 	g_free(uri->name);
@@ -252,6 +263,31 @@ j_object_uri_get_name (JObjectURI* uri)
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->name;
+}
+
+/**
+ * Returns the object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_object(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The object.
+ **/
+JObject*
+j_object_uri_get_object (JObjectURI* uri)
+{
+	g_return_val_if_fail(uri != NULL, NULL);
+
+	return uri->object;
 }
 
 /**
