@@ -613,6 +613,11 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 		it = j_list_iterator_new(operations);
 
+		/**
+		 * This extra loop is necessary because the server might send multiple
+		 * replies per message. The same reply object can be used to receive
+		 * multiple times.
+		 */
 		while (operations_done < operation_count)
 		{
 			guint32 reply_operation_count;
