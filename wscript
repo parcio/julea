@@ -179,6 +179,9 @@ def configure (ctx):
 		ctx.env.CFLAGS += ['-O2']
 
 	if ctx.options.debug:
+		ctx.define('JULEA_DEBUG', 1)
+
+	if ctx.options.debug:
 		# Context.out_dir is empty after the first configure
 		out_dir = os.path.abspath(out)
 		ctx.define('JULEA_BACKEND_PATH_BUILD', '{0}/backend'.format(out_dir))

@@ -678,6 +678,8 @@ main (int argc, char** argv)
 	GModule* meta_module = NULL;
 	GOptionContext* context;
 	GSocketService* socket_service;
+	gchar const* data_path;
+	gchar const* meta_path;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -740,17 +742,30 @@ main (int argc, char** argv)
 	data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend);
 	meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend);
 
-	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, j_configuration_get_data_path(configuration)))
+	data_path = j_configuration_get_data_path(configuration);
+	meta_path = j_configuration_get_metadata_path(configuration);
+
+#ifdef JULEA_DEBUG
+	data_path = g_strdup_printf("%s/%d", data_path, opt_port);
+	meta_path = g_strdup_printf("%s/%d", meta_path, opt_port);
+#endif
+
+	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, data_path))
 	{
 		g_printerr("Could not initialize data backend.\n");
 		return 1;
 	}
 
-	if (jd_meta_backend != NULL && !j_backend_meta_init(jd_meta_backend, j_configuration_get_metadata_path(configuration)))
+	if (jd_meta_backend != NULL && !j_backend_meta_init(jd_meta_backend, meta_path))
 	{
 		g_printerr("Could not initialize metadata backend.\n");
 		return 1;
 	}
+
+#ifdef JULEA_DEBUG
+	g_free((gchar*)meta_path);
+	g_free((gchar*)data_path);
+#endif
 
 	j_configuration_unref(configuration);
 
