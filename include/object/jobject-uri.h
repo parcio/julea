@@ -35,7 +35,7 @@ enum JObjectURIScheme
 	J_OBJECT_URI_SCHEME_NAMESPACE,
 	// object://index/namespace/object
 	J_OBJECT_URI_SCHEME_OBJECT,
-	// object://namespace/object
+	// dobject://namespace/object
 	J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT
 };
 

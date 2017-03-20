@@ -88,35 +88,39 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 {
 	gchar** parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
+	gchar const* scheme_prefix = NULL;
 	guint parts_len;
 	guint scheme_parts = 0;
 	guint i;
-
-	if (!g_str_has_prefix(uri_, "object://"))
-	{
-		goto error;
-	}
 
 	switch (uri->scheme)
 	{
 		case J_OBJECT_URI_SCHEME_NAMESPACE:
 			// object://index/namespace
 			scheme_parts = 2;
+			scheme_prefix = "object://";
 			break;
 		case J_OBJECT_URI_SCHEME_OBJECT:
 			// object://index/namespace/object
 			scheme_parts = 3;
+			scheme_prefix = "object://";
 			break;
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
-			// object://namespace/object
+			// dobject://namespace/object
 			scheme_parts = 2;
+			scheme_prefix = "dobject://";
 			break;
 		default:
 			g_warn_if_reached();
 			break;
 	}
 
-	parts = g_strsplit(uri_ + strlen("object://"), "/", scheme_parts);
+	if (!g_str_has_prefix(uri_, scheme_prefix))
+	{
+		goto error;
+	}
+
+	parts = g_strsplit(uri_ + strlen(scheme_prefix), "/", scheme_parts);
 	parts_len = g_strv_length(parts);
 
 	if (parts_len != scheme_parts)
@@ -136,7 +140,7 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 	{
 		case J_OBJECT_URI_SCHEME_NAMESPACE:
 		case J_OBJECT_URI_SCHEME_OBJECT:
-			for (i = 0; i < 2; i++)
+			for (i = 0; i < G_N_ELEMENTS(illegal); i++)
 			{
 				if (strpbrk(parts[i], illegal[i]) != NULL)
 				{
@@ -145,7 +149,7 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 			}
 			break;
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
-			for (i = 1; i < 2; i++)
+			for (i = 1; i < G_N_ELEMENTS(illegal); i++)
 			{
 				if (strpbrk(parts[i - 1], illegal[i]) != NULL)
 				{
