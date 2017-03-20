@@ -45,7 +45,7 @@ j_cmd_copy (gchar const** arguments)
 
 	for (i = 0; i <= 1; i++)
 	{
-		if ((ouri[i] = j_object_uri_new(arguments[i])) != NULL)
+		if ((ouri[i] = j_object_uri_new(arguments[i], J_OBJECT_URI_SCHEME_OBJECT)) != NULL)
 		{
 			if (i == 0)
 			{

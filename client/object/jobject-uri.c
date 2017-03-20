@@ -41,6 +41,8 @@
  **/
 struct JObjectURI
 {
+	JObjectURIScheme scheme;
+
 	/**
 	 * The index.
 	 */
@@ -85,7 +87,9 @@ gboolean
 j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 {
 	gchar** parts = NULL;
+	gchar const* illegal[2] = { "/", "/" };
 	guint parts_len;
+	guint scheme_parts = 0;
 	guint i;
 
 	if (!g_str_has_prefix(uri_, "object://"))
@@ -93,10 +97,29 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 		goto error;
 	}
 
-	parts = g_strsplit(uri_ + strlen("object://"), "/", 3);
+	switch (uri->scheme)
+	{
+		case J_OBJECT_URI_SCHEME_NAMESPACE:
+			// object://index/namespace
+			scheme_parts = 2;
+			break;
+		case J_OBJECT_URI_SCHEME_OBJECT:
+			// object://index/namespace/object
+			scheme_parts = 3;
+			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
+			// object://namespace/object
+			scheme_parts = 2;
+			break;
+		default:
+			g_warn_if_reached();
+			break;
+	}
+
+	parts = g_strsplit(uri_ + strlen("object://"), "/", scheme_parts);
 	parts_len = g_strv_length(parts);
 
-	if (parts_len != 3)
+	if (parts_len != scheme_parts)
 	{
 		goto error;
 	}
@@ -109,11 +132,57 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 		}
 	}
 
-	// FIXME check for errors
-	uri->index = g_ascii_strtoull(parts[0], NULL, 10);
-	uri->namespace = g_strdup(parts[1]);
-	uri->name = g_strdup(parts[2]);
-	uri->object = j_object_new(uri->index, uri->namespace, uri->name);
+	switch (uri->scheme)
+	{
+		case J_OBJECT_URI_SCHEME_NAMESPACE:
+		case J_OBJECT_URI_SCHEME_OBJECT:
+			for (i = 0; i < 2; i++)
+			{
+				if (strpbrk(parts[i], illegal[i]) != NULL)
+				{
+					goto error;
+				}
+			}
+			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
+			for (i = 1; i < 2; i++)
+			{
+				if (strpbrk(parts[i - 1], illegal[i]) != NULL)
+				{
+					goto error;
+				}
+			}
+			break;
+		default:
+			g_warn_if_reached();
+			break;
+	}
+
+	switch (uri->scheme)
+	{
+		case J_OBJECT_URI_SCHEME_NAMESPACE:
+		case J_OBJECT_URI_SCHEME_OBJECT:
+			// FIXME check for errors
+			uri->index = g_ascii_strtoull(parts[0], NULL, 10);
+			uri->namespace = g_strdup(parts[1]);
+
+			if (parts_len >= 3)
+			{
+				uri->name = g_strdup(parts[2]);
+				uri->object = j_object_new(uri->index, uri->namespace, uri->name);
+			}
+			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
+			uri->namespace = g_strdup(parts[0]);
+			uri->name = g_strdup(parts[1]);
+
+			// FIXME
+			//uri->object = j_object_new(uri->index, uri->namespace, uri->name);
+			break;
+		default:
+			g_warn_if_reached();
+			break;
+	}
 
 	g_strfreev(parts);
 
@@ -141,12 +210,13 @@ error:
  * \return A new URI. Should be freed with j_object_uri_free().
  **/
 JObjectURI*
-j_object_uri_new (gchar const* uri_)
+j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 {
 	JObjectURI* uri;
 
 	uri = g_slice_new(JObjectURI);
 
+	uri->scheme = scheme;
 	uri->index = 0;
 	uri->namespace = NULL;
 	uri->name = NULL;

@@ -29,6 +29,18 @@
  * @{
  **/
 
+enum JObjectURIScheme
+{
+	// object://index/namespace
+	J_OBJECT_URI_SCHEME_NAMESPACE,
+	// object://index/namespace/object
+	J_OBJECT_URI_SCHEME_OBJECT,
+	// object://namespace/object
+	J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT
+};
+
+typedef enum JObjectURIScheme JObjectURIScheme;
+
 struct JObjectURI;
 
 typedef struct JObjectURI JObjectURI;
@@ -37,7 +49,7 @@ typedef struct JObjectURI JObjectURI;
 
 #include <object/jobject.h>
 
-JObjectURI* j_object_uri_new (gchar const*);
+JObjectURI* j_object_uri_new (gchar const*, JObjectURIScheme);
 void j_object_uri_free (JObjectURI*);
 
 guint32 j_object_uri_get_index (JObjectURI*);

@@ -38,7 +38,7 @@ j_cmd_status (gchar const** arguments)
 		goto end;
 	}
 
-	ouri = j_object_uri_new(arguments[0]);
+	ouri = j_object_uri_new(arguments[0], J_OBJECT_URI_SCHEME_OBJECT);
 
 	if (ouri != NULL)
 	{
