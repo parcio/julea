@@ -30,14 +30,10 @@
 
 #include <object/jobject.h>
 
-#include <jbackground-operation-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
-#include <jdistribution.h>
-#include <jdistribution-internal.h>
-#include <jhelper-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>

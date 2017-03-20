@@ -40,23 +40,21 @@ void
 j_cmd_usage (void)
 {
 	g_print("Usage:\n");
-	g_print("  %s COMMAND\n", g_get_prgname());
+	g_print("  %s COMMAND ARGUMENTS\n", g_get_prgname());
 	g_print("\n");
 	g_print("Commands:\n");
-	g_print("  create     object://index/namespace/name\n");
-	g_print("             julea://collection/[item]\n");
-	g_print("  create-all julea://collection/[item]\n");
-	g_print("  copy       object://index/namespace/name object://index/namespace/name\n");
-	g_print("             julea://collection/item julea://collection/item\n");
-	g_print("             object://index/namespace/name file://file\n");
-	g_print("             julea://collection/item file://file\n");
-	g_print("             file://file object://index/namespace/name\n");
-	g_print("             file://file julea://collection/item\n");
-	g_print("  delete     object://index/namespace/name\n");
-	g_print("             julea://collection/[item]\n");
-	g_print("  list       julea://[collection]\n");
-	g_print("  status     object://index/namespace/name\n");
-	g_print("             julea://collection/item\n");
+	g_print("  create      uri\n");
+	g_print("  create-all  uri\n");
+	g_print("  copy        src-uri dst-uri\n");
+	g_print("  delete      uri\n");
+	g_print("  list        uri\n");
+	g_print("  status      uri\n");
+	g_print("\n");
+	g_print("URIs:\n");
+	g_print("  object://index/namespace[/name]\n");
+	g_print("  dobject://namespace/name\n");
+	g_print("  julea://collection[/item]\n");
+	g_print("  file://path\n");
 	g_print("\n");
 }
 

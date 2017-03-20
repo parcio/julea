@@ -35,6 +35,8 @@ enum JObjectURIScheme
 	J_OBJECT_URI_SCHEME_NAMESPACE,
 	// object://index/namespace/object
 	J_OBJECT_URI_SCHEME_OBJECT,
+	// dobject://namespace
+	J_OBJECT_URI_SCHEME_DISTRIBUTED_NAMESPACE,
 	// dobject://namespace/object
 	J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT
 };
@@ -47,6 +49,7 @@ typedef struct JObjectURI JObjectURI;
 
 #include <glib.h>
 
+#include <object/jdistributed-object.h>
 #include <object/jobject.h>
 
 JObjectURI* j_object_uri_new (gchar const*, JObjectURIScheme);
@@ -56,6 +59,7 @@ guint32 j_object_uri_get_index (JObjectURI*);
 gchar const* j_object_uri_get_namespace (JObjectURI*);
 gchar const* j_object_uri_get_name (JObjectURI*);
 
+JDistributedObject* j_object_uri_get_distributed_object (JObjectURI*);
 JObject* j_object_uri_get_object (JObjectURI*);
 
 /**

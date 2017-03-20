@@ -26,6 +26,7 @@ gboolean
 j_cmd_create (gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
+	JObjectURI* duri = NULL;
 	JObjectURI* ouri = NULL;
 	JURI* uri = NULL;
 	GError* error = NULL;
@@ -46,6 +47,22 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 		j_object_create(j_object_uri_get_object(ouri), batch);
+
+		j_batch_execute(batch);
+		j_batch_unref(batch);
+
+		goto end;
+	}
+
+	duri = j_object_uri_new(arguments[0], J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT);
+
+	if (duri != NULL)
+	{
+		JBatch* batch;
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+		j_distributed_object_create(j_object_uri_get_distributed_object(duri), batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);
@@ -74,6 +91,11 @@ end:
 	if (ouri != NULL)
 	{
 		j_object_uri_free(ouri);
+	}
+
+	if (duri != NULL)
+	{
+		j_object_uri_free(duri);
 	}
 
 	if (uri != NULL)

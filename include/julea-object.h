@@ -23,6 +23,7 @@
 #ifndef H_JULEA_OBJECT
 #define H_JULEA_OBJECT
 
+#include <object/jdistributed-object.h>
 #include <object/jobject.h>
 #include <object/jobject-iterator.h>
 #include <object/jobject-uri.h>

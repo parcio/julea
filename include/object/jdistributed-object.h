@@ -30,8 +30,9 @@ struct JDistributedObject;
 typedef struct JDistributedObject JDistributedObject;
 
 #include <jbatch.h>
+#include <jdistribution.h>
 
-JDistributedObject* j_distributed_object_new (guint32, gchar const*, gchar const*);
+JDistributedObject* j_distributed_object_new (gchar const*, gchar const*, JDistribution*);
 JDistributedObject* j_distributed_object_ref (JDistributedObject*);
 void j_distributed_object_unref (JDistributedObject*);
 

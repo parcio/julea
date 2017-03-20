@@ -59,6 +59,11 @@ struct JObjectURI
 	gchar* name;
 
 	/**
+	 * The distributed object.
+	 **/
+	JDistributedObject* distributed_object;
+
+	/**
 	 * The object.
 	 **/
 	JObject* object;
@@ -105,6 +110,11 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 			scheme_parts = 3;
 			scheme_prefix = "object://";
 			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_NAMESPACE:
+			// dobject://namespace
+			scheme_parts = 1;
+			scheme_prefix = "dobject://";
+			break;
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
 			// dobject://namespace/object
 			scheme_parts = 2;
@@ -148,6 +158,7 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 				}
 			}
 			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_NAMESPACE:
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
 			for (i = 1; i < G_N_ELEMENTS(illegal); i++)
 			{
@@ -176,12 +187,23 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 				uri->object = j_object_new(uri->index, uri->namespace, uri->name);
 			}
 			break;
+		case J_OBJECT_URI_SCHEME_DISTRIBUTED_NAMESPACE:
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT:
 			uri->namespace = g_strdup(parts[0]);
-			uri->name = g_strdup(parts[1]);
 
-			// FIXME
-			//uri->object = j_object_new(uri->index, uri->namespace, uri->name);
+			if (parts_len >= 2)
+			{
+				JDistribution* distribution;
+
+				// FIXME
+				distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+				j_distribution_set(distribution, "start-index", 0);
+
+				uri->name = g_strdup(parts[1]);
+				uri->distributed_object = j_distributed_object_new(uri->namespace, uri->name, distribution);
+
+				j_distribution_unref(distribution);
+			}
 			break;
 		default:
 			g_warn_if_reached();
@@ -224,6 +246,7 @@ j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 	uri->index = 0;
 	uri->namespace = NULL;
 	uri->name = NULL;
+	uri->distributed_object = NULL;
 	uri->object = NULL;
 
 	if (!j_object_uri_parse(uri, uri_))
@@ -256,7 +279,15 @@ j_object_uri_free (JObjectURI* uri)
 {
 	g_return_if_fail(uri != NULL);
 
-	j_object_unref(uri->object);
+	if (uri->distributed_object != NULL)
+	{
+		j_distributed_object_unref(uri->distributed_object);
+	}
+
+	if (uri->object != NULL)
+	{
+		j_object_unref(uri->object);
+	}
 
 	g_free(uri->namespace);
 	g_free(uri->name);
@@ -337,6 +368,31 @@ j_object_uri_get_name (JObjectURI* uri)
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->name;
+}
+
+/**
+ * Returns the object.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_object(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The object.
+ **/
+JDistributedObject*
+j_object_uri_get_distributed_object (JObjectURI* uri)
+{
+	g_return_val_if_fail(uri != NULL, NULL);
+
+	return uri->distributed_object;
 }
 
 /**
