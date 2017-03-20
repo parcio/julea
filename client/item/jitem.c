@@ -1396,6 +1396,8 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	JBackend* meta_backend;
 	JCollection* collection = NULL;
 	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 	gchar const* item_name;
 	gchar const* collection_name;
@@ -1428,6 +1430,12 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	{
 		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
 	}
+	else
+	{
+		meta_connection = j_connection_pool_pop_meta(0);
+		message = j_message_new(J_MESSAGE_META_DELETE, 6);
+		j_message_append_n(message, "items", 6);
+	}
 
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
@@ -1444,6 +1452,15 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 		{
 			ret = j_backend_meta_delete(meta_backend, meta_batch, path) && ret;
 		}
+		else
+		{
+			gsize path_len;
+
+			path_len = strlen(path) + 1;
+
+			j_message_add_operation(message, path_len);
+			j_message_append_n(message, path, path_len);
+		}
 
 		//bson_init(&b);
 		//bson_append_oid(&b, "_id", -1, j_item_get_id(item));
@@ -1457,6 +1474,12 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	if (meta_backend != NULL)
 	{
 		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
+	}
+	else
+	{
+		j_message_send(message, meta_connection);
+		j_message_unref(message);
+		j_connection_pool_push_meta(0, meta_connection);
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
