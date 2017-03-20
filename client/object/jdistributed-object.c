@@ -246,6 +246,8 @@ j_distributed_object_create_background_operation (gpointer data)
 	gchar const* namespace;
 	gsize namespace_len;
 
+	j_trace_enter(G_STRFUNC, NULL);
+
 	{
 		JDistributedObject* object;
 
@@ -262,7 +264,16 @@ j_distributed_object_create_background_operation (gpointer data)
 	if (data_backend == NULL)
 	{
 		data_connection = j_connection_pool_pop_data(background_data->index);
+		/**
+		 * Force safe semantics to make the server send a reply.
+		 * Otherwise, nasty races can occur when using unsafe semantics:
+		 * - The client creates the item and sends its first write.
+		 * - The client sends another operation using another connection from the pool.
+		 * - The second operation is executed first and fails because the item does not exist.
+		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
+		 **/
 		message = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
+		j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -296,6 +307,107 @@ j_distributed_object_create_background_operation (gpointer data)
 	}
 
 	j_list_iterator_free(it);
+
+	j_trace_leave(G_STRFUNC);
+
+	g_slice_free(JDistributedObjectBackgroundData, background_data);
+
+	return NULL;
+}
+
+/**
+ * Executes create operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_distributed_object_delete_background_operation (gpointer data)
+{
+	JDistributedObjectBackgroundData* background_data = data;
+
+	gboolean ret = FALSE;
+
+	JBackend* data_backend;
+	JListIterator* it;
+	JMessage* message;
+	GSocketConnection* data_connection;
+	gchar const* namespace;
+	gsize namespace_len;
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	{
+		JDistributedObject* object;
+
+		object = j_list_get_first(background_data->operations);
+		g_assert(object != NULL);
+
+		namespace = object->namespace;
+		namespace_len = strlen(namespace) + 1;
+	}
+
+	it = j_list_iterator_new(background_data->operations);
+	data_backend = j_data_backend();
+
+	if (data_backend == NULL)
+	{
+		data_connection = j_connection_pool_pop_data(background_data->index);
+		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
+		j_message_set_safety(message, background_data->semantics);
+		j_message_append_n(message, namespace, namespace_len);
+	}
+
+	while (j_list_iterator_next(it))
+	{
+		JDistributedObject* object = j_list_iterator_get(it);
+
+		if (data_backend != NULL)
+		{
+			gpointer object_handle;
+
+			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_data_delete(data_backend, object_handle) && ret;
+		}
+		else
+		{
+			gsize name_len;
+
+			name_len = strlen(object->name) + 1;
+
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, object->name, name_len);
+		}
+	}
+
+	if (data_backend == NULL)
+	{
+		j_message_send(message, data_connection);
+
+		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
+		{
+			JMessage* reply;
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, data_connection);
+
+			/* FIXME do something with reply */
+			j_message_unref(reply);
+		}
+
+		j_message_unref(message);
+		j_connection_pool_push_data(background_data->index, data_connection);
+	}
+
+	j_list_iterator_free(it);
+
+	j_trace_leave(G_STRFUNC);
 
 	g_slice_free(JDistributedObjectBackgroundData, background_data);
 
@@ -344,89 +456,38 @@ static
 gboolean
 j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
-
-	JBackend* data_backend;
-	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* data_connection;
-	gchar const* namespace;
-	gsize namespace_len;
-	guint32 index;
+	gpointer* background_data;
+	guint32 server_count;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	server_count = j_configuration_get_data_server_count(j_configuration());
+	background_data = g_new(gpointer, server_count);
+
+	// FIXME use actual distribution
+	for (guint i = 0; i < server_count; i++)
 	{
-		JDistributedObject* object;
+		JDistributedObjectBackgroundData* data;
 
-		object = j_list_get_first(operations);
-		g_assert(object != NULL);
+		data = g_slice_new(JDistributedObjectBackgroundData);
+		data->operations = operations;
+		data->semantics = semantics;
+		data->index = i;
 
-		namespace = object->namespace;
-		namespace_len = strlen(namespace) + 1;
-		index = 0;
+		background_data[i] = data;
 	}
 
-	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 
-	if (data_backend == NULL)
-	{
-		data_connection = j_connection_pool_pop_data(index);
-		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
-		j_message_set_safety(message, semantics);
-		j_message_append_n(message, namespace, namespace_len);
-	}
-
-	while (j_list_iterator_next(it))
-	{
-		JDistributedObject* object = j_list_iterator_get(it);
-
-		if (data_backend != NULL)
-		{
-			gpointer object_handle;
-
-			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_data_delete(data_backend, object_handle) && ret;
-		}
-		else
-		{
-			gsize name_len;
-
-			name_len = strlen(object->name) + 1;
-
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, object->name, name_len);
-		}
-	}
-
-	if (data_backend == NULL)
-	{
-		j_message_send(message, data_connection);
-
-		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
-		{
-			JMessage* reply;
-
-			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
-
-			/* FIXME do something with reply */
-			j_message_unref(reply);
-		}
-
-		j_message_unref(message);
-		j_connection_pool_push_data(index, data_connection);
-	}
-
-	j_list_iterator_free(it);
+	g_free(background_data);
 
 	j_trace_leave(G_STRFUNC);
 
-	return ret;
+	// FIXME
+	return TRUE;
 }
 
 static

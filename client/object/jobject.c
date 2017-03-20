@@ -199,7 +199,16 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	if (data_backend == NULL)
 	{
 		data_connection = j_connection_pool_pop_data(index);
+		/**
+		 * Force safe semantics to make the server send a reply.
+		 * Otherwise, nasty races can occur when using unsafe semantics:
+		 * - The client creates the item and sends its first write.
+		 * - The client sends another operation using another connection from the pool.
+		 * - The second operation is executed first and fails because the item does not exist.
+		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
+		 **/
 		message = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
+		j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
