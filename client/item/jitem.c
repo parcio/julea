@@ -34,6 +34,8 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
+#include <object/jdistributed-object.h>
+
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
@@ -101,18 +103,6 @@ struct JItemBackgroundData
 			JList* buffer_list;
 		}
 		read_status;
-
-		/**
-		 * The write part.
-		 */
-		struct
-		{
-			/**
-			 * The create message.
-			 */
-			JMessage* create_message;
-		}
-		write;
 	};
 };
 
@@ -225,6 +215,8 @@ struct JItem
 	JCredentials* credentials;
 	JDistribution* distribution;
 
+	JDistributedObject* object;
+
 	/**
 	 * The status.
 	 **/
@@ -243,8 +235,6 @@ struct JItem
 		 * Stored in microseconds since the Epoch.
 		 */
 		gint64 modification_time;
-
-		gboolean* created;
 	}
 	status;
 
@@ -326,47 +316,6 @@ j_item_write_free (gpointer data)
 	j_item_unref(operation->write.item);
 
 	g_slice_free(JItemOperation, operation);
-}
-
-/**
- * Executes delete operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_item_delete_background_operation (gpointer data)
-{
-	JItemBackgroundData* background_data = data;
-	JMessage* reply;
-	GSocketConnection* connection;
-
-	connection = j_connection_pool_pop_data(background_data->index);
-
-	j_message_send(background_data->message, connection);
-
-	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
-	{
-		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, connection);
-
-		/* FIXME do something with reply */
-		j_message_unref(reply);
-	}
-
-	j_connection_pool_push_data(background_data->index, connection);
-
-	j_message_unref(background_data->message);
-
-	g_slice_free(JItemBackgroundData, background_data);
-
-	return NULL;
 }
 
 /**
@@ -472,21 +421,6 @@ j_item_write_background_operation (gpointer data)
 	GSocketConnection* connection;
 
 	connection = j_connection_pool_pop_data(background_data->index);
-
-	if (background_data->write.create_message != NULL)
-	{
-		j_message_send(background_data->write.create_message, connection);
-
-		/* This will always be true, see j_item_write_exec(). */
-		if (j_message_get_type_modifier(background_data->write.create_message) & J_MESSAGE_SAFETY_NETWORK)
-		{
-			reply = j_message_new_reply(background_data->write.create_message);
-			j_message_receive(reply, connection);
-			j_message_unref(reply);
-		}
-
-		j_message_unref(background_data->write.create_message);
-	}
 
 	j_message_send(background_data->message, connection);
 
@@ -620,6 +554,11 @@ j_item_unref (JItem* item)
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
+		if (item->object != NULL)
+		{
+			j_distributed_object_unref(item->object);
+		}
+
 		if (item->collection != NULL)
 		{
 			j_collection_unref(item->collection);
@@ -628,7 +567,6 @@ j_item_unref (JItem* item)
 		j_credentials_unref(item->credentials);
 		j_distribution_unref(item->distribution);
 
-		g_free(item->status.created);
 		g_free(item->name);
 
 		g_slice_free(JItem, item);
@@ -702,6 +640,7 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 	operation->exec_func = j_item_create_exec;
 	operation->free_func = j_item_create_free;
 
+	j_distributed_object_create(item->object, batch);
 	j_batch_add(batch, operation);
 
 end:
@@ -785,6 +724,7 @@ j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
 	operation->free_func = j_item_delete_free;
 
 	j_batch_add(batch, operation);
+	j_distributed_object_delete(item->object, batch);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -1018,6 +958,7 @@ JItem*
 j_item_new (JCollection* collection, gchar const* name, JDistribution* distribution)
 {
 	JItem* item = NULL;
+	gchar* path;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -1042,9 +983,12 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	item->status.age = g_get_real_time();
 	item->status.size = 0;
 	item->status.modification_time = g_get_real_time();
-	item->status.created = NULL;
 	item->collection = j_collection_ref(collection);
 	item->ref_count = 1;
+
+	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+	item->object = j_distributed_object_new("item", path, item->distribution);
+	g_free(path);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -1071,6 +1015,7 @@ JItem*
 j_item_new_from_bson (JCollection* collection, bson_t const* b)
 {
 	JItem* item;
+	gchar* path;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
@@ -1084,11 +1029,14 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	item->status.age = 0;
 	item->status.size = 0;
 	item->status.modification_time = 0;
-	item->status.created = NULL;
 	item->collection = j_collection_ref(collection);
 	item->ref_count = 1;
 
 	j_item_deserialize(item, b);
+
+	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+	item->object = j_distributed_object_new("item", path, item->distribution);
+	g_free(path);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -1448,12 +1396,9 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	JBackend* meta_backend;
 	JCollection* collection = NULL;
 	JListIterator* it;
-	JMessage** messages;
 	gboolean ret = TRUE;
-	guint n;
 	gchar const* item_name;
 	gchar const* collection_name;
-	gpointer* background_data;
 	gpointer meta_batch;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1464,15 +1409,6 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	/*
 		IsInitialized(true);
 	*/
-
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_data = g_new(gpointer, n);
-	messages = g_new(JMessage*, n);
-
-	for (guint i = 0; i < n; i++)
-	{
-		messages[i] = NULL;
-	}
 
 	{
 		JItemOperation* operation;
@@ -1499,12 +1435,10 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 		JItemOperation* operation = j_list_iterator_get(it);
 		JItem* item = operation->delete.item;
 		gchar* path;
-		gsize path_len;
 
 		item_name = j_item_get_name(item);
 
 		path = g_build_path("/", collection_name, item_name, NULL);
-		path_len = strlen(path) + 1;
 
 		if (meta_backend != NULL)
 		{
@@ -1515,21 +1449,7 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 		//bson_append_oid(&b, "_id", -1, j_item_get_id(item));
 		//bson_finish(&b);
 
-		for (guint i = 0; i < n; i++)
-		{
-			if (messages[i] == NULL)
-			{
-				/* FIXME */
-				messages[i] = j_message_new(J_MESSAGE_DATA_DELETE, 5);
-				j_message_set_safety(messages[i], semantics);
-				j_message_append_n(messages[i], "item", 5);
-			}
-
-			j_message_add_operation(messages[i], path_len);
-			j_message_append_n(messages[i], path, path_len);
-
-			g_free(path);
-		}
+		g_free(path);
 	}
 
 	j_list_iterator_free(it);
@@ -1540,28 +1460,6 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
-
-	for (guint i = 0; i < n; i++)
-	{
-		JItemBackgroundData* data;
-
-		if (messages[i] == NULL)
-		{
-			background_data[i] = NULL;
-			continue;
-		}
-
-		data = g_slice_new(JItemBackgroundData);
-		data->message = messages[i];
-		data->index = i;
-
-		background_data[i] = data;
-	}
-
-	j_helper_execute_parallel(j_item_delete_background_operation, background_data, n);
-
-	g_free(background_data);
-	g_free(messages);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -1990,7 +1888,6 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 	for (guint i = 0; i < n; i++)
 	{
 		JItemBackgroundData* data;
-		JMessage* create_message = NULL;
 
 		if (messages[i] == NULL)
 		{
@@ -1998,40 +1895,9 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 			continue;
 		}
 
-		if (item->status.created == NULL)
-		{
-			item->status.created = g_new(gboolean, n);
-
-			for (guint j = 0; j < n; j++)
-			{
-				item->status.created[j] = FALSE;
-			}
-		}
-
-		if (!item->status.created[i])
-		{
-			/* FIXME better solution? */
-			create_message = j_message_new(J_MESSAGE_DATA_CREATE, 5);
-			/**
-			 * Force safe semantics to make the server send a reply.
-			 * Otherwise, nasty races can occur when using unsafe semantics:
-			 * - The client creates the item and sends its first write.
-			 * - The client sends another operation using another connection from the pool.
-			 * - The second operation is executed first and fails because the item does not exist.
-			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
-			 **/
-			j_message_force_safety(create_message, J_SEMANTICS_SAFETY_NETWORK);
-			j_message_append_n(create_message, "item", 5);
-			j_message_add_operation(create_message, path_len);
-			j_message_append_n(create_message, path, path_len);
-
-			item->status.created[i] = TRUE;
-		}
-
 		data = g_slice_new(JItemBackgroundData);
 		data->message = messages[i];
 		data->index = i;
-		data->write.create_message = create_message;
 
 		background_data[i] = data;
 	}

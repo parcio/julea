@@ -230,10 +230,15 @@ def build (ctx):
 	clients = ['object', 'item']
 
 	for client in clients:
+		use_extra = []
+
+		if client == 'item':
+			use_extra.append('lib/julea-object')
+
 		ctx.shlib(
 			source = ctx.path.ant_glob('client/{0}/**/*.c'.format(client)),
 			target = 'lib/julea-{0}'.format(client),
-			use = use_julea_lib + ['lib/julea-private'],
+			use = use_julea_lib + ['lib/julea-private'] + use_extra,
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${LIBDIR}'

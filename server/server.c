@@ -748,6 +748,9 @@ main (int argc, char** argv)
 #ifdef JULEA_DEBUG
 	data_path = g_strdup_printf("%s/%d", data_path, opt_port);
 	meta_path = g_strdup_printf("%s/%d", meta_path, opt_port);
+
+	g_mkdir_with_parents(data_path, 0700);
+	g_mkdir_with_parents(meta_path, 0700);
 #endif
 
 	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, data_path))

@@ -237,6 +237,18 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	if (data_backend == NULL)
 	{
 		j_message_send(message, data_connection);
+
+		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
+		{
+			JMessage* reply;
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, data_connection);
+
+			/* FIXME do something with reply */
+			j_message_unref(reply);
+		}
+
 		j_message_unref(message);
 		j_connection_pool_push_data(index, data_connection);
 	}
