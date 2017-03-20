@@ -49,6 +49,7 @@ j_cmd_copy (gchar const** arguments)
 		{
 			if (i == 0)
 			{
+				// FIXME check whether object exists
 			}
 			else if (i == 1)
 			{
