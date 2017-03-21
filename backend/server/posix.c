@@ -59,19 +59,6 @@ jd_backend_files_free (gpointer data)
 static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
 
 static
-gboolean
-backend_close_internal (JBackendFile* file)
-{
-	gboolean ret;
-
-	j_trace_file_begin(file->path, J_TRACE_FILE_CLOSE);
-	ret = (close(file->fd) == 0);
-	j_trace_file_end(file->path, J_TRACE_FILE_CLOSE, 0, 0);
-
-	return ret;
-}
-
-static
 void
 backend_file_unref (gpointer data)
 {
@@ -83,7 +70,9 @@ backend_file_unref (gpointer data)
 	{
 		g_hash_table_remove(jd_backend_file_cache, file->path);
 
-		backend_close_internal(file);
+		j_trace_file_begin(file->path, J_TRACE_FILE_CLOSE);
+		close(file->fd);
+		j_trace_file_end(file->path, J_TRACE_FILE_CLOSE, 0, 0);
 
 		g_free(file->path);
 		g_slice_free(JBackendFile, file);
@@ -251,7 +240,13 @@ static
 gboolean
 backend_close (gpointer data)
 {
-	return TRUE;
+	JBackendFile* file = data;
+	GHashTable* files = jd_backend_files_get_thread();
+	gboolean ret;
+
+	ret = g_hash_table_remove(files, file->path);
+
+	return ret;
 }
 
 static

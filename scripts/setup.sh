@@ -124,6 +124,7 @@ do_start ()
 
 		if test "${host}" = "${HOSTNAME}"
 		then
+			# FIXME else
 			if test "${META_BACKEND}" = 'mongodb'
 			then
 				mkdir --parents "${MONGO_PATH}/db"
