@@ -297,22 +297,40 @@ gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* file = data;
-	gboolean ret;
 
-	gsize nbytes;
+	gsize nbytes_total = 0;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_READ);
-	nbytes = pread(file->fd, buffer, length, offset);
-	// FIXME
-	ret = TRUE;
-	j_trace_file_end(file->path, J_TRACE_FILE_READ, nbytes, offset);
+
+	while (nbytes_total < length)
+	{
+		gssize nbytes;
+
+		nbytes = pread(file->fd, (gchar*)buffer + nbytes_total, length - nbytes_total, offset + nbytes_total);
+
+		if (nbytes == 0)
+		{
+			break;
+		}
+		else if (nbytes < 0)
+		{
+			if (errno != EINTR)
+			{
+				break;
+			}
+		}
+
+		nbytes_total += nbytes;
+	}
+
+	j_trace_file_end(file->path, J_TRACE_FILE_READ, nbytes_total, offset);
 
 	if (bytes_read != NULL)
 	{
-		*bytes_read = nbytes;
+		*bytes_read = nbytes_total;
 	}
 
-	return ret;
+	return (nbytes_total == length);
 }
 
 static
@@ -320,22 +338,36 @@ gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* file = data;
-	gboolean ret;
 
-	gsize nbytes;
+	gsize nbytes_total = 0;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_WRITE);
-	nbytes = pwrite(file->fd, buffer, length, offset);
-	// FIXME
-	ret = TRUE;
-	j_trace_file_end(file->path, J_TRACE_FILE_WRITE, nbytes, offset);
+
+	while (nbytes_total < length)
+	{
+		gssize nbytes;
+
+		nbytes = pwrite(file->fd, (gchar const*)buffer + nbytes_total, length - nbytes_total, offset + nbytes_total);
+
+		if (nbytes <= 0)
+		{
+			if (errno != EINTR)
+			{
+				break;
+			}
+		}
+
+		nbytes_total += nbytes;
+	}
+
+	j_trace_file_end(file->path, J_TRACE_FILE_WRITE, nbytes_total, offset);
 
 	if (bytes_written != NULL)
 	{
-		*bytes_written = nbytes;
+		*bytes_written = nbytes_total;
 	}
 
-	return ret;
+	return (nbytes_total == length);
 }
 
 static

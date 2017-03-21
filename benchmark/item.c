@@ -337,6 +337,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	}
 
 	j_batch_execute(batch);
+	g_assert_cmpuint(nb, ==, n * block_size);
 
 	j_benchmark_timer_start();
 
