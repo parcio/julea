@@ -37,4 +37,7 @@ J_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
 
 J_GNUC_INTERNAL gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
+J_GNUC_INTERNAL guint64 j_helper_atomic_add (guint64 volatile*, guint64);
+
+
 #endif

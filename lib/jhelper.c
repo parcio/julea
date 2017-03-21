@@ -144,6 +144,25 @@ j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint 
 	return TRUE;
 }
 
+guint64
+j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
+{
+	guint64 ret;
+
+#ifdef HAVE_SYNC_FETCH_AND_ADD
+	ret = __sync_fetch_and_add(ptr, val);
+#else
+	G_LOCK_DEFINE_STATIC(j_helper_atomic_add);
+
+	G_LOCK(j_helper_atomic_add);
+	ret = *ptr;
+	*ptr += val;
+	G_UNLOCK(j_helper_atomic_add);
+#endif
+
+	return ret;
+}
+
 /**
  * @}
  **/
