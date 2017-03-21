@@ -153,6 +153,26 @@ def configure (ctx):
 		mandatory = False
 	)
 
+	ctx.check_cc(
+		fragment = '''
+		#define _POSIX_C_SOURCE 200809L
+
+		#include <stdint.h>
+
+		int main (void)
+		{
+			uint64_t dummy = 0;
+
+			__sync_fetch_and_add(&dummy, 1);
+
+			return 0;
+		}
+		''',
+		define_name = 'HAVE_SYNC_FETCH_AND_ADD',
+		msg = 'Checking for __sync_fetch_and_add',
+		mandatory = False
+	)
+
 	if ctx.options.sanitize:
 		ctx.check_cc(
 			cflags = '-fsanitize=address',

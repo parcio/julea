@@ -364,8 +364,12 @@ j_item_read_background_operation (gpointer data)
 			JItemReadData* buffer = j_list_iterator_get(iterator);
 
 			nbytes = j_message_get_8(reply);
+#ifdef HAVE_SYNC_FETCH_AND_ADD
+			__sync_fetch_and_add(buffer->nbytes, nbytes);
+#else
 			// FIXME thread-safety
 			*(buffer->nbytes) += nbytes;
+#endif
 
 			if (nbytes > 0)
 			{
