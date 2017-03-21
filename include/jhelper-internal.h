@@ -39,5 +39,4 @@ J_GNUC_INTERNAL gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gp
 
 J_GNUC_INTERNAL guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 
-
 #endif

@@ -149,6 +149,7 @@ j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 {
 	guint64 ret;
 
+	// FIXME check C11 atomic_fetch_add
 #ifdef HAVE_SYNC_FETCH_AND_ADD
 	ret = __sync_fetch_and_add(ptr, val);
 #else
