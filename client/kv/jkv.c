@@ -107,6 +107,8 @@ j_kv_put_free (gpointer data)
 
 	j_kv_unref(kop->put.kv);
 	bson_destroy(kop->put.value);
+	// FIXME
+	g_slice_free(bson_t, kop->put.value);
 }
 
 static
