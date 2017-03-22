@@ -244,11 +244,11 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
+	JBackend* meta_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
 	gchar const* namespace;
+	gpointer meta_batch;
 	gsize namespace_len;
 	guint32 index;
 
@@ -269,55 +269,62 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	meta_backend = j_metadata_backend();
 
-	if (data_backend == NULL)
+	if (meta_backend != NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
-		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
+		ret = j_backend_meta_batch_start(meta_backend, namespace, &meta_batch);
+	}
+	else
+	{
+		message = j_message_new(J_MESSAGE_META_DELETE, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
 	while (j_list_iterator_next(it))
 	{
-		JKV* object = j_list_iterator_get(it);
+		JKV* kv = j_list_iterator_get(it);
 
-		if (data_backend != NULL)
+		if (meta_backend != NULL)
 		{
-			gpointer object_handle;
-
-			ret = j_backend_data_open(data_backend, object->namespace, object->key, &object_handle) && ret;
-			ret = j_backend_data_delete(data_backend, object_handle) && ret;
+			ret = j_backend_meta_delete(meta_backend, meta_batch, kv->key) && ret;
 		}
 		else
 		{
-			gsize name_len;
+			gsize key_len;
 
-			name_len = strlen(object->key) + 1;
+			key_len = strlen(kv->key) + 1;
 
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, object->key, name_len);
+			j_message_add_operation(message, key_len);
+			j_message_append_n(message, kv->key, key_len);
 		}
 	}
 
-	if (data_backend == NULL)
+	if (meta_backend != NULL)
 	{
-		j_message_send(message, data_connection);
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
+	}
+	else
+	{
+		GSocketConnection* meta_connection;
+
+		meta_connection = j_connection_pool_pop_meta(index);
+		j_message_send(message, meta_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			JMessage* reply;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, meta_connection);
 
 			/* FIXME do something with reply */
 			j_message_unref(reply);
 		}
 
 		j_message_unref(message);
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_meta(index, meta_connection);
 	}
 
 	j_list_iterator_free(it);

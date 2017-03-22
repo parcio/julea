@@ -32,6 +32,8 @@
 #include <item/jitem.h>
 #include <item/jitem-internal.h>
 
+#include <kv/jkv.h>
+
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
@@ -98,6 +100,8 @@ struct JCollection
 
 	JCredentials* credentials;
 
+	JKV* kv;
+
 	/**
 	 * The reference count.
 	 **/
@@ -111,16 +115,6 @@ j_collection_create_free (gpointer data)
 	JCollectionOperation* operation = data;
 
 	j_collection_unref(operation->create.collection);
-	g_slice_free(JCollectionOperation, operation);
-}
-
-static
-void
-j_collection_delete_free (gpointer data)
-{
-	JCollectionOperation* operation = data;
-
-	j_collection_unref(operation->delete.collection);
 	g_slice_free(JCollectionOperation, operation);
 }
 
@@ -183,6 +177,7 @@ j_collection_unref (JCollection* collection)
 
 	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
+		j_kv_unref(collection->kv);
 		j_credentials_unref(collection->credentials);
 
 		g_free(collection->name);
@@ -304,21 +299,10 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 void
 j_collection_delete (JCollection* collection, JBatch* batch)
 {
-	JCollectionOperation* cop;
-	JOperation* operation;
-
 	g_return_if_fail(collection != NULL);
+	g_return_if_fail(batch != NULL);
 
-	cop = g_slice_new(JCollectionOperation);
-	cop->delete.collection = j_collection_ref(collection);
-
-	operation = j_operation_new();
-	operation->key = NULL;
-	operation->data = cop;
-	operation->exec_func = j_collection_delete_exec;
-	operation->free_func = j_collection_delete_free;
-
-	j_batch_add(batch, operation);
+	j_kv_delete(collection->kv, batch);
 }
 
 /* Internal */
@@ -360,6 +344,7 @@ j_collection_new (gchar const* name)
 	bson_oid_init(&(collection->id), bson_context_get_default());
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
+	collection->kv = j_kv_new(0, "collections", collection->name);
 	collection->ref_count = 1;
 
 end:
@@ -400,6 +385,8 @@ j_collection_new_from_bson (bson_t const* b)
 	collection->ref_count = 1;
 
 	j_collection_deserialize(collection, b);
+
+	collection->kv = j_kv_new(0, "collections", collection->name);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -634,85 +621,6 @@ j_collection_create_exec (JList* operations, JSemantics* semantics)
 		bson_destroy(&oerr);
 	}
 	*/
-
-	return ret;
-}
-
-/**
- * Deletes collections.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param batch      A batch.
- * \param operations A list of operations.
- *
- * \return TRUE.
- */
-gboolean
-j_collection_delete_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* meta_connection;
-	gboolean ret = TRUE;
-	gpointer meta_batch;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_start(meta_backend, "collections", &meta_batch);
-	}
-	else
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-		message = j_message_new(J_MESSAGE_META_DELETE, 12);
-		j_message_append_n(message, "collections", 12);
-	}
-
-	/* FIXME do some optimizations for len(operations) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->delete.collection;
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_delete(meta_backend, meta_batch, collection->name) && ret;
-		}
-		else
-		{
-			gsize name_len;
-
-			name_len = strlen(collection->name) + 1;
-
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, collection->name, name_len);
-		}
-	}
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
-	}
-	else
-	{
-		j_message_send(message, meta_connection);
-		j_message_unref(message);
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	j_list_iterator_free(it);
-
-	//j_connection_pool_push_meta(0, mongo_connection);
 
 	return ret;
 }

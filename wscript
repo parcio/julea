@@ -253,6 +253,7 @@ def build (ctx):
 		use_extra = []
 
 		if client == 'item':
+			use_extra.append('lib/julea-kv')
 			use_extra.append('lib/julea-object')
 
 		ctx.shlib(
