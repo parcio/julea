@@ -208,6 +208,8 @@ def configure (ctx):
 
 	ctx.define('JULEA_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
+	ctx.define('JULEA_COMPILATION', 1)
+
 	ctx.write_config_header('include/julea-config.h')
 
 def build (ctx):

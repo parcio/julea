@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_OBJECT_OBJECT_ITERATOR
-#define H_OBJECT_OBJECT_ITERATOR
+#ifndef JULEA_OBJECT_OBJECT_ITERATOR_H
+#define JULEA_OBJECT_OBJECT_ITERATOR_H
+
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
 
 #include <glib.h>
 

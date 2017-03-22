@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_JULEA_KV
-#define H_JULEA_KV
+#ifndef JULEA_KV_H
+#define JULEA_KV_H
 
 #include <kv/jkv.h>
 

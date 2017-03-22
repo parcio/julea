@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_OBJECT_OBJECT_URI
-#define H_OBJECT_OBJECT_URI
+#ifndef JULEA_OBJECT_OBJECT_URI_H
+#define JULEA_OBJECT_OBJECT_URI_H
+
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
 
 /**
  * \addtogroup JObjectURI

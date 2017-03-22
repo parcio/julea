@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_JULEA_OBJECT
-#define H_JULEA_OBJECT
+#ifndef JULEA_OBJECT_H
+#define JULEA_OBJECT_H
 
 #include <object/jdistributed-object.h>
 #include <object/jobject.h>

@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_KV_KV
-#define H_KV_KV
+#ifndef JULEA_KV_KV_H
+#define JULEA_KV_KV_H
+
+#if !defined(JULEA_KV_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
 
 #include <glib.h>
 

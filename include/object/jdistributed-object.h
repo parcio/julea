@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_OBJECT_DISTRIBUTED_OBJECT
-#define H_OBJECT_DISTRIBUTED_OBJECT
+#ifndef JULEA_OBJECT_DISTRIBUTED_OBJECT_H
+#define JULEA_OBJECT_DISTRIBUTED_OBJECT_H
+
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
 
 #include <glib.h>
 
