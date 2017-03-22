@@ -34,6 +34,8 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
+#include <kv/jkv.h>
+
 #include <object/jdistributed-object.h>
 
 #include <jbackground-operation-internal.h>
@@ -195,6 +197,7 @@ struct JItem
 	JCredentials* credentials;
 	JDistribution* distribution;
 
+	JKV* kv;
 	JDistributedObject* object;
 
 	/**
@@ -232,15 +235,6 @@ struct JItem
 static
 void
 j_item_create_free (gpointer data)
-{
-	JItem* item = data;
-
-	j_item_unref(item);
-}
-
-static
-void
-j_item_delete_free (gpointer data)
 {
 	JItem* item = data;
 
@@ -525,6 +519,11 @@ j_item_unref (JItem* item)
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
+		if (item->kv != NULL)
+		{
+			j_kv_unref(item->kv);
+		}
+
 		if (item->object != NULL)
 		{
 			j_distributed_object_unref(item->object);
@@ -671,19 +670,12 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 void
 j_item_delete (JItem* item, JBatch* batch)
 {
-	JOperation* operation;
-
 	g_return_if_fail(item != NULL);
+	g_return_if_fail(batch != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	operation = j_operation_new();
-	operation->key = item->collection;
-	operation->data = j_item_ref(item);
-	operation->exec_func = j_item_delete_exec;
-	operation->free_func = j_item_delete_free;
-
-	j_batch_add(batch, operation);
+	j_kv_delete(item->kv, batch);
 	j_distributed_object_delete(item->object, batch);
 
 	j_trace_leave(G_STRFUNC);
@@ -943,6 +935,7 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	item->ref_count = 1;
 
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+	item->kv = j_kv_new(0, "items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
 	g_free(path);
 
@@ -991,6 +984,7 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	j_item_deserialize(item, b);
 
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
+	item->kv = j_kv_new(0, "items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
 	g_free(path);
 
@@ -1334,102 +1328,6 @@ j_item_create_exec (JList* operations, JSemantics* semantics)
 	}
 
 	j_list_iterator_free(it);
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
-}
-
-gboolean
-j_item_delete_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* meta_connection;
-	gboolean ret = TRUE;
-	gchar const* item_name;
-	gchar const* collection_name;
-	gpointer meta_batch;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	/*
-		IsInitialized(true);
-	*/
-
-	{
-		JItem* item;
-
-		item = j_list_get_first(operations);
-		g_assert(item != NULL);
-
-		collection_name = j_collection_get_name(item->collection);
-	}
-
-	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
-	}
-	else
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-		message = j_message_new(J_MESSAGE_META_DELETE, 6);
-		j_message_append_n(message, "items", 6);
-	}
-
-	/* FIXME do some optimizations for len(operations) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JItem* item = j_list_iterator_get(it);
-		gchar* path;
-
-		item_name = j_item_get_name(item);
-
-		path = g_build_path("/", collection_name, item_name, NULL);
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_delete(meta_backend, meta_batch, path) && ret;
-		}
-		else
-		{
-			gsize path_len;
-
-			path_len = strlen(path) + 1;
-
-			j_message_add_operation(message, path_len);
-			j_message_append_n(message, path, path_len);
-		}
-
-		//bson_init(&b);
-		//bson_append_oid(&b, "_id", -1, j_item_get_id(item));
-		//bson_finish(&b);
-
-		g_free(path);
-	}
-
-	j_list_iterator_free(it);
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
-	}
-	else
-	{
-		j_message_send(message, meta_connection);
-		j_message_unref(message);
-		j_connection_pool_push_meta(0, meta_connection);
-	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
 
