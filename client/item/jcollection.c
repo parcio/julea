@@ -110,16 +110,6 @@ struct JCollection
 
 static
 void
-j_collection_create_free (gpointer data)
-{
-	JCollectionOperation* operation = data;
-
-	j_collection_unref(operation->create.collection);
-	g_slice_free(JCollectionOperation, operation);
-}
-
-static
-void
 j_collection_get_free (gpointer data)
 {
 	JCollectionOperation* operation = data;
@@ -226,8 +216,7 @@ JCollection*
 j_collection_create (gchar const* name, JBatch* batch)
 {
 	JCollection* collection;
-	JCollectionOperation* cop;
-	JOperation* operation;
+	bson_t* value;
 
 	g_return_val_if_fail(name != NULL, NULL);
 
@@ -236,16 +225,9 @@ j_collection_create (gchar const* name, JBatch* batch)
 		goto end;
 	}
 
-	cop = g_slice_new(JCollectionOperation);
-	cop->create.collection = j_collection_ref(collection);
+	value = j_collection_serialize(collection);
 
-	operation = j_operation_new();
-	operation->key = NULL;
-	operation->data = cop;
-	operation->exec_func = j_collection_create_exec;
-	operation->free_func = j_collection_create_free;
-
-	j_batch_add(batch, operation);
+	j_kv_put(collection->kv, value, batch);
 
 end:
 	return collection;
@@ -526,103 +508,6 @@ j_collection_get_id (JCollection* collection)
 	j_trace_leave(G_STRFUNC);
 
 	return &(collection->id);
-}
-
-/**
- * Creates collections.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param batch      A batch.
- * \param operations A list of operations.
- *
- * \return TRUE.
- */
-gboolean
-j_collection_create_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* meta_connection;
-	gboolean ret = FALSE;
-	gpointer meta_batch;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	it = j_list_iterator_new(operations);
-
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_start(meta_backend, "collections", &meta_batch);
-	}
-	else
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-		message = j_message_new(J_MESSAGE_META_PUT, 12);
-		j_message_append_n(message, "collections", 12);
-	}
-
-	while (j_list_iterator_next(it))
-	{
-		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->create.collection;
-		bson_t* b;
-
-		b = j_collection_serialize(collection);
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_put(meta_backend, meta_batch, collection->name, b) && ret;
-		}
-		else
-		{
-			gsize name_len;
-
-			name_len = strlen(collection->name) + 1;
-
-			j_message_add_operation(message, name_len + 4 + b->len);
-			j_message_append_n(message, collection->name, name_len);
-			j_message_append_4(message, &(b->len));
-			j_message_append_n(message, bson_get_data(b), b->len);
-		}
-
-		bson_destroy(b);
-		g_slice_free(bson_t, b);
-	}
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
-	}
-	else
-	{
-		j_message_send(message, meta_connection);
-		j_message_unref(message);
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	j_list_iterator_free(it);
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	/*
-	{
-		bson_t oerr;
-
-		mongo_cmd_get_last_error(mc, store->name, &oerr);
-		bson_print(&oerr);
-		bson_destroy(&oerr);
-	}
-	*/
-
-	return ret;
 }
 
 /**

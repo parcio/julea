@@ -41,7 +41,6 @@ J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson_t const*);
 
 J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 
-J_GNUC_INTERNAL gboolean j_collection_create_exec (JList*, JSemantics*);
 J_GNUC_INTERNAL gboolean j_collection_get_exec (JList*, JSemantics*);
 
 #endif

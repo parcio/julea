@@ -29,6 +29,8 @@ struct JKV;
 
 typedef struct JKV JKV;
 
+#include <bson.h>
+
 #include <jbatch.h>
 
 JKV* j_kv_new (guint32, gchar const*, gchar const*);
@@ -37,7 +39,7 @@ void j_kv_unref (JKV*);
 
 gchar const* j_kv_get_name (JKV*);
 
-void j_kv_put (JKV*, JBatch*);
+void j_kv_put (JKV*, bson_t*, JBatch*);
 void j_kv_delete (JKV*, JBatch*);
 
 void j_kv_get_status (JKV*, gint64*, guint64*, JBatch*);

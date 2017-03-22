@@ -50,7 +50,7 @@
  * @{
  **/
 
-struct JObjectOperation
+struct JKVOperation
 {
 	union
 	{
@@ -64,27 +64,14 @@ struct JObjectOperation
 
 		struct
 		{
-			JKV* object;
-			gpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_read;
+			JKV* kv;
+			bson_t* value;
 		}
-		read;
-
-		struct
-		{
-			JKV* object;
-			gconstpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_written;
-		}
-		write;
+		put;
 	};
 };
 
-typedef struct JObjectOperation JObjectOperation;
+typedef struct JKVOperation JKVOperation;
 
 /**
  * A JKV.
@@ -116,9 +103,10 @@ static
 void
 j_kv_put_free (gpointer data)
 {
-	JKV* object = data;
+	JKVOperation* kop = data;
 
-	j_kv_unref(object);
+	j_kv_unref(kop->put.kv);
+	bson_destroy(kop->put.value);
 }
 
 static
@@ -134,11 +122,11 @@ static
 void
 j_kv_get_status_free (gpointer data)
 {
-	JObjectOperation* operation = data;
+	JKVOperation* operation = data;
 
 	j_kv_unref(operation->get_status.object);
 
-	g_slice_free(JObjectOperation, operation);
+	g_slice_free(JKVOperation, operation);
 }
 
 static
@@ -147,11 +135,11 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
+	JBackend* meta_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
 	gchar const* namespace;
+	gpointer meta_batch;
 	gsize namespace_len;
 	guint32 index;
 
@@ -161,22 +149,25 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	{
-		JKV* object;
+		JKVOperation* kop;
 
-		object = j_list_get_first(operations);
-		g_assert(object != NULL);
+		kop = j_list_get_first(operations);
+		g_assert(kop != NULL);
 
-		namespace = object->namespace;
+		namespace = kop->put.kv->namespace;
 		namespace_len = strlen(namespace) + 1;
-		index = object->index;
+		index = kop->put.kv->index;
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	meta_backend = j_metadata_backend();
 
-	if (data_backend == NULL)
+	if (meta_backend != NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
+		ret = j_backend_meta_batch_start(meta_backend, namespace, &meta_batch);
+	}
+	else
+	{
 		/**
 		 * Force safe semantics to make the server send a reply.
 		 * Otherwise, nasty races can occur when using unsafe semantics:
@@ -185,35 +176,41 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		 * - The second operation is executed first and fails because the item does not exist.
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
-		message = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
+		message = j_message_new(J_MESSAGE_META_PUT, namespace_len);
 		j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
 	while (j_list_iterator_next(it))
 	{
-		JKV* object = j_list_iterator_get(it);
+		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (data_backend != NULL)
+		if (meta_backend != NULL)
 		{
-			gpointer object_handle;
-
-			ret = j_backend_data_create(data_backend, object->namespace, object->key, &object_handle) && ret;
-			ret = j_backend_data_close(data_backend, object_handle) && ret;
+			ret = j_backend_meta_put(meta_backend, meta_batch, kop->put.kv->key, kop->put.value) && ret;
 		}
 		else
 		{
-			gsize name_len;
+			gsize key_len;
 
-			name_len = strlen(object->key) + 1;
+			key_len = strlen(kop->put.kv->key) + 1;
 
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, object->key, name_len);
+			j_message_add_operation(message, key_len + 4 + kop->put.value->len);
+			j_message_append_n(message, kop->put.kv->key, key_len);
+			j_message_append_4(message, &(kop->put.value->len));
+			j_message_append_n(message, bson_get_data(kop->put.value), kop->put.value->len);
 		}
 	}
 
-	if (data_backend == NULL)
+	if (meta_backend != NULL)
 	{
+		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
+	}
+	else
+	{
+		GSocketConnection* data_connection;
+
+		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
@@ -354,7 +351,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	{
-		JObjectOperation* operation = j_list_get_first(operations);
+		JKVOperation* operation = j_list_get_first(operations);
 		JKV* object = operation->get_status.object;
 
 		g_assert(operation != NULL);
@@ -378,7 +375,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 
 	while (j_list_iterator_next(it))
 	{
-		JObjectOperation* operation = j_list_iterator_get(it);
+		JKVOperation* operation = j_list_iterator_get(it);
 		JKV* object = operation->get_status.object;
 		gint64* modification_time = operation->get_status.modification_time;
 		guint64* size = operation->get_status.size;
@@ -417,7 +414,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 
 		while (j_list_iterator_next(it))
 		{
-			JObjectOperation* operation = j_list_iterator_get(it);
+			JKVOperation* operation = j_list_iterator_get(it);
 			gint64* modification_time = operation->get_status.modification_time;
 			guint64* size = operation->get_status.size;
 			gint64 modification_time_;
@@ -579,18 +576,23 @@ j_kv_get_name (JKV* item)
  * \return A new item. Should be freed with j_kv_unref().
  **/
 void
-j_kv_put (JKV* object, JBatch* batch)
+j_kv_put (JKV* kv, bson_t* value, JBatch* batch)
 {
+	JKVOperation* kop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_if_fail(kv != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	kop = g_slice_new(JKVOperation);
+	kop->put.kv = j_kv_ref(kv);
+	kop->put.value = value;
+
 	operation = j_operation_new();
 	// FIXME key = index + namespace
-	operation->key = object;
-	operation->data = j_kv_ref(object);
+	operation->key = kv;
+	operation->data = kop;
 	operation->exec_func = j_kv_put_exec;
 	operation->free_func = j_kv_put_free;
 
@@ -644,14 +646,14 @@ j_kv_delete (JKV* object, JBatch* batch)
 void
 j_kv_get_status (JKV* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
-	JObjectOperation* iop;
+	JKVOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JObjectOperation);
+	iop = g_slice_new(JKVOperation);
 	iop->get_status.object = j_kv_ref(object);
 	iop->get_status.modification_time = modification_time;
 	iop->get_status.size = size;
