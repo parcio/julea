@@ -234,15 +234,6 @@ struct JItem
 
 static
 void
-j_item_create_free (gpointer data)
-{
-	JItem* item = data;
-
-	j_item_unref(item);
-}
-
-static
-void
 j_item_get_free (gpointer data)
 {
 	JItemOperation* operation = data;
@@ -587,7 +578,7 @@ JItem*
 j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
 	JItem* item;
-	JOperation* operation;
+	bson_t* value;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -599,14 +590,10 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 		goto end;
 	}
 
-	operation = j_operation_new();
-	operation->key = collection;
-	operation->data = j_item_ref(item);
-	operation->exec_func = j_item_create_exec;
-	operation->free_func = j_item_create_free;
+	value = j_item_serialize(item, j_batch_get_semantics(batch));
 
 	j_distributed_object_create(item->object, batch);
-	j_batch_add(batch, operation);
+	j_kv_put(item->kv, value, batch);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -1248,92 +1235,6 @@ j_item_get_id (JItem* item)
 	j_trace_leave(G_STRFUNC);
 
 	return &(item->id);
-}
-
-gboolean
-j_item_create_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* meta_connection;
-	gboolean ret = FALSE;
-	gpointer meta_batch;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	it = j_list_iterator_new(operations);
-
-	meta_backend = j_metadata_backend();
-	//mongo_connection = j_connection_pool_pop_meta(0);
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_start(meta_backend, "items", &meta_batch);
-	}
-	else
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-		message = j_message_new(J_MESSAGE_META_PUT, 6);
-		j_message_append_n(message, "items", 6);
-	}
-
-	while (j_list_iterator_next(it))
-	{
-		JItem* item = j_list_iterator_get(it);
-		bson_t* b;
-		gchar* path;
-
-		if (item->collection == NULL)
-		{
-			continue;
-		}
-
-		b = j_item_serialize(item, semantics);
-		path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_put(meta_backend, meta_batch, path, b) && ret;
-		}
-		else
-		{
-			gsize path_len;
-
-			path_len = strlen(path) + 1;
-
-			j_message_add_operation(message, path_len + 4 + b->len);
-			j_message_append_n(message, path, path_len);
-			j_message_append_4(message, &(b->len));
-			j_message_append_n(message, bson_get_data(b), b->len);
-		}
-
-		g_free(path);
-		bson_destroy(b);
-		g_slice_free(bson_t, b);
-	}
-
-	if (meta_backend != NULL)
-	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
-	}
-	else
-	{
-		j_message_send(message, meta_connection);
-		j_message_unref(message);
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	j_list_iterator_free(it);
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
 }
 
 gboolean

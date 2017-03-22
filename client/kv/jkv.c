@@ -212,7 +212,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	{
 		GSocketConnection* data_connection;
 
-		data_connection = j_connection_pool_pop_data(index);
+		data_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, data_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
