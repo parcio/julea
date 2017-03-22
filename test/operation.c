@@ -91,7 +91,7 @@ _test_operation_execute (gboolean async)
 
 	collection = j_collection_create("test", batch);
 	item = j_item_create(collection, "item", NULL, batch);
-	j_item_delete(collection, item, batch);
+	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 
 	j_item_unref(item);

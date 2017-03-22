@@ -57,7 +57,7 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 		item = j_item_create(collection, name, NULL, batch);
 		g_free(name);
 
-		j_item_delete(collection, item, delete_batch);
+		j_item_delete(item, delete_batch);
 		j_item_unref(item);
 
 		if (!use_batch)
@@ -144,7 +144,7 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 		j_batch_execute(get_batch);
 		g_free(name);
 
-		j_item_delete(collection, item, batch);
+		j_item_delete(item, batch);
 		j_item_unref(item);
 
 		if (!use_batch)
@@ -214,7 +214,7 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 		item = j_item_create(collection, name, NULL, batch);
 		g_free(name);
 
-		j_item_delete(collection, item, delete_batch);
+		j_item_delete(item, delete_batch);
 		j_item_unref(item);
 	}
 
@@ -282,7 +282,7 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	j_item_delete(collection, item, batch);
+	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	j_item_unref(item);
 	j_collection_unref(collection);
@@ -362,7 +362,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	j_item_delete(collection, item, batch);
+	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	j_item_unref(item);
 	j_collection_unref(collection);
@@ -436,7 +436,7 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	j_item_delete(collection, item, batch);
+	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	j_item_unref(item);
 	j_collection_unref(collection);
@@ -492,7 +492,7 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 		item = j_item_create(collection, name, NULL, batch);
 		g_free(name);
 
-		j_item_delete(collection, item, batch);
+		j_item_delete(item, batch);
 		j_item_unref(item);
 
 		if (!use_batch)

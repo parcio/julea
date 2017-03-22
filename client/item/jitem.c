@@ -115,30 +115,10 @@ struct JItemOperation
 		struct
 		{
 			JCollection* collection;
-			JItem* item;
-		}
-		create;
-
-		struct
-		{
-			JCollection* collection;
-			JItem* item;
-		}
-		delete;
-
-		struct
-		{
-			JCollection* collection;
 			JItem** item;
 			gchar* name;
 		}
 		get;
-
-		struct
-		{
-			JItem* item;
-		}
-		get_status;
 
 		struct
 		{
@@ -253,24 +233,18 @@ static
 void
 j_item_create_free (gpointer data)
 {
-	JItemOperation* operation = data;
+	JItem* item = data;
 
-	j_collection_unref(operation->create.collection);
-	j_item_unref(operation->create.item);
-
-	g_slice_free(JItemOperation, operation);
+	j_item_unref(item);
 }
 
 static
 void
 j_item_delete_free (gpointer data)
 {
-	JItemOperation* operation = data;
+	JItem* item = data;
 
-	j_collection_unref(operation->delete.collection);
-	j_item_unref(operation->delete.item);
-
-	g_slice_free(JItemOperation, operation);
+	j_item_unref(item);
 }
 
 static
@@ -289,11 +263,9 @@ static
 void
 j_item_get_status_free (gpointer data)
 {
-	JItemOperation* operation = data;
+	JItem* item = data;
 
-	j_item_unref(operation->get_status.item);
-
-	g_slice_free(JItemOperation, operation);
+	j_item_unref(item);
 }
 
 static
@@ -616,7 +588,6 @@ JItem*
 j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
 	JItem* item;
-	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_val_if_fail(collection != NULL, NULL);
@@ -629,13 +600,9 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 		goto end;
 	}
 
-	iop = g_slice_new(JItemOperation);
-	iop->create.collection = j_collection_ref(collection);
-	iop->create.item = j_item_ref(item);
-
 	operation = j_operation_new();
 	operation->key = collection;
-	operation->data = iop;
+	operation->data = j_item_ref(item);
 	operation->exec_func = j_item_create_exec;
 	operation->free_func = j_item_create_free;
 
@@ -702,23 +669,17 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
  * \param batch      A batch.
  **/
 void
-j_item_delete (JCollection* collection, JItem* item, JBatch* batch)
+j_item_delete (JItem* item, JBatch* batch)
 {
-	JItemOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JItemOperation);
-	iop->delete.collection = j_collection_ref(collection);
-	iop->delete.item = j_item_ref(item);
-
 	operation = j_operation_new();
-	operation->key = collection;
-	operation->data = iop;
+	operation->key = item->collection;
+	operation->data = j_item_ref(item);
 	operation->exec_func = j_item_delete_exec;
 	operation->free_func = j_item_delete_free;
 
@@ -837,19 +798,15 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 void
 j_item_get_status (JItem* item, JBatch* batch)
 {
-	JItemOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(item != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JItemOperation);
-	iop->get_status.item = j_item_ref(item);
-
 	operation = j_operation_new();
 	operation->key = item->collection;
-	operation->data = iop;
+	operation->data = j_item_ref(item);
 	operation->exec_func = j_item_get_status_exec;
 	operation->free_func = j_item_get_status_free;
 
@@ -1303,7 +1260,6 @@ gboolean
 j_item_create_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
-	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage* message;
 	GSocketConnection* meta_connection;
@@ -1333,14 +1289,11 @@ j_item_create_exec (JList* operations, JSemantics* semantics)
 
 	while (j_list_iterator_next(it))
 	{
-		JItemOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->create.item;
+		JItem* item = j_list_iterator_get(it);
 		bson_t* b;
 		gchar* path;
 
-		collection = operation->create.collection;
-
-		if (collection == NULL)
+		if (item->collection == NULL)
 		{
 			continue;
 		}
@@ -1393,7 +1346,6 @@ gboolean
 j_item_delete_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
-	JCollection* collection = NULL;
 	JListIterator* it;
 	JMessage* message;
 	GSocketConnection* meta_connection;
@@ -1412,13 +1364,12 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	*/
 
 	{
-		JItemOperation* operation;
+		JItem* item;
 
-		operation = j_list_get_first(operations);
-		g_assert(operation != NULL);
-		collection = operation->delete.collection;
+		item = j_list_get_first(operations);
+		g_assert(item != NULL);
 
-		collection_name = j_collection_get_name(collection);
+		collection_name = j_collection_get_name(item->collection);
 	}
 
 	it = j_list_iterator_new(operations);
@@ -1439,8 +1390,7 @@ j_item_delete_exec (JList* operations, JSemantics* semantics)
 	/* FIXME do some optimizations for len(operations) > 1 */
 	while (j_list_iterator_next(it))
 	{
-		JItemOperation* operation = j_list_iterator_get(it);
-		JItem* item = operation->delete.item;
+		JItem* item = j_list_iterator_get(it);
 		gchar* path;
 
 		item_name = j_item_get_name(item);
@@ -2032,8 +1982,7 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 
 	while (j_list_iterator_next(iterator))
 	{
-		JItemOperation* operation = j_list_iterator_get(iterator);
-		JItem* item = operation->get_status.item;
+		JItem* item = j_list_iterator_get(iterator);
 
 		if (semantics_consistency != J_SEMANTICS_CONSISTENCY_IMMEDIATE)
 		{

@@ -82,7 +82,7 @@ j_cmd_delete (gchar const** arguments)
 
 		if (j_uri_get_item(uri) != NULL)
 		{
-			j_item_delete(j_uri_get_collection(uri), j_uri_get_item(uri), batch);
+			j_item_delete(j_uri_get_item(uri), batch);
 			j_batch_execute(batch);
 		}
 		else if (j_uri_get_collection(uri) != NULL)

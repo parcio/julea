@@ -41,7 +41,7 @@ void j_item_unref (JItem*);
 gchar const* j_item_get_name (JItem*);
 
 JItem* j_item_create (JCollection*, gchar const*, JDistribution*, JBatch*);
-void j_item_delete (JCollection*, JItem*, JBatch*);
+void j_item_delete (JItem*, JBatch*);
 void j_item_get (JCollection*, JItem**, gchar const*, JBatch*);
 
 void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
