@@ -27,6 +27,7 @@ j_cmd_status (gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	JBatch* batch;
+	JObjectURI* duri = NULL;
 	JObjectURI* ouri = NULL;
 	JURI* uri = NULL;
 	GError* error = NULL;
@@ -51,6 +52,38 @@ j_cmd_status (gchar const** arguments)
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 		j_object_status(j_object_uri_get_object(ouri), &modification_time, &size, batch);
+
+		j_batch_execute(batch);
+		j_batch_unref(batch);
+
+		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
+		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
+		size_string = g_format_size(size);
+
+		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
+		g_print("Size:              %s\n", size_string);
+
+		g_date_time_unref(date_time);
+
+		g_free(modification_time_string);
+		g_free(size_string);
+
+		goto end;
+	}
+
+	duri = j_object_uri_new(arguments[0], J_OBJECT_URI_SCHEME_DISTRIBUTED_OBJECT);
+
+	if (duri != NULL)
+	{
+		GDateTime* date_time;
+		gchar* modification_time_string;
+		gchar* size_string;
+		gint64 modification_time;
+		guint64 size;
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+		j_distributed_object_status(j_object_uri_get_distributed_object(duri), &modification_time, &size, batch);
 
 		j_batch_execute(batch);
 		j_batch_unref(batch);
@@ -138,6 +171,11 @@ end:
 	if (ouri != NULL)
 	{
 		j_object_uri_free(ouri);
+	}
+
+	if (duri != NULL)
+	{
+		j_object_uri_free(duri);
 	}
 
 	if (uri != NULL)

@@ -927,6 +927,16 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 		gint64* modification_time = operation->status.modification_time;
 		guint64* size = operation->status.size;
 
+		if (modification_time != NULL)
+		{
+			*modification_time = 0;
+		}
+
+		if (size != NULL)
+		{
+			*size = 0;
+		}
+
 		if (data_backend != NULL)
 		{
 			gpointer object_handle;
@@ -947,9 +957,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 				j_message_add_operation(messages[i], name_len);
 				j_message_append_n(messages[i], object->name, name_len);
 			}
-
-			*modification_time = 0;
-			*size = 0;
 		}
 	}
 
