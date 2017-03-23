@@ -106,20 +106,28 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 		JMessageType message_type;
 		GSocketConnection* meta_connection;
 		gsize namespace_len;
+		gsize prefix_len;
 
 		namespace_len = strlen(namespace) + 1;
 
 		if (prefix == NULL)
 		{
 			message_type = J_MESSAGE_META_GET_ALL;
+			prefix_len = 0;
 		}
 		else
 		{
 			message_type = J_MESSAGE_META_GET_BY_PREFIX;
+			prefix_len = strlen(prefix) + 1;
 		}
 
-		message = j_message_new(message_type, namespace_len);
+		message = j_message_new(message_type, namespace_len + prefix_len);
 		j_message_append_n(message, namespace, namespace_len);
+
+		if (prefix != NULL)
+		{
+			j_message_append_n(message, prefix, prefix_len);
+		}
 
 		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);

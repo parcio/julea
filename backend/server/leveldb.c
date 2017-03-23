@@ -182,13 +182,28 @@ static
 gboolean
 backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
 {
-	gboolean ret = FALSE;
+	JLevelDBIterator* iterator = NULL;
+	leveldb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	return ret;
+	it = leveldb_create_iterator(backend_db, backend_read_options);
+
+	if (it != NULL)
+	{
+		iterator = g_slice_new(JLevelDBIterator);
+		iterator->iterator = it;
+		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
+
+		// FIXME check +1
+		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix) + 1);
+
+		*data = iterator;
+	}
+
+	return (iterator != NULL);
 }
 
 static

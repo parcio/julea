@@ -33,11 +33,7 @@
 #include <item/jitem.h>
 #include <item/jitem-internal.h>
 
-#include <jbackend.h>
-#include <jbackend-internal.h>
-#include <jcommon-internal.h>
-#include <jconnection-pool-internal.h>
-#include <joperation-cache-internal.h>
+#include <kv/jkv-iterator.h>
 
 /**
  * \defgroup JItemIterator Collection Iterator
@@ -49,16 +45,8 @@
 
 struct JItemIterator
 {
-	JBackend* meta_backend;
-
 	JCollection* collection;
-
-	gpointer cursor;
-
-	/**
-	 * The current document.
-	 **/
-	bson_t current[1];
+	JKVIterator* iterator;
 };
 
 /**
@@ -74,26 +62,17 @@ JItemIterator*
 j_item_iterator_new (JCollection* collection)
 {
 	JItemIterator* iterator;
+	gchar* prefix;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_operation_cache_flush();
+	prefix = g_strdup_printf("%s/", j_collection_get_name(collection));
 
 	iterator = g_slice_new(JItemIterator);
-	iterator->meta_backend = j_metadata_backend();
 	iterator->collection = j_collection_ref(collection);
-	iterator->cursor = NULL;
+	iterator->iterator = j_kv_iterator_new(0, "items", prefix);
 
-	if (iterator->meta_backend != NULL)
-	{
-		gchar* prefix;
-
-		prefix = g_strdup_printf("%s/", j_collection_get_name(collection));
-
-		j_backend_meta_get_by_prefix(iterator->meta_backend, "items", prefix, &(iterator->cursor));
-
-		g_free(prefix);
-	}
+	g_free(prefix);
 
 	return iterator;
 }
@@ -110,6 +89,7 @@ j_item_iterator_free (JItemIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
+	j_kv_iterator_free(iterator->iterator);
 	j_collection_unref(iterator->collection);
 
 	g_slice_free(JItemIterator, iterator);
@@ -130,16 +110,9 @@ j_item_iterator_free (JItemIterator* iterator)
 gboolean
 j_item_iterator_next (JItemIterator* iterator)
 {
-	gboolean ret = FALSE;
-
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (iterator->meta_backend != NULL)
-	{
-		ret = j_backend_meta_iterate(iterator->meta_backend, iterator->cursor, iterator->current);
-	}
-
-	return ret;
+	return j_kv_iterator_next(iterator->iterator);
 }
 
 /**
@@ -158,10 +131,12 @@ JItem*
 j_item_iterator_get (JItemIterator* iterator)
 {
 	JItem* item;
+	bson_t const* value;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	item = j_item_new_from_bson(iterator->collection, iterator->current);
+	value = j_kv_iterator_get(iterator->iterator);
+	item = j_item_new_from_bson(iterator->collection, value);
 
 	return item;
 }
