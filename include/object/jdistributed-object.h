@@ -46,6 +46,6 @@ void j_distributed_object_delete (JDistributedObject*, JBatch*);
 void j_distributed_object_read (JDistributedObject*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_distributed_object_write (JDistributedObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_distributed_object_get_status (JDistributedObject*, gint64*, guint64*, JBatch*);
+void j_distributed_object_status (JDistributedObject*, gint64*, guint64*, JBatch*);
 
 #endif

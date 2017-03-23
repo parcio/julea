@@ -61,6 +61,7 @@ struct JDistributedObjectBackgroundData
 {
 	guint32 index;
 	JMessage* message;
+	JList* operations;
 
 	/**
 	 * The union for read and write parts.
@@ -79,19 +80,6 @@ struct JDistributedObjectBackgroundData
 			JList* buffer_list;
 		}
 		read;
-
-		/**
-		 * The read status part.
-		 */
-		struct
-		{
-			/**
-			 * The list of items.
-			 * Contains #JItemReadStatusData elements.
-			 */
-			JList* buffer_list;
-		}
-		read_status;
 
 		/**
 		 * The write part.
@@ -119,7 +107,7 @@ struct JDistributedObjectOperation
 			gint64* modification_time;
 			guint64* size;
 		}
-		get_status;
+		status;
 
 		struct
 		{
@@ -188,11 +176,11 @@ j_distributed_object_delete_free (gpointer data)
 
 static
 void
-j_distributed_object_get_status_free (gpointer data)
+j_distributed_object_status_free (gpointer data)
 {
 	JDistributedObjectOperation* operation = data;
 
-	j_distributed_object_unref(operation->get_status.object);
+	j_distributed_object_unref(operation->status.object);
 
 	g_slice_free(JDistributedObjectOperation, operation);
 }
@@ -296,6 +284,63 @@ j_distributed_object_delete_background_operation (gpointer data)
 	}
 
 	j_message_unref(background_data->message);
+	j_connection_pool_push_data(background_data->index, data_connection);
+
+	g_slice_free(JDistributedObjectBackgroundData, background_data);
+
+	return NULL;
+}
+
+/**
+ * Executes status operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_distributed_object_status_background_operation (gpointer data)
+{
+	JDistributedObjectBackgroundData* background_data = data;
+
+	JListIterator* it;
+	JMessage* reply;
+	GSocketConnection* data_connection;
+
+	data_connection = j_connection_pool_pop_data(background_data->index);
+	j_message_send(background_data->message, data_connection);
+
+	reply = j_message_new_reply(background_data->message);
+	j_message_receive(reply, data_connection);
+
+	it = j_list_iterator_new(background_data->operations);
+
+	while (j_list_iterator_next(it))
+	{
+		JDistributedObjectOperation* operation = j_list_iterator_get(it);
+		gint64* modification_time = operation->status.modification_time;
+		guint64* size = operation->status.size;
+		gint64 modification_time_;
+		guint64 size_;
+
+		modification_time_ = j_message_get_8(reply);
+		size_ = j_message_get_8(reply);
+
+		// FIXME
+		*modification_time = modification_time_;
+		j_helper_atomic_add(size, size_);
+	}
+
+	j_list_iterator_free(it);
+
+	j_message_unref(reply);
+	j_message_unref(background_data->message);
+
 	j_connection_pool_push_data(background_data->index, data_connection);
 
 	g_slice_free(JDistributedObjectBackgroundData, background_data);
@@ -539,7 +584,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->get_status.object;
+		object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -703,7 +748,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->get_status.object;
+		object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -829,17 +874,16 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 static
 gboolean
-j_distributed_object_get_status_exec (JList* operations, JSemantics* semantics)
+j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
 	JListIterator* it;
-	JMessage* message;
-	GSocketConnection* data_connection;
+	JMessage** messages;
 	gchar const* namespace;
 	gsize namespace_len;
-	guint32 index;
+	guint32 server_count;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
@@ -848,14 +892,13 @@ j_distributed_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
-		JDistributedObject* object = operation->get_status.object;
+		JDistributedObject* object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
 
 		namespace = object->namespace;
 		namespace_len = strlen(namespace) + 1;
-		index = 0;
 	}
 
 	it = j_list_iterator_new(operations);
@@ -863,18 +906,24 @@ j_distributed_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
-		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
-		j_message_set_safety(message, semantics);
-		j_message_append_n(message, namespace, namespace_len);
+		server_count = j_configuration_get_data_server_count(j_configuration());
+		messages = g_new(JMessage*, server_count);
+
+		// FIXME use actual distribution
+		for (guint i = 0; i < server_count; i++)
+		{
+			messages[i] = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
+			j_message_set_safety(messages[i], semantics);
+			j_message_append_n(messages[i], namespace, namespace_len);
+		}
 	}
 
 	while (j_list_iterator_next(it))
 	{
 		JDistributedObjectOperation* operation = j_list_iterator_get(it);
-		JDistributedObject* object = operation->get_status.object;
-		gint64* modification_time = operation->get_status.modification_time;
-		guint64* size = operation->get_status.size;
+		JDistributedObject* object = operation->status.object;
+		gint64* modification_time = operation->status.modification_time;
+		guint64* size = operation->status.size;
 
 		if (data_backend != NULL)
 		{
@@ -890,8 +939,15 @@ j_distributed_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 			name_len = strlen(object->name) + 1;
 
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, object->name, name_len);
+			// FIXME use actual distribution
+			for (guint i = 0; i < server_count; i++)
+			{
+				j_message_add_operation(messages[i], name_len);
+				j_message_append_n(messages[i], object->name, name_len);
+			}
+
+			*modification_time = 0;
+			*size = 0;
 		}
 	}
 
@@ -899,36 +955,27 @@ j_distributed_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		JMessage* reply;
+		gpointer* background_data;
 
-		j_message_send(message, data_connection);
+		background_data = g_new(gpointer, server_count);
 
-		reply = j_message_new_reply(message);
-		j_message_receive(reply, data_connection);
-
-		it = j_list_iterator_new(operations);
-
-		while (j_list_iterator_next(it))
+		// FIXME use actual distribution
+		for (guint i = 0; i < server_count; i++)
 		{
-			JDistributedObjectOperation* operation = j_list_iterator_get(it);
-			gint64* modification_time = operation->get_status.modification_time;
-			guint64* size = operation->get_status.size;
-			gint64 modification_time_;
-			guint64 size_;
+			JDistributedObjectBackgroundData* data;
 
-			modification_time_ = j_message_get_8(reply);
-			size_ = j_message_get_8(reply);
+			data = g_slice_new(JDistributedObjectBackgroundData);
+			data->index = i;
+			data->message = messages[i];
+			data->operations = operations;
 
-			*modification_time = modification_time_;
-			*size = size_;
+			background_data[i] = data;
 		}
 
-		j_list_iterator_free(it);
+		j_helper_execute_parallel(j_distributed_object_status_background_operation, background_data, server_count);
 
-		j_message_unref(reply);
-		j_message_unref(message);
-
-		j_connection_pool_push_data(index, data_connection);
+		g_free(background_data);
+		g_free(messages);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -1203,7 +1250,7 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
  * \param batch     A batch.
  **/
 void
-j_distributed_object_get_status (JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
+j_distributed_object_status (JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
@@ -1213,15 +1260,15 @@ j_distributed_object_get_status (JDistributedObject* object, gint64* modificatio
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JDistributedObjectOperation);
-	iop->get_status.object = j_distributed_object_ref(object);
-	iop->get_status.modification_time = modification_time;
-	iop->get_status.size = size;
+	iop->status.object = j_distributed_object_ref(object);
+	iop->status.modification_time = modification_time;
+	iop->status.size = size;
 
 	operation = j_operation_new();
 	operation->key = object;
 	operation->data = iop;
-	operation->exec_func = j_distributed_object_get_status_exec;
-	operation->free_func = j_distributed_object_get_status_free;
+	operation->exec_func = j_distributed_object_status_exec;
+	operation->free_func = j_distributed_object_status_free;
 
 	j_batch_add(batch, operation);
 
