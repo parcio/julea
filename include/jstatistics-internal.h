@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_STATISTICS_INTERNAL
-#define H_STATISTICS_INTERNAL
+#ifndef JULEA_STATISTICS_INTERNAL_H
+#define JULEA_STATISTICS_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

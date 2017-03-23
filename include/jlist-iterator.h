@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_LIST_ITERATOR
-#define H_LIST_ITERATOR
+#ifndef JULEA_LIST_ITERATOR_H
+#define JULEA_LIST_ITERATOR_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_CONNECTION_POOL_INTERNAL
-#define H_CONNECTION_POOL_INTERNAL
+#ifndef JULEA_CONNECTION_POOL_INTERNAL_H
+#define JULEA_CONNECTION_POOL_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 #include <gio/gio.h>

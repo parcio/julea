@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_JULEA
-#define H_JULEA
+#ifndef JULEA_H
+#define JULEA_H
 
 /**
  * \mainpage

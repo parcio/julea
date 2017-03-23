@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_BACKEND_INTERNAL
-#define H_BACKEND_INTERNAL
+#ifndef JULEA_BACKEND_INTERNAL_H
+#define JULEA_BACKEND_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 #include <gmodule.h>

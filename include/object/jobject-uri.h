@@ -24,7 +24,7 @@
 #define JULEA_OBJECT_OBJECT_URI_H
 
 #if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea-kv.h> can be included directly."
+#error "Only <julea-object.h> can be included directly."
 #endif
 
 /**

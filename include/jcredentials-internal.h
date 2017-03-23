@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_CREDENTIALS
-#define H_CREDENTIALS
+#ifndef JULEA_CREDENTIALS_H
+#define JULEA_CREDENTIALS_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

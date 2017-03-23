@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_SEMANTICS
-#define H_SEMANTICS
+#ifndef JULEA_SEMANTICS_H
+#define JULEA_SEMANTICS_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

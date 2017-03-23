@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_LIST
-#define H_LIST
+#ifndef JULEA_LIST_H
+#define JULEA_LIST_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

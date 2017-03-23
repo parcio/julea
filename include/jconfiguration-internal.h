@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_CONFIGURATION_INTERNAL
-#define H_CONFIGURATION_INTERNAL
+#ifndef JULEA_CONFIGURATION_INTERNAL_H
+#define JULEA_CONFIGURATION_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

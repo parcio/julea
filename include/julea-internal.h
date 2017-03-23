@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_JULEA_INTERNAL
-#define H_JULEA_INTERNAL
+#ifndef JULEA_INTERNAL_H
+#define JULEA_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #ifdef J_ENABLE_INTERNAL
 #define J_GNUC_INTERNAL

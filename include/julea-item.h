@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef H_JULEA_ITEM
-#define H_JULEA_ITEM
+#ifndef JULEA_ITEM_H
+#define JULEA_ITEM_H
 
 #include <item/jcollection.h>
 #include <item/jcollection-iterator.h>

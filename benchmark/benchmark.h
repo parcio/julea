@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_BENCHMARK
-#define H_BENCHMARK
+#ifndef JULEA_BENCHMARK_H
+#define JULEA_BENCHMARK_H
 
 #include <glib.h>
 

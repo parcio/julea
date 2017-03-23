@@ -20,8 +20,12 @@
  * \file
  **/
 
-#ifndef H_OPERATION_CACHE_INTERNAL
-#define H_OPERATION_CACHE_INTERNAL
+#ifndef JULEA_OPERATION_CACHE_INTERNAL_H
+#define JULEA_OPERATION_CACHE_INTERNAL_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
 
 #include <glib.h>
 

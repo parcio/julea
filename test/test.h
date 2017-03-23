@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TEST
-#define H_TEST
+#ifndef JULEA_TEST_T
+#define JULEA_TEST_T
 
 void test_background_operation (void);
 void test_cache (void);
