@@ -467,7 +467,7 @@ j_kv_new (guint32 index, gchar const* namespace, gchar const* key)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_data_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_metadata_server_count(configuration), NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2017 Michael Kuhn
+ * Copyright (C) 2017 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,10 +20,25 @@
  * \file
  **/
 
-#ifndef JULEA_KV_H
-#define JULEA_KV_H
+#ifndef JULEA_KV_KV_ITERATOR_H
+#define JULEA_KV_KV_ITERATOR_H
+
+#if !defined(JULEA_KV_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
+
+#include <glib.h>
+
+struct JKVIterator;
+
+typedef struct JKVIterator JKVIterator;
 
 #include <kv/jkv.h>
-#include <kv/jkv-iterator.h>
+
+JKVIterator* j_kv_iterator_new (guint32, gchar const*, gchar const*);
+void j_kv_iterator_free (JKVIterator*);
+
+gboolean j_kv_iterator_next (JKVIterator*);
+bson_t const* j_kv_iterator_get (JKVIterator*);
 
 #endif

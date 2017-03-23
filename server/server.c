@@ -572,7 +572,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-			case J_MESSAGE_META_GET_BY_VALUE:
+			case J_MESSAGE_META_GET_BY_PREFIX:
 			case J_MESSAGE_REPLY:
 			case J_MESSAGE_SAFETY_NETWORK:
 			case J_MESSAGE_SAFETY_STORAGE:
