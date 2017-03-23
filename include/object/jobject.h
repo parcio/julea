@@ -39,8 +39,6 @@ JObject* j_object_new (guint32, gchar const*, gchar const*);
 JObject* j_object_ref (JObject*);
 void j_object_unref (JObject*);
 
-gchar const* j_object_get_name (JObject*);
-
 void j_object_create (JObject*, JBatch*);
 void j_object_delete (JObject*, JBatch*);
 

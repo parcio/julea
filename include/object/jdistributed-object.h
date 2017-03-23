@@ -40,8 +40,6 @@ JDistributedObject* j_distributed_object_new (gchar const*, gchar const*, JDistr
 JDistributedObject* j_distributed_object_ref (JDistributedObject*);
 void j_distributed_object_unref (JDistributedObject*);
 
-gchar const* j_distributed_object_get_name (JDistributedObject*);
-
 void j_distributed_object_create (JDistributedObject*, JBatch*);
 void j_distributed_object_delete (JDistributedObject*, JBatch*);
 

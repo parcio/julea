@@ -869,29 +869,6 @@ j_object_unref (JObject* item)
 }
 
 /**
- * Returns an item's name.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return The name.
- **/
-gchar const*
-j_object_get_name (JObject* item)
-{
-	g_return_val_if_fail(item != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
-
-	return item->name;
-}
-
-/**
  * Creates an object.
  *
  * \author Michael Kuhn

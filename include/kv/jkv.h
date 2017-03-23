@@ -41,8 +41,6 @@ JKV* j_kv_new (guint32, gchar const*, gchar const*);
 JKV* j_kv_ref (JKV*);
 void j_kv_unref (JKV*);
 
-gchar const* j_kv_get_name (JKV*);
-
 void j_kv_put (JKV*, bson_t*, JBatch*);
 void j_kv_delete (JKV*, JBatch*);
 

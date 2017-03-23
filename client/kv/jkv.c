@@ -541,29 +541,6 @@ j_kv_unref (JKV* kv)
 }
 
 /**
- * Returns an item's key.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return The key.
- **/
-gchar const*
-j_kv_get_name (JKV* item)
-{
-	g_return_val_if_fail(item != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
-
-	return item->key;
-}
-
-/**
  * Creates an object.
  *
  * \author Michael Kuhn
