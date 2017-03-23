@@ -103,7 +103,7 @@ j_backend_load (gchar const* name, gchar const* component, JBackendType type, JB
 				g_assert(tmp_backend->meta.delete != NULL);
 				g_assert(tmp_backend->meta.get != NULL);
 				g_assert(tmp_backend->meta.get_all != NULL);
-				g_assert(tmp_backend->meta.get_by_value != NULL);
+				g_assert(tmp_backend->meta.get_by_prefix != NULL);
 				g_assert(tmp_backend->meta.iterate != NULL);
 			}
 		}
@@ -422,19 +422,19 @@ j_backend_meta_get_all (JBackend* backend, gchar const* namespace, gpointer* ite
 }
 
 gboolean
-j_backend_meta_get_by_value (JBackend* backend, gchar const* namespace, bson_t const* value, gpointer* iterator)
+j_backend_meta_get_by_prefix (JBackend* backend, gchar const* namespace, gchar const* prefix, gpointer* iterator)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_META, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	j_trace_enter("backend_get_by_value", "%s, %p, %p", namespace, (gpointer)value, (gpointer)iterator);
-	ret = backend->meta.get_by_value(namespace, value, iterator);
-	j_trace_leave("backend_get_by_value");
+	j_trace_enter("backend_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
+	ret = backend->meta.get_by_prefix(namespace, prefix, iterator);
+	j_trace_leave("backend_get_by_prefix");
 
 	return ret;
 }

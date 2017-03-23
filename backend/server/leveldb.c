@@ -180,12 +180,12 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 static
 gboolean
-backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* data)
+backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	return ret;
@@ -282,7 +282,7 @@ JBackend leveldb_backend = {
 		.delete = backend_delete,
 		.get = backend_get,
 		.get_all = backend_get_all,
-		.get_by_value = backend_get_by_value,
+		.get_by_prefix = backend_get_by_prefix,
 		.iterate = backend_iterate
 	}
 };

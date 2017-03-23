@@ -86,12 +86,13 @@ j_item_iterator_new (JCollection* collection)
 
 	if (iterator->meta_backend != NULL)
 	{
-		bson_t query[1];
+		gchar* prefix;
 
-		bson_init(query);
-		bson_append_oid(query, "collection", -1, j_collection_get_id(iterator->collection));
+		prefix = g_strdup_printf("%s/", j_collection_get_name(collection));
 
-		j_backend_meta_get_by_value(iterator->meta_backend, "items", query, &(iterator->cursor));
+		j_backend_meta_get_by_prefix(iterator->meta_backend, "items", prefix, &(iterator->cursor));
+
+		g_free(prefix);
 	}
 
 	return iterator;

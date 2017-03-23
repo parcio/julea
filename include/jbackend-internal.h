@@ -60,7 +60,7 @@ J_GNUC_INTERNAL gboolean j_backend_meta_delete (JBackend*, gpointer, gchar const
 J_GNUC_INTERNAL gboolean j_backend_meta_get (JBackend*, gchar const*, gchar const*, bson_t*);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_get_all (JBackend*, gchar const*, gpointer*);
-J_GNUC_INTERNAL gboolean j_backend_meta_get_by_value (JBackend*, gchar const*, bson_t const*, gpointer*);
+J_GNUC_INTERNAL gboolean j_backend_meta_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
 J_GNUC_INTERNAL gboolean j_backend_meta_iterate (JBackend*, gpointer, bson_t*);
 
 #endif

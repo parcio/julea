@@ -72,7 +72,7 @@ struct JBackend
 			gboolean (*get) (gchar const*, gchar const*, bson_t*);
 
 			gboolean (*get_all) (gchar const*, gpointer*);
-			gboolean (*get_by_value) (gchar const*, bson_t const*, gpointer*);
+			gboolean (*get_by_prefix) (gchar const*, gchar const*, gpointer*);
 			gboolean (*iterate) (gpointer, bson_t*);
 		}
 		meta;

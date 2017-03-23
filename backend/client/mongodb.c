@@ -279,34 +279,28 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 static
 gboolean
-backend_get_by_value (gchar const* namespace, bson_t const* value, gpointer* data)
+backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	gboolean ret = FALSE;
 
 	bson_t document[1];
-	bson_iter_t iter;
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
+	gchar* escaped_prefix;
+	gchar* regex_prefix;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
+	escaped_prefix = g_regex_escape_string(prefix, -1);
+	regex_prefix = g_strdup_printf("^%s", escaped_prefix);
+
 	bson_init(document);
+	bson_append_regex(document, "key", -1, regex_prefix, NULL);
 
-	if (bson_iter_init(&iter, value))
-	{
-		while (bson_iter_next(&iter))
-		{
-			bson_value_t const* tmp;
-			gchar* key;
-
-			tmp = bson_iter_value(&iter);
-			key = g_strdup_printf("value.%s", bson_iter_key(&iter));
-			bson_append_value(document, key, -1, tmp);
-			g_free(key);
-		}
-	}
+	g_free(escaped_prefix);
+	g_free(regex_prefix);
 
 	/* FIXME */
 	//write_concern = mongoc_write_concern_new();
@@ -425,7 +419,7 @@ JBackend mongodb_backend = {
 		.delete = backend_delete,
 		.get = backend_get,
 		.get_all = backend_get_all,
-		.get_by_value = backend_get_by_value,
+		.get_by_prefix = backend_get_by_prefix,
 		.iterate = backend_iterate
 	}
 };
