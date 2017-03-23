@@ -45,6 +45,6 @@ void j_object_delete (JObject*, JBatch*);
 void j_object_read (JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_object_write (JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_object_get_status (JObject*, gint64*, guint64*, JBatch*);
+void j_object_status (JObject*, gint64*, guint64*, JBatch*);
 
 #endif

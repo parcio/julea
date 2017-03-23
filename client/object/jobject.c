@@ -60,7 +60,7 @@ struct JObjectOperation
 			gint64* modification_time;
 			guint64* size;
 		}
-		get_status;
+		status;
 
 		struct
 		{
@@ -132,11 +132,11 @@ j_object_delete_free (gpointer data)
 
 static
 void
-j_object_get_status_free (gpointer data)
+j_object_status_free (gpointer data)
 {
 	JObjectOperation* operation = data;
 
-	j_object_unref(operation->get_status.object);
+	j_object_unref(operation->status.object);
 
 	g_slice_free(JObjectOperation, operation);
 }
@@ -172,7 +172,6 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 index;
@@ -198,7 +197,6 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
 		/**
 		 * Force safe semantics to make the server send a reply.
 		 * Otherwise, nasty races can occur when using unsafe semantics:
@@ -236,6 +234,9 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
+		GSocketConnection* data_connection;
+
+		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
@@ -269,7 +270,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 index;
@@ -295,7 +295,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
 		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
@@ -325,6 +324,9 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
+		GSocketConnection* data_connection;
+
+		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
@@ -359,7 +361,6 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	JListIterator* it;
 	JMessage* message;
 	JObject* object;
-	GSocketConnection* data_connection;
 	gpointer object_handle;
 
 	// FIXME
@@ -373,7 +374,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->get_status.object;
+		object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -394,7 +395,6 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 		namespace_len = strlen(object->namespace) + 1;
 		name_len = strlen(object->name) + 1;
 
-		data_connection = j_connection_pool_pop_data(object->index);
 		message = j_message_new(J_MESSAGE_DATA_READ, namespace_len + name_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
@@ -441,9 +441,11 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	else
 	{
 		JMessage* reply;
+		GSocketConnection* data_connection;
 		guint32 operations_done;
 		guint32 operation_count;
 
+		data_connection = j_connection_pool_pop_data(object->index);
 		j_message_send(message, data_connection);
 
 		reply = j_message_new_reply(message);
@@ -522,7 +524,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	JListIterator* it;
 	JMessage* message;
 	JObject* object;
-	GSocketConnection* data_connection;
 	gpointer object_handle;
 	guint64 max_offset = 0;
 
@@ -537,7 +538,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->get_status.object;
+		object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -558,7 +559,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		namespace_len = strlen(object->namespace) + 1;
 		name_len = strlen(object->name) + 1;
 
-		data_connection = j_connection_pool_pop_data(object->index);
 		message = j_message_new(J_MESSAGE_DATA_WRITE, namespace_len + name_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
@@ -625,6 +625,9 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
+		GSocketConnection* data_connection;
+
+		data_connection = j_connection_pool_pop_data(object->index);
 		j_message_send(message, data_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
@@ -663,14 +666,13 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 
 static
 gboolean
-j_object_get_status_exec (JList* operations, JSemantics* semantics)
+j_object_status_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 index;
@@ -682,7 +684,7 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
-		JObject* object = operation->get_status.object;
+		JObject* object = operation->status.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -697,7 +699,6 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
 		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
@@ -706,9 +707,9 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
 	while (j_list_iterator_next(it))
 	{
 		JObjectOperation* operation = j_list_iterator_get(it);
-		JObject* object = operation->get_status.object;
-		gint64* modification_time = operation->get_status.modification_time;
-		guint64* size = operation->get_status.size;
+		JObject* object = operation->status.object;
+		gint64* modification_time = operation->status.modification_time;
+		guint64* size = operation->status.size;
 
 		if (data_backend != NULL)
 		{
@@ -734,7 +735,9 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
 	if (data_backend == NULL)
 	{
 		JMessage* reply;
+		GSocketConnection* data_connection;
 
+		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
 		reply = j_message_new_reply(message);
@@ -745,8 +748,8 @@ j_object_get_status_exec (JList* operations, JSemantics* semantics)
 		while (j_list_iterator_next(it))
 		{
 			JObjectOperation* operation = j_list_iterator_get(it);
-			gint64* modification_time = operation->get_status.modification_time;
-			guint64* size = operation->get_status.size;
+			gint64* modification_time = operation->status.modification_time;
+			guint64* size = operation->status.size;
 			gint64 modification_time_;
 			guint64 size_;
 
@@ -1039,7 +1042,7 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
  * \param batch     A batch.
  **/
 void
-j_object_get_status (JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
+j_object_status (JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
 	JObjectOperation* iop;
 	JOperation* operation;
@@ -1049,15 +1052,15 @@ j_object_get_status (JObject* object, gint64* modification_time, guint64* size, 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JObjectOperation);
-	iop->get_status.object = j_object_ref(object);
-	iop->get_status.modification_time = modification_time;
-	iop->get_status.size = size;
+	iop->status.object = j_object_ref(object);
+	iop->status.modification_time = modification_time;
+	iop->status.size = size;
 
 	operation = j_operation_new();
 	operation->key = object;
 	operation->data = iop;
-	operation->exec_func = j_object_get_status_exec;
-	operation->free_func = j_object_get_status_free;
+	operation->exec_func = j_object_status_exec;
+	operation->free_func = j_object_status_free;
 
 	j_batch_add(batch, operation);
 

@@ -441,6 +441,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 			data = g_slice_new(JDistributedObjectBackgroundData);
 			data->index = i;
 			data->message = messages[i];
+			data->operations = NULL;
 
 			background_data[i] = data;
 		}
@@ -543,6 +544,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 			data = g_slice_new(JDistributedObjectBackgroundData);
 			data->index = i;
 			data->message = messages[i];
+			data->operations = NULL;
 
 			background_data[i] = data;
 		}
