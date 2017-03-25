@@ -536,19 +536,19 @@ benchmark_item_unordered_create_delete_batch (BenchmarkResult* result)
 void
 benchmark_item (void)
 {
-	j_benchmark_run("/item/create", benchmark_item_create);
-	j_benchmark_run("/item/create-batch", benchmark_item_create_batch);
-	j_benchmark_run("/item/delete", benchmark_item_delete);
-	j_benchmark_run("/item/delete-batch", benchmark_item_delete_batch);
-	j_benchmark_run("/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
-	j_benchmark_run("/item/get-status", benchmark_item_get_status);
-	j_benchmark_run("/item/get-status-batch", benchmark_item_get_status_batch);
+	j_benchmark_run("/item/item/create", benchmark_item_create);
+	j_benchmark_run("/item/item/create-batch", benchmark_item_create_batch);
+	j_benchmark_run("/item/item/delete", benchmark_item_delete);
+	j_benchmark_run("/item/item/delete-batch", benchmark_item_delete_batch);
+	j_benchmark_run("/item/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
+	j_benchmark_run("/item/item/get-status", benchmark_item_get_status);
+	j_benchmark_run("/item/item/get-status-batch", benchmark_item_get_status_batch);
 	/* FIXME get */
-	j_benchmark_run("/item/read", benchmark_item_read);
-	j_benchmark_run("/item/read-batch", benchmark_item_read_batch);
-	j_benchmark_run("/item/write", benchmark_item_write);
-	j_benchmark_run("/item/write-batch", benchmark_item_write_batch);
+	j_benchmark_run("/item/item/read", benchmark_item_read);
+	j_benchmark_run("/item/item/read-batch", benchmark_item_read_batch);
+	j_benchmark_run("/item/item/write", benchmark_item_write);
+	j_benchmark_run("/item/item/write-batch", benchmark_item_write_batch);
 
-	j_benchmark_run("/item/unordered-create-delete", benchmark_item_unordered_create_delete);
-	j_benchmark_run("/item/unordered-create-delete-batch", benchmark_item_unordered_create_delete_batch);
+	j_benchmark_run("/item/item/unordered-create-delete", benchmark_item_unordered_create_delete);
+	j_benchmark_run("/item/item/unordered-create-delete-batch", benchmark_item_unordered_create_delete_batch);
 }

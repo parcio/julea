@@ -181,13 +181,16 @@ main (int argc, char** argv)
 		g_print("name  elapsed  operations  bytes  total_elapsed\n");
 	}
 
+	// Core
 	benchmark_background_operation();
 	benchmark_cache();
-	benchmark_collection();
-	benchmark_item();
 	benchmark_lock();
 	benchmark_memory_chunk();
 	benchmark_message();
+
+	// Item client
+	benchmark_collection();
+	benchmark_item();
 
 	g_timer_destroy(j_benchmark_timer);
 	j_semantics_unref(j_benchmark_semantics);

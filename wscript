@@ -279,10 +279,10 @@ def build (ctx):
 
 	# Benchmark
 	ctx.program(
-		source = ctx.path.ant_glob('benchmark/*.c'),
+		source = ctx.path.ant_glob('benchmark/**/*.c'),
 		target = 'benchmark/julea-benchmark',
 		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
-		includes = ['include'],
+		includes = ['include', 'benchmark'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
