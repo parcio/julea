@@ -27,33 +27,30 @@
 
 static
 void
-test_item_fixture_setup (JItem** item, gconstpointer data)
+test_collection_fixture_setup (JCollection** collection, gconstpointer data)
 {
 	JBatch* batch;
-	JCollection* collection;
 
 	(void)data;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	collection = j_collection_create("test-collection", batch);
-	*item = j_item_create(collection, "test-item", NULL, batch);
+	*collection = j_collection_create("test-collection", batch);
 
-	j_collection_unref(collection);
 	j_batch_unref(batch);
 }
 
 static
 void
-test_item_fixture_teardown (JItem** item, gconstpointer data)
+test_collection_fixture_teardown (JCollection** collection, gconstpointer data)
 {
 	(void)data;
 
-	j_item_unref(*item);
+	j_collection_unref(*collection);
 }
 
 static
 void
-test_item_new_free (void)
+test_collection_new_free (void)
 {
 	guint const n = 100000;
 
@@ -61,51 +58,28 @@ test_item_new_free (void)
 	{
 		JBatch* batch;
 		JCollection* collection;
-		JItem* item;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		collection = j_collection_create("test-collection", batch);
-		item = j_item_create(collection, "test-item", NULL, batch);
 		j_collection_unref(collection);
 		j_batch_unref(batch);
 
-		g_assert(item != NULL);
-		j_item_unref(item);
+		g_assert(collection != NULL);
 	}
 }
 
 static
 void
-test_item_name (JItem** item, gconstpointer data)
+test_collection_name (JCollection** collection, gconstpointer data)
 {
 	(void)data;
 
-	g_assert_cmpstr(j_item_get_name(*item), ==, "test-item");
-}
-
-static
-void
-test_item_size (JItem** item, gconstpointer data)
-{
-	(void)data;
-
-	g_assert_cmpuint(j_item_get_size(*item), ==, 0);
-}
-
-static
-void
-test_item_modification_time (JItem** item, gconstpointer data)
-{
-	(void)data;
-
-	g_assert_cmpuint(j_item_get_modification_time(*item), >, 0);
+	g_assert_cmpstr(j_collection_get_name(*collection), ==, "test-collection");
 }
 
 void
-test_item (void)
+test_collection (void)
 {
-	g_test_add_func("/item/new_free", test_item_new_free);
-	g_test_add("/item/name", JItem*, NULL, test_item_fixture_setup, test_item_name, test_item_fixture_teardown);
-	g_test_add("/item/size", JItem*, NULL, test_item_fixture_setup, test_item_size, test_item_fixture_teardown);
-	g_test_add("/item/modification_time", JItem*, NULL, test_item_fixture_setup, test_item_modification_time, test_item_fixture_teardown);
+	g_test_add_func("/item/collection/new_free", test_collection_new_free);
+	g_test_add("/item/collection/name", JCollection*, NULL, test_collection_fixture_setup, test_collection_name, test_collection_fixture_teardown);
 }

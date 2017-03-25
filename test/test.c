@@ -33,19 +33,22 @@ main (int argc, char** argv)
 
 	j_init();
 
+	// Core
 	test_background_operation();
+	test_batch();
 	test_cache();
-	test_collection();
 	test_configuration();
 	test_distribution();
-	test_item();
 	test_list();
 	test_list_iterator();
 	test_lock();
 	test_memory_chunk();
 	test_message();
-	test_operation();
 	test_semantics();
+
+	// Item client
+	test_collection();
+	test_item();
 	test_uri();
 
 	ret = g_test_run();

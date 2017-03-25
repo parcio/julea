@@ -27,7 +27,7 @@
 
 #include "test.h"
 
-static gint test_operation_flag;
+static gint test_batch_flag;
 
 static
 void
@@ -37,12 +37,12 @@ on_operation_completed (JBatch* batch, gboolean ret, gpointer user_data)
 	(void)ret;
 	(void)user_data;
 
-	g_atomic_int_set(&test_operation_flag, 1);
+	g_atomic_int_set(&test_batch_flag, 1);
 }
 
 static
 void
-test_operation_new_free (void)
+test_batch_new_free (void)
 {
 	JBatch* batch;
 
@@ -54,7 +54,7 @@ test_operation_new_free (void)
 
 static
 void
-test_operation_semantics (void)
+test_batch_semantics (void)
 {
 	JBatch* batch;
 	JSemantics* semantics;
@@ -76,7 +76,7 @@ test_operation_semantics (void)
 
 static
 void
-_test_operation_execute (gboolean async)
+_test_batch_execute (gboolean async)
 {
 	JCollection* collection;
 	JItem* item;
@@ -84,7 +84,7 @@ _test_operation_execute (gboolean async)
 
 	if (async)
 	{
-		g_atomic_int_set(&test_operation_flag, 0);
+		g_atomic_int_set(&test_batch_flag, 0);
 	}
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -110,7 +110,7 @@ _test_operation_execute (gboolean async)
 
 	if (async)
 	{
-		while (g_atomic_int_get(&test_operation_flag) != 1)
+		while (g_atomic_int_get(&test_batch_flag) != 1)
 		{
 			g_usleep(1000);
 		}
@@ -119,23 +119,23 @@ _test_operation_execute (gboolean async)
 
 static
 void
-test_operation_execute (void)
+test_batch_execute (void)
 {
-	_test_operation_execute(FALSE);
+	_test_batch_execute(FALSE);
 }
 
 static
 void
-test_operation_execute_async (void)
+test_batch_execute_async (void)
 {
-	_test_operation_execute(TRUE);
+	_test_batch_execute(TRUE);
 }
 
 void
-test_operation (void)
+test_batch (void)
 {
-	g_test_add_func("/batch/new_free", test_operation_new_free);
-	g_test_add_func("/batch/semantics", test_operation_semantics);
-	g_test_add_func("/batch/execute", test_operation_execute);
-	g_test_add_func("/batch/execute_async", test_operation_execute_async);
+	g_test_add_func("/batch/new_free", test_batch_new_free);
+	g_test_add_func("/batch/semantics", test_batch_semantics);
+	g_test_add_func("/batch/execute", test_batch_execute);
+	g_test_add_func("/batch/execute_async", test_batch_execute_async);
 }
