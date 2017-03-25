@@ -140,6 +140,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	JBackend* meta_backend;
 	JListIterator* it;
 	JMessage* message;
+	JSemanticsSafety safety;
 	gchar const* namespace;
 	gpointer meta_batch;
 	gsize namespace_len;
@@ -161,12 +162,13 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		index = kop->put.kv->index;
 	}
 
+	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
 	meta_backend = j_metadata_backend();
 
 	if (meta_backend != NULL)
 	{
-		ret = j_backend_meta_batch_start(meta_backend, namespace, &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, namespace, safety, &meta_batch);
 	}
 	else
 	{
@@ -179,7 +181,8 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
 		message = j_message_new(J_MESSAGE_META_PUT, namespace_len);
-		j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
+		j_message_set_safety(message, semantics);
+		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -246,6 +249,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	JBackend* meta_backend;
 	JListIterator* it;
 	JMessage* message;
+	JSemanticsSafety safety;
 	gchar const* namespace;
 	gpointer meta_batch;
 	gsize namespace_len;
@@ -267,12 +271,13 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		index = object->index;
 	}
 
+	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
 	meta_backend = j_metadata_backend();
 
 	if (meta_backend != NULL)
 	{
-		ret = j_backend_meta_batch_start(meta_backend, namespace, &meta_batch);
+		ret = j_backend_meta_batch_start(meta_backend, namespace, safety, &meta_batch);
 	}
 	else
 	{

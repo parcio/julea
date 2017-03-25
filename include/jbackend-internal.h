@@ -34,6 +34,8 @@
 
 #include <jbackend.h>
 
+#include <jsemantics.h>
+
 J_GNUC_INTERNAL GModule* j_backend_load_client (gchar const*, JBackendType, JBackend**);
 J_GNUC_INTERNAL GModule* j_backend_load_server (gchar const*, JBackendType, JBackend**);
 
@@ -55,7 +57,7 @@ J_GNUC_INTERNAL gboolean j_backend_data_write (JBackend*, gpointer, gconstpointe
 J_GNUC_INTERNAL gboolean j_backend_meta_init (JBackend*, gchar const*);
 J_GNUC_INTERNAL void j_backend_meta_fini (JBackend*);
 
-J_GNUC_INTERNAL gboolean j_backend_meta_batch_start (JBackend*, gchar const*, gpointer*);
+J_GNUC_INTERNAL gboolean j_backend_meta_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
 J_GNUC_INTERNAL gboolean j_backend_meta_batch_execute (JBackend*, gpointer);
 
 J_GNUC_INTERNAL gboolean j_backend_meta_put (JBackend*, gpointer, gchar const*, bson_t const*);

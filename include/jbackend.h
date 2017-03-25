@@ -29,6 +29,8 @@
 
 #include <bson.h>
 
+#include <jsemantics.h>
+
 enum JBackendType
 {
 	J_BACKEND_TYPE_DATA,
@@ -67,7 +69,7 @@ struct JBackend
 			gboolean (*init) (gchar const*);
 			void (*fini) (void);
 
-			gboolean (*batch_start) (gchar const*, gpointer*);
+			gboolean (*batch_start) (gchar const*, JSemanticsSafety, gpointer*);
 			gboolean (*batch_execute) (gpointer);
 
 			gboolean (*put) (gpointer, gchar const*, bson_t const*);

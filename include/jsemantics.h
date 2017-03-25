@@ -51,53 +51,67 @@ enum JSemanticsType
 
 typedef enum JSemanticsType JSemanticsType;
 
-enum
+enum JSemanticsAtomicity
 {
 	J_SEMANTICS_ATOMICITY_BATCH,
 	J_SEMANTICS_ATOMICITY_OPERATION,
 	J_SEMANTICS_ATOMICITY_NONE
 };
 
-enum
+typedef enum JSemanticsAtomicity JSemanticsAtomicity;
+
+enum JSemanticsConcurrency
 {
 	J_SEMANTICS_CONCURRENCY_OVERLAPPING,
 	J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING,
 	J_SEMANTICS_CONCURRENCY_NONE
 };
 
-enum
+typedef enum JSemanticsConcurrency JSemanticsConcurrency;
+
+enum JSemanticsConsistency
 {
 	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
 	J_SEMANTICS_CONSISTENCY_EVENTUAL,
 	J_SEMANTICS_CONSISTENCY_NONE
 };
 
-enum
+typedef enum JSemanticsConsistency JSemanticsConsistency;
+
+enum JSemanticsOrdering
 {
 	J_SEMANTICS_ORDERING_STRICT,
 	J_SEMANTICS_ORDERING_SEMI_RELAXED,
 	J_SEMANTICS_ORDERING_RELAXED
 };
 
-enum
+typedef enum JSemanticsOrdering JSemanticsOrdering;
+
+enum JSemanticsPersistency
 {
 	J_SEMANTICS_PERSISTENCY_IMMEDIATE,
 	J_SEMANTICS_PERSISTENCY_EVENTUAL,
 	J_SEMANTICS_PERSISTENCY_NONE
 };
 
-enum
+typedef enum JSemanticsPersistency JSemanticsPersistency;
+
+enum JSemanticsSafety
 {
 	J_SEMANTICS_SAFETY_NONE,
 	J_SEMANTICS_SAFETY_NETWORK,
 	J_SEMANTICS_SAFETY_STORAGE
 };
 
-enum
+typedef enum JSemanticsSafety JSemanticsSafety;
+
+enum JSemanticsSecurity
 {
 	J_SEMANTICS_SECURITY_STRICT,
 	J_SEMANTICS_SECURITY_NONE
 };
+
+typedef enum JSemanticsSecurity JSemanticsSecurity;
 
 struct JSemantics;
 

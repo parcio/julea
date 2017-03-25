@@ -62,6 +62,45 @@ jd_signal (gpointer data)
 }
 
 static
+JSemanticsSafety
+jd_safety_message_to_semantics (JMessageType type)
+{
+	JSemanticsSafety safety;
+
+	safety = J_SEMANTICS_SAFETY_NONE;
+
+	switch (type)
+	{
+		case J_MESSAGE_SAFETY_STORAGE:
+			safety = J_SEMANTICS_SAFETY_STORAGE;
+			break;
+		case J_MESSAGE_SAFETY_NETWORK:
+			safety = J_SEMANTICS_SAFETY_NETWORK;
+			break;
+		case J_MESSAGE_NONE:
+		case J_MESSAGE_PING:
+		case J_MESSAGE_STATISTICS:
+		case J_MESSAGE_DATA_CREATE:
+		case J_MESSAGE_DATA_DELETE:
+		case J_MESSAGE_DATA_READ:
+		case J_MESSAGE_DATA_STATUS:
+		case J_MESSAGE_DATA_WRITE:
+		case J_MESSAGE_META_PUT:
+		case J_MESSAGE_META_DELETE:
+		case J_MESSAGE_META_GET:
+		case J_MESSAGE_META_GET_ALL:
+		case J_MESSAGE_META_GET_BY_PREFIX:
+		case J_MESSAGE_REPLY:
+		case J_MESSAGE_MODIFIER_MASK:
+		default:
+			g_warn_if_reached();
+			break;
+	}
+
+	return safety;
+}
+
+static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
@@ -91,10 +130,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* path;
 		guint32 operation_count;
 		JMessageType type_modifier;
+		JSemanticsSafety safety;
 		guint i;
 
 		operation_count = j_message_get_count(message);
 		type_modifier = j_message_get_type_modifier(message);
+		safety = jd_safety_message_to_semantics(type_modifier);
 
 		switch (j_message_get_type(message))
 		{
@@ -447,7 +488,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					j_backend_meta_batch_start(jd_meta_backend, namespace, &batch);
+					j_backend_meta_batch_start(jd_meta_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -488,7 +529,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					j_backend_meta_batch_start(jd_meta_backend, namespace, &batch);
+					j_backend_meta_batch_start(jd_meta_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{

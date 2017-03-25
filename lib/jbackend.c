@@ -319,7 +319,7 @@ j_backend_meta_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_meta_batch_start (JBackend* backend, gchar const* namespace, gpointer* batch)
+j_backend_meta_batch_start (JBackend* backend, gchar const* namespace, JSemanticsSafety safety, gpointer* batch)
 {
 	gboolean ret;
 
@@ -328,8 +328,8 @@ j_backend_meta_batch_start (JBackend* backend, gchar const* namespace, gpointer*
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-	j_trace_enter("backend_batch_start", "%s, %p", namespace, (gpointer)batch);
-	ret = backend->meta.batch_start(namespace, batch);
+	j_trace_enter("backend_batch_start", "%s, %d, %p", namespace, safety, (gpointer)batch);
+	ret = backend->meta.batch_start(namespace, safety, batch);
 	j_trace_leave("backend_batch_start");
 
 	return ret;

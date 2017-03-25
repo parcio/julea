@@ -168,7 +168,7 @@ j_lock_acquire (JLock* lock)
 	{
 		if (meta_backend != NULL)
 		{
-			acquired = j_backend_meta_batch_start(meta_backend, "locks", &meta_batch);
+			acquired = j_backend_meta_batch_start(meta_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &meta_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)
@@ -231,7 +231,7 @@ j_lock_release (JLock* lock)
 	{
 		if (meta_backend != NULL)
 		{
-			released = j_backend_meta_batch_start(meta_backend, "locks", &meta_batch);
+			released = j_backend_meta_batch_start(meta_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &meta_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)

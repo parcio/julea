@@ -32,6 +32,7 @@ struct JLevelDBBatch
 {
 	leveldb_writebatch_t* batch;
 	gchar* namespace;
+	JSemanticsSafety safety;
 };
 
 typedef struct JLevelDBBatch JLevelDBBatch;
@@ -48,10 +49,11 @@ static leveldb_t* backend_db = NULL;
 
 static leveldb_readoptions_t* backend_read_options = NULL;
 static leveldb_writeoptions_t* backend_write_options = NULL;
+static leveldb_writeoptions_t* backend_write_options_sync = NULL;
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
 	JLevelDBBatch* batch;
 
@@ -62,6 +64,7 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 
 	batch->batch = leveldb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
+	batch->safety = safety;
 	*data = batch;
 
 	return (batch != NULL);
@@ -73,9 +76,16 @@ backend_batch_execute (gpointer data)
 {
 	JLevelDBBatch* batch = data;
 
+	leveldb_writeoptions_t* write_options = backend_write_options;
+
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	leveldb_write(backend_db, backend_write_options, batch->batch, NULL);
+	if (batch->safety == J_SEMANTICS_SAFETY_STORAGE)
+	{
+		write_options = backend_write_options_sync;
+	}
+
+	leveldb_write(backend_db, write_options, batch->batch, NULL);
 
 	g_free(batch->namespace);
 	leveldb_writebatch_destroy(batch->batch);
@@ -264,6 +274,8 @@ backend_init (gchar const* path)
 
 	backend_read_options = leveldb_readoptions_create();
 	backend_write_options = leveldb_writeoptions_create();
+	backend_write_options_sync = leveldb_writeoptions_create();
+	leveldb_writeoptions_set_sync(backend_write_options_sync, 1);
 
 	backend_db = leveldb_open(options, path, NULL);
 
@@ -278,6 +290,7 @@ backend_fini (void)
 {
 	leveldb_readoptions_destroy(backend_read_options);
 	leveldb_writeoptions_destroy(backend_write_options);
+	leveldb_writeoptions_destroy(backend_write_options_sync);
 
 	if (backend_db != NULL)
 	{

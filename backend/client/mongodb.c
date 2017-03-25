@@ -33,34 +33,15 @@ static mongoc_client_t* backend_connection = NULL;
 static gchar* backend_host = NULL;
 static gchar* backend_database = NULL;
 
-/*
-static
-void
-backend_set_write_concern (mongoc_write_concern_t* write_concern, JSemantics* semantics)
-{
-	g_return_if_fail(write_concern != NULL);
-	g_return_if_fail(semantics != NULL);
-
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
-	{
-		mongoc_write_concern_set_w(write_concern, 1);
-
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
-		{
-			mongoc_write_concern_set_journal(write_concern, TRUE);
-		}
-	}
-}
-*/
-
 static
 gboolean
-backend_batch_start (gchar const* namespace, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
 	bson_t index[1];
 	mongoc_bulk_operation_t* bulk_op;
 	mongoc_collection_t* m_collection;
 	mongoc_index_opt_t m_index_opt[1];
+	mongoc_write_concern_t* write_concern;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
@@ -71,18 +52,31 @@ backend_batch_start (gchar const* namespace, gpointer* data)
 	mongoc_index_opt_init(m_index_opt);
 	m_index_opt->unique = TRUE;
 
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
+	write_concern = mongoc_write_concern_new();
+
+	if (safety != J_SEMANTICS_SAFETY_NONE)
+	{
+		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_DEFAULT);
+
+		if (safety == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			mongoc_write_concern_set_journal(write_concern, TRUE);
+		}
+	}
+	else
+	{
+		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_UNACKNOWLEDGED);
+	}
 
 	/* FIXME cache */
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 
 	mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
 
-	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, NULL /*write_concern*/);
+	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, write_concern);
 
 	mongoc_collection_destroy(m_collection);
+	mongoc_write_concern_destroy(write_concern);
 
 	bson_destroy(index);
 
@@ -133,10 +127,6 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
 	bson_append_document(document, "value", -1, value);
@@ -177,10 +167,6 @@ backend_delete (gpointer data, gchar const* key)
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
-
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	mongoc_bulk_operation_remove(bulk_op, document);
 
@@ -257,10 +243,6 @@ backend_get_all (gchar const* namespace, gpointer* data)
 
 	bson_init(document);
 
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
-
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);
 
@@ -301,10 +283,6 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 	g_free(escaped_prefix);
 	g_free(regex_prefix);
-
-	/* FIXME */
-	//write_concern = mongoc_write_concern_new();
-	//j_helper_set_write_concern(write_concern, j_batch_get_semantics(batch));
 
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);

@@ -396,7 +396,8 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 			 **/
 			messages[i] = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
-			j_message_force_safety(messages[i], J_SEMANTICS_SAFETY_NETWORK);
+			j_message_set_safety(messages[i], semantics);
+			//j_message_force_safety(messages[i], J_SEMANTICS_SAFETY_NETWORK);
 			j_message_append_n(messages[i], namespace, namespace_len);
 		}
 	}
