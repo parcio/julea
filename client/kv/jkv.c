@@ -210,24 +210,24 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		GSocketConnection* data_connection;
+		GSocketConnection* meta_connection;
 
-		data_connection = j_connection_pool_pop_meta(index);
-		j_message_send(message, data_connection);
+		meta_connection = j_connection_pool_pop_meta(index);
+		j_message_send(message, meta_connection);
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			JMessage* reply;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, meta_connection);
 
 			/* FIXME do something with reply */
 			j_message_unref(reply);
 		}
 
 		j_message_unref(message);
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_meta(index, meta_connection);
 	}
 
 	j_list_iterator_free(it);
@@ -342,7 +342,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	JMessage* message;
-	GSocketConnection* data_connection;
+	GSocketConnection* meta_connection;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 index;
@@ -369,7 +369,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		data_connection = j_connection_pool_pop_data(index);
+		meta_connection = j_connection_pool_pop_meta(index);
 		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
@@ -407,10 +407,10 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 	{
 		JMessage* reply;
 
-		j_message_send(message, data_connection);
+		j_message_send(message, meta_connection);
 
 		reply = j_message_new_reply(message);
-		j_message_receive(reply, data_connection);
+		j_message_receive(reply, meta_connection);
 
 		it = j_list_iterator_new(operations);
 
@@ -434,7 +434,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 		j_message_unref(reply);
 		j_message_unref(message);
 
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_meta(index, meta_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
