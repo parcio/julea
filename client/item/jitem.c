@@ -227,17 +227,6 @@ j_item_read_free (gpointer data)
 	g_slice_free(JItemOperation, operation);
 }
 
-static
-void
-j_item_write_free (gpointer data)
-{
-	JItemOperation* operation = data;
-
-	j_item_unref(operation->write.item);
-
-	g_slice_free(JItemOperation, operation);
-}
-
 /**
  * Executes read operations in a background operation.
  *
@@ -316,51 +305,6 @@ j_item_read_background_operation (gpointer data)
 		break;
 	}
 	*/
-
-	return NULL;
-}
-
-/**
- * Executes write operations in a background operation.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param data Background data.
- *
- * \return #data.
- **/
-static
-gpointer
-j_item_write_background_operation (gpointer data)
-{
-	JItemBackgroundData* background_data = data;
-	JMessage* reply;
-	GSocketConnection* connection;
-
-	connection = j_connection_pool_pop_data(background_data->index);
-
-	j_message_send(background_data->message, connection);
-
-	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
-	{
-		/* guint64 nbytes; */
-
-		reply = j_message_new_reply(background_data->message);
-		j_message_receive(reply, connection);
-
-		/* FIXME do something with nbytes */
-		/* nbytes = j_message_get_8(reply); */
-
-		j_message_unref(reply);
-	}
-
-	j_connection_pool_push_data(background_data->index, connection);
-
-	j_message_unref(background_data->message);
-
-	g_slice_free(JItemBackgroundData, background_data);
 
 	return NULL;
 }
@@ -638,31 +582,14 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
-	JItemOperation* iop;
-	JOperation* operation;
-
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JItemOperation);
-	iop->write.item = j_item_ref(item);
-	iop->write.data = data;
-	iop->write.length = length;
-	iop->write.offset = offset;
-	iop->write.bytes_written = bytes_written;
-
-	operation = j_operation_new();
-	operation->key = item;
-	operation->data = iop;
-	operation->exec_func = j_item_write_exec;
-	operation->free_func = j_item_write_free;
-
-	*bytes_written = 0;
-
-	j_batch_add(batch, operation);
+	// FIXME see j_item_write_exec
+	j_distributed_object_write(item->object, data, length, offset, bytes_written, batch);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -1436,143 +1363,10 @@ j_item_read_exec (JList* operations, JSemantics* semantics)
 	return TRUE;
 }
 
+/*
 gboolean
 j_item_write_exec (JList* operations, JSemantics* semantics)
 {
-	JItem* item;
-	JListIterator* iterator;
-	JLock* lock = NULL;
-	JMessage** messages;
-	guint n;
-	gchar const* item_name;
-	gchar const* collection_name;
-	guint64 max_offset = 0;
-	gchar* path;
-	gpointer* background_data;
-	gsize path_len;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	n = j_configuration_get_data_server_count(j_configuration());
-	background_data = g_new(gpointer, n);
-	messages = g_new(JMessage*, n);
-
-	for (guint i = 0; i < n; i++)
-	{
-		messages[i] = NULL;
-	}
-
-	{
-		JItemOperation* operation;
-
-		operation = j_list_get_first(operations);
-		g_assert(operation != NULL);
-		item = operation->write.item;
-
-		item_name = item->name;
-		collection_name = j_collection_get_name(item->collection);
-
-		path = g_build_path("/", collection_name, item_name, NULL);
-		path_len = strlen(path) + 1;
-	}
-
-	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
-	{
-		lock = j_lock_new("item", path);
-	}
-
-	iterator = j_list_iterator_new(operations);
-
-	while (j_list_iterator_next(iterator))
-	{
-		JItemOperation* operation = j_list_iterator_get(iterator);
-		gconstpointer data = operation->write.data;
-		guint64 length = operation->write.length;
-		guint64 offset = operation->write.offset;
-		guint64* bytes_written = operation->write.bytes_written;
-
-		gchar const* d;
-		guint64 new_length;
-		guint64 new_offset;
-		guint64 block_id;
-		guint index;
-
-		if (length == 0)
-		{
-			continue;
-		}
-
-		max_offset = MAX(max_offset, offset + length);
-
-		j_trace_file_begin(item_name, J_TRACE_FILE_WRITE);
-
-		j_distribution_reset(item->distribution, length, offset);
-		d = data;
-
-		while (j_distribution_distribute(item->distribution, &index, &new_length, &new_offset, &block_id))
-		{
-			if (messages[index] == NULL)
-			{
-				/* FIXME */
-				messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, 5 + path_len);
-				j_message_set_safety(messages[index], semantics);
-				j_message_append_n(messages[index], "item", 5);
-				j_message_append_n(messages[index], path, path_len);
-			}
-
-			j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(messages[index], &new_length);
-			j_message_append_8(messages[index], &new_offset);
-			j_message_add_send(messages[index], d, new_length);
-
-			if (lock != NULL)
-			{
-				j_lock_add(lock, block_id);
-			}
-
-			d += new_length;
-
-			/* FIXME */
-			if (bytes_written != NULL)
-			{
-				*bytes_written += new_length;
-			}
-		}
-
-		j_trace_file_end(item_name, J_TRACE_FILE_WRITE, length, offset);
-	}
-
-	j_list_iterator_free(iterator);
-
-	if (lock != NULL)
-	{
-		/* FIXME busy wait */
-		while (!j_lock_acquire(lock));
-	}
-
-	for (guint i = 0; i < n; i++)
-	{
-		JItemBackgroundData* data;
-
-		if (messages[i] == NULL)
-		{
-			background_data[i] = NULL;
-			continue;
-		}
-
-		data = g_slice_new(JItemBackgroundData);
-		data->message = messages[i];
-		data->index = i;
-
-		background_data[i] = data;
-	}
-
-	j_helper_execute_parallel(j_item_write_background_operation, background_data, n);
-
-	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE && FALSE)
 	{
 		bson_t b_document[1];
@@ -1624,22 +1418,8 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 
 		mongoc_write_concern_destroy(write_concern);
 	}
-	*/
-
-	if (lock != NULL)
-	{
-		j_lock_free(lock);
-	}
-
-	g_free(path);
-
-	g_free(background_data);
-	g_free(messages);
-
-	j_trace_leave(G_STRFUNC);
-
-	return TRUE;
 }
+*/
 
 /*
 gboolean

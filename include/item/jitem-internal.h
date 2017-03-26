@@ -57,6 +57,5 @@ J_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
 J_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);
 
 J_GNUC_INTERNAL gboolean j_item_read_exec (JList*, JSemantics*);
-J_GNUC_INTERNAL gboolean j_item_write_exec (JList*, JSemantics*);
 
 #endif
