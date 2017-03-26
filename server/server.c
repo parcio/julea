@@ -78,6 +78,8 @@ jd_safety_message_to_semantics (JMessageType type)
 			safety = J_SEMANTICS_SAFETY_NETWORK;
 			break;
 		case J_MESSAGE_NONE:
+			// FIXME
+			break;
 		case J_MESSAGE_PING:
 		case J_MESSAGE_STATISTICS:
 		case J_MESSAGE_DATA_CREATE:
