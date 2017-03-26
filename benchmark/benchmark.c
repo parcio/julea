@@ -188,6 +188,9 @@ main (int argc, char** argv)
 	benchmark_memory_chunk();
 	benchmark_message();
 
+	// Object client
+	benchmark_object();
+
 	// Item client
 	benchmark_collection();
 	benchmark_item();
