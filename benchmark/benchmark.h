@@ -47,6 +47,7 @@ void benchmark_lock (void);
 void benchmark_memory_chunk (void);
 void benchmark_message (void);
 
+void benchmark_distributed_object (void);
 void benchmark_object (void);
 
 void benchmark_collection (void);

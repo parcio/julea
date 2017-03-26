@@ -189,6 +189,7 @@ main (int argc, char** argv)
 	benchmark_message();
 
 	// Object client
+	benchmark_distributed_object();
 	benchmark_object();
 
 	// Item client

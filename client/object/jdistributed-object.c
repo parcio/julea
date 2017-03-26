@@ -689,7 +689,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 				guint64 nbytes;
 
 				nbytes = j_message_get_8(reply);
-				*bytes_read = nbytes;
+				j_helper_atomic_add(bytes_read, nbytes);
 
 				if (nbytes > 0)
 				{
@@ -822,13 +822,12 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 			j_message_add_send(message, data, length);
 		}
 
-		/* FIXME */
-		if (bytes_written != NULL)
-		{
-			*bytes_written += length;
-		}
-
 		j_trace_file_end(object->name, J_TRACE_FILE_WRITE, length, offset);
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+		{
+			j_helper_atomic_add(bytes_written, length);
+		}
 	}
 
 	j_list_iterator_free(it);
@@ -844,13 +843,29 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			JMessage* reply;
-			/* guint64 nbytes; */
+			guint64 nbytes;
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, data_connection);
 
-			/* FIXME do something with nbytes */
-			/* nbytes = j_message_get_8(reply); */
+			it = j_list_iterator_new(operations);
+
+			while (j_list_iterator_next(it))
+			{
+				JDistributedObjectOperation* operation = j_list_iterator_get(it);
+				guint64 length = operation->write.length;
+				guint64* bytes_written = operation->write.bytes_written;
+
+				if (length == 0)
+				{
+					continue;
+				}
+
+				nbytes = j_message_get_8(reply);
+				j_helper_atomic_add(bytes_written, nbytes);
+			}
+
+			j_list_iterator_free(it);
 
 			j_message_unref(reply);
 		}
@@ -1195,6 +1210,8 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 	operation->exec_func = j_distributed_object_read_exec;
 	operation->free_func = j_distributed_object_read_free;
 
+	*bytes_read = 0;
+
 	j_batch_add(batch, operation);
 
 	j_trace_leave(G_STRFUNC);
@@ -1242,6 +1259,8 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 	operation->data = iop;
 	operation->exec_func = j_distributed_object_write_exec;
 	operation->free_func = j_distributed_object_write_free;
+
+	*bytes_written = 0;
 
 	j_batch_add(batch, operation);
 
