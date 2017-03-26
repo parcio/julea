@@ -527,7 +527,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	JMessage* message;
 	JObject* object;
 	gpointer object_handle;
-	guint64 max_offset = 0;
 
 	// FIXME
 	//JLock* lock = NULL;
@@ -588,8 +587,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_WRITE);
-
-		max_offset = MAX(max_offset, offset + length);
 
 		/*
 		if (lock != NULL)

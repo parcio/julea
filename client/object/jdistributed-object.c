@@ -795,7 +795,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	gsize name_len;
 	gsize namespace_len;
 	guint32 server_count;
-	guint64 max_offset = 0;
 
 	// FIXME
 	//JLock* lock = NULL;
@@ -857,8 +856,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_WRITE);
-
-		max_offset = MAX(max_offset, offset + length);
 
 		if (data_backend != NULL)
 		{
