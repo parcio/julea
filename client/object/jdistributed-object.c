@@ -832,7 +832,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = NULL;
-			bw_lists[i] = j_list_new(NULL);
+			bw_lists[i] = NULL;
 		}
 	}
 
@@ -877,12 +877,14 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 			while (j_distribution_distribute(object->distribution, &index, &new_length, &new_offset, &block_id))
 			{
-				if (messages[index] == NULL)
+				if (messages[index] == NULL && bw_lists[index] == NULL)
 				{
 					messages[index] = j_message_new(J_MESSAGE_DATA_WRITE, namespace_len + name_len);
 					j_message_set_safety(messages[index], semantics);
 					j_message_append_n(messages[index], object->namespace, namespace_len);
 					j_message_append_n(messages[index], object->name, name_len);
+
+					bw_lists[index] = j_list_new(NULL);
 				}
 
 				j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
