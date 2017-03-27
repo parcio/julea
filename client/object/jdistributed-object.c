@@ -780,11 +780,6 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		guint64 offset = operation->read.offset;
 		guint64* bytes_read = operation->read.bytes_read;
 
-		if (length == 0)
-		{
-			continue;
-		}
-
 		j_trace_file_begin(object->name, J_TRACE_FILE_READ);
 
 		if (data_backend != NULL)
@@ -962,11 +957,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		guint64 length = operation->write.length;
 		guint64 offset = operation->write.offset;
 		guint64* bytes_written = operation->write.bytes_written;
-
-		if (length == 0)
-		{
-			continue;
-		}
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_WRITE);
 
@@ -1379,6 +1369,7 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
+	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
@@ -1429,6 +1420,7 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
+	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_written != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);

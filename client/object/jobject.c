@@ -581,11 +581,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		guint64 offset = operation->write.offset;
 		guint64* bytes_written = operation->write.bytes_written;
 
-		if (length == 0)
-		{
-			continue;
-		}
-
 		j_trace_file_begin(object->name, J_TRACE_FILE_WRITE);
 
 		/*
@@ -643,11 +638,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 				JObjectOperation* operation = j_list_iterator_get(it);
 				guint64 length = operation->write.length;
 				guint64* bytes_written = operation->write.bytes_written;
-
-				if (length == 0)
-				{
-					continue;
-				}
 
 				nbytes = j_message_get_8(reply);
 				j_helper_atomic_add(bytes_written, nbytes);
@@ -974,6 +964,7 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
+	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
@@ -1024,6 +1015,7 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
+	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_written != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
