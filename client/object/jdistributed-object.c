@@ -75,9 +75,9 @@ struct JDistributedObjectBackgroundData
 		{
 			/**
 			 * The list of buffers to fill.
-			 * Contains #JItemReadData elements.
+			 * Contains #JDistributedObjectReadBuffer elements.
 			 */
-			JList* buffer_list;
+			JList* buffers;
 		}
 		read;
 
@@ -93,6 +93,14 @@ struct JDistributedObjectBackgroundData
 };
 
 typedef struct JDistributedObjectBackgroundData JDistributedObjectBackgroundData;
+
+struct JDistributedObjectReadBuffer
+{
+	gchar* data;
+	guint64* bytes_read;
+};
+
+typedef struct JDistributedObjectReadBuffer JDistributedObjectReadBuffer;
 
 struct JDistributedObjectOperation
 {
@@ -282,6 +290,91 @@ j_distributed_object_delete_background_operation (gpointer data)
 
 	j_message_unref(background_data->message);
 	j_connection_pool_push_data(background_data->index, data_connection);
+
+	g_slice_free(JDistributedObjectBackgroundData, background_data);
+
+	return NULL;
+}
+
+/**
+ * Executes write operations in a background operation.
+ *
+ * \private
+ *
+ * \author Michael Kuhn
+ *
+ * \param data Background data.
+ *
+ * \return #data.
+ **/
+static
+gpointer
+j_distributed_object_read_background_operation (gpointer data)
+{
+	JDistributedObjectBackgroundData* background_data = data;
+
+	JListIterator* it;
+	JMessage* reply;
+	GSocketConnection* data_connection;
+	guint32 operations_done;
+	guint32 operation_count;
+
+	data_connection = j_connection_pool_pop_data(background_data->index);
+	j_message_send(background_data->message, data_connection);
+
+	reply = j_message_new_reply(background_data->message);
+
+	operations_done = 0;
+	operation_count = j_message_get_count(background_data->message);
+
+	it = j_list_iterator_new(background_data->read.buffers);
+
+	/**
+	 * This extra loop is necessary because the server might send multiple
+	 * replies per message. The same reply object can be used to receive
+	 * multiple times.
+	 */
+	while (operations_done < operation_count)
+	{
+		guint32 reply_operation_count;
+
+		j_message_receive(reply, data_connection);
+
+		reply_operation_count = j_message_get_count(reply);
+
+		for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
+		{
+			JDistributedObjectReadBuffer* buffer = j_list_iterator_get(it);
+			gchar* read_data = buffer->data;
+			guint64* bytes_read = buffer->bytes_read;
+
+			guint64 nbytes;
+
+			nbytes = j_message_get_8(reply);
+			j_helper_atomic_add(bytes_read, nbytes);
+
+			if (nbytes > 0)
+			{
+				GInputStream* input;
+
+				input = g_io_stream_get_input_stream(G_IO_STREAM(data_connection));
+				g_input_stream_read_all(input, read_data, nbytes, NULL, NULL, NULL);
+			}
+
+			g_slice_free(JDistributedObjectReadBuffer, buffer);
+		}
+
+		operations_done += reply_operation_count;
+	}
+
+	j_list_iterator_free(it);
+
+	j_message_unref(reply);
+	j_message_unref(background_data->message);
+
+	j_connection_pool_push_data(background_data->index, data_connection);
+
+	j_list_unref(background_data->read.buffers);
 
 	g_slice_free(JDistributedObjectBackgroundData, background_data);
 
@@ -624,11 +717,14 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
+	JList** br_lists;
 	JListIterator* it;
-	JMessage* message;
+	JMessage** messages;
 	JDistributedObject* object;
-	GSocketConnection* data_connection;
 	gpointer object_handle;
+	gsize name_len;
+	gsize namespace_len;
+	guint32 server_count;
 
 	// FIXME
 	//JLock* lock = NULL;
@@ -640,10 +736,9 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
+		g_assert(operation != NULL);
 
 		object = operation->status.object;
-
-		g_assert(operation != NULL);
 		g_assert(object != NULL);
 	}
 
@@ -656,17 +751,18 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		gsize name_len;
-		gsize namespace_len;
+		server_count = j_configuration_get_data_server_count(j_configuration());
+		messages = g_new(JMessage*, server_count);
+		br_lists = g_new(JList*, server_count);
 
 		namespace_len = strlen(object->namespace) + 1;
 		name_len = strlen(object->name) + 1;
 
-		data_connection = j_connection_pool_pop_data(0);
-		message = j_message_new(J_MESSAGE_DATA_READ, namespace_len + name_len);
-		j_message_set_safety(message, semantics);
-		j_message_append_n(message, object->namespace, namespace_len);
-		j_message_append_n(message, object->name, name_len);
+		for (guint i = 0; i < server_count; i++)
+		{
+			messages[i] = NULL;
+			br_lists[i] = NULL;
+		}
 	}
 
 	/*
@@ -684,6 +780,11 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		guint64 offset = operation->read.offset;
 		guint64* bytes_read = operation->read.bytes_read;
 
+		if (length == 0)
+		{
+			continue;
+		}
+
 		j_trace_file_begin(object->name, J_TRACE_FILE_READ);
 
 		if (data_backend != NULL)
@@ -692,9 +793,48 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(message, &length);
-			j_message_append_8(message, &offset);
+			gchar* new_data;
+			guint32 index;
+			guint64 block_id;
+			guint64 new_length;
+			guint64 new_offset;
+
+			j_distribution_reset(object->distribution, length, offset);
+			new_data = data;
+
+			while (j_distribution_distribute(object->distribution, &index, &new_length, &new_offset, &block_id))
+			{
+				JDistributedObjectReadBuffer* buffer;
+
+				if (messages[index] == NULL && br_lists[index] == NULL)
+				{
+					messages[index] = j_message_new(J_MESSAGE_DATA_READ, namespace_len + name_len);
+					j_message_set_safety(messages[index], semantics);
+					j_message_append_n(messages[index], object->namespace, namespace_len);
+					j_message_append_n(messages[index], object->name, name_len);
+
+					br_lists[index] = j_list_new(NULL);
+				}
+
+				j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
+				j_message_append_8(messages[index], &new_length);
+				j_message_append_8(messages[index], &new_offset);
+
+				buffer = g_slice_new(JDistributedObjectReadBuffer);
+				buffer->data = new_data;
+				buffer->bytes_read = bytes_read;
+
+				j_list_append(br_lists[index], buffer);
+
+				/*
+				if (lock != NULL)
+				{
+					j_lock_add(lock, block_id);
+				}
+				*/
+
+				new_data += new_length;
+			}
 		}
 
 		j_trace_file_end(object->name, J_TRACE_FILE_READ, length, offset);
@@ -708,61 +848,34 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		JMessage* reply;
-		guint32 operations_done;
-		guint32 operation_count;
+		gpointer* background_data;
 
-		j_message_send(message, data_connection);
+		background_data = g_new(gpointer, server_count);
 
-		reply = j_message_new_reply(message);
-
-		operations_done = 0;
-		operation_count = j_message_get_count(message);
-
-		it = j_list_iterator_new(operations);
-
-		/**
-		 * This extra loop is necessary because the server might send multiple
-		 * replies per message. The same reply object can be used to receive
-		 * multiple times.
-		 */
-		while (operations_done < operation_count)
+		for (guint i = 0; i < server_count; i++)
 		{
-			guint32 reply_operation_count;
+			JDistributedObjectBackgroundData* data;
 
-			j_message_receive(reply, data_connection);
-
-			reply_operation_count = j_message_get_count(reply);
-
-			for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
+			if (messages[i] == NULL)
 			{
-				JDistributedObjectOperation* operation = j_list_iterator_get(it);
-				gpointer data = operation->read.data;
-				guint64* bytes_read = operation->read.bytes_read;
-
-				guint64 nbytes;
-
-				nbytes = j_message_get_8(reply);
-				j_helper_atomic_add(bytes_read, nbytes);
-
-				if (nbytes > 0)
-				{
-					GInputStream* input;
-
-					input = g_io_stream_get_input_stream(G_IO_STREAM(data_connection));
-					g_input_stream_read_all(input, data, nbytes, NULL, NULL, NULL);
-				}
+				background_data[i] = NULL;
+				continue;
 			}
 
-			operations_done += reply_operation_count;
+			data = g_slice_new(JDistributedObjectBackgroundData);
+			data->index = i;
+			data->message = messages[i];
+			data->operations = NULL;
+			data->read.buffers = br_lists[i];
+
+			background_data[i] = data;
 		}
 
-		j_list_iterator_free(it);
+		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
 
-		j_message_unref(reply);
-		j_message_unref(message);
-
-		j_connection_pool_push_data(0, data_connection);
+		g_free(background_data);
+		g_free(messages);
+		g_free(br_lists);
 	}
 
 	/*
@@ -935,7 +1048,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 			data = g_slice_new(JDistributedObjectBackgroundData);
 			data->index = i;
 			data->message = messages[i];
-			data->operations = operations;
+			data->operations = NULL;
 			data->write.bytes_written = bw_lists[i];
 
 			background_data[i] = data;
