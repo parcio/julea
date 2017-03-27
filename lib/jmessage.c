@@ -77,6 +77,11 @@ struct JMessageHeader
 	guint32 id;
 
 	/**
+	 * The message flags.
+	 **/
+	guint32 flags;
+
+	/**
 	 * The operation type.
 	 **/
 	guint32 op_type;
@@ -299,7 +304,6 @@ j_message_new (JMessageType op_type, gsize length)
 	guint32 rand;
 
 	//g_return_val_if_fail(op_type != J_MESSAGE_NONE, NULL);
-	g_return_val_if_fail((op_type & J_MESSAGE_MODIFIER_MASK) == 0, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
@@ -315,6 +319,7 @@ j_message_new (JMessageType op_type, gsize length)
 
 	j_message_header(message)->length = GUINT32_TO_LE(0);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
+	j_message_header(message)->flags = GUINT32_TO_LE(0);
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(message)->op_count = GUINT32_TO_LE(0);
 
@@ -339,7 +344,7 @@ JMessage*
 j_message_new_reply (JMessage* message)
 {
 	JMessage* reply;
-	JMessageType op_type;
+	JMessageFlags op_flags;
 
 	g_return_val_if_fail(message != NULL, NULL);
 
@@ -353,11 +358,12 @@ j_message_new_reply (JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
-	op_type = j_message_get_type(message) | J_MESSAGE_REPLY;
+	op_flags = j_message_get_type_modifier(message) | J_MESSAGE_REPLY;
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->op_type = GUINT32_TO_LE(op_type);
+	j_message_header(reply)->flags = GUINT32_TO_LE(op_flags);
+	j_message_header(reply)->op_type = j_message_header(message)->op_type;
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
 	j_trace_leave(G_STRFUNC);
@@ -482,7 +488,6 @@ j_message_get_type (JMessage const* message)
 
 	op_type = j_message_header(message)->op_type;
 	op_type = GUINT32_FROM_LE(op_type);
-	op_type &= ~J_MESSAGE_MODIFIER_MASK;
 
 	j_trace_leave(G_STRFUNC);
 
@@ -501,22 +506,21 @@ j_message_get_type (JMessage const* message)
  *
  * \return The message's operation type.
  **/
-JMessageType
+JMessageFlags
 j_message_get_type_modifier (JMessage const* message)
 {
-	JMessageType op_type;
+	JMessageType op_flags;
 
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	op_type = j_message_header(message)->op_type;
-	op_type = GUINT32_FROM_LE(op_type);
-	op_type &= J_MESSAGE_MODIFIER_MASK;
+	op_flags = j_message_header(message)->flags;
+	op_flags = GUINT32_FROM_LE(op_flags);
 
 	j_trace_leave(G_STRFUNC);
 
-	return op_type;
+	return op_flags;
 }
 
 /**
@@ -1139,25 +1143,25 @@ j_message_set_safety (JMessage* message, JSemantics* semantics)
 void
 j_message_force_safety (JMessage* message, gint safety)
 {
-	guint32 op_type;
+	guint32 op_flags;
 
 	g_return_if_fail(message != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	op_type = j_message_header(message)->op_type;
-	op_type = GUINT32_FROM_LE(op_type);
+	op_flags = j_message_header(message)->flags;
+	op_flags = GUINT32_FROM_LE(op_flags);
 
 	if (safety == J_SEMANTICS_SAFETY_NETWORK)
 	{
-		op_type |= J_MESSAGE_SAFETY_NETWORK;
+		op_flags |= J_MESSAGE_SAFETY_NETWORK;
 	}
 	else if (safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
-		op_type |= J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE;
+		op_flags |= J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE;
 	}
 
-	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
+	j_message_header(message)->flags = GUINT32_TO_LE(op_flags);
 
 	j_trace_leave(G_STRFUNC);
 }

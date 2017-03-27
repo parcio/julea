@@ -34,26 +34,31 @@
 
 enum JMessageType
 {
-	J_MESSAGE_NONE               = 0,
-	J_MESSAGE_PING               = 1 << 0,
-	J_MESSAGE_STATISTICS         = 1 << 1,
-	J_MESSAGE_DATA_CREATE        = 1 << 2,
-	J_MESSAGE_DATA_DELETE        = 1 << 3,
-	J_MESSAGE_DATA_READ          = 1 << 4,
-	J_MESSAGE_DATA_STATUS        = 1 << 5,
-	J_MESSAGE_DATA_WRITE         = 1 << 6,
-	J_MESSAGE_META_PUT           = 1 << 7,
-	J_MESSAGE_META_DELETE        = 1 << 8,
-	J_MESSAGE_META_GET           = 1 << 9,
-	J_MESSAGE_META_GET_ALL       = 1 << 10,
-	J_MESSAGE_META_GET_BY_PREFIX = 1 << 11,
-	J_MESSAGE_REPLY              = 1 << 12,
-	J_MESSAGE_SAFETY_NETWORK     = 1 << 13,
-	J_MESSAGE_SAFETY_STORAGE     = 1 << 14,
-	J_MESSAGE_MODIFIER_MASK      = (J_MESSAGE_REPLY | J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE)
+	J_MESSAGE_NONE,
+	J_MESSAGE_PING,
+	J_MESSAGE_STATISTICS,
+	J_MESSAGE_DATA_CREATE,
+	J_MESSAGE_DATA_DELETE,
+	J_MESSAGE_DATA_READ,
+	J_MESSAGE_DATA_STATUS,
+	J_MESSAGE_DATA_WRITE,
+	J_MESSAGE_META_PUT,
+	J_MESSAGE_META_DELETE,
+	J_MESSAGE_META_GET,
+	J_MESSAGE_META_GET_ALL,
+	J_MESSAGE_META_GET_BY_PREFIX,
 };
 
 typedef enum JMessageType JMessageType;
+
+enum JMessageFlags
+{
+	J_MESSAGE_REPLY              = 1 << 0,
+	J_MESSAGE_SAFETY_NETWORK     = 1 << 1,
+	J_MESSAGE_SAFETY_STORAGE     = 1 << 2,
+};
+
+typedef enum JMessageFlags JMessageFlags;
 
 struct JMessage;
 
@@ -68,7 +73,7 @@ J_GNUC_INTERNAL void j_message_unref (JMessage*);
 
 J_GNUC_INTERNAL guint32 j_message_get_id (JMessage const*);
 J_GNUC_INTERNAL JMessageType j_message_get_type (JMessage const*);
-J_GNUC_INTERNAL JMessageType j_message_get_type_modifier (JMessage const*);
+J_GNUC_INTERNAL JMessageFlags j_message_get_type_modifier (JMessage const*);
 J_GNUC_INTERNAL guint32 j_message_get_count (JMessage const*);
 
 J_GNUC_INTERNAL gboolean j_message_append_1 (JMessage*, gconstpointer);

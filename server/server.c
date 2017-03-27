@@ -63,13 +63,13 @@ jd_signal (gpointer data)
 
 static
 JSemanticsSafety
-jd_safety_message_to_semantics (JMessageType type)
+jd_safety_message_to_semantics (JMessageFlags flags)
 {
 	JSemanticsSafety safety;
 
 	safety = J_SEMANTICS_SAFETY_NONE;
 
-	switch (type)
+	switch (flags)
 	{
 		case J_MESSAGE_SAFETY_STORAGE:
 			safety = J_SEMANTICS_SAFETY_STORAGE;
@@ -77,23 +77,7 @@ jd_safety_message_to_semantics (JMessageType type)
 		case J_MESSAGE_SAFETY_NETWORK:
 			safety = J_SEMANTICS_SAFETY_NETWORK;
 			break;
-		case J_MESSAGE_NONE:
-			// FIXME
-			break;
-		case J_MESSAGE_PING:
-		case J_MESSAGE_STATISTICS:
-		case J_MESSAGE_DATA_CREATE:
-		case J_MESSAGE_DATA_DELETE:
-		case J_MESSAGE_DATA_READ:
-		case J_MESSAGE_DATA_STATUS:
-		case J_MESSAGE_DATA_WRITE:
-		case J_MESSAGE_META_PUT:
-		case J_MESSAGE_META_DELETE:
-		case J_MESSAGE_META_GET:
-		case J_MESSAGE_META_GET_ALL:
-		case J_MESSAGE_META_GET_BY_PREFIX:
 		case J_MESSAGE_REPLY:
-		case J_MESSAGE_MODIFIER_MASK:
 		default:
 			g_warn_if_reached();
 			break;
@@ -131,7 +115,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* namespace;
 		gchar const* path;
 		guint32 operation_count;
-		JMessageType type_modifier;
+		JMessageFlags type_modifier;
 		JSemanticsSafety safety;
 		guint i;
 
@@ -644,10 +628,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_unref(reply);
 				}
 				break;
-			case J_MESSAGE_REPLY:
-			case J_MESSAGE_SAFETY_NETWORK:
-			case J_MESSAGE_SAFETY_STORAGE:
-			case J_MESSAGE_MODIFIER_MASK:
 			default:
 				g_warn_if_reached();
 				break;

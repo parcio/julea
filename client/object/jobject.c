@@ -636,7 +636,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 			while (j_list_iterator_next(it))
 			{
 				JObjectOperation* operation = j_list_iterator_get(it);
-				guint64 length = operation->write.length;
 				guint64* bytes_written = operation->write.bytes_written;
 
 				nbytes = j_message_get_8(reply);
