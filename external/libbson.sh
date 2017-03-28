@@ -19,7 +19,7 @@
 set -e
 
 PREFIX="${PWD}/libbson"
-VERSION='1.6.1'
+VERSION='1.6.2'
 
 if test -d "${PREFIX}"
 then
@@ -37,7 +37,6 @@ tar xf "libbson-${VERSION}.tar.gz"
 
 cd "libbson-${VERSION}"
 
-autoreconf --force --install --verbose
 ./configure --prefix="${PREFIX}"
 make --jobs="$(nproc)"
 make install

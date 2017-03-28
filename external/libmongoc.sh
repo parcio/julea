@@ -20,7 +20,7 @@ set -e
 
 PREFIX="${PWD}/libmongoc"
 BSON_PREFIX="${PWD}/libbson"
-VERSION='1.6.1'
+VERSION='1.6.2'
 
 if test -d "${PREFIX}"
 then
@@ -40,7 +40,6 @@ cd "mongo-c-driver-${VERSION}"
 
 export PKG_CONFIG_PATH="${BSON_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-autoreconf --force --install --verbose
 ./configure --prefix="${PREFIX}" --disable-automatic-init-and-cleanup --with-libbson=system
 make --jobs="$(nproc)"
 make install
