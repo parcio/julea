@@ -31,7 +31,7 @@ static
 void
 _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 100000 : 1000;
+	guint const n = 200000;
 
 	JBatch* delete_batch;
 	JBatch* batch;
@@ -104,7 +104,7 @@ static
 void
 _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = 10000;
+	guint const n = 200000;
 
 	JBatch* batch;
 	JSemantics* semantics;
@@ -188,7 +188,7 @@ static
 void
 _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 5000 : 5000;
+	guint const n = 100000;
 
 	JBatch* batch;
 	JSemantics* semantics;
@@ -257,10 +257,10 @@ benchmark_kv_unordered_put_delete_batch (BenchmarkResult* result)
 void
 benchmark_kv (void)
 {
-	j_benchmark_run("/kv/kv/put", benchmark_kv_put);
-	j_benchmark_run("/kv/kv/put-batch", benchmark_kv_put_batch);
-	j_benchmark_run("/kv/kv/delete", benchmark_kv_delete);
-	j_benchmark_run("/kv/kv/delete-batch", benchmark_kv_delete_batch);
-	j_benchmark_run("/kv/kv/unordered-put-delete", benchmark_kv_unordered_put_delete);
-	j_benchmark_run("/kv/kv/unordered-put-delete-batch", benchmark_kv_unordered_put_delete_batch);
+	j_benchmark_run("/kv/put", benchmark_kv_put);
+	j_benchmark_run("/kv/put-batch", benchmark_kv_put_batch);
+	j_benchmark_run("/kv/delete", benchmark_kv_delete);
+	j_benchmark_run("/kv/delete-batch", benchmark_kv_delete_batch);
+	j_benchmark_run("/kv/unordered-put-delete", benchmark_kv_unordered_put_delete);
+	j_benchmark_run("/kv/unordered-put-delete-batch", benchmark_kv_unordered_put_delete_batch);
 }

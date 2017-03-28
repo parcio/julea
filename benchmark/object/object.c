@@ -31,7 +31,7 @@ static
 void
 _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 100000 : 1000;
+	guint const n = 100000;
 
 	JBatch* delete_batch;
 	JBatch* batch;
@@ -98,7 +98,7 @@ static
 void
 _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = 10000;
+	guint const n = 100000;
 
 	JBatch* batch;
 	JSemantics* semantics;
@@ -176,7 +176,7 @@ static
 void
 _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 1000 : 1000;
+	guint const n = 200000;
 
 	JObject* object;
 	JBatch* batch;
@@ -245,7 +245,7 @@ static
 void
 _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 25000 : 25000;
+	guint const n = 200000;
 
 	JObject* object;
 	JBatch* batch;
@@ -323,7 +323,7 @@ static
 void
 _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 25000 : 25000;
+	guint const n = 200000;
 
 	JObject* object;
 	JBatch* batch;
@@ -394,7 +394,7 @@ static
 void
 _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 5000 : 5000;
+	guint const n = 100000;
 
 	JBatch* batch;
 	JSemantics* semantics;
