@@ -42,6 +42,8 @@ typedef struct JItem JItem;
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JItem, j_item_unref)
+
 gchar const* j_item_get_name (JItem*);
 
 JItem* j_item_create (JCollection*, gchar const*, JDistribution*, JBatch*);

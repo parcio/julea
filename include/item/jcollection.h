@@ -43,6 +43,8 @@ typedef struct JCollection JCollection;
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCollection, j_collection_unref)
+
 gchar const* j_collection_get_name (JCollection*);
 
 JCollection* j_collection_create (gchar const*, JBatch*);

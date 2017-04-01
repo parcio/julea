@@ -42,6 +42,8 @@ JBatch* j_batch_new_for_template (JSemanticsTemplate);
 JBatch* j_batch_ref (JBatch*);
 void j_batch_unref (JBatch*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
+
 gboolean j_batch_execute (JBatch*);
 
 void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);

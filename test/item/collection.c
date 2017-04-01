@@ -29,14 +29,12 @@ static
 void
 test_collection_fixture_setup (JCollection** collection, gconstpointer data)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	(void)data;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	*collection = j_collection_create("test-collection", batch);
-
-	j_batch_unref(batch);
 }
 
 static
@@ -56,13 +54,11 @@ test_collection_new_free (void)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JBatch* batch;
-		JCollection* collection;
+		g_autoptr(JBatch) batch = NULL;
+		g_autoptr(JCollection) collection = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		collection = j_collection_create("test-collection", batch);
-		j_collection_unref(collection);
-		j_batch_unref(batch);
 
 		g_assert(collection != NULL);
 	}
