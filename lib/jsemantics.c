@@ -160,7 +160,7 @@ JSemantics*
 j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_str)
 {
 	JSemantics* semantics;
-	gchar** parts;
+	g_auto(GStrv) parts = NULL;
 	guint parts_len;
 
 	j_trace_enter(G_STRFUNC, NULL);
@@ -331,8 +331,6 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 			g_assert_not_reached();
 		}
 	}
-
-	g_strfreev(parts);
 
 end:
 	j_trace_leave(G_STRFUNC);

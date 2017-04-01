@@ -292,7 +292,7 @@ j_trace_init (gchar const* name)
 	}
 	else
 	{
-		gchar** p;
+		g_auto(GStrv) p = NULL;
 		guint i;
 		guint l;
 
@@ -310,8 +310,6 @@ j_trace_init (gchar const* name)
 				j_trace_flags |= J_TRACE_OTF;
 			}
 		}
-
-		g_strfreev(p);
 	}
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -321,7 +319,7 @@ j_trace_init (gchar const* name)
 
 	if ((j_trace_function = g_getenv("J_TRACE_FUNCTION")) != NULL)
 	{
-		gchar** p;
+		g_auto(GStrv) p = NULL;
 		guint i;
 		guint l;
 
@@ -336,8 +334,6 @@ j_trace_init (gchar const* name)
 		}
 
 		j_trace_function_patterns[l] = NULL;
-
-		g_strfreev(p);
 	}
 
 #ifdef HAVE_OTF

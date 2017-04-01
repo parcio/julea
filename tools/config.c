@@ -91,8 +91,8 @@ write_config (gchar* path)
 	gboolean ret = TRUE;
 	gsize key_file_data_len;
 	gchar* key_file_data;
-	gchar** servers_data;
-	gchar** servers_meta;
+	g_auto(GStrv) servers_data = NULL;
+	g_auto(GStrv) servers_meta = NULL;
 
 	servers_data = string_split(opt_servers_data);
 	servers_meta = string_split(opt_servers_meta);
@@ -127,9 +127,6 @@ write_config (gchar* path)
 
 	g_free(key_file_data);
 	g_key_file_free(key_file);
-
-	g_strfreev(servers_data);
-	g_strfreev(servers_meta);
 
 	return ret;
 }

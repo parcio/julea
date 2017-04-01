@@ -88,7 +88,7 @@ static
 gboolean
 j_uri_parse (JURI* uri, gchar const* uri_)
 {
-	gchar** parts = NULL;
+	g_auto(GStrv) parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
 	guint parts_len;
 	guint i;
@@ -132,13 +132,9 @@ j_uri_parse (JURI* uri, gchar const* uri_)
 		uri->item_name = g_strdup(parts[1]);
 	}
 
-	g_strfreev(parts);
-
 	return TRUE;
 
 error:
-	g_strfreev(parts);
-
 	return FALSE;
 }
 

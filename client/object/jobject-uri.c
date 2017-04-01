@@ -91,7 +91,7 @@ static
 gboolean
 j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 {
-	gchar** parts = NULL;
+	g_auto(GStrv) parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
 	gchar const* scheme_prefix = NULL;
 	guint parts_len;
@@ -210,13 +210,9 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 			break;
 	}
 
-	g_strfreev(parts);
-
 	return TRUE;
 
 error:
-	g_strfreev(parts);
-
 	return FALSE;
 }
 
