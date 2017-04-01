@@ -537,9 +537,9 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 			/**
 			 * Force safe semantics to make the server send a reply.
 			 * Otherwise, nasty races can occur when using unsafe semantics:
-			 * - The client creates the item and sends its first write.
+			 * - The client creates the object and sends its first write.
 			 * - The client sends another operation using another connection from the pool.
-			 * - The second operation is executed first and fails because the item does not exist.
+			 * - The second operation is executed first and fails because the object does not exist.
 			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 			 **/
 			messages[i] = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
@@ -768,7 +768,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
 	{
-		lock = j_lock_new("item", path);
+		lock = j_lock_new("object", path);
 	}
 	*/
 
@@ -946,7 +946,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY) != J_SEMANTICS_ATOMICITY_NONE)
 	{
-		lock = j_lock_new("item", path);
+		lock = j_lock_new("object", path);
 	}
 	*/
 
@@ -1185,7 +1185,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 }
 
 /**
- * Creates a new item.
+ * Creates a new object.
  *
  * \author Michael Kuhn
  *
@@ -1195,10 +1195,10 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
  * i = j_distributed_object_new("JULEA");
  * \endcode
  *
- * \param name         An item name.
+ * \param name         An object name.
  * \param distribution A distribution.
  *
- * \return A new item. Should be freed with j_distributed_object_unref().
+ * \return A new object. Should be freed with j_distributed_object_unref().
  **/
 JDistributedObject*
 j_distributed_object_new (gchar const* namespace, gchar const* name, JDistribution* distribution)
@@ -1223,7 +1223,7 @@ j_distributed_object_new (gchar const* namespace, gchar const* name, JDistributi
 }
 
 /**
- * Increases an item's reference count.
+ * Increases an object's reference count.
  *
  * \author Michael Kuhn
  *
@@ -1233,48 +1233,50 @@ j_distributed_object_new (gchar const* namespace, gchar const* name, JDistributi
  * j_distributed_object_ref(i);
  * \endcode
  *
- * \param item An item.
+ * \param object An object.
  *
- * \return #item.
+ * \return #object.
  **/
 JDistributedObject*
-j_distributed_object_ref (JDistributedObject* item)
+j_distributed_object_ref (JDistributedObject* object)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	g_return_val_if_fail(object != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	g_atomic_int_inc(&(item->ref_count));
+	g_atomic_int_inc(&(object->ref_count));
 
 	j_trace_leave(G_STRFUNC);
 
-	return item;
+	return object;
 }
 
 /**
- * Decreases an item's reference count.
- * When the reference count reaches zero, frees the memory allocated for the item.
+ * Decreases an object's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the object.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param item An item.
+ * \param object An object.
  **/
 void
-j_distributed_object_unref (JDistributedObject* item)
+j_distributed_object_unref (JDistributedObject* object)
 {
-	g_return_if_fail(item != NULL);
+	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if (g_atomic_int_dec_and_test(&(item->ref_count)))
+	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
-		g_free(item->name);
-		g_free(item->namespace);
+		g_free(object->name);
+		g_free(object->namespace);
 
-		g_slice_free(JDistributedObject, item);
+		j_distribution_unref(object->distribution);
+
+		g_slice_free(JDistributedObject, object);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -1292,7 +1294,7 @@ j_distributed_object_unref (JDistributedObject* item)
  * \param distribution A distribution.
  * \param batch        A batch.
  *
- * \return A new item. Should be freed with j_distributed_object_unref().
+ * \return A new object. Should be freed with j_distributed_object_unref().
  **/
 void
 j_distributed_object_create (JDistributedObject* object, JBatch* batch)
@@ -1323,7 +1325,7 @@ j_distributed_object_create (JDistributedObject* object, JBatch* batch)
  * \code
  * \endcode
  *
- * \param item       An item.
+ * \param object     An object.
  * \param batch      A batch.
  **/
 void
@@ -1347,7 +1349,7 @@ j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
 }
 
 /**
- * Reads an item.
+ * Reads an object.
  *
  * \author Michael Kuhn
  *
@@ -1395,7 +1397,7 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 }
 
 /**
- * Writes an item.
+ * Writes an object.
  *
  * \note
  * j_distributed_object_write() modifies bytes_written even if j_batch_execute() is not called.
@@ -1405,10 +1407,10 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
  * \code
  * \endcode
  *
- * \param item          An item.
+ * \param object        An object.
  * \param data          A buffer holding the data to write.
  * \param length        Number of bytes to write.
- * \param offset        An offset within #item.
+ * \param offset        An offset within #object.
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/
@@ -1446,14 +1448,14 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 }
 
 /**
- * Get the status of an item.
+ * Get the status of an object.
  *
  * \author Michael Kuhn
  *
  * \code
  * \endcode
  *
- * \param item      An item.
+ * \param object    An object.
  * \param batch     A batch.
  **/
 void
