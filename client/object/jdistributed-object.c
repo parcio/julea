@@ -504,9 +504,9 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	g_autofree JMessage** messages = NULL;
-	gchar const* namespace;
-	gsize namespace_len;
-	guint32 server_count;
+	gchar const* namespace = NULL;
+	gsize namespace_len = 0;
+	guint32 server_count = 0;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
@@ -613,9 +613,9 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	g_autofree JMessage** messages = NULL;
-	gchar const* namespace;
-	gsize namespace_len;
-	guint32 server_count;
+	gchar const* namespace = NULL;
+	gsize namespace_len = 0;
+	guint32 server_count = 0;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
@@ -714,11 +714,11 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	g_autofree JList** br_lists = NULL;
 	JListIterator* it;
 	g_autofree JMessage** messages = NULL;
-	JDistributedObject* object;
+	JDistributedObject* object = NULL;
 	gpointer object_handle;
-	gsize name_len;
-	gsize namespace_len;
-	guint32 server_count;
+	gsize name_len = 0;
+	gsize namespace_len = 0;
+	guint32 server_count = 0;
 
 	// FIXME
 	//JLock* lock = NULL;
@@ -888,11 +888,11 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	g_autofree JList** bw_lists = NULL;
 	JListIterator* it;
 	g_autofree JMessage** messages = NULL;
-	JDistributedObject* object;
+	JDistributedObject* object = NULL;
 	gpointer object_handle;
-	gsize name_len;
-	gsize namespace_len;
-	guint32 server_count;
+	gsize name_len = 0;
+	gsize namespace_len = 0;
+	guint32 server_count = 0;
 
 	// FIXME
 	//JLock* lock = NULL;
@@ -1061,9 +1061,9 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 	JBackend* data_backend;
 	JListIterator* it;
 	g_autofree JMessage** messages = NULL;
-	gchar const* namespace;
-	gsize namespace_len;
-	guint32 server_count;
+	gchar const* namespace = NULL;
+	gsize namespace_len = 0;
+	guint32 server_count = 0;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);

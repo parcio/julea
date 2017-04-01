@@ -63,6 +63,8 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	bf->path = full_path;
 	bf->stream = stream;
 
+	*data = bf;
+
 	g_object_unref(file);
 
 	return (stream != NULL);
@@ -87,6 +89,8 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
 	bf->stream = stream;
+
+	*data = bf;
 
 	g_object_unref(file);
 

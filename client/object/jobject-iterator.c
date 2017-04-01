@@ -153,6 +153,8 @@ j_object_iterator_next (JObjectIterator* iterator)
 gchar const*
 j_object_iterator_get (JObjectIterator* iterator, guint64* index)
 {
+	(void)index;
+
 	g_return_val_if_fail(iterator != NULL, NULL);
 
 	return NULL;

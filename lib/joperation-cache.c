@@ -137,6 +137,8 @@ j_operation_cache_test (JOperation* operation)
 {
 	gboolean ret = FALSE;
 
+	(void)operation;
+
 	j_trace_enter(G_STRFUNC, NULL);
 
 	/* FIXME
@@ -173,6 +175,8 @@ guint64
 j_operation_cache_get_required_size (JOperation* operation)
 {
 	guint64 ret = 0;
+
+	(void)operation;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
