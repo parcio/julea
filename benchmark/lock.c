@@ -34,8 +34,8 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 {
 	guint const n = 3000;
 
-	JList* list;
-	JListIterator* iterator;
+	g_autoptr(JList) list = NULL;
+	g_autoptr(JListIterator) iterator = NULL;
 	JLock* lock;
 	gdouble elapsed;
 
@@ -87,10 +87,6 @@ _benchmark_lock (BenchmarkResult* result, gboolean acquire, gboolean add)
 	{
 		elapsed = j_benchmark_timer_elapsed();
 	}
-
-	j_list_iterator_free(iterator);
-
-	j_list_unref(list);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

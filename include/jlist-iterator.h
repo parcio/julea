@@ -38,6 +38,8 @@ typedef struct JListIterator JListIterator;
 JListIterator* j_list_iterator_new (JList*);
 void j_list_iterator_free (JListIterator*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
+
 gboolean j_list_iterator_next (JListIterator*);
 gpointer j_list_iterator_get (JListIterator*);
 

@@ -140,7 +140,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* meta_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* message;
 	JSemanticsSafety safety;
 	gchar const* namespace;
@@ -235,8 +235,6 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_meta(index, meta_connection);
 	}
 
-	j_list_iterator_free(it);
-
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -249,7 +247,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* meta_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* message;
 	JSemanticsSafety safety;
 	gchar const* namespace;
@@ -332,8 +330,6 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		j_message_unref(message);
 		j_connection_pool_push_meta(index, meta_connection);
 	}
-
-	j_list_iterator_free(it);
 
 	j_trace_leave(G_STRFUNC);
 

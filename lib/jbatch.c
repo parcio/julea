@@ -499,8 +499,8 @@ j_batch_add (JBatch* batch, JOperation* operation)
 gboolean
 j_batch_execute_internal (JBatch* batch)
 {
-	JList* same_list;
-	JListIterator* iterator;
+	g_autoptr(JList) same_list = NULL;
+	g_autoptr(JListIterator) iterator = NULL;
 	JOperationExecFunc last_exec_func;
 	gpointer last_key;
 	gboolean ret = TRUE;
@@ -542,9 +542,6 @@ j_batch_execute_internal (JBatch* batch)
 	}
 
 	ret = j_batch_execute_same(batch, last_exec_func, same_list) && ret;
-
-	j_list_unref(same_list);
-	j_list_iterator_free(iterator);
 
 	j_trace_leave(G_STRFUNC);
 

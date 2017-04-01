@@ -526,7 +526,7 @@ gboolean
 j_collection_get_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* message;
 	JMessage* reply;
 	GSocketConnection* meta_connection;
@@ -613,7 +613,6 @@ j_collection_get_exec (JList* operations, JSemantics* semantics)
 	}
 
 	//j_connection_pool_push_meta(0, mongo_connection);
-	j_list_iterator_free(it);
 
 	return ret;
 }

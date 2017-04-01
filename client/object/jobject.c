@@ -171,7 +171,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* message;
 	gchar const* namespace;
 	gsize namespace_len;
@@ -256,8 +256,6 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_data(index, data_connection);
 	}
 
-	j_list_iterator_free(it);
-
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -270,7 +268,7 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* message;
 	gchar const* namespace;
 	gsize namespace_len;
@@ -345,8 +343,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		j_message_unref(message);
 		j_connection_pool_push_data(index, data_connection);
 	}
-
-	j_list_iterator_free(it);
 
 	j_trace_leave(G_STRFUNC);
 

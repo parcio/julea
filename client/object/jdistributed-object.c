@@ -313,7 +313,7 @@ j_distributed_object_read_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* reply;
 	GSocketConnection* data_connection;
 	guint32 operations_done;
@@ -367,8 +367,6 @@ j_distributed_object_read_background_operation (gpointer data)
 		operations_done += reply_operation_count;
 	}
 
-	j_list_iterator_free(it);
-
 	j_message_unref(reply);
 	j_message_unref(background_data->message);
 
@@ -398,7 +396,6 @@ j_distributed_object_write_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JListIterator* it;
 	GSocketConnection* data_connection;
 
 	data_connection = j_connection_pool_pop_data(background_data->index);
@@ -406,6 +403,7 @@ j_distributed_object_write_background_operation (gpointer data)
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
+		g_autoptr(JListIterator) it = NULL;
 		JMessage* reply;
 		guint64 nbytes;
 
@@ -421,8 +419,6 @@ j_distributed_object_write_background_operation (gpointer data)
 			nbytes = j_message_get_8(reply);
 			j_helper_atomic_add(bytes_written, nbytes);
 		}
-
-		j_list_iterator_free(it);
 
 		j_message_unref(reply);
 	}
@@ -455,7 +451,7 @@ j_distributed_object_status_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	JMessage* reply;
 	GSocketConnection* data_connection;
 
@@ -483,8 +479,6 @@ j_distributed_object_status_background_operation (gpointer data)
 		j_helper_atomic_add(size, size_);
 	}
 
-	j_list_iterator_free(it);
-
 	j_message_unref(reply);
 	j_message_unref(background_data->message);
 
@@ -502,7 +496,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	gchar const* namespace = NULL;
 	gsize namespace_len = 0;
@@ -597,8 +591,6 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 		j_helper_execute_parallel(j_distributed_object_create_background_operation, background_data, server_count);
 	}
 
-	j_list_iterator_free(it);
-
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -611,7 +603,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	gchar const* namespace = NULL;
 	gsize namespace_len = 0;
@@ -697,8 +689,6 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 	}
 
-	j_list_iterator_free(it);
-
 	j_trace_leave(G_STRFUNC);
 
 	return ret;
@@ -712,7 +702,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	g_autofree JList** br_lists = NULL;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object = NULL;
 	gpointer object_handle;
@@ -829,8 +819,6 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		j_trace_file_end(object->name, J_TRACE_FILE_READ, length, offset);
 	}
 
-	j_list_iterator_free(it);
-
 	if (data_backend != NULL)
 	{
 		ret = j_backend_data_close(data_backend, object_handle) && ret;
@@ -886,7 +874,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	g_autofree JList** bw_lists = NULL;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object = NULL;
 	gpointer object_handle;
@@ -1003,8 +991,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		j_trace_file_end(object->name, J_TRACE_FILE_WRITE, length, offset);
 	}
 
-	j_list_iterator_free(it);
-
 	if (data_backend != NULL)
 	{
 		ret = j_backend_data_close(data_backend, object_handle) && ret;
@@ -1059,7 +1045,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JListIterator* it;
+	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	gchar const* namespace = NULL;
 	gsize namespace_len = 0;
@@ -1137,8 +1123,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 			}
 		}
 	}
-
-	j_list_iterator_free(it);
 
 	if (data_backend == NULL)
 	{

@@ -39,6 +39,8 @@ JList* j_list_new (JListFreeFunc);
 JList* j_list_ref (JList*);
 void j_list_unref (JList*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JList, j_list_unref)
+
 guint j_list_length (JList*);
 
 void j_list_append (JList*, gpointer);

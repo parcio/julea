@@ -50,11 +50,10 @@ test_list_new_free (void)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JList* list;
+		g_autoptr(JList) list = NULL;
 
 		list = j_list_new(NULL);
 		g_assert(list != NULL);
-		j_list_unref(list);
 	}
 }
 

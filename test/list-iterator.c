@@ -28,7 +28,7 @@ static
 void
 test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 {
-	JList* list;
+	g_autoptr(JList) list = NULL;
 
 	(void)data;
 
@@ -39,8 +39,6 @@ test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 	j_list_append(list, g_strdup("2"));
 
 	*iterator = j_list_iterator_new(list);
-
-	j_list_unref(list);
 }
 
 static
@@ -60,17 +58,14 @@ test_list_iterator_new_free (void)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JList* list;
-		JListIterator* iterator;
+		g_autoptr(JList) list = NULL;
+		g_autoptr(JListIterator) iterator = NULL;
 
 		list = j_list_new(NULL);
 		g_assert(list != NULL);
 
 		iterator = j_list_iterator_new(list);
 		g_assert(iterator != NULL);
-
-		j_list_unref(list);
-		j_list_iterator_free(iterator);
 	}
 }
 
