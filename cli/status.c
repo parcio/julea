@@ -26,7 +26,7 @@ gboolean
 j_cmd_status (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JObjectURI* duri = NULL;
 	JObjectURI* ouri = NULL;
 	JURI* uri = NULL;
@@ -44,17 +44,14 @@ j_cmd_status (gchar const** arguments)
 	if (ouri != NULL)
 	{
 		GDateTime* date_time;
-		gchar* modification_time_string;
-		gchar* size_string;
+		g_autofree gchar* modification_time_string = NULL;
+		g_autofree gchar* size_string = NULL;
 		gint64 modification_time;
 		guint64 size;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_object_status(j_object_uri_get_object(ouri), &modification_time, &size, batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
 		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
@@ -64,9 +61,6 @@ j_cmd_status (gchar const** arguments)
 		g_print("Size:              %s\n", size_string);
 
 		g_date_time_unref(date_time);
-
-		g_free(modification_time_string);
-		g_free(size_string);
 
 		goto end;
 	}
@@ -76,17 +70,14 @@ j_cmd_status (gchar const** arguments)
 	if (duri != NULL)
 	{
 		GDateTime* date_time;
-		gchar* modification_time_string;
-		gchar* size_string;
+		g_autofree gchar* modification_time_string = NULL;
+		g_autofree gchar* size_string = NULL;
 		gint64 modification_time;
 		guint64 size;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_distributed_object_status(j_object_uri_get_distributed_object(duri), &modification_time, &size, batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
 		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
@@ -96,9 +87,6 @@ j_cmd_status (gchar const** arguments)
 		g_print("Size:              %s\n", size_string);
 
 		g_date_time_unref(date_time);
-
-		g_free(modification_time_string);
-		g_free(size_string);
 
 		goto end;
 	}
@@ -121,8 +109,8 @@ j_cmd_status (gchar const** arguments)
 		{
 			JCredentials* credentials;
 			GDateTime* date_time;
-			gchar* modification_time_string;
-			gchar* size_string;
+			g_autofree gchar* modification_time_string = NULL;
+			g_autofree gchar* size_string = NULL;
 			guint64 modification_time;
 			guint64 size;
 
@@ -145,9 +133,6 @@ j_cmd_status (gchar const** arguments)
 			j_credentials_unref(credentials);
 
 			g_date_time_unref(date_time);
-
-			g_free(modification_time_string);
-			g_free(size_string);
 		}
 		else if (j_uri_get_collection(uri) != NULL)
 		{
@@ -158,8 +143,6 @@ j_cmd_status (gchar const** arguments)
 			ret = FALSE;
 			j_cmd_usage();
 		}
-
-		j_batch_unref(batch);
 
 		goto end;
 	}

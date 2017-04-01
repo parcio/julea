@@ -26,7 +26,6 @@ gboolean
 j_cmd_copy (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JBatch* batch;
 	JObjectURI* ouri[2] = { NULL, NULL };
 	JURI* uri[2] = { NULL, NULL };
 	GError* error;
@@ -45,6 +44,8 @@ j_cmd_copy (gchar const** arguments)
 
 	for (i = 0; i <= 1; i++)
 	{
+		g_autoptr(JBatch) batch = NULL;
+
 		if ((ouri[i] = j_object_uri_new(arguments[i], J_OBJECT_URI_SCHEME_OBJECT)) != NULL)
 		{
 			if (i == 0)
@@ -54,11 +55,8 @@ j_cmd_copy (gchar const** arguments)
 			else if (i == 1)
 			{
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 				j_object_create(j_object_uri_get_object(ouri[i]), batch);
-
 				j_batch_execute(batch);
-				j_batch_unref(batch);
 			}
 		}
 		else if ((uri[i] = j_uri_new(arguments[i])) != NULL)
@@ -84,7 +82,7 @@ j_cmd_copy (gchar const** arguments)
 			}
 			else if (i == 1)
 			{
-				JItem* item;
+				g_autoptr(JItem) item = NULL;
 
 				if (j_uri_get(uri[i], &error))
 				{
@@ -111,13 +109,8 @@ j_cmd_copy (gchar const** arguments)
 				}
 
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 				item = j_item_create(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
-				j_item_unref(item);
-
 				j_batch_execute(batch);
-
-				j_batch_unref(batch);
 
 				j_uri_get(uri[i], NULL);
 			}
@@ -155,13 +148,15 @@ j_cmd_copy (gchar const** arguments)
 		}
 	}
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	offset = 0;
 	buffer = g_new(gchar, 1024 * 1024);
 
 	while (TRUE)
 	{
+		g_autoptr(JBatch) batch = NULL;
 		guint64 bytes_read = 0;
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 		if (ouri[0] != NULL)
 		{
@@ -222,8 +217,6 @@ j_cmd_copy (gchar const** arguments)
 			break;
 		}
 	}
-
-	j_batch_unref(batch);
 
 	g_free(buffer);
 

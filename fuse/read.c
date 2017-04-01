@@ -43,12 +43,11 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 
 	if (j_uri_get_item(uri) != NULL)
 	{
-		JBatch* batch;
+		g_autoptr(JBatch) batch = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_item_read(j_uri_get_item(uri), buf, size, offset, &bytes_read, batch);
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		ret = bytes_read;
 	}

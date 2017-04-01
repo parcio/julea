@@ -24,7 +24,7 @@
 
 int jfs_mkdir(char const* path, mode_t mode)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -51,16 +51,13 @@ int jfs_mkdir(char const* path, mode_t mode)
 	}
 	else
 	{
-		JCollection* collection;
+		g_autoptr(JCollection) collection = NULL;
 
 		collection = j_collection_create(j_uri_get_collection_name(uri), batch);
-		j_collection_unref(collection);
 		j_batch_execute(batch);
 
 		ret = 0;
 	}
-
-	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

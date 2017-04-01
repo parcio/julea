@@ -44,12 +44,10 @@ static
 void
 test_batch_new_free (void)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_assert(batch != NULL);
-
-	j_batch_unref(batch);
 }
 
 static
@@ -78,9 +76,9 @@ static
 void
 _test_batch_execute (gboolean async)
 {
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JItem) item = NULL;
+	g_autoptr(JBatch) batch = NULL;
 
 	if (async)
 	{
@@ -94,9 +92,6 @@ _test_batch_execute (gboolean async)
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 
-	j_item_unref(item);
-	j_collection_unref(collection);
-
 	if (async)
 	{
 		j_batch_execute_async(batch, on_operation_completed, NULL);
@@ -105,8 +100,6 @@ _test_batch_execute (gboolean async)
 	{
 		j_batch_execute(batch);
 	}
-
-	j_batch_unref(batch);
 
 	if (async)
 	{

@@ -24,7 +24,7 @@
 
 int jfs_unlink (char const* path)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -47,8 +47,6 @@ int jfs_unlink (char const* path)
 
 		ret = 0;
 	}
-
-	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)

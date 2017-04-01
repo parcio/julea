@@ -321,7 +321,7 @@ j_uri_get_item_name (JURI* uri)
 gboolean
 j_uri_get (JURI* uri, GError** error)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(uri != NULL, FALSE);
@@ -370,8 +370,6 @@ j_uri_get (JURI* uri, GError** error)
 	}
 
 end:
-	j_batch_unref(batch);
-
 	return ret;
 }
 

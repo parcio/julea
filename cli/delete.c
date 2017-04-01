@@ -24,7 +24,7 @@ gboolean
 j_cmd_delete (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JObjectURI* duri = NULL;
 	JObjectURI* ouri = NULL;
 	JURI* uri = NULL;
@@ -42,11 +42,8 @@ j_cmd_delete (gchar const** arguments)
 	if (ouri != NULL)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_object_delete(j_object_uri_get_object(ouri), batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		goto end;
 	}
@@ -56,11 +53,8 @@ j_cmd_delete (gchar const** arguments)
 	if (duri != NULL)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_distributed_object_delete(j_object_uri_get_distributed_object(duri), batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		goto end;
 	}
@@ -95,8 +89,6 @@ j_cmd_delete (gchar const** arguments)
 			ret = FALSE;
 			j_cmd_usage();
 		}
-
-		j_batch_unref(batch);
 
 		goto end;
 	}

@@ -33,9 +33,9 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 100000 : 1000;
 
-	JCollection* collection;
-	JBatch* delete_batch;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JBatch) delete_batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gdouble elapsed;
 
@@ -50,14 +50,13 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
 
 		j_item_delete(item, delete_batch);
-		j_item_unref(item);
 
 		if (!use_batch)
 		{
@@ -73,11 +72,8 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_collection_delete(collection, delete_batch);
-	j_collection_unref(collection);
 	j_batch_execute(delete_batch);
 
-	j_batch_unref(delete_batch);
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -104,9 +100,9 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 10000;
 
-	JCollection* collection;
-	JBatch* get_batch;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JBatch) get_batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gdouble elapsed;
 
@@ -119,13 +115,11 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
-
-		j_item_unref(item);
 	}
 
 	j_batch_execute(batch);
@@ -134,7 +128,7 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
@@ -142,7 +136,6 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 		j_batch_execute(get_batch);
 
 		j_item_delete(item, batch);
-		j_item_unref(item);
 
 		if (!use_batch)
 		{
@@ -158,11 +151,8 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_collection_delete(collection, batch);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(get_batch);
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -189,9 +179,9 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 {
 	guint const n = 10000;
 
-	JCollection* collection;
-	JBatch* delete_batch;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JBatch) delete_batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gdouble elapsed;
 
@@ -204,14 +194,13 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
 
 		j_item_delete(item, delete_batch);
-		j_item_unref(item);
 	}
 
 	j_batch_execute(batch);
@@ -223,11 +212,8 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_collection_delete(collection, batch);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(delete_batch);
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -240,9 +226,9 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 1000 : 1000;
 
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JItem) item = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gchar dummy[1];
 	gdouble elapsed;
@@ -280,11 +266,8 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
-	j_item_unref(item);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -311,9 +294,9 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JItem) item = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -360,11 +343,8 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
-	j_item_unref(item);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -392,9 +372,9 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
-	JCollection* collection;
-	JItem* item;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JItem) item = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -434,11 +414,8 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
-	j_item_unref(item);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
@@ -466,8 +443,8 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 {
 	guint const n = (use_batch) ? 5000 : 5000;
 
-	JCollection* collection;
-	JBatch* batch;
+	g_autoptr(JCollection) collection = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	JSemantics* semantics;
 	gdouble elapsed;
 
@@ -481,14 +458,13 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 
 	for (guint i = 0; i < n; i++)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
 
 		j_item_delete(item, batch);
-		j_item_unref(item);
 
 		if (!use_batch)
 		{
@@ -504,10 +480,8 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_collection_delete(collection, batch);
-	j_collection_unref(collection);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
 	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;

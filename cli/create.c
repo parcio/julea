@@ -42,14 +42,11 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 	if (ouri != NULL)
 	{
-		JBatch* batch;
+		g_autoptr(JBatch) batch = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_object_create(j_object_uri_get_object(ouri), batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		goto end;
 	}
@@ -58,14 +55,11 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 	if (duri != NULL)
 	{
-		JBatch* batch;
+		g_autoptr(JBatch) batch = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
 		j_distributed_object_create(j_object_uri_get_distributed_object(duri), batch);
-
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		goto end;
 	}

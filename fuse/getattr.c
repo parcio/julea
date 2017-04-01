@@ -41,12 +41,11 @@ jfs_getattr (char const* path, struct stat* stbuf)
 
 	if (j_uri_get_item(uri) != NULL)
 	{
-		JBatch* batch;
+		g_autoptr(JBatch) batch = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_item_get_status(j_uri_get_item(uri), batch);
 		j_batch_execute(batch);
-		j_batch_unref(batch);
 
 		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 		stbuf->st_nlink = 1;

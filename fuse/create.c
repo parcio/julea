@@ -24,7 +24,7 @@
 
 int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 {
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JURI* uri;
 	int ret = -ENOENT;
 
@@ -49,17 +49,13 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 
 	if (j_uri_get_collection(uri) != NULL)
 	{
-		JItem* item;
+		g_autoptr(JItem) item = NULL;
 
 		item = j_item_create(j_uri_get_collection(uri), j_uri_get_item_name(uri), NULL, batch);
-		j_item_unref(item);
-
 		j_batch_execute(batch);
 
 		ret = 0;
 	}
-
-	j_batch_unref(batch);
 
 end:
 	if (uri != NULL)
