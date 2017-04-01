@@ -24,6 +24,7 @@ SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
 
+set_glib_options
 set_path
 set_library_path
 

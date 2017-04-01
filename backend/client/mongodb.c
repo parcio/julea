@@ -268,8 +268,8 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	bson_t document[1];
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
-	gchar* escaped_prefix;
-	gchar* regex_prefix;
+	g_autofree gchar* escaped_prefix = NULL;
+	g_autofree gchar* regex_prefix = NULL;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
@@ -280,9 +280,6 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 	bson_init(document);
 	bson_append_regex(document, "key", -1, regex_prefix, NULL);
-
-	g_free(escaped_prefix);
-	g_free(regex_prefix);
 
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);

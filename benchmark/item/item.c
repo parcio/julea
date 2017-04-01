@@ -51,11 +51,10 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JItem* item;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
-		g_free(name);
 
 		j_item_delete(item, delete_batch);
 		j_item_unref(item);
@@ -121,11 +120,10 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JItem* item;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
-		g_free(name);
 
 		j_item_unref(item);
 	}
@@ -137,12 +135,11 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JItem* item;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		j_item_get(collection, &item, name, get_batch);
 		j_batch_execute(get_batch);
-		g_free(name);
 
 		j_item_delete(item, batch);
 		j_item_unref(item);
@@ -208,11 +205,10 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	for (guint i = 0; i < n; i++)
 	{
 		JItem* item;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
-		g_free(name);
 
 		j_item_delete(item, delete_batch);
 		j_item_unref(item);
@@ -486,11 +482,10 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 	for (guint i = 0; i < n; i++)
 	{
 		JItem* item;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		item = j_item_create(collection, name, NULL, batch);
-		g_free(name);
 
 		j_item_delete(item, batch);
 		j_item_unref(item);

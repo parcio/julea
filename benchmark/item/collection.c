@@ -45,11 +45,10 @@ _benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JCollection* collection;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		collection = j_collection_create(name, batch);
-		g_free(name);
 
 		j_collection_delete(collection, delete_batch);
 		j_collection_unref(collection);
@@ -107,11 +106,10 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JCollection* collection;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		collection = j_collection_create(name, batch);
-		g_free(name);
 
 		j_collection_unref(collection);
 	}
@@ -123,12 +121,11 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 	for (guint i = 0; i < n; i++)
 	{
 		JCollection* collection;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		j_collection_get(&collection, name, batch);
 		j_batch_execute(batch);
-		g_free(name);
 
 		j_collection_delete(collection, batch);
 		j_collection_unref(collection);
@@ -187,11 +184,10 @@ benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 	for (guint i = 0; i < n; i++)
 	{
 		JCollection* collection;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		collection = j_collection_create(name, batch);
-		g_free(name);
 
 		j_collection_delete(collection, delete_batch);
 		j_collection_unref(collection);
@@ -233,11 +229,10 @@ _benchmark_collection_unordered_create_delete (BenchmarkResult* result, gboolean
 	for (guint i = 0; i < n; i++)
 	{
 		JCollection* collection;
-		gchar* name;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		collection = j_collection_create(name, batch);
-		g_free(name);
 
 		j_collection_delete(collection, batch);
 		j_collection_unref(collection);

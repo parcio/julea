@@ -141,7 +141,7 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	GHashTable* files = jd_backend_files_get_thread();
 
 	JBackendFile* file = NULL;
-	gchar* parent;
+	g_autofree gchar* parent = NULL;
 	gchar* full_path;
 	gint fd;
 
@@ -161,7 +161,6 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 
 	parent = g_path_get_dirname(full_path);
 	g_mkdir_with_parents(parent, 0700);
-	g_free(parent);
 
 	fd = open(full_path, O_RDWR | O_CREAT, 0600);
 

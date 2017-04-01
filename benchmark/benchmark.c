@@ -60,7 +60,7 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 {
 	BenchmarkResult result;
 	GTimer* func_timer;
-	gchar* left;
+	g_autofree gchar* left = NULL;
 	gdouble elapsed;
 
 	g_return_if_fail(name != NULL);
@@ -80,7 +80,6 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	{
 		left = g_strconcat(name, ":", NULL);
 		g_print("%-50s ", left);
-		g_free(left);
 	}
 	else
 	{
@@ -102,11 +101,10 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 
 		if (result.bytes != 0)
 		{
-			gchar* size;
+			g_autofree gchar* size = NULL;
 
 			size = g_format_size((gdouble)result.bytes / result.elapsed_time);
 			g_print(" (%s/s)", size);
-			g_free(size);
 		}
 
 		g_print(" [%.3f seconds]\n", elapsed);

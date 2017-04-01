@@ -100,7 +100,7 @@ gboolean
 backend_put (gpointer data, gchar const* key, bson_t const* value)
 {
 	JLevelDBBatch* batch = data;
-	gchar* nskey;
+	g_autofree gchar* nskey = NULL;
 
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
@@ -108,7 +108,6 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gchar*)bson_get_data(value), value->len);
-	g_free(nskey);
 
 	// FIXME
 	return TRUE;
@@ -119,14 +118,13 @@ gboolean
 backend_delete (gpointer data, gchar const* key)
 {
 	JLevelDBBatch* batch = data;
-	gchar* nskey;
+	g_autofree gchar* nskey = NULL;
 
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
-	g_free(nskey);
 
 	// FIXME
 	return TRUE;
@@ -136,8 +134,8 @@ static
 gboolean
 backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
-	gchar* nskey;
-	gpointer result;
+	g_autofree gchar* nskey = NULL;
+	g_autofree gpointer result = NULL;
 	gsize result_len;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
@@ -146,7 +144,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	nskey = g_strdup_printf("%s:%s", namespace, key);
 	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
-	g_free(nskey);
 
 	if (result != NULL)
 	{
@@ -155,7 +152,6 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 		// FIXME check whether copies can be avoided
 		bson_init_static(tmp, result, result_len);
 		bson_copy_to(tmp, result_out);
-		g_free(result);
 	}
 
 	return (result != NULL);

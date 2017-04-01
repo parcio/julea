@@ -503,7 +503,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	JListIterator* it;
-	JMessage** messages;
+	g_autofree JMessage** messages = NULL;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 server_count;
@@ -577,7 +577,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		gpointer* background_data;
+		g_autofree gpointer* background_data = NULL;
 
 		background_data = g_new(gpointer, server_count);
 
@@ -595,9 +595,6 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_create_background_operation, background_data, server_count);
-
-		g_free(background_data);
-		g_free(messages);
 	}
 
 	j_list_iterator_free(it);
@@ -615,7 +612,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	JListIterator* it;
-	JMessage** messages;
+	g_autofree JMessage** messages = NULL;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 server_count;
@@ -680,7 +677,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		gpointer* background_data;
+		g_autofree gpointer* background_data = NULL;
 
 		background_data = g_new(gpointer, server_count);
 
@@ -698,9 +695,6 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
-
-		g_free(background_data);
-		g_free(messages);
 	}
 
 	j_list_iterator_free(it);
@@ -717,9 +711,9 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JList** br_lists;
+	g_autofree JList** br_lists = NULL;
 	JListIterator* it;
-	JMessage** messages;
+	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object;
 	gpointer object_handle;
 	gsize name_len;
@@ -843,7 +837,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		gpointer* background_data;
+		g_autofree gpointer* background_data = NULL;
 
 		background_data = g_new(gpointer, server_count);
 
@@ -867,10 +861,6 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
-
-		g_free(background_data);
-		g_free(messages);
-		g_free(br_lists);
 	}
 
 	/*
@@ -895,9 +885,9 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	gboolean ret = FALSE;
 
 	JBackend* data_backend;
-	JList** bw_lists;
+	g_autofree JList** bw_lists = NULL;
 	JListIterator* it;
-	JMessage** messages;
+	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object;
 	gpointer object_handle;
 	gsize name_len;
@@ -1021,7 +1011,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		gpointer* background_data;
+		g_autofree gpointer* background_data = NULL;
 
 		background_data = g_new(gpointer, server_count);
 
@@ -1045,10 +1035,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
-
-		g_free(background_data);
-		g_free(messages);
-		g_free(bw_lists);
 	}
 
 	/*
@@ -1074,7 +1060,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	JListIterator* it;
-	JMessage** messages;
+	g_autofree JMessage** messages = NULL;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 server_count;
@@ -1156,7 +1142,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		gpointer* background_data;
+		g_autofree gpointer* background_data = NULL;
 
 		background_data = g_new(gpointer, server_count);
 
@@ -1174,9 +1160,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_status_background_operation, background_data, server_count);
-
-		g_free(background_data);
-		g_free(messages);
 	}
 
 	j_trace_leave(G_STRFUNC);
