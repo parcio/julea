@@ -91,7 +91,7 @@ gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	JMemoryChunk* memory_chunk;
-	JMessage* message;
+	g_autoptr(JMessage) message = NULL;
 	JStatistics* statistics;
 	GInputStream* input;
 
@@ -129,7 +129,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_DATA_CREATE:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -165,13 +165,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (reply != NULL)
 					{
 						j_message_send(reply, connection);
-						j_message_unref(reply);
 					}
 				}
 				break;
 			case J_MESSAGE_DATA_DELETE:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -200,7 +199,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (reply != NULL)
 					{
 						j_message_send(reply, connection);
-						j_message_unref(reply);
 					}
 				}
 				break;
@@ -265,7 +263,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_DATA_WRITE:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					gchar* buf;
 					gpointer object;
 					guint64 merge_length = 0;
@@ -349,7 +347,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (reply != NULL)
 					{
 						j_message_send(reply, connection);
-						j_message_unref(reply);
 					}
 
 					j_memory_chunk_reset(memory_chunk);
@@ -357,7 +354,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 			case J_MESSAGE_DATA_STATUS:
 				{
-					JMessage* reply;
+					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
 					reply = j_message_new_reply(message);
@@ -387,12 +384,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_STATISTICS:
 				{
-					JMessage* reply;
+					g_autoptr(JMessage) reply = NULL;
 					JStatistics* r_statistics;
 					gchar get_all;
 					guint64 value;
@@ -432,12 +428,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_PING:
 				{
-					JMessage* reply;
+					g_autoptr(JMessage) reply = NULL;
 					guint num;
 
 					num = g_atomic_int_add(&jd_thread_num, 1);
@@ -460,12 +455,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_META_PUT:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -500,13 +494,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (reply != NULL)
 					{
 						j_message_send(reply, connection);
-						j_message_unref(reply);
 					}
 				}
 				break;
 			case J_MESSAGE_META_DELETE:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
 					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
@@ -534,13 +527,12 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (reply != NULL)
 					{
 						j_message_send(reply, connection);
-						j_message_unref(reply);
 					}
 				}
 				break;
 			case J_MESSAGE_META_GET:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
@@ -569,12 +561,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_META_GET_ALL:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					bson_t value[1];
 					gpointer iterator;
 					guint32 zero = 0;
@@ -596,12 +587,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_append_4(reply, &zero);
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			case J_MESSAGE_META_GET_BY_PREFIX:
 				{
-					JMessage* reply = NULL;
+					g_autoptr(JMessage) reply = NULL;
 					bson_t value[1];
 					gchar const* prefix;
 					gpointer iterator;
@@ -625,7 +615,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_append_4(reply, &zero);
 
 					j_message_send(reply, connection);
-					j_message_unref(reply);
 				}
 				break;
 			default:
@@ -633,8 +622,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				break;
 		}
 	}
-
-	j_message_unref(message);
 
 	{
 		guint64 value;

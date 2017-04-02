@@ -237,13 +237,12 @@ j_distributed_object_create_background_operation (gpointer data)
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
-		JMessage* reply;
+		g_autoptr(JMessage) reply = NULL;
 
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, data_connection);
 
 		/* FIXME do something with reply */
-		j_message_unref(reply);
 	}
 
 	j_message_unref(background_data->message);
@@ -279,13 +278,12 @@ j_distributed_object_delete_background_operation (gpointer data)
 
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
-		JMessage* reply;
+		g_autoptr(JMessage) reply = NULL;
 
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, data_connection);
 
 		/* FIXME do something with reply */
-		j_message_unref(reply);
 	}
 
 	j_message_unref(background_data->message);
@@ -314,7 +312,7 @@ j_distributed_object_read_background_operation (gpointer data)
 	JDistributedObjectBackgroundData* background_data = data;
 
 	g_autoptr(JListIterator) it = NULL;
-	JMessage* reply;
+	g_autoptr(JMessage) reply = NULL;
 	GSocketConnection* data_connection;
 	guint32 operations_done;
 	guint32 operation_count;
@@ -367,7 +365,6 @@ j_distributed_object_read_background_operation (gpointer data)
 		operations_done += reply_operation_count;
 	}
 
-	j_message_unref(reply);
 	j_message_unref(background_data->message);
 
 	j_connection_pool_push_data(background_data->index, data_connection);
@@ -404,7 +401,7 @@ j_distributed_object_write_background_operation (gpointer data)
 	if (j_message_get_type_modifier(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
 	{
 		g_autoptr(JListIterator) it = NULL;
-		JMessage* reply;
+		g_autoptr(JMessage) reply = NULL;
 		guint64 nbytes;
 
 		reply = j_message_new_reply(background_data->message);
@@ -419,8 +416,6 @@ j_distributed_object_write_background_operation (gpointer data)
 			nbytes = j_message_get_8(reply);
 			j_helper_atomic_add(bytes_written, nbytes);
 		}
-
-		j_message_unref(reply);
 	}
 
 	j_message_unref(background_data->message);
@@ -452,7 +447,7 @@ j_distributed_object_status_background_operation (gpointer data)
 	JDistributedObjectBackgroundData* background_data = data;
 
 	g_autoptr(JListIterator) it = NULL;
-	JMessage* reply;
+	g_autoptr(JMessage) reply = NULL;
 	GSocketConnection* data_connection;
 
 	data_connection = j_connection_pool_pop_data(background_data->index);
@@ -479,7 +474,6 @@ j_distributed_object_status_background_operation (gpointer data)
 		j_helper_atomic_add(size, size_);
 	}
 
-	j_message_unref(reply);
 	j_message_unref(background_data->message);
 
 	j_connection_pool_push_data(background_data->index, data_connection);

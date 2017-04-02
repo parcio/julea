@@ -141,7 +141,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;
-	JMessage* message;
+	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
 	gpointer meta_batch;
@@ -222,16 +222,14 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
-			JMessage* reply;
+			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, meta_connection);
 
 			/* FIXME do something with reply */
-			j_message_unref(reply);
 		}
 
-		j_message_unref(message);
 		j_connection_pool_push_meta(index, meta_connection);
 	}
 
@@ -248,7 +246,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;
-	JMessage* message;
+	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
 	gpointer meta_batch;
@@ -318,16 +316,14 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
-			JMessage* reply;
+			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, meta_connection);
 
 			/* FIXME do something with reply */
-			j_message_unref(reply);
 		}
 
-		j_message_unref(message);
 		j_connection_pool_push_meta(index, meta_connection);
 	}
 
@@ -344,7 +340,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 
 	JBackend* data_backend;
 	JListIterator* it;
-	JMessage* message;
+	g_autoptr(JMessage) message = NULL;
 	GSocketConnection* meta_connection;
 	gchar const* namespace;
 	gsize namespace_len;
@@ -408,7 +404,7 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 
 	if (data_backend == NULL)
 	{
-		JMessage* reply;
+		g_autoptr(JMessage) reply = NULL;
 
 		j_message_send(message, meta_connection);
 
@@ -433,9 +429,6 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 		}
 
 		j_list_iterator_free(it);
-
-		j_message_unref(reply);
-		j_message_unref(message);
 
 		j_connection_pool_push_meta(index, meta_connection);
 	}

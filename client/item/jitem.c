@@ -957,8 +957,6 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 {
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;
-	JMessage* message;
-	JMessage* reply;
 	GSocketConnection* meta_connection;
 	gboolean ret = TRUE;
 
@@ -982,6 +980,8 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 		JItemOperation* operation = j_list_iterator_get(it);
 		JCollection* collection = operation->get.collection;
 		JItem** item = operation->get.item;
+		g_autoptr(JMessage) message = NULL;
+		g_autoptr(JMessage) reply = NULL;
 		bson_t result[1];
 		gchar const* name = operation->get.name;
 		gchar* path;
@@ -1018,6 +1018,7 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 
 				data = j_message_get_n(reply, len);
 
+				// result points to reply's memory
 				bson_init_static(result, data, len);
 			}
 			else
@@ -1034,13 +1035,6 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 		{
 			*item = j_item_new_from_bson(collection, result);
 			bson_destroy(result);
-		}
-
-		if (meta_backend == NULL)
-		{
-			// result points to reply's memory
-			j_message_unref(reply);
-			j_message_unref(message);
 		}
 	}
 

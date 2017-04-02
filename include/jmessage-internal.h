@@ -71,6 +71,8 @@ J_GNUC_INTERNAL JMessage* j_message_new_reply (JMessage*);
 J_GNUC_INTERNAL JMessage* j_message_ref (JMessage*);
 J_GNUC_INTERNAL void j_message_unref (JMessage*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JMessage, j_message_unref)
+
 J_GNUC_INTERNAL guint32 j_message_get_id (JMessage const*);
 J_GNUC_INTERNAL JMessageType j_message_get_type (JMessage const*);
 J_GNUC_INTERNAL JMessageFlags j_message_get_type_modifier (JMessage const*);

@@ -60,7 +60,7 @@ int
 main (int argc, char** argv)
 {
 	JConfiguration* configuration;
-	JMessage* message;
+	g_autoptr(JMessage) message = NULL;
 	JStatistics* statistics_total;
 	gchar get_all;
 
@@ -79,7 +79,7 @@ main (int argc, char** argv)
 
 	for (guint i = 0; i < j_configuration_get_data_server_count(configuration); i++)
 	{
-		JMessage* reply;
+		g_autoptr(JMessage) reply = NULL;
 		JStatistics* statistics;
 		GSocketConnection* connection;
 		guint64 value;
@@ -124,8 +124,6 @@ main (int argc, char** argv)
 		j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, value);
 		j_statistics_add(statistics_total, J_STATISTICS_BYTES_SENT, value);
 
-		j_message_unref(reply);
-
 		g_print("Data server %d\n", i);
 		print_statistics(statistics);
 
@@ -145,7 +143,6 @@ main (int argc, char** argv)
 		print_statistics(statistics_total);
 	}
 
-	j_message_unref(message);
 	j_statistics_free(statistics_total);
 
 	j_fini();

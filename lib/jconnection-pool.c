@@ -177,8 +177,8 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			GError* error = NULL;
 			GSocketClient* client;
 
-			JMessage* message;
-			JMessage* reply;
+			g_autoptr(JMessage) message = NULL;
+			g_autoptr(JMessage) reply = NULL;
 
 			guint op_count;
 
@@ -222,9 +222,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 					//g_print("Server has metadata backend.\n");
 				}
 			}
-
-			j_message_unref(message);
-			j_message_unref(reply);
 
 			g_object_unref(client);
 		}

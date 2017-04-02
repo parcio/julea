@@ -35,13 +35,14 @@ _benchmark_message_new (BenchmarkResult* result, gboolean append)
 	guint64 const dummy = 42;
 	gsize const size = m * sizeof(guint64);
 
-	JMessage* message;
 	gdouble elapsed;
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
+		g_autoptr(JMessage) message = NULL;
+
 		message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
 
 		if (append)
@@ -51,8 +52,6 @@ _benchmark_message_new (BenchmarkResult* result, gboolean append)
 				j_message_append_8(message, &dummy);
 			}
 		}
-
-		j_message_unref(message);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
@@ -83,13 +82,14 @@ _benchmark_message_add_operation (BenchmarkResult* result, gboolean large)
 	guint const m = (large) ? 50000 : 100;
 	guint64 const dummy = 42;
 
-	JMessage* message;
 	gdouble elapsed;
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
+		g_autoptr(JMessage) message = NULL;
+
 		message = j_message_new(J_MESSAGE_NONE, 0);
 
 		for (guint j = 0; j < m; j++)
@@ -97,8 +97,6 @@ _benchmark_message_add_operation (BenchmarkResult* result, gboolean large)
 			j_message_add_operation(message, sizeof(guint64));
 			j_message_append_8(message, &dummy);
 		}
-
-		j_message_unref(message);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();

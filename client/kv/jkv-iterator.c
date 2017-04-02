@@ -102,7 +102,7 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 	}
 	else
 	{
-		JMessage* message;
+		g_autoptr(JMessage) message = NULL;
 		JMessageType message_type;
 		GSocketConnection* meta_connection;
 		gsize namespace_len;
@@ -135,7 +135,6 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 		iterator->reply = j_message_new_reply(message);
 		j_message_receive(iterator->reply, meta_connection);
 
-		j_message_unref(message);
 		j_connection_pool_push_meta(index, meta_connection);
 	}
 
