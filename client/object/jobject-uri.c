@@ -193,7 +193,7 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 
 			if (parts_len >= 2)
 			{
-				JDistribution* distribution;
+				g_autoptr(JDistribution) distribution = NULL;
 
 				// FIXME
 				distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
@@ -201,8 +201,6 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 
 				uri->name = g_strdup(parts[1]);
 				uri->distributed_object = j_distributed_object_new(uri->namespace, uri->name, distribution);
-
-				j_distribution_unref(distribution);
 			}
 			break;
 		default:

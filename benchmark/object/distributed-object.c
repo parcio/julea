@@ -35,7 +35,7 @@ _benchmark_distributed_object_create (BenchmarkResult* result, gboolean use_batc
 
 	JBatch* delete_batch;
 	JBatch* batch;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -76,7 +76,6 @@ _benchmark_distributed_object_create (BenchmarkResult* result, gboolean use_batc
 
 	j_batch_unref(delete_batch);
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -103,7 +102,7 @@ _benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batc
 	guint const n = 10000;
 
 	JBatch* batch;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -156,7 +155,6 @@ _benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batc
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -183,7 +181,7 @@ _benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batc
 	guint const n = (use_batch) ? 1000 : 1000;
 
 	JDistributedObject* object;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	JBatch* batch;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[1];
@@ -227,7 +225,6 @@ _benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batc
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -255,7 +252,7 @@ _benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch,
 
 	JDistributedObject* object;
 	JBatch* batch;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -306,7 +303,6 @@ _benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch,
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -335,7 +331,7 @@ _benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch
 
 	JDistributedObject* object;
 	JBatch* batch;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -379,7 +375,6 @@ _benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -407,7 +402,7 @@ _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, 
 	guint const n = (use_batch) ? 5000 : 5000;
 
 	JBatch* batch;
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -446,7 +441,6 @@ _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, 
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_distribution_unref(distribution);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

@@ -64,7 +64,7 @@ static
 void
 test_distribution_distribute (JDistributionType type, JConfiguration** configuration, gconstpointer data)
 {
-	JDistribution* distribution;
+	g_autoptr(JDistribution) distribution = NULL;
 	gboolean ret;
 	guint64 block_size;
 	guint64 length;
@@ -195,8 +195,6 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
 	g_assert(!ret);
-
-	j_distribution_unref(distribution);
 }
 
 static

@@ -46,6 +46,8 @@ JDistribution* j_distribution_new (JDistributionType);
 JDistribution* j_distribution_ref (JDistribution*);
 void j_distribution_unref (JDistribution*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDistribution, j_distribution_unref)
+
 void j_distribution_set_block_size (JDistribution*, guint64);
 void j_distribution_set (JDistribution*, gchar const*, guint64);
 void j_distribution_set2 (JDistribution*, gchar const*, guint64, guint64);
