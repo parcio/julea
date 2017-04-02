@@ -33,8 +33,8 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 100000;
 
-	JBatch* delete_batch;
-	JBatch* batch;
+	g_autoptr(JBatch) delete_batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -72,9 +72,6 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_execute(delete_batch);
 
-	j_batch_unref(delete_batch);
-	j_batch_unref(batch);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -99,7 +96,7 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 100000;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -150,8 +147,6 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -177,7 +172,7 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 	guint const n = 200000;
 
 	JObject* object;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[1];
 	gdouble elapsed;
@@ -218,8 +213,6 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 	j_object_unref(object);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -245,7 +238,7 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 	guint const n = 200000;
 
 	JObject* object;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -294,8 +287,6 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 	j_object_unref(object);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 	result->bytes = n * block_size;
@@ -322,7 +313,7 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 	guint const n = 200000;
 
 	JObject* object;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
@@ -364,8 +355,6 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 	j_object_unref(object);
 	j_batch_execute(batch);
 
-	j_batch_unref(batch);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 	result->bytes = n * block_size;
@@ -391,7 +380,7 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 {
 	guint const n = 100000;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
@@ -427,8 +416,6 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_batch_execute(batch);
-
-	j_batch_unref(batch);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

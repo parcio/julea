@@ -392,7 +392,7 @@ end:
 gboolean
 j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 {
-	JBatch* batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail(uri != NULL, FALSE);
@@ -442,11 +442,6 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 	}
 
 end:
-	if (batch != NULL)
-	{
-		j_batch_unref(batch);
-	}
-
 	return ret;
 }
 
