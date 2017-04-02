@@ -36,7 +36,7 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -74,8 +74,6 @@ _benchmark_item_create (BenchmarkResult* result, gboolean use_batch)
 	j_collection_delete(collection, delete_batch);
 	j_batch_execute(delete_batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -103,7 +101,7 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JBatch) get_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -153,8 +151,6 @@ _benchmark_item_delete (BenchmarkResult* result, gboolean use_batch)
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -182,7 +178,7 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -214,8 +210,6 @@ benchmark_item_delete_batch_without_get (BenchmarkResult* result)
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -229,7 +223,7 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[1];
 	gdouble elapsed;
 	guint64 nb;
@@ -268,8 +262,6 @@ _benchmark_item_get_status (BenchmarkResult* result, gboolean use_batch)
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -297,7 +289,7 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
 	guint64 nb = 0;
@@ -345,8 +337,6 @@ _benchmark_item_read (BenchmarkResult* result, gboolean use_batch, guint block_s
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 	result->bytes = n * block_size;
@@ -375,7 +365,7 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
 	guint64 nb = 0;
@@ -416,8 +406,6 @@ _benchmark_item_write (BenchmarkResult* result, gboolean use_batch, guint block_
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 	result->bytes = n * block_size;
@@ -445,7 +433,7 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -481,8 +469,6 @@ _benchmark_item_unordered_create_delete (BenchmarkResult* result, gboolean use_b
 
 	j_collection_delete(collection, batch);
 	j_batch_execute(batch);
-
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

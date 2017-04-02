@@ -123,6 +123,8 @@ JSemantics* j_semantics_new_from_string (gchar const*, gchar const*);
 JSemantics* j_semantics_ref (JSemantics*);
 void j_semantics_unref (JSemantics*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
+
 void j_semantics_set (JSemantics*, JSemanticsType, gint);
 gint j_semantics_get (JSemantics*, JSemanticsType);
 

@@ -46,13 +46,12 @@ test_semantics_new_ref_unref (void)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JSemantics* semantics;
+		g_autoptr(JSemantics) semantics = NULL;
 
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 		g_assert(semantics != NULL);
 		semantics = j_semantics_ref(semantics);
 		g_assert(semantics != NULL);
-		j_semantics_unref(semantics);
 		j_semantics_unref(semantics);
 	}
 }

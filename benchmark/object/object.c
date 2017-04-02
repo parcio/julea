@@ -35,7 +35,7 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 
 	JBatch* delete_batch;
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -74,7 +74,6 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_unref(delete_batch);
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -101,7 +100,7 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 	guint const n = 100000;
 
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -152,7 +151,6 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -180,7 +178,7 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 
 	JObject* object;
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[1];
 	gdouble elapsed;
 	gint64 modification_time;
@@ -221,7 +219,6 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -249,7 +246,7 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 
 	JObject* object;
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
 	guint64 nb = 0;
@@ -298,7 +295,6 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -327,7 +323,7 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 
 	JObject* object;
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
 	gdouble elapsed;
 	guint64 nb = 0;
@@ -369,7 +365,6 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -397,7 +392,7 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 	guint const n = 100000;
 
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -434,7 +429,6 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

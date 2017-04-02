@@ -55,7 +55,7 @@ void
 test_batch_semantics (void)
 {
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -68,7 +68,6 @@ test_batch_semantics (void)
 
 	g_assert(j_batch_get_semantics(batch) == semantics);
 
-	j_semantics_unref(semantics);
 	j_batch_unref(batch);
 }
 

@@ -153,13 +153,12 @@ JBatch*
 j_batch_new_for_template (JSemanticsTemplate template)
 {
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	semantics = j_semantics_new(template);
 	batch = j_batch_new(semantics);
-	j_semantics_unref(semantics);
 
 	j_trace_leave(G_STRFUNC);
 

@@ -35,7 +35,7 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 
 	JBatch* delete_batch;
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	bson_t* empty;
@@ -80,7 +80,6 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_unref(delete_batch);
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -107,7 +106,7 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 	guint const n = 200000;
 
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	bson_t* empty;
@@ -164,7 +163,6 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -191,7 +189,7 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 	guint const n = 100000;
 
 	JBatch* batch;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	bson_t* empty;
@@ -234,7 +232,6 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 	j_batch_execute(batch);
 
 	j_batch_unref(batch);
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;

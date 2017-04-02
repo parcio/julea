@@ -33,7 +33,7 @@ _benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -67,8 +67,6 @@ _benchmark_collection_create (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_execute(delete_batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -94,7 +92,7 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 	guint const n = 10000;
 
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -139,8 +137,6 @@ _benchmark_collection_delete (BenchmarkResult* result, gboolean use_batch)
 
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -167,7 +163,7 @@ benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -195,8 +191,6 @@ benchmark_collection_delete_batch_without_get (BenchmarkResult* result)
 
 	j_batch_execute(batch);
 
-	j_semantics_unref(semantics);
-
 	result->elapsed_time = elapsed;
 	result->operations = n;
 }
@@ -208,7 +202,7 @@ _benchmark_collection_unordered_create_delete (BenchmarkResult* result, gboolean
 	guint const n = (use_batch) ? 5000 : 5000;
 
 	g_autoptr(JBatch) batch = NULL;
-	JSemantics* semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
 	semantics = j_benchmark_get_semantics();
@@ -240,8 +234,6 @@ _benchmark_collection_unordered_create_delete (BenchmarkResult* result, gboolean
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_batch_execute(batch);
-
-	j_semantics_unref(semantics);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
