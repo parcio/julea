@@ -33,7 +33,7 @@
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <jcommon-internal.h>
-#include <jconnection-pool-internal.h>
+#include <jconnection-pool.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>

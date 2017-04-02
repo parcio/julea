@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_CONNECTION_POOL_INTERNAL_H
-#define JULEA_CONNECTION_POOL_INTERNAL_H
+#ifndef JULEA_CONNECTION_POOL_H
+#define JULEA_CONNECTION_POOL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -30,9 +30,10 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <jconfiguration-internal.h>
+GSocketConnection* j_connection_pool_pop_data (guint);
+void j_connection_pool_push_data (guint, GSocketConnection*);
 
-G_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
-G_GNUC_INTERNAL void j_connection_pool_fini (void);
+GSocketConnection* j_connection_pool_pop_meta (guint);
+void j_connection_pool_push_meta (guint, GSocketConnection*);
 
 #endif

@@ -26,6 +26,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <jconnection-pool.h>
 #include <jconnection-pool-internal.h>
 
 #include <jhelper-internal.h>
