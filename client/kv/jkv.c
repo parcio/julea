@@ -32,7 +32,7 @@
 
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool.h>
 #include <jlist.h>
 #include <jlist-iterator.h>

@@ -29,7 +29,7 @@
 #include <object/jobject-iterator.h>
 
 #include <jbackend.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool-internal.h>
 #include <jmessage.h>
 #include <joperation-cache-internal.h>

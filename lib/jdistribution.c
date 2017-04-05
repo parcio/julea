@@ -31,7 +31,7 @@
 
 #include <julea-internal.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconfiguration.h>
 #include <jtrace-internal.h>
 

@@ -28,7 +28,7 @@
 
 #include <jbackground-operation-internal.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jhelper-internal.h>
 #include <jtrace-internal.h>
 

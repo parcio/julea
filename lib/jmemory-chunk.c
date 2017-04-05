@@ -28,7 +28,7 @@
 
 #include <jmemory-chunk.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jtrace-internal.h>
 
 /**

@@ -29,12 +29,13 @@
 
 #include <jbackground-operation-internal.h>
 #include <jcache-internal.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
+#include <jtrace-internal.h>
 
 /**
  * \defgroup JBatch Batch

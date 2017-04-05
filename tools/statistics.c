@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool.h>
 #include <jmessage.h>
 #include <jstatistics.h>

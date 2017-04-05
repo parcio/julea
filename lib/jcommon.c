@@ -25,7 +25,6 @@
 #include <glib.h>
 
 #include <jcommon.h>
-#include <jcommon-internal.h>
 
 #include <jbackend.h>
 #include <jbackground-operation-internal.h>

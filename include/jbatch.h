@@ -35,6 +35,7 @@ typedef struct JBatch JBatch;
 
 typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
 
+#include <joperation.h>
 #include <jsemantics.h>
 
 JBatch* j_batch_new (JSemantics*);
@@ -43,6 +44,10 @@ JBatch* j_batch_ref (JBatch*);
 void j_batch_unref (JBatch*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
+
+JSemantics* j_batch_get_semantics (JBatch*);
+
+void j_batch_add (JBatch*, JOperation*);
 
 gboolean j_batch_execute (JBatch*);
 

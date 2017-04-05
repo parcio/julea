@@ -29,19 +29,12 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
-
 #include <jbatch.h>
 
-#include <joperation-internal.h>
+G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
 
-J_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
+G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
 
-J_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
-J_GNUC_INTERNAL JSemantics* j_batch_get_semantics (JBatch*);
-
-J_GNUC_INTERNAL void j_batch_add (JBatch*, JOperation*);
-
-J_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
+G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
 
 #endif

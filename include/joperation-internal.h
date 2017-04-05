@@ -29,29 +29,8 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
+#include <joperation.h>
 
-#include <jlist.h>
-#include <jsemantics.h>
-
-typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
-typedef void (*JOperationFreeFunc) (gpointer);
-
-/**
- * An operation.
- **/
-struct JOperation
-{
-	gpointer key;
-	gpointer data;
-
-	JOperationExecFunc exec_func;
-	JOperationFreeFunc free_func;
-};
-
-typedef struct JOperation JOperation;
-
-J_GNUC_INTERNAL JOperation* j_operation_new (void);
-J_GNUC_INTERNAL void j_operation_free (JOperation*);
+G_GNUC_INTERNAL void j_operation_free (JOperation*);
 
 #endif

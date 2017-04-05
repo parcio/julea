@@ -33,7 +33,7 @@
 #include <jbackground-operation-internal.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool.h>
 #include <jdistribution.h>
 #include <jdistribution-internal.h>

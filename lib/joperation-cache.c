@@ -28,12 +28,13 @@
 
 #include <jbackground-operation-internal.h>
 #include <jcache-internal.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <joperation-internal.h>
+#include <jtrace-internal.h>
 
 #include <string.h>
 

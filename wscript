@@ -261,7 +261,7 @@ def build (ctx):
 		ctx.shlib(
 			source = ctx.path.ant_glob('client/{0}/**/*.c'.format(client)),
 			target = 'lib/julea-{0}'.format(client),
-			use = use_julea_lib + ['lib/julea-private'] + use_extra,
+			use = use_julea_lib + ['lib/julea'] + use_extra,
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${LIBDIR}'

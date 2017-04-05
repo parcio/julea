@@ -29,7 +29,7 @@
 #include <jlock-internal.h>
 
 #include <jbackend.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
 #include <jtrace-internal.h>

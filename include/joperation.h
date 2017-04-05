@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_COMMON_INTERNAL_H
-#define JULEA_COMMON_INTERNAL_H
+#ifndef JULEA_OPERATION_H
+#define JULEA_OPERATION_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,15 +29,26 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
-
-#include <jcommon.h>
-
-#include <jbackend.h>
 #include <jlist.h>
-#include <jtrace-internal.h>
+#include <jsemantics.h>
 
-J_GNUC_INTERNAL JBackend* j_data_backend (void);
-J_GNUC_INTERNAL JBackend* j_metadata_backend (void);
+typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
+typedef void (*JOperationFreeFunc) (gpointer);
+
+/**
+ * An operation.
+ **/
+struct JOperation
+{
+	gpointer key;
+	gpointer data;
+
+	JOperationExecFunc exec_func;
+	JOperationFreeFunc free_func;
+};
+
+typedef struct JOperation JOperation;
+
+JOperation* j_operation_new (void);
 
 #endif

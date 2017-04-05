@@ -31,7 +31,7 @@
 
 #include <jcredentials-internal.h>
 
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jtrace-internal.h>
 
 /**

@@ -31,7 +31,7 @@
 #include <kv/jkv.h>
 
 #include <jbackend.h>
-#include <jcommon-internal.h>
+#include <jcommon.h>
 #include <jconnection-pool.h>
 #include <jmessage.h>
 #include <joperation-cache-internal.h>
@@ -81,7 +81,7 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 	g_return_val_if_fail(index < j_configuration_get_metadata_server_count(configuration), NULL);
 
 	/* FIXME still necessary? */
-	j_operation_cache_flush();
+	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
 	iterator->meta_backend = j_metadata_backend();

@@ -33,6 +33,7 @@ struct JCommon;
 
 typedef struct JCommon JCommon;
 
+#include <jbackend.h>
 #include <jbatch.h>
 #include <jconfiguration.h>
 
@@ -40,5 +41,8 @@ void j_init (void);
 void j_fini (void);
 
 JConfiguration* j_configuration (void);
+
+JBackend* j_data_backend (void);
+JBackend* j_metadata_backend (void);
 
 #endif
