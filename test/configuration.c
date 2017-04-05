@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 
 #include "test.h"
 

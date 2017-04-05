@@ -24,7 +24,7 @@
 
 #include <glib.h>
 
-#include <jstatistics-internal.h>
+#include <jstatistics.h>
 
 #include <jtrace-internal.h>
 

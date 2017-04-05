@@ -24,8 +24,8 @@
 
 #include <jcommon-internal.h>
 #include <jconnection-pool.h>
-#include <jmessage-internal.h>
-#include <jstatistics-internal.h>
+#include <jmessage.h>
+#include <jstatistics.h>
 
 static
 void

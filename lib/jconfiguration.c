@@ -26,7 +26,9 @@
 
 #include <string.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
+
+#include <julea-internal.h>
 
 /**
  * \defgroup JConfiguration Configuration

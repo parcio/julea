@@ -30,7 +30,7 @@
 #include <jconnection-pool-internal.h>
 
 #include <jhelper-internal.h>
-#include <jmessage-internal.h>
+#include <jmessage.h>
 #include <jtrace-internal.h>
 
 /**

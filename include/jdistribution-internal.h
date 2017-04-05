@@ -30,7 +30,7 @@
 #include <glib.h>
 
 #include <julea-internal.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jdistribution.h>
 
 #include <bson.h>

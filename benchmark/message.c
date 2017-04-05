@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jmessage-internal.h>
+#include <jmessage.h>
 
 #include "benchmark.h"
 

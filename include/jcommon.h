@@ -34,8 +34,11 @@ struct JCommon;
 typedef struct JCommon JCommon;
 
 #include <jbatch.h>
+#include <jconfiguration.h>
 
 void j_init (void);
 void j_fini (void);
+
+JConfiguration* j_configuration (void);
 
 #endif

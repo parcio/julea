@@ -25,7 +25,7 @@
 
 #include <julea.h>
 
-#include <jmessage-internal.h>
+#include <jmessage.h>
 
 #include "test.h"
 
@@ -55,7 +55,7 @@ test_message_header (void)
 	j_message_add_operation(message, 0);
 
 	g_assert(j_message_get_type(message) == J_MESSAGE_DATA_READ);
-	g_assert(j_message_get_type_modifier(message) == 0);
+	g_assert(j_message_get_flags(message) == 0);
 	g_assert_cmpuint(j_message_get_count(message), ==, 3);
 }
 

@@ -43,7 +43,7 @@
 #include <jhelper-internal.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <jmessage-internal.h>
+#include <jmessage.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
 #include <jtrace-internal.h>

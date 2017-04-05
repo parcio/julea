@@ -343,7 +343,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('cli/*.c'),
 		target = 'cli/julea-cli',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-object', 'lib/julea-item'],
+		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
@@ -354,7 +354,7 @@ def build (ctx):
 		ctx.program(
 			source = ['tools/{0}.c'.format(tool)],
 			target = 'tools/julea-{0}'.format(tool),
-			use = use_julea_core + ['lib/julea-private', 'GIO', 'GOBJECT'],
+			use = use_julea_core + ['lib/julea', 'GIO', 'GOBJECT'],
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${BINDIR}'

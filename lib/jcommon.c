@@ -30,7 +30,7 @@
 #include <jbackend.h>
 #include <jbackend-internal.h>
 #include <jbackground-operation-internal.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jconnection-pool-internal.h>
 #include <jdistribution-internal.h>
 #include <jlist.h>

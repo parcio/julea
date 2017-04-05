@@ -31,11 +31,11 @@
 
 #include <jbackend.h>
 #include <jbackend-internal.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jhelper-internal.h>
 #include <jmemory-chunk-internal.h>
-#include <jmessage-internal.h>
-#include <jstatistics-internal.h>
+#include <jmessage.h>
+#include <jstatistics.h>
 #include <jtrace-internal.h>
 
 static JStatistics* jd_statistics;
@@ -120,7 +120,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		guint i;
 
 		operation_count = j_message_get_count(message);
-		type_modifier = j_message_get_type_modifier(message);
+		type_modifier = j_message_get_flags(message);
 		safety = jd_safety_message_to_semantics(type_modifier);
 
 		switch (j_message_get_type(message))

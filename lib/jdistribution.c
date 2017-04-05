@@ -32,7 +32,7 @@
 #include <julea-internal.h>
 
 #include <jcommon-internal.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jtrace-internal.h>
 
 #include "distribution/distribution.h"

@@ -34,7 +34,7 @@
 #include <jbackend-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool.h>
-#include <jmessage-internal.h>
+#include <jmessage.h>
 #include <joperation-cache-internal.h>
 
 /**

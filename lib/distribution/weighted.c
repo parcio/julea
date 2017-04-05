@@ -26,7 +26,7 @@
 
 #include <bson.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jhelper-internal.h>
 #include <jtrace-internal.h>
 

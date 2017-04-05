@@ -26,7 +26,8 @@
 
 #include <bson.h>
 
-#include <jconfiguration-internal.h>
+#include <julea-internal.h>
+#include <jconfiguration.h>
 #include <jtrace-internal.h>
 
 #include "distribution.h"

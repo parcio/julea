@@ -24,7 +24,7 @@
 #include <julea-internal.h>
 
 #include <jcommon.h>
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 #include <jdistribution-internal.h>
 
 #include "test.h"

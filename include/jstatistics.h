@@ -20,16 +20,14 @@
  * \file
  **/
 
-#ifndef JULEA_STATISTICS_INTERNAL_H
-#define JULEA_STATISTICS_INTERNAL_H
+#ifndef JULEA_STATISTICS_H
+#define JULEA_STATISTICS_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
-
-#include <julea-internal.h>
 
 enum JStatisticsType
 {
@@ -49,10 +47,10 @@ struct JStatistics;
 
 typedef struct JStatistics JStatistics;
 
-J_GNUC_INTERNAL JStatistics* j_statistics_new (gboolean);
-J_GNUC_INTERNAL void j_statistics_free (JStatistics*);
+JStatistics* j_statistics_new (gboolean);
+void j_statistics_free (JStatistics*);
 
-J_GNUC_INTERNAL guint64 j_statistics_get (JStatistics*, JStatisticsType);
-J_GNUC_INTERNAL void j_statistics_add (JStatistics*, JStatisticsType, guint64);
+guint64 j_statistics_get (JStatistics*, JStatisticsType);
+void j_statistics_add (JStatistics*, JStatisticsType, guint64);
 
 #endif

@@ -28,7 +28,7 @@
 #include <math.h>
 #include <string.h>
 
-#include <jmessage-internal.h>
+#include <jmessage.h>
 
 #include <jhelper-internal.h>
 #include <jlist.h>
@@ -358,7 +358,7 @@ j_message_new_reply (JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
-	op_flags = j_message_get_type_modifier(message) | J_MESSAGE_REPLY;
+	op_flags = j_message_get_flags(message) | J_MESSAGE_REPLY;
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
@@ -437,35 +437,6 @@ j_message_unref (JMessage* message)
 }
 
 /**
- * Returns a message's ID.
- *
- * \author Michael Kuhn
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's ID.
- **/
-guint32
-j_message_get_id (JMessage const* message)
-{
-	guint32 id;
-
-	g_return_val_if_fail(message != NULL, 0);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	id = j_message_header(message)->id;
-	id = GUINT32_FROM_LE(id);
-
-	j_trace_leave(G_STRFUNC);
-
-	return id;
-}
-
-/**
  * Returns a message's type.
  *
  * \author Michael Kuhn
@@ -507,7 +478,7 @@ j_message_get_type (JMessage const* message)
  * \return The message's operation type.
  **/
 JMessageFlags
-j_message_get_type_modifier (JMessage const* message)
+j_message_get_flags (JMessage const* message)
 {
 	JMessageType op_flags;
 
@@ -951,7 +922,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if (j_message_get_type_modifier(message) & J_MESSAGE_REPLY)
+	if (j_message_get_flags(message) & J_MESSAGE_REPLY)
 	{
 		g_return_val_if_fail(message->original_message != NULL, FALSE);
 	}
@@ -975,7 +946,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	if (j_message_get_type_modifier(message) & J_MESSAGE_REPLY)
+	if (j_message_get_flags(message) & J_MESSAGE_REPLY)
 	{
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}

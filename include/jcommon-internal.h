@@ -35,11 +35,8 @@
 
 #include <jbackend.h>
 #include <jbackend-internal.h>
-#include <jconfiguration-internal.h>
 #include <jlist.h>
 #include <jtrace-internal.h>
-
-J_GNUC_INTERNAL JConfiguration* j_configuration (void);
 
 J_GNUC_INTERNAL JBackend* j_data_backend (void);
 J_GNUC_INTERNAL JBackend* j_metadata_backend (void);

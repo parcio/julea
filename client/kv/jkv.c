@@ -37,7 +37,7 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>
-#include <jmessage-internal.h>
+#include <jmessage.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
 #include <jtrace-internal.h>
@@ -220,7 +220,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);
 
-		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -314,7 +314,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);
 
-		if (j_message_get_type_modifier(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 

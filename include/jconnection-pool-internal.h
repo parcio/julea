@@ -30,7 +30,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <jconfiguration-internal.h>
+#include <jconfiguration.h>
 
 G_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
 G_GNUC_INTERNAL void j_connection_pool_fini (void);
