@@ -36,6 +36,8 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
+#include <julea-internal.h>
+
 /**
  * \defgroup JMessage Message
  *

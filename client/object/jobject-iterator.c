@@ -29,7 +29,6 @@
 #include <object/jobject-iterator.h>
 
 #include <jbackend.h>
-#include <jbackend-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jmessage.h>

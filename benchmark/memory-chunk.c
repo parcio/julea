@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jmemory-chunk-internal.h>
+#include <jmemory-chunk.h>
 
 #include "benchmark.h"
 

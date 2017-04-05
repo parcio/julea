@@ -37,7 +37,7 @@
 #include <jconnection-pool.h>
 #include <jdistribution.h>
 #include <jdistribution-internal.h>
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>

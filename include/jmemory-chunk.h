@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_COMMON_INTERNAL_H
-#define JULEA_COMMON_INTERNAL_H
+#ifndef JULEA_MEMORY_CHUNK_H
+#define JULEA_MEMORY_CHUNK_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,15 +29,17 @@
 
 #include <glib.h>
 
+// FIXME
 #include <julea-internal.h>
 
-#include <jcommon.h>
+struct JMemoryChunk;
 
-#include <jbackend.h>
-#include <jlist.h>
-#include <jtrace-internal.h>
+typedef struct JMemoryChunk JMemoryChunk;
 
-J_GNUC_INTERNAL JBackend* j_data_backend (void);
-J_GNUC_INTERNAL JBackend* j_metadata_backend (void);
+JMemoryChunk* j_memory_chunk_new (guint64);
+void j_memory_chunk_free (JMemoryChunk*);
+
+gpointer j_memory_chunk_get (JMemoryChunk*, guint64);
+void j_memory_chunk_reset (JMemoryChunk*);
 
 #endif

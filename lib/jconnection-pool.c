@@ -29,9 +29,12 @@
 #include <jconnection-pool.h>
 #include <jconnection-pool-internal.h>
 
+#include <jhelper.h>
 #include <jhelper-internal.h>
 #include <jmessage.h>
 #include <jtrace-internal.h>
+
+#include <julea-internal.h>
 
 /**
  * \defgroup JConnectionPool Connection Pool

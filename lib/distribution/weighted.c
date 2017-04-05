@@ -30,6 +30,8 @@
 #include <jhelper-internal.h>
 #include <jtrace-internal.h>
 
+#include <julea-internal.h>
+
 #include "distribution.h"
 
 /**

@@ -28,7 +28,6 @@
 #include <jcommon-internal.h>
 
 #include <jbackend.h>
-#include <jbackend-internal.h>
 #include <jbackground-operation-internal.h>
 #include <jconfiguration.h>
 #include <jconnection-pool-internal.h>

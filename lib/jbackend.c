@@ -26,7 +26,6 @@
 #include <gmodule.h>
 
 #include <jbackend.h>
-#include <jbackend-internal.h>
 
 #include <jtrace-internal.h>
 

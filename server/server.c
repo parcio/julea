@@ -30,10 +30,9 @@
 #include <julea-internal.h>
 
 #include <jbackend.h>
-#include <jbackend-internal.h>
 #include <jconfiguration.h>
-#include <jhelper-internal.h>
-#include <jmemory-chunk-internal.h>
+#include <jhelper.h>
+#include <jmemory-chunk.h>
 #include <jmessage.h>
 #include <jstatistics.h>
 #include <jtrace-internal.h>

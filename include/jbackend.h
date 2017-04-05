@@ -89,4 +89,39 @@ typedef struct JBackend JBackend;
 
 JBackend* backend_info (JBackendType);
 
+#include <gmodule.h>
+
+GModule* j_backend_load_client (gchar const*, JBackendType, JBackend**);
+GModule* j_backend_load_server (gchar const*, JBackendType, JBackend**);
+
+gboolean j_backend_data_init (JBackend*, gchar const*);
+void j_backend_data_fini (JBackend*);
+
+gboolean j_backend_data_create (JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_data_open (JBackend*, gchar const*, gchar const*, gpointer*);
+
+gboolean j_backend_data_delete (JBackend*, gpointer);
+gboolean j_backend_data_close (JBackend*, gpointer);
+
+gboolean j_backend_data_status (JBackend*, gpointer, gint64*, guint64*);
+gboolean j_backend_data_sync (JBackend*, gpointer);
+
+gboolean j_backend_data_read (JBackend*, gpointer, gpointer, guint64, guint64, guint64*);
+gboolean j_backend_data_write (JBackend*, gpointer, gconstpointer, guint64, guint64, guint64*);
+
+gboolean j_backend_meta_init (JBackend*, gchar const*);
+void j_backend_meta_fini (JBackend*);
+
+gboolean j_backend_meta_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
+gboolean j_backend_meta_batch_execute (JBackend*, gpointer);
+
+gboolean j_backend_meta_put (JBackend*, gpointer, gchar const*, bson_t const*);
+gboolean j_backend_meta_delete (JBackend*, gpointer, gchar const*);
+
+gboolean j_backend_meta_get (JBackend*, gchar const*, gchar const*, bson_t*);
+
+gboolean j_backend_meta_get_all (JBackend*, gchar const*, gpointer*);
+gboolean j_backend_meta_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_meta_iterate (JBackend*, gpointer, bson_t*);
+
 #endif

@@ -34,7 +34,7 @@
 #include <jbatch-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool.h>
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jlock-internal.h>

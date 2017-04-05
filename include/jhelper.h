@@ -20,25 +20,22 @@
  * \file
  **/
 
-#ifndef JULEA_MEMORY_CHUNK_INTERNAL_H
-#define JULEA_MEMORY_CHUNK_INTERNAL_H
+#ifndef JULEA_HELPER_H
+#define JULEA_HELPER_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
+#include <gio/gio.h>
 
-#include <julea-internal.h>
+#include <jbackground-operation-internal.h>
 
-struct JMemoryChunk;
+void j_helper_set_nodelay (GSocketConnection*, gboolean);
 
-typedef struct JMemoryChunk JMemoryChunk;
+gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
-J_GNUC_INTERNAL JMemoryChunk* j_memory_chunk_new (guint64);
-J_GNUC_INTERNAL void j_memory_chunk_free (JMemoryChunk*);
-
-J_GNUC_INTERNAL gpointer j_memory_chunk_get (JMemoryChunk*, guint64);
-J_GNUC_INTERNAL void j_memory_chunk_reset (JMemoryChunk*);
+guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 
 #endif

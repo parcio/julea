@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <jhelper.h>
 #include <jhelper-internal.h>
 
 #include <jsemantics.h>

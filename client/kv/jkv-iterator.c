@@ -31,7 +31,6 @@
 #include <kv/jkv.h>
 
 #include <jbackend.h>
-#include <jbackend-internal.h>
 #include <jcommon-internal.h>
 #include <jconnection-pool.h>
 #include <jmessage.h>

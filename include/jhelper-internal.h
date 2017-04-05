@@ -30,17 +30,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <julea-internal.h>
+G_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
-#include <jbackground-operation-internal.h>
-
-J_GNUC_INTERNAL void j_helper_set_nodelay (GSocketConnection*, gboolean);
-J_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
-
-J_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
-
-J_GNUC_INTERNAL gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
-
-J_GNUC_INTERNAL guint64 j_helper_atomic_add (guint64 volatile*, guint64);
+G_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
 
 #endif
