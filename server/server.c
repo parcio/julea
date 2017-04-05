@@ -715,7 +715,7 @@ main (int argc, char** argv)
 	GModule* data_module = NULL;
 	GModule* meta_module = NULL;
 	GOptionContext* context;
-	GSocketService* socket_service;
+	g_autoptr(GSocketService) socket_service = NULL;
 	gchar const* data_path;
 	gchar const* meta_path;
 
@@ -754,8 +754,6 @@ main (int argc, char** argv)
 
 	if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
 	{
-		g_object_unref(socket_service);
-
 		if (error != NULL)
 		{
 			g_printerr("%s\n", error->message);
@@ -825,7 +823,6 @@ main (int argc, char** argv)
 	g_main_loop_unref(main_loop);
 
 	g_socket_service_stop(socket_service);
-	g_object_unref(socket_service);
 
 	j_statistics_free(jd_statistics);
 

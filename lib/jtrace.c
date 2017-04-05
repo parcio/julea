@@ -597,11 +597,10 @@ j_trace_enter (gchar const* name, gchar const* format, ...)
 
 		if (format != NULL)
 		{
-			gchar* arguments;
+			g_autofree gchar* arguments = NULL;
 
 			arguments = g_strdup_vprintf(format, args);
 			g_printerr("ENTER %s (%s)\n", name, arguments);
-			g_free(arguments);
 		}
 		else
 		{

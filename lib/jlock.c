@@ -173,7 +173,7 @@ j_lock_acquire (JLock* lock)
 
 		for (guint i = 0; i < lock->blocks->len; i++)
 		{
-			gchar* block_str;
+			g_autofree gchar* block_str = NULL;
 			guint64 block;
 
 			block = g_array_index(lock->blocks, guint64, i);
@@ -181,14 +181,11 @@ j_lock_acquire (JLock* lock)
 
 			if (meta_backend != NULL)
 			{
-				gchar* path;
+				g_autofree gchar* path = NULL;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
 				acquired = j_backend_meta_put(meta_backend, meta_batch, path, empty) && acquired;
-				g_free(path);
 			}
-
-			g_free(block_str);
 		}
 
 		if (meta_backend != NULL)
@@ -236,7 +233,7 @@ j_lock_release (JLock* lock)
 
 		for (guint i = 0; i < lock->blocks->len; i++)
 		{
-			gchar* block_str;
+			g_autofree gchar* block_str = NULL;
 			guint64 block;
 
 			block = g_array_index(lock->blocks, guint64, i);
@@ -244,14 +241,11 @@ j_lock_release (JLock* lock)
 
 			if (meta_backend != NULL)
 			{
-				gchar* path;
+				g_autofree gchar* path = NULL;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
 				released = j_backend_meta_delete(meta_backend, meta_batch, path) && released;
-				g_free(path);
 			}
-
-			g_free(block_str);
 		}
 
 		if (meta_backend != NULL)

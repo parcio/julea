@@ -40,6 +40,8 @@ JDistributedObject* j_distributed_object_new (gchar const*, gchar const*, JDistr
 JDistributedObject* j_distributed_object_ref (JDistributedObject*);
 void j_distributed_object_unref (JDistributedObject*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDistributedObject, j_distributed_object_unref)
+
 void j_distributed_object_create (JDistributedObject*, JBatch*);
 void j_distributed_object_delete (JDistributedObject*, JBatch*);
 

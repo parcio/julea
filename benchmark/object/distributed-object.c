@@ -48,16 +48,14 @@ _benchmark_distributed_object_create (BenchmarkResult* result, gboolean use_batc
 
 	for (guint i = 0; i < n; i++)
 	{
-		JDistributedObject* object;
-		gchar* name;
+		g_autoptr(JDistributedObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_distributed_object_new("benchmark", name, distribution);
 		j_distributed_object_create(object, batch);
-		g_free(name);
 
 		j_distributed_object_delete(object, delete_batch);
-		j_distributed_object_unref(object);
 
 		if (!use_batch)
 		{
@@ -109,15 +107,12 @@ _benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batc
 
 	for (guint i = 0; i < n; i++)
 	{
-		JDistributedObject* object;
-		gchar* name;
+		g_autoptr(JDistributedObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_distributed_object_new("benchmark", name, distribution);
 		j_distributed_object_create(object, batch);
-		g_free(name);
-
-		j_distributed_object_unref(object);
 	}
 
 	j_batch_execute(batch);
@@ -126,15 +121,13 @@ _benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batc
 
 	for (guint i = 0; i < n; i++)
 	{
-		JDistributedObject* object;
-		gchar* name;
+		g_autoptr(JDistributedObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_distributed_object_new("benchmark", name, distribution);
-		g_free(name);
 
 		j_distributed_object_delete(object, batch);
-		j_distributed_object_unref(object);
 
 		if (!use_batch)
 		{
@@ -175,7 +168,7 @@ _benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batc
 {
 	guint const n = (use_batch) ? 1000 : 1000;
 
-	JDistributedObject* object;
+	g_autoptr(JDistributedObject) object = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
@@ -216,7 +209,6 @@ _benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batc
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_distributed_object_delete(object, batch);
-	j_distributed_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -243,7 +235,7 @@ _benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch,
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
-	JDistributedObject* object;
+	g_autoptr(JDistributedObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
@@ -292,7 +284,6 @@ _benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch,
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_distributed_object_delete(object, batch);
-	j_distributed_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -320,7 +311,7 @@ _benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
-	JDistributedObject* object;
+	g_autoptr(JDistributedObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
@@ -362,7 +353,6 @@ _benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_distributed_object_delete(object, batch);
-	j_distributed_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -403,16 +393,14 @@ _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, 
 
 	for (guint i = 0; i < n; i++)
 	{
-		JDistributedObject* object;
-		gchar* name;
+		g_autoptr(JDistributedObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_distributed_object_new("benchmark", name, distribution);
 		j_distributed_object_create(object, batch);
-		g_free(name);
 
 		j_distributed_object_delete(object, batch);
-		j_distributed_object_unref(object);
 
 		if (!use_batch)
 		{

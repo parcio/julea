@@ -39,6 +39,8 @@ JObject* j_object_new (guint32, gchar const*, gchar const*);
 JObject* j_object_ref (JObject*);
 void j_object_unref (JObject*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObject, j_object_unref)
+
 void j_object_create (JObject*, JBatch*);
 void j_object_delete (JObject*, JBatch*);
 

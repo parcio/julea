@@ -59,8 +59,8 @@ gboolean
 read_config (gchar* path)
 {
 	gboolean ret = TRUE;
-	GFile* file;
-	gchar* buf;
+	g_autoptr(GFile) file = NULL;
+	g_autofree gchar* buf = NULL;
 
 	if (path == NULL)
 	{
@@ -74,10 +74,7 @@ read_config (gchar* path)
 	if (ret)
 	{
 		g_print("%s", buf);
-		g_free(buf);
 	}
-
-	g_object_unref(file);
 
 end:
 	return ret;
@@ -87,10 +84,10 @@ static
 gboolean
 write_config (gchar* path)
 {
-	GKeyFile* key_file;
+	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean ret = TRUE;
 	gsize key_file_data_len;
-	gchar* key_file_data;
+	g_autofree gchar* key_file_data = NULL;
 	g_auto(GStrv) servers_data = NULL;
 	g_auto(GStrv) servers_meta = NULL;
 
@@ -109,24 +106,18 @@ write_config (gchar* path)
 
 	if (path != NULL)
 	{
-		GFile* file;
-		GFile* parent;
+		g_autoptr(GFile) file = NULL;
+		g_autoptr(GFile) parent = NULL;
 
 		file = g_file_new_for_commandline_arg(path);
 		parent = g_file_get_parent(file);
 		g_file_make_directory_with_parents(parent, NULL, NULL);
 		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
-
-		g_object_unref(file);
-		g_object_unref(parent);
 	}
 	else
 	{
 		g_print("%s", key_file_data);
 	}
-
-	g_free(key_file_data);
-	g_key_file_free(key_file);
 
 	return ret;
 }
@@ -137,7 +128,7 @@ main (gint argc, gchar** argv)
 	GError* error = NULL;
 	GOptionContext* context;
 	gboolean ret;
-	gchar* path;
+	g_autofree gchar* path = NULL;
 
 	GOptionEntry entries[] = {
 		{ "local", 0, 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
@@ -176,13 +167,12 @@ main (gint argc, gchar** argv)
 	    || opt_max_connections < 0
 	)
 	{
-		gchar* help;
+		g_autofree gchar* help = NULL;
 
 		help = g_option_context_get_help(context, TRUE, NULL);
 		g_option_context_free(context);
 
 		g_print("%s", help);
-		g_free(help);
 
 		return 1;
 	}
@@ -210,8 +200,6 @@ main (gint argc, gchar** argv)
 	{
 		ret = write_config(path);
 	}
-
-	g_free(path);
 
 	return (ret) ? 0 : 1;
 }

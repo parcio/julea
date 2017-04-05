@@ -31,7 +31,7 @@ j_cmd_copy (gchar const** arguments)
 	GError* error;
 	GFile* file;
 	GFileIOStream* stream[2] = { NULL, NULL };
-	gchar* buffer;
+	g_autofree gchar* buffer = NULL;
 	guint64 offset;
 	guint i;
 
@@ -217,8 +217,6 @@ j_cmd_copy (gchar const** arguments)
 			break;
 		}
 	}
-
-	g_free(buffer);
 
 end:
 	for (i = 0; i <= 1; i++)

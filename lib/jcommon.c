@@ -131,7 +131,7 @@ void
 j_init (void)
 {
 	JCommon* common;
-	gchar* basename;
+	g_autofree gchar* basename = NULL;
 
 	g_return_if_fail(!j_is_initialized());
 
@@ -140,7 +140,6 @@ j_init (void)
 
 	basename = j_get_program_name("julea");
 	j_trace_init(basename);
-	g_free(basename);
 
 	j_trace_enter(G_STRFUNC, NULL);
 

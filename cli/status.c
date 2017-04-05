@@ -43,7 +43,7 @@ j_cmd_status (gchar const** arguments)
 
 	if (ouri != NULL)
 	{
-		GDateTime* date_time;
+		g_autoptr(GDateTime) date_time = NULL;
 		g_autofree gchar* modification_time_string = NULL;
 		g_autofree gchar* size_string = NULL;
 		gint64 modification_time;
@@ -60,8 +60,6 @@ j_cmd_status (gchar const** arguments)
 		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
 		g_print("Size:              %s\n", size_string);
 
-		g_date_time_unref(date_time);
-
 		goto end;
 	}
 
@@ -69,7 +67,7 @@ j_cmd_status (gchar const** arguments)
 
 	if (duri != NULL)
 	{
-		GDateTime* date_time;
+		g_autoptr(GDateTime) date_time = NULL;
 		g_autofree gchar* modification_time_string = NULL;
 		g_autofree gchar* size_string = NULL;
 		gint64 modification_time;
@@ -85,8 +83,6 @@ j_cmd_status (gchar const** arguments)
 
 		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
 		g_print("Size:              %s\n", size_string);
-
-		g_date_time_unref(date_time);
 
 		goto end;
 	}
@@ -108,7 +104,7 @@ j_cmd_status (gchar const** arguments)
 		if (j_uri_get_item(uri) != NULL)
 		{
 			JCredentials* credentials;
-			GDateTime* date_time;
+			g_autoptr(GDateTime) date_time = NULL;
 			g_autofree gchar* modification_time_string = NULL;
 			g_autofree gchar* size_string = NULL;
 			guint64 modification_time;
@@ -131,8 +127,6 @@ j_cmd_status (gchar const** arguments)
 			g_print("Size:              %s\n", size_string);
 
 			j_credentials_unref(credentials);
-
-			g_date_time_unref(date_time);
 		}
 		else if (j_uri_get_collection(uri) != NULL)
 		{

@@ -106,8 +106,8 @@ test_message_write_read (void)
 {
 	g_autoptr(JMessage) message_recv = NULL;
 	g_autoptr(JMessage) message_send = NULL;
-	GOutputStream* output;
-	GInputStream* input;
+	g_autoptr(GOutputStream) output = NULL;
+	g_autoptr(GInputStream) input = NULL;
 	gboolean ret;
 	gchar dummy_1 = 23;
 	guint32 dummy_4 = 42;
@@ -152,9 +152,6 @@ test_message_write_read (void)
 	g_assert_cmpuint(dummy_8, ==, 2342);
 	dummy_str = j_message_get_string(message_recv);
 	g_assert_cmpstr(dummy_str, ==, "42");
-
-	g_object_unref(input);
-	g_object_unref(output);
 }
 
 void

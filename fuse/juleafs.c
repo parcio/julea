@@ -44,11 +44,10 @@ JURI*
 jfs_get_uri (gchar const* path)
 {
 	JURI* uri;
-	gchar* new_path;
+	g_autofree gchar* new_path = NULL;
 
 	new_path = g_strconcat("julea://", path + 1, NULL);
 	uri = j_uri_new(new_path);
-	g_free(new_path);
 
 	return uri;
 }

@@ -176,7 +176,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 		if ((guint)g_atomic_int_add(count, 1) < j_connection_pool->max_count)
 		{
 			GError* error = NULL;
-			GSocketClient* client;
+			g_autoptr(GSocketClient) client = NULL;
 
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
@@ -184,7 +184,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			guint op_count;
 
 			client = g_socket_client_new();
-
 			connection = g_socket_client_connect_to_host(client, server, 4711, NULL, &error);
 
 			if (error != NULL)
@@ -223,8 +222,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 					//g_print("Server has metadata backend.\n");
 				}
 			}
-
-			g_object_unref(client);
 		}
 		else
 		{

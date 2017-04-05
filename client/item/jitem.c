@@ -608,7 +608,7 @@ JItem*
 j_item_new (JCollection* collection, gchar const* name, JDistribution* distribution)
 {
 	JItem* item = NULL;
-	gchar* path;
+	g_autofree gchar* path = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -639,7 +639,6 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
 	item->kv = j_kv_new(0, "items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
-	g_free(path);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -666,7 +665,7 @@ JItem*
 j_item_new_from_bson (JCollection* collection, bson_t const* b)
 {
 	JItem* item;
-	gchar* path;
+	g_autofree gchar* path = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
@@ -688,7 +687,6 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
 	item->kv = j_kv_new(0, "items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
-	g_free(path);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -984,7 +982,7 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 		g_autoptr(JMessage) reply = NULL;
 		bson_t result[1];
 		gchar const* name = operation->get.name;
-		gchar* path;
+		g_autofree gchar* path = NULL;
 
 		path = g_build_path("/", j_collection_get_name(collection), name, NULL);
 
@@ -1026,8 +1024,6 @@ j_item_get_exec (JList* operations, JSemantics* semantics)
 				ret = FALSE;
 			}
 		}
-
-		g_free(path);
 
 		*item = NULL;
 

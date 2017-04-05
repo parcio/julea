@@ -62,7 +62,7 @@ JItemIterator*
 j_item_iterator_new (JCollection* collection)
 {
 	JItemIterator* iterator;
-	gchar* prefix;
+	g_autofree gchar* prefix = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
@@ -71,8 +71,6 @@ j_item_iterator_new (JCollection* collection)
 	iterator = g_slice_new(JItemIterator);
 	iterator->collection = j_collection_ref(collection);
 	iterator->iterator = j_kv_iterator_new(0, "items", prefix);
-
-	g_free(prefix);
 
 	return iterator;
 }

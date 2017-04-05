@@ -48,8 +48,8 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JKV* object;
-		gchar* name;
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		// FIXME
 		empty = g_slice_new(bson_t);
@@ -58,10 +58,8 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new(0, "benchmark", name);
 		j_kv_put(object, empty, batch);
-		g_free(name);
 
 		j_kv_delete(object, delete_batch);
-		j_kv_unref(object);
 
 		if (!use_batch)
 		{
@@ -113,8 +111,8 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JKV* object;
-		gchar* name;
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		// FIXME
 		empty = g_slice_new(bson_t);
@@ -123,9 +121,6 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new(0, "benchmark", name);
 		j_kv_put(object, empty, batch);
-		g_free(name);
-
-		j_kv_unref(object);
 	}
 
 	j_batch_execute(batch);
@@ -134,15 +129,13 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JKV* object;
-		gchar* name;
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new(0, "benchmark", name);
-		g_free(name);
 
 		j_kv_delete(object, batch);
-		j_kv_unref(object);
 
 		if (!use_batch)
 		{
@@ -196,8 +189,8 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JKV* object;
-		gchar* name;
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		// FIXME
 		empty = g_slice_new(bson_t);
@@ -206,10 +199,8 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new(0, "benchmark", name);
 		j_kv_put(object, empty, batch);
-		g_free(name);
 
 		j_kv_delete(object, batch);
-		j_kv_unref(object);
 
 		if (!use_batch)
 		{

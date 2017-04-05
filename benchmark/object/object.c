@@ -46,16 +46,14 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JObject* object;
-		gchar* name;
+		g_autoptr(JObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_object_new(0, "benchmark", name);
 		j_object_create(object, batch);
-		g_free(name);
 
 		j_object_delete(object, delete_batch);
-		j_object_unref(object);
 
 		if (!use_batch)
 		{
@@ -105,15 +103,12 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JObject* object;
-		gchar* name;
+		g_autoptr(JObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_object_new(0, "benchmark", name);
 		j_object_create(object, batch);
-		g_free(name);
-
-		j_object_unref(object);
 	}
 
 	j_batch_execute(batch);
@@ -122,15 +117,13 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 
 	for (guint i = 0; i < n; i++)
 	{
-		JObject* object;
-		gchar* name;
+		g_autoptr(JObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_object_new(0, "benchmark", name);
-		g_free(name);
 
 		j_object_delete(object, batch);
-		j_object_unref(object);
 
 		if (!use_batch)
 		{
@@ -171,7 +164,7 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 200000;
 
-	JObject* object;
+	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[1];
@@ -210,7 +203,6 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_object_delete(object, batch);
-	j_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -237,7 +229,7 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 {
 	guint const n = 200000;
 
-	JObject* object;
+	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
@@ -284,7 +276,6 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_object_delete(object, batch);
-	j_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -312,7 +303,7 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 {
 	guint const n = 200000;
 
-	JObject* object;
+	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gchar dummy[block_size];
@@ -352,7 +343,6 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 	elapsed = j_benchmark_timer_elapsed();
 
 	j_object_delete(object, batch);
-	j_object_unref(object);
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
@@ -391,16 +381,14 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 
 	for (guint i = 0; i < n; i++)
 	{
-		JObject* object;
-		gchar* name;
+		g_autoptr(JObject) object = NULL;
+		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_object_new(0, "benchmark", name);
 		j_object_create(object, batch);
-		g_free(name);
 
 		j_object_delete(object, batch);
-		j_object_unref(object);
 
 		if (!use_batch)
 		{

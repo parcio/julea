@@ -79,16 +79,15 @@ int
 main (int argc, char** argv)
 {
 	gboolean success;
-	gchar* basename;
+	g_autofree gchar* basename = NULL;
 	gchar const* command = NULL;
-	gchar const** arguments = NULL;
+	g_autofree gchar const** arguments = NULL;
 	gint i;
 
 	setlocale(LC_ALL, "");
 
 	basename = g_path_get_basename(argv[0]);
 	g_set_prgname(basename);
-	g_free(basename);
 
 	if (argc <= 2)
 	{
@@ -138,8 +137,6 @@ main (int argc, char** argv)
 		success = FALSE;
 		j_cmd_usage();
 	}
-
-	g_free(arguments);
 
 	j_fini();
 
