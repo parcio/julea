@@ -239,16 +239,6 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
-	# Library (internal)
-	ctx.shlib(
-		source = ctx.path.ant_glob('lib/**/*.c'),
-		target = 'lib/julea-private',
-		use = use_julea_lib,
-		includes = ['include'],
-		defines = ['J_ENABLE_INTERNAL'],
-		install_path = '${LIBDIR}'
-	)
-
 	clients = ['object', 'kv', 'item']
 
 	for client in clients:
@@ -281,7 +271,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('benchmark/**/*.c'),
 		target = 'benchmark/julea-benchmark',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
+		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'benchmark'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
