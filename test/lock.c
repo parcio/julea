@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jlock-internal.h>
+#include <jlock.h>
 
 #include "test.h"
 

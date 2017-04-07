@@ -27,8 +27,8 @@
 #include <jbatch.h>
 #include <jbatch-internal.h>
 
-#include <jbackground-operation-internal.h>
-#include <jcache-internal.h>
+#include <jbackground-operation.h>
+#include <jcache.h>
 #include <jcommon.h>
 #include <jlist.h>
 #include <jlist-iterator.h>

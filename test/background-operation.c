@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jbackground-operation-internal.h>
+#include <jbackground-operation.h>
 
 #include "test.h"
 

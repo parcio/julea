@@ -30,7 +30,7 @@
 
 #include <object/jdistributed-object.h>
 
-#include <jbackground-operation-internal.h>
+#include <jbackground-operation.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <jcommon.h>
@@ -40,7 +40,7 @@
 #include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <jlock-internal.h>
+#include <jlock.h>
 #include <jmessage.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>

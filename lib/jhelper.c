@@ -35,6 +35,7 @@
 #include <jhelper.h>
 #include <jhelper-internal.h>
 
+#include <jbackground-operation.h>
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 

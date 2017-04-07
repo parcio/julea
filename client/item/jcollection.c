@@ -34,7 +34,7 @@
 
 #include <kv/jkv.h>
 
-#include <jbackground-operation-internal.h>
+#include <jbackground-operation.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <jcommon.h>

@@ -37,7 +37,7 @@
 #include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
-#include <jlock-internal.h>
+#include <jlock.h>
 #include <jmessage.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>

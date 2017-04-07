@@ -22,7 +22,10 @@
 
 #include <julea.h>
 
-#include <jcache-internal.h>
+#include <jcache.h>
+
+// FIXME
+#include <julea-internal.h>
 
 #include "benchmark.h"
 

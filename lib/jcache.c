@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-#include <jcache-internal.h>
+#include <jcache.h>
 
 #include <jcommon.h>
 #include <jtrace-internal.h>

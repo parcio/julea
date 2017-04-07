@@ -26,6 +26,7 @@
 
 #include <unistd.h>
 
+#include <jbackground-operation.h>
 #include <jbackground-operation-internal.h>
 
 #include <jcommon.h>

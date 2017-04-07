@@ -26,7 +26,7 @@
 
 #include <bson.h>
 
-#include <jlock-internal.h>
+#include <jlock.h>
 
 #include <jbackend.h>
 #include <jcommon.h>

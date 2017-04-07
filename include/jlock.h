@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_CACHE_INTERNAL_H
-#define JULEA_CACHE_INTERNAL_H
+#ifndef JULEA_LOCK_H
+#define JULEA_LOCK_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,16 +29,16 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
+struct JLock;
 
-struct JCache;
+typedef struct JLock JLock;
 
-typedef struct JCache JCache;
+JLock* j_lock_new (gchar const*, gchar const*);
+void j_lock_free (JLock*);
 
-J_GNUC_INTERNAL JCache* j_cache_new (guint64);
-J_GNUC_INTERNAL void j_cache_free (JCache*);
+gboolean j_lock_acquire (JLock*);
+gboolean j_lock_release (JLock*);
 
-J_GNUC_INTERNAL gpointer j_cache_get (JCache*, guint64);
-J_GNUC_INTERNAL void j_cache_release (JCache*, gpointer);
+void j_lock_add (JLock*, guint64);
 
 #endif

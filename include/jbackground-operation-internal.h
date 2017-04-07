@@ -29,23 +29,9 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
+G_GNUC_INTERNAL void j_background_operation_init (guint count);
+G_GNUC_INTERNAL void j_background_operation_fini (void);
 
-struct JBackgroundOperation;
-
-typedef struct JBackgroundOperation JBackgroundOperation;
-
-typedef gpointer (*JBackgroundOperationFunc) (gpointer);
-
-J_GNUC_INTERNAL void j_background_operation_init (guint count);
-J_GNUC_INTERNAL void j_background_operation_fini (void);
-
-J_GNUC_INTERNAL guint j_background_operation_get_num_threads (void);
-
-J_GNUC_INTERNAL JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);
-J_GNUC_INTERNAL JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
-J_GNUC_INTERNAL void j_background_operation_unref (JBackgroundOperation*);
-
-J_GNUC_INTERNAL gpointer j_background_operation_wait (JBackgroundOperation*);
+G_GNUC_INTERNAL guint j_background_operation_get_num_threads (void);
 
 #endif

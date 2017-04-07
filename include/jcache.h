@@ -20,22 +20,23 @@
  * \file
  **/
 
-#ifndef JULEA_HELPER_H
-#define JULEA_HELPER_H
+#ifndef JULEA_CACHE_H
+#define JULEA_CACHE_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
-#include <gio/gio.h>
 
-#include <jbackground-operation.h>
+struct JCache;
 
-void j_helper_set_nodelay (GSocketConnection*, gboolean);
+typedef struct JCache JCache;
 
-gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
+JCache* j_cache_new (guint64);
+void j_cache_free (JCache*);
 
-guint64 j_helper_atomic_add (guint64 volatile*, guint64);
+gpointer j_cache_get (JCache*, guint64);
+void j_cache_release (JCache*, gpointer);
 
 #endif

@@ -271,7 +271,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('test/**/*.c'),
 		target = 'test/julea-test',
-		use = use_julea_core + ['lib/julea-private', 'lib/julea-item'],
+		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'test'],
 		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None

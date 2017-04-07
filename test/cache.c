@@ -22,7 +22,7 @@
 
 #include <julea.h>
 
-#include <jcache-internal.h>
+#include <jcache.h>
 
 #include "test.h"
 

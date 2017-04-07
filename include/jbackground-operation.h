@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_LOCK_INTERNAL_H
-#define JULEA_LOCK_INTERNAL_H
+#ifndef JULEA_BACKGROUND_OPERATION_H
+#define JULEA_BACKGROUND_OPERATION_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,18 +29,16 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
+struct JBackgroundOperation;
 
-struct JLock;
+typedef struct JBackgroundOperation JBackgroundOperation;
 
-typedef struct JLock JLock;
+typedef gpointer (*JBackgroundOperationFunc) (gpointer);
 
-J_GNUC_INTERNAL JLock* j_lock_new (gchar const*, gchar const*);
-J_GNUC_INTERNAL void j_lock_free (JLock*);
+JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);
+JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
+void j_background_operation_unref (JBackgroundOperation*);
 
-J_GNUC_INTERNAL gboolean j_lock_acquire (JLock*);
-J_GNUC_INTERNAL gboolean j_lock_release (JLock*);
-
-J_GNUC_INTERNAL void j_lock_add (JLock*, guint64);
+gpointer j_background_operation_wait (JBackgroundOperation*);
 
 #endif
