@@ -29,8 +29,6 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
-
 /**
  * A JList element.
  **/
@@ -50,6 +48,6 @@ typedef struct JListElement JListElement;
 
 #include <jlist.h>
 
-J_GNUC_INTERNAL JListElement* j_list_head (JList*);
+G_GNUC_INTERNAL JListElement* j_list_head (JList*);
 
 #endif

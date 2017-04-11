@@ -31,21 +31,18 @@
 
 #include <bson.h>
 
-// FIXME
-#include <julea-internal.h>
-
 #include <item/jcollection.h>
 
 #include <julea.h>
 
-J_GNUC_INTERNAL JCollection* j_collection_new (gchar const*);
-J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (bson_t const*);
+G_GNUC_INTERNAL JCollection* j_collection_new (gchar const*);
+G_GNUC_INTERNAL JCollection* j_collection_new_from_bson (bson_t const*);
 
-J_GNUC_INTERNAL bson_t* j_collection_serialize (JCollection*);
-J_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson_t const*);
+G_GNUC_INTERNAL bson_t* j_collection_serialize (JCollection*);
+G_GNUC_INTERNAL void j_collection_deserialize (JCollection*, bson_t const*);
 
-J_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
+G_GNUC_INTERNAL bson_oid_t const* j_collection_get_id (JCollection*);
 
-J_GNUC_INTERNAL gboolean j_collection_get_exec (JList*, JSemantics*);
+G_GNUC_INTERNAL gboolean j_collection_get_exec (JList*, JSemantics*);
 
 #endif

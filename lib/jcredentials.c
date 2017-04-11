@@ -29,7 +29,7 @@
 
 #include <bson.h>
 
-#include <jcredentials-internal.h>
+#include <jcredentials.h>
 
 #include <jcommon.h>
 #include <jtrace-internal.h>

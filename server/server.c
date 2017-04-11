@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 static JStatistics* jd_statistics;
 

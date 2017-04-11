@@ -29,9 +29,6 @@
 
 #include <glib.h>
 
-// FIXME
-#include <julea-internal.h>
-
 #include <item/jitem.h>
 
 #include <item/jcollection.h>
@@ -40,20 +37,19 @@
 
 #include <bson.h>
 
-J_GNUC_INTERNAL JItem* j_item_new (JCollection*, gchar const*, JDistribution*);
-J_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson_t const*);
+G_GNUC_INTERNAL JItem* j_item_new (JCollection*, gchar const*, JDistribution*);
+G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson_t const*);
 
-J_GNUC_INTERNAL JCollection* j_item_get_collection (JItem*);
-J_GNUC_INTERNAL JCredentials* j_item_get_credentials (JItem*);
+G_GNUC_INTERNAL JCollection* j_item_get_collection (JItem*);
 
-J_GNUC_INTERNAL bson_t* j_item_serialize (JItem*, JSemantics*);
-J_GNUC_INTERNAL void j_item_deserialize (JItem*, bson_t const*);
+G_GNUC_INTERNAL bson_t* j_item_serialize (JItem*, JSemantics*);
+G_GNUC_INTERNAL void j_item_deserialize (JItem*, bson_t const*);
 
-J_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
+G_GNUC_INTERNAL bson_oid_t const* j_item_get_id (JItem*);
 
-J_GNUC_INTERNAL gboolean j_item_get_exec (JList*, JSemantics*);
+G_GNUC_INTERNAL gboolean j_item_get_exec (JList*, JSemantics*);
 
-J_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
-J_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);
+G_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
+G_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);
 
 #endif

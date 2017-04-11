@@ -30,7 +30,7 @@ static
 void
 benchmark_memory_chunk_get (BenchmarkResult* result)
 {
-	guint const n = J_MIB(50);
+	guint const n = 50 * 1024 * 1024;
 
 	JMemoryChunk* memory_chunk;
 	gdouble elapsed;

@@ -29,9 +29,6 @@
 
 #include <glib.h>
 
-// FIXME
-#include <julea-internal.h>
-
 struct JMemoryChunk;
 
 typedef struct JMemoryChunk JMemoryChunk;

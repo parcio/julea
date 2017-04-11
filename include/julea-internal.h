@@ -27,17 +27,7 @@
 #error "Only <julea.h> can be included directly."
 #endif
 
-#ifdef J_ENABLE_INTERNAL
-#define J_GNUC_INTERNAL
-#else
-#define J_GNUC_INTERNAL G_GNUC_INTERNAL
-#endif
-
-#define J_KIB(n) ((n) * 1024)
-#define J_MIB(n) ((n) * J_KIB(1024))
-#define J_GIB(n) ((n) * J_MIB(1024))
-
-#define J_STRIPE_SIZE J_MIB(4)
+#define J_STRIPE_SIZE (4 * 1024 * 1024)
 
 #define J_CRITICAL(format, ...) g_critical("%s: " format, G_STRFUNC, __VA_ARGS__);
 

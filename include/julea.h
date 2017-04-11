@@ -39,6 +39,7 @@
 #include <jcommon.h>
 #include <jconfiguration.h>
 #include <jconnection-pool.h>
+#include <jcredentials.h>
 #include <jdistribution.h>
 #include <jhelper.h>
 #include <jlist.h>
@@ -51,7 +52,6 @@
 #include <jstatistics.h>
 
 // FIXME
-#include <jcredentials-internal.h>
 #include <jtrace-internal.h>
 
 #endif

@@ -565,7 +565,7 @@ j_item_get_optimal_access_size (JItem* item)
 	j_trace_enter(G_STRFUNC, NULL);
 	j_trace_leave(G_STRFUNC);
 
-	return J_KIB(512);
+	return 512 * 1024;
 }
 
 /* Internal */

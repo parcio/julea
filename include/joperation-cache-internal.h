@@ -29,15 +29,13 @@
 
 #include <glib.h>
 
-#include <julea-internal.h>
-
 #include <jbatch.h>
 
-J_GNUC_INTERNAL void j_operation_cache_init (void);
-J_GNUC_INTERNAL void j_operation_cache_fini (void);
+G_GNUC_INTERNAL void j_operation_cache_init (void);
+G_GNUC_INTERNAL void j_operation_cache_fini (void);
 
-J_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
+G_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
 
-J_GNUC_INTERNAL gboolean j_operation_cache_add (JBatch*);
+G_GNUC_INTERNAL gboolean j_operation_cache_add (JBatch*);
 
 #endif

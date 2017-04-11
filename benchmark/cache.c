@@ -33,7 +33,7 @@ static
 void
 benchmark_cache_get (BenchmarkResult* result)
 {
-	guint const n = J_MIB(50);
+	guint const n = 50 * 1024 * 1024;
 
 	JCache* cache;
 	gdouble elapsed;
