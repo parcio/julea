@@ -23,7 +23,7 @@
 #ifndef JULEA_ITEM_COLLECTION_H
 #define JULEA_ITEM_COLLECTION_H
 
-#if !defined(JULEA_ITEM_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 #error "Only <julea-item.h> can be included directly."
 #endif
 
@@ -35,10 +35,7 @@ typedef struct JCollection JCollection;
 
 #include <item/jitem.h>
 
-#include <jdistribution.h>
-#include <jlist.h>
-#include <jbatch.h>
-#include <jsemantics.h>
+#include <julea.h>
 
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);

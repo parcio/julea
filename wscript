@@ -208,8 +208,6 @@ def configure (ctx):
 
 	ctx.define('JULEA_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
 
-	ctx.define('JULEA_COMPILATION', 1)
-
 	ctx.write_config_header('include/julea-config.h')
 
 def build (ctx):
@@ -236,6 +234,7 @@ def build (ctx):
 		target = 'lib/julea',
 		use = use_julea_lib,
 		includes = ['include'],
+		defines = ['JULEA_COMPILATION'],
 		install_path = '${LIBDIR}'
 	)
 
@@ -253,7 +252,7 @@ def build (ctx):
 			target = 'lib/julea-{0}'.format(client),
 			use = use_julea_lib + ['lib/julea'] + use_extra,
 			includes = ['include'],
-			defines = ['J_ENABLE_INTERNAL'],
+			defines = ['J_ENABLE_INTERNAL', 'JULEA_{0}_COMPILATION'.format(client.upper())],
 			install_path = '${LIBDIR}'
 		)
 
@@ -263,7 +262,6 @@ def build (ctx):
 		target = 'test/julea-test',
 		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'test'],
-		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
 
@@ -273,7 +271,6 @@ def build (ctx):
 		target = 'benchmark/julea-benchmark',
 		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'benchmark'],
-		defines = ['J_ENABLE_INTERNAL'],
 		install_path = None
 	)
 
@@ -283,7 +280,6 @@ def build (ctx):
 		target = 'server/julea-server',
 		use = use_julea_core + ['lib/julea', 'GIO', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
-		defines = ['J_ENABLE_INTERNAL'],
 		install_path = '${BINDIR}'
 	)
 
@@ -346,7 +342,6 @@ def build (ctx):
 			target = 'tools/julea-{0}'.format(tool),
 			use = use_julea_core + ['lib/julea', 'GIO', 'GOBJECT'],
 			includes = ['include'],
-			defines = ['J_ENABLE_INTERNAL'],
 			install_path = '${BINDIR}'
 		)
 

@@ -23,7 +23,7 @@
 #ifndef JULEA_OBJECT_DISTRIBUTED_OBJECT_H
 #define JULEA_OBJECT_DISTRIBUTED_OBJECT_H
 
-#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_OBJECT_COMPILATION)
 #error "Only <julea-object.h> can be included directly."
 #endif
 
@@ -33,8 +33,7 @@ struct JDistributedObject;
 
 typedef struct JDistributedObject JDistributedObject;
 
-#include <jbatch.h>
-#include <jdistribution.h>
+#include <julea.h>
 
 JDistributedObject* j_distributed_object_new (gchar const*, gchar const*, JDistribution*);
 JDistributedObject* j_distributed_object_ref (JDistributedObject*);

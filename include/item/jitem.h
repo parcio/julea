@@ -23,7 +23,7 @@
 #ifndef JULEA_ITEM_ITEM_H
 #define JULEA_ITEM_ITEM_H
 
-#if !defined(JULEA_ITEM_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 #error "Only <julea-item.h> can be included directly."
 #endif
 
@@ -35,9 +35,7 @@ typedef struct JItem JItem;
 
 #include <item/jcollection.h>
 
-#include <jbatch.h>
-#include <jdistribution.h>
-#include <jsemantics.h>
+#include <julea.h>
 
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);

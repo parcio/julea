@@ -23,7 +23,7 @@
 #ifndef JULEA_ITEM_URI_H
 #define JULEA_ITEM_URI_H
 
-#if !defined(JULEA_ITEM_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 #error "Only <julea-item.h> can be included directly."
 #endif
 

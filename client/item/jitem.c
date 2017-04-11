@@ -34,26 +34,9 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
-#include <kv/jkv.h>
-
-#include <object/jdistributed-object.h>
-
-#include <jbackground-operation.h>
-#include <jbatch.h>
-#include <jbatch-internal.h>
-#include <jcommon.h>
-#include <jconnection-pool.h>
-#include <jcredentials-internal.h>
-#include <jdistribution.h>
-#include <jdistribution-internal.h>
-#include <jhelper-internal.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jlock.h>
-#include <jmessage.h>
-#include <joperation-internal.h>
-#include <jsemantics.h>
-#include <jtrace-internal.h>
+#include <julea.h>
+#include <julea-kv.h>
+#include <julea-object.h>
 
 /**
  * \defgroup JItem Item

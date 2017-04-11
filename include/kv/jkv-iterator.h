@@ -23,7 +23,7 @@
 #ifndef JULEA_KV_KV_ITERATOR_H
 #define JULEA_KV_KV_ITERATOR_H
 
-#if !defined(JULEA_KV_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_KV_H) && !defined(JULEA_KV_COMPILATION)
 #error "Only <julea-kv.h> can be included directly."
 #endif
 

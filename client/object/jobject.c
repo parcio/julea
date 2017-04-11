@@ -30,18 +30,7 @@
 
 #include <object/jobject.h>
 
-#include <jbatch.h>
-#include <jbatch-internal.h>
-#include <jcommon.h>
-#include <jconnection-pool.h>
-#include <jhelper.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jlock.h>
-#include <jmessage.h>
-#include <joperation-internal.h>
-#include <jsemantics.h>
-#include <jtrace-internal.h>
+#include <julea.h>
 
 /**
  * \defgroup JObject Object

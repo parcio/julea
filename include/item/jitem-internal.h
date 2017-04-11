@@ -23,20 +23,20 @@
 #ifndef JULEA_ITEM_ITEM_INTERNAL_H
 #define JULEA_ITEM_ITEM_INTERNAL_H
 
-#if !defined(JULEA_ITEM_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 #error "Only <julea-item.h> can be included directly."
 #endif
 
 #include <glib.h>
 
+// FIXME
 #include <julea-internal.h>
 
 #include <item/jitem.h>
 
 #include <item/jcollection.h>
 
-#include <jcredentials-internal.h>
-#include <jsemantics.h>
+#include <julea.h>
 
 #include <bson.h>
 

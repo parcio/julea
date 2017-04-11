@@ -29,8 +29,7 @@
 #include <item/jcollection.h>
 #include <item/jitem.h>
 
-#include <jcommon.h>
-#include <jbatch.h>
+#include <julea.h>
 
 #include <string.h>
 

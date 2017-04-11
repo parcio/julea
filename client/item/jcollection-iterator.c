@@ -31,7 +31,7 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
-#include <kv/jkv-iterator.h>
+#include <julea-kv.h>
 
 /**
  * \defgroup JCollectionIterator Store Iterator

@@ -23,7 +23,7 @@
 #ifndef JULEA_OBJECT_OBJECT_H
 #define JULEA_OBJECT_OBJECT_H
 
-#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_OBJECT_COMPILATION)
 #error "Only <julea-object.h> can be included directly."
 #endif
 
@@ -33,7 +33,7 @@ struct JObject;
 
 typedef struct JObject JObject;
 
-#include <jbatch.h>
+#include <julea.h>
 
 JObject* j_object_new (guint32, gchar const*, gchar const*);
 JObject* j_object_ref (JObject*);

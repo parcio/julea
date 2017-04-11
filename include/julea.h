@@ -32,11 +32,26 @@
  * The name JULEA is a play on ROMIO.
  **/
 
+#include <jbackend.h>
+#include <jbackground-operation.h>
 #include <jbatch.h>
+#include <jcache.h>
 #include <jcommon.h>
+#include <jconfiguration.h>
+#include <jconnection-pool.h>
 #include <jdistribution.h>
+#include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
+#include <jlock.h>
+#include <jmemory-chunk.h>
+#include <jmessage.h>
+#include <joperation.h>
 #include <jsemantics.h>
+#include <jstatistics.h>
+
+// FIXME
+#include <jcredentials-internal.h>
+#include <jtrace-internal.h>
 
 #endif

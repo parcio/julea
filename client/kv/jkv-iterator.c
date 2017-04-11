@@ -30,11 +30,7 @@
 
 #include <kv/jkv.h>
 
-#include <jbackend.h>
-#include <jcommon.h>
-#include <jconnection-pool.h>
-#include <jmessage.h>
-#include <joperation-cache-internal.h>
+#include <julea.h>
 
 /**
  * \defgroup JKVIterator KV Iterator

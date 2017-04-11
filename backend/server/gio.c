@@ -23,8 +23,7 @@
 #include <gio/gio.h>
 #include <gmodule.h>
 
-#include <jbackend.h>
-#include <jtrace-internal.h>
+#include <julea.h>
 
 struct JBackendFile
 {

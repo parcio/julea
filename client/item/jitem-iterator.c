@@ -33,7 +33,7 @@
 #include <item/jitem.h>
 #include <item/jitem-internal.h>
 
-#include <kv/jkv-iterator.h>
+#include <julea-kv.h>
 
 /**
  * \defgroup JItemIterator Collection Iterator

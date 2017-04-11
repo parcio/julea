@@ -25,8 +25,7 @@
 
 #include <leveldb/c.h>
 
-#include <jbackend.h>
-#include <jsemantics.h>
+#include <julea.h>
 
 struct JLevelDBBatch
 {

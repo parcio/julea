@@ -23,7 +23,7 @@
 #ifndef JULEA_ITEM_COLLECTION_INTERNAL_H
 #define JULEA_ITEM_COLLECTION_INTERNAL_H
 
-#if !defined(JULEA_ITEM_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 #error "Only <julea-item.h> can be included directly."
 #endif
 
@@ -31,11 +31,12 @@
 
 #include <bson.h>
 
+// FIXME
 #include <julea-internal.h>
 
 #include <item/jcollection.h>
 
-#include <jlist.h>
+#include <julea.h>
 
 J_GNUC_INTERNAL JCollection* j_collection_new (gchar const*);
 J_GNUC_INTERNAL JCollection* j_collection_new_from_bson (bson_t const*);

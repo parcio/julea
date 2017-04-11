@@ -25,8 +25,7 @@
 
 #include <mongoc.h>
 
-#include <jbackend.h>
-#include <jsemantics.h>
+#include <julea.h>
 
 static mongoc_client_t* backend_connection = NULL;
 

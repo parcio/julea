@@ -23,7 +23,7 @@
 #ifndef JULEA_OBJECT_OBJECT_ITERATOR_H
 #define JULEA_OBJECT_OBJECT_ITERATOR_H
 
-#if !defined(JULEA_OBJECT_H) && !defined(JULEA_COMPILATION)
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_OBJECT_COMPILATION)
 #error "Only <julea-object.h> can be included directly."
 #endif
 

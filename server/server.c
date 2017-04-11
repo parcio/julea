@@ -27,15 +27,7 @@
 
 #include <string.h>
 
-#include <julea-internal.h>
-
-#include <jbackend.h>
-#include <jconfiguration.h>
-#include <jhelper.h>
-#include <jmemory-chunk.h>
-#include <jmessage.h>
-#include <jstatistics.h>
-#include <jtrace-internal.h>
+#include <julea.h>
 
 static JStatistics* jd_statistics;
 
