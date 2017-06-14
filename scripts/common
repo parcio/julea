@@ -41,8 +41,18 @@ set_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	# FIXME glib, leveldb, otf
-	export PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/external/libmongoc/bin:${root_dir}/scripts:${PATH}"
+	# FIXME glib, otf
+	PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/scripts:${PATH}"
+
+	for dep in libmongoc
+	do
+		if test -h "${root_dir}/external/${dep}"
+		then
+			PATH="${root_dir}/external/${dep}/bin:${PATH}"
+		fi
+	done
+
+	export PATH
 }
 
 set_library_path ()
@@ -53,8 +63,18 @@ set_library_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	# FIXME glib, leveldb, otf
-	export LD_LIBRARY_PATH="${build_dir}/lib:${root_dir}/external/libbson/lib:${root_dir}/external/libmongoc/lib:${LD_LIBRARY_PATH}"
+	# FIXME glib, otf
+	LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
+
+	for dep in leveldb libbson libmongoc
+	do
+		if test -h "${root_dir}/external/${dep}"
+		then
+			LD_LIBRARY_PATH="${root_dir}/external/${dep}/lib:${LD_LIBRARY_PATH}"
+		fi
+	done
+
+	export LD_LIBRARY_PATH
 }
 
 set_pkg_config_path ()
@@ -65,6 +85,16 @@ set_pkg_config_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	# FIXME glib, leveldb, otf
-	export PKG_CONFIG_PATH="${build_dir}/pkg-config:${root_dir}/external/libbson/lib:${root_dir}/external/libmongoc/lib:${PKG_CONFIG_PATH}"
+	# FIXME glib, otf
+	PKG_CONFIG_PATH="${build_dir}/pkg-config:${PKG_CONFIG_PATH}"
+
+	for dep in leveldb libbson libmongoc
+	do
+		if test -h "${root_dir}/external/${dep}"
+		then
+			PKG_CONFIG_PATH="${root_dir}/external/${dep}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+		fi
+	done
+
+	export PKG_CONFIG_PATH
 }
