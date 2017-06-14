@@ -69,6 +69,8 @@ GQuark j_uri_error_quark (void);
 JURI* j_uri_new (gchar const*);
 void j_uri_free (JURI*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JURI, j_uri_free)
+
 gchar const* j_uri_get_collection_name (JURI*);
 gchar const* j_uri_get_item_name (JURI*);
 

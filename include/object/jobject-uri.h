@@ -59,6 +59,8 @@ typedef struct JObjectURI JObjectURI;
 JObjectURI* j_object_uri_new (gchar const*, JObjectURIScheme);
 void j_object_uri_free (JObjectURI*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObjectURI, j_object_uri_free)
+
 guint32 j_object_uri_get_index (JObjectURI*);
 gchar const* j_object_uri_get_namespace (JObjectURI*);
 gchar const* j_object_uri_get_name (JObjectURI*);

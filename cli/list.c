@@ -24,7 +24,7 @@ gboolean
 j_cmd_list (gchar const** arguments)
 {
 	gboolean ret = TRUE;
-	JURI* uri = NULL;
+	g_autoptr(JURI) uri = NULL;
 	GError* error = NULL;
 
 	if (j_cmd_arguments_length(arguments) != 1)
@@ -90,10 +90,5 @@ j_cmd_list (gchar const** arguments)
 	}
 
 end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
-
 	return ret;
 }

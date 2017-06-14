@@ -26,9 +26,9 @@ gboolean
 j_cmd_create (gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
-	JObjectURI* duri = NULL;
-	JObjectURI* ouri = NULL;
-	JURI* uri = NULL;
+	g_autoptr(JObjectURI) duri = NULL;
+	g_autoptr(JObjectURI) ouri = NULL;
+	g_autoptr(JURI) uri = NULL;
 	GError* error = NULL;
 
 	if (j_cmd_arguments_length(arguments) != 1)
@@ -82,20 +82,5 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 	g_print("Error: Invalid argument “%s”.\n", arguments[0]);
 
 end:
-	if (ouri != NULL)
-	{
-		j_object_uri_free(ouri);
-	}
-
-	if (duri != NULL)
-	{
-		j_object_uri_free(duri);
-	}
-
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
-
 	return ret;
 }

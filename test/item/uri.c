@@ -29,10 +29,9 @@ static
 void
 test_uri_new_free (void)
 {
-	JURI* uri;
+	g_autoptr(JURI) uri = NULL;
 
 	uri = j_uri_new("julea://JULEA");
-	j_uri_free(uri);
 }
 
 static
