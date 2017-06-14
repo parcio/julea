@@ -37,6 +37,11 @@ def get_pkg_config_path (prefixes):
 	for prefix in prefixes.split(':'):
 		path.append('{0}/lib/pkgconfig'.format(prefix))
 
+	env = os.getenv('PKG_CONFIG_PATH')
+
+	if env:
+		path.append(env)
+
 	return ':'.join(path)
 
 def options (ctx):
