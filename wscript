@@ -31,17 +31,25 @@ out = 'build'
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
 
+def get_pkg_config_path (prefixes):
+	path = []
+
+	for prefix in prefixes.split(':'):
+		path.append('{0}/lib/pkgconfig'.format(prefix))
+
+	return ':'.join(path)
+
 def options (ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 
-	ctx.add_option('--libbson', action='store', default='{0}/external/libbson'.format(Context.run_dir), help='libbson prefix')
-	ctx.add_option('--libmongoc', action='store', default='{0}/external/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
-	ctx.add_option('--otf', action='store', default='{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
-
-	ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
+	ctx.add_option('--glib', action='store', default='/usr:{0}/external/glib'.format(Context.run_dir), help='GLib prefix')
+	ctx.add_option('--leveldb', action='store', default='/usr:{0}/external/leveldb'.format(Context.run_dir), help='LevelDB prefix')
+	ctx.add_option('--libbson', action='store', default='/usr:{0}/external/libbson'.format(Context.run_dir), help='libbson prefix')
+	ctx.add_option('--libmongoc', action='store', default='/usr:{0}/external/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
+	ctx.add_option('--otf', action='store', default='/usr:{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -70,14 +78,15 @@ def configure (ctx):
 		ctx.check_cfg(
 			package = '{0}-2.0'.format(module),
 			args = ['--cflags', '--libs', '{0}-2.0 >= {1}'.format(module, glib_version)],
-			uselib_store = module.upper()
+			uselib_store = module.upper(),
+			pkg_config_path = get_pkg_config_path(ctx.options.glib)
 		)
 
 	ctx.check_cfg(
 		package = 'libbson-1.0',
 		args = ['--cflags', '--libs', 'libbson-1.0 >= 1.6.0'],
 		uselib_store = 'LIBBSON',
-		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.libbson)
+		pkg_config_path = get_pkg_config_path(ctx.options.libbson)
 	)
 
 	ctx.env.JULEA_LIBMONGOC = \
@@ -85,7 +94,7 @@ def configure (ctx):
 		package = 'libmongoc-1.0',
 		args = ['--cflags', '--libs', 'libmongoc-1.0 >= 1.6.0'],
 		uselib_store = 'LIBMONGOC',
-		pkg_config_path = '{0}/lib/pkgconfig:{1}/lib/pkgconfig'.format(ctx.options.libbson, ctx.options.libmongoc),
+		pkg_config_path = '{0}:{1}'.format(get_pkg_config_path(ctx.options.libbson), get_pkg_config_path(ctx.options.libmongoc)),
 		mandatory = False
 	)
 
@@ -115,7 +124,7 @@ def configure (ctx):
 		package = 'leveldb',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'LEVELDB',
-		pkg_config_path = '{0}/lib/pkgconfig'.format(ctx.options.leveldb) if ctx.options.leveldb else None,
+		pkg_config_path = get_pkg_config_path(ctx.options.leveldb),
 		mandatory = False
 	)
 
