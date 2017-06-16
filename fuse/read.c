@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 #include <errno.h>
 
@@ -27,11 +27,23 @@ jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_fi
 {
 	int ret = -ENOENT;
 
-	//guint64 bytes_read;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	g_autoptr(JObject) object = NULL;
+	guint64 bytes_read;
 
 	(void)fi;
 
-	// FIXME
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+	object = j_object_new(0, "posix", path);
+
+	j_object_read(object, buf, size, offset, &bytes_read, batch);
+
+	if (j_batch_execute(batch))
+	{
+		ret = bytes_read;
+	}
 
 	return ret;
 }

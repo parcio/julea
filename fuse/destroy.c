@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 void jfs_destroy (void* data)
 {

@@ -338,7 +338,7 @@ static
 gboolean
 j_object_read_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JBackend* data_backend;
 	JListIterator* it;
@@ -498,7 +498,7 @@ static
 gboolean
 j_object_write_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JBackend* data_backend;
 	JListIterator* it;

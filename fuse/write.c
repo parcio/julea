@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 #include <errno.h>
 
@@ -27,11 +27,24 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 {
 	int ret = -ENOENT;
 
-	//guint64 bytes_written;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	g_autoptr(JObject) object = NULL;
+	guint64 bytes_written;
 
 	(void)fi;
 
-	// FIXME
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+	object = j_object_new(0, "posix", path);
+
+	// FIXME update size
+	j_object_write(object, buf, size, offset, &bytes_written, batch);
+
+	if (j_batch_execute(batch))
+	{
+		ret = bytes_written;
+	}
 
 	return ret;
 }

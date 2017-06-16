@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 #include <errno.h>
 
@@ -28,6 +28,7 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
+	g_autoptr(JObject) object = NULL;
 	bson_t* file;
 	g_autofree gchar* basename = NULL;
 
@@ -37,13 +38,18 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	basename = g_path_get_basename(path);
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new(0, "posix", path);
+	object = j_object_new(0, "posix", path);
 
 	// FIXME
 	file = g_slice_new(bson_t);
 	bson_init(file);
 	bson_append_utf8(file, "name", -1, basename, -1);
 	bson_append_bool(file, "file", -1, TRUE);
+	bson_append_int64(file, "size", -1, 0);
+	bson_append_int64(file, "time", -1, g_get_real_time());
+
 	j_kv_put(kv, file, batch);
+	j_object_create(object, batch);
 
 	if (j_batch_execute(batch))
 	{

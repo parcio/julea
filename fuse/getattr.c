@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 #include <errno.h>
 #include <string.h>
@@ -53,6 +53,9 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	{
 		bson_iter_t iter;
 		gboolean is_file = TRUE;
+		// FIXME
+		gint64 size = 0;
+		gint64 time = 0;
 
 		if (bson_iter_init_find(&iter, file, "file") && bson_iter_type(&iter) == BSON_TYPE_BOOL)
 		{
@@ -65,10 +68,8 @@ jfs_getattr (char const* path, struct stat* stbuf)
 			stbuf->st_nlink = 1;
 			stbuf->st_uid = 0;
 			stbuf->st_gid = 0;
-			// FIXME
-			stbuf->st_size = 0;
-			// FIXME
-			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0 / G_USEC_PER_SEC;
+			stbuf->st_size = size;
+			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = time / G_USEC_PER_SEC;
 
 			ret = 0;
 		}

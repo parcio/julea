@@ -18,7 +18,7 @@
 
 #include <julea-config.h>
 
-#include "juleafs.h"
+#include "julea-fuse.h"
 
 #include <errno.h>
 
@@ -26,9 +26,21 @@ int jfs_access (char const* path, int mask)
 {
 	int ret = -ENOENT;
 
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t file[1];
+
 	(void)mask;
 
-	ret = 0;
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+
+	j_kv_get(kv, file, batch);
+
+	if (j_batch_execute(batch))
+	{
+		ret = 0;
+	}
 
 	return ret;
 }
