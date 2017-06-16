@@ -24,37 +24,23 @@
 
 int jfs_utimens (char const* path, const struct timespec ts[2])
 {
-	JURI* uri;
 	int ret = -ENOENT;
+
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t file[1];
 
 	(void)ts;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+
+	j_kv_get(kv, file, batch);
+
+	if (j_batch_execute(batch))
 	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-		//guint64 time_;
-
-		//time_ = (ts[1].tv_sec * G_USEC_PER_SEC) + (ts[1].tv_nsec / 1000);
-
-		/* FIXME */
-		//j_item_set_modification_time(j_uri_get_item(uri), time_);
-
+		// FIXME
 		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
 	}
 
 	return ret;

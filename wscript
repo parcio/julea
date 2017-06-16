@@ -364,7 +364,7 @@ def build (ctx):
 		ctx.program(
 			source = ctx.path.ant_glob('fuse/*.c'),
 			target = 'fuse/julea-fuse',
-			use = use_julea_core + ['lib/julea', 'lib/julea-item', 'FUSE'],
+			use = use_julea_core + ['lib/julea', 'lib/julea-kv', 'lib/julea-object', 'FUSE'],
 			includes = ['include'],
 			install_path = '${BINDIR}'
 		)

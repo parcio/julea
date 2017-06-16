@@ -216,6 +216,7 @@ j_kv_iterator_get (JKVIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
 
+	// FIXME return key
 	return iterator->current;
 }
 

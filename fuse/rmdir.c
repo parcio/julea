@@ -24,37 +24,19 @@
 
 int jfs_rmdir (char const* path)
 {
-	g_autoptr(JBatch) batch = NULL;
-	JURI* uri;
 	int ret = -ENOENT;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
 
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	j_kv_delete(kv, batch);
 
-	if (j_uri_get_item(uri) != NULL)
+	if (j_batch_execute(batch))
 	{
-	}
-	else if (j_uri_get_collection(uri) != NULL)
-	{
-		j_collection_delete(j_uri_get_collection(uri), batch);
-		j_batch_execute(batch);
-
 		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
 	}
 
 	return ret;

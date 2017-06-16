@@ -40,35 +40,6 @@ struct fuse_operations jfs_vtable = {
 	.write    = jfs_write,
 };
 
-JURI*
-jfs_get_uri (gchar const* path)
-{
-	JURI* uri;
-	g_autofree gchar* new_path = NULL;
-
-	new_path = g_strconcat("julea://", path + 1, NULL);
-	uri = j_uri_new(new_path);
-
-	return uri;
-}
-
-gboolean
-jfs_uri_last (JURI* uri)
-{
-	gboolean ret = FALSE;
-
-	if (j_uri_get_collection(uri) == NULL && j_uri_get_collection_name(uri) != NULL)
-	{
-		ret = (j_uri_get_item_name(uri) == NULL);
-	}
-	else if (j_uri_get_item(uri) == NULL && j_uri_get_item_name(uri) != NULL)
-	{
-		ret = TRUE;
-	}
-
-	return ret;
-}
-
 int
 main (int argc, char** argv)
 {

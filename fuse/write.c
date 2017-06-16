@@ -25,38 +25,13 @@
 int
 jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-	JURI* uri;
-	guint64 bytes_written;
 	int ret = -ENOENT;
+
+	//guint64 bytes_written;
 
 	(void)fi;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-		g_autoptr(JBatch) batch = NULL;
-
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_item_write(j_uri_get_item(uri), buf, size, offset, &bytes_written, batch);
-		j_batch_execute(batch);
-
-		ret = bytes_written;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
+	// FIXME
 
 	return ret;
 }

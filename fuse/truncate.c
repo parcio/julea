@@ -25,33 +25,28 @@
 int
 jfs_truncate (char const* path, off_t size)
 {
-	JURI* uri;
 	int ret = -ENOENT;
+
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t file[1];
 
 	(void)size;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
 
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
+	j_kv_get(kv, file, batch);
 
-	if (j_uri_get_item(uri) != NULL)
+	if (j_batch_execute(batch))
 	{
-		/* FIXME */
-		//j_item_set_size(j_uri_get_item(uri), size);
+		bson_iter_t iter;
 
-		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
+		if (bson_iter_init_find(&iter, file, "file") && bson_iter_type(&iter) == BSON_TYPE_BOOL && bson_iter_bool(&iter))
+		{
+			// FIXME
+			ret = 0;
+		}
 	}
 
 	return ret;

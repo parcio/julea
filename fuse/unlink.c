@@ -24,34 +24,19 @@
 
 int jfs_unlink (char const* path)
 {
-	g_autoptr(JBatch) batch = NULL;
-	JURI* uri;
 	int ret = -ENOENT;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+
+	j_kv_delete(kv, batch);
+
+	if (j_batch_execute(batch))
 	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-		j_item_delete(j_uri_get_item(uri), batch);
-		j_batch_execute(batch);
-
 		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
 	}
 
 	return ret;

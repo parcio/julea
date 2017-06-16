@@ -22,7 +22,8 @@
 #include <fuse.h>
 
 #include <julea.h>
-#include <julea-item.h>
+#include <julea-kv.h>
+#include <julea-object.h>
 
 #include <glib.h>
 
@@ -44,6 +45,3 @@ int jfs_truncate (char const*, off_t);
 int jfs_unlink (char const*);
 int jfs_utimens (char const*, const struct timespec*);
 int jfs_write (char const*, char const*, size_t, off_t, struct fuse_file_info*);
-
-JURI* jfs_get_uri (gchar const*);
-gboolean jfs_uri_last (JURI*);

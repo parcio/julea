@@ -24,28 +24,11 @@
 
 int jfs_access (char const* path, int mask)
 {
-	JURI* uri;
 	int ret = -ENOENT;
 
 	(void)mask;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
 	ret = 0;
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
 
 	return ret;
 }

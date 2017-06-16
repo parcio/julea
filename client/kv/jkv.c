@@ -128,7 +128,7 @@ static
 gboolean
 j_kv_put_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;
@@ -233,7 +233,7 @@ static
 gboolean
 j_kv_delete_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;
@@ -327,7 +327,7 @@ static
 gboolean
 j_kv_get_exec (JList* operations, JSemantics* semantics)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JBackend* meta_backend;
 	g_autoptr(JListIterator) it = NULL;

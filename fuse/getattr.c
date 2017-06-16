@@ -26,37 +26,13 @@
 int
 jfs_getattr (char const* path, struct stat* stbuf)
 {
-	JURI* uri;
 	int ret = -ENOENT;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t file[1];
 
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-		g_autoptr(JBatch) batch = NULL;
-
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_item_get_status(j_uri_get_item(uri), batch);
-		j_batch_execute(batch);
-
-		stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-		stbuf->st_nlink = 1;
-		stbuf->st_uid = 0;
-		stbuf->st_gid = 0;
-		stbuf->st_size = j_item_get_size(j_uri_get_item(uri));
-		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = j_item_get_modification_time(j_uri_get_item(uri)) / G_USEC_PER_SEC;
-
-		ret = 0;
-	}
-	else
+	if (g_strcmp0(path, "/") == 0)
 	{
 		stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 		stbuf->st_nlink = 1;
@@ -65,13 +41,48 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		stbuf->st_size = 0;
 		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
 
-		ret = 0;
+		return 0;
 	}
 
-end:
-	if (uri != NULL)
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+
+	j_kv_get(kv, file, batch);
+
+	if (j_batch_execute(batch))
 	{
-		j_uri_free(uri);
+		bson_iter_t iter;
+		gboolean is_file = TRUE;
+
+		if (bson_iter_init_find(&iter, file, "file") && bson_iter_type(&iter) == BSON_TYPE_BOOL)
+		{
+			is_file = bson_iter_bool(&iter);
+		}
+
+		if (is_file)
+		{
+			stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+			stbuf->st_nlink = 1;
+			stbuf->st_uid = 0;
+			stbuf->st_gid = 0;
+			// FIXME
+			stbuf->st_size = 0;
+			// FIXME
+			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0 / G_USEC_PER_SEC;
+
+			ret = 0;
+		}
+		else
+		{
+			stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+			stbuf->st_nlink = 1;
+			stbuf->st_uid = 0;
+			stbuf->st_gid = 0;
+			stbuf->st_size = 0;
+			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
+
+			ret = 0;
+		}
 	}
 
 	return ret;

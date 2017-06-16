@@ -24,45 +24,29 @@
 
 int jfs_mkdir(char const* path, mode_t mode)
 {
-	g_autoptr(JBatch) batch = NULL;
-	JURI* uri;
 	int ret = -ENOENT;
+
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t* file;
+	g_autofree gchar* basename = NULL;
 
 	(void)mode;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
+	basename = g_path_get_basename(path);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
 
-	if (j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-	else if (!jfs_uri_last(uri))
-	{
-		goto end;
-	}
+	// FIXME
+	file = g_slice_new(bson_t);
+	bson_init(file);
+	bson_append_utf8(file, "name", -1, basename, -1);
+	bson_append_bool(file, "file", -1, FALSE);
+	j_kv_put(kv, file, batch);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	if (j_uri_get_collection(uri) != NULL)
+	if (j_batch_execute(batch))
 	{
-	}
-	else
-	{
-		g_autoptr(JCollection) collection = NULL;
-
-		collection = j_collection_create(j_uri_get_collection_name(uri), batch);
-		j_batch_execute(batch);
-
 		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
 	}
 
 	return ret;

@@ -25,38 +25,13 @@
 int
 jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-	JURI* uri;
-	guint64 bytes_read;
 	int ret = -ENOENT;
+
+	//guint64 bytes_read;
 
 	(void)fi;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
-	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-		g_autoptr(JBatch) batch = NULL;
-
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_item_read(j_uri_get_item(uri), buf, size, offset, &bytes_read, batch);
-		j_batch_execute(batch);
-
-		ret = bytes_read;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
-	}
+	// FIXME
 
 	return ret;
 }

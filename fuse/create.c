@@ -24,43 +24,30 @@
 
 int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 {
-	g_autoptr(JBatch) batch = NULL;
-	JURI* uri;
 	int ret = -ENOENT;
+
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	bson_t* file;
+	g_autofree gchar* basename = NULL;
 
 	(void)mode;
 	(void)fi;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
+	basename = g_path_get_basename(path);
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
+	kv = j_kv_new(0, "posix", path);
+
+	// FIXME
+	file = g_slice_new(bson_t);
+	bson_init(file);
+	bson_append_utf8(file, "name", -1, basename, -1);
+	bson_append_bool(file, "file", -1, TRUE);
+	j_kv_put(kv, file, batch);
+
+	if (j_batch_execute(batch))
 	{
-		goto end;
-	}
-
-	if (j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-	else if (!jfs_uri_last(uri))
-	{
-		goto end;
-	}
-
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-	if (j_uri_get_collection(uri) != NULL)
-	{
-		g_autoptr(JItem) item = NULL;
-
-		item = j_item_create(j_uri_get_collection(uri), j_uri_get_item_name(uri), NULL, batch);
-		j_batch_execute(batch);
-
 		ret = 0;
-	}
-
-end:
-	if (uri != NULL)
-	{
-		j_uri_free(uri);
 	}
 
 	return ret;

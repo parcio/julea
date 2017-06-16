@@ -26,67 +26,46 @@
 int
 jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
-	JURI* uri;
 	int ret = -ENOENT;
+
+	JKVIterator* it;
+	g_autofree gchar* prefix = NULL;
 
 	(void)offset;
 	(void)fi;
 
-	if ((uri = jfs_get_uri(path)) == NULL)
+	if (g_strcmp0(path, "/") == 0)
 	{
-		goto end;
-	}
-
-	if (!j_uri_get(uri, NULL))
-	{
-		goto end;
-	}
-
-	if (j_uri_get_item(uri) != NULL)
-	{
-	}
-	else if (j_uri_get_collection(uri) != NULL)
-	{
-		JItemIterator* citerator;
-
-		citerator = j_item_iterator_new(j_uri_get_collection(uri));
-
-		while (j_item_iterator_next(citerator))
-		{
-			JItem* i = j_item_iterator_get(citerator);
-
-			filler(buf, j_item_get_name(i), NULL, 0);
-			j_item_unref(i);
-		}
-
-		j_item_iterator_free(citerator);
-
-		ret = 0;
+		prefix = g_strdup(path);
 	}
 	else
 	{
-		JCollectionIterator* siterator;
-
-		siterator = j_collection_iterator_new();
-
-		while (j_collection_iterator_next(siterator))
-		{
-			JCollection* c = j_collection_iterator_get(siterator);
-
-			filler(buf, j_collection_get_name(c), NULL, 0);
-			j_collection_unref(c);
-		}
-
-		j_collection_iterator_free(siterator);
-
-		ret = 0;
+		prefix = g_strdup_printf("%s/", path);
 	}
 
-end:
-	if (uri != NULL)
+	it = j_kv_iterator_new(0, "posix", prefix);
+
+	while (j_kv_iterator_next(it))
 	{
-		j_uri_free(uri);
+		bson_t const* value = j_kv_iterator_get(it);
+		bson_iter_t iter;
+
+		if (bson_iter_init_find(&iter, value, "name") && bson_iter_type(&iter) == BSON_TYPE_UTF8)
+		{
+			gchar const* name;
+
+			name = bson_iter_utf8(&iter, NULL);
+			filler(buf, name, NULL, 0);
+		}
+		else
+		{
+			filler(buf, "???", NULL, 0);
+		}
 	}
+
+	j_kv_iterator_free(it);
+
+	ret = 0;
 
 	return ret;
 }
