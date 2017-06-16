@@ -46,93 +46,13 @@
  * @{
  **/
 
-/**
- * Data for background operations.
- */
-struct JItemBackgroundData
+struct JItemGetData
 {
-	/**
-	 * The message to send.
-	 */
-	JMessage* message;
-
-	guint index;
-
-	/**
-	 * The union for read and write parts.
-	 */
-	union
-	{
-		/**
-		 * The read part.
-		 */
-		struct
-		{
-			/**
-			 * The list of buffers to fill.
-			 * Contains #JItemReadData elements.
-			 */
-			JList* buffer_list;
-		}
-		read;
-	};
+	JCollection* collection;
+	JItem** item;
 };
 
-typedef struct JItemBackgroundData JItemBackgroundData;
-
-struct JItemOperation
-{
-	union
-	{
-		struct
-		{
-			JCollection* collection;
-			JItem** item;
-			gchar* name;
-		}
-		get;
-
-		struct
-		{
-			JItem* item;
-			gpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_read;
-		}
-		read;
-
-		struct
-		{
-			JItem* item;
-			gconstpointer data;
-			guint64 length;
-			guint64 offset;
-			guint64* bytes_written;
-		}
-		write;
-	};
-};
-
-typedef struct JItemOperation JItemOperation;
-
-/**
- * Data for buffers.
- */
-struct JItemReadData
-{
-	/**
-	 * The data.
-	 */
-	gpointer data;
-
-	/**
-	 * The data length.
-	 */
-	guint64* nbytes;
-};
-
-typedef struct JItemReadData JItemReadData;
+typedef struct JItemGetData JItemGetData;
 
 /**
  * A JItem.
@@ -186,18 +106,6 @@ struct JItem
 	 **/
 	gint ref_count;
 };
-
-static
-void
-j_item_get_free (gpointer data)
-{
-	JItemOperation* operation = data;
-
-	j_collection_unref(operation->get.collection);
-	g_free(operation->get.name);
-
-	g_slice_free(JItemOperation, operation);
-}
 
 /**
  * Increases an item's reference count.
@@ -339,6 +247,18 @@ end:
 	return item;
 }
 
+static
+void
+j_item_get_callback (bson_t const* value, gpointer data_)
+{
+	JItemGetData* data = data_;
+
+	*(data->item) = j_item_new_from_bson(data->collection, value);
+
+	j_collection_unref(data->collection);
+	g_slice_free(JItemGetData, data);
+}
+
 /**
  * Gets an item from a collection.
  *
@@ -355,8 +275,9 @@ end:
 void
 j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
-	JItemOperation* iop;
-	JOperation* operation;
+	JItemGetData* data;
+	g_autoptr(JKV) kv = NULL;
+	g_autofree gchar* path = NULL;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(item != NULL);
@@ -364,18 +285,13 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JItemOperation);
-	iop->get.collection = j_collection_ref(collection);
-	iop->get.item = item;
-	iop->get.name = g_strdup(name);
+	data = g_slice_new(JItemGetData);
+	data->collection = j_collection_ref(collection);
+	data->item = item;
 
-	operation = j_operation_new();
-	operation->key = collection;
-	operation->data = iop;
-	operation->exec_func = j_item_get_exec;
-	operation->free_func = j_item_get_free;
-
-	j_batch_add(batch, operation);
+	path = g_build_path("/", j_collection_get_name(collection), name, NULL);
+	kv = j_kv_new(0, "items", path);
+	j_kv_get_callback(kv, j_item_get_callback, data, batch);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -931,102 +847,6 @@ j_item_get_id (JItem* item)
 	j_trace_leave(G_STRFUNC);
 
 	return &(item->id);
-}
-
-gboolean
-j_item_get_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	g_autoptr(JListIterator) it = NULL;
-	GSocketConnection* meta_connection;
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend == NULL)
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-	}
-
-	/* FIXME do some optimizations for len(operations) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JItemOperation* operation = j_list_iterator_get(it);
-		JCollection* collection = operation->get.collection;
-		JItem** item = operation->get.item;
-		g_autoptr(JMessage) message = NULL;
-		g_autoptr(JMessage) reply = NULL;
-		bson_t result[1];
-		gchar const* name = operation->get.name;
-		g_autofree gchar* path = NULL;
-
-		path = g_build_path("/", j_collection_get_name(collection), name, NULL);
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
-		}
-		else
-		{
-			gconstpointer data;
-			gsize path_len;
-			guint32 len;
-
-			path_len = strlen(path) + 1;
-
-			message = j_message_new(J_MESSAGE_META_GET, 6);
-			j_message_append_n(message, "items", 6);
-			j_message_add_operation(message, path_len);
-			j_message_append_n(message, path, path_len);
-
-			j_message_send(message, meta_connection);
-
-			reply = j_message_new_reply(message);
-			j_message_receive(reply, meta_connection);
-
-			len = j_message_get_4(reply);
-
-			if (len > 0)
-			{
-				ret = TRUE;
-
-				data = j_message_get_n(reply, len);
-
-				// result points to reply's memory
-				bson_init_static(result, data, len);
-			}
-			else
-			{
-				ret = FALSE;
-			}
-		}
-
-		*item = NULL;
-
-		if (ret)
-		{
-			*item = j_item_new_from_bson(collection, result);
-			bson_destroy(result);
-		}
-	}
-
-	if (meta_backend == NULL)
-	{
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
 }
 
 /**

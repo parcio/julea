@@ -33,6 +33,8 @@ struct JKV;
 
 typedef struct JKV JKV;
 
+typedef void (*JKVGetFunc) (bson_t const*, gpointer);
+
 #include <bson.h>
 
 #include <julea.h>
@@ -46,6 +48,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKV, j_kv_unref)
 void j_kv_put (JKV*, bson_t*, JBatch*);
 void j_kv_delete (JKV*, JBatch*);
 
-void j_kv_get_status (JKV*, gint64*, guint64*, JBatch*);
+void j_kv_get (JKV*, bson_t*, JBatch*);
+void j_kv_get_callback (JKV*, JKVGetFunc, gpointer, JBatch*);
 
 #endif

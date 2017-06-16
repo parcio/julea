@@ -46,11 +46,12 @@ struct JKVOperation
 	{
 		struct
 		{
-			JKV* object;
-			gint64* modification_time;
-			guint64* size;
+			JKV* kv;
+			bson_t* value;
+			JKVGetFunc func;
+			gpointer data;
 		}
-		get_status;
+		get;
 
 		struct
 		{
@@ -107,18 +108,18 @@ static
 void
 j_kv_delete_free (gpointer data)
 {
-	JKV* object = data;
+	JKV* kv = data;
 
-	j_kv_unref(object);
+	j_kv_unref(kv);
 }
 
 static
 void
-j_kv_get_status_free (gpointer data)
+j_kv_get_free (gpointer data)
 {
 	JKVOperation* operation = data;
 
-	j_kv_unref(operation->get_status.object);
+	j_kv_unref(operation->get.kv);
 
 	g_slice_free(JKVOperation, operation);
 }
@@ -324,14 +325,14 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 static
 gboolean
-j_kv_get_status_exec (JList* operations, JSemantics* semantics)
+j_kv_get_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
-	JListIterator* it;
+	JBackend* meta_backend;
+	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	GSocketConnection* meta_connection;
+	//JSemanticsSafety safety;
 	gchar const* namespace;
 	gsize namespace_len;
 	guint32 index;
@@ -342,83 +343,108 @@ j_kv_get_status_exec (JList* operations, JSemantics* semantics)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	{
-		JKVOperation* operation = j_list_get_first(operations);
-		JKV* object = operation->get_status.object;
+		JKVOperation* kop;
 
-		g_assert(operation != NULL);
-		g_assert(object != NULL);
+		kop = j_list_get_first(operations);
+		g_assert(kop != NULL);
 
-		namespace = object->namespace;
+		namespace = kop->get.kv->namespace;
 		namespace_len = strlen(namespace) + 1;
-		index = object->index;
+		index = kop->get.kv->index;
 	}
 
+	//safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	meta_backend = j_metadata_backend();
 
-	if (data_backend == NULL)
+	if (meta_backend == NULL)
 	{
-		meta_connection = j_connection_pool_pop_meta(index);
-		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
+		/**
+		 * Force safe semantics to make the server send a reply.
+		 * Otherwise, nasty races can occur when using unsafe semantics:
+		 * - The client creates the item and sends its first write.
+		 * - The client sends another operation using another connection from the pool.
+		 * - The second operation is executed first and fails because the item does not exist.
+		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
+		 **/
+		message = j_message_new(J_MESSAGE_META_GET, namespace_len);
 		j_message_set_safety(message, semantics);
+		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
 	while (j_list_iterator_next(it))
 	{
-		JKVOperation* operation = j_list_iterator_get(it);
-		JKV* object = operation->get_status.object;
-		gint64* modification_time = operation->get_status.modification_time;
-		guint64* size = operation->get_status.size;
+		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (data_backend != NULL)
+		if (meta_backend != NULL)
 		{
-			gpointer object_handle;
+			if (kop->get.func != NULL)
+			{
+				bson_t tmp[1];
 
-			ret = j_backend_data_open(data_backend, object->namespace, object->key, &object_handle) && ret;
-			ret = j_backend_data_status(data_backend, object_handle, modification_time, size) && ret;
-			ret = j_backend_data_close(data_backend, object_handle) && ret;
+				ret = j_backend_meta_get(meta_backend, kop->get.kv->namespace, kop->get.kv->key, tmp) && ret;
+				kop->get.func(tmp, kop->get.data);
+				bson_destroy(tmp);
+			}
+			else
+			{
+				ret = j_backend_meta_get(meta_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value) && ret;
+			}
 		}
 		else
 		{
-			gsize name_len;
+			gsize key_len;
 
-			name_len = strlen(object->key) + 1;
+			key_len = strlen(kop->get.kv->key) + 1;
 
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, object->key, name_len);
+			j_message_add_operation(message, key_len);
+			j_message_append_n(message, kop->get.kv->key, key_len);
 		}
 	}
 
-	j_list_iterator_free(it);
-
-	if (data_backend == NULL)
+	if (meta_backend == NULL)
 	{
+		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
+		GSocketConnection* meta_connection;
 
+		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);
 
 		reply = j_message_new_reply(message);
 		j_message_receive(reply, meta_connection);
 
-		it = j_list_iterator_new(operations);
+		iter = j_list_iterator_new(operations);
 
-		while (j_list_iterator_next(it))
+		while (j_list_iterator_next(iter))
 		{
-			JKVOperation* operation = j_list_iterator_get(it);
-			gint64* modification_time = operation->get_status.modification_time;
-			guint64* size = operation->get_status.size;
-			gint64 modification_time_;
-			guint64 size_;
+			JKVOperation* kop = j_list_iterator_get(iter);
+			guint32 len;
 
-			modification_time_ = j_message_get_8(reply);
-			size_ = j_message_get_8(reply);
+			len = j_message_get_4(reply);
+			ret = (len > 0) && ret;
 
-			*modification_time = modification_time_;
-			*size = size_;
+			if (len > 0)
+			{
+				bson_t tmp[1];
+				gconstpointer data;
+
+				data = j_message_get_n(reply, len);
+
+				// FIXME check whether copies can be avoided
+				bson_init_static(tmp, data, len);
+
+				if (kop->get.func != NULL)
+				{
+					kop->get.func(tmp, kop->get.data);
+				}
+				else
+				{
+					bson_copy_to(tmp, kop->get.value);
+				}
+			}
 		}
-
-		j_list_iterator_free(it);
 
 		j_connection_pool_push_meta(index, meta_connection);
 	}
@@ -609,25 +635,65 @@ j_kv_delete (JKV* object, JBatch* batch)
  * \param batch     A batch.
  **/
 void
-j_kv_get_status (JKV* object, gint64* modification_time, guint64* size, JBatch* batch)
+j_kv_get (JKV* kv, bson_t* value, JBatch* batch)
 {
-	JKVOperation* iop;
+	JKVOperation* kop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_if_fail(kv != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JKVOperation);
-	iop->get_status.object = j_kv_ref(object);
-	iop->get_status.modification_time = modification_time;
-	iop->get_status.size = size;
+	kop = g_slice_new(JKVOperation);
+	kop->get.kv = j_kv_ref(kv);
+	kop->get.value = value;
+	kop->get.func = NULL;
+	kop->get.data = NULL;
 
 	operation = j_operation_new();
-	operation->key = object;
-	operation->data = iop;
-	operation->exec_func = j_kv_get_status_exec;
-	operation->free_func = j_kv_get_status_free;
+	operation->key = kv;
+	operation->data = kop;
+	operation->exec_func = j_kv_get_exec;
+	operation->free_func = j_kv_get_free;
+
+	j_batch_add(batch, operation);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+/**
+ * Get the status of an item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param batch     A batch.
+ **/
+void
+j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
+{
+	JKVOperation* kop;
+	JOperation* operation;
+
+	g_return_if_fail(kv != NULL);
+	g_return_if_fail(func != NULL);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	kop = g_slice_new(JKVOperation);
+	kop->get.kv = j_kv_ref(kv);
+	kop->get.value = NULL;
+	kop->get.func = func;
+	kop->get.data = data;
+
+	operation = j_operation_new();
+	operation->key = kv;
+	operation->data = kop;
+	operation->exec_func = j_kv_get_exec;
+	operation->free_func = j_kv_get_free;
 
 	j_batch_add(batch, operation);
 

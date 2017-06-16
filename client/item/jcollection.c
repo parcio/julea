@@ -43,33 +43,6 @@
  * @{
  **/
 
-struct JCollectionOperation
-{
-	union
-	{
-		struct
-		{
-			JCollection* collection;
-		}
-		create;
-
-		struct
-		{
-			JCollection* collection;
-		}
-		delete;
-
-		struct
-		{
-			JCollection** collection;
-			gchar* name;
-		}
-		get;
-	};
-};
-
-typedef struct JCollectionOperation JCollectionOperation;
-
 /**
  * A collection of items.
  **/
@@ -94,16 +67,6 @@ struct JCollection
 	 **/
 	gint ref_count;
 };
-
-static
-void
-j_collection_get_free (gpointer data)
-{
-	JCollectionOperation* operation = data;
-
-	g_free(operation->get.name);
-	g_slice_free(JCollectionOperation, operation);
-}
 
 /**
  * Increases a collection's reference count.
@@ -220,6 +183,15 @@ end:
 	return collection;
 }
 
+static
+void
+j_collection_get_callback (bson_t const* value, gpointer data)
+{
+	JCollection** collection = data;
+
+	*collection = j_collection_new_from_bson(value);
+}
+
 /**
  * Gets a collection.
  *
@@ -235,23 +207,13 @@ end:
 void
 j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 {
-	JCollectionOperation* cop;
-	JOperation* operation;
+	g_autoptr(JKV) kv = NULL;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(name != NULL);
 
-	cop = g_slice_new(JCollectionOperation);
-	cop->get.collection = collection;
-	cop->get.name = g_strdup(name);
-
-	operation = j_operation_new();
-	operation->key = NULL;
-	operation->data = cop;
-	operation->exec_func = j_collection_get_exec;
-	operation->free_func = j_collection_get_free;
-
-	j_batch_add(batch, operation);
+	kv = j_kv_new(0, "collections", name);
+	j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
 }
 
 /**
@@ -495,107 +457,6 @@ j_collection_get_id (JCollection* collection)
 	j_trace_leave(G_STRFUNC);
 
 	return &(collection->id);
-}
-
-/**
- * Gets collections.
- *
- * \private
- *
- * \author Michael Kuhn
- *
- * \param batch      A batch.
- * \param operations A list of operations.
- *
- * \return TRUE.
- */
-gboolean
-j_collection_get_exec (JList* operations, JSemantics* semantics)
-{
-	JBackend* meta_backend;
-	g_autoptr(JListIterator) it = NULL;
-	GSocketConnection* meta_connection;
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail(operations != NULL, FALSE);
-	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	it = j_list_iterator_new(operations);
-	//mongo_connection = j_connection_pool_pop_meta(0);
-
-	meta_backend = j_metadata_backend();
-
-	if (meta_backend == NULL)
-	{
-		meta_connection = j_connection_pool_pop_meta(0);
-	}
-
-	/* FIXME do some optimizations for len(operations) > 1 */
-	while (j_list_iterator_next(it))
-	{
-		JCollectionOperation* operation = j_list_iterator_get(it);
-		JCollection** collection = operation->get.collection;
-		g_autoptr(JMessage) message = NULL;
-		g_autoptr(JMessage) reply = NULL;
-		bson_t result[1];
-		gchar const* name = operation->get.name;
-
-		if (meta_backend != NULL)
-		{
-			ret = j_backend_meta_get(meta_backend, "collections", name, result) && ret;
-		}
-		else
-		{
-			gconstpointer data;
-			gsize name_len;
-			guint32 len;
-
-			name_len = strlen(name) + 1;
-
-			message = j_message_new(J_MESSAGE_META_GET, 12);
-			j_message_append_n(message, "collections", 12);
-			j_message_add_operation(message, name_len);
-			j_message_append_n(message, name, name_len);
-
-			j_message_send(message, meta_connection);
-
-			reply = j_message_new_reply(message);
-			j_message_receive(reply, meta_connection);
-
-			len = j_message_get_4(reply);
-
-			if (len > 0)
-			{
-				ret = TRUE;
-
-				data = j_message_get_n(reply, len);
-
-				// result points to reply's memory
-				bson_init_static(result, data, len);
-			}
-			else
-			{
-				ret = FALSE;
-			}
-		}
-
-		*collection = NULL;
-
-		if (ret)
-		{
-			*collection = j_collection_new_from_bson(result);
-			bson_destroy(result);
-		}
-	}
-
-	if (meta_backend == NULL)
-	{
-		j_connection_pool_push_meta(0, meta_connection);
-	}
-
-	//j_connection_pool_push_meta(0, mongo_connection);
-
-	return ret;
 }
 
 /**
