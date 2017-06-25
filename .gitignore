@@ -1,8 +1,10 @@
 # External
-external/*/
-
-# Environment
-julea-environment
+external/glib
+external/leveldb
+external/libbson
+external/libmongoc
+external/otf
+external/spack/
 
 # Sublime Text
 *.sublime-workspace
@@ -11,6 +13,6 @@ julea-environment
 *.swp
 
 # Waf
-build
+build/
 .lock-waf*
-.waf-*
+.waf-*/
