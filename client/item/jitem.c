@@ -290,7 +290,7 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	data->item = item;
 
 	path = g_build_path("/", j_collection_get_name(collection), name, NULL);
-	kv = j_kv_new(0, "items", path);
+	kv = j_kv_new("items", path);
 	j_kv_get_callback(kv, j_item_get_callback, data, batch);
 
 	j_trace_leave(G_STRFUNC);
@@ -536,7 +536,7 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	item->ref_count = 1;
 
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-	item->kv = j_kv_new(0, "items", path);
+	item->kv = j_kv_new("items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
 
 end:
@@ -584,7 +584,7 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	j_item_deserialize(item, b);
 
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-	item->kv = j_kv_new(0, "items", path);
+	item->kv = j_kv_new("items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
 
 	j_trace_leave(G_STRFUNC);

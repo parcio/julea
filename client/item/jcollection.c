@@ -212,7 +212,7 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(name != NULL);
 
-	kv = j_kv_new(0, "collections", name);
+	kv = j_kv_new("collections", name);
 	j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
 }
 
@@ -275,7 +275,7 @@ j_collection_new (gchar const* name)
 	bson_oid_init(&(collection->id), bson_context_get_default());
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
-	collection->kv = j_kv_new(0, "collections", collection->name);
+	collection->kv = j_kv_new("collections", collection->name);
 	collection->ref_count = 1;
 
 end:
@@ -317,7 +317,7 @@ j_collection_new_from_bson (bson_t const* b)
 
 	j_collection_deserialize(collection, b);
 
-	collection->kv = j_kv_new(0, "collections", collection->name);
+	collection->kv = j_kv_new("collections", collection->name);
 
 	j_trace_leave(G_STRFUNC);
 

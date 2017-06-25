@@ -37,8 +37,8 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 
 	basename = g_path_get_basename(path);
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
-	kv = j_kv_new(0, "posix", path);
-	object = j_object_new(0, "posix", path);
+	kv = j_kv_new("posix", path);
+	object = j_object_new("posix", path);
 
 	// FIXME
 	file = g_slice_new(bson_t);

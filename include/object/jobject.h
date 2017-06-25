@@ -35,7 +35,8 @@ typedef struct JObject JObject;
 
 #include <julea.h>
 
-JObject* j_object_new (guint32, gchar const*, gchar const*);
+JObject* j_object_new (gchar const*, gchar const*);
+JObject* j_object_new_for_index (guint32, gchar const*, gchar const*);
 JObject* j_object_ref (JObject*);
 void j_object_unref (JObject*);
 

@@ -39,7 +39,8 @@ typedef void (*JKVGetFunc) (bson_t const*, gpointer);
 
 #include <julea.h>
 
-JKV* j_kv_new (guint32, gchar const*, gchar const*);
+JKV* j_kv_new (gchar const*, gchar const*);
+JKV* j_kv_new_for_index (guint32, gchar const*, gchar const*);
 JKV* j_kv_ref (JKV*);
 void j_kv_unref (JKV*);
 

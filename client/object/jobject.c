@@ -764,11 +764,48 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
  * \return A new item. Should be freed with j_object_unref().
  **/
 JObject*
-j_object_new (guint32 index, gchar const* namespace, gchar const* name)
+j_object_new (gchar const* namespace, gchar const* name)
 {
-	JObject* object = NULL;
-
 	JConfiguration* configuration = j_configuration();
+	JObject* object;
+
+	g_return_val_if_fail(namespace != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	object = g_slice_new(JObject);
+	object->index = j_helper_hash(name) % j_configuration_get_data_server_count(configuration);
+	object->namespace = g_strdup(namespace);
+	object->name = g_strdup(name);
+	object->ref_count = 1;
+
+	j_trace_leave(G_STRFUNC);
+
+	return object;
+}
+
+/**
+ * Creates a new item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JObject* i;
+ *
+ * i = j_object_new("JULEA");
+ * \endcode
+ *
+ * \param name         An item name.
+ * \param distribution A distribution.
+ *
+ * \return A new item. Should be freed with j_object_unref().
+ **/
+JObject*
+j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name)
+{
+	JConfiguration* configuration = j_configuration();
+	JObject* object;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);

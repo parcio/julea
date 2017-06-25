@@ -166,6 +166,22 @@ j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 	return ret;
 }
 
+guint32
+j_helper_hash (gchar const* str)
+{
+	gchar c;
+	guint32 hash;
+
+	hash = 5381;
+
+	while ((c = *str++) != '\0')
+	{
+		hash = ((hash << 5) + hash) + c;
+	}
+
+	return hash;
+}
+
 /**
  * @}
  **/

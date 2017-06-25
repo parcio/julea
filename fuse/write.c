@@ -35,8 +35,8 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 	(void)fi;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
-	kv = j_kv_new(0, "posix", path);
-	object = j_object_new(0, "posix", path);
+	kv = j_kv_new("posix", path);
+	object = j_object_new("posix", path);
 
 	// FIXME update size
 	j_object_write(object, buf, size, offset, &bytes_written, batch);

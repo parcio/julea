@@ -45,7 +45,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	}
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
-	kv = j_kv_new(0, "posix", path);
+	kv = j_kv_new("posix", path);
 
 	j_kv_get(kv, file, batch);
 

@@ -38,4 +38,6 @@ gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
 guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 
+guint32 j_helper_hash (gchar const*);
+
 #endif

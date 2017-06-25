@@ -184,7 +184,8 @@ j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 			if (parts_len >= 3)
 			{
 				uri->name = g_strdup(parts[2]);
-				uri->object = j_object_new(uri->index, uri->namespace, uri->name);
+				// FIXME index
+				uri->object = j_object_new_for_index(uri->index, uri->namespace, uri->name);
 			}
 			break;
 		case J_OBJECT_URI_SCHEME_DISTRIBUTED_NAMESPACE:

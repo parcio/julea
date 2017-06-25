@@ -56,7 +56,7 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 		bson_init(empty);
 
 		name = g_strdup_printf("benchmark-%d", i);
-		object = j_kv_new(0, "benchmark", name);
+		object = j_kv_new("benchmark", name);
 		j_kv_put(object, empty, batch);
 
 		j_kv_delete(object, delete_batch);
@@ -119,7 +119,7 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		bson_init(empty);
 
 		name = g_strdup_printf("benchmark-%d", i);
-		object = j_kv_new(0, "benchmark", name);
+		object = j_kv_new("benchmark", name);
 		j_kv_put(object, empty, batch);
 	}
 
@@ -133,7 +133,7 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-%d", i);
-		object = j_kv_new(0, "benchmark", name);
+		object = j_kv_new("benchmark", name);
 
 		j_kv_delete(object, batch);
 
@@ -197,7 +197,7 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 		bson_init(empty);
 
 		name = g_strdup_printf("benchmark-%d", i);
-		object = j_kv_new(0, "benchmark", name);
+		object = j_kv_new("benchmark", name);
 		j_kv_put(object, empty, batch);
 
 		j_kv_delete(object, batch);

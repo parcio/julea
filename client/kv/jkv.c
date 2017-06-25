@@ -471,11 +471,48 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
  * \return A new item. Should be freed with j_kv_unref().
  **/
 JKV*
-j_kv_new (guint32 index, gchar const* namespace, gchar const* key)
+j_kv_new (gchar const* namespace, gchar const* key)
 {
-	JKV* kv = NULL;
-
 	JConfiguration* configuration = j_configuration();
+	JKV* kv;
+
+	g_return_val_if_fail(namespace != NULL, NULL);
+	g_return_val_if_fail(key != NULL, NULL);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	kv = g_slice_new(JKV);
+	kv->index = j_helper_hash(key) % j_configuration_get_metadata_server_count(configuration);
+	kv->namespace = g_strdup(namespace);
+	kv->key = g_strdup(key);
+	kv->ref_count = 1;
+
+	j_trace_leave(G_STRFUNC);
+
+	return kv;
+}
+
+/**
+ * Creates a new item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JKV* i;
+ *
+ * i = j_kv_new("JULEA");
+ * \endcode
+ *
+ * \param key         An item key.
+ * \param distribution A distribution.
+ *
+ * \return A new item. Should be freed with j_kv_unref().
+ **/
+JKV*
+j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
+{
+	JConfiguration* configuration = j_configuration();
+	JKV* kv;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
