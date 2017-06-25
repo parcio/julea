@@ -18,20 +18,52 @@
 
 set -e
 
+spack_install ()
+{
+	local install_dir
+	local spack_pkg
+
+	spack_pkg="$1"
+
+	test -n "${spack_pkg}" || return 1
+
+	./bin/spack install "${spack_pkg}"
+	install_dir="$(./bin/spack location --install-dir "${spack_pkg}")"
+	rm --force "../${spack_pkg}"
+	ln --symbolic "${install_dir}" "../${spack_pkg}"
+}
+
 install_dependency ()
 {
+	local pkg_config
+	local spack_pkg
+
 	pkg_config="$1"
 	spack_pkg="$2"
 
-	test -n "{pkg_config}" || return 1
-	test -n "{spack_pkg}" || return 1
+	test -n "${pkg_config}" || return 1
+	test -n "${spack_pkg}" || return 1
 
 	if ! pkg-config --exists "${pkg_config}"
 	then
-		./bin/spack install "${spack_pkg}"
-		install_dir="$(./bin/spack location --install-dir "${spack_pkg}")"
-		rm --force "../${spack_pkg}"
-		ln --symbolic "${install_dir}" "../${spack_pkg}"
+		spack_install "${spack_pkg}"
+	fi
+}
+
+install_dependency_bin ()
+{
+	local bin
+	local spack_pkg
+
+	bin="$1"
+	spack_pkg="$2"
+
+	test -n "${bin}" || return 1
+	test -n "${spack_pkg}" || return 1
+
+	if ! command -v "${bin}" > /dev/null 2>&1
+	then
+		spack_install "${spack_pkg}"
 	fi
 }
 
@@ -42,8 +74,11 @@ fi
 
 cd spack
 
+git pull
+
 install_dependency glib-2.0 glib
 install_dependency leveldb leveldb
 install_dependency libbson-1.0 libbson
 install_dependency libmongoc-1.0 libmongoc
-# FIXME otf
+
+#install_dependency_bin otfconfig otf

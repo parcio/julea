@@ -31,16 +31,29 @@ out = 'build'
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
 
+def get_bin (prefixes, bin):
+	env = os.getenv('PATH')
+
+	if env:
+		prefixes = ':'.join((env, prefixes))
+
+	for prefix in prefixes.split(':'):
+		path = '{0}/bin/{1}'.format(prefix, bin)
+
+		if os.access(path, os.X_OK):
+			return path
+
+	return None
+
 def get_pkg_config_path (prefixes):
+	env = os.getenv('PKG_CONFIG_PATH')
 	path = []
+
+	if env:
+		prefixes = ':'.join((env, prefixes))
 
 	for prefix in prefixes.split(':'):
 		path.append('{0}/lib/pkgconfig'.format(prefix))
-
-	env = os.getenv('PKG_CONFIG_PATH')
-
-	if env:
-		path.append(env)
 
 	return ':'.join(path)
 
@@ -133,16 +146,16 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	ctx.check_cc(
-		header_name = 'otf.h',
-		lib = 'open-trace-format',
-		includes = ['{0}/include/open-trace-format'.format(ctx.options.otf)],
-		libpath = ['{0}/lib'.format(ctx.options.otf)],
-		rpath = ['{0}/lib'.format(ctx.options.otf)],
+	"""
+	ctx.check_cfg(
+		path = get_bin(ctx.options.otf, 'otfconfig'),
+		package = '',
+		args = ['--includes', '--libs'],
 		uselib_store = 'OTF',
-		define_name = 'HAVE_OTF',
+		msg = 'Checking for \'otf\'',
 		mandatory = False
 	)
+	"""
 
 	# stat.st_mtim.tv_nsec
 	ctx.check_cc(
