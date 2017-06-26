@@ -24,14 +24,17 @@
 
 #include <string.h>
 
-static gboolean opt_local = FALSE;
-static gboolean opt_global = FALSE;
-static gboolean opt_print = FALSE;
+static gboolean opt_user = FALSE;
+static gboolean opt_system = FALSE;
+static gboolean opt_read = FALSE;
+static gchar const* opt_name = "julea";
 static gchar const* opt_servers_data = NULL;
 static gchar const* opt_servers_meta = NULL;
 static gchar const* opt_data_backend = NULL;
+static gchar const* opt_data_component = NULL;
 static gchar const* opt_data_path = NULL;
 static gchar const* opt_meta_backend = NULL;
+static gchar const* opt_meta_component = NULL;
 static gchar const* opt_meta_path = NULL;
 static gint opt_max_connections = 0;
 
@@ -99,8 +102,10 @@ write_config (gchar* path)
 	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)servers_data, g_strv_length(servers_data));
 	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)servers_meta, g_strv_length(servers_meta));
 	g_key_file_set_string(key_file, "data", "backend", opt_data_backend);
+	g_key_file_set_string(key_file, "data", "component", opt_data_component);
 	g_key_file_set_string(key_file, "data", "path", opt_data_path);
 	g_key_file_set_string(key_file, "metadata", "backend", opt_meta_backend);
+	g_key_file_set_string(key_file, "metadata", "component", opt_meta_component);
 	g_key_file_set_string(key_file, "metadata", "path", opt_meta_path);
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
@@ -126,19 +131,22 @@ gint
 main (gint argc, gchar** argv)
 {
 	GError* error = NULL;
-	GOptionContext* context;
+	g_autoptr(GOptionContext) context = NULL;
 	gboolean ret;
 	g_autofree gchar* path = NULL;
 
 	GOptionEntry entries[] = {
-		{ "local", 0, 0, G_OPTION_ARG_NONE, &opt_local, "Write local configuration", NULL },
-		{ "global", 0, 0, G_OPTION_ARG_NONE, &opt_global, "Write global configuration", NULL },
-		{ "print", 0, 0, G_OPTION_ARG_NONE, &opt_print, "Print configuration", NULL },
+		{ "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Write user configuration", NULL },
+		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
+		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
+		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
 		{ "data-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_data, "Data servers to use", "host1,host2" },
 		{ "metadata-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_meta, "Metadata servers to use", "host1,host2" },
 		{ "data-backend", 0, 0, G_OPTION_ARG_STRING, &opt_data_backend, "Data backend to use", "posix|null|gio|…" },
+		{ "data-component", 0, 0, G_OPTION_ARG_STRING, &opt_data_component, "Data component to use", "client|server" },
 		{ "data-path", 0, 0, G_OPTION_ARG_STRING, &opt_data_path, "Data path to use", "/path/to/storage" },
 		{ "metadata-backend", 0, 0, G_OPTION_ARG_STRING, &opt_meta_backend, "Metadata backend to use", "posix|null|gio|…" },
+		{ "meta-component", 0, 0, G_OPTION_ARG_STRING, &opt_meta_component, "Metadata component to use", "client|server" },
 		{ "metadata-path", 0, 0, G_OPTION_ARG_STRING, &opt_meta_path, "Metadata path to use", "/path/to/storage" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
@@ -149,8 +157,6 @@ main (gint argc, gchar** argv)
 
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
-		g_option_context_free(context);
-
 		if (error)
 		{
 			g_printerr("%s\n", error->message);
@@ -160,39 +166,36 @@ main (gint argc, gchar** argv)
 		return 1;
 	}
 
-	if ((opt_local && opt_global)
-	    || (opt_print && (opt_servers_data != NULL || opt_servers_meta != NULL || opt_data_backend != NULL || opt_data_path != NULL || opt_meta_backend != NULL || opt_meta_path != NULL))
-	    || (opt_print && !opt_local && !opt_global)
-	    || (!opt_print && (opt_servers_data == NULL || opt_servers_meta == NULL || opt_data_backend == NULL || opt_data_path == NULL || opt_meta_backend == NULL || opt_meta_path == NULL))
+	if ((opt_user && opt_system)
+	    || (opt_read && (opt_servers_data != NULL || opt_servers_meta != NULL || opt_data_backend != NULL || opt_data_component != NULL || opt_data_path != NULL || opt_meta_backend != NULL || opt_meta_component != NULL || opt_meta_path != NULL))
+	    || (opt_read && !opt_user && !opt_system)
+	    || (!opt_read && (opt_servers_data == NULL || opt_servers_meta == NULL || opt_data_backend == NULL || opt_data_component == NULL || opt_data_path == NULL || opt_meta_backend == NULL || opt_meta_component == NULL || opt_meta_path == NULL))
 	    || opt_max_connections < 0
 	)
 	{
 		g_autofree gchar* help = NULL;
 
 		help = g_option_context_get_help(context, TRUE, NULL);
-		g_option_context_free(context);
 
 		g_print("%s", help);
 
 		return 1;
 	}
 
-	g_option_context_free(context);
-
-	if (opt_local)
+	if (opt_user)
 	{
-		path = g_build_filename(g_get_user_config_dir(), "julea", "julea", NULL);
+		path = g_build_filename(g_get_user_config_dir(), "julea", opt_name, NULL);
 	}
-	else if (opt_global)
+	else if (opt_system)
 	{
-		path = g_build_filename(g_get_system_config_dirs()[0], "julea", "julea", NULL);
+		path = g_build_filename(g_get_system_config_dirs()[0], "julea", opt_name, NULL);
 	}
 	else
 	{
 		path = NULL;
 	}
 
-	if (opt_print)
+	if (opt_read)
 	{
 		ret = read_config(path);
 	}
