@@ -338,17 +338,21 @@ def build (ctx):
 	# Server backends
 	for backend in backends_server:
 		use_extra = []
+		cflags = []
 
 		if backend == 'gio':
 			use_extra = ['GIO', 'GOBJECT']
 		elif backend == 'leveldb':
 			use_extra = ['LEVELDB']
+			# FIXME remove when no longer necessary
+			cflags = ['-Wno-strict-prototypes']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
 			target = 'backend/server/{0}'.format(backend),
 			use = use_julea_backend + ['lib/julea'] + use_extra,
 			includes = ['include'],
+			cflags = cflags,
 			install_path = '${LIBDIR}/julea/backend/server'
 		)
 
