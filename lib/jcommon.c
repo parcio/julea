@@ -26,6 +26,8 @@
 
 #include <jcommon.h>
 
+#include <julea-internal.h>
+
 #include <jbackend.h>
 #include <jbackground-operation-internal.h>
 #include <jconfiguration.h>
@@ -130,6 +132,12 @@ j_init (void)
 {
 	JCommon* common;
 	g_autofree gchar* basename = NULL;
+	gchar const* data_backend;
+	gchar const* data_component;
+	gchar const* data_path;
+	gchar const* meta_backend;
+	gchar const* meta_component;
+	gchar const* meta_path;
 
 	g_return_if_fail(!j_is_initialized());
 
@@ -148,17 +156,30 @@ j_init (void)
 		goto error;
 	}
 
-	common->data_module = j_backend_load_client(j_configuration_get_data_backend(common->configuration), J_BACKEND_TYPE_DATA, &(common->data_backend));
-	common->meta_module = j_backend_load_client(j_configuration_get_metadata_backend(common->configuration), J_BACKEND_TYPE_META, &(common->meta_backend));
+	data_backend = j_configuration_get_data_backend(common->configuration);
+	data_component = j_configuration_get_data_component(common->configuration);
+	data_path = j_configuration_get_data_path(common->configuration);
 
-	if (common->data_backend != NULL)
+	meta_backend = j_configuration_get_metadata_backend(common->configuration);
+	meta_component = j_configuration_get_metadata_component(common->configuration);
+	meta_path = j_configuration_get_metadata_path(common->configuration);
+
+	if (j_backend_load_client(data_backend, data_component, J_BACKEND_TYPE_DATA, &(common->data_module), &(common->data_backend)))
 	{
-		j_backend_data_init(common->data_backend, j_configuration_get_data_path(common->configuration));
+		if (common->data_backend == NULL || !j_backend_data_init(common->data_backend, data_path))
+		{
+			J_CRITICAL("Could not initialize data backend %s.\n", data_backend);
+			goto error;
+		}
 	}
 
-	if (common->meta_backend != NULL)
+	if (j_backend_load_client(meta_backend, meta_component, J_BACKEND_TYPE_META, &(common->meta_module), &(common->meta_backend)))
 	{
-		j_backend_meta_init(common->meta_backend, j_configuration_get_metadata_path(common->configuration));
+		if (common->meta_backend == NULL || !j_backend_meta_init(common->meta_backend, meta_path))
+		{
+			J_CRITICAL("Could not initialize metadata backend %s.\n", meta_backend);
+			goto error;
+		}
 	}
 
 	j_connection_pool_init(common->configuration);

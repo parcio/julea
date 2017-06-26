@@ -91,8 +91,8 @@ JBackend* backend_info (JBackendType);
 
 #include <gmodule.h>
 
-GModule* j_backend_load_client (gchar const*, JBackendType, JBackend**);
-GModule* j_backend_load_server (gchar const*, JBackendType, JBackend**);
+gboolean j_backend_load_client (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
+gboolean j_backend_load_server (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 
 gboolean j_backend_data_init (JBackend*, gchar const*);
 void j_backend_data_fini (JBackend*);

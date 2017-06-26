@@ -76,6 +76,11 @@ struct JConfiguration
 		gchar* backend;
 
 		/**
+		 * The component.
+		 */
+		gchar* component;
+
+		/**
 		 * The path.
 		 */
 		gchar* path;
@@ -91,6 +96,11 @@ struct JConfiguration
 		 * The backend.
 		 */
 		gchar* backend;
+
+		/**
+		 * The component.
+		 */
+		gchar* component;
 
 		/**
 		 * The path.
@@ -213,8 +223,10 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	gchar** servers_data;
 	gchar** servers_meta;
 	gchar* data_backend;
+	gchar* data_component;
 	gchar* data_path;
 	gchar* meta_backend;
+	gchar* meta_component;
 	gchar* meta_path;
 	guint32 max_connections;
 
@@ -224,20 +236,26 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	servers_data = g_key_file_get_string_list(key_file, "servers", "data", NULL, NULL);
 	servers_meta = g_key_file_get_string_list(key_file, "servers", "metadata", NULL, NULL);
 	data_backend = g_key_file_get_string(key_file, "data", "backend", NULL);
+	data_component = g_key_file_get_string(key_file, "data", "component", NULL);
 	data_path = g_key_file_get_string(key_file, "data", "path", NULL);
 	meta_backend = g_key_file_get_string(key_file, "metadata", "backend", NULL);
+	meta_component = g_key_file_get_string(key_file, "metadata", "component", NULL);
 	meta_path = g_key_file_get_string(key_file, "metadata", "path", NULL);
 
 	if (servers_data == NULL || servers_data[0] == NULL
 	    || servers_meta == NULL || servers_meta[0] == NULL
 	    || data_backend == NULL
+	    || data_component == NULL
 	    || data_path == NULL
 	    || meta_backend == NULL
+	    || meta_component == NULL
 	    || meta_path == NULL)
 	{
 		g_free(meta_backend);
+		g_free(meta_component);
 		g_free(meta_path);
 		g_free(data_backend);
+		g_free(data_component);
 		g_free(data_path);
 		g_strfreev(servers_data);
 		g_strfreev(servers_meta);
@@ -251,8 +269,10 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->servers.data_len = g_strv_length(servers_data);
 	configuration->servers.metadata_len = g_strv_length(servers_meta);
 	configuration->data.backend = data_backend;
+	configuration->data.component = data_component;
 	configuration->data.path = data_path;
 	configuration->meta.backend = meta_backend;
+	configuration->meta.component = meta_component;
 	configuration->meta.path = meta_path;
 	configuration->max_connections = max_connections;
 	configuration->ref_count = 1;
@@ -302,9 +322,11 @@ j_configuration_unref (JConfiguration* configuration)
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
 		g_free(configuration->meta.backend);
+		g_free(configuration->meta.component);
 		g_free(configuration->meta.path);
 
 		g_free(configuration->data.backend);
+		g_free(configuration->data.component);
 		g_free(configuration->data.path);
 
 		g_strfreev(configuration->servers.data);
@@ -357,6 +379,14 @@ j_configuration_get_data_backend (JConfiguration* configuration)
 }
 
 gchar const*
+j_configuration_get_data_component (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->data.component;
+}
+
+gchar const*
 j_configuration_get_data_path (JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
@@ -370,6 +400,14 @@ j_configuration_get_metadata_backend (JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->meta.backend;
+}
+
+gchar const*
+j_configuration_get_metadata_component (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->meta.component;
 }
 
 gchar const*

@@ -708,7 +708,11 @@ main (int argc, char** argv)
 	GModule* meta_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	g_autoptr(GSocketService) socket_service = NULL;
+	gchar const* data_backend;
+	gchar const* data_component;
 	gchar const* data_path;
+	gchar const* meta_backend;
+	gchar const* meta_component;
 	gchar const* meta_path;
 #ifdef JULEA_DEBUG
 	g_autofree gchar* data_path_port = NULL;
@@ -769,10 +773,12 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	data_module = j_backend_load_server(j_configuration_get_data_backend(configuration), J_BACKEND_TYPE_DATA, &jd_data_backend);
-	meta_module = j_backend_load_server(j_configuration_get_metadata_backend(configuration), J_BACKEND_TYPE_META, &jd_meta_backend);
-
+	data_backend = j_configuration_get_data_backend(configuration);
+	data_component = j_configuration_get_data_component(configuration);
 	data_path = j_configuration_get_data_path(configuration);
+
+	meta_backend = j_configuration_get_metadata_backend(configuration);
+	meta_component = j_configuration_get_metadata_component(configuration);
 	meta_path = j_configuration_get_metadata_path(configuration);
 
 #ifdef JULEA_DEBUG
@@ -786,19 +792,23 @@ main (int argc, char** argv)
 	meta_path = meta_path_port;
 #endif
 
-	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, data_path))
+	if (j_backend_load_server(data_backend, data_component, J_BACKEND_TYPE_DATA, &data_module, &jd_data_backend))
 	{
-		g_printerr("Could not initialize data backend.\n");
-		return 1;
+		if (jd_data_backend == NULL || !j_backend_data_init(jd_data_backend, data_path))
+		{
+			J_CRITICAL("Could not initialize data backend %s.\n", data_backend);
+			return 1;
+		}
 	}
 
-	if (jd_meta_backend != NULL && !j_backend_meta_init(jd_meta_backend, meta_path))
+	if (j_backend_load_server(meta_backend, meta_component, J_BACKEND_TYPE_META, &meta_module, &jd_meta_backend))
 	{
-		g_printerr("Could not initialize metadata backend.\n");
-		return 1;
+		if (jd_meta_backend == NULL || !j_backend_meta_init(jd_meta_backend, meta_path))
+		{
+			J_CRITICAL("Could not initialize metadata backend %s.\n", meta_backend);
+			return 1;
+		}
 	}
-
-
 
 	jd_statistics = j_statistics_new(FALSE);
 

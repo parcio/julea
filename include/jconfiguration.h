@@ -48,9 +48,11 @@ guint32 j_configuration_get_data_server_count (JConfiguration*);
 guint32 j_configuration_get_metadata_server_count (JConfiguration*);
 
 gchar const* j_configuration_get_data_backend (JConfiguration*);
+gchar const* j_configuration_get_data_component (JConfiguration*);
 gchar const* j_configuration_get_data_path (JConfiguration*);
 
 gchar const* j_configuration_get_metadata_backend (JConfiguration*);
+gchar const* j_configuration_get_metadata_component (JConfiguration*);
 gchar const* j_configuration_get_metadata_path (JConfiguration*);
 
 guint32 j_configuration_get_max_connections (JConfiguration*);

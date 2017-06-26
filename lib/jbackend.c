@@ -113,16 +113,48 @@ j_backend_load (gchar const* name, gchar const* component, JBackendType type, JB
 	return module;
 }
 
-GModule*
-j_backend_load_client (gchar const* name, JBackendType type, JBackend** backend)
+gboolean
+j_backend_load_client (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
-	return j_backend_load(name, "client", type, backend);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(component != NULL, FALSE);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_DATA || type == J_BACKEND_TYPE_META, FALSE);
+	g_return_val_if_fail(module != NULL, FALSE);
+	g_return_val_if_fail(backend != NULL, FALSE);
+
+	*module = NULL;
+	*backend = NULL;
+
+	if (g_strcmp0(component, "client") == 0)
+	{
+		*module = j_backend_load(name, "client", type, backend);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
-GModule*
-j_backend_load_server (gchar const* name, JBackendType type, JBackend** backend)
+gboolean
+j_backend_load_server (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
-	return j_backend_load(name, "server", type, backend);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(component != NULL, FALSE);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_DATA || type == J_BACKEND_TYPE_META, FALSE);
+	g_return_val_if_fail(module != NULL, FALSE);
+	g_return_val_if_fail(backend != NULL, FALSE);
+
+	*module = NULL;
+	*backend = NULL;
+
+	if (g_strcmp0(component, "server") == 0)
+	{
+		*module = j_backend_load(name, "server", type, backend);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 gboolean
