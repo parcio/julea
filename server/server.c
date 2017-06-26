@@ -701,15 +701,19 @@ main (int argc, char** argv)
 	gboolean opt_daemon = FALSE;
 	gint opt_port = 4711;
 
-	JConfiguration* configuration;
+	g_autoptr(JConfiguration) configuration = NULL;
 	GError* error = NULL;
-	GMainLoop* main_loop;
+	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* data_module = NULL;
 	GModule* meta_module = NULL;
-	GOptionContext* context;
+	g_autoptr(GOptionContext) context = NULL;
 	g_autoptr(GSocketService) socket_service = NULL;
 	gchar const* data_path;
 	gchar const* meta_path;
+#ifdef JULEA_DEBUG
+	g_autofree gchar* data_path_port = NULL;
+	g_autofree gchar* meta_path_port = NULL;
+#endif
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -732,8 +736,6 @@ main (int argc, char** argv)
 
 		return 1;
 	}
-
-	g_option_context_free(context);
 
 	if (opt_daemon && !jd_daemon())
 	{
@@ -774,11 +776,14 @@ main (int argc, char** argv)
 	meta_path = j_configuration_get_metadata_path(configuration);
 
 #ifdef JULEA_DEBUG
-	data_path = g_strdup_printf("%s/%d", data_path, opt_port);
-	meta_path = g_strdup_printf("%s/%d", meta_path, opt_port);
+	data_path_port = g_strdup_printf("%s/%d", data_path, opt_port);
+	meta_path_port = g_strdup_printf("%s/%d", meta_path, opt_port);
 
-	g_mkdir_with_parents(data_path, 0700);
-	g_mkdir_with_parents(meta_path, 0700);
+	g_mkdir_with_parents(data_path_port, 0700);
+	g_mkdir_with_parents(meta_path_port, 0700);
+
+	data_path = data_path_port;
+	meta_path = meta_path_port;
 #endif
 
 	if (jd_data_backend != NULL && !j_backend_data_init(jd_data_backend, data_path))
@@ -793,12 +798,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-#ifdef JULEA_DEBUG
-	g_free((gchar*)meta_path);
-	g_free((gchar*)data_path);
-#endif
 
-	j_configuration_unref(configuration);
 
 	jd_statistics = j_statistics_new(FALSE);
 
@@ -812,7 +812,6 @@ main (int argc, char** argv)
 	g_unix_signal_add(SIGTERM, jd_signal, main_loop);
 
 	g_main_loop_run(main_loop);
-	g_main_loop_unref(main_loop);
 
 	g_socket_service_stop(socket_service);
 

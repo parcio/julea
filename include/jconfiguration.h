@@ -39,6 +39,8 @@ JConfiguration* j_configuration_new_for_data (GKeyFile*);
 JConfiguration* j_configuration_ref (JConfiguration*);
 void j_configuration_unref (JConfiguration*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JConfiguration, j_configuration_unref)
+
 gchar const* j_configuration_get_data_server (JConfiguration*, guint32);
 gchar const* j_configuration_get_metadata_server (JConfiguration*, guint32);
 
