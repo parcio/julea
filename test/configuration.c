@@ -51,8 +51,10 @@ test_configuration_new_for_data (void)
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 1);
 	g_key_file_set_string(key_file, "data", "backend", "null");
+	g_key_file_set_string(key_file, "data", "component", "server");
 	g_key_file_set_string(key_file, "data", "path", "");
 	g_key_file_set_string(key_file, "metadata", "backend", "null");
+	g_key_file_set_string(key_file, "metadata", "component", "server");
 	g_key_file_set_string(key_file, "metadata", "path", "");
 
 	configuration = j_configuration_new_for_data(key_file);
@@ -75,8 +77,10 @@ test_configuration_get (void)
 	g_key_file_set_string_list(key_file, "servers", "data", data_servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "metadata", metadata_servers, 1);
 	g_key_file_set_string(key_file, "data", "backend", "null");
+	g_key_file_set_string(key_file, "data", "component", "server");
 	g_key_file_set_string(key_file, "data", "path", "NULL");
 	g_key_file_set_string(key_file, "metadata", "backend", "null2");
+	g_key_file_set_string(key_file, "metadata", "component", "client");
 	g_key_file_set_string(key_file, "metadata", "path", "NULL2");
 
 	configuration = j_configuration_new_for_data(key_file);
@@ -90,9 +94,11 @@ test_configuration_get (void)
 	g_assert_cmpuint(j_configuration_get_metadata_server_count(configuration), ==, 1);
 
 	g_assert_cmpstr(j_configuration_get_data_backend(configuration), ==, "null");
+	g_assert_cmpstr(j_configuration_get_data_component(configuration), ==, "server");
 	g_assert_cmpstr(j_configuration_get_data_path(configuration), ==, "NULL");
 
 	g_assert_cmpstr(j_configuration_get_metadata_backend(configuration), ==, "null2");
+	g_assert_cmpstr(j_configuration_get_metadata_component(configuration), ==, "client");
 	g_assert_cmpstr(j_configuration_get_metadata_path(configuration), ==, "NULL2");
 
 	j_configuration_unref(configuration);

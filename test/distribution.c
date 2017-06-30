@@ -42,8 +42,10 @@ test_distribution_fixture_setup (JConfiguration** configuration, gconstpointer d
 	g_key_file_set_string_list(key_file, "servers", "data", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "metadata", servers, 2);
 	g_key_file_set_string(key_file, "data", "backend", "null");
+	g_key_file_set_string(key_file, "data", "component", "server");
 	g_key_file_set_string(key_file, "data", "path", "");
 	g_key_file_set_string(key_file, "metadata", "backend", "null");
+	g_key_file_set_string(key_file, "metadata", "component", "server");
 	g_key_file_set_string(key_file, "metadata", "path", "");
 
 	*configuration = j_configuration_new_for_data(key_file);
