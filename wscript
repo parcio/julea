@@ -63,11 +63,11 @@ def options (ctx):
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 
-	ctx.add_option('--glib', action='store', default='/usr:{0}/external/glib'.format(Context.run_dir), help='GLib prefix')
-	ctx.add_option('--leveldb', action='store', default='/usr:{0}/external/leveldb'.format(Context.run_dir), help='LevelDB prefix')
-	ctx.add_option('--libbson', action='store', default='/usr:{0}/external/libbson'.format(Context.run_dir), help='libbson prefix')
-	ctx.add_option('--libmongoc', action='store', default='/usr:{0}/external/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
-	ctx.add_option('--otf', action='store', default='/usr:{0}/external/otf'.format(Context.run_dir), help='OTF prefix')
+	ctx.add_option('--glib', action='store', default='/usr:{0}/dependencies/glib'.format(Context.run_dir), help='GLib prefix')
+	ctx.add_option('--leveldb', action='store', default='/usr:{0}/dependencies/leveldb'.format(Context.run_dir), help='LevelDB prefix')
+	ctx.add_option('--libbson', action='store', default='/usr:{0}/dependencies/libbson'.format(Context.run_dir), help='libbson prefix')
+	ctx.add_option('--libmongoc', action='store', default='/usr:{0}/dependencies/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
+	ctx.add_option('--otf', action='store', default='/usr:{0}/dependencies/otf'.format(Context.run_dir), help='OTF prefix')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -76,6 +76,8 @@ def configure (ctx):
 	ctx.env.CFLAGS += ['-std=c11']
 	ctx.env.CFLAGS += ['-fdiagnostics-color']
 	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
+	# FIXME libbson bug, https://github.com/mongodb/libbson/pull/193
+	ctx.env.CFLAGS += ['-Wno-expansion-to-defined']
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
@@ -344,7 +346,7 @@ def build (ctx):
 			use_extra = ['GIO', 'GOBJECT']
 		elif backend == 'leveldb':
 			use_extra = ['LEVELDB']
-			# FIXME remove when no longer necessary
+			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
 
 		ctx.shlib(

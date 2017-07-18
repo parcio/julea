@@ -18,13 +18,42 @@
 
 set -e
 
+SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
+
+. "${SELF_DIR}/common"
+
+spack_clone ()
+{
+	local dependencies_dir
+
+	dependencies_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
+
+	mkdir --parents "${dependencies_dir}"
+	cd "${dependencies_dir}"
+
+	if test ! -d spack
+	then
+		git clone https://github.com/LLNL/spack.git
+	fi
+
+	cd spack
+
+	git pull
+}
+
 spack_install ()
 {
 	local install_dir
+	local spack_dir
 	local spack_pkg
 
+	spack_dir="$(get_directory "${SELF_DIR}/../dependencies/spack")"
 	spack_pkg="$1"
 
+	test -n "${spack_dir}" || return 1
+	test -d "${spack_dir}" || return 1
 	test -n "${spack_pkg}" || return 1
 
 	./bin/spack install "${spack_pkg}"
@@ -67,14 +96,7 @@ install_dependency_bin ()
 	fi
 }
 
-if test ! -d spack
-then
-	git clone https://github.com/LLNL/spack.git
-fi
-
-cd spack
-
-git pull
+spack_clone
 
 install_dependency glib-2.0 glib
 install_dependency leveldb leveldb

@@ -1,10 +1,5 @@
-# External
-external/glib
-external/leveldb
-external/libbson
-external/libmongoc
-external/otf
-external/spack/
+# Dependencies
+dependencies/
 
 # Sublime Text
 *.sublime-workspace
