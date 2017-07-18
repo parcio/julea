@@ -146,7 +146,7 @@ main (gint argc, gchar** argv)
 		{ "data-component", 0, 0, G_OPTION_ARG_STRING, &opt_data_component, "Data component to use", "client|server" },
 		{ "data-path", 0, 0, G_OPTION_ARG_STRING, &opt_data_path, "Data path to use", "/path/to/storage" },
 		{ "metadata-backend", 0, 0, G_OPTION_ARG_STRING, &opt_meta_backend, "Metadata backend to use", "posix|null|gio|…" },
-		{ "meta-component", 0, 0, G_OPTION_ARG_STRING, &opt_meta_component, "Metadata component to use", "client|server" },
+		{ "metadata-component", 0, 0, G_OPTION_ARG_STRING, &opt_meta_component, "Metadata component to use", "client|server" },
 		{ "metadata-path", 0, 0, G_OPTION_ARG_STRING, &opt_meta_path, "Metadata path to use", "/path/to/storage" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
