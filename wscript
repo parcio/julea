@@ -65,6 +65,7 @@ def options (ctx):
 
 	ctx.add_option('--glib', action='store', default='/usr:{0}/dependencies/glib'.format(Context.run_dir), help='GLib prefix')
 	ctx.add_option('--leveldb', action='store', default='/usr:{0}/dependencies/leveldb'.format(Context.run_dir), help='LevelDB prefix')
+	ctx.add_option('--lmdb', action='store', default='/usr:{0}/dependencies/lmdb'.format(Context.run_dir), help='LMDB prefix')
 	ctx.add_option('--libbson', action='store', default='/usr:{0}/dependencies/libbson'.format(Context.run_dir), help='libbson prefix')
 	ctx.add_option('--libmongoc', action='store', default='/usr:{0}/dependencies/libmongoc'.format(Context.run_dir), help='libmongoc driver prefix')
 	ctx.add_option('--otf', action='store', default='/usr:{0}/dependencies/otf'.format(Context.run_dir), help='OTF prefix')
@@ -145,6 +146,15 @@ def configure (ctx):
 		args = ['--cflags', '--libs'],
 		uselib_store = 'LEVELDB',
 		pkg_config_path = get_pkg_config_path(ctx.options.leveldb),
+		mandatory = False
+	)
+
+	ctx.env.JULEA_LMDB = \
+	ctx.check_cfg(
+		package = 'lmdb',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'LMDB',
+		pkg_config_path = get_pkg_config_path(ctx.options.lmdb),
 		mandatory = False
 	)
 
@@ -337,6 +347,9 @@ def build (ctx):
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
 
+	if ctx.env.JULEA_LMDB:
+		backends_server.append('lmdb')
+
 	# Server backends
 	for backend in backends_server:
 		use_extra = []
@@ -348,6 +361,8 @@ def build (ctx):
 			use_extra = ['LEVELDB']
 			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
+		elif backend == 'lmdb':
+			use_extra = ['LMDB']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],

@@ -98,9 +98,13 @@ install_dependency_bin ()
 
 spack_clone
 
+# Mandatory dependencies
 install_dependency glib-2.0 glib
-install_dependency leveldb leveldb
 install_dependency libbson-1.0 libbson
+
+# Optional dependencies
+install_dependency leveldb leveldb
+install_dependency lmdb lmdb
 install_dependency libmongoc-1.0 libmongoc
 
 #install_dependency_bin otfconfig otf
