@@ -347,8 +347,8 @@ def build (ctx):
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
 
-	if ctx.env.JULEA_LMDB:
-		backends_server.append('lmdb')
+	#if ctx.env.JULEA_LMDB:
+	#	backends_server.append('lmdb')
 
 	# Server backends
 	for backend in backends_server:
