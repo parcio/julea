@@ -45,7 +45,6 @@ spack_clone ()
 
 spack_install ()
 {
-	local install_dir
 	local spack_dir
 	local spack_pkg
 
@@ -57,9 +56,6 @@ spack_install ()
 	test -n "${spack_pkg}" || return 1
 
 	./bin/spack install "${spack_pkg}"
-	install_dir="$(./bin/spack location --install-dir "${spack_pkg}")"
-	rm --force "../${spack_pkg}"
-	ln --symbolic "${install_dir}" "../${spack_pkg}"
 }
 
 install_dependency ()

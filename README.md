@@ -25,9 +25,10 @@ $ ./scripts/install-dependencies.sh
 
 After all dependencies have been installed, JULEA has to be configured and compiled using [Waf](https://waf.io/);
 the different configuration and build options can be shown with `./waf --help`.
+The `configure.sh` script is a wrapper around `./waf configure` that makes sure that the dependencies installed in the previous step are found by Waf.
 
 ```
-$ ./waf configure --debug --sanitize
+$ ./configure.sh --debug --sanitize
 $ ./waf
 ```
 
