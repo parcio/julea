@@ -94,6 +94,9 @@ install_dependency_bin ()
 
 spack_clone
 
+# Required for Spack itself
+spack_install environment-modules
+
 # Mandatory dependencies
 install_dependency glib-2.0 glib
 install_dependency libbson-1.0 libbson

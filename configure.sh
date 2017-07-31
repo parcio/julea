@@ -26,6 +26,7 @@ SELF_BASE="${SELF_PATH##*/}"
 
 spack_init ()
 {
+	local modules_dir
 	local spack_dir
 	local spack_env
 
@@ -36,12 +37,20 @@ spack_init ()
 	test -d "${spack_dir}" || return 1
 	test -f "${spack_env}" || return 1
 
-	if test -f '/etc/profile.d/modules.sh'
-	then
-		. /etc/profile.d/modules.sh
-	fi
-
 	. "${spack_env}"
+
+	if ! command -v module > /dev/null 2>&1
+	then
+		modules_dir="$(spack location --install-dir environment-modules)"
+
+		if test -f "${modules_dir}/Modules/init/bash"
+		then
+			. "${modules_dir}/Modules/init/bash"
+		elif test -f '/etc/profile.d/modules.sh'
+		then
+			. /etc/profile.d/modules.sh
+		fi
+	fi
 }
 
 spack_load ()
