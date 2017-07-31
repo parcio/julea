@@ -31,6 +31,22 @@ out = 'build'
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
 
+def check_cfg_rpath (ctx, **kwargs):
+	r = ctx.check_cfg(**kwargs)
+
+	if ctx.options.debug:
+		rpath = 'RPATH_{0}'.format(kwargs['uselib_store'])
+		libpath = 'LIBPATH_{0}'.format(kwargs['uselib_store'])
+		ctx.env[rpath] = ctx.env[libpath]
+
+	return r
+
+def get_rpath (ctx):
+	if not ctx.env.JULEA_DEBUG:
+		return None
+
+	return ['{0}/lib'.format(os.path.abspath(out))]
+
 def get_bin (prefixes, bin):
 	env = os.getenv('PATH')
 
@@ -77,6 +93,8 @@ def configure (ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
 
+	ctx.env.JULEA_DEBUG = ctx.options.debug
+
 	ctx.env.CFLAGS += ['-std=c11']
 	ctx.env.CFLAGS += ['-fdiagnostics-color']
 	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
@@ -99,14 +117,16 @@ def configure (ctx):
 	)
 
 	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
-		ctx.check_cfg(
+		check_cfg_rpath(
+			ctx,
 			package = '{0}-2.0'.format(module),
 			args = ['--cflags', '--libs', '{0}-2.0 >= {1}'.format(module, glib_version)],
 			uselib_store = module.upper(),
 			pkg_config_path = get_pkg_config_path(ctx.options.glib)
 		)
 
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		package = 'libbson-1.0',
 		args = ['--cflags', '--libs', 'libbson-1.0 >= 1.6.0'],
 		uselib_store = 'LIBBSON',
@@ -114,7 +134,8 @@ def configure (ctx):
 	)
 
 	ctx.env.JULEA_LIBMONGOC = \
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		package = 'libmongoc-1.0',
 		args = ['--cflags', '--libs', 'libmongoc-1.0 >= 1.6.0'],
 		uselib_store = 'LIBMONGOC',
@@ -123,7 +144,8 @@ def configure (ctx):
 	)
 
 	ctx.env.JULEA_FUSE = \
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		package = 'fuse',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'FUSE',
@@ -144,7 +166,8 @@ def configure (ctx):
 		)
 
 	ctx.env.JULEA_LEVELDB = \
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		package = 'leveldb',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'LEVELDB',
@@ -153,7 +176,8 @@ def configure (ctx):
 	)
 
 	ctx.env.JULEA_LMDB = \
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		package = 'lmdb',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'LMDB',
@@ -162,7 +186,8 @@ def configure (ctx):
 	)
 
 	"""
-	ctx.check_cfg(
+	check_cfg_rpath(
+		ctx,
 		path = get_bin(ctx.options.otf, 'otfconfig'),
 		package = '',
 		args = ['--includes', '--libs'],
@@ -295,6 +320,7 @@ def build (ctx):
 			use = use_julea_lib + ['lib/julea'] + use_extra,
 			includes = ['include'],
 			defines = ['J_ENABLE_INTERNAL', 'JULEA_{0}_COMPILATION'.format(client.upper())],
+			rpath = get_rpath(ctx),
 			install_path = '${LIBDIR}'
 		)
 
@@ -304,6 +330,7 @@ def build (ctx):
 		target = 'test/julea-test',
 		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'test'],
+		rpath = get_rpath(ctx),
 		install_path = None
 	)
 
@@ -313,6 +340,7 @@ def build (ctx):
 		target = 'benchmark/julea-benchmark',
 		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
 		includes = ['include', 'benchmark'],
+		rpath = get_rpath(ctx),
 		install_path = None
 	)
 
@@ -322,6 +350,7 @@ def build (ctx):
 		target = 'server/julea-server',
 		use = use_julea_core + ['lib/julea', 'GIO', 'GMODULE', 'GOBJECT', 'GTHREAD'],
 		includes = ['include'],
+		rpath = get_rpath(ctx),
 		install_path = '${BINDIR}'
 	)
 
@@ -342,6 +371,7 @@ def build (ctx):
 			target = 'backend/client/{0}'.format(backend),
 			use = use_julea_backend + ['lib/julea'] + use_extra,
 			includes = ['include'],
+			rpath = get_rpath(ctx),
 			install_path = '${LIBDIR}/julea/backend/client'
 		)
 
@@ -373,6 +403,7 @@ def build (ctx):
 			use = use_julea_backend + ['lib/julea'] + use_extra,
 			includes = ['include'],
 			cflags = cflags,
+			rpath = get_rpath(ctx),
 			install_path = '${LIBDIR}/julea/backend/server'
 		)
 
@@ -383,6 +414,7 @@ def build (ctx):
 		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
 		includes = ['include'],
 		defines = ['J_ENABLE_INTERNAL'],
+		rpath = get_rpath(ctx),
 		install_path = '${BINDIR}'
 	)
 
@@ -393,6 +425,7 @@ def build (ctx):
 			target = 'tools/julea-{0}'.format(tool),
 			use = use_julea_core + ['lib/julea', 'GIO', 'GOBJECT'],
 			includes = ['include'],
+			rpath = get_rpath(ctx),
 			install_path = '${BINDIR}'
 		)
 
@@ -403,6 +436,7 @@ def build (ctx):
 			target = 'fuse/julea-fuse',
 			use = use_julea_core + ['lib/julea', 'lib/julea-kv', 'lib/julea-object', 'FUSE'],
 			includes = ['include'],
+			rpath = get_rpath(ctx),
 			install_path = '${BINDIR}'
 		)
 
