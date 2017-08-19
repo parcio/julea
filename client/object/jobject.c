@@ -230,7 +230,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -316,7 +316,7 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		data_connection = j_connection_pool_pop_data(index);
 		j_message_send(message, data_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -601,7 +601,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		data_connection = j_connection_pool_pop_data(object->index);
 		j_message_send(message, data_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 			guint64 nbytes;

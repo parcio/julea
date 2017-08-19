@@ -51,9 +51,10 @@ typedef enum JMessageType JMessageType;
 
 enum JMessageFlags
 {
-	J_MESSAGE_REPLY              = 1 << 0,
-	J_MESSAGE_SAFETY_NETWORK     = 1 << 1,
-	J_MESSAGE_SAFETY_STORAGE     = 1 << 2,
+	J_MESSAGE_FLAGS_NONE           = 0,
+	J_MESSAGE_FLAGS_REPLY          = 1 << 0,
+	J_MESSAGE_FLAGS_SAFETY_NETWORK = 1 << 1,
+	J_MESSAGE_FLAGS_SAFETY_STORAGE = 1 << 2,
 };
 
 typedef enum JMessageFlags JMessageFlags;

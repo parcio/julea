@@ -221,7 +221,7 @@ j_distributed_object_create_background_operation (gpointer data)
 
 	j_message_send(background_data->message, data_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -262,7 +262,7 @@ j_distributed_object_delete_background_operation (gpointer data)
 
 	j_message_send(background_data->message, data_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -384,7 +384,7 @@ j_distributed_object_write_background_operation (gpointer data)
 	data_connection = j_connection_pool_pop_data(background_data->index);
 	j_message_send(background_data->message, data_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_SAFETY_NETWORK)
+	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 	{
 		g_autoptr(JListIterator) it = NULL;
 		g_autoptr(JMessage) reply = NULL;

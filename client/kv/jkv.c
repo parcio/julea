@@ -211,7 +211,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -305,7 +305,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		meta_connection = j_connection_pool_pop_meta(index);
 		j_message_send(message, meta_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_SAFETY_NETWORK)
+		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 

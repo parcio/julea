@@ -321,7 +321,7 @@ j_message_new (JMessageType op_type, gsize length)
 
 	j_message_header(message)->length = GUINT32_TO_LE(0);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
-	j_message_header(message)->flags = GUINT32_TO_LE(0);
+	j_message_header(message)->flags = GUINT32_TO_LE(J_MESSAGE_FLAGS_NONE);
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(message)->op_count = GUINT32_TO_LE(0);
 
@@ -360,7 +360,7 @@ j_message_new_reply (JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
-	op_flags = j_message_get_flags(message) | J_MESSAGE_REPLY;
+	op_flags = j_message_get_flags(message) | J_MESSAGE_FLAGS_REPLY;
 
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
@@ -482,7 +482,7 @@ j_message_get_type (JMessage const* message)
 JMessageFlags
 j_message_get_flags (JMessage const* message)
 {
-	JMessageType op_flags;
+	JMessageFlags op_flags;
 
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
@@ -924,7 +924,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if (j_message_get_flags(message) & J_MESSAGE_REPLY)
+	if (j_message_get_flags(message) & J_MESSAGE_FLAGS_REPLY)
 	{
 		g_return_val_if_fail(message->original_message != NULL, FALSE);
 	}
@@ -948,7 +948,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	if (j_message_get_flags(message) & J_MESSAGE_REPLY)
+	if (j_message_get_flags(message) & J_MESSAGE_FLAGS_REPLY)
 	{
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
@@ -1122,11 +1122,11 @@ j_message_force_safety (JMessage* message, gint safety)
 
 	if (safety == J_SEMANTICS_SAFETY_NETWORK)
 	{
-		op_flags |= J_MESSAGE_SAFETY_NETWORK;
+		op_flags |= J_MESSAGE_FLAGS_SAFETY_NETWORK;
 	}
 	else if (safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
-		op_flags |= J_MESSAGE_SAFETY_NETWORK | J_MESSAGE_SAFETY_STORAGE;
+		op_flags |= J_MESSAGE_FLAGS_SAFETY_NETWORK | J_MESSAGE_FLAGS_SAFETY_STORAGE;
 	}
 
 	j_message_header(message)->flags = GUINT32_TO_LE(op_flags);

@@ -61,26 +61,22 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 
 	safety = J_SEMANTICS_SAFETY_NONE;
 
-	if (flags == 0)
-	{
-		goto end;
-	}
-
 	switch (flags)
 	{
-		case J_MESSAGE_SAFETY_STORAGE:
+		case J_MESSAGE_FLAGS_NONE:
+			break;
+		case J_MESSAGE_FLAGS_SAFETY_STORAGE:
 			safety = J_SEMANTICS_SAFETY_STORAGE;
 			break;
-		case J_MESSAGE_SAFETY_NETWORK:
+		case J_MESSAGE_FLAGS_SAFETY_NETWORK:
 			safety = J_SEMANTICS_SAFETY_NETWORK;
 			break;
-		case J_MESSAGE_REPLY:
+		case J_MESSAGE_FLAGS_REPLY:
 		default:
 			g_warn_if_reached();
 			break;
 	}
 
-end:
 	return safety;
 }
 
@@ -130,7 +126,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
-					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -145,7 +141,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
-							if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
+							if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
 							{
 								j_backend_data_sync(jd_data_backend, object);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -171,7 +167,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
-					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -267,7 +263,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					guint64 merge_length = 0;
 					guint64 merge_offset = 0;
 
-					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -334,7 +330,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
-					if (type_modifier & J_MESSAGE_SAFETY_STORAGE)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
 					{
 						j_backend_data_sync(jd_data_backend, object);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -460,7 +456,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
-					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -500,7 +496,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
-					if (type_modifier & J_MESSAGE_SAFETY_NETWORK)
+					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
 						reply = j_message_new_reply(message);
 					}
