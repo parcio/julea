@@ -61,6 +61,11 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 
 	safety = J_SEMANTICS_SAFETY_NONE;
 
+	if (flags == 0)
+	{
+		goto end;
+	}
+
 	switch (flags)
 	{
 		case J_MESSAGE_SAFETY_STORAGE:
@@ -75,6 +80,7 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 			break;
 	}
 
+end:
 	return safety;
 }
 
