@@ -30,7 +30,7 @@ spack_init ()
 	local spack_dir
 	local spack_env
 
-	spack_dir="$(get_directory "${SELF_DIR}/dependencies/spack")"
+	spack_dir="$(get_directory "${SELF_DIR}/dependencies")"
 	spack_env="${spack_dir}/share/spack/setup-env.sh"
 
 	test -n "${spack_dir}" || return 1

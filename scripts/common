@@ -44,14 +44,6 @@ set_path ()
 	# FIXME glib, otf
 	PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/scripts:${PATH}"
 
-	for dep in libmongoc
-	do
-		if test -h "${root_dir}/dependencies/${dep}"
-		then
-			PATH="${root_dir}/dependencies/${dep}/bin:${PATH}"
-		fi
-	done
-
 	export PATH
 }
 
@@ -66,14 +58,6 @@ set_library_path ()
 	# FIXME glib, otf
 	LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
 
-	for dep in leveldb libbson libmongoc
-	do
-		if test -h "${root_dir}/dependencies/${dep}"
-		then
-			LD_LIBRARY_PATH="${root_dir}/dependencies/${dep}/lib:${LD_LIBRARY_PATH}"
-		fi
-	done
-
 	export LD_LIBRARY_PATH
 }
 
@@ -87,14 +71,6 @@ set_pkg_config_path ()
 
 	# FIXME glib, otf
 	PKG_CONFIG_PATH="${build_dir}/pkg-config:${PKG_CONFIG_PATH}"
-
-	for dep in leveldb libbson libmongoc
-	do
-		if test -h "${root_dir}/dependencies/${dep}"
-		then
-			PKG_CONFIG_PATH="${root_dir}/dependencies/${dep}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-		fi
-	done
 
 	export PKG_CONFIG_PATH
 }

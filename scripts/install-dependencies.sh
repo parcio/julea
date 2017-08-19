@@ -26,19 +26,16 @@ SELF_BASE="${SELF_PATH##*/}"
 
 spack_clone ()
 {
-	local dependencies_dir
+	local spack_dir
 
-	dependencies_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
+	spack_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
 
-	mkdir --parents "${dependencies_dir}"
-	cd "${dependencies_dir}"
-
-	if test ! -d spack
+	if test ! -d "${spack_dir}"
 	then
-		git clone https://github.com/LLNL/spack.git
+		git clone https://github.com/LLNL/spack.git "${spack_dir}"
 	fi
 
-	cd spack
+	cd "${spack_dir}"
 
 	git pull
 }
@@ -48,7 +45,7 @@ spack_install ()
 	local spack_dir
 	local spack_pkg
 
-	spack_dir="$(get_directory "${SELF_DIR}/../dependencies/spack")"
+	spack_dir="$(get_directory "${SELF_DIR}/../dependencies")"
 	spack_pkg="$1"
 
 	test -n "${spack_dir}" || return 1
