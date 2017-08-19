@@ -215,8 +215,6 @@ static
 gboolean
 backend_iterate (gpointer data, bson_t* result_out)
 {
-	gboolean ret = FALSE;
-
 	JLevelDBIterator* iterator = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
@@ -242,17 +240,15 @@ backend_iterate (gpointer data, bson_t* result_out)
 		// FIXME might invalidate value
 		leveldb_iter_next(iterator->iterator);
 
-		ret = TRUE;
-	}
-	else
-	{
-		g_free(iterator->prefix);
-		leveldb_iter_destroy(iterator->iterator);
-		g_slice_free(JLevelDBIterator, iterator);
+		return TRUE;
 	}
 
 out:
-	return ret;
+	g_free(iterator->prefix);
+	leveldb_iter_destroy(iterator->iterator);
+	g_slice_free(JLevelDBIterator, iterator);
+
+	return FALSE;
 }
 
 static
