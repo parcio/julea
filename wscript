@@ -88,6 +88,7 @@ def options (ctx):
 	ctx.add_option('--libbson', action='store', default=None, help='libbson prefix')
 	ctx.add_option('--libmongoc', action='store', default=None, help='libmongoc driver prefix')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
+	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
 
 def configure (ctx):
 	ctx.load('compiler_c')
@@ -196,6 +197,16 @@ def configure (ctx):
 		mandatory = False
 	)
 	"""
+
+	ctx.env.JULEA_SQLITE = \
+	check_cfg_rpath(
+		ctx,
+		package = 'sqlite3',
+		args = ['--cflags', '--libs'],
+		uselib_store = 'SQLITE',
+		pkg_config_path = get_pkg_config_path(ctx.options.sqlite),
+		mandatory = False
+	)
 
 	# stat.st_mtim.tv_nsec
 	ctx.check_cc(
@@ -383,6 +394,9 @@ def build (ctx):
 	if ctx.env.JULEA_LMDB:
 		backends_server.append('lmdb')
 
+	if ctx.env.JULEA_SQLITE:
+		backends_server.append('sqlite')
+
 	# Server backends
 	for backend in backends_server:
 		use_extra = []
@@ -396,6 +410,8 @@ def build (ctx):
 			cflags = ['-Wno-strict-prototypes']
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
+		elif backend == 'sqlite':
+			use_extra = ['SQLITE']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],

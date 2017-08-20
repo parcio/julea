@@ -102,5 +102,6 @@ install_dependency libbson-1.0 libbson
 install_dependency leveldb leveldb
 install_dependency lmdb lmdb
 install_dependency libmongoc-1.0 libmongoc
+install_dependency sqlite3 sqlite
 
 #install_dependency_bin otfconfig otf

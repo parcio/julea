@@ -66,7 +66,7 @@ spack_load ()
 
 if spack_init
 then
-	for pkg in glib libbson leveldb lmdb libmongoc otf
+	for pkg in glib libbson leveldb lmdb libmongoc otf sqlite
 	do
 		spack_load "${pkg}"
 	done
