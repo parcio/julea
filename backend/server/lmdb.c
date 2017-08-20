@@ -280,6 +280,8 @@ backend_init (gchar const* path)
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
+	g_mkdir_with_parents(path, 0700);
+
 	if (mdb_env_create(&backend_env) == 0)
 	{
 		if (mdb_env_open(backend_env, path, 0, 0600) != 0)

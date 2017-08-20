@@ -41,41 +41,45 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
-	JSQLiteBatch* batch;
+	JSQLiteBatch* batch = NULL;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	batch = g_slice_new(JSQLiteBatch);
+	if (sqlite3_exec(backend_db, "BEGIN TRANSACTION;", NULL, NULL, NULL) == SQLITE_OK)
+	{
+		batch = g_slice_new(JSQLiteBatch);
 
-	batch->namespace = g_strdup(namespace);
-	batch->safety = safety;
+		batch->namespace = g_strdup(namespace);
+		batch->safety = safety;
+	}
+
 	*data = batch;
 
-	sqlite3_exec(backend_db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
-
-	return TRUE;
+	return (batch != NULL);
 }
 
 static
 gboolean
 backend_batch_execute (gpointer data)
 {
+	gboolean ret = FALSE;
+
 	JSQLiteBatch* batch = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	if (batch->safety == J_SEMANTICS_SAFETY_STORAGE)
-	{
-	}
+	// FIXME do something with batch->safety
 
-	sqlite3_exec(backend_db, "COMMIT;", NULL, NULL, NULL);
+	if (sqlite3_exec(backend_db, "COMMIT;", NULL, NULL, NULL) == SQLITE_OK)
+	{
+		ret = TRUE;
+	}
 
 	g_free(batch->namespace);
 	g_slice_free(JSQLiteBatch, batch);
 
-	// FIXME
-	return TRUE;
+	return ret;
 }
 
 static
@@ -169,8 +173,10 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	sqlite3_prepare_v2(backend_db, "SELECT key, value FROM julea WHERE namespace = ?;", -1, &stmt, NULL);
-	sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
+	if (sqlite3_prepare_v2(backend_db, "SELECT key, value FROM julea WHERE namespace = ?;", -1, &stmt, NULL) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
+	}
 
 	*data = stmt;
 
@@ -187,9 +193,11 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	sqlite3_prepare_v2(backend_db, "SELECT key, value FROM julea WHERE namespace = ? AND key LIKE ? || '%';", -1, &stmt, NULL);
-	sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
-	sqlite3_bind_text(stmt, 2, prefix, -1, NULL);
+	if (sqlite3_prepare_v2(backend_db, "SELECT key, value FROM julea WHERE namespace = ? AND key LIKE ? || '%';", -1, &stmt, NULL) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
+		sqlite3_bind_text(stmt, 2, prefix, -1, NULL);
+	}
 
 	*data = stmt;
 
@@ -201,14 +209,11 @@ gboolean
 backend_iterate (gpointer data, bson_t* result_out)
 {
 	sqlite3_stmt* stmt = data;
-	gint ret;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
 
-	ret = sqlite3_step(stmt);
-
-	if (ret == SQLITE_ROW)
+	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		guchar const* key;
 		gconstpointer value;
@@ -234,26 +239,34 @@ static
 gboolean
 backend_init (gchar const* path)
 {
-	g_autofree gchar* path_db;
+	g_autofree gchar* dirname = NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	path_db = g_strdup_printf("%s.db", path);
+	dirname = g_path_get_dirname(path);
+	g_mkdir_with_parents(dirname, 0700);
 
-	if (sqlite3_open(path_db, &backend_db) != SQLITE_OK)
+	if (sqlite3_open(path, &backend_db) != SQLITE_OK)
 	{
-		sqlite3_close(backend_db);
-		backend_db = NULL;
+		goto error;
 	}
 
 	if (sqlite3_exec(backend_db, "CREATE TABLE IF NOT EXISTS julea (namespace TEXT NOT NULL, key TEXT NOT NULL, value BLOB NOT NULL);", NULL, NULL, NULL) != SQLITE_OK)
 	{
-		// FIXME
+		goto error;
 	}
 
-	sqlite3_exec(backend_db, "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);", NULL, NULL, NULL);
+	if (sqlite3_exec(backend_db, "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);", NULL, NULL, NULL) != SQLITE_OK)
+	{
+		goto error;
+	}
 
 	return (backend_db != NULL);
+
+error:
+	sqlite3_close(backend_db);
+
+	return FALSE;
 }
 
 static

@@ -256,8 +256,12 @@ gboolean
 backend_init (gchar const* path)
 {
 	leveldb_options_t* options;
+	g_autofree gchar* dirname = NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
+
+	dirname = g_path_get_dirname(path);
+	g_mkdir_with_parents(dirname, 0700);
 
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);

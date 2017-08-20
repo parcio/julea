@@ -787,9 +787,6 @@ main (int argc, char** argv)
 	data_path_port = g_strdup_printf("%s/%d", data_path, opt_port);
 	meta_path_port = g_strdup_printf("%s/%d", meta_path, opt_port);
 
-	g_mkdir_with_parents(data_path_port, 0700);
-	g_mkdir_with_parents(meta_path_port, 0700);
-
 	data_path = data_path_port;
 	meta_path = meta_path_port;
 #endif
