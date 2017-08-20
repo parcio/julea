@@ -246,11 +246,12 @@ backend_init (gchar const* path)
 		backend_db = NULL;
 	}
 
-	// FIXME index
 	if (sqlite3_exec(backend_db, "CREATE TABLE IF NOT EXISTS julea (namespace TEXT NOT NULL, key TEXT NOT NULL, value BLOB NOT NULL);", NULL, NULL, NULL) != SQLITE_OK)
 	{
 		// FIXME
 	}
+
+	sqlite3_exec(backend_db, "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);", NULL, NULL, NULL);
 
 	return (backend_db != NULL);
 }
