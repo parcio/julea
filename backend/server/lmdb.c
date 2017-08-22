@@ -53,19 +53,18 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
-	JLMDBBatch* batch;
+	JLMDBBatch* batch = NULL;
+	MDB_txn* txn;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	batch = g_slice_new(JLMDBBatch);
-
-	batch->namespace = g_strdup(namespace);
-	batch->safety = safety;
-
-	if (mdb_txn_begin(backend_env, NULL, 0, &(batch->txn)) != 0)
+	if (mdb_txn_begin(backend_env, NULL, 0, &txn) == 0)
 	{
-		// FIXME
+		batch = g_slice_new(JLMDBBatch);
+		batch->txn = txn;
+		batch->namespace = g_strdup(namespace);
+		batch->safety = safety;
 	}
 
 	*data = batch;
@@ -77,24 +76,25 @@ static
 gboolean
 backend_batch_execute (gpointer data)
 {
+	gboolean ret = FALSE;
+
 	JLMDBBatch* batch = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	if (batch->safety == J_SEMANTICS_SAFETY_STORAGE)
+	// FIXME do something with batch->safety
+
+	if (mdb_txn_commit(batch->txn) == 0)
 	{
+		ret = TRUE;
 	}
 
-	if (mdb_txn_commit(batch->txn) != 0)
-	{
-		// FIXME
-	}
+	// FIXME free txn
 
 	g_free(batch->namespace);
 	g_slice_free(JLMDBBatch, batch);
 
-	// FIXME
-	return TRUE;
+	return ret;
 }
 
 static
@@ -117,10 +117,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	m_value.mv_size = value->len;
 	m_value.mv_data = (gchar*)bson_get_data(value);
 
-	mdb_put(batch->txn, backend_dbi, &m_key, &m_value, 0);
-
-	// FIXME
-	return TRUE;
+	return (mdb_put(batch->txn, backend_dbi, &m_key, &m_value, 0) == 0);
 }
 
 static
@@ -139,49 +136,54 @@ backend_delete (gpointer data, gchar const* key)
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 
-	mdb_del(batch->txn, backend_dbi, &m_key, NULL);
-
-	// FIXME
-	return TRUE;
+	return (mdb_del(batch->txn, backend_dbi, &m_key, NULL) == 0);
 }
 
 static
 gboolean
 backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 {
+	gboolean ret = FALSE;
+
 	MDB_txn* txn;
 	MDB_val m_key;
 	MDB_val m_value;
 	g_autofree gchar* nskey = NULL;
-	gint ret;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(result_out != NULL, FALSE);
 
-	// FIXME
-	mdb_txn_begin(backend_env, NULL, 0, &txn);
+	if (mdb_txn_begin(backend_env, NULL, 0, &txn) != 0)
+	{
+		goto error;
+	}
 
 	nskey = g_strdup_printf("%s:%s", namespace, key);
 
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 
-	ret = mdb_get(txn, backend_dbi, &m_key, &m_value);
-
-	if (ret == 0)
+	if (mdb_get(txn, backend_dbi, &m_key, &m_value) == 0)
 	{
 		bson_t tmp[1];
 
 		// FIXME check whether copies can be avoided
 		bson_init_static(tmp, m_value.mv_data, m_value.mv_size);
 		bson_copy_to(tmp, result_out);
+
+		ret = TRUE;
 	}
 
-	// FIXME
-	mdb_txn_commit(txn);
+	if (mdb_txn_commit(txn) != 0)
+	{
+		goto error;
+	}
 
-	return (ret == 0);
+	return ret;
+
+error:
+	return FALSE;
 }
 
 static
@@ -286,29 +288,31 @@ backend_init (gchar const* path)
 	{
 		if (mdb_env_open(backend_env, path, 0, 0600) != 0)
 		{
-			mdb_env_close(backend_env);
-			backend_env = NULL;
-			goto end;
+			goto error;
 		}
 
 		if (mdb_txn_begin(backend_env, NULL, 0, &txn) != 0)
 		{
-			// FIXME
+			goto error;
 		}
 
 		if (mdb_dbi_open(txn, NULL, 0, &backend_dbi) != 0)
 		{
-			// FIXME
+			goto error;
 		}
 
 		if (mdb_txn_commit(txn) != 0)
 		{
-			// FIXME
+			goto error;
 		}
 	}
 
-end:
 	return (backend_env != NULL);
+
+error:
+	mdb_env_close(backend_env);
+
+	return FALSE;
 }
 
 static
