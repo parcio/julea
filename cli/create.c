@@ -28,6 +28,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 	gboolean ret = TRUE;
 	g_autoptr(JObjectURI) duri = NULL;
 	g_autoptr(JObjectURI) ouri = NULL;
+	g_autoptr(JKVURI) kuri = NULL;
 	g_autoptr(JURI) uri = NULL;
 	GError* error = NULL;
 
@@ -59,6 +60,24 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_distributed_object_create(j_object_uri_get_distributed_object(duri), batch);
+		j_batch_execute(batch);
+
+		goto end;
+	}
+
+	kuri = j_kv_uri_new(arguments[0], J_KV_URI_SCHEME_KV);
+
+	if (kuri != NULL)
+	{
+		g_autoptr(JBatch) batch = NULL;
+		bson_t* empty;
+
+		// FIXME
+		empty = g_slice_new(bson_t);
+		bson_init(empty);
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		j_kv_put(j_kv_uri_get_kv(kuri), empty, batch);
 		j_batch_execute(batch);
 
 		goto end;

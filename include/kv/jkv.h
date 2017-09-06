@@ -33,11 +33,11 @@ struct JKV;
 
 typedef struct JKV JKV;
 
-typedef void (*JKVGetFunc) (bson_t const*, gpointer);
-
 #include <bson.h>
 
 #include <julea.h>
+
+typedef void (*JKVGetFunc) (bson_t const*, gpointer);
 
 JKV* j_kv_new (gchar const*, gchar const*);
 JKV* j_kv_new_for_index (guint32, gchar const*, gchar const*);

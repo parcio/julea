@@ -18,6 +18,7 @@
 
 #include <julea.h>
 #include <julea-object.h>
+#include <julea-kv.h>
 #include <julea-item.h>
 
 #include <glib.h>

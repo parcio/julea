@@ -20,11 +20,50 @@
  * \file
  **/
 
-#ifndef JULEA_KV_H
-#define JULEA_KV_H
+#ifndef JULEA_KV_KV_URI_H
+#define JULEA_KV_KV_URI_H
+
+#if !defined(JULEA_KV_H) && !defined(JULEA_KV_COMPILATION)
+#error "Only <julea-kv.h> can be included directly."
+#endif
+
+/**
+ * \addtogroup JKVURI
+ *
+ * @{
+ **/
+
+enum JKVURIScheme
+{
+	// kv://index/namespace
+	J_KV_URI_SCHEME_NAMESPACE,
+	// kv://index/namespace/key
+	J_KV_URI_SCHEME_KV
+};
+
+typedef enum JKVURIScheme JKVURIScheme;
+
+struct JKVURI;
+
+typedef struct JKVURI JKVURI;
+
+#include <glib.h>
 
 #include <kv/jkv.h>
-#include <kv/jkv-iterator.h>
-#include <kv/jkv-uri.h>
+
+JKVURI* j_kv_uri_new (gchar const*, JKVURIScheme);
+void j_kv_uri_free (JKVURI*);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVURI, j_kv_uri_free)
+
+guint32 j_kv_uri_get_index (JKVURI*);
+gchar const* j_kv_uri_get_namespace (JKVURI*);
+gchar const* j_kv_uri_get_name (JKVURI*);
+
+JKV* j_kv_uri_get_kv (JKVURI*);
+
+/**
+ * @}
+ **/
 
 #endif

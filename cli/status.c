@@ -29,6 +29,7 @@ j_cmd_status (gchar const** arguments)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JObjectURI) duri = NULL;
 	g_autoptr(JObjectURI) ouri = NULL;
+	g_autoptr(JKVURI) kuri = NULL;
 	g_autoptr(JURI) uri = NULL;
 	GError* error = NULL;
 
@@ -83,6 +84,27 @@ j_cmd_status (gchar const** arguments)
 
 		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
 		g_print("Size:              %s\n", size_string);
+
+		goto end;
+	}
+
+	kuri = j_kv_uri_new(arguments[0], J_KV_URI_SCHEME_KV);
+
+	if (kuri != NULL)
+	{
+		bson_t value[1];
+		gchar* json;
+
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		j_kv_get(j_kv_uri_get_kv(kuri), value, batch);
+		j_batch_execute(batch);
+
+		json = bson_as_json(value, NULL);
+		bson_destroy(value);
+
+		g_print("JSON: %s\n", json);
+
+		bson_free(json);
 
 		goto end;
 	}

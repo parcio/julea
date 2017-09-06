@@ -53,6 +53,7 @@ j_cmd_usage (void)
 	g_print("URIs:\n");
 	g_print("  object://index/namespace[/name]\n");
 	g_print("  dobject://namespace/name\n");
+	g_print("  kv://index/namespace[/key]\n");
 	g_print("  julea://collection[/item]\n");
 	g_print("  file://path\n");
 	g_print("\n");
