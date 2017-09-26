@@ -37,11 +37,9 @@ spack_init ()
 	test -d "${spack_dir}" || return 1
 	test -f "${spack_env}" || return 1
 
-	. "${spack_env}"
-
 	if ! command -v module > /dev/null 2>&1
 	then
-		modules_dir="$(spack location --install-dir environment-modules)"
+		modules_dir="$("${spack_dir}/bin/spack" location --install-dir environment-modules)"
 
 		if test -f "${modules_dir}/Modules/init/bash"
 		then
@@ -51,6 +49,8 @@ spack_init ()
 			. /etc/profile.d/modules.sh
 		fi
 	fi
+
+	. "${spack_env}"
 }
 
 spack_load ()
