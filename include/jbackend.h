@@ -33,8 +33,8 @@
 
 enum JBackendType
 {
-	J_BACKEND_TYPE_DATA,
-	J_BACKEND_TYPE_META
+	J_BACKEND_TYPE_OBJECT,
+	J_BACKEND_TYPE_KV
 };
 
 typedef enum JBackendType JBackendType;
@@ -62,7 +62,7 @@ struct JBackend
 			gboolean (*read) (gpointer, gpointer, guint64, guint64, guint64*);
 			gboolean (*write) (gpointer, gconstpointer, guint64, guint64, guint64*);
 		}
-		data;
+		object;
 
 		struct
 		{
@@ -81,7 +81,7 @@ struct JBackend
 			gboolean (*get_by_prefix) (gchar const*, gchar const*, gpointer*);
 			gboolean (*iterate) (gpointer, bson_t*);
 		}
-		meta;
+		kv;
 	};
 };
 
@@ -94,34 +94,34 @@ JBackend* backend_info (JBackendType);
 gboolean j_backend_load_client (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 gboolean j_backend_load_server (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 
-gboolean j_backend_data_init (JBackend*, gchar const*);
-void j_backend_data_fini (JBackend*);
+gboolean j_backend_object_init (JBackend*, gchar const*);
+void j_backend_object_fini (JBackend*);
 
-gboolean j_backend_data_create (JBackend*, gchar const*, gchar const*, gpointer*);
-gboolean j_backend_data_open (JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_object_create (JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_object_open (JBackend*, gchar const*, gchar const*, gpointer*);
 
-gboolean j_backend_data_delete (JBackend*, gpointer);
-gboolean j_backend_data_close (JBackend*, gpointer);
+gboolean j_backend_object_delete (JBackend*, gpointer);
+gboolean j_backend_object_close (JBackend*, gpointer);
 
-gboolean j_backend_data_status (JBackend*, gpointer, gint64*, guint64*);
-gboolean j_backend_data_sync (JBackend*, gpointer);
+gboolean j_backend_object_status (JBackend*, gpointer, gint64*, guint64*);
+gboolean j_backend_object_sync (JBackend*, gpointer);
 
-gboolean j_backend_data_read (JBackend*, gpointer, gpointer, guint64, guint64, guint64*);
-gboolean j_backend_data_write (JBackend*, gpointer, gconstpointer, guint64, guint64, guint64*);
+gboolean j_backend_object_read (JBackend*, gpointer, gpointer, guint64, guint64, guint64*);
+gboolean j_backend_object_write (JBackend*, gpointer, gconstpointer, guint64, guint64, guint64*);
 
-gboolean j_backend_meta_init (JBackend*, gchar const*);
-void j_backend_meta_fini (JBackend*);
+gboolean j_backend_kv_init (JBackend*, gchar const*);
+void j_backend_kv_fini (JBackend*);
 
-gboolean j_backend_meta_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
-gboolean j_backend_meta_batch_execute (JBackend*, gpointer);
+gboolean j_backend_kv_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
+gboolean j_backend_kv_batch_execute (JBackend*, gpointer);
 
-gboolean j_backend_meta_put (JBackend*, gpointer, gchar const*, bson_t const*);
-gboolean j_backend_meta_delete (JBackend*, gpointer, gchar const*);
+gboolean j_backend_kv_put (JBackend*, gpointer, gchar const*, bson_t const*);
+gboolean j_backend_kv_delete (JBackend*, gpointer, gchar const*);
 
-gboolean j_backend_meta_get (JBackend*, gchar const*, gchar const*, bson_t*);
+gboolean j_backend_kv_get (JBackend*, gchar const*, gchar const*, bson_t*);
 
-gboolean j_backend_meta_get_all (JBackend*, gchar const*, gpointer*);
-gboolean j_backend_meta_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
-gboolean j_backend_meta_iterate (JBackend*, gpointer, bson_t*);
+gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
+gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_kv_iterate (JBackend*, gpointer, bson_t*);
 
 #endif

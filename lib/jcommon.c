@@ -56,11 +56,11 @@ struct JCommon
 	 */
 	JConfiguration* configuration;
 
-	JBackend* data_backend;
-	JBackend* meta_backend;
+	JBackend* object_backend;
+	JBackend* kv_backend;
 
-	GModule* data_module;
-	GModule* meta_module;
+	GModule* object_module;
+	GModule* kv_module;
 };
 
 static JCommon* j_common = NULL;
@@ -132,12 +132,12 @@ j_init (void)
 {
 	JCommon* common;
 	g_autofree gchar* basename = NULL;
-	gchar const* data_backend;
-	gchar const* data_component;
-	gchar const* data_path;
-	gchar const* meta_backend;
-	gchar const* meta_component;
-	gchar const* meta_path;
+	gchar const* object_backend;
+	gchar const* object_component;
+	gchar const* object_path;
+	gchar const* kv_backend;
+	gchar const* kv_component;
+	gchar const* kv_path;
 
 	g_return_if_fail(!j_is_initialized());
 
@@ -156,28 +156,28 @@ j_init (void)
 		goto error;
 	}
 
-	data_backend = j_configuration_get_data_backend(common->configuration);
-	data_component = j_configuration_get_data_component(common->configuration);
-	data_path = j_configuration_get_data_path(common->configuration);
+	object_backend = j_configuration_get_object_backend(common->configuration);
+	object_component = j_configuration_get_object_component(common->configuration);
+	object_path = j_configuration_get_object_path(common->configuration);
 
-	meta_backend = j_configuration_get_metadata_backend(common->configuration);
-	meta_component = j_configuration_get_metadata_component(common->configuration);
-	meta_path = j_configuration_get_metadata_path(common->configuration);
+	kv_backend = j_configuration_get_kv_backend(common->configuration);
+	kv_component = j_configuration_get_kv_component(common->configuration);
+	kv_path = j_configuration_get_kv_path(common->configuration);
 
-	if (j_backend_load_client(data_backend, data_component, J_BACKEND_TYPE_DATA, &(common->data_module), &(common->data_backend)))
+	if (j_backend_load_client(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &(common->object_module), &(common->object_backend)))
 	{
-		if (common->data_backend == NULL || !j_backend_data_init(common->data_backend, data_path))
+		if (common->object_backend == NULL || !j_backend_object_init(common->object_backend, object_path))
 		{
-			J_CRITICAL("Could not initialize data backend %s.\n", data_backend);
+			J_CRITICAL("Could not initialize object backend %s.\n", object_backend);
 			goto error;
 		}
 	}
 
-	if (j_backend_load_client(meta_backend, meta_component, J_BACKEND_TYPE_META, &(common->meta_module), &(common->meta_backend)))
+	if (j_backend_load_client(kv_backend, kv_component, J_BACKEND_TYPE_KV, &(common->kv_module), &(common->kv_backend)))
 	{
-		if (common->meta_backend == NULL || !j_backend_meta_init(common->meta_backend, meta_path))
+		if (common->kv_backend == NULL || !j_backend_kv_init(common->kv_backend, kv_path))
 		{
-			J_CRITICAL("Could not initialize metadata backend %s.\n", meta_backend);
+			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
 			goto error;
 		}
 	}
@@ -229,24 +229,24 @@ j_fini (void)
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
 
-	if (common->meta_backend != NULL)
+	if (common->kv_backend != NULL)
 	{
-		j_backend_meta_fini(common->meta_backend);
+		j_backend_kv_fini(common->kv_backend);
 	}
 
-	if (common->data_backend != NULL)
+	if (common->object_backend != NULL)
 	{
-		j_backend_data_fini(common->data_backend);
+		j_backend_object_fini(common->object_backend);
 	}
 
-	if (common->meta_module)
+	if (common->kv_module)
 	{
-		g_module_close(common->meta_module);
+		g_module_close(common->kv_module);
 	}
 
-	if (common->data_module)
+	if (common->object_module)
 	{
-		g_module_close(common->data_module);
+		g_module_close(common->object_module);
 	}
 
 	j_configuration_unref(common->configuration);
@@ -291,7 +291,7 @@ j_configuration (void)
  * \return The data backend.
  */
 JBackend*
-j_data_backend (void)
+j_object_backend (void)
 {
 	JCommon* common;
 
@@ -299,7 +299,7 @@ j_data_backend (void)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	return common->data_backend;
+	return common->object_backend;
 }
 
 /**
@@ -312,7 +312,7 @@ j_data_backend (void)
  * \return The data backend.
  */
 JBackend*
-j_metadata_backend (void)
+j_kv_backend (void)
 {
 	JCommon* common;
 
@@ -320,7 +320,7 @@ j_metadata_backend (void)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	return common->meta_backend;
+	return common->kv_backend;
 }
 
 /**

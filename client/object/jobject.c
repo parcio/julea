@@ -159,7 +159,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
+	JBackend* object_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
 	gchar const* namespace;
@@ -183,9 +183,9 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	object_backend = j_object_backend();
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -195,7 +195,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		 * - The second operation is executed first and fails because the item does not exist.
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
-		message = j_message_new(J_MESSAGE_DATA_CREATE, namespace_len);
+		message = j_message_new(J_MESSAGE_OBJECT_CREATE, namespace_len);
 		j_message_set_safety(message, semantics);
 		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
@@ -205,12 +205,12 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	{
 		JObject* object = j_list_iterator_get(it);
 
-		if (data_backend != NULL)
+		if (object_backend != NULL)
 		{
 			gpointer object_handle;
 
-			ret = j_backend_data_create(data_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_data_close(data_backend, object_handle) && ret;
+			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
 		}
 		else
 		{
@@ -223,24 +223,24 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
-		GSocketConnection* data_connection;
+		GSocketConnection* object_connection;
 
-		data_connection = j_connection_pool_pop_data(index);
-		j_message_send(message, data_connection);
+		object_connection = j_connection_pool_pop_object(index);
+		j_message_send(message, object_connection);
 
 		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, object_connection);
 
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_object(index, object_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -254,7 +254,7 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
+	JBackend* object_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
 	gchar const* namespace;
@@ -278,11 +278,11 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	object_backend = j_object_backend();
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
-		message = j_message_new(J_MESSAGE_DATA_DELETE, namespace_len);
+		message = j_message_new(J_MESSAGE_OBJECT_DELETE, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
@@ -291,12 +291,12 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	{
 		JObject* object = j_list_iterator_get(it);
 
-		if (data_backend != NULL)
+		if (object_backend != NULL)
 		{
 			gpointer object_handle;
 
-			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_data_delete(data_backend, object_handle) && ret;
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_delete(object_backend, object_handle) && ret;
 		}
 		else
 		{
@@ -309,24 +309,24 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
-		GSocketConnection* data_connection;
+		GSocketConnection* object_connection;
 
-		data_connection = j_connection_pool_pop_data(index);
-		j_message_send(message, data_connection);
+		object_connection = j_connection_pool_pop_object(index);
+		j_message_send(message, object_connection);
 
 		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, object_connection);
 
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_object(index, object_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -340,7 +340,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 
-	JBackend* data_backend;
+	JBackend* object_backend;
 	JListIterator* it;
 	g_autoptr(JMessage) message = NULL;
 	JObject* object;
@@ -364,11 +364,11 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	object_backend = j_object_backend();
 
-	if (data_backend != NULL)
+	if (object_backend != NULL)
 	{
-		ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 	}
 	else
 	{
@@ -378,7 +378,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 		namespace_len = strlen(object->namespace) + 1;
 		name_len = strlen(object->name) + 1;
 
-		message = j_message_new(J_MESSAGE_DATA_READ, namespace_len + name_len);
+		message = j_message_new(J_MESSAGE_OBJECT_READ, namespace_len + name_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
 		j_message_append_n(message, object->name, name_len);
@@ -401,9 +401,9 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_READ);
 
-		if (data_backend != NULL)
+		if (object_backend != NULL)
 		{
-			ret = j_backend_data_read(data_backend, object_handle, data, length, offset, bytes_read) && ret;
+			ret = j_backend_object_read(object_backend, object_handle, data, length, offset, bytes_read) && ret;
 		}
 		else
 		{
@@ -417,19 +417,19 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 	j_list_iterator_free(it);
 
-	if (data_backend != NULL)
+	if (object_backend != NULL)
 	{
-		ret = j_backend_data_close(data_backend, object_handle) && ret;
+		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
 	else
 	{
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* data_connection;
+		GSocketConnection* object_connection;
 		guint32 operations_done;
 		guint32 operation_count;
 
-		data_connection = j_connection_pool_pop_data(object->index);
-		j_message_send(message, data_connection);
+		object_connection = j_connection_pool_pop_object(object->index);
+		j_message_send(message, object_connection);
 
 		reply = j_message_new_reply(message);
 
@@ -447,7 +447,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 		{
 			guint32 reply_operation_count;
 
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, object_connection);
 
 			reply_operation_count = j_message_get_count(reply);
 
@@ -466,7 +466,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 				{
 					GInputStream* input;
 
-					input = g_io_stream_get_input_stream(G_IO_STREAM(data_connection));
+					input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
 					g_input_stream_read_all(input, data, nbytes, NULL, NULL, NULL);
 				}
 			}
@@ -476,7 +476,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 		j_list_iterator_free(it);
 
-		j_connection_pool_push_data(object->index, data_connection);
+		j_connection_pool_push_object(object->index, object_connection);
 	}
 
 	/*
@@ -500,7 +500,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 
-	JBackend* data_backend;
+	JBackend* object_backend;
 	JListIterator* it;
 	g_autoptr(JMessage) message = NULL;
 	JObject* object;
@@ -524,11 +524,11 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	object_backend = j_object_backend();
 
-	if (data_backend != NULL)
+	if (object_backend != NULL)
 	{
-		ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
+		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 	}
 	else
 	{
@@ -538,7 +538,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		namespace_len = strlen(object->namespace) + 1;
 		name_len = strlen(object->name) + 1;
 
-		message = j_message_new(J_MESSAGE_DATA_WRITE, namespace_len + name_len);
+		message = j_message_new(J_MESSAGE_OBJECT_WRITE, namespace_len + name_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
 		j_message_append_n(message, object->name, name_len);
@@ -568,9 +568,9 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		}
 		*/
 
-		if (data_backend != NULL)
+		if (object_backend != NULL)
 		{
-			ret = j_backend_data_write(data_backend, object_handle, data, length, offset, bytes_written) && ret;
+			ret = j_backend_object_write(object_backend, object_handle, data, length, offset, bytes_written) && ret;
 		}
 		else
 		{
@@ -590,16 +590,16 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 
 	j_list_iterator_free(it);
 
-	if (data_backend != NULL)
+	if (object_backend != NULL)
 	{
-		ret = j_backend_data_close(data_backend, object_handle) && ret;
+		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
 	else
 	{
-		GSocketConnection* data_connection;
+		GSocketConnection* object_connection;
 
-		data_connection = j_connection_pool_pop_data(object->index);
-		j_message_send(message, data_connection);
+		object_connection = j_connection_pool_pop_object(object->index);
+		j_message_send(message, object_connection);
 
 		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
@@ -607,7 +607,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 			guint64 nbytes;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, data_connection);
+			j_message_receive(reply, object_connection);
 
 			it = j_list_iterator_new(operations);
 
@@ -623,7 +623,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 			j_list_iterator_free(it);
 		}
 
-		j_connection_pool_push_data(object->index, data_connection);
+		j_connection_pool_push_object(object->index, object_connection);
 	}
 
 	/*
@@ -647,7 +647,7 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = FALSE;
 
-	JBackend* data_backend;
+	JBackend* object_backend;
 	JListIterator* it;
 	g_autoptr(JMessage) message = NULL;
 	gchar const* namespace;
@@ -672,11 +672,11 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	data_backend = j_data_backend();
+	object_backend = j_object_backend();
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
-		message = j_message_new(J_MESSAGE_DATA_STATUS, namespace_len);
+		message = j_message_new(J_MESSAGE_OBJECT_STATUS, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
@@ -688,13 +688,13 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 		gint64* modification_time = operation->status.modification_time;
 		guint64* size = operation->status.size;
 
-		if (data_backend != NULL)
+		if (object_backend != NULL)
 		{
 			gpointer object_handle;
 
-			ret = j_backend_data_open(data_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_data_status(data_backend, object_handle, modification_time, size) && ret;
-			ret = j_backend_data_close(data_backend, object_handle) && ret;
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
 		}
 		else
 		{
@@ -709,16 +709,16 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 
 	j_list_iterator_free(it);
 
-	if (data_backend == NULL)
+	if (object_backend == NULL)
 	{
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* data_connection;
+		GSocketConnection* object_connection;
 
-		data_connection = j_connection_pool_pop_data(index);
-		j_message_send(message, data_connection);
+		object_connection = j_connection_pool_pop_object(index);
+		j_message_send(message, object_connection);
 
 		reply = j_message_new_reply(message);
-		j_message_receive(reply, data_connection);
+		j_message_receive(reply, object_connection);
 
 		it = j_list_iterator_new(operations);
 
@@ -739,7 +739,7 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 
 		j_list_iterator_free(it);
 
-		j_connection_pool_push_data(index, data_connection);
+		j_connection_pool_push_object(index, object_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -775,7 +775,7 @@ j_object_new (gchar const* namespace, gchar const* name)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	object = g_slice_new(JObject);
-	object->index = j_helper_hash(name) % j_configuration_get_data_server_count(configuration);
+	object->index = j_helper_hash(name) % j_configuration_get_object_server_count(configuration);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->ref_count = 1;
@@ -809,7 +809,7 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_data_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_object_server_count(configuration), NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 

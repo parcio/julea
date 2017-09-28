@@ -1,7 +1,7 @@
 # JULEA
 
 JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
-To be able to rapidly prototype new approaches, it offers data and metadata backends that can either be client-side or server-side;
+To be able to rapidly prototype new approaches, it offers object and key-value backends that can either be client-side or server-side;
 backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.
 Additionally, JULEA allows dynamically adapting the I/O operations' semantics and can thus be adjusted to different use-cases.
 It runs completely in user space, which eases development and debugging.
@@ -42,9 +42,9 @@ Finally, a JULEA configuration has to be created.
 
 ```
 $ julea-config --user \
-  --data-servers="$(hostname)" --metadata-servers="$(hostname)" \
-  --data-backend=posix --data-component=server --data-path=/tmp/julea \
-  --metadata-backend=leveldb --metadata-component=server --metadata-path=/tmp/julea
+  --object-servers="$(hostname)" --kv-servers="$(hostname)" \
+  --object-backend=posix --object-component=server --object-path=/tmp/julea \
+  --kv-backend=leveldb --kv-component=server --kv-path=/tmp/julea
 ```
 
 You can check whether JULEA works by executing the integrated test suite.

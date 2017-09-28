@@ -41,7 +41,7 @@
 struct JObjectIterator
 {
 	gchar* namespace;
-	JBackend* data_backend;
+	JBackend* object_backend;
 	guint32 servers;
 	JMessage* message;
 };
@@ -68,11 +68,11 @@ j_object_iterator_new (gchar const* namespace)
 
 	iterator = g_slice_new(JObjectIterator);
 	iterator->namespace = g_strdup(namespace);
-	iterator->data_backend = j_data_backend();
-	iterator->servers = j_configuration_get_data_server_count(configuration);
+	iterator->object_backend = j_object_backend();
+	iterator->servers = j_configuration_get_object_server_count(configuration);
 	iterator->message = NULL;
 
-	if (iterator->data_backend != NULL)
+	if (iterator->object_backend != NULL)
 	{
 	}
 	else
@@ -123,7 +123,7 @@ j_object_iterator_next (JObjectIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (iterator->data_backend != NULL)
+	if (iterator->object_backend != NULL)
 	{
 	}
 	else

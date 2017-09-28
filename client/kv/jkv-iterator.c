@@ -42,7 +42,7 @@
 
 struct JKVIterator
 {
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 
 	/**
 	 * The iterate cursor.
@@ -74,32 +74,32 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 	JConfiguration* configuration = j_configuration();
 
 	g_return_val_if_fail(namespace != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_metadata_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_kv_server_count(configuration), NULL);
 
 	/* FIXME still necessary? */
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
-	iterator->meta_backend = j_metadata_backend();
+	iterator->kv_backend = j_kv_backend();
 	iterator->cursor = NULL;
 	iterator->reply = NULL;
 
-	if (iterator->meta_backend != NULL)
+	if (iterator->kv_backend != NULL)
 	{
 		if (prefix == NULL)
 		{
-			j_backend_meta_get_all(iterator->meta_backend, namespace, &(iterator->cursor));
+			j_backend_kv_get_all(iterator->kv_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			j_backend_meta_get_by_prefix(iterator->meta_backend, namespace, prefix, &(iterator->cursor));
+			j_backend_kv_get_by_prefix(iterator->kv_backend, namespace, prefix, &(iterator->cursor));
 		}
 	}
 	else
 	{
 		g_autoptr(JMessage) message = NULL;
 		JMessageType message_type;
-		GSocketConnection* meta_connection;
+		GSocketConnection* kv_connection;
 		gsize namespace_len;
 		gsize prefix_len;
 
@@ -107,12 +107,12 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 
 		if (prefix == NULL)
 		{
-			message_type = J_MESSAGE_META_GET_ALL;
+			message_type = J_MESSAGE_KV_GET_ALL;
 			prefix_len = 0;
 		}
 		else
 		{
-			message_type = J_MESSAGE_META_GET_BY_PREFIX;
+			message_type = J_MESSAGE_KV_GET_BY_PREFIX;
 			prefix_len = strlen(prefix) + 1;
 		}
 
@@ -124,13 +124,13 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 			j_message_append_n(message, prefix, prefix_len);
 		}
 
-		meta_connection = j_connection_pool_pop_meta(index);
-		j_message_send(message, meta_connection);
+		kv_connection = j_connection_pool_pop_kv(index);
+		j_message_send(message, kv_connection);
 
 		iterator->reply = j_message_new_reply(message);
-		j_message_receive(iterator->reply, meta_connection);
+		j_message_receive(iterator->reply, kv_connection);
 
-		j_connection_pool_push_meta(index, meta_connection);
+		j_connection_pool_push_kv(index, kv_connection);
 	}
 
 	return iterator;
@@ -175,9 +175,9 @@ j_kv_iterator_next (JKVIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (iterator->meta_backend != NULL)
+	if (iterator->kv_backend != NULL)
 	{
-		ret = j_backend_meta_iterate(iterator->meta_backend, iterator->cursor, iterator->current);
+		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, iterator->current);
 	}
 	else
 	{

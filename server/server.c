@@ -34,8 +34,8 @@ static JStatistics* jd_statistics;
 
 G_LOCK_DEFINE_STATIC(jd_statistics);
 
-static JBackend* jd_data_backend;
-static JBackend* jd_meta_backend;
+static JBackend* jd_object_backend;
+static JBackend* jd_kv_backend;
 
 static guint jd_thread_num = 0;
 
@@ -121,7 +121,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		{
 			case J_MESSAGE_NONE:
 				break;
-			case J_MESSAGE_DATA_CREATE:
+			case J_MESSAGE_OBJECT_CREATE:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
@@ -137,17 +137,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_create(jd_data_backend, namespace, path, &object))
+						if (j_backend_object_create(jd_object_backend, namespace, path, &object))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
 							if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
 							{
-								j_backend_data_sync(jd_data_backend, object);
+								j_backend_object_sync(jd_object_backend, object);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 							}
 
-							j_backend_data_close(jd_data_backend, object);
+							j_backend_object_close(jd_object_backend, object);
 						}
 
 						if (reply != NULL)
@@ -162,7 +162,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_DATA_DELETE:
+			case J_MESSAGE_OBJECT_DELETE:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
@@ -178,8 +178,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						path = j_message_get_string(message);
 
-						if (j_backend_data_open(jd_data_backend, namespace, path, &object)
-						    && j_backend_data_delete(jd_data_backend, object))
+						if (j_backend_object_open(jd_object_backend, namespace, path, &object)
+						    && j_backend_object_delete(jd_object_backend, object))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
 						}
@@ -196,7 +196,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_DATA_READ:
+			case J_MESSAGE_OBJECT_READ:
 				{
 					JMessage* reply;
 					gpointer object;
@@ -207,7 +207,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, namespace, path, &object);
+					j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -233,7 +233,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							buf = j_memory_chunk_get(memory_chunk, length);
 						}
 
-						j_backend_data_read(jd_data_backend, object, buf, length, offset, &bytes_read);
+						j_backend_object_read(jd_object_backend, object, buf, length, offset, &bytes_read);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
 						j_message_add_operation(reply, sizeof(guint64));
@@ -247,7 +247,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 					}
 
-					j_backend_data_close(jd_data_backend, object);
+					j_backend_object_close(jd_object_backend, object);
 
 					j_message_send(reply, connection);
 					j_message_unref(reply);
@@ -255,7 +255,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
-			case J_MESSAGE_DATA_WRITE:
+			case J_MESSAGE_OBJECT_WRITE:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gchar* buf;
@@ -276,7 +276,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_assert(buf != NULL);
 
 					// FIXME return value
-					j_backend_data_open(jd_data_backend, namespace, path, &object);
+					j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -298,7 +298,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-							j_backend_data_write(jd_data_backend, object, buf, merge_length, merge_offset, &bytes_written);
+							j_backend_object_write(jd_object_backend, object, buf, merge_length, merge_offset, &bytes_written);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 							merge_length = 0;
@@ -326,17 +326,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
-						j_backend_data_write(jd_data_backend, object, buf, merge_length, merge_offset, &bytes_written);
+						j_backend_object_write(jd_object_backend, object, buf, merge_length, merge_offset, &bytes_written);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 					}
 
 					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
 					{
-						j_backend_data_sync(jd_data_backend, object);
+						j_backend_object_sync(jd_object_backend, object);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 					}
 
-					j_backend_data_close(jd_data_backend, object);
+					j_backend_object_close(jd_object_backend, object);
 
 					if (reply != NULL)
 					{
@@ -346,7 +346,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_memory_chunk_reset(memory_chunk);
 				}
 				break;
-			case J_MESSAGE_DATA_STATUS:
+			case J_MESSAGE_OBJECT_STATUS:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
@@ -363,9 +363,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						path = j_message_get_string(message);
 
 						// FIXME return value
-						j_backend_data_open(jd_data_backend, namespace, path, &object);
+						j_backend_object_open(jd_object_backend, namespace, path, &object);
 
-						if (j_backend_data_status(jd_data_backend, object, &modification_time, &size))
+						if (j_backend_object_status(jd_object_backend, object, &modification_time, &size))
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
 						}
@@ -374,7 +374,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_message_append_8(reply, &modification_time);
 						j_message_append_8(reply, &size);
 
-						j_backend_data_close(jd_data_backend, object);
+						j_backend_object_close(jd_object_backend, object);
 					}
 
 					j_message_send(reply, connection);
@@ -436,22 +436,22 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					reply = j_message_new_reply(message);
 
-					if (jd_data_backend != NULL)
+					if (jd_object_backend != NULL)
 					{
-						j_message_add_operation(reply, 5);
-						j_message_append_n(reply, "data", 5);
+						j_message_add_operation(reply, 7);
+						j_message_append_n(reply, "object", 7);
 					}
 
-					if (jd_meta_backend != NULL)
+					if (jd_kv_backend != NULL)
 					{
-						j_message_add_operation(reply, 5);
-						j_message_append_n(reply, "meta", 5);
+						j_message_add_operation(reply, 3);
+						j_message_append_n(reply, "kv", 3);
 					}
 
 					j_message_send(reply, connection);
 				}
 				break;
-			case J_MESSAGE_META_PUT:
+			case J_MESSAGE_KV_PUT:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
@@ -462,7 +462,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					j_backend_meta_batch_start(jd_meta_backend, namespace, safety, &batch);
+					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -475,7 +475,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						data = j_message_get_n(message, len);
 						bson_init_static(value, data, len);
 
-						j_backend_meta_put(jd_meta_backend, batch, key, value);
+						j_backend_kv_put(jd_kv_backend, batch, key, value);
 
 						if (reply != NULL)
 						{
@@ -483,7 +483,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 					}
 
-					j_backend_meta_batch_execute(jd_meta_backend, batch);
+					j_backend_kv_batch_execute(jd_kv_backend, batch);
 
 					if (reply != NULL)
 					{
@@ -491,7 +491,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_META_DELETE:
+			case J_MESSAGE_KV_DELETE:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
@@ -502,13 +502,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					namespace = j_message_get_string(message);
-					j_backend_meta_batch_start(jd_meta_backend, namespace, safety, &batch);
+					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
 						key = j_message_get_string(message);
 
-						j_backend_meta_delete(jd_meta_backend, batch, key);
+						j_backend_kv_delete(jd_kv_backend, batch, key);
 
 						if (reply != NULL)
 						{
@@ -516,7 +516,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 					}
 
-					j_backend_meta_batch_execute(jd_meta_backend, batch);
+					j_backend_kv_batch_execute(jd_kv_backend, batch);
 
 					if (reply != NULL)
 					{
@@ -524,7 +524,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 				}
 				break;
-			case J_MESSAGE_META_GET:
+			case J_MESSAGE_KV_GET:
 				{
 					g_autoptr(JMessage) reply = NULL;
 
@@ -537,7 +537,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						key = j_message_get_string(message);
 
-						if (j_backend_meta_get(jd_meta_backend, namespace, key, value))
+						if (j_backend_kv_get(jd_kv_backend, namespace, key, value))
 						{
 							j_message_add_operation(reply, 4 + value->len);
 							j_message_append_4(reply, &(value->len));
@@ -557,7 +557,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_send(reply, connection);
 				}
 				break;
-			case J_MESSAGE_META_GET_ALL:
+			case J_MESSAGE_KV_GET_ALL:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					bson_t value[1];
@@ -567,9 +567,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
 
-					j_backend_meta_get_all(jd_meta_backend, namespace, &iterator);
+					j_backend_kv_get_all(jd_kv_backend, namespace, &iterator);
 
-					while (j_backend_meta_iterate(jd_meta_backend, iterator, value))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, value))
 					{
 						j_message_add_operation(reply, 4 + value->len);
 						j_message_append_4(reply, &(value->len));
@@ -583,7 +583,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_send(reply, connection);
 				}
 				break;
-			case J_MESSAGE_META_GET_BY_PREFIX:
+			case J_MESSAGE_KV_GET_BY_PREFIX:
 				{
 					g_autoptr(JMessage) reply = NULL;
 					bson_t value[1];
@@ -595,9 +595,9 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					namespace = j_message_get_string(message);
 					prefix = j_message_get_string(message);
 
-					j_backend_meta_get_by_prefix(jd_meta_backend, namespace, prefix, &iterator);
+					j_backend_kv_get_by_prefix(jd_kv_backend, namespace, prefix, &iterator);
 
-					while (j_backend_meta_iterate(jd_meta_backend, iterator, value))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, value))
 					{
 						j_message_add_operation(reply, 4 + value->len);
 						j_message_append_4(reply, &(value->len));
@@ -706,19 +706,19 @@ main (int argc, char** argv)
 	g_autoptr(JConfiguration) configuration = NULL;
 	GError* error = NULL;
 	g_autoptr(GMainLoop) main_loop = NULL;
-	GModule* data_module = NULL;
-	GModule* meta_module = NULL;
+	GModule* object_module = NULL;
+	GModule* kv_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	g_autoptr(GSocketService) socket_service = NULL;
-	gchar const* data_backend;
-	gchar const* data_component;
-	gchar const* data_path;
-	gchar const* meta_backend;
-	gchar const* meta_component;
-	gchar const* meta_path;
+	gchar const* object_backend;
+	gchar const* object_component;
+	gchar const* object_path;
+	gchar const* kv_backend;
+	gchar const* kv_component;
+	gchar const* kv_path;
 #ifdef JULEA_DEBUG
-	g_autofree gchar* data_path_port = NULL;
-	g_autofree gchar* meta_path_port = NULL;
+	g_autofree gchar* object_path_port = NULL;
+	g_autofree gchar* kv_path_port = NULL;
 #endif
 
 	GOptionEntry entries[] = {
@@ -775,36 +775,36 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	data_backend = j_configuration_get_data_backend(configuration);
-	data_component = j_configuration_get_data_component(configuration);
-	data_path = j_configuration_get_data_path(configuration);
+	object_backend = j_configuration_get_object_backend(configuration);
+	object_component = j_configuration_get_object_component(configuration);
+	object_path = j_configuration_get_object_path(configuration);
 
-	meta_backend = j_configuration_get_metadata_backend(configuration);
-	meta_component = j_configuration_get_metadata_component(configuration);
-	meta_path = j_configuration_get_metadata_path(configuration);
+	kv_backend = j_configuration_get_kv_backend(configuration);
+	kv_component = j_configuration_get_kv_component(configuration);
+	kv_path = j_configuration_get_kv_path(configuration);
 
 #ifdef JULEA_DEBUG
-	data_path_port = g_strdup_printf("%s/%d", data_path, opt_port);
-	meta_path_port = g_strdup_printf("%s/%d", meta_path, opt_port);
+	object_path_port = g_strdup_printf("%s/%d", object_path, opt_port);
+	kv_path_port = g_strdup_printf("%s/%d", kv_path, opt_port);
 
-	data_path = data_path_port;
-	meta_path = meta_path_port;
+	object_path = object_path_port;
+	kv_path = kv_path_port;
 #endif
 
-	if (j_backend_load_server(data_backend, data_component, J_BACKEND_TYPE_DATA, &data_module, &jd_data_backend))
+	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
 	{
-		if (jd_data_backend == NULL || !j_backend_data_init(jd_data_backend, data_path))
+		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
 		{
-			J_CRITICAL("Could not initialize data backend %s.\n", data_backend);
+			J_CRITICAL("Could not initialize object backend %s.\n", object_backend);
 			return 1;
 		}
 	}
 
-	if (j_backend_load_server(meta_backend, meta_component, J_BACKEND_TYPE_META, &meta_module, &jd_meta_backend))
+	if (j_backend_load_server(kv_backend, kv_component, J_BACKEND_TYPE_KV, &kv_module, &jd_kv_backend))
 	{
-		if (jd_meta_backend == NULL || !j_backend_meta_init(jd_meta_backend, meta_path))
+		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
-			J_CRITICAL("Could not initialize metadata backend %s.\n", meta_backend);
+			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
 			return 1;
 		}
 	}
@@ -826,24 +826,24 @@ main (int argc, char** argv)
 
 	j_statistics_free(jd_statistics);
 
-	if (jd_meta_backend != NULL)
+	if (jd_kv_backend != NULL)
 	{
-		j_backend_meta_fini(jd_meta_backend);
+		j_backend_kv_fini(jd_kv_backend);
 	}
 
-	if (jd_data_backend != NULL)
+	if (jd_object_backend != NULL)
 	{
-		j_backend_data_fini(jd_data_backend);
+		j_backend_object_fini(jd_object_backend);
 	}
 
-	if (meta_module != NULL)
+	if (kv_module != NULL)
 	{
-		g_module_close(meta_module);
+		g_module_close(kv_module);
 	}
 
-	if (data_module)
+	if (object_module)
 	{
-		g_module_close(data_module);
+		g_module_close(object_module);
 	}
 
 	j_trace_leave(G_STRFUNC);

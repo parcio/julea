@@ -77,7 +77,7 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	server_count = j_configuration_get_data_server_count(configuration);
+	server_count = j_configuration_get_object_server_count(configuration);
 
 	distribution = g_slice_new(JDistribution);
 	distribution->type = type;

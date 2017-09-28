@@ -931,12 +931,12 @@ j_item_write_exec (JList* operations, JSemantics* semantics)
 
 		//bson_finish(op);
 
-		mongo_connection = j_connection_pool_pop_meta(0);
+		mongo_connection = j_connection_pool_pop_kv(0);
 		mongo_collection = mongoc_client_get_collection(mongo_connection, "JULEA", "Items");
 
 		ret = mongoc_collection_update(mongo_collection, MONGOC_UPDATE_NONE, cond, op, write_concern, NULL);
 
-		j_connection_pool_push_meta(0, mongo_connection);
+		j_connection_pool_push_kv(0, mongo_connection);
 
 		if (!ret)
 		{
@@ -977,10 +977,10 @@ j_item_get_status_exec (JList* operations, JSemantics* semantics)
 
 		bson_append_document_end(&opts, &projection);
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
 			path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
-			ret = j_backend_meta_get(meta_backend, "items", path, result) && ret;
+			ret = j_backend_kv_get(kv_backend, "items", path, result) && ret;
 			g_free(path);
 		}
 

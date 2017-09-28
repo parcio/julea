@@ -42,7 +42,7 @@ void j_fini (void);
 
 JConfiguration* j_configuration (void);
 
-JBackend* j_data_backend (void);
-JBackend* j_metadata_backend (void);
+JBackend* j_object_backend (void);
+JBackend* j_kv_backend (void);
 
 #endif

@@ -77,14 +77,14 @@ main (int argc, char** argv)
 	j_message_add_operation(message, 0);
 	j_message_append_1(message, &get_all);
 
-	for (guint i = 0; i < j_configuration_get_data_server_count(configuration); i++)
+	for (guint i = 0; i < j_configuration_get_object_server_count(configuration); i++)
 	{
 		g_autoptr(JMessage) reply = NULL;
 		JStatistics* statistics;
 		GSocketConnection* connection;
 		guint64 value;
 
-		connection = j_connection_pool_pop_data(i);
+		connection = j_connection_pool_pop_object(i);
 		statistics = j_statistics_new(FALSE);
 
 		j_message_send(message, connection);
@@ -127,16 +127,16 @@ main (int argc, char** argv)
 		g_print("Data server %d\n", i);
 		print_statistics(statistics);
 
-		if (i != j_configuration_get_data_server_count(configuration) - 1)
+		if (i != j_configuration_get_object_server_count(configuration) - 1)
 		{
 			g_print("\n");
 		}
 
 		j_statistics_free(statistics);
-		j_connection_pool_push_data(i, connection);
+		j_connection_pool_push_object(i, connection);
 	}
 
-	if (j_configuration_get_data_server_count(configuration) > 1)
+	if (j_configuration_get_object_server_count(configuration) > 1)
 	{
 		g_print("\n");
 		g_print("Total\n");

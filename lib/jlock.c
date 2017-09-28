@@ -137,10 +137,10 @@ j_lock_free (JLock* lock)
 gboolean
 j_lock_acquire (JLock* lock)
 {
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 	bson_t empty[1];
 	gboolean acquired = TRUE;
-	gpointer meta_batch;
+	gpointer kv_batch;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 
@@ -159,15 +159,15 @@ j_lock_acquire (JLock* lock)
 
 	bson_init(empty);
 
-	meta_backend = j_metadata_backend();
+	kv_backend = j_kv_backend();
 
-	//mongo_connection = j_connection_pool_pop_meta(0);
+	//mongo_connection = j_connection_pool_pop_kv(0);
 
 	if (lock->blocks->len > 0)
 	{
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			acquired = j_backend_meta_batch_start(meta_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &meta_batch);
+			acquired = j_backend_kv_batch_start(kv_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &kv_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)
@@ -178,24 +178,24 @@ j_lock_acquire (JLock* lock)
 			block = g_array_index(lock->blocks, guint64, i);
 			block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
 
-			if (meta_backend != NULL)
+			if (kv_backend != NULL)
 			{
 				g_autofree gchar* path = NULL;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
-				acquired = j_backend_meta_put(meta_backend, meta_batch, path, empty) && acquired;
+				acquired = j_backend_kv_put(kv_backend, kv_batch, path, empty) && acquired;
 			}
 		}
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			acquired = j_backend_meta_batch_execute(meta_backend, meta_batch) && acquired;
+			acquired = j_backend_kv_batch_execute(kv_backend, kv_batch) && acquired;
 		}
 	}
 
 	lock->acquired = acquired;
 
-	//j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_kv(0, mongo_connection);
 
 	bson_destroy(empty);
 
@@ -205,9 +205,9 @@ j_lock_acquire (JLock* lock)
 gboolean
 j_lock_release (JLock* lock)
 {
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 	gboolean released = TRUE;
-	gpointer meta_batch;
+	gpointer kv_batch;
 
 	g_return_val_if_fail(lock != NULL, FALSE);
 	g_return_val_if_fail(lock->acquired, FALSE);
@@ -220,14 +220,14 @@ j_lock_release (JLock* lock)
 	//bson_append_oid(obj, "_id", -1, &(lock->id));
 	//bson_finish(obj);
 
-	meta_backend = j_metadata_backend();
-	//mongo_connection = j_connection_pool_pop_meta(0);
+	kv_backend = j_kv_backend();
+	//mongo_connection = j_connection_pool_pop_kv(0);
 
 	if (lock->blocks->len > 0)
 	{
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			released = j_backend_meta_batch_start(meta_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &meta_batch);
+			released = j_backend_kv_batch_start(kv_backend, "locks", J_SEMANTICS_SAFETY_NETWORK, &kv_batch);
 		}
 
 		for (guint i = 0; i < lock->blocks->len; i++)
@@ -238,24 +238,24 @@ j_lock_release (JLock* lock)
 			block = g_array_index(lock->blocks, guint64, i);
 			block_str = g_strdup_printf("%" G_GUINT64_FORMAT, block);
 
-			if (meta_backend != NULL)
+			if (kv_backend != NULL)
 			{
 				g_autofree gchar* path = NULL;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
-				released = j_backend_meta_delete(meta_backend, meta_batch, path) && released;
+				released = j_backend_kv_delete(kv_backend, kv_batch, path) && released;
 			}
 		}
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			released = j_backend_meta_batch_execute(meta_backend, meta_batch) && released;
+			released = j_backend_kv_batch_execute(kv_backend, kv_batch) && released;
 		}
 	}
 
 	lock->acquired = !released;
 
-	//j_connection_pool_push_meta(0, mongo_connection);
+	//j_connection_pool_push_kv(0, mongo_connection);
 
 	return !(lock->acquired);
 }

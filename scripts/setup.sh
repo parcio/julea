@@ -103,7 +103,7 @@ do_start ()
 	local port
 	local port_option
 
-	for server in ${SERVERS_DATA}
+	for server in ${SERVERS_OBJECT}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
@@ -117,7 +117,7 @@ do_start ()
 		fi
 	done
 
-	for server in ${SERVERS_META}
+	for server in ${SERVERS_KV}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
@@ -125,7 +125,7 @@ do_start ()
 		if test "${host}" = "${HOSTNAME}"
 		then
 			# FIXME else
-			if test "${META_BACKEND}" = 'mongodb'
+			if test "${KV_BACKEND}" = 'mongodb'
 			then
 				mkdir --parents "${MONGO_PATH}/db"
 				mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
@@ -143,7 +143,7 @@ do_stop ()
 	local port
 	local server
 
-	for server in ${SERVERS_DATA}
+	for server in ${SERVERS_OBJECT}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
@@ -151,23 +151,23 @@ do_stop ()
 		if test "${host}" = "${HOSTNAME}"
 		then
 			killall --verbose julea-server || true
-			rm -rf "${DATA_PATH}"
+			rm -rf "${OBJECT_PATH}"
 		fi
 	done
 
-	for server in ${SERVERS_META}
+	for server in ${SERVERS_KV}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
 
 		if test "${host}" = "${HOSTNAME}"
 		then
-			if test "${META_BACKEND}" = 'mongodb'
+			if test "${KV_BACKEND}" = 'mongodb'
 			then
 				mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
 				rm -rf "${MONGO_PATH}"
 			else
-				rm -rf "${META_PATH}"
+				rm -rf "${KV_PATH}"
 			fi
 		fi
 	done
@@ -185,25 +185,25 @@ MONGO_PATH="/tmp/julea-mongo-${USER}"
 set_path
 set_library_path
 
-SERVERS_DATA="$(get_config | grep ^data=)"
-SERVERS_META="$(get_config | grep ^metadata=)"
-DATA_BACKEND="$(get_config | grep ^backend= | head --lines=1)"
-META_BACKEND="$(get_config | grep ^backend= | tail --lines=1)"
-DATA_PATH="$(get_config | grep ^path= | head --lines=1)"
-META_PATH="$(get_config | grep ^path= | tail --lines=1)"
+SERVERS_OBJECT="$(get_config | grep ^object=)"
+SERVERS_KV="$(get_config | grep ^kv=)"
+OBJECT_BACKEND="$(get_config | grep ^backend= | head --lines=1)"
+KV_BACKEND="$(get_config | grep ^backend= | tail --lines=1)"
+OBJECT_PATH="$(get_config | grep ^path= | head --lines=1)"
+KV_PATH="$(get_config | grep ^path= | tail --lines=1)"
 
-SERVERS_DATA="${SERVERS_DATA#data=}"
-SERVERS_META="${SERVERS_META#metadata=}"
-DATA_BACKEND="${DATA_BACKEND#backend=}"
-META_BACKEND="${META_BACKEND#backend=}"
-DATA_PATH="${DATA_PATH#path=}"
-META_PATH="${META_PATH#path=}"
+SERVERS_OBJECT="${SERVERS_OBJECT#object=}"
+SERVERS_KV="${SERVERS_KV#kv=}"
+OBJECT_BACKEND="${OBJECT_BACKEND#backend=}"
+KV_BACKEND="${KV_BACKEND#backend=}"
+OBJECT_PATH="${OBJECT_PATH#path=}"
+KV_PATH="${KV_PATH#path=}"
 
-SERVERS_DATA="${SERVERS_DATA%;}"
-SERVERS_META="${SERVERS_META%;}"
+SERVERS_OBJECT="${SERVERS_OBJECT%;}"
+SERVERS_KV="${SERVERS_KV%;}"
 
-SERVERS_DATA=$(echo ${SERVERS_DATA} | sed 's/;/ /g')
-SERVERS_META=$(echo ${SERVERS_META} | sed 's/;/ /g')
+SERVERS_OBJECT=$(echo ${SERVERS_OBJECT} | sed 's/;/ /g')
+SERVERS_KV=$(echo ${SERVERS_KV} | sed 's/;/ /g')
 
 case "${MODE}" in
 	start)

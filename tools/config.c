@@ -28,14 +28,14 @@ static gboolean opt_user = FALSE;
 static gboolean opt_system = FALSE;
 static gboolean opt_read = FALSE;
 static gchar const* opt_name = "julea";
-static gchar const* opt_servers_data = NULL;
-static gchar const* opt_servers_meta = NULL;
-static gchar const* opt_data_backend = NULL;
-static gchar const* opt_data_component = NULL;
-static gchar const* opt_data_path = NULL;
-static gchar const* opt_meta_backend = NULL;
-static gchar const* opt_meta_component = NULL;
-static gchar const* opt_meta_path = NULL;
+static gchar const* opt_servers_object = NULL;
+static gchar const* opt_servers_kv = NULL;
+static gchar const* opt_object_backend = NULL;
+static gchar const* opt_object_component = NULL;
+static gchar const* opt_object_path = NULL;
+static gchar const* opt_kv_backend = NULL;
+static gchar const* opt_kv_component = NULL;
+static gchar const* opt_kv_path = NULL;
 static gint opt_max_connections = 0;
 
 static
@@ -91,22 +91,22 @@ write_config (gchar* path)
 	gboolean ret = TRUE;
 	gsize key_file_data_len;
 	g_autofree gchar* key_file_data = NULL;
-	g_auto(GStrv) servers_data = NULL;
-	g_auto(GStrv) servers_meta = NULL;
+	g_auto(GStrv) servers_object = NULL;
+	g_auto(GStrv) servers_kv = NULL;
 
-	servers_data = string_split(opt_servers_data);
-	servers_meta = string_split(opt_servers_meta);
+	servers_object = string_split(opt_servers_object);
+	servers_kv = string_split(opt_servers_kv);
 
 	key_file = g_key_file_new();
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
-	g_key_file_set_string_list(key_file, "servers", "data", (gchar const* const*)servers_data, g_strv_length(servers_data));
-	g_key_file_set_string_list(key_file, "servers", "metadata", (gchar const* const*)servers_meta, g_strv_length(servers_meta));
-	g_key_file_set_string(key_file, "data", "backend", opt_data_backend);
-	g_key_file_set_string(key_file, "data", "component", opt_data_component);
-	g_key_file_set_string(key_file, "data", "path", opt_data_path);
-	g_key_file_set_string(key_file, "metadata", "backend", opt_meta_backend);
-	g_key_file_set_string(key_file, "metadata", "component", opt_meta_component);
-	g_key_file_set_string(key_file, "metadata", "path", opt_meta_path);
+	g_key_file_set_string_list(key_file, "servers", "object", (gchar const* const*)servers_object, g_strv_length(servers_object));
+	g_key_file_set_string_list(key_file, "servers", "kv", (gchar const* const*)servers_kv, g_strv_length(servers_kv));
+	g_key_file_set_string(key_file, "object", "backend", opt_object_backend);
+	g_key_file_set_string(key_file, "object", "component", opt_object_component);
+	g_key_file_set_string(key_file, "object", "path", opt_object_path);
+	g_key_file_set_string(key_file, "kv", "backend", opt_kv_backend);
+	g_key_file_set_string(key_file, "kv", "component", opt_kv_component);
+	g_key_file_set_string(key_file, "kv", "path", opt_kv_path);
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
@@ -140,14 +140,14 @@ main (gint argc, gchar** argv)
 		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
 		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
-		{ "data-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_data, "Data servers to use", "host1,host2" },
-		{ "metadata-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_meta, "Metadata servers to use", "host1,host2" },
-		{ "data-backend", 0, 0, G_OPTION_ARG_STRING, &opt_data_backend, "Data backend to use", "posix|null|gio|…" },
-		{ "data-component", 0, 0, G_OPTION_ARG_STRING, &opt_data_component, "Data component to use", "client|server" },
-		{ "data-path", 0, 0, G_OPTION_ARG_STRING, &opt_data_path, "Data path to use", "/path/to/storage" },
-		{ "metadata-backend", 0, 0, G_OPTION_ARG_STRING, &opt_meta_backend, "Metadata backend to use", "posix|null|gio|…" },
-		{ "metadata-component", 0, 0, G_OPTION_ARG_STRING, &opt_meta_component, "Metadata component to use", "client|server" },
-		{ "metadata-path", 0, 0, G_OPTION_ARG_STRING, &opt_meta_path, "Metadata path to use", "/path/to/storage" },
+		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2" },
+		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "KV servers to use", "host1,host2" },
+		{ "object-backend", 0, 0, G_OPTION_ARG_STRING, &opt_object_backend, "Object backend to use", "posix|null|gio|…" },
+		{ "object-component", 0, 0, G_OPTION_ARG_STRING, &opt_object_component, "Object component to use", "client|server" },
+		{ "object-path", 0, 0, G_OPTION_ARG_STRING, &opt_object_path, "Object path to use", "/path/to/storage" },
+		{ "kv-backend", 0, 0, G_OPTION_ARG_STRING, &opt_kv_backend, "KV backend to use", "posix|null|gio|…" },
+		{ "kv-component", 0, 0, G_OPTION_ARG_STRING, &opt_kv_component, "KV component to use", "client|server" },
+		{ "kv-path", 0, 0, G_OPTION_ARG_STRING, &opt_kv_path, "KV path to use", "/path/to/storage" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
@@ -167,9 +167,9 @@ main (gint argc, gchar** argv)
 	}
 
 	if ((opt_user && opt_system)
-	    || (opt_read && (opt_servers_data != NULL || opt_servers_meta != NULL || opt_data_backend != NULL || opt_data_component != NULL || opt_data_path != NULL || opt_meta_backend != NULL || opt_meta_component != NULL || opt_meta_path != NULL))
+	    || (opt_read && (opt_servers_object != NULL || opt_servers_kv != NULL || opt_object_backend != NULL || opt_object_component != NULL || opt_object_path != NULL || opt_kv_backend != NULL || opt_kv_component != NULL || opt_kv_path != NULL))
 	    || (opt_read && !opt_user && !opt_system)
-	    || (!opt_read && (opt_servers_data == NULL || opt_servers_meta == NULL || opt_data_backend == NULL || opt_data_component == NULL || opt_data_path == NULL || opt_meta_backend == NULL || opt_meta_component == NULL || opt_meta_path == NULL))
+	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL))
 	    || opt_max_connections < 0
 	)
 	{

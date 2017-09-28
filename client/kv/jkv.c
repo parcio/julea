@@ -130,12 +130,12 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
-	gpointer meta_batch;
+	gpointer kv_batch;
 	gsize namespace_len;
 	guint32 index;
 
@@ -157,11 +157,11 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	meta_backend = j_metadata_backend();
+	kv_backend = j_kv_backend();
 
-	if (meta_backend != NULL)
+	if (kv_backend != NULL)
 	{
-		ret = j_backend_meta_batch_start(meta_backend, namespace, safety, &meta_batch);
+		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
 	}
 	else
 	{
@@ -173,7 +173,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		 * - The second operation is executed first and fails because the item does not exist.
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
-		message = j_message_new(J_MESSAGE_META_PUT, namespace_len);
+		message = j_message_new(J_MESSAGE_KV_PUT, namespace_len);
 		j_message_set_safety(message, semantics);
 		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
@@ -183,9 +183,9 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	{
 		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			ret = j_backend_meta_put(meta_backend, meta_batch, kop->put.kv->key, kop->put.value) && ret;
+			ret = j_backend_kv_put(kv_backend, kv_batch, kop->put.kv->key, kop->put.value) && ret;
 		}
 		else
 		{
@@ -200,28 +200,28 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (meta_backend != NULL)
+	if (kv_backend != NULL)
 	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
 	}
 	else
 	{
-		GSocketConnection* meta_connection;
+		GSocketConnection* kv_connection;
 
-		meta_connection = j_connection_pool_pop_meta(index);
-		j_message_send(message, meta_connection);
+		kv_connection = j_connection_pool_pop_kv(index);
+		j_message_send(message, kv_connection);
 
 		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, meta_connection);
+			j_message_receive(reply, kv_connection);
 
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_meta(index, meta_connection);
+		j_connection_pool_push_kv(index, kv_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -235,12 +235,12 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
-	gpointer meta_batch;
+	gpointer kv_batch;
 	gsize namespace_len;
 	guint32 index;
 
@@ -262,15 +262,15 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	meta_backend = j_metadata_backend();
+	kv_backend = j_kv_backend();
 
-	if (meta_backend != NULL)
+	if (kv_backend != NULL)
 	{
-		ret = j_backend_meta_batch_start(meta_backend, namespace, safety, &meta_batch);
+		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
 	}
 	else
 	{
-		message = j_message_new(J_MESSAGE_META_DELETE, namespace_len);
+		message = j_message_new(J_MESSAGE_KV_DELETE, namespace_len);
 		j_message_set_safety(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
@@ -279,9 +279,9 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	{
 		JKV* kv = j_list_iterator_get(it);
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
-			ret = j_backend_meta_delete(meta_backend, meta_batch, kv->key) && ret;
+			ret = j_backend_kv_delete(kv_backend, kv_batch, kv->key) && ret;
 		}
 		else
 		{
@@ -294,28 +294,28 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (meta_backend != NULL)
+	if (kv_backend != NULL)
 	{
-		ret = j_backend_meta_batch_execute(meta_backend, meta_batch) && ret;
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
 	}
 	else
 	{
-		GSocketConnection* meta_connection;
+		GSocketConnection* kv_connection;
 
-		meta_connection = j_connection_pool_pop_meta(index);
-		j_message_send(message, meta_connection);
+		kv_connection = j_connection_pool_pop_kv(index);
+		j_message_send(message, kv_connection);
 
 		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, meta_connection);
+			j_message_receive(reply, kv_connection);
 
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_meta(index, meta_connection);
+		j_connection_pool_push_kv(index, kv_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -329,7 +329,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 {
 	gboolean ret = TRUE;
 
-	JBackend* meta_backend;
+	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
 	//JSemanticsSafety safety;
@@ -355,9 +355,9 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 
 	//safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	meta_backend = j_metadata_backend();
+	kv_backend = j_kv_backend();
 
-	if (meta_backend == NULL)
+	if (kv_backend == NULL)
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -367,7 +367,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		 * - The second operation is executed first and fails because the item does not exist.
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
-		message = j_message_new(J_MESSAGE_META_GET, namespace_len);
+		message = j_message_new(J_MESSAGE_KV_GET, namespace_len);
 		j_message_set_safety(message, semantics);
 		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
 		j_message_append_n(message, namespace, namespace_len);
@@ -377,19 +377,19 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	{
 		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (meta_backend != NULL)
+		if (kv_backend != NULL)
 		{
 			if (kop->get.func != NULL)
 			{
 				bson_t tmp[1];
 
-				ret = j_backend_meta_get(meta_backend, kop->get.kv->namespace, kop->get.kv->key, tmp) && ret;
+				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, tmp) && ret;
 				kop->get.func(tmp, kop->get.data);
 				bson_destroy(tmp);
 			}
 			else
 			{
-				ret = j_backend_meta_get(meta_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value) && ret;
+				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value) && ret;
 			}
 		}
 		else
@@ -403,17 +403,17 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (meta_backend == NULL)
+	if (kv_backend == NULL)
 	{
 		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* meta_connection;
+		GSocketConnection* kv_connection;
 
-		meta_connection = j_connection_pool_pop_meta(index);
-		j_message_send(message, meta_connection);
+		kv_connection = j_connection_pool_pop_kv(index);
+		j_message_send(message, kv_connection);
 
 		reply = j_message_new_reply(message);
-		j_message_receive(reply, meta_connection);
+		j_message_receive(reply, kv_connection);
 
 		iter = j_list_iterator_new(operations);
 
@@ -446,7 +446,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 			}
 		}
 
-		j_connection_pool_push_meta(index, meta_connection);
+		j_connection_pool_push_kv(index, kv_connection);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -482,7 +482,7 @@ j_kv_new (gchar const* namespace, gchar const* key)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	kv = g_slice_new(JKV);
-	kv->index = j_helper_hash(key) % j_configuration_get_metadata_server_count(configuration);
+	kv->index = j_helper_hash(key) % j_configuration_get_kv_server_count(configuration);
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
 	kv->ref_count = 1;
@@ -516,7 +516,7 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_metadata_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_kv_server_count(configuration), NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 

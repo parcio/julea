@@ -30,10 +30,10 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-GSocketConnection* j_connection_pool_pop_data (guint);
-void j_connection_pool_push_data (guint, GSocketConnection*);
+GSocketConnection* j_connection_pool_pop_object (guint);
+void j_connection_pool_push_object (guint, GSocketConnection*);
 
-GSocketConnection* j_connection_pool_pop_meta (guint);
-void j_connection_pool_push_meta (guint, GSocketConnection*);
+GSocketConnection* j_connection_pool_pop_kv (guint);
+void j_connection_pool_push_kv (guint, GSocketConnection*);
 
 #endif

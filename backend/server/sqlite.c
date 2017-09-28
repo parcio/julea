@@ -281,8 +281,8 @@ backend_fini (void)
 
 static
 JBackend sqlite_backend = {
-	.type = J_BACKEND_TYPE_META,
-	.meta = {
+	.type = J_BACKEND_TYPE_KV,
+	.kv = {
 		.init = backend_init,
 		.fini = backend_fini,
 		.batch_start = backend_batch_start,
@@ -302,7 +302,7 @@ backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
-	if (type == J_BACKEND_TYPE_META)
+	if (type == J_BACKEND_TYPE_KV)
 	{
 		backend = &sqlite_backend;
 	}

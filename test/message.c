@@ -47,14 +47,14 @@ test_message_header (void)
 {
 	g_autoptr(JMessage) message = NULL;
 
-	message = j_message_new(J_MESSAGE_DATA_READ, 42);
+	message = j_message_new(J_MESSAGE_OBJECT_READ, 42);
 	g_assert(message != NULL);
 
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 
-	g_assert(j_message_get_type(message) == J_MESSAGE_DATA_READ);
+	g_assert(j_message_get_type(message) == J_MESSAGE_OBJECT_READ);
 	g_assert(j_message_get_flags(message) == 0);
 	g_assert_cmpuint(j_message_get_count(message), ==, 3);
 }

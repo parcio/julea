@@ -165,8 +165,8 @@ backend_fini (void)
 
 static
 JBackend null_backend = {
-	.type = J_BACKEND_TYPE_DATA,
-	.data = {
+	.type = J_BACKEND_TYPE_OBJECT,
+	.object = {
 		.init = backend_init,
 		.fini = backend_fini,
 		.create = backend_create,
@@ -186,7 +186,7 @@ backend_info (JBackendType type)
 {
 	JBackend* backend = NULL;
 
-	if (type == J_BACKEND_TYPE_DATA)
+	if (type == J_BACKEND_TYPE_OBJECT)
 	{
 		backend = &null_backend;
 	}
