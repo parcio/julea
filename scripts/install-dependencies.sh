@@ -26,8 +26,10 @@ SELF_BASE="${SELF_PATH##*/}"
 
 spack_clone ()
 {
+	local spack_commit
 	local spack_dir
 
+	spack_commit='aff6148116a1ca19f31033faa495291b522f2bd2'
 	spack_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 	if test ! -d "${spack_dir}"
@@ -37,7 +39,9 @@ spack_clone ()
 
 	cd "${spack_dir}"
 
-	git pull
+	git fetch
+
+	git reset --hard "${spack_commit}"
 }
 
 spack_install ()
