@@ -32,12 +32,6 @@ $ ./configure.sh --debug --sanitize
 $ ./waf
 ```
 
-To be able to use JULEA, its environment has to be loaded.
-
-```
-$ . ./scripts/environment.sh
-```
-
 Finally, a JULEA configuration has to be created.
 
 ```
