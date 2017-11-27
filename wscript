@@ -87,6 +87,7 @@ def options (ctx):
 	ctx.add_option('--lmdb', action='store', default=None, help='LMDB prefix')
 	ctx.add_option('--libbson', action='store', default=None, help='libbson prefix')
 	ctx.add_option('--libmongoc', action='store', default=None, help='libmongoc driver prefix')
+	ctx.add_option('--librados', action='store', default=None, help='librados driver prefix')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
 
@@ -142,6 +143,13 @@ def configure (ctx):
 		uselib_store = 'LIBMONGOC',
 		pkg_config_path = get_pkg_config_path(ctx.options.libmongoc),
 		mandatory = False
+	)
+
+	ctx.env.JULEA_LIBRADOS = \
+	ctx.check_cc(
+		lib='rados',
+		cflags='-lrados',
+		uselib_store='LIBRADOS'
 	)
 
 	ctx.env.JULEA_FUSE = \
@@ -377,6 +385,9 @@ def build (ctx):
 		if backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
 
+		if backend == 'rados':
+			use_extra = ['LIBRADOS']
+
 		ctx.shlib(
 			source = ['backend/client/{0}.c'.format(backend)],
 			target = 'backend/client/{0}'.format(backend),
@@ -387,6 +398,9 @@ def build (ctx):
 		)
 
 	backends_server = ['gio', 'null', 'posix']
+
+	if ctx.env.JULEA_LIBRADOS:
+		backends_server.append('rados')
 
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
