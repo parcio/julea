@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2017 Michael Kuhn
@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SELF_PATH="$(readlink --canonicalize-existing -- "${BASH_SOURCE[0]}")"
+SELF_ZERO="$0"
+test -n "${BASH_VERSION}" && SELF_ZERO="${BASH_SOURCE[0]}"
+
+SELF_PATH="$(readlink --canonicalize-existing -- "${SELF_ZERO}")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
@@ -24,5 +27,5 @@ SELF_BASE="${SELF_PATH##*/}"
 
 set_glib_options
 set_path
-set_library_path
-set_pkg_config_path
+#set_library_path
+#set_pkg_config_path

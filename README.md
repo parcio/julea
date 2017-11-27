@@ -32,7 +32,8 @@ $ ./configure.sh --debug --sanitize
 $ ./waf
 ```
 
-To be able to use JULEA, its environment has to be loaded.
+To allow the shell to find JULEA's binaries and to set some variables useful for debugging, the environment has to be loaded.
+Alternatively, the binaries can be found in the `build` directory.
 
 ```
 $ . ./scripts/environment.sh
