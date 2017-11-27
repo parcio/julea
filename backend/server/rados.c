@@ -33,36 +33,65 @@ static gchar* backend_host = NULL;
 static gchar* backend_namespace = NULL;
 static gchar* backend_config = NULL;
 
+struct JBackendFile
+{
+	gchar* path;
+	rados_ioctx_t* io;
+};
+
+typedef struct JBackendFile JBackendFile;
+
 static
 gboolean
 backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
-	gchar* full_path = path;
+	JBackendFile* bf;
+	rados_ioctx_t io;
+	gchar* full_path = g_strdup(path);
 	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
+
+	ret = rados_ioctx_create(backend_connection, namespace, &io);
+	g_return_val_if_fail(ret == 0, FALSE);
+
     ret = rados_write_full(backend_io, full_path, "", 0);
+    g_return_val_if_fail(ret == 0, FALSE);
+
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	g_free(full_path);
+	bf = g_slice_new(JBackendFile);
+	bf->path = full_path;
+	bf->io = &io;
 
-    return (ret == 0 ? TRUE : FALSE);
+	*data = bf;
+
+    return TRUE;
 }
 
 static
 gboolean
 backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 {
-	gchar* full_path;
-
-	full_path = g_build_filename(namespace, path, NULL);
+	JBackendFile* bf;
+	rados_ioctx_t io;
+	gchar* full_path = g_strdup(path);
+	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
+
+	ret = rados_ioctx_create(backend_connection, namespace, &io);
+	g_return_val_if_fail(ret == 0, FALSE);
+
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
-	*data = full_path;
+	bf = g_slice_new(JBackendFile);
+	bf->path = full_path;
+	bf->io = &io;
 
-	return TRUE;
+	*data = bf;
+
+    return TRUE;
 }
 
 static
