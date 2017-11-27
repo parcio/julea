@@ -25,12 +25,9 @@
 
 #include <julea.h>
 
-/* Initialize cluster and io variables */
+/* Initialize cluster and config variables */
 static rados_t backend_connection = NULL;
-static rados_ioctx_t backend_io = NULL;
-
 static gchar* backend_host = NULL;
-static gchar* backend_namespace = NULL;
 static gchar* backend_config = NULL;
 
 struct JBackendFile
@@ -55,7 +52,7 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	ret = rados_ioctx_create(backend_connection, namespace, &io);
 	g_return_val_if_fail(ret == 0, FALSE);
 
-    ret = rados_write_full(backend_io, full_path, "", 0);
+    ret = rados_write_full(io, full_path, "", 0);
     g_return_val_if_fail(ret == 0, FALSE);
 
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
@@ -98,14 +95,16 @@ static
 gboolean
 backend_delete (gpointer data)
 {
-	gchar* full_path = data;
+	JBackendFile* bf = data;
 	gint ret = 0;
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_DELETE);
-    ret = rados_remove(backend_io, full_path);
-	j_trace_file_end(full_path, J_TRACE_FILE_DELETE, 0, 0);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
+    ret = rados_remove(bf->io, bf->path);
+	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
-	g_free(full_path);
+	g_free(bf->path);
+	rados_ioctx_destroy(bf->io);
+	g_slice_free(JBackendFile, bf);
 
     return (ret == 0 ? TRUE : FALSE);
 }
@@ -114,16 +113,20 @@ static
 gboolean
 backend_close (gpointer data)
 {
-	gchar* full_path = data;
+	JBackendFile* bf = data;
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_CLOSE);
-	j_trace_file_end(full_path, J_TRACE_FILE_CLOSE, 0, 0);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
+	rados_ioctx_destroy(bf->io);
+	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 
-	g_free(full_path);
+	g_free(bf->path);
+	rados_ioctx_destroy(bf->io);
+	g_slice_free(JBackendFile, bf);
 
 	return TRUE;
 }
 
+// TODO
 static
 gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
@@ -139,6 +142,7 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 	return TRUE;
 }
 
+// TODO
 static
 gboolean
 backend_sync (gpointer data)
@@ -151,6 +155,7 @@ backend_sync (gpointer data)
 	return TRUE;
 }
 
+// TODO
 static
 gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
@@ -170,6 +175,7 @@ backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, gu
 	return TRUE;
 }
 
+// TODO
 static
 gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
@@ -202,11 +208,9 @@ backend_init (gchar const* path)
 	split = g_strsplit(path, ":", 0);
 
 	backend_host = g_strdup(split[0]);
-	backend_namespace = g_strdup(split[1]);
-	backend_config = g_strdup(split[2]);
+	backend_config = g_strdup(split[1]);
 
 	g_return_val_if_fail(backend_host != NULL, FALSE);
-	g_return_val_if_fail(backend_namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_config != NULL, FALSE);
 
 	/* Create cluster handle */
@@ -227,13 +231,6 @@ backend_init (gchar const* path)
 		g_critical("Can not connect to RADOS %s.", backend_host);
 	}
 
-	/* Initialize IO and select pool */
-	if(rados_ioctx_create(backend_connection, backend_namespace, &backend_io) != 0)
-	{
-		rados_shutdown(backend_connection);
-		g_critical("Can not connect to RADOS pool %s.", backend_namespace);
-	}
-
 	return TRUE;
 }
 
@@ -241,15 +238,11 @@ static
 void
 backend_fini (void)
 {
-    /* Close IO handler */
-    rados_ioctx_destroy(backend_io);
-
     /* Close connection to cluster */
     rados_shutdown(backend_connection);
 
     /* Free memory */
 	g_free(backend_host);
-	g_free(backend_namespace);
 	g_free(backend_config);
 }
 
