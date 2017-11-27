@@ -48,14 +48,12 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
-
 	ret = rados_ioctx_create(backend_connection, namespace, &io);
 	g_return_val_if_fail(ret == 0, FALSE);
-
     ret = rados_write_full(io, full_path, "", 0);
-    g_return_val_if_fail(ret == 0, FALSE);
-
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
+
+    g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
@@ -76,11 +74,10 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
-
 	ret = rados_ioctx_create(backend_connection, namespace, &io);
-	g_return_val_if_fail(ret == 0, FALSE);
-
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
+
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
@@ -126,66 +123,68 @@ backend_close (gpointer data)
 	return TRUE;
 }
 
-// TODO
 static
 gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
-	gchar const* full_path = data;
+	JBackendFile* bf = data;
+	gint ret = 0;
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_STATUS);
-	j_trace_file_end(full_path, J_TRACE_FILE_STATUS, 0, 0);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
+	ret = rados_stat(bf->io, bf->path, size, modification_time);
+	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
-	*modification_time = 0;
-	*size = 0;
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	return TRUE;
 }
 
-// TODO
+/* Not implemented */
 static
 gboolean
 backend_sync (gpointer data)
 {
-	gchar const* full_path = data;
+	JBackendFile* bf = data;
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_SYNC);
-	j_trace_file_end(full_path, J_TRACE_FILE_SYNC, 0, 0);
+	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
+	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 
 	return TRUE;
 }
 
-// TODO
 static
 gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
-	gchar const* full_path = data;
+	JBackendFile* bf = data;
+	gint ret = 0;
 
-	(void)buffer;
+	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
+    ret = rados_read(bf->io, bf->path, buffer, length, offset);
+	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_READ);
-	j_trace_file_end(full_path, J_TRACE_FILE_READ, length, offset);
+	g_return_val_if_fail(ret >= 0, FALSE);
 
 	if (bytes_read != NULL)
 	{
-		*bytes_read = length;
+		*bytes_read = ret;
 	}
 
 	return TRUE;
 }
 
-// TODO
 static
 gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
-	gchar const* full_path = data;
+	JBackendFile* bf = data;
+	gint ret = 0;
 
-	(void)buffer;
+	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
+    ret = rados_write(bf->io, bf->path, buffer, length, offset);
+	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
 
-	j_trace_file_begin(full_path, J_TRACE_FILE_WRITE);
-	j_trace_file_end(full_path, J_TRACE_FILE_WRITE, length, offset);
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	if (bytes_written != NULL)
 	{
@@ -203,8 +202,8 @@ backend_init (gchar const* path)
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	/* Path syntax: [hostname]:[namespace]:[config-path]
-	   e.g.: localhost:testpool:/etc/ceph/ceph.conf */
+	/* Path syntax: [hostname]:[config-path]
+	   e.g.: localhost:/etc/ceph/ceph.conf */
 	split = g_strsplit(path, ":", 0);
 
 	backend_host = g_strdup(split[0]);
