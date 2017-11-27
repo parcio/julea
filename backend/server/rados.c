@@ -37,16 +37,16 @@ static
 gboolean
 backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
-	gchar* full_path;
-
-	full_path = g_build_filename(namespace, path, NULL);
+	gchar* full_path = path;
+	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
+    ret = rados_write_full(backend_io, full_path, "", 0);
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	*data = full_path;
+	g_free(full_path);
 
-	return TRUE;
+    return (ret == 0 ? TRUE : FALSE);
 }
 
 static
