@@ -346,9 +346,11 @@ backend_init (gchar const* path)
 
 	split = g_strsplit(path, ":", 0);
 
-	/* FIXME error handling */
 	backend_host = g_strdup(split[0]);
 	backend_database = g_strdup(split[1]);
+
+	g_return_val_if_fail(backend_host != NULL, FALSE);
+	g_return_val_if_fail(backend_database != NULL, FALSE);
 
 	uri = mongoc_uri_new_for_host_port(backend_host, 27017);
 	backend_connection = mongoc_client_new_from_uri(uri);
