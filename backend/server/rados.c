@@ -21,7 +21,17 @@
 #include <glib.h>
 #include <gmodule.h>
 
+#include <rados/librados.h>
+
 #include <julea.h>
+
+/* Initialize cluster and io variables */
+static rados_t backend_connection = NULL;
+static rados_ioctx_t backend_io = NULL;
+
+static gchar* backend_host = NULL;
+static gchar* backend_namespace = NULL;
+static gchar* backend_config = NULL;
 
 static
 gboolean
@@ -152,7 +162,46 @@ static
 gboolean
 backend_init (gchar const* path)
 {
-	(void)path;
+	g_auto(GStrv) split = NULL;
+
+	g_return_val_if_fail(path != NULL, FALSE);
+
+	/* Path syntax: [hostname]:[namespace]:[config-path]
+	   e.g.: localhost:testpool:/etc/ceph/ceph.conf */
+	split = g_strsplit(path, ":", 0);
+
+	backend_host = g_strdup(split[0]);
+	backend_namespace = g_strdup(split[1]);
+	backend_config = g_strdup(split[2]);
+
+	g_return_val_if_fail(backend_host != NULL, FALSE);
+	g_return_val_if_fail(backend_namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_config != NULL, FALSE);
+
+	/* Create cluster handle */
+	if(rados_create(&backend_connection, NULL) != 0)
+	{
+		g_critical("Can not create a RADOS cluster handle.");
+	}
+
+	/* Read config file */
+	if(rados_conf_read_file(backend_connection, backend_config) != 0)
+	{
+		g_critical("Can not read RADOS config file %s.", backend_config);
+	}
+
+	/* Connect to cluster */
+	if(rados_connect(backend_connection) != 0)
+	{
+		g_critical("Can not connect to RADOS %s.", backend_host);
+	}
+
+	/* Initialize IO and select pool */
+	if(rados_ioctx_create(backend_connection, backend_namespace, &backend_io) != 0)
+	{
+		rados_shutdown(backend_connection);
+		g_critical("Can not connect to RADOS pool %s.", backend_namespace);
+	}
 
 	return TRUE;
 }
@@ -161,10 +210,20 @@ static
 void
 backend_fini (void)
 {
+    /* Close IO handler */
+    rados_ioctx_destroy(backend_io);
+
+    /* Close connection to cluster */
+    rados_shutdown(backend_connection);
+
+    /* Free memory */
+	g_free(backend_host);
+	g_free(backend_namespace);
+	g_free(backend_config);
 }
 
 static
-JBackend null_backend = {
+JBackend rados_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.object = {
 		.init = backend_init,
@@ -188,7 +247,7 @@ backend_info (JBackendType type)
 
 	if (type == J_BACKEND_TYPE_OBJECT)
 	{
-		backend = &null_backend;
+		backend = &rados_backend;
 	}
 
 	return backend;
