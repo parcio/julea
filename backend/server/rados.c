@@ -70,13 +70,15 @@ gboolean
 backend_delete (gpointer data)
 {
 	gchar* full_path = data;
+	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_DELETE);
+    ret = rados_remove(backend_io, full_path);
 	j_trace_file_end(full_path, J_TRACE_FILE_DELETE, 0, 0);
 
 	g_free(full_path);
 
-	return TRUE;
+    return (ret == 0 ? TRUE : FALSE);
 }
 
 static
