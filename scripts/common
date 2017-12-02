@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2017 Michael Kuhn
