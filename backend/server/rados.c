@@ -27,13 +27,14 @@
 
 /* Initialize cluster and config variables */
 static rados_t backend_connection = NULL;
-static gchar* backend_host = NULL;
+static rados_ioctx_t backend_io   = NULL;
+
+static gchar* backend_pool   = NULL;
 static gchar* backend_config = NULL;
 
 struct JBackendFile
 {
 	gchar* path;
-	rados_ioctx_t* io;
 };
 
 typedef struct JBackendFile JBackendFile;
@@ -43,21 +44,17 @@ gboolean
 backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
-	rados_ioctx_t io;
-	gchar* full_path = g_strdup(path);
+	gchar* full_path = g_strconcat(namespace, path, NULL);
 	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
-	ret = rados_ioctx_create(backend_connection, namespace, &io);
-	g_return_val_if_fail(ret == 0, FALSE);
-    ret = rados_write_full(io, full_path, "", 0);
+ 	ret = rados_write_full(backend_io, full_path, "", 0);
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
     g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
-	bf->io = &io;
 
 	*data = bf;
 
@@ -69,19 +66,16 @@ gboolean
 backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
-	rados_ioctx_t io;
-	gchar* full_path = g_strdup(path);
+	gchar* full_path = g_strconcat(namespace, path, NULL);
 	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
-	ret = rados_ioctx_create(backend_connection, namespace, &io);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
 	g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
-	bf->io = &io;
 
 	*data = bf;
 
@@ -96,11 +90,10 @@ backend_delete (gpointer data)
 	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-    ret = rados_remove(bf->io, bf->path);
+    ret = rados_remove(backend_io, bf->path);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	g_free(bf->path);
-	rados_ioctx_destroy(bf->io);
 	g_slice_free(JBackendFile, bf);
 
     return (ret == 0 ? TRUE : FALSE);
@@ -113,11 +106,9 @@ backend_close (gpointer data)
 	JBackendFile* bf = data;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-	rados_ioctx_destroy(bf->io);
 	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 
 	g_free(bf->path);
-	rados_ioctx_destroy(bf->io);
 	g_slice_free(JBackendFile, bf);
 
 	return TRUE;
@@ -131,7 +122,7 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-	ret = rados_stat(bf->io, bf->path, size, modification_time);
+	ret = rados_stat(backend_io, bf->path, size, modification_time);
 	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
 	g_return_val_if_fail(ret == 0, FALSE);
@@ -160,7 +151,7 @@ backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, gu
 	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-    ret = rados_read(bf->io, bf->path, buffer, length, offset);
+    ret = rados_read(backend_io, bf->path, buffer, length, offset);
 	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
 
 	g_return_val_if_fail(ret >= 0, FALSE);
@@ -181,7 +172,7 @@ backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offs
 	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-    ret = rados_write(bf->io, bf->path, buffer, length, offset);
+    ret = rados_write(backend_io, bf->path, buffer, length, offset);
 	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
 
 	g_return_val_if_fail(ret == 0, FALSE);
@@ -202,14 +193,15 @@ backend_init (gchar const* path)
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
-	/* Path syntax: [hostname]:[config-path]
-	   e.g.: localhost:/etc/ceph/ceph.conf */
+	/* Path syntax: [config-path]:[pool]
+	   e.g.: /etc/ceph/ceph.conf:data */
 	split = g_strsplit(path, ":", 0);
+	backend_config = g_strdup(split[0]);
 
-	backend_host = g_strdup(split[0]);
-	backend_config = g_strdup(split[1]);
+	split = g_strsplit(split[1], "/", 0);
+	backend_pool   = g_strdup(split[0]);
 
-	g_return_val_if_fail(backend_host != NULL, FALSE);
+	g_return_val_if_fail(backend_pool   != NULL, FALSE);
 	g_return_val_if_fail(backend_config != NULL, FALSE);
 
 	/* Create cluster handle */
@@ -227,7 +219,14 @@ backend_init (gchar const* path)
 	/* Connect to cluster */
 	if(rados_connect(backend_connection) != 0)
 	{
-		g_critical("Can not connect to RADOS %s.", backend_host);
+		g_critical("Can not connect to RADOS. Cluster online, config up-to-date and keyring correct linked?");
+	}
+
+	/* Initialize IO and select pool */
+	if(rados_ioctx_create(backend_connection, backend_pool, &backend_io) != 0)
+	{
+		rados_shutdown(backend_connection);
+		g_critical("Can not connect to RADOS pool %s.", backend_pool);
 	}
 
 	return TRUE;
@@ -238,11 +237,12 @@ void
 backend_fini (void)
 {
     /* Close connection to cluster */
+    rados_ioctx_destroy(backend_io);
     rados_shutdown(backend_connection);
 
     /* Free memory */
-	g_free(backend_host);
 	g_free(backend_config);
+	g_free(backend_pool);
 }
 
 static

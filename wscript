@@ -385,9 +385,6 @@ def build (ctx):
 		if backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
 
-		if backend == 'rados':
-			use_extra = ['LIBRADOS']
-
 		ctx.shlib(
 			source = ['backend/client/{0}.c'.format(backend)],
 			target = 'backend/client/{0}'.format(backend),
@@ -426,6 +423,8 @@ def build (ctx):
 			use_extra = ['LMDB']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
+		elif backend == 'rados':
+			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
