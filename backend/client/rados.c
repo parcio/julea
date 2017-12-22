@@ -197,9 +197,7 @@ backend_init (gchar const* path)
 	   e.g.: /etc/ceph/ceph.conf:data */
 	split = g_strsplit(path, ":", 0);
 	backend_config = g_strdup(split[0]);
-
-	split = g_strsplit(split[1], "/", 0);
-	backend_pool = g_strdup(split[0]);
+	backend_pool = g_strdup(split[1]);
 
 	g_return_val_if_fail(backend_pool != NULL, FALSE);
 	g_return_val_if_fail(backend_config != NULL, FALSE);
