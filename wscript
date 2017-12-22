@@ -378,12 +378,17 @@ def build (ctx):
 	if ctx.env.JULEA_LIBMONGOC:
 		backends_client.append('mongodb')
 
+	if ctx.env.JULEA_LIBRADOS:
+		backends_client.append('rados')
+
 	# Client backends
 	for backend in backends_client:
 		use_extra = []
 
 		if backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
+		elif backend == 'rados':
+			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/client/{0}.c'.format(backend)],
@@ -395,10 +400,6 @@ def build (ctx):
 		)
 
 	backends_server = ['gio', 'null', 'posix']
-
-	# FIXME convert to client backend
-	if ctx.env.JULEA_LIBRADOS:
-		backends_server.append('rados')
 
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
@@ -424,8 +425,6 @@ def build (ctx):
 			use_extra = ['LMDB']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
-		elif backend == 'rados':
-			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
