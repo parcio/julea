@@ -393,7 +393,7 @@ j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, bson_t co
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	j_trace_enter("backend_put", "%p, %s, %p", batch, key, (gpointer)value);
+	j_trace_enter("backend_put", "%p, %s, %p", batch, key, (gconstpointer)value);
 	ret = backend->kv.put(batch, key, value);
 	j_trace_leave("backend_put");
 

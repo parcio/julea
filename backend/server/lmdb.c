@@ -115,7 +115,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 	m_value.mv_size = value->len;
-	m_value.mv_data = (gchar*)bson_get_data(value);
+	m_value.mv_data = bson_get_data(value);
 
 	return (mdb_put(batch->txn, backend_dbi, &m_key, &m_value, 0) == 0);
 }

@@ -276,7 +276,37 @@ def configure (ctx):
 		)
 
 	if ctx.options.debug:
-		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
+		ctx.env.CFLAGS += [
+			'-Waggregate-return',
+			'-Wcast-align',
+			'-Wcast-qual',
+			'-Wdeclaration-after-statement',
+			'-Wdouble-promotion',
+			'-Wduplicated-cond',
+			'-Wfloat-equal',
+			'-Wformat=2',
+			'-Winit-self',
+			'-Winline',
+			'-Wjump-misses-init',
+			'-Wlogical-op',
+			'-Wmissing-declarations',
+			'-Wmissing-format-attribute',
+			'-Wmissing-include-dirs',
+			'-Wmissing-noreturn',
+			'-Wmissing-prototypes',
+			'-Wnested-externs',
+			'-Wnull-dereference',
+			'-Wold-style-definition',
+			'-Wredundant-decls',
+			'-Wrestrict',
+			'-Wshadow',
+			'-Wstrict-prototypes',
+			'-Wswitch-default',
+			'-Wswitch-enum',
+			'-Wundef',
+			'-Wuninitialized',
+			'-Wwrite-strings'
+		]
 		ctx.env.CFLAGS += ['-ggdb']
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)

@@ -96,7 +96,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	sqlite3_prepare_v2(backend_db, "INSERT INTO julea (namespace, key, value) VALUES (?, ?, ?);", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
 	sqlite3_bind_text(stmt, 2, key, -1, NULL);
-	sqlite3_bind_blob(stmt, 3, (gchar*)bson_get_data(value), value->len, NULL);
+	sqlite3_bind_blob(stmt, 3, bson_get_data(value), value->len, NULL);
 
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
