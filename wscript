@@ -149,7 +149,8 @@ def configure (ctx):
 	ctx.env.JULEA_LIBRADOS = \
 	ctx.check_cc(
 		lib = 'rados',
-		uselib_store = 'LIBRADOS'
+		uselib_store = 'LIBRADOS',
+		mandatory = False
 	)
 
 	ctx.env.JULEA_FUSE = \
