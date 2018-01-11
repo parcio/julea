@@ -384,8 +384,12 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 				bson_t tmp[1];
 
 				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, tmp) && ret;
-				kop->get.func(tmp, kop->get.data);
-				bson_destroy(tmp);
+
+				if (ret)
+				{
+					kop->get.func(tmp, kop->get.data);
+					bson_destroy(tmp);
+				}
 			}
 			else
 			{
