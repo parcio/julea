@@ -454,6 +454,8 @@ def build (ctx):
 			cflags = ['-Wno-strict-prototypes']
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
+			# FIXME lmdb bug
+			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
 
