@@ -29,6 +29,7 @@ get_directory ()
 
 set_glib_options ()
 {
+	#export G_DEBUG=resident-modules
 	#export G_SLICE=all
 	export G_SLICE=always-malloc
 }
