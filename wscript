@@ -41,6 +41,16 @@ def check_cfg_rpath (ctx, **kwargs):
 
 	return r
 
+def check_cc_rpath (ctx, opt, **kwargs):
+	if opt:
+		kwargs['includes'] = ['{0}/include'.format(opt)]
+		kwargs['libpath'] = ['{0}/lib'.format(opt)]
+
+		if ctx.options.debug:
+			kwargs['rpath'] = kwargs['libpath']
+
+	return ctx.check_cc(**kwargs)
+
 def get_rpath (ctx):
 	if not ctx.env.JULEA_DEBUG:
 		return None
@@ -88,6 +98,7 @@ def options (ctx):
 	ctx.add_option('--libbson', action='store', default=None, help='libbson prefix')
 	ctx.add_option('--libmongoc', action='store', default=None, help='libmongoc driver prefix')
 	ctx.add_option('--librados', action='store', default=None, help='librados driver prefix')
+	ctx.add_option('--hdf5', action='store', default=None, help='HDF5 prefix', dest='hdf')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
 
@@ -150,6 +161,16 @@ def configure (ctx):
 	ctx.check_cc(
 		lib = 'rados',
 		uselib_store = 'LIBRADOS',
+		mandatory = False
+	)
+
+	ctx.env.JULEA_HDF = \
+	check_cc_rpath(
+		ctx,
+		ctx.options.hdf,
+		header_name = 'hdf5.h',
+		lib = 'hdf5',
+		uselib_store = 'HDF5',
 		mandatory = False
 	)
 
