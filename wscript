@@ -41,6 +41,16 @@ def check_cfg_rpath (ctx, **kwargs):
 
 	return r
 
+def check_cc_rpath (ctx, opt, **kwargs):
+	if opt:
+		kwargs['includes'] = ['{0}/include'.format(opt)]
+		kwargs['libpath'] = ['{0}/lib'.format(opt)]
+
+		if ctx.options.debug:
+			kwargs['rpath'] = kwargs['libpath']
+
+	return ctx.check_cc(**kwargs)
+
 def get_rpath (ctx):
 	if not ctx.env.JULEA_DEBUG:
 		return None
@@ -88,6 +98,7 @@ def options (ctx):
 	ctx.add_option('--libbson', action='store', default=None, help='libbson prefix')
 	ctx.add_option('--libmongoc', action='store', default=None, help='libmongoc driver prefix')
 	ctx.add_option('--librados', action='store', default=None, help='librados driver prefix')
+	ctx.add_option('--hdf5', action='store', default=None, help='HDF5 prefix', dest='hdf')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
 
@@ -145,11 +156,22 @@ def configure (ctx):
 		mandatory = False
 	)
 
+	# FIXME use check_cfg
 	ctx.env.JULEA_LIBRADOS = \
 	ctx.check_cc(
-		lib='rados',
-		cflags='-lrados',
-		uselib_store='LIBRADOS'
+		lib = 'rados',
+		uselib_store = 'LIBRADOS',
+		mandatory = False
+	)
+
+	ctx.env.JULEA_HDF = \
+	check_cc_rpath(
+		ctx,
+		ctx.options.hdf,
+		header_name = 'hdf5.h',
+		lib = 'hdf5',
+		uselib_store = 'HDF5',
+		mandatory = False
 	)
 
 	ctx.env.JULEA_FUSE = \
@@ -275,7 +297,37 @@ def configure (ctx):
 		)
 
 	if ctx.options.debug:
-		ctx.env.CFLAGS += ['-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wold-style-definition', '-Wdeclaration-after-statement', '-Wmissing-declarations', '-Wmissing-prototypes', '-Wredundant-decls', '-Wmissing-noreturn', '-Wshadow', '-Wpointer-arith', '-Wcast-align', '-Wwrite-strings', '-Winline', '-Wformat-nonliteral', '-Wformat-security', '-Wswitch-enum', '-Wswitch-default', '-Winit-self', '-Wmissing-include-dirs', '-Wundef', '-Waggregate-return', '-Wmissing-format-attribute', '-Wnested-externs', '-Wstrict-prototypes']
+		ctx.env.CFLAGS += [
+			'-Waggregate-return',
+			'-Wcast-align',
+			'-Wcast-qual',
+			'-Wdeclaration-after-statement',
+			'-Wdouble-promotion',
+			'-Wduplicated-cond',
+			'-Wfloat-equal',
+			'-Wformat=2',
+			'-Winit-self',
+			'-Winline',
+			'-Wjump-misses-init',
+			'-Wlogical-op',
+			'-Wmissing-declarations',
+			'-Wmissing-format-attribute',
+			'-Wmissing-include-dirs',
+			'-Wmissing-noreturn',
+			'-Wmissing-prototypes',
+			'-Wnested-externs',
+			'-Wnull-dereference',
+			'-Wold-style-definition',
+			'-Wredundant-decls',
+			'-Wrestrict',
+			'-Wshadow',
+			'-Wstrict-prototypes',
+			'-Wswitch-default',
+			'-Wswitch-enum',
+			'-Wundef',
+			'-Wuninitialized',
+			'-Wwrite-strings'
+		]
 		ctx.env.CFLAGS += ['-ggdb']
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
@@ -378,12 +430,17 @@ def build (ctx):
 	if ctx.env.JULEA_LIBMONGOC:
 		backends_client.append('mongodb')
 
+	if ctx.env.JULEA_LIBRADOS:
+		backends_client.append('rados')
+
 	# Client backends
 	for backend in backends_client:
 		use_extra = []
 
 		if backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
+		elif backend == 'rados':
+			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/client/{0}.c'.format(backend)],
@@ -421,6 +478,8 @@ def build (ctx):
 			cflags = ['-Wno-strict-prototypes']
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
+			# FIXME lmdb bug
+			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
 		elif backend == 'rados':

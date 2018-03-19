@@ -36,20 +36,38 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
+	bson_t command[1];
 	bson_t index[1];
+	bson_t indexes[1];
+	bson_t key[1];
+	bson_t reply[1];
 	mongoc_bulk_operation_t* bulk_op;
 	mongoc_collection_t* m_collection;
-	mongoc_index_opt_t m_index_opt[1];
+	mongoc_database_t* m_database;
 	mongoc_write_concern_t* write_concern;
+
+	gchar* index_name;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	bson_init(index);
-	bson_append_int32(index, "key", -1, 1);
+	bson_init(key);
+	bson_append_int32(key, "key", -1, 1);
 
-	mongoc_index_opt_init(m_index_opt);
-	m_index_opt->unique = TRUE;
+	index_name = mongoc_collection_keys_to_index_string(key);
+
+	bson_init(command);
+	bson_append_utf8(command, "createIndexes", -1, namespace, -1);
+	bson_append_array_begin(command, "indexes", -1, indexes);
+	bson_append_document_begin(indexes, "0", -1, index);
+	bson_append_document(index, "key", -1, key);
+	bson_append_utf8(index, "name", -1, index_name, -1);
+	bson_append_bool(index, "unique", -1, TRUE);
+	bson_append_document_end(indexes, index);
+	bson_append_array_end(command, indexes);
+
+	bson_destroy(key);
+	bson_free(index_name);
 
 	write_concern = mongoc_write_concern_new();
 
@@ -69,15 +87,18 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 
 	/* FIXME cache */
 	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+	m_database = mongoc_client_get_database(backend_connection, backend_database);
 
-	mongoc_collection_create_index(m_collection, index, m_index_opt, NULL);
+	mongoc_database_write_command_with_opts(m_database, command, NULL, reply, NULL);
 
 	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, write_concern);
 
 	mongoc_collection_destroy(m_collection);
+	mongoc_database_destroy(m_database);
 	mongoc_write_concern_destroy(write_concern);
 
-	bson_destroy(index);
+	bson_destroy(command);
+	bson_destroy(reply);
 
 	*data = bulk_op;
 

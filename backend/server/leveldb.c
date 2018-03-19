@@ -106,7 +106,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gchar*)bson_get_data(value), value->len);
+	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gconstpointer)bson_get_data(value), value->len);
 
 	// FIXME
 	return TRUE;
