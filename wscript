@@ -453,9 +453,6 @@ def build (ctx):
 
 	backends_server = ['gio', 'null', 'posix']
 
-	if ctx.env.JULEA_LIBRADOS:
-		backends_server.append('rados')
-
 	if ctx.env.JULEA_LEVELDB:
 		backends_server.append('leveldb')
 
@@ -482,8 +479,6 @@ def build (ctx):
 			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
-		elif backend == 'rados':
-			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/server/{0}.c'.format(backend)],
