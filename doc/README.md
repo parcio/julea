@@ -7,7 +7,7 @@ Additionally, *JULEA* allows dynamically adapting the I/O operations' semantics 
 
 ## Links
 
-* [Quick Start](Quick Start.md)
+* [Quick Start](Quick%20Start.md)
 * [Configuration](Configuration.md)
 * [Dependencies](Dependencies.md)
-* [Howto implement a backend](Howto implement a backend.md)
+* [Howto implement a backend](Howto%20implement%20a%20backend.md)
