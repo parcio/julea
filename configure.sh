@@ -64,12 +64,51 @@ spack_load ()
 	spack load --dependencies "${spack_pkg}"
 }
 
+load_dependency ()
+{
+	local pkg_config
+	local spack_pkg
+
+	pkg_config="$1"
+	spack_pkg="$2"
+
+	test -n "${pkg_config}" || return 1
+	test -n "${spack_pkg}" || return 1
+
+	if ! pkg-config --exists "${pkg_config}"
+	then
+		spack_load "${spack_pkg}"
+	fi
+}
+
+load_dependency_bin ()
+{
+	local bin
+	local spack_pkg
+
+	bin="$1"
+	spack_pkg="$2"
+
+	test -n "${bin}" || return 1
+	test -n "${spack_pkg}" || return 1
+
+	if ! command -v "${bin}" > /dev/null 2>&1
+	then
+		spack_load "${spack_pkg}"
+	fi
+}
+
 if spack_init
 then
-	for pkg in glib libbson leveldb lmdb libmongoc otf sqlite
-	do
-		spack_load "${pkg}"
-	done
+	load_dependency_bin pkg-config pkgconfig
+
+	load_dependency glib-2.0 glib
+	load_dependency libbson-1.0 libbson
+
+	load_dependency leveldb leveldb
+	load_dependency lmdb lmdb
+	load_dependency libmongoc-1.0 libmongoc
+	load_dependency sqlite3 sqlite
 fi
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH,

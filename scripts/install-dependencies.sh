@@ -29,7 +29,7 @@ spack_clone ()
 	local spack_commit
 	local spack_dir
 
-	spack_commit='e9c66a76f00057f9900e8678765c474dc2a79823'
+	spack_commit='80564fae5df952eb8544272e178d283bac0c0f57'
 	spack_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 	if test ! -d "${spack_dir}"
@@ -97,6 +97,11 @@ spack_clone
 
 # Required for Spack itself
 spack_install environment-modules
+
+# FIXME install all dependencies via Spack even if they are available locally?
+
+# Required for Waf
+install_dependency_bin pkg-config pkgconfig
 
 # Mandatory dependencies
 install_dependency glib-2.0 glib
