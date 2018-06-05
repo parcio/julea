@@ -40,6 +40,7 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 	bson_t index[1];
 	bson_t indexes[1];
 	bson_t key[1];
+	bson_t opts[1];
 	bson_t reply[1];
 	mongoc_bulk_operation_t* bulk_op;
 	mongoc_collection_t* m_collection;
@@ -91,7 +92,12 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 
 	mongoc_database_write_command_with_opts(m_database, command, NULL, reply, NULL);
 
-	bulk_op = mongoc_collection_create_bulk_operation(m_collection, FALSE, write_concern);
+	bson_init(opts);
+	mongoc_write_concern_append(write_concern, opts);
+
+	bulk_op = mongoc_collection_create_bulk_operation_with_opts(m_collection, opts);
+
+	bson_free(opts);
 
 	mongoc_collection_destroy(m_collection);
 	mongoc_database_destroy(m_database);
