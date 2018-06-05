@@ -76,6 +76,7 @@ gchar const* j_uri_get_item_name (JURI*);
 
 gboolean j_uri_get (JURI*, GError**);
 gboolean j_uri_create (JURI*, gboolean, GError**);
+gboolean j_uri_delete (JURI*, GError**);
 
 JCollection* j_uri_get_collection (JURI*);
 JItem* j_uri_get_item (JURI*);

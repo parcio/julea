@@ -399,20 +399,16 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 
 	if (j_uri_get(uri, error))
 	{
-		if (!with_parents)
+		if (uri->item != NULL)
 		{
-			ret = FALSE;
-
-			if (uri->item != NULL)
-			{
-				g_set_error(error, J_URI_ERROR, J_URI_ERROR_ITEM_EXISTS, "Item “%s” already exists.", j_item_get_name(uri->item));
-			}
-			else if (uri->collection != NULL)
-			{
-				g_set_error(error, J_URI_ERROR, J_URI_ERROR_COLLECTION_EXISTS, "Collection “%s” already exists.", j_collection_get_name(uri->collection));
-			}
+			g_set_error(error, J_URI_ERROR, J_URI_ERROR_ITEM_EXISTS, "Item “%s” already exists.", j_item_get_name(uri->item));
+		}
+		else if (uri->collection != NULL)
+		{
+			g_set_error(error, J_URI_ERROR, J_URI_ERROR_COLLECTION_EXISTS, "Collection “%s” already exists.", j_collection_get_name(uri->collection));
 		}
 
+		ret = FALSE;
 		goto end;
 	}
 	else
@@ -437,6 +433,60 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 	if (uri->item == NULL && uri->item_name != NULL)
 	{
 		uri->item = j_item_create(uri->collection, uri->item_name, NULL, batch);
+		j_batch_execute(batch);
+	}
+
+end:
+	return ret;
+}
+
+/**
+ * Deletes the collection and item.
+ *
+ * \author Michael Kuhn
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_delete(uri, FALSE, &error);
+ * \endcode
+ *
+ * \param uri          A URI.
+ * \param error        An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_uri_delete (JURI* uri, GError** error)
+{
+	g_autoptr(JBatch) batch = NULL;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail(uri != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	if (!j_uri_get(uri, error))
+	{
+		ret = FALSE;
+		goto end;
+	}
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	if (uri->item != NULL)
+	{
+		j_item_delete(uri->item, batch);
+		j_batch_execute(batch);
+		/* Delete only the last component. */
+		goto end;
+	}
+
+	if (uri->collection != NULL)
+	{
+		j_collection_delete(uri->collection, batch);
 		j_batch_execute(batch);
 	}
 

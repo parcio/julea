@@ -99,7 +99,7 @@ test_uri_invalid (void)
 
 static
 void
-test_uri_create (void)
+test_uri_create_delete (void)
 {
 	JURI* uri;
 	gboolean ret;
@@ -112,10 +112,14 @@ test_uri_create (void)
 	uri = j_uri_new("julea://uri-create-1");
 	ret = j_uri_create(uri, FALSE, NULL);
 	g_assert_true(ret);
+	ret = j_uri_delete(uri, NULL);
+	g_assert_true(ret);
 	j_uri_free(uri);
 
 	uri = j_uri_new("julea://uri-create-2/uri-create-2");
 	ret = j_uri_create(uri, TRUE, NULL);
+	g_assert_true(ret);
+	ret = j_uri_delete(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
 }
@@ -143,6 +147,6 @@ test_uri (void)
 	g_test_add_func("/item/uri/new_free", test_uri_new_free);
 	g_test_add_func("/item/uri/valid", test_uri_valid);
 	g_test_add_func("/item/uri/invalid", test_uri_invalid);
-	g_test_add_func("/item/uri/create", test_uri_create);
+	g_test_add_func("/item/uri/create_delete", test_uri_create_delete);
 	g_test_add_func("/item/uri/get", test_uri_get);
 }
