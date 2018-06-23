@@ -30,6 +30,8 @@
  * It also allows to change the file system semantics at runtime.
  *
  * The name JULEA is a play on ROMIO.
+ *
+ * Start using the API: \ref JCommon
  **/
 
 #include <jbackend.h>
