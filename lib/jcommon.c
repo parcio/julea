@@ -113,7 +113,7 @@ j_is_initialized (void)
  *
  * \param default_name Default name
  *
- * \return The progran name if it can be determined, default_name otherwise.
+ * \return The progran name if it can be determined, \paramname{default_name} otherwise.
  */
 static
 gchar*
