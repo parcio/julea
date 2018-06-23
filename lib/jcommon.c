@@ -44,6 +44,25 @@
 /**
  * \defgroup JCommon Common
  * @{
+ * 
+ * Before we can use Julea we first need to initialize the Julea Context
+ * 
+ * \ref j_init(void) expect that the enviroment variable `JULEA_CONFIG` is set to the used julea config file.
+ * @code
+ * j_init();
+ * 
+ * if(!j_is_initialized()) // check if julea is functional
+ * 	goto error;
+ * 
+ * JBackend* kv = j_kv_backend(); // get key-value backend
+ * JBackend* object = j_object_backend(); // get object backend
+ * 
+ * //[...] create/alter/delete data
+ * 
+ * j_fini(); // shut down julea
+ * @endcode
+ * 
+ * It is important to check \ref j_is_initialized() before using j_object_backend() and j_kv_backend(), if not the JCommon struct may have not been correctly initialized due to missing config or misconfiguration.
  **/
 
 /**
