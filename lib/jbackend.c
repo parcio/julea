@@ -113,6 +113,9 @@ j_backend_load (gchar const* name, gchar const* component, JBackendType type, JB
 	return module;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_load_client (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
@@ -135,6 +138,9 @@ j_backend_load_client (gchar const* name, gchar const* component, JBackendType t
 	return FALSE;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_load_server (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
@@ -157,6 +163,9 @@ j_backend_load_server (gchar const* name, gchar const* component, JBackendType t
 	return FALSE;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_init (JBackend* backend, gchar const* path)
 {
@@ -184,6 +193,9 @@ j_backend_object_fini (JBackend* backend)
 	j_trace_leave("backend_fini");
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
@@ -202,6 +214,9 @@ j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const*
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
@@ -220,6 +235,9 @@ j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* p
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_delete (JBackend* backend, gpointer data)
 {
@@ -236,6 +254,9 @@ j_backend_object_delete (JBackend* backend, gpointer data)
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_close (JBackend* backend, gpointer data)
 {
@@ -252,6 +273,9 @@ j_backend_object_close (JBackend* backend, gpointer data)
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_time, guint64* size)
 {
@@ -270,6 +294,9 @@ j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_sync (JBackend* backend, gpointer data)
 {
@@ -286,6 +313,9 @@ j_backend_object_sync (JBackend* backend, gpointer data)
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
@@ -304,6 +334,9 @@ j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint6
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_object_write (JBackend* backend, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
@@ -322,6 +355,9 @@ j_backend_object_write (JBackend* backend, gpointer data, gconstpointer buffer, 
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_init (JBackend* backend, gchar const* path)
 {
@@ -349,6 +385,9 @@ j_backend_kv_fini (JBackend* backend)
 	j_trace_leave("backend_fini");
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemanticsSafety safety, gpointer* batch)
 {
@@ -366,6 +405,9 @@ j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemanticsS
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_batch_execute (JBackend* backend, gpointer batch)
 {
@@ -382,6 +424,9 @@ j_backend_kv_batch_execute (JBackend* backend, gpointer batch)
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, bson_t const* value)
 {
@@ -400,6 +445,9 @@ j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, bson_t co
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
 {
@@ -417,6 +465,9 @@ j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, bson_t* value)
 {
@@ -435,6 +486,9 @@ j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, b
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_get_all (JBackend* backend, gchar const* namespace, gpointer* iterator)
 {
@@ -452,6 +506,9 @@ j_backend_kv_get_all (JBackend* backend, gchar const* namespace, gpointer* itera
 	return ret;
 }
 
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_get_by_prefix (JBackend* backend, gchar const* namespace, gchar const* prefix, gpointer* iterator)
 {
@@ -469,6 +526,10 @@ j_backend_kv_get_by_prefix (JBackend* backend, gchar const* namespace, gchar con
 
 	return ret;
 }
+
+/**
+ * \returns `TRUE` on success, `FALSE` on failure 
+ */
 gboolean
 j_backend_kv_iterate (JBackend* backend, gpointer iterator, bson_t* value)
 {
