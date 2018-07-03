@@ -194,6 +194,9 @@ j_backend_object_fini (JBackend* backend)
 }
 
 /**
+ * Creates object in \paramname{namespace} with \paramname{path}. 
+ * \returns \paramname{data} object handle get stored on this memory location
+ * Depending on the \paramname{backend} this may do the same thing than j_backend_object_open
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -215,6 +218,9 @@ j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const*
 }
 
 /**
+ * Opens object in \paramname{namespace} with \paramname{path}.
+ * Depending on the \paramname{backend} this may only initialize internal values to write to an object storage backend that doesn't need objects beeing opened prior writes and reads
+ * \returns \paramname{data} object handle get stored on this memory location
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -236,6 +242,8 @@ j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* p
 }
 
 /**
+ * Delete the object associated with the given object handle \paramname{data}
+ * \param data object handle that was created by j_backend_object_open or j_backend_object_create 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -255,6 +263,8 @@ j_backend_object_delete (JBackend* backend, gpointer data)
 }
 
 /**
+ * Informs the \paramname{backend} that the object referenced by \paramname{data} will no longer be written or read from. 
+ * Depending on the backend this may free caches and/or write dirty pages to disk 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -274,6 +284,9 @@ j_backend_object_close (JBackend* backend, gpointer data)
 }
 
 /**
+ * Get the time of modification and size of the referenced object \paramname{data}
+ * \returns \paramname{modification_time} time of last modification 
+ * \returns \paramname{size} size in bytes of object 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
