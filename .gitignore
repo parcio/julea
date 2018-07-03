@@ -14,3 +14,6 @@ html/
 build/
 .lock-waf*
 .waf-*/
+
+# Doxygen <html>
+html/
