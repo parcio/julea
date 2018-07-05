@@ -308,6 +308,8 @@ j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_
 }
 
 /**
+ * If \paramname{backend} uses something like a page cache this function-call may force the \paramname{backend} to write all dirty pages of \paramname{data} object handle to disk.
+ * \param data object handle that was created by j_backend_object_open or j_backend_object_create 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -327,6 +329,7 @@ j_backend_object_sync (JBackend* backend, gpointer data)
 }
 
 /**
+ * \param data object handle that was created by j_backend_object_open or j_backend_object_create 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
@@ -348,6 +351,7 @@ j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint6
 }
 
 /**
+ * \param data object handle that was created by j_backend_object_open or j_backend_object_create 
  * \returns `TRUE` on success, `FALSE` on failure 
  */
 gboolean
