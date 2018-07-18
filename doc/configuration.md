@@ -6,6 +6,7 @@ For an example invocation of `julea-config`, please refer to the [Quick Start](.
 
 JULEA supports multiple configurations that can be selected at runtime using the `JULEA_CONFIG` environment variable.
 They can be created using the `--name` parameter when calling `julea-config`.
+If no name is specified, the default (`julea`) is used.
 
 ## Backends
 

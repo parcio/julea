@@ -8,6 +8,8 @@ Additionally, JULEA allows dynamically adapting the I/O operations' semantics an
 It runs completely in user space, which eases development and debugging.
 Its goal is to provide a solid foundation for storage research and teaching.
 
+For more information, please refer to the [doc/README.md](documentation).
+
 ## Quick Start
 
 To use JULEA, first clone the Git repository and enter the directory.
