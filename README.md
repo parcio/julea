@@ -8,7 +8,7 @@ Additionally, JULEA allows dynamically adapting the I/O operations' semantics an
 It runs completely in user space, which eases development and debugging.
 Its goal is to provide a solid foundation for storage research and teaching.
 
-For more information, please refer to the [doc/README.md](documentation).
+For more information, please refer to the [documentation](doc/README.md).
 
 ## Quick Start
 
