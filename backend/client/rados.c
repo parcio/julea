@@ -247,16 +247,16 @@ static
 JBackend rados_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.object = {
-		.init = backend_init,
-		.fini = backend_fini,
-		.create = backend_create,
-		.delete = backend_delete,
-		.open = backend_open,
-		.close = backend_close,
-		.status = backend_status,
-		.sync = backend_sync,
-		.read = backend_read,
-		.write = backend_write
+		.backend_init = backend_init,
+		.backend_fini = backend_fini,
+		.backend_create = backend_create,
+		.backend_delete = backend_delete,
+		.backend_open = backend_open,
+		.backend_close = backend_close,
+		.backend_status = backend_status,
+		.backend_sync = backend_sync,
+		.backend_read = backend_read,
+		.backend_write = backend_write
 	}
 };
 

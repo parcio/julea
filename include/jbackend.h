@@ -47,39 +47,39 @@ struct JBackend
 	{
 		struct
 		{
-			gboolean (*init) (gchar const*);
-			void (*fini) (void);
+			gboolean (*backend_init) (gchar const*);
+			void (*backend_fini) (void);
 
-			gboolean (*create) (gchar const*, gchar const*, gpointer*);
-			gboolean (*open) (gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_create) (gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_open) (gchar const*, gchar const*, gpointer*);
 
-			gboolean (*delete) (gpointer);
-			gboolean (*close) (gpointer);
+			gboolean (*backend_delete) (gpointer);
+			gboolean (*backend_close) (gpointer);
 
-			gboolean (*status) (gpointer, gint64*, guint64*);
-			gboolean (*sync) (gpointer);
+			gboolean (*backend_status) (gpointer, gint64*, guint64*);
+			gboolean (*backend_sync) (gpointer);
 
-			gboolean (*read) (gpointer, gpointer, guint64, guint64, guint64*);
-			gboolean (*write) (gpointer, gconstpointer, guint64, guint64, guint64*);
+			gboolean (*backend_read) (gpointer, gpointer, guint64, guint64, guint64*);
+			gboolean (*backend_write) (gpointer, gconstpointer, guint64, guint64, guint64*);
 		}
 		object;
 
 		struct
 		{
-			gboolean (*init) (gchar const*);
-			void (*fini) (void);
+			gboolean (*backend_init) (gchar const*);
+			void (*backend_fini) (void);
 
-			gboolean (*batch_start) (gchar const*, JSemanticsSafety, gpointer*);
-			gboolean (*batch_execute) (gpointer);
+			gboolean (*backend_batch_start) (gchar const*, JSemanticsSafety, gpointer*);
+			gboolean (*backend_batch_execute) (gpointer);
 
-			gboolean (*put) (gpointer, gchar const*, bson_t const*);
-			gboolean (*delete) (gpointer, gchar const*);
+			gboolean (*backend_put) (gpointer, gchar const*, bson_t const*);
+			gboolean (*backend_delete) (gpointer, gchar const*);
 
-			gboolean (*get) (gchar const*, gchar const*, bson_t*);
+			gboolean (*backend_get) (gchar const*, gchar const*, bson_t*);
 
-			gboolean (*get_all) (gchar const*, gpointer*);
-			gboolean (*get_by_prefix) (gchar const*, gchar const*, gpointer*);
-			gboolean (*iterate) (gpointer, bson_t*);
+			gboolean (*backend_get_all) (gchar const*, gpointer*);
+			gboolean (*backend_get_by_prefix) (gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_iterate) (gpointer, bson_t*);
 		}
 		kv;
 	};

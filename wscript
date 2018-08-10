@@ -390,7 +390,7 @@ def build (ctx):
 			target = 'lib/julea-{0}'.format(client),
 			use = use_julea_lib + ['lib/julea'] + use_extra,
 			includes = ['include'],
-			defines = ['J_ENABLE_INTERNAL', 'JULEA_{0}_COMPILATION'.format(client.upper())],
+			defines = ['JULEA_{0}_COMPILATION'.format(client.upper())],
 			rpath = get_rpath(ctx),
 			install_path = '${LIBDIR}'
 		)
@@ -496,7 +496,6 @@ def build (ctx):
 		target = 'cli/julea-cli',
 		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
 		includes = ['include'],
-		defines = ['J_ENABLE_INTERNAL'],
 		rpath = get_rpath(ctx),
 		install_path = '${BINDIR}'
 	)

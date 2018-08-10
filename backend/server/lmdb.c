@@ -329,16 +329,16 @@ static
 JBackend lmdb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.kv = {
-		.init = backend_init,
-		.fini = backend_fini,
-		.batch_start = backend_batch_start,
-		.batch_execute = backend_batch_execute,
-		.put = backend_put,
-		.delete = backend_delete,
-		.get = backend_get,
-		.get_all = backend_get_all,
-		.get_by_prefix = backend_get_by_prefix,
-		.iterate = backend_iterate
+		.backend_init = backend_init,
+		.backend_fini = backend_fini,
+		.backend_batch_start = backend_batch_start,
+		.backend_batch_execute = backend_batch_execute,
+		.backend_put = backend_put,
+		.backend_delete = backend_delete,
+		.backend_get = backend_get,
+		.backend_get_all = backend_get_all,
+		.backend_get_by_prefix = backend_get_by_prefix,
+		.backend_iterate = backend_iterate
 	}
 };
 
