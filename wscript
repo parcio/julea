@@ -117,12 +117,12 @@ def configure (ctx):
 
 	ctx.check_large_file()
 
-	for program in ('mpicc',):
-		ctx.find_program(
-			program,
-			var = program.upper(),
-			mandatory = False
-		)
+	#for program in ('mpicc',):
+	#	ctx.find_program(
+	#		program,
+	#		var = program.upper(),
+	#		mandatory = False
+	#	)
 
 	ctx.check_cc(
 		lib = 'm',
@@ -183,18 +183,18 @@ def configure (ctx):
 		mandatory = False
 	)
 
-	if ctx.env.MPICC:
-		# FIXME: only works with OpenMPI
-		ctx.env.JULEA_MPI = \
-		ctx.check_cc(
-			header_name = 'mpi.h',
-			lib = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libs']).strip()),
-			includes = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:incdirs']).strip()),
-			libpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
-			rpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
-			uselib_store = 'MPI',
-			define_name = 'HAVE_MPI'
-		)
+	#if ctx.env.MPICC:
+	#	# FIXME: only works with OpenMPI
+	#	ctx.env.JULEA_MPI = \
+	#	ctx.check_cc(
+	#		header_name = 'mpi.h',
+	#		lib = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libs']).strip()),
+	#		includes = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:incdirs']).strip()),
+	#		libpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
+	#		rpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
+	#		uselib_store = 'MPI',
+	#		define_name = 'HAVE_MPI'
+	#	)
 
 	ctx.env.JULEA_LEVELDB = \
 	check_cfg_rpath(
