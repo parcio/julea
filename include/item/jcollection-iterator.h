@@ -29,16 +29,24 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JCollectionIterator;
 
 typedef struct JCollectionIterator JCollectionIterator;
 
+G_END_DECLS
+
 #include <item/jcollection.h>
+
+G_BEGIN_DECLS
 
 JCollectionIterator* j_collection_iterator_new (void);
 void j_collection_iterator_free (JCollectionIterator*);
 
 gboolean j_collection_iterator_next (JCollectionIterator*);
 JCollection* j_collection_iterator_get (JCollectionIterator*);
+
+G_END_DECLS
 
 #endif

@@ -29,11 +29,13 @@
 
 #include <glib.h>
 
+#include <julea.h>
+
+G_BEGIN_DECLS
+
 struct JObject;
 
 typedef struct JObject JObject;
-
-#include <julea.h>
 
 JObject* j_object_new (gchar const*, gchar const*);
 JObject* j_object_new_for_index (guint32, gchar const*, gchar const*);
@@ -49,5 +51,7 @@ void j_object_read (JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_object_write (JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
 void j_object_status (JObject*, gint64*, guint64*, JBatch*);
+
+G_END_DECLS
 
 #endif

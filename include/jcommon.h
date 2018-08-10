@@ -29,13 +29,19 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JCommon;
 
 typedef struct JCommon JCommon;
 
+G_END_DECLS
+
 #include <jbackend.h>
 #include <jbatch.h>
 #include <jconfiguration.h>
+
+G_BEGIN_DECLS
 
 void j_init (void);
 void j_fini (void);
@@ -44,5 +50,7 @@ JConfiguration* j_configuration (void);
 
 JBackend* j_object_backend (void);
 JBackend* j_kv_backend (void);
+
+G_END_DECLS
 
 #endif

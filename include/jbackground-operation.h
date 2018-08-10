@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JBackgroundOperation;
 
 typedef struct JBackgroundOperation JBackgroundOperation;
@@ -40,5 +42,7 @@ JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
 void j_background_operation_unref (JBackgroundOperation*);
 
 gpointer j_background_operation_wait (JBackgroundOperation*);
+
+G_END_DECLS
 
 #endif

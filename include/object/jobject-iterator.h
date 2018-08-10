@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JObjectIterator;
 
 typedef struct JObjectIterator JObjectIterator;
@@ -38,5 +40,7 @@ void j_object_iterator_free (JObjectIterator*);
 
 gboolean j_object_iterator_next (JObjectIterator*);
 gchar const* j_object_iterator_get (JObjectIterator*, guint64*);
+
+G_END_DECLS
 
 #endif

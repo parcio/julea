@@ -31,10 +31,14 @@
 
 #include <jbatch.h>
 
+G_BEGIN_DECLS
+
 G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
 
 G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
 
 G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
+
+G_END_DECLS
 
 #endif

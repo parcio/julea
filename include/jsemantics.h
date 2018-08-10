@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 enum JSemanticsTemplate
 {
 	J_SEMANTICS_TEMPLATE_DEFAULT,
@@ -127,5 +129,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
 
 void j_semantics_set (JSemantics*, JSemanticsType, gint);
 gint j_semantics_get (JSemantics*, JSemanticsType);
+
+G_END_DECLS
 
 #endif

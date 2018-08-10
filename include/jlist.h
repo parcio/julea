@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JList;
 
 typedef struct JList JList;
@@ -50,5 +52,7 @@ gpointer j_list_get_first (JList*);
 gpointer j_list_get_last (JList*);
 
 void j_list_delete_all (JList*);
+
+G_END_DECLS
 
 #endif

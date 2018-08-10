@@ -29,6 +29,10 @@
 
 #include <glib.h>
 
+#include <bson.h>
+
+G_BEGIN_DECLS
+
 enum JDistributionType
 {
 	J_DISTRIBUTION_ROUND_ROBIN,
@@ -42,9 +46,11 @@ struct JDistribution;
 
 typedef struct JDistribution JDistribution;
 
-#include <bson.h>
+G_END_DECLS
 
 #include <jconfiguration.h>
+
+G_BEGIN_DECLS
 
 JDistribution* j_distribution_new (JDistributionType);
 JDistribution* j_distribution_new_for_configuration (JDistributionType, JConfiguration*);
@@ -63,5 +69,7 @@ void j_distribution_set2 (JDistribution*, gchar const*, guint64, guint64);
 
 void j_distribution_reset (JDistribution*, guint64, guint64);
 gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
+
+G_END_DECLS
 
 #endif

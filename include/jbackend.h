@@ -27,9 +27,14 @@
 #error "Only <julea.h> can be included directly."
 #endif
 
+#include <glib.h>
+#include <gmodule.h>
+
 #include <bson.h>
 
 #include <jsemantics.h>
+
+G_BEGIN_DECLS
 
 enum JBackendType
 {
@@ -89,8 +94,6 @@ typedef struct JBackend JBackend;
 
 JBackend* backend_info (JBackendType);
 
-#include <gmodule.h>
-
 gboolean j_backend_load_client (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 gboolean j_backend_load_server (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 
@@ -123,5 +126,7 @@ gboolean j_backend_kv_get (JBackend*, gchar const*, gchar const*, bson_t*);
 gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
 gboolean j_backend_kv_iterate (JBackend*, gpointer, bson_t*);
+
+G_END_DECLS
 
 #endif

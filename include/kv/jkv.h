@@ -29,13 +29,15 @@
 
 #include <glib.h>
 
-struct JKV;
-
-typedef struct JKV JKV;
-
 #include <bson.h>
 
 #include <julea.h>
+
+G_BEGIN_DECLS
+
+struct JKV;
+
+typedef struct JKV JKV;
 
 typedef void (*JKVGetFunc) (bson_t const*, gpointer);
 
@@ -51,5 +53,7 @@ void j_kv_delete (JKV*, JBatch*);
 
 void j_kv_get (JKV*, bson_t*, JBatch*);
 void j_kv_get_callback (JKV*, JKVGetFunc, gpointer, JBatch*);
+
+G_END_DECLS
 
 #endif

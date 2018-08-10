@@ -29,14 +29,20 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JBatch;
 
 typedef struct JBatch JBatch;
 
 typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
 
+G_END_DECLS
+
 #include <joperation.h>
 #include <jsemantics.h>
+
+G_BEGIN_DECLS
 
 JBatch* j_batch_new (JSemantics*);
 JBatch* j_batch_new_for_template (JSemanticsTemplate);
@@ -53,5 +59,7 @@ gboolean j_batch_execute (JBatch*);
 
 void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
 void j_batch_wait (JBatch*);
+
+G_END_DECLS
 
 #endif

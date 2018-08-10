@@ -29,13 +29,19 @@
 
 #include <glib.h>
 
+#include <julea.h>
+
+G_BEGIN_DECLS
+
 struct JCollection;
 
 typedef struct JCollection JCollection;
 
+G_END_DECLS
+
 #include <item/jitem.h>
 
-#include <julea.h>
+G_BEGIN_DECLS
 
 JCollection* j_collection_ref (JCollection*);
 void j_collection_unref (JCollection*);
@@ -47,5 +53,7 @@ gchar const* j_collection_get_name (JCollection*);
 JCollection* j_collection_create (gchar const*, JBatch*);
 void j_collection_get (JCollection**, gchar const*, JBatch*);
 void j_collection_delete (JCollection*, JBatch*);
+
+G_END_DECLS
 
 #endif

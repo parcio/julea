@@ -27,6 +27,10 @@
 #error "Only <julea-item.h> can be included directly."
 #endif
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 /**
  * \addtogroup JURI
  *
@@ -59,10 +63,12 @@ struct JURI;
  **/
 typedef struct JURI JURI;
 
+G_BEGIN_DECLS
+
 #include <item/jcollection.h>
 #include <item/jitem.h>
 
-#include <glib.h>
+G_END_DECLS
 
 GQuark j_uri_error_quark (void);
 
@@ -84,5 +90,7 @@ JItem* j_uri_get_item (JURI*);
 /**
  * @}
  **/
+
+G_END_DECLS
 
 #endif

@@ -30,8 +30,12 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+G_BEGIN_DECLS
+
 G_GNUC_INTERNAL void j_helper_set_cork (GSocketConnection*, gboolean);
 
 G_GNUC_INTERNAL void j_helper_get_number_string (gchar*, guint32, guint32);
+
+G_END_DECLS
 
 #endif

@@ -29,11 +29,13 @@
 
 #include <glib.h>
 
+#include <julea.h>
+
+G_BEGIN_DECLS
+
 struct JDistributedObject;
 
 typedef struct JDistributedObject JDistributedObject;
-
-#include <julea.h>
 
 JDistributedObject* j_distributed_object_new (gchar const*, gchar const*, JDistribution*);
 JDistributedObject* j_distributed_object_ref (JDistributedObject*);
@@ -48,5 +50,7 @@ void j_distributed_object_read (JDistributedObject*, gpointer, guint64, guint64,
 void j_distributed_object_write (JDistributedObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
 void j_distributed_object_status (JDistributedObject*, gint64*, guint64*, JBatch*);
+
+G_END_DECLS
 
 #endif

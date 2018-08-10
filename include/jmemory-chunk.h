@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JMemoryChunk;
 
 typedef struct JMemoryChunk JMemoryChunk;
@@ -38,5 +40,7 @@ void j_memory_chunk_free (JMemoryChunk*);
 
 gpointer j_memory_chunk_get (JMemoryChunk*, guint64);
 void j_memory_chunk_reset (JMemoryChunk*);
+
+G_END_DECLS
 
 #endif

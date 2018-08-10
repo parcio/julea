@@ -29,16 +29,24 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JKVIterator;
 
 typedef struct JKVIterator JKVIterator;
 
+G_END_DECLS
+
 #include <kv/jkv.h>
+
+G_BEGIN_DECLS
 
 JKVIterator* j_kv_iterator_new (guint32, gchar const*, gchar const*);
 void j_kv_iterator_free (JKVIterator*);
 
 gboolean j_kv_iterator_next (JKVIterator*);
 bson_t const* j_kv_iterator_get (JKVIterator*);
+
+G_END_DECLS
 
 #endif

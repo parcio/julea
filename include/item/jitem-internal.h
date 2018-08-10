@@ -29,13 +29,14 @@
 
 #include <glib.h>
 
-#include <item/jitem.h>
-
-#include <item/jcollection.h>
+#include <bson.h>
 
 #include <julea.h>
 
-#include <bson.h>
+#include <item/jcollection.h>
+#include <item/jitem.h>
+
+G_BEGIN_DECLS
 
 G_GNUC_INTERNAL JItem* j_item_new (JCollection*, gchar const*, JDistribution*);
 G_GNUC_INTERNAL JItem* j_item_new_from_bson (JCollection*, bson_t const*);
@@ -51,5 +52,7 @@ G_GNUC_INTERNAL gboolean j_item_get_exec (JList*, JSemantics*);
 
 G_GNUC_INTERNAL void j_item_set_modification_time (JItem*, gint64);
 G_GNUC_INTERNAL void j_item_set_size (JItem*, guint64);
+
+G_END_DECLS
 
 #endif

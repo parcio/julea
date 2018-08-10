@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 enum JStatisticsType
 {
 	J_STATISTICS_FILES_CREATED,
@@ -52,5 +54,7 @@ void j_statistics_free (JStatistics*);
 
 guint64 j_statistics_get (JStatistics*, JStatisticsType);
 void j_statistics_add (JStatistics*, JStatisticsType, guint64);
+
+G_END_DECLS
 
 #endif

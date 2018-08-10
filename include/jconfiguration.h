@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
@@ -56,5 +58,7 @@ gchar const* j_configuration_get_kv_component (JConfiguration*);
 gchar const* j_configuration_get_kv_path (JConfiguration*);
 
 guint32 j_configuration_get_max_connections (JConfiguration*);
+
+G_END_DECLS
 
 #endif

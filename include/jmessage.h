@@ -30,6 +30,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+G_BEGIN_DECLS
+
 enum JMessageType
 {
 	J_MESSAGE_NONE,
@@ -63,7 +65,11 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
+G_BEGIN_DECLS
+
 #include <jsemantics.h>
+
+G_END_DECLS
 
 JMessage* j_message_new (JMessageType, gsize);
 JMessage* j_message_new_reply (JMessage*);
@@ -98,5 +104,7 @@ void j_message_add_operation (JMessage*, gsize);
 
 void j_message_set_safety (JMessage*, JSemantics*);
 void j_message_force_safety (JMessage*, gint);
+
+G_END_DECLS
 
 #endif

@@ -27,6 +27,10 @@
 #error "Only <julea-object.h> can be included directly."
 #endif
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 /**
  * \addtogroup JObjectURI
  *
@@ -51,10 +55,12 @@ struct JObjectURI;
 
 typedef struct JObjectURI JObjectURI;
 
-#include <glib.h>
+G_BEGIN_DECLS
 
 #include <object/jdistributed-object.h>
 #include <object/jobject.h>
+
+G_END_DECLS
 
 JObjectURI* j_object_uri_new (gchar const*, JObjectURIScheme);
 void j_object_uri_free (JObjectURI*);
@@ -71,5 +77,7 @@ JObject* j_object_uri_get_object (JObjectURI*);
 /**
  * @}
  **/
+
+G_END_DECLS
 
 #endif

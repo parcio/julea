@@ -27,6 +27,10 @@
 #error "Only <julea-kv.h> can be included directly."
 #endif
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 /**
  * \addtogroup JKVURI
  *
@@ -47,9 +51,11 @@ struct JKVURI;
 
 typedef struct JKVURI JKVURI;
 
-#include <glib.h>
+G_BEGIN_DECLS
 
 #include <kv/jkv.h>
+
+G_END_DECLS
 
 JKVURI* j_kv_uri_new (gchar const*, JKVURIScheme);
 void j_kv_uri_free (JKVURI*);
@@ -65,5 +71,7 @@ JKV* j_kv_uri_get_kv (JKVURI*);
 /**
  * @}
  **/
+
+G_END_DECLS
 
 #endif

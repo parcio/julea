@@ -29,13 +29,19 @@
 
 #include <glib.h>
 
+#include <julea.h>
+
+G_BEGIN_DECLS
+
 struct JItem;
 
 typedef struct JItem JItem;
 
+G_END_DECLS
+
 #include <item/jcollection.h>
 
-#include <julea.h>
+G_BEGIN_DECLS
 
 JItem* j_item_ref (JItem*);
 void j_item_unref (JItem*);
@@ -58,5 +64,7 @@ guint64 j_item_get_size (JItem*);
 gint64 j_item_get_modification_time (JItem*);
 
 guint64 j_item_get_optimal_access_size (JItem*);
+
+G_END_DECLS
 
 #endif

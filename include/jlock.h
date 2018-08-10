@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JLock;
 
 typedef struct JLock JLock;
@@ -40,5 +42,7 @@ gboolean j_lock_acquire (JLock*);
 gboolean j_lock_release (JLock*);
 
 void j_lock_add (JLock*, guint64);
+
+G_END_DECLS
 
 #endif

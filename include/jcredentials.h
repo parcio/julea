@@ -31,6 +31,8 @@
 
 #include <bson.h>
 
+G_BEGIN_DECLS
+
 struct JCredentials;
 
 typedef struct JCredentials JCredentials;
@@ -44,5 +46,7 @@ guint32 j_credentials_get_group (JCredentials*);
 
 bson_t* j_credentials_serialize (JCredentials*);
 void j_credentials_deserialize (JCredentials*, bson_t const*);
+
+G_END_DECLS
 
 #endif

@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JCache;
 
 typedef struct JCache JCache;
@@ -38,5 +40,7 @@ void j_cache_free (JCache*);
 
 gpointer j_cache_get (JCache*, guint64);
 void j_cache_release (JCache*, gpointer);
+
+G_END_DECLS
 
 #endif

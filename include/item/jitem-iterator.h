@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JItemIterator;
 
 typedef struct JItemIterator JItemIterator;
@@ -36,10 +38,14 @@ typedef struct JItemIterator JItemIterator;
 #include <item/jcollection.h>
 #include <item/jitem.h>
 
+G_BEGIN_DECLS
+
 JItemIterator* j_item_iterator_new (JCollection*);
 void j_item_iterator_free (JItemIterator*);
 
 gboolean j_item_iterator_next (JItemIterator*);
 JItem* j_item_iterator_get (JItemIterator*);
+
+G_END_DECLS
 
 #endif

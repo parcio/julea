@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 enum JTraceFileOperation
 {
 	J_TRACE_FILE_CLOSE,
@@ -64,5 +66,7 @@ void j_trace_file_begin (gchar const*, JTraceFileOperation);
 void j_trace_file_end (gchar const*, JTraceFileOperation, guint64, guint64);
 
 void j_trace_counter (gchar const*, guint64);
+
+G_END_DECLS
 
 #endif

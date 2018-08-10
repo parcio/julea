@@ -32,6 +32,8 @@
 
 #include <jbackground-operation.h>
 
+G_BEGIN_DECLS
+
 void j_helper_set_nodelay (GSocketConnection*, gboolean);
 
 gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
@@ -39,5 +41,7 @@ gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 
 guint32 j_helper_hash (gchar const*);
+
+G_END_DECLS
 
 #endif

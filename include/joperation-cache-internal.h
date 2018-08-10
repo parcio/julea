@@ -31,11 +31,15 @@
 
 #include <jbatch.h>
 
+G_BEGIN_DECLS
+
 G_GNUC_INTERNAL void j_operation_cache_init (void);
 G_GNUC_INTERNAL void j_operation_cache_fini (void);
 
 G_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
 
 G_GNUC_INTERNAL gboolean j_operation_cache_add (JBatch*);
+
+G_END_DECLS
 
 #endif

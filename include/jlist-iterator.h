@@ -29,11 +29,17 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct JListIterator;
 
 typedef struct JListIterator JListIterator;
 
+G_END_DECLS
+
 #include <jlist.h>
+
+G_BEGIN_DECLS
 
 JListIterator* j_list_iterator_new (JList*);
 void j_list_iterator_free (JListIterator*);
@@ -42,5 +48,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
 
 gboolean j_list_iterator_next (JListIterator*);
 gpointer j_list_iterator_get (JListIterator*);
+
+G_END_DECLS
 
 #endif
