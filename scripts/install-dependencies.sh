@@ -29,7 +29,7 @@ spack_clone ()
 	local spack_commit
 	local spack_dir
 
-	spack_commit='20a89ca326712058f3f22621eed725c0f510bee3'
+	spack_commit='2a94d59433bbaa7ec5a9960e4b3419f8a92bdfea'
 	spack_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 	if test ! -d "${spack_dir}"
@@ -113,4 +113,5 @@ install_dependency lmdb lmdb
 install_dependency libmongoc-1.0 libmongoc
 install_dependency sqlite3 sqlite
 
+#install_dependency_bin mpicc mpi
 #install_dependency_bin otfconfig otf

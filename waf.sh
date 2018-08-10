@@ -101,6 +101,7 @@ load_dependency_bin ()
 if spack_init
 then
 	load_dependency_bin pkg-config pkgconfig
+	#load_dependency_bin mpicc mpi
 
 	load_dependency glib-2.0 glib
 	load_dependency libbson-1.0 libbson

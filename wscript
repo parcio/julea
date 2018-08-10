@@ -184,14 +184,14 @@ def configure (ctx):
 	)
 
 	if ctx.env.MPICC:
-		# MPI
+		# FIXME: only works with OpenMPI
 		ctx.env.JULEA_MPI = \
 		ctx.check_cc(
 			header_name = 'mpi.h',
-			lib = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libs']).strip()),
-			includes = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:incdirs']).strip()),
-			libpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
-			rpath = Utils.to_list(ctx.cmd_and_log([ctx.env.MPICC, '--showme:libdirs']).strip()),
+			lib = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libs']).strip()),
+			includes = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:incdirs']).strip()),
+			libpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
+			rpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
 			uselib_store = 'MPI',
 			define_name = 'HAVE_MPI'
 		)
