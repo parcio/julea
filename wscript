@@ -425,45 +425,24 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	backends_client = []
-
-	if ctx.env.JULEA_LIBMONGOC:
-		backends_client.append('mongodb')
-
-	if ctx.env.JULEA_LIBRADOS:
-		backends_client.append('rados')
-
-	# Client backends
-	for backend in backends_client:
-		use_extra = []
-
-		if backend == 'mongodb':
-			use_extra = ['LIBMONGOC']
-		elif backend == 'rados':
-			use_extra = ['LIBRADOS']
-
-		ctx.shlib(
-			source = ['backend/client/{0}.c'.format(backend)],
-			target = 'backend/client/{0}'.format(backend),
-			use = use_julea_backend + ['lib/julea'] + use_extra,
-			includes = ['include'],
-			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}/julea/backend/client'
-		)
-
-	backends_server = ['gio', 'null', 'posix']
+	backends = ['gio', 'null', 'posix']
 
 	if ctx.env.JULEA_LEVELDB:
-		backends_server.append('leveldb')
+		backends.append('leveldb')
 
 	if ctx.env.JULEA_LMDB:
-		backends_server.append('lmdb')
+		backends.append('lmdb')
+
+	if ctx.env.JULEA_LIBMONGOC:
+		backends.append('mongodb')
+
+	if ctx.env.JULEA_LIBRADOS:
+		backends.append('rados')
 
 	if ctx.env.JULEA_SQLITE:
-		backends_server.append('sqlite')
+		backends.append('sqlite')
 
-	# Server backends
-	for backend in backends_server:
+	for backend in backends:
 		use_extra = []
 		cflags = []
 
@@ -477,17 +456,21 @@ def build (ctx):
 			use_extra = ['LMDB']
 			# FIXME lmdb bug
 			cflags = ['-Wno-discarded-qualifiers']
+		elif backend == 'mongodb':
+			use_extra = ['LIBMONGOC']
+		elif backend == 'rados':
+			use_extra = ['LIBRADOS']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
 
 		ctx.shlib(
-			source = ['backend/server/{0}.c'.format(backend)],
-			target = 'backend/server/{0}'.format(backend),
+			source = ['backend/{0}.c'.format(backend)],
+			target = 'backend/{0}'.format(backend),
 			use = use_julea_backend + ['lib/julea'] + use_extra,
 			includes = ['include'],
 			cflags = cflags,
 			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}/julea/backend/server'
+			install_path = '${LIBDIR}/julea/backend'
 		)
 
 	# Command line

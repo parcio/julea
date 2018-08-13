@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2018 Michael Kuhn
+ * Copyright (C) 2017 Lars Thoms
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,54 +19,46 @@
 #include <julea-config.h>
 
 #include <glib.h>
-#include <glib-object.h>
-#include <gio/gio.h>
 #include <gmodule.h>
 
+#include <rados/librados.h>
+
 #include <julea.h>
+
+/* Initialize cluster and config variables */
+static rados_t backend_connection = NULL;
+static rados_ioctx_t backend_io = NULL;
+
+static gchar* backend_pool = NULL;
+static gchar* backend_config = NULL;
 
 struct JBackendFile
 {
 	gchar* path;
-	GFileIOStream* stream;
 };
 
 typedef struct JBackendFile JBackendFile;
-
-static gchar* jd_backend_path = NULL;
 
 static
 gboolean
 backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
-	GFile* file;
-	GFile* parent;
-	GFileIOStream* stream;
-	gchar* full_path;
-
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
-	file = g_file_new_for_path(full_path);
+	gchar* full_path = g_strconcat(namespace, path, NULL);
+	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
-
-	parent = g_file_get_parent(file);
-	g_file_make_directory_with_parents(parent, NULL, NULL);
-	g_object_unref(parent);
-
-	stream = g_file_create_readwrite(file, G_FILE_CREATE_NONE, NULL, NULL);
-
+	ret = rados_write_full(backend_io, full_path, "", 0);
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
+
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
-	bf->stream = stream;
 
 	*data = bf;
 
-	g_object_unref(file);
-
-	return (stream != NULL);
+	return TRUE;
 }
 
 static
@@ -74,26 +66,20 @@ gboolean
 backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
-	GFile* file;
-	GFileIOStream* stream;
-	gchar* full_path;
-
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
-	file = g_file_new_for_path(full_path);
+	gchar* full_path = g_strconcat(namespace, path, NULL);
+	gint ret = 0;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
-	stream = g_file_open_readwrite(file, NULL, NULL);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
+
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	bf = g_slice_new(JBackendFile);
 	bf->path = full_path;
-	bf->stream = stream;
 
 	*data = bf;
 
-	g_object_unref(file);
-
-	return (stream != NULL);
+	return TRUE;
 }
 
 static
@@ -101,23 +87,16 @@ gboolean
 backend_delete (gpointer data)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
-
-	GFile* file;
-
-	file = g_file_new_for_path(bf->path);
+	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-	ret = g_file_delete(file, NULL, NULL);
+	ret = rados_remove(backend_io, bf->path);
 	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
 
-	g_object_unref(file);
-
-	g_object_unref(bf->stream);
 	g_free(bf->path);
 	g_slice_free(JBackendFile, bf);
 
-	return ret;
+	return (ret == 0 ? TRUE : FALSE);
 }
 
 static
@@ -125,17 +104,14 @@ gboolean
 backend_close (gpointer data)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-	ret = g_io_stream_close(G_IO_STREAM(bf->stream), NULL, NULL);
 	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
 
-	g_object_unref(bf->stream);
 	g_free(bf->path);
 	g_slice_free(JBackendFile, bf);
 
-	return ret;
+	return TRUE;
 }
 
 static
@@ -143,39 +119,28 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
-
-	//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
+	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-	// FIXME
-	//g_output_stream_flush(output, NULL, NULL);
+	ret = rados_stat(backend_io, bf->path, size, modification_time);
 	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
-	// FIXME
-	ret = TRUE;
-	*modification_time = 0;
-	*size = 0;
+	g_return_val_if_fail(ret == 0, FALSE);
 
-	return ret;
+	return TRUE;
 }
 
+/* Not implemented */
 static
 gboolean
 backend_sync (gpointer data)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
-
-	GOutputStream* output;
-
-	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
-	ret = g_output_stream_flush(output, NULL, NULL);
 	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
 
-	return ret;
+	return TRUE;
 }
 
 static
@@ -183,27 +148,20 @@ gboolean
 backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
-
-	GInputStream* input;
-	gsize nbytes;
-
-	input = g_io_stream_get_input_stream(G_IO_STREAM(bf->stream));
-
-	j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
-	g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
-	j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
+	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-	ret = g_input_stream_read_all(input, buffer, length, &nbytes, NULL, NULL);
-	j_trace_file_end(bf->path, J_TRACE_FILE_READ, nbytes, offset);
+	ret = rados_read(backend_io, bf->path, buffer, length, offset);
+	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
+
+	g_return_val_if_fail(ret >= 0, FALSE);
 
 	if (bytes_read != NULL)
 	{
-		*bytes_read = nbytes;
+		*bytes_read = ret;
 	}
 
-	return ret;
+	return TRUE;
 }
 
 static
@@ -211,40 +169,63 @@ gboolean
 backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
-
-	GOutputStream* output;
-	gsize nbytes;
-
-	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
-
-	j_trace_file_begin(bf->path, J_TRACE_FILE_SEEK);
-	g_seekable_seek(G_SEEKABLE(bf->stream), offset, G_SEEK_SET, NULL, NULL);
-	j_trace_file_end(bf->path, J_TRACE_FILE_SEEK, 0, offset);
+	gint ret = 0;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-	ret = g_output_stream_write_all(output, buffer, length, &nbytes, NULL, NULL);
-	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, nbytes, offset);
+	ret = rados_write(backend_io, bf->path, buffer, length, offset);
+	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
+
+	g_return_val_if_fail(ret == 0, FALSE);
 
 	if (bytes_written != NULL)
 	{
-		*bytes_written = nbytes;
+		*bytes_written = length;
 	}
 
-	return ret;
+	return TRUE;
 }
 
 static
 gboolean
 backend_init (gchar const* path)
 {
-	GFile* file;
+	g_auto(GStrv) split = NULL;
 
-	jd_backend_path = g_strdup(path);
+	g_return_val_if_fail(path != NULL, FALSE);
 
-	file = g_file_new_for_path(path);
-	g_file_make_directory_with_parents(file, NULL, NULL);
-	g_object_unref(file);
+	/* Path syntax: [config-path]:[pool]
+	   e.g.: /etc/ceph/ceph.conf:data */
+	split = g_strsplit(path, ":", 0);
+	backend_config = g_strdup(split[0]);
+	backend_pool = g_strdup(split[1]);
+
+	g_return_val_if_fail(backend_pool != NULL, FALSE);
+	g_return_val_if_fail(backend_config != NULL, FALSE);
+
+	/* Create cluster handle */
+	if (rados_create(&backend_connection, NULL) != 0)
+	{
+		g_critical("Can not create a RADOS cluster handle.");
+	}
+
+	/* Read config file */
+	if (rados_conf_read_file(backend_connection, backend_config) != 0)
+	{
+		g_critical("Can not read RADOS config file %s.", backend_config);
+	}
+
+	/* Connect to cluster */
+	if (rados_connect(backend_connection) != 0)
+	{
+		g_critical("Can not connect to RADOS. Cluster online, config up-to-date and keyring correct linked?");
+	}
+
+	/* Initialize IO and select pool */
+	if (rados_ioctx_create(backend_connection, backend_pool, &backend_io) != 0)
+	{
+		rados_shutdown(backend_connection);
+		g_critical("Can not connect to RADOS pool %s.", backend_pool);
+	}
 
 	return TRUE;
 }
@@ -253,12 +234,19 @@ static
 void
 backend_fini (void)
 {
-	g_free(jd_backend_path);
+	/* Close connection to cluster */
+	rados_ioctx_destroy(backend_io);
+	rados_shutdown(backend_connection);
+
+	/* Free memory */
+	g_free(backend_config);
+	g_free(backend_pool);
 }
 
 static
-JBackend gio_backend = {
+JBackend rados_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
+	.component = J_BACKEND_COMPONENT_CLIENT,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
@@ -281,7 +269,7 @@ backend_info (JBackendType type)
 
 	if (type == J_BACKEND_TYPE_OBJECT)
 	{
-		backend = &gio_backend;
+		backend = &rados_backend;
 	}
 
 	return backend;

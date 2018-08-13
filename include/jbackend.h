@@ -44,9 +44,18 @@ enum JBackendType
 
 typedef enum JBackendType JBackendType;
 
+enum JBackendComponent
+{
+	J_BACKEND_COMPONENT_CLIENT = 1 << 0,
+	J_BACKEND_COMPONENT_SERVER = 1 << 1
+};
+
+typedef enum JBackendComponent JBackendComponent;
+
 struct JBackend
 {
 	JBackendType type;
+	JBackendComponent component;
 
 	union
 	{

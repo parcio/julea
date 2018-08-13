@@ -411,6 +411,7 @@ backend_fini (void)
 static
 JBackend mongodb_backend = {
 	.type = J_BACKEND_TYPE_KV,
+	.component = J_BACKEND_COMPONENT_CLIENT,
 	.kv = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
