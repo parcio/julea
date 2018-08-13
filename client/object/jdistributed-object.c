@@ -748,7 +748,10 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 
 		if (object_backend != NULL)
 		{
-			ret = j_backend_object_read(object_backend, object_handle, data, length, offset, bytes_read) && ret;
+			guint64 nbytes = 0;
+
+			ret = j_backend_object_read(object_backend, object_handle, data, length, offset, &nbytes) && ret;
+			j_helper_atomic_add(bytes_read, nbytes);
 		}
 		else
 		{
@@ -920,7 +923,10 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 		if (object_backend != NULL)
 		{
-			ret = j_backend_object_write(object_backend, object_handle, data, length, offset, bytes_written) && ret;
+			guint64 nbytes = 0;
+
+			ret = j_backend_object_write(object_backend, object_handle, data, length, offset, &nbytes) && ret;
+			j_helper_atomic_add(bytes_written, nbytes);
 		}
 		else
 		{
@@ -961,6 +967,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 				new_data += new_length;
 
+				// Fake bytes_written here instead of doing another loop further down
 				if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
 				{
 					j_helper_atomic_add(bytes_written, new_length);
