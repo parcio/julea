@@ -410,14 +410,7 @@ JBackend posix_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendType type)
+backend_info (void)
 {
-	JBackend* backend = NULL;
-
-	if (type == J_BACKEND_TYPE_OBJECT)
-	{
-		backend = &posix_backend;
-	}
-
-	return backend;
+	return &posix_backend;
 }

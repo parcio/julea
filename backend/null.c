@@ -183,14 +183,7 @@ JBackend null_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendType type)
+backend_info (void)
 {
-	JBackend* backend = NULL;
-
-	if (type == J_BACKEND_TYPE_OBJECT)
-	{
-		backend = &null_backend;
-	}
-
-	return backend;
+	return &null_backend;
 }

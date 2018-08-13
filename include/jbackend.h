@@ -101,7 +101,7 @@ struct JBackend
 
 typedef struct JBackend JBackend;
 
-JBackend* backend_info (JBackendType);
+JBackend* backend_info (void);
 
 gboolean j_backend_load_client (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 gboolean j_backend_load_server (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);

@@ -299,14 +299,7 @@ JBackend sqlite_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendType type)
+backend_info (void)
 {
-	JBackend* backend = NULL;
-
-	if (type == J_BACKEND_TYPE_KV)
-	{
-		backend = &sqlite_backend;
-	}
-
-	return backend;
+	return &sqlite_backend;
 }

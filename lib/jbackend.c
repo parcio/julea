@@ -41,7 +41,7 @@ static
 GModule*
 j_backend_load (gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
 {
-	JBackend* (*module_backend_info) (JBackendType) = NULL;
+	JBackend* (*module_backend_info) (void) = NULL;
 
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
@@ -60,53 +60,79 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		g_free(path);
 	}
 
-	if (module != NULL)
+	if (module == NULL)
 	{
-		g_module_symbol(module, "backend_info", (gpointer*)&module_backend_info);
+		goto error;
+	}
 
-		g_assert(module_backend_info != NULL);
+	g_module_symbol(module, "backend_info", (gpointer*)&module_backend_info);
 
-		j_trace_enter("backend_info", "%d", type);
-		tmp_backend = module_backend_info(type);
-		j_trace_leave("backend_info");
+	if (module_backend_info == NULL)
+	{
+		goto error;
+	}
 
-		if (tmp_backend != NULL)
+	j_trace_enter("backend_info", NULL);
+	tmp_backend = module_backend_info();
+	j_trace_leave("backend_info");
+
+	if (tmp_backend == NULL)
+	{
+		goto error;
+	}
+
+	if (tmp_backend->type != type || !(tmp_backend->component & component))
+	{
+		goto error;
+	}
+
+	if (type == J_BACKEND_TYPE_OBJECT)
+	{
+		if (tmp_backend->object.backend_init == NULL
+		    || tmp_backend->object.backend_fini == NULL
+		    || tmp_backend->object.backend_create == NULL
+		    || tmp_backend->object.backend_delete == NULL
+		    || tmp_backend->object.backend_open == NULL
+		    || tmp_backend->object.backend_close == NULL
+		    || tmp_backend->object.backend_status == NULL
+		    || tmp_backend->object.backend_sync == NULL
+		    || tmp_backend->object.backend_read == NULL
+		    || tmp_backend->object.backend_write == NULL)
 		{
-			g_assert(tmp_backend->type == type);
-			g_assert(tmp_backend->component & component);
+			goto error;
+		}
+	}
 
-			if (type == J_BACKEND_TYPE_OBJECT)
-			{
-				g_assert(tmp_backend->object.backend_init != NULL);
-				g_assert(tmp_backend->object.backend_fini != NULL);
-				g_assert(tmp_backend->object.backend_create != NULL);
-				g_assert(tmp_backend->object.backend_delete != NULL);
-				g_assert(tmp_backend->object.backend_open != NULL);
-				g_assert(tmp_backend->object.backend_close != NULL);
-				g_assert(tmp_backend->object.backend_status != NULL);
-				g_assert(tmp_backend->object.backend_sync != NULL);
-				g_assert(tmp_backend->object.backend_read != NULL);
-				g_assert(tmp_backend->object.backend_write != NULL);
-			}
-			else if (type == J_BACKEND_TYPE_KV)
-			{
-				g_assert(tmp_backend->kv.backend_init != NULL);
-				g_assert(tmp_backend->kv.backend_fini != NULL);
-				g_assert(tmp_backend->kv.backend_batch_start != NULL);
-				g_assert(tmp_backend->kv.backend_batch_execute != NULL);
-				g_assert(tmp_backend->kv.backend_put != NULL);
-				g_assert(tmp_backend->kv.backend_delete != NULL);
-				g_assert(tmp_backend->kv.backend_get != NULL);
-				g_assert(tmp_backend->kv.backend_get_all != NULL);
-				g_assert(tmp_backend->kv.backend_get_by_prefix != NULL);
-				g_assert(tmp_backend->kv.backend_iterate != NULL);
-			}
+	if (type == J_BACKEND_TYPE_KV)
+	{
+		if (tmp_backend->kv.backend_init == NULL
+		    || tmp_backend->kv.backend_fini == NULL
+		    || tmp_backend->kv.backend_batch_start == NULL
+		    || tmp_backend->kv.backend_batch_execute == NULL
+		    || tmp_backend->kv.backend_put == NULL
+		    || tmp_backend->kv.backend_delete == NULL
+		    || tmp_backend->kv.backend_get == NULL
+		    || tmp_backend->kv.backend_get_all == NULL
+		    || tmp_backend->kv.backend_get_by_prefix == NULL
+		    || tmp_backend->kv.backend_iterate == NULL)
+		{
+			goto error;
 		}
 	}
 
 	*backend = tmp_backend;
 
 	return module;
+
+error:
+	if (module != NULL)
+	{
+		g_module_close(module);
+	}
+
+	*backend = NULL;
+
+	return NULL;
 }
 
 gboolean

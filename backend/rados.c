@@ -263,14 +263,7 @@ JBackend rados_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendType type)
+backend_info (void)
 {
-	JBackend* backend = NULL;
-
-	if (type == J_BACKEND_TYPE_OBJECT)
-	{
-		backend = &rados_backend;
-	}
-
-	return backend;
+	return &rados_backend;
 }
