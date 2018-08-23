@@ -29,7 +29,7 @@ spack_clone ()
 	local spack_commit
 	local spack_dir
 
-	spack_commit='2a94d59433bbaa7ec5a9960e4b3419f8a92bdfea'
+	spack_commit='ca2e1e9019c50b905662b63041695bbbe6ad7630'
 	spack_dir="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 	if test ! -d "${spack_dir}"
