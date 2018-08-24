@@ -425,52 +425,67 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	backends = ['object/gio', 'object/null', 'object/posix', 'kv/null']
+	object_backends = ['gio', 'null', 'posix']
+
+	for backend in object_backends:
+		use_extra = []
+
+		if backend == 'gio':
+			use_extra = ['GIO', 'GOBJECT']
+
+		ctx.shlib(
+			source = ['backend/object/{0}.c'.format(backend)],
+			target = 'backend/object/{0}'.format(backend),
+			use = use_julea_backend + ['lib/julea'] + use_extra,
+			includes = ['include'],
+			rpath = get_rpath(ctx),
+			install_path = '${LIBDIR}/julea/backend/object'
+		)
+
+	kv_backends = ['null']
 
 	if ctx.env.JULEA_LEVELDB:
-		backends.append('kv/leveldb')
+		kv_backends.append('leveldb')
 
 	if ctx.env.JULEA_LMDB:
-		backends.append('kv/lmdb')
+		kv_backends.append('lmdb')
 
 	if ctx.env.JULEA_LIBMONGOC:
-		backends.append('kv/mongodb')
+		kv_backends.append('mongodb')
 
 	if ctx.env.JULEA_LIBRADOS:
-		backends.append('kv/rados')
+		kv_backends.append('rados')
 
 	if ctx.env.JULEA_SQLITE:
-		backends.append('kv/sqlite')
+		kv_backends.append('sqlite')
 
-	for backend in backends:
+	for backend in kv_backends:
 		use_extra = []
 		cflags = []
 
-		if backend == 'object/gio':
-			use_extra = ['GIO', 'GOBJECT']
-		elif backend == 'kv/leveldb':
+		if backend == 'leveldb':
 			use_extra = ['LEVELDB']
 			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
-		elif backend == 'kv/lmdb':
+		elif backend == 'lmdb':
 			use_extra = ['LMDB']
 			# FIXME lmdb bug
 			cflags = ['-Wno-discarded-qualifiers']
-		elif backend == 'kv/mongodb':
+		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
-		elif backend == 'kv/rados':
+		elif backend == 'rados':
 			use_extra = ['LIBRADOS']
-		elif backend == 'kv/sqlite':
+		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
 
 		ctx.shlib(
-			source = ['backend/{0}.c'.format(backend)],
-			target = 'backend/{0}'.format(backend),
+			source = ['backend/kv/{0}.c'.format(backend)],
+			target = 'backend/kv/{0}'.format(backend),
 			use = use_julea_backend + ['lib/julea'] + use_extra,
 			includes = ['include'],
 			cflags = cflags,
 			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}/julea/backend'
+			install_path = '${LIBDIR}/julea/backend/kv'
 		)
 
 	# Command line
