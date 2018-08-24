@@ -46,17 +46,35 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
 	gchar* path = NULL;
+	gchar* tpath = NULL;
+	gchar const* type_str = NULL;
+
+	switch(type)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			type_str = "object";
+			break;
+		case J_BACKEND_TYPE_KV:
+			type_str = "kv";
+			break;
+		default:
+			g_warn_if_reached();
+	}
 
 #ifdef JULEA_BACKEND_PATH_BUILD
-	path = g_module_build_path(JULEA_BACKEND_PATH_BUILD, name);
+	tpath = g_build_filename(JULEA_BACKEND_PATH_BUILD, type_str, NULL);
+	path = g_module_build_path(tpath, name);
 	module = g_module_open(path, G_MODULE_BIND_LOCAL);
+	g_free(tpath);
 	g_free(path);
 #endif
 
 	if (module == NULL)
 	{
-		path = g_module_build_path(JULEA_BACKEND_PATH, name);
+		tpath = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
+		path = g_module_build_path(tpath, name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
+		g_free(tpath);
 		g_free(path);
 	}
 

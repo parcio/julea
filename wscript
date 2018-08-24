@@ -425,42 +425,42 @@ def build (ctx):
 		install_path = '${BINDIR}'
 	)
 
-	backends = ['gio', 'null', 'posix']
+	backends = ['object/gio', 'object/null', 'object/posix', 'kv/null']
 
 	if ctx.env.JULEA_LEVELDB:
-		backends.append('leveldb')
+		backends.append('kv/leveldb')
 
 	if ctx.env.JULEA_LMDB:
-		backends.append('lmdb')
+		backends.append('kv/lmdb')
 
 	if ctx.env.JULEA_LIBMONGOC:
-		backends.append('mongodb')
+		backends.append('kv/mongodb')
 
 	if ctx.env.JULEA_LIBRADOS:
-		backends.append('rados')
+		backends.append('kv/rados')
 
 	if ctx.env.JULEA_SQLITE:
-		backends.append('sqlite')
+		backends.append('kv/sqlite')
 
 	for backend in backends:
 		use_extra = []
 		cflags = []
 
-		if backend == 'gio':
+		if backend == 'object/gio':
 			use_extra = ['GIO', 'GOBJECT']
-		elif backend == 'leveldb':
+		elif backend == 'kv/leveldb':
 			use_extra = ['LEVELDB']
 			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
-		elif backend == 'lmdb':
+		elif backend == 'kv/lmdb':
 			use_extra = ['LMDB']
 			# FIXME lmdb bug
 			cflags = ['-Wno-discarded-qualifiers']
-		elif backend == 'mongodb':
+		elif backend == 'kv/mongodb':
 			use_extra = ['LIBMONGOC']
-		elif backend == 'rados':
+		elif backend == 'kv/rados':
 			use_extra = ['LIBRADOS']
-		elif backend == 'sqlite':
+		elif backend == 'kv/sqlite':
 			use_extra = ['SQLITE']
 
 		ctx.shlib(
