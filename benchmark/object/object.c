@@ -406,7 +406,7 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
-	result->operations = n;
+	result->operations = n * 2;
 }
 
 static

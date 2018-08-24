@@ -218,7 +218,7 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
-	result->operations = n;
+	result->operations = n * 2;
 }
 
 static

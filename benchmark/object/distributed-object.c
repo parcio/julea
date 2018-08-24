@@ -378,7 +378,7 @@ static
 void
 _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, gboolean use_batch)
 {
-	guint const n = (use_batch) ? 5000 : 5000;
+	guint const n = 5000;
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
@@ -418,7 +418,7 @@ _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, 
 	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
-	result->operations = n;
+	result->operations = n * 2;
 }
 
 static
