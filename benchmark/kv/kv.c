@@ -51,9 +51,7 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		// FIXME
-		empty = g_slice_new(bson_t);
-		bson_init(empty);
+		empty = bson_new();
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);
@@ -114,9 +112,7 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		// FIXME
-		empty = g_slice_new(bson_t);
-		bson_init(empty);
+		empty = bson_new();
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);
@@ -192,9 +188,7 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		// FIXME
-		empty = g_slice_new(bson_t);
-		bson_init(empty);
+		empty = bson_new();
 
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);

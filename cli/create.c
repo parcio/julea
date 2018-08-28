@@ -72,9 +72,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 		g_autoptr(JBatch) batch = NULL;
 		bson_t* empty;
 
-		// FIXME
-		empty = g_slice_new(bson_t);
-		bson_init(empty);
+		empty = bson_new();
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_put(j_kv_uri_get_kv(kuri), empty, batch);

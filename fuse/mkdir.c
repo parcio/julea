@@ -37,9 +37,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
 
-	// FIXME
-	file = g_slice_new(bson_t);
-	bson_init(file);
+	file = bson_new();
+
 	bson_append_utf8(file, "name", -1, basename, -1);
 	bson_append_bool(file, "file", -1, FALSE);
 	j_kv_put(kv, file, batch);

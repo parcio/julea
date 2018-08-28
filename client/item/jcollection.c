@@ -353,10 +353,8 @@ j_collection_serialize (JCollection* collection)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	b = bson_new();
 	b_cred = j_credentials_serialize(collection->credentials);
-
-	b = g_slice_new(bson_t);
-	bson_init(b);
 
 	bson_append_oid(b, "_id", -1, &(collection->id));
 	bson_append_utf8(b, "name", -1, collection->name, -1);
@@ -364,7 +362,6 @@ j_collection_serialize (JCollection* collection)
 	//bson_finish(b);
 
 	bson_destroy(b_cred);
-	g_slice_free(bson_t, b_cred);
 
 	j_trace_leave(G_STRFUNC);
 

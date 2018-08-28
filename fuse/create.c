@@ -40,9 +40,8 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	kv = j_kv_new("posix", path);
 	object = j_object_new("posix", path);
 
-	// FIXME
-	file = g_slice_new(bson_t);
-	bson_init(file);
+	file = bson_new();
+
 	bson_append_utf8(file, "name", -1, basename, -1);
 	bson_append_bool(file, "file", -1, TRUE);
 	bson_append_int64(file, "size", -1, 0);

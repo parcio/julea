@@ -98,8 +98,6 @@ j_kv_put_free (gpointer data)
 
 	j_kv_unref(operation->put.kv);
 	bson_destroy(operation->put.value);
-	// FIXME
-	g_slice_free(bson_t, operation->put.value);
 
 	g_slice_free(JKVOperation, operation);
 }
@@ -601,9 +599,9 @@ j_kv_unref (JKV* kv)
  * \code
  * \endcode
  *
- * \param key         A key.
- * \param distribution A distribution.
- * \param batch        A batch.
+ * \param kv    A KV.
+ * \param value A value. Has to be allocated with bson_new(). Ownership is transfered.
+ * \param batch A batch.
  *
  * \return A new item. Should be freed with j_kv_unref().
  **/

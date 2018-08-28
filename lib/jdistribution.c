@@ -337,8 +337,7 @@ j_distribution_serialize (JDistribution* distribution)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	b = g_slice_new(bson_t);
-	bson_init(b);
+	b = bson_new();
 
 	bson_append_int32(b, "type", -1, distribution->type);
 	//bson_append_int64(b, "BlockSize", -1, distribution->block_size);

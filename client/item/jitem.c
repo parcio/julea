@@ -668,11 +668,9 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
+	b = bson_new();
 	b_cred = j_credentials_serialize(item->credentials);
 	b_distribution = j_distribution_serialize(item->distribution);
-
-	b = g_slice_new(bson_t);
-	bson_init(b);
 
 	bson_append_oid(b, "_id", -1, &(item->id));
 	bson_append_oid(b, "collection", -1, j_collection_get_id(item->collection));
@@ -699,8 +697,6 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 
 	bson_destroy(b_cred);
 	bson_destroy(b_distribution);
-	g_slice_free(bson_t, b_cred);
-	g_slice_free(bson_t, b_distribution);
 
 	j_trace_leave(G_STRFUNC);
 

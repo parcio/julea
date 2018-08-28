@@ -143,8 +143,8 @@ j_credentials_serialize (JCredentials* credentials)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	b = g_slice_new(bson_t);
-	bson_init(b);
+	b = bson_new();
+
 	bson_append_int32(b, "user", -1, credentials->user);
 	bson_append_int32(b, "group", -1, credentials->group);
 	//bson_finish(b);
