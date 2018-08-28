@@ -14,13 +14,21 @@ JULEA supports multiple backends that can be used for object or key-value storag
 It is possible to use them either on the client or on the server.
 The following table visualizes all supported types and special configuration parameters.
 
+### Object Backends
+
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
 | gio     | ❌     | ✅     | Path to a directory (`/var/storage/gio`) |
+| null    | ✅     | ✅     |  |
+| posix   | ❌     | ✅     | Path to a directory (`/var/storage/posix`) |
+
+## Key-Value Backends
+
+| Backend | Client | Server | Path format  |
+|---------|:------:|:------:|--------------|
 | leveldb | ❌     | ✅     | Path to a directory (`/var/storage/leveldb`) |
 | lmdb    | ❌     | ✅     | Path to a directory (`/var/storage/lmdb`) |
-| null    | ❌     | ✅     |  |
-| posix   | ❌     | ✅     | Path to a directory (`/var/storage/posix`) |
-| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
 | mongodb | ✅     | ❌     | Host name and database name (`localhost:julea`) |
+| null    | ✅     | ✅     |  |
 | rados   | ✅     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
+| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
