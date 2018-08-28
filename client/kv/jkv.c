@@ -133,7 +133,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
-	gpointer kv_batch;
+	gpointer kv_batch = NULL;
 	gsize namespace_len;
 	guint32 index;
 
@@ -238,7 +238,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	g_autoptr(JMessage) message = NULL;
 	JSemanticsSafety safety;
 	gchar const* namespace;
-	gpointer kv_batch;
+	gpointer kv_batch = NULL;
 	gsize namespace_len;
 	guint32 index;
 

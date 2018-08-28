@@ -34,6 +34,9 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 
 	(void)safety;
 
+	// Return something != NULL
+	*data = empty;
+
 	return TRUE;
 }
 
