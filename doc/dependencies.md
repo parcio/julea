@@ -1,57 +1,55 @@
 # Dependencies
 
-## Automatic installation
+JULEA's dependencies can either be installed using your operating system's package manage or with JULEA's `install-dependencies.sh` script.
 
-With [[Spack|https://github.com/spack/spack]] it is possible, to load all needed dependencies automatically on a configured node. Just execute our script.
+## Automatic Installation
 
-``` {.shell}
-./scripts/install-dependencies.sh
+The `install-dependencies.sh` script installs all dependencies into the `dependencies` subdirectory using [Spack](https://spack.io/).
+
+```console
+$ ./scripts/install-dependencies.sh
 ```
 
+## Manual Installation
 
-## Manual installation
+Alternatively, you can install the dependencies manually.
+Most of them should be available within the repositories of Linux distributions.
 
-Otherwise, you could install them manually. Most of them should be available prepackaged in repositories of your favourite Linux distribution.
+### Required Dependencies
 
+- GLib
+  - Debian: `apt install libglib2.0-dev`
+  - Fedora: `dnf install glib2-devel`
+  - Arch Linux: `pacman -S glib2`
 
-### Required dependencies
+- libbson
+  - Debian: `apt install libbson-dev`
+  - Fedora: `dnf install libbson-devel`
+  - Arch Linux: `pacman -S libbson`
 
-*   **GLib 2.0**  
-    Debian: `apt install libglib2.0-dev`  
-    Fedora: `dnf install glib2-devel`  
-    Arch Linux: `pacman -S glib2`
+### Optional Dependencies
 
-*   **BSON**  
-    Debian: `apt install libbson-dev`  
-    Fedora: `dnf install libbson-devel`  
-    Arch Linux: `pacman -S libbson`
+- LevelDB
+  - Debian: `apt install libleveldb-dev`
+  - Fedora: `dnf install leveldb-devel`
+  - Arch Linux: `pacman -S leveldb`
 
+- LMDB
+  - Debian: `apt install liblmdb-dev`
+  - Fedora: `dnf install lmdb-devel`
+  - Arch Linux: `pacman -S lmdb`
 
-### Optional dependencies
+- libmongoc
+  - Debian: `apt install libmongoc-dev`
+  - Fedora: `dnf install mongo-c-driver-devel`
+  - Arch Linux: `pacman -S libmongoc`
 
-Depending on the used backend services of *JULEA* you have to install several extra packages. They are optional, but it is reasonable to use some of them.
+- SQLite
+  - Debian: `apt install libsqlite3-dev`
+  - Fedora: `dnf install sqlite-devel`
+  - Arch Linux: `pacman -S sqlite`
 
-* **LevelDB**  
-    Debian: `apt install libleveldb-dev`  
-    Fedora: `dnf install leveldb-devel`  
-    Arch Linux: `pacman -S leveldb`
-
-* **LMDB**  
-    Debian: `apt install liblmdb-dev`  
-    Fedora: `dnf install lmdb-devel`  
-    Arch Linux: `pacman -S lmdb`
-
-* **MongoDB C**  
-    Debian: `apt install libmongoc-dev`  
-    Fedora: `dnf install mongo-c-driver-devel`  
-    Arch Linux: `pacman -S libmongoc`
-
-* **SQLite 3**  
-    Debian: `apt install libsqlite3-dev`  
-    Fedora: `dnf install sqlite-devel`  
-    Arch Linux: `pacman -S sqlite`
-
-* **RADOS**  
-    Debian: `apt install librados-dev`  
-    Fedora: `dnf install librados-devel`  
-    Arch Linux: `pacman -S ceph-libs`
+- librados
+  - Debian: `apt install librados-dev`
+  - Fedora: `dnf install librados-devel`
+  - Arch Linux: `pacman -S ceph-libs`
