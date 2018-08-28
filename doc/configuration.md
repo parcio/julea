@@ -12,7 +12,7 @@ If no name is specified, the default (`julea`) is used.
 
 JULEA supports multiple backends that can be used for object or key-value storage.
 It is possible to use them either on the client or on the server.
-The following table visualizes all supported types and special configuration parameters.
+The following tables visualize all supported types and special configuration parameters.
 
 ### Object Backends
 
