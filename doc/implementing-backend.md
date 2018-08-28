@@ -1,182 +1,109 @@
-# How to implement a backend
+# Implementing a Backend
 
-Implementing an additional backend storage system is usually done in a single `.c`-file. At the beginning, a final decision has to been taken: is this backend connectable via *JULEA* client or server?
+Implementing an additional JULEA backend is done by providing its implementation within the `backend` directory.
+Depending on the type of backend, it has to be placed in the `object` or `kv` subdirectory.
 
-Therefore, a file should be created in `backend/client/` or `backend/server/`.
+The `null` object and key-value backends can serve as starting points for a new backend.
 
-Here is a basic template, which could be used to create an implementation:
+The following headers should be included by all backends:
 
-``` {.c}
+```c
 #include <julea-config.h>
+
 #include <glib.h>
 #include <gmodule.h>
+
 #include <julea.h>
+```
 
-static gboolean backend_create (gchar const* namespace, gchar const* path, gpointer* data)
+The headers are followed by the actual implementation of the backend, which is divided into multiple functions.
+Among others, the backend can define initialization and finalization functions:
+
+```c
+static
+gboolean
+backend_init (gchar const* path)
 {
-    // PREPARE STUFF
-    j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
-    // DO STUFF
-    j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
-    // FOLLOW UP STUFF
+    (void)path;
 
     return TRUE;
-}
-
-static gboolean backend_open (gchar const* namespace, gchar const* path, gpointer* data)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
-    // DO STUFF
-    j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_delete (gpointer data)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_close (gpointer data)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_status (gpointer data, gint64* modification_time, guint64* size)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_sync (gpointer data)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
-{
-    // PREPARE STUFF
-    j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-    // DO STUFF
-    j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
-    // FOLLOW UP STUFF
-
-    return TRUE;
-}
-
-static gboolean backend_init (gchar const* path)
-{
-    // DO STUFF
-
-    return TRUE;
-}
-
-static void backend_fini (void)
-{
-    // DO STUFF
 }
 
 static
-JBackend my_new_backend = {
+void
+backend_fini (void)
+{
+}
+```
+
+Finally, a `JBackend` structure has to be defined and returned to make the backend known to JULEA.
+
+```c
+static
+JBackend null_backend = {
     .type = J_BACKEND_TYPE_OBJECT,
+    .component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
     .object = {
-        .init = backend_init,
-        .fini = backend_fini,
-        .create = backend_create,
-        .delete = backend_delete,
-        .open = backend_open,
-        .close = backend_close,
-        .status = backend_status,
-        .sync = backend_sync,
-        .read = backend_read,
-        .write = backend_write
+        .backend_init = backend_init,
+        .backend_fini = backend_fini,
+        .backend_create = backend_create,
+        .backend_delete = backend_delete,
+        .backend_open = backend_open,
+        .backend_close = backend_close,
+        .backend_status = backend_status,
+        .backend_sync = backend_sync,
+        .backend_read = backend_read,
+        .backend_write = backend_write
     }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (JBackendType type)
+backend_info (void)
 {
-    JBackend* backend = NULL;
-
-    if (type == J_BACKEND_TYPE_OBJECT)
-    {
-        backend = &my_new_backend;
-    }
-
-    return backend;
+    return &null_backend;
 }
 ```
 
+## Build System
 
-# Add to buildscript
+JULEA uses the [Waf](https://waf.io/) build system and its build scripts are therefore written in Python.
 
-Currently, the Python-written buildsystem called [[Waf|https://github.com/waf-project/waf]] is been used. To add your implementation to the build chain, a little Python has to been written. The following code snippets shows, how `librados` is added to *Waf*.
+In case the new backend depends on additional libraries, these dependencies have to be checked first.
+Specifically, a new parameter has to be added for each dependency:
 
-At first, you want to add an optional parameter for using your new backend.
-
-``` {.Python}
-ctx.add_option('--librados', action='store', default=None, help='librados driver prefix')
+```python
+ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
 ```
 
-The next step is defining an environment variable with its preferences, like libraries to use or its obligation.
+The next step is to check for the dependency's existence using `pkg-config`.
+JULEA provides `check_cfg_rpath`, which is a thin wrapper around Waf's `check_cfg` to set the `rpath`:
 
-``` {.python}
-ctx.env.JULEA_LIBRADOS = \
-ctx.check_cc(
-    lib = 'rados',
-    uselib_store = 'LIBRADOS',
+```python
+ctx.env.JULEA_LEVELDB = \
+check_cfg_rpath(
+    ctx,
+    package = 'leveldb',
+    args = ['--cflags', '--libs'],
+    uselib_store = 'LEVELDB',
+    pkg_config_path = get_pkg_config_path(ctx.options.leveldb),
     mandatory = False
 )
 ```
 
-At least, tell *Waf* weather you backend is a client or server component.
+Last, the backend has to be added to the list of backend targets.
 
-``` {.python}
-if ctx.env.JULEA_LIBRADOS:
-    backends_client.append('rados')
+```python
+...
 
-for backend in backends_client:
-    use_extra = []
+if ctx.env.JULEA_LEVELDB:
+    kv_backends.append('leveldb')
 
-    if backend == 'mongodb':
-        use_extra = ['LIBMONGOC']
-    elif backend == 'rados':
-       use_extra = ['LIBRADOS']
+...
+
+for backend in kv_backends:
+    if backend == 'leveldb':
+        use_extra = ['LEVELDB']
+
+    ...
 ```
