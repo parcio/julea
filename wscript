@@ -30,6 +30,12 @@ out = 'build'
 
 # CentOS 7 has GLib 2.42
 glib_version = '2.42'
+libbson_version = '1.9.0'
+
+leveldb_version = '1.20'
+lmdb_version = '0.9.21'
+libmongoc_version = '1.9.0'
+sqlite_version = '3.23.0'
 
 def check_cfg_rpath (ctx, **kwargs):
 	r = ctx.check_cfg(**kwargs)
@@ -141,7 +147,7 @@ def configure (ctx):
 	check_cfg_rpath(
 		ctx,
 		package = 'libbson-1.0',
-		args = ['--cflags', '--libs', 'libbson-1.0 >= 1.6.0'],
+		args = ['--cflags', '--libs', 'libbson-1.0 >= {0}'.format(libbson_version)],
 		uselib_store = 'LIBBSON',
 		pkg_config_path = get_pkg_config_path(ctx.options.libbson)
 	)
@@ -150,7 +156,7 @@ def configure (ctx):
 	check_cfg_rpath(
 		ctx,
 		package = 'libmongoc-1.0',
-		args = ['--cflags', '--libs', 'libmongoc-1.0 >= 1.6.0'],
+		args = ['--cflags', '--libs', 'libmongoc-1.0 >= {0}'.format(libmongoc_version)],
 		uselib_store = 'LIBMONGOC',
 		pkg_config_path = get_pkg_config_path(ctx.options.libmongoc),
 		mandatory = False
@@ -200,7 +206,7 @@ def configure (ctx):
 	check_cfg_rpath(
 		ctx,
 		package = 'leveldb',
-		args = ['--cflags', '--libs'],
+		args = ['--cflags', '--libs', 'leveldb >= {0}'.format(leveldb_version)],
 		uselib_store = 'LEVELDB',
 		pkg_config_path = get_pkg_config_path(ctx.options.leveldb),
 		mandatory = False
@@ -210,7 +216,7 @@ def configure (ctx):
 	check_cfg_rpath(
 		ctx,
 		package = 'lmdb',
-		args = ['--cflags', '--libs'],
+		args = ['--cflags', '--libs', 'lmdb >= {0}'.format(lmdb_version)],
 		uselib_store = 'LMDB',
 		pkg_config_path = get_pkg_config_path(ctx.options.lmdb),
 		mandatory = False
@@ -232,7 +238,7 @@ def configure (ctx):
 	check_cfg_rpath(
 		ctx,
 		package = 'sqlite3',
-		args = ['--cflags', '--libs'],
+		args = ['--cflags', '--libs', 'sqlite3 >= {0}'.format(sqlite_version)],
 		uselib_store = 'SQLITE',
 		pkg_config_path = get_pkg_config_path(ctx.options.sqlite),
 		mandatory = False
@@ -530,5 +536,6 @@ def build (ctx):
 		VERSION = VERSION,
 		INCLUDEDIR = Utils.subst_vars('${INCLUDEDIR}', ctx.env),
 		LIBDIR = Utils.subst_vars('${LIBDIR}', ctx.env),
-		GLIB_VERSION = glib_version
+		GLIB_VERSION = glib_version,
+		LIBBSON_VERSION = libbson_version
 	)
