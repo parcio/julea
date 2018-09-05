@@ -24,8 +24,13 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
+. "${SELF_DIR}/spack"
 
 set_glib_options
 set_path
 #set_library_path
 #set_pkg_config_path
+
+SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+
+spack_load_dependencies

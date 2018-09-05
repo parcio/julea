@@ -23,94 +23,11 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/scripts/common"
+. "${SELF_DIR}/scripts/spack"
 
-spack_init ()
-{
-	local modules_dir
-	local spack_dir
-	local spack_env
+SPACK_DIR="$(get_directory "${SELF_DIR}/dependencies")"
 
-	spack_dir="$(get_directory "${SELF_DIR}/dependencies")"
-	spack_env="${spack_dir}/share/spack/setup-env.sh"
-
-	test -n "${spack_dir}" || return 1
-	test -d "${spack_dir}" || return 1
-	test -f "${spack_env}" || return 1
-
-	if ! command -v module > /dev/null 2>&1
-	then
-		modules_dir="$("${spack_dir}/bin/spack" location --install-dir environment-modules)"
-
-		if test -f "${modules_dir}/Modules/init/bash"
-		then
-			. "${modules_dir}/Modules/init/bash"
-		elif test -f '/etc/profile.d/modules.sh'
-		then
-			. /etc/profile.d/modules.sh
-		fi
-	fi
-
-	. "${spack_env}"
-}
-
-spack_load ()
-{
-	local spack_pkg
-
-	spack_pkg="$1"
-
-	test -n "${spack_pkg}" || return 1
-
-	spack load --dependencies "${spack_pkg}"
-}
-
-load_dependency ()
-{
-	local pkg_config
-	local spack_pkg
-
-	pkg_config="$1"
-	spack_pkg="$2"
-
-	test -n "${pkg_config}" || return 1
-	test -n "${spack_pkg}" || return 1
-
-	if ! pkg-config --exists "${pkg_config}"
-	then
-		spack_load "${spack_pkg}"
-	fi
-}
-
-load_dependency_bin ()
-{
-	local bin
-	local spack_pkg
-
-	bin="$1"
-	spack_pkg="$2"
-
-	test -n "${bin}" || return 1
-	test -n "${spack_pkg}" || return 1
-
-	if ! command -v "${bin}" > /dev/null 2>&1
-	then
-		spack_load "${spack_pkg}"
-	fi
-}
-
-if spack_init
-then
-	load_dependency_bin pkg-config pkgconfig
-	#load_dependency_bin mpicc mpi
-
-	load_dependency glib-2.0 glib
-	load_dependency libbson-1.0 libbson
-
-	load_dependency leveldb leveldb
-	load_dependency lmdb lmdb
-	load_dependency libmongoc-1.0 libmongoc
-	load_dependency sqlite3 sqlite
-fi
+spack_load_dependencies
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH,
 # otherwise ./waf will not work without having them set.

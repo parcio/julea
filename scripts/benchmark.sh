@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2017-2018 Michael Kuhn
@@ -23,6 +23,7 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
+. "${SELF_DIR}/spack"
 
 set_glib_options
 set_path
@@ -30,9 +31,14 @@ set_library_path
 
 run_benchmark ()
 {
+	# FIXME should use functions instead of setup.sh
 	setup.sh start
 	julea-benchmark "$@" || true
 	setup.sh stop
 }
+
+SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+
+spack_load_dependencies
 
 run_benchmark "$@"

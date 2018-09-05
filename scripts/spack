@@ -1,0 +1,147 @@
+#!/bin/sh
+
+# JULEA - Flexible storage framework
+# Copyright (C) 2017-2018 Michael Kuhn
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+spack_clone ()
+{
+	local spack_commit
+
+	spack_commit='ca2e1e9019c50b905662b63041695bbbe6ad7630'
+
+	test -n "${SPACK_DIR}" || return 1
+
+	if test ! -d "${SPACK_DIR}"
+	then
+		git clone https://github.com/LLNL/spack.git "${SPACK_DIR}"
+	fi
+
+	test -d "${SPACK_DIR}" || return 1
+
+	(
+		cd "${SPACK_DIR}"
+
+		git fetch
+		git reset --hard "${spack_commit}"
+	)
+
+	return 0
+}
+
+spack_init ()
+{
+	local modules_dir
+	local spack_env
+
+	test -n "${SPACK_DIR}" || return 1
+	test -d "${SPACK_DIR}" || return 1
+
+	spack_env="${SPACK_DIR}/share/spack/setup-env.sh"
+
+	test -f "${spack_env}" || return 1
+
+	if ! command -v module > /dev/null 2>&1
+	then
+		modules_dir="$("${SPACK_DIR}/bin/spack" location --install-dir environment-modules)"
+
+		if test -f "${modules_dir}/Modules/init/bash"
+		then
+			. "${modules_dir}/Modules/init/bash"
+		elif test -f '/etc/profile.d/modules.sh'
+		then
+			. /etc/profile.d/modules.sh
+		fi
+	fi
+
+	. "${spack_env}"
+
+	return 0
+}
+
+spack_install ()
+{
+	local spack_pkg
+
+	spack_pkg="$1"
+
+	test -n "${SPACK_DIR}" || return 1
+	test -d "${SPACK_DIR}" || return 1
+	test -n "${spack_pkg}" || return 1
+
+	(
+		cd "${SPACK_DIR}"
+
+		./bin/spack install "${spack_pkg}"
+	)
+}
+
+spack_load ()
+{
+	local spack_pkg
+
+	spack_pkg="$1"
+
+	test -n "${spack_pkg}" || return 1
+
+	spack load --dependencies "${spack_pkg}"
+}
+
+spack_get_dependencies ()
+{
+	local dependencies
+
+	dependencies=''
+
+	# Required for Waf
+	dependencies="${dependencies} pkgconfig"
+
+	# Mandatory dependencies
+	dependencies="${dependencies} glib"
+	dependencies="${dependencies} libbson"
+
+	# Optional dependencies
+	dependencies="${dependencies} leveldb"
+	dependencies="${dependencies} lmdb"
+	dependencies="${dependencies} libmongoc"
+	dependencies="${dependencies} sqlite"
+
+	#dependencies="${dependencies} mpi"
+	#dependencies="${dependencies} otf"
+
+	printf '%s' "${dependencies}"
+}
+
+spack_load_dependencies ()
+{
+	if spack_init
+	then
+		for dependency in $(spack_get_dependencies)
+		do
+			spack_load "${dependency}"
+		done
+	fi
+}
+
+spack_install_dependencies ()
+{
+	if spack_clone
+	then
+		for dependency in $(spack_get_dependencies)
+		do
+			spack_install "${dependency}"
+		done
+	fi
+}

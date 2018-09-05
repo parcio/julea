@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2017-2018 Michael Kuhn
@@ -23,6 +23,7 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
+. "${SELF_DIR}/spack"
 
 set_glib_options
 set_path
@@ -32,11 +33,17 @@ run_test ()
 {
 	local build_dir
 
+	# julea-test does not get installed, so we have to find it in the build directory.
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 
+	# FIXME should use functions instead of setup.sh
 	setup.sh start
 	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test" || true
 	setup.sh stop
 }
+
+SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+
+spack_load_dependencies
 
 run_test "$@"
