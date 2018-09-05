@@ -21,6 +21,7 @@ The following tables visualize all supported types and special configuration par
 | gio     | ❌     | ✅     | Path to a directory (`/var/storage/gio`) |
 | null    | ✅     | ✅     |  |
 | posix   | ❌     | ✅     | Path to a directory (`/var/storage/posix`) |
+| rados   | ✅     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
 
 ## Key-Value Backends
 
@@ -30,5 +31,4 @@ The following tables visualize all supported types and special configuration par
 | lmdb    | ❌     | ✅     | Path to a directory (`/var/storage/lmdb`) |
 | mongodb | ✅     | ❌     | Host name and database name (`localhost:julea`) |
 | null    | ✅     | ✅     |  |
-| rados   | ✅     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
 | sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |

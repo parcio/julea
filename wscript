@@ -433,11 +433,16 @@ def build (ctx):
 
 	object_backends = ['gio', 'null', 'posix']
 
+	if ctx.env.JULEA_LIBRADOS:
+		object_backends.append('rados')
+
 	for backend in object_backends:
 		use_extra = []
 
 		if backend == 'gio':
 			use_extra = ['GIO', 'GOBJECT']
+		elif backend == 'rados':
+			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
 			source = ['backend/object/{0}.c'.format(backend)],
@@ -459,9 +464,6 @@ def build (ctx):
 	if ctx.env.JULEA_LIBMONGOC:
 		kv_backends.append('mongodb')
 
-	if ctx.env.JULEA_LIBRADOS:
-		kv_backends.append('rados')
-
 	if ctx.env.JULEA_SQLITE:
 		kv_backends.append('sqlite')
 
@@ -479,8 +481,6 @@ def build (ctx):
 			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
-		elif backend == 'rados':
-			use_extra = ['LIBRADOS']
 		elif backend == 'sqlite':
 			use_extra = ['SQLITE']
 
