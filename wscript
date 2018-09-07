@@ -63,6 +63,19 @@ def get_rpath (ctx):
 
 	return ['{0}/lib'.format(os.path.abspath(out))]
 
+def check_and_add_cflags (ctx, flags, mandatory=True):
+	if not isinstance(flags, list):
+		flags = [flags]
+
+	for flag in flags:
+		ret = ctx.check_cc(
+			cflags = flag,
+			mandatory = mandatory
+		)
+
+		if ret:
+			ctx.env.CFLAGS += [flag]
+
 def get_bin (prefixes, bin):
 	env = os.getenv('PATH')
 
@@ -114,11 +127,9 @@ def configure (ctx):
 
 	ctx.env.JULEA_DEBUG = ctx.options.debug
 
-	ctx.env.CFLAGS += ['-std=c11']
-	ctx.env.CFLAGS += ['-fdiagnostics-color']
-	ctx.env.CFLAGS += ['-Wpedantic', '-Wall', '-Wextra']
-	# FIXME libbson bug, https://github.com/mongodb/libbson/pull/193
-	ctx.env.CFLAGS += ['-Wno-expansion-to-defined']
+	check_and_add_cflags(ctx, '-std=c11')
+	check_and_add_cflags(ctx, '-fdiagnostics-color', False)
+	check_and_add_cflags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
@@ -303,7 +314,7 @@ def configure (ctx):
 		)
 
 	if ctx.options.debug:
-		ctx.env.CFLAGS += [
+		check_and_add_cflags(ctx, [
 			'-Waggregate-return',
 			'-Wcast-align',
 			'-Wcast-qual',
@@ -333,14 +344,14 @@ def configure (ctx):
 			'-Wundef',
 			'-Wuninitialized',
 			'-Wwrite-strings'
-		]
-		ctx.env.CFLAGS += ['-ggdb']
+		])
+		check_and_add_cflags(ctx, '-ggdb')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 	else:
-		ctx.env.CFLAGS += ['-O2']
+		check_and_add_cflags(ctx, '-O2')
 
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)
