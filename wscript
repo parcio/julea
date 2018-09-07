@@ -356,12 +356,19 @@ def configure (ctx):
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)
 
+	backend_paths = []
+
 	if ctx.options.debug:
 		# Context.out_dir is empty after the first configure
-		out_dir = os.path.abspath(out)
-		ctx.define('JULEA_BACKEND_PATH_BUILD', '{0}/backend'.format(out_dir))
+		backend_path_build = '{0}/backend'.format(os.path.abspath(out))
+		ctx.define('JULEA_BACKEND_PATH_BUILD', backend_path_build)
+		backend_paths.append(backend_path_build)
 
-	ctx.define('JULEA_BACKEND_PATH', Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env))
+	backend_path = Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env)
+	ctx.define('JULEA_BACKEND_PATH', backend_path)
+	backend_paths.append(backend_path)
+
+	ctx.msg('Setting backend paths to', ', '.join(backend_paths))
 
 	ctx.write_config_header('include/julea-config.h')
 
