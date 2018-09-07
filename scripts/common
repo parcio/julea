@@ -42,7 +42,6 @@ set_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	# FIXME glib, otf
 	PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/scripts:${PATH}"
 
 	export PATH
@@ -56,22 +55,7 @@ set_library_path ()
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	root_dir="$(get_directory "${SELF_DIR}/..")"
 
-	# FIXME glib, otf
 	LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
 
 	export LD_LIBRARY_PATH
-}
-
-set_pkg_config_path ()
-{
-	local build_dir
-	local root_dir
-
-	build_dir="$(get_directory "${SELF_DIR}/../build")"
-	root_dir="$(get_directory "${SELF_DIR}/..")"
-
-	# FIXME glib, otf
-	PKG_CONFIG_PATH="${build_dir}/pkg-config:${PKG_CONFIG_PATH}"
-
-	export PKG_CONFIG_PATH
 }
