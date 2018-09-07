@@ -102,8 +102,16 @@ spack_load ()
 spack_get_dependencies ()
 {
 	local dependencies
+	local mode
 
 	dependencies=''
+	mode="$1"
+
+	if test "${mode}" = 'install'
+	then
+		# Required for Spack itself
+		dependencies="${dependencies} environment-modules"
+	fi
 
 	# Required for Waf
 	dependencies="${dependencies} pkgconfig"
@@ -128,7 +136,7 @@ spack_load_dependencies ()
 {
 	if spack_init
 	then
-		for dependency in $(spack_get_dependencies)
+		for dependency in $(spack_get_dependencies load)
 		do
 			spack_load "${dependency}"
 		done
@@ -139,7 +147,7 @@ spack_install_dependencies ()
 {
 	if spack_clone
 	then
-		for dependency in $(spack_get_dependencies)
+		for dependency in $(spack_get_dependencies install)
 		do
 			spack_install "${dependency}"
 		done
