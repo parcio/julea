@@ -23,6 +23,7 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
+. "${SELF_DIR}/setup"
 . "${SELF_DIR}/spack"
 
 set_glib_options
@@ -31,10 +32,10 @@ set_library_path
 
 run_benchmark ()
 {
-	# FIXME should use functions instead of setup.sh
-	setup.sh start
+	setup_init
+	setup_start
 	julea-benchmark "$@" || true
-	setup.sh stop
+	setup_stop
 }
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"

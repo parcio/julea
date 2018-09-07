@@ -23,6 +23,7 @@ SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
 . "${SELF_DIR}/common"
+. "${SELF_DIR}/setup"
 . "${SELF_DIR}/spack"
 
 set_glib_options
@@ -36,10 +37,10 @@ run_test ()
 	# julea-test does not get installed, so we have to find it in the build directory.
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
 
-	# FIXME should use functions instead of setup.sh
-	setup.sh start
+	setup_init
+	setup_start
 	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test" || true
-	setup.sh stop
+	setup_stop
 }
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
