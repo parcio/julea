@@ -2,6 +2,7 @@
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2013-2018 Michael Kuhn
+# Copyright (C) 2013 Anna Fuchs
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -32,6 +33,30 @@ usage ()
 	exit 1
 }
 
+setup_slurm ()
+{
+	local mode
+	local nodes
+
+	mode="$1"
+
+	test -n "${mode}" || return 1
+
+	if test -n "${SLURM_JOB_NODELIST}"
+	then
+		nodes="$(scontrol show hostnames)"
+
+		for node in ${nodes}
+		do
+			ssh "${node}" "${SELF_PATH}" "${mode}-local"
+		done
+
+		return 0
+	fi
+
+	return 1
+}
+
 test -n "$1" || usage
 
 MODE="$1"
@@ -47,9 +72,21 @@ setup_init
 
 case "${MODE}" in
 	start)
+		if ! setup_slurm "${MODE}"
+		then
+			setup_start
+		fi
+		;;
+	start-local)
 		setup_start
 		;;
 	stop)
+		if ! setup_slurm "${MODE}"
+		then
+			setup_stop
+		fi
+		;;
+	stop-local)
 		setup_stop
 		;;
 	restart)
