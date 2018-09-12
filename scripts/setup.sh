@@ -90,9 +90,17 @@ case "${MODE}" in
 		setup_stop
 		;;
 	restart)
-		setup_stop
+		if ! setup_slurm stop
+		then
+			setup_stop
+		fi
+
 		sleep 10
-		setup_start
+
+		if ! setup_slurm start
+		then
+			setup_start
+		fi
 		;;
 	*)
 		usage
