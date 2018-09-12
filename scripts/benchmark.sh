@@ -26,7 +26,6 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/setup"
 . "${SELF_DIR}/spack"
 
-set_glib_options
 set_path
 set_library_path
 

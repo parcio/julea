@@ -26,7 +26,9 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/setup"
 . "${SELF_DIR}/spack"
 
-set_glib_options
+#export G_SLICE=always-malloc
+export G_SLICE=debug-blocks
+
 set_path
 set_library_path
 

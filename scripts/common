@@ -27,13 +27,6 @@ get_directory ()
 	printf '%s' "$(readlink --canonicalize-existing -- "${directory}")"
 }
 
-set_glib_options ()
-{
-	#export G_DEBUG=resident-modules
-	#export G_SLICE=all
-	export G_SLICE=always-malloc
-}
-
 set_path ()
 {
 	local build_dir
