@@ -28,6 +28,7 @@
 
 #include "benchmark.h"
 
+static gchar* opt_machine_separator = NULL;
 static gboolean opt_machine_readable = FALSE;
 static gchar* opt_path = NULL;
 static gchar* opt_semantics = NULL;
@@ -118,27 +119,27 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	}
 	else
 	{
-		g_print(" %f", result.elapsed_time);
+		g_print("%s%f", opt_machine_separator, result.elapsed_time);
 
 		if (result.operations != 0)
 		{
-			g_print(" %f", (gdouble)result.operations / result.elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)result.operations / result.elapsed_time);
 		}
 		else
 		{
-			g_print(" -");
+			g_print("%s-", opt_machine_separator);
 		}
 
 		if (result.bytes != 0)
 		{
-			g_print(" %f", (gdouble)result.bytes / result.elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)result.bytes / result.elapsed_time);
 		}
 		else
 		{
-			g_print(" -");
+			g_print("%s-", opt_machine_separator);
 		}
 
-		g_print(" %f\n", elapsed);
+		g_print("%s%f\n", opt_machine_separator, elapsed);
 	}
 
 	g_timer_destroy(func_timer);
@@ -152,9 +153,10 @@ main (int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "machine-readable", 0, 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
-		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", "/" },
+		{ "machine-separator", 0, 0, G_OPTION_ARG_STRING, &opt_machine_separator, "Separator for machine-readable output", "\\t" },
+		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", NULL },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
-		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", "default" },
+		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -176,6 +178,11 @@ main (int argc, char** argv)
 
 	g_option_context_free(context);
 
+	if (opt_machine_separator == NULL)
+	{
+		opt_machine_separator = g_strdup("\t");
+	}
+
 	j_init();
 
 	j_benchmark_semantics = j_semantics_new_from_string(opt_template, opt_semantics);
@@ -183,7 +190,7 @@ main (int argc, char** argv)
 
 	if (opt_machine_readable)
 	{
-		g_print("name  elapsed  operations  bytes  total_elapsed\n");
+		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
 	}
 
 	// Core
@@ -209,6 +216,7 @@ main (int argc, char** argv)
 
 	j_fini();
 
+	g_free(opt_machine_separator);
 	g_free(opt_path);
 	g_free(opt_semantics);
 	g_free(opt_template);
