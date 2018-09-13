@@ -111,27 +111,27 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	}
 	else
 	{
-		g_print(" %f", result.elapsed_time);
+		g_print("\t%f", result.elapsed_time);
 
 		if (result.operations != 0)
 		{
-			g_print(" %f", (gdouble)result.operations / result.elapsed_time);
+			g_print("\t%f", (gdouble)result.operations / result.elapsed_time);
 		}
 		else
 		{
-			g_print(" -");
+			g_print("\t-");
 		}
 
 		if (result.bytes != 0)
 		{
-			g_print(" %f", (gdouble)result.bytes / result.elapsed_time);
+			g_print("\t%f", (gdouble)result.bytes / result.elapsed_time);
 		}
 		else
 		{
-			g_print(" -");
+			g_print("\t-");
 		}
 
-		g_print(" %f\n", elapsed);
+		g_print("\t%f\n", elapsed);
 	}
 
 	g_timer_destroy(func_timer);
