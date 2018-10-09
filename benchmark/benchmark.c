@@ -66,9 +66,16 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 	g_return_if_fail(name != NULL);
 	g_return_if_fail(benchmark_func != NULL);
 
-	if (opt_path != NULL && !g_str_has_prefix(name, opt_path))
+	if (opt_path != NULL)
 	{
-		return;
+		g_autofree gchar* path_suite = NULL;
+
+		path_suite = g_strconcat(opt_path, "/", NULL);
+
+		if (g_strcmp0(name, opt_path) != 0 && !g_str_has_prefix(name, path_suite))
+		{
+			return;
+		}
 	}
 
 	func_timer = g_timer_new();
