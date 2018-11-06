@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # JULEA - Flexible storage framework
 # Copyright (C) 2017-2018 Michael Kuhn
 #
@@ -20,13 +18,13 @@ spack_clone ()
 {
 	local spack_commit
 
-	spack_commit='ca2e1e9019c50b905662b63041695bbbe6ad7630'
+	spack_commit='d5327d8d4bfa0fd1094dacbdc07a83ed41e4a50e'
 
 	test -n "${SPACK_DIR}" || return 1
 
 	if test ! -d "${SPACK_DIR}"
 	then
-		git clone https://github.com/LLNL/spack.git "${SPACK_DIR}"
+		git clone https://github.com/spack/spack.git "${SPACK_DIR}"
 	fi
 
 	test -d "${SPACK_DIR}" || return 1
