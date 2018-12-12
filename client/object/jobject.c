@@ -31,6 +31,7 @@
 #include <object/jobject.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 /**
  * \defgroup JObject Object

@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+#include <jtrace-internal.h>
+
 G_BEGIN_DECLS
 
 #define J_STRIPE_SIZE (4 * 1024 * 1024)

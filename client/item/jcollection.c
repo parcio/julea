@@ -33,6 +33,7 @@
 #include <item/jitem-internal.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 #include <julea-kv.h>
 
 /**

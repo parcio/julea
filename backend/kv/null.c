@@ -22,6 +22,7 @@
 #include <gmodule.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 static bson_t empty[1];
 

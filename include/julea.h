@@ -51,7 +51,4 @@
 #include <jsemantics.h>
 #include <jstatistics.h>
 
-// FIXME
-#include <jtrace-internal.h>
-
 #endif

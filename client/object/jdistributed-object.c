@@ -31,6 +31,7 @@
 #include <object/jdistributed-object.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 /**
  * \defgroup JDistributedObject Distributed Object

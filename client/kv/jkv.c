@@ -31,6 +31,7 @@
 #include <kv/jkv.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 /**
  * \defgroup JKV KV
