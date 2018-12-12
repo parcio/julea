@@ -45,11 +45,7 @@ main (int argc, char** argv)
 {
 	gint ret;
 
-	j_init();
-
 	ret = fuse_main(argc, argv, &jfs_vtable, NULL);
-
-	j_fini();
 
 	return ret;
 }

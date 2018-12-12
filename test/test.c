@@ -31,8 +31,6 @@ main (int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-	j_init();
-
 	// Core
 	test_background_operation();
 	test_batch();
@@ -52,8 +50,6 @@ main (int argc, char** argv)
 	test_uri();
 
 	ret = g_test_run();
-
-	j_fini();
 
 	return ret;
 }

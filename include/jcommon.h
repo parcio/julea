@@ -43,8 +43,9 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-void j_init (void);
-void j_fini (void);
+// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+void __attribute__((constructor)) j_init (void);
+void __attribute__((destructor)) j_fini (void);
 
 JConfiguration* j_configuration (void);
 

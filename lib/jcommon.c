@@ -139,7 +139,10 @@ j_init (void)
 	gchar const* kv_component;
 	gchar const* kv_path;
 
-	g_return_if_fail(!j_is_initialized());
+	if (j_is_initialized())
+	{
+		return;
+	}
 
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
@@ -218,7 +221,10 @@ j_fini (void)
 {
 	JCommon* common;
 
-	g_return_if_fail(j_is_initialized());
+	if (!j_is_initialized())
+	{
+		return;
+	}
 
 	j_trace_enter(G_STRFUNC, NULL);
 

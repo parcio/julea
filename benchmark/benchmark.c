@@ -183,8 +183,6 @@ main (int argc, char** argv)
 		opt_machine_separator = g_strdup("\t");
 	}
 
-	j_init();
-
 	j_benchmark_semantics = j_semantics_new_from_string(opt_template, opt_semantics);
 	j_benchmark_timer = g_timer_new();
 
@@ -213,8 +211,6 @@ main (int argc, char** argv)
 
 	g_timer_destroy(j_benchmark_timer);
 	j_semantics_unref(j_benchmark_semantics);
-
-	j_fini();
 
 	g_free(opt_machine_separator);
 	g_free(opt_path);

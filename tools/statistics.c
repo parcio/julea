@@ -67,8 +67,6 @@ main (int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	j_init();
-
 	get_all = 1;
 	configuration = j_configuration();
 	statistics_total = j_statistics_new(FALSE);
@@ -144,8 +142,6 @@ main (int argc, char** argv)
 	}
 
 	j_statistics_free(statistics_total);
-
-	j_fini();
 
 	return 0;
 }

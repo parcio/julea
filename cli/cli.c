@@ -98,8 +98,6 @@ main (int argc, char** argv)
 
 	command = argv[1];
 
-	j_init();
-
 	arguments = g_new(gchar const*, argc - 1);
 
 	for (i = 2; i < argc; i++)
@@ -138,8 +136,6 @@ main (int argc, char** argv)
 		success = FALSE;
 		j_cmd_usage();
 	}
-
-	j_fini();
 
 	return (success) ? 0 : 1;
 }
