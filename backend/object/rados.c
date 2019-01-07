@@ -24,6 +24,7 @@
 #include <rados/librados.h>
 
 #include <julea.h>
+#include <julea-internal.h>
 
 /* Initialize cluster and config variables */
 static rados_t backend_connection = NULL;
