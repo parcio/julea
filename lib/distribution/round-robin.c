@@ -268,7 +268,7 @@ distribution_deserialize (gpointer data, bson_t const* b)
 
 		if (g_strcmp0(key, "block_size") == 0)
 		{
-			distribution->block_size = bson_iter_int32(&iterator);
+			distribution->block_size = bson_iter_int64(&iterator);
 		}
 		else if (g_strcmp0(key, "start_index") == 0)
 		{
