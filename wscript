@@ -524,10 +524,15 @@ def build (ctx):
 
 	# Tools
 	for tool in ('config', 'statistics'):
+		use_extra = []
+
+		if tool == 'statistics':
+			use_extra.append('lib/julea')
+
 		ctx.program(
 			source = ['tools/{0}.c'.format(tool)],
 			target = 'tools/julea-{0}'.format(tool),
-			use = use_julea_core + ['lib/julea', 'GIO', 'GOBJECT'],
+			use = use_julea_core + ['GIO', 'GOBJECT'] + use_extra,
 			includes = ['include'],
 			rpath = get_rpath(ctx),
 			install_path = '${BINDIR}'
