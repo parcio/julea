@@ -56,3 +56,9 @@ You can check whether JULEA works by executing the integrated test suite.
 ```console
 $ ./scripts/test.sh
 ```
+
+## Citing JULEA
+
+If you want to cite JULEA, please use the following paper:
+
+- [JULEA: A Flexible Storage Framework for HPC](https://link.springer.com/chapter/10.1007/978-3-319-67630-2_51) (Michael Kuhn), In High Performance Computing, Lecture Notes in Computer Science (10524), (Editors: Julian Kunkel, Rio Yokota, Michela Taufer, John Shalf), Springer International Publishing, ISC High Performance 2017, Frankfurt, Germany, ISBN: 978-3-319-67629-6, 2017-11
