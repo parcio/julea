@@ -34,6 +34,7 @@ G_BEGIN_DECLS
 struct JItemIterator;
 
 typedef struct JItemIterator JItemIterator;
+G_END_DECLS
 
 #include <item/jcollection.h>
 #include <item/jitem.h>
