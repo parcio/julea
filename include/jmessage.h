@@ -65,11 +65,11 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
-G_BEGIN_DECLS
+G_END_DECLS
 
 #include <jsemantics.h>
 
-G_END_DECLS
+G_BEGIN_DECLS
 
 JMessage* j_message_new (JMessageType, gsize);
 JMessage* j_message_new_reply (JMessage*);
