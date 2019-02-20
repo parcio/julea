@@ -63,12 +63,12 @@ struct JURI;
  **/
 typedef struct JURI JURI;
 
-G_BEGIN_DECLS
+G_END_DECLS
 
 #include <item/jcollection.h>
 #include <item/jitem.h>
 
-G_END_DECLS
+G_BEGIN_DECLS
 
 GQuark j_uri_error_quark (void);
 

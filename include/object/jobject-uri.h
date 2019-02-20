@@ -55,12 +55,12 @@ struct JObjectURI;
 
 typedef struct JObjectURI JObjectURI;
 
-G_BEGIN_DECLS
+G_END_DECLS
 
 #include <object/jdistributed-object.h>
 #include <object/jobject.h>
 
-G_END_DECLS
+G_BEGIN_DECLS
 
 JObjectURI* j_object_uri_new (gchar const*, JObjectURIScheme);
 void j_object_uri_free (JObjectURI*);
