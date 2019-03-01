@@ -457,8 +457,14 @@ j_distributed_object_status_background_operation (gpointer data)
 		size_ = j_message_get_8(reply);
 
 		// FIXME
-		*modification_time = modification_time_;
-		j_helper_atomic_add(size, size_);
+		if (modification_time != NULL)
+		{
+			*modification_time = modification_time_;
+		}
+		if (size != NULL)
+		{
+			j_helper_atomic_add(size, size_);
+		}
 	}
 
 	j_message_unref(background_data->message);

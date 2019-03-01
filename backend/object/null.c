@@ -93,8 +93,14 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 	j_trace_file_begin(full_path, J_TRACE_FILE_STATUS);
 	j_trace_file_end(full_path, J_TRACE_FILE_STATUS, 0, 0);
 
-	*modification_time = 0;
-	*size = 0;
+	if (modification_time != NULL)
+	{
+		*modification_time = 0;
+	}
+	if (size != NULL)
+	{
+		*size = 0;
+	}
 
 	return TRUE;
 }
