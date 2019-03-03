@@ -219,6 +219,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
+						// FIXME Easy to create an operation with length > J_STRIPE_SIZE
+						// that will never fit into any memory chunk, reset and use the
+						// full cache of size J_STRIPE_SIZE is no solution
+						// TODO Split such operation
 						buf = j_memory_chunk_get(memory_chunk, length);
 
 						if (buf == NULL)
@@ -287,6 +291,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						offset = j_message_get_8(message);
 
 						/* Check whether we can merge two consecutive operations. */
+						// FIXME Easy to create an operation with length > J_STRIPE_SIZE
+						// TODO Consider split of operations requested too large
 						if (merge_length > 0 && merge_offset + merge_length == offset && merge_length + length <= J_STRIPE_SIZE)
 						{
 							merge_length += length;
