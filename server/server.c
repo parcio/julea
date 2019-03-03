@@ -291,8 +291,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						offset = j_message_get_8(message);
 
 						/* Check whether we can merge two consecutive operations. */
-						// FIXME Easy to create an operation with length > J_STRIPE_SIZE
-						// TODO Consider split of operations requested too large
 						if (merge_length > 0 && merge_offset + merge_length == offset && merge_length + length <= J_STRIPE_SIZE)
 						{
 							merge_length += length;
@@ -301,6 +299,21 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						{
 							guint64 bytes_written = 0;
 
+							// Split operation if necessary, write full caches
+							// Consider having an operation with length > J_STRIPE_SIZE
+							while (merge_length > J_STRIPE_SIZE)
+							{
+								g_input_stream_read_all(input, buf, J_STRIPE_SIZE, NULL, NULL, NULL);
+								j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, J_STRIPE_SIZE);
+
+								j_backend_object_write(jd_object_backend, object, buf, J_STRIPE_SIZE, merge_offset, &bytes_written);
+								j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+								merge_length -= J_STRIPE_SIZE;
+								merge_offset += J_STRIPE_SIZE;
+							}
+
+							// Write the rest
 							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
@@ -329,6 +342,21 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					{
 						guint64 bytes_written = 0;
 
+						// Split operation if necessary, write full caches
+						// Consider having an operation with length > J_STRIPE_SIZE
+						while (merge_length > J_STRIPE_SIZE)
+						{
+							g_input_stream_read_all(input, buf, J_STRIPE_SIZE, NULL, NULL, NULL);
+							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, J_STRIPE_SIZE);
+
+							j_backend_object_write(jd_object_backend, object, buf, J_STRIPE_SIZE, merge_offset, &bytes_written);
+							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+							merge_length -= J_STRIPE_SIZE;
+							merge_offset += J_STRIPE_SIZE;
+						}
+
+						// Write the rest
 						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
 						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
 
