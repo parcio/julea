@@ -31,6 +31,8 @@ void test_memory_chunk (void);
 void test_message (void);
 void test_semantics (void);
 
+void test_object_object (void);
+
 void test_collection (void);
 void test_item (void);
 void test_uri (void);

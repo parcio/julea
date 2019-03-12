@@ -44,6 +44,9 @@ main (int argc, char** argv)
 	test_message();
 	test_semantics();
 
+	// Object client
+	test_object_object();
+
 	// Item client
 	test_collection();
 	test_item();
