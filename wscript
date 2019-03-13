@@ -360,8 +360,9 @@ def configure(ctx):
 
 	ctx.write_config_header('include/julea-config.h')
 
+	ctx.load('clang_compilation_database')
 
-def build(ctx):
+def build (ctx):
 	# Headers
 	include_dir = ctx.path.find_dir('include')
 	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl='**/*-internal.h'), cwd=include_dir, relative_trick=True)
