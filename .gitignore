@@ -24,3 +24,6 @@ waf-extras/__pycache__/
 .lock-waf*
 .waf-*/
 .waf3-*/
+
+# Python
+python/**/__pycache__/
