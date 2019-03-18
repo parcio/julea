@@ -120,27 +120,28 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
-	gint ret = 0;
+	gboolean ret = TRUE;
 	gint64 modification_time_ = 0;
 	guint64 size_ = 0;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-	ret = rados_stat(backend_io, bf->path, &size_, &modification_time_);
-	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
-
-	g_return_val_if_fail(ret == 0, FALSE);
-
-	if (modification_time != NULL)
+	if (modification_time != NULL || size != NULL)
 	{
-		*modification_time = modification_time_;
+		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
+		ret = (rados_stat(backend_io, bf->path, &size_, &modification_time_) == 0);
+		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
+
+		if (ret && modification_time != NULL)
+		{
+			*modification_time = modification_time_;
+		}
+
+		if (ret && size != NULL)
+		{
+			*size = size_;
+		}
 	}
 
-	if (size != NULL)
-	{
-		*size = size_;
-	}
-
-	return TRUE;
+	return ret;
 }
 
 /* Not implemented */

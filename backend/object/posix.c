@@ -253,25 +253,28 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* file = data;
-	gboolean ret;
+	gboolean ret = TRUE;
 	struct stat buf;
 
-	j_trace_file_begin(file->path, J_TRACE_FILE_STATUS);
-	ret = (fstat(file->fd, &buf) == 0);
-	j_trace_file_end(file->path, J_TRACE_FILE_STATUS, 0, 0);
-
-	if (modification_time != NULL)
+	if (modification_time != NULL || size != NULL)
 	{
-		*modification_time = buf.st_mtime * G_USEC_PER_SEC;
+		j_trace_file_begin(file->path, J_TRACE_FILE_STATUS);
+		ret = (fstat(file->fd, &buf) == 0);
+		j_trace_file_end(file->path, J_TRACE_FILE_STATUS, 0, 0);
+
+		if (ret && modification_time != NULL)
+		{
+			*modification_time = buf.st_mtime * G_USEC_PER_SEC;
 
 #ifdef HAVE_STMTIM_TVNSEC
-		*modification_time += buf.st_mtim.tv_nsec / 1000;
+			*modification_time += buf.st_mtim.tv_nsec / 1000;
 #endif
-	}
+		}
 
-	if (size != NULL)
-	{
-		*size = buf.st_size;
+		if (ret && size != NULL)
+		{
+			*size = buf.st_size;
+		}
 	}
 
 	return ret;
