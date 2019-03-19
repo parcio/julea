@@ -5,7 +5,7 @@ dependencies/
 html/
 
 # Sublime Text
-*.sublime-workspace
+*.sublime-*
 
 # Vim
 *.swp
