@@ -144,7 +144,7 @@ end:
 
 static
 gpointer
-distribution_new (guint server_count)
+distribution_new (guint server_count, guint64 stripe_size)
 {
 	JDistributionWeighted* distribution;
 
@@ -154,7 +154,7 @@ distribution_new (guint server_count)
 	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
-	distribution->block_size = J_STRIPE_SIZE;
+	distribution->block_size = stripe_size;
 
 	distribution->sum = 0;
 	distribution->weights = g_new(guint, distribution->server_count);

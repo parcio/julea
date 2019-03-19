@@ -74,14 +74,16 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 {
 	JDistribution* distribution;
 	guint server_count;
+	guint64 stripe_size;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	server_count = j_configuration_get_object_server_count(configuration);
+	stripe_size = j_configuration_get_stripe_size(configuration);
 
 	distribution = g_slice_new(JDistribution);
 	distribution->type = type;
-	distribution->distribution = j_distribution_vtables[type].distribution_new(server_count);
+	distribution->distribution = j_distribution_vtables[type].distribution_new(server_count, stripe_size);
 	distribution->ref_count = 1;
 
 	j_trace_leave(G_STRFUNC);
@@ -189,7 +191,7 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 
 	if (j_distribution_vtables[distribution->type].distribution_set != NULL)
 	{
-		j_distribution_vtables[distribution->type].distribution_set(distribution->distribution, "block-size", MIN(block_size, J_STRIPE_SIZE));
+		j_distribution_vtables[distribution->type].distribution_set(distribution->distribution, "block-size", block_size);
 	}
 }
 

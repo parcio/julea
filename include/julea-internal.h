@@ -33,8 +33,6 @@
 
 G_BEGIN_DECLS
 
-#define J_STRIPE_SIZE (4 * 1024 * 1024)
-
 #define J_CRITICAL(format, ...) g_critical("%s:%s: " format, G_STRLOC, G_STRFUNC, __VA_ARGS__);
 
 /* FIXME j_sync() for benchmarks */

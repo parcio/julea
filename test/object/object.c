@@ -74,10 +74,13 @@ test_object_read_write (void)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JObject) object = NULL;
 	g_autofree gchar* buffer = NULL;
+	guint64 max_operation_size;
 	guint64 nbytes = 0;
 
+	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	buffer = g_malloc(J_STRIPE_SIZE + 1);
+	buffer = g_malloc(max_operation_size + 1);
 
 	object = j_object_new("test", "test-object-rw");
 	g_assert(object != NULL);
@@ -89,43 +92,43 @@ test_object_read_write (void)
 	j_batch_execute(batch);
 	g_assert_cmpuint(nbytes, ==, 1);
 
-	j_object_write(object, buffer, J_STRIPE_SIZE - 1, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE - 1);
+	g_assert_cmpuint(nbytes, ==, max_operation_size - 1);
 
-	j_object_read(object, buffer, J_STRIPE_SIZE - 1, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE - 1);
+	g_assert_cmpuint(nbytes, ==, max_operation_size - 1);
 
-	j_object_write(object, buffer, J_STRIPE_SIZE, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE);
+	g_assert_cmpuint(nbytes, ==, max_operation_size);
 
-	j_object_read(object, buffer, J_STRIPE_SIZE, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE);
+	g_assert_cmpuint(nbytes, ==, max_operation_size);
 
-	j_object_write(object, buffer, J_STRIPE_SIZE + 1, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE + 1);
+	g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
 	// FIXME
-	//j_object_read(object, buffer, J_STRIPE_SIZE + 1, 0, &nbytes, batch);
+	//j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
 	//j_batch_execute(batch);
-	//g_assert_cmpuint(nbytes, ==, J_STRIPE_SIZE + 1);
+	//g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
-	j_object_write(object, buffer, J_STRIPE_SIZE - 1, 0, &nbytes, batch);
-	j_object_write(object, buffer, J_STRIPE_SIZE, 0, &nbytes, batch);
-	j_object_write(object, buffer, J_STRIPE_SIZE + 1, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size, 0, &nbytes, batch);
+	j_object_write(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, 3 * J_STRIPE_SIZE);
+	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
 	// FIXME
-	j_object_read(object, buffer, J_STRIPE_SIZE - 1, 0, &nbytes, batch);
-	j_object_read(object, buffer, J_STRIPE_SIZE, 0, &nbytes, batch);
-	//j_object_read(object, buffer, J_STRIPE_SIZE + 1, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size, 0, &nbytes, batch);
+	//j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, 2 * J_STRIPE_SIZE - 1);
+	g_assert_cmpuint(nbytes, ==, 2 * max_operation_size - 1);
 
 	j_object_delete(object, batch);
 	j_batch_execute(batch);

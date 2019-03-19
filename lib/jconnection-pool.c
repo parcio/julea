@@ -86,11 +86,6 @@ j_connection_pool_init (JConfiguration* configuration)
 	pool->kv_queues = g_new(JConnectionPoolQueue, pool->kv_len);
 	pool->max_count = j_configuration_get_max_connections(configuration);
 
-	if (pool->max_count == 0)
-	{
-		pool->max_count = g_get_num_processors();
-	}
-
 	for (guint i = 0; i < pool->object_len; i++)
 	{
 		pool->object_queues[i].queue = g_async_queue_new();

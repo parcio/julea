@@ -124,7 +124,7 @@ end:
 
 static
 gpointer
-distribution_new (guint server_count)
+distribution_new (guint server_count, guint64 stripe_size)
 {
 	JDistributionSingleServer* distribution;
 
@@ -134,7 +134,7 @@ distribution_new (guint server_count)
 	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
-	distribution->block_size = J_STRIPE_SIZE;
+	distribution->block_size = stripe_size;
 
 	distribution->index = g_random_int_range(0, distribution->server_count);
 

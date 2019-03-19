@@ -57,7 +57,9 @@ gchar const* j_configuration_get_kv_backend (JConfiguration*);
 gchar const* j_configuration_get_kv_component (JConfiguration*);
 gchar const* j_configuration_get_kv_path (JConfiguration*);
 
+guint64 j_configuration_get_max_operation_size (JConfiguration*);
 guint32 j_configuration_get_max_connections (JConfiguration*);
+guint64 j_configuration_get_stripe_size (JConfiguration*);
 
 G_END_DECLS
 
