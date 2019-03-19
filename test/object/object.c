@@ -79,7 +79,7 @@ test_object_read_write (void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc(J_STRIPE_SIZE + 1);
 
-	object = j_object_new("test", "test-object");
+	object = j_object_new("test", "test-object-rw");
 	g_assert(object != NULL);
 
 	j_object_create(object, batch);
@@ -145,7 +145,7 @@ test_object_status (void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc(42);
 
-	object = j_object_new("test", "test-object");
+	object = j_object_new("test", "test-object-status");
 	g_assert(object != NULL);
 
 	j_object_create(object, batch);
