@@ -45,6 +45,7 @@ main (int argc, char** argv)
 	test_semantics();
 
 	// Object client
+	test_object_distributed_object();
 	test_object_object();
 
 	// Item client
