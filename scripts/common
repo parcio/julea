@@ -50,3 +50,16 @@ set_library_path ()
 
 	export LD_LIBRARY_PATH
 }
+
+set_pkg_config_path ()
+{
+	local build_dir
+	local root_dir
+
+	build_dir="$(get_directory "${SELF_DIR}/../build")"
+	root_dir="$(get_directory "${SELF_DIR}/..")"
+
+	PKG_CONFIG_PATH="${build_dir}/pkg-config:${LD_LIBRARY_PATH}"
+
+	export PKG_CONFIG_PATH
+}
