@@ -29,7 +29,7 @@
 
 #include <glib.h>
 
-#include <jtrace-internal.h>
+#include <core/jtrace-internal.h>
 
 G_BEGIN_DECLS
 

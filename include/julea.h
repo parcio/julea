@@ -32,23 +32,23 @@
  * The name JULEA is a play on ROMIO.
  **/
 
-#include <jbackend.h>
-#include <jbackground-operation.h>
-#include <jbatch.h>
-#include <jcache.h>
-#include <jcommon.h>
-#include <jconfiguration.h>
-#include <jconnection-pool.h>
-#include <jcredentials.h>
-#include <jdistribution.h>
-#include <jhelper.h>
-#include <jlist.h>
-#include <jlist-iterator.h>
-#include <jlock.h>
-#include <jmemory-chunk.h>
-#include <jmessage.h>
-#include <joperation.h>
-#include <jsemantics.h>
-#include <jstatistics.h>
+#include <core/jbackend.h>
+#include <core/jbackground-operation.h>
+#include <core/jbatch.h>
+#include <core/jcache.h>
+#include <core/jcommon.h>
+#include <core/jconfiguration.h>
+#include <core/jconnection-pool.h>
+#include <core/jcredentials.h>
+#include <core/jdistribution.h>
+#include <core/jhelper.h>
+#include <core/jlist.h>
+#include <core/jlist-iterator.h>
+#include <core/jlock.h>
+#include <core/jmemory-chunk.h>
+#include <core/jmessage.h>
+#include <core/joperation.h>
+#include <core/jsemantics.h>
+#include <core/jstatistics.h>
 
 #endif

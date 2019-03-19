@@ -20,38 +20,27 @@
  * \file
  **/
 
-#ifndef JULEA_OPERATION_H
-#define JULEA_OPERATION_H
+#ifndef JULEA_HELPER_H
+#define JULEA_HELPER_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
+#include <gio/gio.h>
 
-#include <jlist.h>
-#include <jsemantics.h>
+#include <core/jbackground-operation.h>
 
 G_BEGIN_DECLS
 
-typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
-typedef void (*JOperationFreeFunc) (gpointer);
+void j_helper_set_nodelay (GSocketConnection*, gboolean);
 
-/**
- * An operation.
- **/
-struct JOperation
-{
-	gpointer key;
-	gpointer data;
+gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
-	JOperationExecFunc exec_func;
-	JOperationFreeFunc free_func;
-};
+guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 
-typedef struct JOperation JOperation;
-
-JOperation* j_operation_new (void);
+guint32 j_helper_hash (gchar const*);
 
 G_END_DECLS
 

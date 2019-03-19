@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_LIST_INTERNAL_H
-#define JULEA_LIST_INTERNAL_H
+#ifndef JULEA_BATCH_INTERNAL_H
+#define JULEA_BATCH_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,32 +29,15 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
-
-/**
- * A JList element.
- **/
-struct JListElement
-{
-	/**
-	 * Pointer to the next element.
-	 **/
-	struct JListElement* next;
-	/**
-	 * Pointer to data.
-	 **/
-	gpointer data;
-};
-
-typedef struct JListElement JListElement;
-
-G_END_DECLS
-
-#include <jlist.h>
+#include <core/jbatch.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JListElement* j_list_head (JList*);
+G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
+
+G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
+
+G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
 
 G_END_DECLS
 

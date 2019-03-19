@@ -3,7 +3,7 @@ libdir=@LIBDIR@
 
 Name: @APPNAME@
 Description: Flexible storage framework
-URL: https://redmine.wr.informatik.uni-hamburg.de/projects/julea
+URL: https://github.com/wr-hamburg/julea
 Version: @VERSION@
 Requires.private: glib-2.0 >= @GLIB_VERSION@, gio-2.0 >= @GLIB_VERSION@, gmodule-2.0 >= @GLIB_VERSION@, gobject-2.0 >= @GLIB_VERSION@, gthread-2.0 >= @GLIB_VERSION@, libbson-1.0 >= @LIBBSON_VERSION@
 Cflags: -I${includedir}/julea

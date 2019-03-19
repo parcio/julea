@@ -67,7 +67,7 @@ typedef struct JMessage JMessage;
 
 G_END_DECLS
 
-#include <jsemantics.h>
+#include <core/jsemantics.h>
 
 G_BEGIN_DECLS
 

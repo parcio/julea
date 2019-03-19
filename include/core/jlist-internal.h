@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_BATCH_H
-#define JULEA_BATCH_H
+#ifndef JULEA_LIST_INTERNAL_H
+#define JULEA_LIST_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -31,34 +31,30 @@
 
 G_BEGIN_DECLS
 
-struct JBatch;
+/**
+ * A JList element.
+ **/
+struct JListElement
+{
+	/**
+	 * Pointer to the next element.
+	 **/
+	struct JListElement* next;
+	/**
+	 * Pointer to data.
+	 **/
+	gpointer data;
+};
 
-typedef struct JBatch JBatch;
-
-typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
+typedef struct JListElement JListElement;
 
 G_END_DECLS
 
-#include <joperation.h>
-#include <jsemantics.h>
+#include <core/jlist.h>
 
 G_BEGIN_DECLS
 
-JBatch* j_batch_new (JSemantics*);
-JBatch* j_batch_new_for_template (JSemanticsTemplate);
-JBatch* j_batch_ref (JBatch*);
-void j_batch_unref (JBatch*);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
-
-JSemantics* j_batch_get_semantics (JBatch*);
-
-void j_batch_add (JBatch*, JOperation*);
-
-gboolean j_batch_execute (JBatch*);
-
-void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
-void j_batch_wait (JBatch*);
+G_GNUC_INTERNAL JListElement* j_list_head (JList*);
 
 G_END_DECLS
 

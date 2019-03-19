@@ -20,27 +20,25 @@
  * \file
  **/
 
-#ifndef JULEA_HELPER_H
-#define JULEA_HELPER_H
+#ifndef JULEA_DISTRIBUTION_INTERNAL_H
+#define JULEA_DISTRIBUTION_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
-#include <gio/gio.h>
 
-#include <jbackground-operation.h>
+#include <bson.h>
+
+#include <core/jconfiguration.h>
+#include <core/jdistribution.h>
 
 G_BEGIN_DECLS
 
-void j_helper_set_nodelay (GSocketConnection*, gboolean);
+G_GNUC_INTERNAL void j_distribution_init (void);
 
-gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
-
-guint64 j_helper_atomic_add (guint64 volatile*, guint64);
-
-guint32 j_helper_hash (gchar const*);
+G_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson_t const*);
 
 G_END_DECLS
 

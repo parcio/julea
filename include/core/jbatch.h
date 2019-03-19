@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_COMMON_H
-#define JULEA_COMMON_H
+#ifndef JULEA_BATCH_H
+#define JULEA_BATCH_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -31,26 +31,34 @@
 
 G_BEGIN_DECLS
 
-struct JCommon;
+struct JBatch;
 
-typedef struct JCommon JCommon;
+typedef struct JBatch JBatch;
+
+typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
 
 G_END_DECLS
 
-#include <jbackend.h>
-#include <jbatch.h>
-#include <jconfiguration.h>
+#include <core/joperation.h>
+#include <core/jsemantics.h>
 
 G_BEGIN_DECLS
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-void __attribute__((constructor)) j_init (void);
-void __attribute__((destructor)) j_fini (void);
+JBatch* j_batch_new (JSemantics*);
+JBatch* j_batch_new_for_template (JSemanticsTemplate);
+JBatch* j_batch_ref (JBatch*);
+void j_batch_unref (JBatch*);
 
-JConfiguration* j_configuration (void);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
 
-JBackend* j_object_backend (void);
-JBackend* j_kv_backend (void);
+JSemantics* j_batch_get_semantics (JBatch*);
+
+void j_batch_add (JBatch*, JOperation*);
+
+gboolean j_batch_execute (JBatch*);
+
+void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
+void j_batch_wait (JBatch*);
 
 G_END_DECLS
 

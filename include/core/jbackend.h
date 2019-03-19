@@ -32,7 +32,7 @@
 
 #include <bson.h>
 
-#include <jsemantics.h>
+#include <core/jsemantics.h>
 
 G_BEGIN_DECLS
 

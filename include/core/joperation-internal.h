@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_LIST_ITERATOR_H
-#define JULEA_LIST_ITERATOR_H
+#ifndef JULEA_OPERATION_INTERNAL_H
+#define JULEA_OPERATION_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,25 +29,11 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
-
-struct JListIterator;
-
-typedef struct JListIterator JListIterator;
-
-G_END_DECLS
-
-#include <jlist.h>
+#include <core/joperation.h>
 
 G_BEGIN_DECLS
 
-JListIterator* j_list_iterator_new (JList*);
-void j_list_iterator_free (JListIterator*);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
-
-gboolean j_list_iterator_next (JListIterator*);
-gpointer j_list_iterator_get (JListIterator*);
+G_GNUC_INTERNAL void j_operation_free (JOperation*);
 
 G_END_DECLS
 

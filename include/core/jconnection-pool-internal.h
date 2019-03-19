@@ -20,25 +20,22 @@
  * \file
  **/
 
-#ifndef JULEA_OPERATION_CACHE_INTERNAL_H
-#define JULEA_OPERATION_CACHE_INTERNAL_H
+#ifndef JULEA_CONNECTION_POOL_INTERNAL_H
+#define JULEA_CONNECTION_POOL_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
+#include <gio/gio.h>
 
-#include <jbatch.h>
+#include <core/jconfiguration.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_operation_cache_init (void);
-G_GNUC_INTERNAL void j_operation_cache_fini (void);
-
-G_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
-
-G_GNUC_INTERNAL gboolean j_operation_cache_add (JBatch*);
+G_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
+G_GNUC_INTERNAL void j_connection_pool_fini (void);
 
 G_END_DECLS
 

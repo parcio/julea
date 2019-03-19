@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_BATCH_INTERNAL_H
-#define JULEA_BATCH_INTERNAL_H
+#ifndef JULEA_LIST_ITERATOR_H
+#define JULEA_LIST_ITERATOR_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,15 +29,25 @@
 
 #include <glib.h>
 
-#include <jbatch.h>
+G_BEGIN_DECLS
+
+struct JListIterator;
+
+typedef struct JListIterator JListIterator;
+
+G_END_DECLS
+
+#include <core/jlist.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
+JListIterator* j_list_iterator_new (JList*);
+void j_list_iterator_free (JListIterator*);
 
-G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
 
-G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
+gboolean j_list_iterator_next (JListIterator*);
+gpointer j_list_iterator_get (JListIterator*);
 
 G_END_DECLS
 

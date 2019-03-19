@@ -48,7 +48,7 @@ typedef struct JDistribution JDistribution;
 
 G_END_DECLS
 
-#include <jconfiguration.h>
+#include <core/jconfiguration.h>
 
 G_BEGIN_DECLS
 
