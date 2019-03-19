@@ -1,6 +1,9 @@
 # Dependencies
 dependencies/
 
+# Example
+example/hello-world
+
 # Doxygen
 html/
 
