@@ -83,35 +83,6 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 }
 
 static
-guint64
-jd_object_write_chunked (JStatistics* statistics, GInputStream* input, gpointer object, gpointer buffer, guint64 buffer_length, guint64 length, guint64 offset)
-{
-	guint64 bytes_written = 0;
-
-	// Split operation into chunks if necessary
-	while (length > 0)
-	{
-		guint64 chunk_length;
-		guint64 tmp;
-
-		chunk_length = MIN(length, buffer_length);
-
-		g_input_stream_read_all(input, buffer, chunk_length, NULL, NULL, NULL);
-		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, chunk_length);
-
-		j_backend_object_write(jd_object_backend, object, buffer, chunk_length, offset, &tmp);
-		j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, tmp);
-
-		length -= chunk_length;
-		offset += chunk_length;
-
-		bytes_written += tmp;
-	}
-
-	return bytes_written;
-}
-
-static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
@@ -252,7 +223,14 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
-						// FIXME Handle operations with length > memory_chunk_size
+						if (length > memory_chunk_size)
+						{
+							// FIXME return proper error
+							j_message_add_operation(reply, sizeof(guint64));
+							j_message_append_8(reply, &bytes_read);
+							continue;
+						}
+
 						buf = j_memory_chunk_get(memory_chunk, length);
 
 						if (buf == NULL)
@@ -292,10 +270,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_OBJECT_WRITE:
 				{
 					g_autoptr(JMessage) reply = NULL;
-					gchar* buf;
 					gpointer object;
-					guint64 merge_length = 0;
-					guint64 merge_offset = 0;
 
 					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
 					{
@@ -305,51 +280,44 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					namespace = j_message_get_string(message);
 					path = j_message_get_string(message);
 
-					/* Guaranteed to work, because memory_chunk is not shared. */
-					buf = j_memory_chunk_get(memory_chunk, memory_chunk_size);
-					g_assert(buf != NULL);
-
 					// FIXME return value
 					j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 					for (i = 0; i < operation_count; i++)
 					{
+						gchar* buf;
 						guint64 length;
 						guint64 offset;
+						guint64 bytes_written = 0;
 
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
-						/* Check whether we can merge two consecutive operations. */
-						if (merge_length > 0 && merge_offset + merge_length == offset && merge_length + length <= memory_chunk_size)
+						if (length > memory_chunk_size)
 						{
-							merge_length += length;
-						}
-						else if (merge_length > 0)
-						{
-							jd_object_write_chunked(statistics, input, object, buf, memory_chunk_size, merge_length, merge_offset);
-
-							merge_length = 0;
-							merge_offset = 0;
+							// FIXME return proper error
+							j_message_add_operation(reply, sizeof(guint64));
+							j_message_append_8(reply, &bytes_written);
+							continue;
 						}
 
-						if (merge_length == 0)
-						{
-							merge_length = length;
-							merge_offset = offset;
-						}
+						// Guaranteed to work because memory_chunk is reset below
+						buf = j_memory_chunk_get(memory_chunk, length);
+						g_assert(buf != NULL);
+
+						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
+						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
+
+						j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
+						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 						if (reply != NULL)
 						{
-							// FIXME the reply is faked (length should be bytes_written)
 							j_message_add_operation(reply, sizeof(guint64));
-							j_message_append_8(reply, &length);
+							j_message_append_8(reply, &bytes_written);
 						}
-					}
 
-					if (merge_length > 0)
-					{
-						jd_object_write_chunked(statistics, input, object, buf, memory_chunk_size, merge_length, merge_offset);
+						j_memory_chunk_reset(memory_chunk);
 					}
 
 					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)

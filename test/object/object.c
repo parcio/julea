@@ -112,10 +112,9 @@ test_object_read_write (void)
 	j_batch_execute(batch);
 	g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
-	// FIXME
-	//j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
-	//j_batch_execute(batch);
-	//g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
+	j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
+	j_batch_execute(batch);
+	g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
 	j_object_write(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_object_write(object, buffer, max_operation_size, 0, &nbytes, batch);
@@ -123,12 +122,11 @@ test_object_read_write (void)
 	j_batch_execute(batch);
 	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
-	// FIXME
 	j_object_read(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_object_read(object, buffer, max_operation_size, 0, &nbytes, batch);
-	//j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
 	j_batch_execute(batch);
-	g_assert_cmpuint(nbytes, ==, 2 * max_operation_size - 1);
+	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
 	j_object_delete(object, batch);
 	j_batch_execute(batch);

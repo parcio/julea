@@ -983,6 +983,7 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 {
 	JObjectOperation* iop;
 	JOperation* operation;
+	guint64 max_operation_size;
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
@@ -991,22 +992,36 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JObjectOperation);
-	iop->read.object = j_object_ref(object);
-	iop->read.data = data;
-	iop->read.length = length;
-	iop->read.offset = offset;
-	iop->read.bytes_read = bytes_read;
+	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
-	operation = j_operation_new();
-	operation->key = object;
-	operation->data = iop;
-	operation->exec_func = j_object_read_exec;
-	operation->free_func = j_object_read_free;
+	// Chunk operation if necessary
+	while (length > 0)
+	{
+		guint64 chunk_size;
+
+		chunk_size = MIN(length, max_operation_size);
+
+		iop = g_slice_new(JObjectOperation);
+		iop->read.object = j_object_ref(object);
+		iop->read.data = data;
+		iop->read.length = chunk_size;
+		iop->read.offset = offset;
+		iop->read.bytes_read = bytes_read;
+
+		operation = j_operation_new();
+		operation->key = object;
+		operation->data = iop;
+		operation->exec_func = j_object_read_exec;
+		operation->free_func = j_object_read_free;
+
+		j_batch_add(batch, operation);
+
+		data = (gchar*)data + chunk_size;
+		length -= chunk_size;
+		offset += chunk_size;
+	}
 
 	*bytes_read = 0;
-
-	j_batch_add(batch, operation);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -1034,6 +1049,7 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 {
 	JObjectOperation* iop;
 	JOperation* operation;
+	guint64 max_operation_size;
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
@@ -1042,22 +1058,37 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	iop = g_slice_new(JObjectOperation);
-	iop->write.object = j_object_ref(object);
-	iop->write.data = data;
-	iop->write.length = length;
-	iop->write.offset = offset;
-	iop->write.bytes_written = bytes_written;
+	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
-	operation = j_operation_new();
-	operation->key = object;
-	operation->data = iop;
-	operation->exec_func = j_object_write_exec;
-	operation->free_func = j_object_write_free;
+	// Chunk operation if necessary
+	while (length > 0)
+	{
+		guint64 chunk_size;
+
+		chunk_size = MIN(length, max_operation_size);
+
+		iop = g_slice_new(JObjectOperation);
+		iop->write.object = j_object_ref(object);
+		iop->write.data = data;
+		iop->write.length = chunk_size;
+		iop->write.offset = offset;
+		iop->write.bytes_written = bytes_written;
+
+		operation = j_operation_new();
+		operation->key = object;
+		operation->data = iop;
+		operation->exec_func = j_object_write_exec;
+		operation->free_func = j_object_write_free;
+
+		j_batch_add(batch, operation);
+
+		data = (gchar const*)data + chunk_size;
+		length -= chunk_size;
+		offset += chunk_size;
+	}
+
 
 	*bytes_written = 0;
-
-	j_batch_add(batch, operation);
 
 	j_trace_leave(G_STRFUNC);
 }
