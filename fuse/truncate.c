@@ -47,6 +47,8 @@ jfs_truncate (char const* path, off_t size)
 			// FIXME
 			ret = 0;
 		}
+
+		bson_destroy(file);
 	}
 
 	return ret;

@@ -22,6 +22,8 @@
 
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int
 jfs_getattr (char const* path, struct stat* stbuf)
@@ -39,7 +41,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		stbuf->st_uid = 0;
 		stbuf->st_gid = 0;
 		stbuf->st_size = 0;
-		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
+		stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = g_get_real_time() / G_USEC_PER_SEC;
 
 		return 0;
 	}
@@ -53,21 +55,37 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	{
 		bson_iter_t iter;
 		gboolean is_file = TRUE;
-		// FIXME
 		gint64 size = 0;
 		gint64 time = 0;
 
-		if (bson_iter_init_find(&iter, file, "file") && bson_iter_type(&iter) == BSON_TYPE_BOOL)
+		bson_iter_init(&iter, file);
+
+		while (bson_iter_next(&iter))
 		{
-			is_file = bson_iter_bool(&iter);
+			gchar const* key;
+
+			key = bson_iter_key(&iter);
+
+			if (g_strcmp0(key, "file") == 0)
+			{
+				is_file = bson_iter_bool(&iter);
+			}
+			else if (g_strcmp0(key, "size") == 0)
+			{
+				size = bson_iter_int64(&iter);
+			}
+			else if (g_strcmp0(key, "time") == 0)
+			{
+				time = bson_iter_int64(&iter);
+			}
 		}
 
 		if (is_file)
 		{
 			stbuf->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 			stbuf->st_nlink = 1;
-			stbuf->st_uid = 0;
-			stbuf->st_gid = 0;
+			stbuf->st_uid = getuid();
+			stbuf->st_gid = getgid();
 			stbuf->st_size = size;
 			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = time / G_USEC_PER_SEC;
 
@@ -77,13 +95,15 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		{
 			stbuf->st_mode = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 			stbuf->st_nlink = 1;
-			stbuf->st_uid = 0;
-			stbuf->st_gid = 0;
+			stbuf->st_uid = getuid();
+			stbuf->st_gid = getgid();
 			stbuf->st_size = 0;
-			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = 0;
+			stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = time / G_USEC_PER_SEC;
 
 			ret = 0;
 		}
+
+		bson_destroy(file);
 	}
 
 	return ret;

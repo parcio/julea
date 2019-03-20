@@ -32,6 +32,11 @@ int jfs_access (char const* path, int mask)
 
 	(void)mask;
 
+	if (g_strcmp0(path, "/") == 0)
+	{
+		return 0;
+	}
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
 
@@ -40,6 +45,8 @@ int jfs_access (char const* path, int mask)
 	if (j_batch_execute(batch))
 	{
 		ret = 0;
+
+		bson_destroy(file);
 	}
 
 	return ret;

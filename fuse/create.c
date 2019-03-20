@@ -55,5 +55,6 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 		ret = 0;
 	}
 
+	// FIXME does not return 0 on success
 	return ret;
 }

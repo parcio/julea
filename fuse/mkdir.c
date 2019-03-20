@@ -41,6 +41,8 @@ int jfs_mkdir(char const* path, mode_t mode)
 
 	bson_append_utf8(file, "name", -1, basename, -1);
 	bson_append_bool(file, "file", -1, FALSE);
+	bson_append_int64(file, "time", -1, g_get_real_time());
+
 	j_kv_put(kv, file, batch);
 
 	if (j_batch_execute(batch))

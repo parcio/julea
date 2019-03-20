@@ -41,6 +41,8 @@ int jfs_utimens (char const* path, const struct timespec ts[2])
 	{
 		// FIXME
 		ret = 0;
+
+		bson_destroy(file);
 	}
 
 	return ret;
