@@ -91,19 +91,20 @@ def get_bin (prefixes, bin):
 	return None
 
 def get_pkg_config_path (prefix):
-	env = os.getenv('PKG_CONFIG_PATH')
-	path = None
+	env = os.getenv('PKG_CONFIG_PATH').split(':')
+	path = []
 
-	if prefix:
-		path = '{0}/lib/pkgconfig'.format(prefix)
+	# If no prefix has been specified, fall back to the global directories
+	if not prefix:
+		prefix = '/usr'
+
+	for component in ('lib', 'lib64', 'share'):
+		path.append('{0}/{1}/pkgconfig'.format(prefix, component))
 
 	if env:
-		if path:
-			path = '{0}:{1}'.format(path, env)
-		else:
-			path = env
+		path.extend(env)
 
-	return path
+	return ':'.join(path)
 
 def options (ctx):
 	ctx.load('compiler_c')
@@ -197,6 +198,7 @@ def configure (ctx):
 		package = 'fuse',
 		args = ['--cflags', '--libs'],
 		uselib_store = 'FUSE',
+		pkg_config_path = get_pkg_config_path(None),
 		mandatory = False
 	)
 
