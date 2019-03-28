@@ -91,7 +91,9 @@ def get_bin (prefixes, bin):
 	return None
 
 def get_pkg_config_path (prefix):
-	env = os.getenv('PKG_CONFIG_PATH').split(':')
+    if os.getenv('PKG_CONFIG_PATH'):
+        env = os.getenv('PKG_CONFIG_PATH').split(':')
+
 	path = []
 
 	# If no prefix has been specified, fall back to the global directories
