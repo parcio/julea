@@ -16,11 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from waflib import Context, Utils
-from waflib.Build import BuildContext
+from waflib import Utils
 
 import os
-import subprocess
 
 APPNAME = 'julea'
 VERSION = '0.2'
@@ -37,7 +35,8 @@ lmdb_version = '0.9.21'
 libmongoc_version = '1.9.0'
 sqlite_version = '3.23.0'
 
-def check_cfg_rpath (ctx, **kwargs):
+
+def check_cfg_rpath(ctx, **kwargs):
 	r = ctx.check_cfg(**kwargs)
 
 	if ctx.options.debug:
@@ -47,7 +46,8 @@ def check_cfg_rpath (ctx, **kwargs):
 
 	return r
 
-def check_cc_rpath (ctx, opt, **kwargs):
+
+def check_cc_rpath(ctx, opt, **kwargs):
 	if opt:
 		kwargs['includes'] = ['{0}/include'.format(opt)]
 		kwargs['libpath'] = ['{0}/lib'.format(opt)]
@@ -57,26 +57,29 @@ def check_cc_rpath (ctx, opt, **kwargs):
 
 	return ctx.check_cc(**kwargs)
 
-def get_rpath (ctx):
+
+def get_rpath(ctx):
 	if not ctx.env.JULEA_DEBUG:
 		return None
 
 	return ['{0}/lib'.format(os.path.abspath(out))]
 
-def check_and_add_cflags (ctx, flags, mandatory=True):
+
+def check_and_add_cflags(ctx, flags, mandatory=True):
 	if not isinstance(flags, list):
 		flags = [flags]
 
 	for flag in flags:
 		ret = ctx.check_cc(
-			cflags = flag,
-			mandatory = mandatory
+			cflags=flag,
+			mandatory=mandatory
 		)
 
 		if ret:
 			ctx.env.CFLAGS += [flag]
 
-def get_bin (prefixes, bin):
+
+def get_bin(prefixes, bin):
 	env = os.getenv('PATH')
 
 	if env:
@@ -90,7 +93,8 @@ def get_bin (prefixes, bin):
 
 	return None
 
-def get_pkg_config_path (prefix):
+
+def get_pkg_config_path(prefix):
 	env = os.getenv('PKG_CONFIG_PATH')
 	path = []
 
@@ -106,7 +110,8 @@ def get_pkg_config_path (prefix):
 
 	return ':'.join(path)
 
-def options (ctx):
+
+def options(ctx):
 	ctx.load('compiler_c')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
@@ -122,7 +127,8 @@ def options (ctx):
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
 
-def configure (ctx):
+
+def configure(ctx):
 	ctx.load('compiler_c')
 	ctx.load('gnu_dirs')
 
@@ -135,105 +141,85 @@ def configure (ctx):
 
 	ctx.check_large_file()
 
-	#for program in ('mpicc',):
-	#	ctx.find_program(
-	#		program,
-	#		var = program.upper(),
-	#		mandatory = False
-	#	)
-
 	ctx.check_cc(
-		lib = 'm',
-		uselib_store = 'M'
+		lib='m',
+		uselib_store='M'
 	)
 
 	for module in ('gio', 'glib', 'gmodule', 'gobject', 'gthread'):
 		check_cfg_rpath(
 			ctx,
-			package = '{0}-2.0'.format(module),
-			args = ['--cflags', '--libs', '{0}-2.0 >= {1}'.format(module, glib_version)],
-			uselib_store = module.upper(),
-			pkg_config_path = get_pkg_config_path(ctx.options.glib)
+			package='{0}-2.0'.format(module),
+			args=['--cflags', '--libs', '{0}-2.0 >= {1}'.format(module, glib_version)],
+			uselib_store=module.upper(),
+			pkg_config_path=get_pkg_config_path(ctx.options.glib)
 		)
 
 	check_cfg_rpath(
 		ctx,
-		package = 'libbson-1.0',
-		args = ['--cflags', '--libs', 'libbson-1.0 >= {0}'.format(libbson_version)],
-		uselib_store = 'LIBBSON',
-		pkg_config_path = get_pkg_config_path(ctx.options.libbson)
+		package='libbson-1.0',
+		args=['--cflags', '--libs', 'libbson-1.0 >= {0}'.format(libbson_version)],
+		uselib_store='LIBBSON',
+		pkg_config_path=get_pkg_config_path(ctx.options.libbson)
 	)
 
 	ctx.env.JULEA_LIBMONGOC = \
-	check_cfg_rpath(
-		ctx,
-		package = 'libmongoc-1.0',
-		args = ['--cflags', '--libs', 'libmongoc-1.0 >= {0}'.format(libmongoc_version)],
-		uselib_store = 'LIBMONGOC',
-		pkg_config_path = get_pkg_config_path(ctx.options.libmongoc),
-		mandatory = False
-	)
+		check_cfg_rpath(
+			ctx,
+			package='libmongoc-1.0',
+			args=['--cflags', '--libs', 'libmongoc-1.0 >= {0}'.format(libmongoc_version)],
+			uselib_store='LIBMONGOC',
+			pkg_config_path=get_pkg_config_path(ctx.options.libmongoc),
+			mandatory=False
+		)
 
 	# FIXME use check_cfg
 	ctx.env.JULEA_LIBRADOS = \
-	ctx.check_cc(
-		lib = 'rados',
-		uselib_store = 'LIBRADOS',
-		mandatory = False
-	)
+		ctx.check_cc(
+			lib='rados',
+			uselib_store='LIBRADOS',
+			mandatory=False
+		)
 
 	ctx.env.JULEA_HDF = \
-	check_cc_rpath(
-		ctx,
-		ctx.options.hdf,
-		header_name = 'hdf5.h',
-		lib = 'hdf5',
-		uselib_store = 'HDF5',
-		mandatory = False
-	)
+		check_cc_rpath(
+			ctx,
+			ctx.options.hdf,
+			header_name='hdf5.h',
+			lib='hdf5',
+			uselib_store='HDF5',
+			mandatory=False
+		)
 
 	ctx.env.JULEA_FUSE = \
-	check_cfg_rpath(
-		ctx,
-		package = 'fuse',
-		args = ['--cflags', '--libs'],
-		uselib_store = 'FUSE',
-		pkg_config_path = get_pkg_config_path(None),
-		mandatory = False
-	)
-
-	#if ctx.env.MPICC:
-	#	# FIXME: only works with OpenMPI
-	#	ctx.env.JULEA_MPI = \
-	#	ctx.check_cc(
-	#		header_name = 'mpi.h',
-	#		lib = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libs']).strip()),
-	#		includes = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:incdirs']).strip()),
-	#		libpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
-	#		rpath = Utils.to_list(ctx.cmd_and_log(ctx.env.MPICC + ['--showme:libdirs']).strip()),
-	#		uselib_store = 'MPI',
-	#		define_name = 'HAVE_MPI'
-	#	)
+		check_cfg_rpath(
+			ctx,
+			package='fuse',
+			args=['--cflags', '--libs'],
+			uselib_store='FUSE',
+			pkg_config_path=get_pkg_config_path(None),
+			mandatory=False
+		)
 
 	ctx.env.JULEA_LEVELDB = \
-	check_cfg_rpath(
-		ctx,
-		package = 'leveldb',
-		args = ['--cflags', '--libs', 'leveldb >= {0}'.format(leveldb_version)],
-		uselib_store = 'LEVELDB',
-		pkg_config_path = get_pkg_config_path(ctx.options.leveldb),
-		mandatory = False
-	)
+		check_cfg_rpath(
+			ctx,
+			package='leveldb',
+			args=['--cflags', '--libs', 'leveldb >= {0}'.format(leveldb_version)],
+			uselib_store='LEVELDB',
+			pkg_config_path=get_pkg_config_path(ctx.options.leveldb),
+			mandatory=False
+		)
 
 	ctx.env.JULEA_LMDB = \
-	check_cfg_rpath(
-		ctx,
-		package = 'lmdb',
-		args = ['--cflags', '--libs', 'lmdb >= {0}'.format(lmdb_version)],
-		uselib_store = 'LMDB',
-		pkg_config_path = get_pkg_config_path(ctx.options.lmdb),
-		mandatory = False
-	)
+		check_cfg_rpath(
+			ctx,
+			package='lmdb',
+			args=['--cflags', '--libs', 'lmdb >= {0}'.format(lmdb_version)],
+			uselib_store='LMDB',
+			pkg_config_path=get_pkg_config_path(ctx.options.lmdb),
+			mandatory=False
+		)
 
 	"""
 	check_cfg_rpath(
@@ -248,18 +234,18 @@ def configure (ctx):
 	"""
 
 	ctx.env.JULEA_SQLITE = \
-	check_cfg_rpath(
-		ctx,
-		package = 'sqlite3',
-		args = ['--cflags', '--libs', 'sqlite3 >= {0}'.format(sqlite_version)],
-		uselib_store = 'SQLITE',
-		pkg_config_path = get_pkg_config_path(ctx.options.sqlite),
-		mandatory = False
-	)
+		check_cfg_rpath(
+			ctx,
+			package='sqlite3',
+			args=['--cflags', '--libs', 'sqlite3 >= {0}'.format(sqlite_version)],
+			uselib_store='SQLITE',
+			pkg_config_path=get_pkg_config_path(ctx.options.sqlite),
+			mandatory=False
+		)
 
 	# stat.st_mtim.tv_nsec
 	ctx.check_cc(
-		fragment = '''
+		fragment='''
 		#define _POSIX_C_SOURCE 200809L
 
 		#include <sys/types.h>
@@ -275,13 +261,13 @@ def configure (ctx):
 			return 0;
 		}
 		''',
-		define_name = 'HAVE_STMTIM_TVNSEC',
-		msg = 'Checking for stat.st_mtim.tv_nsec',
-		mandatory = False
+		define_name='HAVE_STMTIM_TVNSEC',
+		msg='Checking for stat.st_mtim.tv_nsec',
+		mandatory=False
 	)
 
 	ctx.check_cc(
-		fragment = '''
+		fragment='''
 		#define _POSIX_C_SOURCE 200809L
 
 		#include <stdint.h>
@@ -295,24 +281,24 @@ def configure (ctx):
 			return 0;
 		}
 		''',
-		define_name = 'HAVE_SYNC_FETCH_AND_ADD',
-		msg = 'Checking for __sync_fetch_and_add',
-		mandatory = False
+		define_name='HAVE_SYNC_FETCH_AND_ADD',
+		msg='Checking for __sync_fetch_and_add',
+		mandatory=False
 	)
 
 	if ctx.options.sanitize:
 		ctx.check_cc(
-			cflags = '-fsanitize=address',
-			ldflags = '-fsanitize=address',
-			uselib_store = 'ASAN',
-			mandatory = False
+			cflags='-fsanitize=address',
+			ldflags='-fsanitize=address',
+			uselib_store='ASAN',
+			mandatory=False
 		)
 
 		ctx.check_cc(
-			cflags = '-fsanitize=undefined',
-			ldflags = '-fsanitize=undefined',
-			uselib_store = 'UBSAN',
-			mandatory = False
+			cflags='-fsanitize=undefined',
+			ldflags='-fsanitize=undefined',
+			uselib_store='UBSAN',
+			mandatory=False
 		)
 
 	if ctx.options.debug:
@@ -374,21 +360,13 @@ def configure (ctx):
 
 	ctx.write_config_header('include/julea-config.h')
 
-def build (ctx):
+
+def build(ctx):
 	# Headers
 	include_dir = ctx.path.find_dir('include')
 	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl='**/*-internal.h'), cwd=include_dir, relative_trick=True)
 
-	# Trace library
-#	ctx.shlib(
-#		source = ['lib/jtrace.c'],
-#		target = 'lib/jtrace',
-#		use = ['GLIB', 'OTF'],
-#		includes = ['include'],
-#		install_path = '${LIBDIR}'
-#	)
-
-	use_julea_core = ['M', 'GLIB', 'ASAN'] # 'UBSAN'
+	use_julea_core = ['M', 'GLIB', 'ASAN']  # 'UBSAN'
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 
@@ -396,12 +374,12 @@ def build (ctx):
 
 	# Library
 	ctx.shlib(
-		source = ctx.path.ant_glob('lib/core/**/*.c'),
-		target = 'lib/julea',
-		use = use_julea_lib,
-		includes = include_julea_core,
-		defines = ['JULEA_COMPILATION'],
-		install_path = '${LIBDIR}'
+		source=ctx.path.ant_glob('lib/core/**/*.c'),
+		target='lib/julea',
+		use=use_julea_lib,
+		includes=include_julea_core,
+		defines=['JULEA_COMPILATION'],
+		install_path='${LIBDIR}'
 	)
 
 	clients = ['object', 'kv', 'item']
@@ -414,43 +392,43 @@ def build (ctx):
 			use_extra.append('lib/julea-object')
 
 		ctx.shlib(
-			source = ctx.path.ant_glob('lib/{0}/**/*.c'.format(client)),
-			target = 'lib/julea-{0}'.format(client),
-			use = use_julea_lib + ['lib/julea'] + use_extra,
-			includes = include_julea_core,
-			defines = ['JULEA_{0}_COMPILATION'.format(client.upper())],
-			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}'
+			source=ctx.path.ant_glob('lib/{0}/**/*.c'.format(client)),
+			target='lib/julea-{0}'.format(client),
+			use=use_julea_lib + ['lib/julea'] + use_extra,
+			includes=include_julea_core,
+			defines=['JULEA_{0}_COMPILATION'.format(client.upper())],
+			rpath=get_rpath(ctx),
+			install_path='${LIBDIR}'
 		)
 
 	# Tests
 	ctx.program(
-		source = ctx.path.ant_glob('test/**/*.c'),
-		target = 'test/julea-test',
-		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
-		includes = include_julea_core + ['test'],
-		rpath = get_rpath(ctx),
-		install_path = None
+		source=ctx.path.ant_glob('test/**/*.c'),
+		target='test/julea-test',
+		use=use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
+		includes=include_julea_core + ['test'],
+		rpath=get_rpath(ctx),
+		install_path=None
 	)
 
 	# Benchmark
 	ctx.program(
-		source = ctx.path.ant_glob('benchmark/**/*.c'),
-		target = 'benchmark/julea-benchmark',
-		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
-		includes = include_julea_core + ['benchmark'],
-		rpath = get_rpath(ctx),
-		install_path = None
+		source=ctx.path.ant_glob('benchmark/**/*.c'),
+		target='benchmark/julea-benchmark',
+		use=use_julea_core + ['lib/julea', 'lib/julea-item'],
+		includes=include_julea_core + ['benchmark'],
+		rpath=get_rpath(ctx),
+		install_path=None
 	)
 
 	# Server
 	ctx.program(
-		source = ctx.path.ant_glob('server/*.c'),
-		target = 'server/julea-server',
-		use = use_julea_core + ['lib/julea', 'GIO', 'GMODULE', 'GOBJECT', 'GTHREAD'],
-		includes = include_julea_core,
-		rpath = get_rpath(ctx),
-		install_path = '${BINDIR}'
+		source=ctx.path.ant_glob('server/*.c'),
+		target='server/julea-server',
+		use=use_julea_core + ['lib/julea', 'GIO', 'GMODULE', 'GOBJECT', 'GTHREAD'],
+		includes=include_julea_core,
+		rpath=get_rpath(ctx),
+		install_path='${BINDIR}'
 	)
 
 	object_backends = ['gio', 'null', 'posix']
@@ -467,12 +445,12 @@ def build (ctx):
 			use_extra = ['LIBRADOS']
 
 		ctx.shlib(
-			source = ['backend/object/{0}.c'.format(backend)],
-			target = 'backend/object/{0}'.format(backend),
-			use = use_julea_backend + ['lib/julea'] + use_extra,
-			includes = include_julea_core,
-			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}/julea/backend/object'
+			source=['backend/object/{0}.c'.format(backend)],
+			target='backend/object/{0}'.format(backend),
+			use=use_julea_backend + ['lib/julea'] + use_extra,
+			includes=include_julea_core,
+			rpath=get_rpath(ctx),
+			install_path='${LIBDIR}/julea/backend/object'
 		)
 
 	kv_backends = ['null']
@@ -507,23 +485,23 @@ def build (ctx):
 			use_extra = ['SQLITE']
 
 		ctx.shlib(
-			source = ['backend/kv/{0}.c'.format(backend)],
-			target = 'backend/kv/{0}'.format(backend),
-			use = use_julea_backend + ['lib/julea'] + use_extra,
-			includes = include_julea_core,
-			cflags = cflags,
-			rpath = get_rpath(ctx),
-			install_path = '${LIBDIR}/julea/backend/kv'
+			source=['backend/kv/{0}.c'.format(backend)],
+			target='backend/kv/{0}'.format(backend),
+			use=use_julea_backend + ['lib/julea'] + use_extra,
+			includes=include_julea_core,
+			cflags=cflags,
+			rpath=get_rpath(ctx),
+			install_path='${LIBDIR}/julea/backend/kv'
 		)
 
 	# Command line
 	ctx.program(
-		source = ctx.path.ant_glob('cli/*.c'),
-		target = 'cli/julea-cli',
-		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
-		includes = include_julea_core,
-		rpath = get_rpath(ctx),
-		install_path = '${BINDIR}'
+		source=ctx.path.ant_glob('cli/*.c'),
+		target='cli/julea-cli',
+		use=use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
+		includes=include_julea_core,
+		rpath=get_rpath(ctx),
+		install_path='${BINDIR}'
 	)
 
 	# Tools
@@ -534,23 +512,23 @@ def build (ctx):
 			use_extra.append('lib/julea')
 
 		ctx.program(
-			source = ['tools/{0}.c'.format(tool)],
-			target = 'tools/julea-{0}'.format(tool),
-			use = use_julea_core + ['GIO', 'GOBJECT'] + use_extra,
-			includes = include_julea_core,
-			rpath = get_rpath(ctx),
-			install_path = '${BINDIR}'
+			source=['tools/{0}.c'.format(tool)],
+			target='tools/julea-{0}'.format(tool),
+			use=use_julea_core + ['GIO', 'GOBJECT'] + use_extra,
+			includes=include_julea_core,
+			rpath=get_rpath(ctx),
+			install_path='${BINDIR}'
 		)
 
 	# FUSE
 	if ctx.env.JULEA_FUSE:
 		ctx.program(
-			source = ctx.path.ant_glob('fuse/*.c'),
-			target = 'fuse/julea-fuse',
-			use = use_julea_core + ['lib/julea', 'lib/julea-kv', 'lib/julea-object', 'FUSE'],
-			includes = include_julea_core,
-			rpath = get_rpath(ctx),
-			install_path = '${BINDIR}'
+			source=ctx.path.ant_glob('fuse/*.c'),
+			target='fuse/julea-fuse',
+			use=use_julea_core + ['lib/julea', 'lib/julea-kv', 'lib/julea-object', 'FUSE'],
+			includes=include_julea_core,
+			rpath=get_rpath(ctx),
+			install_path='${BINDIR}'
 		)
 
 	# pkg-config
@@ -558,14 +536,14 @@ def build (ctx):
 		suffix = '-{0}'.format(lib) if lib else ''
 
 		ctx(
-			features = 'subst',
-			source = 'pkg-config/julea{0}.pc.in'.format(suffix),
-			target = 'pkg-config/julea{0}.pc'.format(suffix),
-			install_path = '${LIBDIR}/pkgconfig',
-			APPNAME = APPNAME,
-			VERSION = VERSION,
-			INCLUDEDIR = Utils.subst_vars('${INCLUDEDIR}', ctx.env),
-			LIBDIR = Utils.subst_vars('${LIBDIR}', ctx.env),
-			GLIB_VERSION = glib_version,
-			LIBBSON_VERSION = libbson_version
+			features='subst',
+			source='pkg-config/julea{0}.pc.in'.format(suffix),
+			target='pkg-config/julea{0}.pc'.format(suffix),
+			install_path='${LIBDIR}/pkgconfig',
+			APPNAME=APPNAME,
+			VERSION=VERSION,
+			INCLUDEDIR=Utils.subst_vars('${INCLUDEDIR}', ctx.env),
+			LIBDIR=Utils.subst_vars('${LIBDIR}', ctx.env),
+			GLIB_VERSION=glib_version,
+			LIBBSON_VERSION=libbson_version
 		)
