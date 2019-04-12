@@ -94,19 +94,29 @@ def get_bin(prefixes, bin):
 	return None
 
 
+def check_and_append_pkg_config_path(path, prefix):
+	for component in ('lib', 'lib64', 'share'):
+		dir = '{0}/{1}/pkgconfig'.format(prefix, component)
+
+		if os.path.exists(dir):
+			path.append(dir)
+
+
 def get_pkg_config_path(prefix):
 	env = os.getenv('PKG_CONFIG_PATH')
 	path = []
 
-	# If no prefix has been specified, fall back to the global directories
-	if not prefix:
-		prefix = '/usr'
+	# Prefer prefixes that have been set explicitly.
+	if prefix:
+		check_and_append_pkg_config_path(path, prefix)
 
-	for component in ('lib', 'lib64', 'share'):
-		path.append('{0}/{1}/pkgconfig'.format(prefix, component))
-
+	# Use paths from the environment next as they include the dependencies installed via Spack.
 	if env:
 		path.extend(env.split(':'))
+
+	# If no prefix has been specified, fall back to the global directories.
+	if not prefix:
+		check_and_append_pkg_config_path(path, '/usr')
 
 	return ':'.join(path)
 
