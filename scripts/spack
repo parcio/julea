@@ -143,9 +143,9 @@ spack_load_dependencies ()
 			then
 				spack_load "${dependency}"
 			else
-				if ! spack_load "${dependency}" > /dev/null 2>&1
+				if ! spack_load "${dependency}"
 				then
-					echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore this warning."
+					echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
 				fi
 			fi
 		done
