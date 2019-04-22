@@ -51,19 +51,6 @@ spack_init ()
 
 	test -f "${spack_env}" || return 1
 
-	if ! command -v module > /dev/null 2>&1
-	then
-		modules_dir="$("${SPACK_DIR}/bin/spack" location --install-dir environment-modules)"
-
-		if test -f "${modules_dir}/Modules/init/bash"
-		then
-			. "${modules_dir}/Modules/init/bash"
-		elif test -f '/etc/profile.d/modules.sh'
-		then
-			. /etc/profile.d/modules.sh
-		fi
-	fi
-
 	. "${spack_env}"
 
 	return 0
@@ -105,47 +92,77 @@ spack_get_dependencies ()
 	dependencies=''
 	mode="$1"
 
-	if test "${mode}" = 'install'
+	if test "${mode}" != 'load'
 	then
+		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
 		# Required for Spack itself
-		dependencies="${dependencies} environment-modules"
+		dependencies="${dependencies} environment-modules~X"
 	fi
 
-	# Required for Waf
-	dependencies="${dependencies} pkgconfig"
+	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard' -o "${mode}" = 'install-minimal'
+	then
+		# Required for Waf
+		dependencies="${dependencies} pkgconfig"
 
-	# Mandatory dependencies
-	dependencies="${dependencies} glib"
-	dependencies="${dependencies} libbson"
+		# Mandatory dependencies
+		dependencies="${dependencies} glib"
+		dependencies="${dependencies} libbson"
+	fi
 
-	# Optional dependencies
-	dependencies="${dependencies} leveldb"
-	dependencies="${dependencies} lmdb"
-	dependencies="${dependencies} libmongoc"
-	dependencies="${dependencies} sqlite"
+	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard'
+	then
+		# Optional dependencies
+		dependencies="${dependencies} lmdb"
+		dependencies="${dependencies} sqlite"
+	fi
 
-	#dependencies="${dependencies} mpi"
-	#dependencies="${dependencies} otf"
+	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
+	then
+		# Optional dependencies
+		dependencies="${dependencies} leveldb"
+		dependencies="${dependencies} libmongoc"
+
+		#dependencies="${dependencies} mpi"
+		#dependencies="${dependencies} otf"
+	fi
 
 	printf '%s' "${dependencies}"
 }
 
 spack_load_dependencies ()
 {
+	local minimal_pkgs
+
+	minimal_pkgs="$(spack_get_dependencies install-minimal)"
+
 	if spack_init
 	then
 		for dependency in $(spack_get_dependencies load)
 		do
-			spack_load "${dependency}"
+			if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
+			then
+				spack_load "${dependency}"
+			else
+				if ! spack_load "${dependency}" > /dev/null 2>&1
+				then
+					echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore this warning."
+				fi
+			fi
 		done
 	fi
 }
 
 spack_install_dependencies ()
 {
+	local mode
+
+	mode="$1"
+
+	test -n "${mode}" || return 1
+
 	if spack_clone
 	then
-		for dependency in $(spack_get_dependencies install)
+		for dependency in $(spack_get_dependencies "install-${mode}")
 		do
 			spack_install "${dependency}"
 		done

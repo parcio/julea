@@ -20,13 +20,15 @@ $ cd julea
 ```
 
 JULEA has two mandatory dependencies (GLib and libbson) and several optional ones that enable additional functionality.
-The dependencies can either be installed using your operating system's package manage or with JULEA's script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
+The dependencies can either be installed using your operating system's package manager or with JULEA's `install-dependencies` script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
+By default, the script will install a useful subset of dependencies;
+if you want to install all of them, call it with the `full` argument.
 
 ```console
 $ ./scripts/install-dependencies.sh
 ```
 
-After all dependencies have been installed, JULEA has to be configured and compiled using [Waf](https://waf.io/);
+After the dependencies have been installed, JULEA has to be configured and compiled using [Waf](https://waf.io/);
 the different configuration and build options can be shown with `./waf --help`.
 The `waf.sh` script is a wrapper around Waf that makes sure that the dependencies installed in the previous step are found.
 
@@ -47,7 +49,7 @@ Finally, a JULEA configuration has to be created.
 $ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" \
   --object-backend=posix --object-component=server --object-path=/tmp/julea \
-  --kv-backend=leveldb --kv-component=server --kv-path=/tmp/julea
+  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea
 ```
 
 You can check whether JULEA works by executing the integrated test suite.

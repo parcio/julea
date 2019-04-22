@@ -29,7 +29,7 @@ SELF_BASE="${SELF_PATH##*/}"
 
 usage ()
 {
-	echo "Usage: ${0##*/} start|stop|restart"
+	echo "Usage: ${SELF_BASE} start|stop|restart"
 	exit 1
 }
 
