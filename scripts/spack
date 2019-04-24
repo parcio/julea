@@ -121,6 +121,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} libmongoc"
+		dependencies="${dependencies} hdf5@develop~mpi"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"

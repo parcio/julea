@@ -199,6 +199,7 @@ def configure(ctx):
 			header_name='hdf5.h',
 			lib='hdf5',
 			uselib_store='HDF5',
+			define_name='HAVE_HDF5',
 			mandatory=False
 		)
 
