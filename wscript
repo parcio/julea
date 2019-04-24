@@ -50,6 +50,9 @@ def check_cfg_rpath(ctx, **kwargs):
 
 
 def check_cc_rpath(ctx, opt, **kwargs):
+	if opt in (None, 'no', 'off'):
+		return False
+
 	if opt:
 		kwargs['includes'] = ['{0}/include'.format(opt)]
 		kwargs['libpath'] = ['{0}/lib'.format(opt)]
@@ -384,6 +387,9 @@ def build(ctx):
 	use_julea_core = ['M', 'GLIB', 'ASAN']  # 'UBSAN'
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
+	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
+	use_julea_kv = use_julea_core + ['lib/julea', 'lib/julea-kv']
+	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
 
 	include_julea_core = ['include', 'include/core']
 
@@ -420,7 +426,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('test/**/*.c'),
 		target='test/julea-test',
-		use=use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
+		use=use_julea_object + use_julea_item,
 		includes=include_julea_core + ['test'],
 		rpath=get_rpath(ctx),
 		install_path=None
@@ -430,7 +436,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('benchmark/**/*.c'),
 		target='benchmark/julea-benchmark',
-		use=use_julea_core + ['lib/julea', 'lib/julea-item'],
+		use=use_julea_item,
 		includes=include_julea_core + ['benchmark'],
 		rpath=get_rpath(ctx),
 		install_path=None
@@ -513,7 +519,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('cli/*.c'),
 		target='cli/julea-cli',
-		use=use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
+		use=use_julea_object + use_julea_kv + use_julea_item,
 		includes=include_julea_core,
 		rpath=get_rpath(ctx),
 		install_path='${BINDIR}'
@@ -540,7 +546,7 @@ def build(ctx):
 		ctx.program(
 			source=ctx.path.ant_glob('fuse/*.c'),
 			target='fuse/julea-fuse',
-			use=use_julea_core + ['lib/julea', 'lib/julea-kv', 'lib/julea-object', 'FUSE'],
+			use=use_julea_object + use_julea_kv + ['FUSE'],
 			includes=include_julea_core,
 			rpath=get_rpath(ctx),
 			install_path='${BINDIR}'
