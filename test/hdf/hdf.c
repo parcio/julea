@@ -53,9 +53,9 @@ write_dataset (hid_t file)
 	dataspace_ds = H5Screate_simple(2, dims_ds, NULL);
 	dataset = H5Dcreate2(file, "TestDataset", H5T_NATIVE_INT, dataspace_ds, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	for (size_t i = 0; i < 6; i++)
+	for (guint i = 0; i < 6; i++)
 	{
-		for (size_t j = 0; j < 7; j++)
+		for (guint j = 0; j < 7; j++)
 		{
 			data_ds[i][j] = i + j;
 		}
@@ -112,9 +112,9 @@ read_dataset (hid_t file)
 
 	H5Dread(dataset, H5T_NATIVE_INT, dataspace_ds, H5S_ALL, H5P_DEFAULT, data_ds);
 
-	for (size_t i = 0; i < 6; i++)
+	for (guint i = 0; i < 6; i++)
 	{
-		for (size_t j = 0; j < 7; j++)
+		for (guint j = 0; j < 7; j++)
 		{
 			g_assert_cmpint(data_ds[i][j], ==, i + j);
 		}
