@@ -96,7 +96,7 @@ case "${MODE}" in
 		fi
 		;;
 	clean-local)
-		setup_stop
+		setup_clean
 		;;
 	restart)
 		if ! setup_slurm stop
