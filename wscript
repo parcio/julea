@@ -390,6 +390,7 @@ def build(ctx):
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
 	use_julea_kv = use_julea_core + ['lib/julea', 'lib/julea-kv']
 	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
+	use_julea_hdf = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5'] if ctx.env.JULEA_HDF else []
 
 	include_julea_core = ['include', 'include/core']
 
@@ -405,10 +406,17 @@ def build(ctx):
 
 	clients = ['object', 'kv', 'item']
 
+	if ctx.env.JULEA_HDF:
+		clients.append('hdf5')
+
 	for client in clients:
 		use_extra = []
 
 		if client == 'item':
+			use_extra.append('lib/julea-kv')
+			use_extra.append('lib/julea-object')
+		elif client == 'hdf5':
+			use_extra.append('HDF5')
 			use_extra.append('lib/julea-kv')
 			use_extra.append('lib/julea-object')
 
