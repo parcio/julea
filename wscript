@@ -40,9 +40,11 @@ def check_cfg_rpath(ctx, **kwargs):
 	r = ctx.check_cfg(**kwargs)
 
 	if ctx.options.debug:
-		rpath = 'RPATH_{0}'.format(kwargs['uselib_store'])
 		libpath = 'LIBPATH_{0}'.format(kwargs['uselib_store'])
-		ctx.env[rpath] = ctx.env[libpath]
+
+		if libpath in ctx.env:
+			rpath = 'RPATH_{0}'.format(kwargs['uselib_store'])
+			ctx.env[rpath] = ctx.env[libpath]
 
 	return r
 
@@ -192,6 +194,7 @@ def configure(ctx):
 			mandatory=False
 		)
 
+	# FIXME check for VOL support
 	ctx.env.JULEA_HDF = \
 		check_cc_rpath(
 			ctx,
