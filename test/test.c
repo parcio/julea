@@ -53,6 +53,9 @@ main (int argc, char** argv)
 	test_item();
 	test_uri();
 
+	// HDF5 client
+	test_hdf();
+
 	ret = g_test_run();
 
 	return ret;

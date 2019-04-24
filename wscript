@@ -434,7 +434,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('test/**/*.c'),
 		target='test/julea-test',
-		use=use_julea_object + use_julea_item,
+		use=use_julea_object + use_julea_item + use_julea_hdf,
 		includes=include_julea_core + ['test'],
 		rpath=get_rpath(ctx),
 		install_path=None
