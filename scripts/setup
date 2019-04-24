@@ -163,7 +163,6 @@ setup_stop ()
 		if test "${host}" = "${HOSTNAME}"
 		then
 			killall --verbose julea-server || true
-			rm -rf "${OBJECT_PATH}"
 		fi
 	done
 
@@ -177,6 +176,37 @@ setup_stop ()
 			if test "${KV_BACKEND}" = 'mongodb'
 			then
 				mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
+			fi
+		fi
+	done
+}
+
+setup_clean ()
+{
+	local host
+	local port
+	local server
+
+	for server in ${SERVERS_OBJECT}
+	do
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
+
+		if test "${host}" = "${HOSTNAME}"
+		then
+			rm -rf "${OBJECT_PATH}"
+		fi
+	done
+
+	for server in ${SERVERS_KV}
+	do
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
+
+		if test "${host}" = "${HOSTNAME}"
+		then
+			if test "${KV_BACKEND}" = 'mongodb'
+			then
 				rm -rf "${MONGO_PATH}"
 			else
 				rm -rf "${KV_PATH}"

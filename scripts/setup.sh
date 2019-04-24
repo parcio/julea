@@ -89,6 +89,15 @@ case "${MODE}" in
 	stop-local)
 		setup_stop
 		;;
+	clean)
+		if ! setup_slurm "${MODE}"
+		then
+			setup_clean
+		fi
+		;;
+	clean-local)
+		setup_stop
+		;;
 	restart)
 		if ! setup_slurm stop
 		then
