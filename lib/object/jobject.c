@@ -763,18 +763,18 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 }
 
 /**
- * Creates a new item.
+ * Creates a new object.
  *
  * \code
  * JObject* i;
  *
- * i = j_object_new("JULEA");
+ * i = j_object_new("JULEA", "JULEA");
  * \endcode
  *
- * \param name         An item name.
- * \param distribution A distribution.
+ * \param namespace    A namespace.
+ * \param name         An object name.
  *
- * \return A new item. Should be freed with j_object_unref().
+ * \return A new object. Should be freed with j_object_unref().
  **/
 JObject*
 j_object_new (gchar const* namespace, gchar const* name)
@@ -799,18 +799,19 @@ j_object_new (gchar const* namespace, gchar const* name)
 }
 
 /**
- * Creates a new item.
+ * Creates a new object.
  *
  * \code
  * JObject* i;
  *
- * i = j_object_new("JULEA");
+ * i = j_object_new_for_index(index, "JULEA", "JULEA");
  * \endcode
  *
- * \param name         An item name.
- * \param distribution A distribution.
+ * \param index        An object server index. Must be less than the return value of j_configuration_get_object_server_count().
+ * \param namespace    A namespace.
+ * \param name         An object name.
  *
- * \return A new item. Should be freed with j_object_unref().
+ * \return A new object. Should be freed with j_object_unref().
  **/
 JObject*
 j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name)
@@ -836,7 +837,7 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 }
 
 /**
- * Increases an item's reference count.
+ * Increases an object's reference count.
  *
  * \code
  * JObject* i;
@@ -844,46 +845,46 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
  * j_object_ref(i);
  * \endcode
  *
- * \param item An item.
+ * \param object An object.
  *
- * \return #item.
+ * \return #object.
  **/
 JObject*
-j_object_ref (JObject* item)
+j_object_ref (JObject* object)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	g_return_val_if_fail(object != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	g_atomic_int_inc(&(item->ref_count));
+	g_atomic_int_inc(&(object->ref_count));
 
 	j_trace_leave(G_STRFUNC);
 
-	return item;
+	return object;
 }
 
 /**
- * Decreases an item's reference count.
- * When the reference count reaches zero, frees the memory allocated for the item.
+ * Decreases an object's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the object.
  *
  * \code
  * \endcode
  *
- * \param item An item.
+ * \param object An object.
  **/
 void
-j_object_unref (JObject* item)
+j_object_unref (JObject* object)
 {
-	g_return_if_fail(item != NULL);
+	g_return_if_fail(object != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if (g_atomic_int_dec_and_test(&(item->ref_count)))
+	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
-		g_free(item->name);
-		g_free(item->namespace);
+		g_free(object->name);
+		g_free(object->namespace);
 
-		g_slice_free(JObject, item);
+		g_slice_free(JObject, object);
 	}
 
 	j_trace_leave(G_STRFUNC);
@@ -899,7 +900,7 @@ j_object_unref (JObject* item)
  * \param distribution A distribution.
  * \param batch        A batch.
  *
- * \return A new item. Should be freed with j_object_unref().
+ * \return A new object. Should be freed with j_object_unref().
  **/
 void
 j_object_create (JObject* object, JBatch* batch)
@@ -928,7 +929,7 @@ j_object_create (JObject* object, JBatch* batch)
  * \code
  * \endcode
  *
- * \param item       An item.
+ * \param object     An object.
  * \param batch      A batch.
  **/
 void
@@ -952,7 +953,7 @@ j_object_delete (JObject* object, JBatch* batch)
 }
 
 /**
- * Reads an item.
+ * Reads an object.
  *
  * \code
  * \endcode
@@ -1013,7 +1014,7 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 }
 
 /**
- * Writes an item.
+ * Writes an object.
  *
  * \note
  * j_object_write() modifies bytes_written even if j_batch_execute() is not called.
@@ -1021,10 +1022,10 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
  * \code
  * \endcode
  *
- * \param item          An item.
+ * \param object        An object.
  * \param data          A buffer holding the data to write.
  * \param length        Number of bytes to write.
- * \param offset        An offset within #item.
+ * \param offset        An offset within #object.
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/
@@ -1078,12 +1079,12 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 }
 
 /**
- * Get the status of an item.
+ * Get the status of an object.
  *
  * \code
  * \endcode
  *
- * \param item      An item.
+ * \param object    An object.
  * \param batch     A batch.
  **/
 void
