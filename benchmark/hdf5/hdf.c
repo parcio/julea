@@ -140,8 +140,6 @@ benchmark_hdf_write (BenchmarkResult *result)
 	const H5VL_class_t *h5vl_julea;
 	hid_t native_vol_id;
 
-	gconstpointer vol_info;
-
 	gdouble elapsed;
 
 	native_vol_id = H5VLget_connector_id("native");
@@ -157,7 +155,7 @@ benchmark_hdf_write (BenchmarkResult *result)
 
 	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(acc_tpl, julea_vol_id, &vol_info);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
 	j_benchmark_timer_start();
 
@@ -196,8 +194,6 @@ benchmark_hdf_read (BenchmarkResult *result)
 	const H5VL_class_t *h5vl_julea;
 	hid_t native_vol_id;
 
-	gconstpointer vol_info;
-
 	gdouble elapsed;
 
 	native_vol_id = H5VLget_connector_id("native");
@@ -213,7 +209,7 @@ benchmark_hdf_read (BenchmarkResult *result)
 
 	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(acc_tpl, julea_vol_id, &vol_info);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
 	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
 

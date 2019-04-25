@@ -135,8 +135,6 @@ test_hdf_read_write (void)
 	const H5VL_class_t *h5vl_julea;
 	hid_t native_vol_id;
 
-	gconstpointer vol_info;
-
 	native_vol_id = H5VLget_connector_id("native");
 	g_assert(native_vol_id > 0);
 	g_assert(H5VLis_connector_registered("native") == 1);
@@ -150,7 +148,7 @@ test_hdf_read_write (void)
 
 	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(acc_tpl, julea_vol_id, &vol_info);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
 	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
 

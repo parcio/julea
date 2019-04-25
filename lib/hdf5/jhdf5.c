@@ -119,7 +119,8 @@ char* create_path(const char*, char*);
 
 hid_t native_plugin_id = -1;
 
-h5julea_fapl_t *ginfo = NULL;
+// FIXME
+//h5julea_fapl_t *ginfo = NULL;
 
 /**
  * Copies the file operations
@@ -242,7 +243,6 @@ j_hdf5_serialize (const void* data, size_t data_size)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	b = bson_new();
-	bson_init(b);
 
 	bson_append_binary(b, "data", -1, BSON_SUBTYPE_BINARY, data, data_size);
 	bson_append_int32(b, "size", -1, (int32_t)data_size);
@@ -272,7 +272,6 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
 	j_trace_enter(G_STRFUNC, NULL);
 
 	b = bson_new();
-	bson_init(b);
 
 	bson_append_int32(b, "tsize", -1, (int32_t)type_size);
 	bson_append_int32(b, "ssize", -1, (int32_t)space_size);
@@ -309,7 +308,6 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
 	b_distribution = j_distribution_serialize(distribution);
 
 	b = bson_new();
-	bson_init(b);
 
 	bson_append_int32(b, "tsize", -1, (int32_t)type_size);
 	bson_append_int32(b, "ssize", -1, (int32_t)space_size);
@@ -609,6 +607,9 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 		data_size *= dims[i];
 	}
 
+	free(maxdims);
+	free(dims);
+
 	switch (loc_params->obj_type)
 	{
 	case H5I_FILE:
@@ -676,6 +677,10 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	j_kv_put(attribute->ts, value, batch);
 	j_batch_execute(batch);
 	j_trace_leave(G_STRFUNC);
+
+	free(type_buf);
+	free(space_buf);
+	free(tsloc);
 
 	return (void *)attribute;
 }
@@ -753,6 +758,9 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		j_hdf5_deserialize_size(data, &(attribute->data_size));
 		attribute->kv = kv;
 	}
+	bson_destroy(data);
+
+	free(tsloc);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -779,6 +787,7 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id __attribute__((unused)), void* b
 	j_kv_get(d->kv, b, batch);
 	j_batch_execute(batch);
 	j_hdf5_deserialize(b, buf, d->data_size);
+	bson_destroy(b);
 
 	j_trace_leave(G_STRFUNC);
 
@@ -839,13 +848,17 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attri
 	case H5VL_ATTR_GET_SPACE:
 	{
 		hid_t* ret_id = va_arg (arguments, hid_t *);
+		void* space;
 
 		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->ts, b, batch);
 		j_batch_execute(batch);
 		j_trace_leave(G_STRFUNC);
-		*ret_id = H5Sdecode(j_hdf5_deserialize_space(b));
+		space = j_hdf5_deserialize_space(b);
+		*ret_id = H5Sdecode(space);
+		free(space);
+		bson_destroy(b);
 	}
 	break;
 	case H5VL_ATTR_GET_STORAGE_SIZE:
@@ -908,13 +921,13 @@ H5VL_julea_attr_close (void* attr, hid_t dxpl_id __attribute__((unused)), void**
  **/
 static
 void*
-H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
-	void *vol_info;
+	//void *vol_info;
 
-	H5Pget_vol_info(fapl_id, &vol_info);
-	ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
+	//H5Pget_vol_info(fapl_id, &vol_info);
+	//ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
 	file = (JHF_t *)malloc(sizeof(*file));
 	file->name = g_strdup(fname);
 	return (void *)file;
@@ -929,13 +942,13 @@ H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)
  **/
 static
 void*
-H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
-	void *vol_info;
+	//void *vol_info;
 
-	H5Pget_vol_info(fapl_id, &vol_info);
-	ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
+	//H5Pget_vol_info(fapl_id, &vol_info);
+	//ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
 	file = (JHF_t *)malloc(sizeof(*file));
 	file->name = g_strdup(fname);
 	return (void *)file;
@@ -954,7 +967,7 @@ H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void**
 	g_free(f->name);
 	f->name = NULL;
 	free(f);
-	H5VL_julea_fapl_free(ginfo);
+	//H5VL_julea_fapl_free(ginfo);
 	return 1;
 }
 
@@ -1124,6 +1137,9 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	}
 	dset->data_size = data_size;
 
+	free(maxdims);
+	free(dims);
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	switch (loc_params->obj_type)
@@ -1190,6 +1206,10 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	j_kv_put(dset->kv, value, batch);
 	j_batch_execute(batch);
 	j_trace_leave(G_STRFUNC);
+
+	free(type_buf);
+	free(space_buf);
+	free(tsloc);
 
 	dset->name = g_strdup(name);
 	return (void *)dset;
@@ -1264,8 +1284,11 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 	{
 		j_hdf5_deserialize_dataset(kvdata, dset, &(dset->data_size));
 	}
+	bson_destroy(kvdata);
 
 	dset->object = j_distributed_object_new("hdf5", dset->location, dset->distribution);
+
+	free(tsloc);
 
 	return (void *)dset;
 }
@@ -1333,13 +1356,17 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 	case H5VL_DATASET_GET_SPACE:
 	{
 		hid_t* ret_id = va_arg (arguments, hid_t *);
+		void* space;
 
 		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->kv, b, batch);
 		j_batch_execute(batch);
 		j_trace_leave(G_STRFUNC);
-		*ret_id = H5Sdecode(j_hdf5_deserialize_space(b));
+		space = j_hdf5_deserialize_space(b);
+		*ret_id = H5Sdecode(space);
+		free(space);
+		bson_destroy(b);
 	}
 		break;
 	case H5VL_DATASET_GET_SPACE_STATUS:
