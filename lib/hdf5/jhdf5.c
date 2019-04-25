@@ -53,28 +53,25 @@
 
 #define JULEA 520
 
-#define ERRORMSG(...)    \
-	printf(__VA_ARGS__); \
-	printf("\n");        \
-	g_assert(false);       \
-	exit(1);
-
-#define COUNT_MAX 2147479552
-
-struct JHF_t;
-
-typedef struct JHF_t
+/* structure for file*/
+struct JHF_t
 {
 	char *name;
-} JHF_t; /* structure for file*/
+};
 
-typedef struct JHG_t
+typedef struct JHF_t JHF_t;
+
+/* structure for group*/
+struct JHG_t
 {
 	char *location;
 	char *name;
-} JHG_t; /* structure for group*/
+};
 
-typedef struct JHD_t
+typedef struct JHG_t JHG_t;
+
+/* structure for dataset*/
+struct JHD_t
 {
 	char *location;
 	char *name;
@@ -82,174 +79,45 @@ typedef struct JHD_t
 	JDistribution *distribution;
 	JDistributedObject *object;
 	JKV *kv;
-} JHD_t; /* structure for dataset*/
+};
 
-typedef struct JHA_t
+typedef struct JHD_t JHD_t;
+
+/*structure for attribute*/
+struct JHA_t
 {
 	char *location;
 	char *name;
 	size_t data_size;
 	JKV *kv;
 	JKV *ts;
-} JHA_t; /*structure for attribute*/
-
-typedef struct h5julea_fapl_t
-{
-	char *name;
-} h5julea_fapl_t;
-
-static herr_t H5VL_julea_fapl_free(void *info);
-static void *H5VL_julea_fapl_copy(const void *info);
-
-static herr_t H5VL_julea_init(hid_t vipl_id);
-static herr_t H5VL_julea_term(void);
-
-/* Atrribute callbacks */
-static void *H5VL_julea_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const char *attr_name, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void **req);
-static void *H5VL_julea_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char *attr_name, hid_t aapl_id, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_attr_read(void *attr, hid_t dtype_id, void *buf, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_attr_write(void *attr, hid_t dtype_id, const void *buf, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_attr_get(void *obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void **req, va_list arguments);
-static herr_t H5VL_julea_attr_close(void *attr, hid_t dxpl_id, void **req);
-
-/* Dataset callbacks */
-static void *H5VL_julea_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id, void **req);
-static void *H5VL_julea_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t dapl_id, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_dataset_read(void *dset, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void *buf, void **req);
-static herr_t H5VL_julea_dataset_get(void *dset, H5VL_dataset_get_t get_type, hid_t dxpl_id, void **req, va_list arguments);
-static herr_t H5VL_julea_dataset_write(void *dset, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, const void *buf, void **req);
-static herr_t H5VL_julea_dataset_close(void *dset, hid_t dxpl_id, void **req);
-
-/* File callbacks */
-static void *H5VL_julea_file_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id, void **req);
-static void *H5VL_julea_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_file_close(void *file, hid_t dxpl_id, void **req);
-
-/* Group callbacks */
-static void *H5VL_julea_group_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void **req);
-static void *H5VL_julea_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t gapl_id, hid_t dxpl_id, void **req);
-static herr_t H5VL_julea_group_close(void *grp, hid_t dxpl_id, void **req);
-
-char *j_hdf5_encode_type(const char *, hid_t *, hid_t, size_t *);
-char *j_hdf5_encode_space(const char *, hid_t *, hid_t, size_t *);
-
-bson_t *j_hdf5_serialize(const void *, size_t);
-bson_t *j_hdf5_serialize_ts (const void *, size_t, const void *, size_t);
-bson_t *j_hdf5_serialize_dataset(const void *, size_t, const void *, size_t, size_t, JDistribution *);
-
-void j_hdf5_deserialize(const bson_t *, void *, size_t);
-void *j_hdf5_deserialize_type (const bson_t*);
-void *j_hdf5_deserialize_space (const bson_t*);
-void j_hdf5_deserialize_dataset(const bson_t *, JHD_t *, size_t *);
-void j_hdf5_deserialize_size(const bson_t *, size_t *);
-
-char *create_path(const char *, char *);
-
-hid_t native_plugin_id = -1;
-
-/**
- * The class providing the functions to HDF5
- **/
-static const H5VL_class_t H5VL_julea_g = {
-	0,
-	JULEA,
-	"julea",	  /* name */
-	0,
-	H5VL_julea_init, /* initialize */
-	H5VL_julea_term, /* terminate */
-	{
-		sizeof(h5julea_fapl_t),
-		H5VL_julea_fapl_copy,
-		NULL,
-		H5VL_julea_fapl_free,
-		NULL,
-		NULL
-	},
-	{
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL
-	},
-	{
-		/* attribute_cls */
-		H5VL_julea_attr_create, /* create */
-		H5VL_julea_attr_open,   /* open */
-		H5VL_julea_attr_read,   /* read */
-		H5VL_julea_attr_write,  /* write */
-		H5VL_julea_attr_get,	/* get */
-		NULL,					 //H5VL_julea_attr_specific,              /* specific */
-		NULL,					 //H5VL_julea_attr_optional,              /* optional */
-		H5VL_julea_attr_close   /* close */
-	},
-	{
-		/* dataset_cls */
-		H5VL_julea_dataset_create, /* create */
-		H5VL_julea_dataset_open,   /* open */
-		H5VL_julea_dataset_read,   /* read */
-		H5VL_julea_dataset_write,  /* write */
-		H5VL_julea_dataset_get,	/* get */
-		NULL,						//H5VL_julea_dataset_specific,          /* specific */
-		NULL,						//H5VL_julea_dataset_optional,          /* optional */
-		H5VL_julea_dataset_close   /* close */
-	},
-	{
-		/* datatype_cls */
-		NULL, //H5VL_julea_datatype_commit, /* commit */
-		NULL, //H5VL_julea_datatype_open,   /* open */
-		NULL, //H5VL_julea_datatype_get,	/* get_size */
-		NULL,						 //H5VL_julea_datatype_specific,         /* specific */
-		NULL,						 //H5VL_julea_datatype_optional,         /* optional */
-		NULL, //H5VL_julea_datatype_close   /* close */
-	},
-	{
-		/* file_cls */
-		H5VL_julea_file_create, /* create */
-		H5VL_julea_file_open,   /* open */
-		NULL, //H5VL_julea_file_get,	/* get */
-		NULL,					 //H5VL_julea_file_specific,            /* specific */
-		NULL,					 //H5VL_julea_file_optional,            /* optional */
-		H5VL_julea_file_close   /* close */
-	},
-	{
-		/* group_cls */
-		H5VL_julea_group_create, /* create */
-		H5VL_julea_group_open,   /* open */
-		NULL, //H5VL_julea_group_get,	/* get */
-		NULL,					  //H5VL_julea_group_specific,           /* specific */
-		NULL,					  //H5VL_julea_group_optional,           /* optional */
-		H5VL_julea_group_close   /* close */
-	},
-	{
-		/* link_cls */
-		NULL, //H5VL_julea_link_create,                /* create */
-		NULL, //H5VL_julea_link_copy,                  /* copy */
-		NULL, //H5VL_julea_link_move,                  /* move */
-		NULL, //H5VL_julea_link_get,                   /* get */
-		NULL, //H5VL_julea_link_specific,              /* specific */
-		NULL, //H5VL_julea_link_optional,              /* optional */
-	},
-	{
-		/* object_cls */
-		NULL, //H5VL_julea_object_open,                        /* open */
-		NULL, //H5VL_julea_object_copy,                /* copy */
-		NULL, //H5VL_julea_object_get,                 /* get */
-		NULL, //H5VL_julea_object_specific,                    /* specific */
-		NULL, //H5VL_julea_object_optional,            /* optional */
-	},
-	{
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL
-	},
-	NULL
 };
 
-char *err_msg = 0; /* pointer to an error string */
+typedef struct JHA_t JHA_t;
+
+struct h5julea_fapl_t
+{
+	char *name;
+};
+
+typedef struct h5julea_fapl_t h5julea_fapl_t;
+
+char* j_hdf5_encode_type(const char*, hid_t*, hid_t, size_t*);
+char* j_hdf5_encode_space(const char*, hid_t*, hid_t, size_t*);
+
+bson_t* j_hdf5_serialize(const void*, size_t);
+bson_t* j_hdf5_serialize_ts (const void*, size_t, const void*, size_t);
+bson_t* j_hdf5_serialize_dataset(const void*, size_t, const void*, size_t, size_t, JDistribution*);
+
+void j_hdf5_deserialize(const bson_t*, void*, size_t);
+void* j_hdf5_deserialize_type (const bson_t*);
+void* j_hdf5_deserialize_space (const bson_t*);
+void j_hdf5_deserialize_dataset(const bson_t*, JHD_t*, size_t*);
+void j_hdf5_deserialize_size(const bson_t*, size_t*);
+
+char* create_path(const char*, char*);
+
+hid_t native_plugin_id = -1;
 
 h5julea_fapl_t *ginfo = NULL;
 
@@ -262,7 +130,9 @@ h5julea_fapl_t *ginfo = NULL;
  *
  * \return fapl_target The new file operations.
  **/
-static void *H5VL_julea_fapl_copy(const void *info)
+static
+void*
+H5VL_julea_fapl_copy (const void* info)
 {
 	const h5julea_fapl_t* fapl_source = (const h5julea_fapl_t*) info;
 	h5julea_fapl_t* fapl_target = (h5julea_fapl_t*) malloc(sizeof(*fapl_target));
@@ -278,7 +148,9 @@ static void *H5VL_julea_fapl_copy(const void *info)
  *
  * \return err Error
  **/
-static herr_t H5VL_julea_fapl_free(void *info __attribute__((unused)))
+static
+herr_t
+H5VL_julea_fapl_free (void* info __attribute__((unused)))
 {
 	herr_t err = 0;
 	return err;
@@ -291,7 +163,9 @@ static herr_t H5VL_julea_fapl_free(void *info __attribute__((unused)))
  *
  * \return err Error
  **/
-static herr_t H5VL_julea_init(hid_t vipl_id __attribute__((unused)))
+static
+herr_t
+H5VL_julea_init (hid_t vipl_id __attribute__((unused)))
 {
 	native_plugin_id = H5VLget_connector_id("native");
 	g_assert(native_plugin_id > 0);
@@ -305,7 +179,9 @@ static herr_t H5VL_julea_init(hid_t vipl_id __attribute__((unused)))
  *
  * \return err Error
  **/
-static herr_t H5VL_julea_term(void)
+static
+herr_t
+H5VL_julea_term (void)
 {
 	return 0;
 }
@@ -318,7 +194,7 @@ static herr_t H5VL_julea_term(void)
  * \return type_buf The encoded type
  **/
 char*
-j_hdf5_encode_type (const char *property, hid_t *type_id, hid_t cpl_id, size_t *type_size)
+j_hdf5_encode_type (const char* property, hid_t* type_id, hid_t cpl_id, size_t* type_size)
 {
 	char* type_buf;
 	H5Pget(cpl_id, property, type_id);
@@ -337,7 +213,7 @@ j_hdf5_encode_type (const char *property, hid_t *type_id, hid_t cpl_id, size_t *
  * \return type_buf The encoded space
  **/
 char*
-j_hdf5_encode_space (const char *property, hid_t *space_id, hid_t cpl_id, size_t *space_size)
+j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t* space_size)
 {
 	char* space_buf;
 	H5Pget(cpl_id, property, space_id);
@@ -359,7 +235,7 @@ j_hdf5_encode_space (const char *property, hid_t *space_id, hid_t cpl_id, size_t
  * \return b The serialized BSON
  **/
 bson_t*
-j_hdf5_serialize (const void *data, size_t data_size)
+j_hdf5_serialize (const void* data, size_t data_size)
 {
 	bson_t* b;
 
@@ -389,7 +265,7 @@ j_hdf5_serialize (const void *data, size_t data_size)
  * \return b The serialized BSON
  **/
 bson_t*
-j_hdf5_serialize_ts (const void *type_data, size_t type_size, const void *space_data, size_t space_size)
+j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_data, size_t space_size)
 {
 	bson_t* b;
 
@@ -423,7 +299,7 @@ j_hdf5_serialize_ts (const void *type_data, size_t type_size, const void *space_
  * \return b The serialized BSON
  **/
 bson_t*
-j_hdf5_serialize_dataset (const void *type_data, size_t type_size, const void *space_data, size_t space_size, size_t data_size, JDistribution* distribution)
+j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* space_data, size_t space_size, size_t data_size, JDistribution* distribution)
 {
 	bson_t* b;
 	bson_t* b_distribution;
@@ -459,7 +335,7 @@ j_hdf5_serialize_dataset (const void *type_data, size_t type_size, const void *s
  * \param data_size The size of the data
  **/
 void
-j_hdf5_deserialize (const bson_t* b, void *data, size_t data_size)
+j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
 {
 	bson_iter_t iterator;
 	const void *buf;
@@ -678,7 +554,9 @@ j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
  *
  * \return path
  **/
-char* create_path(const char* name, char* prev_path) {
+char*
+create_path (const char* name, char* prev_path)
+{
 	static const char* seperator = "/";
 	char* path = NULL;
 
@@ -696,8 +574,9 @@ char* create_path(const char* name, char* prev_path) {
  *
  * \return attribute The new attribute
  **/
-static void *
-H5VL_julea_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const char *attr_name, hid_t acpl_id, hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t acpl_id, hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHA_t *attribute;
 	hid_t space_id;
@@ -808,9 +687,9 @@ H5VL_julea_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const cha
  *
  * \return attribute The attribute
  **/
-static void *
-H5VL_julea_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char *attr_name,
-					  hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHA_t *attribute;
 	JKV *kv;
@@ -885,8 +764,9 @@ H5VL_julea_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char 
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_attr_read(void *attr, hid_t dtype_id __attribute__((unused)), void *buf, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+herr_t
+H5VL_julea_attr_read(void* attr, hid_t dtype_id __attribute__((unused)), void* buf, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHA_t *d;
 	bson_t b[1];
@@ -910,8 +790,9 @@ H5VL_julea_attr_read(void *attr, hid_t dtype_id __attribute__((unused)), void *b
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_attr_write(void *attr, hid_t dtype_id __attribute__((unused)), const void *buf, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+herr_t
+H5VL_julea_attr_write (void* attr, hid_t dtype_id __attribute__((unused)), const void* buf, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHA_t *d = (JHA_t *)attr;
 	bson_t* value;
@@ -936,8 +817,9 @@ H5VL_julea_attr_write(void *attr, hid_t dtype_id __attribute__((unused)), const 
  *
  * \return ret_value The error code
  **/
-static herr_t
-H5VL_julea_attr_get(void *attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)), va_list arguments)
+static
+herr_t
+H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)), va_list arguments)
 {
 	herr_t ret_value = 0;
 	JHA_t *d;
@@ -993,8 +875,9 @@ H5VL_julea_attr_get(void *attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attrib
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_attr_close(void *attr, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+herr_t
+H5VL_julea_attr_close (void* attr, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHA_t *a = (JHA_t *)attr;
 
@@ -1023,8 +906,9 @@ H5VL_julea_attr_close(void *attr, hid_t dxpl_id __attribute__((unused)), void **
  *
  * \return file The new file
  **/
-static void *
-H5VL_julea_file_create(const char *fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
 	void *vol_info;
@@ -1043,8 +927,9 @@ H5VL_julea_file_create(const char *fname, unsigned flags __attribute__((unused))
  *
  * \return file The file
  **/
-static void *
-H5VL_julea_file_open(const char *fname, unsigned flags __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)), hid_t fapl_id, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
 	void *vol_info;
@@ -1061,8 +946,9 @@ H5VL_julea_file_open(const char *fname, unsigned flags __attribute__((unused)), 
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_file_close(void *file, hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+herr_t
+H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *f = (JHF_t *)file;
 	g_free(f->name);
@@ -1079,9 +965,9 @@ H5VL_julea_file_close(void *file, hid_t dxpl_id __attribute__((unused)), void **
  *
  * \return group The new group
  **/
-static void *
-H5VL_julea_group_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-						 hid_t gcpl_id __attribute__((unused)), hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gcpl_id __attribute__((unused)), hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHG_t *group;
 	group = (JHG_t *)malloc(sizeof(*group));
@@ -1133,7 +1019,9 @@ H5VL_julea_group_create(void *obj, const H5VL_loc_params_t *loc_params, const ch
  *
  * \return group The group
  **/
-static void *H5VL_julea_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void **req __attribute__((unused)))
+static
+void*
+H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHG_t *group;
 	group = (JHG_t *)malloc(sizeof(*group));
@@ -1183,8 +1071,9 @@ static void *H5VL_julea_group_open(void *obj, const H5VL_loc_params_t *loc_param
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_group_close(void *grp, hid_t dxpl_id  __attribute__((unused)), void **req  __attribute__((unused)))
+static
+herr_t
+H5VL_julea_group_close (void* grp, hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
 {
 	JHG_t *g = (JHG_t *)grp;
 	g_free(g->name);
@@ -1200,8 +1089,9 @@ H5VL_julea_group_close(void *grp, hid_t dxpl_id  __attribute__((unused)), void *
  *
  * \return dset The new dataset
  **/
-static void *
-H5VL_julea_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t dcpl_id, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void **req  __attribute__((unused)))
+static
+void*
+H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t dcpl_id, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
 {
 	JHD_t *dset;
 	hid_t space_id;
@@ -1312,8 +1202,9 @@ H5VL_julea_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, const 
  *
  * \return dset The dataset
  **/
-static void *
-H5VL_julea_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void **req  __attribute__((unused)))
+static
+void*
+H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
 {
 	JHD_t *dset;
 	JBatch *batch;
@@ -1384,9 +1275,9 @@ H5VL_julea_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const ch
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_dataset_read(void *dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)),
-						 hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), void *buf, void **req  __attribute__((unused)))
+static
+herr_t
+H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)), hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), void* buf, void** req  __attribute__((unused)))
 {
 	JBatch* batch;
 	JHD_t *d;
@@ -1420,8 +1311,9 @@ H5VL_julea_dataset_read(void *dset, hid_t mem_type_id  __attribute__((unused)), 
  *
  * \return ret_value The error code
  **/
-static herr_t
-H5VL_julea_dataset_get(void *dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  __attribute__((unused)), void **req  __attribute__((unused)), va_list arguments)
+static
+herr_t
+H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)), va_list arguments)
 {
 	herr_t ret_value = 0;
 	JHD_t *d;
@@ -1479,9 +1371,9 @@ H5VL_julea_dataset_get(void *dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  _
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_dataset_write(void *dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)),
-						  hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), const void *buf, void **req  __attribute__((unused)))
+static
+herr_t
+H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)), hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), const void* buf, void** req  __attribute__((unused)))
 {
 	JBatch* batch;
 	JHD_t *d;
@@ -1509,8 +1401,9 @@ H5VL_julea_dataset_write(void *dset, hid_t mem_type_id  __attribute__((unused)),
  *
  * \author Johannes Coym
  **/
-static herr_t
-H5VL_julea_dataset_close(void *dset, hid_t dxpl_id  __attribute__((unused)), void **req  __attribute__((unused)))
+static
+herr_t
+H5VL_julea_dataset_close (void* dset, hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
 {
 	JHD_t *d = (JHD_t *)dset;
 	if (d->distribution != NULL)
@@ -1533,6 +1426,111 @@ H5VL_julea_dataset_close(void *dset, hid_t dxpl_id  __attribute__((unused)), voi
 	free(d);
 	return 1;
 }
+
+/**
+ * The class providing the functions to HDF5
+ **/
+static
+const
+H5VL_class_t H5VL_julea_g =
+{
+	0,
+	JULEA,
+	"julea",	  /* name */
+	0,
+	H5VL_julea_init, /* initialize */
+	H5VL_julea_term, /* terminate */
+	{
+		sizeof(h5julea_fapl_t),
+		H5VL_julea_fapl_copy,
+		NULL,
+		H5VL_julea_fapl_free,
+		NULL,
+		NULL
+	},
+	{
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	{
+		/* attribute_cls */
+		H5VL_julea_attr_create, /* create */
+		H5VL_julea_attr_open,   /* open */
+		H5VL_julea_attr_read,   /* read */
+		H5VL_julea_attr_write,  /* write */
+		H5VL_julea_attr_get,	/* get */
+		NULL,					 //H5VL_julea_attr_specific,              /* specific */
+		NULL,					 //H5VL_julea_attr_optional,              /* optional */
+		H5VL_julea_attr_close   /* close */
+	},
+	{
+		/* dataset_cls */
+		H5VL_julea_dataset_create, /* create */
+		H5VL_julea_dataset_open,   /* open */
+		H5VL_julea_dataset_read,   /* read */
+		H5VL_julea_dataset_write,  /* write */
+		H5VL_julea_dataset_get,	/* get */
+		NULL,						//H5VL_julea_dataset_specific,          /* specific */
+		NULL,						//H5VL_julea_dataset_optional,          /* optional */
+		H5VL_julea_dataset_close   /* close */
+	},
+	{
+		/* datatype_cls */
+		NULL, //H5VL_julea_datatype_commit, /* commit */
+		NULL, //H5VL_julea_datatype_open,   /* open */
+		NULL, //H5VL_julea_datatype_get,	/* get_size */
+		NULL,						 //H5VL_julea_datatype_specific,         /* specific */
+		NULL,						 //H5VL_julea_datatype_optional,         /* optional */
+		NULL, //H5VL_julea_datatype_close   /* close */
+	},
+	{
+		/* file_cls */
+		H5VL_julea_file_create, /* create */
+		H5VL_julea_file_open,   /* open */
+		NULL, //H5VL_julea_file_get,	/* get */
+		NULL,					 //H5VL_julea_file_specific,            /* specific */
+		NULL,					 //H5VL_julea_file_optional,            /* optional */
+		H5VL_julea_file_close   /* close */
+	},
+	{
+		/* group_cls */
+		H5VL_julea_group_create, /* create */
+		H5VL_julea_group_open,   /* open */
+		NULL, //H5VL_julea_group_get,	/* get */
+		NULL,					  //H5VL_julea_group_specific,           /* specific */
+		NULL,					  //H5VL_julea_group_optional,           /* optional */
+		H5VL_julea_group_close   /* close */
+	},
+	{
+		/* link_cls */
+		NULL, //H5VL_julea_link_create,                /* create */
+		NULL, //H5VL_julea_link_copy,                  /* copy */
+		NULL, //H5VL_julea_link_move,                  /* move */
+		NULL, //H5VL_julea_link_get,                   /* get */
+		NULL, //H5VL_julea_link_specific,              /* specific */
+		NULL, //H5VL_julea_link_optional,              /* optional */
+	},
+	{
+		/* object_cls */
+		NULL, //H5VL_julea_object_open,                        /* open */
+		NULL, //H5VL_julea_object_copy,                /* copy */
+		NULL, //H5VL_julea_object_get,                 /* get */
+		NULL, //H5VL_julea_object_specific,                    /* specific */
+		NULL, //H5VL_julea_object_optional,            /* optional */
+	},
+	{
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	NULL
+};
 
 /**
  * Provides the plugin type
