@@ -1153,10 +1153,12 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
  *
  * \code
  * JDistributedObject* i;
+ * JDistribution d;
  *
- * i = j_distributed_object_new("JULEA");
+ * i = j_distributed_object_new("JULEA", "JULEA", d);
  * \endcode
  *
+ * \param namespace    A namespace
  * \param name         An object name.
  * \param distribution A distribution.
  *
