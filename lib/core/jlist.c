@@ -66,8 +66,6 @@ struct JList
 /**
  * Creates a new list.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -93,8 +91,6 @@ j_list_new (JListFreeFunc free_func)
 /**
  * Increases the list's reference count.
  *
- * \author Michael Kuhn
- *
  * \param list A list.
  *
  * \return The list.
@@ -112,8 +108,6 @@ j_list_ref (JList* list)
 /**
  * Decreases the list's reference count.
  * When the reference count reaches zero, frees the memory allocated for the list.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -136,8 +130,6 @@ j_list_unref (JList* list)
 /**
  * Returns the list's length.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -155,8 +147,6 @@ j_list_length (JList* list)
 
 /**
  * Appends a new list element to a list.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -194,8 +184,6 @@ j_list_append (JList* list, gpointer data)
 /**
  * Prepends a new list element to a list.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -226,8 +214,6 @@ j_list_prepend (JList* list, gpointer data)
 /**
  * Returns the first list element.
  *
- * \author Michael Kuhn
- *
  * \param list  A list.
  *
  * \return A list element, or NULL.
@@ -250,8 +236,6 @@ j_list_get_first (JList* list)
 /**
  * Returns the last list element.
  *
- * \author Michael Kuhn
- *
  * \param list  A list.
  *
  * \return A list element, or NULL.
@@ -273,8 +257,6 @@ j_list_get_last (JList* list)
 
 /**
  * Deletes all list elements.
- *
- * \author Michael Kuhn
  *
  * \param list A list.
  **/
@@ -312,8 +294,6 @@ j_list_delete_all (JList* list)
  * Returns the list's first element.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

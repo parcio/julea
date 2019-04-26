@@ -86,8 +86,6 @@ static GThreadPool* j_thread_pool = NULL;
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -119,8 +117,6 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 /**
  * Initializes the background operation framework.
  *
- * \author Michael Kuhn
- *
  * \code
  * j_background_operation_init();
  * \endcode
@@ -147,8 +143,6 @@ j_background_operation_init (guint count)
 
 /**
  * Shuts down the background operation framework.
- *
- * \author Michael Kuhn
  *
  * \code
  * j_background_operation_fini();
@@ -179,8 +173,6 @@ j_background_operation_get_num_threads (void)
 
 /**
  * Creates a new background operation.
- *
- * \author Michael Kuhn
  *
  * \code
  * static
@@ -229,8 +221,6 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 /**
  * Increases a background operation's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JBackgroundOperation* background_operation;
  *
@@ -258,8 +248,6 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 /**
  * Decreases a background operation's reference count.
  * When the reference count reaches zero, frees the memory allocated for the background operation.
- *
- * \author Michael Kuhn
  *
  * \code
  * JBackgroundOperation* background_operation;
@@ -289,8 +277,6 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 
 /**
  * Waits for a background operation to finish.
- *
- * \author Michael Kuhn
  *
  * \code
  * JBackgroundOperation* background_operation;

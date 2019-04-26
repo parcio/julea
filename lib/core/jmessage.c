@@ -141,8 +141,6 @@ struct JMessage
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -161,8 +159,6 @@ j_message_header (JMessage const* message)
  * Returns a message's length.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -194,8 +190,6 @@ j_message_data_free (gpointer data)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -215,8 +209,6 @@ j_message_can_append (JMessage const* message, gsize length)
  * Checks whether it is possible to get data from a message.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -289,8 +281,6 @@ j_message_ensure_size (JMessage* message, gsize length)
 /**
  * Creates a new message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -333,8 +323,6 @@ j_message_new (JMessageType op_type, gsize length)
 /**
  * Creates a new reply message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -376,8 +364,6 @@ j_message_new_reply (JMessage* message)
 /**
  * Increases a message's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JMessage* m;
  *
@@ -403,8 +389,6 @@ j_message_ref (JMessage* message)
 /**
  * Decreases a message's reference count.
  * When the reference count reaches zero, frees the memory allocated for the message.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -441,8 +425,6 @@ j_message_unref (JMessage* message)
 /**
  * Returns a message's type.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -469,8 +451,6 @@ j_message_get_type (JMessage const* message)
 
 /**
  * Returns a message's type modifier.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -499,8 +479,6 @@ j_message_get_flags (JMessage const* message)
 /**
  * Returns a message's count.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -527,8 +505,6 @@ j_message_get_count (JMessage const* message)
 
 /**
  * Appends 1 byte to a message.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -563,8 +539,6 @@ j_message_append_1 (JMessage* message, gconstpointer data)
 /**
  * Appends 4 bytes to a message.
  * The bytes are converted to little endian automatically.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -602,8 +576,6 @@ j_message_append_4 (JMessage* message, gconstpointer data)
  * Appends 8 bytes to a message.
  * The bytes are converted to little endian automatically.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -638,8 +610,6 @@ j_message_append_8 (JMessage* message, gconstpointer data)
 
 /**
  * Appends a number of bytes to a message.
- *
- * \author Michael Kuhn
  *
  * \code
  * gchar* str = "Hello world!";
@@ -678,8 +648,6 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 /**
  * Gets 1 byte from a message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -708,8 +676,6 @@ j_message_get_1 (JMessage* message)
 /**
  * Gets 4 bytes from a message.
  * The bytes are converted from little endian automatically.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -741,8 +707,6 @@ j_message_get_4 (JMessage* message)
  * Gets 8 bytes from a message.
  * The bytes are converted from little endian automatically.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -772,8 +736,6 @@ j_message_get_8 (JMessage* message)
 /**
  * Gets n bytes from a message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -802,8 +764,6 @@ j_message_get_n (JMessage* message, gsize length)
 /**
  * Gets a string from a message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -830,8 +790,6 @@ j_message_get_string (JMessage* message)
 
 /**
  * Reads a message from the network.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -863,8 +821,6 @@ j_message_receive (JMessage* message, GSocketConnection* connection)
 
 /**
  * Writes a message to the network.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -900,8 +856,6 @@ j_message_send (JMessage* message, GSocketConnection* connection)
 
 /**
  * Reads a message from the network.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -970,8 +924,6 @@ end:
 /**
  * Writes a message to the network.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1038,8 +990,6 @@ end:
 /**
  * Adds new data to send to a message.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1069,8 +1019,6 @@ j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
 
 /**
  * Adds a new operation to a message.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

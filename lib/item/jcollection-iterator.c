@@ -49,8 +49,6 @@ struct JCollectionIterator
 /**
  * Creates a new JCollectionIterator.
  *
- * \author Michael Kuhn
- *
  * \param store A JStore.
  *
  * \return A new JCollectionIterator.
@@ -69,8 +67,6 @@ j_collection_iterator_new (void)
 /**
  * Frees the memory allocated by the JCollectionIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JCollectionIterator.
  **/
 void
@@ -85,8 +81,6 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 
 /**
  * Checks whether another collection is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -105,8 +99,6 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 
 /**
  * Returns the current collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

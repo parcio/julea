@@ -69,8 +69,6 @@ struct JKVURI
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * JKVURI* uri;
  *
@@ -177,8 +175,6 @@ error:
 /**
  * Creates a new URI.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKVURI* uri;
  *
@@ -215,8 +211,6 @@ j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
 /**
  * Frees the memory allocated by a URI.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKVURI* uri;
  *
@@ -246,8 +240,6 @@ j_kv_uri_free (JKVURI* uri)
 /**
  * Returns the index.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKVURI* uri;
  *
@@ -270,8 +262,6 @@ j_kv_uri_get_index (JKVURI* uri)
 
 /**
  * Returns the namespace.
- *
- * \author Michael Kuhn
  *
  * \code
  * JKVURI* uri;
@@ -296,8 +286,6 @@ j_kv_uri_get_namespace (JKVURI* uri)
 /**
  * Returns the name.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKVURI* uri;
  *
@@ -320,8 +308,6 @@ j_kv_uri_get_name (JKVURI* uri)
 
 /**
  * Returns the kv.
- *
- * \author Michael Kuhn
  *
  * \code
  * JKVURI* uri;

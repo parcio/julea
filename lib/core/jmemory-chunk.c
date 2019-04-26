@@ -60,8 +60,6 @@ struct JMemoryChunk
 /**
  * Creates a new cache.
  *
- * \author Michael Kuhn
- *
  * \code
  * JMemoryChunk* cache;
  *
@@ -94,8 +92,6 @@ j_memory_chunk_new (guint64 size)
 /**
  * Frees the memory allocated for the cache.
  *
- * \author Michael Kuhn
- *
  * \code
  * JMemoryChunk* cache;
  *
@@ -125,8 +121,6 @@ j_memory_chunk_free (JMemoryChunk* cache)
 
 /**
  * Gets a new segment from the cache.
- *
- * \author Michael Kuhn
  *
  * \code
  * JMemoryChunk* cache;

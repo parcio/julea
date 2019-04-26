@@ -204,8 +204,6 @@ j_distributed_object_write_free (gpointer data)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \param data Background data.
  *
  * \return #data.
@@ -245,8 +243,6 @@ j_distributed_object_create_background_operation (gpointer data)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \param data Background data.
  *
  * \return #data.
@@ -285,8 +281,6 @@ j_distributed_object_delete_background_operation (gpointer data)
  * Executes write operations in a background operation.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \param data Background data.
  *
@@ -368,8 +362,6 @@ j_distributed_object_read_background_operation (gpointer data)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \param data Background data.
  *
  * \return #data.
@@ -420,8 +412,6 @@ j_distributed_object_write_background_operation (gpointer data)
  * Executes status operations in a background operation.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \param data Background data.
  *
@@ -1149,8 +1139,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 /**
  * Creates a new object.
  *
- * \author Michael Kuhn
- *
  * \code
  * JDistributedObject* i;
  *
@@ -1187,8 +1175,6 @@ j_distributed_object_new (gchar const* namespace, gchar const* name, JDistributi
 /**
  * Increases an object's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JDistributedObject* i;
  *
@@ -1217,8 +1203,6 @@ j_distributed_object_ref (JDistributedObject* object)
  * Decreases an object's reference count.
  * When the reference count reaches zero, frees the memory allocated for the object.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1246,8 +1230,6 @@ j_distributed_object_unref (JDistributedObject* object)
 
 /**
  * Creates an object.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -1282,8 +1264,6 @@ j_distributed_object_create (JDistributedObject* object, JBatch* batch)
 /**
  * Deletes an object.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1312,8 +1292,6 @@ j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
 
 /**
  * Reads an object.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -1379,8 +1357,6 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
  * \note
  * j_distributed_object_write() modifies bytes_written even if j_batch_execute() is not called.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1441,8 +1417,6 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 
 /**
  * Get the status of an object.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

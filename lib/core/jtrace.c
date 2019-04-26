@@ -135,8 +135,6 @@ G_LOCK_DEFINE_STATIC(j_trace_echo);
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -161,8 +159,6 @@ j_trace_echo_printerr (JTrace* trace, guint64 timestamp)
  * Returns the current time.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * guint64 timestamp;
@@ -189,8 +185,6 @@ j_trace_get_time (void)
  * Returns the name of a file operation.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -234,8 +228,6 @@ j_trace_file_operation_name (JTraceFileOperation op)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \param name A function name.
  *
  * \return TRUE if the function should be traced, FALSE otherwise.
@@ -268,8 +260,6 @@ j_trace_function_check (gchar const* name)
  * Set the \c J_TRACE environment variable to enable it.
  * Valid values are \e echo and \e otf.
  * Multiple values can be combined with commas.
- *
- * \author Michael Kuhn
  *
  * \code
  * j_trace_init("JULEA");
@@ -361,8 +351,6 @@ j_trace_init (gchar const* name)
 /**
  * Shuts down the trace framework.
  *
- * \author Michael Kuhn
- *
  * \code
  * j_trace_fini();
  * \endcode
@@ -415,8 +403,6 @@ j_trace_fini (void)
 /**
  * Returns the thread-default trace.
  *
- * \author Michael Kuhn
- *
  * \return The thread-default trace.
  **/
 JTrace*
@@ -437,8 +423,6 @@ j_trace_get_thread_default (void)
 
 /**
  * Creates a new trace.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -491,8 +475,6 @@ j_trace_new (GThread* thread)
 /**
  * Increases a trace's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JTrace* t;
  *
@@ -521,8 +503,6 @@ j_trace_ref (JTrace* trace)
 /**
  * Decreases a trace's reference count.
  * When the reference count reaches zero, frees the memory allocated for the trace.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -556,8 +536,6 @@ j_trace_unref (JTrace* trace)
 
 /**
  * Traces the entering of a function.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -644,8 +622,6 @@ j_trace_enter (gchar const* name, gchar const* format, ...)
 /**
  * Traces the leaving of a function.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -710,8 +686,6 @@ j_trace_leave (gchar const* name)
 /**
  * Traces the beginning of a file operation.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -774,8 +748,6 @@ j_trace_file_begin (gchar const* path, JTraceFileOperation op)
 
 /**
  * Traces the ending of a file operation.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -872,8 +844,6 @@ j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, gui
 
 /**
  * Traces a counter.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

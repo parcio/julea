@@ -56,8 +56,6 @@ struct JCache
 /**
  * Creates a new cache.
  *
- * \author Michael Kuhn
- *
  * \code
  * JCache* cache;
  *
@@ -91,8 +89,6 @@ j_cache_new (guint64 size)
 
 /**
  * Frees the memory allocated for the cache.
- *
- * \author Michael Kuhn
  *
  * \code
  * JCache* cache;
@@ -133,8 +129,6 @@ j_cache_free (JCache* cache)
 
 /**
  * Gets a new segment from the cache.
- *
- * \author Michael Kuhn
  *
  * \code
  * JCache* cache;

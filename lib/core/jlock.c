@@ -61,8 +61,6 @@ struct JLock
 /**
  * Creates a new lock.
  *
- * \author Michael Kuhn
- *
  * \code
  * JItem* item;
  * JLock* lock;
@@ -99,8 +97,6 @@ j_lock_new (gchar const* namespace, gchar const* path)
 
 /**
  * Frees the memory allocated for the lock.
- *
- * \author Michael Kuhn
  *
  * \code
  * JLock* lock;

@@ -125,8 +125,6 @@ j_credentials_get_group (JCredentials* credentials)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -158,8 +156,6 @@ j_credentials_serialize (JCredentials* credentials)
  * Deserializes credentials.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

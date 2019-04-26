@@ -115,8 +115,6 @@ hid_t native_plugin_id = -1;
 /**
  * Initializes the plugin
  *
- * \author Johannes Coym
- *
  * \return err Error
  **/
 static
@@ -131,8 +129,6 @@ H5VL_julea_init (hid_t vipl_id)
 /**
  * Terminates the plugin
  *
- * \author Johannes Coym
- *
  * \return err Error
  **/
 static
@@ -144,8 +140,6 @@ H5VL_julea_term (void)
 
 /**
  * Encodes the type
- *
- * \author Johannes Coym
  *
  * \return type_buf The encoded type
  **/
@@ -164,8 +158,6 @@ j_hdf5_encode_type (const char* property, hid_t* type_id, hid_t cpl_id, size_t* 
 /**
  * Encodes the space
  *
- * \author Johannes Coym
- *
  * \return type_buf The encoded space
  **/
 char*
@@ -182,8 +174,6 @@ j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t
 
 /**
  * Serializes attribute data
- *
- * \author Johannes Coym
  *
  * \param data The data
  * \param size The size of the data
@@ -209,8 +199,6 @@ j_hdf5_serialize (const void* data, size_t data_size)
 
 /**
  * Serializes type and space data
- *
- * \author Johannes Coym
  *
  * \param type_data The type data
  * \param type_size The size of the type data
@@ -240,8 +228,6 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
 
 /**
  * Serializes all metadata from datasets
- *
- * \author Johannes Coym
  *
  * \param type_data The type data
  * \param type_size The size of the type data
@@ -281,8 +267,6 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
 /**
  * Deserializes only the data from the bson
  *
- * \author Johannes Coym
- *
  * \param b The bson containing the data
  * \param data The pointer where the data is returned
  * \param data_size The size of the data
@@ -318,8 +302,6 @@ j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
 
 /**
  * Deserializes the type data from the bson
- *
- * \author Johannes Coym
  *
  * \param b The bson containing the data
  *
@@ -370,8 +352,6 @@ j_hdf5_deserialize_type (const bson_t* b)
 /**
  * Deserializes the space data from the bson
  *
- * \author Johannes Coym
- *
  * \param b The bson containing the data
  *
  * \return space_data the encoded space data
@@ -421,8 +401,6 @@ j_hdf5_deserialize_space (const bson_t* b)
 /**
  * Deserializes only the data size from the bson
  *
- * \author Johannes Coym
- *
  * \param b The bson containing the data
  * \param data_size Pointer to the data size to return
  **/
@@ -454,8 +432,6 @@ j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
 
 /**
  * Deserializes data size and disttribution from the bson
- *
- * \author Johannes Coym
  *
  * \param b The bson containing the data
  * \param d The dataset whoch should contain the distribution
@@ -500,8 +476,6 @@ j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
 /**
  * Generates the path of the current element
  *
- * \author Johannes Coym
- *
  * \param name The name of the current element
  * \param prev_path The previous path
  *
@@ -522,8 +496,6 @@ create_path (const char* name, char* prev_path)
 
 /**
  * Creates a new attribute
- *
- * \author Johannes Coym
  *
  * \return attribute The new attribute
  **/
@@ -633,8 +605,6 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 /**
  * Opens an attribute
  *
- * \author Johannes Coym
- *
  * \return attribute The attribute
  **/
 static
@@ -714,8 +684,6 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 
 /**
  * Reads the data from the attribute
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -741,8 +709,6 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id __attribute__((unused)), void* b
 
 /**
  * Writes the data of the attribute
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -766,8 +732,6 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id __attribute__((unused)), const
 
 /**
  * Provides get Functions of the attribute
- *
- * \author Johannes Coym
  *
  * \return ret_value The error code
  **/
@@ -834,8 +798,6 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attri
 
 /**
  * Closes the attribute
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -864,8 +826,6 @@ H5VL_julea_attr_close (void* attr, hid_t dxpl_id __attribute__((unused)), void**
 /**
  * Creates a new file
  *
- * \author Johannes Coym
- *
  * \return file The new file
  **/
 static
@@ -882,8 +842,6 @@ H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)
 /**
  * Opens a file
  *
- * \author Johannes Coym
- *
  * \return file The file
  **/
 static
@@ -899,8 +857,6 @@ H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)),
 
 /**
  * Closes the file
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -916,8 +872,6 @@ H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void**
 
 /**
  * Creates a new group
- *
- * \author Johannes Coym
  *
  * \return group The new group
  **/
@@ -971,8 +925,6 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 /**
  * Opens a group
  *
- * \author Johannes Coym
- *
  * \return group The group
  **/
 static
@@ -1024,8 +976,6 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 
 /**
  * Closes the group
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -1040,8 +990,6 @@ H5VL_julea_group_close (void* grp, hid_t dxpl_id  __attribute__((unused)), void*
 
 /**
  * Creates a new dataset
- *
- * \author Johannes Coym
  *
  * \return dset The new dataset
  **/
@@ -1158,8 +1106,6 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 /**
  * Opens a dataset
  *
- * \author Johannes Coym
- *
  * \return dset The dataset
  **/
 static
@@ -1235,8 +1181,6 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 
 /**
  * Reads the data from the dataset
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -1269,8 +1213,6 @@ H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)),
 
 /**
  * Provides get Functions of the dataset
- *
- * \author Johannes Coym
  *
  * \return ret_value The error code
  **/
@@ -1339,8 +1281,6 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 
 /**
  * Writes the data to the dataset
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -1369,8 +1309,6 @@ H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused))
 
 /**
  * Closes the dataset
- *
- * \author Johannes Coym
  **/
 static
 herr_t
@@ -1505,8 +1443,6 @@ H5VL_class_t H5VL_julea_g =
 
 /**
  * Provides the plugin type
- *
- * \author Johannes Coym
  **/
 H5PL_type_t
 H5PLget_plugin_type (void)
@@ -1516,8 +1452,6 @@ H5PLget_plugin_type (void)
 
 /**
  * Provides a pointer to the plugin structure
- *
- * \author Johannes Coym
  **/
 const void*
 H5PLget_plugin_info (void)

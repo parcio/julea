@@ -74,8 +74,6 @@ struct JObjectURI
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -218,8 +216,6 @@ error:
 /**
  * Creates a new URI.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -257,8 +253,6 @@ j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 /**
  * Frees the memory allocated by a URI.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -293,8 +287,6 @@ j_object_uri_free (JObjectURI* uri)
 /**
  * Returns the index.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -317,8 +309,6 @@ j_object_uri_get_index (JObjectURI* uri)
 
 /**
  * Returns the namespace.
- *
- * \author Michael Kuhn
  *
  * \code
  * JObjectURI* uri;
@@ -343,8 +333,6 @@ j_object_uri_get_namespace (JObjectURI* uri)
 /**
  * Returns the name.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -368,8 +356,6 @@ j_object_uri_get_name (JObjectURI* uri)
 /**
  * Returns the object.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObjectURI* uri;
  *
@@ -392,8 +378,6 @@ j_object_uri_get_distributed_object (JObjectURI* uri)
 
 /**
  * Returns the object.
- *
- * \author Michael Kuhn
  *
  * \code
  * JObjectURI* uri;

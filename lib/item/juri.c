@@ -70,8 +70,6 @@ struct JURI
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  *
@@ -160,8 +158,6 @@ j_uri_only_last_component_not_found (JURI* uri)
 /**
  * Returns the URI error quark.
  *
- * \author Michael Kuhn
- *
  * \return The URI error quark.
  **/
 GQuark
@@ -172,8 +168,6 @@ j_uri_error_quark (void)
 
 /**
  * Creates a new URI.
- *
- * \author Michael Kuhn
  *
  * \code
  * JURI* uri;
@@ -211,8 +205,6 @@ j_uri_new (gchar const* uri_)
 /**
  * Frees the memory allocated by a URI.
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  *
@@ -247,8 +239,6 @@ j_uri_free (JURI* uri)
 /**
  * Returns the collection name.
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  *
@@ -272,8 +262,6 @@ j_uri_get_collection_name (JURI* uri)
 /**
  * Returns the item name.
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  *
@@ -296,8 +284,6 @@ j_uri_get_item_name (JURI* uri)
 
 /**
  * Gets the collection and item.
- *
- * \author Michael Kuhn
  *
  * \code
  * JURI* uri;
@@ -371,8 +357,6 @@ end:
 /**
  * Creates the collection and item.
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  * GError* error = NULL;
@@ -443,8 +427,6 @@ end:
 /**
  * Deletes the collection and item.
  *
- * \author Michael Kuhn
- *
  * \code
  * JURI* uri;
  * GError* error = NULL;
@@ -497,8 +479,6 @@ end:
 /**
  * Returns the collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * JCollection* collection;
  * JURI* uri;
@@ -522,8 +502,6 @@ j_uri_get_collection (JURI* uri)
 
 /**
  * Returns the item.
- *
- * \author Michael Kuhn
  *
  * \code
  * JItem* item;

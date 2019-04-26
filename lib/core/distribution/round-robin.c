@@ -75,8 +75,6 @@ typedef struct JDistributionRoundRobin JDistributionRoundRobin;
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -149,8 +147,6 @@ distribution_new (guint server_count, guint64 stripe_size)
  * Decreases a distribution's reference count.
  * When the reference count reaches zero, frees the memory allocated for the distribution.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -173,8 +169,6 @@ distribution_free (gpointer data)
 
 /**
  * Sets the start index for the round robin distribution.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -207,8 +201,6 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -236,8 +228,6 @@ distribution_serialize (gpointer data, bson_t* b)
  * Deserializes distribution.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -281,8 +271,6 @@ distribution_deserialize (gpointer data, bson_t const* b)
 
 /**
  * Initializes a distribution.
- *
- * \author Michael Kuhn
  *
  * \code
  * JDistribution* d;

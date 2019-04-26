@@ -765,8 +765,6 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 /**
  * Creates a new item.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObject* i;
  *
@@ -802,8 +800,6 @@ j_object_new (gchar const* namespace, gchar const* name)
 
 /**
  * Creates a new item.
- *
- * \author Michael Kuhn
  *
  * \code
  * JObject* i;
@@ -842,8 +838,6 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 /**
  * Increases an item's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JObject* i;
  *
@@ -872,8 +866,6 @@ j_object_ref (JObject* item)
  * Decreases an item's reference count.
  * When the reference count reaches zero, frees the memory allocated for the item.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -899,8 +891,6 @@ j_object_unref (JObject* item)
 
 /**
  * Creates an object.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -935,8 +925,6 @@ j_object_create (JObject* object, JBatch* batch)
 /**
  * Deletes an object.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -965,8 +953,6 @@ j_object_delete (JObject* object, JBatch* batch)
 
 /**
  * Reads an item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -1032,8 +1018,6 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
  * \note
  * j_object_write() modifies bytes_written even if j_batch_execute() is not called.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -1095,8 +1079,6 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 
 /**
  * Get the status of an item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

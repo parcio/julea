@@ -111,8 +111,6 @@ struct JItem
 /**
  * Increases an item's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JItem* i;
  *
@@ -140,8 +138,6 @@ j_item_ref (JItem* item)
 /**
  * Decreases an item's reference count.
  * When the reference count reaches zero, frees the memory allocated for the item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -186,8 +182,6 @@ j_item_unref (JItem* item)
 /**
  * Returns an item's name.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -208,8 +202,6 @@ j_item_get_name (JItem* item)
 
 /**
  * Creates an item in a collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -263,8 +255,6 @@ j_item_get_callback (bson_t const* value, gpointer data_)
 /**
  * Gets an item from a collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -300,8 +290,6 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 /**
  * Deletes an item from a collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -325,8 +313,6 @@ j_item_delete (JItem* item, JBatch* batch)
 
 /**
  * Reads an item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -358,8 +344,6 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
  * \note
  * j_item_write() modifies bytes_written even if j_batch_execute() is not called.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -388,8 +372,6 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 /**
  * Get the status of an item.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -412,8 +394,6 @@ j_item_get_status (JItem* item, JBatch* batch)
 /**
  * Returns an item's size.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -435,8 +415,6 @@ j_item_get_size (JItem* item)
 /**
  * Returns an item's modification time.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -457,8 +435,6 @@ j_item_get_modification_time (JItem* item)
 
 /**
  * Returns the item's optimal access size.
- *
- * \author Michael Kuhn
  *
  * \code
  * JItem* item;
@@ -489,8 +465,6 @@ j_item_get_optimal_access_size (JItem* item)
 
 /**
  * Creates a new item.
- *
- * \author Michael Kuhn
  *
  * \code
  * JItem* i;
@@ -551,8 +525,6 @@ end:
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -598,8 +570,6 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -623,8 +593,6 @@ j_item_get_collection (JItem* item)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -647,8 +615,6 @@ j_item_get_credentials (JItem* item)
  * Serializes an item.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -743,8 +709,6 @@ j_item_deserialize_status (JItem* item, bson_t const* b)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -826,8 +790,6 @@ j_item_deserialize (JItem* item, bson_t const* b)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -849,8 +811,6 @@ j_item_get_id (JItem* item)
 /**
  * Sets an item's modification time.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -870,8 +830,6 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 
 /**
  * Sets an item's size.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

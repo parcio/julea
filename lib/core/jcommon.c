@@ -70,8 +70,6 @@ static JCommon* j_common = NULL;
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \return TRUE if JULEA has been initialized, FALSE otherwise.
  */
 static
@@ -89,8 +87,6 @@ j_is_initialized (void)
  * Returns the program name.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \param default_name Default name
  *
@@ -121,8 +117,6 @@ j_get_program_name (gchar const* default_name)
 
 /**
  * Initializes JULEA.
- *
- * \author Michael Kuhn
  *
  * \param argc A pointer to \c argc.
  * \param argv A pointer to \c argv.
@@ -213,8 +207,6 @@ error:
 
 /**
  * Shuts down JULEA.
- *
- * \author Michael Kuhn
  */
 void
 j_fini (void)
@@ -271,8 +263,6 @@ j_fini (void)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \return The configuration.
  */
 JConfiguration*
@@ -292,8 +282,6 @@ j_configuration (void)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \return The data backend.
  */
 JBackend*
@@ -312,8 +300,6 @@ j_object_backend (void)
  * Returns the data backend.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \return The data backend.
  */

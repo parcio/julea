@@ -460,8 +460,6 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 /**
  * Creates a new item.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKV* i;
  *
@@ -497,8 +495,6 @@ j_kv_new (gchar const* namespace, gchar const* key)
 
 /**
  * Creates a new item.
- *
- * \author Michael Kuhn
  *
  * \code
  * JKV* i;
@@ -537,8 +533,6 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 /**
  * Increases an item's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JKV* i;
  *
@@ -567,8 +561,6 @@ j_kv_ref (JKV* kv)
  * Decreases an item's reference count.
  * When the reference count reaches zero, frees the memory allocated for the item.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -594,8 +586,6 @@ j_kv_unref (JKV* kv)
 
 /**
  * Creates an object.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -635,8 +625,6 @@ j_kv_put (JKV* kv, bson_t* value, JBatch* batch)
 /**
  * Deletes an object.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -665,8 +653,6 @@ j_kv_delete (JKV* object, JBatch* batch)
 
 /**
  * Get the status of an item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -703,8 +689,6 @@ j_kv_get (JKV* kv, bson_t* value, JBatch* batch)
 
 /**
  * Get the status of an item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

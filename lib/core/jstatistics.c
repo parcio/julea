@@ -118,8 +118,6 @@ j_statistics_get_type_name (JStatisticsType type)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * JStatistics* s;
  *
@@ -155,8 +153,6 @@ j_statistics_new (gboolean trace)
  * Frees the memory allocated for the statistics.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

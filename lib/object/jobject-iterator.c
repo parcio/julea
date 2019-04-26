@@ -49,8 +49,6 @@ struct JObjectIterator
 /**
  * Creates a new JObjectIterator.
  *
- * \author Michael Kuhn
- *
  * \param collection A JCollection.
  *
  * \return A new JObjectIterator.
@@ -85,8 +83,6 @@ j_object_iterator_new (gchar const* namespace)
 /**
  * Frees the memory allocated by the JObjectIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JObjectIterator.
  **/
 void
@@ -106,8 +102,6 @@ j_object_iterator_free (JObjectIterator* iterator)
 
 /**
  * Checks whether another item is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -135,8 +129,6 @@ j_object_iterator_next (JObjectIterator* iterator)
 
 /**
  * Returns the current item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

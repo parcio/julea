@@ -60,8 +60,6 @@ struct JKVIterator
 /**
  * Creates a new JKVIterator.
  *
- * \author Michael Kuhn
- *
  * \param store A JStore.
  *
  * \return A new JKVIterator.
@@ -139,8 +137,6 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 /**
  * Frees the memory allocated by the JKVIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JKVIterator.
  **/
 void
@@ -158,8 +154,6 @@ j_kv_iterator_free (JKVIterator* iterator)
 
 /**
  * Checks whether another collection is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -201,8 +195,6 @@ j_kv_iterator_next (JKVIterator* iterator)
 
 /**
  * Returns the current collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

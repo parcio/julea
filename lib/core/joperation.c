@@ -35,8 +35,6 @@
 /**
  * Creates a new operation.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -60,8 +58,6 @@ j_operation_new (void)
  * Frees the memory allocated by an operation.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

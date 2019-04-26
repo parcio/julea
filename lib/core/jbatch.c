@@ -106,8 +106,6 @@ j_batch_background_operation (gpointer data)
 /**
  * Creates a new batch.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -138,8 +136,6 @@ j_batch_new (JSemantics* semantics)
 /**
  * Creates a new batch for a semantics template.
  *
- * \author Michael Kuhn
- *
  * \code
  * JBatch* batch;
  *
@@ -169,8 +165,6 @@ j_batch_new_for_template (JSemanticsTemplate template)
 /**
  * Increases the batch's reference count.
  *
- * \author Michael Kuhn
- *
  * \param list A batch.
  *
  * \return The batch.
@@ -192,8 +186,6 @@ j_batch_ref (JBatch* batch)
 /**
  * Decreases the batch's reference count.
  * When the reference count reaches zero, frees the memory allocated for the batch.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -232,8 +224,6 @@ j_batch_unref (JBatch* batch)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -271,8 +261,6 @@ end:
 
 /**
  * Executes the batch.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -316,8 +304,6 @@ end:
 
 /**
  * Executes the batch asynchronously.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -369,8 +355,6 @@ j_batch_wait (JBatch* batch)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -405,8 +389,6 @@ j_batch_new_from_batch (JBatch* old_batch)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -432,8 +414,6 @@ j_batch_get_operations (JBatch* batch)
  * Returns a batch's semantics.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -461,8 +441,6 @@ j_batch_get_semantics (JBatch* batch)
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -486,8 +464,6 @@ j_batch_add (JBatch* batch, JOperation* operation)
  * Executes the batch.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

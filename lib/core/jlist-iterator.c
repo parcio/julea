@@ -56,8 +56,6 @@ struct JListIterator
 /**
  * Creates a new list iterator.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -83,8 +81,6 @@ j_list_iterator_new (JList* list)
 /**
  * Frees the memory allocated by a list iterator.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -102,8 +98,6 @@ j_list_iterator_free (JListIterator* iterator)
 
 /**
  * Checks whether another list element is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -131,8 +125,6 @@ j_list_iterator_next (JListIterator* iterator)
 
 /**
  * Returns the current list element.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

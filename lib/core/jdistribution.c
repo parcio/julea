@@ -94,8 +94,6 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 /**
  * Creates a new distribution.
  *
- * \author Michael Kuhn
- *
  * \code
  * JDistribution* d;
  *
@@ -123,8 +121,6 @@ j_distribution_new (JDistributionType type)
 /**
  * Increases a distribution's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -147,8 +143,6 @@ j_distribution_ref (JDistribution* distribution)
 /**
  * Decreases a distribution's reference count.
  * When the reference count reaches zero, frees the memory allocated for the distribution.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -175,8 +169,6 @@ j_distribution_unref (JDistribution* distribution)
 /**
  * Sets the block size for the distribution.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -197,8 +189,6 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 
 /**
  * Sets the start index for the round robin distribution.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -262,8 +252,6 @@ j_distribution_init (void)
 /**
  * Creates a new distribution from a BSON object.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -289,8 +277,6 @@ j_distribution_new_from_bson (bson_t const* b)
 
 /**
  * Creates a new distribution for a given configuration.
- *
- * \author Michael Kuhn
  *
  * \code
  * JDistribution* d;
@@ -320,8 +306,6 @@ j_distribution_new_for_configuration (JDistributionType type, JConfiguration* co
  * Serializes distribution.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -357,8 +341,6 @@ j_distribution_serialize (JDistribution* distribution)
  * Deserializes distribution.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -398,8 +380,6 @@ j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 /**
  * Resets a distribution.
  *
- * \author Michael Kuhn
- *
  * \code
  * JDistribution* d;
  *
@@ -425,8 +405,6 @@ j_distribution_reset (JDistribution* distribution, guint64 length, guint64 offse
 
 /**
  * Calculates a new length and a new offset based on a distribution.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

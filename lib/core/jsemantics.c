@@ -87,8 +87,6 @@ struct JSemantics
  * Creates a new semantics object.
  * Semantics objects become immutable after the first call to j_semantics_ref().
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -142,8 +140,6 @@ j_semantics_new (JSemanticsTemplate template)
 /**
  * Creates a new semantics object from two strings.
  * Semantics objects become immutable after the first call to j_semantics_ref().
- *
- * \author Michael Kuhn
  *
  * \code
  * JSemantics* semantics;
@@ -341,8 +337,6 @@ end:
 /**
  * Increases the semantics' reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -369,8 +363,6 @@ j_semantics_ref (JSemantics* semantics)
  * Decreases the semantics' reference count.
  * When the reference count reaches zero, frees the memory allocated for the semantics.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -389,8 +381,6 @@ j_semantics_unref (JSemantics* semantics)
 
 /**
  * Sets a specific aspect of the semantics.
- *
- * \author Michael Kuhn
  *
  * \code
  * JSemantics* semantics;
@@ -438,8 +428,6 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 
 /**
  * Gets a specific aspect of the semantics.
- *
- * \author Michael Kuhn
  *
  * \code
  * JSemantics* semantics;

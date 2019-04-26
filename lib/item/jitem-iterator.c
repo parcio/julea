@@ -52,8 +52,6 @@ struct JItemIterator
 /**
  * Creates a new JItemIterator.
  *
- * \author Michael Kuhn
- *
  * \param collection A JCollection.
  *
  * \return A new JItemIterator.
@@ -78,8 +76,6 @@ j_item_iterator_new (JCollection* collection)
 /**
  * Frees the memory allocated by the JItemIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JItemIterator.
  **/
 void
@@ -95,8 +91,6 @@ j_item_iterator_free (JItemIterator* iterator)
 
 /**
  * Checks whether another item is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -115,8 +109,6 @@ j_item_iterator_next (JItemIterator* iterator)
 
 /**
  * Returns the current item.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

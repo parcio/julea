@@ -72,8 +72,6 @@ struct JCollection
 /**
  * Increases a collection's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JCollection* c;
  *
@@ -101,8 +99,6 @@ j_collection_ref (JCollection* collection)
 /**
  * Decreases a collection's reference count.
  * When the reference count reaches zero, frees the memory allocated for the collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -132,8 +128,6 @@ j_collection_unref (JCollection* collection)
 /**
  * Returns a collection's name.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -154,8 +148,6 @@ j_collection_get_name (JCollection* collection)
 
 /**
  * Creates a collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -196,8 +188,6 @@ j_collection_get_callback (bson_t const* value, gpointer data)
 /**
  * Gets a collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -220,8 +210,6 @@ j_collection_get (JCollection** collection, gchar const* name, JBatch* batch)
 /**
  * Deletes a collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -241,8 +229,6 @@ j_collection_delete (JCollection* collection, JBatch* batch)
 
 /**
  * Creates a new collection.
- *
- * \author Michael Kuhn
  *
  * \code
  * JCollection* c;
@@ -290,8 +276,6 @@ end:
  *
  * \private
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -329,8 +313,6 @@ j_collection_new_from_bson (bson_t const* b)
  * Serializes a collection.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -373,8 +355,6 @@ j_collection_serialize (JCollection* collection)
  * Deserializes a collection.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -436,8 +416,6 @@ j_collection_deserialize (JCollection* collection, bson_t const* b)
  * Returns a collection's ID.
  *
  * \private
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
