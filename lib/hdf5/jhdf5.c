@@ -866,13 +866,17 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attri
 	case H5VL_ATTR_GET_TYPE:
 	{
 		hid_t* ret_id = va_arg (arguments, hid_t *);
+		void* type;
 
 		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->ts, b, batch);
 		j_batch_execute(batch);
 		j_trace_leave(G_STRFUNC);
-		*ret_id = H5Tdecode(j_hdf5_deserialize_type(b));
+		type = j_hdf5_deserialize_type(b);
+		*ret_id = H5Tdecode(type);
+		free(type);
+		bson_destroy(b);
 	}
 	break;
 	default:
@@ -1376,13 +1380,17 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 	case H5VL_DATASET_GET_TYPE:
 	{
 		hid_t* ret_id = va_arg (arguments, hid_t *);
+		void* type;
 
 		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->kv, b, batch);
 		j_batch_execute(batch);
 		j_trace_leave(G_STRFUNC);
-		*ret_id = H5Tdecode(j_hdf5_deserialize_type(b));
+		type = j_hdf5_deserialize_type(b);
+		*ret_id = H5Tdecode(type);
+		free(type);
+		bson_destroy(b);
 	}
 		break;
 	default:

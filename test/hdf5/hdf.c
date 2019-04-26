@@ -87,6 +87,7 @@ read_dataset (hid_t file)
 	hid_t dataset;
 	hid_t dataspace_attr;
 	hid_t dataspace_ds;
+	hid_t datatype;
 
 	hssize_t elements;
 
@@ -100,6 +101,9 @@ read_dataset (hid_t file)
 	elements = H5Sget_simple_extent_npoints(dataspace_attr);
 	g_assert_cmpuint(elements, ==, 3);
 
+	datatype = H5Aget_type(attribute);
+	g_assert(H5Tget_class(datatype) == H5T_INTEGER);
+
 	H5Aread(attribute, H5T_NATIVE_INT, data_attr);
 
 	g_assert_cmpint(data_attr[0], ==, 10);
@@ -109,6 +113,9 @@ read_dataset (hid_t file)
 	dataspace_ds = H5Dget_space(dataset);
 	elements = H5Sget_simple_extent_npoints(dataspace_ds);
 	g_assert_cmpuint(elements, ==, 6 * 7);
+
+	datatype = H5Dget_type(dataset);
+	g_assert(H5Tget_class(datatype) == H5T_INTEGER);
 
 	H5Dread(dataset, H5T_NATIVE_INT, dataspace_ds, H5S_ALL, H5P_DEFAULT, data_ds);
 
