@@ -56,7 +56,7 @@
 /* structure for file*/
 struct JHF_t
 {
-	char *name;
+	char* name;
 };
 
 typedef struct JHF_t JHF_t;
@@ -64,8 +64,8 @@ typedef struct JHF_t JHF_t;
 /* structure for group*/
 struct JHG_t
 {
-	char *location;
-	char *name;
+	char* location;
+	char* name;
 };
 
 typedef struct JHG_t JHG_t;
@@ -73,12 +73,12 @@ typedef struct JHG_t JHG_t;
 /* structure for dataset*/
 struct JHD_t
 {
-	char *location;
-	char *name;
+	char* location;
+	char* name;
 	size_t data_size;
-	JDistribution *distribution;
-	JDistributedObject *object;
-	JKV *kv;
+	JDistribution* distribution;
+	JDistributedObject* object;
+	JKV* kv;
 };
 
 typedef struct JHD_t JHD_t;
@@ -86,21 +86,14 @@ typedef struct JHD_t JHD_t;
 /*structure for attribute*/
 struct JHA_t
 {
-	char *location;
-	char *name;
+	char* location;
+	char* name;
 	size_t data_size;
-	JKV *kv;
-	JKV *ts;
+	JKV* kv;
+	JKV* ts;
 };
 
 typedef struct JHA_t JHA_t;
-
-struct h5julea_fapl_t
-{
-	char *name;
-};
-
-typedef struct h5julea_fapl_t h5julea_fapl_t;
 
 char* j_hdf5_encode_type(const char*, hid_t*, hid_t, size_t*);
 char* j_hdf5_encode_space(const char*, hid_t*, hid_t, size_t*);
@@ -119,44 +112,6 @@ char* create_path(const char*, char*);
 
 hid_t native_plugin_id = -1;
 
-// FIXME
-//h5julea_fapl_t *ginfo = NULL;
-
-/**
- * Copies the file operations
- *
- * \author Johannes Coym
- *
- * \param info The original file operations
- *
- * \return fapl_target The new file operations.
- **/
-static
-void*
-H5VL_julea_fapl_copy (const void* info)
-{
-	const h5julea_fapl_t* fapl_source = (const h5julea_fapl_t*) info;
-	h5julea_fapl_t* fapl_target = (h5julea_fapl_t*) malloc(sizeof(*fapl_target));
-	memcpy(fapl_target, fapl_source, sizeof(*fapl_source));
-	fapl_target->name  = fapl_source->name;
-	return (void *)fapl_target;
-}
-
-/**
- * Frees the file operations(unused)
- *
- * \author Johannes Coym
- *
- * \return err Error
- **/
-static
-herr_t
-H5VL_julea_fapl_free (void* info __attribute__((unused)))
-{
-	herr_t err = 0;
-	return err;
-}
-
 /**
  * Initializes the plugin
  *
@@ -166,10 +121,10 @@ H5VL_julea_fapl_free (void* info __attribute__((unused)))
  **/
 static
 herr_t
-H5VL_julea_init (hid_t vipl_id __attribute__((unused)))
+H5VL_julea_init (hid_t vipl_id)
 {
-	native_plugin_id = H5VLget_connector_id("native");
-	g_assert(native_plugin_id > 0);
+	(void)vipl_id;
+
 	return 0;
 }
 
@@ -574,115 +529,105 @@ create_path (const char* name, char* prev_path)
  **/
 static
 void*
-H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t acpl_id, hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
 	JHA_t *attribute;
-	hid_t space_id;
-	size_t space_size;
-	char* space_buf;
-	int ndims;
-	hsize_t *maxdims;
+
+	gint ndims;
+
 	hsize_t *dims;
-	hid_t type_id;
-	size_t type_size;
-	char* type_buf;
-	size_t data_size;
 	bson_t* value;
 	JBatch* batch;
 	char* tsloc;
 
-	attribute = (JHA_t *)malloc(sizeof(*attribute));
+	gchar* space_buf = NULL;
+	gchar* type_buf = NULL;
+	hid_t space_id;
+	hid_t type_id;
+	gsize space_size;
+	gsize type_size;
+
+	gsize data_size;
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	(void)aapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	attribute = malloc(sizeof(*attribute));
 
 	type_buf = j_hdf5_encode_type("attr_type_id", &type_id, acpl_id, &type_size);
 	space_buf = j_hdf5_encode_space("attr_space_id", &space_id, acpl_id, &space_size);
-
-	ndims = H5Sget_simple_extent_ndims(space_id);
-	maxdims = malloc(sizeof(hsize_t) * ndims);
-	dims = malloc(sizeof(hsize_t) * ndims);
-	H5Sget_simple_extent_dims(/* in */ space_id, /* out */ dims, /* out */ maxdims);
 	data_size = H5Tget_size(type_id);
 
-	for (int i = 0; i < ndims; ++i)
+	ndims = H5Sget_simple_extent_ndims(space_id);
+	dims = g_new(hsize_t, ndims);
+	H5Sget_simple_extent_dims(space_id, dims, NULL);
+
+	for (gint i = 0; i < ndims; i++)
 	{
 		data_size *= dims[i];
 	}
 
-	free(maxdims);
-	free(dims);
+	g_free(dims);
 
 	switch (loc_params->obj_type)
 	{
-	case H5I_FILE:
-		break;
-	case H5I_GROUP:
-	{
-		JHG_t *o = (JHG_t *)obj;
-		attribute->location = create_path(attr_name, o->location);
+		case H5I_DATASET:
+			{
+				JHD_t* o = (JHD_t*)obj;
 
-		j_trace_enter(G_STRFUNC, NULL);
+				attribute->location = create_path(attr_name, o->location);
+				attribute->name = g_strdup(attr_name);
+				attribute->data_size = data_size;
+				attribute->kv = j_kv_new("hdf5", attribute->location);
+			}
+			break;
+		case H5I_GROUP:
+			{
+				JHG_t* o = (JHG_t*)obj;
 
-		attribute->kv = j_kv_new("hdf5", attribute->location);
-
-		j_trace_leave(G_STRFUNC);
-
-		attribute->name = g_strdup(attr_name);
-		attribute->data_size = data_size;
+				attribute->location = create_path(attr_name, o->location);
+				attribute->name = g_strdup(attr_name);
+				attribute->data_size = data_size;
+				attribute->kv = j_kv_new("hdf5", attribute->location);
+			}
+			break;
+		case H5I_ATTR:
+		case H5I_BADID:
+		case H5I_DATASPACE:
+		case H5I_DATATYPE:
+		case H5I_ERROR_CLASS:
+		case H5I_ERROR_MSG:
+		case H5I_ERROR_STACK:
+		case H5I_FILE:
+		case H5I_GENPROP_CLS:
+		case H5I_GENPROP_LST:
+		case H5I_NTYPES:
+		case H5I_UNINIT:
+		case H5I_VFL:
+		case H5I_VOL:
+		default:
+			g_assert_not_reached();
+			exit(1);
 	}
-	break;
-	case H5I_DATATYPE:
-		break;
-	case H5I_DATASET:
 
-	{
-		JHD_t *o = (JHD_t *)obj;
-		attribute->location = create_path(attr_name, o->location);
-
-		j_trace_enter(G_STRFUNC, NULL);
-
-		attribute->kv = j_kv_new("hdf5", attribute->location);
-
-		j_trace_leave(G_STRFUNC);
-
-		attribute->data_size = data_size;
-		attribute->name = g_strdup(attr_name);
-	}
-	break;
-	case H5I_ATTR:
-		break;
-	case H5I_UNINIT:
-	case H5I_BADID:
-	case H5I_DATASPACE:
-	case H5I_VFL:
-	case H5I_VOL:
-	case H5I_GENPROP_CLS:
-	case H5I_GENPROP_LST:
-	case H5I_ERROR_CLASS:
-	case H5I_ERROR_MSG:
-	case H5I_ERROR_STACK:
-	case H5I_NTYPES:
-	default:
-		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
-		exit(1);
-	} /* end switch */
-
-	// FIXME
-	tsloc = (char*) malloc(strlen(attribute->location) + 4);
-
-	j_trace_enter(G_STRFUNC, NULL);
-	strcpy(tsloc, attribute->location);
-	strcat(tsloc, "_ts");
+	tsloc = g_strdup_printf("%s_ts", attribute->location);
 	attribute->ts = j_kv_new("hdf5", tsloc);
+	g_free(tsloc);
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = j_hdf5_serialize_ts(type_buf, type_size, space_buf, space_size);
 	j_kv_put(attribute->ts, value, batch);
 	j_batch_execute(batch);
+
+	g_free(type_buf);
+	g_free(space_buf);
+
 	j_trace_leave(G_STRFUNC);
 
-	free(type_buf);
-	free(space_buf);
-	free(tsloc);
-
-	return (void *)attribute;
+	return attribute;
 }
 
 /**
@@ -928,10 +873,7 @@ void*
 H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
-	//void *vol_info;
 
-	//H5Pget_vol_info(fapl_id, &vol_info);
-	//ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
 	file = (JHF_t *)malloc(sizeof(*file));
 	file->name = g_strdup(fname);
 	return (void *)file;
@@ -949,10 +891,7 @@ void*
 H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHF_t *file;
-	//void *vol_info;
 
-	//H5Pget_vol_info(fapl_id, &vol_info);
-	//ginfo = (h5julea_fapl_t *)H5VL_julea_fapl_copy(vol_info);
 	file = (JHF_t *)malloc(sizeof(*file));
 	file->name = g_strdup(fname);
 	return (void *)file;
@@ -1115,7 +1054,6 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	size_t space_size;
 	char* space_buf;
 	int ndims;
-	hsize_t *maxdims;
 	hsize_t *dims;
 	hid_t type_id;
 	size_t type_size;
@@ -1131,9 +1069,8 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	space_buf = j_hdf5_encode_space("dataset_space_id", &space_id, dcpl_id, &space_size);
 
 	ndims = H5Sget_simple_extent_ndims(space_id);
-	maxdims = malloc(sizeof(hsize_t) * ndims);
 	dims = malloc(sizeof(hsize_t) * ndims);
-	H5Sget_simple_extent_dims(/* in */ space_id, /* out */ dims, /* out */ maxdims);
+	H5Sget_simple_extent_dims(/* in */ space_id, /* out */ dims, /* out */ NULL);
 	data_size = H5Tget_size(type_id);
 	for (int i = 0; i < ndims; ++i)
 	{
@@ -1141,7 +1078,6 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	}
 	dset->data_size = data_size;
 
-	free(maxdims);
 	free(dims);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -1476,10 +1412,10 @@ H5VL_class_t H5VL_julea_g =
 	H5VL_julea_init, /* initialize */
 	H5VL_julea_term, /* terminate */
 	{
-		sizeof(h5julea_fapl_t),
-		H5VL_julea_fapl_copy,
+		0,
 		NULL,
-		H5VL_julea_fapl_free,
+		NULL,
+		NULL,
 		NULL,
 		NULL
 	},
