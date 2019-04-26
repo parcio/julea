@@ -503,14 +503,10 @@ static
 void*
 H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
-	JHA_t *attribute;
+	JHA_t* attribute;
 
+	hsize_t* dims;
 	gint ndims;
-
-	hsize_t *dims;
-	bson_t* value;
-	JBatch* batch;
-	char* tsloc;
 
 	gchar* space_buf = NULL;
 	gchar* type_buf = NULL;
@@ -521,13 +517,17 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	gsize data_size;
 
+	bson_t* value;
+	JBatch* batch;
+	gchar* tsloc;
+
 	j_trace_enter(G_STRFUNC, NULL);
 
 	(void)aapl_id;
 	(void)dxpl_id;
 	(void)req;
 
-	attribute = malloc(sizeof(*attribute));
+	attribute = g_new(JHA_t, 1);
 
 	type_buf = j_hdf5_encode_type("attr_type_id", &type_id, acpl_id, &type_size);
 	space_buf = j_hdf5_encode_space("attr_space_id", &space_id, acpl_id, &space_size);
@@ -609,77 +609,73 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
  **/
 static
 void*
-H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t aapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
-	JHA_t *attribute;
-	JKV *kv;
-	bson_t data[1];
-	JBatch *batch;
-	char* tsloc;
+	JHA_t* attribute;
 
-	attribute = (JHA_t *)malloc(sizeof(*attribute));
+	bson_t data[1];
+	JBatch* batch;
+	gchar* tsloc;
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	(void)aapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	attribute = g_new(JHA_t, 1);
 	attribute->name = g_strdup(attr_name);
 
 	switch (loc_params->obj_type)
 	{
-	case H5I_FILE:
-		break;
-	case H5I_GROUP:
-	{
-		JHG_t *o = (JHG_t *)obj;
-		attribute->location = create_path(attr_name, o->location);
+		case H5I_DATASET:
+			{
+				JHD_t* o = (JHD_t*)obj;
+				attribute->location = create_path(attr_name, o->location);
+			}
+			break;
+		case H5I_GROUP:
+			{
+				JHG_t* o = (JHG_t*)obj;
+				attribute->location = create_path(attr_name, o->location);
+			}
+			break;
+		case H5I_ATTR:
+		case H5I_BADID:
+		case H5I_DATASPACE:
+		case H5I_DATATYPE:
+		case H5I_ERROR_CLASS:
+		case H5I_ERROR_MSG:
+		case H5I_ERROR_STACK:
+		case H5I_FILE:
+		case H5I_GENPROP_CLS:
+		case H5I_GENPROP_LST:
+		case H5I_NTYPES:
+		case H5I_UNINIT:
+		case H5I_VFL:
+		case H5I_VOL:
+		default:
+			g_assert_not_reached();
+			exit(1);
 	}
-	break;
-	case H5I_DATATYPE:
-		break;
-	case H5I_DATASET:
-	{
-		JHD_t *o = (JHD_t *)obj;
-		attribute->location = create_path(attr_name, o->location);
-	}
-	break;
-	case H5I_ATTR:
-		break;
-	case H5I_UNINIT:
-	case H5I_BADID:
-	case H5I_DATASPACE:
-	case H5I_VFL:
-	case H5I_VOL:
-	case H5I_GENPROP_CLS:
-	case H5I_GENPROP_LST:
-	case H5I_ERROR_CLASS:
-	case H5I_ERROR_MSG:
-	case H5I_ERROR_STACK:
-	case H5I_NTYPES:
-	default:
-		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
-		exit(1);
-	} /* end switch */
 
-	// FIXME
-	tsloc = (char*) malloc(strlen(attribute->location) + 4);
-
-	j_trace_enter(G_STRFUNC, NULL);
+	tsloc = g_strdup_printf("%s_ts", attribute->location);
+	attribute->ts = j_kv_new("hdf5", tsloc);
+	g_free(tsloc);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	kv = j_kv_new("hdf5", attribute->location);
-	j_kv_get(kv, data, batch);
+	attribute->kv = j_kv_new("hdf5", attribute->location);
+	j_kv_get(attribute->kv, data, batch);
 
-	strcpy(tsloc, attribute->location);
-	strcat(tsloc, "_ts");
-	attribute->ts = j_kv_new("hdf5", tsloc);
 	if (j_batch_execute(batch))
 	{
 		j_hdf5_deserialize_size(data, &(attribute->data_size));
-		attribute->kv = kv;
+		bson_destroy(data);
 	}
-	bson_destroy(data);
-
-	free(tsloc);
 
 	j_trace_leave(G_STRFUNC);
 
-	return (void *)attribute;
+	return attribute;
 }
 
 /**
