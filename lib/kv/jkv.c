@@ -34,7 +34,7 @@
 /**
  * \defgroup JKV KV
  *
- * Data structures and functions for managing objects.
+ * Data structures and functions for managing key-value pairs.
  *
  * @{
  **/
@@ -465,7 +465,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 }
 
 /**
- * Creates a new item.
+ * Creates a new key-value pair.
  *
  * \code
  * JKV* i;
@@ -473,10 +473,10 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
  * i = j_kv_new("JULEA");
  * \endcode
  *
- * \param key         An item key.
+ * \param key          A key-value pair key.
  * \param distribution A distribution.
  *
- * \return A new item. Should be freed with j_kv_unref().
+ * \return A new key-value pair. Should be freed with j_kv_unref().
  **/
 JKV*
 j_kv_new (gchar const* namespace, gchar const* key)
@@ -501,7 +501,7 @@ j_kv_new (gchar const* namespace, gchar const* key)
 }
 
 /**
- * Creates a new item.
+ * Creates a new key-value pair.
  *
  * \code
  * JKV* i;
@@ -512,7 +512,7 @@ j_kv_new (gchar const* namespace, gchar const* key)
  * \param key         An item key.
  * \param distribution A distribution.
  *
- * \return A new item. Should be freed with j_kv_unref().
+ * \return A new key-value pair. Should be freed with j_kv_unref().
  **/
 JKV*
 j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
@@ -538,7 +538,7 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 }
 
 /**
- * Increases an item's reference count.
+ * Increases a key-value pair's reference count.
  *
  * \code
  * JKV* i;
@@ -546,9 +546,9 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
  * j_kv_ref(i);
  * \endcode
  *
- * \param item An item.
+ * \param kv A key-value pair.
  *
- * \return #item.
+ * \return key-value pair.
  **/
 JKV*
 j_kv_ref (JKV* kv)
@@ -565,13 +565,13 @@ j_kv_ref (JKV* kv)
 }
 
 /**
- * Decreases an item's reference count.
- * When the reference count reaches zero, frees the memory allocated for the item.
+ * Decreases a key-value pair's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the key-value pair.
  *
  * \code
  * \endcode
  *
- * \param item An item.
+ * \param kv A key-value pair.
  **/
 void
 j_kv_unref (JKV* kv)
@@ -592,7 +592,7 @@ j_kv_unref (JKV* kv)
 }
 
 /**
- * Creates an object.
+ * Creates a key-value pair.
  *
  * \code
  * \endcode
@@ -600,8 +600,6 @@ j_kv_unref (JKV* kv)
  * \param kv    A KV.
  * \param value A value.
  * \param batch A batch.
- *
- * \return A new item. Should be freed with j_kv_unref().
  **/
 void
 j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
@@ -632,7 +630,7 @@ j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destr
 }
 
 /**
- * Deletes an object.
+ * Deletes a key-value pair.
  *
  * \code
  * \endcode
@@ -641,17 +639,17 @@ j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destr
  * \param batch      A batch.
  **/
 void
-j_kv_delete (JKV* object, JBatch* batch)
+j_kv_delete (JKV* kv, JBatch* batch)
 {
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_if_fail(kv != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
-	operation->key = object;
-	operation->data = j_kv_ref(object);
+	operation->key = kv;
+	operation->data = j_kv_ref(kv);
 	operation->exec_func = j_kv_delete_exec;
 	operation->free_func = j_kv_delete_free;
 
@@ -661,12 +659,12 @@ j_kv_delete (JKV* object, JBatch* batch)
 }
 
 /**
- * Get the status of an item.
+ * Get a key-value pair.
  *
  * \code
  * \endcode
  *
- * \param item      An item.
+ * \param kv        A key-value pair.
  * \param batch     A batch.
  **/
 void
@@ -698,12 +696,12 @@ j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 }
 
 /**
- * Get the status of an item.
+ * Get a key-value pair.
  *
  * \code
  * \endcode
  *
- * \param item      An item.
+ * \param kv        A key-value pair.
  * \param batch     A batch.
  **/
 void
