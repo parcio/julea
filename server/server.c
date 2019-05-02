@@ -75,7 +75,7 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 			break;
 		case J_MESSAGE_FLAGS_REPLY:
 		default:
-			g_warn_if_reached();
+			J_WARNING("Uknown safety semantics : %x",flags);
 			break;
 	}
 
@@ -602,7 +602,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			default:
-				g_warn_if_reached();
+				J_WARNING("Recv unknown message with type: %d",j_message_get_type(message))
 				break;
 		}
 	}
@@ -649,7 +649,7 @@ jd_daemon (void)
 
 	if (pid > 0)
 	{
-		g_printerr("Daemon started as process %d.\n", pid);
+		J_INFO("Daemon started as process %d.\n", pid);
 		_exit(0);
 	}
 	else if (pid == -1)
@@ -725,7 +725,7 @@ main (int argc, char** argv)
 
 		if (error)
 		{
-			g_printerr("%s\n", error->message);
+			J_CRITICAL("%s\n", error->message);
 			g_error_free(error);
 		}
 
@@ -745,7 +745,7 @@ main (int argc, char** argv)
 	{
 		if (error != NULL)
 		{
-			g_printerr("%s\n", error->message);
+			J_CRITICAL("cannot listen on port %d : %s", opt_port,error->message);
 			g_error_free(error);
 		}
 
@@ -760,7 +760,6 @@ main (int argc, char** argv)
 
 	if (jd_configuration == NULL)
 	{
-		g_printerr("Could not read configuration.\n");
 		return 1;
 	}
 

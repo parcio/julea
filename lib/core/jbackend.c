@@ -28,6 +28,7 @@
 #include <jbackend.h>
 
 #include <jtrace-internal.h>
+#include <julea-internal.h>
 
 /**
  * \defgroup JHelper Helper
@@ -71,6 +72,9 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (module == NULL)
 	{
+		#ifdef JULEA_BACKEND_PATH_BUILD
+		J_WARNING("failed to load %s %s backend: %s",name,type_str,g_module_error());
+		#endif
 		tpath = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
 		path = g_module_build_path(tpath, name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
@@ -80,6 +84,7 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (module == NULL)
 	{
+		J_CRITICAL("failed to load %s %s backend: %s",name,type_str,g_module_error());
 		goto error;
 	}
 
@@ -87,6 +92,7 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (module_backend_info == NULL)
 	{
+		J_CRITICAL("failed to load %s %s backend: %s",name,type_str,g_module_error());
 		goto error;
 	}
 
@@ -117,6 +123,7 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		    || tmp_backend->object.backend_read == NULL
 		    || tmp_backend->object.backend_write == NULL)
 		{
+			J_CRITICAL("failed to load %s %s backend: missing symbols",name,type_str);
 			goto error;
 		}
 	}
@@ -134,6 +141,7 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		    || tmp_backend->kv.backend_get_by_prefix == NULL
 		    || tmp_backend->kv.backend_iterate == NULL)
 		{
+			J_CRITICAL("failed to load %s %s backend: missing symbols",name,type_str);
 			goto error;
 		}
 	}
