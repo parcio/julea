@@ -85,7 +85,7 @@ test_object_read_write (void)
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	buffer = g_malloc(max_operation_size + 1);
+	buffer = g_malloc0(max_operation_size + 1);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	j_distribution_set_block_size(distribution, max_operation_size + 1);
@@ -152,7 +152,7 @@ test_object_status (void)
 	guint64 size = 0;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	buffer = g_malloc(42);
+	buffer = g_malloc0(42);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	object = j_distributed_object_new("test", "test-object-status", distribution);

@@ -80,7 +80,7 @@ test_object_read_write (void)
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	buffer = g_malloc(max_operation_size + 1);
+	buffer = g_malloc0(max_operation_size + 1);
 
 	object = j_object_new("test", "test-object-rw");
 	g_assert(object != NULL);
@@ -144,7 +144,7 @@ test_object_status (void)
 	guint64 size = 0;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	buffer = g_malloc(42);
+	buffer = g_malloc0(42);
 
 	object = j_object_new("test", "test-object-status");
 	g_assert(object != NULL);
