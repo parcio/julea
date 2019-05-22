@@ -27,6 +27,14 @@
 
 #include <julea.h>
 
+struct JMongoDBBatch
+{
+	mongoc_bulk_operation_t* bulk_op;
+	gchar* namespace;
+};
+
+typedef struct JMongoDBBatch JMongoDBBatch;
+
 static mongoc_client_t* backend_connection = NULL;
 
 static gchar* backend_host = NULL;
@@ -36,6 +44,7 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
+	JMongoDBBatch* batch;
 	bson_t command[1];
 	bson_t index[1];
 	bson_t indexes[1];
@@ -106,7 +115,11 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 	bson_destroy(command);
 	bson_destroy(reply);
 
-	*data = bulk_op;
+	batch = g_slice_new(JMongoDBBatch);
+	batch->bulk_op = bulk_op;
+	batch->namespace = g_strdup(namespace);
+
+	*data = batch;
 
 	return TRUE;
 }
@@ -117,12 +130,13 @@ backend_batch_execute (gpointer data)
 {
 	gboolean ret = FALSE;
 
+	JMongoDBBatch* batch = data;
+
 	bson_t reply[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
+	ret = mongoc_bulk_operation_execute(batch->bulk_op, reply, NULL);
 
 	/*
 	if (!ret)
@@ -135,8 +149,10 @@ backend_batch_execute (gpointer data)
 	}
 	*/
 
-	mongoc_bulk_operation_destroy(bulk_op);
+	mongoc_bulk_operation_destroy(batch->bulk_op);
 	bson_destroy(reply);
+	g_free(batch->namespace);
+	g_slice_free(JMongoDBBatch, batch);
 
 	return ret;
 }
@@ -145,13 +161,13 @@ static
 gboolean
 backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
+	JMongoDBBatch* batch = data;
 	bson_t document[1];
 	bson_t selector[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
@@ -161,8 +177,8 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	bson_append_utf8(selector, "key", -1, key, -1);
 
 	/* FIXME use insert when possible */
-	//mongoc_bulk_operation_insert(bulk_op, document);
-	mongoc_bulk_operation_replace_one(bulk_op, selector, document, TRUE);
+	//mongoc_bulk_operation_insert(batch->bulk_op, document);
+	mongoc_bulk_operation_replace_one(batch->bulk_op, selector, document, TRUE);
 
 	/*
 	if (!ret)
@@ -185,16 +201,16 @@ static
 gboolean
 backend_delete (gpointer data, gchar const* key)
 {
+	JMongoDBBatch* batch = data;
 	bson_t document[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
 
-	mongoc_bulk_operation_remove(bulk_op, document);
+	mongoc_bulk_operation_remove(batch->bulk_op, document);
 
 	bson_destroy(document);
 
@@ -203,9 +219,11 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
+
+	JMongoDBBatch* batch = data;
 
 	bson_t document[1];
 	bson_t opts[1];
@@ -213,7 +231,7 @@ backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32*
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
@@ -224,7 +242,7 @@ backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32*
 	bson_init(opts);
 	bson_append_int32(opts, "limit", -1, 1);
 
-	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+	m_collection = mongoc_client_get_collection(backend_connection, backend_database, batch->namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, opts, NULL);
 
 	while (mongoc_cursor_next(cursor, &result))

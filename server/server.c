@@ -515,9 +515,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_KV_GET:
 				{
 					g_autoptr(JMessage) reply = NULL;
+					gpointer batch;
 
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
+					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
@@ -526,7 +528,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 						key = j_message_get_string(message);
 
-						if (j_backend_kv_get(jd_kv_backend, namespace, key, &value, &len))
+						if (j_backend_kv_get(jd_kv_backend, batch, key, &value, &len))
 						{
 							j_message_add_operation(reply, 4 + len);
 							j_message_append_4(reply, &len);
@@ -542,6 +544,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 							j_message_append_4(reply, &zero);
 						}
 					}
+
+					j_backend_kv_batch_execute(jd_kv_backend, batch);
 
 					j_message_send(reply, connection);
 				}

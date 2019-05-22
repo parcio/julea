@@ -52,9 +52,9 @@ static
 gboolean
 backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	(void)len;
 
@@ -65,17 +65,17 @@ static
 gboolean
 backend_delete (gpointer data, gchar const* key)
 {
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	return TRUE;
 }
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);

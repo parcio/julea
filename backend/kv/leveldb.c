@@ -101,9 +101,9 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
 
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, value, len);
@@ -119,8 +119,8 @@ backend_delete (gpointer data, gchar const* key)
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
@@ -131,18 +131,19 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
+	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
 	g_autofree gpointer result = NULL;
 	gsize result_len;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
-	nskey = g_strdup_printf("%s:%s", namespace, key);
+	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
 
 	if (result != NULL)

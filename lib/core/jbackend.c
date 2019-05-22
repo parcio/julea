@@ -458,19 +458,19 @@ j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
 }
 
 gboolean
-j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, gpointer* value, guint32* value_len)
+j_backend_kv_get (JBackend* backend, gpointer batch, gchar const* key, gpointer* value, guint32* value_len)
 {
 	gboolean ret;
 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(value_len != NULL, FALSE);
 
-	j_trace_enter("backend_get", "%s, %s, %p, %p", namespace, key, (gpointer)value, (gpointer)value_len);
-	ret = backend->kv.backend_get(namespace, key, value, value_len);
+	j_trace_enter("backend_get", "%p, %s, %p, %p", batch, key, (gpointer)value, (gpointer)value_len);
+	ret = backend->kv.backend_get(batch, key, value, value_len);
 	j_trace_leave("backend_get");
 
 	return ret;

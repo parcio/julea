@@ -88,8 +88,7 @@ struct JBackend
 
 			gboolean (*backend_put) (gpointer, gchar const*, gconstpointer, guint32);
 			gboolean (*backend_delete) (gpointer, gchar const*);
-
-			gboolean (*backend_get) (gchar const*, gchar const*, gpointer*, guint32*);
+			gboolean (*backend_get) (gpointer, gchar const*, gpointer*, guint32*);
 
 			gboolean (*backend_get_all) (gchar const*, gpointer*);
 			gboolean (*backend_get_by_prefix) (gchar const*, gchar const*, gpointer*);
@@ -129,8 +128,7 @@ gboolean j_backend_kv_batch_execute (JBackend*, gpointer);
 
 gboolean j_backend_kv_put (JBackend*, gpointer, gchar const*, gconstpointer, guint32);
 gboolean j_backend_kv_delete (JBackend*, gpointer, gchar const*);
-
-gboolean j_backend_kv_get (JBackend*, gchar const*, gchar const*, gpointer*, guint32*);
+gboolean j_backend_kv_get (JBackend*, gpointer, gchar const*, gpointer*, guint32*);
 
 gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);

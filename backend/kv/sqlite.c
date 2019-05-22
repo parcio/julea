@@ -89,9 +89,9 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
 
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	sqlite3_prepare_v2(backend_db, "INSERT INTO julea (namespace, key, value) VALUES (?, ?, ?);", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
@@ -113,8 +113,8 @@ backend_delete (gpointer data, gchar const* key)
 	sqlite3_stmt* stmt;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	sqlite3_prepare_v2(backend_db, "DELETE FROM julea WHERE namespace = ? AND key = ?;", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
@@ -129,21 +129,22 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
+	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
 	g_autofree gchar* nskey = NULL;
 	gint ret;
 	gconstpointer result = NULL;
 	gsize result_len;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
 	sqlite3_prepare_v2(backend_db, "SELECT value FROM julea WHERE namespace = ? AND key = ?;", -1, &stmt, NULL);
-	sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
+	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
 	sqlite3_bind_text(stmt, 2, key, -1, NULL);
 
 	ret = sqlite3_step(stmt);
