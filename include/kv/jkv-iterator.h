@@ -45,7 +45,7 @@ JKVIterator* j_kv_iterator_new (guint32, gchar const*, gchar const*);
 void j_kv_iterator_free (JKVIterator*);
 
 gboolean j_kv_iterator_next (JKVIterator*);
-bson_t const* j_kv_iterator_get (JKVIterator*);
+gconstpointer j_kv_iterator_get (JKVIterator*, guint32*);
 
 G_END_DECLS
 

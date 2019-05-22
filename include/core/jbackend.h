@@ -86,14 +86,14 @@ struct JBackend
 			gboolean (*backend_batch_start) (gchar const*, JSemanticsSafety, gpointer*);
 			gboolean (*backend_batch_execute) (gpointer);
 
-			gboolean (*backend_put) (gpointer, gchar const*, bson_t const*);
+			gboolean (*backend_put) (gpointer, gchar const*, gconstpointer, guint32);
 			gboolean (*backend_delete) (gpointer, gchar const*);
 
-			gboolean (*backend_get) (gchar const*, gchar const*, bson_t*);
+			gboolean (*backend_get) (gchar const*, gchar const*, gpointer*, guint32*);
 
 			gboolean (*backend_get_all) (gchar const*, gpointer*);
 			gboolean (*backend_get_by_prefix) (gchar const*, gchar const*, gpointer*);
-			gboolean (*backend_iterate) (gpointer, bson_t*);
+			gboolean (*backend_iterate) (gpointer, gconstpointer*, guint32*);
 		}
 		kv;
 	};
@@ -127,14 +127,14 @@ void j_backend_kv_fini (JBackend*);
 gboolean j_backend_kv_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
 gboolean j_backend_kv_batch_execute (JBackend*, gpointer);
 
-gboolean j_backend_kv_put (JBackend*, gpointer, gchar const*, bson_t const*);
+gboolean j_backend_kv_put (JBackend*, gpointer, gchar const*, gconstpointer, guint32);
 gboolean j_backend_kv_delete (JBackend*, gpointer, gchar const*);
 
-gboolean j_backend_kv_get (JBackend*, gchar const*, gchar const*, bson_t*);
+gboolean j_backend_kv_get (JBackend*, gchar const*, gchar const*, gpointer*, guint32*);
 
 gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
-gboolean j_backend_kv_iterate (JBackend*, gpointer, bson_t*);
+gboolean j_backend_kv_iterate (JBackend*, gpointer, gconstpointer*, guint32*);
 
 G_END_DECLS
 

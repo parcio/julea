@@ -84,7 +84,7 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
@@ -96,7 +96,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	sqlite3_prepare_v2(backend_db, "INSERT INTO julea (namespace, key, value) VALUES (?, ?, ?);", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
 	sqlite3_bind_text(stmt, 2, key, -1, NULL);
-	sqlite3_bind_blob(stmt, 3, bson_get_data(value), value->len, NULL);
+	sqlite3_bind_blob(stmt, 3, value, len, NULL);
 
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
@@ -129,7 +129,7 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
 {
 	sqlite3_stmt* stmt;
 	g_autofree gchar* nskey = NULL;
@@ -139,7 +139,8 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	sqlite3_prepare_v2(backend_db, "SELECT value FROM julea WHERE namespace = ? AND key = ?;", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
@@ -149,14 +150,12 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	if (ret == SQLITE_ROW)
 	{
-		bson_t tmp[1];
-
 		result = sqlite3_column_blob(stmt, 0);
 		result_len = sqlite3_column_bytes(stmt, 0);
 
 		// FIXME check whether copies can be avoided
-		bson_init_static(tmp, result, result_len);
-		bson_copy_to(tmp, result_out);
+		*value = g_memdup(result, result_len);
+		*len = result_len;
 	}
 
 	sqlite3_finalize(stmt);
@@ -206,26 +205,23 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	sqlite3_stmt* stmt = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		guchar const* key;
-		gconstpointer value;
-		gsize len;
 
 		key = sqlite3_column_text(stmt, 0);
-		value = sqlite3_column_blob(stmt, 1);
-		len = sqlite3_column_bytes(stmt, 1);
+		*value = sqlite3_column_blob(stmt, 1);
+		*len = sqlite3_column_bytes(stmt, 1);
 
 		(void)key;
-
-		bson_init_static(result_out, value, len);
 
 		return TRUE;
 	}

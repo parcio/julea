@@ -24,8 +24,6 @@
 #include <julea.h>
 #include <julea-internal.h>
 
-static bson_t empty[1];
-
 static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
@@ -36,7 +34,7 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 	(void)safety;
 
 	// Return something != NULL
-	*data = empty;
+	*data = data;
 
 	return TRUE;
 }
@@ -52,11 +50,13 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+
+	(void)len;
 
 	return TRUE;
 }
@@ -73,13 +73,15 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
 {
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
-	bson_copy_to(empty, result_out);
+	*value = NULL;
+	*len = 0;
 
 	return TRUE;
 }
@@ -111,12 +113,14 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
-	bson_init_static(result_out, bson_get_data(empty), empty->len);
+	*value = "";
+	*len = 1;
 
 	return FALSE;
 }
@@ -127,8 +131,6 @@ backend_init (gchar const* path)
 {
 	(void)path;
 
-	bson_init(empty);
-
 	return TRUE;
 }
 
@@ -136,7 +138,6 @@ static
 void
 backend_fini (void)
 {
-	bson_destroy(empty);
 }
 
 static

@@ -28,7 +28,9 @@ int jfs_mkdir(char const* path, mode_t mode)
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
-	bson_t* file;
+	bson_t* tmp;
+	gpointer value;
+	guint32 len;
 	g_autofree gchar* basename = NULL;
 
 	(void)mode;
@@ -37,13 +39,15 @@ int jfs_mkdir(char const* path, mode_t mode)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
 
-	file = bson_new();
+	tmp = bson_new();
 
-	bson_append_utf8(file, "name", -1, basename, -1);
-	bson_append_bool(file, "file", -1, FALSE);
-	bson_append_int64(file, "time", -1, g_get_real_time());
+	bson_append_utf8(tmp, "name", -1, basename, -1);
+	bson_append_bool(tmp, "file", -1, FALSE);
+	bson_append_int64(tmp, "time", -1, g_get_real_time());
 
-	j_kv_put(kv, file, batch);
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
+
+	j_kv_put(kv, value, len, bson_free, batch);
 
 	if (j_batch_execute(batch))
 	{

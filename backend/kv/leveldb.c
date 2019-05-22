@@ -96,7 +96,7 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
@@ -106,7 +106,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, (gconstpointer)bson_get_data(value), value->len);
+	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, value, len);
 
 	// FIXME
 	return TRUE;
@@ -131,7 +131,7 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
 {
 	g_autofree gchar* nskey = NULL;
 	g_autofree gpointer result = NULL;
@@ -139,18 +139,17 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", namespace, key);
 	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
 
 	if (result != NULL)
 	{
-		bson_t tmp[1];
-
 		// FIXME check whether copies can be avoided
-		bson_init_static(tmp, result, result_len);
-		bson_copy_to(tmp, result_out);
+		*value = g_memdup(result, result_len);
+		*len = result_len;
 	}
 
 	return (result != NULL);
@@ -213,20 +212,20 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	JLevelDBIterator* iterator = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	if (leveldb_iter_valid(iterator->iterator))
 	{
 		gchar const* key;
-		gconstpointer value;
-		gsize len;
+		gsize tmp;
 
-		key = leveldb_iter_key(iterator->iterator, &len);
+		key = leveldb_iter_key(iterator->iterator, &tmp);
 
 		if (!g_str_has_prefix(key, iterator->prefix))
 		{
@@ -234,8 +233,8 @@ backend_iterate (gpointer data, bson_t* result_out)
 			goto out;
 		}
 
-		value = leveldb_iter_value(iterator->iterator, &len);
-		bson_init_static(result_out, value, len);
+		*value = leveldb_iter_value(iterator->iterator, &tmp);
+		*len = tmp;
 
 		// FIXME might invalidate value
 		leveldb_iter_next(iterator->iterator);

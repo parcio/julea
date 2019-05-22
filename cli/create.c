@@ -70,12 +70,9 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 	if (kuri != NULL)
 	{
 		g_autoptr(JBatch) batch = NULL;
-		bson_t* empty;
-
-		empty = bson_new();
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_kv_put(j_kv_uri_get_kv(kuri), empty, batch);
+		j_kv_put(j_kv_uri_get_kv(kuri), g_strdup("empty"), 6, g_free, batch);
 		j_batch_execute(batch);
 
 		goto end;

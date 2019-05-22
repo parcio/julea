@@ -38,8 +38,6 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
-	bson_t* empty;
-
 	semantics = j_benchmark_get_semantics();
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
@@ -51,11 +49,9 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		empty = bson_new();
-
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);
-		j_kv_put(object, empty, batch);
+		j_kv_put(object, g_strdup("empty"), 6, g_free, batch);
 
 		j_kv_delete(object, delete_batch);
 
@@ -94,6 +90,89 @@ benchmark_kv_put_batch (BenchmarkResult* result)
 
 static
 void
+_benchmark_kv_get_callback (gpointer value, guint32 len, gpointer data)
+{
+	(void)len;
+	(void)data;
+
+	g_free(value);
+}
+
+static
+void
+_benchmark_kv_get (BenchmarkResult* result, gboolean use_batch)
+{
+	guint const n = 200000;
+
+	g_autoptr(JBatch) delete_batch = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JSemantics) semantics = NULL;
+	gdouble elapsed;
+
+	semantics = j_benchmark_get_semantics();
+	delete_batch = j_batch_new(semantics);
+	batch = j_batch_new(semantics);
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-%d", i);
+		object = j_kv_new("benchmark", name);
+		j_kv_put(object, g_strdup(name), strlen(name), g_free, batch);
+
+		j_kv_delete(object, delete_batch);
+	}
+
+	j_batch_execute(batch);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_autoptr(JKV) object = NULL;
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-%d", i);
+		object = j_kv_new("benchmark", name);
+		j_kv_get_callback(object, _benchmark_kv_get_callback, NULL, batch);
+
+		if (!use_batch)
+		{
+			j_batch_execute(batch);
+		}
+	}
+
+	if (use_batch)
+	{
+		j_batch_execute(batch);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	j_batch_execute(delete_batch);
+
+	result->elapsed_time = elapsed;
+	result->operations = n;
+}
+
+static
+void
+benchmark_kv_get (BenchmarkResult* result)
+{
+	_benchmark_kv_get(result, FALSE);
+}
+
+static
+void
+benchmark_kv_get_batch (BenchmarkResult* result)
+{
+	_benchmark_kv_get(result, TRUE);
+}
+
+static
+void
 _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 200000;
@@ -101,8 +180,6 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
-
-	bson_t* empty;
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
@@ -112,11 +189,9 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		empty = bson_new();
-
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);
-		j_kv_put(object, empty, batch);
+		j_kv_put(object, g_strdup("empty"), 6, g_free, batch);
 	}
 
 	j_batch_execute(batch);
@@ -176,8 +251,6 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
 
-	bson_t* empty;
-
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
@@ -188,11 +261,9 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 		g_autoptr(JKV) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		empty = bson_new();
-
 		name = g_strdup_printf("benchmark-%d", i);
 		object = j_kv_new("benchmark", name);
-		j_kv_put(object, empty, batch);
+		j_kv_put(object, g_strdup("empty"), 6, g_free, batch);
 
 		j_kv_delete(object, batch);
 
@@ -234,6 +305,8 @@ benchmark_kv (void)
 {
 	j_benchmark_run("/kv/put", benchmark_kv_put);
 	j_benchmark_run("/kv/put-batch", benchmark_kv_put_batch);
+	j_benchmark_run("/kv/get", benchmark_kv_get);
+	j_benchmark_run("/kv/get-batch", benchmark_kv_get_batch);
 	j_benchmark_run("/kv/delete", benchmark_kv_delete);
 	j_benchmark_run("/kv/delete-batch", benchmark_kv_delete_batch);
 	j_benchmark_run("/kv/unordered-put-delete", benchmark_kv_unordered_put_delete);

@@ -47,10 +47,15 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 
 	while (j_kv_iterator_next(it))
 	{
-		bson_t const* value = j_kv_iterator_get(it);
+		gconstpointer value;
+		guint32 len;
+		bson_t tmp[1];
 		bson_iter_t iter;
 
-		if (bson_iter_init_find(&iter, value, "name") && bson_iter_type(&iter) == BSON_TYPE_UTF8)
+		value = j_kv_iterator_get(it, &len);
+		bson_init_static(tmp, value, len);
+
+		if (bson_iter_init_find(&iter, tmp, "name") && bson_iter_type(&iter) == BSON_TYPE_UTF8)
 		{
 			gchar const* name;
 

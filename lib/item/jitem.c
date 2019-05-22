@@ -217,7 +217,9 @@ JItem*
 j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
 	JItem* item;
-	bson_t* value;
+	bson_t* tmp;
+	gpointer value;
+	guint32 len;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -229,10 +231,11 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 		goto end;
 	}
 
-	value = j_item_serialize(item, j_batch_get_semantics(batch));
+	tmp = j_item_serialize(item, j_batch_get_semantics(batch));
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
 
 	j_distributed_object_create(item->object, batch);
-	j_kv_put(item->kv, value, batch);
+	j_kv_put(item->kv, value, len, bson_free, batch);
 
 end:
 	j_trace_leave(G_STRFUNC);
@@ -242,14 +245,18 @@ end:
 
 static
 void
-j_item_get_callback (bson_t const* value, gpointer data_)
+j_item_get_callback (gpointer value, guint32 len, gpointer data_)
 {
 	JItemGetData* data = data_;
+	bson_t tmp[1];
 
-	*(data->item) = j_item_new_from_bson(data->collection, value);
+	bson_init_static(tmp, value, len);
+	*(data->item) = j_item_new_from_bson(data->collection, tmp);
 
 	j_collection_unref(data->collection);
 	g_slice_free(JItemGetData, data);
+
+	g_free(value);
 }
 
 /**

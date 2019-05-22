@@ -32,7 +32,8 @@ jfs_getattr (char const* path, struct stat* stbuf)
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
-	bson_t file[1];
+	gpointer value;
+	guint32 len;
 
 	if (g_strcmp0(path, "/") == 0)
 	{
@@ -49,15 +50,17 @@ jfs_getattr (char const* path, struct stat* stbuf)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
 
-	j_kv_get(kv, file, batch);
+	j_kv_get(kv, &value, &len, batch);
 
 	if (j_batch_execute(batch))
 	{
+		bson_t file[1];
 		bson_iter_t iter;
 		gboolean is_file = TRUE;
 		gint64 size = 0;
 		gint64 time = 0;
 
+		bson_init_static(file, value, len);
 		bson_iter_init(&iter, file);
 
 		while (bson_iter_next(&iter))
@@ -104,6 +107,7 @@ jfs_getattr (char const* path, struct stat* stbuf)
 		}
 
 		bson_destroy(file);
+		g_free(value);
 	}
 
 	return ret;

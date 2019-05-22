@@ -423,7 +423,7 @@ j_backend_kv_batch_execute (JBackend* backend, gpointer batch)
 }
 
 gboolean
-j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, bson_t const* value)
+j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, gconstpointer value, guint32 value_len)
 {
 	gboolean ret;
 
@@ -433,8 +433,8 @@ j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, bson_t co
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	j_trace_enter("backend_put", "%p, %s, %p", batch, key, (gconstpointer)value);
-	ret = backend->kv.backend_put(batch, key, value);
+	j_trace_enter("backend_put", "%p, %s, %p, %u", batch, key, (gconstpointer)value, value_len);
+	ret = backend->kv.backend_put(batch, key, value, value_len);
 	j_trace_leave("backend_put");
 
 	return ret;
@@ -458,7 +458,7 @@ j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
 }
 
 gboolean
-j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, bson_t* value)
+j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, gpointer* value, guint32* value_len)
 {
 	gboolean ret;
 
@@ -467,9 +467,10 @@ j_backend_kv_get (JBackend* backend, gchar const* namespace, gchar const* key, b
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(value_len != NULL, FALSE);
 
-	j_trace_enter("backend_get", "%s, %s, %p", namespace, key, (gpointer)value);
-	ret = backend->kv.backend_get(namespace, key, value);
+	j_trace_enter("backend_get", "%s, %s, %p, %p", namespace, key, (gpointer)value, (gpointer)value_len);
+	ret = backend->kv.backend_get(namespace, key, value, value_len);
 	j_trace_leave("backend_get");
 
 	return ret;
@@ -510,7 +511,7 @@ j_backend_kv_get_by_prefix (JBackend* backend, gchar const* namespace, gchar con
 	return ret;
 }
 gboolean
-j_backend_kv_iterate (JBackend* backend, gpointer iterator, bson_t* value)
+j_backend_kv_iterate (JBackend* backend, gpointer iterator, gconstpointer* value, guint32* value_len)
 {
 	gboolean ret;
 
@@ -518,9 +519,10 @@ j_backend_kv_iterate (JBackend* backend, gpointer iterator, bson_t* value)
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(value_len != NULL, FALSE);
 
-	j_trace_enter("backend_iterate", "%p, %p", iterator, (gpointer)value);
-	ret = backend->kv.backend_iterate(iterator, value);
+	j_trace_enter("backend_iterate", "%p, %p, %p", iterator, (gpointer)value, (gpointer)value_len);
+	ret = backend->kv.backend_iterate(iterator, value, value_len);
 	j_trace_leave("backend_iterate");
 
 	return ret;

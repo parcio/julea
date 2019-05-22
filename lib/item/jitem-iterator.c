@@ -121,12 +121,15 @@ JItem*
 j_item_iterator_get (JItemIterator* iterator)
 {
 	JItem* item;
-	bson_t const* value;
+	bson_t tmp[1];
+	gconstpointer value;
+	guint32 len;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator);
-	item = j_item_new_from_bson(iterator->collection, value);
+	value = j_kv_iterator_get(iterator->iterator, &len);
+	bson_init_static(tmp, value, len);
+	item = j_item_new_from_bson(iterator->collection, tmp);
 
 	return item;
 }

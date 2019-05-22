@@ -92,19 +92,19 @@ j_cmd_status (gchar const** arguments)
 
 	if (kuri != NULL)
 	{
-		bson_t value[1];
-		gchar* json;
+		g_autofree gchar* size_string = NULL;
+		gpointer value;
+		guint32 len;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_kv_get(j_kv_uri_get_kv(kuri), value, batch);
+		j_kv_get(j_kv_uri_get_kv(kuri), &value, &len, batch);
 		j_batch_execute(batch);
 
-		json = bson_as_json(value, NULL);
-		bson_destroy(value);
+		size_string = g_format_size(len);
 
-		g_print("JSON: %s\n", json);
+		g_print("Size:              %s\n", size_string);
 
-		bson_free(json);
+		g_free(value);
 
 		goto end;
 	}

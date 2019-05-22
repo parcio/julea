@@ -28,21 +28,22 @@ int jfs_utimens (char const* path, const struct timespec ts[2])
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
-	bson_t file[1];
+	gpointer value;
+	guint32 len;
 
 	(void)ts;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
 
-	j_kv_get(kv, file, batch);
+	j_kv_get(kv, &value, &len, batch);
 
 	if (j_batch_execute(batch))
 	{
 		// FIXME
 		ret = 0;
 
-		bson_destroy(file);
+		g_free(value);
 	}
 
 	return ret;

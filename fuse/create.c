@@ -29,7 +29,9 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autoptr(JObject) object = NULL;
-	bson_t* file;
+	bson_t* tmp;
+	gpointer value;
+	guint32 len;
 	g_autofree gchar* basename = NULL;
 
 	(void)mode;
@@ -40,14 +42,16 @@ int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
 	kv = j_kv_new("posix", path);
 	object = j_object_new("posix", path);
 
-	file = bson_new();
+	tmp = bson_new();
 
-	bson_append_utf8(file, "name", -1, basename, -1);
-	bson_append_bool(file, "file", -1, TRUE);
-	bson_append_int64(file, "size", -1, 0);
-	bson_append_int64(file, "time", -1, g_get_real_time());
+	bson_append_utf8(tmp, "name", -1, basename, -1);
+	bson_append_bool(tmp, "file", -1, TRUE);
+	bson_append_int64(tmp, "size", -1, 0);
+	bson_append_int64(tmp, "time", -1, g_get_real_time());
 
-	j_kv_put(kv, file, batch);
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
+
+	j_kv_put(kv, value, len, bson_free, batch);
 	j_object_create(object, batch);
 
 	if (j_batch_execute(batch))

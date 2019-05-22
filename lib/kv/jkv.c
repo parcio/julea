@@ -26,8 +26,6 @@
 
 #include <string.h>
 
-#include <bson.h>
-
 #include <kv/jkv.h>
 
 #include <julea.h>
@@ -48,7 +46,8 @@ struct JKVOperation
 		struct
 		{
 			JKV* kv;
-			bson_t* value;
+			gpointer* value;
+			guint32* value_len;
 			JKVGetFunc func;
 			gpointer data;
 		}
@@ -57,7 +56,9 @@ struct JKVOperation
 		struct
 		{
 			JKV* kv;
-			bson_t* value;
+			gpointer* value;
+			guint32 value_len;
+			GDestroyNotify value_destroy;
 		}
 		put;
 	};
@@ -98,7 +99,11 @@ j_kv_put_free (gpointer data)
 	JKVOperation* operation = data;
 
 	j_kv_unref(operation->put.kv);
-	bson_destroy(operation->put.value);
+
+	if (operation->put.value_destroy != NULL)
+	{
+		operation->put.value_destroy(operation->put.value);
+	}
 
 	g_slice_free(JKVOperation, operation);
 }
@@ -184,7 +189,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 		if (kv_backend != NULL)
 		{
-			ret = j_backend_kv_put(kv_backend, kv_batch, kop->put.kv->key, kop->put.value) && ret;
+			ret = j_backend_kv_put(kv_backend, kv_batch, kop->put.kv->key, kop->put.value, kop->put.value_len) && ret;
 		}
 		else
 		{
@@ -192,10 +197,10 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 			key_len = strlen(kop->put.kv->key) + 1;
 
-			j_message_add_operation(message, key_len + 4 + kop->put.value->len);
+			j_message_add_operation(message, key_len + 4 + kop->put.value_len);
 			j_message_append_n(message, kop->put.kv->key, key_len);
-			j_message_append_4(message, &(kop->put.value->len));
-			j_message_append_n(message, bson_get_data(kop->put.value), kop->put.value->len);
+			j_message_append_4(message, &(kop->put.value_len));
+			j_message_append_n(message, kop->put.value, kop->put.value_len);
 		}
 	}
 
@@ -380,19 +385,20 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		{
 			if (kop->get.func != NULL)
 			{
-				bson_t tmp[1];
+				gpointer value;
+				guint32 len;
 
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, tmp) && ret;
+				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, &value, &len) && ret;
 
 				if (ret)
 				{
-					kop->get.func(tmp, kop->get.data);
-					bson_destroy(tmp);
+					// j_backend_kv_get returns a new copy, pass it along
+					kop->get.func(value, len, kop->get.data);
 				}
 			}
 			else
 			{
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value) && ret;
+				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
 			}
 		}
 		else
@@ -430,21 +436,22 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 
 			if (len > 0)
 			{
-				bson_t tmp[1];
 				gconstpointer data;
 
 				data = j_message_get_n(reply, len);
 
-				// FIXME check whether copies can be avoided
-				bson_init_static(tmp, data, len);
-
 				if (kop->get.func != NULL)
 				{
-					kop->get.func(tmp, kop->get.data);
+					gpointer value;
+
+					// data belongs to the message, create a copy for the callback
+					value = g_memdup(data, len);
+					kop->get.func(value, len, kop->get.data);
 				}
 				else
 				{
-					bson_copy_to(tmp, kop->get.value);
+					*(kop->get.value) = g_memdup(data, len);
+					*(kop->get.value_len) = len;
 				}
 			}
 		}
@@ -591,13 +598,13 @@ j_kv_unref (JKV* kv)
  * \endcode
  *
  * \param kv    A KV.
- * \param value A value. Has to be allocated with bson_new(). Ownership is transfered.
+ * \param value A value.
  * \param batch A batch.
  *
  * \return A new item. Should be freed with j_kv_unref().
  **/
 void
-j_kv_put (JKV* kv, bson_t* value, JBatch* batch)
+j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
 {
 	JKVOperation* kop;
 	JOperation* operation;
@@ -609,6 +616,8 @@ j_kv_put (JKV* kv, bson_t* value, JBatch* batch)
 	kop = g_slice_new(JKVOperation);
 	kop->put.kv = j_kv_ref(kv);
 	kop->put.value = value;
+	kop->put.value_len = value_len;
+	kop->put.value_destroy = value_destroy;
 
 	operation = j_operation_new();
 	// FIXME key = index + namespace
@@ -661,7 +670,7 @@ j_kv_delete (JKV* object, JBatch* batch)
  * \param batch     A batch.
  **/
 void
-j_kv_get (JKV* kv, bson_t* value, JBatch* batch)
+j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 {
 	JKVOperation* kop;
 	JOperation* operation;
@@ -673,6 +682,7 @@ j_kv_get (JKV* kv, bson_t* value, JBatch* batch)
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
 	kop->get.value = value;
+	kop->get.value_len = value_len;
 	kop->get.func = NULL;
 	kop->get.data = NULL;
 
@@ -710,6 +720,7 @@ j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
 	kop->get.value = NULL;
+	kop->get.value_len = NULL;
 	kop->get.func = func;
 	kop->get.data = data;
 

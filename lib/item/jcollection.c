@@ -159,7 +159,9 @@ JCollection*
 j_collection_create (gchar const* name, JBatch* batch)
 {
 	JCollection* collection;
-	bson_t* value;
+	bson_t* tmp;
+	gpointer value;
+	guint32 len;
 
 	g_return_val_if_fail(name != NULL, NULL);
 
@@ -168,9 +170,10 @@ j_collection_create (gchar const* name, JBatch* batch)
 		goto end;
 	}
 
-	value = j_collection_serialize(collection);
+	tmp = j_collection_serialize(collection);
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
 
-	j_kv_put(collection->kv, value, batch);
+	j_kv_put(collection->kv, value, len, bson_free, batch);
 
 end:
 	return collection;
@@ -178,11 +181,15 @@ end:
 
 static
 void
-j_collection_get_callback (bson_t const* value, gpointer data)
+j_collection_get_callback (gpointer value, guint32 len, gpointer data)
 {
 	JCollection** collection = data;
+	bson_t tmp[1];
 
-	*collection = j_collection_new_from_bson(value);
+	bson_init_static(tmp, value, len);
+	*collection = j_collection_new_from_bson(tmp);
+
+	g_free(value);
 }
 
 /**

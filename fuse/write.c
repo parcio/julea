@@ -30,8 +30,9 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autoptr(JObject) object = NULL;
-	bson_t file[1];
 	guint64 bytes_written;
+	gpointer value;
+	guint32 len;
 
 	(void)fi;
 
@@ -39,13 +40,16 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 	kv = j_kv_new("posix", path);
 	object = j_object_new("posix", path);
 
-	j_kv_get(kv, file, batch);
+	j_kv_get(kv, &value, &len, batch);
 	j_object_write(object, buf, size, offset, &bytes_written, batch);
 
 	if (j_batch_execute(batch))
 	{
+		bson_t file[1];
 		bson_iter_t iter;
 		gint64 old_size = 0;
+
+		bson_init_static(file, value, len);
 
 		if (bson_iter_init_find(&iter, file, "size") && bson_iter_type(&iter) == BSON_TYPE_INT64)
 		{
@@ -55,7 +59,7 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 			{
 				bson_iter_overwrite_int64(&iter, offset + size);
 
-				j_kv_put(kv, bson_copy(file), batch);
+				j_kv_put(kv, g_memdup(bson_get_data(file), file->len), file->len, g_free, batch);
 				j_batch_execute(batch);
 			}
 		}
@@ -63,6 +67,7 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 		ret = bytes_written;
 
 		bson_destroy(file);
+		g_free(value);
 	}
 
 	return ret;

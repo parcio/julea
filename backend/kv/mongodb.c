@@ -143,7 +143,7 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	bson_t document[1];
 	bson_t selector[1];
@@ -155,7 +155,7 @@ backend_put (gpointer data, gchar const* key, bson_t const* value)
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
-	bson_append_document(document, "value", -1, value);
+	bson_append_binary(document, "value", -1, BSON_SUBTYPE_BINARY, value, len);
 
 	bson_init(selector);
 	bson_append_utf8(selector, "key", -1, key, -1);
@@ -203,7 +203,7 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gchar const* namespace, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
 
@@ -215,7 +215,8 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
@@ -230,16 +231,15 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	{
 		bson_iter_t iter;
 
-		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_BINARY)
 		{
-			bson_t tmp[1];
-			bson_value_t const* value;
+			bson_value_t const* bv;
 
-			value = bson_iter_value(&iter);
-			bson_init_static(tmp, value->value.v_doc.data, value->value.v_doc.data_len);
+			bv = bson_iter_value(&iter);
+			*value = g_memdup(bv->value.v_binary.data, bv->value.v_binary.data_len);
+			*len = bv->value.v_binary.data_len;
 
 			ret = TRUE;
-			bson_copy_to(tmp, result_out);
 
 			break;
 		}
@@ -325,7 +325,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	bson_t const* result;
 	bson_iter_t iter;
@@ -334,17 +334,19 @@ backend_iterate (gpointer data, bson_t* result_out)
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	/* FIXME */
 	if (mongoc_cursor_next(cursor, &result))
 	{
 		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
 		{
-			bson_value_t const* value;
+			bson_value_t const* bv;
 
-			value = bson_iter_value(&iter);
-			bson_init_static(result_out, value->value.v_doc.data, value->value.v_doc.data_len);
+			bv = bson_iter_value(&iter);
+			*value = bv->value.v_doc.data;
+			*len = bv->value.v_doc.data_len;
 
 			ret = TRUE;
 		}
