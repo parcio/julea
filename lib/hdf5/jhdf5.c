@@ -147,7 +147,9 @@ char*
 j_hdf5_encode_type (const char* property, hid_t* type_id, hid_t cpl_id, size_t* type_size)
 {
 	char* type_buf;
-	H5Pget(cpl_id, property, type_id);
+	(void)property;
+	(void)cpl_id;
+	//H5Pget(cpl_id, property, type_id);
 	g_assert(-1 != *type_id);
 	H5Tencode(*type_id, NULL, type_size);
 	type_buf = (char*) malloc(*type_size);
@@ -164,7 +166,9 @@ char*
 j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t* space_size)
 {
 	char* space_buf;
-	H5Pget(cpl_id, property, space_id);
+	(void)property;
+	(void)cpl_id;
+	//H5Pget(cpl_id, property, space_id);
 	g_assert(-1 != *space_id);
 	H5Sencode(*space_id, NULL, space_size);
 	space_buf = (char*) malloc(*space_size);
@@ -501,7 +505,7 @@ create_path (const char* name, char* prev_path)
  **/
 static
 void*
-H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req)
+H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
 	JHA_t* attribute;
 
@@ -510,8 +514,6 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	gchar* space_buf = NULL;
 	gchar* type_buf = NULL;
-	hid_t space_id;
-	hid_t type_id;
 	gsize space_size;
 	gsize type_size;
 
@@ -873,10 +875,12 @@ H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void**
  **/
 static
 void*
-H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gcpl_id __attribute__((unused)), hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id __attribute__((unused)), hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
 {
 	JHG_t *group;
 	group = (JHG_t *)malloc(sizeof(*group));
+
+	(void)lcpl_id;
 
 	switch (loc_params->obj_type)
 	{
@@ -991,21 +995,21 @@ H5VL_julea_group_close (void* grp, hid_t dxpl_id  __attribute__((unused)), void*
  **/
 static
 void*
-H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t dcpl_id, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
+H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t dapl_id  __attribute__((unused)), hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)))
 {
 	JHD_t *dset;
-	hid_t space_id;
 	size_t space_size;
 	char* space_buf;
 	int ndims;
 	hsize_t *dims;
-	hid_t type_id;
 	size_t type_size;
 	char* type_buf;
 	size_t data_size;
 	bson_t* value;
 	JBatch* batch;
 	char* tsloc;
+
+	(void)lcpl_id;
 
 	dset = (JHD_t *)malloc(sizeof(*dset));
 
