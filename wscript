@@ -67,7 +67,7 @@ def get_rpath(ctx):
 	if not ctx.env.JULEA_DEBUG:
 		return None
 
-	return ['{0}/lib'.format(os.path.abspath(out))]
+	return ['{0}/lib'.format(os.path.abspath(ctx.out_dir))]
 
 
 def check_and_add_cflags(ctx, flags, mandatory=True):
@@ -365,8 +365,9 @@ def configure(ctx):
 	backend_paths = []
 
 	if ctx.options.debug:
-		# Context.out_dir is empty after the first configure
-		backend_path_build = '{0}/backend'.format(os.path.abspath(out))
+		# ctx.out_dir is not available yet
+		out_dir = ctx.options.out or out
+		backend_path_build = '{0}/backend'.format(os.path.abspath(out_dir))
 		ctx.define('JULEA_BACKEND_PATH_BUILD', backend_path_build)
 		backend_paths.append(backend_path_build)
 
