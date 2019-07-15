@@ -68,7 +68,7 @@ j_item_iterator_new (JCollection* collection)
 
 	iterator = g_slice_new(JItemIterator);
 	iterator->collection = j_collection_ref(collection);
-	iterator->iterator = j_kv_iterator_new(0, "items", prefix);
+	iterator->iterator = j_kv_iterator_new("items", prefix);
 
 	return iterator;
 }

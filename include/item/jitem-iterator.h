@@ -44,6 +44,8 @@ G_BEGIN_DECLS
 JItemIterator* j_item_iterator_new (JCollection*);
 void j_item_iterator_free (JItemIterator*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JItemIterator, j_item_iterator_free)
+
 gboolean j_item_iterator_next (JItemIterator*);
 JItem* j_item_iterator_get (JItemIterator*);
 

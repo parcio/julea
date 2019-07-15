@@ -59,7 +59,7 @@ j_collection_iterator_new (void)
 	JCollectionIterator* iterator;
 
 	iterator = g_slice_new(JCollectionIterator);
-	iterator->iterator = j_kv_iterator_new(0, "collections", NULL);
+	iterator->iterator = j_kv_iterator_new("collections", NULL);
 
 	return iterator;
 }

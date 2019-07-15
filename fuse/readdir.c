@@ -43,7 +43,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		prefix = g_strdup_printf("%s/", path);
 	}
 
-	it = j_kv_iterator_new(0, "posix", prefix);
+	it = j_kv_iterator_new("posix", prefix);
 
 	while (j_kv_iterator_next(it))
 	{

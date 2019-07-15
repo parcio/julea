@@ -51,6 +51,7 @@ main (int argc, char** argv)
 	// Item client
 	test_collection();
 	test_item();
+	test_item_iterator();
 	test_uri();
 
 	// HDF5 client
