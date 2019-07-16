@@ -117,7 +117,7 @@ test_message_write_read (void)
 	output = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
 	input = g_memory_input_stream_new();
 
-	message_send = j_message_new(J_MESSAGE_NONE, 16);
+	message_send = j_message_new(J_MESSAGE_NONE, 18);
 	g_assert(message_send != NULL);
 	message_recv = j_message_new(J_MESSAGE_NONE, 0);
 	g_assert(message_recv != NULL);
@@ -128,7 +128,9 @@ test_message_write_read (void)
 	g_assert(ret);
 	ret = j_message_append_8(message_send, &dummy_8);
 	g_assert(ret);
-	ret = j_message_append_n(message_send, dummy_str, strlen(dummy_str) + 1);
+	ret = j_message_append_n(message_send, dummy_str + 1, strlen(dummy_str + 1) + 1);
+	g_assert(ret);
+	ret = j_message_append_string(message_send, dummy_str);
 	g_assert(ret);
 
 	ret = j_message_write(message_send, output);
@@ -150,6 +152,8 @@ test_message_write_read (void)
 	g_assert_cmpuint(dummy_4, ==, 42);
 	dummy_8 = j_message_get_8(message_recv);
 	g_assert_cmpuint(dummy_8, ==, 2342);
+	dummy_str = j_message_get_n(message_recv, 2);
+	g_assert_cmpstr(dummy_str, ==, "2");
 	dummy_str = j_message_get_string(message_recv);
 	g_assert_cmpstr(dummy_str, ==, "42");
 }

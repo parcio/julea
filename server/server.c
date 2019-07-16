@@ -429,13 +429,13 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					if (jd_object_backend != NULL)
 					{
 						j_message_add_operation(reply, 7);
-						j_message_append_n(reply, "object", 7);
+						j_message_append_string(reply, "object");
 					}
 
 					if (jd_kv_backend != NULL)
 					{
 						j_message_add_operation(reply, 3);
-						j_message_append_n(reply, "kv", 3);
+						j_message_append_string(reply, "kv");
 					}
 
 					j_message_send(reply, connection);
