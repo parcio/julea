@@ -48,6 +48,11 @@ struct JKVIterator
 	gpointer cursor;
 
 	/**
+	 * The current key.
+	 **/
+	gchar const* key;
+
+	/**
 	 * The current value.
 	 **/
 	gconstpointer value;
@@ -123,6 +128,9 @@ j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 	iterator = g_slice_new(JKVIterator);
 	iterator->kv_backend = j_kv_backend();
 	iterator->cursor = NULL;
+	iterator->key = NULL;
+	iterator->value = NULL;
+	iterator->len = 0;
 	iterator->replies_n = j_configuration_get_kv_server_count(configuration);
 	iterator->replies = g_new(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
@@ -165,6 +173,9 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 	iterator = g_slice_new(JKVIterator);
 	iterator->kv_backend = j_kv_backend();
 	iterator->cursor = NULL;
+	iterator->key = NULL;
+	iterator->value = NULL;
+	iterator->len = 0;
 	iterator->replies_n = 1;
 	iterator->replies = g_new(JMessage*, 1);
 	iterator->replies_cur = 0;
@@ -230,7 +241,7 @@ j_kv_iterator_next (JKVIterator* iterator)
 
 	if (iterator->kv_backend != NULL)
 	{
-		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->value), &(iterator->len));
+		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
 	}
 	else
 	{
@@ -240,6 +251,7 @@ retry:
 		if (iterator->len > 0)
 		{
 			iterator->value = j_message_get_n(iterator->replies[iterator->replies_cur], iterator->len);
+			iterator->key = j_message_get_string(iterator->replies[iterator->replies_cur]);
 
 			ret = TRUE;
 		}
@@ -263,16 +275,16 @@ retry:
  *
  * \return A new collection. Should be freed with j_kv_unref().
  **/
-gconstpointer
-j_kv_iterator_get (JKVIterator* iterator, guint32* len)
+gchar const*
+j_kv_iterator_get (JKVIterator* iterator, gconstpointer* value, guint32* len)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(len != NULL, NULL);
 
+	*value = iterator->value;
 	*len = iterator->len;
 
-	// FIXME return key
-	return iterator->value;
+	return iterator->key;
 }
 
 /**

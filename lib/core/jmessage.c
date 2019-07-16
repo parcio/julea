@@ -646,6 +646,37 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
 }
 
 /**
+ * Appends a string to a message.
+ *
+ * \code
+ * gchar* str = "Hello world!";
+ * ...
+ * j_message_append_string(message, str);
+ * \endcode
+ *
+ * \param message A message.
+ * \param str     String to append.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_message_append_string (JMessage* message, gchar const* str)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(str != NULL, FALSE);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	ret = j_message_append_n(message, str, strlen(str) + 1);
+
+	j_trace_leave(G_STRFUNC);
+
+	return ret;
+}
+
+/**
  * Gets 1 byte from a message.
  *
  * \code

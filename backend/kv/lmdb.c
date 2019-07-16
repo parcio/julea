@@ -42,6 +42,7 @@ struct JLMDBIterator
 	MDB_txn* txn;
 	gboolean first;
 	gchar* prefix;
+	gsize namespace_len;
 };
 
 typedef struct JLMDBIterator JLMDBIterator;
@@ -184,6 +185,7 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	iterator = g_slice_new(JLMDBIterator);
 	iterator->first = TRUE;
 	iterator->prefix = g_strdup_printf("%s:", namespace);
+	iterator->namespace_len = strlen(namespace) + 1;
 
 	mdb_txn_begin(backend_env, NULL, 0, &(iterator->txn));
 	mdb_cursor_open(iterator->txn, backend_dbi, &(iterator->cursor));
@@ -206,6 +208,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	iterator = g_slice_new(JLMDBIterator);
 	iterator->first = TRUE;
 	iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
+	iterator->namespace_len = strlen(namespace) + 1;
 
 	mdb_txn_begin(backend_env, NULL, 0, &(iterator->txn));
 	mdb_cursor_open(iterator->txn, backend_dbi, &(iterator->cursor));
@@ -217,7 +220,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, gconstpointer* value, guint32* len)
+backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	JLMDBIterator* iterator = data;
 	MDB_cursor_op cursor_op = MDB_NEXT;
@@ -247,6 +250,7 @@ backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 			goto out;
 		}
 
+		*key = (gchar const*)m_key.mv_data + iterator->namespace_len;
 		*value = m_value.mv_data;
 		*len = m_value.mv_size;
 

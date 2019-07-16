@@ -206,7 +206,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, gconstpointer* value, guint32* len)
+backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	sqlite3_stmt* stmt = data;
 
@@ -216,13 +216,9 @@ backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		guchar const* key;
-
-		key = sqlite3_column_text(stmt, 0);
+		*key = (gchar const*)sqlite3_column_text(stmt, 0);
 		*value = sqlite3_column_blob(stmt, 1);
 		*len = sqlite3_column_bytes(stmt, 1);
-
-		(void)key;
 
 		return TRUE;
 	}

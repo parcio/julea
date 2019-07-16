@@ -117,7 +117,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator, &len);
+	j_kv_iterator_get(iterator->iterator, &value, &len);
 	bson_init_static(tmp, value, len);
 	collection = j_collection_new_from_bson(tmp);
 

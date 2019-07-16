@@ -86,6 +86,7 @@ gboolean j_message_append_1 (JMessage*, gconstpointer);
 gboolean j_message_append_4 (JMessage*, gconstpointer);
 gboolean j_message_append_8 (JMessage*, gconstpointer);
 gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
+gboolean j_message_append_string (JMessage*, gchar const*);
 
 gchar j_message_get_1 (JMessage*);
 gint32 j_message_get_4 (JMessage*);

@@ -563,11 +563,16 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					j_backend_kv_get_all(jd_kv_backend, namespace, &iterator);
 
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, &value, &len))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, &key, &value, &len))
 					{
-						j_message_add_operation(reply, 4 + len);
+						gsize key_len;
+
+						key_len = strlen(key) + 1;
+
+						j_message_add_operation(reply, 4 + len + key_len);
 						j_message_append_4(reply, &len);
 						j_message_append_n(reply, value, len);
+						j_message_append_string(reply, key);
 					}
 
 					j_message_add_operation(reply, 4);
@@ -591,11 +596,16 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					j_backend_kv_get_by_prefix(jd_kv_backend, namespace, prefix, &iterator);
 
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, &value, &len))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, &key, &value, &len))
 					{
-						j_message_add_operation(reply, 4 + len);
+						gsize key_len;
+
+						key_len = strlen(key) + 1;
+
+						j_message_add_operation(reply, 4 + len + key_len);
 						j_message_append_4(reply, &len);
 						j_message_append_n(reply, value, len);
+						j_message_append_string(reply, key);
 					}
 
 					j_message_add_operation(reply, 4);

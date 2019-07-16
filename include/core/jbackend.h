@@ -92,7 +92,7 @@ struct JBackend
 
 			gboolean (*backend_get_all) (gchar const*, gpointer*);
 			gboolean (*backend_get_by_prefix) (gchar const*, gchar const*, gpointer*);
-			gboolean (*backend_iterate) (gpointer, gconstpointer*, guint32*);
+			gboolean (*backend_iterate) (gpointer, gchar const**, gconstpointer*, guint32*);
 		}
 		kv;
 	};
@@ -132,7 +132,7 @@ gboolean j_backend_kv_get (JBackend*, gpointer, gchar const*, gpointer*, guint32
 
 gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
-gboolean j_backend_kv_iterate (JBackend*, gpointer, gconstpointer*, guint32*);
+gboolean j_backend_kv_iterate (JBackend*, gpointer, gchar const**, gconstpointer*, guint32*);
 
 G_END_DECLS
 

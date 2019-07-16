@@ -62,11 +62,13 @@ test_kv_iterator_next_get (void)
 	{
 		g_autoptr(JKV) kv = NULL;
 
-		g_autofree gchar* name = NULL;
+		g_autofree gchar* key = NULL;
+		gchar* value = NULL;
 
-		name = g_strdup_printf("test-kv-%d", i);
-		kv = j_kv_new("test-ns", name);
-		j_kv_put(kv, g_strdup(name), strlen(name) + 1, g_free, batch);
+		key = g_strdup_printf("test-key-%d", i);
+		value = g_strdup_printf("test-value-%d", i);
+		kv = j_kv_new("test-ns", key);
+		j_kv_put(kv, value, strlen(value) + 1, g_free, batch);
 		j_kv_delete(kv, delete_batch);
 
 		g_assert(kv != NULL);
@@ -78,11 +80,13 @@ test_kv_iterator_next_get (void)
 
 	while (j_kv_iterator_next(kv_iterator))
 	{
+		gchar const* key;
 		gconstpointer value;
 		guint32 len;
 
-		value = j_kv_iterator_get(kv_iterator, &len);
-		g_assert(g_str_has_prefix(value, "test-kv-"));
+		key = j_kv_iterator_get(kv_iterator, &value, &len);
+		g_assert(g_str_has_prefix(key, "test-key-"));
+		g_assert(g_str_has_prefix(value, "test-value-"));
 		kvs++;
 	}
 

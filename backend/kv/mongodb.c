@@ -343,7 +343,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, gconstpointer* value, guint32* len)
+backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	bson_t const* result;
 	bson_iter_t iter;
@@ -358,16 +358,29 @@ backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 	/* FIXME */
 	if (mongoc_cursor_next(cursor, &result))
 	{
-		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+		bson_iter_init(&iter, result);
+
+		while (bson_iter_next(&iter))
 		{
-			bson_value_t const* bv;
+			gchar const* key_;
 
-			bv = bson_iter_value(&iter);
-			*value = bv->value.v_doc.data;
-			*len = bv->value.v_doc.data_len;
+			key_ = bson_iter_key(&iter);
 
-			ret = TRUE;
+			if (g_strcmp0(key_, "key") == 0 && bson_iter_type(&iter) == BSON_TYPE_UTF8)
+			{
+				*key = bson_iter_utf8(&iter, NULL);
+			}
+			else if (g_strcmp0(key_, "value") == 0 && bson_iter_type(&iter) == BSON_TYPE_BINARY)
+			{
+				bson_value_t const* bv;
+
+				bv = bson_iter_value(&iter);
+				*value = bv->value.v_binary.data;
+				*len = bv->value.v_binary.data_len;
+			}
 		}
+
+		ret = TRUE;
 	}
 	else
 	{
