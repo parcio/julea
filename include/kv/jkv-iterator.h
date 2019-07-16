@@ -45,6 +45,8 @@ JKVIterator* j_kv_iterator_new (gchar const*, gchar const*);
 JKVIterator* j_kv_iterator_new_for_index (guint32, gchar const*, gchar const*);
 void j_kv_iterator_free (JKVIterator*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVIterator, j_kv_iterator_free)
+
 gboolean j_kv_iterator_next (JKVIterator*);
 gconstpointer j_kv_iterator_get (JKVIterator*, guint32*);
 

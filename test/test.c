@@ -48,6 +48,9 @@ main (int argc, char** argv)
 	test_object_distributed_object();
 	test_object_object();
 
+	// KV client
+	test_kv_iterator();
+
 	// Item client
 	test_collection();
 	test_collection_iterator();
