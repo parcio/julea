@@ -582,6 +582,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
 		case H5I_NTYPES:
+		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
@@ -659,6 +660,7 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
 		case H5I_NTYPES:
+		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
@@ -949,6 +951,7 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 	case H5I_ERROR_MSG:
 	case H5I_ERROR_STACK:
 	case H5I_NTYPES:
+	case H5I_SPACE_SEL_ITER:
 	default:
 		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
 		exit(1);
@@ -999,6 +1002,7 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 	case H5I_ERROR_MSG:
 	case H5I_ERROR_STACK:
 	case H5I_NTYPES:
+	case H5I_SPACE_SEL_ITER:
 	default:
 		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
 		exit(1);
@@ -1115,6 +1119,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	case H5I_ERROR_MSG:
 	case H5I_ERROR_STACK:
 	case H5I_NTYPES:
+	case H5I_SPACE_SEL_ITER:
 	default:
 		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
 		exit(1);
@@ -1192,6 +1197,7 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 	case H5I_ERROR_MSG:
 	case H5I_ERROR_STACK:
 	case H5I_NTYPES:
+	case H5I_SPACE_SEL_ITER:
 	default:
 		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
 		exit(1);
