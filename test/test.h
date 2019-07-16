@@ -35,6 +35,7 @@ void test_object_distributed_object (void);
 void test_object_object (void);
 
 void test_collection (void);
+void test_collection_iterator (void);
 void test_item (void);
 void test_item_iterator (void);
 void test_uri (void);

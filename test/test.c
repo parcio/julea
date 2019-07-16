@@ -50,6 +50,7 @@ main (int argc, char** argv)
 
 	// Item client
 	test_collection();
+	test_collection_iterator();
 	test_item();
 	test_item_iterator();
 	test_uri();
