@@ -76,6 +76,8 @@ backend_batch_execute (gpointer data)
 {
 	JLevelDBBatch* batch = data;
 
+	g_autofree gchar* leveldb_error = NULL;
+
 	leveldb_writeoptions_t* write_options = backend_write_options;
 
 	g_return_val_if_fail(data != NULL, FALSE);
@@ -85,14 +87,13 @@ backend_batch_execute (gpointer data)
 		write_options = backend_write_options_sync;
 	}
 
-	leveldb_write(backend_db, write_options, batch->batch, NULL);
+	leveldb_write(backend_db, write_options, batch->batch, &leveldb_error);
 
 	g_free(batch->namespace);
 	leveldb_writebatch_destroy(batch->batch);
 	g_slice_free(JLevelDBBatch, batch);
 
-	// FIXME
-	return TRUE;
+	return (leveldb_error == NULL);
 }
 
 static
@@ -109,7 +110,6 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, value, len);
 
-	// FIXME
 	return TRUE;
 }
 
@@ -126,7 +126,6 @@ backend_delete (gpointer data, gchar const* key)
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
 
-	// FIXME
 	return TRUE;
 }
 
@@ -149,7 +148,6 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 
 	if (result != NULL)
 	{
-		// FIXME check whether copies can be avoided
 		*value = g_memdup(result, result_len);
 		*len = result_len;
 	}
@@ -176,8 +174,7 @@ backend_get_all (gchar const* namespace, gpointer* data)
 		iterator->prefix = g_strdup_printf("%s:", namespace);
 		iterator->namespace_len = strlen(namespace) + 1;
 
-		// FIXME check +1
-		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix) + 1);
+		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
 
 		*data = iterator;
 	}
@@ -205,8 +202,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
 		iterator->namespace_len = strlen(namespace) + 1;
 
-		// FIXME check +1
-		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix) + 1);
+		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
 
 		*data = iterator;
 	}
@@ -233,7 +229,6 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 
 		if (!g_str_has_prefix(key_, iterator->prefix))
 		{
-			// FIXME check whether we can completely terminate
 			goto out;
 		}
 
@@ -241,7 +236,7 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 		*value = leveldb_iter_value(iterator->iterator, &tmp);
 		*len = tmp;
 
-		// FIXME might invalidate value
+		// FIXME might invalidate key and value
 		leveldb_iter_next(iterator->iterator);
 
 		return TRUE;

@@ -24,9 +24,6 @@
 
 #include <jcache.h>
 
-// FIXME
-#include <julea-internal.h>
-
 #include "benchmark.h"
 
 static

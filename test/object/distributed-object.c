@@ -21,7 +21,6 @@
 #include <glib.h>
 
 #include <julea.h>
-#include <julea-internal.h>
 #include <julea-object.h>
 
 #include "test.h"

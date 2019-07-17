@@ -22,7 +22,6 @@
 #include <gmodule.h>
 
 #include <julea.h>
-#include <julea-internal.h>
 
 static
 gboolean

@@ -197,12 +197,11 @@ def configure(ctx):
 			mandatory=False
 		)
 
-	# FIXME check for VOL support
 	ctx.env.JULEA_HDF = \
 		check_cc_rpath(
 			ctx,
 			ctx.options.hdf,
-			header_name='hdf5.h',
+			header_name=['hdf5.h', 'H5PLextern.h'],
 			lib='hdf5',
 			uselib_store='HDF5',
 			define_name='HAVE_HDF5',
@@ -503,11 +502,12 @@ def build(ctx):
 
 		if backend == 'leveldb':
 			use_extra = ['LEVELDB']
-			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
+			# leveldb bug (will be fixed in 1.23)
+			# https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
-			# FIXME lmdb bug
+			# lmdb bug
 			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
