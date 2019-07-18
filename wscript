@@ -446,6 +446,16 @@ def build(ctx):
 		install_path=None
 	)
 
+	# AFL-Tests
+	ctx.program(
+		source=ctx.path.ant_glob('test-afl/test-db-backend.c'),
+		target='test-afl/julea-test-afl-db-backend',
+		use=use_julea_object + use_julea_item + use_julea_hdf + use_julea_db,
+		includes=include_julea_core + ['test-afl'],
+		rpath=get_rpath(ctx),
+		install_path=None
+	)
+
 	# Benchmark
 	ctx.program(
 		source=ctx.path.ant_glob('benchmark/**/*.c'),

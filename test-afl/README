@@ -1,0 +1,75 @@
+# JULEA - Flexible storage framework
+# Copyright (C) 2019 Benjamin Warnke
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# wie die tests ausgeführt werden:
+
+# laden der umgebungsvariablen
+
+. ./scripts/environment.sh
+
+# compilieren
+# die compile logs landen jeweils in 'log/compile*'
+
+./scripts/warnke_skript/build.sh
+
+# prüfen, dass compilieren erfolgreich war
+# uniq -c sollte für jede 'log/compile*' Datei 3 mal success zählen
+
+grep -rni successfully log | sort | sed -e "s/:.*//g" | uniq -c
+
+# starten von afl
+# dies startet mehrere Instanzen von Julea im Hintergrund
+
+nohup ./scripts/warnke_skript/afl.sh
+
+# mindestens 1 Minute warten, bis afl die ersten Statistiken in das Dateisystem schreibt
+
+
+
+
+# abfragen des aktuellen testzustands
+# hier sieht man statistiken wie gefundene Fehler, geschwindigkeit der Tests etc.
+
+afl-whatsup afl/out
+# oder
+watch afl-whatsup -s afl/out
+
+
+
+
+# wenn crashes gefunden wurden
+
+./scripts/warnke_skript/afl-check.sh
+
+# solange alle Zeilen 'invalid' liefern ist alles in Ordnung
+# wenn die letzte Zeile 'valid' ist, dann befindet sich das vollständige julea-debug-log in der Datei 'x'
+
+
+
+
+# coverage
+# nach ausführen von afl - oder auch währenddessen
+# die zusammenfassende code-coverage befindet sich in 'afl/cov/html'
+# in den 'afl/cov/html-*' Ordnern befinden sich die code-coverage für die einzelnen compile-optionen
+
+./scripts/warnke_skript/afl-coverage.sh
+
+
+
+
+# beenden der tests
+./scripts/warnke_skript/kill.sh
