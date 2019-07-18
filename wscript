@@ -531,10 +531,15 @@ def build(ctx):
 		)
 
 	db_backends = ['null']
+	if ctx.env.JULEA_SQLITE:
+		db_backends.append('sqlite')
 
 	for backend in db_backends:
 		use_extra = []
 		cflags = []
+
+		if backend == 'sqlite':
+			use_extra = ['SQLITE']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],
