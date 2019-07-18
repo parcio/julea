@@ -696,26 +696,30 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
  **/
 static
 herr_t
-H5VL_julea_attr_read(void* attr, hid_t dtype_id __attribute__((unused)), void* buf, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void** req)
 {
-	JHA_t *d;
+	JHA_t* attribute = attr;
+
 	JBatch* batch;
 
 	gpointer value;
 	guint32 len;
 
-	d = (JHA_t *)attr;
+	(void)dtype_id;
+	(void)dxpl_id;
+	(void)req;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	j_kv_get(d->kv, &value, &len, batch);
+	j_kv_get(attribute->kv, &value, &len, batch);
+
 	if (j_batch_execute(batch))
 	{
 		bson_t b[1];
 
 		bson_init_static(b, value, len);
-		j_hdf5_deserialize(b, buf, d->data_size);
+		j_hdf5_deserialize(b, buf, attribute->data_size);
 		g_free(value);
 	}
 
@@ -729,21 +733,27 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id __attribute__((unused)), void* b
  **/
 static
 herr_t
-H5VL_julea_attr_write (void* attr, hid_t dtype_id __attribute__((unused)), const void* buf, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_id, void** req)
 {
-	JHA_t *d = (JHA_t *)attr;
-	bson_t* tmp;
+	JHA_t* attribute = attr;
+
 	JBatch* batch;
+
+	bson_t* tmp;
 
 	gpointer value;
 	guint32 len;
 
+	(void)dtype_id;
+	(void)dxpl_id;
+	(void)req;
+
 	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	tmp = j_hdf5_serialize(buf, d->data_size);
+	tmp = j_hdf5_serialize(buf, attribute->data_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
-	j_kv_put(d->kv, value, len, bson_free, batch);
+	j_kv_put(attribute->kv, value, len, bson_free, batch);
 	j_batch_execute(batch);
 
 	j_trace_leave(G_STRFUNC);
@@ -758,74 +768,74 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id __attribute__((unused)), const
  **/
 static
 herr_t
-H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)), va_list arguments)
+H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
-	herr_t ret_value = 0;
-	JHA_t *d;
+	JHA_t* attribute = attr;
+
 	JBatch* batch;
+
+	herr_t ret_value = 0;
 
 	gpointer value;
 	guint32 len;
 
-	d = (JHA_t *)attr;
+	(void)dxpl_id;
+	(void)req;
+
+	j_trace_enter(G_STRFUNC, NULL);
 
 	switch (get_type)
 	{
-	case H5VL_ATTR_GET_ACPL:
-		break;
-	case H5VL_ATTR_GET_INFO:
-		break;
-	case H5VL_ATTR_GET_NAME:
-		break;
-	case H5VL_ATTR_GET_SPACE:
-	{
-		hid_t* ret_id = va_arg (arguments, hid_t *);
-		void* space;
+		case H5VL_ATTR_GET_SPACE:
+			{
+				hid_t* ret_id = va_arg(arguments, hid_t*);
+				void* space;
 
-		j_trace_enter(G_STRFUNC, NULL);
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_kv_get(d->ts, &value, &len, batch);
-		if (j_batch_execute(batch))
-		{
-			bson_t b[1];
+				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+				j_kv_get(attribute->ts, &value, &len, batch);
 
-			bson_init_static(b, value, len);
-			space = j_hdf5_deserialize_space(b);
-			*ret_id = H5Sdecode(space);
-			free(space);
-			g_free(value);
-		}
+				if (j_batch_execute(batch))
+				{
+					bson_t b[1];
 
-		j_trace_leave(G_STRFUNC);
+					bson_init_static(b, value, len);
+					space = j_hdf5_deserialize_space(b);
+					*ret_id = H5Sdecode(space);
+					g_free(space);
+					g_free(value);
+				}
+			}
+		break;
+		case H5VL_ATTR_GET_TYPE:
+			{
+				hid_t* ret_id = va_arg(arguments, hid_t*);
+				void* type;
+
+				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+				j_kv_get(attribute->ts, &value, &len, batch);
+
+				if (j_batch_execute(batch))
+				{
+					bson_t b[1];
+
+					bson_init_static(b, value, len);
+					type = j_hdf5_deserialize_type(b);
+					*ret_id = H5Tdecode(type);
+					g_free(type);
+					g_free(value);
+				}
+			}
+			break;
+		case H5VL_ATTR_GET_ACPL:
+		case H5VL_ATTR_GET_INFO:
+		case H5VL_ATTR_GET_NAME:
+		case H5VL_ATTR_GET_STORAGE_SIZE:
+		default:
+			g_assert_not_reached();
+			exit(1);
 	}
-	break;
-	case H5VL_ATTR_GET_STORAGE_SIZE:
-		break;
-	case H5VL_ATTR_GET_TYPE:
-	{
-		hid_t* ret_id = va_arg (arguments, hid_t *);
-		void* type;
 
-		j_trace_enter(G_STRFUNC, NULL);
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_kv_get(d->ts, &value, &len, batch);
-		if (j_batch_execute(batch))
-		{
-			bson_t b[1];
-
-			bson_init_static(b, value, len);
-			type = j_hdf5_deserialize_type(b);
-			*ret_id = H5Tdecode(type);
-			free(type);
-			g_free(value);
-		}
-		j_trace_leave(G_STRFUNC);
-	}
-	break;
-	default:
-		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
-		exit(1);
-	}
+	j_trace_leave(G_STRFUNC);
 
 	return ret_value;
 }
@@ -835,25 +845,27 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id __attri
  **/
 static
 herr_t
-H5VL_julea_attr_close (void* attr, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_attr_close (void* attr, hid_t dxpl_id, void** req)
 {
-	JHA_t *a = (JHA_t *)attr;
+	JHA_t* attribute = attr;
 
-	if (a->kv != NULL)
+	(void)dxpl_id;
+	(void)req;
+
+	if (attribute->kv != NULL)
 	{
-		j_kv_unref(a->kv);
+		j_kv_unref(attribute->kv);
 	}
 
-	if (a->ts != NULL)
+	if (attribute->ts != NULL)
 	{
-		j_kv_unref(a->ts);
+		j_kv_unref(attribute->ts);
 	}
 
-	g_free(a->name);
-	a->name = NULL;
-	free(a->location);
-	a->location = NULL;
-	free(a);
+	g_free(attribute->name);
+	g_free(attribute->location);
+	g_free(attribute);
+
 	return 1;
 }
 
@@ -864,13 +876,20 @@ H5VL_julea_attr_close (void* attr, hid_t dxpl_id __attribute__((unused)), void**
  **/
 static
 void*
-H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)), hid_t fcpl_id __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_file_create (const char* fname, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
-	JHF_t *file;
+	JHF_t* file;
 
-	file = (JHF_t *)malloc(sizeof(*file));
+	(void)flags;
+	(void)fcpl_id;
+	(void)fapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
-	return (void *)file;
+
+	return file;
 }
 
 /**
@@ -880,13 +899,19 @@ H5VL_julea_file_create (const char* fname, unsigned flags __attribute__((unused)
  **/
 static
 void*
-H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)), hid_t fapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_file_open (const char* fname, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
-	JHF_t *file;
+	JHF_t* file;
 
-	file = (JHF_t *)malloc(sizeof(*file));
+	(void)flags;
+	(void)fapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
-	return (void *)file;
+
+	return file;
 }
 
 /**
@@ -894,13 +919,16 @@ H5VL_julea_file_open (const char* fname, unsigned flags __attribute__((unused)),
  **/
 static
 herr_t
-H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_file_close (void* file, hid_t dxpl_id, void** req)
 {
-	JHF_t *f = (JHF_t *)file;
+	JHF_t* f = file;
+
+	(void)dxpl_id;
+	(void)req;
+
 	g_free(f->name);
-	f->name = NULL;
-	free(f);
-	//H5VL_julea_fapl_free(ginfo);
+	g_free(f);
+
 	return 1;
 }
 
@@ -911,52 +939,55 @@ H5VL_julea_file_close (void* file, hid_t dxpl_id __attribute__((unused)), void**
  **/
 static
 void*
-H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id __attribute__((unused)), hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
-	JHG_t *group;
-	group = (JHG_t *)malloc(sizeof(*group));
+	JHG_t* group;
 
 	(void)lcpl_id;
+	(void)gcpl_id;
+	(void)gapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	group = g_new(JHG_t, 1);
 
 	switch (loc_params->obj_type)
 	{
-	case H5I_FILE:
-	{
-		JHF_t *o = (JHF_t *)obj;
-		group->location = create_path(name, o->name);
-		group->name = g_strdup(name);
+		case H5I_FILE:
+			{
+				JHF_t* o = obj;
+				group->location = create_path(name, o->name);
+				group->name = g_strdup(name);
+			}
+			break;
+		case H5I_GROUP:
+			{
+				JHG_t* o = obj;
+				group->location = create_path(name, o->location);
+				group->name = g_strdup(name);
+			}
+			break;
+		case H5I_ATTR:
+		case H5I_BADID:
+		case H5I_DATASET:
+		case H5I_DATASPACE:
+		case H5I_DATATYPE:
+		case H5I_ERROR_CLASS:
+		case H5I_ERROR_MSG:
+		case H5I_ERROR_STACK:
+		case H5I_GENPROP_CLS:
+		case H5I_GENPROP_LST:
+		case H5I_NTYPES:
+		case H5I_SPACE_SEL_ITER:
+		case H5I_UNINIT:
+		case H5I_VFL:
+		case H5I_VOL:
+		default:
+			g_assert_not_reached();
+			exit(1);
 	}
-	break;
-	case H5I_GROUP:
-	{
-		JHG_t *o = (JHG_t *)obj;
-		group->location = create_path(name, o->location);
-		group->name = g_strdup(name);
-	}
-	break;
-	case H5I_DATATYPE:
-		break;
-	case H5I_DATASET:
-		break;
-	case H5I_ATTR:
-		break;
-	case H5I_UNINIT:
-	case H5I_BADID:
-	case H5I_DATASPACE:
-	case H5I_VFL:
-	case H5I_VOL:
-	case H5I_GENPROP_CLS:
-	case H5I_GENPROP_LST:
-	case H5I_ERROR_CLASS:
-	case H5I_ERROR_MSG:
-	case H5I_ERROR_STACK:
-	case H5I_NTYPES:
-	case H5I_SPACE_SEL_ITER:
-	default:
-		printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
-		exit(1);
-	} /* end switch */
-	return (void *)group;
+
+	return group;
 }
 
 /**
@@ -966,10 +997,15 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
  **/
 static
 void*
-H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gapl_id __attribute__((unused)), hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)))
+H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
-	JHG_t *group;
-	group = (JHG_t *)malloc(sizeof(*group));
+	JHG_t* group;
+
+	(void)gapl_id;
+	(void)dxpl_id;
+	(void)req;
+
+	group = g_new(JHG_t, 1);
 
 	switch (loc_params->obj_type)
 	{
