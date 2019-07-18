@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -47,6 +48,13 @@ enum JMessageType
 	J_MESSAGE_KV_GET,
 	J_MESSAGE_KV_GET_ALL,
 	J_MESSAGE_KV_GET_BY_PREFIX,
+	J_MESSAGE_DB_SCHEMA_CREATE,
+	J_MESSAGE_DB_SCHEMA_GET,
+	J_MESSAGE_DB_SCHEMA_DELETE,
+	J_MESSAGE_DB_INSERT,
+	J_MESSAGE_DB_UPDATE,
+	J_MESSAGE_DB_DELETE,
+	J_MESSAGE_DB_GET_ALL,
 };
 
 typedef enum JMessageType JMessageType;

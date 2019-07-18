@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,13 +34,16 @@
 #include <bson.h>
 
 #include <core/jsemantics.h>
+#include <core/jmessage.h>
+#include <core/jerror.h>
 
 G_BEGIN_DECLS
 
 enum JBackendType
 {
 	J_BACKEND_TYPE_OBJECT,
-	J_BACKEND_TYPE_KV
+	J_BACKEND_TYPE_KV,
+	J_BACKEND_TYPE_DB,
 };
 
 typedef enum JBackendType JBackendType;
@@ -52,6 +56,7 @@ enum JBackendComponent
 
 typedef enum JBackendComponent JBackendComponent;
 
+//! This struct contains the required functions for the different backends
 struct JBackend
 {
 	JBackendType type;
@@ -134,6 +139,17 @@ gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
 gboolean j_backend_kv_iterate (JBackend*, gpointer, gchar const**, gconstpointer*, guint32*);
 
+//db backend ->
+
+gboolean j_backend_db_init(JBackend*, gchar const*);
+void j_backend_db_fini(JBackend*);
+extern const JBackend_db_operation_data j_db_schema_create_params;
+extern const JBackend_db_operation_data j_db_schema_get_params;
+extern const JBackend_db_operation_data j_db_schema_delete_params;
+extern const JBackend_db_operation_data j_db_insert_params;
+extern const JBackend_db_operation_data j_db_update_params;
+extern const JBackend_db_operation_data j_db_delete_params;
+extern const JBackend_db_operation_data j_db_get_all_params;
 G_END_DECLS
 
 #endif

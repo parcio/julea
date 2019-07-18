@@ -1,6 +1,5 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
  * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,32 +15,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <core/jerror.h>
 
-/**
- * \file
- **/
-
-#ifndef JULEA_CONNECTION_POOL_H
-#define JULEA_CONNECTION_POOL_H
-
-#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea.h> can be included directly."
-#endif
-
-#include <glib.h>
-#include <gio/gio.h>
-
-G_BEGIN_DECLS
-
-GSocketConnection* j_connection_pool_pop_object (guint);
-void j_connection_pool_push_object (guint, GSocketConnection*);
-
-GSocketConnection* j_connection_pool_pop_kv (guint);
-void j_connection_pool_push_kv (guint, GSocketConnection*);
-
-GSocketConnection* j_connection_pool_pop_db(guint);
-void j_connection_pool_push_db(guint, GSocketConnection*);
-
-G_END_DECLS
-
-#endif
+GQuark
+julea_backend_error_quark(void)
+{
+	return g_quark_from_static_string("julea-backend-error-quark");
+}
+GQuark
+julea_frontend_error_quark(void)
+{
+	return g_quark_from_static_string("julea-frontend-error-quark");
+}
+#define JULEA_REGISTER_BACKEND_ERROR(e, s) s,
+const char* const JuleaBackendErrorFormat[] = {
+	"Generic Backend Error%s",
+#include <core/jerror.h>
+};
+#undef JULEA_REGISTER_BACKEND_ERROR
+#define JULEA_REGISTER_FRONTEND_ERROR(e, s) s,
+const char* const JuleaFrontendErrorFormat[] = {
+	"Generic Frontend Error%s",
+#include <core/jerror.h>
+};
+#undef JULEA_REGISTER_FRONTEND_ERROR

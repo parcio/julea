@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -58,9 +59,11 @@ struct JCommon
 
 	JBackend* object_backend;
 	JBackend* kv_backend;
+	JBackend* db_backend;
 
 	GModule* object_module;
 	GModule* kv_module;
+	GModule* db_module;
 };
 
 static JCommon* j_common = NULL;
@@ -132,6 +135,9 @@ j_init (void)
 	gchar const* kv_backend;
 	gchar const* kv_component;
 	gchar const* kv_path;
+	gchar const* db_backend;
+	gchar const* db_component;
+	gchar const* db_path;
 
 	if (j_is_initialized())
 	{
@@ -161,6 +167,10 @@ j_init (void)
 	kv_component = j_configuration_get_kv_component(common->configuration);
 	kv_path = j_configuration_get_kv_path(common->configuration);
 
+	db_backend = j_configuration_get_db_backend(common->configuration);
+	db_component = j_configuration_get_db_component(common->configuration);
+	db_path = j_configuration_get_db_path(common->configuration);
+
 	if (j_backend_load_client(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &(common->object_module), &(common->object_backend)))
 	{
 		if (common->object_backend == NULL || !j_backend_object_init(common->object_backend, object_path))
@@ -175,6 +185,15 @@ j_init (void)
 		if (common->kv_backend == NULL || !j_backend_kv_init(common->kv_backend, kv_path))
 		{
 			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
+			goto error;
+		}
+	}
+
+	if (j_backend_load_client(db_backend, db_component, J_BACKEND_TYPE_DB, &(common->db_module), &(common->db_backend)))
+	{
+		if (common->db_backend == NULL || !j_backend_db_init(common->db_backend, db_path))
+		{
+			J_CRITICAL("Could not initialize db backend %s.\n", db_backend);
 			goto error;
 		}
 	}
@@ -227,6 +246,11 @@ j_fini (void)
 	common = g_atomic_pointer_get(&j_common);
 	g_atomic_pointer_set(&j_common, NULL);
 
+	if (common->db_backend != NULL)
+	{
+		j_backend_db_fini(common->db_backend);
+	}
+
 	if (common->kv_backend != NULL)
 	{
 		j_backend_kv_fini(common->kv_backend);
@@ -235,6 +259,11 @@ j_fini (void)
 	if (common->object_backend != NULL)
 	{
 		j_backend_object_fini(common->object_backend);
+	}
+
+	if (common->db_module)
+	{
+		g_module_close(common->db_module);
 	}
 
 	if (common->kv_module)
@@ -313,6 +342,25 @@ j_kv_backend (void)
 	common = g_atomic_pointer_get(&j_common);
 
 	return common->kv_backend;
+}
+
+/**
+ * Returns the data backend.
+ *
+ * \private
+ *
+ * \return The data backend.
+ */
+JBackend*
+j_db_backend(void)
+{
+	JCommon* common;
+
+	g_return_val_if_fail(j_is_initialized(), NULL);
+
+	common = g_atomic_pointer_get(&j_common);
+
+	return common->db_backend;
 }
 
 /**
