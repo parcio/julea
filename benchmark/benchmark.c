@@ -191,6 +191,7 @@ main (int argc, char** argv)
 		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
 	}
 
+	benchmark_db();
 	// Core
 	benchmark_background_operation();
 	benchmark_cache();
