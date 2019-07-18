@@ -139,6 +139,7 @@ def get_pkg_config_path(prefix):
 def options(ctx):
 	ctx.load('compiler_c')
 
+	ctx.add_option('--testmockup', action='store_true', default=False, help='Enable testmockup mode')
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 	ctx.add_option('--coverage', action='store_true', default=False, help='Enable coverage analysis')
@@ -160,6 +161,8 @@ def configure(ctx):
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
 	ctx.env.JULEA_DEBUG = ctx.options.debug
+
+	ctx.env.JULEA_TEST_MOCKUP = ctx.options.testmockup
 
 	check_and_add_flags(ctx, '-std=c11')
 	check_and_add_flags(ctx, '-fdiagnostics-color', False)
@@ -365,6 +368,11 @@ def configure(ctx):
 
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)
+
+	if ctx.options.testmockup:
+		ctx.define('JULEA_TEST_MOCKUP', 1)
+	else:
+		ctx.define('JULEA_TEST_MOCKUP', 0)
 
 	backend_paths = []
 

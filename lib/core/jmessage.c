@@ -20,6 +20,8 @@
  * \file
  **/
 
+#define JMESSAGE_COMPILATION
+
 #include <julea-config.h>
 
 #include <glib.h>
