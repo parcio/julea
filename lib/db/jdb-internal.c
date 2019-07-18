@@ -53,13 +53,13 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 	JBackend* db_backend = j_db_backend();
 	gpointer batch = NULL;
 	GError* error = NULL;
-	if (db_backend == NULL)
+	if (db_backend == NULL || JULEA_TEST_MOCKUP)
 		message = j_message_new(type, 0);
 	iter_send = j_list_iterator_new(operations);
 	while (j_list_iterator_next(iter_send))
 	{
 		data = j_list_iterator_get(iter_send);
-		if (db_backend != NULL)
+		if (db_backend != NULL && !JULEA_TEST_MOCKUP)
 		{
 			if (!batch)
 			{
@@ -79,7 +79,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 			ret = j_backend_db_message_from_data(message, data->in_param, data->in_param_count) && ret;
 		}
 	}
-	if (db_backend != NULL)
+	if (db_backend != NULL && !JULEA_TEST_MOCKUP)
 	{
 		if (data != NULL)
 		{

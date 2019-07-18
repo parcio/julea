@@ -24,6 +24,35 @@
 #ifndef JULEA_MESSAGE_H
 #define JULEA_MESSAGE_H
 
+#if (JULEA_TEST_MOCKUP == 1)
+#ifndef JMESSAGE_COMPILATION
+#define j_message_new j_message_mockup_new
+#define j_message_new_reply j_message_mockup_new_reply
+#define j_message_ref j_message_mockup_ref
+#define j_message_unref j_message_mockup_unref
+#define j_message_get_type j_message_mockup_get_type
+#define j_message_get_flags j_message_mockup_get_flags
+#define j_message_get_count j_message_mockup_get_count
+#define j_message_append_1 j_message_mockup_append_1
+#define j_message_append_4 j_message_mockup_append_4
+#define j_message_append_8 j_message_mockup_append_8
+#define j_message_append_n j_message_mockup_append_n
+#define j_message_get_1 j_message_mockup_get_1
+#define j_message_get_4 j_message_mockup_get_4
+#define j_message_get_8 j_message_mockup_get_8
+#define j_message_get_n j_message_mockup_get_n
+#define j_message_get_string j_message_mockup_get_string
+#define j_message_send j_message_mockup_send
+#define j_message_receive j_message_mockup_receive
+#define j_message_read j_message_mockup_read
+#define j_message_write j_message_mockup_write
+#define j_message_add_send j_message_mockup_add_send
+#define j_message_add_operation j_message_mockup_add_operation
+#define j_message_set_safety j_message_mockup_set_safety
+#define j_message_force_safety j_message_mockup_force_safety
+#endif
+#endif
+
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif

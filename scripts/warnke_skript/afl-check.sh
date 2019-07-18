@@ -23,6 +23,7 @@ files="${files} $(ls afl/start-files/* | grep -v README )"
 rm -rf /mnt2/julea/* b
 mkdir b
 (export AFL_USE_ASAN=1; export ASAN_OPTIONS=abort_on_error=1,symbolize=0; ./waf configure --debug --out build-gcc-asan --prefix=prefix-gcc-asan --libdir=prefix-gcc-asan --bindir=prefix-gcc-asan --destdir=prefix-gcc-asan&& ./waf.sh build && ./waf.sh install)
+(export AFL_USE_ASAN=1; export ASAN_OPTIONS=abort_on_error=1,symbolize=0; ./waf configure --debug --testmockup --out build-gcc-asan-mockup --prefix=prefix-gcc-asan-mockup --libdir=prefix-gcc-asan-mockup --bindir=prefix-gcc-asan-mockup --destdir=prefix-gcc-asan-mockup&& ./waf.sh build && ./waf.sh install)
 i=300
 (export LD_LIBRARY_PATH=prefix-gcc-asan/lib/:$LD_LIBRARY_PATH; ./build-gcc-asan/tools/julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" \
@@ -36,7 +37,7 @@ j=0
 
 for f in ${files}
 do
-for g in gcc-asan
+for g in gcc-asan gcc-asan-mockup
 do
 echo "using binary : $g"
 mkdir b/${g}

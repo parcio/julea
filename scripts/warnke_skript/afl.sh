@@ -148,9 +148,17 @@ i=$(($i + 1)); julea_run "afl-gcc" "--debug" "" "$i" "-m none -t 10000 -S" "0" "
 sleep 0.5s
 i=$(($i + 1)); julea_run "afl-gcc" "" "asan" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
 sleep 0.5s
+i=$(($i + 1)); julea_run "afl-gcc" "--testmockup" "" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-gcc" "--testmockup --debug" "" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
 i=$(($i + 1)); julea_run "afl-clang-fast" "" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
 sleep 0.5s
 i=$(($i + 1)); julea_run "afl-clang-fast" "--debug" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-clang-fast" "--testmockup" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-clang-fast" "--testmockup --debug" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
 sleep 0.5s
 
 
