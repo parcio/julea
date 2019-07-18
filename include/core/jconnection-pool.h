@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -37,6 +38,9 @@ void j_connection_pool_push_object (guint, GSocketConnection*);
 
 GSocketConnection* j_connection_pool_pop_kv (guint);
 void j_connection_pool_push_kv (guint, GSocketConnection*);
+
+GSocketConnection* j_connection_pool_pop_db(guint);
+void j_connection_pool_push_db(guint, GSocketConnection*);
 
 G_END_DECLS
 

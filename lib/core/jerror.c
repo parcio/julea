@@ -1,6 +1,5 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
  * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,44 +15,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <core/jerror.h>
 
-/**
- * \file
- **/
-
-#ifndef JULEA_COMMON_H
-#define JULEA_COMMON_H
-
-#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea.h> can be included directly."
-#endif
-
-#include <glib.h>
-
-G_BEGIN_DECLS
-
-struct JCommon;
-
-typedef struct JCommon JCommon;
-
-G_END_DECLS
-
-#include <core/jbackend.h>
-#include <core/jbatch.h>
-#include <core/jconfiguration.h>
-
-G_BEGIN_DECLS
-
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-void __attribute__((constructor)) j_init(void);
-void __attribute__((destructor)) j_fini(void);
-
-JConfiguration* j_configuration(void);
-
-JBackend* j_object_backend(void);
-JBackend* j_kv_backend(void);
-JBackend* j_db_backend(void);
-
-G_END_DECLS
-
-#endif
+GQuark
+julea_backend_error_quark(void)
+{
+	return g_quark_from_static_string("julea-backend-error-quark");
+}
+GQuark
+julea_frontend_error_quark(void)
+{
+	return g_quark_from_static_string("julea-frontend-error-quark");
+}
+#define JULEA_REGISTER_BACKEND_ERROR(e, s) s,
+const char* const JuleaBackendErrorFormat[] = {
+	"Generic Backend Error%s",
+#include <core/jerror.h>
+};
+#undef JULEA_REGISTER_BACKEND_ERROR
+#define JULEA_REGISTER_FRONTEND_ERROR(e, s) s,
+const char* const JuleaFrontendErrorFormat[] = {
+	"Generic Frontend Error%s",
+#include <core/jerror.h>
+};
+#undef JULEA_REGISTER_FRONTEND_ERROR

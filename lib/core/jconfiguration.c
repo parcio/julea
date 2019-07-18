@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -54,6 +55,11 @@ struct JConfiguration
 		gchar** kv;
 
 		/**
+		 * The db servers.
+		 */
+		gchar** db;
+
+		/**
 		 * The number of object servers.
 		 */
 		guint32 object_len;
@@ -62,8 +68,11 @@ struct JConfiguration
 		 * The number of kv servers.
 		 */
 		guint32 kv_len;
-	}
-	servers;
+		/**
+		 * The number of db servers.
+		 */
+		guint32 db_len;
+	} servers;
 
 	/**
 	 * The object configuration.
@@ -84,8 +93,7 @@ struct JConfiguration
 		 * The path.
 		 */
 		gchar* path;
-	}
-	object;
+	} object;
 
 	/**
 	 * The kv configuration.
@@ -106,8 +114,28 @@ struct JConfiguration
 		 * The path.
 		 */
 		gchar* path;
-	}
-	kv;
+	} kv;
+
+	/**
+	 * The db configuration.
+	 */
+	struct
+	{
+		/**
+		 * The backend.
+		 */
+		gchar* backend;
+
+		/**
+		 * The component.
+		 */
+		gchar* component;
+
+		/**
+		 * The path.
+		 */
+		gchar* path;
+	} db;
 
 	guint64 max_operation_size;
 	guint32 max_connections;
@@ -128,7 +156,7 @@ struct JConfiguration
  * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
-j_configuration_new (void)
+j_configuration_new(void)
 {
 	JConfiguration* configuration = NULL;
 	GKeyFile* key_file;
@@ -215,17 +243,21 @@ out:
  * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
-j_configuration_new_for_data (GKeyFile* key_file)
+j_configuration_new_for_data(GKeyFile* key_file)
 {
 	JConfiguration* configuration;
 	gchar** servers_object;
 	gchar** servers_kv;
+	gchar** servers_db;
 	gchar* object_backend;
 	gchar* object_component;
 	gchar* object_path;
 	gchar* kv_backend;
 	gchar* kv_component;
 	gchar* kv_path;
+	gchar* db_backend;
+	gchar* db_component;
+	gchar* db_path;
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
@@ -237,22 +269,36 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
 	servers_kv = g_key_file_get_string_list(key_file, "servers", "kv", NULL, NULL);
+	servers_db = g_key_file_get_string_list(key_file, "servers", "db", NULL, NULL);
 	object_backend = g_key_file_get_string(key_file, "object", "backend", NULL);
 	object_component = g_key_file_get_string(key_file, "object", "component", NULL);
 	object_path = g_key_file_get_string(key_file, "object", "path", NULL);
 	kv_backend = g_key_file_get_string(key_file, "kv", "backend", NULL);
 	kv_component = g_key_file_get_string(key_file, "kv", "component", NULL);
 	kv_path = g_key_file_get_string(key_file, "kv", "path", NULL);
+	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
+	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
+	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
 
-	if (servers_object == NULL || servers_object[0] == NULL
-	    || servers_kv == NULL || servers_kv[0] == NULL
-	    || object_backend == NULL
-	    || object_component == NULL
-	    || object_path == NULL
-	    || kv_backend == NULL
-	    || kv_component == NULL
-	    || kv_path == NULL)
+	if (servers_object == NULL //
+		|| servers_object[0] == NULL //
+		|| servers_kv == NULL //
+		|| servers_kv[0] == NULL //
+		|| servers_db == NULL //
+		|| servers_db[0] == NULL //
+		|| object_backend == NULL //
+		|| object_component == NULL //
+		|| object_path == NULL //
+		|| kv_backend == NULL //
+		|| kv_component == NULL //
+		|| kv_path == NULL //
+		|| db_backend == NULL //
+		|| db_component == NULL //
+		|| db_path == NULL)
 	{
+		g_free(db_backend);
+		g_free(db_component);
+		g_free(db_path);
 		g_free(kv_backend);
 		g_free(kv_component);
 		g_free(kv_path);
@@ -261,6 +307,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 		g_free(object_path);
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
+		g_strfreev(servers_db);
 
 		return NULL;
 	}
@@ -268,14 +315,19 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration = g_slice_new(JConfiguration);
 	configuration->servers.object = servers_object;
 	configuration->servers.kv = servers_kv;
+	configuration->servers.db = servers_db;
 	configuration->servers.object_len = g_strv_length(servers_object);
 	configuration->servers.kv_len = g_strv_length(servers_kv);
+	configuration->servers.db_len = g_strv_length(servers_db);
 	configuration->object.backend = object_backend;
 	configuration->object.component = object_component;
 	configuration->object.path = object_path;
 	configuration->kv.backend = kv_backend;
 	configuration->kv.component = kv_component;
 	configuration->kv.path = kv_path;
+	configuration->db.backend = db_backend;
+	configuration->db.component = db_component;
+	configuration->db.path = db_path;
 	configuration->max_operation_size = max_operation_size;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
@@ -313,7 +365,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
  * \return #configuration.
  **/
 JConfiguration*
-j_configuration_ref (JConfiguration* configuration)
+j_configuration_ref(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -332,10 +384,14 @@ j_configuration_ref (JConfiguration* configuration)
  * \param configuration A configuration.
  **/
 void
-j_configuration_unref (JConfiguration* configuration)
+j_configuration_unref(JConfiguration* configuration)
 {
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
+		g_free(configuration->db.backend);
+		g_free(configuration->db.component);
+		g_free(configuration->db.path);
+
 		g_free(configuration->kv.backend);
 		g_free(configuration->kv.component);
 		g_free(configuration->kv.path);
@@ -346,13 +402,14 @@ j_configuration_unref (JConfiguration* configuration)
 
 		g_strfreev(configuration->servers.object);
 		g_strfreev(configuration->servers.kv);
+		g_strfreev(configuration->servers.db);
 
 		g_slice_free(JConfiguration, configuration);
 	}
 }
 
 gchar const*
-j_configuration_get_object_server (JConfiguration* configuration, guint32 index)
+j_configuration_get_object_server(JConfiguration* configuration, guint32 index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.object_len, NULL);
@@ -361,7 +418,7 @@ j_configuration_get_object_server (JConfiguration* configuration, guint32 index)
 }
 
 gchar const*
-j_configuration_get_kv_server (JConfiguration* configuration, guint32 index)
+j_configuration_get_kv_server(JConfiguration* configuration, guint32 index)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.kv_len, NULL);
@@ -369,8 +426,17 @@ j_configuration_get_kv_server (JConfiguration* configuration, guint32 index)
 	return configuration->servers.kv[index];
 }
 
+gchar const*
+j_configuration_get_db_server(JConfiguration* configuration, guint32 index)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+	g_return_val_if_fail(index < configuration->servers.db_len, NULL);
+
+	return configuration->servers.db[index];
+}
+
 guint32
-j_configuration_get_object_server_count (JConfiguration* configuration)
+j_configuration_get_object_server_count(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
@@ -378,15 +444,23 @@ j_configuration_get_object_server_count (JConfiguration* configuration)
 }
 
 guint32
-j_configuration_get_kv_server_count (JConfiguration* configuration)
+j_configuration_get_kv_server_count(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->servers.kv_len;
 }
 
+guint32
+j_configuration_get_db_server_count(JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->servers.db_len;
+}
+
 gchar const*
-j_configuration_get_object_backend (JConfiguration* configuration)
+j_configuration_get_object_backend(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -394,7 +468,7 @@ j_configuration_get_object_backend (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_object_component (JConfiguration* configuration)
+j_configuration_get_object_component(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -402,7 +476,7 @@ j_configuration_get_object_component (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_object_path (JConfiguration* configuration)
+j_configuration_get_object_path(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -410,7 +484,7 @@ j_configuration_get_object_path (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_kv_backend (JConfiguration* configuration)
+j_configuration_get_kv_backend(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -418,7 +492,7 @@ j_configuration_get_kv_backend (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_kv_component (JConfiguration* configuration)
+j_configuration_get_kv_component(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
@@ -426,15 +500,39 @@ j_configuration_get_kv_component (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_kv_path (JConfiguration* configuration)
+j_configuration_get_kv_path(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->kv.path;
 }
 
+gchar const*
+j_configuration_get_db_backend(JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->db.backend;
+}
+
+gchar const*
+j_configuration_get_db_component(JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->db.component;
+}
+
+gchar const*
+j_configuration_get_db_path(JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->db.path;
+}
+
 guint64
-j_configuration_get_max_operation_size (JConfiguration* configuration)
+j_configuration_get_max_operation_size(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
@@ -442,7 +540,7 @@ j_configuration_get_max_operation_size (JConfiguration* configuration)
 }
 
 guint32
-j_configuration_get_max_connections (JConfiguration* configuration)
+j_configuration_get_max_connections(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 
@@ -450,7 +548,7 @@ j_configuration_get_max_connections (JConfiguration* configuration)
 }
 
 guint64
-j_configuration_get_stripe_size (JConfiguration* configuration)
+j_configuration_get_stripe_size(JConfiguration* configuration)
 {
 	g_return_val_if_fail(configuration != NULL, 0);
 

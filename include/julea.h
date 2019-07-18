@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -50,5 +51,6 @@
 #include <core/joperation.h>
 #include <core/jsemantics.h>
 #include <core/jstatistics.h>
+#include <core/jerror.h>
 
 #endif
