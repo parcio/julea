@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-for f in $(find . -type f -name "*.h" -o -name "*.c" | grep -v not-formatted-header.h | grep -v prefix | grep -v spack);do
-	echo $f
-#	clang-format -i $f
-done
-
+#SBATCH -J ${name}
+#SBATCH --output=${name}-slurm.out
+#SBATCH --partition=west
+#SBATCH --ntasks=1
+#SBATCH --nodes=1
+./scripts/warnke_script/afl.sh $(($RANDOM * 100))

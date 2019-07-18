@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-for f in $(find . -type f -name "*.h" -o -name "*.c" | grep -v not-formatted-header.h | grep -v prefix | grep -v spack);do
-	echo $f
-#	clang-format -i $f
-done
+pkill julea-benchmark
+pkill julea-test*
+pkill julea-server
+pkill afl-fuzz
+pkill afl-cov
 

@@ -16,8 +16,4 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-for f in $(find . -type f -name "*.h" -o -name "*.c" | grep -v not-formatted-header.h | grep -v prefix | grep -v spack);do
-	echo $f
-#	clang-format -i $f
-done
-
+./scripts/warnke_skript/build.sh "/home/warnke/afl/"
