@@ -139,6 +139,7 @@ if (( $c < 10 )); then
 		export LD_LIBRARY_PATH=prefix-${name}/lib/:$LD_LIBRARY_PATH
 		export JULEA_CONFIG=~/.config/julea/julea${i}
 		./build-${name}/test-afl/julea-test-afl-db-backend ${afl_path}
+		./build-${name}/test-afl/julea-test-afl-db-schema ${afl_path}
 	)
 fi
 i=${first_index};
@@ -159,6 +160,16 @@ sleep 0.5s
 i=$(($i + 1)); julea_run "afl-clang-fast" "--testmockup" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
 sleep 0.5s
 i=$(($i + 1)); julea_run "afl-clang-fast" "--testmockup --debug" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-backend" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-gcc" "" "" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-schema" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-gcc" "--debug" "" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-schema" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-gcc" "" "asan" "$i" "-m none -t 10000 -S" "0" "julea-test-afl-db-schema" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-clang-fast" "" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-schema" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
+sleep 0.5s
+i=$(($i + 1)); julea_run "afl-clang-fast" "--debug" "" "$i" "-m none -t 10000 -M" "0" "julea-test-afl-db-schema" > "${log_path}/run$i.out" 2>"${log_path}/run$i.err" &
 sleep 0.5s
 
 

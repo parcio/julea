@@ -16,13 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef JULEA_DB_H
-#define JULEA_DB_H
+#ifndef JULEA_DB_SELECTOR_H
+#define JULEA_DB_SELECTOR_H
 
+#include <glib.h>
+#include <bson.h>
+#include <julea.h>
 #include <db/jdb-type.h>
 #include <db/jdb-schema.h>
-#include <db/jdb-selector.h>
-#include <db/jdb-iterator.h>
-#include <db/jdb-entry.h>
+
+struct JDBSelector
+{
+	JDBSchema* schema;
+	gint ref_count;
+	bson_t bson;
+};
+typedef struct JDBSelector JDBSelector;
+
+JDBSelector* j_db_selector_new(JDBSchema* schema, GError** error);
+
+JDBSelector* j_db_selector_ref(JDBSelector* selector, GError** error);
+void j_db_selector_unref(JDBSelector* selector);
+
+//TODO the functions here
 
 #endif
