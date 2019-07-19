@@ -45,32 +45,32 @@ struct JSemantics
 	/**
 	 * The consistency semantics.
 	 **/
-	gint consistency;
+	JSemanticsConsistency consistency;
 
 	/**
 	 * The persistency semantics.
 	 **/
-	gint persistency;
+	JSemanticsPersistency persistency;
 
 	/**
 	 * The concurrency semantics.
 	 **/
-	gint concurrency;
+	JSemanticsConcurrency concurrency;
 
 	/**
 	 * The safety semantics.
 	 **/
-	gint safety;
+	JSemanticsSafety safety;
 
 	/**
 	 * The security semantics.
 	 **/
-	gint security;
+	JSemanticsSecurity security;
 
 	/**
 	 * The ordering semantics.
 	 */
-	gint ordering;
+	JSemanticsOrdering ordering;
 
 	/**
 	 * Whether the semantics object is immutable.

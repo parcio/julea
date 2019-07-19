@@ -56,33 +56,6 @@ jd_signal (gpointer data)
 }
 
 static
-JSemanticsSafety
-jd_safety_message_to_semantics (JMessageFlags flags)
-{
-	JSemanticsSafety safety;
-
-	safety = J_SEMANTICS_SAFETY_NONE;
-
-	switch (flags)
-	{
-		case J_MESSAGE_FLAGS_NONE:
-			break;
-		case J_MESSAGE_FLAGS_SAFETY_STORAGE:
-			safety = J_SEMANTICS_SAFETY_STORAGE;
-			break;
-		case J_MESSAGE_FLAGS_SAFETY_NETWORK:
-			safety = J_SEMANTICS_SAFETY_NETWORK;
-			break;
-		case J_MESSAGE_FLAGS_REPLY:
-		default:
-			g_warn_if_reached();
-			break;
-	}
-
-	return safety;
-}
-
-static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
@@ -113,13 +86,14 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* namespace;
 		gchar const* path;
 		guint32 operation_count;
-		JMessageFlags type_modifier;
+		JSemantics* semantics;
 		JSemanticsSafety safety;
 		guint i;
 
 		operation_count = j_message_get_count(message);
-		type_modifier = j_message_get_flags(message);
-		safety = jd_safety_message_to_semantics(type_modifier);
+		semantics = j_message_get_semantics(message);
+		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		j_semantics_unref(semantics);
 
 		switch (j_message_get_type(message))
 		{
@@ -130,7 +104,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -145,7 +119,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						{
 							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
-							if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
+							if (safety == J_SEMANTICS_SAFETY_STORAGE)
 							{
 								j_backend_object_sync(jd_object_backend, object);
 								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -171,7 +145,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -272,7 +246,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer object;
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -320,7 +294,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						j_memory_chunk_reset(memory_chunk);
 					}
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)
+					if (safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						j_backend_object_sync(jd_object_backend, object);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -446,7 +420,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						reply = j_message_new_reply(message);
 					}
@@ -484,7 +458,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					g_autoptr(JMessage) reply = NULL;
 					gpointer batch;
 
-					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 					{
 						reply = j_message_new_reply(message);
 					}

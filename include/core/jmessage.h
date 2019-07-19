@@ -51,16 +51,6 @@ enum JMessageType
 
 typedef enum JMessageType JMessageType;
 
-enum JMessageFlags
-{
-	J_MESSAGE_FLAGS_NONE           = 0,
-	J_MESSAGE_FLAGS_REPLY          = 1 << 0,
-	J_MESSAGE_FLAGS_SAFETY_NETWORK = 1 << 1,
-	J_MESSAGE_FLAGS_SAFETY_STORAGE = 1 << 2,
-};
-
-typedef enum JMessageFlags JMessageFlags;
-
 struct JMessage;
 
 typedef struct JMessage JMessage;
@@ -79,7 +69,6 @@ void j_message_unref (JMessage*);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JMessage, j_message_unref)
 
 JMessageType j_message_get_type (JMessage const*);
-JMessageFlags j_message_get_flags (JMessage const*);
 guint32 j_message_get_count (JMessage const*);
 
 gboolean j_message_append_1 (JMessage*, gconstpointer);
@@ -103,8 +92,8 @@ gboolean j_message_write (JMessage*, GOutputStream*);
 void j_message_add_send (JMessage*, gconstpointer, guint64);
 void j_message_add_operation (JMessage*, gsize);
 
-void j_message_set_safety (JMessage*, JSemantics*);
-void j_message_force_safety (JMessage*, gint);
+void j_message_set_semantics (JMessage*, JSemantics*);
+JSemantics* j_message_get_semantics (JMessage*);
 
 G_END_DECLS
 

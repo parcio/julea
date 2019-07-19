@@ -55,7 +55,6 @@ test_message_header (void)
 	j_message_add_operation(message, 0);
 
 	g_assert(j_message_get_type(message) == J_MESSAGE_OBJECT_READ);
-	g_assert(j_message_get_flags(message) == 0);
 	g_assert_cmpuint(j_message_get_count(message), ==, 3);
 }
 
@@ -158,6 +157,32 @@ test_message_write_read (void)
 	g_assert_cmpstr(dummy_str, ==, "42");
 }
 
+static
+void
+test_message_semantics (void)
+{
+	g_autoptr(JMessage) message = NULL;
+	g_autoptr(JSemantics) semantics = NULL;
+	g_autoptr(JSemantics) msg_semantics = NULL;
+
+	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
+	g_assert(semantics != NULL);
+
+	message = j_message_new(J_MESSAGE_NONE, 0);
+	g_assert(message != NULL);
+
+	j_message_set_semantics(message, semantics);
+	msg_semantics = j_message_get_semantics(message);
+
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_ATOMICITY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_ATOMICITY));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_CONCURRENCY));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_CONSISTENCY));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_ORDERING), ==, j_semantics_get(msg_semantics, J_SEMANTICS_ORDERING));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_PERSISTENCY));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SAFETY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SAFETY));
+	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SECURITY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SECURITY));
+}
+
 void
 test_message (void)
 {
@@ -165,4 +190,5 @@ test_message (void)
 	g_test_add_func("/message/header", test_message_header);
 	g_test_add_func("/message/append", test_message_append);
 	g_test_add_func("/message/write_read", test_message_write_read);
+	g_test_add_func("/message/semantics", test_message_semantics);
 }
