@@ -1242,7 +1242,6 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 	g_free(tsloc);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	dset->object = j_distributed_object_new("hdf5", dset->location, dset->distribution);
 	j_kv_get(dset->kv, &value, &len, batch);
 
 	if (j_batch_execute(batch))
@@ -1254,7 +1253,9 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 		g_free(value);
 	}
 
-	return (void *)dset;
+	dset->object = j_distributed_object_new("hdf5", dset->location, dset->distribution);
+
+	return dset;
 }
 
 /**
