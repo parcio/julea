@@ -178,8 +178,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
 		message = j_message_new(J_MESSAGE_KV_PUT, namespace_len);
-		j_message_set_safety(message, semantics);
-		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -215,7 +214,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		kv_connection = j_connection_pool_pop_kv(index);
 		j_message_send(message, kv_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -275,7 +274,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	else
 	{
 		message = j_message_new(J_MESSAGE_KV_DELETE, namespace_len);
-		j_message_set_safety(message, semantics);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -309,7 +308,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		kv_connection = j_connection_pool_pop_kv(index);
 		j_message_send(message, kv_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -372,8 +371,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
 		message = j_message_new(J_MESSAGE_KV_GET, namespace_len);
-		j_message_set_safety(message, semantics);
-		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 

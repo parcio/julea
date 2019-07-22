@@ -44,6 +44,32 @@
  * @{
  **/
 
+enum JMessageSemantics
+{
+	J_MESSAGE_SEMANTICS_ATOMICITY_BATCH =             1 << 0,
+	J_MESSAGE_SEMANTICS_ATOMICITY_OPERATION =         1 << 1,
+	J_MESSAGE_SEMANTICS_ATOMICITY_NONE =              1 << 2,
+	J_MESSAGE_SEMANTICS_CONCURRENCY_OVERLAPPING =     1 << 3,
+	J_MESSAGE_SEMANTICS_CONCURRENCY_NON_OVERLAPPING = 1 << 4,
+	J_MESSAGE_SEMANTICS_CONCURRENCY_NONE =            1 << 5,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_IMMEDIATE =       1 << 6,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_EVENTUAL =        1 << 7,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_NONE =            1 << 8,
+	J_MESSAGE_SEMANTICS_ORDERING_STRICT =             1 << 9,
+	J_MESSAGE_SEMANTICS_ORDERING_SEMI_RELAXED =       1 << 10,
+	J_MESSAGE_SEMANTICS_ORDERING_RELAXED =            1 << 11,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_IMMEDIATE =       1 << 12,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_EVENTUAL =        1 << 13,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_NONE =            1 << 14,
+	J_MESSAGE_SEMANTICS_SAFETY_STORAGE =              1 << 15,
+	J_MESSAGE_SEMANTICS_SAFETY_NETWORK =              1 << 16,
+	J_MESSAGE_SEMANTICS_SAFETY_NONE =                 1 << 17,
+	J_MESSAGE_SEMANTICS_SECURITY_STRICT =             1 << 18,
+	J_MESSAGE_SEMANTICS_SECURITY_NONE =               1 << 19
+};
+
+typedef enum JMessageSemantics JMessageSemantics;
+
 /**
  * Additional message data.
  **/
@@ -62,10 +88,10 @@ struct JMessageData
 
 typedef struct JMessageData JMessageData;
 
-#pragma pack(4)
 /**
  * A message header.
  **/
+#pragma pack(4)
 struct JMessageHeader
 {
 	/**
@@ -79,9 +105,9 @@ struct JMessageHeader
 	guint32 id;
 
 	/**
-	 * The message flags.
+	 * The semantics.
 	 **/
-	guint32 flags;
+	guint32 semantics;
 
 	/**
 	 * The operation type.
@@ -311,7 +337,7 @@ j_message_new (JMessageType op_type, gsize length)
 
 	j_message_header(message)->length = GUINT32_TO_LE(0);
 	j_message_header(message)->id = GUINT32_TO_LE(rand);
-	j_message_header(message)->flags = GUINT32_TO_LE(J_MESSAGE_FLAGS_NONE);
+	j_message_header(message)->semantics = GUINT32_TO_LE(0);
 	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
 	j_message_header(message)->op_count = GUINT32_TO_LE(0);
 
@@ -334,7 +360,6 @@ JMessage*
 j_message_new_reply (JMessage* message)
 {
 	JMessage* reply;
-	JMessageFlags op_flags;
 
 	g_return_val_if_fail(message != NULL, NULL);
 
@@ -348,11 +373,9 @@ j_message_new_reply (JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
-	op_flags = j_message_get_flags(message) | J_MESSAGE_FLAGS_REPLY;
-
 	j_message_header(reply)->length = GUINT32_TO_LE(0);
 	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->flags = GUINT32_TO_LE(op_flags);
+	j_message_header(reply)->semantics = GUINT32_TO_LE(0);
 	j_message_header(reply)->op_type = j_message_header(message)->op_type;
 	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
 
@@ -447,33 +470,6 @@ j_message_get_type (JMessage const* message)
 	j_trace_leave(G_STRFUNC);
 
 	return op_type;
-}
-
-/**
- * Returns a message's type modifier.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation type.
- **/
-JMessageFlags
-j_message_get_flags (JMessage const* message)
-{
-	JMessageFlags op_flags;
-
-	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
-
-	j_trace_enter(G_STRFUNC, NULL);
-
-	op_flags = j_message_header(message)->flags;
-	op_flags = GUINT32_FROM_LE(op_flags);
-
-	j_trace_leave(G_STRFUNC);
-
-	return op_flags;
 }
 
 /**
@@ -909,11 +905,6 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	if (j_message_get_flags(message) & J_MESSAGE_FLAGS_REPLY)
-	{
-		g_return_val_if_fail(message->original_message != NULL, FALSE);
-	}
-
 	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, &error))
 	{
 		goto end;
@@ -933,7 +924,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	message->current = message->data + sizeof(JMessageHeader);
 
-	if (j_message_get_flags(message) & J_MESSAGE_FLAGS_REPLY)
+	if (message->original_message != NULL)
 	{
 		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
 	}
@@ -1075,42 +1066,90 @@ j_message_add_operation (JMessage* message, gsize length)
 }
 
 void
-j_message_set_safety (JMessage* message, JSemantics* semantics)
+j_message_set_semantics (JMessage* message, JSemantics* semantics)
 {
+	guint32 serialized_semantics = 0;
+
 	g_return_if_fail(message != NULL);
 	g_return_if_fail(semantics != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	j_message_force_safety(message, j_semantics_get(semantics, J_SEMANTICS_SAFETY));
+#define SERIALIZE_SEMANTICS(type, key) { gint tmp; tmp = j_semantics_get(semantics, J_SEMANTICS_ ## type); if (tmp == J_SEMANTICS_ ## type ## _ ## key) { serialized_semantics |= J_MESSAGE_SEMANTICS_ ## type ## _ ##key; } }
+
+	SERIALIZE_SEMANTICS(ATOMICITY, BATCH)
+	SERIALIZE_SEMANTICS(ATOMICITY, OPERATION)
+	SERIALIZE_SEMANTICS(ATOMICITY, NONE)
+	SERIALIZE_SEMANTICS(CONCURRENCY, OVERLAPPING)
+	SERIALIZE_SEMANTICS(CONCURRENCY, NON_OVERLAPPING)
+	SERIALIZE_SEMANTICS(CONCURRENCY, NONE)
+	SERIALIZE_SEMANTICS(CONSISTENCY, IMMEDIATE)
+	SERIALIZE_SEMANTICS(CONSISTENCY, EVENTUAL)
+	SERIALIZE_SEMANTICS(CONSISTENCY, NONE)
+	SERIALIZE_SEMANTICS(ORDERING, STRICT)
+	SERIALIZE_SEMANTICS(ORDERING, SEMI_RELAXED)
+	SERIALIZE_SEMANTICS(ORDERING, RELAXED)
+	SERIALIZE_SEMANTICS(PERSISTENCY, IMMEDIATE)
+	SERIALIZE_SEMANTICS(PERSISTENCY, EVENTUAL)
+	SERIALIZE_SEMANTICS(PERSISTENCY, NONE)
+	SERIALIZE_SEMANTICS(SAFETY, STORAGE)
+	SERIALIZE_SEMANTICS(SAFETY, NETWORK)
+	SERIALIZE_SEMANTICS(SAFETY, NONE)
+	SERIALIZE_SEMANTICS(SECURITY, STRICT)
+	SERIALIZE_SEMANTICS(SECURITY, NONE)
+
+#undef SERIALIZE_SEMANTICS
+
+	j_message_header(message)->semantics = GUINT32_TO_LE(serialized_semantics);
 
 	j_trace_leave(G_STRFUNC);
 }
 
-void
-j_message_force_safety (JMessage* message, gint safety)
+JSemantics*
+j_message_get_semantics (JMessage* message)
 {
-	guint32 op_flags;
+	JSemantics* semantics;
 
-	g_return_if_fail(message != NULL);
+	guint32 serialized_semantics;
+
+	g_return_val_if_fail(message != NULL, NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	op_flags = j_message_header(message)->flags;
-	op_flags = GUINT32_FROM_LE(op_flags);
+	serialized_semantics = j_message_header(message)->semantics;
+	serialized_semantics = GUINT32_FROM_LE(serialized_semantics);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK)
-	{
-		op_flags |= J_MESSAGE_FLAGS_SAFETY_NETWORK;
-	}
-	else if (safety == J_SEMANTICS_SAFETY_STORAGE)
-	{
-		op_flags |= J_MESSAGE_FLAGS_SAFETY_NETWORK | J_MESSAGE_FLAGS_SAFETY_STORAGE;
-	}
+	// If serialized_semantics is 0, we will end up with the default semantics.
+	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	j_message_header(message)->flags = GUINT32_TO_LE(op_flags);
+#define DESERIALIZE_SEMANTICS(type, key) if (serialized_semantics & J_MESSAGE_SEMANTICS_ ## type ## _ ## key) { j_semantics_set(semantics, J_SEMANTICS_ ## type, J_SEMANTICS_ ## type ## _ ## key); }
+
+	DESERIALIZE_SEMANTICS(ATOMICITY, BATCH)
+	DESERIALIZE_SEMANTICS(ATOMICITY, OPERATION)
+	DESERIALIZE_SEMANTICS(ATOMICITY, NONE)
+	DESERIALIZE_SEMANTICS(CONCURRENCY, OVERLAPPING)
+	DESERIALIZE_SEMANTICS(CONCURRENCY, NON_OVERLAPPING)
+	DESERIALIZE_SEMANTICS(CONCURRENCY, NONE)
+	DESERIALIZE_SEMANTICS(CONSISTENCY, IMMEDIATE)
+	DESERIALIZE_SEMANTICS(CONSISTENCY, EVENTUAL)
+	DESERIALIZE_SEMANTICS(CONSISTENCY, NONE)
+	DESERIALIZE_SEMANTICS(ORDERING, STRICT)
+	DESERIALIZE_SEMANTICS(ORDERING, SEMI_RELAXED)
+	DESERIALIZE_SEMANTICS(ORDERING, RELAXED)
+	DESERIALIZE_SEMANTICS(PERSISTENCY, IMMEDIATE)
+	DESERIALIZE_SEMANTICS(PERSISTENCY, EVENTUAL)
+	DESERIALIZE_SEMANTICS(PERSISTENCY, NONE)
+	DESERIALIZE_SEMANTICS(SAFETY, STORAGE)
+	DESERIALIZE_SEMANTICS(SAFETY, NETWORK)
+	DESERIALIZE_SEMANTICS(SAFETY, NONE)
+	DESERIALIZE_SEMANTICS(SECURITY, STRICT)
+	DESERIALIZE_SEMANTICS(SECURITY, NONE)
+
+#undef DESERIALIZE_SEMANTICS
 
 	j_trace_leave(G_STRFUNC);
+
+	return semantics;
 }
 
 /**

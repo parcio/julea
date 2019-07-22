@@ -100,9 +100,9 @@ typedef enum JSemanticsPersistency JSemanticsPersistency;
 
 enum JSemanticsSafety
 {
-	J_SEMANTICS_SAFETY_NONE,
+	J_SEMANTICS_SAFETY_STORAGE,
 	J_SEMANTICS_SAFETY_NETWORK,
-	J_SEMANTICS_SAFETY_STORAGE
+	J_SEMANTICS_SAFETY_NONE
 };
 
 typedef enum JSemanticsSafety JSemanticsSafety;

@@ -197,8 +197,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 		 **/
 		message = j_message_new(J_MESSAGE_OBJECT_CREATE, namespace_len);
-		j_message_set_safety(message, semantics);
-		//j_message_force_safety(message, J_SEMANTICS_SAFETY_NETWORK);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -226,12 +225,15 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
+		JSemanticsSafety safety;
+
 		GSocketConnection* object_connection;
 
+		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		object_connection = j_connection_pool_pop_object(index);
 		j_message_send(message, object_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -284,7 +286,7 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	if (object_backend == NULL)
 	{
 		message = j_message_new(J_MESSAGE_OBJECT_DELETE, namespace_len);
-		j_message_set_safety(message, semantics);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 
@@ -312,12 +314,15 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
+		JSemanticsSafety safety;
+
 		GSocketConnection* object_connection;
 
+		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		object_connection = j_connection_pool_pop_object(index);
 		j_message_send(message, object_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -380,7 +385,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 		name_len = strlen(object->name) + 1;
 
 		message = j_message_new(J_MESSAGE_OBJECT_READ, namespace_len + name_len);
-		j_message_set_safety(message, semantics);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
 		j_message_append_n(message, object->name, name_len);
 	}
@@ -543,7 +548,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 		name_len = strlen(object->name) + 1;
 
 		message = j_message_new(J_MESSAGE_OBJECT_WRITE, namespace_len + name_len);
-		j_message_set_safety(message, semantics);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, object->namespace, namespace_len);
 		j_message_append_n(message, object->name, name_len);
 	}
@@ -604,12 +609,15 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
+		JSemanticsSafety safety;
+
 		GSocketConnection* object_connection;
 
+		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		object_connection = j_connection_pool_pop_object(object->index);
 		j_message_send(message, object_connection);
 
-		if (j_message_get_flags(message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 			guint64 nbytes;
@@ -685,7 +693,7 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 	if (object_backend == NULL)
 	{
 		message = j_message_new(J_MESSAGE_OBJECT_STATUS, namespace_len);
-		j_message_set_safety(message, semantics);
+		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
 

@@ -49,6 +49,7 @@ struct JDistributedObjectBackgroundData
 	guint32 index;
 	JMessage* message;
 	JList* operations;
+	JSemantics* semantics;
 
 	/**
 	 * The union for read and write parts.
@@ -214,13 +215,16 @@ j_distributed_object_create_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
+	JSemanticsSafety safety;
+
 	GSocketConnection* object_connection;
 
+	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
 	object_connection = j_connection_pool_pop_object(background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -253,13 +257,16 @@ j_distributed_object_delete_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
+	JSemanticsSafety safety;
+
 	GSocketConnection* object_connection;
 
+	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
 	object_connection = j_connection_pool_pop_object(background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -372,12 +379,15 @@ j_distributed_object_write_background_operation (gpointer data)
 {
 	JDistributedObjectBackgroundData* background_data = data;
 
+	JSemanticsSafety safety;
+
 	GSocketConnection* object_connection;
 
+	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
 	object_connection = j_connection_pool_pop_object(background_data->index);
 	j_message_send(background_data->message, object_connection);
 
-	if (j_message_get_flags(background_data->message) & J_MESSAGE_FLAGS_SAFETY_NETWORK)
+	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		g_autoptr(JListIterator) it = NULL;
 		g_autoptr(JMessage) reply = NULL;
@@ -515,8 +525,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 			 * This does not completely eliminate all races but fixes the common case of create, write, write, ...
 			 **/
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_CREATE, namespace_len);
-			j_message_set_safety(messages[i], semantics);
-			//j_message_force_safety(messages[i], J_SEMANTICS_SAFETY_NETWORK);
+			j_message_set_semantics(messages[i], semantics);
 			j_message_append_n(messages[i], namespace, namespace_len);
 		}
 	}
@@ -562,6 +571,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
+			data->semantics = semantics;
 
 			background_data[i] = data;
 		}
@@ -614,7 +624,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_DELETE, namespace_len);
-			j_message_set_safety(messages[i], semantics);
+			j_message_set_semantics(messages[i], semantics);
 			j_message_append_n(messages[i], namespace, namespace_len);
 		}
 	}
@@ -660,6 +670,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
+			data->semantics = semantics;
 
 			background_data[i] = data;
 		}
@@ -769,7 +780,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 				if (messages[index] == NULL && br_lists[index] == NULL)
 				{
 					messages[index] = j_message_new(J_MESSAGE_OBJECT_READ, namespace_len + name_len);
-					j_message_set_safety(messages[index], semantics);
+					j_message_set_semantics(messages[index], semantics);
 					j_message_append_n(messages[index], object->namespace, namespace_len);
 					j_message_append_n(messages[index], object->name, name_len);
 
@@ -824,6 +835,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
+			data->semantics = semantics;
 			data->read.buffers = br_lists[i];
 
 			background_data[i] = data;
@@ -942,7 +954,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 				if (messages[index] == NULL && bw_lists[index] == NULL)
 				{
 					messages[index] = j_message_new(J_MESSAGE_OBJECT_WRITE, namespace_len + name_len);
-					j_message_set_safety(messages[index], semantics);
+					j_message_set_semantics(messages[index], semantics);
 					j_message_append_n(messages[index], object->namespace, namespace_len);
 					j_message_append_n(messages[index], object->name, name_len);
 
@@ -1000,6 +1012,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
+			data->semantics = semantics;
 			data->write.bytes_written = bw_lists[i];
 
 			background_data[i] = data;
@@ -1064,7 +1077,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_STATUS, namespace_len);
-			j_message_set_safety(messages[i], semantics);
+			j_message_set_semantics(messages[i], semantics);
 			j_message_append_n(messages[i], namespace, namespace_len);
 		}
 	}
@@ -1124,6 +1137,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 			data->index = i;
 			data->message = messages[i];
 			data->operations = operations;
+			data->semantics = semantics;
 
 			background_data[i] = data;
 		}

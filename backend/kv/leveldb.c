@@ -39,6 +39,7 @@ typedef struct JLevelDBBatch JLevelDBBatch;
 struct JLevelDBIterator
 {
 	leveldb_iterator_t* iterator;
+	gboolean first;
 	gchar* prefix;
 	gsize namespace_len;
 };
@@ -171,10 +172,9 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	{
 		iterator = g_slice_new(JLevelDBIterator);
 		iterator->iterator = it;
+		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:", namespace);
 		iterator->namespace_len = strlen(namespace) + 1;
-
-		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
 
 		*data = iterator;
 	}
@@ -199,10 +199,9 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	{
 		iterator = g_slice_new(JLevelDBIterator);
 		iterator->iterator = it;
+		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
 		iterator->namespace_len = strlen(namespace) + 1;
-
-		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
 
 		*data = iterator;
 	}
@@ -220,6 +219,16 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
+	if (iterator->first)
+	{
+		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
+		iterator->first = FALSE;
+	}
+	else
+	{
+		leveldb_iter_next(iterator->iterator);
+	}
+
 	if (leveldb_iter_valid(iterator->iterator))
 	{
 		gchar const* key_;
@@ -235,9 +244,6 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 		*key = key_ + iterator->namespace_len;
 		*value = leveldb_iter_value(iterator->iterator, &tmp);
 		*len = tmp;
-
-		// FIXME might invalidate key and value
-		leveldb_iter_next(iterator->iterator);
 
 		return TRUE;
 	}
