@@ -22,7 +22,9 @@
 #include <glib.h>
 #include <bson.h>
 #include <julea.h>
+#include <db/jdb-selector.h>
 
+//client side wrappers for backend functions
 gboolean j_db_internal_schema_create(gchar const* namespace, gchar const* name, bson_t const* schema, JBatch* batch, GError** error);
 gboolean j_db_internal_schema_get(gchar const* namespace, gchar const* name, bson_t* schema, JBatch* batch, GError** error);
 gboolean j_db_internal_schema_delete(gchar const* namespace, gchar const* name, JBatch* batch, GError** error);
@@ -31,5 +33,8 @@ gboolean j_db_internal_update(gchar const* namespace, gchar const* name, bson_t 
 gboolean j_db_internal_delete(gchar const* namespace, gchar const* name, bson_t const* selector, JBatch* batch, GError** error);
 gboolean j_db_internal_query(gchar const* namespace, gchar const* name, bson_t const* selector, gpointer* iterator, JBatch* batch, GError** error);
 gboolean j_db_internal_iterate(gpointer iterator, bson_t* metadata, GError** error);
+
+//client side additional internal functions
+bson_t* j_db_selector_get_bson(JDBSelector* selector);
 
 #endif

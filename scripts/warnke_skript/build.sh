@@ -54,8 +54,8 @@ echo		lcov -c -i -d "build-${name}" -o "${afl_path}/cov/build-${name}.info"
 	)
 }
 
-julea_compile "afl-gcc" "" "" > ${log_path}/compile1 2>&1
-julea_compile "afl-gcc" "--debug" "" > ${log_path}/compile2 2>&1
+julea_compile "afl-gcc" "--coverage" "" > ${log_path}/compile1 2>&1
+julea_compile "afl-gcc" "--coverage --debug" "" > ${log_path}/compile2 2>&1
 julea_compile "afl-gcc" "" "asan" > ${log_path}/compile3 2>&1
 julea_compile "afl-clang-fast" "" "" > ${log_path}/compile6 2>&1
 julea_compile "afl-clang-fast" "--debug" "" > ${log_path}/compile7 2>&1

@@ -53,17 +53,17 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	switch(type)
 	{
-	case J_BACKEND_TYPE_OBJECT:
-		type_str = "object";
-		break;
-	case J_BACKEND_TYPE_KV:
-		type_str = "kv";
-		break;
-	case J_BACKEND_TYPE_DB:
-		type_str = "db";
-		break;
-	default:
-		g_warn_if_reached();
+		case J_BACKEND_TYPE_OBJECT:
+			type_str = "object";
+			break;
+		case J_BACKEND_TYPE_KV:
+			type_str = "kv";
+			break;
+		case J_BACKEND_TYPE_DB:
+			type_str = "db";
+			break;
+		default:
+			g_warn_if_reached();
 	}
 
 #ifdef JULEA_BACKEND_PATH_BUILD
@@ -111,16 +111,16 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (type == J_BACKEND_TYPE_OBJECT)
 	{
-		if (tmp_backend->object.backend_init == NULL //
-			|| tmp_backend->object.backend_fini == NULL //
-			|| tmp_backend->object.backend_create == NULL //
-			|| tmp_backend->object.backend_delete == NULL //
-			|| tmp_backend->object.backend_open == NULL //
-			|| tmp_backend->object.backend_close == NULL //
-			|| tmp_backend->object.backend_status == NULL //
-			|| tmp_backend->object.backend_sync == NULL //
-			|| tmp_backend->object.backend_read == NULL //
-			|| tmp_backend->object.backend_write == NULL)
+		if (tmp_backend->object.backend_init == NULL
+		    || tmp_backend->object.backend_fini == NULL
+		    || tmp_backend->object.backend_create == NULL
+		    || tmp_backend->object.backend_delete == NULL
+		    || tmp_backend->object.backend_open == NULL
+		    || tmp_backend->object.backend_close == NULL
+		    || tmp_backend->object.backend_status == NULL
+		    || tmp_backend->object.backend_sync == NULL
+		    || tmp_backend->object.backend_read == NULL
+		    || tmp_backend->object.backend_write == NULL)
 		{
 			goto error;
 		}
@@ -128,16 +128,16 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (type == J_BACKEND_TYPE_KV)
 	{
-		if (tmp_backend->kv.backend_init == NULL //
-			|| tmp_backend->kv.backend_fini == NULL //
-			|| tmp_backend->kv.backend_batch_start == NULL //
-			|| tmp_backend->kv.backend_batch_execute == NULL //
-			|| tmp_backend->kv.backend_put == NULL //
-			|| tmp_backend->kv.backend_delete == NULL //
-			|| tmp_backend->kv.backend_get == NULL //
-			|| tmp_backend->kv.backend_get_all == NULL //
-			|| tmp_backend->kv.backend_get_by_prefix == NULL //
-			|| tmp_backend->kv.backend_iterate == NULL)
+		if (tmp_backend->kv.backend_init == NULL
+		    || tmp_backend->kv.backend_fini == NULL
+		    || tmp_backend->kv.backend_batch_start == NULL
+		    || tmp_backend->kv.backend_batch_execute == NULL
+		    || tmp_backend->kv.backend_put == NULL
+		    || tmp_backend->kv.backend_delete == NULL
+		    || tmp_backend->kv.backend_get == NULL
+		    || tmp_backend->kv.backend_get_all == NULL
+		    || tmp_backend->kv.backend_get_by_prefix == NULL
+		    || tmp_backend->kv.backend_iterate == NULL)
 		{
 			goto error;
 		}
@@ -145,9 +145,18 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	if (type == J_BACKEND_TYPE_DB)
 	{
-		if (tmp_backend->db.backend_init == NULL //
-			|| tmp_backend->db.backend_fini == NULL //
-			|| tmp_backend->db.backend_schema_create == NULL || tmp_backend->db.backend_schema_get == NULL || tmp_backend->db.backend_schema_delete == NULL || tmp_backend->db.backend_insert == NULL || tmp_backend->db.backend_update == NULL || tmp_backend->db.backend_delete == NULL || tmp_backend->db.backend_query == NULL || tmp_backend->db.backend_iterate == NULL)
+		if (tmp_backend->db.backend_init == NULL
+		    || tmp_backend->db.backend_fini == NULL
+		    || tmp_backend->db.backend_batch_start == NULL
+		    || tmp_backend->db.backend_batch_execute == NULL
+		    || tmp_backend->db.backend_schema_create == NULL
+		    || tmp_backend->db.backend_schema_get == NULL
+		    || tmp_backend->db.backend_schema_delete == NULL
+		    || tmp_backend->db.backend_insert == NULL
+		    || tmp_backend->db.backend_update == NULL
+		    || tmp_backend->db.backend_delete == NULL
+		    || tmp_backend->db.backend_query == NULL
+		    || tmp_backend->db.backend_iterate == NULL)
 		{
 			goto error;
 		}

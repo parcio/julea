@@ -92,3 +92,19 @@
 		J_DEBUG("abort %d", 0); \
 		abort();                \
 	} while (0)
+#define MYABORT_IF(val)                         \
+	do                                      \
+	{                                       \
+		if (val)                        \
+		{                               \
+			J_DEBUG("abort %d", 0); \
+			abort();                \
+		}                               \
+	} while (0)
+#define MYABORT_DEFAULT()                       \
+	default:                                \
+		do                              \
+		{                               \
+			J_DEBUG("abort %d", 0); \
+			abort();                \
+		} while (0)

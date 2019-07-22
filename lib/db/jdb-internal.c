@@ -314,7 +314,8 @@ j_db_internal_iterate(gpointer iterator, bson_t* metadata, GError** error)
 	ret = BSON_ITER_HOLDS_DOCUMENT(&helper->iter);
 	j_goto_error_backend(!ret, JULEA_BACKEND_ERROR_BSON_INVALID_TYPE, bson_iter_type(&helper->iter));
 	bson_iter_document(&helper->iter, &length, &data);
-	bson_init_static(metadata, data, length);
+	if (metadata)
+		bson_init_static(metadata, data, length);
 	return TRUE;
 _error:
 	bson_destroy(&helper->bson);

@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,8 +27,9 @@
 
 #include "test.h"
 
-static void
-test_configuration_new_ref_unref(void)
+static
+void
+test_configuration_new_ref_unref (void)
 {
 	JConfiguration* configuration;
 
@@ -38,8 +40,9 @@ test_configuration_new_ref_unref(void)
 	j_configuration_unref(configuration);
 }
 
-static void
-test_configuration_new_for_data(void)
+static
+void
+test_configuration_new_for_data (void)
 {
 	JConfiguration* configuration;
 	GKeyFile* key_file;
@@ -66,8 +69,9 @@ test_configuration_new_for_data(void)
 	g_key_file_free(key_file);
 }
 
-static void
-test_configuration_get(void)
+static
+void
+test_configuration_get (void)
 {
 	JConfiguration* configuration;
 	GKeyFile* key_file;
@@ -120,7 +124,7 @@ test_configuration_get(void)
 }
 
 void
-test_configuration(void)
+test_configuration (void)
 {
 	g_test_add_func("/configuration/new_ref_unref", test_configuration_new_ref_unref);
 	g_test_add_func("/configuration/new_for_data", test_configuration_new_for_data);

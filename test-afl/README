@@ -64,7 +64,7 @@ watch afl-whatsup -s afl/out
 # coverage
 # nach ausführen von afl - oder auch währenddessen
 # die zusammenfassende code-coverage befindet sich in 'afl/cov/html'
-# in den 'afl/cov/html-*' Ordnern befinden sich die code-coverage für die einzelnen compile-optionen
+# in den 'afl/cov/html-*' Ordnern befinden sich die code-coverage Ergebnisse für die einzelnen compile-optionen
 
 ./scripts/warnke_skript/afl-coverage.sh
 
