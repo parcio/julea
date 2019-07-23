@@ -343,6 +343,20 @@ gboolean j_backend_kv_iterate (JBackend*, gpointer, gchar const**, gconstpointer
 gboolean j_backend_db_init (JBackend*, gchar const*);
 void j_backend_db_fini (JBackend*);
 
+gboolean j_backend_db_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*, GError**);
+gboolean j_backend_db_batch_execute (JBackend*, gpointer, GError**);
+
+gboolean j_backend_db_schema_create (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
+gboolean j_backend_db_schema_get (JBackend*, gpointer, gchar const*, bson_t*, GError**);
+gboolean j_backend_db_schema_delete (JBackend*, gpointer, gchar const*, GError**);
+
+gboolean j_backend_db_insert (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
+gboolean j_backend_db_update (JBackend*, gpointer, gchar const*, bson_t const*, bson_t const*, GError**);
+gboolean j_backend_db_delete (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
+
+gboolean j_backend_db_query (JBackend*, gpointer, gchar const*, bson_t const*, gpointer*, GError**);
+gboolean j_backend_db_iterate (JBackend*, gpointer, bson_t*, GError**);
+
 G_END_DECLS
 
 #endif

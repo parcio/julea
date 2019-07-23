@@ -578,6 +578,193 @@ j_backend_db_fini (JBackend* backend)
 	j_trace_leave("backend_fini");
 }
 
+gboolean
+j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemanticsSafety safety, gpointer* batch, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_batch_start", "%s, %d, %p, %p", namespace, safety, (gpointer)batch, (gpointer)error);
+	ret = backend->db.backend_batch_start(namespace, safety, batch, error);
+	j_trace_leave("backend_batch_start");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_batch_execute (JBackend* backend, gpointer batch, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_batch_execute", "%p, %p", batch, (gpointer)error);
+	ret = backend->db.backend_batch_execute(batch, error);
+	j_trace_leave("backend_batch_execute");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_schema_create (JBackend* backend, gpointer batch, gchar const* name, bson_t const* schema, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(schema != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_schema_create", "%p, %s, %p, %p", batch, name, (gconstpointer)schema, (gpointer)error);
+	ret = backend->db.backend_schema_create(batch, name, schema, error);
+	j_trace_leave("backend_schema_create");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_schema_get (JBackend* backend, gpointer batch, gchar const* name, bson_t* schema, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(schema != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
+	ret = backend->db.backend_schema_get(batch, name, schema, error);
+	j_trace_leave("backend_schema_get");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_schema_delete (JBackend* backend, gpointer batch, gchar const* name, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_schema_delete", "%p, %s, %p", batch, name, (gpointer)error);
+	ret = backend->db.backend_schema_delete(batch, name, error);
+	j_trace_leave("backend_schema_delete");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_insert (JBackend* backend, gpointer batch, gchar const* name, bson_t const* metadata, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(metadata != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_insert", "%p, %s, %p, %p", batch, name, (gconstpointer)metadata, (gpointer)error);
+	ret = backend->db.backend_insert(batch, name, metadata, error);
+	j_trace_leave("backend_insert");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_update (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(metadata != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_update", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gconstpointer)metadata, (gpointer)error);
+	ret = backend->db.backend_update(batch, name, selector, metadata, error);
+	j_trace_leave("backend_update");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_delete (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_delete", "%p, %s, %p, %p", batch, name, (gconstpointer)selector, (gpointer)error);
+	ret = backend->db.backend_delete(batch, name, selector, error);
+	j_trace_leave("backend_delete");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_query (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(iterator != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_query", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gpointer)iterator, (gpointer)error);
+	ret = backend->db.backend_query(batch, name, selector, iterator, error);
+	j_trace_leave("backend_query");
+
+	return ret;
+}
+
+gboolean
+j_backend_db_iterate (JBackend* backend, gpointer iterator, bson_t* metadata, GError** error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(iterator != NULL, FALSE);
+	g_return_val_if_fail(metadata != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_trace_enter("backend_iterate", "%p, %p, %p", iterator, (gpointer)metadata, (gpointer)error);
+	ret = backend->db.backend_iterate(iterator, metadata, error);
+	j_trace_leave("backend_iterate");
+
+	return ret;
+}
+
 /**
  * @}
  **/
