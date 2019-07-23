@@ -7,6 +7,10 @@ example/hello-world
 # Doxygen
 html/
 
+# Patch
+*.orig
+*.rej
+
 # Sublime Text
 *.sublime-*
 
@@ -14,7 +18,7 @@ html/
 *.swp
 
 # Waf
-build/
+build*/
 waf-extras/*.pyc
 .lock-waf*
 .waf-*/
