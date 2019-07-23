@@ -37,6 +37,12 @@
  * @{
  **/
 
+GQuark
+j_backend_db_error_quark (void)
+{
+	return g_quark_from_static_string("julea-error-backend-db-quark");
+}
+
 static
 GModule*
 j_backend_load (gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)

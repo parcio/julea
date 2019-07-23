@@ -529,8 +529,8 @@ def build(ctx):
 
 	db_backends = ['null']
 
-	#if ctx.env.JULEA_SQLITE:
-	#	db_backends.append('sqlite')
+	if ctx.env.JULEA_SQLITE:
+		db_backends.append('sqlite')
 
 	for backend in db_backends:
 		use_extra = []
