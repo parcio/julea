@@ -51,6 +51,7 @@ JConfiguration* j_configuration (void);
 
 JBackend* j_object_backend (void);
 JBackend* j_kv_backend (void);
+JBackend* j_db_backend (void);
 
 G_END_DECLS
 

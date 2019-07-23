@@ -38,6 +38,9 @@ void j_connection_pool_push_object (guint, GSocketConnection*);
 GSocketConnection* j_connection_pool_pop_kv (guint);
 void j_connection_pool_push_kv (guint, GSocketConnection*);
 
+GSocketConnection* j_connection_pool_pop_db (guint);
+void j_connection_pool_push_db (guint, GSocketConnection*);
+
 G_END_DECLS
 
 #endif
