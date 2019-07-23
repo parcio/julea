@@ -57,6 +57,9 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		case J_BACKEND_TYPE_KV:
 			type_str = "kv";
 			break;
+		case J_BACKEND_TYPE_DB:
+			type_str = "db";
+			break;
 		default:
 			g_warn_if_reached();
 	}
@@ -138,6 +141,25 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		}
 	}
 
+	if (type == J_BACKEND_TYPE_DB)
+	{
+		if (tmp_backend->db.backend_init == NULL
+		    || tmp_backend->db.backend_fini == NULL
+		    || tmp_backend->db.backend_batch_start == NULL
+		    || tmp_backend->db.backend_batch_execute == NULL
+		    || tmp_backend->db.backend_schema_create == NULL
+		    || tmp_backend->db.backend_schema_get == NULL
+		    || tmp_backend->db.backend_schema_delete == NULL
+		    || tmp_backend->db.backend_insert == NULL
+		    || tmp_backend->db.backend_update == NULL
+		    || tmp_backend->db.backend_delete == NULL
+		    || tmp_backend->db.backend_query == NULL
+		    || tmp_backend->db.backend_iterate == NULL)
+		{
+			goto error;
+		}
+	}
+
 	*backend = tmp_backend;
 
 	return module;
@@ -158,7 +180,7 @@ j_backend_load_client (gchar const* name, gchar const* component, JBackendType t
 {
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(component != NULL, FALSE);
-	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(module != NULL, FALSE);
 	g_return_val_if_fail(backend != NULL, FALSE);
 
@@ -180,7 +202,7 @@ j_backend_load_server (gchar const* name, gchar const* component, JBackendType t
 {
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(component != NULL, FALSE);
-	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV, FALSE);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(module != NULL, FALSE);
 	g_return_val_if_fail(backend != NULL, FALSE);
 
@@ -527,6 +549,33 @@ j_backend_kv_iterate (JBackend* backend, gpointer iterator, gchar const** key, g
 	j_trace_leave("backend_iterate");
 
 	return ret;
+}
+
+gboolean
+j_backend_db_init (JBackend* backend, gchar const* path)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
+	g_return_val_if_fail(path != NULL, FALSE);
+
+	j_trace_enter("backend_init", "%s", path);
+	ret = backend->db.backend_init(path);
+	j_trace_leave("backend_init");
+
+	return ret;
+}
+
+void
+j_backend_db_fini (JBackend* backend)
+{
+	g_return_if_fail(backend != NULL);
+	g_return_if_fail(backend->type == J_BACKEND_TYPE_DB);
+
+	j_trace_enter("backend_fini", NULL);
+	backend->db.backend_fini();
+	j_trace_leave("backend_fini");
 }
 
 /**

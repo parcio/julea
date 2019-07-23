@@ -527,6 +527,28 @@ def build(ctx):
 			install_path='${LIBDIR}/julea/backend/kv'
 		)
 
+	db_backends = ['null']
+
+	#if ctx.env.JULEA_SQLITE:
+	#	db_backends.append('sqlite')
+
+	for backend in db_backends:
+		use_extra = []
+		cflags = []
+
+		if backend == 'sqlite':
+			use_extra = ['SQLITE']
+
+		ctx.shlib(
+			source=['backend/db/{0}.c'.format(backend)],
+			target='backend/db/{0}'.format(backend),
+			use=use_julea_backend + ['lib/julea'] + use_extra,
+			includes=include_julea_core,
+			cflags=cflags,
+			rpath=get_rpath(ctx),
+			install_path='${LIBDIR}/julea/backend/db'
+		)
+
 	# Command line
 	ctx.program(
 		source=ctx.path.ant_glob('cli/*.c'),

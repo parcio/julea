@@ -38,6 +38,7 @@ static JConfiguration* jd_configuration;
 
 static JBackend* jd_object_backend;
 static JBackend* jd_kv_backend;
+static JBackend* jd_db_backend;
 
 static guint jd_thread_num = 0;
 
@@ -588,6 +589,15 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					j_message_send(reply, connection);
 				}
 				break;
+			case J_MESSAGE_DB_SCHEMA_CREATE:
+			case J_MESSAGE_DB_SCHEMA_GET:
+			case J_MESSAGE_DB_SCHEMA_DELETE:
+			case J_MESSAGE_DB_INSERT:
+			case J_MESSAGE_DB_UPDATE:
+			case J_MESSAGE_DB_DELETE:
+			case J_MESSAGE_DB_QUERY:
+				g_warn_if_reached();
+				break;
 			default:
 				g_warn_if_reached();
 				break;
@@ -684,6 +694,7 @@ main (int argc, char** argv)
 	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
 	GModule* kv_module = NULL;
+	GModule* db_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	g_autoptr(GSocketService) socket_service = NULL;
 	gchar const* object_backend;
@@ -692,9 +703,13 @@ main (int argc, char** argv)
 	gchar const* kv_backend;
 	gchar const* kv_component;
 	gchar const* kv_path;
+	gchar const* db_backend;
+	gchar const* db_component;
+	gchar const* db_path;
 #ifdef JULEA_DEBUG
 	g_autofree gchar* object_path_port = NULL;
 	g_autofree gchar* kv_path_port = NULL;
+	g_autofree gchar* db_path_port = NULL;
 #endif
 
 	GOptionEntry entries[] = {
@@ -759,12 +774,18 @@ main (int argc, char** argv)
 	kv_component = j_configuration_get_kv_component(jd_configuration);
 	kv_path = j_configuration_get_kv_path(jd_configuration);
 
+	db_backend = j_configuration_get_db_backend(jd_configuration);
+	db_component = j_configuration_get_db_component(jd_configuration);
+	db_path = j_configuration_get_db_path(jd_configuration);
+
 #ifdef JULEA_DEBUG
 	object_path_port = g_strdup_printf("%s/%d", object_path, opt_port);
 	kv_path_port = g_strdup_printf("%s/%d", kv_path, opt_port);
+	db_path_port = g_strdup_printf("%s/%d", db_path, opt_port);
 
 	object_path = object_path_port;
 	kv_path = kv_path_port;
+	db_path = db_path_port;
 #endif
 
 	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
@@ -781,6 +802,15 @@ main (int argc, char** argv)
 		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
 			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
+			return 1;
+		}
+	}
+
+	if (j_backend_load_server(db_backend, db_component, J_BACKEND_TYPE_DB, &db_module, &jd_db_backend))
+	{
+		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
+		{
+			J_CRITICAL("Could not initialize db backend %s.\n", db_backend);
 			return 1;
 		}
 	}
@@ -802,6 +832,11 @@ main (int argc, char** argv)
 
 	j_statistics_free(jd_statistics);
 
+	if (jd_db_backend != NULL)
+	{
+		j_backend_db_fini(jd_db_backend);
+	}
+
 	if (jd_kv_backend != NULL)
 	{
 		j_backend_kv_fini(jd_kv_backend);
@@ -810,6 +845,11 @@ main (int argc, char** argv)
 	if (jd_object_backend != NULL)
 	{
 		j_backend_object_fini(jd_object_backend);
+	}
+
+	if (db_module != NULL)
+	{
+		g_module_close(db_module);
 	}
 
 	if (kv_module != NULL)

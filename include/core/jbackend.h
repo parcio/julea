@@ -39,7 +39,8 @@ G_BEGIN_DECLS
 enum JBackendType
 {
 	J_BACKEND_TYPE_OBJECT,
-	J_BACKEND_TYPE_KV
+	J_BACKEND_TYPE_KV,
+	J_BACKEND_TYPE_DB
 };
 
 typedef enum JBackendType JBackendType;
@@ -95,6 +96,211 @@ struct JBackend
 			gboolean (*backend_iterate) (gpointer, gchar const**, gconstpointer*, guint32*);
 		}
 		kv;
+
+		struct
+		{
+			gboolean (*backend_init) (gchar const*);
+			void (*backend_fini) (void);
+
+			gboolean (*backend_batch_start) (gchar const* namespace, JSemanticsSafety safety, gpointer* batch, GError** error);
+			gboolean (*backend_batch_execute) (gpointer batch, GError** error);
+
+			/**
+			* Create a schema
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to create (e.g., "files")
+			* \param[in] schema    The schema structure to create. Points to:
+			*                      - An initialized BSON containing "structure"
+			* \code
+			* structure
+			* {
+			*	"var_name1": var_type1 (int32),
+			*	"var_name2": var_type2 (int32),
+			*	"var_nameN": var_typeN (int32),
+			*	"_indexes": [["var_name1", "var_name2"], ["var_name3"]]
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_schema_create) (gpointer batch, gchar const* name, bson_t const* schema, GError** error);
+
+			/**
+			* Obtains information about a schema
+			*
+			* \param[in]  namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in]  name      Schema name to open (e.g., "files")
+			* \param[out] schema    The schema information initially points to:
+			*                       - An allocated, uninitialized BSON
+			*                       - NULL
+			* \code
+			* {
+			*	"_id": id (int64),
+			*	"var_name1": var_type1 (int32),
+			*	"var_name2": var_type2 (int32),
+			*	"var_nameN": var_typeN (int32)
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_schema_get) (gpointer batch, gchar const* name, bson_t* schema, GError** error);
+
+			/**
+			* Delete a schema
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to delete (e.g., "files")
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_schema_delete) (gpointer batch, gchar const* name, GError** error);
+
+			/**
+			* Insert data into a schema
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to delete (e.g., "files")
+			* \param[in] metadata  The data to insert. Points to:
+			*                      - An initialized BSON containing "data"
+			* \code
+			* data
+			* {
+			*	"var_name1": value1,
+			*	"var_name2": value2,
+			*	"var_nameN": valueN,
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_insert) (gpointer batch, gchar const* name, bson_t const* metadata, GError** error);
+
+			/**
+			* Updates data
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to delete (e.g., "files")
+			* \param[in] selector  The selector to decide which data should be updated. Points to:
+			*                      - An initialized BSON containing "selector_part"
+			* \code
+			* selector_part
+			* {
+			*	"_mode": mode (int32)
+			*	"0": {
+			*		"_name": name1 (utf8),
+			*		"_operator": op1 (int32),
+			*		"_value": value1
+			*	},
+			*	"4": selector_part (document),
+			*	"N": {
+			*		"_name": name2 (utf8),
+			*		"_operator": op2 (int32),
+			*		"_value": value2
+			*	}
+			* }
+			* \endcode
+			*
+			* \param[in] metadata  The data to write. All undefined columns will be set to NULL.
+			* \code
+			* {
+			*	"var_name1": value1,
+			*	"var_name2": value2,
+			*	"var_nameN": valueN
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_update) (gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
+
+			/**
+			* Deletes data
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to delete (e.g., "files")
+			* \param[in] selector  The selector to decide which data should be updated. Points to:
+			*                      - An initialized bson containing "selector_part"
+			*                      - An empty bson
+			*                      - NULL
+			* \code
+			* selector_part
+			* {
+			*	"_mode": mode (int32)
+			*	"0": {
+			*		"_name": name1 (utf8),
+			*		"_operator": op1 (int32),
+			*		"_value": value1
+			*	},
+			*	"4": selector_part (document),
+			*	"N": {
+			*		"_name": name2 (utf8),
+			*		"_operator": op2 (int32),
+			*		"_value": value2
+			*	}
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_delete) (gpointer batch, gchar const* name, bson_t const* selector, GError** error);
+
+			/**
+			* Creates an iterator
+			*
+			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in] name      Schema name to delete (e.g., "files")
+			* \param[in] selector  The selector to decide which data should be updated. Points to:
+			*                      - An initialized BSON containing "selector_part"
+			*                      - An empty BSON
+			*                      - NULL
+			* \code
+			* selector_part
+			* {
+			*	"_mode": mode (int32),
+			*	"0": {
+			*		"_name": name1 (utf8),
+			*		"_operator": op1 (int32),
+			*		"_value": value1
+			*	},
+			*	"4": selector_part (document),
+			*	"N": {
+			*		"_name": name2 (utf8),
+			*		"_operator": op2 (int32),
+			*		"_value": value2
+			*	},
+			* }
+			* \endcode
+			* \param[out] iterator The iterator which can be used later for backend_iterate
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_query) (gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
+
+			/**
+			* Obtains metadata
+			*
+			* backend_iterate should be called until the returned value is NULL due to no more elements found.
+			* This allows the backend to free potentially allocated caches.
+			*
+			* \param[in,out] iterator The iterator specifying the data to retrieve
+			* \param[out]    metadata The requested metadata initially points to:
+			*                         - An initialized BSON
+			* \code
+			* {
+			* 	"_id": id,
+			* 	"var_name1": value1,
+			* 	"var_name2": value2,
+			* 	"var_nameN": valueN
+			* }
+			* \endcode
+			*
+			* \return TRUE on success, FALSE otherwise.
+			**/
+			gboolean (*backend_iterate) (gpointer iterator, bson_t* metadata, GError** error);
+		}
+		db;
 	};
 };
 
@@ -133,6 +339,9 @@ gboolean j_backend_kv_get (JBackend*, gpointer, gchar const*, gpointer*, guint32
 gboolean j_backend_kv_get_all (JBackend*, gchar const*, gpointer*);
 gboolean j_backend_kv_get_by_prefix (JBackend*, gchar const*, gchar const*, gpointer*);
 gboolean j_backend_kv_iterate (JBackend*, gpointer, gchar const**, gconstpointer*, guint32*);
+
+gboolean j_backend_db_init (JBackend*, gchar const*);
+void j_backend_db_fini (JBackend*);
 
 G_END_DECLS
 
