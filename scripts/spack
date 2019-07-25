@@ -18,7 +18,7 @@ spack_clone ()
 {
 	local spack_commit
 
-	spack_commit='227f9c90269ce466646102310b433d0f1f238886'
+	spack_commit='b0abbfecb8595c8901855e679be0bbea64089fe8'
 
 	test -n "${SPACK_DIR}" || return 1
 
