@@ -47,9 +47,10 @@ Finally, a JULEA configuration has to be created.
 
 ```console
 $ julea-config --user \
-  --object-servers="$(hostname)" --kv-servers="$(hostname)" \
+  --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
   --object-backend=posix --object-component=server --object-path=/tmp/julea \
-  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea
+  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea \
+  --db-backend=null --db-component=server --db-path=
 ```
 
 You can check whether JULEA works by executing the integrated test suite.
