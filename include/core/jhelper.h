@@ -34,13 +34,11 @@
 
 G_BEGIN_DECLS
 
-void j_helper_set_nodelay (GSocketConnection*, gboolean);
-
-gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
-
 guint64 j_helper_atomic_add (guint64 volatile*, guint64);
-
+gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 guint32 j_helper_hash (gchar const*);
+void j_helper_set_nodelay (GSocketConnection*, gboolean);
+gchar* j_helper_str_replace (gchar const*, gchar const*, gchar const*);
 
 G_END_DECLS
 

@@ -97,6 +97,24 @@ j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 	g_return_if_fail((guint)ret <= length);
 }
 
+gchar*
+j_helper_str_replace (gchar const* str, gchar const* old, gchar const* new)
+{
+	g_autoptr(GRegex) regex = NULL;
+	g_autofree gchar* old_escaped = NULL;
+	gchar* replace;
+
+	g_return_val_if_fail(str != NULL, NULL);
+	g_return_val_if_fail(old != NULL, NULL);
+	g_return_val_if_fail(new != NULL, NULL);
+
+	old_escaped = g_regex_escape_string(old, -1);
+	regex = g_regex_new(old_escaped, 0, 0, NULL);
+	replace = g_regex_replace_literal(regex, str, -1, 0, new, 0, NULL);
+
+	return replace;
+}
+
 gboolean
 j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint length)
 {

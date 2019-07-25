@@ -10,9 +10,12 @@ If no name is specified, the default (`julea`) is used.
 
 ## Backends
 
-JULEA supports multiple backends that can be used for object or key-value storage.
+JULEA supports multiple backends that can be used for object, key-value or database storage.
 It is possible to use them either on the client or on the server.
 The following tables visualize all supported types and special configuration parameters.
+
+The backend paths can contain the special string `{PORT}`, which will be replaced with the server's port at runtime.
+This can be used to run two servers on the same machine, as sharing backend paths among multiple instances will typically lead to problems.
 
 ### Object Backends
 
@@ -30,5 +33,12 @@ The following tables visualize all supported types and special configuration par
 | leveldb | ❌     | ✅     | Path to a directory (`/var/storage/leveldb`) |
 | lmdb    | ❌     | ✅     | Path to a directory (`/var/storage/lmdb`) |
 | mongodb | ✅     | ❌     | Host name and database name (`localhost:julea`) |
+| null    | ✅     | ✅     |  |
+| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
+
+## Database Backends
+
+| Backend | Client | Server | Path format  |
+|---------|:------:|:------:|--------------|
 | null    | ✅     | ✅     |  |
 | sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |

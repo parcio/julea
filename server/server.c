@@ -786,18 +786,14 @@ main (int argc, char** argv)
 	g_autoptr(GSocketService) socket_service = NULL;
 	gchar const* object_backend;
 	gchar const* object_component;
-	gchar const* object_path;
+	g_autofree gchar* object_path = NULL;
 	gchar const* kv_backend;
 	gchar const* kv_component;
-	gchar const* kv_path;
+	g_autofree gchar* kv_path = NULL;
 	gchar const* db_backend;
 	gchar const* db_component;
-	gchar const* db_path;
-#ifdef JULEA_DEBUG
-	g_autofree gchar* object_path_port = NULL;
-	g_autofree gchar* kv_path_port = NULL;
-	g_autofree gchar* db_path_port = NULL;
-#endif
+	g_autofree gchar* db_path = NULL;
+	g_autofree gchar* port_str = NULL;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -853,27 +849,19 @@ main (int argc, char** argv)
 		return 1;
 	}
 
+	port_str = g_strdup_printf("%d", opt_port);
+
 	object_backend = j_configuration_get_object_backend(jd_configuration);
 	object_component = j_configuration_get_object_component(jd_configuration);
-	object_path = j_configuration_get_object_path(jd_configuration);
+	object_path = j_helper_str_replace(j_configuration_get_object_path(jd_configuration), "{PORT}", port_str);
 
 	kv_backend = j_configuration_get_kv_backend(jd_configuration);
 	kv_component = j_configuration_get_kv_component(jd_configuration);
-	kv_path = j_configuration_get_kv_path(jd_configuration);
+	kv_path = j_helper_str_replace(j_configuration_get_kv_path(jd_configuration), "{PORT}", port_str);
 
 	db_backend = j_configuration_get_db_backend(jd_configuration);
 	db_component = j_configuration_get_db_component(jd_configuration);
-	db_path = j_configuration_get_db_path(jd_configuration);
-
-#ifdef JULEA_DEBUG
-	object_path_port = g_strdup_printf("%s/%d", object_path, opt_port);
-	kv_path_port = g_strdup_printf("%s/%d", kv_path, opt_port);
-	db_path_port = g_strdup_printf("%s/%d", db_path, opt_port);
-
-	object_path = object_path_port;
-	kv_path = kv_path_port;
-	db_path = db_path_port;
-#endif
+	db_path = j_helper_str_replace(j_configuration_get_db_path(jd_configuration), "{PORT}", port_str);
 
 	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
 	{

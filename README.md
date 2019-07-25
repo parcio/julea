@@ -48,8 +48,8 @@ Finally, a JULEA configuration has to be created.
 ```console
 $ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
-  --object-backend=posix --object-component=server --object-path=/tmp/julea \
-  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea \
+  --object-backend=posix --object-component=server --object-path=/tmp/julea/posix \
+  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb \
   --db-backend=null --db-component=server --db-path=
 ```
 
