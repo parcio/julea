@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -87,6 +88,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		gchar const* namespace;
 		gchar const* path;
 		guint32 operation_count;
+		JBackendOperation backend_operation;
 		JSemantics* semantics;
 		JSemanticsSafety safety;
 		guint i;
@@ -590,13 +592,98 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_DB_SCHEMA_CREATE:
+				memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_GET:
+				memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_DELETE:
+				memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_INSERT:
+				memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_UPDATE:
+				memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_DELETE:
+				memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
+				// fallthrough
 			case J_MESSAGE_DB_QUERY:
-				g_warn_if_reached();
+				memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
+				{
+					g_autoptr(JMessage) reply = NULL;
+					g_autoptr(GError) error = NULL;
+					gpointer batch = NULL;
+					gint ret;
+
+					reply = j_message_new_reply(message);
+
+					for (guint j = 0; j < backend_operation.out_param_count; j++)
+					{
+						if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_ERROR)
+						{
+							backend_operation.out_param[j].ptr = &backend_operation.out_param[j].error_ptr;
+							backend_operation.out_param[j].error_ptr = NULL;
+						}
+						else if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
+						{
+							backend_operation.out_param[j].bson_initialized = FALSE;
+							backend_operation.out_param[j].ptr = &backend_operation.out_param[j].bson;
+						}
+					}
+					if (operation_count)
+					{
+						j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
+					}
+
+					j_backend_db_batch_start(jd_db_backend, backend_operation.in_param[0].ptr, safety, &batch, &error);
+
+					for (i = 0; i < operation_count; i++)
+					{
+						ret = FALSE;
+						if (i)
+						{
+							j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
+						}
+
+						if (error)
+						{
+							backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = g_error_copy(error);
+						}
+						else
+						{
+							ret = backend_operation.backend_func(jd_db_backend, batch, &backend_operation);
+							for (guint j = 0; j < backend_operation.out_param_count; j++)
+							{
+								if (ret && backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
+								{
+									backend_operation.out_param[j].bson_initialized = TRUE;
+								}
+							}
+						}
+
+						j_backend_operation_to_message(reply, backend_operation.out_param, backend_operation.out_param_count);
+
+						if (ret)
+						{
+							for (guint j = 0; j < backend_operation.out_param_count; j++)
+							{
+								if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
+								{
+									bson_destroy(backend_operation.out_param[j].ptr);
+								}
+							}
+						}
+					}
+
+					if (error == NULL)
+					{
+						j_backend_db_batch_execute(jd_db_backend, batch, &error);
+					}
+
+					j_message_send(reply, connection);
+				}
 				break;
 			default:
 				g_warn_if_reached();

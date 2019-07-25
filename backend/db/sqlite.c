@@ -27,6 +27,8 @@
 #include <julea-internal.h>
 #include <julea-db.h>
 
+// FIXME clean up
+
 const char* const JuleaBackendErrorFormat[] = {
 	"Generic Backend Error%s",
 	"%s:%s: batch not set%s",

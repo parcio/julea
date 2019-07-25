@@ -33,6 +33,7 @@
  **/
 
 #include <core/jbackend.h>
+#include <core/jbackend-operation.h>
 #include <core/jbackground-operation.h>
 #include <core/jbatch.h>
 #include <core/jcache.h>

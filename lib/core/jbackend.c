@@ -40,7 +40,7 @@
 GQuark
 j_backend_db_error_quark (void)
 {
-	return g_quark_from_static_string("julea-error-backend-db-quark");
+	return g_quark_from_static_string("j-backend-db-error-quark");
 }
 
 static
