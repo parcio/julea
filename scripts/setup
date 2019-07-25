@@ -87,25 +87,34 @@ setup_init ()
 
 	MONGO_PATH="/tmp/julea-mongo-${USER}"
 
+	# FIXME make more robust
 	SERVERS_OBJECT="$(get_config | grep ^object=)"
 	SERVERS_KV="$(get_config | grep ^kv=)"
+	SERVERS_DB="$(get_config | grep ^db=)"
 	OBJECT_BACKEND="$(get_config | grep ^backend= | head --lines=1)"
-	KV_BACKEND="$(get_config | grep ^backend= | tail --lines=1)"
+	KV_BACKEND="$(get_config | grep ^backend= | tail --lines=2 | head --lines=1)"
+	DB_BACKEND="$(get_config | grep ^backend= | tail --lines=1)"
 	OBJECT_PATH="$(get_config | grep ^path= | head --lines=1)"
-	KV_PATH="$(get_config | grep ^path= | tail --lines=1)"
+	KV_PATH="$(get_config | grep ^path= | tail --lines=2 | head --lines=1)"
+	DB_PATH="$(get_config | grep ^path= | tail --lines=1)"
 
 	SERVERS_OBJECT="${SERVERS_OBJECT#object=}"
 	SERVERS_KV="${SERVERS_KV#kv=}"
+	SERVERS_DB="${SERVERS_DB#db=}"
 	OBJECT_BACKEND="${OBJECT_BACKEND#backend=}"
 	KV_BACKEND="${KV_BACKEND#backend=}"
+	DB_BACKEND="${DB_BACKEND#backend=}"
 	OBJECT_PATH="${OBJECT_PATH#path=}"
 	KV_PATH="${KV_PATH#path=}"
+	DB_PATH="${DB_PATH#path=}"
 
 	SERVERS_OBJECT="${SERVERS_OBJECT%;}"
 	SERVERS_KV="${SERVERS_KV%;}"
+	SERVERS_DB="${SERVERS_DB%;}"
 
 	SERVERS_OBJECT=$(echo ${SERVERS_OBJECT} | sed 's/;/ /g')
 	SERVERS_KV=$(echo ${SERVERS_KV} | sed 's/;/ /g')
+	SERVERS_DB=$(echo ${SERVERS_DB} | sed 's/;/ /g')
 }
 
 setup_start ()
@@ -145,6 +154,18 @@ setup_start ()
 		fi
 	done
 
+	for server in ${SERVERS_DB}
+	do
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
+
+		if test "${host}" = "${HOSTNAME}"
+		then
+			# FIXME do something
+			:
+		fi
+	done
+
 	# Give the servers enough time to initialize properly.
 	sleep 5
 }
@@ -179,6 +200,17 @@ setup_stop ()
 			fi
 		fi
 	done
+
+	for server in ${SERVERS_DB}
+	do
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
+
+		if test "${host}" = "${HOSTNAME}"
+		then
+			:
+		fi
+	done
 }
 
 setup_clean ()
@@ -194,7 +226,10 @@ setup_clean ()
 
 		if test "${host}" = "${HOSTNAME}"
 		then
-			rm -rf "${OBJECT_PATH}"
+			if test -n "${OBJECT_PATH}"
+			then
+				rm -rf "${OBJECT_PATH}"
+			fi
 		fi
 	done
 
@@ -209,7 +244,24 @@ setup_clean ()
 			then
 				rm -rf "${MONGO_PATH}"
 			else
-				rm -rf "${KV_PATH}"
+				if test -n "${KV_PATH}"
+				then
+					rm -rf "${KV_PATH}"
+				fi
+			fi
+		fi
+	done
+
+	for server in ${SERVERS_DB}
+	do
+		host="$(get_host "${server}")"
+		port="$(get_port "${server}")"
+
+		if test "${host}" = "${HOSTNAME}"
+		then
+			if test -n "${DB_PATH}"
+			then
+				rm -rf "${DB_PATH}"
 			fi
 		fi
 	done
