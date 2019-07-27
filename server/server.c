@@ -61,11 +61,13 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
-	JMemoryChunk* memory_chunk;
+	JMemoryChunk* memory_chunk = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JStatistics* statistics;
-	GInputStream* input;
+	JStatistics* statistics = NULL;
+	GInputStream* input = NULL;
 	guint64 memory_chunk_size;
+	JMessageType message_type;
+	gboolean first = TRUE;
 
 	(void)service;
 	(void)source_object;
@@ -98,7 +100,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		j_semantics_unref(semantics);
 
-		switch (j_message_get_type(message))
+		message_type = j_message_get_type(message);
+		switch (message_type)
 		{
 			case J_MESSAGE_NONE:
 				break;
@@ -592,25 +595,39 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_DB_SCHEMA_CREATE:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_GET:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_DELETE:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_INSERT:
-				memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_UPDATE:
-				memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_DELETE:
-				memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
+				first = FALSE;
 				// fallthrough
 			case J_MESSAGE_DB_QUERY:
-				memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
+				if (first)
+					memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
+				first = FALSE;
 				{
 					g_autoptr(JMessage) reply = NULL;
 					g_autoptr(GError) error = NULL;
@@ -683,6 +700,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
+
+					first = TRUE;
 				}
 				break;
 			default:
