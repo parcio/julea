@@ -61,6 +61,7 @@ struct JBackendOperationParam
 		};
 		struct
 		{
+			const gchar* error_quark_string;
 			GError error;
 			GError* error_ptr;
 		};
