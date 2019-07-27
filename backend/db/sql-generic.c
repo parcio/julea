@@ -144,7 +144,6 @@ freeJSqlCacheSQLPrepared(void* ptr)
 		}
 		g_free(p);
 	}
-	_error:;
 }
 static JSqlCacheSQLPrepared*
 getCachePrepared(gchar const* namespace, gchar const* name, gchar const* query, GError** error)

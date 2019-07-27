@@ -2,6 +2,7 @@
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2010-2019 Michael Kuhn
+# Copyright (C) 2019 Benjamin Warnke
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -353,6 +354,7 @@ def configure(ctx):
 			'-Wuninitialized',
 			'-Wwrite-strings'
 		])
+		check_and_add_flags(ctx, '-fno-omit-frame-pointer')
 		check_and_add_flags(ctx, '-ggdb')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
@@ -392,6 +394,7 @@ def build(ctx):
 	use_julea_backend = use_julea_core + ['GMODULE']
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
 	use_julea_kv = use_julea_core + ['lib/julea', 'lib/julea-kv']
+	use_julea_db = use_julea_core + ['lib/julea', 'lib/julea-db']
 	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
 	use_julea_hdf = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5'] if ctx.env.JULEA_HDF else []
 
@@ -407,7 +410,7 @@ def build(ctx):
 		install_path='${LIBDIR}'
 	)
 
-	clients = ['object', 'kv', 'item']
+	clients = ['object', 'kv', 'db', 'item']
 
 	if ctx.env.JULEA_HDF:
 		clients.append('hdf5')
@@ -437,8 +440,18 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('test/**/*.c'),
 		target='test/julea-test',
-		use=use_julea_object + use_julea_item + use_julea_hdf,
+		use=use_julea_object + use_julea_item + use_julea_hdf + use_julea_db,
 		includes=include_julea_core + ['test'],
+		rpath=get_rpath(ctx),
+		install_path=None
+	)
+
+	# AFL-Tests
+	ctx.program(
+		source=ctx.path.ant_glob('test-afl/test-db-backend-main.c'),
+		target='test-afl/julea-test-afl-db-backend',
+		use=use_julea_object + use_julea_item + use_julea_hdf + use_julea_db,
+		includes=include_julea_core + ['test-afl'],
 		rpath=get_rpath(ctx),
 		install_path=None
 	)
@@ -447,7 +460,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('benchmark/**/*.c'),
 		target='benchmark/julea-benchmark',
-		use=use_julea_item + use_julea_hdf,
+		use=use_julea_item + use_julea_hdf + use_julea_db,
 		includes=include_julea_core + ['benchmark'],
 		rpath=get_rpath(ctx),
 		install_path=None
@@ -553,7 +566,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('cli/*.c'),
 		target='cli/julea-cli',
-		use=use_julea_object + use_julea_kv + use_julea_item,
+		use=use_julea_object + use_julea_kv + use_julea_item + use_julea_db,
 		includes=include_julea_core,
 		rpath=get_rpath(ctx),
 		install_path='${BINDIR}'
@@ -587,7 +600,7 @@ def build(ctx):
 		)
 
 	# pkg-config
-	for lib in ('', 'object', 'kv', 'item'):
+	for lib in ('', 'object', 'kv', 'db', 'item'):
 		suffix = '-{0}'.format(lib) if lib else ''
 
 		ctx(

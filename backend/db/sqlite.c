@@ -270,7 +270,7 @@ backend_init(gchar const* path)
 {
 	g_autofree gchar* dirname = NULL;
 	g_return_val_if_fail(path != NULL, FALSE);
-	if (strncmp(":memory:", path, 7))
+	if (strncmp("memory", path, 5))
 	{
 		dirname = g_path_get_dirname(path);
 		g_mkdir_with_parents(dirname, 0700);
@@ -299,7 +299,7 @@ backend_fini(void)
 }
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
-	.component = J_BACKEND_COMPONENT_SERVER,
+	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
