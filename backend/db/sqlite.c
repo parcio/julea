@@ -315,6 +315,7 @@ backend_fini(void)
 	fini_sql();
 	ret = sqlite3_close(backend_db);
 	j_sql_check(ret, SQLITE_OK);
+_error:;
 }
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
