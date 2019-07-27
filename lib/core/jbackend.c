@@ -44,6 +44,12 @@ j_backend_db_error_quark (void)
 	return g_quark_from_static_string("j-backend-db-error-quark");
 }
 
+GQuark
+j_sql_error_quark(void)
+{
+	return g_quark_from_static_string("j-sql-error-quark");
+}
+
 static
 GModule*
 j_backend_load (gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
