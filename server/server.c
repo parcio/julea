@@ -91,6 +91,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		JBackendOperation backend_operation;
 		JSemantics* semantics;
 		JSemanticsSafety safety;
+		gboolean message_matched = FALSE;
 		guint i;
 
 		operation_count = j_message_get_count(message);
@@ -592,25 +593,53 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_DB_SCHEMA_CREATE:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_GET:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_DELETE:
-				memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_INSERT:
-				memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_UPDATE:
-				memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_DELETE:
-				memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_QUERY:
-				memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
+				if (!message_matched)
+				{
+					memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
+					message_matched = TRUE;
+				}
 				{
 					g_autoptr(JMessage) reply = NULL;
 					g_autoptr(GError) error = NULL;
