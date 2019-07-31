@@ -29,7 +29,8 @@
 #include <string.h>
 
 #include <julea.h>
-#include <julea-internal.h>
+
+#include <jtrace-internal.h>
 
 static JStatistics* jd_statistics;
 
@@ -896,7 +897,7 @@ main (int argc, char** argv)
 	{
 		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
 		{
-			J_CRITICAL("Could not initialize object backend %s.\n", object_backend);
+			g_critical("Could not initialize object backend %s.\n", object_backend);
 			return 1;
 		}
 	}
@@ -905,7 +906,7 @@ main (int argc, char** argv)
 	{
 		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
-			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
+			g_critical("Could not initialize kv backend %s.\n", kv_backend);
 			return 1;
 		}
 	}
@@ -914,7 +915,7 @@ main (int argc, char** argv)
 	{
 		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
 		{
-			J_CRITICAL("Could not initialize db backend %s.\n", db_backend);
+			g_critical("Could not initialize db backend %s.\n", db_backend);
 			return 1;
 		}
 	}

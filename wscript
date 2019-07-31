@@ -26,8 +26,9 @@ VERSION = '0.2'
 top = '.'
 out = 'build'
 
-# CentOS 7 has GLib 2.42
-glib_version = '2.42'
+# Structured logging needs GLib 2.56
+# CentOS 7 has GLib 2.42, CentOS 7.6 has GLib 2.56
+glib_version = '2.56'
 libbson_version = '1.9.0'
 
 leveldb_version = '1.20'
@@ -360,6 +361,8 @@ def configure(ctx):
 		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 	else:
 		check_and_add_flags(ctx, '-O2')
+
+	ctx.define('G_LOG_USE_STRUCTURED', 1)
 
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)

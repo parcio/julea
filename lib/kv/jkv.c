@@ -28,8 +28,9 @@
 
 #include <kv/jkv.h>
 
+#include <jtrace-internal.h>
+
 #include <julea.h>
-#include <julea-internal.h>
 
 /**
  * \defgroup JKV KV

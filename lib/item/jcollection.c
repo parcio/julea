@@ -32,8 +32,9 @@
 #include <item/jitem.h>
 #include <item/jitem-internal.h>
 
+#include <jtrace-internal.h>
+
 #include <julea.h>
-#include <julea-internal.h>
 #include <julea-kv.h>
 
 /**

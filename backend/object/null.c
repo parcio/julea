@@ -22,7 +22,7 @@
 #include <gmodule.h>
 
 #include <julea.h>
-#include <julea-internal.h>
+#include <jtrace-internal.h>
 
 static
 gboolean

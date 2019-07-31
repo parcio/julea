@@ -24,7 +24,6 @@
 #include <sqlite3.h>
 
 #include <julea.h>
-#include <julea-internal.h>
 #include <julea-db.h>
 
 // FIXME clean up
@@ -122,7 +121,7 @@ static sqlite3* backend_db = NULL;
 	{                                                                                   \
 		if (ret != flag)                                                            \
 		{                                                                           \
-			J_CRITICAL("sql error '%d' '%s'", ret, sqlite3_errmsg(backend_db)); \
+			g_critical("sql error '%d' '%s'", ret, sqlite3_errmsg(backend_db)); \
 			abort();                                                            \
 		}                                                                           \
 	} while (0)
