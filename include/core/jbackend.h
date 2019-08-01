@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2018-2019 Michael Straßberger
  * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
@@ -140,8 +141,8 @@ struct JBackend
 			gboolean (*backend_init) (gchar const*);
 			void (*backend_fini) (void);
 
-			gboolean (*backend_batch_start) (gchar const* namespace, JSemanticsSafety safety, gpointer* batch, GError** error);
-			gboolean (*backend_batch_execute) (gpointer batch, GError** error);
+			gboolean (*backend_batch_start) (gchar const*, JSemanticsSafety, gpointer*, GError**);
+			gboolean (*backend_batch_execute) (gpointer, GError**);
 
 			/**
 			* Create a schema
@@ -162,7 +163,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_create) (gpointer batch, gchar const* name, bson_t const* schema, GError** error);
+			gboolean (*backend_schema_create) (gpointer, gchar const*, bson_t const*, GError**);
 
 			/**
 			* Obtains information about a schema
@@ -183,7 +184,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_get) (gpointer batch, gchar const* name, bson_t* schema, GError** error);
+			gboolean (*backend_schema_get) (gpointer, gchar const*, bson_t*, GError**);
 
 			/**
 			* Delete a schema
@@ -193,7 +194,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_delete) (gpointer batch, gchar const* name, GError** error);
+			gboolean (*backend_schema_delete) (gpointer, gchar const*, GError**);
 
 			/**
 			* Insert data into a schema
@@ -213,7 +214,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_insert) (gpointer batch, gchar const* name, bson_t const* metadata, GError** error);
+			gboolean (*backend_insert) (gpointer, gchar const*, bson_t const*, GError**);
 
 			/**
 			* Updates data
@@ -251,7 +252,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_update) (gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
+			gboolean (*backend_update) (gpointer, gchar const*, bson_t const*, bson_t const*, GError**);
 
 			/**
 			* Deletes data
@@ -282,7 +283,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_delete) (gpointer batch, gchar const* name, bson_t const* selector, GError** error);
+			gboolean (*backend_delete) (gpointer, gchar const*, bson_t const*, GError**);
 
 			/**
 			* Creates an iterator
@@ -314,7 +315,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_query) (gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
+			gboolean (*backend_query) (gpointer, gchar const*, bson_t const*, gpointer*, GError**);
 
 			/**
 			* Obtains metadata
@@ -336,7 +337,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_iterate) (gpointer iterator, bson_t* metadata, GError** error);
+			gboolean (*backend_iterate) (gpointer, bson_t*, GError**);
 		}
 		db;
 	};
