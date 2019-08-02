@@ -16,6 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file
+ **/
+
 #ifndef JULEA_DB_TYPE_H
 #define JULEA_DB_TYPE_H
 
@@ -38,7 +42,7 @@ enum JDBType
 
 typedef enum JDBType JDBType;
 
-union JDBType_value
+union JDBTypeValue
 {
 	guint32 val_uint32;
 	gint32 val_sint32;
@@ -54,6 +58,6 @@ union JDBType_value
 	};
 };
 
-typedef union JDBType_value JDBType_value;
+typedef union JDBTypeValue JDBTypeValue;
 
 #endif

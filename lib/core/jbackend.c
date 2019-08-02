@@ -44,7 +44,7 @@ j_backend_db_error_quark (void)
 }
 
 GQuark
-j_sql_error_quark(void)
+j_backend_sql_error_quark (void)
 {
 	return g_quark_from_static_string("j-sql-error-quark");
 }
