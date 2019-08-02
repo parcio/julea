@@ -62,13 +62,11 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
-	JMemoryChunk* memory_chunk = NULL;
+	JMemoryChunk* memory_chunk;
 	g_autoptr(JMessage) message = NULL;
-	JStatistics* statistics = NULL;
-	GInputStream* input = NULL;
+	JStatistics* statistics;
+	GInputStream* input;
 	guint64 memory_chunk_size;
-	JMessageType message_type;
-	gboolean first = TRUE;
 
 	(void)service;
 	(void)source_object;
@@ -102,8 +100,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		j_semantics_unref(semantics);
 
-		message_type = j_message_get_type(message);
-		switch (message_type)
+		switch (j_message_get_type(message))
 		{
 			case J_MESSAGE_NONE:
 				break;
@@ -716,8 +713,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 					}
 
 					j_message_send(reply, connection);
-
-					first = TRUE;
 				}
 				break;
 			default:

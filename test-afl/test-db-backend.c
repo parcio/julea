@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 #include <julea.h>
 #include <db/jdb-internal.h>
-#include <julea-internal.h>
 #include <julea-db.h>
 #include "afl.h"
 
@@ -451,7 +450,9 @@ event_query_single(void)
 						MYABORT_IF(g_strcmp0((const char*)binary, namespace_varvalues_string_const[namespace_varvalues_string[random_values.namespace][random_values.name][random_values.values.value_index][i]]));
 					}
 					else
+					{
 						MYABORT_IF(bson_iter_type(&iter) != BSON_TYPE_NULL);
+					}
 					break;
 				case _J_DB_TYPE_COUNT:
 				default: //LCOV_EXCL_LINE
@@ -634,7 +635,9 @@ event_insert(void)
 	else
 	{
 		if (namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index])
+		{
 			namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index] = 1;
+		}
 	}
 	if (metadata)
 	{
@@ -762,9 +765,13 @@ event_update(void)
 	if (namespace_exist[random_values.namespace][random_values.name])
 	{
 		if (ret)
+		{
 			namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index] = random_values.values.value_count;
+		}
 		else if (namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index])
+		{
 			namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index] = 1;
+		}
 	}
 	if (selector)
 	{
@@ -838,7 +845,9 @@ event_schema_get(void)
 		}
 	}
 	if (ret)
+	{
 		bson_destroy(&bson);
+	}
 }
 static void
 event_schema_delete(void)
@@ -872,7 +881,9 @@ event_schema_delete(void)
 	{
 		MYABORT_IF(!ret);
 		if (namespace_bson[random_values.namespace][random_values.name])
+		{
 			bson_destroy(namespace_bson[random_values.namespace][random_values.name]);
+		}
 		namespace_bson[random_values.namespace][random_values.name] = NULL;
 		namespace_exist[random_values.namespace][random_values.name] = FALSE;
 	}
@@ -953,11 +964,15 @@ event_schema_create(void)
 	random_values.schema_create.duplicate_variables = random_values.schema_create.duplicate_variables % 2;
 	random_values.schema_create.variable_count = random_values.schema_create.variable_count % AFL_LIMIT_SCHEMA_VARIABLES;
 	for (i = 0; i < random_values.schema_create.variable_count; i++)
+	{
 		random_values.schema_create.variable_types[i] = random_values.schema_create.variable_types[i] % _J_DB_TYPE_COUNT;
+	}
 	bson = bson_new();
 	ret_expected = random_values.schema_create.variable_count > 0;
 	if (random_values.schema_create.variable_types[0] == J_DB_TYPE_BLOB)
+	{
 		random_values.schema_create.variable_types[0] = J_DB_TYPE_UINT32;
+	}
 	for (i = 0; i < random_values.schema_create.variable_count; i++)
 	{
 		sprintf(varname_strbuf, AFL_VARNAME_FORMAT, i);
@@ -980,7 +995,9 @@ event_schema_create(void)
 	if (namespace_exist[random_values.namespace][random_values.name])
 	{
 		if (bson)
+		{
 			bson_destroy(bson);
+		}
 	}
 	else
 	{
@@ -990,14 +1007,20 @@ event_schema_create(void)
 			namespace_bson[random_values.namespace][random_values.name] = bson;
 			namespace_varcount[random_values.namespace][random_values.name] = random_values.schema_create.variable_count;
 			for (i = 0; i < random_values.schema_create.variable_count; i++)
+			{
 				namespace_vartypes[random_values.namespace][random_values.name][i] = random_values.schema_create.variable_types[i];
+			}
 			for (i = 0; i < AFL_LIMIT_SCHEMA_VALUES; i++)
+			{
 				namespace_varvalues_valid[random_values.namespace][random_values.name][i] = 0;
+			}
 		}
 		else
 		{
 			if (bson)
+			{
 				bson_destroy(bson);
+			}
 		}
 	}
 }
@@ -1026,7 +1049,9 @@ test_db_backend_create_base_test_files(const char* path)
 static void
 test_db_backend_init(void)
 {
-	guint i, j, k;
+	guint i;
+	guint j;
+	guint k;
 	for (i = 0; i < AFL_LIMIT_SCHEMA_STRING_VALUES; i++)
 	{
 		sprintf(&namespace_varvalues_string_const[i][0], AFL_STRING_CONST_FORMAT, i);
@@ -1057,23 +1082,23 @@ test_db_backend_exec(void)
 	switch (event)
 	{
 	case AFL_EVENT_DB_SCHEMA_CREATE:
-		g_debug("%s:%s AFL_EVENT_DB_SCHEMA_CREATE %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_SCHEMA_CREATE %s %s", namespace_strbuf, name_strbuf);
 		event_schema_get();
 		event_schema_create();
 		event_schema_get();
 		break;
 	case AFL_EVENT_DB_SCHEMA_GET:
-		g_debug("%s:%s AFL_EVENT_DB_SCHEMA_GET %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_SCHEMA_GET %s %s", namespace_strbuf, name_strbuf);
 		event_schema_get();
 		break;
 	case AFL_EVENT_DB_SCHEMA_DELETE:
-		g_debug("%s:%s AFL_EVENT_DB_SCHEMA_DELETE %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_SCHEMA_DELETE %s %s", namespace_strbuf, name_strbuf);
 		event_schema_get();
 		event_schema_delete();
 		event_schema_get();
 		break;
 	case AFL_EVENT_DB_INSERT:
-		g_debug("%s:%s AFL_EVENT_DB_INSERT %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_INSERT %s %s", namespace_strbuf, name_strbuf);
 		random_values.values.existent = 1;
 		tmp = random_values.values.value_index % (AFL_LIMIT_SCHEMA_VALUES);
 		event_query_all();
@@ -1085,19 +1110,19 @@ test_db_backend_exec(void)
 		event_query_all();
 		break;
 	case AFL_EVENT_DB_UPDATE:
-		g_debug("%s:%s AFL_EVENT_DB_UPDATE %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_UPDATE %s %s", namespace_strbuf, name_strbuf);
 		event_query_all();
 		event_update();
 		event_query_all();
 		break;
 	case AFL_EVENT_DB_DELETE:
-		g_debug("%s:%s AFL_EVENT_DB_DELETE %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_DELETE %s %s", namespace_strbuf, name_strbuf);
 		event_query_all();
 		event_delete();
 		event_query_all();
 		break;
 	case AFL_EVENT_DB_QUERY_ALL:
-		g_debug("%s:%s AFL_EVENT_DB_QUERY_ALL %s %s", G_STRLOC, G_STRFUNC, namespace_strbuf, name_strbuf);
+		g_debug("AFL_EVENT_DB_QUERY_ALL %s %s", namespace_strbuf, name_strbuf);
 		event_query_all();
 		event_query_single();
 		break;
@@ -1109,13 +1134,16 @@ test_db_backend_exec(void)
 static void
 test_db_backend_cleanup(void)
 {
-	guint i, j;
+	guint i;
+	guint j;
 	for (i = 0; i < AFL_LIMIT_SCHEMA_NAMESPACE; i++)
 	{
 		for (j = 0; j < AFL_LIMIT_SCHEMA_NAME; j++)
 		{
 			if (namespace_bson[i][j])
+			{
 				bson_destroy(namespace_bson[i][j]);
+			}
 			namespace_bson[i][j] = NULL;
 		}
 	}

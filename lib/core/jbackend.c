@@ -1,7 +1,6 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2017-2019 Michael Kuhn
- * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,12 +41,6 @@ GQuark
 j_backend_db_error_quark (void)
 {
 	return g_quark_from_static_string("j-backend-db-error-quark");
-}
-
-GQuark
-j_sql_error_quark(void)
-{
-	return g_quark_from_static_string("j-sql-error-quark");
 }
 
 static
@@ -730,7 +723,6 @@ j_backend_db_delete (JBackend* backend, gpointer batch, gchar const* name, bson_
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	j_trace_enter("backend_delete", "%p, %s, %p, %p", batch, name, (gconstpointer)selector, (gpointer)error);
@@ -749,7 +741,6 @@ j_backend_db_query (JBackend* backend, gpointer batch, gchar const* name, bson_t
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 

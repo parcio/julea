@@ -16,8 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file
+ **/
+
 #ifndef JULEA_DB_INTERNAL_H
 #define JULEA_DB_INTERNAL_H
+
+#if !defined(JULEA_DB_H) && !defined(JULEA_DB_COMPILATION)
+#error "Only <julea-db.h> can be included directly."
+#endif
 
 #include <glib.h>
 #include <bson.h>

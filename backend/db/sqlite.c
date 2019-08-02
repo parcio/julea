@@ -26,93 +26,91 @@
 #include <julea.h>
 #include <julea-db.h>
 
-#include <core/jbson-wrapper.h>
+// FIXME clean up
 
-static sqlite3* backend_db = NULL;
+const char* const JuleaBackendErrorFormat[] = {
+	"Generic Backend Error%s",
+	"%s:%s: batch not set%s",
+	"%s:%s: bson append failed. db type was '%s'",
+	"%s:%s: bson generic error",
+	"%s:%s: bson invalid%s",
+	"%s:%s: bson invalid type '%d'",
+	"%s:%s: bson iter init failed%s",
+	"%s:%s: bson iter recourse failed%s",
+	"%s:%s: bson is missing required key '%s'",
+	"%s:%s: db comparator invalid '%d'",
+	"%s:%s: db invalid type '%d'",
+	"%s:%s: no more elements to iterate%s",
+	"%s:%s: iterator not set%s",
+	"%s:%s: metadata is empty%s",
+	"%s:%s: metadata not set%s",
+	"%s:%s: name not set%s",
+	"%s:%s: namespace not set%s",
+	"%s:%s: no variable set to a not NULL value%s",
+	"%s:%s: db operator invalid '%d'",
+	"%s:%s: schema is empty%s",
+	"%s:%s: schema not found%s",
+	"%s:%s: schema not set%s",
+	"%s:%s: selector is empty%s",
+	"%s:%s: selector not set%s",
+	"%s:%s: sql constraint error '%d' '%s'",
+	"%s:%s: sql error '%d' '%s'",
+	"%s:%s: some other thread modified critical variables without lock%s",
+	"%s:%s: variable '%s' not defined in schema"
+};
 
-static gboolean
-j_sql_finalize(void* _stmt, GError** error)
-{
-	sqlite3_stmt* stmt = _stmt;
-	if (sqlite3_finalize(stmt) != SQLITE_OK)
-	{
-		g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_FINALIZE, "sql finalize failed error was '%s'", sqlite3_errmsg(backend_db));
-		goto _error;
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
+#ifdef JULEA_DEBUG
+#define J_WARNING(format, ...)                                                   \
+	do                                                                       \
+	{                                                                        \
+		g_warning("%s:%s: " format, G_STRLOC, G_STRFUNC, ##__VA_ARGS__); \
+	} while (0)
+#define J_INFO(format, ...)                                                   \
+	do                                                                    \
+	{                                                                     \
+		g_info("%s:%s: " format, G_STRLOC, G_STRFUNC, ##__VA_ARGS__); \
+	} while (0)
+#define J_DEBUG(format, ...)                                                   \
+	do                                                                     \
+	{                                                                      \
+		g_debug("%s:%s: " format, G_STRLOC, G_STRFUNC, ##__VA_ARGS__); \
+	} while (0)
+#define J_DEBUG_ERROR(format, ...)                                   \
+	do                                                           \
+	{                                                            \
+		g_debug(format, G_STRLOC, G_STRFUNC, ##__VA_ARGS__); \
+	} while (0)
+#else
+#define J_WARNING(format, ...)
+#define J_INFO(format, ...)
+#define J_DEBUG(format, ...)
+#define J_DEBUG_ERROR(format, ...)
+#endif
 
-static gboolean
-j_sql_prepare(const char* sql, void* _stmt, GError** error)
-{
-	sqlite3_stmt** stmt = _stmt;
-	if (sqlite3_prepare_v3(backend_db, sql, -1, SQLITE_PREPARE_PERSISTENT, stmt, NULL) != SQLITE_OK)
-	{
-		g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_PREPARE, "sql prepare failed error was '%s'", sqlite3_errmsg(backend_db));
-		goto _error;
-	}
-	return TRUE;
-_error:
-	j_sql_finalize(*stmt, NULL);
-	return FALSE;
-}
+#define j_goto_error_backend(val, err_code, ...)                                                                                                  \
+	do                                                                                                                                        \
+	{                                                                                                                                         \
+		_Pragma("GCC diagnostic push");                                                                                                   \
+		_Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"");                                                                        \
+		if (val)                                                                                                                          \
+		{                                                                                                                                 \
+			J_DEBUG_ERROR(JuleaBackendErrorFormat[err_code], ##__VA_ARGS__);                                                          \
+			g_set_error(error, J_BACKEND_DB_ERROR, err_code, JuleaBackendErrorFormat[err_code], G_STRLOC, G_STRFUNC, ##__VA_ARGS__); \
+			goto _error;                                                                                                              \
+		}                                                                                                                                 \
+		_Pragma("GCC diagnostic pop");                                                                                                    \
+	} while (0)
 
-static gboolean
-j_sql_bind_null(void* _stmt, guint idx, GError** error)
-{
-	sqlite3_stmt* stmt = _stmt;
-	if (sqlite3_bind_null(stmt, idx) != SQLITE_OK)
-	{
-		g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
-		goto _error;
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
+#define j_goto_error_subcommand(val) \
+	do                           \
+	{                            \
+		if (val)             \
+			goto _error; \
+	} while (0)
 
-static gboolean
-j_sql_column(void* _stmt, guint idx, JDBType type, JDBType_value* value, GError** error)
-{
-	sqlite3_stmt* stmt = _stmt;
-	switch (type)
-	{
-	case J_DB_TYPE_SINT32:
-		value->val_sint32 = sqlite3_column_int64(stmt, idx);
-		break;
-	case J_DB_TYPE_UINT32:
-		value->val_uint32 = sqlite3_column_int64(stmt, idx);
-		break;
-	case J_DB_TYPE_SINT64:
-		value->val_sint64 = sqlite3_column_int64(stmt, idx);
-		break;
-	case J_DB_TYPE_UINT64:
-		value->val_uint64 = sqlite3_column_int64(stmt, idx);
-		break;
-	case J_DB_TYPE_FLOAT32:
-		value->val_float32 = sqlite3_column_double(stmt, idx);
-		break;
-	case J_DB_TYPE_FLOAT64:
-		value->val_float64 = sqlite3_column_double(stmt, idx);
-		break;
-	case J_DB_TYPE_STRING:
-		value->val_string = (const char*)sqlite3_column_text(stmt, idx);
-		break;
-	case J_DB_TYPE_BLOB:
-		value->val_blob = sqlite3_column_blob(stmt, idx);
-		value->val_blob_length = sqlite3_column_bytes(stmt, idx);
-		break;
-	case _J_DB_TYPE_COUNT:
-	default:
-		g_set_error_literal(error, J_SQL_ERROR, J_SQL_ERROR_INVALID_TYPE, "bson iter invalid type");
-		goto _error;
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
+/*
+* this file defines makros such that the generic-sql.h implementation can call the sqlite specific functions without knowing, that it is actually sqlite
+*/
 
 #define j_sql_statement_type sqlite3_stmt*
 #define j_sql_done SQLITE_DONE
@@ -278,92 +276,32 @@ static sqlite3* backend_db = NULL;
 #define j_sql_column_blob(stmt, idx) (const char*)sqlite3_column_blob(stmt, idx)
 #define j_sql_column_blob_len(stmt, idx) (guint64) sqlite3_column_bytes(stmt, idx)
 
-static gboolean
-j_sql_exec(const char* sql, GError** error)
-{
-	sqlite3_stmt* stmt;
-	if (!j_sql_prepare(sql, &stmt, error))
-		goto _error;
-	if (sqlite3_step(stmt) != SQLITE_DONE)
-	{
-		g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_STEP, "sql step failed error was '%s'", sqlite3_errmsg(backend_db));
-		goto _error;
-	}
-	if (!j_sql_finalize(stmt, error))
-		goto _error;
-	return TRUE;
-_error:
-	if (!j_sql_finalize(stmt, error))
-		goto _error2;
-	return FALSE;
-_error2:
-	/*something failed very hard*/
-	return FALSE;
-}
-static gboolean
-j_sql_step(void* _stmt, gboolean* found, GError** error)
-{
-	sqlite3_stmt* stmt = _stmt;
-	guint ret;
-	ret = sqlite3_step(stmt);
-	*found = ret == SQLITE_ROW;
-	if (ret != SQLITE_ROW)
-	{
-		if (ret == SQLITE_CONSTRAINT)
-		{
-			g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_CONSTRAINT, "sql constraint failed error was '%s'", sqlite3_errmsg(backend_db));
-			goto _error;
-		}
-		else if (ret != SQLITE_DONE)
-		{
-			g_set_error(error, J_SQL_ERROR, J_SQL_ERROR_STEP, "sql step failed error was '%s'", sqlite3_errmsg(backend_db));
-			goto _error;
-		}
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
-static gboolean
-j_sql_step_and_reset_check_done(void* _stmt, GError** error)
-{
-	gboolean sql_found;
-	if (!j_sql_step(_stmt, &sql_found, error))
-		goto _error;
-	if (!j_sql_reset(_stmt, error))
-		goto _error;
-	return TRUE;
-_error:
-	if (!j_sql_reset(_stmt, error))
-		goto _error2;
-	return FALSE;
-_error2:
-	/*something failed very hard*/
-	return FALSE;
-}
 #include "sql-generic.c"
 
 static gboolean
 backend_init(gchar const* path)
 {
+	GError** error = NULL;
+	guint ret;
 	g_autofree gchar* dirname = NULL;
 	g_return_val_if_fail(path != NULL, FALSE);
-	if (strncmp("memory", path, 5))
+	if (strncmp(":memory:", path, 7))
 	{
+		J_DEBUG("init useing path=%s", path);
 		dirname = g_path_get_dirname(path);
 		g_mkdir_with_parents(dirname, 0700);
-		if (sqlite3_open(path, &backend_db) != SQLITE_OK)
-			goto _error;
+		ret = sqlite3_open(path, &backend_db);
+		j_sql_check(ret, SQLITE_OK);
 	}
 	else
 	{
-		if (sqlite3_open(":memory:", &backend_db) != SQLITE_OK)
-			goto _error;
+		J_DEBUG("init useing path=%s", ":memory:");
+		ret = sqlite3_open(":memory:", &backend_db);
+		j_sql_check(ret, SQLITE_OK);
 	}
-	if (!j_sql_exec("PRAGMA foreign_keys = ON", NULL))
-		goto _error;
-	if (!init_sql())
-		goto _error;
+	j_sql_exec_or_error("PRAGMA foreign_keys = ON", SQLITE_DONE);
+	ret = init_sql();
+	j_goto_error_subcommand(!ret);
 	return (backend_db != NULL);
 _error:
 	sqlite3_close(backend_db);
@@ -372,6 +310,7 @@ _error:
 static void
 backend_fini(void)
 {
+	gint ret;
 	fini_sql();
 	ret = sqlite3_close(backend_db);
 	j_sql_check(ret, SQLITE_OK);
@@ -381,7 +320,7 @@ backend_fini(void)
 }
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
-	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
+	.component = J_BACKEND_COMPONENT_SERVER,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
