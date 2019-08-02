@@ -51,6 +51,7 @@ struct JTrace;
 typedef struct JTrace JTrace;
 
 void j_trace_init (gchar const*);
+void j_trace_flush (const char*);
 void j_trace_fini (void);
 
 JTrace* j_trace_get_thread_default (void);

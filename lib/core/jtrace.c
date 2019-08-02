@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include <stdlib.h>
+
 #ifdef HAVE_OTF
 #include <otf.h>
 #endif
@@ -40,6 +42,24 @@
  * @{
  **/
 
+struct JTraceTimer
+{
+	guint id;
+	GTimer* timer;
+	gdouble elapsed;
+	gdouble elapsed_child;
+	struct JTraceTimer* parent;
+};
+typedef struct JTraceTimer JTraceTimer;
+
+struct JTraceStack
+{
+	char* name;
+	char* name_format;
+	JTraceTimer* timer; //this does NOT increase ref_count - due to the structure it is always just a 'quick' link, which is valid as long as required
+};
+typedef struct JTraceStack JTraceStack;
+
 /**
  * A trace.
  * Usually one trace per thread is used.
@@ -53,14 +73,20 @@ struct JTrace
 	gchar* thread_name;
 
 	/**
-	 * Name of the thread function.
-	 **/
-	gchar* function_name;
-
-	/**
 	 * Function depth within the current thread.
 	 **/
 	guint function_depth;
+
+	/**
+	 * Function stack within the current thread. Index (0) is the topmost function, Index (stack->len - 1) is the current function.
+	 * Elements have Type JTraceStack
+	 **/
+	GArray* stack;
+
+	/**
+	 * key represents the full function-stack, value is of type JTraceTimer
+	 **/
+	GHashTable* timer;
 
 #ifdef HAVE_OTF
 	/**
@@ -72,8 +98,7 @@ struct JTrace
 		 * Thread's process ID.
 		 **/
 		guint32 process_id;
-	}
-	otf;
+	} otf;
 #endif
 
 	/**
@@ -89,7 +114,10 @@ enum JTraceFlags
 {
 	J_TRACE_OFF     = 0,
 	J_TRACE_ECHO    = 1 << 0,
-	J_TRACE_OTF     = 1 << 1
+	J_TRACE_OTF = 1 << 1,
+	J_TRACE_DEBUG = 1 << 2,
+	J_TRACE_TIMER = 1 << 3,
+	J_TRACE_TIMER_SQL = 1 << 4
 };
 
 typedef enum JTraceFlags JTraceFlags;
@@ -116,6 +144,14 @@ static GHashTable* otf_counter_table = NULL;
 
 G_LOCK_DEFINE_STATIC(j_trace_otf);
 #endif
+
+static
+void
+j_trace_timer_free_func (gpointer data)
+{
+	JTraceTimer* timer = data;
+	g_slice_free(JTraceTimer, timer);
+}
 
 static
 void
@@ -280,7 +316,6 @@ j_trace_init (gchar const* name)
 	{
 		return;
 	}
-	else
 	{
 		g_auto(GStrv) p = NULL;
 		guint i;
@@ -298,6 +333,21 @@ j_trace_init (gchar const* name)
 			else if (g_strcmp0(p[i], "otf") == 0)
 			{
 				j_trace_flags |= J_TRACE_OTF;
+			}
+			else if (g_strcmp0(p[i], "debug") == 0)
+			{
+				j_trace_flags |= J_TRACE_DEBUG;
+			}
+			else if (g_strcmp0(p[i], "timer") == 0)
+			{
+				j_trace_flags |= J_TRACE_DEBUG;
+				j_trace_flags |= J_TRACE_TIMER;
+			}
+			else if (g_strcmp0(p[i], "sqltimer") == 0)
+			{
+				j_trace_flags |= J_TRACE_DEBUG;
+				j_trace_flags |= J_TRACE_TIMER;
+				j_trace_flags |= J_TRACE_TIMER_SQL;
 			}
 		}
 	}
@@ -362,6 +412,8 @@ j_trace_fini (void)
 	{
 		return;
 	}
+
+	j_trace_flush("");
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -457,6 +509,16 @@ j_trace_new (GThread* thread)
 		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
+	if (j_trace_flags & J_TRACE_DEBUG)
+	{
+		trace->stack = g_array_new(FALSE, FALSE, sizeof(JTraceStack));
+	}
+
+	if (j_trace_flags & J_TRACE_TIMER)
+	{
+		trace->timer = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, j_trace_timer_free_func);
+	}
+
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
@@ -521,6 +583,24 @@ j_trace_unref (JTrace* trace)
 
 	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
 	{
+		if (j_trace_flags & J_TRACE_DEBUG)
+		{
+			guint i;
+			if (trace->stack->len != 0)
+			{
+				for (i = 0; i < trace->stack->len; i++)
+				{
+					g_debug("trace-error: did not leave function (%s)", g_array_index(trace->stack, JTraceStack, i).name);
+				}
+				abort();
+			}
+			g_array_unref(trace->stack);
+		}
+
+		if (j_trace_flags & J_TRACE_TIMER)
+		{
+			g_hash_table_unref(trace->timer);
+		}
 #ifdef HAVE_OTF
 		if (j_trace_flags & J_TRACE_OTF)
 		{
@@ -588,6 +668,69 @@ j_trace_enter (gchar const* name, gchar const* format, ...)
 		G_UNLOCK(j_trace_echo);
 	}
 
+	if (j_trace_flags & J_TRACE_DEBUG)
+	{
+		struct JTraceStack stack;
+		GString* key;
+		key = g_string_new(name);
+		if (format != NULL)
+		{
+			g_autofree gchar* arguments = NULL;
+			if (!strstr(format, "%p") && !strstr(format, "%s"))
+			{
+				arguments = g_strdup_vprintf(format, args);
+				g_string_append(key, arguments);
+			}
+		}
+		stack.name_format = g_strdup(key->str);
+		stack.name = g_strdup(name);
+		g_string_free(key, TRUE);
+		g_array_append_val(trace->stack, stack);
+	}
+
+	if (j_trace_flags & J_TRACE_TIMER)
+	{
+		guint i;
+		GString* key;
+		struct JTraceTimer* timer;
+		key = g_string_new("main");
+		for (i = 0; i < trace->stack->len; i++)
+		{
+			g_string_append(key, "-");
+			g_string_append(key, g_array_index(trace->stack, JTraceStack, i).name_format);
+		}
+		if (format != NULL)
+		{
+			g_autofree gchar* arguments = NULL;
+			if (!strstr(format, "%p") && !strstr(format, "%s"))
+			{
+				arguments = g_strdup_vprintf(format, args);
+				g_string_append(key, arguments);
+			}
+		}
+		timer = g_hash_table_lookup(trace->timer, key->str);
+		if (timer)
+		{
+			g_string_free(key, TRUE);
+		}
+		else
+		{
+			timer = g_slice_new(JTraceTimer);
+			timer->elapsed = 0;
+			timer->parent = NULL;
+			timer->id = g_hash_table_size(trace->timer);
+			timer->elapsed_child = 0;
+			g_hash_table_insert(trace->timer, key->str, timer);
+			g_string_free(key, FALSE);
+			if (trace->stack->len > 1)
+			{
+				timer->parent = g_array_index(trace->stack, JTraceStack, trace->stack->len - 2).timer;
+			}
+		}
+		timer->timer = g_timer_new();
+		g_array_index(trace->stack, JTraceStack, trace->stack->len - 1).timer = timer;
+	}
+
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
@@ -647,12 +790,6 @@ j_trace_leave (gchar const* name)
 		return;
 	}
 
-	/* FIXME */
-	if (trace->function_depth == 0)
-	{
-		return;
-	}
-
 	trace->function_depth--;
 	timestamp = j_trace_get_time();
 
@@ -662,6 +799,41 @@ j_trace_leave (gchar const* name)
 		j_trace_echo_printerr(trace, timestamp);
 		g_printerr("LEAVE %s\n", name);
 		G_UNLOCK(j_trace_echo);
+	}
+
+	if (j_trace_flags & J_TRACE_TIMER)
+	{
+		struct JTraceTimer* timer;
+		struct JTraceTimer* timer_parent;
+		gdouble elapsed;
+		timer = g_array_index(trace->stack, JTraceStack, trace->stack->len - 1).timer;
+		elapsed = g_timer_elapsed(timer->timer, NULL);
+		timer->elapsed += elapsed;
+		g_timer_destroy(timer->timer);
+		if (trace->stack->len > 1)
+		{
+			timer_parent = g_array_index(trace->stack, JTraceStack, trace->stack->len - 2).timer;
+			timer_parent->elapsed_child += elapsed;
+		}
+	}
+
+	if (j_trace_flags & J_TRACE_DEBUG)
+	{
+		char* name_enter;
+		if (trace->stack->len == 0)
+		{
+			g_debug("trace-error: nothing entered, but leaving (%s)", name);
+			abort();
+		}
+		name_enter = g_array_index(trace->stack, JTraceStack, trace->stack->len - 1).name;
+		if (g_strcmp0(name_enter, name))
+		{
+			g_debug("trace-error: entered (%s), but leaved (%s)", name_enter, name);
+			abort();
+		}
+		g_free(name_enter);
+		g_free(g_array_index(trace->stack, JTraceStack, trace->stack->len - 1).name_format);
+		g_array_set_size(trace->stack, trace->stack->len - 1);
 	}
 
 #ifdef HAVE_OTF
@@ -681,6 +853,69 @@ j_trace_leave (gchar const* name)
 		OTF_Writer_writeLeave(otf_writer, timestamp, function_id, trace->otf.process_id, 0);
 	}
 #endif
+}
+
+/**
+ * flush all measured data to file
+ **/
+void
+j_trace_flush(const char* prefix)
+{
+	JTrace* trace;
+	GHashTableIter iter;
+	gpointer key;
+	gpointer value;
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return;
+	}
+
+	trace = j_trace_get_thread_default();
+
+	if ((j_trace_flags & J_TRACE_TIMER) && (!(j_trace_flags & J_TRACE_TIMER_SQL)))
+	{
+		JTraceTimer* timer_val;
+		g_hash_table_iter_init(&iter, trace->timer);
+		while (g_hash_table_iter_next(&iter, &key, &value))
+		{
+			timer_val = value;
+			if (timer_val->elapsed > 0)
+			{
+				g_debug("trace-timer: %s, %f, %f, %s", prefix, timer_val->elapsed - timer_val->elapsed_child, timer_val->elapsed, (char*)key);
+				timer_val->elapsed = 0;
+				timer_val->elapsed_child = 0;
+			}
+		}
+	}
+	if (j_trace_flags & J_TRACE_TIMER_SQL)
+	{
+		JTraceTimer* timer_val;
+		JTraceTimer* timer_val_root;
+		g_hash_table_iter_init(&iter, trace->timer);
+		g_debug("CREATE TABLE IF NOT EXISTS benchmark (id INTEGER, parent_id INTEGER, root_id INTEGER, prefix TEXT, elapsed DOUBLE, elapsed_no_child DOUBLE, function_name TEXT);");
+		while (g_hash_table_iter_next(&iter, &key, &value))
+		{
+			timer_val = value;
+			timer_val_root = timer_val;
+			while (timer_val_root->parent)
+			{
+				timer_val_root = timer_val_root->parent;
+			}
+			if (timer_val->elapsed > 0)
+			{
+				g_debug("INSERT INTO benchmark (id,parent_id,root_id,prefix,elapsed,elapsed_no_child,function_name) VALUES (%d, %d, %d, \"%s\", %f, %f, \"%s\");",
+					timer_val->id,
+					timer_val->parent ? timer_val->parent->id : timer_val->id,
+					timer_val_root->id,
+					prefix,
+					timer_val->elapsed,
+					timer_val->elapsed - timer_val->elapsed_child,
+					(char*)key);
+				timer_val->elapsed = 0;
+				timer_val->elapsed_child = 0;
+			}
+		}
+	}
 }
 
 /**
@@ -742,8 +977,6 @@ j_trace_file_begin (gchar const* path, JTraceFileOperation op)
 		OTF_Writer_writeBeginFileOperation(otf_writer, timestamp, trace->otf.process_id, 1, 0);
 	}
 #endif
-
-	return;
 }
 
 /**
