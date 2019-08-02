@@ -106,6 +106,7 @@ j_operation_cache_thread (gpointer data)
 		/* data == cache, terminate */
 		if (cached_batch == data)
 		{
+			j_trace_leave(G_STRFUNC);
 			return NULL;
 		}
 
