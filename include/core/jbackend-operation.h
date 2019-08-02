@@ -51,6 +51,8 @@ typedef enum JBackendOperationParamType JBackendOperationParamType;
 
 struct JBackendOperationParam
 {
+	JBackendOperationParamType type;
+
 	// Only for temporary static storage
 	union
 	{
@@ -74,7 +76,6 @@ struct JBackendOperationParam
 
 	// Length of ptr data
 	gint len;
-	JBackendOperationParamType type;
 };
 
 typedef struct JBackendOperationParam JBackendOperationParam;

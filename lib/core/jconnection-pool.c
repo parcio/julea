@@ -34,8 +34,6 @@
 #include <jmessage.h>
 #include <jtrace-internal.h>
 
-#include <julea-internal.h>
-
 /**
  * \defgroup JConnectionPool Connection Pool
  *
@@ -210,13 +208,13 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			if (error != NULL)
 			{
-				J_CRITICAL("%s", error->message);
+				g_critical("%s", error->message);
 				g_error_free(error);
 			}
 
 			if (connection == NULL)
 			{
-				J_CRITICAL("Can not connect to %s [%d].", server, g_atomic_int_get(count));
+				g_critical("Can not connect to %s [%d].", server, g_atomic_int_get(count));
 			}
 
 			j_helper_set_nodelay(connection, TRUE);

@@ -36,8 +36,6 @@
 #include <jsemantics.h>
 #include <jtrace-internal.h>
 
-#include <julea-internal.h>
-
 /**
  * \defgroup JMessage Message
  *
@@ -932,7 +930,7 @@ j_message_read (JMessage* message, GInputStream* stream)
 end:
 	if (error != NULL)
 	{
-		J_CRITICAL("%s", error->message);
+		g_critical("%s", error->message);
 		g_error_free(error);
 	}
 
@@ -998,7 +996,7 @@ j_message_write (JMessage* message, GOutputStream* stream)
 end:
 	if (error != NULL)
 	{
-		J_CRITICAL("%s", error->message);
+		g_critical("%s", error->message);
 		g_error_free(error);
 	}
 

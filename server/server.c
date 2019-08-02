@@ -29,7 +29,8 @@
 #include <string.h>
 
 #include <julea.h>
-#include <julea-internal.h>
+
+#include <jtrace-internal.h>
 
 static JStatistics* jd_statistics;
 
@@ -93,6 +94,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		JBackendOperation backend_operation;
 		JSemantics* semantics;
 		JSemanticsSafety safety;
+		gboolean message_matched = FALSE;
 		guint i;
 
 		operation_count = j_message_get_count(message);
@@ -595,39 +597,53 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 				}
 				break;
 			case J_MESSAGE_DB_SCHEMA_CREATE:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_GET:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_SCHEMA_DELETE:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_INSERT:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_UPDATE:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_DELETE:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				// fallthrough
 			case J_MESSAGE_DB_QUERY:
-				if (first)
+				if (!message_matched)
+				{
 					memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
-				first = FALSE;
+					message_matched = TRUE;
+				}
 				{
 					g_autoptr(JMessage) reply = NULL;
 					g_autoptr(GError) error = NULL;
@@ -886,7 +902,7 @@ main (int argc, char** argv)
 	{
 		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
 		{
-			J_CRITICAL("Could not initialize object backend %s.\n", object_backend);
+			g_critical("Could not initialize object backend %s.\n", object_backend);
 			return 1;
 		}
 	}
@@ -895,7 +911,7 @@ main (int argc, char** argv)
 	{
 		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
-			J_CRITICAL("Could not initialize kv backend %s.\n", kv_backend);
+			g_critical("Could not initialize kv backend %s.\n", kv_backend);
 			return 1;
 		}
 	}
@@ -904,7 +920,7 @@ main (int argc, char** argv)
 	{
 		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
 		{
-			J_CRITICAL("Could not initialize db backend %s.\n", db_backend);
+			g_critical("Could not initialize db backend %s.\n", db_backend);
 			return 1;
 		}
 	}

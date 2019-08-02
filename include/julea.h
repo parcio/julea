@@ -52,4 +52,7 @@
 #include <core/jsemantics.h>
 #include <core/jstatistics.h>
 
+// FIXME
+//#undef JULEA_H
+
 #endif
