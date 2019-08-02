@@ -336,8 +336,9 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	//JSemanticsSafety safety;
+	JSemanticsSafety safety;
 	gchar const* namespace;
+	gpointer kv_batch = NULL;
 	gsize namespace_len;
 	guint32 index;
 
@@ -357,11 +358,15 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		index = kop->get.kv->index;
 	}
 
-	//safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_backend();
 
-	if (kv_backend == NULL)
+	if (kv_backend != NULL)
+	{
+		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
+	}
+	else
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -387,7 +392,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 				gpointer value;
 				guint32 len;
 
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, &value, &len) && ret;
+				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, &value, &len) && ret;
 
 				if (ret)
 				{
@@ -397,7 +402,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 			}
 			else
 			{
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
+				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
 			}
 		}
 		else
@@ -411,7 +416,11 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (kv_backend == NULL)
+	if (kv_backend != NULL)
+	{
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
+	}
+	else
 	{
 		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
