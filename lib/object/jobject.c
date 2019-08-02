@@ -30,8 +30,9 @@
 
 #include <object/jobject.h>
 
+#include <jtrace-internal.h>
+
 #include <julea.h>
-#include <julea-internal.h>
 
 /**
  * \defgroup JObject Object

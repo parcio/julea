@@ -144,6 +144,9 @@ freeJSqlCacheSQLPrepared(void* ptr)
 		}
 		g_free(p);
 	}
+#ifndef JULEA_DEBUG
+	_error:;
+#endif
 }
 static JSqlCacheSQLPrepared*
 getCachePrepared(gchar const* namespace, gchar const* name, gchar const* query, GError** error)
@@ -237,12 +240,15 @@ static void
 fini_sql(void)
 {
 	freeJSqlCacheNamespaces(cacheNamespaces);
-	j_sql_finalize(stmt_schema_structure_create, NULL);
-	j_sql_finalize(stmt_schema_structure_get, NULL);
-	j_sql_finalize(stmt_schema_structure_delete, NULL);
-	j_sql_finalize(stmt_transaction_abort, NULL);
-	j_sql_finalize(stmt_transaction_begin, NULL);
-	j_sql_finalize(stmt_transaction_commit, NULL);
+	j_sql_finalize(stmt_schema_structure_create);
+	j_sql_finalize(stmt_schema_structure_get);
+	j_sql_finalize(stmt_schema_structure_delete);
+	j_sql_finalize(stmt_transaction_abort);
+	j_sql_finalize(stmt_transaction_begin);
+	j_sql_finalize(stmt_transaction_commit);
+#ifndef JULEA_DEBUG
+	_error:;
+#endif
 }
 static gboolean
 backend_batch_start(gchar const* namespace, JSemanticsSafety safety, gpointer* _batch, GError** error)

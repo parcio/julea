@@ -34,8 +34,9 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
+#include <jtrace-internal.h>
+
 #include <julea.h>
-#include <julea-internal.h>
 #include <julea-kv.h>
 #include <julea-object.h>
 

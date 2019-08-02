@@ -29,8 +29,6 @@
 #include <jdistribution.h>
 #include <jdistribution-internal.h>
 
-#include <julea-internal.h>
-
 #include <jcommon.h>
 #include <jconfiguration.h>
 #include <jtrace-internal.h>

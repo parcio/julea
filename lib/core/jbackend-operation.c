@@ -117,6 +117,8 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 	JBackendOperationParam* element;
 	guint i;
 	guint len = 0;
+	guint error_message_len;
+	guint error_domain_len;
 	guint tmp;
 	GError** error;
 	for (i = 0; i < arrlen; i++)
@@ -147,7 +149,9 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 				element->len += 4;
 				if (*error)
 				{
-					element->len += 4 + 4;
+					element->error_quark_string = g_quark_to_string((*error)->domain);
+					element->len += 4 + 4 + 4;
+					element->len += strlen(element->error_quark_string) + 1;
 					element->len += strlen((*error)->message) + 1;
 				}
 			}
@@ -190,10 +194,13 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 					if (*error)
 					{
 						tmp = (*error)->code;
+						error_domain_len = strlen(element->error_quark_string) + 1;
+						error_message_len = strlen((*error)->message) + 1;
 						j_message_append_4(message, &tmp);
-						tmp = strlen((*error)->message) + 1;
-						j_message_append_4(message, &tmp);
-						j_message_append_n(message, (*error)->message, tmp);
+						j_message_append_4(message, &error_domain_len);
+						j_message_append_4(message, &error_message_len);
+						j_message_append_n(message, element->error_quark_string, error_domain_len);
+						j_message_append_n(message, (*error)->message, error_message_len);
 						g_error_free(*error);
 						*error = NULL;
 					}
@@ -219,8 +226,10 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 	JBackendOperationParam* element;
 	guint i;
 	guint len;
-	gint error_code;
-	gint error_message_len;
+	guint error_code;
+	guint error_message_len;
+	guint error_domain_len;
+	GQuark error_quark;
 	GError** error;
 	gboolean ret = TRUE;
 	for (i = 0; i < arrlen; i++)
@@ -251,8 +260,10 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 						{
 							ret = FALSE;
 							error_code = j_message_get_4(message);
+							error_domain_len = j_message_get_4(message);
 							error_message_len = j_message_get_4(message);
-							g_set_error_literal(error, J_BACKEND_DB_ERROR, error_code, j_message_get_n(message, error_message_len));
+							error_quark = g_quark_from_string(j_message_get_n(message, error_domain_len));
+							g_set_error_literal(error, error_quark, error_code, j_message_get_n(message, error_message_len));
 						}
 					}
 				}
@@ -291,6 +302,7 @@ j_backend_operation_from_message_static (JMessage* message, JBackendOperationPar
 	guint i;
 	guint len;
 	guint error_message_len;
+	guint error_domain_len;
 	gboolean ret = TRUE;
 	for (i = 0; i < arrlen; i++)
 	{
@@ -320,7 +332,9 @@ j_backend_operation_from_message_static (JMessage* message, JBackendOperationPar
 						ret = FALSE;
 						element->error_ptr = &element->error;
 						element->error.code = j_message_get_4(message);
+						error_domain_len = j_message_get_4(message);
 						error_message_len = j_message_get_4(message);
+						element->error.domain = g_quark_from_string(j_message_get_n(message, error_domain_len));
 						element->error.message = j_message_get_n(message, error_message_len);
 					}
 				}

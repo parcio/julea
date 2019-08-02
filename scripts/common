@@ -27,39 +27,48 @@ get_directory ()
 
 set_path ()
 {
-	local build_dir
-	local root_dir
+	if test -n "${JULEA_PREFIX}"
+	then
+		PATH="${JULEA_PREFIX}/bin:${PATH}"
+	else
+		local build_dir
 
-	build_dir="$(get_directory "${SELF_DIR}/../build")"
-	root_dir="$(get_directory "${SELF_DIR}/..")"
+		build_dir="$(get_directory "${SELF_DIR}/../build")"
 
-	PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${root_dir}/scripts:${PATH}"
+		PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${PATH}"
+	fi
 
 	export PATH
 }
 
 set_library_path ()
 {
-	local build_dir
-	local root_dir
+	if test -n "${JULEA_PREFIX}"
+	then
+		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib:${LD_LIBRARY_PATH}"
+	else
+		local build_dir
 
-	build_dir="$(get_directory "${SELF_DIR}/../build")"
-	root_dir="$(get_directory "${SELF_DIR}/..")"
+		build_dir="$(get_directory "${SELF_DIR}/../build")"
 
-	LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
+		LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
+	fi
 
 	export LD_LIBRARY_PATH
 }
 
 set_pkg_config_path ()
 {
-	local build_dir
-	local root_dir
+	if test -n "${JULEA_PREFIX}"
+	then
+		PKG_CONFIG_PATH="${JULEA_PREFIX}/lib64/pkgconfig:${JULEA_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	else
+		local build_dir
 
-	build_dir="$(get_directory "${SELF_DIR}/../build")"
-	root_dir="$(get_directory "${SELF_DIR}/..")"
+		build_dir="$(get_directory "${SELF_DIR}/../build")"
 
-	PKG_CONFIG_PATH="${build_dir}/pkg-config:${LD_LIBRARY_PATH}"
+		PKG_CONFIG_PATH="${build_dir}/pkg-config:${PKG_CONFIG_PATH}"
+	fi
 
 	export PKG_CONFIG_PATH
 }
