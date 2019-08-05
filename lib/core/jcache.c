@@ -29,7 +29,7 @@
 #include <jcache.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCache Cache

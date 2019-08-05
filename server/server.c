@@ -29,8 +29,6 @@
 
 #include <julea.h>
 
-#include <jtrace-internal.h>
-
 #include "server.h"
 
 static JConfiguration* jd_configuration;

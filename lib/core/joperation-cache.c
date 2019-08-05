@@ -34,7 +34,7 @@
 #include <jbatch.h>
 #include <jbatch-internal.h>
 #include <joperation-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 #include <string.h>
 

@@ -32,7 +32,7 @@
 #include <jcommon.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JLock Lock

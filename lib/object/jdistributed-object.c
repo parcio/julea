@@ -30,8 +30,6 @@
 
 #include <object/jdistributed-object.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**

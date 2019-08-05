@@ -31,7 +31,7 @@
 
 #include <jcommon.h>
 #include <jhelper-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JBackgroundOperation Background Operation

@@ -27,7 +27,7 @@
 
 #include <jbackend.h>
 
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JHelper Helper

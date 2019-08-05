@@ -27,8 +27,7 @@
 #include <string.h>
 
 #include <jsemantics.h>
-
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JSemantics Semantics

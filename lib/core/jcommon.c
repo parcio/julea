@@ -37,7 +37,7 @@
 #include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCommon Common

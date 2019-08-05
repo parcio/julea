@@ -31,7 +31,7 @@
 
 #include <jcommon.h>
 #include <jconfiguration.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 #include "distribution/distribution.h"
 

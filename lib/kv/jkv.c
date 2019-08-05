@@ -28,8 +28,6 @@
 
 #include <kv/jkv.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**

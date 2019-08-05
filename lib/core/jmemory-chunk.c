@@ -29,7 +29,7 @@
 #include <jmemory-chunk.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JMemoryChunk Cache

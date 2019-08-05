@@ -30,8 +30,6 @@
 
 #include <object/jobject.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**

@@ -32,7 +32,7 @@
 #include <jhelper.h>
 #include <jhelper-internal.h>
 #include <jmessage.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JConnectionPool Connection Pool

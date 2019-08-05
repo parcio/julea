@@ -35,7 +35,7 @@
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JBatch Batch

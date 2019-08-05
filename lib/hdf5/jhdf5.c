@@ -34,7 +34,6 @@
 #include <julea.h>
 #include <julea-kv.h>
 #include <julea-object.h>
-#include <jtrace-internal.h>
 #include <glib.h>
 #include <bson.h>
 

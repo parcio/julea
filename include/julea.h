@@ -51,6 +51,7 @@
 #include <core/joperation.h>
 #include <core/jsemantics.h>
 #include <core/jstatistics.h>
+#include <core/jtrace.h>
 
 // FIXME
 //#undef JULEA_H

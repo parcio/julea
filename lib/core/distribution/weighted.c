@@ -28,7 +28,7 @@
 
 #include <jconfiguration.h>
 #include <jhelper-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 #include "distribution.h"
 

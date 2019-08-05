@@ -28,7 +28,7 @@
 
 #include <jbackend-operation.h>
 
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JBackendOperation Backend Operation

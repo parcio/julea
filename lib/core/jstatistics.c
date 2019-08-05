@@ -25,8 +25,7 @@
 #include <glib.h>
 
 #include <jstatistics.h>
-
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JStatistics Statistics

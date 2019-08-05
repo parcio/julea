@@ -24,8 +24,6 @@
 
 #include <julea.h>
 
-#include <jtrace-internal.h>
-
 #include "server.h"
 
 static guint jd_thread_num = 0;

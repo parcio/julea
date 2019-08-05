@@ -32,7 +32,7 @@
 #include <jcredentials.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCredentials Credentials

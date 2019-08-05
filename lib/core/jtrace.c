@@ -29,7 +29,7 @@
 #include <otf.h>
 #endif
 
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JTrace Trace
