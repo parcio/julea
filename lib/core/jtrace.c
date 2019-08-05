@@ -82,6 +82,8 @@ struct JTrace
 	gint ref_count;
 };
 
+typedef struct JTrace JTrace;
+
 /**
  * Flags used to enable specific trace back-ends.
  */
@@ -117,6 +119,152 @@ static GHashTable* otf_counter_table = NULL;
 G_LOCK_DEFINE_STATIC(j_trace_otf);
 #endif
 
+static void j_trace_thread_default_free (gpointer);
+
+static GPrivate j_trace_thread_default = G_PRIVATE_INIT(j_trace_thread_default_free);
+
+G_LOCK_DEFINE_STATIC(j_trace_echo);
+
+/**
+ * Creates a new trace.
+ *
+ * \code
+ * \endcode
+ *
+ * \param thread A thread.
+ *
+ * \return A new trace. Should be freed with j_trace_unref().
+ **/
+static
+JTrace*
+j_trace_new (GThread* thread)
+{
+	JTrace* trace;
+
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return NULL;
+	}
+
+	trace = g_slice_new(JTrace);
+	trace->function_depth = 0;
+
+	if (thread == NULL)
+	{
+		trace->thread_name = g_strdup("Main process");
+	}
+	else
+	{
+		guint thread_id;
+
+		/* FIXME use name? */
+		thread_id = g_atomic_int_add(&j_trace_thread_id, 1);
+		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
+	}
+
+#ifdef HAVE_OTF
+	if (j_trace_flags & J_TRACE_OTF)
+	{
+		trace->otf.process_id = g_atomic_int_add(&otf_process_id, 1);
+
+		OTF_Writer_writeDefProcess(otf_writer, 0, trace->otf.process_id, trace->thread_name, 0);
+		OTF_Writer_writeBeginProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
+	}
+#endif
+
+	trace->ref_count = 1;
+
+	return trace;
+}
+
+/**
+ * Increases a trace's reference count.
+ *
+ * \code
+ * JTrace* t;
+ *
+ * j_trace_ref(t);
+ * \endcode
+ *
+ * \param trace A trace.
+ *
+ * \return #trace.
+ **/
+/*
+static
+JTrace*
+j_trace_ref (JTrace* trace)
+{
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return NULL;
+	}
+
+	g_return_val_if_fail(trace != NULL, NULL);
+
+	g_atomic_int_inc(&(trace->ref_count));
+
+	return trace;
+}
+*/
+
+/**
+ * Decreases a trace's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the trace.
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A trace.
+ **/
+static
+void
+j_trace_unref (JTrace* trace)
+{
+	if (j_trace_flags == J_TRACE_OFF)
+	{
+		return;
+	}
+
+	g_return_if_fail(trace != NULL);
+
+	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
+	{
+#ifdef HAVE_OTF
+		if (j_trace_flags & J_TRACE_OTF)
+		{
+			OTF_Writer_writeEndProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
+		}
+#endif
+
+		g_free(trace->thread_name);
+
+		g_slice_free(JTrace, trace);
+	}
+}
+
+/**
+ * Returns the thread-default trace.
+ *
+ * \return The thread-default trace.
+ **/
+static
+JTrace*
+j_trace_get_thread_default (void)
+{
+	JTrace* trace;
+
+	trace = g_private_get(&j_trace_thread_default);
+
+	if (G_UNLIKELY(trace == NULL))
+	{
+		trace = j_trace_new(g_thread_self());
+		g_private_replace(&j_trace_thread_default, trace);
+	}
+
+	return trace;
+}
+
 static
 void
 j_trace_thread_default_free (gpointer data)
@@ -125,10 +273,6 @@ j_trace_thread_default_free (gpointer data)
 
 	j_trace_unref(trace);
 }
-
-static GPrivate j_trace_thread_default = G_PRIVATE_INIT(j_trace_thread_default_free);
-
-G_LOCK_DEFINE_STATIC(j_trace_echo);
 
 /**
  * Prints a common header to stderr.
@@ -398,140 +542,6 @@ j_trace_fini (void)
 	g_free(j_trace_function_patterns);
 
 	g_free(j_trace_name);
-}
-
-/**
- * Returns the thread-default trace.
- *
- * \return The thread-default trace.
- **/
-JTrace*
-j_trace_get_thread_default (void)
-{
-	JTrace* trace;
-
-	trace = g_private_get(&j_trace_thread_default);
-
-	if (G_UNLIKELY(trace == NULL))
-	{
-		trace = j_trace_new(g_thread_self());
-		g_private_replace(&j_trace_thread_default, trace);
-	}
-
-	return trace;
-}
-
-/**
- * Creates a new trace.
- *
- * \code
- * \endcode
- *
- * \param thread A thread.
- *
- * \return A new trace. Should be freed with j_trace_unref().
- **/
-JTrace*
-j_trace_new (GThread* thread)
-{
-	JTrace* trace;
-
-	if (j_trace_flags == J_TRACE_OFF)
-	{
-		return NULL;
-	}
-
-	trace = g_slice_new(JTrace);
-	trace->function_depth = 0;
-
-	if (thread == NULL)
-	{
-		trace->thread_name = g_strdup("Main process");
-	}
-	else
-	{
-		guint thread_id;
-
-		/* FIXME use name? */
-		thread_id = g_atomic_int_add(&j_trace_thread_id, 1);
-		trace->thread_name = g_strdup_printf("Thread %d", thread_id);
-	}
-
-#ifdef HAVE_OTF
-	if (j_trace_flags & J_TRACE_OTF)
-	{
-		trace->otf.process_id = g_atomic_int_add(&otf_process_id, 1);
-
-		OTF_Writer_writeDefProcess(otf_writer, 0, trace->otf.process_id, trace->thread_name, 0);
-		OTF_Writer_writeBeginProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
-	}
-#endif
-
-	trace->ref_count = 1;
-
-	return trace;
-}
-
-/**
- * Increases a trace's reference count.
- *
- * \code
- * JTrace* t;
- *
- * j_trace_ref(t);
- * \endcode
- *
- * \param trace A trace.
- *
- * \return #trace.
- **/
-JTrace*
-j_trace_ref (JTrace* trace)
-{
-	if (j_trace_flags == J_TRACE_OFF)
-	{
-		return NULL;
-	}
-
-	g_return_val_if_fail(trace != NULL, NULL);
-
-	g_atomic_int_inc(&(trace->ref_count));
-
-	return trace;
-}
-
-/**
- * Decreases a trace's reference count.
- * When the reference count reaches zero, frees the memory allocated for the trace.
- *
- * \code
- * \endcode
- *
- * \param trace A trace.
- **/
-void
-j_trace_unref (JTrace* trace)
-{
-	if (j_trace_flags == J_TRACE_OFF)
-	{
-		return;
-	}
-
-	g_return_if_fail(trace != NULL);
-
-	if (g_atomic_int_dec_and_test(&(trace->ref_count)))
-	{
-#ifdef HAVE_OTF
-		if (j_trace_flags & J_TRACE_OTF)
-		{
-			OTF_Writer_writeEndProcess(otf_writer, j_trace_get_time(), trace->otf.process_id);
-		}
-#endif
-
-		g_free(trace->thread_name);
-
-		g_slice_free(JTrace, trace);
-	}
 }
 
 /**
