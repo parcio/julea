@@ -38,7 +38,8 @@ main (int argc, char** argv)
 	object = j_object_new("hello", "world");
 
 	j_object_create(object, batch);
-	j_object_write(object, hello_world, strlen(hello_world), 0, &nbytes, batch);
+	j_object_write(object, hello_world, strlen(hello_world) + 1, 0, &nbytes, batch);
+	j_batch_execute(batch);
 	j_object_read(object, buffer, 128, 0, &nbytes, batch);
 	j_batch_execute(batch);
 
