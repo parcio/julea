@@ -31,6 +31,8 @@ static guint jd_thread_num = 0;
 gboolean
 jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gchar const* key;
 	gchar const* namespace;
 	gchar const* path;
@@ -40,8 +42,6 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 	JSemanticsSafety safety;
 	gboolean message_matched = FALSE;
 	guint i;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation_count = j_message_get_count(message);
 	semantics = j_message_get_semantics(message);
@@ -669,8 +669,6 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 			g_warn_if_reached();
 			break;
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return message_matched;
 }

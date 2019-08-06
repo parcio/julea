@@ -84,13 +84,11 @@ struct JCollection
 JCollection*
 j_collection_ref (JCollection* collection)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(collection->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return collection;
 }
@@ -107,9 +105,9 @@ j_collection_ref (JCollection* collection)
 void
 j_collection_unref (JCollection* collection)
 {
-	g_return_if_fail(collection != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(collection != NULL);
 
 	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
@@ -120,8 +118,6 @@ j_collection_unref (JCollection* collection)
 
 		g_slice_free(JCollection, collection);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -137,10 +133,9 @@ j_collection_unref (JCollection* collection)
 gchar const*
 j_collection_get_name (JCollection* collection)
 {
-	g_return_val_if_fail(collection != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(collection != NULL, NULL);
 
 	return collection->name;
 }
@@ -249,15 +244,15 @@ j_collection_delete (JCollection* collection, JBatch* batch)
 JCollection*
 j_collection_new (gchar const* name)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JCollection* collection = NULL;
 
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if (strpbrk(name, "/") != NULL)
 	{
-		goto end;
+		return NULL;
 	}
 
 	/*
@@ -270,9 +265,6 @@ j_collection_new (gchar const* name)
 	collection->credentials = j_credentials_new();
 	collection->kv = j_kv_new("collections", collection->name);
 	collection->ref_count = 1;
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return collection;
 }
@@ -292,14 +284,14 @@ end:
 JCollection*
 j_collection_new_from_bson (bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	/*
 		: m_initialized(true),
 	*/
 	JCollection* collection;
 
 	g_return_val_if_fail(b != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	collection = g_slice_new(JCollection);
 	collection->name = NULL;
@@ -309,8 +301,6 @@ j_collection_new_from_bson (bson_t const* b)
 	j_collection_deserialize(collection, b);
 
 	collection->kv = j_kv_new("collections", collection->name);
-
-	j_trace_leave(G_STRFUNC);
 
 	return collection;
 }
@@ -330,6 +320,8 @@ j_collection_new_from_bson (bson_t const* b)
 bson_t*
 j_collection_serialize (JCollection* collection)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	/*
 			.append("User", m_owner.User())
 			.append("Group", m_owner.Group())
@@ -340,8 +332,6 @@ j_collection_serialize (JCollection* collection)
 
 	g_return_val_if_fail(collection != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	b = bson_new();
 	b_cred = j_credentials_serialize(collection->credentials);
 
@@ -351,8 +341,6 @@ j_collection_serialize (JCollection* collection)
 	//bson_finish(b);
 
 	bson_destroy(b_cred);
-
-	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -371,12 +359,12 @@ j_collection_serialize (JCollection* collection)
 void
 j_collection_deserialize (JCollection* collection, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(collection != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	//j_bson_print(bson_t);
 
@@ -414,8 +402,6 @@ j_collection_deserialize (JCollection* collection, bson_t const* b)
 			bson_destroy(b_cred);
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -433,10 +419,9 @@ j_collection_deserialize (JCollection* collection, bson_t const* b)
 bson_oid_t const*
 j_collection_get_id (JCollection* collection)
 {
-	g_return_val_if_fail(collection != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(collection != NULL, NULL);
 
 	return &(collection->id);
 }

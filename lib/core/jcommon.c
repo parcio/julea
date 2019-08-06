@@ -125,6 +125,7 @@ void
 j_init (void)
 {
 	JCommon* common;
+	JTrace* trace;
 	g_autofree gchar* basename = NULL;
 	gchar const* object_backend;
 	gchar const* object_component;
@@ -144,10 +145,10 @@ j_init (void)
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
 
-	basename = j_get_program_name("julea");
+	basename = j_get_program_name("libjulea");
 	j_trace_init(basename);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	common->configuration = j_configuration_new();
 
@@ -202,7 +203,7 @@ j_init (void)
 
 	g_atomic_pointer_set(&j_common, common);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	return;
 
@@ -212,7 +213,7 @@ error:
 		j_configuration_unref(common->configuration);
 	}
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 
@@ -228,13 +229,14 @@ void
 j_fini (void)
 {
 	JCommon* common;
+	JTrace* trace;
 
 	if (!j_is_initialized())
 	{
 		return;
 	}
 
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	j_operation_cache_fini();
 	j_background_operation_fini();
@@ -275,7 +277,7 @@ j_fini (void)
 
 	j_configuration_unref(common->configuration);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 

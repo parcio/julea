@@ -90,6 +90,8 @@ static
 gboolean
 distribution_distribute (gpointer data, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionWeighted* distribution = data;
 
 	gboolean ret = TRUE;
@@ -98,12 +100,10 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	guint64 round;
 	guint block_offset;
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if (distribution->length == 0)
 	{
 		ret = FALSE;
-		goto end;
+		return FALSE;
 	}
 
 	block = distribution->offset / distribution->block_size;
@@ -132,9 +132,6 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
 
-end:
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -142,9 +139,9 @@ static
 gpointer
 distribution_new (guint server_count, guint64 stripe_size)
 {
-	JDistributionWeighted* distribution;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	JDistributionWeighted* distribution;
 
 	distribution = g_slice_new(JDistributionWeighted);
 	distribution->server_count = server_count;
@@ -159,8 +156,6 @@ distribution_new (guint server_count, guint64 stripe_size)
 	{
 		distribution->weights[i] = 0;
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -178,17 +173,15 @@ static
 void
 distribution_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionWeighted* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_free(distribution->weights);
 
 	g_slice_free(JDistributionWeighted, distribution);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -249,14 +242,14 @@ static
 void
 distribution_serialize (gpointer data, bson_t* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionWeighted* distribution = data;
 
 	bson_t b_array[1];
 	gchar numstr[16];
 
 	g_return_if_fail(distribution != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_append_int64(b, "block_size", -1, distribution->block_size);
 
@@ -270,8 +263,6 @@ distribution_serialize (gpointer data, bson_t* b)
 	}
 
 	bson_append_array_end(b, b_array);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -289,13 +280,13 @@ static
 void
 distribution_deserialize (gpointer data, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionWeighted* distribution = data;
 	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -324,8 +315,6 @@ distribution_deserialize (gpointer data, bson_t const* b)
 			}
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -346,16 +335,14 @@ static
 void
 distribution_reset (gpointer data, guint64 length, guint64 offset)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionWeighted* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	distribution->length = length;
 	distribution->offset = offset;
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void

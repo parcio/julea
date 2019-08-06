@@ -50,26 +50,26 @@
 void
 j_helper_set_nodelay (GSocketConnection* connection, gboolean enable)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint const flag = (enable) ? 1 : 0;
 
 	GSocket* socket_;
 	gint fd;
 
 	g_return_if_fail(connection != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
 
 	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void
 j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint const flag = (enable) ? 1 : 0;
 
 	GSocket* socket_;
@@ -77,14 +77,10 @@ j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
 
 	setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(gint));
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void
@@ -187,6 +183,8 @@ j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 guint32
 j_helper_hash (gchar const* str)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gchar c;
 	guint32 hash;
 

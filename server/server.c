@@ -51,6 +51,8 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JMemoryChunk* memory_chunk;
 	g_autoptr(JMessage) message = NULL;
 	JStatistics* statistics;
@@ -59,8 +61,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	(void)service;
 	(void)source_object;
 	(void)user_data;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	j_helper_set_nodelay(connection, TRUE);
 
@@ -100,8 +100,6 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
-
-	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -161,6 +159,7 @@ main (int argc, char** argv)
 	gboolean opt_daemon = FALSE;
 	gint opt_port = 4711;
 
+	JTrace* trace;
 	GError* error = NULL;
 	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
@@ -223,7 +222,7 @@ main (int argc, char** argv)
 
 	j_trace_init("julea-server");
 
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	jd_configuration = j_configuration_new();
 
@@ -325,7 +324,7 @@ main (int argc, char** argv)
 
 	j_configuration_unref(jd_configuration);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 

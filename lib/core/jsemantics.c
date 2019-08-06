@@ -154,11 +154,11 @@ j_semantics_new (JSemanticsTemplate template)
 JSemantics*
 j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_str)
 {
-	JSemantics* semantics;
+	J_TRACE_FUNCTION(NULL);
+
+	JSemantics* semantics = NULL;
 	g_auto(GStrv) parts = NULL;
 	guint parts_len;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	if (template_str == NULL || g_strcmp0(template_str, "default") == 0)
 	{
@@ -179,7 +179,7 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 
 	if (semantics_str == NULL)
 	{
-		goto end;
+		return semantics;
 	}
 
 	parts = g_strsplit(semantics_str, ",", 0);
@@ -326,9 +326,6 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 			g_assert_not_reached();
 		}
 	}
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return semantics;
 }

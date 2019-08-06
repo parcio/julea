@@ -46,11 +46,20 @@ enum JTraceFileOperation
 
 typedef enum JTraceFileOperation JTraceFileOperation;
 
+struct JTrace;
+
+typedef struct JTrace JTrace;
+
 void j_trace_init (gchar const*);
 void j_trace_fini (void);
 
-void j_trace_enter (gchar const*, gchar const*, ...) G_GNUC_PRINTF(2, 3);
-void j_trace_leave (gchar const*);
+JTrace* j_trace_enter (gchar const*, gchar const*, ...) G_GNUC_PRINTF(2, 3);
+void j_trace_leave (JTrace*);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
+
+#define J_TRACE(name, ...) g_autoptr(JTrace) j_trace = j_trace_enter(name, __VA_ARGS__)
+#define J_TRACE_FUNCTION(...) g_autoptr(JTrace) j_trace_function = j_trace_enter(G_STRFUNC, __VA_ARGS__)
 
 void j_trace_file_begin (gchar const*, JTraceFileOperation);
 void j_trace_file_end (gchar const*, JTraceFileOperation, guint64, guint64);
