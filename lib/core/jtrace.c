@@ -93,6 +93,7 @@ struct JTrace
 
 static JTraceFlags j_trace_flags = J_TRACE_OFF;
 
+static gchar* j_trace_name = NULL;
 static gint j_trace_thread_id = 1;
 
 static GPatternSpec** j_trace_function_patterns = NULL;
@@ -249,7 +250,7 @@ j_trace_echo_printerr (JTraceThread* trace_thread, guint64 timestamp)
 {
 	guint i;
 
-	g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, trace_thread->thread_name);
+	g_printerr("[%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "] %s %s: ", timestamp / G_USEC_PER_SEC, timestamp % G_USEC_PER_SEC, j_trace_name, trace_thread->thread_name);
 
 	for (i = 0; i < trace_thread->function_depth; i++)
 	{
@@ -445,6 +446,9 @@ j_trace_init (gchar const* name)
 		otf_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	}
 #endif
+
+	g_free(j_trace_name);
+	j_trace_name = g_strdup(name);
 }
 
 /**
@@ -495,6 +499,7 @@ j_trace_fini (void)
 	}
 
 	g_free(j_trace_function_patterns);
+	g_free(j_trace_name);
 }
 
 /**
