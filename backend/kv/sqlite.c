@@ -111,7 +111,6 @@ backend_delete (gpointer data, gchar const* key)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
-	g_autofree gchar* nskey = NULL;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -133,7 +132,6 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
-	g_autofree gchar* nskey = NULL;
 	gint ret;
 	gconstpointer result = NULL;
 	gsize result_len;

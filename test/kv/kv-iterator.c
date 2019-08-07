@@ -33,10 +33,8 @@ test_kv_iterator_new_free (void)
 
 	for (guint i = 0; i < n; i++)
 	{
-		g_autoptr(JBatch) batch = NULL;
 		g_autoptr(JKV) kv = NULL;
 
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		kv = j_kv_new("test-ns", "test-kv");
 
 		g_assert(kv != NULL);
