@@ -86,6 +86,8 @@ j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 void
 j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint ret;
 
 	/* FIXME improve */
@@ -96,6 +98,8 @@ j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 gchar*
 j_helper_str_replace (gchar const* str, gchar const* old, gchar const* new)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_autoptr(GRegex) regex = NULL;
 	g_autofree gchar* old_escaped = NULL;
 	gchar* replace;
@@ -114,6 +118,8 @@ j_helper_str_replace (gchar const* str, gchar const* old, gchar const* new)
 gboolean
 j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBackgroundOperation** operations;
 	guint data_count = 0;
 
@@ -163,6 +169,8 @@ j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint 
 guint64
 j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	guint64 ret;
 
 	// FIXME check C11 atomic_fetch_add

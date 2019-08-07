@@ -168,6 +168,8 @@ j_distribution_unref (JDistribution* distribution)
 void
 j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(block_size > 0);
 
@@ -189,6 +191,8 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 void
 j_distribution_set (JDistribution* distribution, gchar const* key, guint64 value)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(key != NULL);
 
@@ -201,6 +205,8 @@ j_distribution_set (JDistribution* distribution, gchar const* key, guint64 value
 void
 j_distribution_set2 (JDistribution* distribution, gchar const* key, guint64 value1, guint64 value2)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(key != NULL);
 
@@ -216,6 +222,8 @@ static
 void
 j_distribution_check_vtables (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	for (guint i = 0; i < G_N_ELEMENTS(j_distribution_vtables); i++)
 	{
 		g_return_if_fail(j_distribution_vtables[i].distribution_new != NULL);
@@ -232,6 +240,8 @@ j_distribution_check_vtables (void)
 void
 j_distribution_init (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	j_distribution_round_robin_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_ROUND_ROBIN]));
 	j_distribution_single_server_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_SINGLE_SERVER]));
 	j_distribution_weighted_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_WEIGHTED]));

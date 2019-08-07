@@ -168,6 +168,8 @@ static
 void
 distribution_set (gpointer data, gchar const* key, guint64 value)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributionSingleServer* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
@@ -284,6 +286,8 @@ distribution_reset (gpointer data, guint64 length, guint64 offset)
 void
 j_distribution_single_server_get_vtable (JDistributionVTable* vtable)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	vtable->distribution_new = distribution_new;
 	vtable->distribution_free = distribution_free;
 	vtable->distribution_set = distribution_set;

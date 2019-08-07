@@ -28,6 +28,7 @@
 
 #include <jlist.h>
 #include <jlist-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JListIterator List Iterator
@@ -66,6 +67,8 @@ struct JListIterator
 JListIterator*
 j_list_iterator_new (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JListIterator* iterator;
 
 	g_return_val_if_fail(list != NULL, NULL);
@@ -89,6 +92,8 @@ j_list_iterator_new (JList* list)
 void
 j_list_iterator_free (JListIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(iterator != NULL);
 
 	j_list_unref(iterator->list);
@@ -109,6 +114,8 @@ j_list_iterator_free (JListIterator* iterator)
 gboolean
 j_list_iterator_next (JListIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
 	if (G_UNLIKELY(iterator->first))
@@ -136,6 +143,8 @@ j_list_iterator_next (JListIterator* iterator)
 gpointer
 j_list_iterator_get (JListIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(iterator->current != NULL, NULL);
 

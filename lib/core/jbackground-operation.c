@@ -162,6 +162,8 @@ j_background_operation_fini (void)
 guint
 j_background_operation_get_num_threads (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_thread_pool_get_max_threads(j_thread_pool);
 }
 

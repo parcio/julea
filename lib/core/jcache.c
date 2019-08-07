@@ -169,6 +169,8 @@ end:
 void
 j_cache_release (JCache* cache, gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer size;
 
 	g_return_if_fail(cache != NULL);

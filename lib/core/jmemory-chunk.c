@@ -154,6 +154,8 @@ j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 void
 j_memory_chunk_reset (JMemoryChunk* cache)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(cache != NULL);
 
 	cache->current = cache->data;
