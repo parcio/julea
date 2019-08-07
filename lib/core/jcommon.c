@@ -142,12 +142,17 @@ j_init (void)
 		return;
 	}
 
+	basename = j_get_program_name("libjulea");
+
+	if (g_strcmp0(basename, "julea-server") == 0)
+	{
+		return;
+	}
+
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
 
-	basename = j_get_program_name("libjulea");
 	j_trace_init(basename);
-
 	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	common->configuration = j_configuration_new();
