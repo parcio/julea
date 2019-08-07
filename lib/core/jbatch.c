@@ -267,14 +267,12 @@ j_batch_execute (JBatch* batch)
 
 	if (j_list_length(batch->list) == 0)
 	{
-		ret = FALSE;
 		return FALSE;
 	}
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
-		ret = TRUE;
 		return TRUE;
 	}
 
@@ -381,13 +379,9 @@ j_batch_get_operations (JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JList* ret;
-
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	ret = batch->list;
-
-	return ret;
+	return batch->list;
 }
 
 /**
@@ -407,13 +401,9 @@ j_batch_get_semantics (JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSemantics* ret;
-
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	ret = batch->semantics;
-
-	return ret;
+	return batch->semantics;
 }
 
 /**

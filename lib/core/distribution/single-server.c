@@ -92,13 +92,11 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 
 	JDistributionSingleServer* distribution = data;
 
-	gboolean ret = TRUE;
 	guint64 block;
 	guint64 displacement;
 
 	if (distribution->length == 0)
 	{
-		ret = FALSE;
 		return FALSE;
 	}
 
@@ -113,7 +111,7 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
 
-	return ret;
+	return TRUE;
 }
 
 static

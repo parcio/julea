@@ -94,7 +94,6 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 
 	JDistributionWeighted* distribution = data;
 
-	gboolean ret = TRUE;
 	guint64 block;
 	guint64 displacement;
 	guint64 round;
@@ -102,7 +101,6 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 
 	if (distribution->length == 0)
 	{
-		ret = FALSE;
 		return FALSE;
 	}
 
@@ -132,7 +130,7 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	distribution->length -= *new_length;
 	distribution->offset += *new_length;
 
-	return ret;
+	return TRUE;
 }
 
 static

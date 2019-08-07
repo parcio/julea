@@ -401,16 +401,12 @@ j_distribution_distribute (JDistribution* distribution, guint* index, guint64* n
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
-
 	g_return_val_if_fail(distribution != NULL, FALSE);
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
 
-	ret = j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
-
-	return ret;
+	return j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
 }
 
 /**

@@ -640,14 +640,10 @@ j_message_append_string (JMessage* message, gchar const* str)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret;
-
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(str != NULL, FALSE);
 
-	ret = j_message_append_n(message, str, strlen(str) + 1);
-
-	return ret;
+	return j_message_append_n(message, str, strlen(str) + 1);
 }
 
 /**
@@ -799,17 +795,13 @@ j_message_receive (JMessage* message, GSocketConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret;
-
 	GInputStream* stream;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
 	stream = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-	ret = j_message_read(message, stream);
-
-	return ret;
+	return j_message_read(message, stream);
 }
 
 /**
