@@ -28,8 +28,6 @@
 
 #include <kv/jkv.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**
@@ -133,6 +131,8 @@ static
 gboolean
 j_kv_put_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = TRUE;
 
 	JBackend* kv_backend;
@@ -146,8 +146,6 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JKVOperation* kop;
@@ -228,8 +226,6 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_kv(index, kv_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -237,6 +233,8 @@ static
 gboolean
 j_kv_delete_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = TRUE;
 
 	JBackend* kv_backend;
@@ -250,8 +248,6 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JKV* object;
@@ -322,8 +318,6 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_kv(index, kv_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -331,20 +325,21 @@ static
 gboolean
 j_kv_get_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = TRUE;
 
 	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	//JSemanticsSafety safety;
+	JSemanticsSafety safety;
 	gchar const* namespace;
+	gpointer kv_batch = NULL;
 	gsize namespace_len;
 	guint32 index;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JKVOperation* kop;
@@ -357,11 +352,15 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		index = kop->get.kv->index;
 	}
 
-	//safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_backend();
 
-	if (kv_backend == NULL)
+	if (kv_backend != NULL)
+	{
+		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
+	}
+	else
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -387,7 +386,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 				gpointer value;
 				guint32 len;
 
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, &value, &len) && ret;
+				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, &value, &len) && ret;
 
 				if (ret)
 				{
@@ -397,7 +396,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 			}
 			else
 			{
-				ret = j_backend_kv_get(kv_backend, kop->get.kv->namespace, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
+				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
 			}
 		}
 		else
@@ -411,7 +410,11 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		}
 	}
 
-	if (kv_backend == NULL)
+	if (kv_backend != NULL)
+	{
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
+	}
+	else
 	{
 		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
@@ -458,8 +461,6 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_kv(index, kv_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -480,21 +481,19 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 JKV*
 j_kv_new (gchar const* namespace, gchar const* key)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration = j_configuration();
 	JKV* kv;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	kv = g_slice_new(JKV);
 	kv->index = j_helper_hash(key) % j_configuration_get_kv_server_count(configuration);
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
 	kv->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return kv;
 }
@@ -516,6 +515,8 @@ j_kv_new (gchar const* namespace, gchar const* key)
 JKV*
 j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration = j_configuration();
 	JKV* kv;
 
@@ -523,15 +524,11 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 	g_return_val_if_fail(key != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_kv_server_count(configuration), NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	kv = g_slice_new(JKV);
 	kv->index = index;
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
 	kv->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return kv;
 }
@@ -552,13 +549,11 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 JKV*
 j_kv_ref (JKV* kv)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(kv != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(kv->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return kv;
 }
@@ -575,9 +570,9 @@ j_kv_ref (JKV* kv)
 void
 j_kv_unref (JKV* kv)
 {
-	g_return_if_fail(kv != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(kv != NULL);
 
 	if (g_atomic_int_dec_and_test(&(kv->ref_count)))
 	{
@@ -586,8 +581,6 @@ j_kv_unref (JKV* kv)
 
 		g_slice_free(JKV, kv);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -603,12 +596,12 @@ j_kv_unref (JKV* kv)
 void
 j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVOperation* kop;
 	JOperation* operation;
 
 	g_return_if_fail(kv != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	kop = g_slice_new(JKVOperation);
 	kop->put.kv = j_kv_ref(kv);
@@ -624,8 +617,6 @@ j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destr
 	operation->free_func = j_kv_put_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -640,11 +631,11 @@ j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destr
 void
 j_kv_delete (JKV* kv, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	g_return_if_fail(kv != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
 	operation->key = kv;
@@ -653,8 +644,6 @@ j_kv_delete (JKV* kv, JBatch* batch)
 	operation->free_func = j_kv_delete_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -669,12 +658,12 @@ j_kv_delete (JKV* kv, JBatch* batch)
 void
 j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVOperation* kop;
 	JOperation* operation;
 
 	g_return_if_fail(kv != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
@@ -690,8 +679,6 @@ j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 	operation->free_func = j_kv_get_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -706,13 +693,13 @@ j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 void
 j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVOperation* kop;
 	JOperation* operation;
 
 	g_return_if_fail(kv != NULL);
 	g_return_if_fail(func != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
@@ -728,8 +715,6 @@ j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	operation->free_func = j_kv_get_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

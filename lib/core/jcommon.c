@@ -37,7 +37,7 @@
 #include <jbatch-internal.h>
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCommon Common
@@ -125,6 +125,7 @@ void
 j_init (void)
 {
 	JCommon* common;
+	JTrace* trace;
 	g_autofree gchar* basename = NULL;
 	gchar const* object_backend;
 	gchar const* object_component;
@@ -141,13 +142,18 @@ j_init (void)
 		return;
 	}
 
+	basename = j_get_program_name("libjulea");
+
+	if (g_strcmp0(basename, "julea-server") == 0)
+	{
+		return;
+	}
+
 	common = g_slice_new(JCommon);
 	common->configuration = NULL;
 
-	basename = j_get_program_name("julea");
 	j_trace_init(basename);
-
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	common->configuration = j_configuration_new();
 
@@ -202,7 +208,7 @@ j_init (void)
 
 	g_atomic_pointer_set(&j_common, common);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	return;
 
@@ -212,7 +218,7 @@ error:
 		j_configuration_unref(common->configuration);
 	}
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 
@@ -228,13 +234,14 @@ void
 j_fini (void)
 {
 	JCommon* common;
+	JTrace* trace;
 
 	if (!j_is_initialized())
 	{
 		return;
 	}
 
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	j_operation_cache_fini();
 	j_background_operation_fini();
@@ -275,7 +282,7 @@ j_fini (void)
 
 	j_configuration_unref(common->configuration);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 

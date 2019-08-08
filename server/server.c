@@ -1,7 +1,6 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
- * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,19 +29,9 @@
 
 #include <julea.h>
 
-#include <jtrace-internal.h>
-
-static JStatistics* jd_statistics;
-
-G_LOCK_DEFINE_STATIC(jd_statistics);
+#include "server.h"
 
 static JConfiguration* jd_configuration;
-
-static JBackend* jd_object_backend;
-static JBackend* jd_kv_backend;
-static JBackend* jd_db_backend;
-
-static guint jd_thread_num = 0;
 
 static
 gboolean
@@ -62,17 +51,16 @@ static
 gboolean
 jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JMemoryChunk* memory_chunk;
 	g_autoptr(JMessage) message = NULL;
 	JStatistics* statistics;
-	GInputStream* input;
 	guint64 memory_chunk_size;
 
 	(void)service;
 	(void)source_object;
 	(void)user_data;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	j_helper_set_nodelay(connection, TRUE);
 
@@ -81,650 +69,16 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	memory_chunk = j_memory_chunk_new(memory_chunk_size);
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
-	input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
 
 	while (j_message_receive(message, connection))
 	{
-		gchar const* key;
-		gchar const* namespace;
-		gchar const* path;
-		guint32 operation_count;
-		JBackendOperation backend_operation;
-		JSemantics* semantics;
-		JSemanticsSafety safety;
-		gboolean message_matched = FALSE;
-		guint i;
-
-		operation_count = j_message_get_count(message);
-		semantics = j_message_get_semantics(message);
-		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-		j_semantics_unref(semantics);
-
-		switch (j_message_get_type(message))
-		{
-			case J_MESSAGE_NONE:
-				break;
-			case J_MESSAGE_OBJECT_CREATE:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer object;
-
-					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						reply = j_message_new_reply(message);
-					}
-
-					namespace = j_message_get_string(message);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						path = j_message_get_string(message);
-
-						if (j_backend_object_create(jd_object_backend, namespace, path, &object))
-						{
-							j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
-
-							if (safety == J_SEMANTICS_SAFETY_STORAGE)
-							{
-								j_backend_object_sync(jd_object_backend, object);
-								j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
-							}
-
-							j_backend_object_close(jd_object_backend, object);
-						}
-
-						if (reply != NULL)
-						{
-							j_message_add_operation(reply, 0);
-						}
-					}
-
-					if (reply != NULL)
-					{
-						j_message_send(reply, connection);
-					}
-				}
-				break;
-			case J_MESSAGE_OBJECT_DELETE:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer object;
-
-					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						reply = j_message_new_reply(message);
-					}
-
-					namespace = j_message_get_string(message);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						path = j_message_get_string(message);
-
-						if (j_backend_object_open(jd_object_backend, namespace, path, &object)
-						    && j_backend_object_delete(jd_object_backend, object))
-						{
-							j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
-						}
-
-						if (reply != NULL)
-						{
-							j_message_add_operation(reply, 0);
-						}
-					}
-
-					if (reply != NULL)
-					{
-						j_message_send(reply, connection);
-					}
-				}
-				break;
-			case J_MESSAGE_OBJECT_READ:
-				{
-					JMessage* reply;
-					gpointer object;
-
-					namespace = j_message_get_string(message);
-					path = j_message_get_string(message);
-
-					reply = j_message_new_reply(message);
-
-					// FIXME return value
-					j_backend_object_open(jd_object_backend, namespace, path, &object);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						gchar* buf;
-						guint64 length;
-						guint64 offset;
-						guint64 bytes_read = 0;
-
-						length = j_message_get_8(message);
-						offset = j_message_get_8(message);
-
-						if (length > memory_chunk_size)
-						{
-							// FIXME return proper error
-							j_message_add_operation(reply, sizeof(guint64));
-							j_message_append_8(reply, &bytes_read);
-							continue;
-						}
-
-						buf = j_memory_chunk_get(memory_chunk, length);
-
-						if (buf == NULL)
-						{
-							// FIXME ugly
-							j_message_send(reply, connection);
-							j_message_unref(reply);
-
-							reply = j_message_new_reply(message);
-
-							j_memory_chunk_reset(memory_chunk);
-							buf = j_memory_chunk_get(memory_chunk, length);
-						}
-
-						j_backend_object_read(jd_object_backend, object, buf, length, offset, &bytes_read);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
-
-						j_message_add_operation(reply, sizeof(guint64));
-						j_message_append_8(reply, &bytes_read);
-
-						if (bytes_read > 0)
-						{
-							j_message_add_send(reply, buf, bytes_read);
-						}
-
-						j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
-					}
-
-					j_backend_object_close(jd_object_backend, object);
-
-					j_message_send(reply, connection);
-					j_message_unref(reply);
-
-					j_memory_chunk_reset(memory_chunk);
-				}
-				break;
-			case J_MESSAGE_OBJECT_WRITE:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer object;
-
-					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						reply = j_message_new_reply(message);
-					}
-
-					namespace = j_message_get_string(message);
-					path = j_message_get_string(message);
-
-					// FIXME return value
-					j_backend_object_open(jd_object_backend, namespace, path, &object);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						gchar* buf;
-						guint64 length;
-						guint64 offset;
-						guint64 bytes_written = 0;
-
-						length = j_message_get_8(message);
-						offset = j_message_get_8(message);
-
-						if (length > memory_chunk_size)
-						{
-							// FIXME return proper error
-							j_message_add_operation(reply, sizeof(guint64));
-							j_message_append_8(reply, &bytes_written);
-							continue;
-						}
-
-						// Guaranteed to work because memory_chunk is reset below
-						buf = j_memory_chunk_get(memory_chunk, length);
-						g_assert(buf != NULL);
-
-						g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
-
-						j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
-
-						if (reply != NULL)
-						{
-							j_message_add_operation(reply, sizeof(guint64));
-							j_message_append_8(reply, &bytes_written);
-						}
-
-						j_memory_chunk_reset(memory_chunk);
-					}
-
-					if (safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						j_backend_object_sync(jd_object_backend, object);
-						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
-					}
-
-					j_backend_object_close(jd_object_backend, object);
-
-					if (reply != NULL)
-					{
-						j_message_send(reply, connection);
-					}
-
-					j_memory_chunk_reset(memory_chunk);
-				}
-				break;
-			case J_MESSAGE_OBJECT_STATUS:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer object;
-
-					reply = j_message_new_reply(message);
-
-					namespace = j_message_get_string(message);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						gint64 modification_time = 0;
-						guint64 size = 0;
-
-						path = j_message_get_string(message);
-
-						// FIXME return value
-						j_backend_object_open(jd_object_backend, namespace, path, &object);
-
-						if (j_backend_object_status(jd_object_backend, object, &modification_time, &size))
-						{
-							j_statistics_add(statistics, J_STATISTICS_FILES_STATED, 1);
-						}
-
-						j_message_add_operation(reply, sizeof(gint64) + sizeof(guint64));
-						j_message_append_8(reply, &modification_time);
-						j_message_append_8(reply, &size);
-
-						j_backend_object_close(jd_object_backend, object);
-					}
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_STATISTICS:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					JStatistics* r_statistics;
-					gchar get_all;
-					guint64 value;
-
-					get_all = j_message_get_1(message);
-					r_statistics = (get_all == 0) ? statistics : jd_statistics;
-
-					if (get_all != 0)
-					{
-						G_LOCK(jd_statistics);
-						/* FIXME add statistics of all threads */
-					}
-
-					reply = j_message_new_reply(message);
-					j_message_add_operation(reply, 8 * sizeof(guint64));
-
-					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_CREATED);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_DELETED);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_FILES_STATED);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_SYNC);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_BYTES_READ);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_BYTES_WRITTEN);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_BYTES_RECEIVED);
-					j_message_append_8(reply, &value);
-					value = j_statistics_get(r_statistics, J_STATISTICS_BYTES_SENT);
-					j_message_append_8(reply, &value);
-
-					if (get_all != 0)
-					{
-						G_UNLOCK(jd_statistics);
-					}
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_PING:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					guint num;
-
-					num = g_atomic_int_add(&jd_thread_num, 1);
-
-					(void)num;
-					//g_print("HELLO %d\n", num);
-
-					reply = j_message_new_reply(message);
-
-					if (jd_object_backend != NULL)
-					{
-						j_message_add_operation(reply, 7);
-						j_message_append_string(reply, "object");
-					}
-
-					if (jd_kv_backend != NULL)
-					{
-						j_message_add_operation(reply, 3);
-						j_message_append_string(reply, "kv");
-					}
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_KV_PUT:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer batch;
-
-					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						reply = j_message_new_reply(message);
-					}
-
-					namespace = j_message_get_string(message);
-					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						gconstpointer data;
-						guint32 len;
-
-						key = j_message_get_string(message);
-						len = j_message_get_4(message);
-						data = j_message_get_n(message, len);
-
-						j_backend_kv_put(jd_kv_backend, batch, key, data, len);
-
-						if (reply != NULL)
-						{
-							j_message_add_operation(reply, 0);
-						}
-					}
-
-					j_backend_kv_batch_execute(jd_kv_backend, batch);
-
-					if (reply != NULL)
-					{
-						j_message_send(reply, connection);
-					}
-				}
-				break;
-			case J_MESSAGE_KV_DELETE:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer batch;
-
-					if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
-					{
-						reply = j_message_new_reply(message);
-					}
-
-					namespace = j_message_get_string(message);
-					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						key = j_message_get_string(message);
-
-						j_backend_kv_delete(jd_kv_backend, batch, key);
-
-						if (reply != NULL)
-						{
-							j_message_add_operation(reply, 0);
-						}
-					}
-
-					j_backend_kv_batch_execute(jd_kv_backend, batch);
-
-					if (reply != NULL)
-					{
-						j_message_send(reply, connection);
-					}
-				}
-				break;
-			case J_MESSAGE_KV_GET:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer batch;
-
-					reply = j_message_new_reply(message);
-					namespace = j_message_get_string(message);
-					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						gpointer value;
-						guint32 len;
-
-						key = j_message_get_string(message);
-
-						if (j_backend_kv_get(jd_kv_backend, batch, key, &value, &len))
-						{
-							j_message_add_operation(reply, 4 + len);
-							j_message_append_4(reply, &len);
-							j_message_append_n(reply, value, len);
-
-							g_free(value);
-						}
-						else
-						{
-							guint32 zero = 0;
-
-							j_message_add_operation(reply, 4);
-							j_message_append_4(reply, &zero);
-						}
-					}
-
-					j_backend_kv_batch_execute(jd_kv_backend, batch);
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_KV_GET_ALL:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gpointer iterator;
-					gconstpointer value;
-					guint32 len;
-					guint32 zero = 0;
-
-					reply = j_message_new_reply(message);
-					namespace = j_message_get_string(message);
-
-					j_backend_kv_get_all(jd_kv_backend, namespace, &iterator);
-
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, &key, &value, &len))
-					{
-						gsize key_len;
-
-						key_len = strlen(key) + 1;
-
-						j_message_add_operation(reply, 4 + len + key_len);
-						j_message_append_4(reply, &len);
-						j_message_append_n(reply, value, len);
-						j_message_append_string(reply, key);
-					}
-
-					j_message_add_operation(reply, 4);
-					j_message_append_4(reply, &zero);
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_KV_GET_BY_PREFIX:
-				{
-					g_autoptr(JMessage) reply = NULL;
-					gchar const* prefix;
-					gpointer iterator;
-					gconstpointer value;
-					guint32 len;
-					guint32 zero = 0;
-
-					reply = j_message_new_reply(message);
-					namespace = j_message_get_string(message);
-					prefix = j_message_get_string(message);
-
-					j_backend_kv_get_by_prefix(jd_kv_backend, namespace, prefix, &iterator);
-
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, &key, &value, &len))
-					{
-						gsize key_len;
-
-						key_len = strlen(key) + 1;
-
-						j_message_add_operation(reply, 4 + len + key_len);
-						j_message_append_4(reply, &len);
-						j_message_append_n(reply, value, len);
-						j_message_append_string(reply, key);
-					}
-
-					j_message_add_operation(reply, 4);
-					j_message_append_4(reply, &zero);
-
-					j_message_send(reply, connection);
-				}
-				break;
-			case J_MESSAGE_DB_SCHEMA_CREATE:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_SCHEMA_GET:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_SCHEMA_DELETE:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_INSERT:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_insert, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_UPDATE:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_update, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_DELETE:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_delete, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				// fallthrough
-			case J_MESSAGE_DB_QUERY:
-				if (!message_matched)
-				{
-					memcpy(&backend_operation, &j_backend_operation_db_query, sizeof(JBackendOperation));
-					message_matched = TRUE;
-				}
-				{
-					g_autoptr(JMessage) reply = NULL;
-					g_autoptr(GError) error = NULL;
-					gpointer batch = NULL;
-					gint ret;
-
-					reply = j_message_new_reply(message);
-
-					for (guint j = 0; j < backend_operation.out_param_count; j++)
-					{
-						if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_ERROR)
-						{
-							backend_operation.out_param[j].ptr = &backend_operation.out_param[j].error_ptr;
-							backend_operation.out_param[j].error_ptr = NULL;
-						}
-						else if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
-						{
-							backend_operation.out_param[j].bson_initialized = FALSE;
-							backend_operation.out_param[j].ptr = &backend_operation.out_param[j].bson;
-						}
-					}
-					if (operation_count)
-					{
-						j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
-					}
-
-					j_backend_db_batch_start(jd_db_backend, backend_operation.in_param[0].ptr, safety, &batch, &error);
-
-					for (i = 0; i < operation_count; i++)
-					{
-						ret = FALSE;
-						if (i)
-						{
-							j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
-						}
-
-						if (error)
-						{
-							backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = g_error_copy(error);
-						}
-						else
-						{
-							ret = backend_operation.backend_func(jd_db_backend, batch, &backend_operation);
-							for (guint j = 0; j < backend_operation.out_param_count; j++)
-							{
-								if (ret && backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
-								{
-									backend_operation.out_param[j].bson_initialized = TRUE;
-								}
-							}
-						}
-
-						j_backend_operation_to_message(reply, backend_operation.out_param, backend_operation.out_param_count);
-
-						if (ret)
-						{
-							for (guint j = 0; j < backend_operation.out_param_count; j++)
-							{
-								if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
-								{
-									bson_destroy(backend_operation.out_param[j].ptr);
-								}
-							}
-						}
-					}
-
-					if (error == NULL)
-					{
-						j_backend_db_batch_execute(jd_db_backend, batch, &error);
-					}
-
-					j_message_send(reply, connection);
-				}
-				break;
-			default:
-				g_warn_if_reached();
-				break;
-		}
+		jd_handle_message(message, connection, memory_chunk, memory_chunk_size, statistics);
 	}
 
 	{
 		guint64 value;
 
-		G_LOCK(jd_statistics);
+		g_mutex_lock(jd_statistics_mutex);
 
 		value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
 		j_statistics_add(jd_statistics, J_STATISTICS_FILES_CREATED, value);
@@ -741,13 +95,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 		value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
 		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
 
-		G_UNLOCK(jd_statistics);
+		g_mutex_unlock(jd_statistics_mutex);
 	}
 
 	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
-
-	j_trace_leave(G_STRFUNC);
 
 	return TRUE;
 }
@@ -807,6 +159,7 @@ main (int argc, char** argv)
 	gboolean opt_daemon = FALSE;
 	gint opt_port = 4711;
 
+	JTrace* trace;
 	GError* error = NULL;
 	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
@@ -869,7 +222,7 @@ main (int argc, char** argv)
 
 	j_trace_init("julea-server");
 
-	j_trace_enter(G_STRFUNC, NULL);
+	trace = j_trace_enter(G_STRFUNC, NULL);
 
 	jd_configuration = j_configuration_new();
 
@@ -921,6 +274,7 @@ main (int argc, char** argv)
 	}
 
 	jd_statistics = j_statistics_new(FALSE);
+	g_mutex_init(jd_statistics_mutex);
 
 	g_socket_service_start(socket_service);
 	g_signal_connect(socket_service, "run", G_CALLBACK(jd_on_run), NULL);
@@ -935,6 +289,7 @@ main (int argc, char** argv)
 
 	g_socket_service_stop(socket_service);
 
+	g_mutex_clear(jd_statistics_mutex);
 	j_statistics_free(jd_statistics);
 
 	if (jd_db_backend != NULL)
@@ -969,7 +324,7 @@ main (int argc, char** argv)
 
 	j_configuration_unref(jd_configuration);
 
-	j_trace_leave(G_STRFUNC);
+	j_trace_leave(trace);
 
 	j_trace_fini();
 

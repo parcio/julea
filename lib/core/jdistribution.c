@@ -31,7 +31,7 @@
 
 #include <jcommon.h>
 #include <jconfiguration.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 #include "distribution/distribution.h"
 
@@ -70,11 +70,11 @@ static
 JDistribution*
 j_distribution_new_common (JDistributionType type, JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistribution* distribution;
 	guint server_count;
 	guint64 stripe_size;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	server_count = j_configuration_get_object_server_count(configuration);
 	stripe_size = j_configuration_get_stripe_size(configuration);
@@ -83,8 +83,6 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 	distribution->type = type;
 	distribution->distribution = j_distribution_vtables[type].distribution_new(server_count, stripe_size);
 	distribution->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -105,13 +103,11 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 JDistribution*
 j_distribution_new (JDistributionType type)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistribution* distribution;
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	distribution = j_distribution_new_common(type, j_configuration());
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -127,13 +123,11 @@ j_distribution_new (JDistributionType type)
 JDistribution*
 j_distribution_ref (JDistribution* distribution)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(distribution != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(distribution->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -150,9 +144,9 @@ j_distribution_ref (JDistribution* distribution)
 void
 j_distribution_unref (JDistribution* distribution)
 {
-	g_return_if_fail(distribution != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(distribution != NULL);
 
 	if (g_atomic_int_dec_and_test(&(distribution->ref_count)))
 	{
@@ -160,8 +154,6 @@ j_distribution_unref (JDistribution* distribution)
 
 		g_slice_free(JDistribution, distribution);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -176,6 +168,8 @@ j_distribution_unref (JDistribution* distribution)
 void
 j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(block_size > 0);
 
@@ -197,6 +191,8 @@ j_distribution_set_block_size (JDistribution* distribution, guint64 block_size)
 void
 j_distribution_set (JDistribution* distribution, gchar const* key, guint64 value)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(key != NULL);
 
@@ -209,6 +205,8 @@ j_distribution_set (JDistribution* distribution, gchar const* key, guint64 value
 void
 j_distribution_set2 (JDistribution* distribution, gchar const* key, guint64 value1, guint64 value2)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(key != NULL);
 
@@ -224,6 +222,8 @@ static
 void
 j_distribution_check_vtables (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	for (guint i = 0; i < G_N_ELEMENTS(j_distribution_vtables); i++)
 	{
 		g_return_if_fail(j_distribution_vtables[i].distribution_new != NULL);
@@ -240,6 +240,8 @@ j_distribution_check_vtables (void)
 void
 j_distribution_init (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	j_distribution_round_robin_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_ROUND_ROBIN]));
 	j_distribution_single_server_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_SINGLE_SERVER]));
 	j_distribution_weighted_get_vtable(&(j_distribution_vtables[J_DISTRIBUTION_WEIGHTED]));
@@ -260,15 +262,13 @@ j_distribution_init (void)
 JDistribution*
 j_distribution_new_from_bson (bson_t const* b)
 {
-	JDistribution* distribution;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	JDistribution* distribution;
 
 	distribution = j_distribution_new_common(J_DISTRIBUTION_ROUND_ROBIN, j_configuration());
 
 	j_distribution_deserialize(distribution, b);
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -289,13 +289,11 @@ j_distribution_new_from_bson (bson_t const* b)
 JDistribution*
 j_distribution_new_for_configuration (JDistributionType type, JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistribution* distribution;
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	distribution = j_distribution_new_common(type, configuration);
-
-	j_trace_leave(G_STRFUNC);
 
 	return distribution;
 }
@@ -315,11 +313,11 @@ j_distribution_new_for_configuration (JDistributionType type, JConfiguration* co
 bson_t*
 j_distribution_serialize (JDistribution* distribution)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_t* b;
 
 	g_return_val_if_fail(distribution != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	b = bson_new();
 
@@ -329,8 +327,6 @@ j_distribution_serialize (JDistribution* distribution)
 	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
 
 	//bson_finish(b);
-
-	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -349,12 +345,12 @@ j_distribution_serialize (JDistribution* distribution)
 void
 j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -371,8 +367,6 @@ j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 	}
 
 	j_distribution_vtables[distribution->type].distribution_deserialize(distribution->distribution, b);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -392,13 +386,11 @@ j_distribution_deserialize (JDistribution* distribution, bson_t const* b)
 void
 j_distribution_reset (JDistribution* distribution, guint64 length, guint64 offset)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(distribution != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	j_distribution_vtables[distribution->type].distribution_reset(distribution->distribution, length, offset);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -417,20 +409,14 @@ j_distribution_reset (JDistribution* distribution, guint64 length, guint64 offse
 gboolean
 j_distribution_distribute (JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
-	gboolean ret = FALSE;
+	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(distribution != NULL, FALSE);
 	g_return_val_if_fail(index != NULL, FALSE);
 	g_return_val_if_fail(new_length != NULL, FALSE);
 	g_return_val_if_fail(new_offset != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
-	ret = j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
-
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
+	return j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
 }
 
 /**

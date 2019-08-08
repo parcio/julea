@@ -27,6 +27,8 @@
 #include <jlist.h>
 #include <jlist-internal.h>
 
+#include <jtrace.h>
+
 /**
  * \defgroup JList List
  * @{
@@ -76,6 +78,8 @@ struct JList
 JList*
 j_list_new (JListFreeFunc free_func)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JList* list;
 
 	list = g_slice_new(JList);
@@ -98,6 +102,8 @@ j_list_new (JListFreeFunc free_func)
 JList*
 j_list_ref (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(list != NULL, NULL);
 
 	g_atomic_int_inc(&(list->ref_count));
@@ -117,6 +123,8 @@ j_list_ref (JList* list)
 void
 j_list_unref (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(list != NULL);
 
 	if (g_atomic_int_dec_and_test(&(list->ref_count)))
@@ -140,6 +148,8 @@ j_list_unref (JList* list)
 guint
 j_list_length (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(list != NULL, 0);
 
 	return list->length;
@@ -157,6 +167,8 @@ j_list_length (JList* list)
 void
 j_list_append (JList* list, gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JListElement* element;
 
 	g_return_if_fail(list != NULL);
@@ -193,6 +205,8 @@ j_list_append (JList* list, gpointer data)
 void
 j_list_prepend (JList* list, gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JListElement* element;
 
 	g_return_if_fail(list != NULL);
@@ -221,6 +235,8 @@ j_list_prepend (JList* list, gpointer data)
 gpointer
 j_list_get_first (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer data = NULL;
 
 	g_return_val_if_fail(list != NULL, NULL);
@@ -243,6 +259,8 @@ j_list_get_first (JList* list)
 gpointer
 j_list_get_last (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer data = NULL;
 
 	g_return_val_if_fail(list != NULL, NULL);
@@ -263,6 +281,8 @@ j_list_get_last (JList* list)
 void
 j_list_delete_all (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JListElement* element;
 
 	g_return_if_fail(list != NULL);
@@ -305,6 +325,8 @@ j_list_delete_all (JList* list)
 JListElement*
 j_list_head (JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(list != NULL, NULL);
 
 	return list->head;

@@ -31,7 +31,7 @@
 
 #include <jcommon.h>
 #include <jhelper-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JBackgroundOperation Background Operation
@@ -96,11 +96,11 @@ static
 void
 j_background_operation_thread (gpointer data, gpointer user_data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBackgroundOperation* background_operation = data;
 
 	(void)user_data;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	background_operation->result = (*(background_operation->func))(background_operation->data);
 
@@ -110,8 +110,6 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 	g_mutex_unlock(background_operation->mutex);
 
 	j_background_operation_unref(background_operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -124,11 +122,11 @@ j_background_operation_thread (gpointer data, gpointer user_data)
 void
 j_background_operation_init (guint count)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	GThreadPool* thread_pool;
 
 	g_return_if_fail(j_thread_pool == NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	if (count == 0)
 	{
@@ -137,8 +135,6 @@ j_background_operation_init (guint count)
 
 	thread_pool = g_thread_pool_new(j_background_operation_thread, NULL, count, FALSE, NULL);
 	g_atomic_pointer_set(&j_thread_pool, thread_pool);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -151,23 +147,23 @@ j_background_operation_init (guint count)
 void
 j_background_operation_fini (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	GThreadPool* thread_pool;
 
 	g_return_if_fail(j_thread_pool != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	thread_pool = g_atomic_pointer_get(&j_thread_pool);
 	g_atomic_pointer_set(&j_thread_pool, NULL);
 
 	g_thread_pool_free(thread_pool, FALSE, TRUE);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 guint
 j_background_operation_get_num_threads (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_thread_pool_get_max_threads(j_thread_pool);
 }
 
@@ -195,11 +191,11 @@ j_background_operation_get_num_threads (void)
 JBackgroundOperation*
 j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBackgroundOperation* background_operation;
 
 	g_return_val_if_fail(func != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	background_operation = g_slice_new(JBackgroundOperation);
 	background_operation->func = func;
@@ -212,8 +208,6 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 	g_cond_init(background_operation->cond);
 
 	g_thread_pool_push(j_thread_pool, background_operation, NULL);
-
-	j_trace_leave(G_STRFUNC);
 
 	return background_operation;
 }
@@ -234,13 +228,11 @@ j_background_operation_new (JBackgroundOperationFunc func, gpointer data)
 JBackgroundOperation*
 j_background_operation_ref (JBackgroundOperation* background_operation)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(background_operation != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(background_operation->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return background_operation;
 }
@@ -260,9 +252,9 @@ j_background_operation_ref (JBackgroundOperation* background_operation)
 void
 j_background_operation_unref (JBackgroundOperation* background_operation)
 {
-	g_return_if_fail(background_operation != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(background_operation != NULL);
 
 	if (g_atomic_int_dec_and_test(&(background_operation->ref_count)))
 	{
@@ -271,8 +263,6 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 
 		g_slice_free(JBackgroundOperation, background_operation);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -291,9 +281,9 @@ j_background_operation_unref (JBackgroundOperation* background_operation)
 gpointer
 j_background_operation_wait (JBackgroundOperation* background_operation)
 {
-	g_return_val_if_fail(background_operation != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_val_if_fail(background_operation != NULL, NULL);
 
 	g_mutex_lock(background_operation->mutex);
 
@@ -303,8 +293,6 @@ j_background_operation_wait (JBackgroundOperation* background_operation)
 	}
 
 	g_mutex_unlock(background_operation->mutex);
-
-	j_trace_leave(G_STRFUNC);
 
 	return background_operation->result;
 }

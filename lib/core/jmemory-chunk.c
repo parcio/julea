@@ -29,7 +29,7 @@
 #include <jmemory-chunk.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JMemoryChunk Cache
@@ -73,18 +73,16 @@ struct JMemoryChunk
 JMemoryChunk*
 j_memory_chunk_new (guint64 size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JMemoryChunk* cache;
 
 	g_return_val_if_fail(size > 0, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	cache = g_slice_new(JMemoryChunk);
 	cache->size = size;
 	cache->data = g_malloc(cache->size);
 	cache->current = cache->data;
-
-	j_trace_leave(G_STRFUNC);
 
 	return cache;
 }
@@ -105,9 +103,9 @@ j_memory_chunk_new (guint64 size)
 void
 j_memory_chunk_free (JMemoryChunk* cache)
 {
-	g_return_if_fail(cache != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(cache != NULL);
 
 	if (cache->data != NULL)
 	{
@@ -115,8 +113,6 @@ j_memory_chunk_free (JMemoryChunk* cache)
 	}
 
 	g_slice_free(JMemoryChunk, cache);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -138,22 +134,19 @@ j_memory_chunk_free (JMemoryChunk* cache)
 gpointer
 j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer ret = NULL;
 
 	g_return_val_if_fail(cache != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if (cache->current + length > cache->data + cache->size)
 	{
-		goto end;
+		return NULL;
 	}
 
 	ret = cache->current;
 	cache->current += length;
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -161,6 +154,8 @@ end:
 void
 j_memory_chunk_reset (JMemoryChunk* cache)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(cache != NULL);
 
 	cache->current = cache->data;
