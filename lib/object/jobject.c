@@ -30,8 +30,6 @@
 
 #include <object/jobject.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**
@@ -159,6 +157,8 @@ static
 gboolean
 j_object_create_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -170,8 +170,6 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JObject* object;
@@ -247,8 +245,6 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_object(index, object_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -256,6 +252,8 @@ static
 gboolean
 j_object_delete_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -267,8 +265,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JObject* object;
@@ -336,8 +332,6 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_object(index, object_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -345,6 +339,8 @@ static
 gboolean
 j_object_read_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -358,8 +354,6 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
@@ -499,8 +493,6 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	*/
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -508,6 +500,8 @@ static
 gboolean
 j_object_write_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -521,8 +515,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
@@ -653,8 +645,6 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	*/
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -662,6 +652,8 @@ static
 gboolean
 j_object_status_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -673,8 +665,6 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
@@ -766,8 +756,6 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 		j_connection_pool_push_object(index, object_connection);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -788,21 +776,19 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 JObject*
 j_object_new (gchar const* namespace, gchar const* name)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration = j_configuration();
 	JObject* object;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	object = g_slice_new(JObject);
 	object->index = j_helper_hash(name) % j_configuration_get_object_server_count(configuration);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return object;
 }
@@ -825,6 +811,8 @@ j_object_new (gchar const* namespace, gchar const* name)
 JObject*
 j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration = j_configuration();
 	JObject* object;
 
@@ -832,15 +820,11 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 	g_return_val_if_fail(name != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_object_server_count(configuration), NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	object = g_slice_new(JObject);
 	object->index = index;
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return object;
 }
@@ -861,13 +845,11 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 JObject*
 j_object_ref (JObject* object)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(object != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(object->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return object;
 }
@@ -884,9 +866,9 @@ j_object_ref (JObject* object)
 void
 j_object_unref (JObject* object)
 {
-	g_return_if_fail(object != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(object != NULL);
 
 	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
@@ -895,8 +877,6 @@ j_object_unref (JObject* object)
 
 		g_slice_free(JObject, object);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -914,11 +894,11 @@ j_object_unref (JObject* object)
 void
 j_object_create (JObject* object, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
 	// FIXME key = index + namespace
@@ -928,8 +908,6 @@ j_object_create (JObject* object, JBatch* batch)
 	operation->free_func = j_object_create_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -944,11 +922,11 @@ j_object_create (JObject* object, JBatch* batch)
 void
 j_object_delete (JObject* object, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -957,8 +935,6 @@ j_object_delete (JObject* object, JBatch* batch)
 	operation->free_func = j_object_delete_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -977,6 +953,8 @@ j_object_delete (JObject* object, JBatch* batch)
 void
 j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
@@ -985,8 +963,6 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1018,8 +994,6 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 	}
 
 	*bytes_read = 0;
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1041,6 +1015,8 @@ j_object_read (JObject* object, gpointer data, guint64 length, guint64 offset, g
 void
 j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
@@ -1049,8 +1025,6 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_written != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1081,10 +1055,7 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 		offset += chunk_size;
 	}
 
-
 	*bytes_written = 0;
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1099,12 +1070,12 @@ j_object_write (JObject* object, gconstpointer data, guint64 length, guint64 off
 void
 j_object_status (JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JObjectOperation);
 	iop->status.object = j_object_ref(object);
@@ -1118,8 +1089,6 @@ j_object_status (JObject* object, gint64* modification_time, guint64* size, JBat
 	operation->free_func = j_object_status_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

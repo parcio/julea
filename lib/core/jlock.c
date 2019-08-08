@@ -32,7 +32,7 @@
 #include <jcommon.h>
 #include <jconnection-pool-internal.h>
 #include <jhelper-internal.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JLock Lock
@@ -77,20 +77,18 @@ struct JLock
 JLock*
 j_lock_new (gchar const* namespace, gchar const* path)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JLock* lock;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(path != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	lock = g_slice_new(JLock);
 	lock->namespace = g_strdup(namespace);
 	lock->path = g_strdup(path);
 	lock->blocks = g_array_new(FALSE, FALSE, sizeof(guint64));
 	lock->acquired = FALSE;
-
-	j_trace_leave(G_STRFUNC);
 
 	return lock;
 }
@@ -111,9 +109,9 @@ j_lock_new (gchar const* namespace, gchar const* path)
 void
 j_lock_free (JLock* lock)
 {
-	g_return_if_fail(lock != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(lock != NULL);
 
 	if (lock->acquired)
 	{
@@ -126,8 +124,6 @@ j_lock_free (JLock* lock)
 	g_array_free(lock->blocks, TRUE);
 
 	g_slice_free(JLock, lock);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 gboolean

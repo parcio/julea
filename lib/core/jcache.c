@@ -29,7 +29,7 @@
 #include <jcache.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCache Cache
@@ -69,11 +69,11 @@ struct JCache
 JCache*
 j_cache_new (guint64 size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JCache* cache;
 
 	g_return_val_if_fail(size > 0, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	cache = g_slice_new(JCache);
 	cache->size = size;
@@ -81,8 +81,6 @@ j_cache_new (guint64 size)
 	cache->used = 0;
 
 	g_mutex_init(cache->mutex);
-
-	j_trace_leave(G_STRFUNC);
 
 	return cache;
 }
@@ -103,13 +101,13 @@ j_cache_new (guint64 size)
 void
 j_cache_free (JCache* cache)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	GHashTableIter iter[1];
 	gpointer key;
 	gpointer value;
 
 	g_return_if_fail(cache != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	g_hash_table_iter_init(iter, cache->buffers);
 
@@ -123,8 +121,6 @@ j_cache_free (JCache* cache)
 	g_mutex_clear(cache->mutex);
 
 	g_slice_free(JCache, cache);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -146,11 +142,11 @@ j_cache_free (JCache* cache)
 gpointer
 j_cache_get (JCache* cache, guint64 length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer ret = NULL;
 
 	g_return_val_if_fail(cache != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	g_mutex_lock(cache->mutex);
 
@@ -167,14 +163,14 @@ j_cache_get (JCache* cache, guint64 length)
 end:
 	g_mutex_unlock(cache->mutex);
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
 void
 j_cache_release (JCache* cache, gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gpointer size;
 
 	g_return_if_fail(cache != NULL);

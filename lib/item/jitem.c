@@ -34,8 +34,6 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 #include <julea-kv.h>
 #include <julea-object.h>
@@ -125,13 +123,11 @@ struct JItem
 JItem*
 j_item_ref (JItem* item)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(item != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(item->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return item;
 }
@@ -148,9 +144,9 @@ j_item_ref (JItem* item)
 void
 j_item_unref (JItem* item)
 {
-	g_return_if_fail(item != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(item != NULL);
 
 	if (g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
@@ -176,8 +172,6 @@ j_item_unref (JItem* item)
 
 		g_slice_free(JItem, item);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -193,10 +187,9 @@ j_item_unref (JItem* item)
 gchar const*
 j_item_get_name (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, NULL);
 
 	return item->name;
 }
@@ -217,6 +210,8 @@ j_item_get_name (JItem* item)
 JItem*
 j_item_create (JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JItem* item;
 	bson_t* tmp;
 	gpointer value;
@@ -225,11 +220,9 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if ((item = j_item_new(collection, name, distribution)) == NULL)
 	{
-		goto end;
+		return NULL;
 	}
 
 	tmp = j_item_serialize(item, j_batch_get_semantics(batch));
@@ -237,9 +230,6 @@ j_item_create (JCollection* collection, gchar const* name, JDistribution* distri
 
 	j_distributed_object_create(item->object, batch);
 	j_kv_put(item->kv, value, len, bson_free, batch);
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return item;
 }
@@ -274,6 +264,8 @@ j_item_get_callback (gpointer value, guint32 len, gpointer data_)
 void
 j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JItemGetData* data;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* path = NULL;
@@ -282,8 +274,6 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(name != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	data = g_slice_new(JItemGetData);
 	data->collection = j_collection_ref(collection);
 	data->item = item;
@@ -291,8 +281,6 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 	path = g_build_path("/", j_collection_get_name(collection), name, NULL);
 	kv = j_kv_new("items", path);
 	j_kv_get_callback(kv, j_item_get_callback, data, batch);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -308,15 +296,13 @@ j_item_get (JCollection* collection, JItem** item, gchar const* name, JBatch* ba
 void
 j_item_delete (JItem* item, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(batch != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	j_kv_delete(item->kv, batch);
 	j_distributed_object_delete(item->object, batch);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -335,15 +321,13 @@ j_item_delete (JItem* item, JBatch* batch)
 void
 j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_read != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	j_distributed_object_read(item->object, data, length, offset, bytes_read, batch);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -365,16 +349,14 @@ j_item_read (JItem* item, gpointer data, guint64 length, guint64 offset, guint64
 void
 j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	// FIXME see j_item_write_exec
 	j_distributed_object_write(item->object, data, length, offset, bytes_written, batch);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -389,14 +371,12 @@ j_item_write (JItem* item, gconstpointer data, guint64 length, guint64 offset, g
 void
 j_item_get_status (JItem* item, JBatch* batch)
 {
-	g_return_if_fail(item != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(item != NULL);
 
 	// FIXME check j_item_get_status_exec
 	j_distributed_object_status(item->object, &(item->status.modification_time), &(item->status.size), batch);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -412,10 +392,9 @@ j_item_get_status (JItem* item, JBatch* batch)
 guint64
 j_item_get_size (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, 0);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, 0);
 
 	return item->status.size;
 }
@@ -433,10 +412,9 @@ j_item_get_size (JItem* item)
 gint64
 j_item_get_modification_time (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, 0);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, 0);
 
 	return item->status.modification_time;
 }
@@ -461,10 +439,9 @@ j_item_get_modification_time (JItem* item)
 guint64
 j_item_get_optimal_access_size (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, 0);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, 0);
 
 	return 512 * 1024;
 }
@@ -489,17 +466,17 @@ j_item_get_optimal_access_size (JItem* item)
 JItem*
 j_item_new (JCollection* collection, gchar const* name, JDistribution* distribution)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JItem* item = NULL;
 	g_autofree gchar* path = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if (strpbrk(name, "/") != NULL)
 	{
-		goto end;
+		return NULL;
 	}
 
 	if (distribution == NULL)
@@ -522,9 +499,6 @@ j_item_new (JCollection* collection, gchar const* name, JDistribution* distribut
 	item->kv = j_kv_new("items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
 
-end:
-	j_trace_leave(G_STRFUNC);
-
 	return item;
 }
 
@@ -544,13 +518,13 @@ end:
 JItem*
 j_item_new_from_bson (JCollection* collection, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JItem* item;
 	g_autofree gchar* path = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	item = g_slice_new(JItem);
 	item->name = NULL;
@@ -567,8 +541,6 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 	path = g_build_path("/", j_collection_get_name(item->collection), item->name, NULL);
 	item->kv = j_kv_new("items", path);
 	item->object = j_distributed_object_new("item", path, item->distribution);
-
-	j_trace_leave(G_STRFUNC);
 
 	return item;
 }
@@ -588,10 +560,9 @@ j_item_new_from_bson (JCollection* collection, bson_t const* b)
 JCollection*
 j_item_get_collection (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, NULL);
 
 	return item->collection;
 }
@@ -611,10 +582,9 @@ j_item_get_collection (JItem* item)
 JCredentials*
 j_item_get_credentials (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, NULL);
 
 	return item->credentials;
 }
@@ -635,13 +605,13 @@ j_item_get_credentials (JItem* item)
 bson_t*
 j_item_serialize (JItem* item, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_t* b;
 	bson_t* b_cred;
 	bson_t* b_distribution;
 
 	g_return_val_if_fail(item != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	b = bson_new();
 	b_cred = j_credentials_serialize(item->credentials);
@@ -673,8 +643,6 @@ j_item_serialize (JItem* item, JSemantics* semantics)
 	bson_destroy(b_cred);
 	bson_destroy(b_distribution);
 
-	j_trace_leave(G_STRFUNC);
-
 	return b;
 }
 
@@ -682,12 +650,12 @@ static
 void
 j_item_deserialize_status (JItem* item, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -708,8 +676,6 @@ j_item_deserialize_status (JItem* item, bson_t const* b)
 			item->status.age = g_get_real_time();
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -726,12 +692,12 @@ j_item_deserialize_status (JItem* item, bson_t const* b)
 void
 j_item_deserialize (JItem* item, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -789,8 +755,6 @@ j_item_deserialize (JItem* item, bson_t const* b)
 			bson_destroy(b_distribution);
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -808,10 +772,9 @@ j_item_deserialize (JItem* item, bson_t const* b)
 bson_oid_t const*
 j_item_get_id (JItem* item)
 {
-	g_return_val_if_fail(item != NULL, NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(item != NULL, NULL);
 
 	return &(item->id);
 }
@@ -828,12 +791,12 @@ j_item_get_id (JItem* item)
 void
 j_item_set_modification_time (JItem* item, gint64 modification_time)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
 	item->status.age = g_get_real_time();
 	item->status.modification_time = MAX(item->status.modification_time, modification_time);
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -848,12 +811,12 @@ j_item_set_modification_time (JItem* item, gint64 modification_time)
 void
 j_item_set_size (JItem* item, guint64 size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(item != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
 	item->status.age = g_get_real_time();
 	item->status.size = size;
-	j_trace_leave(G_STRFUNC);
 }
 
 /*

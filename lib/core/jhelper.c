@@ -37,7 +37,7 @@
 
 #include <jbackground-operation.h>
 #include <jsemantics.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JHelper Helper
@@ -50,26 +50,26 @@
 void
 j_helper_set_nodelay (GSocketConnection* connection, gboolean enable)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint const flag = (enable) ? 1 : 0;
 
 	GSocket* socket_;
 	gint fd;
 
 	g_return_if_fail(connection != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
 
 	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(gint));
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void
 j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint const flag = (enable) ? 1 : 0;
 
 	GSocket* socket_;
@@ -77,19 +77,17 @@ j_helper_set_cork (GSocketConnection* connection, gboolean enable)
 
 	g_return_if_fail(connection != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	socket_ = g_socket_connection_get_socket(connection);
 	fd = g_socket_get_fd(socket_);
 
 	setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(gint));
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void
 j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint ret;
 
 	/* FIXME improve */
@@ -100,6 +98,8 @@ j_helper_get_number_string (gchar* string, guint32 length, guint32 number)
 gchar*
 j_helper_str_replace (gchar const* str, gchar const* old, gchar const* new)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_autoptr(GRegex) regex = NULL;
 	g_autofree gchar* old_escaped = NULL;
 	gchar* replace;
@@ -118,6 +118,8 @@ j_helper_str_replace (gchar const* str, gchar const* old, gchar const* new)
 gboolean
 j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBackgroundOperation** operations;
 	guint data_count = 0;
 
@@ -167,6 +169,8 @@ j_helper_execute_parallel (JBackgroundOperationFunc func, gpointer* data, guint 
 guint64
 j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	guint64 ret;
 
 	// FIXME check C11 atomic_fetch_add
@@ -187,6 +191,8 @@ j_helper_atomic_add (guint64 volatile* ptr, guint64 val)
 guint32
 j_helper_hash (gchar const* str)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gchar c;
 	guint32 hash;
 

@@ -26,6 +26,8 @@
 
 #include <joperation-internal.h>
 
+#include <jtrace.h>
+
 /**
  * \defgroup JOperation Operation
  *
@@ -43,6 +45,8 @@
 JOperation*
 j_operation_new (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	operation = g_slice_new(JOperation);
@@ -68,6 +72,8 @@ j_operation_new (void)
 void
 j_operation_free (JOperation* operation)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	if (operation->free_func != NULL)
 	{
 		operation->free_func(operation->data);

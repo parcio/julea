@@ -34,7 +34,6 @@
 #include <julea.h>
 #include <julea-kv.h>
 #include <julea-object.h>
-#include <jtrace-internal.h>
 #include <glib.h>
 #include <bson.h>
 
@@ -187,16 +186,14 @@ j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t
 bson_t*
 j_hdf5_serialize (const void* data, size_t data_size)
 {
-	bson_t* b;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	bson_t* b;
 
 	b = bson_new();
 
 	bson_append_binary(b, "data", -1, BSON_SUBTYPE_BINARY, data, data_size);
 	bson_append_int32(b, "size", -1, (int32_t)data_size);
-
-	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -214,9 +211,9 @@ j_hdf5_serialize (const void* data, size_t data_size)
 bson_t*
 j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_data, size_t space_size)
 {
-	bson_t* b;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	bson_t* b;
 
 	b = bson_new();
 
@@ -224,8 +221,6 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
 	bson_append_int32(b, "ssize", -1, (int32_t)space_size);
 	bson_append_binary(b, "tdata", -1, BSON_SUBTYPE_BINARY, type_data, type_size);
 	bson_append_binary(b, "sdata", -1, BSON_SUBTYPE_BINARY, space_data, space_size);
-
-	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -245,10 +240,10 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
 bson_t*
 j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* space_data, size_t space_size, size_t data_size, JDistribution* distribution)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_t* b;
 	bson_t* b_distribution;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	b_distribution = j_distribution_serialize(distribution);
 
@@ -263,8 +258,6 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
 
 	bson_destroy(b_distribution);
 
-	j_trace_leave(G_STRFUNC);
-
 	return b;
 }
 
@@ -278,13 +271,13 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
 void
 j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 	const void *buf;
 	bson_subtype_t bs;
 
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -301,7 +294,6 @@ j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
 		}
 	}
 	memcpy(data, buf, data_size);
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -314,13 +306,13 @@ j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
 void*
 j_hdf5_deserialize_type (const bson_t* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 	const void *buf;
 	bson_subtype_t bs;
 	void* type_data;
 	size_t type_size;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 	while (bson_iter_next(&iterator))
@@ -348,7 +340,6 @@ j_hdf5_deserialize_type (const bson_t* b)
 			bson_iter_binary(&iterator, &bs, (uint32_t *)&type_size, (const uint8_t **) &buf);
 		}
 	}
-	j_trace_leave(G_STRFUNC);
 	memcpy(type_data, buf, type_size);
 	return type_data;
 }
@@ -363,13 +354,13 @@ j_hdf5_deserialize_type (const bson_t* b)
 void*
 j_hdf5_deserialize_space (const bson_t* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 	const void *buf;
 	bson_subtype_t bs;
 	void* space_data;
 	size_t space_size;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 	while (bson_iter_next(&iterator))
@@ -397,7 +388,6 @@ j_hdf5_deserialize_space (const bson_t* b)
 			bson_iter_binary(&iterator, &bs, (uint32_t *)&space_size, (const uint8_t **) &buf);
 		}
 	}
-	j_trace_leave(G_STRFUNC);
 	memcpy(space_data, buf, space_size);
 	return space_data;
 }
@@ -411,12 +401,12 @@ j_hdf5_deserialize_space (const bson_t* b)
 void
 j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(data_size != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -431,7 +421,6 @@ j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
 			*data_size = bson_iter_int32(&iterator);
 		}
 	}
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -444,9 +433,9 @@ j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
 void
 j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
 {
-	bson_iter_t iterator;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	bson_iter_t iterator;
 
 	bson_iter_init(&iterator, b);
 
@@ -473,8 +462,6 @@ j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
 			*data_size = bson_iter_int32(&iterator);
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -507,6 +494,8 @@ static
 void*
 H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHA_t* attribute;
 
 	hsize_t* dims;
@@ -525,8 +514,6 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	gpointer value;
 	guint32 len;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	(void)aapl_id;
 	(void)dxpl_id;
@@ -603,8 +590,6 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	g_free(type_buf);
 	g_free(space_buf);
 
-	j_trace_leave(G_STRFUNC);
-
 	return attribute;
 }
 
@@ -617,6 +602,8 @@ static
 void*
 H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char* attr_name, hid_t aapl_id, hid_t dxpl_id, void** req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHA_t* attribute;
 
 	JBatch* batch;
@@ -624,8 +611,6 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 
 	gpointer value;
 	guint32 len;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	(void)aapl_id;
 	(void)dxpl_id;
@@ -685,8 +670,6 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		g_free(value);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return attribute;
 }
 
@@ -697,6 +680,8 @@ static
 herr_t
 H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void** req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHA_t* attribute = attr;
 
 	JBatch* batch;
@@ -707,8 +692,6 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void*
 	(void)dtype_id;
 	(void)dxpl_id;
 	(void)req;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	j_kv_get(attribute->kv, &value, &len, batch);
@@ -722,8 +705,6 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void*
 		g_free(value);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return 1;
 }
 
@@ -734,6 +715,8 @@ static
 herr_t
 H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_id, void** req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHA_t* attribute = attr;
 
 	JBatch* batch;
@@ -747,15 +730,11 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_i
 	(void)dxpl_id;
 	(void)req;
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	tmp = j_hdf5_serialize(buf, attribute->data_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->kv, value, len, bson_free, batch);
 	j_batch_execute(batch);
-
-	j_trace_leave(G_STRFUNC);
 
 	return 1;
 }
@@ -769,6 +748,8 @@ static
 herr_t
 H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHA_t* attribute = attr;
 
 	JBatch* batch;
@@ -780,8 +761,6 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void**
 
 	(void)dxpl_id;
 	(void)req;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	switch (get_type)
 	{
@@ -833,8 +812,6 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void**
 			g_assert_not_reached();
 			exit(1);
 	}
-
-	j_trace_leave(G_STRFUNC);
 
 	return ret_value;
 }
@@ -1072,6 +1049,8 @@ static
 void*
 H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id, void** req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JHD_t* dset;
 
 	hsize_t* dims;
@@ -1095,8 +1074,6 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	(void)dapl_id;
 	(void)dxpl_id;
 	(void)req;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	dset = g_new(JHD_t, 1);
 	dset->name = g_strdup(name);
@@ -1173,8 +1150,6 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 
 	g_free(type_buf);
 	g_free(space_buf);
-
-	j_trace_leave(G_STRFUNC);
 
 	return (void *)dset;
 }
@@ -1265,13 +1240,13 @@ static
 herr_t
 H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)), hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), void* buf, void** req  __attribute__((unused)))
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBatch* batch;
 	JHD_t *d;
 	guint64 bytes_read;
 
 	d = (JHD_t *)dset;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -1285,8 +1260,6 @@ H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)),
 
 	j_batch_execute(batch);
 
-	j_trace_leave(G_STRFUNC);
-
 	return 1;
 }
 
@@ -1299,6 +1272,8 @@ static
 herr_t
 H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  __attribute__((unused)), void** req  __attribute__((unused)), va_list arguments)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	herr_t ret_value = 0;
 	JHD_t *d;
 	JBatch* batch;
@@ -1321,7 +1296,6 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 		hid_t* ret_id = va_arg (arguments, hid_t *);
 		void* space;
 
-		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->kv, &value, &len, batch);
 		if (j_batch_execute(batch))
@@ -1334,7 +1308,6 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 			free(space);
 			g_free(value);
 		}
-		j_trace_leave(G_STRFUNC);
 	}
 		break;
 	case H5VL_DATASET_GET_SPACE_STATUS:
@@ -1346,7 +1319,6 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 		hid_t* ret_id = va_arg (arguments, hid_t *);
 		void* type;
 
-		j_trace_enter(G_STRFUNC, NULL);
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(d->kv, &value, &len, batch);
 		if (j_batch_execute(batch))
@@ -1359,7 +1331,6 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 			free(type);
 			g_free(value);
 		}
-		j_trace_leave(G_STRFUNC);
 	}
 		break;
 	default:
@@ -1377,13 +1348,13 @@ static
 herr_t
 H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused)), hid_t mem_space_id  __attribute__((unused)), hid_t file_space_id  __attribute__((unused)), hid_t plist_id  __attribute__((unused)), const void* buf, void** req  __attribute__((unused)))
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBatch* batch;
 	JHD_t *d;
 	guint64 bytes_written;
 
 	d = (JHD_t *)dset;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -1392,8 +1363,6 @@ H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused))
 	j_distributed_object_write(d->object, buf, d->data_size, 0, &bytes_written, batch);
 
 	j_batch_execute(batch);
-
-	j_trace_leave(G_STRFUNC);
 
 	return 1;
 }

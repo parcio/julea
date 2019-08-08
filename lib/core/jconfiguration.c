@@ -28,6 +28,8 @@
 
 #include <jconfiguration.h>
 
+#include <jtrace.h>
+
 /**
  * \defgroup JConfiguration Configuration
  *
@@ -159,6 +161,8 @@ struct JConfiguration
 JConfiguration*
 j_configuration_new (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration = NULL;
 	GKeyFile* key_file;
 	gchar* config_name = NULL;
@@ -246,6 +250,8 @@ out:
 JConfiguration*
 j_configuration_new_for_data (GKeyFile* key_file)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JConfiguration* configuration;
 	gchar** servers_object;
 	gchar** servers_kv;
@@ -365,6 +371,8 @@ j_configuration_new_for_data (GKeyFile* key_file)
 JConfiguration*
 j_configuration_ref (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	g_atomic_int_inc(&(configuration->ref_count));
@@ -384,6 +392,8 @@ j_configuration_ref (JConfiguration* configuration)
 void
 j_configuration_unref (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
 		g_free(configuration->db.backend);
@@ -409,6 +419,8 @@ j_configuration_unref (JConfiguration* configuration)
 gchar const*
 j_configuration_get_object_server (JConfiguration* configuration, guint32 index)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.object_len, NULL);
 
@@ -418,6 +430,8 @@ j_configuration_get_object_server (JConfiguration* configuration, guint32 index)
 gchar const*
 j_configuration_get_kv_server (JConfiguration* configuration, guint32 index)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.kv_len, NULL);
 
@@ -427,6 +441,8 @@ j_configuration_get_kv_server (JConfiguration* configuration, guint32 index)
 gchar const*
 j_configuration_get_db_server (JConfiguration* configuration, guint32 index)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 	g_return_val_if_fail(index < configuration->servers.db_len, NULL);
 
@@ -436,6 +452,8 @@ j_configuration_get_db_server (JConfiguration* configuration, guint32 index)
 guint32
 j_configuration_get_object_server_count (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->servers.object_len;
@@ -444,6 +462,8 @@ j_configuration_get_object_server_count (JConfiguration* configuration)
 guint32
 j_configuration_get_kv_server_count (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->servers.kv_len;
@@ -452,6 +472,8 @@ j_configuration_get_kv_server_count (JConfiguration* configuration)
 guint32
 j_configuration_get_db_server_count (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->servers.db_len;
@@ -460,6 +482,8 @@ j_configuration_get_db_server_count (JConfiguration* configuration)
 gchar const*
 j_configuration_get_object_backend (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->object.backend;
@@ -468,6 +492,8 @@ j_configuration_get_object_backend (JConfiguration* configuration)
 gchar const*
 j_configuration_get_object_component (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->object.component;
@@ -476,6 +502,8 @@ j_configuration_get_object_component (JConfiguration* configuration)
 gchar const*
 j_configuration_get_object_path (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->object.path;
@@ -484,6 +512,8 @@ j_configuration_get_object_path (JConfiguration* configuration)
 gchar const*
 j_configuration_get_kv_backend (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->kv.backend;
@@ -492,6 +522,8 @@ j_configuration_get_kv_backend (JConfiguration* configuration)
 gchar const*
 j_configuration_get_kv_component (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->kv.component;
@@ -500,6 +532,8 @@ j_configuration_get_kv_component (JConfiguration* configuration)
 gchar const*
 j_configuration_get_kv_path (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->kv.path;
@@ -508,6 +542,8 @@ j_configuration_get_kv_path (JConfiguration* configuration)
 gchar const*
 j_configuration_get_db_backend (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->db.backend;
@@ -516,6 +552,8 @@ j_configuration_get_db_backend (JConfiguration* configuration)
 gchar const*
 j_configuration_get_db_component (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->db.component;
@@ -524,6 +562,8 @@ j_configuration_get_db_component (JConfiguration* configuration)
 gchar const*
 j_configuration_get_db_path (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->db.path;
@@ -532,6 +572,8 @@ j_configuration_get_db_path (JConfiguration* configuration)
 guint64
 j_configuration_get_max_operation_size (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->max_operation_size;
@@ -540,6 +582,8 @@ j_configuration_get_max_operation_size (JConfiguration* configuration)
 guint32
 j_configuration_get_max_connections (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->max_connections;
@@ -548,6 +592,8 @@ j_configuration_get_max_connections (JConfiguration* configuration)
 guint64
 j_configuration_get_stripe_size (JConfiguration* configuration)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->stripe_size;

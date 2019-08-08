@@ -30,8 +30,6 @@
 
 #include <object/jdistributed-object.h>
 
-#include <jtrace-internal.h>
-
 #include <julea.h>
 
 /**
@@ -482,6 +480,8 @@ static
 gboolean
 j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -493,8 +493,6 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JDistributedObject* object;
@@ -580,8 +578,6 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 		j_helper_execute_parallel(j_distributed_object_create_background_operation, background_data, server_count);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -589,6 +585,8 @@ static
 gboolean
 j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -600,8 +598,6 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JDistributedObject* object;
@@ -679,8 +675,6 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -688,6 +682,8 @@ static
 gboolean
 j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -705,8 +701,6 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
@@ -855,8 +849,6 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	*/
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -864,6 +856,8 @@ static
 gboolean
 j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -881,8 +875,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
@@ -1032,8 +1024,6 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	*/
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -1041,6 +1031,8 @@ static
 gboolean
 j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	JBackend* object_backend;
@@ -1052,8 +1044,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
@@ -1146,8 +1136,6 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 		j_helper_execute_parallel(j_distributed_object_status_background_operation, background_data, server_count);
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return ret;
 }
 
@@ -1170,21 +1158,19 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 JDistributedObject*
 j_distributed_object_new (gchar const* namespace, gchar const* name, JDistribution* distribution)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributedObject* object = NULL;
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 	g_return_val_if_fail(distribution != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	object = g_slice_new(JDistributedObject);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->distribution = j_distribution_ref(distribution);
 	object->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return object;
 }
@@ -1205,13 +1191,11 @@ j_distributed_object_new (gchar const* namespace, gchar const* name, JDistributi
 JDistributedObject*
 j_distributed_object_ref (JDistributedObject* object)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(object != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(object->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return object;
 }
@@ -1228,9 +1212,9 @@ j_distributed_object_ref (JDistributedObject* object)
 void
 j_distributed_object_unref (JDistributedObject* object)
 {
-	g_return_if_fail(object != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(object != NULL);
 
 	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
@@ -1241,8 +1225,6 @@ j_distributed_object_unref (JDistributedObject* object)
 
 		g_slice_free(JDistributedObject, object);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1260,11 +1242,11 @@ j_distributed_object_unref (JDistributedObject* object)
 void
 j_distributed_object_create (JDistributedObject* object, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
 	// FIXME key = index + namespace
@@ -1274,8 +1256,6 @@ j_distributed_object_create (JDistributedObject* object, JBatch* batch)
 	operation->free_func = j_distributed_object_create_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1290,11 +1270,11 @@ j_distributed_object_create (JDistributedObject* object, JBatch* batch)
 void
 j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -1303,8 +1283,6 @@ j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
 	operation->free_func = j_distributed_object_delete_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1323,6 +1301,8 @@ j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
 void
 j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
@@ -1331,8 +1311,6 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1364,8 +1342,6 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 	}
 
 	*bytes_read = 0;
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1387,6 +1363,8 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
 void
 j_distributed_object_write (JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
@@ -1395,8 +1373,6 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_written != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1428,8 +1404,6 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 	}
 
 	*bytes_written = 0;
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -1444,12 +1418,12 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
 void
 j_distributed_object_status (JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	iop = g_slice_new(JDistributedObjectOperation);
 	iop->status.object = j_distributed_object_ref(object);
@@ -1463,8 +1437,6 @@ j_distributed_object_status (JDistributedObject* object, gint64* modification_ti
 	operation->free_func = j_distributed_object_status_free;
 
 	j_batch_add(batch, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

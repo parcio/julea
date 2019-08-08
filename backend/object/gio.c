@@ -24,7 +24,6 @@
 #include <gmodule.h>
 
 #include <julea.h>
-#include <jtrace-internal.h>
 
 struct JBackendFile
 {

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2010-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,34 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <julea.h>
-#include <julea-object.h>
+#ifndef JULEA_SERVER_H
+#define JULEA_SERVER_H
 
-#include <stdio.h>
+#include <glib.h>
+#include <gio/gio.h>
 
-int
-main (int argc, char** argv)
-{
-	(void)argc;
-	(void)argv;
+#include <jbackend.h>
+#include <jmemory-chunk.h>
+#include <jmessage.h>
+#include <jstatistics.h>
 
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JObject) object = NULL;
+G_GNUC_INTERNAL JStatistics* jd_statistics;
+G_GNUC_INTERNAL GMutex jd_statistics_mutex[1];
 
-	gchar buffer[128];
-	gchar const* hello_world = "Hello World!";
-	guint64 nbytes;
+G_GNUC_INTERNAL JBackend* jd_object_backend;
+G_GNUC_INTERNAL JBackend* jd_kv_backend;
+G_GNUC_INTERNAL JBackend* jd_db_backend;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	object = j_object_new("hello", "world");
+G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
 
-	j_object_create(object, batch);
-	j_object_write(object, hello_world, strlen(hello_world) + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
-	j_object_read(object, buffer, 128, 0, &nbytes, batch);
-	j_batch_execute(batch);
-
-	printf("Object contains: %s (%lu bytes)\n", buffer, nbytes);
-
-	return 0;
-}
+#endif

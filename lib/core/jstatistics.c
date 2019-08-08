@@ -25,8 +25,7 @@
 #include <glib.h>
 
 #include <jstatistics.h>
-
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JStatistics Statistics
@@ -129,9 +128,9 @@ j_statistics_get_type_name (JStatisticsType type)
 JStatistics*
 j_statistics_new (gboolean trace)
 {
-	JStatistics* statistics;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	JStatistics* statistics;
 
 	statistics = g_slice_new(JStatistics);
 	statistics->trace = trace;
@@ -143,8 +142,6 @@ j_statistics_new (gboolean trace)
 	statistics->bytes_written = 0;
 	statistics->bytes_received = 0;
 	statistics->bytes_sent = 0;
-
-	j_trace_leave(G_STRFUNC);
 
 	return statistics;
 }
@@ -162,23 +159,21 @@ j_statistics_new (gboolean trace)
 void
 j_statistics_free (JStatistics* statistics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(statistics != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_slice_free(JStatistics, statistics);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 guint64
 j_statistics_get (JStatistics* statistics, JStatisticsType type)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	guint64 value = 0;
 
 	g_return_val_if_fail(statistics != NULL, 0);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	switch (type)
 	{
@@ -211,17 +206,15 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 			break;
 	}
 
-	j_trace_leave(G_STRFUNC);
-
 	return value;
 }
 
 void
 j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 {
-	g_return_if_fail(statistics != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(statistics != NULL);
 
 	switch (type)
 	{
@@ -258,8 +251,6 @@ j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
 	{
 		j_trace_counter(j_statistics_get_type_name(type), value);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

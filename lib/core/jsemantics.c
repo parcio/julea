@@ -27,8 +27,7 @@
 #include <string.h>
 
 #include <jsemantics.h>
-
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JSemantics Semantics
@@ -95,6 +94,8 @@ struct JSemantics
 JSemantics*
 j_semantics_new (JSemanticsTemplate template)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JSemantics* semantics;
 
 	semantics = g_slice_new(JSemantics);
@@ -155,11 +156,11 @@ j_semantics_new (JSemanticsTemplate template)
 JSemantics*
 j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_str)
 {
-	JSemantics* semantics;
+	J_TRACE_FUNCTION(NULL);
+
+	JSemantics* semantics = NULL;
 	g_auto(GStrv) parts = NULL;
 	guint parts_len;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	if (template_str == NULL || g_strcmp0(template_str, "default") == 0)
 	{
@@ -180,7 +181,7 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 
 	if (semantics_str == NULL)
 	{
-		goto end;
+		return semantics;
 	}
 
 	parts = g_strsplit(semantics_str, ",", 0);
@@ -328,9 +329,6 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
 		}
 	}
 
-end:
-	j_trace_leave(G_STRFUNC);
-
 	return semantics;
 }
 
@@ -347,6 +345,8 @@ end:
 JSemantics*
 j_semantics_ref (JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(semantics != NULL, NULL);
 
 	g_atomic_int_inc(&(semantics->ref_count));
@@ -371,6 +371,8 @@ j_semantics_ref (JSemantics* semantics)
 void
 j_semantics_unref (JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(semantics != NULL);
 
 	if (g_atomic_int_dec_and_test(&(semantics->ref_count)))
@@ -395,6 +397,8 @@ j_semantics_unref (JSemantics* semantics)
 void
 j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(semantics != NULL);
 	g_return_if_fail(!semantics->immutable);
 
@@ -443,6 +447,8 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
 gint
 j_semantics_get (JSemantics* semantics, JSemanticsType key)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(semantics != NULL, -1);
 
 	switch (key)

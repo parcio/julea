@@ -35,7 +35,7 @@
 #include <joperation-cache-internal.h>
 #include <joperation-internal.h>
 #include <jsemantics.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JBatch Batch
@@ -82,10 +82,10 @@ static
 gpointer
 j_batch_background_operation (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperationAsync* async = data;
 	gboolean ret;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	ret = j_batch_execute(async->batch);
 
@@ -97,8 +97,6 @@ j_batch_background_operation (gpointer data)
 	j_batch_unref(async->batch);
 
 	g_slice_free(JOperationAsync, async);
-
-	j_trace_leave(G_STRFUNC);
 
 	return NULL;
 }
@@ -116,19 +114,17 @@ j_batch_background_operation (gpointer data)
 JBatch*
 j_batch_new (JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBatch* batch;
 
 	g_return_val_if_fail(semantics != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = g_slice_new(JBatch);
 	batch->list = j_list_new((JListFreeFunc)j_operation_free);
 	batch->semantics = j_semantics_ref(semantics);
 	batch->background_operation = NULL;
 	batch->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return batch;
 }
@@ -149,15 +145,13 @@ j_batch_new (JSemantics* semantics)
 JBatch*
 j_batch_new_for_template (JSemanticsTemplate template)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBatch* batch;
 	g_autoptr(JSemantics) semantics = NULL;
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	semantics = j_semantics_new(template);
 	batch = j_batch_new(semantics);
-
-	j_trace_leave(G_STRFUNC);
 
 	return batch;
 }
@@ -172,13 +166,11 @@ j_batch_new_for_template (JSemanticsTemplate template)
 JBatch*
 j_batch_ref (JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(batch->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return batch;
 }
@@ -195,9 +187,9 @@ j_batch_ref (JBatch* batch)
 void
 j_batch_unref (JBatch* batch)
 {
-	g_return_if_fail(batch != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(batch != NULL);
 
 	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{
@@ -215,8 +207,6 @@ j_batch_unref (JBatch* batch)
 
 		g_slice_free(JBatch, batch);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -234,16 +224,16 @@ static
 gboolean
 j_batch_execute_same (JBatch* batch, JOperationExecFunc exec_func, JList* list)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperation* operation;
 	gboolean ret = FALSE;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	operation = j_list_get_first(list);
 
 	if (operation == NULL)
 	{
-		goto end;
+		return FALSE;
 	}
 
 	if (exec_func != NULL)
@@ -252,9 +242,6 @@ j_batch_execute_same (JBatch* batch, JOperationExecFunc exec_func, JList* list)
 	}
 
 	j_list_delete_all(list);
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -272,32 +259,27 @@ end:
 gboolean
 j_batch_execute (JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	if (j_list_length(batch->list) == 0)
 	{
-		ret = FALSE;
-		goto end;
+		return FALSE;
 	}
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
-		ret = TRUE;
-		goto end;
+		return TRUE;
 	}
 
 	j_operation_cache_flush();
 
 	ret = j_batch_execute_internal(batch);
 	j_list_delete_all(batch->list);
-
-end:
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }
@@ -316,12 +298,12 @@ end:
 void
 j_batch_execute_async (JBatch* batch, JOperationCompletedFunc func, gpointer user_data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JOperationAsync* async;
 
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(batch->background_operation == NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	async = g_slice_new(JOperationAsync);
 	async->batch = j_batch_ref(batch);
@@ -329,13 +311,13 @@ j_batch_execute_async (JBatch* batch, JOperationCompletedFunc func, gpointer use
 	async->user_data = user_data;
 
 	batch->background_operation = j_background_operation_new(j_batch_background_operation, async);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 void
 j_batch_wait (JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(batch != NULL);
 
 	if (batch->background_operation != NULL)
@@ -344,8 +326,6 @@ j_batch_wait (JBatch* batch)
 		j_background_operation_unref(batch->background_operation);
 		batch->background_operation = NULL;
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /* Internal */
@@ -365,11 +345,11 @@ j_batch_wait (JBatch* batch)
 JBatch*
 j_batch_new_from_batch (JBatch* old_batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBatch* batch;
 
 	g_return_val_if_fail(old_batch != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	batch = g_slice_new(JBatch);
 	batch->list = old_batch->list;
@@ -378,8 +358,6 @@ j_batch_new_from_batch (JBatch* old_batch)
 	batch->ref_count = 1;
 
 	old_batch->list = j_list_new((JListFreeFunc)j_operation_free);
-
-	j_trace_leave(G_STRFUNC);
 
 	return batch;
 }
@@ -399,15 +377,11 @@ j_batch_new_from_batch (JBatch* old_batch)
 JList*
 j_batch_get_operations (JBatch* batch)
 {
-	JList* ret;
+	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	ret = batch->list;
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
+	return batch->list;
 }
 
 /**
@@ -425,15 +399,11 @@ j_batch_get_operations (JBatch* batch)
 JSemantics*
 j_batch_get_semantics (JBatch* batch)
 {
-	JSemantics* ret;
+	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(batch != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	ret = batch->semantics;
-	j_trace_leave(G_STRFUNC);
-
-	return ret;
+	return batch->semantics;
 }
 
 /**
@@ -450,14 +420,12 @@ j_batch_get_semantics (JBatch* batch)
 void
 j_batch_add (JBatch* batch, JOperation* operation)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(operation != NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	j_list_append(batch->list, operation);
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**
@@ -475,13 +443,13 @@ j_batch_add (JBatch* batch, JOperation* operation)
 gboolean
 j_batch_execute_internal (JBatch* batch)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_autoptr(JList) same_list = NULL;
 	g_autoptr(JListIterator) iterator = NULL;
 	JOperationExecFunc last_exec_func;
 	gpointer last_key;
 	gboolean ret = TRUE;
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	iterator = j_list_iterator_new(batch->list);
 	same_list = j_list_new(NULL);
@@ -518,8 +486,6 @@ j_batch_execute_internal (JBatch* batch)
 	}
 
 	ret = j_batch_execute_same(batch, last_exec_func, same_list) && ret;
-
-	j_trace_leave(G_STRFUNC);
 
 	return ret;
 }

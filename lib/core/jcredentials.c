@@ -32,7 +32,7 @@
 #include <jcredentials.h>
 
 #include <jcommon.h>
-#include <jtrace-internal.h>
+#include <jtrace.h>
 
 /**
  * \defgroup JCredentials Credentials
@@ -53,16 +53,14 @@ struct JCredentials
 JCredentials*
 j_credentials_new (void)
 {
-	JCredentials* credentials;
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	JCredentials* credentials;
 
 	credentials = g_slice_new(JCredentials);
 	credentials->user = geteuid();
 	credentials->group = getegid();
 	credentials->ref_count = 1;
-
-	j_trace_leave(G_STRFUNC);
 
 	return credentials;
 }
@@ -70,13 +68,11 @@ j_credentials_new (void)
 JCredentials*
 j_credentials_ref (JCredentials* credentials)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(credentials != NULL, NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-
 	g_atomic_int_inc(&(credentials->ref_count));
-
-	j_trace_leave(G_STRFUNC);
 
 	return credentials;
 }
@@ -84,25 +80,22 @@ j_credentials_ref (JCredentials* credentials)
 void
 j_credentials_unref (JCredentials* credentials)
 {
-	g_return_if_fail(credentials != NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
+	g_return_if_fail(credentials != NULL);
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
 		g_slice_free(JCredentials, credentials);
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 guint32
 j_credentials_get_user (JCredentials* credentials)
 {
-	g_return_val_if_fail(credentials != NULL, 0);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(credentials != NULL, 0);
 
 	return credentials->user;
 }
@@ -110,10 +103,9 @@ j_credentials_get_user (JCredentials* credentials)
 guint32
 j_credentials_get_group (JCredentials* credentials)
 {
-	g_return_val_if_fail(credentials != NULL, 0);
+	J_TRACE_FUNCTION(NULL);
 
-	j_trace_enter(G_STRFUNC, NULL);
-	j_trace_leave(G_STRFUNC);
+	g_return_val_if_fail(credentials != NULL, 0);
 
 	return credentials->group;
 }
@@ -135,19 +127,17 @@ j_credentials_get_group (JCredentials* credentials)
 bson_t*
 j_credentials_serialize (JCredentials* credentials)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_t* b;
 
 	g_return_val_if_fail(credentials != NULL, NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	b = bson_new();
 
 	bson_append_int32(b, "user", -1, credentials->user);
 	bson_append_int32(b, "group", -1, credentials->group);
 	//bson_finish(b);
-
-	j_trace_leave(G_STRFUNC);
 
 	return b;
 }
@@ -166,12 +156,12 @@ j_credentials_serialize (JCredentials* credentials)
 void
 j_credentials_deserialize (JCredentials* credentials, bson_t const* b)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	bson_iter_t iterator;
 
 	g_return_if_fail(credentials != NULL);
 	g_return_if_fail(b != NULL);
-
-	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_iter_init(&iterator, b);
 
@@ -190,8 +180,6 @@ j_credentials_deserialize (JCredentials* credentials, bson_t const* b)
 			credentials->group = bson_iter_int32(&iterator);
 		}
 	}
-
-	j_trace_leave(G_STRFUNC);
 }
 
 /**

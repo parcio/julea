@@ -132,7 +132,7 @@ j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 	iterator->value = NULL;
 	iterator->len = 0;
 	iterator->replies_n = j_configuration_get_kv_server_count(configuration);
-	iterator->replies = g_new(JMessage*, iterator->replies_n);
+	iterator->replies = g_new0(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
 
 	if (iterator->kv_backend != NULL)
@@ -177,7 +177,7 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 	iterator->value = NULL;
 	iterator->len = 0;
 	iterator->replies_n = 1;
-	iterator->replies = g_new(JMessage*, 1);
+	iterator->replies = g_new0(JMessage*, 1);
 	iterator->replies_cur = 0;
 
 	if (iterator->kv_backend != NULL)
