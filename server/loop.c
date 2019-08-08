@@ -46,7 +46,6 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 	operation_count = j_message_get_count(message);
 	semantics = j_message_get_semantics(message);
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-	j_semantics_unref(semantics);
 
 	switch (j_message_get_type(message))
 	{
@@ -593,12 +592,11 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 			}
 			{
 				g_autoptr(JMessage) reply = NULL;
-				g_autoptr(GError) error = NULL;
+			GError* error = NULL;
 				gpointer batch = NULL;
-				gint ret;
+			gboolean ret = TRUE;
 
 				reply = j_message_new_reply(message);
-
 				for (guint j = 0; j < backend_operation.out_param_count; j++)
 				{
 					if (backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_ERROR)
@@ -616,24 +614,45 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				{
 					j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
 				}
-
-				j_backend_db_batch_start(jd_db_backend, backend_operation.in_param[0].ptr, safety, &batch, &error);
-
+			switch (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY))
+			{
+			case J_SEMANTICS_ATOMICITY_BATCH:
+				j_backend_db_batch_start(jd_db_backend, backend_operation.in_param[0].ptr, semantics, &batch, &error);
+				break;
+			case J_SEMANTICS_ATOMICITY_OPERATION:
+			case J_SEMANTICS_ATOMICITY_NONE:
+				break;
+			default:
+				g_warn_if_reached();
+			}
 				for (i = 0; i < operation_count; i++)
 				{
-					ret = FALSE;
+				backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = NULL;
 					if (i)
 					{
 						j_backend_operation_from_message_static(message, backend_operation.in_param, backend_operation.in_param_count);
 					}
-
-					if (error)
+				switch (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY))
 					{
-						backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = g_error_copy(error);
+				case J_SEMANTICS_ATOMICITY_BATCH:
+					if (ret && !error)
+					{
+						//message must be read completly, and reply must answer all requests - but there should be no more executions in a failed 'J_SEMANTICS_ATOMICITY_BATCH'
+						ret = backend_operation.backend_func(jd_db_backend, batch, &backend_operation);
 					}
 					else
 					{
+						backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = g_error_copy(error);
+					}
+					break;
+				case J_SEMANTICS_ATOMICITY_OPERATION:
+				case J_SEMANTICS_ATOMICITY_NONE:
+					j_backend_db_batch_start(jd_db_backend, backend_operation.in_param[0].ptr, semantics, &batch, &error);
 						ret = backend_operation.backend_func(jd_db_backend, batch, &backend_operation);
+					break;
+				default:
+					g_warn_if_reached();
+				}
 						for (guint j = 0; j < backend_operation.out_param_count; j++)
 						{
 							if (ret && backend_operation.out_param[j].type == J_BACKEND_OPERATION_PARAM_TYPE_BSON)
@@ -641,10 +660,27 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 								backend_operation.out_param[j].bson_initialized = TRUE;
 							}
 						}
+				switch (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY))
+				{
+				case J_SEMANTICS_ATOMICITY_BATCH:
+					break;
+				case J_SEMANTICS_ATOMICITY_OPERATION:
+				case J_SEMANTICS_ATOMICITY_NONE:
+					j_backend_db_batch_execute(jd_db_backend, batch, NULL);
+					if (error)
+					{
+						g_error_free(error);
+						error = NULL;
 					}
-
+					break;
+				default:
+					g_warn_if_reached();
+				}
+				if (error && !backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr)
+				{
+					backend_operation.out_param[backend_operation.out_param_count - 1].error_ptr = g_error_copy(error);
+					}
 					j_backend_operation_to_message(reply, backend_operation.out_param, backend_operation.out_param_count);
-
 					if (ret)
 					{
 						for (guint j = 0; j < backend_operation.out_param_count; j++)
@@ -656,12 +692,22 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 						}
 					}
 				}
-
-				if (error == NULL)
+			switch (j_semantics_get(semantics, J_SEMANTICS_ATOMICITY))
+			{
+			case J_SEMANTICS_ATOMICITY_BATCH:
+				j_backend_db_batch_execute(jd_db_backend, batch, NULL);
+				if (error)
 				{
-					j_backend_db_batch_execute(jd_db_backend, batch, &error);
+					g_error_free(error);
+					error = NULL;
 				}
-
+				break;
+			case J_SEMANTICS_ATOMICITY_OPERATION:
+			case J_SEMANTICS_ATOMICITY_NONE:
+				break;
+			default:
+				g_warn_if_reached();
+				}
 				j_message_send(reply, connection);
 			}
 			break;
@@ -669,6 +715,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 			g_warn_if_reached();
 			break;
 	}
+	j_semantics_unref(semantics);
 
 	return message_matched;
 }

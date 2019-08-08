@@ -664,7 +664,7 @@ j_backend_db_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemanticsSafety safety, gpointer* batch, GError** error)
+j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -674,11 +674,12 @@ j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemanticsS
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	{
-		J_TRACE("backend_batch_start", "%s, %d, %p, %p", namespace, safety, (gpointer)batch, (gpointer)error);
-		ret = backend->db.backend_batch_start(namespace, safety, batch, error);
+		J_TRACE("backend_batch_start", "%s, %p, %p, %p", namespace, (gpointer)semantics, (gpointer)batch, (gpointer)error);
+		ret = backend->db.backend_batch_start(namespace, semantics, batch, error);
 	}
 
 	return ret;
@@ -737,7 +738,6 @@ j_backend_db_schema_get (JBackend* backend, gpointer batch, gchar const* name, b
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(schema != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	{
@@ -825,7 +825,6 @@ j_backend_db_delete (JBackend* backend, gpointer batch, gchar const* name, bson_
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	{
@@ -847,7 +846,6 @@ j_backend_db_query (JBackend* backend, gpointer batch, gchar const* name, bson_t
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
