@@ -32,15 +32,18 @@
 	{                                                                            \
 		if (error)                                                           \
 		{                                                                    \
+			G_DEBUG_HERE();                                              \
 			g_debug("ERROR (%d) (%s)", error->code, error->message);     \
 		}                                                                    \
 		if ((ret) != (ret_expected))                                         \
 		{                                                                    \
+			G_DEBUG_HERE();                                              \
 			g_debug("not expected %d != %d", (ret), (ret_expected));     \
 			MYABORT();                                                   \
 		}                                                                    \
 		if ((ret) != ((error) == NULL))                                      \
 		{                                                                    \
+			G_DEBUG_HERE();                                              \
 			g_debug("not initialized %d != %d", (ret), (error) == NULL); \
 			MYABORT();                                                   \
 		}                                                                    \
@@ -55,10 +58,12 @@
 	{                                                                            \
 		if (error)                                                           \
 		{                                                                    \
+			G_DEBUG_HERE();                                              \
 			g_debug("ERROR (%d) (%s)", (error)->code, (error)->message); \
 		}                                                                    \
 		if ((ret) != ((error) == NULL))                                      \
 		{                                                                    \
+			G_DEBUG_HERE();                                              \
 			g_debug("not initialized %d != %d", (ret), (error) == NULL); \
 			MYABORT();                                                   \
 		}                                                                    \
@@ -90,22 +95,25 @@
 #define MYABORT()                       \
 	do                              \
 	{                               \
+		G_DEBUG_HERE();         \
 		g_debug("abort %d", 0); \
-		g_assert_not_reached();                \
+		g_assert_not_reached(); \
 	} while (0)
 #define MYABORT_IF(val)                         \
 	do                                      \
 	{                                       \
 		if (val)                        \
 		{                               \
+			G_DEBUG_HERE();         \
 			g_debug("abort %d", 0); \
-			g_assert_not_reached();                \
+			g_assert_not_reached(); \
 		}                               \
 	} while (0)
 #else
 #define MYABORT()                       \
 	do                              \
 	{                               \
+		G_DEBUG_HERE();         \
 		g_debug("abort %d", 0); \
 		abort();                \
 	} while (0)
@@ -114,6 +122,7 @@
 	{                                       \
 		if (val)                        \
 		{                               \
+			G_DEBUG_HERE();         \
 			g_debug("abort %d", 0); \
 			abort();                \
 		}                               \

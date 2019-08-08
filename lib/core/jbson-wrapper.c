@@ -26,8 +26,8 @@
 #include <gmodule.h>
 
 #include <core/jbson-wrapper.h>
+#include <core/jtrace.h>
 
-#include <jtrace-internal.h>
 
 GQuark
 j_bson_error_quark(void)
@@ -38,7 +38,8 @@ j_bson_error_quark(void)
 gboolean
 j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -54,17 +55,16 @@ j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_INIT, "bson iter init failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_next(bson_iter_t* iter, gboolean* has_next, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -76,17 +76,16 @@ j_bson_iter_next(bson_iter_t* iter, gboolean* has_next, GError** error)
 		goto _error;
 	}
 	*has_next = bson_iter_next(iter);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -98,33 +97,31 @@ j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GEr
 		goto _error;
 	}
 	*equals = !g_strcmp0(bson_iter_key(iter), key);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 const char*
 j_bson_iter_key(bson_iter_t* iter, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return bson_iter_key(iter);
 _error:
-	j_trace_leave(G_STRFUNC);
 	return NULL;
 }
 
 gboolean
 j_bson_append_value(bson_t* bson, const char* name, JDBType type, JDBTypeValue* value, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -214,17 +211,16 @@ j_bson_append_value(bson_t* bson, const char* name, JDBType type, JDBTypeValue* 
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -333,41 +329,39 @@ j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError**
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 char*
 j_bson_as_json(const bson_t* bson, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return bson_as_json(bson, NULL);
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 void
 j_bson_free_json(char* json)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	bson_free(json);
-	j_trace_leave(G_STRFUNC);
 }
 
 gboolean
 j_bson_iter_find(bson_iter_t* iter, const char* key, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -383,17 +377,16 @@ j_bson_iter_find(bson_iter_t* iter, const char* key, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_KEY_NOT_FOUND, "bson iter can not find key");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_not_find(bson_iter_t* iter, const char* key, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -409,16 +402,15 @@ j_bson_iter_not_find(bson_iter_t* iter, const char* key, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_KEY_FOUND, "bson iter should not find key");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter || !iter_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -434,17 +426,16 @@ j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, GError** e
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_RECOURSE, "bson iter recourse failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_recurse_document(bson_iter_t* iter, bson_iter_t* iter_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter || !iter_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -460,10 +451,8 @@ j_bson_iter_recurse_document(bson_iter_t* iter, bson_iter_t* iter_child, GError*
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_RECOURSE, "bson iter recourse failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
@@ -473,7 +462,8 @@ j_bson_iter_copy_document(bson_iter_t* iter, bson_t* bson, GError** error)
 	const uint8_t* data;
 	uint32_t length;
 
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -489,17 +479,16 @@ j_bson_iter_copy_document(bson_iter_t* iter, bson_t* bson, GError** error)
 		bson_iter_document(iter, &length, &data);
 		bson_init_static(bson, data, length);
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_init_from_json(bson_t* bson, const char* json, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -515,17 +504,16 @@ j_bson_init_from_json(bson_t* bson, const char* json, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_INIT_FROM_JSON_FAILED, "bson init from json failes");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_iter_type_db(bson_iter_t* iter, JDBType* type, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
@@ -576,17 +564,16 @@ j_bson_iter_type_db(bson_iter_t* iter, JDBType* type, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_has_enough_keys(const bson_t* bson, guint32 min_keys, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -597,44 +584,42 @@ j_bson_has_enough_keys(const bson_t* bson, guint32 min_keys, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NOT_ENOUGH_KEYS, "bson not enough keys");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 void
 j_bson_destroy(bson_t* bson)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (bson)
 	{
 		bson_destroy(bson);
 	}
-	j_trace_leave(G_STRFUNC);
 }
 
 gboolean
 j_bson_init(bson_t* bson, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
 		goto _error;
 	}
 	bson_init(bson);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_has_field(bson_t* bson, gchar const* name, gboolean* has_field, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -646,17 +631,16 @@ j_bson_has_field(bson_t* bson, gchar const* name, gboolean* has_field, GError** 
 		goto _error;
 	}
 	*has_field = bson_has_field(bson, name);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_count_keys(bson_t* bson, guint32* count, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -668,18 +652,17 @@ j_bson_count_keys(bson_t* bson, guint32* count, GError** error)
 		goto _error;
 	}
 	*count = bson_count_keys(bson);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_array_generate_key(guint32 index, const char** key, char* buf, guint buf_length, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
-	if (G_UNLIKELY(!key || !*key))
+J_TRACE_FUNCTION(NULL);
+
+	if (G_UNLIKELY(!key))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_ITER_KEY_NULL, "key must not be NULL");
 		goto _error;
@@ -690,16 +673,15 @@ j_bson_array_generate_key(guint32 index, const char** key, char* buf, guint buf_
 		goto _error;
 	}
 	bson_uint32_to_string(index, key, buf, buf_length);
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_append_array(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -715,16 +697,15 @@ j_bson_append_array(bson_t* bson, const char* key, bson_t* bson_child, GError** 
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_ARRAY_FAILED, "bson append array failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_append_array_begin(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -740,16 +721,15 @@ j_bson_append_array_begin(bson_t* bson, const char* key, bson_t* bson_child, GEr
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_ARRAY_FAILED, "bson append array failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_append_array_end(bson_t* bson, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -760,17 +740,16 @@ j_bson_append_array_end(bson_t* bson, bson_t* bson_child, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_ARRAY_FAILED, "bson append array failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 
 gboolean
 j_bson_append_document(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -786,16 +765,15 @@ j_bson_append_document(bson_t* bson, const char* key, bson_t* bson_child, GError
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_DOCUMENT_FAILED, "bson append document failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_append_document_begin(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -811,16 +789,15 @@ j_bson_append_document_begin(bson_t* bson, const char* key, bson_t* bson_child, 
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_DOCUMENT_FAILED, "bson append document failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }
 gboolean
 j_bson_append_document_end(bson_t* bson, bson_t* bson_child, GError** error)
 {
-	j_trace_enter(G_STRFUNC, NULL);
+J_TRACE_FUNCTION(NULL);
+
 	if (G_UNLIKELY(!bson || !bson_child))
 	{
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_NULL, "bson must not be NULL");
@@ -831,9 +808,7 @@ j_bson_append_document_end(bson_t* bson, bson_t* bson_child, GError** error)
 		g_set_error_literal(error, J_BSON_ERROR, J_BSON_ERROR_BSON_APPEND_DOCUMENT_FAILED, "bson append document failed");
 		goto _error;
 	}
-	j_trace_leave(G_STRFUNC);
 	return TRUE;
 _error:
-	j_trace_leave(G_STRFUNC);
 	return FALSE;
 }

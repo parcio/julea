@@ -26,7 +26,7 @@
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* batch, GError** error)
+backend_batch_start (gchar const* namespace, JSemantics* safety, gpointer* batch, GError** error)
 {
 	(void)error;
 	(void)batch;

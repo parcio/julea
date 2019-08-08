@@ -308,7 +308,7 @@ fini_sql(void)
 #endif
 }
 static gboolean
-backend_batch_start(gchar const* namespace, JSemanticsSafety safety, gpointer* _batch, GError** error)
+backend_batch_start(gchar const* namespace, JSemantics* safety, gpointer* _batch, GError** error)
 {
 	JSqlBatch* batch = *_batch = g_slice_new(JSqlBatch);
 	j_goto_error_backend(!namespace, J_BACKEND_DB_ERROR_NAMESPACE_NULL, "");
