@@ -79,12 +79,16 @@ def check_and_add_flags(ctx, flags, mandatory=True, type=['cflags']):
 		args = {}
 
 		if 'cflags' in type:
-			args['cflags'] = flag
+			args['cflags'] = [flag, '-Werror']
 
 		if 'ldflags' in type:
-			args['ldflags'] = flag
+			args['ldflags'] = [flag, '-Werror']
 
-		ret = ctx.check_cc(mandatory=mandatory, **args)
+		ret = ctx.check_cc(
+			msg='Checking for compiler flag {0}'.format(flag),
+			mandatory=mandatory,
+			**args
+		)
 
 		if ret:
 			if 'cflags' in type:
@@ -317,7 +321,7 @@ def configure(ctx):
 	if ctx.options.sanitize:
 		check_and_add_flags(ctx, '-fsanitize=address', False, ['cflags', 'ldflags'])
 		# FIXME enable ubsan?
-		#check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
+		# check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
 
 	if ctx.options.coverage:
 		check_and_add_flags(ctx, '--coverage', True, ['cflags', 'ldflags'])
@@ -353,7 +357,7 @@ def configure(ctx):
 			'-Wundef',
 			'-Wuninitialized',
 			'-Wwrite-strings'
-		])
+		], False)
 		check_and_add_flags(ctx, '-ggdb')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
