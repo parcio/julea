@@ -78,6 +78,7 @@ test_collection_iterator_next_get (void)
 	while (j_collection_iterator_next(collection_iterator))
 	{
 		g_autoptr(JCollection) collection = j_collection_iterator_get(collection_iterator);
+		(void)collection;
 		collections++;
 	}
 

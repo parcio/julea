@@ -82,6 +82,7 @@ test_item_iterator_next_get (void)
 	while (j_item_iterator_next(item_iterator))
 	{
 		g_autoptr(JItem) item = j_item_iterator_get(item_iterator);
+		(void)item;
 		items++;
 	}
 

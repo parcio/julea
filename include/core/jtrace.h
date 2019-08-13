@@ -58,8 +58,8 @@ void j_trace_leave (JTrace*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 
-#define J_TRACE(name, ...) g_autoptr(JTrace) j_trace = j_trace_enter(name, __VA_ARGS__)
-#define J_TRACE_FUNCTION(...) g_autoptr(JTrace) j_trace_function = j_trace_enter(G_STRFUNC, __VA_ARGS__)
+#define J_TRACE(name, ...) g_autoptr(JTrace) j_trace G_GNUC_UNUSED = j_trace_enter(name, __VA_ARGS__)
+#define J_TRACE_FUNCTION(...) g_autoptr(JTrace) j_trace_function G_GNUC_UNUSED = j_trace_enter(G_STRFUNC, __VA_ARGS__)
 
 void j_trace_file_begin (gchar const*, JTraceFileOperation);
 void j_trace_file_end (gchar const*, JTraceFileOperation, guint64, guint64);
