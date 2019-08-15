@@ -75,7 +75,7 @@ main (int argc, char** argv)
 	j_message_add_operation(message, 0);
 	j_message_append_1(message, &get_all);
 
-	for (guint i = 0; i < j_configuration_get_object_server_count(configuration); i++)
+	for (guint i = 0; i < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT); i++)
 	{
 		g_autoptr(JMessage) reply = NULL;
 		JStatistics* statistics;
@@ -125,7 +125,7 @@ main (int argc, char** argv)
 		g_print("Data server %d\n", i);
 		print_statistics(statistics);
 
-		if (i != j_configuration_get_object_server_count(configuration) - 1)
+		if (i != j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT) - 1)
 		{
 			g_print("\n");
 		}
@@ -134,7 +134,7 @@ main (int argc, char** argv)
 		j_connection_pool_push_object(i, connection);
 	}
 
-	if (j_configuration_get_object_server_count(configuration) > 1)
+	if (j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT) > 1)
 	{
 		g_print("\n");
 		g_print("Total\n");

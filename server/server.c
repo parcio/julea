@@ -234,17 +234,17 @@ main (int argc, char** argv)
 
 	port_str = g_strdup_printf("%d", opt_port);
 
-	object_backend = j_configuration_get_object_backend(jd_configuration);
-	object_component = j_configuration_get_object_component(jd_configuration);
-	object_path = j_helper_str_replace(j_configuration_get_object_path(jd_configuration), "{PORT}", port_str);
+	object_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_OBJECT);
+	object_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_OBJECT);
+	object_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_OBJECT), "{PORT}", port_str);
 
-	kv_backend = j_configuration_get_kv_backend(jd_configuration);
-	kv_component = j_configuration_get_kv_component(jd_configuration);
-	kv_path = j_helper_str_replace(j_configuration_get_kv_path(jd_configuration), "{PORT}", port_str);
+	kv_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_KV);
+	kv_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_KV);
+	kv_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_KV), "{PORT}", port_str);
 
-	db_backend = j_configuration_get_db_backend(jd_configuration);
-	db_component = j_configuration_get_db_component(jd_configuration);
-	db_path = j_helper_str_replace(j_configuration_get_db_path(jd_configuration), "{PORT}", port_str);
+	db_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_DB);
+	db_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_DB);
+	db_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_DB), "{PORT}", port_str);
 
 	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
 	{

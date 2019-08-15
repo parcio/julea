@@ -488,7 +488,7 @@ j_kv_new (gchar const* namespace, gchar const* key)
 	g_return_val_if_fail(key != NULL, NULL);
 
 	kv = g_slice_new(JKV);
-	kv->index = j_helper_hash(key) % j_configuration_get_kv_server_count(configuration);
+	kv->index = j_helper_hash(key) % j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV);
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
 	kv->ref_count = 1;
@@ -520,7 +520,7 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_kv_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV), NULL);
 
 	kv = g_slice_new(JKV);
 	kv->index = index;

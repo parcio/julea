@@ -131,7 +131,7 @@ j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 	iterator->key = NULL;
 	iterator->value = NULL;
 	iterator->len = 0;
-	iterator->replies_n = j_configuration_get_kv_server_count(configuration);
+	iterator->replies_n = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV);
 	iterator->replies = g_new0(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
 
@@ -165,7 +165,7 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 	JConfiguration* configuration = j_configuration();
 
 	g_return_val_if_fail(namespace != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_kv_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV), NULL);
 
 	/* FIXME still necessary? */
 	//j_operation_cache_flush();

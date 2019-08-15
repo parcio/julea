@@ -509,7 +509,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		server_count = j_configuration_get_object_server_count(j_configuration());
+		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
 		// FIXME use actual distribution
@@ -614,7 +614,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		server_count = j_configuration_get_object_server_count(j_configuration());
+		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
 		// FIXME use actual distribution
@@ -719,7 +719,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		server_count = j_configuration_get_object_server_count(j_configuration());
+		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 		br_lists = g_new(JList*, server_count);
 
@@ -893,7 +893,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		server_count = j_configuration_get_object_server_count(j_configuration());
+		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 		bw_lists = g_new(JList*, server_count);
 
@@ -1061,7 +1061,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		server_count = j_configuration_get_object_server_count(j_configuration());
+		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
 		// FIXME use actual distribution

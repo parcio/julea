@@ -95,28 +95,28 @@ test_configuration_get (void)
 	configuration = j_configuration_new_for_data(key_file);
 	g_assert(configuration != NULL);
 
-	g_assert_cmpstr(j_configuration_get_object_server(configuration, 0), ==, "localhost");
-	g_assert_cmpstr(j_configuration_get_object_server(configuration, 1), ==, "local.host");
-	g_assert_cmpuint(j_configuration_get_object_server_count(configuration), ==, 2);
+	g_assert_cmpstr(j_configuration_get_server(configuration, J_BACKEND_TYPE_OBJECT, 0), ==, "localhost");
+	g_assert_cmpstr(j_configuration_get_server(configuration, J_BACKEND_TYPE_OBJECT, 1), ==, "local.host");
+	g_assert_cmpuint(j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), ==, 2);
 
-	g_assert_cmpstr(j_configuration_get_kv_server(configuration, 0), ==, "localhost");
-	g_assert_cmpuint(j_configuration_get_kv_server_count(configuration), ==, 1);
+	g_assert_cmpstr(j_configuration_get_server(configuration, J_BACKEND_TYPE_KV, 0), ==, "localhost");
+	g_assert_cmpuint(j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV), ==, 1);
 
-	g_assert_cmpstr(j_configuration_get_db_server(configuration, 0), ==, "localhost");
-	g_assert_cmpstr(j_configuration_get_db_server(configuration, 1), ==, "host.local");
-	g_assert_cmpuint(j_configuration_get_db_server_count(configuration), ==, 2);
+	g_assert_cmpstr(j_configuration_get_server(configuration, J_BACKEND_TYPE_DB, 0), ==, "localhost");
+	g_assert_cmpstr(j_configuration_get_server(configuration, J_BACKEND_TYPE_DB, 1), ==, "host.local");
+	g_assert_cmpuint(j_configuration_get_server_count(configuration, J_BACKEND_TYPE_DB), ==, 2);
 
-	g_assert_cmpstr(j_configuration_get_object_backend(configuration), ==, "null");
-	g_assert_cmpstr(j_configuration_get_object_component(configuration), ==, "server");
-	g_assert_cmpstr(j_configuration_get_object_path(configuration), ==, "NULL");
+	g_assert_cmpstr(j_configuration_get_backend(configuration, J_BACKEND_TYPE_OBJECT), ==, "null");
+	g_assert_cmpstr(j_configuration_get_backend_component(configuration, J_BACKEND_TYPE_OBJECT), ==, "server");
+	g_assert_cmpstr(j_configuration_get_backend_path(configuration, J_BACKEND_TYPE_OBJECT), ==, "NULL");
 
-	g_assert_cmpstr(j_configuration_get_kv_backend(configuration), ==, "null2");
-	g_assert_cmpstr(j_configuration_get_kv_component(configuration), ==, "client");
-	g_assert_cmpstr(j_configuration_get_kv_path(configuration), ==, "NULL2");
+	g_assert_cmpstr(j_configuration_get_backend(configuration, J_BACKEND_TYPE_KV), ==, "null2");
+	g_assert_cmpstr(j_configuration_get_backend_component(configuration, J_BACKEND_TYPE_KV), ==, "client");
+	g_assert_cmpstr(j_configuration_get_backend_path(configuration, J_BACKEND_TYPE_KV), ==, "NULL2");
 
-	g_assert_cmpstr(j_configuration_get_db_backend(configuration), ==, "null3");
-	g_assert_cmpstr(j_configuration_get_db_component(configuration), ==, "client");
-	g_assert_cmpstr(j_configuration_get_db_path(configuration), ==, "NULL3");
+	g_assert_cmpstr(j_configuration_get_backend(configuration, J_BACKEND_TYPE_DB), ==, "null3");
+	g_assert_cmpstr(j_configuration_get_backend_component(configuration, J_BACKEND_TYPE_DB), ==, "client");
+	g_assert_cmpstr(j_configuration_get_backend_path(configuration, J_BACKEND_TYPE_DB), ==, "NULL3");
 
 	j_configuration_unref(configuration);
 

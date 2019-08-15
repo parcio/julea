@@ -162,17 +162,17 @@ j_init (void)
 		goto error;
 	}
 
-	object_backend = j_configuration_get_object_backend(common->configuration);
-	object_component = j_configuration_get_object_component(common->configuration);
-	object_path = j_configuration_get_object_path(common->configuration);
+	object_backend = j_configuration_get_backend(common->configuration, J_BACKEND_TYPE_OBJECT);
+	object_component = j_configuration_get_backend_component(common->configuration, J_BACKEND_TYPE_OBJECT);
+	object_path = j_configuration_get_backend_path(common->configuration, J_BACKEND_TYPE_OBJECT);
 
-	kv_backend = j_configuration_get_kv_backend(common->configuration);
-	kv_component = j_configuration_get_kv_component(common->configuration);
-	kv_path = j_configuration_get_kv_path(common->configuration);
+	kv_backend = j_configuration_get_backend(common->configuration, J_BACKEND_TYPE_KV);
+	kv_component = j_configuration_get_backend_component(common->configuration, J_BACKEND_TYPE_KV);
+	kv_path = j_configuration_get_backend_path(common->configuration, J_BACKEND_TYPE_KV);
 
-	db_backend = j_configuration_get_db_backend(common->configuration);
-	db_component = j_configuration_get_db_component(common->configuration);
-	db_path = j_configuration_get_db_path(common->configuration);
+	db_backend = j_configuration_get_backend(common->configuration, J_BACKEND_TYPE_DB);
+	db_component = j_configuration_get_backend_component(common->configuration, J_BACKEND_TYPE_DB);
+	db_path = j_configuration_get_backend_path(common->configuration, J_BACKEND_TYPE_DB);
 
 	if (j_backend_load_client(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &(common->object_module), &(common->object_backend)))
 	{

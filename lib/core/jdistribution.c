@@ -29,6 +29,7 @@
 #include <jdistribution.h>
 #include <jdistribution-internal.h>
 
+#include <jbackend.h>
 #include <jcommon.h>
 #include <jconfiguration.h>
 #include <jtrace.h>
@@ -76,7 +77,7 @@ j_distribution_new_common (JDistributionType type, JConfiguration* configuration
 	guint server_count;
 	guint64 stripe_size;
 
-	server_count = j_configuration_get_object_server_count(configuration);
+	server_count = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	stripe_size = j_configuration_get_stripe_size(configuration);
 
 	distribution = g_slice_new(JDistribution);

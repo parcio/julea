@@ -28,6 +28,7 @@
 
 #include <jconfiguration.h>
 
+#include <jbackend.h>
 #include <jtrace.h>
 
 /**
@@ -417,156 +418,116 @@ j_configuration_unref (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_object_server (JConfiguration* configuration, guint32 index)
+j_configuration_get_server (JConfiguration* configuration, JBackendType backend, guint32 index)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, NULL);
-	g_return_val_if_fail(index < configuration->servers.object_len, NULL);
 
-	return configuration->servers.object[index];
-}
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			g_return_val_if_fail(index < configuration->servers.object_len, NULL);
+			return configuration->servers.object[index];
+		case J_BACKEND_TYPE_KV:
+			g_return_val_if_fail(index < configuration->servers.kv_len, NULL);
+			return configuration->servers.kv[index];
+		case J_BACKEND_TYPE_DB:
+			g_return_val_if_fail(index < configuration->servers.db_len, NULL);
+			return configuration->servers.db[index];
+		default:
+			g_assert_not_reached();
+	}
 
-gchar const*
-j_configuration_get_kv_server (JConfiguration* configuration, guint32 index)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-	g_return_val_if_fail(index < configuration->servers.kv_len, NULL);
-
-	return configuration->servers.kv[index];
-}
-
-gchar const*
-j_configuration_get_db_server (JConfiguration* configuration, guint32 index)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-	g_return_val_if_fail(index < configuration->servers.db_len, NULL);
-
-	return configuration->servers.db[index];
+	return NULL;
 }
 
 guint32
-j_configuration_get_object_server_count (JConfiguration* configuration)
+j_configuration_get_server_count (JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->servers.object_len;
-}
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			return configuration->servers.object_len;
+		case J_BACKEND_TYPE_KV:
+			return configuration->servers.kv_len;
+		case J_BACKEND_TYPE_DB:
+			return configuration->servers.db_len;
+		default:
+			g_assert_not_reached();
+	}
 
-guint32
-j_configuration_get_kv_server_count (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return configuration->servers.kv_len;
-}
-
-guint32
-j_configuration_get_db_server_count (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return configuration->servers.db_len;
+	return 0;
 }
 
 gchar const*
-j_configuration_get_object_backend (JConfiguration* configuration)
+j_configuration_get_backend (JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	return configuration->object.backend;
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			return configuration->object.backend;
+		case J_BACKEND_TYPE_KV:
+			return configuration->kv.backend;
+		case J_BACKEND_TYPE_DB:
+			return configuration->db.backend;
+		default:
+			g_assert_not_reached();
+	}
+
+	return NULL;
 }
 
 gchar const*
-j_configuration_get_object_component (JConfiguration* configuration)
+j_configuration_get_backend_component (JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	return configuration->object.component;
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			return configuration->object.component;
+		case J_BACKEND_TYPE_KV:
+			return configuration->kv.component;
+		case J_BACKEND_TYPE_DB:
+			return configuration->db.component;
+		default:
+			g_assert_not_reached();
+	}
+
+	return NULL;
 }
 
 gchar const*
-j_configuration_get_object_path (JConfiguration* configuration)
+j_configuration_get_backend_path (JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, NULL);
 
-	return configuration->object.path;
-}
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			return configuration->object.path;
+		case J_BACKEND_TYPE_KV:
+			return configuration->kv.path;
+		case J_BACKEND_TYPE_DB:
+			return configuration->db.path;
+		default:
+			g_assert_not_reached();
+	}
 
-gchar const*
-j_configuration_get_kv_backend (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->kv.backend;
-}
-
-gchar const*
-j_configuration_get_kv_component (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->kv.component;
-}
-
-gchar const*
-j_configuration_get_kv_path (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->kv.path;
-}
-
-gchar const*
-j_configuration_get_db_backend (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->db.backend;
-}
-
-gchar const*
-j_configuration_get_db_component (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->db.component;
-}
-
-gchar const*
-j_configuration_get_db_path (JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	return configuration->db.path;
+	return NULL;
 }
 
 guint64

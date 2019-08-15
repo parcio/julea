@@ -785,7 +785,7 @@ j_object_new (gchar const* namespace, gchar const* name)
 	g_return_val_if_fail(name != NULL, NULL);
 
 	object = g_slice_new(JObject);
-	object->index = j_helper_hash(name) % j_configuration_get_object_server_count(configuration);
+	object->index = j_helper_hash(name) % j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->ref_count = 1;
@@ -802,7 +802,7 @@ j_object_new (gchar const* namespace, gchar const* name)
  * i = j_object_new_for_index(index, "JULEA", "JULEA");
  * \endcode
  *
- * \param index        An object server index. Must be less than the return value of j_configuration_get_object_server_count().
+ * \param index        An object server index. Must be less than the return value of j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT).
  * \param namespace    A namespace.
  * \param name         An object name.
  *
@@ -818,7 +818,7 @@ j_object_new_for_index (guint32 index, gchar const* namespace, gchar const* name
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
-	g_return_val_if_fail(index < j_configuration_get_object_server_count(configuration), NULL);
+	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), NULL);
 
 	object = g_slice_new(JObject);
 	object->index = index;
