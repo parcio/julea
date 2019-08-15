@@ -38,6 +38,12 @@
  **/
 
 GQuark
+j_backend_bson_error_quark (void)
+{
+	return g_quark_from_static_string("j-backend-bson-error-quark");
+}
+
+GQuark
 j_backend_db_error_quark (void)
 {
 	return g_quark_from_static_string("j-backend-db-error-quark");
