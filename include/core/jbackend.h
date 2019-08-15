@@ -39,41 +39,37 @@
 G_BEGIN_DECLS
 
 #define J_BACKEND_DB_ERROR j_backend_db_error_quark()
+#define J_BACKEND_SQL_ERROR j_backend_sql_error_quark()
 
 enum JBackendDBError
 {
-	J_BACKEND_DB_ERROR_FAILED = 0,
-	J_BACKEND_DB_ERROR_BATCH_NULL,
-	J_BACKEND_DB_ERROR_BSON_APPEND_FAILED,
-	J_BACKEND_DB_ERROR_BSON_FAILED,
-	J_BACKEND_DB_ERROR_BSON_INVALID,
-	J_BACKEND_DB_ERROR_BSON_INVALID_TYPE,
-	J_BACKEND_DB_ERROR_BSON_ITER_INIT,
-	J_BACKEND_DB_ERROR_BSON_ITER_RECOURSE,
-	J_BACKEND_DB_ERROR_BSON_KEY_NOT_FOUND,
 	J_BACKEND_DB_ERROR_COMPARATOR_INVALID,
 	J_BACKEND_DB_ERROR_DB_TYPE_INVALID,
+	J_BACKEND_DB_ERROR_ITERATOR_INVALID,
 	J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS,
-	J_BACKEND_DB_ERROR_ITERATOR_NULL,
-	J_BACKEND_DB_ERROR_METADATA_EMPTY,
-	J_BACKEND_DB_ERROR_METADATA_NULL,
-	J_BACKEND_DB_ERROR_NAME_NULL,
-	J_BACKEND_DB_ERROR_NAMESPACE_NULL,
 	J_BACKEND_DB_ERROR_NO_VARIABLE_SET,
 	J_BACKEND_DB_ERROR_OPERATOR_INVALID,
 	J_BACKEND_DB_ERROR_SCHEMA_EMPTY,
 	J_BACKEND_DB_ERROR_SCHEMA_NOT_FOUND,
-	J_BACKEND_DB_ERROR_SCHEMA_NULL,
 	J_BACKEND_DB_ERROR_SELECTOR_EMPTY,
-	J_BACKEND_DB_ERROR_SELECTOR_NULL,
-	J_BACKEND_DB_ERROR_SQL_CONSTRAINT,
-	J_BACKEND_DB_ERROR_SQL_FAILED,
 	J_BACKEND_DB_ERROR_THREADING_ERROR,
-	J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND,
-	_J_BACKEND_DB_ERROR_COUNT
+	J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND
 };
 
 typedef enum JBackendDBError JBackendDBError;
+
+enum JBackendSQLError
+{
+	J_BACKEND_SQL_ERROR_BIND,
+	J_BACKEND_SQL_ERROR_CONSTRAINT,
+	J_BACKEND_SQL_ERROR_FINALIZE,
+	J_BACKEND_SQL_ERROR_INVALID_TYPE,
+	J_BACKEND_SQL_ERROR_PREPARE,
+	J_BACKEND_SQL_ERROR_RESET,
+	J_BACKEND_SQL_ERROR_STEP
+};
+
+typedef enum JBackendSQLError JBackendSQLError;
 
 enum JBackendType
 {
@@ -141,7 +137,7 @@ struct JBackend
 			gboolean (*backend_init) (gchar const*);
 			void (*backend_fini) (void);
 
-			gboolean (*backend_batch_start) (gchar const*, JSemanticsSafety, gpointer*, GError**);
+			gboolean (*backend_batch_start) (gchar const*, JSemantics*, gpointer*, GError**);
 			gboolean (*backend_batch_execute) (gpointer, GError**);
 
 			/**
@@ -346,6 +342,7 @@ struct JBackend
 typedef struct JBackend JBackend;
 
 GQuark j_backend_db_error_quark (void);
+GQuark j_backend_sql_error_quark (void);
 
 JBackend* backend_info (void);
 
@@ -384,7 +381,7 @@ gboolean j_backend_kv_iterate (JBackend*, gpointer, gchar const**, gconstpointer
 gboolean j_backend_db_init (JBackend*, gchar const*);
 void j_backend_db_fini (JBackend*);
 
-gboolean j_backend_db_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*, GError**);
+gboolean j_backend_db_batch_start (JBackend*, gchar const*, JSemantics*, gpointer*, GError**);
 gboolean j_backend_db_batch_execute (JBackend*, gpointer, GError**);
 
 gboolean j_backend_db_schema_create (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
