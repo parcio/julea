@@ -119,7 +119,7 @@ struct JBackend
 			gboolean (*backend_init) (gchar const*);
 			void (*backend_fini) (void);
 
-			gboolean (*backend_batch_start) (gchar const*, JSemanticsSafety, gpointer*);
+			gboolean (*backend_batch_start) (gchar const*, JSemantics*, gpointer*);
 			gboolean (*backend_batch_execute) (gpointer);
 
 			gboolean (*backend_put) (gpointer, gchar const*, gconstpointer, guint32);
@@ -367,7 +367,7 @@ gboolean j_backend_object_write (JBackend*, gpointer, gconstpointer, guint64, gu
 gboolean j_backend_kv_init (JBackend*, gchar const*);
 void j_backend_kv_fini (JBackend*);
 
-gboolean j_backend_kv_batch_start (JBackend*, gchar const*, JSemanticsSafety, gpointer*);
+gboolean j_backend_kv_batch_start (JBackend*, gchar const*, JSemantics*, gpointer*);
 gboolean j_backend_kv_batch_execute (JBackend*, gpointer);
 
 gboolean j_backend_kv_put (JBackend*, gpointer, gchar const*, gconstpointer, guint32);

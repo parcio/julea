@@ -467,7 +467,7 @@ j_backend_kv_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemanticsSafety safety, gpointer* batch)
+j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -476,11 +476,12 @@ j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemanticsS
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
 	{
-		J_TRACE("backend_batch_start", "%s, %d, %p", namespace, safety, (gpointer)batch);
-		ret = backend->kv.backend_batch_start(namespace, safety, batch);
+		J_TRACE("backend_batch_start", "%s, %p, %p", namespace, (gpointer)semantics, (gpointer)batch);
+		ret = backend->kv.backend_batch_start(namespace, semantics, batch);
 	}
 
 	return ret;

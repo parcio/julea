@@ -25,12 +25,12 @@
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	(void)safety;
+	(void)semantics;
 
 	// Return something != NULL
 	*data = data;

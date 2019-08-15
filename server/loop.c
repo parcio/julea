@@ -380,7 +380,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				}
 
 				namespace = j_message_get_string(message);
-				j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
+				j_backend_kv_batch_start(jd_kv_backend, namespace, semantics, &batch);
 
 				for (i = 0; i < operation_count; i++)
 				{
@@ -418,7 +418,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				}
 
 				namespace = j_message_get_string(message);
-				j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
+				j_backend_kv_batch_start(jd_kv_backend, namespace, semantics, &batch);
 
 				for (i = 0; i < operation_count; i++)
 				{
@@ -447,7 +447,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				reply = j_message_new_reply(message);
 				namespace = j_message_get_string(message);
-				j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
+				j_backend_kv_batch_start(jd_kv_backend, namespace, semantics, &batch);
 
 				for (i = 0; i < operation_count; i++)
 				{

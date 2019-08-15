@@ -42,7 +42,7 @@ static gchar* backend_database = NULL;
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JMongoDBBatch* batch;
 	bson_t command[1];
@@ -81,11 +81,11 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 
 	write_concern = mongoc_write_concern_new();
 
-	if (safety != J_SEMANTICS_SAFETY_NONE)
+	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
 	{
 		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_DEFAULT);
 
-		if (safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			mongoc_write_concern_set_journal(write_concern, TRUE);
 		}

@@ -164,7 +164,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	if (kv_backend != NULL)
 	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
 	}
 	else
 	{
@@ -266,7 +266,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	if (kv_backend != NULL)
 	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
 	}
 	else
 	{
@@ -332,7 +332,6 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JSemanticsSafety safety;
 	gchar const* namespace;
 	gpointer kv_batch = NULL;
 	gsize namespace_len;
@@ -352,13 +351,12 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 		index = kop->get.kv->index;
 	}
 
-	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_backend();
 
 	if (kv_backend != NULL)
 	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, safety, &kv_batch);
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
 	}
 	else
 	{

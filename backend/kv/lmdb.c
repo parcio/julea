@@ -31,7 +31,7 @@ struct JLMDBBatch
 {
 	MDB_txn* txn;
 	gchar* namespace;
-	JSemanticsSafety safety;
+	JSemantics* semantics;
 };
 
 typedef struct JLMDBBatch JLMDBBatch;
@@ -52,7 +52,7 @@ static MDB_dbi backend_dbi;
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JLMDBBatch* batch = NULL;
 	MDB_txn* txn;
@@ -65,7 +65,7 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 		batch = g_slice_new(JLMDBBatch);
 		batch->txn = txn;
 		batch->namespace = g_strdup(namespace);
-		batch->safety = safety;
+		batch->semantics = j_semantics_ref(semantics);
 	}
 
 	*data = batch;
@@ -83,7 +83,7 @@ backend_batch_execute (gpointer data)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	// FIXME do something with batch->safety
+	// FIXME do something with batch->semantics
 
 	if (mdb_txn_commit(batch->txn) == 0)
 	{
@@ -92,6 +92,7 @@ backend_batch_execute (gpointer data)
 
 	// FIXME free txn
 
+	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
 	g_slice_free(JLMDBBatch, batch);
 

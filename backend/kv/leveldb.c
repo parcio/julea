@@ -31,7 +31,7 @@ struct JLevelDBBatch
 {
 	leveldb_writebatch_t* batch;
 	gchar* namespace;
-	JSemanticsSafety safety;
+	JSemantics* semantics;
 };
 
 typedef struct JLevelDBBatch JLevelDBBatch;
@@ -54,7 +54,7 @@ static leveldb_writeoptions_t* backend_write_options_sync = NULL;
 
 static
 gboolean
-backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
+backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JLevelDBBatch* batch;
 
@@ -65,7 +65,7 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 
 	batch->batch = leveldb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
-	batch->safety = safety;
+	batch->semantics = j_semantics_ref(semantics);
 	*data = batch;
 
 	return (batch != NULL);
@@ -83,13 +83,14 @@ backend_batch_execute (gpointer data)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	if (batch->safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		write_options = backend_write_options_sync;
 	}
 
 	leveldb_write(backend_db, write_options, batch->batch, &leveldb_error);
 
+	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
 	leveldb_writebatch_destroy(batch->batch);
 	g_slice_free(JLevelDBBatch, batch);
