@@ -90,8 +90,8 @@ gint64 j_message_get_8 (JMessage*);
 gpointer j_message_get_n (JMessage*, gsize);
 gchar const* j_message_get_string (JMessage*);
 
-gboolean j_message_send (JMessage*, GSocketConnection*);
-gboolean j_message_receive (JMessage*, GSocketConnection*);
+gboolean j_message_send (JMessage*, gpointer);
+gboolean j_message_receive (JMessage*, gpointer);
 
 gboolean j_message_read (JMessage*, GInputStream*);
 gboolean j_message_write (JMessage*, GOutputStream*);

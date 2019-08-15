@@ -30,16 +30,12 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <core/jbackend.h>
+
 G_BEGIN_DECLS
 
-GSocketConnection* j_connection_pool_pop_object (guint);
-void j_connection_pool_push_object (guint, GSocketConnection*);
-
-GSocketConnection* j_connection_pool_pop_kv (guint);
-void j_connection_pool_push_kv (guint, GSocketConnection*);
-
-GSocketConnection* j_connection_pool_pop_db (guint);
-void j_connection_pool_push_db (guint, GSocketConnection*);
+gpointer j_connection_pool_pop (JBackendType, guint);
+void j_connection_pool_push (JBackendType, guint, gpointer);
 
 G_END_DECLS
 

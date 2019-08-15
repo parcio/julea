@@ -226,10 +226,10 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 	{
 		JSemanticsSafety safety;
 
-		GSocketConnection* object_connection;
+		gpointer object_connection;
 
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-		object_connection = j_connection_pool_pop_object(index);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
@@ -242,7 +242,7 @@ j_object_create_exec (JList* operations, JSemantics* semantics)
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_object(index, object_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
 	}
 
 	return ret;
@@ -313,10 +313,10 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 	{
 		JSemanticsSafety safety;
 
-		GSocketConnection* object_connection;
+		gpointer object_connection;
 
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-		object_connection = j_connection_pool_pop_object(index);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
@@ -329,7 +329,7 @@ j_object_delete_exec (JList* operations, JSemantics* semantics)
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_object(index, object_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
 	}
 
 	return ret;
@@ -428,11 +428,11 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	else
 	{
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* object_connection;
+		gpointer object_connection;
 		guint32 operations_done;
 		guint32 operation_count;
 
-		object_connection = j_connection_pool_pop_object(object->index);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, object->index);
 		j_message_send(message, object_connection);
 
 		reply = j_message_new_reply(message);
@@ -480,7 +480,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 
 		j_list_iterator_free(it);
 
-		j_connection_pool_push_object(object->index, object_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, object->index, object_connection);
 	}
 
 	/*
@@ -604,10 +604,10 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	{
 		JSemanticsSafety safety;
 
-		GSocketConnection* object_connection;
+		gpointer object_connection;
 
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-		object_connection = j_connection_pool_pop_object(object->index);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, object->index);
 		j_message_send(message, object_connection);
 
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
@@ -632,7 +632,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 			j_list_iterator_free(it);
 		}
 
-		j_connection_pool_push_object(object->index, object_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, object->index, object_connection);
 	}
 
 	/*
@@ -719,9 +719,9 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 	if (object_backend == NULL)
 	{
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* object_connection;
+		gpointer object_connection;
 
-		object_connection = j_connection_pool_pop_object(index);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
 		reply = j_message_new_reply(message);
@@ -753,7 +753,7 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 
 		j_list_iterator_free(it);
 
-		j_connection_pool_push_object(index, object_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
 	}
 
 	return ret;

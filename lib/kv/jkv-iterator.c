@@ -70,7 +70,7 @@ fetch_reply (guint32 index, gchar const* namespace, gchar const* prefix)
 	g_autoptr(JMessage) message = NULL;
 	JMessage* reply;
 	JMessageType message_type;
-	GSocketConnection* kv_connection;
+	gpointer kv_connection;
 	gsize namespace_len;
 	gsize prefix_len;
 
@@ -95,13 +95,13 @@ fetch_reply (guint32 index, gchar const* namespace, gchar const* prefix)
 		j_message_append_n(message, prefix, prefix_len);
 	}
 
-	kv_connection = j_connection_pool_pop_kv(index);
+	kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 	j_message_send(message, kv_connection);
 
 	reply = j_message_new_reply(message);
 	j_message_receive(reply, kv_connection);
 
-	j_connection_pool_push_kv(index, kv_connection);
+	j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
 
 	return reply;
 }

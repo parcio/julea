@@ -37,6 +37,7 @@ G_BEGIN_DECLS
 guint64 j_helper_atomic_add (guint64 volatile*, guint64);
 gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 guint32 j_helper_hash (gchar const*);
+// FIXME get rid of GSocketConnection
 void j_helper_set_nodelay (GSocketConnection*, gboolean);
 gchar* j_helper_str_replace (gchar const*, gchar const*, gchar const*);
 

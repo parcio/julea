@@ -208,9 +208,9 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		GSocketConnection* kv_connection;
+		gpointer kv_connection;
 
-		kv_connection = j_connection_pool_pop_kv(index);
+		kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 		j_message_send(message, kv_connection);
 
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
@@ -223,7 +223,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_kv(index, kv_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
 	}
 
 	return ret;
@@ -300,9 +300,9 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	}
 	else
 	{
-		GSocketConnection* kv_connection;
+		gpointer kv_connection;
 
-		kv_connection = j_connection_pool_pop_kv(index);
+		kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 		j_message_send(message, kv_connection);
 
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
@@ -315,7 +315,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 			/* FIXME do something with reply */
 		}
 
-		j_connection_pool_push_kv(index, kv_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
 	}
 
 	return ret;
@@ -416,9 +416,9 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	{
 		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
-		GSocketConnection* kv_connection;
+		gpointer kv_connection;
 
-		kv_connection = j_connection_pool_pop_kv(index);
+		kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 		j_message_send(message, kv_connection);
 
 		reply = j_message_new_reply(message);
@@ -456,7 +456,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 			}
 		}
 
-		j_connection_pool_push_kv(index, kv_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
 	}
 
 	return ret;
