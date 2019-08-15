@@ -194,7 +194,6 @@ main (int argc, char** argv)
 	// Core
 	benchmark_background_operation();
 	benchmark_cache();
-	benchmark_lock();
 	benchmark_memory_chunk();
 	benchmark_message();
 

@@ -39,7 +39,6 @@ main (int argc, char** argv)
 	test_distribution();
 	test_list();
 	test_list_iterator();
-	test_lock();
 	test_memory_chunk();
 	test_message();
 	test_semantics();

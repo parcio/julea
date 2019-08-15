@@ -43,7 +43,6 @@ void j_benchmark_run (gchar const*, BenchmarkFunc);
 
 void benchmark_background_operation (void);
 void benchmark_cache (void);
-void benchmark_lock (void);
 void benchmark_memory_chunk (void);
 void benchmark_message (void);
 

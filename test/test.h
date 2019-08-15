@@ -26,7 +26,6 @@ void test_configuration (void);
 void test_distribution (void);
 void test_list (void);
 void test_list_iterator (void);
-void test_lock (void);
 void test_memory_chunk (void);
 void test_message (void);
 void test_semantics (void);

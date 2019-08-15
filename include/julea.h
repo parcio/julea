@@ -45,7 +45,6 @@
 #include <core/jhelper.h>
 #include <core/jlist.h>
 #include <core/jlist-iterator.h>
-#include <core/jlock.h>
 #include <core/jmemory-chunk.h>
 #include <core/jmessage.h>
 #include <core/joperation.h>
