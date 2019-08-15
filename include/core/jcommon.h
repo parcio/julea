@@ -49,9 +49,7 @@ void __attribute__((destructor)) j_fini (void);
 
 JConfiguration* j_configuration (void);
 
-JBackend* j_object_backend (void);
-JBackend* j_kv_backend (void);
-JBackend* j_db_backend (void);
+JBackend* j_backend (JBackendType);
 
 G_END_DECLS
 

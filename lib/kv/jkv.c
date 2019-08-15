@@ -160,7 +160,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	kv_backend = j_kv_backend();
+	kv_backend = j_backend(J_BACKEND_TYPE_KV);
 
 	if (kv_backend != NULL)
 	{
@@ -262,7 +262,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	kv_backend = j_kv_backend();
+	kv_backend = j_backend(J_BACKEND_TYPE_KV);
 
 	if (kv_backend != NULL)
 	{
@@ -352,7 +352,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	kv_backend = j_kv_backend();
+	kv_backend = j_backend(J_BACKEND_TYPE_KV);
 
 	if (kv_backend != NULL)
 	{

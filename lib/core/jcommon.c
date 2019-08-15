@@ -311,14 +311,14 @@ j_configuration (void)
 }
 
 /**
- * Returns the object backend.
+ * Returns a backend.
  *
- * \private
+ * \param backend The backend to return.
  *
  * \return The object backend.
  */
 JBackend*
-j_object_backend (void)
+j_backend (JBackendType backend)
 {
 	JCommon* common;
 
@@ -326,45 +326,19 @@ j_object_backend (void)
 
 	common = g_atomic_pointer_get(&j_common);
 
-	return common->object_backend;
-}
+	switch (backend)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			return common->object_backend;
+		case J_BACKEND_TYPE_KV:
+			return common->kv_backend;
+		case J_BACKEND_TYPE_DB:
+			return common->db_backend;
+		default:
+			g_assert_not_reached();
+	}
 
-/**
- * Returns the kv backend.
- *
- * \private
- *
- * \return The kv backend.
- */
-JBackend*
-j_kv_backend (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->kv_backend;
-}
-
-/**
- * Returns the db backend.
- *
- * \private
- *
- * \return The db backend.
- */
-JBackend*
-j_db_backend (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->db_backend;
+	return NULL;
 }
 
 /**

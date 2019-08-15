@@ -66,7 +66,7 @@ j_object_iterator_new (gchar const* namespace)
 
 	iterator = g_slice_new(JObjectIterator);
 	iterator->namespace = g_strdup(namespace);
-	iterator->object_backend = j_object_backend();
+	iterator->object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
 	iterator->servers = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	iterator->message = NULL;
 
