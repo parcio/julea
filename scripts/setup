@@ -101,20 +101,20 @@ setup_init ()
 	SERVERS_OBJECT="${SERVERS_OBJECT#object=}"
 	SERVERS_KV="${SERVERS_KV#kv=}"
 	SERVERS_DB="${SERVERS_DB#db=}"
-	OBJECT_BACKEND="${OBJECT_BACKEND#backend=}"
-	KV_BACKEND="${KV_BACKEND#backend=}"
-	DB_BACKEND="${DB_BACKEND#backend=}"
-	OBJECT_PATH="${OBJECT_PATH#path=}"
-	KV_PATH="${KV_PATH#path=}"
-	DB_PATH="${DB_PATH#path=}"
-
 	SERVERS_OBJECT="${SERVERS_OBJECT%;}"
 	SERVERS_KV="${SERVERS_KV%;}"
 	SERVERS_DB="${SERVERS_DB%;}"
-
 	SERVERS_OBJECT=$(echo ${SERVERS_OBJECT} | sed 's/;/ /g')
 	SERVERS_KV=$(echo ${SERVERS_KV} | sed 's/;/ /g')
 	SERVERS_DB=$(echo ${SERVERS_DB} | sed 's/;/ /g')
+
+	OBJECT_BACKEND="${OBJECT_BACKEND#backend=}"
+	KV_BACKEND="${KV_BACKEND#backend=}"
+	DB_BACKEND="${DB_BACKEND#backend=}"
+
+	OBJECT_PATH="${OBJECT_PATH#path=}"
+	KV_PATH="${KV_PATH#path=}"
+	DB_PATH="${DB_PATH#path=}"
 }
 
 setup_start ()
@@ -215,6 +215,7 @@ setup_stop ()
 
 setup_clean ()
 {
+	local backend_path
 	local host
 	local port
 	local server
@@ -223,12 +224,14 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
+		test -n "${port}" || port='4711'
+		backend_path="$(printf '%s' "${OBJECT_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
 		then
-			if test -n "${OBJECT_PATH}"
+			if test -n "${backend_path}"
 			then
-				rm -rf "${OBJECT_PATH}"
+				rm -rf "${backend_path}"
 			fi
 		fi
 	done
@@ -237,6 +240,8 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
+		test -n "${port}" || port='4711'
+		backend_path="$(printf '%s' "${KV_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
 		then
@@ -244,9 +249,9 @@ setup_clean ()
 			then
 				rm -rf "${MONGO_PATH}"
 			else
-				if test -n "${KV_PATH}"
+				if test -n "${backend_path}"
 				then
-					rm -rf "${KV_PATH}"
+					rm -rf "${backend_path}"
 				fi
 			fi
 		fi
@@ -256,12 +261,14 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
+		test -n "${port}" || port='4711'
+		backend_path="$(printf '%s' "${DB_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
 		then
-			if test -n "${DB_PATH}"
+			if test -n "${backend_path}"
 			then
-				rm -rf "${DB_PATH}"
+				rm -rf "${backend_path}"
 			fi
 		fi
 	done
