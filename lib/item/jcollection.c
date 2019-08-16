@@ -107,9 +107,7 @@ j_collection_unref (JCollection* collection)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(collection != NULL);
-
-	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
+	if (collection && g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{
 		j_kv_unref(collection->kv);
 		j_credentials_unref(collection->credentials);

@@ -65,7 +65,7 @@ backend_file_unref (gpointer data)
 
 	G_LOCK(jd_backend_file_cache);
 
-	if (g_atomic_int_dec_and_test(&(file->ref_count)))
+	if (file && g_atomic_int_dec_and_test(&(file->ref_count)))
 	{
 		g_hash_table_remove(jd_backend_file_cache, file->path);
 

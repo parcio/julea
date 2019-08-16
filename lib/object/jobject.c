@@ -868,9 +868,7 @@ j_object_unref (JObject* object)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(object != NULL);
-
-	if (g_atomic_int_dec_and_test(&(object->ref_count)))
+	if (object && g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
 		g_free(object->name);
 		g_free(object->namespace);

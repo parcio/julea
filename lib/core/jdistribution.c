@@ -147,9 +147,7 @@ j_distribution_unref (JDistribution* distribution)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(distribution != NULL);
-
-	if (g_atomic_int_dec_and_test(&(distribution->ref_count)))
+	if (distribution && g_atomic_int_dec_and_test(&(distribution->ref_count)))
 	{
 		j_distribution_vtables[distribution->type].distribution_free(distribution->distribution);
 

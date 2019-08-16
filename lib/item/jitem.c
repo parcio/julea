@@ -146,9 +146,7 @@ j_item_unref (JItem* item)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-
-	if (g_atomic_int_dec_and_test(&(item->ref_count)))
+	if (item && g_atomic_int_dec_and_test(&(item->ref_count)))
 	{
 		if (item->kv != NULL)
 		{

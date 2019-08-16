@@ -417,9 +417,7 @@ j_message_unref (JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(message != NULL);
-
-	if (g_atomic_int_dec_and_test(&(message->ref_count)))
+	if (message && g_atomic_int_dec_and_test(&(message->ref_count)))
 	{
 		if (message->original_message != NULL)
 		{

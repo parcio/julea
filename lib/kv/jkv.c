@@ -570,9 +570,7 @@ j_kv_unref (JKV* kv)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(kv != NULL);
-
-	if (g_atomic_int_dec_and_test(&(kv->ref_count)))
+	if (kv && g_atomic_int_dec_and_test(&(kv->ref_count)))
 	{
 		g_free(kv->key);
 		g_free(kv->namespace);
