@@ -85,10 +85,11 @@ _error:
 static gboolean
 j_sql_column(void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
+	memset(value, 0, sizeof(*value));
 	switch (type)
 	{
 	case J_DB_TYPE_SINT32:
@@ -116,6 +117,7 @@ J_TRACE_FUNCTION(NULL);
 		value->val_blob = sqlite3_column_blob(stmt, idx);
 		value->val_blob_length = sqlite3_column_bytes(stmt, idx);
 		break;
+	case J_DB_TYPE_ID:
 	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
@@ -191,6 +193,7 @@ J_TRACE_FUNCTION(NULL);
 			goto _error;
 		}
 		break;
+	case J_DB_TYPE_ID:
 	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
