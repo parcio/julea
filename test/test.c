@@ -60,6 +60,9 @@ main (int argc, char** argv)
 	// HDF5 client
 	test_hdf();
 
+	// DB backend
+	test_db_backend();
+
 	ret = g_test_run();
 
 	return ret;

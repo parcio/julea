@@ -43,4 +43,6 @@ void test_uri (void);
 
 void test_hdf (void);
 
+void test_db_backend (void);
+
 #endif
