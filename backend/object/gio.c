@@ -144,12 +144,17 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
+	GFile *file;
+	GFileInfo *info;
+	GTimeVal modTime;
 
 	//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
 	// FIXME
 	//g_output_stream_flush(output, NULL, NULL);
+	file = g_file_new_for_path (bf->path);
+	info = g_file_query_info (file,"standard::size,time::modified", G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
 
 	// FIXME
@@ -157,12 +162,15 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 
 	if (modification_time != NULL)
 	{
-		*modification_time = 0;
+		g_file_info_get_modification_time (info, &modTime);
+		*modification_time = modTime.tv_sec * G_USEC_PER_SEC;
+		// *modification_time = 0;
 	}
 
 	if (size != NULL)
 	{
-		*size = 0;
+		*size =  g_file_info_get_size (info);
+		// *size = 0;
 	}
 
 	return ret;
