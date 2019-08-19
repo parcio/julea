@@ -37,7 +37,7 @@ test_object_new_free (void)
 		g_autoptr(JDistributedObject) object = NULL;
 
 		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
-		object = j_distributed_object_new("test", "test-object", distribution);
+		object = j_distributed_object_new("test", "test-distributed-object", distribution);
 		g_assert(object != NULL);
 	}
 }
@@ -49,6 +49,7 @@ test_object_create_delete (void)
 	guint const n = 100;
 
 	g_autoptr(JBatch) batch = NULL;
+	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -59,7 +60,7 @@ test_object_create_delete (void)
 		g_autofree gchar* name = NULL;
 
 		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
-		name = g_strdup_printf("test-object-%u", i);
+		name = g_strdup_printf("test-distributed-object-%u", i);
 		object = j_distributed_object_new("test", name, distribution);
 		g_assert(object != NULL);
 
@@ -67,7 +68,8 @@ test_object_create_delete (void)
 		j_distributed_object_delete(object, batch);
 	}
 
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 }
 
 static
@@ -80,6 +82,7 @@ test_object_read_write (void)
 	g_autofree gchar* buffer = NULL;
 	guint64 max_operation_size;
 	guint64 nbytes = 0;
+	gboolean ret;
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -88,54 +91,65 @@ test_object_read_write (void)
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	j_distribution_set_block_size(distribution, max_operation_size + 1);
-	object = j_distributed_object_new("test", "test-object-rw", distribution);
+	object = j_distributed_object_new("test", "test-distributed-object-rw", distribution);
 	g_assert(object != NULL);
 
 	j_distributed_object_create(object, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	j_distributed_object_write(object, buffer, 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 1);
 
 	j_distributed_object_write(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size - 1);
 
 	j_distributed_object_read(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size - 1);
 
 	j_distributed_object_write(object, buffer, max_operation_size, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size);
 
 	j_distributed_object_read(object, buffer, max_operation_size, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size);
 
 	j_distributed_object_write(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
 	j_distributed_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, max_operation_size + 1);
 
 	j_distributed_object_write(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_distributed_object_write(object, buffer, max_operation_size, 0, &nbytes, batch);
 	j_distributed_object_write(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
 	j_distributed_object_read(object, buffer, max_operation_size - 1, 0, &nbytes, batch);
 	j_distributed_object_read(object, buffer, max_operation_size, 0, &nbytes, batch);
 	j_distributed_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
 	j_distributed_object_delete(object, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 }
 
 static
@@ -149,27 +163,32 @@ test_object_status (void)
 	gint64 modification_time = 0;
 	guint64 nbytes = 0;
 	guint64 size = 0;
+	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc0(42);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
-	object = j_distributed_object_new("test", "test-object-status", distribution);
+	object = j_distributed_object_new("test", "test-distributed-object-status", distribution);
 	g_assert(object != NULL);
 
 	j_distributed_object_create(object, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	j_distributed_object_write(object, buffer, 42, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 42);
 
 	j_distributed_object_status(object, &modification_time, &size, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 	g_assert_cmpuint(size, ==, 42);
 
 	j_distributed_object_delete(object, batch);
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 }
 
 void
