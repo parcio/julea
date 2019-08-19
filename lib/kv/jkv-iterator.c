@@ -207,7 +207,10 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 void
 j_kv_iterator_free (JKVIterator* iterator)
 {
-	g_return_if_fail(iterator != NULL);
+	if (G_UNLIKELY(iterator == NULL))
+	{
+		return;
+	}
 
 	for (guint32 i = 0; i < iterator->replies_n; i++)
 	{

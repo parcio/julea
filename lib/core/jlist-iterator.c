@@ -94,7 +94,10 @@ j_list_iterator_free (JListIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(iterator != NULL);
+	if (G_UNLIKELY(iterator == NULL))
+	{
+		return;
+	}
 
 	j_list_unref(iterator->list);
 

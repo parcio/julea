@@ -81,7 +81,10 @@ j_item_iterator_new (JCollection* collection)
 void
 j_item_iterator_free (JItemIterator* iterator)
 {
-	g_return_if_fail(iterator != NULL);
+	if (G_UNLIKELY(iterator == NULL))
+	{
+		return;
+	}
 
 	j_kv_iterator_free(iterator->iterator);
 	j_collection_unref(iterator->collection);

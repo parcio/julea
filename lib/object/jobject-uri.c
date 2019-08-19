@@ -266,7 +266,10 @@ j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 void
 j_object_uri_free (JObjectURI* uri)
 {
-	g_return_if_fail(uri != NULL);
+	if (G_UNLIKELY(uri == NULL))
+	{
+		return;
+	}
 
 	if (uri->distributed_object != NULL)
 	{

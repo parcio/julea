@@ -224,7 +224,10 @@ j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
 void
 j_kv_uri_free (JKVURI* uri)
 {
-	g_return_if_fail(uri != NULL);
+	if (G_UNLIKELY(uri == NULL))
+	{
+		return;
+	}
 
 	if (uri->kv != NULL)
 	{

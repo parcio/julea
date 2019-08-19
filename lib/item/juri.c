@@ -218,7 +218,10 @@ j_uri_new (gchar const* uri_)
 void
 j_uri_free (JURI* uri)
 {
-	g_return_if_fail(uri != NULL);
+	if (G_UNLIKELY(uri == NULL))
+	{
+		return;
+	}
 
 	if (uri->item != NULL)
 	{
