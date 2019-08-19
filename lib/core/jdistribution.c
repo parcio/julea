@@ -147,7 +147,10 @@ j_distribution_unref (JDistribution* distribution)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(distribution != NULL);
+	if (G_UNLIKELY(distribution == NULL))
+	{
+		return;
+	}
 
 	if (g_atomic_int_dec_and_test(&(distribution->ref_count)))
 	{

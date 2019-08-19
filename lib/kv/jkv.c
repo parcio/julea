@@ -570,7 +570,10 @@ j_kv_unref (JKV* kv)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(kv != NULL);
+	if (G_UNLIKELY(kv == NULL))
+	{
+		return;
+	}
 
 	if (g_atomic_int_dec_and_test(&(kv->ref_count)))
 	{

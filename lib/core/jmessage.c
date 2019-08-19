@@ -417,7 +417,10 @@ j_message_unref (JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(message != NULL);
+	if (G_UNLIKELY(message == NULL))
+	{
+		return;
+	}
 
 	if (g_atomic_int_dec_and_test(&(message->ref_count)))
 	{

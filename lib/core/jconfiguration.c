@@ -395,6 +395,11 @@ j_configuration_unref (JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	if (G_UNLIKELY(configuration == NULL))
+	{
+		return;
+	}
+
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
 		g_free(configuration->db.backend);

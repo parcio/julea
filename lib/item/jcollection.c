@@ -107,7 +107,10 @@ j_collection_unref (JCollection* collection)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(collection != NULL);
+	if (G_UNLIKELY(collection == NULL))
+	{
+		return;
+	}
 
 	if (g_atomic_int_dec_and_test(&(collection->ref_count)))
 	{

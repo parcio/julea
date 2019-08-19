@@ -1214,7 +1214,10 @@ j_distributed_object_unref (JDistributedObject* object)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(object != NULL);
+	if (G_UNLIKELY(object == NULL))
+	{
+		return;
+	}
 
 	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{
