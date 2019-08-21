@@ -395,10 +395,7 @@ j_configuration_unref (JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(configuration == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(configuration != NULL);
 
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{

@@ -82,10 +82,7 @@ j_credentials_unref (JCredentials* credentials)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(credentials == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(credentials != NULL);
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{

@@ -125,10 +125,7 @@ j_list_unref (JList* list)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(list == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(list != NULL);
 
 	if (g_atomic_int_dec_and_test(&(list->ref_count)))
 	{

@@ -189,10 +189,7 @@ j_batch_unref (JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(batch == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(batch != NULL);
 
 	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{

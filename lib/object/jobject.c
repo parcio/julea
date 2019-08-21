@@ -873,10 +873,7 @@ j_object_unref (JObject* object)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(object == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(object != NULL);
 
 	if (g_atomic_int_dec_and_test(&(object->ref_count)))
 	{

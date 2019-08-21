@@ -373,10 +373,7 @@ j_semantics_unref (JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (G_UNLIKELY(semantics == NULL))
-	{
-		return;
-	}
+	g_return_if_fail(semantics != NULL);
 
 	if (g_atomic_int_dec_and_test(&(semantics->ref_count)))
 	{
