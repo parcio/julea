@@ -43,22 +43,7 @@ enum JDBType
 
 typedef enum JDBType JDBType;
 
-union JDBTypeValue
-{
-	guint32 val_uint32;
-	gint32 val_sint32;
-	guint64 val_uint64;
-	gint64 val_sint64;
-	gdouble val_float64;
-	gfloat val_float32;
-	gchar const* val_string;
-	struct
-	{
-		gchar const* val_blob;
-		guint32 val_blob_length;
-	};
-};
-
+union JDBTypeValue;
 typedef union JDBTypeValue JDBTypeValue;
 
 #endif
