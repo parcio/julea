@@ -383,7 +383,6 @@ j_trace_init (gchar const* name)
 	{
 		return;
 	}
-	else
 	{
 		g_auto(GStrv) p = NULL;
 		guint i;

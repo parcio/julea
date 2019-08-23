@@ -28,12 +28,22 @@
 
 #include "jbson.c"
 
-static sqlite3* backend_db = NULL;
+/*
+ * sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
+ * to remove errors due to concurrent access.
+ * if SQL_MODE is defined as SQL_MODE_SINGLE_THREAD, the sqlite-generic code uses a global lock to prevent concurrency errors.
+ * otherwise there is no lock
+ */
+#define SQL_MODE_SINGLE_THREAD 0
+#define SQL_MODE_MULTI_THREAD 1
+#define SQL_MODE SQL_MODE_SINGLE_THREAD
+
+static gchar* path;
 
 static gboolean
-j_sql_finalize(void* _stmt, GError** error)
+j_sql_finalize(sqlite3* backend_db, void* _stmt, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
@@ -48,9 +58,9 @@ _error:
 }
 
 static gboolean
-j_sql_prepare(const char* sql, void* _stmt, GError** error)
+j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt** stmt = _stmt;
 
@@ -61,14 +71,14 @@ J_TRACE_FUNCTION(NULL);
 	}
 	return TRUE;
 _error:
-	j_sql_finalize(*stmt, NULL);
+	j_sql_finalize(backend_db, *stmt, NULL);
 	return FALSE;
 }
 
 static gboolean
-j_sql_bind_null(void* _stmt, guint idx, GError** error)
+j_sql_bind_null(sqlite3* backend_db, void* _stmt, guint idx, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
@@ -83,12 +93,13 @@ _error:
 }
 
 static gboolean
-j_sql_column(void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_column(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
+	(void)backend_db;
 	memset(value, 0, sizeof(*value));
 	switch (type)
 	{
@@ -129,9 +140,9 @@ _error:
 }
 
 static gboolean
-j_sql_bind_value(void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
@@ -204,9 +215,9 @@ _error:
 	return FALSE;
 }
 static gboolean
-j_sql_reset(void* _stmt, GError** error)
+j_sql_reset(sqlite3* backend_db, void* _stmt, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 
@@ -221,13 +232,13 @@ _error:
 }
 
 static gboolean
-j_sql_exec(const char* sql, GError** error)
+j_sql_exec(sqlite3* backend_db, const char* sql, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt;
 
-	if (G_UNLIKELY(!j_sql_prepare(sql, &stmt, error)))
+	if (G_UNLIKELY(!j_sql_prepare(backend_db, sql, &stmt, error)))
 	{
 		goto _error;
 	}
@@ -236,13 +247,13 @@ J_TRACE_FUNCTION(NULL);
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was '%s'", sqlite3_errmsg(backend_db));
 		goto _error;
 	}
-	if (G_UNLIKELY(!j_sql_finalize(stmt, error)))
+	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, error)))
 	{
 		goto _error;
 	}
 	return TRUE;
 _error:
-	if (G_UNLIKELY(!j_sql_finalize(stmt, NULL)))
+	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, NULL)))
 	{
 		goto _error2;
 	}
@@ -252,9 +263,9 @@ _error2:
 	return FALSE;
 }
 static gboolean
-j_sql_step(void* _stmt, gboolean* found, GError** error)
+j_sql_step(sqlite3* backend_db, void* _stmt, gboolean* found, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 	guint ret;
@@ -279,23 +290,23 @@ _error:
 	return FALSE;
 }
 static gboolean
-j_sql_step_and_reset_check_done(void* _stmt, GError** error)
+j_sql_step_and_reset_check_done(sqlite3* backend_db, void* _stmt, GError** error)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
 	gboolean sql_found;
 
-	if (G_UNLIKELY(!j_sql_step(_stmt, &sql_found, error)))
+	if (G_UNLIKELY(!j_sql_step(backend_db, _stmt, &sql_found, error)))
 	{
 		goto _error;
 	}
-	if (G_UNLIKELY(!j_sql_reset(_stmt, error)))
+	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, error)))
 	{
 		goto _error;
 	}
 	return TRUE;
 _error:
-	if (G_UNLIKELY(!j_sql_reset(_stmt, NULL)))
+	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, NULL)))
 	{
 		goto _error2;
 	}
@@ -304,16 +315,16 @@ _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
-#include "sql-generic.c"
-
-static gboolean
-backend_init(gchar const* path)
+static void*
+j_sql_open(void)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
+	sqlite3* backend_db = NULL;
 	g_autofree gchar* dirname = NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
+
 	if (strncmp("memory", path, 5))
 	{
 		dirname = g_path_get_dirname(path);
@@ -330,30 +341,45 @@ J_TRACE_FUNCTION(NULL);
 			goto _error;
 		}
 	}
-	if (G_UNLIKELY(!j_sql_exec("PRAGMA foreign_keys = ON", NULL)))
+	if (G_UNLIKELY(!j_sql_exec(backend_db, "PRAGMA foreign_keys = ON", NULL)))
 	{
 		goto _error;
 	}
-	if (G_UNLIKELY(!init_sql()))
-	{
-		goto _error;
-	}
-	return (backend_db != NULL);
+	return backend_db;
 _error:
 	sqlite3_close(backend_db);
-	return FALSE;
+	return NULL;
+}
+static void
+j_sql_close(sqlite3* backend_db)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	sqlite3_close(backend_db);
+}
+#include "sql-generic.c"
+static gboolean
+backend_init(gchar const* _path)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_debug("db-backend-init %s", _path);
+
+	path = g_strdup(_path);
+	return TRUE;
 }
 static void
 backend_fini(void)
 {
-J_TRACE_FUNCTION(NULL);
+	J_TRACE_FUNCTION(NULL);
 
-	fini_sql();
-	sqlite3_close(backend_db);
+	g_debug("db-backend-fini");
+
+	g_free(path);
 }
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
-	.component = J_BACKEND_COMPONENT_SERVER,
+	.component = J_BACKEND_COMPONENT_SERVER | J_BACKEND_COMPONENT_CLIENT,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
