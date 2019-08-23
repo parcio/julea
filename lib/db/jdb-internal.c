@@ -28,7 +28,7 @@
 
 #include <bson.h>
 
-#include <db/jdb-internal.h>
+#include "jdb-internal.h"
 
 #include <julea.h>
 #include "../../backend/db/jbson.c"
@@ -120,7 +120,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 	}
 	else
 	{
-		db_connection = j_connection_pool_pop(J_BACKEND_TYPE_DB,0);
+		db_connection = j_connection_pool_pop(J_BACKEND_TYPE_DB, 0);
 		j_message_send(message, db_connection);
 		reply = j_message_new_reply(message);
 		j_message_receive(reply, db_connection);
@@ -130,7 +130,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 			data = j_list_iterator_get(iter_recieve);
 			ret = j_backend_operation_from_message(reply, data->out_param, data->out_param_count) && ret;
 		}
-		j_connection_pool_push(J_BACKEND_TYPE_DB,0, db_connection);
+		j_connection_pool_push(J_BACKEND_TYPE_DB, 0, db_connection);
 	}
 	return ret;
 }

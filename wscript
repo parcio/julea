@@ -357,18 +357,13 @@ def configure(ctx):
 			'-Wuninitialized',
 			'-Wwrite-strings'
 		], False)
-		check_and_add_flags(ctx, '-fstack-protector-all')
-		check_and_add_flags(ctx, '-fno-omit-frame-pointer')
 		check_and_add_flags(ctx, '-ggdb')
-		check_and_add_flags(ctx, '-D_FORTIFY_SOURCE=2')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 	else:
 		check_and_add_flags(ctx, '-O2')
-		ctx.define('G_DISABLE_ASSERT', 1)
-		ctx.define('G_DISABLE_CHECKS', 1)
 
 	ctx.define('G_LOG_USE_STRUCTURED', 1)
 
@@ -420,6 +415,7 @@ def build(ctx):
 			use_extra.append('lib/julea-object')
 		elif client == 'hdf5':
 			use_extra.append('HDF5')
+			use_extra.append('SQLITE')
 			use_extra.append('lib/julea-kv')
 			use_extra.append('lib/julea-object')
 			use_extra.append('lib/julea-db')

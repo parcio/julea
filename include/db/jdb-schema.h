@@ -32,27 +32,10 @@
 #include <julea.h>
 #include <db/jdb-type.h>
 
-struct JDBSchemaIndex
-{
-	guint variable_count;
-	GHashTable* variables;
-};
+struct JDBSchemaIndex;
 typedef struct JDBSchemaIndex JDBSchemaIndex;
 
-struct JDBSchema
-{
-	gchar* namespace;
-	gchar* name;
-	gboolean bson_initialized;
-	bson_t bson;
-	gboolean bson_index_initialized;
-	GHashTable* variables; //contains char*
-	GArray* index; //contains GHashTable * which contain char*
-	bson_t bson_index;
-	guint bson_index_count;
-	gint ref_count;
-	gboolean server_side;
-};
+struct JDBSchema;
 typedef struct JDBSchema JDBSchema;
 
 /**

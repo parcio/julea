@@ -60,14 +60,7 @@ enum JDBSelectorOperator
 
 typedef enum JDBSelectorOperator JDBSelectorOperator;
 
-struct JDBSelector
-{
-	JDBSelectorMode mode;
-	JDBSchema* schema;
-	gint ref_count;
-	bson_t bson;
-	guint bson_count;
-};
+struct JDBSelector;
 
 typedef struct JDBSelector JDBSelector;
 

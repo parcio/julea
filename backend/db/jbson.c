@@ -27,6 +27,8 @@
 
 #include <jtrace.h>
 
+#include "../../lib/db/jdb-internal.h"
+
 G_GNUC_UNUSED
 static
 gboolean

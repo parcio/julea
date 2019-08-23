@@ -33,16 +33,7 @@
 #include <db/jdb-schema.h>
 #include <db/jdb-selector.h>
 
-struct JDBIterator
-{
-	JDBSchema* schema;
-	JDBSelector* selector;
-	gpointer iterator;
-	gint ref_count;
-	gboolean valid;
-	gboolean bson_valid;
-	bson_t bson;
-};
+struct JDBIterator;
 typedef struct JDBIterator JDBIterator;
 
 /**

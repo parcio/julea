@@ -29,7 +29,7 @@
 #include <bson.h>
 
 #include <julea.h>
-#include <db/jdb-internal.h>
+#include "jdb-internal.h"
 #include <julea-db.h>
 #include "../../backend/db/jbson.c"
 
