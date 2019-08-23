@@ -105,7 +105,7 @@ j_backend_operation_unwrap_db_query (JBackend* backend, gpointer batch, JBackend
 	ret = j_backend_db_query(backend, batch, data->in_param[1].ptr, data->in_param[2].ptr, &iter, data->out_param[1].ptr);
 	if (!ret)
 	{
-		return FALSE;
+		goto _error;
 	}
 	i = 0;
 	do
@@ -127,6 +127,8 @@ j_backend_operation_unwrap_db_query (JBackend* backend, gpointer batch, JBackend
 		*error = NULL;
 	}
 	return TRUE;
+_error:
+	return FALSE;
 }
 
 gboolean
@@ -309,8 +311,10 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 						if (j_message_get_4(message))
 						{
 							ret = FALSE;
-							j_message_get_4(message);
+							error_code = j_message_get_4(message);
+							error_domain_len = j_message_get_4(message);
 							error_message_len = j_message_get_4(message);
+							j_message_get_n(message, error_domain_len);
 							j_message_get_n(message, error_message_len);
 						}
 					}

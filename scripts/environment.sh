@@ -27,6 +27,7 @@ SELF_BASE="${SELF_PATH##*/}"
 set_path
 set_library_path
 set_pkg_config_path
+set_backend_path
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 

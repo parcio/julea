@@ -41,6 +41,8 @@ JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpoi
 JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
 void j_background_operation_unref (JBackgroundOperation*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBackgroundOperation, j_background_operation_unref)
+
 gpointer j_background_operation_wait (JBackgroundOperation*);
 
 G_END_DECLS

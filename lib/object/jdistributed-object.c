@@ -482,7 +482,8 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
 
 	JBackend* object_backend;
 	g_autoptr(JListIterator) it = NULL;
@@ -587,7 +588,8 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
 
 	JBackend* object_backend;
 	g_autoptr(JListIterator) it = NULL;
@@ -684,7 +686,8 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
 
 	JBackend* object_backend;
 	g_autofree JList** br_lists = NULL;
@@ -858,7 +861,8 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
 
 	JBackend* object_backend;
 	g_autofree JList** bw_lists = NULL;
@@ -1033,7 +1037,8 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret = FALSE;
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
 
 	JBackend* object_backend;
 	g_autoptr(JListIterator) it = NULL;

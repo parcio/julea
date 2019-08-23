@@ -72,3 +72,17 @@ set_pkg_config_path ()
 
 	export PKG_CONFIG_PATH
 }
+
+set_backend_path ()
+{
+	if test -z "${JULEA_PREFIX}"
+	then
+		local build_dir
+
+		build_dir="$(get_directory "${SELF_DIR}/../build")"
+
+		JULEA_BACKEND_PATH="${build_dir}/backend"
+	fi
+
+	export JULEA_BACKEND_PATH
+}

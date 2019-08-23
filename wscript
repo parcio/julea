@@ -66,10 +66,8 @@ def check_cc_rpath(ctx, opt, **kwargs):
 
 
 def get_rpath(ctx):
-	if not ctx.env.JULEA_DEBUG:
-		return None
-
-	return ['{0}/lib'.format(os.path.abspath(ctx.out_dir))]
+	return None
+	# return ['{0}/lib'.format(os.path.abspath(ctx.out_dir))]
 
 
 def check_and_add_flags(ctx, flags, mandatory=True, type=['cflags']):
@@ -377,20 +375,8 @@ def configure(ctx):
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)
 
-	backend_paths = []
-
-	if ctx.options.debug:
-		# ctx.out_dir is not available yet
-		out_dir = ctx.options.out or out
-		backend_path_build = '{0}/backend'.format(os.path.abspath(out_dir))
-		ctx.define('JULEA_BACKEND_PATH_BUILD', backend_path_build)
-		backend_paths.append(backend_path_build)
-
 	backend_path = Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env)
 	ctx.define('JULEA_BACKEND_PATH', backend_path)
-	backend_paths.append(backend_path)
-
-	ctx.msg('Setting backend paths to', ', '.join(backend_paths))
 
 	ctx.write_config_header('include/julea-config.h')
 

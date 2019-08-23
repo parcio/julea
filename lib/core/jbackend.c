@@ -65,8 +65,9 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
+	gchar const* backend_path = NULL;
 	gchar* path = NULL;
-	gchar* tpath = NULL;
+	gchar* type_path = NULL;
 	gchar const* type_str = NULL;
 
 	switch(type)
@@ -84,20 +85,23 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 			g_warn_if_reached();
 	}
 
-#ifdef JULEA_BACKEND_PATH_BUILD
-	tpath = g_build_filename(JULEA_BACKEND_PATH_BUILD, type_str, NULL);
-	path = g_module_build_path(tpath, name);
-	module = g_module_open(path, G_MODULE_BIND_LOCAL);
-	g_free(tpath);
-	g_free(path);
+#ifdef JULEA_DEBUG
+	if ((backend_path = g_getenv("JULEA_BACKEND_PATH")) != NULL)
+	{
+		type_path = g_build_filename(backend_path, type_str, NULL);
+		path = g_module_build_path(type_path, name);
+		module = g_module_open(path, G_MODULE_BIND_LOCAL);
+		g_free(type_path);
+		g_free(path);
+	}
 #endif
 
 	if (module == NULL)
 	{
-		tpath = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
-		path = g_module_build_path(tpath, name);
+		type_path = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
+		path = g_module_build_path(type_path, name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(tpath);
+		g_free(type_path);
 		g_free(path);
 	}
 
