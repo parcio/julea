@@ -33,19 +33,25 @@ struct JBackendFile
 
 typedef struct JBackendFile JBackendFile;
 
-static gchar* jd_backend_path = NULL;
+struct JBackendData
+{
+	gchar* path;
+};
+
+typedef struct JBackendData JBackendData;
 
 static
 gboolean
-backend_create (gchar const* namespace, gchar const* path, gpointer* data)
+backend_create (gpointer bData, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* backendData = bData;
 	JBackendFile* bf;
 	GFile* file;
 	GFile* parent;
 	GFileIOStream* stream;
 	gchar* full_path;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(backendData->path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
@@ -71,14 +77,15 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 
 static
 gboolean
-backend_open (gchar const* namespace, gchar const* path, gpointer* data)
+backend_open (gpointer bData, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* backendData = bData;
 	JBackendFile* bf;
 	GFile* file;
 	GFileIOStream* stream;
 	gchar* full_path;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(backendData->path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
@@ -98,12 +105,13 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 
 static
 gboolean
-backend_delete (gpointer data)
+backend_delete (gpointer bData, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
-
 	GFile* file;
+
+	(void) bData;
 
 	file = g_file_new_for_path(bf->path);
 
@@ -122,10 +130,12 @@ backend_delete (gpointer data)
 
 static
 gboolean
-backend_close (gpointer data)
+backend_close (gpointer bData, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
+
+	(void) bData;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 	ret = g_io_stream_close(G_IO_STREAM(bf->stream), NULL, NULL);
@@ -140,10 +150,12 @@ backend_close (gpointer data)
 
 static
 gboolean
-backend_status (gpointer data, gint64* modification_time, guint64* size)
+backend_status (gpointer bData, gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
+
+	(void) bData;
 
 	//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
 
@@ -170,13 +182,14 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 
 static
 gboolean
-backend_sync (gpointer data)
+backend_sync (gpointer bData, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
-
 	GOutputStream* output;
 
+	(void) bData;
+	
 	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
@@ -188,13 +201,15 @@ backend_sync (gpointer data)
 
 static
 gboolean
-backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read (gpointer bData, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
 
 	GInputStream* input;
 	gsize nbytes;
+
+	(void) bData;
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(bf->stream));
 
@@ -216,13 +231,15 @@ backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, gu
 
 static
 gboolean
-backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write (gpointer bData, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
 
 	GOutputStream* output;
 	gsize nbytes;
+
+	(void) bData;
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
@@ -244,24 +261,30 @@ backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offs
 
 static
 gboolean
-backend_init (gchar const* path)
+backend_init (gpointer* bData, gchar const* path)
 {
+	JBackendData* backendData = g_slice_new(JBackendData);
 	GFile* file;
 
-	jd_backend_path = g_strdup(path);
+	backendData->path = g_strdup(path);
 
 	file = g_file_new_for_path(path);
 	g_file_make_directory_with_parents(file, NULL, NULL);
 	g_object_unref(file);
+
+	*bData = backendData;
 
 	return TRUE;
 }
 
 static
 void
-backend_fini (void)
+backend_fini (gpointer bData)
 {
-	g_free(jd_backend_path);
+	JBackendData* backendData = bData;
+
+	g_free(backendData->path);
+	g_free(backendData);
 }
 
 static

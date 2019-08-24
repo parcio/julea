@@ -176,7 +176,7 @@ j_init (void)
 
 	if (j_backend_load_client(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &(common->object_module), &(common->object_backend)))
 	{
-		if (common->object_backend == NULL || !j_backend_object_init(common->object_backend, object_path))
+		if (common->object_backend == NULL || !j_backend_object_init(&common->object_backend, object_path))
 		{
 			g_critical("Could not initialize object backend %s.\n", object_backend);
 			goto error;

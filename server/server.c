@@ -248,7 +248,7 @@ main (int argc, char** argv)
 
 	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
 	{
-		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
+		if (jd_object_backend == NULL || !j_backend_object_init(&jd_object_backend, object_path))
 		{
 			g_critical("Could not initialize object backend %s.\n", object_backend);
 			return 1;

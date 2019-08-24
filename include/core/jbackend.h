@@ -118,29 +118,32 @@ enum JBackendComponent
 
 typedef enum JBackendComponent JBackendComponent;
 
+typedef struct JBackend JBackend;
+
 struct JBackend
 {
 	JBackendType type;
 	JBackendComponent component;
+	gpointer data;
 
 	union
 	{
 		struct
 		{
-			gboolean (*backend_init) (gchar const*);
-			void (*backend_fini) (void);
+			gboolean (*backend_init) (gpointer*, gchar const*);
+			void (*backend_fini) (gpointer);
 
-			gboolean (*backend_create) (gchar const*, gchar const*, gpointer*);
-			gboolean (*backend_open) (gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_create) (gpointer, gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_open) (gpointer, gchar const*, gchar const*, gpointer*);
 
-			gboolean (*backend_delete) (gpointer);
-			gboolean (*backend_close) (gpointer);
+			gboolean (*backend_delete) (gpointer, gpointer);
+			gboolean (*backend_close) (gpointer, gpointer);
 
-			gboolean (*backend_status) (gpointer, gint64*, guint64*);
-			gboolean (*backend_sync) (gpointer);
+			gboolean (*backend_status) (gpointer, gpointer, gint64*, guint64*);
+			gboolean (*backend_sync) (gpointer, gpointer);
 
-			gboolean (*backend_read) (gpointer, gpointer, guint64, guint64, guint64*);
-			gboolean (*backend_write) (gpointer, gconstpointer, guint64, guint64, guint64*);
+			gboolean (*backend_read) (gpointer, gpointer, gpointer, guint64, guint64, guint64*);
+			gboolean (*backend_write) (gpointer, gpointer, gconstpointer, guint64, guint64, guint64*);
 		}
 		object;
 
@@ -369,8 +372,6 @@ struct JBackend
 	};
 };
 
-typedef struct JBackend JBackend;
-
 GQuark j_backend_bson_error_quark(void);
 GQuark j_backend_db_error_quark (void);
 GQuark j_backend_sql_error_quark (void);
@@ -380,7 +381,7 @@ JBackend* backend_info (void);
 gboolean j_backend_load_client (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 gboolean j_backend_load_server (gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
 
-gboolean j_backend_object_init (JBackend*, gchar const*);
+gboolean j_backend_object_init (JBackend**, gchar const*);
 void j_backend_object_fini (JBackend*);
 
 gboolean j_backend_object_create (JBackend*, gchar const*, gchar const*, gpointer*);

@@ -249,20 +249,26 @@ j_backend_load_server (gchar const* name, gchar const* component, JBackendType t
 }
 
 gboolean
-j_backend_object_init (JBackend* backend, gchar const* path)
+j_backend_object_init (JBackend** backend, gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret;
 
+	JBackend* tmpBackend = g_slice_new(JBackend);
+
+	*tmpBackend = **backend;
+
 	g_return_val_if_fail(backend != NULL, FALSE);
-	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
+	g_return_val_if_fail((*backend)->type == J_BACKEND_TYPE_OBJECT, FALSE);
 	g_return_val_if_fail(path != NULL, FALSE);
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->object.backend_init(path);
+		ret = (*backend)->object.backend_init(&tmpBackend->data, path);
 	}
+
+	*backend = tmpBackend;
 
 	return ret;
 }
@@ -277,8 +283,10 @@ j_backend_object_fini (JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->object.backend_fini();
+		backend->object.backend_fini(backend->data);
 	}
+
+	g_free(backend);
 }
 
 gboolean
@@ -296,7 +304,7 @@ j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const*
 
 	{
 		J_TRACE("backend_create", "%s, %s, %p", namespace, path, (gpointer)data);
-		ret = backend->object.backend_create(namespace, path, data);
+		ret = backend->object.backend_create(backend->data, namespace, path, data);
 	}
 
 	return ret;
@@ -317,7 +325,7 @@ j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* p
 
 	{
 		J_TRACE("backend_open", "%s, %s, %p", namespace, path, (gpointer)data);
-		ret = backend->object.backend_open(namespace, path, data);
+		ret = backend->object.backend_open(backend->data, namespace, path, data);
 	}
 
 	return ret;
@@ -336,7 +344,7 @@ j_backend_object_delete (JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_delete", "%p", data);
-		ret = backend->object.backend_delete(data);
+		ret = backend->object.backend_delete(backend->data, data);
 	}
 
 	return ret;
@@ -355,7 +363,7 @@ j_backend_object_close (JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_close", "%p", data);
-		ret = backend->object.backend_close(data);
+		ret = backend->object.backend_close(backend->data, data);
 	}
 
 	return ret;
@@ -376,7 +384,7 @@ j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_
 
 	{
 		J_TRACE("backend_status", "%p, %p, %p", data, (gpointer)modification_time, (gpointer)size);
-		ret = backend->object.backend_status(data, modification_time, size);
+		ret = backend->object.backend_status(backend->data, data, modification_time, size);
 	}
 
 	return ret;
@@ -395,7 +403,7 @@ j_backend_object_sync (JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_sync", "%p", data);
-		ret = backend->object.backend_sync(data);
+		ret = backend->object.backend_sync(backend->data, data);
 	}
 
 	return ret;
@@ -416,7 +424,7 @@ j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint6
 
 	{
 		J_TRACE("backend_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_read);
-		ret = backend->object.backend_read(data, buffer, length, offset, bytes_read);
+		ret = backend->object.backend_read(backend->data, data, buffer, length, offset, bytes_read);
 	}
 
 	return ret;
@@ -437,7 +445,7 @@ j_backend_object_write (JBackend* backend, gpointer data, gconstpointer buffer, 
 
 	{
 		J_TRACE("backend_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_written);
-		ret = backend->object.backend_write(data, buffer, length, offset, bytes_written);
+		ret = backend->object.backend_write(backend->data, data, buffer, length, offset, bytes_written);
 	}
 
 	return ret;
