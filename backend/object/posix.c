@@ -31,6 +31,14 @@
 
 #include <julea.h>
 
+struct JBackendData
+{
+	gchar* path;
+	// FIXME check whether hash tables can stay global
+};
+
+typedef struct JBackendData JBackendData;
+
 struct JBackendFile
 {
 	gchar* path;
@@ -40,8 +48,9 @@ struct JBackendFile
 
 typedef struct JBackendFile JBackendFile;
 
+static guint jd_num_backends = 0;
+
 static GHashTable* jd_backend_file_cache = NULL;
-static gchar* jd_backend_path = NULL;
 
 G_LOCK_DEFINE_STATIC(jd_backend_file_cache);
 
@@ -131,8 +140,9 @@ backend_file_add(GHashTable* files, JBackendFile* file)
 }
 
 static gboolean
-backend_create(gchar const* namespace, gchar const* path, gpointer* data)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* bd = backend_data;
 	GHashTable* files = jd_backend_files_get_thread();
 
 	JBackendFile* file = NULL;
@@ -140,7 +150,7 @@ backend_create(gchar const* namespace, gchar const* path, gpointer* data)
 	gchar* full_path;
 	gint fd;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(bd->path, namespace, path, NULL);
 
 	if ((file = backend_file_get(files, full_path)) != NULL)
 	{
@@ -175,15 +185,16 @@ end:
 }
 
 static gboolean
-backend_open(gchar const* namespace, gchar const* path, gpointer* data)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* bd = backend_data;
 	GHashTable* files = jd_backend_files_get_thread();
 
 	JBackendFile* file = NULL;
 	gchar* full_path;
 	gint fd;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(bd->path, namespace, path, NULL);
 
 	if ((file = backend_file_get(files, full_path)) != NULL)
 	{
@@ -213,11 +224,13 @@ end:
 }
 
 static gboolean
-backend_delete(gpointer data)
+backend_delete(gpointer backend_data, gpointer data)
 {
 	JBackendFile* file = data;
 	GHashTable* files = jd_backend_files_get_thread();
 	gboolean ret;
+
+	(void)backend_data;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_DELETE);
 	ret = (g_unlink(file->path) == 0);
@@ -229,11 +242,13 @@ backend_delete(gpointer data)
 }
 
 static gboolean
-backend_close(gpointer data)
+backend_close(gpointer backend_data, gpointer data)
 {
 	JBackendFile* file = data;
 	GHashTable* files = jd_backend_files_get_thread();
 	gboolean ret;
+
+	(void)backend_data;
 
 	ret = g_hash_table_remove(files, file->path);
 
@@ -241,11 +256,13 @@ backend_close(gpointer data)
 }
 
 static gboolean
-backend_status(gpointer data, gint64* modification_time, guint64* size)
+backend_status(gpointer backend_data, gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* file = data;
 	gboolean ret = TRUE;
 	struct stat buf;
+
+	(void)backend_data;
 
 	if (modification_time != NULL || size != NULL)
 	{
@@ -272,10 +289,12 @@ backend_status(gpointer data, gint64* modification_time, guint64* size)
 }
 
 static gboolean
-backend_sync(gpointer data)
+backend_sync(gpointer backend_data, gpointer data)
 {
 	JBackendFile* file = data;
 	gboolean ret;
+
+	(void)backend_data;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_SYNC);
 	ret = (fsync(file->fd) == 0);
@@ -285,11 +304,13 @@ backend_sync(gpointer data)
 }
 
 static gboolean
-backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* file = data;
 
 	gsize nbytes_total = 0;
+
+	(void)backend_data;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_READ);
 
@@ -325,11 +346,13 @@ backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, gui
 }
 
 static gboolean
-backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer backend_data, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* file = data;
 
 	gsize nbytes_total = 0;
+
+	(void)backend_data;
 
 	j_trace_file_begin(file->path, J_TRACE_FILE_WRITE);
 
@@ -361,23 +384,37 @@ backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offse
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
-	jd_backend_path = g_strdup(path);
+	JBackendData* bd;
+
+	bd = g_slice_new(JBackendData);
+	bd->path = g_strdup(path);
+
 	jd_backend_file_cache = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
 	g_mkdir_with_parents(path, 0700);
+
+	g_atomic_int_inc(&jd_num_backends);
+
+	*backend_data = bd;
 
 	return TRUE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
-	g_assert(g_hash_table_size(jd_backend_file_cache) == 0);
-	g_hash_table_destroy(jd_backend_file_cache);
+	JBackendData* bd = backend_data;
 
-	g_free(jd_backend_path);
+	if (g_atomic_int_dec_and_test(&jd_num_backends))
+	{
+		g_assert(g_hash_table_size(jd_backend_file_cache) == 0);
+		g_hash_table_destroy(jd_backend_file_cache);
+	}
+
+	g_free(bd->path);
+	g_slice_free(JBackendData, bd);
 }
 
 static JBackend posix_backend = {

@@ -25,6 +25,13 @@
 
 #include <julea.h>
 
+struct JBackendData
+{
+	gchar* path;
+};
+
+typedef struct JBackendData JBackendData;
+
 struct JBackendFile
 {
 	gchar* path;
@@ -33,18 +40,17 @@ struct JBackendFile
 
 typedef struct JBackendFile JBackendFile;
 
-static gchar* jd_backend_path = NULL;
-
 static gboolean
-backend_create(gchar const* namespace, gchar const* path, gpointer* data)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* bd = backend_data;
 	JBackendFile* bf;
 	GFile* file;
 	GFile* parent;
 	GFileIOStream* stream;
 	gchar* full_path;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(bd->path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
@@ -69,14 +75,15 @@ backend_create(gchar const* namespace, gchar const* path, gpointer* data)
 }
 
 static gboolean
-backend_open(gchar const* namespace, gchar const* path, gpointer* data)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
+	JBackendData* bd = backend_data;
 	JBackendFile* bf;
 	GFile* file;
 	GFileIOStream* stream;
 	gchar* full_path;
 
-	full_path = g_build_filename(jd_backend_path, namespace, path, NULL);
+	full_path = g_build_filename(bd->path, namespace, path, NULL);
 	file = g_file_new_for_path(full_path);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
@@ -95,12 +102,13 @@ backend_open(gchar const* namespace, gchar const* path, gpointer* data)
 }
 
 static gboolean
-backend_delete(gpointer data)
+backend_delete(gpointer backend_data, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
-
 	GFile* file;
+
+	(void)backend_data;
 
 	file = g_file_new_for_path(bf->path);
 
@@ -118,10 +126,12 @@ backend_delete(gpointer data)
 }
 
 static gboolean
-backend_close(gpointer data)
+backend_close(gpointer backend_data, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
+
+	(void)backend_data;
 
 	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
 	ret = g_io_stream_close(G_IO_STREAM(bf->stream), NULL, NULL);
@@ -135,10 +145,12 @@ backend_close(gpointer data)
 }
 
 static gboolean
-backend_status(gpointer data, gint64* modification_time, guint64* size)
+backend_status(gpointer backend_data, gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
 	gboolean ret = TRUE;
+
+	(void)backend_data;
 
 	if (modification_time != NULL || size != NULL)
 	{
@@ -174,12 +186,13 @@ backend_status(gpointer data, gint64* modification_time, guint64* size)
 }
 
 static gboolean
-backend_sync(gpointer data)
+backend_sync(gpointer backend_data, gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
-
 	GOutputStream* output;
+
+	(void)backend_data;
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
@@ -191,13 +204,15 @@ backend_sync(gpointer data)
 }
 
 static gboolean
-backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
 
 	GInputStream* input;
 	gsize nbytes;
+
+	(void)backend_data;
 
 	input = g_io_stream_get_input_stream(G_IO_STREAM(bf->stream));
 
@@ -218,13 +233,15 @@ backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, gui
 }
 
 static gboolean
-backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer backend_data, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
 
 	GOutputStream* output;
 	gsize nbytes;
+
+	(void)backend_data;
 
 	output = g_io_stream_get_output_stream(G_IO_STREAM(bf->stream));
 
@@ -245,23 +262,30 @@ backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offse
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
+	JBackendData* bd;
 	GFile* file;
 
-	jd_backend_path = g_strdup(path);
+	bd = g_slice_new(JBackendData);
+	bd->path = g_strdup(path);
 
 	file = g_file_new_for_path(path);
 	g_file_make_directory_with_parents(file, NULL, NULL);
 	g_object_unref(file);
 
+	*backend_data = bd;
+
 	return TRUE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
-	g_free(jd_backend_path);
+	JBackendData* bd = backend_data;
+
+	g_free(bd->path);
+	g_slice_free(JBackendData, bd);
 }
 
 static JBackend gio_backend = {

@@ -126,24 +126,26 @@ struct JBackend
 	JBackendType type;
 	JBackendComponent component;
 
+	gpointer data;
+
 	union
 	{
 		struct
 		{
-			gboolean (*backend_init)(gchar const*);
-			void (*backend_fini)(void);
+			gboolean (*backend_init)(gchar const*, gpointer*);
+			void (*backend_fini)(gpointer);
 
-			gboolean (*backend_create)(gchar const*, gchar const*, gpointer*);
-			gboolean (*backend_open)(gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_create)(gpointer, gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_open)(gpointer, gchar const*, gchar const*, gpointer*);
 
-			gboolean (*backend_delete)(gpointer);
-			gboolean (*backend_close)(gpointer);
+			gboolean (*backend_delete)(gpointer, gpointer);
+			gboolean (*backend_close)(gpointer, gpointer);
 
-			gboolean (*backend_status)(gpointer, gint64*, guint64*);
-			gboolean (*backend_sync)(gpointer);
+			gboolean (*backend_status)(gpointer, gpointer, gint64*, guint64*);
+			gboolean (*backend_sync)(gpointer, gpointer);
 
-			gboolean (*backend_read)(gpointer, gpointer, guint64, guint64, guint64*);
-			gboolean (*backend_write)(gpointer, gconstpointer, guint64, guint64, guint64*);
+			gboolean (*backend_read)(gpointer, gpointer, gpointer, guint64, guint64, guint64*);
+			gboolean (*backend_write)(gpointer, gpointer, gconstpointer, guint64, guint64, guint64*);
 		} object;
 
 		struct

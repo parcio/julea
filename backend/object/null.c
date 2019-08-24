@@ -24,9 +24,11 @@
 #include <julea.h>
 
 static gboolean
-backend_create(gchar const* namespace, gchar const* path, gpointer* data)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gchar* full_path;
+
+	(void)backend_data;
 
 	full_path = g_build_filename(namespace, path, NULL);
 
@@ -39,9 +41,11 @@ backend_create(gchar const* namespace, gchar const* path, gpointer* data)
 }
 
 static gboolean
-backend_open(gchar const* namespace, gchar const* path, gpointer* data)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gchar* full_path;
+
+	(void)backend_data;
 
 	full_path = g_build_filename(namespace, path, NULL);
 
@@ -54,9 +58,11 @@ backend_open(gchar const* namespace, gchar const* path, gpointer* data)
 }
 
 static gboolean
-backend_delete(gpointer data)
+backend_delete(gpointer backend_data, gpointer data)
 {
 	gchar* full_path = data;
+
+	(void)backend_data;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_DELETE);
 	j_trace_file_end(full_path, J_TRACE_FILE_DELETE, 0, 0);
@@ -67,9 +73,11 @@ backend_delete(gpointer data)
 }
 
 static gboolean
-backend_close(gpointer data)
+backend_close(gpointer backend_data, gpointer data)
 {
 	gchar* full_path = data;
+
+	(void)backend_data;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CLOSE);
 	j_trace_file_end(full_path, J_TRACE_FILE_CLOSE, 0, 0);
@@ -80,9 +88,11 @@ backend_close(gpointer data)
 }
 
 static gboolean
-backend_status(gpointer data, gint64* modification_time, guint64* size)
+backend_status(gpointer backend_data, gpointer data, gint64* modification_time, guint64* size)
 {
 	gchar const* full_path = data;
+
+	(void)backend_data;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_STATUS);
 	j_trace_file_end(full_path, J_TRACE_FILE_STATUS, 0, 0);
@@ -101,9 +111,11 @@ backend_status(gpointer data, gint64* modification_time, guint64* size)
 }
 
 static gboolean
-backend_sync(gpointer data)
+backend_sync(gpointer backend_data, gpointer data)
 {
 	gchar const* full_path = data;
+
+	(void)backend_data;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_SYNC);
 	j_trace_file_end(full_path, J_TRACE_FILE_SYNC, 0, 0);
@@ -112,10 +124,11 @@ backend_sync(gpointer data)
 }
 
 static gboolean
-backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gchar const* full_path = data;
 
+	(void)backend_data;
 	(void)buffer;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_READ);
@@ -130,10 +143,11 @@ backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, gui
 }
 
 static gboolean
-backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer backend_data, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gchar const* full_path = data;
 
+	(void)backend_data;
 	(void)buffer;
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_WRITE);
@@ -148,16 +162,18 @@ backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offse
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
+	(void)backend_data;
 	(void)path;
 
 	return TRUE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
+	(void)backend_data;
 }
 
 static JBackend null_backend = {
