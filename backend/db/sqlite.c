@@ -38,6 +38,8 @@
 #define SQL_MODE_MULTI_THREAD 1
 #define SQL_MODE SQL_MODE_SINGLE_THREAD
 
+#define sql_autoincrement_string ""
+
 static gchar* path;
 
 static gboolean
@@ -58,11 +60,15 @@ _error:
 }
 
 static gboolean
-j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GError** error)
+j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt** stmt = _stmt;
+	(void)types_in;
+	(void)types_out;
+
+	//g_debug("sql = %s", sql);
 
 	if (G_UNLIKELY(sqlite3_prepare_v3(backend_db, sql, -1, SQLITE_PREPARE_PERSISTENT, stmt, NULL) != SQLITE_OK))
 	{
@@ -238,7 +244,7 @@ j_sql_exec(sqlite3* backend_db, const char* sql, GError** error)
 
 	sqlite3_stmt* stmt;
 
-	if (G_UNLIKELY(!j_sql_prepare(backend_db, sql, &stmt, error)))
+	if (G_UNLIKELY(!j_sql_prepare(backend_db, sql, &stmt, NULL, NULL, error)))
 	{
 		goto _error;
 	}
@@ -357,13 +363,28 @@ j_sql_close(sqlite3* backend_db)
 
 	sqlite3_close(backend_db);
 }
+static gboolean
+j_sql_start_transaction(sqlite3* backend_db, GError** error)
+{
+	return j_sql_exec(backend_db, "BEGIN TRANSACTION", error);
+}
+static gboolean
+j_sql_commit_transaction(sqlite3* backend_db, GError** error)
+{
+	return j_sql_exec(backend_db, "COMMIT", error);
+}
+static gboolean
+j_sql_abort_transaction(sqlite3* backend_db, GError** error)
+{
+	return j_sql_exec(backend_db, "ROLLBACK", error);
+}
 #include "sql-generic.c"
 static gboolean
 backend_init(gchar const* _path)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_debug("db-backend-init %s", _path);
+	//g_debug("db-backend-init %s", _path);
 
 	path = g_strdup(_path);
 	return TRUE;
@@ -373,8 +394,9 @@ backend_fini(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_debug("db-backend-fini");
+	//g_debug("db-backend-fini");
 
+	g_private_replace(&thread_variables_global, NULL);
 	g_free(path);
 }
 static JBackend sqlite_backend = {

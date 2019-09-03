@@ -36,7 +36,8 @@ struct JSqlCacheNames
 typedef struct JSqlCacheNames JSqlCacheNames;
 struct JSqlCacheSQLQueries
 {
-	GHashTable* queries;
+	GHashTable* types; // variablename(char*) -> variabletype(JDBType)
+	GHashTable* queries; //sql(char*) -> (JSqlCacheSQLPrepared*)
 };
 typedef struct JSqlCacheSQLQueries JSqlCacheSQLQueries;
 struct JSqlCacheSQLPrepared
@@ -45,8 +46,9 @@ struct JSqlCacheSQLPrepared
 	void* stmt;
 	guint variables_count;
 	GHashTable* variables_index;
-	GHashTable* variables_type;
 	gboolean initialized;
+	gchar* namespace;
+	gchar* name;
 };
 typedef struct JSqlCacheSQLPrepared JSqlCacheSQLPrepared;
 struct JSqlBatch
@@ -97,13 +99,14 @@ thread_variables_get(GError** error)
 	thread_variables = g_private_get(&thread_variables_global);
 	if (!thread_variables)
 	{
+		g_debug("!thread_variables");
 		thread_variables = g_new0(JThreadVariables, 1);
 		thread_variables->sql_backend = j_sql_open();
 		if (G_UNLIKELY(!j_sql_exec(thread_variables->sql_backend,
 			    "CREATE TABLE IF NOT EXISTS schema_structure ("
-			    "namespace TEXT,"
-			    "name TEXT,"
-			    "varname TEXT,"
+			    "namespace VARCHAR(255),"
+			    "name VARCHAR(255),"
+			    "varname VARCHAR(255),"
 			    "vartype INTEGER,"
 			    "PRIMARY KEY (namespace, name, varname)"
 			    ")",
@@ -163,6 +166,10 @@ freeJSqlCacheSQLQueries(void* ptr)
 		{
 			g_hash_table_destroy(p->queries);
 		}
+		if (p->types)
+		{
+			g_hash_table_destroy(p->types);
+		}
 		g_free(p);
 	}
 }
@@ -182,10 +189,6 @@ freeJSqlCacheSQLPrepared(void* ptr)
 		{
 			g_hash_table_destroy(p->variables_index);
 		}
-		if (p->variables_type)
-		{
-			g_hash_table_destroy(p->variables_type);
-		}
 		if (p->sql)
 		{
 			g_string_free(p->sql, TRUE);
@@ -194,22 +197,23 @@ freeJSqlCacheSQLPrepared(void* ptr)
 		{
 			j_sql_finalize(thread_variables->sql_backend, p->stmt, NULL);
 		}
+		g_free(p->namespace);
+		g_free(p->name);
 		g_free(p);
 	}
 }
-static JSqlCacheSQLPrepared*
-getCachePrepared(gchar const* namespace, gchar const* name, gchar const* query, GError** error)
+static JSqlCacheSQLQueries*
+_getCachePrepared(gchar const* namespace, gchar const* name, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JSqlCacheNames* cacheNames = NULL;
 	JSqlCacheSQLQueries* cacheQueries = NULL;
-	JSqlCacheSQLPrepared* cachePrepared = NULL;
 	JThreadVariables* thread_variables = NULL;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
-
+	g_return_val_if_fail(thread_variables->namespaces != NULL, NULL);
 	if (!(cacheNames = g_hash_table_lookup(thread_variables->namespaces, namespace)))
 	{
 		cacheNames = g_new0(JSqlCacheNames, 1);
@@ -223,14 +227,103 @@ getCachePrepared(gchar const* namespace, gchar const* name, gchar const* query, 
 	{
 		cacheQueries = g_new0(JSqlCacheSQLQueries, 1);
 		cacheQueries->queries = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeJSqlCacheSQLPrepared);
+		cacheQueries->types = NULL;
 		if (G_UNLIKELY(!g_hash_table_insert(cacheNames->names, g_strdup(name), cacheQueries)))
 		{
 			g_assert_not_reached();
 		}
 	}
+	return cacheQueries;
+_error:
+	return NULL;
+}
+static gboolean
+_backend_schema_get(gpointer _batch, gchar const* name, bson_t* schema, GError** error);
+static GHashTable*
+getCacheSchema(gpointer _batch, gchar const* name, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JSqlBatch* batch = _batch;
+	gboolean schema_initialized = FALSE;
+	gboolean has_next;
+	gboolean equals;
+	bson_t schema;
+	JSqlCacheSQLQueries* cacheQueries = NULL;
+	bson_iter_t iter;
+	char* string_tmp;
+	JDBTypeValue value;
+
+	if (!(cacheQueries = _getCachePrepared(batch->namespace, name, error)))
+		goto _error;
+
+	if (cacheQueries->types == NULL)
+	{
+		cacheQueries->types = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		if (!(schema_initialized = _backend_schema_get(batch, name, &schema, error)))
+			goto _error;
+		if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema, error)))
+		{
+			goto _error;
+		}
+		while (TRUE)
+		{
+			if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
+			{
+				goto _error;
+			}
+			if (!has_next)
+			{
+				break;
+			}
+			if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
+			{
+				goto _error;
+			}
+			if (equals)
+			{
+				continue;
+			}
+			string_tmp = j_bson_iter_key(&iter, error);
+			if (G_UNLIKELY(!string_tmp))
+			{
+				goto _error;
+			}
+			if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &value, error)))
+			{
+				goto _error;
+			}
+			g_hash_table_insert(cacheQueries->types, g_strdup(string_tmp), GINT_TO_POINTER(value.val_uint32));
+		}
+	}
+	if (schema_initialized)
+		j_bson_destroy(&schema);
+	return cacheQueries->types;
+_error:
+	if (schema_initialized)
+		j_bson_destroy(&schema);
+	return NULL;
+}
+static JSqlCacheSQLPrepared*
+getCachePrepared(gchar const* namespace, gchar const* name, gchar const* query, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JSqlCacheSQLQueries* cacheQueries = NULL;
+	JSqlCacheSQLPrepared* cachePrepared = NULL;
+	JThreadVariables* thread_variables = NULL;
+
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
+		goto _error;
+
+	if (!(cacheQueries = _getCachePrepared(namespace, name, error)))
+		goto _error;
+
 	if (!(cachePrepared = g_hash_table_lookup(cacheQueries->queries, query)))
 	{
 		cachePrepared = g_new0(JSqlCacheSQLPrepared, 1);
+		cachePrepared->namespace = g_strdup(namespace);
+		cachePrepared->name = g_strdup(name);
 		if (G_UNLIKELY(!g_hash_table_insert(cacheQueries->queries, g_strdup(query), cachePrepared)))
 		{
 			g_assert_not_reached();
@@ -249,7 +342,10 @@ deleteCachePrepared(gchar const* namespace, gchar const* name)
 	JThreadVariables* thread_variables = NULL;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(NULL))))
+	{
 		goto _error;
+	}
+	g_return_if_fail(thread_variables->namespaces != NULL);
 	if (G_UNLIKELY(!(cacheNames = g_hash_table_lookup(thread_variables->namespaces, namespace))))
 	{
 		goto _error;
@@ -264,30 +360,14 @@ _backend_batch_start(JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
 
 	g_return_val_if_fail(!batch->open, FALSE);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
-	prepared = getCachePrepared(batch->namespace, "_default", "_batch_start", error);
-	if (G_UNLIKELY(!prepared))
-	{
+	if (!j_sql_start_transaction(thread_variables->sql_backend, error))
 		goto _error;
-	}
-	if (!prepared->initialized)
-	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "BEGIN TRANSACTION", &prepared->stmt, error)))
-	{
-		goto _error;
-	}
-		prepared->initialized = TRUE;
-	}
-	if (G_UNLIKELY(!j_sql_step_and_reset_check_done(thread_variables->sql_backend, prepared->stmt, error)))
-	{
-		goto _error;
-	}
 	batch->open = TRUE;
 	batch->aborted = FALSE;
 	return TRUE;
@@ -299,30 +379,15 @@ _backend_batch_execute(JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+
 	g_return_val_if_fail(batch->open || (!batch->open && batch->aborted), FALSE);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
-	prepared = getCachePrepared(batch->namespace, "_default", "_batch_execute", error);
-	if (G_UNLIKELY(!prepared))
-	{
+	if (!j_sql_commit_transaction(thread_variables->sql_backend, error))
 		goto _error;
-	}
-	if (!prepared->initialized)
-	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "COMMIT", &prepared->stmt, error)))
-		{
-			goto _error;
-		}
-		prepared->initialized = TRUE;
-	}
 	batch->open = FALSE;
-	if (G_UNLIKELY(!j_sql_step_and_reset_check_done(thread_variables->sql_backend, prepared->stmt, error)))
-	{
-		goto _error;
-	}
 	return TRUE;
 _error:
 	return FALSE;
@@ -332,31 +397,16 @@ _backend_batch_abort(JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+
 	g_return_val_if_fail(batch->open, FALSE);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
-	prepared = getCachePrepared(batch->namespace, "_default", "_batch_abort", error);
-	if (G_UNLIKELY(!prepared))
-	{
+	if (!j_sql_abort_transaction(thread_variables->sql_backend, error))
 		goto _error;
-	}
-	if (!prepared->initialized)
-	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "ROLLBACK", &prepared->stmt, error)))
-		{
-			goto _error;
-		}
-		prepared->initialized = TRUE;
-	}
 	batch->open = FALSE;
 	batch->aborted = TRUE;
-	if (G_UNLIKELY(!j_sql_step_and_reset_check_done(thread_variables->sql_backend, prepared->stmt, error)))
-	{
-		goto _error;
-	}
 	return TRUE;
 _error:
 	return FALSE;
@@ -437,14 +487,16 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 	guint counter = 0;
 	gboolean found_index = FALSE;
 	JDBTypeValue value;
-	const char* tmp_string;
+	const char* string_tmp;
 	GString* sql = g_string_new(NULL);
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(schema != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	prepared = getCachePrepared(batch->namespace, name, "_schema_create", error);
@@ -454,7 +506,13 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 	}
 	if (!prepared->initialized)
 	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "INSERT INTO schema_structure(namespace, name, varname, vartype) VALUES (?1, ?2, ?3, ?4)", &prepared->stmt, error)))
+		type = J_DB_TYPE_STRING;
+		g_array_append_val(arr_types_in, type);
+		g_array_append_val(arr_types_in, type);
+		g_array_append_val(arr_types_in, type);
+		type = J_DB_TYPE_UINT32;
+		g_array_append_val(arr_types_in, type);
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "INSERT INTO schema_structure(namespace, name, varname, vartype) VALUES (?, ?, ?, ?)", &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
 		}
@@ -465,7 +523,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 		//no ddl in transaction - most databases wont support that - continue without any open transaction
 		goto _error;
 	}
-	g_string_append_printf(sql, "CREATE TABLE %s_%s ( _id INTEGER PRIMARY KEY", batch->namespace, name);
+	g_string_append_printf(sql, "CREATE TABLE %s_%s ( _id INTEGER " sql_autoincrement_string " PRIMARY KEY", batch->namespace, name);
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
 	{
 		goto _error;
@@ -481,7 +539,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 			break;
 		}
 		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
-	{
+		{
 			goto _error;
 		}
 		if (equals)
@@ -519,7 +577,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 				g_string_append(sql, " REAL");
 				break;
 			case J_DB_TYPE_STRING:
-				g_string_append(sql, " TEXT");
+				g_string_append(sql, " VARCHAR(255)");
 				break;
 			case J_DB_TYPE_BLOB:
 				g_string_append(sql, " BLOB");
@@ -543,7 +601,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 	}
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 		sql = NULL;
 	}
 	if (found_index)
@@ -585,7 +643,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 					goto _error;
 				}
 				if (!has_next)
-			{
+				{
 					break;
 				}
 				if (first)
@@ -600,8 +658,8 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 				{
 					goto _error;
 				}
-				tmp_string = value.val_string;
-				g_string_append_printf(sql, "%s", tmp_string);
+				string_tmp = value.val_string;
+				g_string_append_printf(sql, "%s", string_tmp);
 			}
 			g_string_append(sql, " )");
 			if (G_UNLIKELY(!j_sql_exec(thread_variables->sql_backend, sql->str, error)))
@@ -610,7 +668,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 			}
 			if (sql)
 			{
-			g_string_free(sql, TRUE);
+				g_string_free(sql, TRUE);
 				sql = NULL;
 			}
 			i++;
@@ -660,21 +718,21 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 		}
 		if (!equals)
 		{
-	value.val_string = batch->namespace;
+			value.val_string = batch->namespace;
 			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, 1, J_DB_TYPE_STRING, &value, error)))
-	{
-		goto _error;
-	}
-	value.val_string = name;
+			{
+				goto _error;
+			}
+			value.val_string = name;
 			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, 2, J_DB_TYPE_STRING, &value, error)))
-	{
-		goto _error;
-	}
+			{
+				goto _error;
+			}
 			value.val_string = j_bson_iter_key(&iter, error);
 			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, 3, J_DB_TYPE_STRING, &value, error)))
-	{
-		goto _error;
-	}
+			{
+				goto _error;
+			}
 			if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &value, error)))
 			{
 				goto _error;
@@ -688,9 +746,9 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 				goto _error;
 			}
 			if (G_UNLIKELY(!j_sql_step_and_reset_check_done(thread_variables->sql_backend, prepared->stmt, error)))
-	{
-		goto _error;
-	}
+			{
+				goto _error;
+			}
 		}
 	}
 	if (G_UNLIKELY(!_backend_batch_start(batch, error)))
@@ -705,7 +763,7 @@ _error:
 	}
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 	}
 	return FALSE;
 }
@@ -722,10 +780,15 @@ _backend_schema_get(gpointer _batch, gchar const* name, bson_t* schema, GError**
 	gboolean bson_initialized = FALSE;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
+	g_autoptr(GArray) arr_types_out = NULL;
+	JDBType type;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
+	arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	prepared = getCachePrepared(batch->namespace, name, "_schema_get", error);
@@ -735,7 +798,13 @@ _backend_schema_get(gpointer _batch, gchar const* name, bson_t* schema, GError**
 	}
 	if (!prepared->initialized)
 	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "SELECT varname, vartype FROM schema_structure WHERE namespace=?1 AND name=?2", &prepared->stmt, error)))
+		type = J_DB_TYPE_STRING;
+		g_array_append_val(arr_types_in, type);
+		g_array_append_val(arr_types_in, type);
+		g_array_append_val(arr_types_out, type);
+		type = J_DB_TYPE_UINT32;
+		g_array_append_val(arr_types_out, type);
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "SELECT varname, vartype FROM schema_structure WHERE namespace=? AND name=?", &prepared->stmt, arr_types_in, arr_types_out, error)))
 		{
 			goto _error;
 		}
@@ -763,11 +832,11 @@ _backend_schema_get(gpointer _batch, gchar const* name, bson_t* schema, GError**
 	while (TRUE)
 	{
 		if (G_UNLIKELY(!j_sql_step(thread_variables->sql_backend, prepared->stmt, &sql_found, error)))
-	{
-		goto _error;
-	}
+		{
+			goto _error;
+		}
 		if (!sql_found)
-	{
+		{
 			break;
 		}
 		found = TRUE;
@@ -776,18 +845,18 @@ _backend_schema_get(gpointer _batch, gchar const* name, bson_t* schema, GError**
 			break;
 		}
 		if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, 0, J_DB_TYPE_STRING, &value1, error)))
-			{
-				goto _error;
-			}
-		if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, 1, J_DB_TYPE_UINT32, &value2, error)))
-			{
-				goto _error;
-			}
-		if (G_UNLIKELY(!j_bson_append_value(schema, value1.val_string, J_DB_TYPE_UINT32, &value2, error)))
-			{
-				goto _error;
-			}
+		{
+			goto _error;
 		}
+		if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, 1, J_DB_TYPE_UINT32, &value2, error)))
+		{
+			goto _error;
+		}
+		if (G_UNLIKELY(!j_bson_append_value(schema, value1.val_string, J_DB_TYPE_UINT32, &value2, error)))
+		{
+			goto _error;
+		}
+	}
 	if (G_UNLIKELY(!found))
 	{
 		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_SCHEMA_NOT_FOUND, "schema not found");
@@ -828,15 +897,18 @@ backend_schema_delete(gpointer _batch, gchar const* name, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JDBType type;
 	JDBTypeValue value;
 	JSqlBatch* batch = _batch;
 	GString* sql = g_string_new(NULL);
 	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	prepared = getCachePrepared(batch->namespace, name, "_schema_delete", error);
@@ -846,7 +918,10 @@ backend_schema_delete(gpointer _batch, gchar const* name, GError** error)
 	}
 	if (!prepared->initialized)
 	{
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "DELETE FROM schema_structure WHERE namespace=?1 AND name=?2", &prepared->stmt, error)))
+		type = J_DB_TYPE_STRING;
+		g_array_append_val(arr_types_in, type);
+		g_array_append_val(arr_types_in, type);
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, "DELETE FROM schema_structure WHERE namespace=? AND name=?", &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
 		}
@@ -857,12 +932,7 @@ backend_schema_delete(gpointer _batch, gchar const* name, GError** error)
 		//no ddl in transaction - most databases wont support that - continue without any open transaction
 		goto _error;
 	}
-	deleteCachePrepared(batch->namespace, name);
-	if (G_UNLIKELY(!_backend_schema_get(batch, name, NULL, error)))
-	{
-		goto _error;
-	}
-	g_string_append_printf(sql, "DROP TABLE %s_%s", batch->namespace, name);
+	g_string_append_printf(sql, "DROP TABLE IF EXISTS %s_%s", batch->namespace, name);
 	value.val_string = batch->namespace;
 	if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, 1, J_DB_TYPE_STRING, &value, error)))
 	{
@@ -883,18 +953,19 @@ backend_schema_delete(gpointer _batch, gchar const* name, GError** error)
 	}
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 		sql = NULL;
 	}
 	if (G_UNLIKELY(!_backend_batch_start(batch, error)))
 	{
 		goto _error;
 	}
+	deleteCachePrepared(batch->namespace, name);
 	return TRUE;
 _error:
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 	}
 	if (G_UNLIKELY(!_backend_batch_start(batch, NULL)))
 	{
@@ -904,11 +975,11 @@ _error2:
 	return FALSE;
 }
 static gboolean
-insert_helper(JSqlCacheSQLPrepared* prepared, bson_iter_t* iter, GError** error)
+insert_helper(JSqlCacheSQLPrepared* prepared, bson_iter_t* iter, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	const char* tmp_string;
+	const char* string_tmp;
 	JDBType type;
 	guint i;
 	gboolean has_next;
@@ -936,22 +1007,19 @@ insert_helper(JSqlCacheSQLPrepared* prepared, bson_iter_t* iter, GError** error)
 		{
 			break;
 		}
-		if (G_UNLIKELY(!j_bson_iter_type_db(iter, &type, error)))
+		string_tmp = j_bson_iter_key(iter, error);
+		if (G_UNLIKELY(!string_tmp))
 		{
 			goto _error;
 		}
-		tmp_string = j_bson_iter_key(iter, error);
-		if (G_UNLIKELY(!tmp_string))
-		{
-			goto _error;
-		}
-		index = GPOINTER_TO_INT(g_hash_table_lookup(prepared->variables_index, tmp_string));
+		type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+		index = GPOINTER_TO_INT(g_hash_table_lookup(prepared->variables_index, string_tmp));
 		if (G_UNLIKELY(!index))
 		{
 			g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND, "variable not found");
 			goto _error;
 		}
-			count++;
+		count++;
 		if (G_UNLIKELY(!j_bson_iter_value(iter, type, &value, error)))
 		{
 			goto _error;
@@ -980,20 +1048,22 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, GErro
 	J_TRACE_FUNCTION(NULL);
 
 	JSqlBatch* batch = _batch;
-	gboolean has_next;
-	gboolean equals;
 	guint i;
 	bson_iter_t iter;
-	bson_t schema;
-	const char* tmp_string;
-	gboolean schema_initialized = FALSE;
+	gpointer type_tmp;
+	JDBType type;
+	GHashTableIter schema_iter;
+	GHashTable* schema_cache = NULL;
+	const char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(metadata != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	if (G_UNLIKELY(!j_bson_has_enough_keys(metadata, 1, error)))
@@ -1005,59 +1075,35 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, GErro
 	{
 		goto _error;
 	}
+	if (!(schema_cache = getCacheSchema(batch, name, error)))
+		goto _error;
 	if (!prepared->initialized)
 	{
-		schema_initialized = _backend_schema_get(batch, name, &schema, error);
-		if (G_UNLIKELY(!schema_initialized))
-		{
-			goto _error;
-		}
 		prepared->sql = g_string_new(NULL);
 		prepared->variables_count = 0;
 		prepared->variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		g_string_append_printf(prepared->sql, "INSERT INTO %s_%s (", batch->namespace, name);
-		if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema, error)))
+		g_hash_table_iter_init(&schema_iter, schema_cache);
+
+		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
 		{
-			goto _error;
-		}
-		while (TRUE)
-		{
-			if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
-			{
-				goto _error;
-			}
-			if (!has_next)
-			{
-				break;
-			}
-			if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
-			{
-				goto _error;
-			}
-			if (equals)
-		{
-				continue;
-			}
+			type = GPOINTER_TO_INT(type_tmp);
 			if (prepared->variables_count)
 			{
 				g_string_append(prepared->sql, ", ");
 			}
 			prepared->variables_count++;
-			tmp_string = j_bson_iter_key(&iter, error);
-			if (G_UNLIKELY(!tmp_string))
-			{
-				goto _error;
-			}
-			g_string_append_printf(prepared->sql, "%s", tmp_string);
-			g_hash_table_insert(prepared->variables_index, g_strdup(tmp_string), GINT_TO_POINTER(prepared->variables_count));
+			g_string_append_printf(prepared->sql, "%s", string_tmp);
+			g_array_append_val(arr_types_in, type);
+			g_hash_table_insert(prepared->variables_index, g_strdup(string_tmp), GINT_TO_POINTER(prepared->variables_count));
 		}
-		g_string_append(prepared->sql, ") VALUES ( ?1");
+		g_string_append(prepared->sql, ") VALUES ( ?");
 		for (i = 1; i < prepared->variables_count; i++)
 		{
-			g_string_append_printf(prepared->sql, ", ?%d", i + 1);
+			g_string_append_printf(prepared->sql, ", ?");
 		}
 		g_string_append(prepared->sql, " )");
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, error)))
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
 		}
@@ -1067,20 +1113,12 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, GErro
 	{
 		goto _error;
 	}
-	if (G_UNLIKELY(!insert_helper(prepared, &iter, error)))
+	if (G_UNLIKELY(!insert_helper(prepared, &iter, schema_cache, error)))
 	{
 		goto _error;
 	}
-		if (schema_initialized)
-	{
-		j_bson_destroy(&schema);
-	}
 	return TRUE;
 _error:
-		if (schema_initialized)
-	{
-		j_bson_destroy(&schema);
-	}
 	if (G_UNLIKELY(!_backend_batch_abort(batch, NULL)))
 	{
 		goto _error2;
@@ -1091,7 +1129,7 @@ _error2:
 	return FALSE;
 }
 static gboolean
-build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guint* variables_count, GError** error)
+build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guint* variables_count, GArray* arr_types_in, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1100,10 +1138,11 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 	gboolean has_next;
 	JDBSelectorOperator op;
 	gboolean first = TRUE;
-	const char* tmp_string;
+	const char* string_tmp;
 	JDBTypeValue value;
 	bson_iter_t iterchild;
 	JThreadVariables* thread_variables = NULL;
+	JDBType type;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
@@ -1123,7 +1162,7 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 			goto _error;
 		}
 		if (equals)
-	{
+		{
 			continue;
 		}
 		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
@@ -1155,17 +1194,16 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 			}
 			mode_child = value.val_uint32;
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
-		{
+			{
 				goto _error;
 			}
-			if (G_UNLIKELY(!build_selector_query(&iterchild, sql, mode_child, variables_count, error)))
+			if (G_UNLIKELY(!build_selector_query(&iterchild, sql, mode_child, variables_count, arr_types_in, schema_cache, error)))
 			{
 				goto _error;
 			}
 		}
 		else
 		{
-			(*variables_count)++;
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -1178,8 +1216,18 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 			{
 				goto _error;
 			}
-			tmp_string = value.val_string;
-			g_string_append_printf(sql, "%s ", tmp_string);
+			string_tmp = value.val_string;
+			g_string_append_printf(sql, "%s ", string_tmp);
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_value", error)))
+			{
+				goto _error;
+			}
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+			g_array_append_val(arr_types_in, type);
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -1218,7 +1266,8 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_COMPARATOR_INVALID, "comparator invalid");
 				goto _error;
 			}
-			g_string_append_printf(sql, " ?%d", *variables_count);
+			(*variables_count)++;
+			g_string_append_printf(sql, " ?");
 		}
 	}
 	g_string_append(sql, " )");
@@ -1232,7 +1281,7 @@ _error:
 	return FALSE;
 }
 static gboolean
-bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GError** error)
+bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1242,6 +1291,7 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 	gboolean has_next;
 	gboolean equals;
 	JThreadVariables* thread_variables = NULL;
+	char* string_tmp;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
@@ -1260,7 +1310,7 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 			goto _error;
 		}
 		if (equals)
-	{
+		{
 			continue;
 		}
 		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
@@ -1270,10 +1320,10 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 		if (j_bson_iter_find(&iterchild, "_mode", NULL))
 		{
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
-		{
+			{
 				goto _error;
 			}
-			if (G_UNLIKELY(!bind_selector_query(&iterchild, prepared, variables_count, error)))
+			if (G_UNLIKELY(!bind_selector_query(&iterchild, prepared, variables_count, schema_cache, error)))
 			{
 				goto _error;
 			}
@@ -1285,14 +1335,25 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 			{
 				goto _error;
 			}
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_name", error)))
+			{
+				goto _error;
+			}
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+			{
+				goto _error;
+			}
+			string_tmp = value.val_string;
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_value", error)))
 			{
 				goto _error;
 			}
-			if (G_UNLIKELY(!j_bson_iter_type_db(&iterchild, &type, error)))
-			{
-				goto _error;
-			}
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
 			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, type, &value, error)))
 			{
 				goto _error;
@@ -1321,9 +1382,19 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	guint variables_count;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GString* sql = g_string_new(NULL);
-	JSqlIterator* iteratorOut;
+	JSqlIterator* iteratorOut = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
+	g_autoptr(GArray) arr_types_out = NULL;
+	JDBType type;
+	GHashTable* schema_cache = NULL;
 
+	if (!(schema_cache = getCacheSchema(batch, name, error)))
+		goto _error;
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
+	arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
+	type = J_DB_TYPE_UINT32;
+	g_array_append_val(arr_types_out, type);
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	*iterator = NULL;
@@ -1355,7 +1426,7 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 			goto _error;
 		}
 		variables_count = 0;
-		if (G_UNLIKELY(!build_selector_query(&iter, sql, mode_child, &variables_count, error)))
+		if (G_UNLIKELY(!build_selector_query(&iter, sql, mode_child, &variables_count, arr_types_in, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -1367,13 +1438,9 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	}
 	if (!prepared->initialized)
 	{
-		if (G_UNLIKELY(!_backend_schema_get(batch, name, NULL, error)))
-		{
-			goto _error;
-		}
 		prepared->sql = g_string_new(sql->str);
 		prepared->variables_count = variables_count;
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, error)))
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, arr_types_out, error)))
 		{
 			goto _error;
 		}
@@ -1382,11 +1449,11 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
-	{
+		{
 			goto _error;
 		}
 		variables_count = 0;
-		if (G_UNLIKELY(!bind_selector_query(&iter, prepared, &variables_count, error)))
+		if (G_UNLIKELY(!bind_selector_query(&iter, prepared, &variables_count, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -1394,7 +1461,7 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	while (TRUE)
 	{
 		if (G_UNLIKELY(!j_sql_step(thread_variables->sql_backend, prepared->stmt, &sql_found, error)))
-	{
+		{
 			goto _error;
 		}
 		if (!sql_found)
@@ -1419,7 +1486,7 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	}
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 		sql = NULL;
 	}
 	*iterator = iteratorOut;
@@ -1427,7 +1494,7 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 _error:
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 	}
 	freeJSqlIterator(iteratorOut);
 	return FALSE;
@@ -1447,18 +1514,23 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 	bson_iter_t iter;
 	guint index;
 	guint j;
-	const char* tmp_string;
+	GHashTable* schema_cache = NULL;
+	const char* string_tmp;
 	gboolean has_next;
 	GString* sql = g_string_new(NULL);
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(metadata != NULL, FALSE);
 	g_return_val_if_fail(selector != NULL, FALSE);
 
+	if (!(schema_cache = getCacheSchema(batch, name, error)))
+		goto _error;
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	if (G_UNLIKELY(!j_bson_has_enough_keys(selector, 2, error)))
@@ -1469,42 +1541,46 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 	variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	g_string_append_printf(sql, "UPDATE %s_%s SET ", batch->namespace, name);
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, metadata, error)))
+	{
+		goto _error;
+	}
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
 		{
 			goto _error;
 		}
-		while (TRUE)
+		if (!has_next)
 		{
-			if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
-			{
-				goto _error;
-			}
-			if (!has_next)
-			{
-				break;
-			}
-			if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
-			{
-				goto _error;
-			}
-			if (equals)
-		{
-				continue;
-			}
-		if (variables_count)
-			{
-			g_string_append(sql, ", ");
-			}
-		variables_count++;
-			tmp_string = j_bson_iter_key(&iter, error);
-			if (G_UNLIKELY(!tmp_string))
-			{
-				goto _error;
-			}
-		g_string_append_printf(sql, "%s = ?%d", tmp_string, variables_count);
-		g_hash_table_insert(variables_index, g_strdup(tmp_string), GINT_TO_POINTER(variables_count));
+			break;
 		}
+		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
+		{
+			goto _error;
+		}
+		if (equals)
+		{
+			continue;
+		}
+		if (variables_count)
+		{
+			g_string_append(sql, ", ");
+		}
+		variables_count++;
+		string_tmp = j_bson_iter_key(&iter, error);
+		if (G_UNLIKELY(!string_tmp))
+		{
+			goto _error;
+		}
+		type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+		g_array_append_val(arr_types_in, type);
+		g_string_append_printf(sql, "%s = ?", string_tmp);
+		g_hash_table_insert(variables_index, g_strdup(string_tmp), GINT_TO_POINTER(variables_count));
+	}
 	variables_count++;
-	g_string_append_printf(sql, " WHERE _id = ?%d", variables_count);
+	type = J_DB_TYPE_UINT32;
+	g_array_append_val(arr_types_in, type);
+	g_string_append_printf(sql, " WHERE _id = ?");
 	g_hash_table_insert(variables_index, g_strdup("_id"), GINT_TO_POINTER(variables_count));
 	prepared = getCachePrepared(batch->namespace, name, sql->str, error);
 	if (G_UNLIKELY(!prepared))
@@ -1518,7 +1594,7 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 		prepared->variables_count = variables_count;
 		prepared->variables_index = variables_index;
 		variables_index = NULL;
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, error)))
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
 		}
@@ -1556,22 +1632,19 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 			{
 				break;
 			}
-			if (G_UNLIKELY(!j_bson_iter_type_db(&iter, &type, error)))
+			string_tmp = j_bson_iter_key(&iter, error);
+			if (G_UNLIKELY(!string_tmp))
 			{
 				goto _error;
 			}
-			tmp_string = j_bson_iter_key(&iter, error);
-			if (G_UNLIKELY(!tmp_string))
-			{
-				goto _error;
-			}
-			index = GPOINTER_TO_INT(g_hash_table_lookup(prepared->variables_index, tmp_string));
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+			index = GPOINTER_TO_INT(g_hash_table_lookup(prepared->variables_index, string_tmp));
 			if (G_UNLIKELY(!index))
 			{
 				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND, "variable not found");
 				goto _error;
 			}
-				count++;
+			count++;
 			if (G_UNLIKELY(!j_bson_iter_value(&iter, type, &value, error)))
 			{
 				goto _error;
@@ -1579,14 +1652,14 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, index, type, &value, error)))
 			{
 				goto _error;
+			}
 		}
-	}
 		if (G_UNLIKELY(!j_sql_step_and_reset_check_done(thread_variables->sql_backend, prepared->stmt, error)))
 		{
 			goto _error;
 		}
 		if (!count)
-	{
+		{
 			g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
 			goto _error;
 		}
@@ -1623,16 +1696,21 @@ backend_delete(gpointer _batch, gchar const* name, bson_t const* selector, GErro
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JDBType type;
 	JSqlBatch* batch = _batch;
 	JSqlIterator* iterator = NULL;
 	guint j;
 	JDBTypeValue value;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
+	type = J_DB_TYPE_UINT32;
+	g_array_append_val(arr_types_in, type);
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
 	if (G_UNLIKELY(!_backend_query(batch, name, selector, (gpointer*)&iterator, error)))
@@ -1648,8 +1726,8 @@ backend_delete(gpointer _batch, gchar const* name, bson_t const* selector, GErro
 	{
 		prepared->sql = g_string_new(NULL);
 		prepared->variables_count = 1;
-		g_string_append_printf(prepared->sql, "DELETE FROM %s_%s WHERE _id = ?1", batch->namespace, name);
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, error)))
+		g_string_append_printf(prepared->sql, "DELETE FROM %s_%s WHERE _id = ?", batch->namespace, name);
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
 		}
@@ -1686,82 +1764,55 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	J_TRACE_FUNCTION(NULL);
 
 	JDBSelectorMode mode_child;
-	bson_t schema;
-	gboolean schema_initialized = FALSE;
+	GHashTableIter schema_iter;
+
+	GHashTable* schema_cache = NULL;
+	JDBType type;
+	gpointer type_tmp;
+
 	JSqlBatch* batch = _batch;
 	bson_iter_t iter;
-	gboolean equals;
 	guint variables_count;
 	guint variables_count2;
 	JDBTypeValue value;
-	const char* tmp_string;
+	const char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL;
-	gboolean has_next;
-	GHashTable* variables_type = NULL;
 	GString* sql = g_string_new(NULL);
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GArray) arr_types_in = NULL;
+	g_autoptr(GArray) arr_types_out = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
+	arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
+	{
 		goto _error;
+	}
 	variables_index = g_hash_table_new_full(g_direct_hash, NULL, NULL, g_free);
-	variables_type = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	g_string_append(sql, "SELECT ");
 	variables_count = 0;
-	schema_initialized = _backend_schema_get(batch, name, &schema, error);
-	if (G_UNLIKELY(!schema_initialized))
-	{
+
+	if (!(schema_cache = getCacheSchema(batch, name, error)))
 		goto _error;
-	}
-	if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema, error)))
-	{
-		goto _error;
-	}
+	g_hash_table_iter_init(&schema_iter, schema_cache);
+
 	g_string_append(sql, "_id");
 	g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup("_id"));
-	g_hash_table_insert(variables_type, g_strdup("_id"), GINT_TO_POINTER(J_DB_TYPE_UINT32));
+	type = J_DB_TYPE_UINT32;
+	g_array_append_val(arr_types_out, type);
 	variables_count++;
-	while (TRUE)
+	while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
 	{
-		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
-	{
-			goto _error;
-		}
-		if (!has_next)
-		{
-			break;
-		}
-		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
-		{
-			goto _error;
-		}
-		if (equals)
-		{
+		type = GPOINTER_TO_INT(type_tmp);
+		if (strcmp(string_tmp, "_id") == 0)
 			continue;
-		}
-		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_id", &equals, error)))
-		{
-			goto _error;
-		}
-		if (equals)
-		{
-			continue;
-		}
-		if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &value, error)))
-		{
-			goto _error;
-		}
-		tmp_string = j_bson_iter_key(&iter, error);
-		if (G_UNLIKELY(!tmp_string))
-		{
-			goto _error;
-		}
-		g_string_append_printf(sql, ", %s", tmp_string);
-		g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup(tmp_string));
-		g_hash_table_insert(variables_type, g_strdup(tmp_string), GINT_TO_POINTER(value.val_uint32));
+		g_string_append_printf(sql, ", %s", string_tmp);
+		g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup(string_tmp));
+		g_array_append_val(arr_types_out, type);
 		variables_count++;
 	}
 	g_string_append_printf(sql, " FROM %s_%s", batch->namespace, name);
@@ -1786,7 +1837,7 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 			goto _error;
 		}
 		variables_count2 = 0;
-		if (G_UNLIKELY(!build_selector_query(&iter, sql, mode_child, &variables_count2, error)))
+		if (G_UNLIKELY(!build_selector_query(&iter, sql, mode_child, &variables_count2, arr_types_in, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -1798,15 +1849,10 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	}
 	if (!prepared->initialized)
 	{
-		if (G_UNLIKELY(!_backend_schema_get(batch, name, NULL, error)))
-		{
-			goto _error;
-		}
 		prepared->sql = g_string_new(sql->str);
 		prepared->variables_index = variables_index;
-		prepared->variables_type = variables_type;
 		prepared->variables_count = variables_count;
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, error)))
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, arr_types_out, error)))
 		{
 			goto _error;
 		}
@@ -1816,17 +1862,15 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	{
 		g_hash_table_destroy(variables_index);
 		variables_index = NULL;
-		g_hash_table_destroy(variables_type);
-		variables_type = NULL;
 	}
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
-	{
+		{
 			goto _error;
 		}
 		variables_count2 = 0;
-		if (G_UNLIKELY(!bind_selector_query(&iter, prepared, &variables_count2, error)))
+		if (G_UNLIKELY(!bind_selector_query(&iter, prepared, &variables_count2, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -1834,31 +1878,19 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	*iterator = prepared;
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 		sql = NULL;
-	}
-		if (schema_initialized)
-	{
-		j_bson_destroy(&schema);
 	}
 	return TRUE;
 _error:
 	if (sql)
 	{
-	g_string_free(sql, TRUE);
+		g_string_free(sql, TRUE);
 		sql = NULL;
-	}
-		if (schema_initialized)
-	{
-		j_bson_destroy(&schema);
 	}
 	if (variables_index)
 	{
 		g_hash_table_destroy(variables_index);
-	}
-	if (variables_type)
-	{
-		g_hash_table_destroy(variables_type);
 	}
 	return FALSE;
 }
@@ -1867,8 +1899,10 @@ backend_iterate(gpointer _iterator, bson_t* metadata, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	const char* name;
+	GHashTable* schema_cache = NULL;
+	const char* string_tmp;
 	guint i;
+	JSqlCacheSQLQueries* queries = NULL;
 	JDBTypeValue value;
 	JDBType type;
 	gboolean sql_found;
@@ -1877,6 +1911,10 @@ backend_iterate(gpointer _iterator, bson_t* metadata, GError** error)
 	JThreadVariables* thread_variables = NULL;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
+		goto _error;
+	if (!(queries = _getCachePrepared(prepared->namespace, prepared->name, error)))
+		goto _error;
+	if (!(schema_cache = queries->types))
 		goto _error;
 	if (G_UNLIKELY(!j_sql_step(thread_variables->sql_backend, prepared->stmt, &sql_found, error)))
 	{
@@ -1887,13 +1925,13 @@ backend_iterate(gpointer _iterator, bson_t* metadata, GError** error)
 		found = TRUE;
 		for (i = 0; i < prepared->variables_count; i++)
 		{
-			name = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
-			type = GPOINTER_TO_INT(g_hash_table_lookup(prepared->variables_type, name));
+			string_tmp = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
 			if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, i, type, &value, error)))
 			{
 				goto _error;
 			}
-			if (G_UNLIKELY(!j_bson_append_value(metadata, name, type, &value, error)))
+			if (G_UNLIKELY(!j_bson_append_value(metadata, string_tmp, type, &value, error)))
 			{
 				goto _error;
 			}
