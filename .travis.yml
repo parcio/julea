@@ -14,10 +14,11 @@ language: c
 compiler:
   - gcc
   - clang
+before_install:
+  - sudo apt-get -y purge glib-networking
 script:
   - ./waf configure --debug --sanitize
   - ./waf
   - . ./scripts/environment.sh
-  - julea-config --user --object-servers=localhost --kv-servers=localhost --db-servers=localhost --object-backend=posix --object-component=server --object-path=/tmp/julea/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb --db-backend=null --db-component=server --db-path=
-  - julea-server --daemon
-  - gtester --keep-going --verbose "$(which julea-test)"
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb --db-backend=null --db-component=server --db-path=
+  - ./scripts/test.sh
