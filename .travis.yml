@@ -1,0 +1,22 @@
+dist: bionic
+addons:
+  apt:
+    packages:
+      - libglib2.0-dev
+      - libbson-dev
+      - libleveldb-dev
+      - liblmdb-dev
+      - libmongoc-dev
+      - libsqlite3-dev
+      - librados-dev
+      - libfuse-dev
+language: c
+compiler:
+  - gcc
+  - clang
+script:
+  - ./waf configure --debug --sanitize
+  - ./waf
+  - . ./scripts/environment.sh
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb --db-backend=null --db-component=server --db-path=
+  - ./scripts/test.sh

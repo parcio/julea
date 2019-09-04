@@ -53,3 +53,8 @@ Most of them should be available within the repositories of Linux distributions.
   - Debian: `apt install librados-dev`
   - Fedora: `dnf install librados-devel`
   - Arch Linux: `pacman -S ceph-libs`
+
+- FUSE
+  - Debian: `apt install libfuse-dev`
+  - Fedora: `dnf install fuse-devel`
+  - Arch Linux: `pacman -S fuse2`
