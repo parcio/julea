@@ -28,13 +28,19 @@ out = 'build'
 
 # Structured logging needs GLib 2.56
 # CentOS 7 has GLib 2.42, CentOS 7.6 has GLib 2.56
+# Ubuntu 18.04 has GLib 2.56
 glib_version = '2.56'
+# Ubuntu 18.04 has libbson 1.9.2
 libbson_version = '1.9.0'
 
+# Ubuntu 18.04 has LevelDB 1.20
 leveldb_version = '1.20'
+# Ubuntu 18.04 has LMDB 0.9.21
 lmdb_version = '0.9.21'
+# Ubuntu 18.04 has libmongoc 1.9.2
 libmongoc_version = '1.9.0'
-sqlite_version = '3.23.0'
+# Ubuntu 18.04 has SQLite 3.22.0
+sqlite_version = '3.22.0'
 
 
 def check_cfg_rpath(ctx, **kwargs):
