@@ -36,14 +36,18 @@ set_backend_path
 run_test ()
 {
 	local build_dir
+	local ret
 
 	# julea-test does not get installed, so we have to find it in the build directory.
 	build_dir="$(get_directory "${SELF_DIR}/../build")"
+	ret=0
 
 	setup_init
 	setup_start
-	gtester --keep-going --verbose "$@" "${build_dir}/test/julea-test" || true
+	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
 	setup_stop
+
+	return ${ret}
 }
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
