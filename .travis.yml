@@ -14,6 +14,12 @@ language: c
 compiler:
   - gcc
   - clang
+jobs:
+  include:
+    - env: JULEA_OBJECT=posix JULEA_KV=lmdb
+    - env: JULEA_OBJECT=gio   JULEA_KV=lmdb
+    - env: JULEA_OBJECT=posix JULEA_KV=leveldb
+    - env: JULEA_OBJECT=posix JULEA_KV=sqlite
 # FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking
@@ -22,7 +28,7 @@ script:
   - ./waf configure --debug --sanitize --leveldb=/usr
   - ./waf
   - . ./scripts/environment.sh
-  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb --db-backend=null --db-component=server --db-path=
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/${JULEA_KV} --db-backend=null --db-component=server --db-path=
   - ./scripts/test.sh
 notifications:
   email:
