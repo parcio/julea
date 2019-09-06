@@ -14,12 +14,11 @@ language: c
 compiler:
   - gcc
   - clang
-jobs:
-  include:
-    - env: JULEA_OBJECT=posix JULEA_KV=lmdb
-    - env: JULEA_OBJECT=gio   JULEA_KV=lmdb
-    - env: JULEA_OBJECT=posix JULEA_KV=leveldb
-    - env: JULEA_OBJECT=posix JULEA_KV=sqlite
+env:
+  - JULEA_OBJECT=posix JULEA_KV=lmdb
+  - JULEA_OBJECT=gio   JULEA_KV=lmdb
+  - JULEA_OBJECT=posix JULEA_KV=leveldb
+  - JULEA_OBJECT=posix JULEA_KV=sqlite
 # FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking
