@@ -247,6 +247,18 @@ def configure(ctx):
 			mandatory=False
 		)
 
+	if not ctx.env.JULEA_LEVELDB:
+		ctx.env.JULEA_LEVELDB = \
+			check_cc_rpath(
+				ctx,
+				ctx.options.leveldb,
+				header_name='leveldb/c.h',
+				lib='leveldb',
+				uselib_store='LEVELDB',
+				define_name='HAVE_LEVELDB',
+				mandatory=False
+			)
+
 	ctx.env.JULEA_LMDB = \
 		check_cfg_rpath(
 			ctx,

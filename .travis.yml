@@ -19,7 +19,7 @@ before_install:
   - sudo apt-get -y remove glib-networking
   - sudo apt-get -y autoremove
 script:
-  - ./waf configure --debug --sanitize
+  - ./waf configure --debug --sanitize --leveldb=/usr
   - ./waf
   - . ./scripts/environment.sh
   - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb --db-backend=null --db-component=server --db-path=
