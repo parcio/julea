@@ -251,7 +251,7 @@ getCacheSchema(gpointer _batch, gchar const* name, GError** error)
 	bson_t schema;
 	JSqlCacheSQLQueries* cacheQueries = NULL;
 	bson_iter_t iter;
-	char* string_tmp;
+	const char* string_tmp;
 	JDBTypeValue value;
 
 	if (!(cacheQueries = _getCachePrepared(batch->namespace, name, error)))
@@ -1054,7 +1054,7 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, GErro
 	JDBType type;
 	GHashTableIter schema_iter;
 	GHashTable* schema_cache = NULL;
-	const char* string_tmp;
+	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	JThreadVariables* thread_variables = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
@@ -1291,7 +1291,7 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 	gboolean has_next;
 	gboolean equals;
 	JThreadVariables* thread_variables = NULL;
-	char* string_tmp;
+	const char* string_tmp;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 		goto _error;
@@ -1775,7 +1775,7 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	guint variables_count;
 	guint variables_count2;
 	JDBTypeValue value;
-	const char* string_tmp;
+	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL;
 	GString* sql = g_string_new(NULL);
