@@ -26,8 +26,6 @@
 
 #include <string.h>
 
-#include <bson.h>
-
 #include <object/jobject.h>
 
 #include <julea.h>

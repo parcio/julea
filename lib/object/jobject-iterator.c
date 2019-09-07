@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <object/jobject-iterator.h>
 
 #include <julea.h>

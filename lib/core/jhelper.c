@@ -25,8 +25,6 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <bson.h>
-
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>

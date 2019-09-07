@@ -26,8 +26,6 @@
 
 #include <string.h>
 
-#include <bson.h>
-
 #include <object/jdistributed-object.h>
 
 #include <julea.h>
