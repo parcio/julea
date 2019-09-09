@@ -56,7 +56,12 @@ j_cmd_copy (gchar const** arguments)
 			{
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 				j_object_create(j_object_uri_get_object(ouri[i]), batch);
-				j_batch_execute(batch);
+
+				if (!j_batch_execute(batch))
+				{
+					ret = FALSE;
+					goto end;
+				}
 			}
 		}
 		else if ((uri[i] = j_uri_new(arguments[i])) != NULL)
@@ -110,7 +115,12 @@ j_cmd_copy (gchar const** arguments)
 
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 				item = j_item_create(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
-				j_batch_execute(batch);
+
+				if (!j_batch_execute(batch))
+				{
+					ret = FALSE;
+					goto end;
+				}
 
 				j_uri_get(uri[i], NULL);
 			}
@@ -163,7 +173,12 @@ j_cmd_copy (gchar const** arguments)
 			guint64 nbytes;
 
 			j_object_read(j_object_uri_get_object(ouri[0]), buffer, 1024 * 1024, offset, &nbytes, batch);
-			j_batch_execute(batch);
+
+			if (!j_batch_execute(batch))
+			{
+				ret = FALSE;
+				goto end;
+			}
 
 			bytes_read = nbytes;
 		}
@@ -172,7 +187,12 @@ j_cmd_copy (gchar const** arguments)
 			guint64 nbytes;
 
 			j_item_read(j_uri_get_item(uri[0]), buffer, 1024 * 1024, offset, &nbytes, batch);
-			j_batch_execute(batch);
+
+			if (!j_batch_execute(batch))
+			{
+				ret = FALSE;
+				goto end;
+			}
 
 			bytes_read = nbytes;
 		}
@@ -192,14 +212,24 @@ j_cmd_copy (gchar const** arguments)
 			guint64 dummy;
 
 			j_object_write(j_object_uri_get_object(ouri[1]), buffer, bytes_read, offset, &dummy, batch);
-			j_batch_execute(batch);
+
+			if (!j_batch_execute(batch))
+			{
+				ret = FALSE;
+				goto end;
+			}
 		}
 		else if (uri[1] != NULL)
 		{
 			guint64 dummy;
 
 			j_item_write(j_uri_get_item(uri[1]), buffer, bytes_read, offset, &dummy, batch);
-			j_batch_execute(batch);
+
+			if (!j_batch_execute(batch))
+			{
+				ret = FALSE;
+				goto end;
+			}
 		}
 		else if (stream[1] != NULL)
 		{

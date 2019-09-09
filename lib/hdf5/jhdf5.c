@@ -585,7 +585,11 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	tmp = j_hdf5_serialize_ts(type_buf, type_size, space_buf, space_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->ts, value, len, bson_free, batch);
-	j_batch_execute(batch);
+
+	if (!j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	g_free(type_buf);
 	g_free(space_buf);
@@ -734,7 +738,11 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_i
 	tmp = j_hdf5_serialize(buf, attribute->data_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->kv, value, len, bson_free, batch);
-	j_batch_execute(batch);
+
+	if (!j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	return 1;
 }
@@ -1146,7 +1154,11 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	tmp = j_hdf5_serialize_dataset(type_buf, type_size, space_buf, space_size, data_size, dset->distribution);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(dset->kv, value, len, bson_free, batch);
-	j_batch_execute(batch);
+
+	if (!j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	g_free(type_buf);
 	g_free(space_buf);
@@ -1258,7 +1270,10 @@ H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)),
 
 	j_distributed_object_read(d->object, buf, d->data_size, 0, &bytes_read, batch);
 
-	j_batch_execute(batch);
+	if (!j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	return 1;
 }
@@ -1362,7 +1377,10 @@ H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused))
 
 	j_distributed_object_write(d->object, buf, d->data_size, 0, &bytes_written, batch);
 
-	j_batch_execute(batch);
+	if (!j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	return 1;
 }

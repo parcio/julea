@@ -325,7 +325,12 @@ j_uri_get (JURI* uri, GError** error)
 	if (uri->collection_name != NULL)
 	{
 		j_collection_get(&(uri->collection), uri->collection_name, batch);
-		j_batch_execute(batch);
+
+		if (!j_batch_execute(batch))
+		{
+			ret = FALSE;
+			goto end;
+		}
 
 		if (uri->collection == NULL)
 		{
@@ -339,7 +344,12 @@ j_uri_get (JURI* uri, GError** error)
 	if (uri->item_name != NULL)
 	{
 		j_item_get(uri->collection, &(uri->item), uri->item_name, batch);
-		j_batch_execute(batch);
+
+		if (!j_batch_execute(batch))
+		{
+			ret = FALSE;
+			goto end;
+		}
 
 		if (uri->item == NULL)
 		{
@@ -411,13 +421,18 @@ j_uri_create (JURI* uri, gboolean with_parents, GError** error)
 	if (uri->collection == NULL && uri->collection_name != NULL)
 	{
 		uri->collection = j_collection_create(uri->collection_name, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+	}
+
+	if (!ret)
+	{
+		goto end;
 	}
 
 	if (uri->item == NULL && uri->item_name != NULL)
 	{
 		uri->item = j_item_create(uri->collection, uri->item_name, NULL, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 	}
 
 end:
@@ -461,7 +476,7 @@ j_uri_delete (JURI* uri, GError** error)
 	if (uri->item != NULL)
 	{
 		j_item_delete(uri->item, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 		/* Delete only the last component. */
 		goto end;
 	}
@@ -469,7 +484,7 @@ j_uri_delete (JURI* uri, GError** error)
 	if (uri->collection != NULL)
 	{
 		j_collection_delete(uri->collection, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 	}
 
 end:

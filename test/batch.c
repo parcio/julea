@@ -78,6 +78,7 @@ _test_batch_execute (gboolean async)
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
 	g_autoptr(JBatch) batch = NULL;
+	gboolean ret;
 
 	if (async)
 	{
@@ -97,7 +98,8 @@ _test_batch_execute (gboolean async)
 	}
 	else
 	{
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
 	}
 
 	if (async)

@@ -69,14 +69,14 @@ struct JBatch
 	gint ref_count;
 };
 
-struct JOperationAsync
+struct JBatchAsync
 {
 	JBatch* batch;
-	JOperationCompletedFunc func;
+	JBatchAsyncCallback callback;
 	gpointer user_data;
 };
 
-typedef struct JOperationAsync JOperationAsync;
+typedef struct JBatchAsync JBatchAsync;
 
 static
 gpointer
@@ -84,19 +84,19 @@ j_batch_background_operation (gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JOperationAsync* async = data;
+	JBatchAsync* async = data;
 	gboolean ret;
 
 	ret = j_batch_execute(async->batch);
 
-	if (async->func != NULL)
+	if (async->callback != NULL)
 	{
-		(*async->func)(async->batch, ret, async->user_data);
+		(*async->callback)(async->batch, ret, async->user_data);
 	}
 
 	j_batch_unref(async->batch);
 
-	g_slice_free(JOperationAsync, async);
+	g_slice_free(JBatchAsync, async);
 
 	return NULL;
 }
@@ -291,23 +291,23 @@ j_batch_execute (JBatch* batch)
  * \endcode
  *
  * \param batch     A batch.
- * \param func      A complete function.
+ * \param callback  An async callback.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
 void
-j_batch_execute_async (JBatch* batch, JOperationCompletedFunc func, gpointer user_data)
+j_batch_execute_async (JBatch* batch, JBatchAsyncCallback callback, gpointer user_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JOperationAsync* async;
+	JBatchAsync* async;
 
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(batch->background_operation == NULL);
 
-	async = g_slice_new(JOperationAsync);
+	async = g_slice_new(JBatchAsync);
 	async->batch = j_batch_ref(batch);
-	async->func = func;
+	async->callback = callback;
 	async->user_data = user_data;
 
 	batch->background_operation = j_background_operation_new(j_batch_background_operation, async);

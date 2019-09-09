@@ -43,7 +43,7 @@ j_cmd_delete (gchar const** arguments)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_object_delete(j_object_uri_get_object(ouri), batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
 		goto end;
 	}
@@ -54,7 +54,7 @@ j_cmd_delete (gchar const** arguments)
 	{
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_distributed_object_delete(j_object_uri_get_distributed_object(duri), batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
 		goto end;
 	}
@@ -77,12 +77,12 @@ j_cmd_delete (gchar const** arguments)
 		if (j_uri_get_item(uri) != NULL)
 		{
 			j_item_delete(j_uri_get_item(uri), batch);
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
 		}
 		else if (j_uri_get_collection(uri) != NULL)
 		{
 			j_collection_delete(j_uri_get_collection(uri), batch);
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
 		}
 		else
 		{

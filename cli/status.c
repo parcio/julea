@@ -52,14 +52,17 @@ j_cmd_status (gchar const** arguments)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_object_status(j_object_uri_get_object(ouri), &modification_time, &size, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
-		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
-		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
-		size_string = g_format_size(size);
+		if (ret)
+		{
+			date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
+			modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
+			size_string = g_format_size(size);
 
-		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
-		g_print("Size:              %s\n", size_string);
+			g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
+			g_print("Size:              %s\n", size_string);
+		}
 
 		goto end;
 	}
@@ -76,14 +79,17 @@ j_cmd_status (gchar const** arguments)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_distributed_object_status(j_object_uri_get_distributed_object(duri), &modification_time, &size, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
-		date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
-		modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
-		size_string = g_format_size(size);
+		if (ret)
+		{
+			date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
+			modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
+			size_string = g_format_size(size);
 
-		g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
-		g_print("Size:              %s\n", size_string);
+			g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
+			g_print("Size:              %s\n", size_string);
+		}
 
 		goto end;
 	}
@@ -98,13 +104,16 @@ j_cmd_status (gchar const** arguments)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_get(j_kv_uri_get_kv(kuri), &value, &len, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
-		size_string = g_format_size(len);
+		if (ret)
+		{
+			size_string = g_format_size(len);
 
-		g_print("Size:              %s\n", size_string);
+			g_print("Size:              %s\n", size_string);
 
-		g_free(value);
+			g_free(value);
+		}
 
 		goto end;
 	}
@@ -133,22 +142,25 @@ j_cmd_status (gchar const** arguments)
 			guint64 size;
 
 			j_item_get_status(j_uri_get_item(uri), batch);
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
 
-			credentials = j_item_get_credentials(j_uri_get_item(uri));
-			modification_time = j_item_get_modification_time(j_uri_get_item(uri));
-			size = j_item_get_size(j_uri_get_item(uri));
+			if (ret)
+			{
+				credentials = j_item_get_credentials(j_uri_get_item(uri));
+				modification_time = j_item_get_modification_time(j_uri_get_item(uri));
+				size = j_item_get_size(j_uri_get_item(uri));
 
-			date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
-			modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
-			size_string = g_format_size(size);
+				date_time = g_date_time_new_from_unix_local(modification_time / G_USEC_PER_SEC);
+				modification_time_string = g_date_time_format(date_time, "%Y-%m-%d %H:%M:%S");
+				size_string = g_format_size(size);
 
-			g_print("User:              %" G_GUINT32_FORMAT "\n", j_credentials_get_user(credentials));
-			g_print("Group:             %" G_GUINT32_FORMAT "\n", j_credentials_get_group(credentials));
-			g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
-			g_print("Size:              %s\n", size_string);
+				g_print("User:              %" G_GUINT32_FORMAT "\n", j_credentials_get_user(credentials));
+				g_print("Group:             %" G_GUINT32_FORMAT "\n", j_credentials_get_group(credentials));
+				g_print("Modification time: %s.%06" G_GUINT64_FORMAT "\n", modification_time_string, modification_time % G_USEC_PER_SEC);
+				g_print("Size:              %s\n", size_string);
 
-			j_credentials_unref(credentials);
+				j_credentials_unref(credentials);
+			}
 		}
 		else if (j_uri_get_collection(uri) != NULL)
 		{

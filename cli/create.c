@@ -47,7 +47,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_object_create(j_object_uri_get_object(ouri), batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
 		goto end;
 	}
@@ -60,7 +60,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_distributed_object_create(j_object_uri_get_distributed_object(duri), batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
 		goto end;
 	}
@@ -73,7 +73,7 @@ j_cmd_create (gchar const** arguments, gboolean with_parents)
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		j_kv_put(j_kv_uri_get_kv(kuri), g_strdup("empty"), 6, g_free, batch);
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
 
 		goto end;
 	}

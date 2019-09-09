@@ -50,6 +50,7 @@ test_kv_iterator_next_get (void)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JKVIterator) kv_iterator = NULL;
+	gboolean ret;
 
 	guint kvs = 0;
 
@@ -72,7 +73,8 @@ test_kv_iterator_next_get (void)
 		g_assert(kv != NULL);
 	}
 
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	kv_iterator = j_kv_iterator_new("test-ns", NULL);
 
@@ -88,7 +90,8 @@ test_kv_iterator_next_get (void)
 		kvs++;
 	}
 
-	j_batch_execute(delete_batch);
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
 
 	g_assert_cmpuint(kvs, ==, n);
 }
