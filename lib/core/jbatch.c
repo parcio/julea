@@ -448,7 +448,7 @@ j_batch_execute_internal (JBatch* batch)
 	g_autoptr(JList) same_list = NULL;
 	g_autoptr(JListIterator) iterator = NULL;
 	JOperationExecFunc last_exec_func;
-	gpointer last_key;
+	gconstpointer last_key;
 	gboolean ret = TRUE;
 
 	iterator = j_list_iterator_new(batch->list);
