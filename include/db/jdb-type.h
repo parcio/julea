@@ -27,9 +27,13 @@
 #error "Only <julea-db.h> can be included directly."
 #endif
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 enum JDBType
 {
-	J_DB_TYPE_SINT32 = 0,
+	J_DB_TYPE_SINT32,
 	J_DB_TYPE_UINT32,
 	J_DB_TYPE_FLOAT32,
 	J_DB_TYPE_SINT64,
@@ -43,22 +47,10 @@ enum JDBType
 
 typedef enum JDBType JDBType;
 
-union JDBTypeValue
-{
-	guint32 val_uint32;
-	gint32 val_sint32;
-	guint64 val_uint64;
-	gint64 val_sint64;
-	gdouble val_float64;
-	gfloat val_float32;
-	gchar const* val_string;
-	struct
-	{
-		gchar const* val_blob;
-		guint32 val_blob_length;
-	};
-};
+union JDBTypeValue;
 
 typedef union JDBTypeValue JDBTypeValue;
+
+G_END_DECLS
 
 #endif

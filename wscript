@@ -403,6 +403,7 @@ def build(ctx):
 	use_julea_backend = use_julea_core + ['GMODULE']
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
 	use_julea_kv = use_julea_core + ['lib/julea', 'lib/julea-kv']
+	use_julea_db = use_julea_core + ['lib/julea', 'lib/julea-db']
 	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
 	use_julea_hdf = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5'] if ctx.env.JULEA_HDF else []
 
@@ -418,7 +419,7 @@ def build(ctx):
 		install_path='${LIBDIR}'
 	)
 
-	clients = ['object', 'kv', 'item']
+	clients = ['object', 'kv', 'db', 'item']
 
 	if ctx.env.JULEA_HDF:
 		clients.append('hdf5')
@@ -598,7 +599,7 @@ def build(ctx):
 		)
 
 	# pkg-config
-	for lib in ('', 'object', 'kv', 'item'):
+	for lib in ('', 'object', 'kv', 'db', 'item'):
 		suffix = '-{0}'.format(lib) if lib else ''
 
 		ctx(
