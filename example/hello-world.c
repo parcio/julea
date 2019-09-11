@@ -18,32 +18,51 @@
 
 #include <julea.h>
 #include <julea-object.h>
+#include <julea-kv.h>
 
 #include <stdio.h>
 
 int
 main (int argc, char** argv)
 {
-	(void)argc;
-	(void)argv;
-
 	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
 	g_autoptr(JObject) object = NULL;
 
-	gchar buffer[128];
 	gchar const* hello_world = "Hello World!";
 	guint64 nbytes;
 
+	(void)argc;
+	(void)argv;
+
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	object = j_object_new("hello", "world");
+	kv = j_kv_new("hello", "world");
 
 	j_object_create(object, batch);
 	j_object_write(object, hello_world, strlen(hello_world) + 1, 0, &nbytes, batch);
-	j_batch_execute(batch);
-	j_object_read(object, buffer, 128, 0, &nbytes, batch);
-	j_batch_execute(batch);
+	j_kv_put(kv, g_strdup(hello_world), strlen(hello_world) + 1, g_free, batch);
 
-	printf("Object contains: %s (%lu bytes)\n", buffer, nbytes);
+	if (j_batch_execute(batch))
+	{
+		gchar buffer[128];
+		g_autofree gpointer value = NULL;
+		guint32 length;
+
+		j_object_read(object, buffer, 128, 0, &nbytes, batch);
+
+		if (j_batch_execute(batch))
+		{
+			printf("Object contains: %s (%" G_GUINT64_FORMAT " bytes)\n", buffer, nbytes);
+		}
+
+		j_kv_get(kv, &value, &length, batch);
+
+		if (j_batch_execute(batch))
+		{
+			printf("KV contains: %s (%" G_GUINT32_FORMAT " bytes)\n", (gchar*)value, length);
+		}
+	}
 
 	return 0;
 }
