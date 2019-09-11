@@ -34,16 +34,6 @@
 #include <julea.h>
 #include "../../backend/db/jbson.c"
 
-#define J_AFL_DEBUG_BSON(bson)                           \
-	do                                               \
-	{                                                \
-		char* json = NULL;                       \
-		if (bson)                                \
-			json = bson_as_json(bson, NULL); \
-		g_debug("json = %s", json);              \
-		bson_free((void*)json);                  \
-	} while (0)
-
 struct JDBIteratorHelper
 {
 	bson_t bson;
@@ -54,7 +44,7 @@ struct JDBIteratorHelper
 typedef struct JDBIteratorHelper JDBIteratorHelper;
 
 GQuark
-j_db_error_quark(void)
+j_db_error_quark (void)
 {
 	return g_quark_from_static_string("j-db-error-quark");
 }
@@ -174,8 +164,7 @@ j_db_internal_schema_create (gchar const* namespace, gchar const* name, bson_t c
 	JOperation* op;
 	JBackendOperation* data;
 
-	g_debug("namespace='%s' name='%s'", namespace, name);
-	J_AFL_DEBUG_BSON(schema);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
@@ -210,6 +199,8 @@ j_db_internal_schema_get (gchar const* namespace, gchar const* name, bson_t* sch
 	JOperation* op;
 	JBackendOperation* data;
 
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
 	data->in_param[0].ptr_const = namespace;
@@ -243,6 +234,8 @@ j_db_internal_schema_delete (gchar const* namespace, gchar const* name, JBatch* 
 	JOperation* op;
 	JBackendOperation* data;
 
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
 	data->in_param[0].ptr_const = namespace;
@@ -274,6 +267,8 @@ j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* m
 
 	JOperation* op;
 	JBackendOperation* data;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_insert, sizeof(JBackendOperation));
@@ -308,9 +303,7 @@ j_db_internal_update (gchar const* namespace, gchar const* name, bson_t const* s
 	JOperation* op;
 	JBackendOperation* data;
 
-	g_debug("namespace='%s' name='%s'", namespace, name);
-	J_AFL_DEBUG_BSON(selector);
-	J_AFL_DEBUG_BSON(metadata);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_update, sizeof(JBackendOperation));
@@ -345,6 +338,8 @@ j_db_internal_delete (gchar const* namespace, gchar const* name, bson_t const* s
 
 	JOperation* op;
 	JBackendOperation* data;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_delete, sizeof(JBackendOperation));
@@ -381,6 +376,7 @@ j_db_internal_query (gchar const* namespace, gchar const* name, bson_t const* se
 	JBackendOperation* data;
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	helper = g_slice_new(JDBIteratorHelper);
 	helper->initialized = FALSE;
@@ -414,6 +410,8 @@ j_db_internal_iterate (gpointer iterator, bson_t* metadata, GError** error)
 	JDBIteratorHelper* helper = iterator;
 	gboolean has_next;
 	bson_t zerobson;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	memset(&zerobson, 0, sizeof(bson_t));
 

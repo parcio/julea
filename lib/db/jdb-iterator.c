@@ -43,11 +43,12 @@ j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError** error)
 	JBatch* batch;
 	JDBIterator* iterator = NULL;
 
-	g_return_val_if_fail(schema != NULL, FALSE);
-	g_return_val_if_fail((selector == NULL) || (selector->schema == schema), FALSE);
+	g_return_val_if_fail(schema != NULL, NULL);
+	g_return_val_if_fail((selector == NULL) || (selector->schema == schema), NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	iterator = g_slice_new(JDBIterator);
-	iterator->schema = j_db_schema_ref(schema, error);
+	iterator->schema = j_db_schema_ref(schema);
 
 	if (G_UNLIKELY(!iterator->schema))
 	{
@@ -56,7 +57,7 @@ j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError** error)
 
 	if (selector)
 	{
-		iterator->selector = j_db_selector_ref(selector, error);
+		iterator->selector = j_db_selector_ref(selector);
 
 		if (G_UNLIKELY(!iterator->selector))
 		{
@@ -101,13 +102,11 @@ _error:
 }
 
 JDBIterator*
-j_db_iterator_ref (JDBIterator* iterator, GError** error)
+j_db_iterator_ref (JDBIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
-
-	(void)error;
 
 	g_atomic_int_inc(&iterator->ref_count);
 
@@ -147,6 +146,7 @@ j_db_iterator_next (JDBIterator* iterator, GError** error)
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->valid, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (iterator->bson_valid)
 	{
@@ -183,6 +183,7 @@ j_db_iterator_get_field (JDBIterator* iterator, gchar const* name, JDBType* type
 	g_return_val_if_fail(type != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(length != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 	{

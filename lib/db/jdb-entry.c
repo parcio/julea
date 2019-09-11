@@ -40,7 +40,8 @@ j_db_entry_new (JDBSchema* schema, GError** error)
 
 	JDBEntry* entry = NULL;
 
-	g_return_val_if_fail(schema != NULL, FALSE);
+	g_return_val_if_fail(schema != NULL, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	entry = g_slice_new(JDBEntry);
 
@@ -50,7 +51,7 @@ j_db_entry_new (JDBSchema* schema, GError** error)
 	}
 
 	entry->ref_count = 1;
-	entry->schema = j_db_schema_ref(schema, error);
+	entry->schema = j_db_schema_ref(schema);
 
 	if (G_UNLIKELY(!entry->schema))
 	{
@@ -66,13 +67,11 @@ _error:
 }
 
 JDBEntry*
-j_db_entry_ref (JDBEntry* entry, GError** error)
+j_db_entry_ref (JDBEntry* entry)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(entry != NULL, FALSE);
-
-	(void)error;
 
 	g_atomic_int_inc(&entry->ref_count);
 
@@ -105,6 +104,7 @@ j_db_entry_set_field (JDBEntry* entry, gchar const* name, gconstpointer value, g
 
 	g_return_val_if_fail(entry != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_schema_get_field(entry->schema, name, &type, error)))
 	{
@@ -172,6 +172,7 @@ j_db_entry_insert (JDBEntry* entry, JBatch* batch, GError** error)
 
 	g_return_val_if_fail(entry != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_internal_insert(entry->schema->namespace, entry->schema->name, &entry->bson, batch, error)))
 	{
@@ -195,6 +196,7 @@ j_db_entry_update (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(selector->schema == entry->schema, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	bson = j_db_selector_get_bson(selector);
 
@@ -223,6 +225,7 @@ j_db_entry_delete (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError
 	g_return_val_if_fail(entry != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail((selector == NULL) || (selector->schema == entry->schema), FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_internal_delete(entry->schema->namespace, entry->schema->name, j_db_selector_get_bson(selector), batch, error)))
 	{

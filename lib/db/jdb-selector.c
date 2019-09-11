@@ -41,14 +41,15 @@ j_db_selector_new (JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	JDBTypeValue val;
 	JDBSelector* selector = NULL;
 
-	g_return_val_if_fail(mode < _J_DB_SELECTOR_MODE_COUNT, FALSE);
+	g_return_val_if_fail(mode < _J_DB_SELECTOR_MODE_COUNT, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	selector = g_slice_new(JDBSelector);
 	selector->ref_count = 1;
 	selector->mode = mode;
 	selector->bson_count = 0;
 	bson_init(&selector->bson);
-	selector->schema = j_db_schema_ref(schema, error);
+	selector->schema = j_db_schema_ref(schema);
 
 	if (G_UNLIKELY(!selector->schema))
 	{
@@ -70,13 +71,11 @@ _error:
 }
 
 JDBSelector*
-j_db_selector_ref (JDBSelector* selector, GError** error)
+j_db_selector_ref (JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_val_if_fail(selector != NULL, FALSE);
-
-	(void)error;
+	g_return_val_if_fail(selector != NULL, NULL);
 
 	g_atomic_int_inc(&selector->ref_count);
 
@@ -110,7 +109,8 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 	JDBTypeValue val;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
-	g_return_val_if_fail(operator<_J_DB_SELECTOR_OPERATOR_COUNT, FALSE);
+	g_return_val_if_fail(operator < _J_DB_SELECTOR_OPERATOR_COUNT, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(selector->bson_count + 1 > 500))
 	{
@@ -207,6 +207,7 @@ j_db_selector_add_selector (JDBSelector* selector, JDBSelector* sub_selector, GE
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
 	g_return_val_if_fail(selector != sub_selector, FALSE);
 	g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!sub_selector->bson_count))
 	{

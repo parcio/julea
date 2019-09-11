@@ -70,7 +70,7 @@ JDBSchema* j_db_schema_new (gchar const* namespace, gchar const* name, GError** 
  * \return the schema or NULL on failure
  **/
 
-JDBSchema* j_db_schema_ref (JDBSchema* schema, GError** error);
+JDBSchema* j_db_schema_ref (JDBSchema* schema);
 
 /**
  * Decrease the ref_count of the given schema - and automatically call free if ref_count is 0.  This is a noop if schema == NULL.

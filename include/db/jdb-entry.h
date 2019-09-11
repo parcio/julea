@@ -65,7 +65,7 @@ JDBEntry* j_db_entry_new (JDBSchema* schema, GError** error);
  * \return the entry or NULL on failure
  **/
 
-JDBEntry* j_db_entry_ref (JDBEntry* entry, GError** error);
+JDBEntry* j_db_entry_ref (JDBEntry* entry);
 
 /**
  * Decrease the ref_count of the given entry - and automatically call free if ref_count is 0.  This is a noop if entry == NULL.

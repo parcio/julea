@@ -66,7 +66,7 @@ JDBIterator* j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError
  * \return the iterator or NULL on failure
  **/
 
-JDBIterator* j_db_iterator_ref (JDBIterator* iterator, GError** error);
+JDBIterator* j_db_iterator_ref (JDBIterator* iterator);
 
 /**
  * Decrease the ref_count of the given iterator - and automatically call free if ref_count is 0. This is a noop if iterator == NULL.

@@ -40,8 +40,9 @@ j_db_schema_new (gchar const* namespace, gchar const* name, GError** error)
 
 	JDBSchema* schema = NULL;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(namespace != NULL, NULL);
+	g_return_val_if_fail(name != NULL, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	(void)error;
 
@@ -60,13 +61,11 @@ j_db_schema_new (gchar const* namespace, gchar const* name, GError** error)
 }
 
 JDBSchema*
-j_db_schema_ref (JDBSchema* schema, GError** error)
+j_db_schema_ref (JDBSchema* schema)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(schema != NULL, FALSE);
-
-	(void)error;
 
 	g_atomic_int_inc(&schema->ref_count);
 
@@ -123,6 +122,7 @@ j_db_schema_add_field (JDBSchema* schema, gchar const* name, JDBType type, GErro
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(type < _J_DB_TYPE_COUNT, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (!schema->bson_initialized)
 	{
@@ -171,6 +171,7 @@ j_db_schema_get_field (JDBSchema* schema, gchar const* name, JDBType* type, GErr
 	g_return_val_if_fail(type != NULL, FALSE);
 	g_return_val_if_fail(g_strcmp0(name, "_index"), FALSE);
 	g_return_val_if_fail(schema->bson_initialized, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema->bson, error)))
 	{
@@ -206,10 +207,11 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 	JDBTypeValue val;
 	const char* key;
 
-	g_return_val_if_fail(schema != NULL, FALSE);
-	g_return_val_if_fail(names != NULL, FALSE);
-	g_return_val_if_fail(types != NULL, FALSE);
-	g_return_val_if_fail(schema->bson_initialized, FALSE);
+	g_return_val_if_fail(schema != NULL, 0);
+	g_return_val_if_fail(names != NULL, 0);
+	g_return_val_if_fail(types != NULL, 0);
+	g_return_val_if_fail(schema->bson_initialized, 0);
+	g_return_val_if_fail(error == NULL || *error == NULL, 0);
 
 	*names = NULL;
 	*types = NULL;
@@ -283,6 +285,7 @@ j_db_schema_add_index (JDBSchema* schema, gchar const** names, GError** error)
 	g_return_val_if_fail(names != NULL, FALSE);
 	g_return_val_if_fail(*names != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	index.variables = NULL;
 
@@ -401,6 +404,7 @@ j_db_schema_create (JDBSchema* schema, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(schema->bson_initialized, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (schema->bson_index_initialized)
 	{
@@ -432,6 +436,7 @@ j_db_schema_get (JDBSchema* schema, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(!schema->bson_initialized, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	schema->server_side = TRUE;
 	schema->bson_initialized = TRUE;
@@ -454,6 +459,7 @@ j_db_schema_delete (JDBSchema* schema, JBatch* batch, GError** error)
 
 	g_return_val_if_fail(schema != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_internal_schema_delete(schema->namespace, schema->name, batch, error)))
 	{
@@ -483,6 +489,7 @@ j_db_schema_equals (JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GEr
 
 	g_return_val_if_fail(schema1 != NULL, FALSE);
 	g_return_val_if_fail(schema2 != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	*equal = TRUE;
 

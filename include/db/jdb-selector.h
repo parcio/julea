@@ -92,7 +92,7 @@ JDBSelector* j_db_selector_new (JDBSchema* schema, JDBSelectorMode mode, GError*
  * \return the selector or NULL on failure
  **/
 
-JDBSelector* j_db_selector_ref (JDBSelector* selector, GError** error);
+JDBSelector* j_db_selector_ref (JDBSelector* selector);
 
 /**
  * Decrease the ref_count of the given selector - and automatically call free if ref_count is 0.  This is a noop if selector == NULL.
