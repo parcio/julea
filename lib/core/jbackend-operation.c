@@ -311,7 +311,7 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 						if (j_message_get_4(message))
 						{
 							ret = FALSE;
-							error_code = j_message_get_4(message);
+							j_message_get_4(message);
 							error_domain_len = j_message_get_4(message);
 							error_message_len = j_message_get_4(message);
 							j_message_get_n(message, error_domain_len);
