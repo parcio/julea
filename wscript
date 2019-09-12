@@ -2,6 +2,7 @@
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2010-2019 Michael Kuhn
+# Copyright (C) 2019 Benjamin Warnke
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -39,8 +40,8 @@ leveldb_version = '1.20'
 lmdb_version = '0.9.21'
 # Ubuntu 18.04 has libmongoc 1.9.2
 libmongoc_version = '1.9.0'
-# Ubuntu 18.04 has SQLite 3.22.0
 sqlite_version = '3.22.0'
+mysql_version = '8.0.15'
 
 
 def check_cfg_rpath(ctx, **kwargs):
@@ -161,6 +162,7 @@ def options(ctx):
 	ctx.add_option('--hdf5', action='store', default=None, help='HDF5 prefix', dest='hdf')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
+	ctx.add_option('--mysql', action='store', default=None, help='MYSQL prefix')
 
 
 def configure(ctx):
@@ -290,6 +292,16 @@ def configure(ctx):
 			args=['--cflags', '--libs', 'sqlite3 >= {0}'.format(sqlite_version)],
 			uselib_store='SQLITE',
 			pkg_config_path=get_pkg_config_path(ctx.options.sqlite),
+			mandatory=False
+		)
+
+	ctx.env.JULEA_MYSQL = \
+		check_cfg_rpath(
+			ctx,
+			package='mysqlclient',
+			args=['--cflags', '--libs', 'mysqlclient >= {0}'.format(mysql_version)],
+			uselib_store='MYSQL',
+			pkg_config_path=get_pkg_config_path(ctx.options.mysql),
 			mandatory=False
 		)
 
@@ -545,6 +557,9 @@ def build(ctx):
 
 	if ctx.env.JULEA_SQLITE:
 		db_backends.append('sqlite')
+	if ctx.env.JULEA_MYSQL:
+		db_backends.append('mysql')
+
 
 	for backend in db_backends:
 		use_extra = []
@@ -552,6 +567,8 @@ def build(ctx):
 
 		if backend == 'sqlite':
 			use_extra = ['SQLITE']
+		if backend == 'mysql':
+			use_extra = ['MYSQL']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],

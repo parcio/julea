@@ -114,6 +114,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
+		dependencies="${dependencies} mysql"
 	fi
 
 	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
@@ -165,7 +166,15 @@ spack_install_dependencies ()
 	then
 		for dependency in $(spack_get_dependencies "install-${mode}")
 		do
+			if test ${dependency} = 'mysql'
+			then
+				(
+					cd "${SPACK_DIR}"
+					./bin/spack install mysql +client_only build_type=Release cxxstd=11
+				)
+			else
 			spack_install "${dependency}"
+			fi
 		done
 	fi
 }
