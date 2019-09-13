@@ -379,7 +379,7 @@ j_trace_init (gchar const* name)
 	g_return_if_fail(name != NULL);
 	g_return_if_fail(j_trace_flags == J_TRACE_OFF);
 
-	if ((j_trace = g_getenv("J_TRACE")) == NULL)
+	if ((j_trace = g_getenv("JULEA_TRACE")) == NULL)
 	{
 		return;
 	}
@@ -410,7 +410,7 @@ j_trace_init (gchar const* name)
 		return;
 	}
 
-	if ((j_trace_function = g_getenv("J_TRACE_FUNCTION")) != NULL)
+	if ((j_trace_function = g_getenv("JULEA_TRACE_FUNCTION")) != NULL)
 	{
 		g_auto(GStrv) p = NULL;
 		guint i;
