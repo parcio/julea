@@ -174,9 +174,9 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 			break;
 		case J_DB_TYPE_ID:
 		case _J_DB_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
-	}
+		default:
+			g_assert_not_reached();
+		}
 
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_value", type, &val, error)))
 	{

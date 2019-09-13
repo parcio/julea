@@ -242,22 +242,22 @@ j_db_iterator_get_field (JDBIterator* iterator, gchar const* name, JDBType* type
 			*length = strlen(val.val_string);
 			break;
 		case J_DB_TYPE_BLOB:
-		if (val.val_blob && val.val_blob_length)
-		{
-			*value = g_new(gchar, val.val_blob_length);
-			memcpy(*value, val.val_blob, val.val_blob_length);
-			*length = val.val_blob_length;
-		}
-		else
-		{
-			*value = NULL;
-			*length = 0;
-		}
+			if (val.val_blob && val.val_blob_length)
+			{
+				*value = g_new(gchar, val.val_blob_length);
+				memcpy(*value, val.val_blob, val.val_blob_length);
+				*length = val.val_blob_length;
+			}
+			else
+			{
+				*value = NULL;
+				*length = 0;
+			}
 			break;
 		case J_DB_TYPE_ID:
 		case _J_DB_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
+		default:
+			g_assert_not_reached();
 	}
 
 	return TRUE;
