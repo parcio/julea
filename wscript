@@ -146,6 +146,7 @@ def get_pkg_config_path(prefix):
 
 def options(ctx):
 	ctx.load('compiler_c')
+	#ctx.load('compiler_cxx')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
@@ -164,6 +165,7 @@ def options(ctx):
 
 def configure(ctx):
 	ctx.load('compiler_c')
+	#ctx.load('compiler_cxx')
 	ctx.load('gnu_dirs')
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
@@ -403,6 +405,7 @@ def build(ctx):
 	use_julea_backend = use_julea_core + ['GMODULE']
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
 	use_julea_kv = use_julea_core + ['lib/julea', 'lib/julea-kv']
+	use_julea_db = use_julea_core + ['lib/julea', 'lib/julea-db']
 	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
 	use_julea_hdf = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5'] if ctx.env.JULEA_HDF else []
 
@@ -418,7 +421,7 @@ def build(ctx):
 		install_path='${LIBDIR}'
 	)
 
-	clients = ['object', 'kv', 'item']
+	clients = ['object', 'kv', 'db', 'item']
 
 	if ctx.env.JULEA_HDF:
 		clients.append('hdf5')
@@ -598,7 +601,7 @@ def build(ctx):
 		)
 
 	# pkg-config
-	for lib in ('', 'object', 'kv', 'item'):
+	for lib in ('', 'object', 'kv', 'db', 'item'):
 		suffix = '-{0}'.format(lib) if lib else ''
 
 		ctx(
@@ -613,3 +616,15 @@ def build(ctx):
 			GLIB_VERSION=glib_version,
 			LIBBSON_VERSION=libbson_version
 		)
+
+	# Example
+	#for compiler in ('c', 'cxx'):
+	#	ctx(
+	#		features=[compiler, '{0}program'.format(compiler)],
+	#		source=ctx.path.ant_glob('example/hello-world.c'),
+	#		target='example/hello-world-{0}'.format(compiler),
+	#		use=use_julea_object + use_julea_kv,
+	#		includes=include_julea_core,
+	#		rpath=get_rpath(ctx),
+	#		install_path=None
+	#	)

@@ -42,7 +42,7 @@ typedef void (*JOperationFreeFunc) (gpointer);
  **/
 struct JOperation
 {
-	gpointer key;
+	gconstpointer key;
 	gpointer data;
 
 	JOperationExecFunc exec_func;

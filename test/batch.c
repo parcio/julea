@@ -104,10 +104,8 @@ _test_batch_execute (gboolean async)
 
 	if (async)
 	{
-		while (g_atomic_int_get(&test_batch_flag) != 1)
-		{
-			g_usleep(1000);
-		}
+		j_batch_wait(batch);
+		g_assert_cmpint(g_atomic_int_get(&test_batch_flag), ==, 1);
 	}
 }
 

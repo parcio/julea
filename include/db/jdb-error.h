@@ -20,14 +20,40 @@
  * \file
  **/
 
-#ifndef JULEA_DB_H
-#define JULEA_DB_H
+#ifndef JULEA_DB_ERROR_H
+#define JULEA_DB_ERROR_H
 
-#include <db/jdb-entry.h>
-#include <db/jdb-error.h>
-#include <db/jdb-iterator.h>
-#include <db/jdb-schema.h>
-#include <db/jdb-selector.h>
-#include <db/jdb-type.h>
+#if !defined(JULEA_DB_H) && !defined(JULEA_DB_COMPILATION)
+#error "Only <julea-db.h> can be included directly."
+#endif
+
+#include <glib.h>
+
+G_BEGIN_DECLS
+
+#define J_DB_ERROR j_db_error_quark()
+
+enum JDBError
+{
+	J_DB_ERROR_DUPLICATE_INDEX,
+	J_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS,
+	J_DB_ERROR_MODE_INVALID,
+	J_DB_ERROR_OPERATOR_INVALID,
+	J_DB_ERROR_SCHEMA_INITIALIZED,
+	J_DB_ERROR_SCHEMA_NOT_INITIALIZED,
+	J_DB_ERROR_SCHEMA_SERVER,
+	J_DB_ERROR_SELECTOR_EMPTY,
+	J_DB_ERROR_SELECTOR_MUST_NOT_EQUAL,
+	J_DB_ERROR_SELECTOR_TOO_COMPLEX,
+	J_DB_ERROR_TYPE_INVALID,
+	J_DB_ERROR_VARIABLE_ALREADY_SET,
+	J_DB_ERROR_VARIABLE_NOT_FOUND
+};
+
+typedef enum JDBError JDBError;
+
+GQuark j_db_error_quark (void);
+
+G_END_DECLS
 
 #endif
