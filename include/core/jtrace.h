@@ -58,7 +58,7 @@ void j_trace_leave (JTrace*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 
-#ifndef JULEA_DEBUG
+#ifdef JULEA_DEBUG
 #ifdef __COUNTER__
 #define J_TRACE(name, ...) g_autoptr(JTrace) G_PASTE(j_trace, __COUNTER__) G_GNUC_UNUSED = j_trace_enter(name, __VA_ARGS__)
 #define J_TRACE_FUNCTION(...) g_autoptr(JTrace) G_PASTE(j_trace_function, __COUNTER__) G_GNUC_UNUSED = j_trace_enter(G_STRFUNC, __VA_ARGS__)
