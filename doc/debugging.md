@@ -6,7 +6,7 @@ Moreover, developers should be aware of the fact that debug builds of JULEA beha
 ## Tracing
 
 JULEA contains a tracing component that can be used to record information about various aspects of JULEA's behavior.
-The overall tracing can be influence using the `JULEA_TRACE` environment variable.
+The overall tracing can be influenced using the `JULEA_TRACE` environment variable.
 If the variable is set to `echo`, all tracing information will be printed to stderr.
 If JULEA has been built with OTF support, a value of `otf` will cause JULEA to produce traces via OTF.
 It is also possible to specify multiple values separated by commas.
