@@ -95,6 +95,8 @@ static
 void
 j_kv_put_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVOperation* operation = data;
 
 	j_kv_unref(operation->put.kv);
@@ -111,6 +113,8 @@ static
 void
 j_kv_delete_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKV* kv = data;
 
 	j_kv_unref(kv);
@@ -120,6 +124,8 @@ static
 void
 j_kv_get_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVOperation* operation = data;
 
 	j_kv_unref(operation->get.kv);

@@ -37,6 +37,8 @@ static
 gboolean
 jd_signal (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	GMainLoop* main_loop = data;
 
 	if (g_main_loop_is_running(main_loop))
@@ -108,6 +110,8 @@ static
 gboolean
 jd_daemon (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gint fd;
 	pid_t pid;
 
@@ -156,6 +160,8 @@ jd_daemon (void)
 int
 main (int argc, char** argv)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean opt_daemon = FALSE;
 	gint opt_port = 4711;
 

@@ -38,7 +38,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 	gchar const* path;
 	guint32 operation_count;
 	JBackendOperation backend_operation;
-	g_autoptr(JSemantics) semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	JSemanticsSafety safety;
 	gboolean message_matched = FALSE;
 	guint i;

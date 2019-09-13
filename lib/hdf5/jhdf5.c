@@ -311,6 +311,7 @@ j_hdf5_deserialize_type (const bson_t* b)
 	bson_iter_t iterator;
 	const void *buf;
 	bson_subtype_t bs;
+	// FIXME might be uninitialized
 	void* type_data;
 	size_t type_size;
 
@@ -359,6 +360,7 @@ j_hdf5_deserialize_space (const bson_t* b)
 	bson_iter_t iterator;
 	const void *buf;
 	bson_subtype_t bs;
+	// FIXME might be uninitialized
 	void* space_data;
 	size_t space_size;
 

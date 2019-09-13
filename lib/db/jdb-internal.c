@@ -46,6 +46,8 @@ typedef struct JDBIteratorHelper JDBIteratorHelper;
 GQuark
 j_db_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-db-error-quark");
 }
 
@@ -141,6 +143,8 @@ static
 void
 j_backend_db_func_free (gpointer _data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JBackendOperation* data = _data;
 
 	if (data)
@@ -153,6 +157,8 @@ static
 gboolean
 j_db_schema_create_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_SCHEMA_CREATE);
 }
 
@@ -188,6 +194,8 @@ static
 gboolean
 j_db_schema_get_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_SCHEMA_GET);
 }
 
@@ -223,6 +231,8 @@ static
 gboolean
 j_db_schema_delete_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_SCHEMA_DELETE);
 }
 
@@ -257,6 +267,8 @@ static
 gboolean
 j_db_insert_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_INSERT);
 }
 
@@ -292,6 +304,8 @@ static
 gboolean
 j_db_update_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_UPDATE);
 }
 
@@ -328,6 +342,8 @@ static
 gboolean
 j_db_delete_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_DELETE);
 }
 
@@ -363,6 +379,8 @@ static
 gboolean
 j_db_query_exec (JList* operations, JSemantics* semantics)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_QUERY);
 }
 
@@ -461,6 +479,8 @@ error2:
 bson_t*
 j_db_selector_get_bson (JDBSelector* selector)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	if (selector && selector->bson_count > 0)
 	{
 		return &selector->bson;

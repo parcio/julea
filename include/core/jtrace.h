@@ -67,8 +67,13 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 #define J_TRACE_FUNCTION(...) g_autoptr(JTrace) G_PASTE(j_trace_function, __LINE__) G_GNUC_UNUSED = j_trace_enter(G_STRFUNC, __VA_ARGS__)
 #endif
 #else
-#define J_TRACE(name, ...) guint G_PASTE(j_trace, __LINE__) G_GNUC_UNUSED = 0;
-#define J_TRACE_FUNCTION(...) guint G_PASTE(j_trace_function, __LINE__) G_GNUC_UNUSED = 0;
+#ifdef __COUNTER__
+#define J_TRACE(name, ...) g_autoptr(JTrace) G_PASTE(j_trace, __COUNTER__) G_GNUC_UNUSED = NULL
+#define J_TRACE_FUNCTION(...) g_autoptr(JTrace) G_PASTE(j_trace_function, __COUNTER__) G_GNUC_UNUSED = NULL
+#else
+#define J_TRACE(name, ...) g_autoptr(JTrace) G_PASTE(j_trace, __LINE__) G_GNUC_UNUSED = NULL
+#define J_TRACE_FUNCTION(...) g_autoptr(JTrace) G_PASTE(j_trace_function, __LINE__) G_GNUC_UNUSED = NULL
+#endif
 #endif
 
 void j_trace_file_begin (gchar const*, JTraceFileOperation);
