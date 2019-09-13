@@ -176,6 +176,8 @@ static
 JMessageHeader*
 j_message_header (JMessage const* message)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return (JMessageHeader*)message->data;
 }
 
@@ -195,6 +197,8 @@ static
 gsize
 j_message_length (JMessage const* message)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	guint32 length;
 
 	length = j_message_header(message)->length;
@@ -206,6 +210,8 @@ static
 void
 j_message_data_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_slice_free(JMessageData, data);
 }
 
@@ -226,6 +232,8 @@ static
 gboolean
 j_message_can_append (JMessage const* message, gsize length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return (message->current + length <= message->data + message->size);
 }
 
@@ -246,6 +254,8 @@ static
 gboolean
 j_message_can_get (JMessage const* message, gsize length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return (message->current + length <= message->data + sizeof(JMessageHeader) + j_message_length(message));
 }
 
@@ -253,6 +263,8 @@ static
 void
 j_message_extend (JMessage* message, gsize length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gsize factor = 1;
 	gsize current_length;
 	gsize position;
@@ -288,6 +300,8 @@ static
 void
 j_message_ensure_size (JMessage* message, gsize length)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gsize position;
 
 	if (length <= message->size)

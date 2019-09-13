@@ -40,18 +40,24 @@
 GQuark
 j_backend_bson_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-bson-error-quark");
 }
 
 GQuark
 j_backend_db_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-db-error-quark");
 }
 
 GQuark
 j_backend_sql_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-sql-error-quark");
 }
 

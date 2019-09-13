@@ -84,6 +84,8 @@ static
 gboolean
 j_kv_uri_parse (JKVURI* uri, gchar const* uri_)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_auto(GStrv) parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
 	gchar const* scheme_prefix = NULL;
@@ -188,6 +190,8 @@ error:
 JKVURI*
 j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVURI* uri;
 
 	uri = g_slice_new(JKVURI);
@@ -224,6 +228,8 @@ j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
 void
 j_kv_uri_free (JKVURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(uri != NULL);
 
 	if (uri->kv != NULL)
@@ -255,6 +261,8 @@ j_kv_uri_free (JKVURI* uri)
 guint32
 j_kv_uri_get_index (JKVURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, 0);
 
 	return uri->index;
@@ -278,6 +286,8 @@ j_kv_uri_get_index (JKVURI* uri)
 gchar const*
 j_kv_uri_get_namespace (JKVURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->namespace;
@@ -301,6 +311,8 @@ j_kv_uri_get_namespace (JKVURI* uri)
 gchar const*
 j_kv_uri_get_name (JKVURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->name;
@@ -324,6 +336,8 @@ j_kv_uri_get_name (JKVURI* uri)
 JKV*
 j_kv_uri_get_kv (JKVURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->kv;
