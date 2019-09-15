@@ -220,7 +220,7 @@ j_trace_thread_free (JTraceThread* trace_thread)
 #endif
 
 	g_free(trace_thread->thread_name);
-
+	g_array_free(trace_thread->stack, TRUE);
 	g_slice_free(JTraceThread, trace_thread);
 }
 
@@ -677,20 +677,20 @@ j_trace_leave (JTrace* trace)
 
 	if (j_trace_flags == J_TRACE_OFF)
 	{
-		return;
+		goto end;
 	}
 
 	trace_thread = j_trace_thread_get_default();
 
 	if (!j_trace_function_check(trace->name))
 	{
-		return;
+		goto end;
 	}
 
 	/* FIXME */
 	if (trace_thread->function_depth == 0)
 	{
-		return;
+		goto end;
 	}
 
 	trace_thread->function_depth--;
@@ -761,6 +761,10 @@ j_trace_leave (JTrace* trace)
 		g_free(top_stack->name);
 		g_array_set_size(trace_thread->stack, trace_thread->stack->len - 1);
 	}
+
+end:
+	g_free(trace->name);
+	g_slice_free(JTrace, trace);
 }
 
 /**
