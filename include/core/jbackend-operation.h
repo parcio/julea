@@ -164,7 +164,7 @@ static const JBackendOperation j_backend_operation_db_schema_delete = {
 static const JBackendOperation j_backend_operation_db_insert = {
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
-	.out_param_count = 1,
+	.out_param_count = 2,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -195,6 +195,10 @@ static const JBackendOperation j_backend_operation_db_update = {
 		},
 	},
 	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
 };
