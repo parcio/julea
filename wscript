@@ -40,8 +40,10 @@ leveldb_version = '1.20'
 lmdb_version = '0.9.21'
 # Ubuntu 18.04 has libmongoc 1.9.2
 libmongoc_version = '1.9.0'
+# Ubuntu 18.04 has SQLite 3.22.0
 sqlite_version = '3.22.0'
-mysql_version = '8.0.15'
+# Ubuntu 18.04 has mariaDB 10.1
+mariadb_version = '10.1'
 
 
 def check_cfg_rpath(ctx, **kwargs):
@@ -298,8 +300,8 @@ def configure(ctx):
 	ctx.env.JULEA_MYSQL = \
 		check_cfg_rpath(
 			ctx,
-			package='mysqlclient',
-			args=['--cflags', '--libs', 'mysqlclient >= {0}'.format(mysql_version)],
+			package='mariadb',
+			args=['--cflags', '--libs', 'mariadb >= {0}'.format(mariadb_version)],
 			uselib_store='MYSQL',
 			pkg_config_path=get_pkg_config_path(ctx.options.mysql),
 			mandatory=False

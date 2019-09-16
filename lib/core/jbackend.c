@@ -40,18 +40,24 @@
 GQuark
 j_backend_bson_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-bson-error-quark");
 }
 
 GQuark
 j_backend_db_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-db-error-quark");
 }
 
 GQuark
 j_backend_sql_error_quark (void)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return g_quark_from_static_string("j-backend-sql-error-quark");
 }
 
@@ -65,7 +71,8 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
-	gchar const* backend_path = NULL;
+	// Unused in release builds
+	gchar const* backend_path G_GNUC_UNUSED = NULL;
 	gchar* path = NULL;
 	gchar* type_path = NULL;
 	gchar const* type_str = NULL;

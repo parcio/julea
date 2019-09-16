@@ -154,7 +154,6 @@ j_cmd_copy (gchar const** arguments)
 
 				goto end;
 			}
-
 		}
 	}
 

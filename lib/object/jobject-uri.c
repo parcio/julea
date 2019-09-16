@@ -89,6 +89,8 @@ static
 gboolean
 j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_auto(GStrv) parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
 	gchar const* scheme_prefix = NULL;
@@ -229,6 +231,8 @@ error:
 JObjectURI*
 j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectURI* uri;
 
 	uri = g_slice_new(JObjectURI);
@@ -266,6 +270,8 @@ j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
 void
 j_object_uri_free (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(uri != NULL);
 
 	if (uri->distributed_object != NULL)
@@ -302,6 +308,8 @@ j_object_uri_free (JObjectURI* uri)
 guint32
 j_object_uri_get_index (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, 0);
 
 	return uri->index;
@@ -325,6 +333,8 @@ j_object_uri_get_index (JObjectURI* uri)
 gchar const*
 j_object_uri_get_namespace (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->namespace;
@@ -348,6 +358,8 @@ j_object_uri_get_namespace (JObjectURI* uri)
 gchar const*
 j_object_uri_get_name (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->name;
@@ -371,6 +383,8 @@ j_object_uri_get_name (JObjectURI* uri)
 JDistributedObject*
 j_object_uri_get_distributed_object (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->distributed_object;
@@ -394,6 +408,8 @@ j_object_uri_get_distributed_object (JObjectURI* uri)
 JObject*
 j_object_uri_get_object (JObjectURI* uri)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(uri != NULL, NULL);
 
 	return uri->object;

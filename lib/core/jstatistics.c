@@ -88,6 +88,8 @@ static
 gchar const*
 j_statistics_get_type_name (JStatisticsType type)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	switch (type)
 	{
 		case J_STATISTICS_FILES_CREATED:

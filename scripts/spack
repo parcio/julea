@@ -114,7 +114,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
-		dependencies="${dependencies} mysql"
+		dependencies="${dependencies} mariadb"
 	fi
 
 	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
@@ -152,6 +152,7 @@ spack_load_dependencies ()
 			fi
 		done
 	fi
+	export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:$(find dependencies/opt/spack/ -name *.pc | sed "s-/[^/]*\$-/-" | uniq | tr '\n' ':')
 }
 
 spack_install_dependencies ()
@@ -166,15 +167,7 @@ spack_install_dependencies ()
 	then
 		for dependency in $(spack_get_dependencies "install-${mode}")
 		do
-			if test ${dependency} = 'mysql'
-			then
-				(
-					cd "${SPACK_DIR}"
-					./bin/spack install mysql +client_only build_type=Release cxxstd=11
-				)
-			else
 			spack_install "${dependency}"
-			fi
 		done
 	fi
 }

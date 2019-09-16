@@ -540,7 +540,7 @@ j_sql_open(void)
 		    "julea", //database name
 		    3306, //port number
 		    "/var/run/mysqld/mysqld.sock", //unix socket
-		    CLIENT_OPTIONAL_RESULTSET_METADATA //client flags
+		    0 //client flags
 		    ))
 	{
 		goto _error;
@@ -610,7 +610,7 @@ void
 backend_fini(void)
 {
 	J_TRACE_FUNCTION(NULL);
-	g_private_replace(&thread_variables_global, NULL); //this should free the main threads private variables
+
 	g_free(path);
 }
 static

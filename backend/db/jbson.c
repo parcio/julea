@@ -345,33 +345,6 @@ _error:
 
 G_GNUC_UNUSED
 static
-char*
-j_bson_as_json(const bson_t* bson, GError** error)
-{
-J_TRACE_FUNCTION(NULL);
-
-	if (G_UNLIKELY(!bson))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_BSON_NULL, "bson must not be NULL");
-		goto _error;
-	}
-	return bson_as_json(bson, NULL);
-_error:
-	return FALSE;
-}
-
-G_GNUC_UNUSED
-static
-void
-j_bson_free_json(char* json)
-{
-J_TRACE_FUNCTION(NULL);
-
-	bson_free(json);
-}
-
-G_GNUC_UNUSED
-static
 gboolean
 j_bson_iter_find(bson_iter_t* iter, const char* key, GError** error)
 {
@@ -501,95 +474,6 @@ J_TRACE_FUNCTION(NULL);
 	{
 		bson_iter_document(iter, &length, &data);
 		bson_init_static(bson, data, length);
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
-
-G_GNUC_UNUSED
-static
-gboolean
-j_bson_init_from_json(bson_t* bson, const char* json, GError** error)
-{
-J_TRACE_FUNCTION(NULL);
-
-	if (G_UNLIKELY(!bson))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_BSON_NULL, "bson must not be NULL");
-		goto _error;
-	}
-	if (G_UNLIKELY(!json))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_BSON_JSON_NULL, "json must not be NULL");
-		goto _error;
-	}
-	if (G_UNLIKELY(!bson_init_from_json(bson, json, -1, NULL)))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_BSON_INIT_FROM_JSON_FAILED, "bson init from json failes");
-		goto _error;
-	}
-	return TRUE;
-_error:
-	return FALSE;
-}
-
-G_GNUC_UNUSED
-static
-gboolean
-j_bson_iter_type_db(bson_iter_t* iter, JDBType* type, GError** error)
-{
-J_TRACE_FUNCTION(NULL);
-
-	if (G_UNLIKELY(!iter))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
-		goto _error;
-	}
-	if (G_UNLIKELY(!type))
-	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_TYPE_NULL, "type must not be NULL");
-		goto _error;
-	}
-	switch (bson_iter_type(iter))
-	{
-	case BSON_TYPE_DOUBLE:
-		*type = J_DB_TYPE_FLOAT64;
-		break;
-	case BSON_TYPE_UTF8:
-		*type = J_DB_TYPE_STRING;
-		break;
-	case BSON_TYPE_INT32:
-		*type = J_DB_TYPE_UINT32;
-		break;
-	case BSON_TYPE_INT64:
-		*type = J_DB_TYPE_UINT64;
-		break;
-	case BSON_TYPE_BINARY:
-		*type = J_DB_TYPE_BLOB;
-		break;
-	case BSON_TYPE_NULL:
-		*type = J_DB_TYPE_BLOB;
-		break;
-	case BSON_TYPE_EOD:
-	case BSON_TYPE_DOCUMENT:
-	case BSON_TYPE_ARRAY:
-	case BSON_TYPE_UNDEFINED:
-	case BSON_TYPE_OID:
-	case BSON_TYPE_BOOL:
-	case BSON_TYPE_DATE_TIME:
-	case BSON_TYPE_REGEX:
-	case BSON_TYPE_DBPOINTER:
-	case BSON_TYPE_CODE:
-	case BSON_TYPE_SYMBOL:
-	case BSON_TYPE_CODEWSCOPE:
-	case BSON_TYPE_TIMESTAMP:
-	case BSON_TYPE_DECIMAL128:
-	case BSON_TYPE_MAXKEY:
-	case BSON_TYPE_MINKEY:
-	default:
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
-		goto _error;
 	}
 	return TRUE;
 _error:

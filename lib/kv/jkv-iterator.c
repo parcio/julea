@@ -67,6 +67,8 @@ static
 JMessage*
 fetch_reply (guint32 index, gchar const* namespace, gchar const* prefix)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_autoptr(JMessage) message = NULL;
 	JMessage* reply;
 	JMessageType message_type;
@@ -116,6 +118,8 @@ fetch_reply (guint32 index, gchar const* namespace, gchar const* prefix)
 JKVIterator*
 j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVIterator* iterator;
 
 	JConfiguration* configuration = j_configuration();
@@ -160,6 +164,8 @@ j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 JKVIterator*
 j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const* prefix)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JKVIterator* iterator;
 
 	JConfiguration* configuration = j_configuration();
@@ -207,6 +213,8 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 void
 j_kv_iterator_free (JKVIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(iterator != NULL);
 
 	for (guint32 i = 0; i < iterator->replies_n; i++)
@@ -235,6 +243,8 @@ j_kv_iterator_free (JKVIterator* iterator)
 gboolean
 j_kv_iterator_next (JKVIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
@@ -278,6 +288,8 @@ retry:
 gchar const*
 j_kv_iterator_get (JKVIterator* iterator, gconstpointer* value, guint32* len)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_val_if_fail(iterator != NULL, NULL);
 	g_return_val_if_fail(len != NULL, NULL);
 
