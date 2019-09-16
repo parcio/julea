@@ -24,7 +24,7 @@ main(int argc, char* argv[])
 	if (argc > 1)
 	{
 		test_db_backend_create_base_test_files(argv[1]);
-		goto fini;
+		return 0;
 	}
 	test_db_backend_init();
 #ifdef __AFL_HAVE_MANUAL_CONTROL
@@ -42,7 +42,5 @@ main(int argc, char* argv[])
 	cleanup:
 		test_db_backend_cleanup();
 	}
-fini:
-	j_fini(); //memory leaks count as error -> free everything possible
 	return 0;
 }

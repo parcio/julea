@@ -38,7 +38,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 	gchar const* path;
 	guint32 operation_count;
 	JBackendOperation backend_operation;
-	g_autoptr(JSemantics) semantics;
+	g_autoptr(JSemantics) semantics = NULL;
 	JSemanticsSafety safety;
 	gboolean message_matched = FALSE;
 	guint i;
@@ -386,16 +386,21 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				{
 					gconstpointer data;
 					guint32 len;
+					gboolean ret;
 
 					key = j_message_get_string(message);
 					len = j_message_get_4(message);
 					data = j_message_get_n(message, len);
 
-					j_backend_kv_put(jd_kv_backend, batch, key, data, len);
+					ret = j_backend_kv_put(jd_kv_backend, batch, key, data, len);
 
 					if (reply != NULL)
 					{
-						j_message_add_operation(reply, 0);
+						guint32 dummy;
+
+						dummy = (ret) ? 1 : 0;
+						j_message_add_operation(reply, 4);
+						j_message_append_4(reply, &dummy);
 					}
 				}
 
@@ -422,13 +427,19 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				for (i = 0; i < operation_count; i++)
 				{
+					gboolean ret;
+
 					key = j_message_get_string(message);
 
-					j_backend_kv_delete(jd_kv_backend, batch, key);
+					ret = j_backend_kv_delete(jd_kv_backend, batch, key);
 
 					if (reply != NULL)
 					{
-						j_message_add_operation(reply, 0);
+						guint32 dummy;
+
+						dummy = (ret) ? 1 : 0;
+						j_message_add_operation(reply, 4);
+						j_message_append_4(reply, &dummy);
 					}
 				}
 

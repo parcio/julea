@@ -32,10 +32,16 @@ set_backend_path
 
 run_benchmark ()
 {
+	local ret
+
+	ret=0
+
 	setup_init
 	setup_start
-	julea-benchmark "$@" || true
+	julea-benchmark "$@" || ret=$?
 	setup_stop
+
+	return ${ret}
 }
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"

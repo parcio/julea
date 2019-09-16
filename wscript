@@ -29,13 +29,19 @@ out = 'build'
 
 # Structured logging needs GLib 2.56
 # CentOS 7 has GLib 2.42, CentOS 7.6 has GLib 2.56
+# Ubuntu 18.04 has GLib 2.56
 glib_version = '2.56'
+# Ubuntu 18.04 has libbson 1.9.2
 libbson_version = '1.9.0'
 
+# Ubuntu 18.04 has LevelDB 1.20
 leveldb_version = '1.20'
+# Ubuntu 18.04 has LMDB 0.9.21
 lmdb_version = '0.9.21'
+# Ubuntu 18.04 has libmongoc 1.9.2
 libmongoc_version = '1.9.0'
-sqlite_version = '3.23.0'
+# Ubuntu 18.04 has SQLite 3.22.0
+sqlite_version = '3.22.0'
 
 
 def check_cfg_rpath(ctx, **kwargs):
@@ -141,6 +147,7 @@ def get_pkg_config_path(prefix):
 
 def options(ctx):
 	ctx.load('compiler_c')
+	#ctx.load('compiler_cxx')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
@@ -159,6 +166,7 @@ def options(ctx):
 
 def configure(ctx):
 	ctx.load('compiler_c')
+	#ctx.load('compiler_cxx')
 	ctx.load('gnu_dirs')
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
@@ -241,6 +249,18 @@ def configure(ctx):
 			pkg_config_path=get_pkg_config_path(ctx.options.leveldb),
 			mandatory=False
 		)
+
+	if not ctx.env.JULEA_LEVELDB:
+		ctx.env.JULEA_LEVELDB = \
+			check_cc_rpath(
+				ctx,
+				ctx.options.leveldb,
+				header_name='leveldb/c.h',
+				lib='leveldb',
+				uselib_store='LEVELDB',
+				define_name='HAVE_LEVELDB',
+				mandatory=False
+			)
 
 	ctx.env.JULEA_LMDB = \
 		check_cfg_rpath(
@@ -609,3 +629,15 @@ def build(ctx):
 			GLIB_VERSION=glib_version,
 			LIBBSON_VERSION=libbson_version
 		)
+
+	# Example
+	#for compiler in ('c', 'cxx'):
+	#	ctx(
+	#		features=[compiler, '{0}program'.format(compiler)],
+	#		source=ctx.path.ant_glob('example/hello-world.c'),
+	#		target='example/hello-world-{0}'.format(compiler),
+	#		use=use_julea_object + use_julea_kv,
+	#		includes=include_julea_core,
+	#		rpath=get_rpath(ctx),
+	#		install_path=None
+	#	)

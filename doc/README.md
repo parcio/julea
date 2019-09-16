@@ -12,5 +12,6 @@ Its goal is to provide a solid foundation for storage research and teaching.
 
 * [Quick Start](../README.md#quick-start)
 * [Configuration](configuration.md)
+* [Debugging](debugging.md)
 * [Dependencies](dependencies.md)
 * [Implementing a backend](implementing-backend.md)

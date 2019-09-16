@@ -29,8 +29,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <julea.h>
 
 G_BEGIN_DECLS

@@ -279,6 +279,12 @@ backend_init (gchar const* path)
 
 	if (mdb_env_create(&backend_env) == 0)
 	{
+		// FIXME grow mapsize dynamically (default is 10 MiB)
+		if (mdb_env_set_mapsize(backend_env, (gsize)4 * 1024 * 1024 * 1024) != 0)
+		{
+			goto error;
+		}
+
 		if (mdb_env_open(backend_env, path, 0, 0600) != 0)
 		{
 			goto error;

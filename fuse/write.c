@@ -49,6 +49,8 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 		bson_iter_t iter;
 		gint64 old_size = 0;
 
+		ret = bytes_written;
+
 		bson_init_static(file, value, len);
 
 		if (bson_iter_init_find(&iter, file, "size") && bson_iter_type(&iter) == BSON_TYPE_INT64)
@@ -60,11 +62,13 @@ jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct 
 				bson_iter_overwrite_int64(&iter, offset + size);
 
 				j_kv_put(kv, g_memdup(bson_get_data(file), file->len), file->len, g_free, batch);
-				j_batch_execute(batch);
+
+				if (!j_batch_execute(batch))
+				{
+					ret = -EIO;
+				}
 			}
 		}
-
-		ret = bytes_written;
 
 		bson_destroy(file);
 		g_free(value);

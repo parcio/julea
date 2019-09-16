@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <object/jobject-iterator.h>
 
 #include <julea.h>
@@ -56,6 +54,8 @@ struct JObjectIterator
 JObjectIterator*
 j_object_iterator_new (gchar const* namespace)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectIterator* iterator;
 
 	JConfiguration* configuration;
@@ -88,6 +88,8 @@ j_object_iterator_new (gchar const* namespace)
 void
 j_object_iterator_free (JObjectIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	g_return_if_fail(iterator != NULL);
 
 	if (iterator->message != NULL)
@@ -113,6 +115,8 @@ j_object_iterator_free (JObjectIterator* iterator)
 gboolean
 j_object_iterator_next (JObjectIterator* iterator)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
@@ -140,6 +144,8 @@ j_object_iterator_next (JObjectIterator* iterator)
 gchar const*
 j_object_iterator_get (JObjectIterator* iterator, guint64* index)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	(void)index;
 
 	g_return_val_if_fail(iterator != NULL, NULL);

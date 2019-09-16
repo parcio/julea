@@ -143,26 +143,36 @@ gboolean
 backend_status (gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
-	gboolean ret;
+	gboolean ret = TRUE;
 
-	//output = g_io_stream_get_output_stream(G_IO_STREAM(stream));
-
-	j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-	// FIXME
-	//g_output_stream_flush(output, NULL, NULL);
-	j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
-
-	// FIXME
-	ret = TRUE;
-
-	if (modification_time != NULL)
+	if (modification_time != NULL || size != NULL)
 	{
-		*modification_time = 0;
-	}
+		GFile* file;
+		GFileInfo* file_info;
 
-	if (size != NULL)
-	{
-		*size = 0;
+		file = g_file_new_for_path(bf->path);
+
+		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
+		file_info = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_SIZE "," G_FILE_ATTRIBUTE_TIME_MODIFIED "," G_FILE_ATTRIBUTE_TIME_MODIFIED_USEC, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
+
+		ret = (file_info != NULL);
+
+		if (modification_time != NULL)
+		{
+			GTimeVal time_val;
+
+			g_file_info_get_modification_time(file_info, &time_val);
+			*modification_time = time_val.tv_sec * G_USEC_PER_SEC + time_val.tv_usec;
+		}
+
+		if (size != NULL)
+		{
+			*size = g_file_info_get_size(file_info);
+		}
+
+		g_object_unref(file_info);
+		g_object_unref(file);
 	}
 
 	return ret;

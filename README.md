@@ -1,5 +1,7 @@
 # JULEA
 
+[![Build Status](https://travis-ci.org/wr-hamburg/julea.svg?branch=master)](https://travis-ci.org/wr-hamburg/julea)
+
 JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object and key-value backends that can either be client-side or server-side;
 backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.

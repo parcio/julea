@@ -29,45 +29,59 @@
 
 #include "../../test-afl/test-db-backend.c"
 
-static void
+static
+void
 test_db_schema_create(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
+	random_values.schema_create.variable_count = 1;
 	event = AFL_EVENT_DB_SCHEMA_CREATE;
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_schema_get(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_SCHEMA_GET;
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_schema_delete(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_SCHEMA_DELETE;
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_insert(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_INSERT;
 	test_db_backend_exec();
+	random_values.schema_create.variable_types[0] = J_DB_TYPE_UINT32;
+	random_values.schema_create.variable_count = 1;
 	event = AFL_EVENT_DB_SCHEMA_CREATE;
 	test_db_backend_exec();
 	event = AFL_EVENT_DB_INSERT;
+	random_values.values.value_count = 1;
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_update(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_UPDATE;
 	test_db_backend_exec();
@@ -81,9 +95,11 @@ test_db_update(void)
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_delete(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_DELETE;
 	test_db_backend_exec();
@@ -95,9 +111,11 @@ test_db_delete(void)
 	test_db_backend_exec();
 	test_db_backend_cleanup();
 }
-static void
+static
+void
 test_db_query_all(void)
 {
+	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_QUERY_ALL;
 	test_db_backend_exec();
@@ -113,7 +131,6 @@ test_db_query_all(void)
 void
 test_db_backend(void)
 {
-	test_db_backend_init();
 	g_test_add_func("/db/backend/schema-create", test_db_schema_create);
 	g_test_add_func("/db/backend/schema-get", test_db_schema_get);
 	g_test_add_func("/db/backend/schema-delete", test_db_schema_delete);

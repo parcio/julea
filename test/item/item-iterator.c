@@ -55,6 +55,7 @@ test_item_iterator_next_get (void)
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItemIterator) item_iterator = NULL;
+	gboolean ret;
 
 	guint items = 0;
 
@@ -75,7 +76,8 @@ test_item_iterator_next_get (void)
 		g_assert(item != NULL);
 	}
 
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	item_iterator = j_item_iterator_new(collection);
 
@@ -86,7 +88,8 @@ test_item_iterator_next_get (void)
 		items++;
 	}
 
-	j_batch_execute(delete_batch);
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
 
 	g_assert_cmpuint(items, ==, n);
 }

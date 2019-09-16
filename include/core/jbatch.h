@@ -35,7 +35,7 @@ struct JBatch;
 
 typedef struct JBatch JBatch;
 
-typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
+typedef void (*JBatchAsyncCallback) (JBatch*, gboolean, gpointer);
 
 G_END_DECLS
 
@@ -55,9 +55,9 @@ JSemantics* j_batch_get_semantics (JBatch*);
 
 void j_batch_add (JBatch*, JOperation*);
 
-gboolean j_batch_execute (JBatch*);
+gboolean j_batch_execute (JBatch*) G_GNUC_WARN_UNUSED_RESULT;
 
-void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
+void j_batch_execute_async (JBatch*, JBatchAsyncCallback, gpointer);
 void j_batch_wait (JBatch*);
 
 G_END_DECLS

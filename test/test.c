@@ -57,11 +57,11 @@ main (int argc, char** argv)
 	test_item_iterator();
 	test_uri();
 
-	// HDF5 client
-	test_hdf();
-
 	// DB backend
 	test_db_backend();
+
+	// HDF5 client
+	test_hdf();
 
 	ret = g_test_run();
 

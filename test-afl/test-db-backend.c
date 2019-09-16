@@ -15,7 +15,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef JULEA_DB_COMPILATION
 #define JULEA_DB_COMPILATION
+#endif
 #include <julea-config.h>
 #include <stdio.h>
 #include <math.h>
@@ -24,7 +26,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <julea.h>
-#include "../lib/db/jdb-internal.h"
+#include <db/jdb-internal.h>
 #include <julea-db.h>
 #include "afl.h"
 
@@ -86,29 +88,46 @@ struct JDBAflRandomValues
 typedef struct JDBAflRandomValues JDBAflRandomValues;
 /*TODO test multiple functions/batch */
 //schema->
-static gboolean namespace_exist[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
-static bson_t* namespace_bson[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
-static guint namespace_varcount[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
-static JDBType namespace_vartypes[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VARIABLES];
+static
+gboolean namespace_exist[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
+static
+bson_t* namespace_bson[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
+static
+guint namespace_varcount[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME];
+static
+JDBType namespace_vartypes[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VARIABLES];
 //<-
 //values->
-static char namespace_varvalues_string_const[AFL_LIMIT_SCHEMA_STRING_VALUES][AFL_LIMIT_STRING_LEN];
+static
+char namespace_varvalues_string_const[AFL_LIMIT_SCHEMA_STRING_VALUES][AFL_LIMIT_STRING_LEN];
 //
-static guint64 namespace_varvalues_int64[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
-static gdouble namespace_varvalues_double[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
-static guint namespace_varvalues_string[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
-static guint namespace_varvalues_valid[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES]; // (x == 0) -> row does not exist, (x > 0) -> row exist with given number of valid columns
+static
+guint64 namespace_varvalues_int64[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
+static
+gdouble namespace_varvalues_double[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
+static
+guint namespace_varvalues_string[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES][AFL_LIMIT_SCHEMA_VARIABLES];
+static
+guint namespace_varvalues_valid[AFL_LIMIT_SCHEMA_NAMESPACE][AFL_LIMIT_SCHEMA_NAME][AFL_LIMIT_SCHEMA_VALUES]; // (x == 0) -> row does not exist, (x > 0) -> row exist with given number of valid columns
 //<-
 //allgemein->
-static JDBAflRandomValues random_values;
-static char namespace_strbuf[AFL_LIMIT_STRING_LEN];
-static char name_strbuf[AFL_LIMIT_STRING_LEN];
-static char varname_strbuf[AFL_LIMIT_STRING_LEN];
-static bson_t* selector;
-static bson_t* metadata;
-static JDBAflEvent event;
+static
+JDBAflRandomValues random_values;
+static
+char namespace_strbuf[AFL_LIMIT_STRING_LEN];
+static
+char name_strbuf[AFL_LIMIT_STRING_LEN];
+static
+char varname_strbuf[AFL_LIMIT_STRING_LEN];
+static
+bson_t* selector;
+static
+bson_t* metadata;
+static
+JDBAflEvent event;
 //<-
-static gboolean
+static
+gboolean
 build_selector_single(guint varname, guint value)
 {
 	gboolean ret_expected = TRUE;
@@ -177,7 +196,8 @@ build_selector_single(guint varname, guint value)
 	J_AFL_DEBUG_BSON(selector);
 	return ret_expected;
 }
-static gboolean
+static
+gboolean
 build_metadata(void)
 {
 	bson_t* bson;
@@ -270,7 +290,8 @@ build_metadata(void)
 	J_AFL_DEBUG_BSON(metadata);
 	return ret_expected && count;
 }
-static void
+static
+void
 event_query_single(void)
 {
 	uint32_t binary_len;
@@ -366,6 +387,7 @@ event_query_single(void)
 		ret_expected = namespace_varvalues_valid[random_values.namespace][random_values.name][random_values.values.value_index] && ret_expected;
 		if (random_values.values.existent)
 		{
+
 			ret_expected = build_selector_single(0, random_values.values.value_index) && ret_expected;
 		}
 		else
@@ -458,7 +480,8 @@ event_query_single(void)
 	ret = j_db_internal_iterate(iterator, &bson, &error);
 	J_AFL_DEBUG_ERROR(ret, FALSE, error);
 }
-static void
+static
+void
 event_query_all(void)
 {
 	guint i;
@@ -472,7 +495,8 @@ event_query_all(void)
 		}
 	}
 }
-static void
+static
+void
 event_delete(void)
 {
 	GError* error = NULL;
@@ -575,15 +599,19 @@ event_delete(void)
 	}
 	selector = NULL;
 }
-static void
+static
+void
 event_insert(void)
 {
 	GError* error = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	gboolean ret;
+	bson_t id;
 	gboolean ret_expected = TRUE;
+	bson_init(&id);
 	ret_expected = build_metadata() && ret_expected; //inserting valid metadata should succeed
 	G_DEBUG_HERE();
+//	ret = j_db_internal_insert(namespace_strbuf, name_strbuf, metadata, &id, batch, &error);
 	ret = j_db_internal_insert(namespace_strbuf, name_strbuf, metadata, batch, &error);
 	ret = j_batch_execute(batch) && ret;
 	J_AFL_DEBUG_ERROR(ret, ret_expected, error);
@@ -603,8 +631,11 @@ event_insert(void)
 		bson_destroy(metadata);
 		metadata = NULL;
 	}
+	J_AFL_DEBUG_BSON(&id);
+	bson_destroy(&id);
 }
-static void
+static
+void
 event_update(void)
 {
 	//TODO update multile rows together
@@ -734,7 +765,8 @@ event_update(void)
 		metadata = NULL;
 	}
 }
-static void
+static
+void
 event_schema_get(void)
 {
 	GError* error = NULL;
@@ -791,7 +823,8 @@ event_schema_get(void)
 		bson_destroy(&bson);
 	}
 }
-static void
+static
+void
 event_schema_delete(void)
 {
 	GError* error = NULL;
@@ -811,12 +844,9 @@ event_schema_delete(void)
 		namespace_bson[random_values.namespace][random_values.name] = NULL;
 		namespace_exist[random_values.namespace][random_values.name] = FALSE;
 	}
-	else
-	{
-		MYABORT_IF(ret);
-	}
 }
-static void
+static
+void
 event_schema_create(void)
 {
 	GError* error = NULL;
@@ -932,7 +962,8 @@ event_schema_create(void)
 	}
 }
 
-static void
+static
+void
 test_db_backend_create_base_test_files(const char* path)
 {
 	FILE* file;
@@ -953,12 +984,14 @@ test_db_backend_create_base_test_files(const char* path)
 	}
 }
 
-static void
+static
+void
 test_db_backend_init(void)
 {
 	guint i;
 	guint j;
 	guint k;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	for (i = 0; i < AFL_LIMIT_SCHEMA_STRING_VALUES; i++)
 	{
 		sprintf(&namespace_varvalues_string_const[i][0], AFL_STRING_CONST_FORMAT, i);
@@ -975,10 +1008,14 @@ test_db_backend_init(void)
 				namespace_vartypes[i][j][k] = _J_DB_TYPE_COUNT;
 			}
 		}
+		sprintf(namespace_strbuf, AFL_NAMESPACE_FORMAT, i);
+		//j_internal_reset(namespace_strbuf, batch, NULL);
+		//j_batch_execute(batch);
 	}
 }
 
-static void
+static
+void
 test_db_backend_exec(void)
 {
 	guint tmp;
@@ -1038,11 +1075,15 @@ test_db_backend_exec(void)
 		MYABORT(); //LCOV_EXCL_LINE
 	}
 }
-static void
+static
+void
 test_db_backend_cleanup(void)
 {
 	guint i;
 	guint j;
+	GError* error = NULL;
+	gboolean ret = TRUE;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	for (i = 0; i < AFL_LIMIT_SCHEMA_NAMESPACE; i++)
 	{
 		for (j = 0; j < AFL_LIMIT_SCHEMA_NAME; j++)
@@ -1052,6 +1093,14 @@ test_db_backend_cleanup(void)
 				bson_destroy(namespace_bson[i][j]);
 			}
 			namespace_bson[i][j] = NULL;
+			event = AFL_EVENT_DB_SCHEMA_DELETE;
+			random_values.namespace = i;
+			random_values.name = j;
+			test_db_backend_exec();
 		}
+		sprintf(namespace_strbuf, AFL_NAMESPACE_FORMAT, i);
+		//ret = j_internal_reset(namespace_strbuf, batch, &error);
+		//ret = ret && j_batch_execute(batch);
+		//J_AFL_DEBUG_ERROR(ret, TRUE, error);
 	}
 }

@@ -37,6 +37,7 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
+	gboolean ret;
 
 	semantics = j_benchmark_get_semantics();
 	delete_batch = j_batch_new(semantics);
@@ -57,18 +58,21 @@ _benchmark_kv_put (BenchmarkResult* result, gboolean use_batch)
 
 		if (!use_batch)
 		{
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
+			g_assert_true(ret);
 		}
 	}
 
 	if (use_batch)
 	{
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	j_batch_execute(delete_batch);
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -108,6 +112,7 @@ _benchmark_kv_get (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
+	gboolean ret;
 
 	semantics = j_benchmark_get_semantics();
 	delete_batch = j_batch_new(semantics);
@@ -125,7 +130,8 @@ _benchmark_kv_get (BenchmarkResult* result, gboolean use_batch)
 		j_kv_delete(object, delete_batch);
 	}
 
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	j_benchmark_timer_start();
 
@@ -140,18 +146,21 @@ _benchmark_kv_get (BenchmarkResult* result, gboolean use_batch)
 
 		if (!use_batch)
 		{
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
+			g_assert_true(ret);
 		}
 	}
 
 	if (use_batch)
 	{
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
 
-	j_batch_execute(delete_batch);
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -180,6 +189,7 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
+	gboolean ret;
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
@@ -194,7 +204,8 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 		j_kv_put(object, g_strdup("empty"), 6, g_free, batch);
 	}
 
-	j_batch_execute(batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	j_benchmark_timer_start();
 
@@ -210,18 +221,18 @@ _benchmark_kv_delete (BenchmarkResult* result, gboolean use_batch)
 
 		if (!use_batch)
 		{
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
+			g_assert_true(ret);
 		}
 	}
 
 	if (use_batch)
 	{
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
-
-	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -250,6 +261,7 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	gdouble elapsed;
+	gboolean ret;
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
@@ -269,18 +281,18 @@ _benchmark_kv_unordered_put_delete (BenchmarkResult* result, gboolean use_batch)
 
 		if (!use_batch)
 		{
-			j_batch_execute(batch);
+			ret = j_batch_execute(batch);
+			g_assert_true(ret);
 		}
 	}
 
 	if (use_batch)
 	{
-		j_batch_execute(batch);
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
 	}
 
 	elapsed = j_benchmark_timer_elapsed();
-
-	j_batch_execute(batch);
 
 	result->elapsed_time = elapsed;
 	result->operations = n * 2;

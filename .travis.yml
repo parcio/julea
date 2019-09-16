@@ -1,0 +1,35 @@
+dist: bionic
+addons:
+  apt:
+    packages:
+      - libglib2.0-dev
+      - libbson-dev
+      - libleveldb-dev
+      - liblmdb-dev
+      - libmongoc-dev
+      - libsqlite3-dev
+      - librados-dev
+      - libfuse-dev
+language: c
+compiler:
+  - gcc
+  - clang
+env:
+  - JULEA_OBJECT=posix JULEA_KV=lmdb
+  - JULEA_OBJECT=gio   JULEA_KV=lmdb
+  - JULEA_OBJECT=posix JULEA_KV=leveldb
+  - JULEA_OBJECT=posix JULEA_KV=sqlite
+# FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
+before_install:
+  - sudo apt-get -y remove glib-networking
+  - sudo apt-get -y autoremove
+script:
+  - ./waf configure --debug --sanitize --leveldb=/usr
+  - ./waf
+  - . ./scripts/environment.sh
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/${JULEA_KV} --db-backend=null --db-component=server --db-path=
+  - ./scripts/test.sh
+notifications:
+  email:
+    recipients:
+      secure: "afr3ro7F/VJY/Zt9wuswFL6eHdJPVzR0dozjUQsxdAGFB15fPniKnganWzlG8iup5PVF5EAr3+3N0yN78V4y9tZosGyW6SZhPUPZzgeONAVU1qS36qvGEqaPFqv1X062sYdLE4PshesDLLQ6L8JU4En+4okJ+LVgLIallET0OF306anf6r9BdNVygXsARgT8343577Ha2M2UncZ27HtQaPSlKD+6DSEcOHJoaCihy8hIeQmO0cqaRVf8yM00cWNXJkODyzVqqzvlIKqR0rmNLEbuYl8pdFKblijA24EcJ6fSYqzjQtHfF/8d2pO/cpRYtz40dlIHc3oJmAg5/e0ww04qnexGMG65OesH9sX1Fxn4ahlOicvb1F5H4FnS4ufii7aB2es63EKW0hj3Lnju1eB4LRLVzzYzGol5+ne5QwsjHNtGwuZywJhBKInhc6zW03eGLna3EmmizCtHBU7ixYVM6c9iC4muEAwzluTQ6ZmtkV1kuUtYnz+YrLQq0mFe554V8g92yHvr20amalNUuPNlm9mpfXaxg5Ca9ESkHodUpp+p/c/IAmZ77z5vsN14fn1IGG4qv0IeM4rqdjD9NDHFuMaWc31j33sWZl/LdV+nbXyVZHvyaXYKTCLWWx830oCDwBMlG4vR4dHJ9k97Gokp031+3RDGly1xDEC+rXI="

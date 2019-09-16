@@ -184,6 +184,7 @@ test_object_status (void)
 	j_distributed_object_status(object, &modification_time, &size, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	g_assert_cmpint(modification_time, !=, 0);
 	g_assert_cmpuint(size, ==, 42);
 
 	j_distributed_object_delete(object, batch);

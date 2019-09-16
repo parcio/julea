@@ -26,8 +26,6 @@
 
 #include <string.h>
 
-#include <bson.h>
-
 #include <object/jobject.h>
 
 #include <julea.h>
@@ -106,6 +104,8 @@ static
 void
 j_object_create_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObject* object = data;
 
 	j_object_unref(object);
@@ -115,6 +115,8 @@ static
 void
 j_object_delete_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObject* object = data;
 
 	j_object_unref(object);
@@ -124,6 +126,8 @@ static
 void
 j_object_status_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* operation = data;
 
 	j_object_unref(operation->status.object);
@@ -135,6 +139,8 @@ static
 void
 j_object_read_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* operation = data;
 
 	j_object_unref(operation->read.object);
@@ -146,6 +152,8 @@ static
 void
 j_object_write_free (gpointer data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	JObjectOperation* operation = data;
 
 	j_object_unref(operation->write.object);
