@@ -78,6 +78,11 @@ void j_db_entry_unref (JDBEntry* entry);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBEntry, j_db_entry_unref)
 
 /**
+ * returns the id of the entry, after j_db_entry_insert has been called
+ */
+gboolean j_db_entry_get_id (JDBEntry* entry, gpointer* value, guint64* length, GError** error);
+
+/**
  * Set a field in the given entry
  *
  * \param[in] entry the entry to set a value
