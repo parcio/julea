@@ -128,7 +128,10 @@ j_db_iterator_unref (JDBIterator* iterator)
 		}
 
 		j_db_schema_unref(iterator->schema);
+		if (iterator->selector)
+		{
 		j_db_selector_unref(iterator->selector);
+		}
 
 		if (iterator->bson_valid)
 		{

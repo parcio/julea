@@ -102,7 +102,6 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME possible overrun
 	char buf[20];
 	bson_t bson;
 	JDBType type;
@@ -123,8 +122,7 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 		goto _error;
 	}
 
-	// FIXME possible overrun
-	sprintf(buf, "%d", selector->bson_count);
+	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
 
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, buf, &bson, error)))
 	{
@@ -201,7 +199,6 @@ j_db_selector_add_selector (JDBSelector* selector, JDBSelector* sub_selector, GE
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME possible overrun
 	char buf[20];
 
 	g_return_val_if_fail(selector != NULL, FALSE);
@@ -222,8 +219,7 @@ j_db_selector_add_selector (JDBSelector* selector, JDBSelector* sub_selector, GE
 		goto _error;
 	}
 
-	// FIXME possible overrun
-	sprintf(buf, "%d", selector->bson_count);
+	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
 
 	if (G_UNLIKELY(!j_bson_append_document(&selector->bson, buf, &sub_selector->bson, error)))
 	{
