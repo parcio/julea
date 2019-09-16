@@ -39,6 +39,14 @@
  **/
 
 gboolean
+j_backend_operation_unwrap_reset(JBackend* backend, gpointer batch, JBackendOperation* data)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	return j_backend_reset(backend, batch, data->out_param[0].ptr);
+}
+
+gboolean
 j_backend_operation_unwrap_db_schema_create (JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);

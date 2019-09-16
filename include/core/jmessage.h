@@ -53,7 +53,8 @@ enum JMessageType
 	J_MESSAGE_DB_INSERT,
 	J_MESSAGE_DB_UPDATE,
 	J_MESSAGE_DB_DELETE,
-	J_MESSAGE_DB_QUERY
+	J_MESSAGE_DB_QUERY,
+	J_MESSAGE_RESET
 };
 
 typedef enum JMessageType JMessageType;
