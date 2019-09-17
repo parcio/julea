@@ -333,7 +333,7 @@ getCacheSchema(gpointer _batch, gchar const* name, GError** error)
 	bson_t schema;
 	JSqlCacheSQLQueries* cacheQueries = NULL;
 	bson_iter_t iter;
-	char* string_tmp;
+	char const* string_tmp;
 	JDBTypeValue value;
 
 	if (!(cacheQueries = _getCachePrepared(batch->namespace, name, error)))
@@ -1168,13 +1168,15 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, bson_
 	}
 	if (!prepared->initialized)
 	{
+		gchar* key;
+
 		prepared->sql = g_string_new(NULL);
 		prepared->variables_count = 0;
 		prepared->variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		g_string_append_printf(prepared->sql, "INSERT INTO %s_%s (", batch->namespace, name);
 		g_hash_table_iter_init(&schema_iter, schema_cache);
 
-		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
+		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&key, &type_tmp))
 		{
 			type = GPOINTER_TO_INT(type_tmp);
 			if (prepared->variables_count)
@@ -1182,9 +1184,9 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, bson_
 				g_string_append(prepared->sql, ", ");
 			}
 			prepared->variables_count++;
-			g_string_append_printf(prepared->sql, "%s", string_tmp);
+			g_string_append_printf(prepared->sql, "%s", key);
 			g_array_append_val(arr_types_in, type);
-			g_hash_table_insert(prepared->variables_index, g_strdup(string_tmp), GINT_TO_POINTER(prepared->variables_count));
+			g_hash_table_insert(prepared->variables_index, g_strdup(key), GINT_TO_POINTER(prepared->variables_count));
 		}
 		g_string_append(prepared->sql, ") VALUES (");
 		if (prepared->variables_count)
@@ -1458,7 +1460,7 @@ bind_selector_query(bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* va
 	gboolean has_next;
 	gboolean equals;
 	JThreadVariables* thread_variables = NULL;
-	char* string_tmp;
+	char const* string_tmp;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(error))))
 	{
@@ -1958,7 +1960,7 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 	guint variables_count;
 	guint variables_count2;
 	JDBTypeValue value;
-	const char* string_tmp;
+	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL;
 	GString* sql = g_string_new(NULL);
