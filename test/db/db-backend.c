@@ -33,7 +33,6 @@ static
 void
 test_db_schema_create(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	random_values.schema_create.variable_count = 1;
 	event = AFL_EVENT_DB_SCHEMA_CREATE;
@@ -44,7 +43,6 @@ static
 void
 test_db_schema_get(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_SCHEMA_GET;
 	test_db_backend_exec();
@@ -54,7 +52,6 @@ static
 void
 test_db_schema_delete(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_SCHEMA_DELETE;
 	test_db_backend_exec();
@@ -64,7 +61,6 @@ static
 void
 test_db_insert(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_INSERT;
 	test_db_backend_exec();
@@ -81,7 +77,6 @@ static
 void
 test_db_update(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_UPDATE;
 	test_db_backend_exec();
@@ -99,7 +94,6 @@ static
 void
 test_db_delete(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_DELETE;
 	test_db_backend_exec();
@@ -115,7 +109,6 @@ static
 void
 test_db_query_all(void)
 {
-	test_db_backend_init();
 	memset(&random_values, 0, sizeof(random_values));
 	event = AFL_EVENT_DB_QUERY_ALL;
 	test_db_backend_exec();
@@ -131,6 +124,7 @@ test_db_query_all(void)
 void
 test_db_backend(void)
 {
+	test_db_backend_init();
 	g_test_add_func("/db/backend/schema-create", test_db_schema_create);
 	g_test_add_func("/db/backend/schema-get", test_db_schema_get);
 	g_test_add_func("/db/backend/schema-delete", test_db_schema_delete);
