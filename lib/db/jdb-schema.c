@@ -201,7 +201,7 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 	J_TRACE_FUNCTION(NULL);
 
 	bson_iter_t iter;
-	guint count;
+	guint count = 0;
 	guint i;
 	JDBTypeValue val;
 	const char* key;
@@ -254,10 +254,13 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 	return count;
 
 _error:
-	for (i = 0; i < count; i++)
+	if (*names != NULL)
 	{
-		g_free((*names)[i]);
+		for (i = 0; i < count; i++)
+		{
+			g_free((*names)[i]);
 
+		}
 	}
 
 	g_free(*names);
