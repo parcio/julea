@@ -34,8 +34,7 @@ G_BEGIN_DECLS
 enum JDBSelectorMode
 {
 	J_DB_SELECTOR_MODE_AND,
-	J_DB_SELECTOR_MODE_OR,
-	_J_DB_SELECTOR_MODE_COUNT
+	J_DB_SELECTOR_MODE_OR
 };
 
 typedef enum JDBSelectorMode JDBSelectorMode;
@@ -53,8 +52,7 @@ enum JDBSelectorOperator
 	// =
 	J_DB_SELECTOR_OPERATOR_EQ,
 	// !=
-	J_DB_SELECTOR_OPERATOR_NE,
-	_J_DB_SELECTOR_OPERATOR_COUNT
+	J_DB_SELECTOR_OPERATOR_NE
 };
 
 typedef enum JDBSelectorOperator JDBSelectorOperator;

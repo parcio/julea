@@ -182,7 +182,6 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 			wrapper->bind_in[i].buffer_length = wrapper->buffer[i].val_blob_length;
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
@@ -235,7 +234,6 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 			wrapper->bind_out[i].buffer = g_new(char, MAX_BUF_SIZE);
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
@@ -308,7 +306,6 @@ j_sql_column(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeVal
 		value->val_blob_length = wrapper->length[idx];
 		break;
 	case J_DB_TYPE_ID:
-	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 		goto _error;
@@ -369,7 +366,6 @@ j_sql_bind_value(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTyp
 		wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
 		break;
 	case J_DB_TYPE_ID:
-	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 		goto _error;

@@ -700,7 +700,6 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 			case J_DB_TYPE_BLOB:
 				g_string_append(sql, " BLOB");
 				break;
-			case _J_DB_TYPE_COUNT:
 			default:
 				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_DB_TYPE_INVALID, "db type invalid");
 				goto _error;
@@ -1347,7 +1346,6 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 			case J_DB_SELECTOR_MODE_OR:
 				g_string_append(sql, " OR ");
 				break;
-			case _J_DB_SELECTOR_MODE_COUNT:
 			default:
 				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
 				goto _error;
@@ -1429,7 +1427,6 @@ build_selector_query(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guin
 			case J_DB_SELECTOR_OPERATOR_NE:
 				g_string_append(sql, "!=");
 				break;
-			case _J_DB_SELECTOR_OPERATOR_COUNT:
 			default:
 				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_COMPARATOR_INVALID, "comparator invalid");
 				goto _error;

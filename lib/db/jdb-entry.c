@@ -156,7 +156,6 @@ j_db_entry_set_field (JDBEntry* entry, gchar const* name, gconstpointer value, g
 			val.val_blob_length = length;
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_assert_not_reached();
 	}
@@ -341,7 +340,6 @@ j_db_entry_get_id (JDBEntry* entry, gpointer* value, guint64* length, GError** e
 			}
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_assert_not_reached();
 	}
