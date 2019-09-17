@@ -10,6 +10,7 @@ addons:
       - libsqlite3-dev
       - librados-dev
       - libfuse-dev
+      - libmariadb-dev
 language: c
 compiler:
   - gcc

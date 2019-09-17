@@ -58,3 +58,8 @@ Most of them should be available within the repositories of Linux distributions.
   - Debian: `apt install libfuse-dev`
   - Fedora: `dnf install fuse-devel`
   - Arch Linux: `pacman -S fuse2`
+
+- MariaDB
+  - Debian: `apt install libmariadb-dev`
+  - Fedora: `dnf install mariadb-devel`
+  - Arch Linux: `pacman -S mariadb-libs`
