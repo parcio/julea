@@ -50,6 +50,11 @@ j_db_entry_new (JDBSchema* schema, GError** error)
 		goto _error;
 	}
 
+	if (G_UNLIKELY(!j_bson_init(&entry->id, error)))
+	{
+		goto _error;
+	}
+
 	entry->ref_count = 1;
 	entry->schema = j_db_schema_ref(schema);
 
@@ -89,6 +94,7 @@ j_db_entry_unref (JDBEntry* entry)
 	{
 		j_db_schema_unref(entry->schema);
 		j_bson_destroy(&entry->bson);
+		j_bson_destroy(&entry->id);
 		g_slice_free(JDBEntry, entry);
 	}
 }
@@ -175,7 +181,7 @@ j_db_entry_insert (JDBEntry* entry, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!j_db_internal_insert(entry->schema->namespace, entry->schema->name, &entry->bson, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_insert(entry->schema->namespace, entry->schema->name, &entry->bson, &entry->id, batch, error)))
 	{
 		goto _error;
 	}
@@ -231,6 +237,113 @@ j_db_entry_delete (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError
 	if (G_UNLIKELY(!j_db_internal_delete(entry->schema->namespace, entry->schema->name, j_db_selector_get_bson(selector), batch, error)))
 	{
 		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+gboolean
+j_db_entry_get_id (JDBEntry* entry, gpointer* value, guint64* length, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JDBTypeValue val;
+	JDBType type;
+	bson_iter_t iter;
+
+	g_return_val_if_fail(entry != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(length != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, &entry->id, error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_find(&iter, "_value_type", error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
+	{
+		goto _error;
+	}
+
+	type = val.val_uint32;
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, &entry->id, error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_find(&iter, "_value", error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_value(&iter, type, &val, error)))
+	{
+		goto _error;
+	}
+
+	switch (type)
+	{
+		case J_DB_TYPE_SINT32:
+			*value = g_new(gint32, 1);
+			*((gint32*)*value) = val.val_sint32;
+			*length = sizeof(gint32);
+			break;
+		case J_DB_TYPE_UINT32:
+			*value = g_new(guint32, 1);
+			*((guint32*)*value) = val.val_uint32;
+			*length = sizeof(guint32);
+			break;
+		case J_DB_TYPE_FLOAT32:
+			*value = g_new(gfloat, 1);
+			*((gfloat*)*value) = val.val_float32;
+			*length = sizeof(gfloat);
+			break;
+		case J_DB_TYPE_SINT64:
+			*value = g_new(gint64, 1);
+			*((gint64*)*value) = val.val_sint64;
+			*length = sizeof(gint64);
+			break;
+		case J_DB_TYPE_UINT64:
+			*value = g_new(guint64, 1);
+			*((guint64*)*value) = val.val_uint64;
+			*length = sizeof(guint64);
+			break;
+		case J_DB_TYPE_FLOAT64:
+			*value = g_new(gdouble, 1);
+			*((gdouble*)*value) = val.val_float64;
+			*length = sizeof(gdouble);
+			break;
+		case J_DB_TYPE_STRING:
+			*value = g_strdup(val.val_string);
+			*length = strlen(val.val_string);
+			break;
+		case J_DB_TYPE_BLOB:
+			if (val.val_blob && val.val_blob_length)
+			{
+				*value = g_new(gchar, val.val_blob_length);
+				memcpy(*value, val.val_blob, val.val_blob_length);
+				*length = val.val_blob_length;
+			}
+			else
+			{
+				*value = NULL;
+				*length = 0;
+			}
+			break;
+		case J_DB_TYPE_ID:
+		case _J_DB_TYPE_COUNT:
+		default:
+			g_assert_not_reached();
 	}
 
 	return TRUE;

@@ -35,6 +35,7 @@
 #define SQL_MODE SQL_MODE_MULTI_THREAD
 
 #define sql_autoincrement_string " NOT NULL AUTO_INCREMENT "
+#define sql_uint64_type " BIGINT UNSIGNED "
 #define sql_last_insert_id_string " SELECT LAST_INSERT_ID() "
 #define sql_get_table_names "SELECT table_name FROM information_schema.tables WHERE table_schema = 'julea' AND table_name LIKE '%s_%%';"
 static
@@ -45,8 +46,8 @@ struct mysql_stmt_wrapper
 	MYSQL_BIND* bind_in; //input
 	MYSQL_BIND* bind_out; //output
 	JDBTypeValue* buffer; //reused for in AND out
-	bool* is_null; //reused for in AND out
-	bool* is_error; //reused for in AND out
+	my_bool* is_null; //reused for in AND out
+	my_bool* is_error; //reused for in AND out
 	unsigned long* length; //output
 	gboolean active;
 	guint param_count_in;
@@ -132,8 +133,8 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 	wrapper->bind_in = g_new0(MYSQL_BIND, wrapper->param_count_in);
 	wrapper->bind_out = g_new0(MYSQL_BIND, wrapper->param_count_out);
 	wrapper->buffer = g_new0(JDBTypeValue, wrapper->param_count_total);
-	wrapper->is_null = g_new0(bool, wrapper->param_count_total);
-	wrapper->is_error = g_new0(bool, wrapper->param_count_total);
+	wrapper->is_null = g_new0(my_bool, wrapper->param_count_total);
+	wrapper->is_error = g_new0(my_bool, wrapper->param_count_total);
 	wrapper->length = g_new0(unsigned long, wrapper->param_count_total);
 	wrapper->active = FALSE;
 	for (i = 0; i < wrapper->param_count_in; i++)
@@ -603,6 +604,7 @@ backend_init(gchar const* _path)
 	g_return_val_if_fail(_path != NULL, FALSE);
 
 	path = g_strdup(_path);
+	sql_generic_init();
 	return TRUE;
 }
 static
@@ -611,6 +613,7 @@ backend_fini(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	sql_generic_fini();
 	g_free(path);
 }
 static

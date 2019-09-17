@@ -228,10 +228,12 @@ struct JBackend
 			/**
 			* Insert data into a schema
 			*
-			* \param[in] namespace Different use cases (e.g., "adios", "hdf5")
-			* \param[in] name      Schema name to delete (e.g., "files")
-			* \param[in] metadata  The data to insert. Points to:
-			*                      - An initialized BSON containing "data"
+			* \param[in]  namespace Different use cases (e.g., "adios", "hdf5")
+			* \param[in]  name      Schema name to delete (e.g., "files")
+			* \param[in]  metadata  The data to insert. Points to:
+			*                       - An initialized BSON containing "data"
+			* \param[out] id returns the id of the inserted entry
+			*
 			* \code
 			* data
 			* {
@@ -243,7 +245,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_insert) (gpointer, gchar const*, bson_t const*, GError**);
+			gboolean (*backend_insert) (gpointer, gchar const*, bson_t const*, bson_t*, GError**);
 
 			/**
 			* Updates data
@@ -422,7 +424,7 @@ gboolean j_backend_db_schema_create (JBackend*, gpointer, gchar const*, bson_t c
 gboolean j_backend_db_schema_get (JBackend*, gpointer, gchar const*, bson_t*, GError**);
 gboolean j_backend_db_schema_delete (JBackend*, gpointer, gchar const*, GError**);
 
-gboolean j_backend_db_insert (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
+gboolean j_backend_db_insert (JBackend*, gpointer, gchar const*, bson_t const*, bson_t*, GError**);
 gboolean j_backend_db_update (JBackend*, gpointer, gchar const*, bson_t const*, bson_t const*, GError**);
 gboolean j_backend_db_delete (JBackend*, gpointer, gchar const*, bson_t const*, GError**);
 
