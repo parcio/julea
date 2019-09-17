@@ -570,6 +570,9 @@ def build(ctx):
 			use_extra = ['SQLITE']
 		if backend == 'mysql':
 			use_extra = ['MARIADB']
+			# MariaDB bug
+			# https://jira.mariadb.org/browse/CONC-381
+			cflags = ['-Wno-strict-prototypes']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],
