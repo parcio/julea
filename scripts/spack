@@ -82,6 +82,12 @@ spack_load ()
 	test -n "${spack_pkg}" || return 1
 
 	spack load --dependencies "${spack_pkg}"
+
+	# FIXME https://github.com/spack/spack/pull/12838
+	if test "${spack_pkg}" = 'mariadb'
+	then
+		export PKG_CONFIG_PATH="$(spack location --install-dir mariadb)/share/pkgconfig:${PKG_CONFIG_PATH}"
+	fi
 }
 
 spack_get_dependencies ()
