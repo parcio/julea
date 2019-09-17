@@ -403,6 +403,7 @@ backend_init(gchar const* _path)
 
 
 	path = g_strdup(_path);
+	sql_generic_init();
 	return TRUE;
 }
 static
@@ -411,12 +412,13 @@ backend_fini(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	sql_generic_fini();
 	g_free(path);
 }
 static
 JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
-	.component = J_BACKEND_COMPONENT_SERVER | J_BACKEND_COMPONENT_CLIENT,
+	.component = J_BACKEND_COMPONENT_SERVER,
 	.backend_reset = backend_reset,
 	.db = {
 		.backend_init = backend_init,

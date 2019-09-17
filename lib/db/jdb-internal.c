@@ -155,7 +155,7 @@ j_backend_db_func_free (gpointer _data)
 
 static
 gboolean
-j_reset_exec (JList* operations, JSemantics* semantics)
+j_reset_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -163,7 +163,7 @@ j_reset_exec (JList* operations, JSemantics* semantics)
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_RESET);
 }
 gboolean
-j_internal_reset (gchar const* namespace, JBatch* batch, GError** error)
+j_internal_reset(gchar const* namespace, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -303,7 +303,7 @@ j_db_insert_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* metadata, JBatch* batch, GError** error)
+j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* metadata, bson_t* id, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -317,7 +317,8 @@ j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* m
 	data->in_param[0].ptr_const = namespace;
 	data->in_param[1].ptr_const = name;
 	data->in_param[2].ptr_const = metadata;
-	data->out_param[0].ptr_const = error;
+	data->out_param[0].ptr_const = id;
+	data->out_param[1].ptr_const = error;
 
 	op = j_operation_new();
 	op->key = namespace;
