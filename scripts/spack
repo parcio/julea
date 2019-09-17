@@ -114,6 +114,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
+		dependencies="${dependencies} mariadb"
 	fi
 
 	if test "${mode}" = 'load' -o "${mode}" = 'install-full'

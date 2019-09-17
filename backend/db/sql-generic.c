@@ -689,7 +689,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 				g_string_append(sql, " INTEGER");
 				break;
 			case J_DB_TYPE_UINT64:
-				g_string_append(sql, " UNSIGNED BIGINT");
+				g_string_append(sql, sql_uint64_type);
 				break;
 			case J_DB_TYPE_FLOAT64:
 				g_string_append(sql, " REAL");
