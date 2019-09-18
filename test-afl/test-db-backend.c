@@ -1080,8 +1080,8 @@ test_db_backend_cleanup(void)
 {
 	guint i;
 	guint j;
-	GError* error = NULL;
-	gboolean ret = TRUE;
+//	GError* error = NULL;
+//	gboolean ret = TRUE;
 //	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	for (i = 0; i < AFL_LIMIT_SCHEMA_NAMESPACE; i++)
 	{

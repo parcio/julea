@@ -91,6 +91,9 @@
 		MY_READ(var);      \
 		var = var % (max); \
 	} while (0)
+#define _J_DB_SELECTOR_MODE_COUNT 2
+#define _J_DB_SELECTOR_OPERATOR_COUNT 6
+#define _J_DB_TYPE_COUNT 9
 #ifdef JULEA_TEST_COMPILES
 #define MYABORT()                       \
 	do                              \

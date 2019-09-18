@@ -448,10 +448,8 @@ def build(ctx):
 			use_extra.append('lib/julea-object')
 		elif client == 'hdf5':
 			use_extra.append('HDF5')
-			use_extra.append('SQLITE')
 			use_extra.append('lib/julea-kv')
 			use_extra.append('lib/julea-object')
-			use_extra.append('lib/julea-db')
 
 		ctx.shlib(
 			source=ctx.path.ant_glob('lib/{0}/**/*.c'.format(client)),
@@ -487,7 +485,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('benchmark/**/*.c'),
 		target='benchmark/julea-benchmark',
-		use=use_julea_item + use_julea_hdf + use_julea_db,
+		use=use_julea_item + use_julea_hdf,
 		includes=include_julea_core + ['benchmark'],
 		rpath=get_rpath(ctx),
 		install_path=None
