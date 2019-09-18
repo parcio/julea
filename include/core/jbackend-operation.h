@@ -173,6 +173,10 @@ static const JBackendOperation j_backend_operation_db_insert = {
 		},
 	},
 	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
 };
@@ -194,10 +198,6 @@ static const JBackendOperation j_backend_operation_db_update = {
 		},
 	},
 	.out_param = {
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
 };
