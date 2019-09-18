@@ -67,7 +67,21 @@ j_backend_operation_unwrap_db_insert (JBackend* backend, gpointer batch, JBacken
 {
 	J_TRACE_FUNCTION(NULL);
 
-	return j_backend_db_insert(backend, batch, data->in_param[1].ptr, data->in_param[2].ptr, data->out_param[0].ptr);
+	bson_t* bson = data->out_param[0].ptr;
+
+	bson_init(bson);
+
+	if (!j_backend_db_insert(backend, batch, data->in_param[1].ptr, data->in_param[2].ptr, data->out_param[0].ptr, data->out_param[1].ptr))
+	{
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	bson_destroy(bson);
+
+	return FALSE;
 }
 
 gboolean
@@ -187,7 +201,6 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 				}
 			}
 			break;
-		case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 		default:
 			abort();
 		}
@@ -239,7 +252,6 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}
@@ -320,7 +332,6 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}
@@ -380,7 +391,6 @@ j_backend_operation_from_message_static (JMessage* message, JBackendOperationPar
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}

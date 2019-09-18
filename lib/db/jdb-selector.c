@@ -41,7 +41,6 @@ j_db_selector_new (JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	JDBTypeValue val;
 	JDBSelector* selector = NULL;
 
-	g_return_val_if_fail(mode < _J_DB_SELECTOR_MODE_COUNT, NULL);
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	selector = g_slice_new(JDBSelector);
@@ -108,7 +107,6 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 	JDBTypeValue val;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
-	g_return_val_if_fail(operator < _J_DB_SELECTOR_OPERATOR_COUNT, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(selector->bson_count + 1 > 500))
@@ -171,7 +169,6 @@ j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOp
 			val.val_blob_length = length;
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_assert_not_reached();
 	}

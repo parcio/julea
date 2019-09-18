@@ -41,8 +41,7 @@ enum JDBType
 	J_DB_TYPE_FLOAT64,
 	J_DB_TYPE_STRING,
 	J_DB_TYPE_BLOB,
-	J_DB_TYPE_ID,
-	_J_DB_TYPE_COUNT
+	J_DB_TYPE_ID
 };
 
 typedef enum JDBType JDBType;

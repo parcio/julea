@@ -40,11 +40,10 @@ G_BEGIN_DECLS
 
 enum JBackendOperationParamType
 {
-	J_BACKEND_OPERATION_PARAM_TYPE_STR = 0,
+	J_BACKEND_OPERATION_PARAM_TYPE_STR,
 	J_BACKEND_OPERATION_PARAM_TYPE_BLOB,
 	J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-	J_BACKEND_OPERATION_PARAM_TYPE_ERROR,
-	_J_BACKEND_OPERATION_PARAM_TYPE_COUNT
+	J_BACKEND_OPERATION_PARAM_TYPE_ERROR
 };
 
 typedef enum JBackendOperationParamType JBackendOperationParamType;
@@ -164,7 +163,7 @@ static const JBackendOperation j_backend_operation_db_schema_delete = {
 static const JBackendOperation j_backend_operation_db_insert = {
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
-	.out_param_count = 1,
+	.out_param_count = 2,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -174,6 +173,10 @@ static const JBackendOperation j_backend_operation_db_insert = {
 		},
 	},
 	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
 };

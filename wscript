@@ -41,6 +41,8 @@ lmdb_version = '0.9.21'
 libmongoc_version = '1.9.0'
 # Ubuntu 18.04 has SQLite 3.22.0
 sqlite_version = '3.22.0'
+# Ubuntu 18.04 has MariaDB 10.1
+mariadb_version = '10.1'
 
 
 def check_cfg_rpath(ctx, **kwargs):
@@ -161,6 +163,7 @@ def options(ctx):
 	ctx.add_option('--hdf5', action='store', default=None, help='HDF5 prefix', dest='hdf')
 	ctx.add_option('--otf', action='store', default=None, help='OTF prefix')
 	ctx.add_option('--sqlite', action='store', default=None, help='SQLite prefix')
+	ctx.add_option('--mariadb', action='store', default=None, help='MariaDB prefix')
 
 
 def configure(ctx):
@@ -290,6 +293,16 @@ def configure(ctx):
 			args=['--cflags', '--libs', 'sqlite3 >= {0}'.format(sqlite_version)],
 			uselib_store='SQLITE',
 			pkg_config_path=get_pkg_config_path(ctx.options.sqlite),
+			mandatory=False
+		)
+
+	ctx.env.JULEA_MARIADB = \
+		check_cfg_rpath(
+			ctx,
+			package='mariadb',
+			args=['--cflags', '--libs', 'mariadb >= {0}'.format(mariadb_version)],
+			uselib_store='MARIADB',
+			pkg_config_path=get_pkg_config_path(ctx.options.mariadb),
 			mandatory=False
 		)
 
@@ -545,6 +558,9 @@ def build(ctx):
 
 	if ctx.env.JULEA_SQLITE:
 		db_backends.append('sqlite')
+	if ctx.env.JULEA_MARIADB:
+		db_backends.append('mysql')
+
 
 	for backend in db_backends:
 		use_extra = []
@@ -552,6 +568,11 @@ def build(ctx):
 
 		if backend == 'sqlite':
 			use_extra = ['SQLITE']
+		if backend == 'mysql':
+			use_extra = ['MARIADB']
+			# MariaDB bug
+			# https://jira.mariadb.org/browse/CONC-381
+			cflags = ['-Wno-strict-prototypes']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],

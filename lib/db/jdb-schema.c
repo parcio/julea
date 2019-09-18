@@ -120,7 +120,6 @@ j_db_schema_add_field (JDBSchema* schema, gchar const* name, JDBType type, GErro
 
 	g_return_val_if_fail(schema != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(type < _J_DB_TYPE_COUNT, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
@@ -202,7 +201,7 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 	J_TRACE_FUNCTION(NULL);
 
 	bson_iter_t iter;
-	guint count;
+	guint count = 0;
 	guint i;
 	JDBTypeValue val;
 	const char* key;
@@ -226,7 +225,6 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 		goto _error;
 	}
 
-	count++;
 	*names = g_new0(gchar*, count);
 	*types = g_new(JDBType, count);
 	i = 0;
@@ -253,18 +251,24 @@ j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, 
 		}
 	}
 
-	(*names)[i] = NULL;
-	(*types)[i] = _J_DB_TYPE_COUNT;
-
-	return TRUE;
+	return count;
 
 _error:
-	g_strfreev(*names);
+	if (*names != NULL)
+	{
+		for (i = 0; i < count; i++)
+		{
+			g_free((*names)[i]);
+
+		}
+	}
+
+	g_free(*names);
 	g_free(*types);
 	*names = NULL;
 	*types = NULL;
 
-	return FALSE;
+	return 0;
 }
 
 gboolean

@@ -127,10 +127,10 @@ gboolean j_db_schema_get_field (JDBSchema* schema, gchar const* name, JDBType* t
  * \pre *names is not initialized
  * \pre types != NULL
  * \pre *types is not initialized
- * \post *names is an initialized zero-terminated array of char*. The array must be freed by the caller using g_strfreev
- * \post *types is an initialized array of JDBType. The array has the same length as *names. This array is terminated with the value _J_DB_TYPE_COUNT
+ * \post *names is an initialized array of char*. The array must be freed by the caller.
+ * \post *types is an initialized array of JDBType. The array has the same length as *names.
  *
- * \return TRUE on success, FALSE otherwise
+ * \return Number of variables on success, 0 otherwise
  **/
 
 guint32 j_db_schema_get_all_fields (JDBSchema* schema, gchar*** names, JDBType** types, GError** error);

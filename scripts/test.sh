@@ -35,11 +35,8 @@ set_backend_path
 
 run_test ()
 {
-	local build_dir
 	local ret
 
-	# julea-test does not get installed, so we have to find it in the build directory.
-	build_dir="$(get_directory "${SELF_DIR}/../build")"
 	ret=0
 
 	setup_init

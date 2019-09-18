@@ -520,9 +520,11 @@ j_trace_fini (void)
 
 		g_hash_table_iter_init(&iter, j_trace_summary_table);
 
+		g_printerr("# stack duration[s] count\n");
+
 		while (g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
 		{
-			g_printerr("%s %f (%d)\n", key, value->time, value->count);
+			g_printerr("%s %f %d\n", key, value->time, value->count);
 		}
 
 		g_hash_table_unref(j_trace_summary_table);
