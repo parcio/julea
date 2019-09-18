@@ -259,7 +259,6 @@ j_db_iterator_get_field (JDBIterator* iterator, gchar const* name, JDBType* type
 			}
 			break;
 		case J_DB_TYPE_ID:
-		case _J_DB_TYPE_COUNT:
 		default:
 			g_assert_not_reached();
 	}

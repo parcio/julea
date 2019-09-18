@@ -39,6 +39,7 @@
 #define SQL_MODE SQL_MODE_SINGLE_THREAD
 
 #define sql_autoincrement_string " "
+#define sql_uint64_type " UNSIGNED BIGINT "
 #define sql_last_insert_id_string " SELECT last_insert_rowid() "
 
 static gchar* path;
@@ -137,7 +138,6 @@ j_sql_column(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeV
 		value->val_blob_length = sqlite3_column_bytes(stmt, idx);
 		break;
 	case J_DB_TYPE_ID:
-	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 		goto _error;
@@ -213,7 +213,6 @@ j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBT
 		}
 		break;
 	case J_DB_TYPE_ID:
-	case _J_DB_TYPE_COUNT:
 	default:
 		g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 		goto _error;

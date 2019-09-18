@@ -201,7 +201,6 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 				}
 			}
 			break;
-		case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 		default:
 			abort();
 		}
@@ -253,7 +252,6 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}
@@ -334,7 +332,6 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}
@@ -394,7 +391,6 @@ j_backend_operation_from_message_static (JMessage* message, JBackendOperationPar
 					}
 				}
 				break;
-			case _J_BACKEND_OPERATION_PARAM_TYPE_COUNT:
 			default:
 				abort();
 			}
