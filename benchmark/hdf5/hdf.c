@@ -35,87 +35,109 @@
 #include <H5PLextern.h>
 
 static void
-write_dataset (hid_t file, gchar const* name)
+write_attribute (hid_t file)
 {
 	hid_t attribute;
+	hid_t dataspace;
+	hid_t group;
+
+	hsize_t dims[1];
+
+	int data[1024];
+
+	group = H5Gopen2(file, "/", H5P_DEFAULT);
+
+	dims[0] = 1024;
+	dataspace = H5Screate_simple(1, dims, NULL);
+	attribute = H5Acreate2(group, "BenchmarkAttribute", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT);
+
+	for (guint i = 0; i < 1024; i++)
+	{
+		data[i] = i * 10;
+	}
+
+	H5Awrite(attribute, H5T_NATIVE_INT, data);
+
+	H5Sclose(dataspace);
+	H5Aclose(attribute);
+	H5Gclose(group);
+}
+
+static void
+read_attribute (hid_t file)
+{
+	hid_t attribute;
+	hid_t dataspace;
+	hid_t group;
+
+	hssize_t elements;
+
+	int data[1024];
+
+	group = H5Gopen2(file, "/", H5P_DEFAULT);
+	attribute = H5Aopen(group, "BenchmarkAttribute", H5P_DEFAULT);
+
+	dataspace = H5Aget_space(attribute);
+	elements = H5Sget_simple_extent_npoints(dataspace);
+	g_assert_cmpuint(elements, ==, 1024);
+
+	H5Aread(attribute, H5T_NATIVE_INT, data);
+
+	for (guint i = 0; i < 1024; i++)
+	{
+		g_assert_cmpint(data[i], ==, i * 10);
+	}
+
+	H5Aclose(attribute);
+	H5Gclose(group);
+}
+
+static void
+write_dataset (hid_t file, gchar const* name)
+{
 	hid_t dataset;
-	hid_t dataspace_attr;
-	hid_t dataspace_ds;
+	hid_t dataspace;
 
-	hsize_t dims_attr[1];
-	hsize_t dims_ds[2];
+	hsize_t dims[2];
 
-	int data_attr[1024];
-	int data_ds[1024][1024];
+	int data[1024][1024];
 
-	dims_ds[0] = 1024;
-	dims_ds[1] = 1024;
-	dataspace_ds = H5Screate_simple(2, dims_ds, NULL);
-	dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace_ds, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dims[0] = 1024;
+	dims[1] = 1024;
+	dataspace = H5Screate_simple(2, dims, NULL);
+	dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	for (guint i = 0; i < 1024; i++)
 	{
 		for (guint j = 0; j < 1024; j++)
 		{
-			data_ds[i][j] = i + j;
+			data[i][j] = i + j;
 		}
 	}
 
-	H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_ds);
+	H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
 
-	// FIXME 1024
-	dims_attr[0] = 1;
-	dataspace_attr = H5Screate_simple(1, dims_attr, NULL);
-	attribute = H5Acreate2(dataset, "BenchmarkAttribute", H5T_NATIVE_INT, dataspace_attr, H5P_DEFAULT, H5P_DEFAULT);
-
-	for (guint i = 0; i < 1024; i++)
-	{
-		data_attr[i] = i * 10;
-	}
-
-	H5Awrite(attribute, H5T_NATIVE_INT, data_attr);
-
-	H5Sclose(dataspace_attr);
-	H5Aclose(attribute);
-
-	H5Sclose(dataspace_ds);
+	H5Sclose(dataspace);
 	H5Dclose(dataset);
 }
 
 static void
 read_dataset (hid_t file, gchar const* name)
 {
-	hid_t attribute;
 	hid_t dataset;
-	hid_t dataspace_attr;
-	hid_t dataspace_ds;
+	hid_t dataspace;
 
 	hssize_t elements;
 
-	int data_attr[1024];
 	int data_ds[1024][1024];
 
 	dataset = H5Dopen2(file, name, H5P_DEFAULT);
-	attribute = H5Aopen(dataset, "BenchmarkAttribute", H5P_DEFAULT);
 
-	dataspace_attr = H5Aget_space(attribute);
-	elements = H5Sget_simple_extent_npoints(dataspace_attr);
-	// FIXME 1024
-	g_assert_cmpuint(elements, ==, 1);
-
-	H5Aread(attribute, H5T_NATIVE_INT, data_attr);
-
-	// FIXME 1024
-	for (guint i = 0; i < 1; i++)
-	{
-		g_assert_cmpint(data_attr[i], ==, i * 10);
-	}
-
-	dataspace_ds = H5Dget_space(dataset);
-	elements = H5Sget_simple_extent_npoints(dataspace_ds);
+	dataspace = H5Dget_space(dataset);
+	elements = H5Sget_simple_extent_npoints(dataspace);
 	g_assert_cmpuint(elements, ==, 1024 * 1024);
 
-	H5Dread(dataset, H5T_NATIVE_INT, dataspace_ds, H5S_ALL, H5P_DEFAULT, data_ds);
+	H5Dread(dataset, H5T_NATIVE_INT, dataspace, H5S_ALL, H5P_DEFAULT, data_ds);
 
 	for (guint i = 0; i < 1024; i++)
 	{
@@ -125,12 +147,122 @@ read_dataset (hid_t file, gchar const* name)
 		}
 	}
 
-	H5Aclose(attribute);
 	H5Dclose(dataset);
 }
 
 static void
-benchmark_hdf_write (BenchmarkResult *result)
+benchmark_hdf_attribute_write (BenchmarkResult *result)
+{
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	hid_t file;
+
+	const H5VL_class_t *h5vl_julea;
+	hid_t native_vol_id;
+
+	gdouble elapsed;
+
+	native_vol_id = H5VLget_connector_id("native");
+	g_assert(native_vol_id > 0);
+	g_assert(H5VLis_connector_registered("native") == 1);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("native") == 1);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	j_benchmark_timer_start();
+
+	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
+
+	for (guint i = 0; i < 1024; i++)
+	{
+		write_attribute(file);
+	}
+
+	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = 1024;
+	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+}
+
+static void
+benchmark_hdf_attribute_read (BenchmarkResult *result)
+{
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	hid_t file;
+
+	const H5VL_class_t *h5vl_julea;
+	hid_t native_vol_id;
+
+	gdouble elapsed;
+
+	native_vol_id = H5VLget_connector_id("native");
+	g_assert(native_vol_id > 0);
+	g_assert(H5VLis_connector_registered("native") == 1);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("native") == 1);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
+
+	for (guint i = 0; i < 1024; i++)
+	{
+		write_attribute(file);
+	}
+
+	H5Fclose(file);
+
+	j_benchmark_timer_start();
+
+	file = H5Fcreate("JULEA.h5", H5F_ACC_RDONLY, H5P_DEFAULT, acc_tpl);
+
+	for (guint i = 0; i < 1024; i++)
+	{
+		read_attribute(file);
+	}
+
+	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = 1024;
+	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+}
+
+static void
+benchmark_hdf_dataset_write (BenchmarkResult *result)
 {
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
@@ -184,7 +316,7 @@ benchmark_hdf_write (BenchmarkResult *result)
 }
 
 static void
-benchmark_hdf_read (BenchmarkResult *result)
+benchmark_hdf_dataset_read (BenchmarkResult *result)
 {
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
@@ -256,7 +388,9 @@ benchmark_hdf (void)
 {
 	// FIXME repeated runs exhibit strange behavior, objects are distributed differently etc.
 #ifdef HAVE_HDF5
-	j_benchmark_run("/hdf5/write", benchmark_hdf_write);
-	j_benchmark_run("/hdf5/read", benchmark_hdf_read);
+	j_benchmark_run("/hdf5/attribute/write", benchmark_hdf_attribute_write);
+	j_benchmark_run("/hdf5/attribute/read", benchmark_hdf_attribute_read);
+	j_benchmark_run("/hdf5/dataset/write", benchmark_hdf_dataset_write);
+	j_benchmark_run("/hdf5/dataset/read", benchmark_hdf_dataset_read);
 #endif
 }
