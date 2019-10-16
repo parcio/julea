@@ -511,7 +511,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	gsize data_size;
 
 	bson_t* tmp;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	gchar* tsloc;
 
 	gpointer value;
@@ -612,7 +612,7 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 
 	JHA_t* attribute;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	gchar* tsloc;
 
 	gpointer value;
@@ -690,7 +690,7 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void*
 
 	JHA_t* attribute = attr;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	gpointer value;
 	guint32 len;
@@ -725,7 +725,7 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_i
 
 	JHA_t* attribute = attr;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	bson_t* tmp;
 
@@ -762,7 +762,7 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void**
 
 	JHA_t* attribute = attr;
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	herr_t ret_value = 0;
 
@@ -1074,7 +1074,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 	gsize data_size;
 
 	bson_t* tmp;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	gchar* tsloc;
 
 	gpointer value;
@@ -1178,7 +1178,7 @@ void*
 H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t dapl_id, hid_t dxpl_id, void** req)
 {
 	JHD_t *dset;
-	JBatch *batch;
+	g_autoptr(JBatch) batch = NULL;
 	char* tsloc;
 
 	gpointer value;
@@ -1256,7 +1256,7 @@ H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)),
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JHD_t *d;
 	guint64 bytes_read;
 
@@ -1293,7 +1293,7 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 
 	herr_t ret_value = 0;
 	JHD_t *d;
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 
 	gpointer value;
 	guint32 len;
@@ -1367,7 +1367,7 @@ H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused))
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JBatch* batch;
+	g_autoptr(JBatch) batch = NULL;
 	JHD_t *d;
 	guint64 bytes_written;
 
