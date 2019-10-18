@@ -117,6 +117,8 @@ gboolean j_db_internal_iterate (gpointer iterator, bson_t* metadata, GError** er
 // Client-side additional internal functions
 bson_t* j_db_selector_get_bson (JDBSelector* selector);
 
+G_GNUC_INTERNAL JBackend* j_db_get_backend (void);
+
 G_END_DECLS
 
 #endif

@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <kv/jkv.h>
+#include <kv/jkv-internal.h>
 
 #include <julea.h>
 
@@ -90,6 +91,65 @@ struct JKV
 	 **/
 	gint ref_count;
 };
+
+static JBackend* j_kv_backend = NULL;
+static GModule* j_kv_module = NULL;
+
+// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+static void __attribute__((constructor)) j_kv_init (void);
+static void __attribute__((destructor)) j_kv_fini (void);
+
+/**
+ * Initializes the kv client.
+ */
+static
+void
+j_kv_init (void)
+{
+	gchar const* kv_backend;
+	gchar const* kv_component;
+	gchar const* kv_path;
+
+	if (j_kv_backend != NULL && j_kv_module != NULL)
+	{
+		return;
+	}
+
+	kv_backend = j_configuration_get_backend(j_configuration(), J_BACKEND_TYPE_KV);
+	kv_component = j_configuration_get_backend_component(j_configuration(), J_BACKEND_TYPE_KV);
+	kv_path = j_configuration_get_backend_path(j_configuration(), J_BACKEND_TYPE_KV);
+
+	if (j_backend_load_client(kv_backend, kv_component, J_BACKEND_TYPE_KV, &j_kv_module, &j_kv_backend))
+	{
+		if (j_kv_backend == NULL || !j_backend_kv_init(j_kv_backend, kv_path))
+		{
+			g_critical("Could not initialize kv backend %s.\n", kv_backend);
+		}
+	}
+}
+
+/**
+ * Shuts down the kv client.
+ */
+static
+void
+j_kv_fini (void)
+{
+	if (j_kv_backend == NULL && j_kv_module == NULL)
+	{
+		return;
+	}
+
+	if (j_kv_backend != NULL)
+	{
+		j_backend_kv_fini(j_kv_backend);
+	}
+
+	if (j_kv_module)
+	{
+		g_module_close(j_kv_module);
+	}
+}
 
 static
 void
@@ -166,7 +226,7 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	kv_backend = j_backend(J_BACKEND_TYPE_KV);
+	kv_backend = j_kv_get_backend();
 
 	if (kv_backend != NULL)
 	{
@@ -268,7 +328,7 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 
 	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 	it = j_list_iterator_new(operations);
-	kv_backend = j_backend(J_BACKEND_TYPE_KV);
+	kv_backend = j_kv_get_backend();
 
 	if (kv_backend != NULL)
 	{
@@ -358,7 +418,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	kv_backend = j_backend(J_BACKEND_TYPE_KV);
+	kv_backend = j_kv_get_backend();
 
 	if (kv_backend != NULL)
 	{
@@ -719,6 +779,17 @@ j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	operation->free_func = j_kv_get_free;
 
 	j_batch_add(batch, operation);
+}
+
+/**
+ * Returns the kv backend.
+ *
+ * \return The kv backend.
+ */
+JBackend*
+j_kv_get_backend (void)
+{
+	return j_kv_backend;
 }
 
 /**

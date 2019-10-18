@@ -27,6 +27,7 @@
 #include <kv/jkv-iterator.h>
 
 #include <kv/jkv.h>
+#include <kv/jkv-internal.h>
 
 #include <julea.h>
 
@@ -130,7 +131,7 @@ j_kv_iterator_new (gchar const* namespace, gchar const* prefix)
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
-	iterator->kv_backend = j_backend(J_BACKEND_TYPE_KV);
+	iterator->kv_backend = j_kv_get_backend();
 	iterator->cursor = NULL;
 	iterator->key = NULL;
 	iterator->value = NULL;
@@ -177,7 +178,7 @@ j_kv_iterator_new_for_index (guint32 index, gchar const* namespace, gchar const*
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
-	iterator->kv_backend = j_backend(J_BACKEND_TYPE_KV);
+	iterator->kv_backend = j_kv_get_backend();
 	iterator->cursor = NULL;
 	iterator->key = NULL;
 	iterator->value = NULL;

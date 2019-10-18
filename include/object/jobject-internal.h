@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2017-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,34 +20,20 @@
  * \file
  **/
 
-#ifndef JULEA_COMMON_H
-#define JULEA_COMMON_H
+#ifndef JULEA_OBJECT_OBJECT_INTERNAL_H
+#define JULEA_OBJECT_OBJECT_INTERNAL_H
 
-#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea.h> can be included directly."
+#if !defined(JULEA_OBJECT_H) && !defined(JULEA_OBJECT_COMPILATION)
+#error "Only <julea-object.h> can be included directly."
 #endif
 
 #include <glib.h>
 
-G_BEGIN_DECLS
-
-struct JCommon;
-
-typedef struct JCommon JCommon;
-
-G_END_DECLS
-
-#include <core/jbackend.h>
-#include <core/jbatch.h>
-#include <core/jconfiguration.h>
+#include <julea.h>
 
 G_BEGIN_DECLS
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-void __attribute__((constructor)) j_init (void);
-void __attribute__((destructor)) j_fini (void);
-
-JConfiguration* j_configuration (void);
+G_GNUC_INTERNAL JBackend* j_object_get_backend (void);
 
 G_END_DECLS
 

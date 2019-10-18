@@ -64,7 +64,7 @@ j_backend_db_func_exec (JList* operations, JSemantics* semantics, JMessageType t
 	g_autoptr(JListIterator) iter_recieve = NULL;
 	g_autoptr(JMessage) message = NULL;
 	g_autoptr(JMessage) reply = NULL;
-	JBackend* db_backend = j_backend(J_BACKEND_TYPE_DB);
+	JBackend* db_backend = j_db_get_backend();
 	gpointer batch = NULL;
 	GError* error = NULL;
 

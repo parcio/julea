@@ -28,6 +28,8 @@
 
 #include <object/jdistributed-object.h>
 
+#include <object/jobject-internal.h>
+
 #include <julea.h>
 
 /**
@@ -524,7 +526,7 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
+	object_backend = j_object_get_backend();
 
 	if (object_backend == NULL)
 	{
@@ -630,7 +632,7 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
+	object_backend = j_object_get_backend();
 
 	if (object_backend == NULL)
 	{
@@ -732,7 +734,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
+	object_backend = j_object_get_backend();
 
 	if (object_backend != NULL)
 	{
@@ -907,7 +909,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
+	object_backend = j_object_get_backend();
 
 	if (object_backend != NULL)
 	{
@@ -1080,7 +1082,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
 	}
 
 	it = j_list_iterator_new(operations);
-	object_backend = j_backend(J_BACKEND_TYPE_OBJECT);
+	object_backend = j_object_get_backend();
 
 	if (object_backend == NULL)
 	{
