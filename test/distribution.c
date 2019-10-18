@@ -22,7 +22,6 @@
 
 #include <julea.h>
 
-#include <jcommon.h>
 #include <jconfiguration.h>
 #include <jdistribution-internal.h>
 

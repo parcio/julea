@@ -28,7 +28,6 @@
 
 #include <jmemory-chunk.h>
 
-#include <jcommon.h>
 #include <jtrace.h>
 
 /**

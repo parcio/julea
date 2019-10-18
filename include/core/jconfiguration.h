@@ -37,6 +37,8 @@ struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
 
+JConfiguration* j_configuration (void);
+
 JConfiguration* j_configuration_new (void);
 JConfiguration* j_configuration_new_for_data (GKeyFile*);
 

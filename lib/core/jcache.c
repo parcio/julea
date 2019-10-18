@@ -28,7 +28,6 @@
 
 #include <jcache.h>
 
-#include <jcommon.h>
 #include <jtrace.h>
 
 /**

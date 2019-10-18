@@ -30,7 +30,6 @@
 #include <jdistribution-internal.h>
 
 #include <jbackend.h>
-#include <jcommon.h>
 #include <jconfiguration.h>
 #include <jtrace.h>
 

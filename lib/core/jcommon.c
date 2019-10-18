@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <jcommon.h>
-
 #include <jbackend.h>
 #include <jbackground-operation-internal.h>
 #include <jconfiguration.h>
@@ -44,36 +42,7 @@
  * @{
  **/
 
-/**
- * Common structure.
- */
-struct JCommon
-{
-	/**
-	 * The configuration.
-	 */
-	JConfiguration* configuration;
-};
-
-static JCommon* j_common = NULL;
-
-/**
- * Returns whether JULEA has been initialized.
- *
- * \private
- *
- * \return TRUE if JULEA has been initialized, FALSE otherwise.
- */
-static
-gboolean
-j_is_initialized (void)
-{
-	JCommon* p;
-
-	p = g_atomic_pointer_get(&j_common);
-
-	return (p != NULL);
-}
+static gboolean j_inited = FALSE;
 
 /**
  * Returns the program name.
@@ -118,11 +87,10 @@ static
 void
 j_init (void)
 {
-	JCommon* common;
 	JTrace* trace;
 	g_autofree gchar* basename = NULL;
 
-	if (j_is_initialized())
+	if (j_inited)
 	{
 		return;
 	}
@@ -134,41 +102,29 @@ j_init (void)
 		return;
 	}
 
-	common = g_slice_new(JCommon);
-	common->configuration = NULL;
-
 	j_trace_init(basename);
 	trace = j_trace_enter(G_STRFUNC, NULL);
 
-	common->configuration = j_configuration_new();
-
-	if (common->configuration == NULL)
+	if (j_configuration() == NULL)
 	{
 		goto error;
 	}
 
-	j_connection_pool_init(common->configuration);
+	j_connection_pool_init(j_configuration());
 	j_distribution_init();
 	j_background_operation_init(0);
 	j_operation_cache_init();
 
-	g_atomic_pointer_set(&j_common, common);
+	j_inited = TRUE;
 
 	j_trace_leave(trace);
 
 	return;
 
 error:
-	if (common->configuration != NULL)
-	{
-		j_configuration_unref(common->configuration);
-	}
-
 	j_trace_leave(trace);
 
 	j_trace_fini();
-
-	g_slice_free(JCommon, common);
 
 	g_error("%s: Failed to initialize JULEA.", G_STRLOC);
 }
@@ -180,10 +136,9 @@ static
 void
 j_fini (void)
 {
-	JCommon* common;
 	JTrace* trace;
 
-	if (!j_is_initialized())
+	if (!j_inited)
 	{
 		return;
 	}
@@ -194,37 +149,11 @@ j_fini (void)
 	j_background_operation_fini();
 	j_connection_pool_fini();
 
-	common = g_atomic_pointer_get(&j_common);
-	g_atomic_pointer_set(&j_common, NULL);
-
-	j_configuration_unref(common->configuration);
+	j_inited = FALSE;
 
 	j_trace_leave(trace);
 
 	j_trace_fini();
-
-	g_slice_free(JCommon, common);
-}
-
-/* Internal */
-
-/**
- * Returns the configuration.
- *
- * \private
- *
- * \return The configuration.
- */
-JConfiguration*
-j_configuration (void)
-{
-	JCommon* common;
-
-	g_return_val_if_fail(j_is_initialized(), NULL);
-
-	common = g_atomic_pointer_get(&j_common);
-
-	return common->configuration;
 }
 
 /**

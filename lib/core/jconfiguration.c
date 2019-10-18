@@ -152,6 +152,25 @@ struct JConfiguration
 };
 
 /**
+ * Returns the configuration.
+ *
+ * \return The configuration.
+ */
+JConfiguration*
+j_configuration (void)
+{
+	static JConfiguration* configuration = NULL;
+
+	if (g_atomic_pointer_get(&configuration) == NULL)
+	{
+		// FIXME never freed
+		g_atomic_pointer_compare_and_exchange(&configuration, NULL, j_configuration_new());
+	}
+
+	return configuration;
+}
+
+/**
  * Creates a new configuration.
  *
  * \code

@@ -37,7 +37,6 @@
 #include <core/jbackground-operation.h>
 #include <core/jbatch.h>
 #include <core/jcache.h>
-#include <core/jcommon.h>
 #include <core/jconfiguration.h>
 #include <core/jconnection-pool.h>
 #include <core/jcredentials.h>

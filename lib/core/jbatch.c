@@ -29,7 +29,6 @@
 
 #include <jbackground-operation.h>
 #include <jcache.h>
-#include <jcommon.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <joperation-cache-internal.h>
