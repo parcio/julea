@@ -16,10 +16,10 @@ compiler:
   - gcc
   - clang
 env:
-  - JULEA_OBJECT=posix JULEA_KV=lmdb
-  - JULEA_OBJECT=gio   JULEA_KV=lmdb
-  - JULEA_OBJECT=posix JULEA_KV=leveldb
-  - JULEA_OBJECT=posix JULEA_KV=sqlite
+  - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=sqlite
+  - JULEA_OBJECT=gio   JULEA_KV=lmdb    JULEA_DB=sqlite
+  - JULEA_OBJECT=posix JULEA_KV=leveldb JULEA_DB=sqlite
+  - JULEA_OBJECT=posix JULEA_KV=sqlite  JULEA_DB=sqlite
 # FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking
@@ -28,7 +28,7 @@ script:
   - ./waf configure --debug --sanitize --leveldb=/usr
   - ./waf
   - . ./scripts/environment.sh
-  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/${JULEA_KV} --db-backend=null --db-component=server --db-path=
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component=server --db-path=/tmp/julea/db/${JULEA_DB}
   - ./scripts/test.sh
 notifications:
   email:
