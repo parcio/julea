@@ -211,7 +211,7 @@ gboolean j_db_schema_delete (JDBSchema* schema, JBatch* batch, GError** error);
  * \return TRUE on success, FALSE otherwise
  **/
 
-gboolean j_db_schema_equals(JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GError** error);
+gboolean j_db_schema_equals (JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GError** error);
 
 G_END_DECLS
 
