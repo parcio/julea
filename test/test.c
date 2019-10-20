@@ -50,6 +50,9 @@ main (int argc, char** argv)
 	// KV client
 	test_kv_iterator();
 
+	// DB client
+	test_db();
+
 	// Item client
 	test_collection();
 	test_collection_iterator();
