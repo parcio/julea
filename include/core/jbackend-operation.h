@@ -89,6 +89,10 @@ struct JBackendOperation
 	// Output parameters
 	// The last out parameter must be of type 'J_BACKEND_OPERATION_PARAM_TYPE_ERROR'
 	JBackendOperationParam out_param[20];
+	//refcounting objects which are required for transmission - unref those after use
+	guint unref_func_count;
+	void (*unref_funcs[20])(gpointer value);
+	gpointer unref_values[20];
 };
 
 typedef struct JBackendOperation JBackendOperation;
@@ -130,7 +134,8 @@ static const JBackendOperation j_backend_operation_db_schema_create = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_schema_get = {
+static
+const JBackendOperation j_backend_operation_db_schema_get = {
 	.backend_func = j_backend_operation_unwrap_db_schema_get,
 	.in_param_count = 2,
 	.out_param_count = 2,
@@ -147,7 +152,8 @@ static const JBackendOperation j_backend_operation_db_schema_get = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_schema_delete = {
+static
+const JBackendOperation j_backend_operation_db_schema_delete = {
 	.backend_func = j_backend_operation_unwrap_db_schema_delete,
 	.in_param_count = 2,
 	.out_param_count = 1,
@@ -160,7 +166,8 @@ static const JBackendOperation j_backend_operation_db_schema_delete = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_insert = {
+static
+const JBackendOperation j_backend_operation_db_insert = {
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
 	.out_param_count = 2,
@@ -181,7 +188,8 @@ static const JBackendOperation j_backend_operation_db_insert = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_update = {
+static
+const JBackendOperation j_backend_operation_db_update = {
 	.backend_func = j_backend_operation_unwrap_db_update,
 	.in_param_count = 4,
 	.out_param_count = 1,
@@ -202,7 +210,8 @@ static const JBackendOperation j_backend_operation_db_update = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_delete = {
+static
+const JBackendOperation j_backend_operation_db_delete = {
 	.backend_func = j_backend_operation_unwrap_db_delete,
 	.in_param_count = 3,
 	.out_param_count = 1,
@@ -219,7 +228,8 @@ static const JBackendOperation j_backend_operation_db_delete = {
 	},
 };
 
-static const JBackendOperation j_backend_operation_db_query = {
+static
+const JBackendOperation j_backend_operation_db_query = {
 	.backend_func = j_backend_operation_unwrap_db_query,
 	.in_param_count = 3,
 	.out_param_count = 2,

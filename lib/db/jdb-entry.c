@@ -180,7 +180,7 @@ j_db_entry_insert (JDBEntry* entry, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!j_db_internal_insert(entry->schema->namespace, entry->schema->name, &entry->bson, &entry->id, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_insert(entry, batch, error)))
 	{
 		goto _error;
 	}
@@ -212,7 +212,7 @@ j_db_entry_update (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!j_db_internal_update(entry->schema->namespace, entry->schema->name, bson, &entry->bson, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_update(entry, selector, batch, error)))
 	{
 		goto _error;
 	}
@@ -233,7 +233,7 @@ j_db_entry_delete (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError
 	g_return_val_if_fail((selector == NULL) || (selector->schema == entry->schema), FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!j_db_internal_delete(entry->schema->namespace, entry->schema->name, j_db_selector_get_bson(selector), batch, error)))
+	if (G_UNLIKELY(!j_db_internal_delete(entry, selector, batch, error)))
 	{
 		goto _error;
 	}

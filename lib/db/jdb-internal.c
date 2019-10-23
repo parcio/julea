@@ -146,9 +146,18 @@ j_backend_db_func_free (gpointer _data)
 	J_TRACE_FUNCTION(NULL);
 
 	JBackendOperation* data = _data;
+	guint i;
 
 	if (data)
 	{
+		for (i = 0; i < data->unref_func_count; i++)
+		{
+			if (data->unref_values[i])
+			{
+				(*data->unref_funcs[i])(data->unref_values[i]);
+			}
+		}
+
 		g_slice_free(JBackendOperation, data);
 	}
 }
@@ -161,9 +170,8 @@ j_db_schema_create_exec (JList* operations, JSemantics* semantics)
 
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_SCHEMA_CREATE);
 }
-
 gboolean
-j_db_internal_schema_create (gchar const* namespace, gchar const* name, bson_t const* schema, JBatch* batch, GError** error)
+j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -174,13 +182,17 @@ j_db_internal_schema_create (gchar const* namespace, gchar const* name, bson_t c
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->in_param[2].ptr_const = schema;
+	data->in_param[0].ptr_const = j_db_schema->namespace;
+	data->in_param[1].ptr_const = j_db_schema->name;
+	data->in_param[2].ptr_const = &j_db_schema->bson;
 	data->out_param[0].ptr_const = error;
 
+	data->unref_func_count = 1;
+	data->unref_funcs[0] = (void (*)(void*))j_db_schema_unref;
+	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_create_exec;
 	op->free_func = j_backend_db_func_free;
@@ -200,7 +212,7 @@ j_db_schema_get_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_schema_get (gchar const* namespace, gchar const* name, bson_t* schema, JBatch* batch, GError** error)
+j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -211,13 +223,17 @@ j_db_internal_schema_get (gchar const* namespace, gchar const* name, bson_t* sch
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->out_param[0].ptr_const = schema;
+	data->in_param[0].ptr_const = j_db_schema->namespace;
+	data->in_param[1].ptr_const = j_db_schema->name;
+	data->out_param[0].ptr_const = &j_db_schema->bson;
 	data->out_param[1].ptr_const = error;
 
+	data->unref_func_count = 1;
+	data->unref_funcs[0] = (void (*)(void*))j_db_schema_unref;
+	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_get_exec;
 	op->free_func = j_backend_db_func_free;
@@ -235,9 +251,8 @@ j_db_schema_delete_exec (JList* operations, JSemantics* semantics)
 
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_SCHEMA_DELETE);
 }
-
 gboolean
-j_db_internal_schema_delete (gchar const* namespace, gchar const* name, JBatch* batch, GError** error)
+j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -248,12 +263,16 @@ j_db_internal_schema_delete (gchar const* namespace, gchar const* name, JBatch* 
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
+	data->in_param[0].ptr_const = j_db_schema->namespace;
+	data->in_param[1].ptr_const = j_db_schema->name;
 	data->out_param[0].ptr_const = error;
 
+	data->unref_func_count = 1;
+	data->unref_funcs[0] = (void (*)(void*))j_db_schema_unref;
+	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_delete_exec;
 	op->free_func = j_backend_db_func_free;
@@ -273,7 +292,7 @@ j_db_insert_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* metadata, bson_t* id, JBatch* batch, GError** error)
+j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -284,14 +303,18 @@ j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* m
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_insert, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->in_param[2].ptr_const = metadata;
-	data->out_param[0].ptr_const = id;
+	data->in_param[0].ptr_const = j_db_entry->schema->namespace;
+	data->in_param[1].ptr_const = j_db_entry->schema->name;
+	data->in_param[2].ptr_const = &j_db_entry->bson;
+	data->out_param[0].ptr_const = &j_db_entry->id;
 	data->out_param[1].ptr_const = error;
 
+	data->unref_func_count = 1;
+	data->unref_funcs[0] = (void (*)(void*))j_db_entry_unref;
+	data->unref_values[0] = j_db_entry_ref(j_db_entry);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_entry->schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_insert_exec;
 	op->free_func = j_backend_db_func_free;
@@ -311,7 +334,7 @@ j_db_update_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_update (gchar const* namespace, gchar const* name, bson_t const* selector, bson_t const* metadata, JBatch* batch, GError** error)
+j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -322,14 +345,20 @@ j_db_internal_update (gchar const* namespace, gchar const* name, bson_t const* s
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_update, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->in_param[2].ptr_const = selector;
-	data->in_param[3].ptr_const = metadata;
+	data->in_param[0].ptr_const = j_db_entry->schema->namespace;
+	data->in_param[1].ptr_const = j_db_entry->schema->name;
+	data->in_param[2].ptr_const = j_db_selector_get_bson(j_db_selector);
+	data->in_param[3].ptr_const = &j_db_entry->bson;
 	data->out_param[0].ptr_const = error;
 
+	data->unref_func_count = 2;
+	data->unref_funcs[0] = (void (*)(void*))j_db_entry_unref;
+	data->unref_funcs[1] = (void (*)(void*))j_db_selector_unref;
+	data->unref_values[0] = j_db_entry_ref(j_db_entry);
+	data->unref_values[1] = j_db_selector_ref(j_db_selector);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_entry->schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_update_exec;
 	op->free_func = j_backend_db_func_free;
@@ -347,9 +376,8 @@ j_db_delete_exec (JList* operations, JSemantics* semantics)
 
 	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_DB_DELETE);
 }
-
 gboolean
-j_db_internal_delete (gchar const* namespace, gchar const* name, bson_t const* selector, JBatch* batch, GError** error)
+j_db_internal_delete(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -360,13 +388,19 @@ j_db_internal_delete (gchar const* namespace, gchar const* name, bson_t const* s
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_delete, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->in_param[2].ptr_const = selector;
+	data->in_param[0].ptr_const = j_db_entry->schema->namespace;
+	data->in_param[1].ptr_const = j_db_entry->schema->name;
+	data->in_param[2].ptr_const = j_db_selector_get_bson(j_db_selector);
 	data->out_param[0].ptr_const = error;
 
+	data->unref_func_count = 2;
+	data->unref_funcs[0] = (void (*)(void*))j_db_entry_unref;
+	data->unref_funcs[1] = (void (*)(void*))j_db_selector_unref;
+	data->unref_values[0] = j_db_entry_ref(j_db_entry);
+	data->unref_values[1] = j_db_selector_ref(j_db_selector);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_entry->schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_delete_exec;
 	op->free_func = j_backend_db_func_free;
@@ -386,7 +420,7 @@ j_db_query_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_query (gchar const* namespace, gchar const* name, bson_t const* selector, gpointer* iterator, JBatch* batch, GError** error)
+j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIterator* j_db_iterator, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -394,24 +428,31 @@ j_db_internal_query (gchar const* namespace, gchar const* name, bson_t const* se
 	JOperation* op;
 	JBackendOperation* data;
 
-	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	helper = g_slice_new(JDBIteratorHelper);
 	helper->initialized = FALSE;
 	memset(&helper->bson, 0, sizeof(bson_t));
-	*iterator = helper;
+	j_db_iterator->iterator = helper;
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_query, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = namespace;
-	data->in_param[1].ptr_const = name;
-	data->in_param[2].ptr_const = selector;
+	data->in_param[0].ptr_const = j_db_schema->namespace;
+	data->in_param[1].ptr_const = j_db_schema->name;
+	data->in_param[2].ptr_const = j_db_selector_get_bson(j_db_selector);
 	data->out_param[0].ptr_const = &helper->bson;
 	data->out_param[1].ptr_const = error;
 
+	data->unref_func_count = 3;
+	data->unref_funcs[0] = (void (*)(void*))j_db_schema_unref;
+	data->unref_funcs[1] = (void (*)(void*))j_db_selector_unref;
+	data->unref_funcs[2] = (void (*)(void*))j_db_iterator_unref;
+	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+	data->unref_values[1] = j_db_selector_ref(j_db_selector);
+	data->unref_values[2] = j_db_iterator_ref(j_db_iterator);
+
 	op = j_operation_new();
-	op->key = namespace;
+	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_query_exec;
 	op->free_func = j_backend_db_func_free;
@@ -422,11 +463,11 @@ j_db_internal_query (gchar const* namespace, gchar const* name, bson_t const* se
 }
 
 gboolean
-j_db_internal_iterate (gpointer iterator, bson_t* metadata, GError** error)
+j_db_internal_iterate(JDBIterator* j_db_iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JDBIteratorHelper* helper = iterator;
+	JDBIteratorHelper* helper = j_db_iterator->iterator;
 	gboolean has_next;
 	bson_t zerobson;
 
@@ -461,7 +502,7 @@ j_db_internal_iterate (gpointer iterator, bson_t* metadata, GError** error)
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!j_bson_iter_copy_document(&helper->iter, metadata, error)))
+	if (G_UNLIKELY(!j_bson_iter_copy_document(&helper->iter, &j_db_iterator->bson, error)))
 	{
 		goto _error;
 	}
