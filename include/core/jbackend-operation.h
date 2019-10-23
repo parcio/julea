@@ -134,8 +134,7 @@ static const JBackendOperation j_backend_operation_db_schema_create = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_schema_get = {
+static const JBackendOperation j_backend_operation_db_schema_get = {
 	.backend_func = j_backend_operation_unwrap_db_schema_get,
 	.in_param_count = 2,
 	.out_param_count = 2,
@@ -152,8 +151,7 @@ const JBackendOperation j_backend_operation_db_schema_get = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_schema_delete = {
+static const JBackendOperation j_backend_operation_db_schema_delete = {
 	.backend_func = j_backend_operation_unwrap_db_schema_delete,
 	.in_param_count = 2,
 	.out_param_count = 1,
@@ -166,8 +164,7 @@ const JBackendOperation j_backend_operation_db_schema_delete = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_insert = {
+static const JBackendOperation j_backend_operation_db_insert = {
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
 	.out_param_count = 2,
@@ -188,8 +185,7 @@ const JBackendOperation j_backend_operation_db_insert = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_update = {
+static const JBackendOperation j_backend_operation_db_update = {
 	.backend_func = j_backend_operation_unwrap_db_update,
 	.in_param_count = 4,
 	.out_param_count = 1,
@@ -210,8 +206,7 @@ const JBackendOperation j_backend_operation_db_update = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_delete = {
+static const JBackendOperation j_backend_operation_db_delete = {
 	.backend_func = j_backend_operation_unwrap_db_delete,
 	.in_param_count = 3,
 	.out_param_count = 1,
@@ -228,8 +223,7 @@ const JBackendOperation j_backend_operation_db_delete = {
 	},
 };
 
-static
-const JBackendOperation j_backend_operation_db_query = {
+static const JBackendOperation j_backend_operation_db_query = {
 	.backend_func = j_backend_operation_unwrap_db_query,
 	.in_param_count = 3,
 	.out_param_count = 2,
