@@ -56,6 +56,7 @@
 struct JHF_t
 {
 	char* name;
+	JKV* kv;
 };
 
 typedef struct JHF_t JHF_t;
@@ -866,14 +867,35 @@ H5VL_julea_file_create (const char* fname, unsigned flags, hid_t fcpl_id, hid_t 
 {
 	JHF_t* file;
 
+	g_autoptr(JBatch) batch = NULL;
+
+	bson_t tmp[1];
+
+	gpointer value;
+	guint32 len;
+
 	(void)flags;
 	(void)fcpl_id;
 	(void)fapl_id;
 	(void)dxpl_id;
 	(void)req;
 
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
 	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
+	file->kv = j_kv_new("hdf5", fname);
+
+	bson_init(tmp);
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
+	bson_destroy(tmp);
+
+	j_kv_put(file->kv, value, len, bson_free, batch);
+
+	if (j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
 
 	return file;
 }
@@ -889,13 +911,29 @@ H5VL_julea_file_open (const char* fname, unsigned flags, hid_t fapl_id, hid_t dx
 {
 	JHF_t* file;
 
+	g_autoptr(JBatch) batch = NULL;
+
+	gpointer value;
+	guint32 len;
+
 	(void)flags;
 	(void)fapl_id;
 	(void)dxpl_id;
 	(void)req;
 
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
 	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
+	file->kv = j_kv_new("hdf5", fname);
+
+	j_kv_get(file->kv, &value, &len, batch);
+
+	if (j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+		g_free(value);
+	}
 
 	return file;
 }
@@ -912,6 +950,7 @@ H5VL_julea_file_close (void* file, hid_t dxpl_id, void** req)
 	(void)dxpl_id;
 	(void)req;
 
+	j_kv_unref(f->kv);
 	g_free(f->name);
 	g_free(f);
 
