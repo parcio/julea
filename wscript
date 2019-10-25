@@ -561,7 +561,6 @@ def build(ctx):
 	if ctx.env.JULEA_MARIADB:
 		db_backends.append('mysql')
 
-
 	for backend in db_backends:
 		use_extra = []
 		cflags = []

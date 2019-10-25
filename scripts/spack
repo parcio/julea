@@ -120,7 +120,6 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
-		dependencies="${dependencies} mariadb"
 	fi
 
 	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
@@ -129,6 +128,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} libmongoc"
 		dependencies="${dependencies} hdf5@develop~mpi"
+		dependencies="${dependencies} mariadb"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"
