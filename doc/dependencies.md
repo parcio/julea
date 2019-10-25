@@ -60,6 +60,6 @@ Most of them should be available within the repositories of Linux distributions.
   - Arch Linux: `pacman -S fuse2`
 
 - MariaDB
-  - Debian: `apt install libmariadbclient-dev`
-  - Fedora: `dnf install mariadb-devel`
+  - Debian: `apt install libmariadb-dev`
+  - Fedora: `dnf install mariadb-connector-c-devel`
   - Arch Linux: `pacman -S mariadb-libs`

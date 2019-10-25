@@ -41,8 +41,8 @@ lmdb_version = '0.9.21'
 libmongoc_version = '1.9.0'
 # Ubuntu 18.04 has SQLite 3.22.0
 sqlite_version = '3.22.0'
-# Ubuntu 18.04 has MariaDB 10.1
-mariadb_version = '10.1'
+# Ubuntu 18.04 has MariaDB Connector/C 3.0.3
+mariadb_version = '3.0.3'
 
 
 def check_cfg_rpath(ctx, **kwargs):
@@ -299,8 +299,8 @@ def configure(ctx):
 	ctx.env.JULEA_MARIADB = \
 		check_cfg_rpath(
 			ctx,
-			package='mariadb',
-			args=['--cflags', '--libs', 'mariadb >= {0}'.format(mariadb_version)],
+			package='libmariadb',
+			args=['--cflags', '--libs', 'libmariadb >= {0}'.format(mariadb_version)],
 			uselib_store='MARIADB',
 			pkg_config_path=get_pkg_config_path(ctx.options.mariadb),
 			mandatory=False
