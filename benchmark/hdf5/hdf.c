@@ -58,21 +58,18 @@ open_group (hid_t file, gchar const* name)
 
 static
 void
-write_attribute (hid_t file)
+write_attribute (hid_t group, gchar const* name)
 {
 	hid_t attribute;
 	hid_t dataspace;
-	hid_t group;
 
 	hsize_t dims[1];
 
 	int data[1024];
 
-	group = H5Gopen2(file, "/", H5P_DEFAULT);
-
 	dims[0] = 1024;
 	dataspace = H5Screate_simple(1, dims, NULL);
-	attribute = H5Acreate2(group, "BenchmarkAttribute", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT);
+	attribute = H5Acreate2(group, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT);
 
 	for (guint i = 0; i < 1024; i++)
 	{
@@ -83,23 +80,20 @@ write_attribute (hid_t file)
 
 	H5Sclose(dataspace);
 	H5Aclose(attribute);
-	H5Gclose(group);
 }
 
 static
 void
-read_attribute (hid_t file)
+read_attribute (hid_t group, gchar const* name)
 {
 	hid_t attribute;
 	hid_t dataspace;
-	hid_t group;
 
 	hssize_t elements;
 
 	int data[1024];
 
-	group = H5Gopen2(file, "/", H5P_DEFAULT);
-	attribute = H5Aopen(group, "BenchmarkAttribute", H5P_DEFAULT);
+	attribute = H5Aopen(group, name, H5P_DEFAULT);
 
 	dataspace = H5Aget_space(attribute);
 	elements = H5Sget_simple_extent_npoints(dataspace);
@@ -113,7 +107,6 @@ read_attribute (hid_t file)
 	}
 
 	H5Aclose(attribute);
-	H5Gclose(group);
 }
 
 static
@@ -198,6 +191,7 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 	hid_t julea_vol_id;
 
 	hid_t file;
+	hid_t group;
 
 	const H5VL_class_t *h5vl_julea;
 
@@ -215,12 +209,17 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 	j_benchmark_timer_start();
 
 	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	group = open_group(file, "/");
 
 	for (guint i = 0; i < n; i++)
 	{
-		write_attribute(file);
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-attribute-write-%u", i);
+		write_attribute(group, name);
 	}
 
+	H5Gclose(group);
 	H5Fclose(file);
 
 	elapsed = j_benchmark_timer_elapsed();
@@ -245,6 +244,7 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	hid_t julea_vol_id;
 
 	hid_t file;
+	hid_t group;
 
 	const H5VL_class_t *h5vl_julea;
 
@@ -260,19 +260,27 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
 	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	group = open_group(file, "/");
 
 	for (guint i = 0; i < n; i++)
 	{
-		write_attribute(file);
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-attribute-read-%u", i);
+		write_attribute(group, name);
 	}
 
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
 	{
-		read_attribute(file);
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-attribute-read-%u", i);
+		read_attribute(group, name);
 	}
 
+	H5Gclose(group);
 	H5Fclose(file);
 
 	elapsed = j_benchmark_timer_elapsed();
