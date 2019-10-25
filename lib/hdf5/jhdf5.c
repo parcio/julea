@@ -66,6 +66,7 @@ struct JHG_t
 {
 	char* location;
 	char* name;
+	JKV* kv;
 };
 
 typedef struct JHG_t JHG_t;
@@ -970,11 +971,20 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 {
 	JHG_t* group;
 
+	g_autoptr(JBatch) batch = NULL;
+
+	bson_t tmp[1];
+
+	gpointer value;
+	guint32 len;
+
 	(void)lcpl_id;
 	(void)gcpl_id;
 	(void)gapl_id;
 	(void)dxpl_id;
 	(void)req;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	group = g_new(JHG_t, 1);
 
@@ -1015,6 +1025,19 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 			exit(1);
 	}
 
+	group->kv = j_kv_new("hdf5", group->name);
+
+	bson_init(tmp);
+	value = bson_destroy_with_steal(tmp, TRUE, &len);
+	bson_destroy(tmp);
+
+	j_kv_put(group->kv, value, len, bson_free, batch);
+
+	if (j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+	}
+
 	return group;
 }
 
@@ -1029,9 +1052,16 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 {
 	JHG_t* group;
 
+	g_autoptr(JBatch) batch = NULL;
+
+	gpointer value;
+	guint32 len;
+
 	(void)gapl_id;
 	(void)dxpl_id;
 	(void)req;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	group = g_new(JHG_t, 1);
 	group->name = g_strdup(name);
@@ -1071,6 +1101,16 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 			exit(1);
 	}
 
+	group->kv = j_kv_new("hdf5", group->location);
+
+	j_kv_get(group->kv, &value, &len, batch);
+
+	if (j_batch_execute(batch))
+	{
+		// FIXME check return value properly
+		g_free(value);
+	}
+
 	return group;
 }
 
@@ -1086,6 +1126,7 @@ H5VL_julea_group_close (void* grp, hid_t dxpl_id, void** req)
 	(void)dxpl_id;
 	(void)req;
 
+	j_kv_unref(g->kv);
 	g_free(g->name);
 	g_free(g->location);
 	g_free(g);

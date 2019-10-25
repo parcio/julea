@@ -35,6 +35,28 @@
 #include <H5PLextern.h>
 
 static
+hid_t
+create_group (hid_t file, gchar const* name)
+{
+	hid_t group;
+
+	group = H5Gcreate2(file, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	return group;
+}
+
+static
+hid_t
+open_group (hid_t file, gchar const* name)
+{
+	hid_t group;
+
+	group = H5Gopen2(file, name, H5P_DEFAULT);
+
+	return group;
+}
+
+static
 void
 write_attribute (hid_t file)
 {
@@ -114,6 +136,17 @@ create_dataset (hid_t file, gchar const* name)
 }
 
 static
+hid_t
+open_dataset (hid_t file, gchar const* name)
+{
+	hid_t dataset;
+
+	dataset = H5Dopen2(file, name, H5P_DEFAULT);
+
+	return dataset;
+}
+
+static
 void
 write_dataset (hid_t dataset)
 {
@@ -132,32 +165,27 @@ write_dataset (hid_t dataset)
 
 static
 void
-read_dataset (hid_t file, gchar const* name)
+read_dataset (hid_t dataset)
 {
-	hid_t dataset;
 	hid_t dataspace;
 
 	hssize_t elements;
 
-	int data_ds[1024][1024];
-
-	dataset = H5Dopen2(file, name, H5P_DEFAULT);
+	int data[1024][1024];
 
 	dataspace = H5Dget_space(dataset);
 	elements = H5Sget_simple_extent_npoints(dataspace);
 	g_assert_cmpuint(elements, ==, 1024 * 1024);
 
-	H5Dread(dataset, H5T_NATIVE_INT, dataspace, H5S_ALL, H5P_DEFAULT, data_ds);
+	H5Dread(dataset, H5T_NATIVE_INT, dataspace, H5S_ALL, H5P_DEFAULT, data);
 
 	for (guint i = 0; i < 1024; i++)
 	{
 		for (guint j = 0; j < 1024; j++)
 		{
-			g_assert_cmpint(data_ds[i][j], ==, i + j);
+			g_assert_cmpint(data[i][j], ==, i + j);
 		}
 	}
-
-	H5Dclose(dataset);
 }
 
 static
@@ -471,10 +499,14 @@ benchmark_hdf_dataset_read (BenchmarkResult *result)
 
 	for (guint i = 0; i < n; i++)
 	{
+		hid_t dataset;
+
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-dataset-read-%u", i);
-		read_dataset(file, name);
+		dataset = open_dataset(file, name);
+		read_dataset(dataset);
+		H5Dclose(dataset);
 	}
 
 	H5Fclose(file);
@@ -594,6 +626,121 @@ benchmark_hdf_file_open (BenchmarkResult *result)
 	result->operations = n;
 }
 
+static
+void
+benchmark_hdf_group_create (BenchmarkResult *result)
+{
+	guint const n = 100000;
+
+	hid_t file;
+
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	const H5VL_class_t *h5vl_julea;
+
+	gdouble elapsed;
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	file = H5Fcreate("benchmark-group-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t group;
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-group-create-%u", i);
+		group = create_group(file, name);
+		H5Gclose(group);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Fclose(file);
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = n;
+}
+
+static
+void
+benchmark_hdf_group_open (BenchmarkResult *result)
+{
+	guint const n = 100000;
+
+	hid_t file;
+
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	const H5VL_class_t *h5vl_julea;
+
+	gdouble elapsed;
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	file = H5Fcreate("benchmark-group-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t group;
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-group-open-%u", i);
+		group = create_group(file, name);
+		H5Gclose(group);
+	}
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t group;
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-group-open-%u", i);
+		group = open_group(file, name);
+		H5Gclose(group);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Fclose(file);
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = n;
+}
+
 #endif
 
 void
@@ -609,5 +756,7 @@ benchmark_hdf (void)
 	j_benchmark_run("/hdf5/dataset/read", benchmark_hdf_dataset_read);
 	j_benchmark_run("/hdf5/file/create", benchmark_hdf_file_create);
 	j_benchmark_run("/hdf5/file/open", benchmark_hdf_file_open);
+	j_benchmark_run("/hdf5/group/create", benchmark_hdf_group_create);
+	j_benchmark_run("/hdf5/group/open", benchmark_hdf_group_open);
 #endif
 }
