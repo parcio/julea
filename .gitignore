@@ -20,5 +20,7 @@ html/
 # Waf
 build*/
 waf-extras/*.pyc
+waf-extras/__pycache__/
 .lock-waf*
 .waf-*/
+.waf3-*/
