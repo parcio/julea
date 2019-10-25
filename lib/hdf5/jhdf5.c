@@ -570,6 +570,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 		case H5I_FILE:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -650,6 +651,7 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		case H5I_FILE:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -1002,6 +1004,7 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 		case H5I_ERROR_STACK:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -1057,6 +1060,7 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 		case H5I_ERROR_STACK:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -1178,6 +1182,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 		case H5I_ERROR_STACK:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -1255,6 +1260,7 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 		case H5I_ERROR_STACK:
 		case H5I_GENPROP_CLS:
 		case H5I_GENPROP_LST:
+		case H5I_MAP:
 		case H5I_NTYPES:
 		case H5I_SPACE_SEL_ITER:
 		case H5I_UNINIT:
@@ -1550,8 +1556,16 @@ H5VL_class_t H5VL_julea_g =
 		NULL, //H5VL_julea_object_optional,            /* optional */
 	},
 	{
+		// H5VL_request_class_t
 		NULL,
 		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	{
+		// H5VL_blob_class_t
 		NULL,
 		NULL,
 		NULL,
