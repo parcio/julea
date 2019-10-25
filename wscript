@@ -252,6 +252,7 @@ def configure(ctx):
 			mandatory=False
 		)
 
+	# Ubuntu's package does not ship a pkg-config file
 	if not ctx.env.JULEA_LEVELDB:
 		ctx.env.JULEA_LEVELDB = \
 			check_cc_rpath(
@@ -305,6 +306,19 @@ def configure(ctx):
 			pkg_config_path=get_pkg_config_path(ctx.options.mariadb),
 			mandatory=False
 		)
+
+	# Ubuntu's package does not ship a pkg-config file
+	if not ctx.env.JULEA_MARIADB:
+		ctx.env.JULEA_MARIADB = \
+			check_cfg_rpath(
+				ctx,
+				path='mariadb_config',
+				package='',
+				args=['--cflags', '--libs'],
+				uselib_store='MARIADB',
+				msg='Checking for mariadb_config',
+				mandatory=False
+			)
 
 	# stat.st_mtim.tv_nsec
 	ctx.check_cc(
