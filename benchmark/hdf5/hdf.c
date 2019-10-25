@@ -191,7 +191,7 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 
 	result->elapsed_time = elapsed;
 	result->operations = 1024;
-	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+	result->bytes = 1024 * 1024 * sizeof(int);
 }
 
 static void
@@ -244,7 +244,119 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 
 	result->elapsed_time = elapsed;
 	result->operations = 1024;
-	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+	result->bytes = 1024 * 1024 * sizeof(int);
+}
+
+static void
+benchmark_hdf_dataset_create (BenchmarkResult *result)
+{
+	guint const n = 100000;
+
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	const H5VL_class_t *h5vl_julea;
+
+	hid_t file;
+
+	gdouble elapsed;
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t dataset;
+		hid_t dataspace;
+
+		hsize_t dims[2];
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-dataset-create-%u", i);
+
+		dims[0] = 1024;
+		dims[1] = 1024;
+		dataspace = H5Screate_simple(2, dims, NULL);
+		dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+		H5Sclose(dataspace);
+		H5Dclose(dataset);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Fclose(file);
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = n;
+}
+
+static void
+benchmark_hdf_dataset_open (BenchmarkResult *result)
+{
+	guint const n = 100000;
+
+	hid_t acc_tpl;
+	hid_t julea_vol_id;
+
+	const H5VL_class_t *h5vl_julea;
+
+	hid_t file;
+
+	gdouble elapsed;
+
+	h5vl_julea = H5PLget_plugin_info();
+	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
+	g_assert(julea_vol_id > 0);
+	g_assert(H5VLis_connector_registered("julea") == 1);
+
+	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
+	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
+
+	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+
+	j_benchmark_timer_start();
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t dataset;
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-dataset-create-%u", i);
+		dataset = H5Dopen2(file, name, H5P_DEFAULT);
+
+		H5Dclose(dataset);
+	}
+
+	elapsed = j_benchmark_timer_elapsed();
+
+	H5Fclose(file);
+
+	H5Pclose(acc_tpl);
+	H5VLterminate(julea_vol_id);
+	H5VLunregister_connector(julea_vol_id);
+	g_assert(H5VLis_connector_registered("julea") == 0);
+
+	result->elapsed_time = elapsed;
+	result->operations = n;
 }
 
 static void
@@ -463,6 +575,8 @@ benchmark_hdf (void)
 #ifdef HAVE_HDF5
 	j_benchmark_run("/hdf5/attribute/write", benchmark_hdf_attribute_write);
 	j_benchmark_run("/hdf5/attribute/read", benchmark_hdf_attribute_read);
+	j_benchmark_run("/hdf5/dataset/create", benchmark_hdf_dataset_create);
+	j_benchmark_run("/hdf5/dataset/open", benchmark_hdf_dataset_open);
 	j_benchmark_run("/hdf5/dataset/write", benchmark_hdf_dataset_write);
 	j_benchmark_run("/hdf5/dataset/read", benchmark_hdf_dataset_read);
 	j_benchmark_run("/hdf5/file/create", benchmark_hdf_file_create);
