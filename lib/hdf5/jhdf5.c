@@ -31,28 +31,33 @@
 #define H5Sencode_vers 1
 
 #include <julea-config.h>
-#include <julea.h>
-#include <julea-kv.h>
-#include <julea-object.h>
-#include <glib.h>
-#include <bson.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <string.h>
+#include <glib.h>
+
+#include <bson.h>
 
 #include <hdf5.h>
 #include <H5PLextern.h>
+
+#include <string.h>
+
+#include <julea.h>
+#include <julea-kv.h>
+#include <julea-object.h>
 
 #define _GNU_SOURCE
 
 #define JULEA 520
 
-/* structure for file*/
+enum JHDF5Type
+{
+	J_HDF5_TYPE_FILE,
+	J_HDF5_TYPE_GROUP,
+	J_HDF5_TYPE_DATASET,
+	J_HDF5_TYPE_ATTRIBUTE
+};
+
+/* structure for file */
 struct JHF_t
 {
 	char* name;
@@ -61,7 +66,7 @@ struct JHF_t
 
 typedef struct JHF_t JHF_t;
 
-/* structure for group*/
+/* structure for group */
 struct JHG_t
 {
 	char* location;
@@ -71,7 +76,7 @@ struct JHG_t
 
 typedef struct JHG_t JHG_t;
 
-/* structure for dataset*/
+/* structure for dataset */
 struct JHD_t
 {
 	char* location;
@@ -84,7 +89,7 @@ struct JHD_t
 
 typedef struct JHD_t JHD_t;
 
-/*structure for attribute*/
+/* structure for attribute */
 struct JHA_t
 {
 	char* location;
@@ -95,23 +100,6 @@ struct JHA_t
 };
 
 typedef struct JHA_t JHA_t;
-
-char* j_hdf5_encode_type(const char*, hid_t*, hid_t, size_t*);
-char* j_hdf5_encode_space(const char*, hid_t*, hid_t, size_t*);
-
-bson_t* j_hdf5_serialize(const void*, size_t);
-bson_t* j_hdf5_serialize_ts (const void*, size_t, const void*, size_t);
-bson_t* j_hdf5_serialize_dataset(const void*, size_t, const void*, size_t, size_t, JDistribution*);
-
-void j_hdf5_deserialize(const bson_t*, void*, size_t);
-void* j_hdf5_deserialize_type (const bson_t*);
-void* j_hdf5_deserialize_space (const bson_t*);
-void j_hdf5_deserialize_dataset(const bson_t*, JHD_t*, size_t*);
-void j_hdf5_deserialize_size(const bson_t*, size_t*);
-
-char* create_path(const char*, char*);
-
-hid_t native_plugin_id = -1;
 
 /**
  * Initializes the plugin
@@ -144,6 +132,7 @@ H5VL_julea_term (void)
  *
  * \return type_buf The encoded type
  **/
+static
 char*
 j_hdf5_encode_type (const char* property, hid_t* type_id, hid_t cpl_id, size_t* type_size)
 {
@@ -163,6 +152,7 @@ j_hdf5_encode_type (const char* property, hid_t* type_id, hid_t cpl_id, size_t* 
  *
  * \return type_buf The encoded space
  **/
+static
 char*
 j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t* space_size)
 {
@@ -185,8 +175,9 @@ j_hdf5_encode_space (const char* property, hid_t* space_id, hid_t cpl_id, size_t
  *
  * \return b The serialized BSON
  **/
+static
 bson_t*
-j_hdf5_serialize (const void* data, size_t data_size)
+j_hdf5_serialize_attribute_data (const void* data, size_t data_size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -194,6 +185,7 @@ j_hdf5_serialize (const void* data, size_t data_size)
 
 	b = bson_new();
 
+	bson_append_int32(b, "type", -1, J_HDF5_TYPE_ATTRIBUTE);
 	bson_append_binary(b, "data", -1, BSON_SUBTYPE_BINARY, data, data_size);
 	bson_append_int32(b, "size", -1, (int32_t)data_size);
 
@@ -210,8 +202,9 @@ j_hdf5_serialize (const void* data, size_t data_size)
  *
  * \return b The serialized BSON
  **/
+static
 bson_t*
-j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_data, size_t space_size)
+j_hdf5_serialize_attribute (const void* type_data, size_t type_size, const void* space_data, size_t space_size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -219,6 +212,7 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
 
 	b = bson_new();
 
+	bson_append_int32(b, "type", -1, J_HDF5_TYPE_ATTRIBUTE);
 	bson_append_int32(b, "tsize", -1, (int32_t)type_size);
 	bson_append_int32(b, "ssize", -1, (int32_t)space_size);
 	bson_append_binary(b, "tdata", -1, BSON_SUBTYPE_BINARY, type_data, type_size);
@@ -239,6 +233,7 @@ j_hdf5_serialize_ts (const void* type_data, size_t type_size, const void* space_
  *
  * \return b The serialized BSON
  **/
+static
 bson_t*
 j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* space_data, size_t space_size, size_t data_size, JDistribution* distribution)
 {
@@ -251,6 +246,7 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
 
 	b = bson_new();
 
+	bson_append_int32(b, "type", -1, J_HDF5_TYPE_DATASET);
 	bson_append_int32(b, "tsize", -1, (int32_t)type_size);
 	bson_append_int32(b, "ssize", -1, (int32_t)space_size);
 	bson_append_binary(b, "tdata", -1, BSON_SUBTYPE_BINARY, type_data, type_size);
@@ -270,8 +266,9 @@ j_hdf5_serialize_dataset (const void* type_data, size_t type_size, const void* s
  * \param data The pointer where the data is returned
  * \param data_size The size of the data
  **/
+static
 void
-j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
+j_hdf5_deserialize_attribute_data (const bson_t* b, void* data, size_t data_size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -305,6 +302,7 @@ j_hdf5_deserialize (const bson_t* b, void* data, size_t data_size)
  *
  * \return type_data the encoded type data
  **/
+static
 void*
 j_hdf5_deserialize_type (const bson_t* b)
 {
@@ -354,6 +352,7 @@ j_hdf5_deserialize_type (const bson_t* b)
  *
  * \return space_data the encoded space data
  **/
+static
 void*
 j_hdf5_deserialize_space (const bson_t* b)
 {
@@ -402,6 +401,7 @@ j_hdf5_deserialize_space (const bson_t* b)
  * \param b The bson containing the data
  * \param data_size Pointer to the data size to return
  **/
+static
 void
 j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
 {
@@ -434,6 +434,7 @@ j_hdf5_deserialize_size (const bson_t* b, size_t* data_size)
  * \param d The dataset whoch should contain the distribution
  * \param data_size Pointer to the data size to return
  **/
+static
 void
 j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
 {
@@ -466,27 +467,6 @@ j_hdf5_deserialize_dataset (const bson_t* b, JHD_t* d, size_t* data_size)
 			*data_size = bson_iter_int32(&iterator);
 		}
 	}
-}
-
-/**
- * Generates the path of the current element
- *
- * \param name The name of the current element
- * \param prev_path The previous path
- *
- * \return path
- **/
-char*
-create_path (const char* name, char* prev_path)
-{
-	static const char* seperator = "/";
-	char* path = NULL;
-
-	path = (char*) malloc(strlen(prev_path) + strlen(seperator) + strlen(name) + 1);
-	strcpy(path, prev_path);
-	strcat(path, seperator);
-	strcat(path, name);
-	return path;
 }
 
 /**
@@ -549,7 +529,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 			{
 				JHD_t* o = obj;
 
-				attribute->location = create_path(attr_name, o->location);
+				attribute->location = g_build_path("/", o->location, attr_name, NULL);
 				attribute->kv = j_kv_new("hdf5", attribute->location);
 			}
 			break;
@@ -557,7 +537,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 			{
 				JHG_t* o = obj;
 
-				attribute->location = create_path(attr_name, o->location);
+				attribute->location = g_build_path("/", o->location, attr_name, NULL);
 				attribute->kv = j_kv_new("hdf5", attribute->location);
 			}
 			break;
@@ -587,7 +567,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	g_free(tsloc);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	tmp = j_hdf5_serialize_ts(type_buf, type_size, space_buf, space_size);
+	tmp = j_hdf5_serialize_attribute(type_buf, type_size, space_buf, space_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->ts, value, len, bson_free, batch);
 
@@ -633,13 +613,13 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		case H5I_DATASET:
 			{
 				JHD_t* o = obj;
-				attribute->location = create_path(attr_name, o->location);
+				attribute->location = g_build_path("/", o->location, attr_name, NULL);
 			}
 			break;
 		case H5I_GROUP:
 			{
 				JHG_t* o = obj;
-				attribute->location = create_path(attr_name, o->location);
+				attribute->location = g_build_path("/", o->location, attr_name, NULL);
 			}
 			break;
 		case H5I_ATTR:
@@ -711,7 +691,7 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void*
 		bson_t b[1];
 
 		bson_init_static(b, value, len);
-		j_hdf5_deserialize(b, buf, attribute->data_size);
+		j_hdf5_deserialize_attribute_data(b, buf, attribute->data_size);
 		g_free(value);
 	}
 
@@ -741,7 +721,7 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_i
 	(void)req;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	tmp = j_hdf5_serialize(buf, attribute->data_size);
+	tmp = j_hdf5_serialize_attribute_data(buf, attribute->data_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->kv, value, len, bson_free, batch);
 
@@ -890,6 +870,7 @@ H5VL_julea_file_create (const char* fname, unsigned flags, hid_t fcpl_id, hid_t 
 	file->kv = j_kv_new("hdf5", fname);
 
 	bson_init(tmp);
+	bson_append_int32(tmp, "type", -1, J_HDF5_TYPE_FILE);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	bson_destroy(tmp);
 
@@ -993,14 +974,14 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 		case H5I_FILE:
 			{
 				JHF_t* o = obj;
-				group->location = create_path(name, o->name);
+				group->location = g_build_path("/", o->name, name, NULL);
 				group->name = g_strdup(name);
 			}
 			break;
 		case H5I_GROUP:
 			{
 				JHG_t* o = obj;
-				group->location = create_path(name, o->location);
+				group->location = g_build_path("/", o->location, name, NULL);
 				group->name = g_strdup(name);
 			}
 			break;
@@ -1028,6 +1009,7 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 	group->kv = j_kv_new("hdf5", group->name);
 
 	bson_init(tmp);
+	bson_append_int32(tmp, "type", -1, J_HDF5_TYPE_GROUP);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	bson_destroy(tmp);
 
@@ -1071,13 +1053,13 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 		case H5I_FILE:
 			{
 				JHF_t* o = obj;
-				group->location = create_path(name, o->name);
+				group->location = g_build_path("/", o->name, name, NULL);
 			}
 			break;
 		case H5I_GROUP:
 			{
 				JHG_t* o = obj;
-				group->location = create_path(name, o->location);
+				group->location = g_build_path("/", o->location, name, NULL);
 			}
 			break;
 		case H5I_ATTR:
@@ -1198,7 +1180,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 			{
 				JHF_t* o = obj;
 
-				dset->location = create_path(name, o->name);
+				dset->location = g_build_path("/", o->name, name, NULL);
 				dset->object = j_distributed_object_new("hdf5", dset->location, dset->distribution);
 				j_distributed_object_create(dset->object, batch);
 			}
@@ -1208,7 +1190,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 			{
 				JHG_t* o = obj;
 
-				dset->location = create_path(name, o->location);
+				dset->location = g_build_path("/", o->location, name, NULL);
 				dset->object = j_distributed_object_new("hdf5", dset->location, dset->distribution);
 				j_distributed_object_create(dset->object, batch);
 			}
@@ -1281,14 +1263,14 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 		case H5I_FILE:
 			{
 				JHF_t *o = obj;
-				dset->location = create_path(name, o->name);
+				dset->location = g_build_path("/", o->name, name, NULL);
 			}
 
 			break;
 		case H5I_GROUP:
 			{
 				JHG_t *o = obj;
-				dset->location = create_path(name, o->location);
+				dset->location = g_build_path("/", o->location, name, NULL);
 			}
 			break;
 		case H5I_ATTR:
