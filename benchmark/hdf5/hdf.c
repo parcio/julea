@@ -34,7 +34,8 @@
 #include <hdf5.h>
 #include <H5PLextern.h>
 
-static void
+static
+void
 write_attribute (hid_t file)
 {
 	hid_t attribute;
@@ -63,7 +64,8 @@ write_attribute (hid_t file)
 	H5Gclose(group);
 }
 
-static void
+static
+void
 read_attribute (hid_t file)
 {
 	hid_t attribute;
@@ -92,20 +94,30 @@ read_attribute (hid_t file)
 	H5Gclose(group);
 }
 
-static void
-write_dataset (hid_t file, gchar const* name)
+static
+hid_t
+create_dataset (hid_t file, gchar const* name)
 {
 	hid_t dataset;
 	hid_t dataspace;
 
 	hsize_t dims[2];
 
-	int data[1024][1024];
-
 	dims[0] = 1024;
 	dims[1] = 1024;
 	dataspace = H5Screate_simple(2, dims, NULL);
 	dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	H5Sclose(dataspace);
+
+	return dataset;
+}
+
+static
+void
+write_dataset (hid_t dataset)
+{
+	int data[1024][1024];
 
 	for (guint i = 0; i < 1024; i++)
 	{
@@ -116,12 +128,10 @@ write_dataset (hid_t file, gchar const* name)
 	}
 
 	H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-
-	H5Sclose(dataspace);
-	H5Dclose(dataset);
 }
 
-static void
+static
+void
 read_dataset (hid_t file, gchar const* name)
 {
 	hid_t dataset;
@@ -150,9 +160,12 @@ read_dataset (hid_t file, gchar const* name)
 	H5Dclose(dataset);
 }
 
-static void
+static
+void
 benchmark_hdf_attribute_write (BenchmarkResult *result)
 {
+	guint const n = 25000;
+
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
 
@@ -173,9 +186,9 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 
 	j_benchmark_timer_start();
 
-	file = H5Fcreate("JULEA.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
 
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
 		write_attribute(file);
 	}
@@ -190,13 +203,16 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 	g_assert(H5VLis_connector_registered("julea") == 0);
 
 	result->elapsed_time = elapsed;
-	result->operations = 1024;
-	result->bytes = 1024 * 1024 * sizeof(int);
+	result->operations = n;
+	result->bytes = n * 1024 * sizeof(int);
 }
 
-static void
+static
+void
 benchmark_hdf_attribute_read (BenchmarkResult *result)
 {
+	guint const n = 25000;
+
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
 
@@ -215,20 +231,16 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
-	file = H5Fcreate("JULEA.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
 
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
 		write_attribute(file);
 	}
 
-	H5Fclose(file);
-
 	j_benchmark_timer_start();
 
-	file = H5Fopen("JULEA.h5", H5F_ACC_RDWR, acc_tpl);
-
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
 		read_attribute(file);
 	}
@@ -243,14 +255,15 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	g_assert(H5VLis_connector_registered("julea") == 0);
 
 	result->elapsed_time = elapsed;
-	result->operations = 1024;
-	result->bytes = 1024 * 1024 * sizeof(int);
+	result->operations = n;
+	result->bytes = n * 1024 * sizeof(int);
 }
 
-static void
+static
+void
 benchmark_hdf_dataset_create (BenchmarkResult *result)
 {
-	guint const n = 100000;
+	guint const n = 25000;
 
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
@@ -277,20 +290,11 @@ benchmark_hdf_dataset_create (BenchmarkResult *result)
 	for (guint i = 0; i < n; i++)
 	{
 		hid_t dataset;
-		hid_t dataspace;
-
-		hsize_t dims[2];
 
 		g_autofree gchar* name = NULL;
 
 		name = g_strdup_printf("benchmark-dataset-create-%u", i);
-
-		dims[0] = 1024;
-		dims[1] = 1024;
-		dataspace = H5Screate_simple(2, dims, NULL);
-		dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-		H5Sclose(dataspace);
+		dataset = create_dataset(file, name);
 		H5Dclose(dataset);
 	}
 
@@ -307,10 +311,11 @@ benchmark_hdf_dataset_create (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static void
+static
+void
 benchmark_hdf_dataset_open (BenchmarkResult *result)
 {
-	guint const n = 100000;
+	guint const n = 25000;
 
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
@@ -330,7 +335,18 @@ benchmark_hdf_dataset_open (BenchmarkResult *result)
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
-	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("benchmark-dataset-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+
+	for (guint i = 0; i < n; i++)
+	{
+		hid_t dataset;
+
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("benchmark-dataset-open-%u", i);
+		dataset = create_dataset(file, name);
+		H5Dclose(dataset);
+	}
 
 	j_benchmark_timer_start();
 
@@ -340,7 +356,7 @@ benchmark_hdf_dataset_open (BenchmarkResult *result)
 
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("benchmark-dataset-create-%u", i);
+		name = g_strdup_printf("benchmark-dataset-open-%u", i);
 		dataset = H5Dopen2(file, name, H5P_DEFAULT);
 
 		H5Dclose(dataset);
@@ -359,9 +375,12 @@ benchmark_hdf_dataset_open (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static void
+static
+void
 benchmark_hdf_dataset_write (BenchmarkResult *result)
 {
+	guint const n = 512;
+
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
 
@@ -382,14 +401,18 @@ benchmark_hdf_dataset_write (BenchmarkResult *result)
 
 	j_benchmark_timer_start();
 
-	file = H5Fcreate("JULEA.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("benchmark-dataset-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
 
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
+		hid_t dataset;
+
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("BenchmarkDataset%u", i);
-		write_dataset(file, name);
+		name = g_strdup_printf("benchmark-dataset-write-%u", i);
+		dataset = create_dataset(file, name);
+		write_dataset(dataset);
+		H5Dclose(dataset);
 	}
 
 	H5Fclose(file);
@@ -402,13 +425,16 @@ benchmark_hdf_dataset_write (BenchmarkResult *result)
 	g_assert(H5VLis_connector_registered("julea") == 0);
 
 	result->elapsed_time = elapsed;
-	result->operations = 1024;
-	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+	result->operations = n;
+	result->bytes = n * 1024 * 1024 * sizeof(int);
 }
 
-static void
+static
+void
 benchmark_hdf_dataset_read (BenchmarkResult *result)
 {
+	guint const n = 512;
+
 	hid_t acc_tpl;
 	hid_t julea_vol_id;
 
@@ -427,27 +453,27 @@ benchmark_hdf_dataset_read (BenchmarkResult *result)
 	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
 
-	file = H5Fcreate("JULEA.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("benchmark-dataset-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, acc_tpl);
 
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
+		hid_t dataset;
+
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("BenchmarkDataset%u", i);
-		write_dataset(file, name);
+		name = g_strdup_printf("benchmark-dataset-read-%u", i);
+		dataset = create_dataset(file, name);
+		write_dataset(dataset);
+		H5Dclose(dataset);
 	}
-
-	H5Fclose(file);
 
 	j_benchmark_timer_start();
 
-	file = H5Fopen("JULEA.h5", H5F_ACC_RDWR, acc_tpl);
-
-	for (guint i = 0; i < 1024; i++)
+	for (guint i = 0; i < n; i++)
 	{
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("BenchmarkDataset%u", i);
+		name = g_strdup_printf("benchmark-dataset-read-%u", i);
 		read_dataset(file, name);
 	}
 
@@ -461,11 +487,12 @@ benchmark_hdf_dataset_read (BenchmarkResult *result)
 	g_assert(H5VLis_connector_registered("julea") == 0);
 
 	result->elapsed_time = elapsed;
-	result->operations = 1024;
-	result->bytes = 1024 * 1024 * 1024 * sizeof(int);
+	result->operations = n;
+	result->bytes = n * 1024 * 1024 * sizeof(int);
 }
 
-static void
+static
+void
 benchmark_hdf_file_create (BenchmarkResult *result)
 {
 	guint const n = 100000;
@@ -510,7 +537,8 @@ benchmark_hdf_file_create (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static void
+static
+void
 benchmark_hdf_file_open (BenchmarkResult *result)
 {
 	guint const n = 100000;
