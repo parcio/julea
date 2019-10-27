@@ -423,10 +423,16 @@ def configure(ctx):
 
 
 def build(ctx):
-	# FIXME do not install JHDF5 headers if HDF5 is not available
 	# Headers
 	include_dir = ctx.path.find_dir('include')
-	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl='**/*-internal.h'), cwd=include_dir, relative_trick=True)
+	include_excl = ['**/*-internal.h']
+
+	if not ctx.env.JULEA_HDF:
+		include_excl.append('**/julea-hdf5.h')
+		include_excl.append('**/jhdf5.h')
+		include_excl.append('**/jhdf5-*.h')
+
+	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl=include_excl), cwd=include_dir, relative_trick=True)
 
 	use_julea_core = ['M', 'GLIB']
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
