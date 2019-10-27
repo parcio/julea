@@ -31,8 +31,9 @@
 
 #ifdef HAVE_HDF5
 
+#include <julea-hdf5.h>
+
 #include <hdf5.h>
-#include <H5PLextern.h>
 
 static void
 write_dataset (hid_t file)
@@ -134,40 +135,14 @@ read_dataset (hid_t file)
 static void
 test_hdf_read_write (void)
 {
-	hid_t acc_tpl;
-	hid_t julea_vol_id;
-
 	hid_t file;
 
-	const H5VL_class_t *h5vl_julea;
-	hid_t native_vol_id;
-
-	native_vol_id = H5VLget_connector_id("native");
-	g_assert(native_vol_id > 0);
-	g_assert(H5VLis_connector_registered("native") == 1);
-	g_assert(H5VLis_connector_registered("julea") == 0);
-
-	h5vl_julea = H5PLget_plugin_info();
-	julea_vol_id = H5VLregister_connector(h5vl_julea, H5P_DEFAULT);
-	g_assert(julea_vol_id > 0);
-	g_assert(H5VLis_connector_registered("native") == 1);
-	g_assert(H5VLis_connector_registered("julea") == 1);
-
-	H5VLinitialize(julea_vol_id, H5P_DEFAULT);
-	acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(acc_tpl, julea_vol_id, NULL);
-
-	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
+	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, j_hdf5_get_fapl());
 
 	write_dataset(file);
 	read_dataset(file);
 
 	H5Fclose(file);
-
-	H5Pclose(acc_tpl);
-	H5VLterminate(julea_vol_id);
-	H5VLunregister_connector(julea_vol_id);
-	g_assert(H5VLis_connector_registered("julea") == 0);
 }
 
 #endif
