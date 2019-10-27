@@ -196,7 +196,7 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 	j_benchmark_timer_start();
 
 	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
-	group = open_group(file, "/");
+	group = create_group(file, "benchmark-attribute-write");
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -228,7 +228,7 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	gdouble elapsed;
 
 	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
-	group = open_group(file, "/");
+	group = create_group(file, "benchmark-attribute-read");
 
 	for (guint i = 0; i < n; i++)
 	{
