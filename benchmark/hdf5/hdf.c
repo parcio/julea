@@ -36,6 +36,16 @@
 #include <hdf5.h>
 
 static
+void
+set_semantics (void)
+{
+	g_autoptr(JSemantics) semantics = NULL;
+
+	semantics = j_benchmark_get_semantics();
+	j_hdf5_set_semantics(semantics);
+}
+
+static
 hid_t
 create_group (hid_t file, gchar const* name)
 {
@@ -193,6 +203,8 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 
 	gdouble elapsed;
 
+	set_semantics();
+
 	j_benchmark_timer_start();
 
 	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
@@ -226,6 +238,8 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	hid_t group;
 
 	gdouble elapsed;
+
+	set_semantics();
 
 	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 	group = create_group(file, "benchmark-attribute-read");
@@ -268,6 +282,8 @@ benchmark_hdf_dataset_create (BenchmarkResult *result)
 
 	gdouble elapsed;
 
+	set_semantics();
+
 	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
 	j_benchmark_timer_start();
@@ -300,6 +316,8 @@ benchmark_hdf_dataset_open (BenchmarkResult *result)
 	hid_t file;
 
 	gdouble elapsed;
+
+	set_semantics();
 
 	file = H5Fcreate("benchmark-dataset-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
@@ -346,6 +364,8 @@ benchmark_hdf_dataset_write (BenchmarkResult *result)
 
 	gdouble elapsed;
 
+	set_semantics();
+
 	j_benchmark_timer_start();
 
 	file = H5Fcreate("benchmark-dataset-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
@@ -380,6 +400,8 @@ benchmark_hdf_dataset_read (BenchmarkResult *result)
 	hid_t file;
 
 	gdouble elapsed;
+
+	set_semantics();
 
 	file = H5Fcreate("benchmark-dataset-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
@@ -426,6 +448,8 @@ benchmark_hdf_file_create (BenchmarkResult *result)
 
 	gdouble elapsed;
 
+	set_semantics();
+
 	j_benchmark_timer_start();
 
 	for (guint i = 0; i < n; i++)
@@ -452,6 +476,8 @@ benchmark_hdf_file_open (BenchmarkResult *result)
 	guint const n = 100000;
 
 	gdouble elapsed;
+
+	set_semantics();
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -493,6 +519,8 @@ benchmark_hdf_group_create (BenchmarkResult *result)
 
 	gdouble elapsed;
 
+	set_semantics();
+
 	file = H5Fcreate("benchmark-group-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
 	j_benchmark_timer_start();
@@ -525,6 +553,8 @@ benchmark_hdf_group_open (BenchmarkResult *result)
 	hid_t file;
 
 	gdouble elapsed;
+
+	set_semantics();
 
 	file = H5Fcreate("benchmark-group-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 

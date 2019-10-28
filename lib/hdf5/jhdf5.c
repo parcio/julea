@@ -103,6 +103,8 @@ struct JHA_t
 
 typedef struct JHA_t JHA_t;
 
+static JSemantics* j_hdf5_semantics;
+
 /**
  * Initializes the plugin
  *
@@ -568,7 +570,7 @@ H5VL_julea_attr_create (void* obj, const H5VL_loc_params_t* loc_params, const ch
 	attribute->ts = j_kv_new("hdf5", tsloc);
 	g_free(tsloc);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 	tmp = j_hdf5_serialize_attribute(type_buf, type_size, space_buf, space_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->ts, value, len, bson_free, batch);
@@ -649,7 +651,7 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 	attribute->ts = j_kv_new("hdf5", tsloc);
 	g_free(tsloc);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 	attribute->kv = j_kv_new("hdf5", attribute->location);
 	j_kv_get(attribute->kv, &value, &len, batch);
 
@@ -685,7 +687,7 @@ H5VL_julea_attr_read(void* attr, hid_t dtype_id, void* buf, hid_t dxpl_id, void*
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 	j_kv_get(attribute->kv, &value, &len, batch);
 
 	if (j_batch_execute(batch))
@@ -722,7 +724,7 @@ H5VL_julea_attr_write (void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_i
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 	tmp = j_hdf5_serialize_attribute_data(buf, attribute->data_size);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 	j_kv_put(attribute->kv, value, len, bson_free, batch);
@@ -765,7 +767,7 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void**
 				hid_t* ret_id = va_arg(arguments, hid_t*);
 				void* space;
 
-				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+				batch = j_batch_new(j_hdf5_semantics);
 				j_kv_get(attribute->ts, &value, &len, batch);
 
 				if (j_batch_execute(batch))
@@ -785,7 +787,7 @@ H5VL_julea_attr_get (void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void**
 				hid_t* ret_id = va_arg(arguments, hid_t*);
 				void* type;
 
-				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+				batch = j_batch_new(j_hdf5_semantics);
 				j_kv_get(attribute->ts, &value, &len, batch);
 
 				if (j_batch_execute(batch))
@@ -865,7 +867,7 @@ H5VL_julea_file_create (const char* fname, unsigned flags, hid_t fcpl_id, hid_t 
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
@@ -907,7 +909,7 @@ H5VL_julea_file_open (const char* fname, unsigned flags, hid_t fapl_id, hid_t dx
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	file = g_new(JHF_t, 1);
 	file->name = g_strdup(fname);
@@ -967,7 +969,7 @@ H5VL_julea_group_create (void* obj, const H5VL_loc_params_t* loc_params, const c
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	group = g_new(JHG_t, 1);
 
@@ -1045,7 +1047,7 @@ H5VL_julea_group_open (void* obj, const H5VL_loc_params_t* loc_params, const cha
 	(void)dxpl_id;
 	(void)req;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	group = g_new(JHG_t, 1);
 	group->name = g_strdup(name);
@@ -1174,7 +1176,7 @@ H5VL_julea_dataset_create (void* obj, const H5VL_loc_params_t* loc_params, const
 
 	dset->data_size = data_size;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	switch (loc_params->obj_type)
 	{
@@ -1300,7 +1302,7 @@ H5VL_julea_dataset_open (void* obj, const H5VL_loc_params_t* loc_params, const c
 	dset->kv = j_kv_new("hdf5", tsloc);
 	g_free(tsloc);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 	j_kv_get(dset->kv, &value, &len, batch);
 
 	if (j_batch_execute(batch))
@@ -1332,7 +1334,7 @@ H5VL_julea_dataset_read (void* dset, hid_t mem_type_id  __attribute__((unused)),
 
 	d = (JHD_t *)dset;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	bytes_read = 0;
 
@@ -1383,7 +1385,7 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 		hid_t* ret_id = va_arg (arguments, hid_t *);
 		void* space;
 
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		batch = j_batch_new(j_hdf5_semantics);
 		j_kv_get(d->kv, &value, &len, batch);
 		if (j_batch_execute(batch))
 		{
@@ -1406,7 +1408,7 @@ H5VL_julea_dataset_get (void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id  
 		hid_t* ret_id = va_arg (arguments, hid_t *);
 		void* type;
 
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		batch = j_batch_new(j_hdf5_semantics);
 		j_kv_get(d->kv, &value, &len, batch);
 		if (j_batch_execute(batch))
 		{
@@ -1443,7 +1445,7 @@ H5VL_julea_dataset_write (void* dset, hid_t mem_type_id  __attribute__((unused))
 
 	d = (JHD_t *)dset;
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	batch = j_batch_new(j_hdf5_semantics);
 
 	bytes_written = 0;
 
@@ -1622,6 +1624,8 @@ H5PLget_plugin_info (void)
 static hid_t j_hdf5_fapl = -1;
 static hid_t j_hdf5_vol = -1;
 
+static JSemantics* j_hdf5_semantics = NULL;
+
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_hdf5_init (void);
 static void __attribute__((destructor)) j_hdf5_fini (void);
@@ -1635,7 +1639,7 @@ j_hdf5_init (void)
 {
 	H5VL_class_t const* julea_h5vl;
 
-	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1)
+	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1 && j_hdf5_semantics != NULL)
 	{
 		return;
 	}
@@ -1649,6 +1653,8 @@ j_hdf5_init (void)
 
 	j_hdf5_fapl = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_vol(j_hdf5_fapl, j_hdf5_vol, NULL);
+
+	j_hdf5_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 }
 
 /**
@@ -1658,10 +1664,12 @@ static
 void
 j_hdf5_fini (void)
 {
-	if (j_hdf5_fapl == -1 && j_hdf5_vol == -1)
+	if (j_hdf5_fapl == -1 && j_hdf5_vol == -1 && j_hdf5_semantics == NULL)
 	{
 		return;
 	}
+
+	j_semantics_unref(j_hdf5_semantics);
 
 	H5Pclose(j_hdf5_fapl);
 
@@ -1675,4 +1683,17 @@ hid_t
 j_hdf5_get_fapl (void)
 {
 	return j_hdf5_fapl;
+}
+
+void
+j_hdf5_set_semantics (JSemantics* semantics)
+{
+	j_semantics_unref(j_hdf5_semantics);
+
+	if (semantics == NULL)
+	{
+		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
+
+	j_hdf5_semantics = j_semantics_ref(semantics);
 }
