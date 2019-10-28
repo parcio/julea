@@ -283,9 +283,9 @@ benchmark_hdf_dataset_create (BenchmarkResult *result)
 		H5Dclose(dataset);
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
 	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -328,9 +328,9 @@ benchmark_hdf_dataset_open (BenchmarkResult *result)
 		H5Dclose(dataset);
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
 	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -508,9 +508,9 @@ benchmark_hdf_group_create (BenchmarkResult *result)
 		H5Gclose(group);
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
 	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
@@ -552,9 +552,9 @@ benchmark_hdf_group_open (BenchmarkResult *result)
 		H5Gclose(group);
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
 	H5Fclose(file);
+
+	elapsed = j_benchmark_timer_elapsed();
 
 	result->elapsed_time = elapsed;
 	result->operations = n;
