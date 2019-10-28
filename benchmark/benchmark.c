@@ -152,7 +152,7 @@ main (int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
-		{ "machine-readable", 0, 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
+		{ "machine-readable", 'm', 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
 		{ "machine-separator", 0, 0, G_OPTION_ARG_STRING, &opt_machine_separator, "Separator for machine-readable output", "\\t" },
 		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", NULL },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
