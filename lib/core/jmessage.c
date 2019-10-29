@@ -36,6 +36,9 @@
 #include <jsemantics.h>
 #include <jtrace.h>
 
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_errno.h>
+
 /**
  * \defgroup JMessage Message
  *
@@ -159,6 +162,13 @@ struct JMessage
 	 **/
 	gint ref_count;
 };
+
+struct JEndpoint
+{
+	fid_ep* endpoint;
+	ssize_t max_msg_size;
+};
+typedef struct JEndpoint JEndpoint;
 
 /**
  * Returns a message's header.
@@ -794,60 +804,20 @@ j_message_get_string (JMessage* message)
 }
 
 /**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
+*
+*checks whether size of the whole j_message is in the boundaries set by the maximal Message size of the used libfabric provider
+*
+*
+*\return TRUE if Message size is in boundaries, FALSE if not
+*/
+static
 gboolean
-j_message_receive (JMessage* message, gpointer connection)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	GInputStream* stream;
-
-	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(connection != NULL, FALSE);
-
-	stream = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-	return j_message_read(message, stream);
-}
-
-/**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean
-j_message_send (JMessage* message, gpointer connection)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	gboolean ret;
-
-	GOutputStream* stream;
-
-	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(connection != NULL, FALSE);
-
-	j_helper_set_cork(connection, TRUE);
-
-	stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
-	ret = j_message_write(message, stream);
-
-	j_helper_set_cork(connection, FALSE);
-
+j_message_fi_val_message_size(ssize_t max_msg_size, JMessage* message){
+	gboolean ret = FALSE;
+	if((sizeof(JMessageHeader) + j_message_length(message)) <= max_msg_size)
+	{
+		ret = TRUE;
+	}
 	return ret;
 }
 
@@ -863,34 +833,101 @@ j_message_send (JMessage* message, gpointer connection)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_read (JMessage* message, GInputStream* stream)
+j_message_receive (JMessage* message, gpointer endpoint)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JEndpoint* local_ep;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(endpoint != NULL, FALSE);
+
+	local_ep = (JEndpoint*) endpoint;
+	return j_message_read(message, local_ep);
+}
+
+/**
+ * Writes a message to the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \parem stream  A libfabric endpoint
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_message_send (JMessage* message, gpointer endpoint)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	JEndpoint* local_ep;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(endpoint != NULL, FALSE);
+
+	//j_helper_set_cork(connection, TRUE);
+
+	local_ep = (JEndpoint*) endpoint;
+	ret = j_message_write(message, local_ep);
+
+	//j_helper_set_cork(connection, FALSE);
+
+	return ret;
+}
+
+/**
+ * Reads a message from the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \parem stream  An libfabric endpoint.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_message_read (JMessage* message, JEndpoint* j_endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret = FALSE;
 
-	GError* error = NULL;
-	gsize bytes_read;
+	fid_ep* endpoint = j_endpoint->endpoint;
+
+	ssize_t error;
+	gchar max_msg_size_error[42];
 
 	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(stream != NULL, FALSE);
+	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, &error))
+
+	//TODO descriptor (4. Feld) muss gesetzt werden, wenn lokale Kommunikation (1 Gerät) gewollt
+	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
+	if ((int) error != 0)
 	{
 		goto end;
 	}
 
-	if (bytes_read == 0)
+	//TODO Nicht Error reporten, sondern aufspalten
+	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
+		max_msg_size_error = "Message bigger than provider max_msg_size";
 		goto end;
 	}
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
-	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, &error))
+	error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
+	if ((int) error != 0)
 	{
 		goto end;
 	}
+
 
 	message->current = message->data + sizeof(JMessageHeader);
 
@@ -901,11 +938,17 @@ j_message_read (JMessage* message, GInputStream* stream)
 
 	ret = TRUE;
 
-end:
-	if (error != NULL)
+	end:
+	if (error != 0 || max_msg_size_error[] != NULL)
 	{
-		g_critical("%s", error->message);
-		g_error_free(error);
+		if(error!= 0)
+			{
+				g_critical("%s", *fi_strerror((int)error));
+			}
+		else
+			{
+				g_critical("%s", max_msg_size_error[]);
+			}
 	}
 
 	return ret;
@@ -923,53 +966,62 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_write (JMessage* message, GOutputStream* stream)
+j_message_write (JMessage* message, JEndpoint* j_endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret = FALSE;
 
+	fid_ep* endpoint = j_endpoint->endpoint;
+
 	g_autoptr(JListIterator) iterator = NULL;
-	GError* error = NULL;
-	gsize bytes_written;
+	ssize_t error;
+	gchar max_msg_size_error[42];
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, &error))
+	//TODO descriptor (4. Feld) muss gesetzt werden, wenn lokale Kommunikation (1 Gerät) gewollt
+	error = fi_send(endpoint, message->data, sizeof(JMessageHeader) + j_message_length(message), NULL, 0, NULL);
+	if ((int) error != 0)
 	{
 		goto end;
 	}
 
-	if (bytes_written == 0)
+	//TODO Nicht Error reporten, sondern aufspalten
+	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
+		max_msg_size_error = "Message bigger than provider max_msg_size";
 		goto end;
 	}
 
 	if (message->send_list != NULL)
 	{
 		iterator = j_list_iterator_new(message->send_list);
-
 		while (j_list_iterator_next(iterator))
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
-
-			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, &error))
+			error = fi_send(endpoint, message->data, message_data->length, NULL, 0, NULL);
+			if ((int) error != 0)
 			{
 				goto end;
 			}
 		}
 	}
 
-	g_output_stream_flush(stream, NULL, NULL);
-
 	ret = TRUE;
 
-end:
-	if (error != NULL)
+	end:
+	if (error != 0 || max_msg_size_error[] != NULL)
 	{
-		g_critical("%s", error->message);
-		g_error_free(error);
+		if(error!= 0)
+		{
+			g_critical("%s", *fi_strerror((int)error));
+		}
+		else
+		{
+			g_critical("%s", max_msg_size_error[]);
+		}
 	}
 
 	return ret;

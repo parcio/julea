@@ -62,6 +62,10 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
+struct JEndpoint;
+
+typedef JEndpoint JEndpoint;
+
 G_END_DECLS
 
 #include <core/jsemantics.h>
@@ -90,11 +94,13 @@ gint64 j_message_get_8 (JMessage*);
 gpointer j_message_get_n (JMessage*, gsize);
 gchar const* j_message_get_string (JMessage*);
 
+gboolean j_message_fi_val_message_size(ssize_t, JMessage*);
+
 gboolean j_message_send (JMessage*, gpointer);
 gboolean j_message_receive (JMessage*, gpointer);
 
-gboolean j_message_read (JMessage*, GInputStream*);
-gboolean j_message_write (JMessage*, GOutputStream*);
+gboolean j_message_read (JMessage*, JEndpoint*);
+gboolean j_message_write (JMessage*, JEndpoint*);
 
 void j_message_add_send (JMessage*, gconstpointer, guint64);
 void j_message_add_operation (JMessage*, gsize);
