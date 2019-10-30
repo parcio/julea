@@ -133,24 +133,32 @@ spack_get_dependencies ()
 
 spack_load_dependencies ()
 {
-	local minimal_pkgs
-
-	minimal_pkgs="$(spack_get_dependencies install-minimal)"
-
-	if spack_init
+	if test -z "${JULEA_SPACK_DEPENDENCIES_LOADED}"
 	then
-		for dependency in $(spack_get_dependencies load)
-		do
-			if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
-			then
-				spack_load "${dependency}"
-			else
-				if ! spack_load "${dependency}"
+		local minimal_pkgs
+
+		minimal_pkgs="$(spack_get_dependencies install-minimal)"
+
+		if spack_init
+		then
+			for dependency in $(spack_get_dependencies load)
+			do
+				if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
 				then
-					echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
+					spack_load "${dependency}"
+				else
+					if ! spack_load "${dependency}"
+					then
+						echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
+					fi
 				fi
-			fi
-		done
+			done
+
+			# FIXME this could be more clever by storing the actual dependencies loaded
+			JULEA_SPACK_DEPENDENCIES_LOADED=1
+
+			export JULEA_SPACK_DEPENDENCIES_LOADED
+		fi
 	fi
 }
 
