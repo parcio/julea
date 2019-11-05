@@ -35,6 +35,13 @@
 #include <jmessage.h>
 #include <jtrace.h>
 
+//libfabric interfaces for used Objects
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h>
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
+
 /**
  * \defgroup JConnectionPool Connection Pool
  *
@@ -70,9 +77,19 @@ typedef struct JConnectionPool JConnectionPool;
 
 static JConnectionPool* j_connection_pool = NULL;
 
+//libfabric high level objects
+static fi_fabric* j_fi_fabric;
+static fi_domain* j_fi_domain;
+static fid_eq* j_fi_domain_eventqueue;
+//libfabric config structures
+static fi_info* j_fi_info;
+
+
 void
 j_connection_pool_init (JConfiguration* configuration)
 {
+
+	// Pool Init
 	J_TRACE_FUNCTION(NULL);
 
 	JConnectionPool* pool;
@@ -108,6 +125,104 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 	g_atomic_pointer_set(&j_connection_pool, pool);
+
+//Init Libfabric Objects
+	//Parameter for fabric init
+	int error = 0;
+	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	const char* node = NULL; //TODO read target Server from config and put into node
+	const char* service = "4711"; //target port (for future maybe not hardcoded)
+	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+
+	fi_info* fi_hints = NULL; //config object
+
+
+
+	fi_hints = fi_allocinfo(); //initiated object is zeroed
+
+	if(fi_hints == NULL)
+	{
+		g_critical("Allocating empty hints did not work");
+	}
+
+	//TODO read hints from config (and define corresponding fields there) + or all given caps
+	fi_hints.caps = FI_MSG | FI_SEND | FI_RECV;
+	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	//TODO future support to set modes
+	//fabri_hints.mode = 0;
+
+	//inits j_fi_info
+	//gives a linked list of available provider details into j_fi_info
+	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_fi_info)
+	fi_freeinfo(fi_hints); //hints only used for config
+	if(error != 0)
+	{
+		goto end;
+	}
+	if(j_fi_info == NULL)
+	{
+		g_critical("Allocating j_fi_info did not work");
+	}
+
+	//validating juleas needs here
+	//PERROR: through no casting (size_t and guint)
+	if(j_fi_info->domain_attr->ep_cnt < pool->object_len * 3)
+	{
+		g_critical("Demand for connections exceeds the max number of endpoints available through domain/provider");
+	}
+	if(j_fi_info->domain_attr->cq_cnt < pool->object_len * 3)
+	{
+		g_warning("Demand for connections exceeds the optimal number of completion queues available through domain/provider");
+	}
+
+
+	//inits fabric
+	error = fi_fabric(j_fi_info->fabric_attr, &j_fi_fabric, NULL);
+	if(error != FI_SUCCESS)
+	{
+		goto end;
+	}
+	if(j_fi_fabric == NULL)
+	{
+		g_critical("Allocating j_fi_fabric did not work");
+	}
+
+	//inits domain
+	error = fi_domain(j_fi_fabric, j_fi_info, &j_fi_domain, NULL);
+	if(error != 0) //WHO THE HELL DID DESIGN THOSE ERROR CODES?! SUCESS IS SOMETIMES 0, SOMETIMES A DEFINED BUT NOT DOCUMENTED VALUE, ARGH
+	{
+		goto end;
+	}
+	if(j_fi_fabric == NULL)
+	{
+		g_critical("Allocating j_fi_fabric did not work");
+	}
+
+	//build event queue for domain
+	//TODO read eventqueue attributes from julea config
+	//PERROR: Wrong formatting of event queue attributes
+	struct fi_eq_attr eventqueue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
+	error = fi_eq_open(j_fi_fabric, &eventqueue_attr, &j_fi_domain_eventqueue, NULL);
+	if(error != 0)
+	{
+		goto end;
+	}
+	//bind an event queue to domain
+	//PERROR: FI_WRITE is not a acceptable parameter for fi_domain_bind (what exactly is acceptable, is not mentioned in man)
+	error = fi_domain_bind(j_fi_domain, j_fi_domain_eventqueue, FI_WRITE);
+	if(error != 0)
+	{
+		goto end;
+	}
+
+
+	end:
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong during init.\n Details:\n %s", fi_strerror(error));
+	}
+
+
 }
 
 void
@@ -171,34 +286,37 @@ j_connection_pool_fini (void)
 }
 
 static
-GSocketConnection*
+gpointer
 j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* server)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	GSocketConnection* connection;
+	JEndpoint* endpoint;
 
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
-	connection = g_async_queue_try_pop(queue);
+	endpoint = g_async_queue_try_pop(queue);
 
-	if (connection != NULL)
+	if (endpoint != NULL)
 	{
-		return connection;
+		return endpoint;
 	}
 
 	if ((guint)g_atomic_int_get(count) < j_connection_pool->max_count)
 	{
 		if ((guint)g_atomic_int_add(count, 1) < j_connection_pool->max_count)
 		{
-			GError* error = NULL;
+			int error = 0;
 			g_autoptr(GSocketClient) client = NULL;
 
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
 			guint op_count;
+
+			//TODO hier weiter EPs anlegen
+
 
 			client = g_socket_client_new();
 			connection = g_socket_client_connect_to_host(client, server, 4711, NULL, &error);
@@ -209,7 +327,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				g_error_free(error);
 			}
 
-			if (connection == NULL)
+			if (endpoint == NULL)
 			{
 				g_critical("Can not connect to %s [%d].", server, g_atomic_int_get(count));
 			}
@@ -222,6 +340,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, connection);
 
+			/*
 			op_count = j_message_get_count(reply);
 
 			for (guint i = 0; i < op_count; i++)
@@ -243,6 +362,10 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 					//g_print("Server has db backend.\n");
 				}
 			}
+			*/
+			errorhandling:
+
+
 		}
 		else
 		{

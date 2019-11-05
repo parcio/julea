@@ -899,7 +899,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	fid_ep* endpoint = j_endpoint->endpoint;
 
-	ssize_t error;
+	ssize_t error = 0;
 	gchar max_msg_size_error[42];
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -975,7 +975,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	fid_ep* endpoint = j_endpoint->endpoint;
 
 	g_autoptr(JListIterator) iterator = NULL;
-	ssize_t error;
+	ssize_t error = 0;
 	gchar max_msg_size_error[42];
 
 	g_return_val_if_fail(message != NULL, FALSE);
