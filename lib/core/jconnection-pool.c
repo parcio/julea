@@ -37,10 +37,12 @@
 
 //libfabric interfaces for used Objects
 #include <rdma/fabric.h>
-#include <rdma/fi_domain.h>
+#include <rdma/fi_domain.h> //includes cqs and eqs
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
+
+#include <netinet/in.h> //for target address
 
 /**
  * \defgroup JConnectionPool Connection Pool
@@ -78,9 +80,9 @@ typedef struct JConnectionPool JConnectionPool;
 static JConnectionPool* j_connection_pool = NULL;
 
 //libfabric high level objects
-static fi_fabric* j_fi_fabric;
-static fi_domain* j_fi_domain;
-static fid_eq* j_fi_domain_eventqueue;
+static fid_fabric* j_fid_fabric;
+static fid_domain* j_fid_domain;
+static fid_eq* j_fid_domain_eventqueue;
 //libfabric config structures
 static fi_info* j_fi_info;
 
@@ -131,7 +133,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	int error = 0;
 	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
 	const char* node = NULL; //TODO read target Server from config and put into node
-	const char* service = "4711"; //target port (for future maybe not hardcoded)
+	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	fi_info* fi_hints = NULL; //config object
@@ -148,6 +150,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	fi_hints.caps = FI_MSG | FI_SEND | FI_RECV;
 	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	fi_hints->adr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
 
@@ -166,50 +169,50 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
-	if(j_fi_info->domain_attr->ep_cnt < pool->object_len * 3)
+	if(j_fi_info->domain_attr->ep_cnt < pool->object_len * 3 + 1)
 	{
 		g_critical("Demand for connections exceeds the max number of endpoints available through domain/provider");
 	}
-	if(j_fi_info->domain_attr->cq_cnt < pool->object_len * 3)
+	if(j_fi_info->domain_attr->cq_cnt < (pool->object_len * 3) * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
 	{
 		g_warning("Demand for connections exceeds the optimal number of completion queues available through domain/provider");
 	}
 
 
 	//inits fabric
-	error = fi_fabric(j_fi_info->fabric_attr, &j_fi_fabric, NULL);
+	error = fi_fabric(j_fi_info->fabric_attr, &j_fid_fabric, NULL);
 	if(error != FI_SUCCESS)
 	{
 		goto end;
 	}
-	if(j_fi_fabric == NULL)
+	if(j_fid_fabric == NULL)
 	{
-		g_critical("Allocating j_fi_fabric did not work");
+		g_critical("Allocating j_fid_fabric did not work");
 	}
 
 	//inits domain
-	error = fi_domain(j_fi_fabric, j_fi_info, &j_fi_domain, NULL);
+	error = fi_domain(j_fid_fabric, j_fi_info, &j_fid_domain, NULL);
 	if(error != 0) //WHO THE HELL DID DESIGN THOSE ERROR CODES?! SUCESS IS SOMETIMES 0, SOMETIMES A DEFINED BUT NOT DOCUMENTED VALUE, ARGH
 	{
 		goto end;
 	}
-	if(j_fi_fabric == NULL)
+	if(j_fid_fabric == NULL)
 	{
-		g_critical("Allocating j_fi_fabric did not work");
+		g_critical("Allocating j_fid_fabric did not work");
 	}
 
 	//build event queue for domain
 	//TODO read eventqueue attributes from julea config
 	//PERROR: Wrong formatting of event queue attributes
 	struct fi_eq_attr eventqueue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
-	error = fi_eq_open(j_fi_fabric, &eventqueue_attr, &j_fi_domain_eventqueue, NULL);
+	error = fi_eq_open(j_fid_fabric, &eventqueue_attr, &j_fid_domain_eventqueue, NULL);
 	if(error != 0)
 	{
 		goto end;
 	}
 	//bind an event queue to domain
 	//PERROR: FI_WRITE is not a acceptable parameter for fi_domain_bind (what exactly is acceptable, is not mentioned in man)
-	error = fi_domain_bind(j_fi_domain, j_fi_domain_eventqueue, FI_WRITE);
+	error = fi_domain_bind(j_fid_domain, j_fid_domain_eventqueue, FI_WRITE);
 	if(error != 0)
 	{
 		goto end;
@@ -221,7 +224,6 @@ j_connection_pool_init (JConfiguration* configuration)
 	{
 		g_critical("Something went horribly wrong during init.\n Details:\n %s", fi_strerror(error));
 	}
-
 
 }
 
@@ -285,6 +287,11 @@ j_connection_pool_fini (void)
 	g_slice_free(JConnectionPool, pool);
 }
 
+/*
+/
+/ Returns first Element from respective queue or  if none found
+/
+*/
 static
 gpointer
 j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* server)
@@ -307,38 +314,131 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	{
 		if ((guint)g_atomic_int_add(count, 1) < j_connection_pool->max_count)
 		{
-			int error = 0;
-			g_autoptr(GSocketClient) client = NULL;
+			endpoint = NULL;
 
+			int error = 0;
+
+			//Endpoint related definitions
+			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
+			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+
+			fid_ep* tmp_endpoint = NULL;
+			fid_eq* tmp_event_queue = NULL;
+			fid_cq* tmp_receive_queue = NULL;
+			fid_cq* tmp_transmit_queue = NULL;
+
+			//connection related definitions
+			struct sockaddr_in address;
+			uint32_t* eq_event;
+
+			//Test Message related definitions
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
-			guint op_count;
+			// guint op_count;
 
-			//TODO hier weiter EPs anlegen
-
-
-			client = g_socket_client_new();
-			connection = g_socket_client_connect_to_host(client, server, 4711, NULL, &error);
-
-			if (error != NULL)
+			//Allocate Endpoint and related ressources
+			//PERROR: last param of fi_endpoint maybe mandatory. If so, build context struct with every info in it
+			error = fi_endpoint(j_fid_domain, j_fi_info, &tmp_endpoint, NULL);
+			if(error != 0)
 			{
-				g_critical("%s", error->message);
-				g_error_free(error);
+				goto ConnectionTest;
 			}
 
-			if (endpoint == NULL)
+			error = fi_eq_open(j_fid_fabric, &event_queue_attr, &tmp_event_queue, NULL);
+			if(error != 0)
 			{
-				g_critical("Can not connect to %s [%d].", server, g_atomic_int_get(count));
+				goto ConnectionTest;
 			}
 
-			j_helper_set_nodelay(connection, TRUE);
+			error = fi_cq_open(j_fid_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			error = fi_cq_open(j_fid_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			//Bind resources to Endpoint
+			error = fi_ep_bind(tmp_endpoint, tmp_event_queue, 0);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			error = fi_ep_bind(tmp_endpoint, tmp_receive_queue, FI_RECV);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			error = fi_ep_bind(tmp_endpoint, tmp_receive_queue, FI_TRANSMIT);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			//enable Endpoint
+			error = fi_enable(tmp_endpoint);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+
+			//Connect Endpoint to server via port 4711
+			address.sin_family = AF_INET;
+			address.sin_port = htons(4711);
+			address.sin_addr = htonl(server); //TODO server ist atm not an IPV4 address
+
+			//PERROR: User specified data maybe required to be set
+			error = fi_connect(tmp_endpoint, &address, NULL, NULL);
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+
+			//check whether connection accepted
+			error = (int) fi_eq_read(tmp_endpoint, eq_event, NULL, 0, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			if(error != 0)
+			{
+				goto ConnectionTest;
+			}
+			if (eq_event != FI_CONNECTED)
+			{
+				g_critical("TMP-Endpoint has no established connection towards: %s [%d].", server, g_atomic_int_get(count));
+			}
+
+
+			//bind endpoint to the tmp_structures
+			endpoint->endpoint = tmp_endpoint;
+			endpoint->event_queue = tmp_event_queue;
+			endpoint->completion_queue_receive = tmp_receive_queue;
+			endpoint->completion_queue_transmit = tmp_transmit_queue;
+
+
+			ConnectionTest:
+			if (error != 0)
+			{
+				g_critical("%s", *fi_strerror((int)error));
+			}
+
+			if(endpoint == NULL)
+			{
+				g_critical("Endpoint-binding did not work.");
+			}
+
+			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
 
 			message = j_message_new(J_MESSAGE_PING, 0);
-			j_message_send(message, connection);
+			j_message_send(message, endpoint);
 
 			reply = j_message_new_reply(message);
-			j_message_receive(reply, connection);
+			j_message_receive(reply, endpoint);
 
 			/*
 			op_count = j_message_get_count(reply);
@@ -363,8 +463,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				}
 			}
 			*/
-			errorhandling:
-
 
 		}
 		else
@@ -373,14 +471,14 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 		}
 	}
 
-	if (connection != NULL)
+	if (endpoint != NULL)
 	{
-		return connection;
+		return endpoint;
 	}
 
-	connection = g_async_queue_pop(queue);
+	endpoint = g_async_queue_pop(queue);
 
-	return connection;
+	return endpoint;
 }
 
 static

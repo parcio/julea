@@ -163,10 +163,15 @@ struct JMessage
 	gint ref_count;
 };
 
+
+//TODO: possibly replace through a context structure given to the endpoint (but apparently 0 retrieve function in libfabric)
 struct JEndpoint
 {
 	fid_ep* endpoint;
-	ssize_t max_msg_size;
+	ssize_t max_msg_size; //TODO maybe replace with fi_info-struct
+	fid_eq* event_queue;
+	fid_cq*	completion_queue_transmit;
+	fid_cq* completion_queue_receive;
 };
 typedef struct JEndpoint JEndpoint;
 
@@ -988,7 +993,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		goto end;
 	}
 
-	//TODO Nicht Error reporten, sondern aufspalten
+	//TODO Dont report error, but split the Message
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		max_msg_size_error = "Message bigger than provider max_msg_size";
