@@ -127,9 +127,13 @@ spack_get_dependencies ()
 	then
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
-		dependencies="${dependencies} libmongoc"
+		dependencies="${dependencies} mongo-c-driver"
 		dependencies="${dependencies} hdf5@develop~mpi"
 		dependencies="${dependencies} mariadb-c-client"
+
+		# FIXME move to minimal
+		# FIXME set fabrics
+		dependencies="${dependencies} libfabric"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"
@@ -183,6 +187,7 @@ spack_install_dependencies ()
 
 		for dependency in $(spack_get_dependencies "${mode}")
 		do
+			# FIXME ignore errors?
 			spack_install "${dependency}"
 		done
 	fi
