@@ -37,7 +37,7 @@
 
 //libfabric interfaces for used Objects
 #include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and 
+#include <rdma/fi_domain.h> //includes cqs and
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
@@ -168,11 +168,11 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
-	if(j_fi_info->domain_attr->ep_cnt < pool->object_len * 3 + 1)
+	if(j_fi_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
 		g_critical("Demand for connections exceeds the max number of endpoints available through domain/provider");
 	}
-	if(j_fi_info->domain_attr->cq_cnt < (pool->object_len * 3) * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
+	if(j_fi_info->domain_attr->cq_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
 	{
 		g_warning("Demand for connections exceeds the optimal number of completion queues available through domain/provider");
 	}
