@@ -186,6 +186,7 @@ entry_insert (void)
 	success = j_db_schema_get(schema, batch, &error);
 	g_assert_true(success);
 	success = j_batch_execute(batch);
+	g_assert_true(success);
 
 	entry = j_db_entry_new(schema, &error);
 	g_assert_nonnull(entry);
@@ -316,6 +317,7 @@ entry_delete (void)
 	success = j_db_schema_get(schema, batch, &error);
 	g_assert_true(success);
 	success = j_batch_execute(batch);
+	g_assert_true(success);
 
 	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector);
