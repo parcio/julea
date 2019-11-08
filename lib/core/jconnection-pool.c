@@ -37,8 +37,7 @@
 
 //libfabric interfaces for used Objects
 #include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and eqs
-#include <rdma/fi_endpoint.h>
+#include <rdma/fi_domain.h> //includes cqs and 
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
@@ -179,7 +178,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 
-	//inits fabric
+	//init fabric
 	error = fi_fabric(j_fi_info->fabric_attr, &j_fid_fabric, NULL);
 	if(error != FI_SUCCESS)
 	{
@@ -190,7 +189,7 @@ j_connection_pool_init (JConfiguration* configuration)
 		g_critical("Allocating j_fid_fabric did not work");
 	}
 
-	//inits domain
+	//init domain
 	error = fi_domain(j_fid_fabric, j_fi_info, &j_fid_domain, NULL);
 	if(error != 0) //WHO THE HELL DID DESIGN THOSE ERROR CODES?! SUCESS IS SOMETIMES 0, SOMETIMES A DEFINED BUT NOT DOCUMENTED VALUE, ARGH
 	{
@@ -211,8 +210,8 @@ j_connection_pool_init (JConfiguration* configuration)
 		goto end;
 	}
 	//bind an event queue to domain
-	//PERROR: FI_WRITE is not a acceptable parameter for fi_domain_bind (what exactly is acceptable, is not mentioned in man)
-	error = fi_domain_bind(j_fid_domain, j_fid_domain_eventqueue, FI_WRITE);
+	//PERROR: 0 is possibly not an acceptable parameter for fi_domain_bind (what exactly is acceptable, except 1 possible flag, is not mentioned in man)
+	error = fi_domain_bind(j_fid_domain, j_fid_domain_eventqueue, 0);
 	if(error != 0)
 	{
 		goto end;
@@ -227,6 +226,9 @@ j_connection_pool_init (JConfiguration* configuration)
 
 }
 
+/*
+/closes the connection_pool and all associated objects
+*/
 void
 j_connection_pool_fini (void)
 {
@@ -239,14 +241,45 @@ j_connection_pool_fini (void)
 	pool = g_atomic_pointer_get(&j_connection_pool);
 	g_atomic_pointer_set(&j_connection_pool, NULL);
 
+	fi_freeinfo(j_fi_info);
+
 	for (guint i = 0; i < pool->object_len; i++)
 	{
-		GSocketConnection* connection;
+		JEndpoint* endpoint;
+		int error = 0;
 
-		while ((connection = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
+		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
 		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
+			error = fi_shutdown(endpoint->endpoint,0);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_receive);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_transmit);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->event_queue);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->endpoint);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -254,12 +287,41 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
-		GSocketConnection* connection;
+		JEndpoint* endpoint;
+		int error = 0;
 
 		while ((connection = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
 		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
+			error = fi_shutdown(endpoint->endpoint,0);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_receive);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_transmit);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->event_queue);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->endpoint);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -267,18 +329,67 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->db_len; i++)
 	{
-		GSocketConnection* connection;
+		JEndpoint* endpoint;
+		int error = 0;
 
 		while ((connection = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
 		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
+			error = fi_shutdown(endpoint->endpoint,0);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_receive);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->completion_queue_transmit);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->event_queue);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(endpoint->endpoint);
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
 	}
 
 	j_configuration_unref(pool->configuration);
+
+	int error = 0;
+
+	error = fi_close(j_fid_domain_eventqueue);
+	if(error != 0)
+	{
+		g_warning("Something went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
+	}
+
+	error = fi_close(j_fid_domain);
+	if(error != 0)
+	{
+		g_warning("Something went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
+	}
+
+	error = fi_close(j_fid_fabric)
+	if(error != 0)
+	{
+		g_warning("Something went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
+	}
 
 	g_free(pool->object_queues);
 	g_free(pool->kv_queues);
