@@ -18,7 +18,7 @@ spack_clone ()
 {
 	local spack_commit
 
-	spack_commit='ba69ebc5f7831562f0fb83fac6ea68e023bb907f'
+	spack_commit='ae6229dee20da04b2120dc97cdfae800c136e42a'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -54,6 +54,20 @@ spack_init ()
 	. "${spack_env}"
 
 	return 0
+}
+
+spack_bootstrap ()
+{
+	test -n "${SPACK_DIR}" || return 1
+	test -d "${SPACK_DIR}" || return 1
+
+	(
+		cd "${SPACK_DIR}"
+
+		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
+		# Use bootstrap to install environment-modules, otherwise the shell integration might not find it.
+		./bin/spack bootstrap
+	)
 }
 
 spack_install ()
@@ -92,14 +106,7 @@ spack_get_dependencies ()
 	dependencies=''
 	mode="$1"
 
-	if test "${mode}" != 'load'
-	then
-		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
-		# Required for Spack itself
-		dependencies="${dependencies} environment-modules~X"
-	fi
-
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard' -o "${mode}" = 'install-minimal'
+	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
 	then
 		# Required for Waf
 		dependencies="${dependencies} pkgconfig"
@@ -109,14 +116,14 @@ spack_get_dependencies ()
 		dependencies="${dependencies} libbson"
 	fi
 
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard'
+	if test "${mode}" = 'full' -o "${mode}" = 'standard'
 	then
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
 	fi
 
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
+	if test "${mode}" = 'full'
 	then
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
@@ -137,11 +144,11 @@ spack_load_dependencies ()
 	then
 		local minimal_pkgs
 
-		minimal_pkgs="$(spack_get_dependencies install-minimal)"
+		minimal_pkgs="$(spack_get_dependencies minimal)"
 
 		if spack_init
 		then
-			for dependency in $(spack_get_dependencies load)
+			for dependency in $(spack_get_dependencies full)
 			do
 				if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
 				then
@@ -172,7 +179,9 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
-		for dependency in $(spack_get_dependencies "install-${mode}")
+		spack_bootstrap
+
+		for dependency in $(spack_get_dependencies "${mode}")
 		do
 			spack_install "${dependency}"
 		done
