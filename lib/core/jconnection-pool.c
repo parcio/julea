@@ -483,14 +483,14 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 static
 void
-j_connection_pool_push_internal (GAsyncQueue* queue, GSocketConnection* connection)
+j_connection_pool_push_internal (GAsyncQueue* queue, JEndpoint* endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_if_fail(queue != NULL);
-	g_return_if_fail(connection != NULL);
+	g_return_if_fail(endpoint != NULL);
 
-	g_async_queue_push(queue, connection);
+	g_async_queue_push(queue, endpoint);
 }
 
 gpointer
