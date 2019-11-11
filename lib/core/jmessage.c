@@ -946,7 +946,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	if (error != 0 || max_msg_size_error[] != NULL)
+	if (error != 0 || max_msg_size_error != NULL)
 	{
 		if(error!= 0)
 			{
@@ -954,7 +954,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 			}
 		else
 			{
-				g_critical("%s", max_msg_size_error[]);
+				g_critical("%s", max_msg_size_error);
 			}
 	}
 
@@ -1021,7 +1021,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	if (error != 0 || max_msg_size_error[] != NULL)
+	if (error != 0 || max_msg_size_error != NULL)
 	{
 		if(error!= 0)
 		{
@@ -1029,7 +1029,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		}
 		else
 		{
-			g_critical("%s", max_msg_size_error[]);
+			g_critical("%s", max_msg_size_error);
 		}
 	}
 
