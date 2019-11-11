@@ -905,7 +905,10 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	fid_ep* endpoint = j_endpoint->endpoint;
 
 	ssize_t error = 0;
-	gchar* max_msg_size_error;
+	gchar* custom_error_msg;
+
+	struct fi_cq_msg_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
@@ -918,11 +921,26 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	{
 		goto end;
 	}
+	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
+	if(error != 0)
+	{
+		if(error == -FI_EAGAIN)
+		{
+			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			goto end;
+		}
+		if(error < 0)
+		{
+			goto end;
+		}
+	}
+	error = 0;
 
 	//TODO splice the message, not just report an error
 	if(!j_message_fi_val_message_size(endpoint->max_msg_size, message))
 	{
-		max_msg_size_error = "Message bigger than provider max_msg_size";
+		custom_error_msg = "Message bigger than provider max_msg_size";
 		goto end;
 	}
 
@@ -934,6 +952,21 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	{
 		goto end;
 	}
+	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
+	if(error != 0)
+	{
+		if(error == -FI_EAGAIN)
+		{
+			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			goto end;
+		}
+		if(error < 0)
+		{
+			goto end;
+		}
+	}
+	error = 0;
 
 
 	message->current = message->data + sizeof(JMessageHeader);
@@ -946,7 +979,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	if (error != 0 || max_msg_size_error != NULL)
+	if (error != 0 || custom_error_msg != NULL)
 	{
 		if(error!= 0)
 			{
@@ -954,7 +987,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 			}
 		else
 			{
-				g_critical("%s", max_msg_size_error);
+				g_critical("%s", custom_error_msg);
 			}
 	}
 
@@ -983,7 +1016,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
-	gchar* max_msg_size_error;
+	gchar* custom_error_msg;
+
+  struct fi_cq_msg_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
@@ -996,10 +1032,26 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		goto end;
 	}
 
+	error = fi_cq_read(j_endpoint->completion_queue_transmit, &completion_queue_data, 1);
+	if(error != 0)
+	{
+		if(error == -FI_EAGAIN)
+		{
+			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			goto end;
+		}
+		if(error < 0)
+		{
+			goto end;
+		}
+	}
+	error = 0;
+
 	//TODO Dont report error, but split the Message
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
-		max_msg_size_error = "Message bigger than provider max_msg_size";
+		custom_error_msg = "Message bigger than provider max_msg_size";
 		goto end;
 	}
 
@@ -1015,13 +1067,28 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 			{
 				goto end;
 			}
+			error = fi_cq_read(j_endpoint->completion_queue_transmit, &completion_queue_data, 1);
+			if(error != 0)
+			{
+				if(error == -FI_EAGAIN)
+				{
+					error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
+					g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+					goto end;
+				}
+				if(error < 0)
+				{
+					goto end;
+				}
+			}
+			error = 0;
 		}
 	}
 
 	ret = TRUE;
 
 	end:
-	if (error != 0 || max_msg_size_error != NULL)
+	if (error != 0 || custom_error_msg != NULL)
 	{
 		if(error!= 0)
 		{
@@ -1029,7 +1096,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		}
 		else
 		{
-			g_critical("%s", max_msg_size_error);
+			g_critical("%s", custom_error_msg);
 		}
 	}
 
