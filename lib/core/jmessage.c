@@ -915,7 +915,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
 
-	//TODO descriptor (4th field) must be set, if local machine shall be used
+	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
@@ -946,7 +946,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
-	//TODO descriptor (4th field) must be set, if local machine shall be used
+	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 	error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
@@ -1025,7 +1025,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	//TODO descriptor (4th field) must be set, if local machine shall be used
+	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 	error = fi_send(endpoint, message->data, sizeof(JMessageHeader) + j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
@@ -1061,7 +1061,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		while (j_list_iterator_next(iterator))
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
-			//TODO descriptor (4th field) must be set, if local machine shall be used
+			//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 			error = fi_send(endpoint, message->data, message_data->length, NULL, 0, NULL);
 			if ((int) error != 0)
 			{

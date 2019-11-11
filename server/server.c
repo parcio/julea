@@ -31,6 +31,20 @@
 
 #include "server.h"
 
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h> //includes cqs and
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
+
+#include <netinet/in.h> //for target address
+
+//libfabric high level objects
+static fid_fabric* j_fid_fabric;
+static fid_domain* j_fid_domain;
+static fid_eq* j_fid_domain_eventqueue;
+//libfabric config structures
+static fi_info* j_fi_info;
+
 static JConfiguration* jd_configuration;
 
 static
@@ -51,7 +65,7 @@ jd_signal (gpointer data)
 
 static
 gboolean
-jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
+jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data) //TODO change connection to endpoint
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -166,13 +180,13 @@ main (int argc, char** argv)
 	gint opt_port = 4711;
 
 	JTrace* trace;
-	GError* error = NULL;
+	GError* error = NULL; //TODO Change Error-Type
 	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
 	GModule* kv_module = NULL;
 	GModule* db_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
-	g_autoptr(GSocketService) socket_service = NULL;
+	g_autoptr(GSocketService) socket_service = NULL; //TODO not needed anymore
 	gchar const* object_backend;
 	gchar const* object_component;
 	g_autofree gchar* object_path = NULL;
@@ -211,7 +225,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	socket_service = g_threaded_socket_service_new(-1);
+	socket_service = g_threaded_socket_service_new(-1); //TODO init libfabric ressources. Up to init passive endpoint (prob new function)
 
 	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
 
@@ -282,9 +296,10 @@ main (int argc, char** argv)
 	jd_statistics = j_statistics_new(FALSE);
 	g_mutex_init(jd_statistics_mutex);
 
-	g_socket_service_start(socket_service);
+	g_socket_service_start(socket_service); //TODO start listening
 	g_signal_connect(socket_service, "run", G_CALLBACK(jd_on_run), NULL);
 
+	//TODO replace main loop?
 	main_loop = g_main_loop_new(NULL, FALSE);
 
 	g_unix_signal_add(SIGHUP, jd_signal, main_loop);
@@ -293,7 +308,7 @@ main (int argc, char** argv)
 
 	g_main_loop_run(main_loop);
 
-	g_socket_service_stop(socket_service);
+	g_socket_service_stop(socket_service); //TODO end listening
 
 	g_mutex_clear(jd_statistics_mutex);
 	j_statistics_free(jd_statistics);
@@ -327,6 +342,8 @@ main (int argc, char** argv)
 	{
 		g_module_close(object_module);
 	}
+
+	//TODO unbind Fabric ressources
 
 	j_configuration_unref(jd_configuration);
 

@@ -29,7 +29,7 @@
 static guint jd_thread_num = 0;
 
 gboolean
-jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
+jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics) //TODO exchange connection
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -211,7 +211,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				for (i = 0; i < operation_count; i++)
 				{
-					GInputStream* input;
+					GInputStream* input; //TODO make Endpoint
 					gchar* buf;
 					guint64 length;
 					guint64 offset;
@@ -232,8 +232,8 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					buf = j_memory_chunk_get(memory_chunk, length);
 					g_assert(buf != NULL);
 
-					input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
+					input = g_io_stream_get_input_stream(G_IO_STREAM(connection)); //TODO get the relevant Endpoint (where from? additional parameter?)
+					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL); //TODO build a direct receive
 					j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
 
 					j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
