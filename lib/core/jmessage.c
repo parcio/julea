@@ -905,21 +905,22 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	fid_ep* endpoint = j_endpoint->endpoint;
 
 	ssize_t error = 0;
-	gchar max_msg_size_error[42];
+	gchar* max_msg_size_error;
 
 	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
 
-	//TODO descriptor (4. Feld) muss gesetzt werden, wenn lokale Kommunikation (1 Gerät) gewollt
+	//TODO descriptor (4th field) must be set, if local machine shall be used
 	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
 		goto end;
 	}
 
-	//TODO Nicht Error reporten, sondern aufspalten
-	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
+	//TODO splice the message, not just report an error
+	if(!j_message_fi_val_message_size(endpoint->max_msg_size, message))
 	{
 		max_msg_size_error = "Message bigger than provider max_msg_size";
 		goto end;
@@ -927,6 +928,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
+	//TODO descriptor (4th field) must be set, if local machine shall be used
 	error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
@@ -981,12 +983,13 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
-	gchar max_msg_size_error[42];
+	gchar* max_msg_size_error;
 
 	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(stream != NULL, FALSE);
+	g_return_val_if_fail(j_endpoint != NULL, FALSE);
+	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	//TODO descriptor (4. Feld) muss gesetzt werden, wenn lokale Kommunikation (1 Gerät) gewollt
+	//TODO descriptor (4th field) must be set, if local machine shall be used
 	error = fi_send(endpoint, message->data, sizeof(JMessageHeader) + j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
@@ -1006,6 +1009,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		while (j_list_iterator_next(iterator))
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
+			//TODO descriptor (4th field) must be set, if local machine shall be used
 			error = fi_send(endpoint, message->data, message_data->length, NULL, 0, NULL);
 			if ((int) error != 0)
 			{

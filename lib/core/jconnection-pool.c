@@ -131,7 +131,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	//Parameter for fabric init
 	int error = 0;
 	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = NULL; //TODO read target Server from config and put into node
+	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
