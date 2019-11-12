@@ -40,8 +40,7 @@
 
 //libfabric high level objects
 static fid_fabric* j_fid_fabric;
-static fid_domain* j_fid_domain;
-static fid_eq* j_fid_domain_eventqueue;
+static fid_eq* j_fid_passive_ep_eventqueue;
 //libfabric config structures
 static fi_info* j_fi_info;
 
@@ -171,6 +170,19 @@ jd_daemon (void)
 	return TRUE;
 }
 
+//TODO
+static
+jboolean jd_compare_domain_infos(fid_info* info1, fid_info* info2)
+{
+	jboolean ret FALSE;
+	if( != ) goto end;
+
+	ret = TRUE;
+	end:
+	return ret;
+}
+
+
 int
 main (int argc, char** argv)
 {
@@ -180,13 +192,13 @@ main (int argc, char** argv)
 	gint opt_port = 4711;
 
 	JTrace* trace;
-	GError* error = NULL; //TODO Change Error-Type
+	GError* error = NULL;
 	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
 	GModule* kv_module = NULL;
 	GModule* db_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
-	g_autoptr(GSocketService) socket_service = NULL; //TODO not needed anymore
+	g_autoptr(GSocketService) socket_service = NULL; //TODO not needed anymore for Program, but relevant for entries parse?
 	gchar const* object_backend;
 	gchar const* object_component;
 	g_autofree gchar* object_path = NULL;
@@ -197,6 +209,15 @@ main (int argc, char** argv)
 	gchar const* db_component;
 	g_autofree gchar* db_path = NULL;
 	g_autofree gchar* port_str = NULL;
+
+	int fi_error = 0;
+	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
+	const char* service = "4711"; //target port (in future maybe not hardcoded)
+	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+	fid_pep* passive_endpoint;
+
+	fi_info* fi_hints = NULL; //config object
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -225,7 +246,75 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	socket_service = g_threaded_socket_service_new(-1); //TODO init libfabric ressources. Up to init passive endpoint (prob new function)
+	//TODO init libfabric ressources. Up to init passive endpoint (prob new function)
+	fi_hints = fi_allocinfo(); //initiated object is zeroed
+
+	if(fi_hints == NULL)
+	{
+		g_critical("Allocating empty hints did not work");
+	}
+	//TODO read hints from config (and define corresponding fields there) + or all given caps
+	//define Fabric attributes
+	fi_hints.caps = FI_MSG | FI_SEND | FI_RECV;
+	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	fi_hints->adr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
+	//TODO future support to set modes
+	//fi_hints.mode = 0;
+	fi_hints->domain_attr.threading = FI_THREAD_FID; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+
+	//get fi_info
+	fi_error = fi_getinfo(version, node, service, flags,fi_hints, &j_fi_info)
+	fi_freeinfo(fi_hints); //hints only used for config
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	if(j_fi_info == NULL)
+	{
+		g_critical("Allocating j_fi_info did not work");
+	}
+	fi_error = 0;
+
+	//Init fabric
+	fi_error = fi_fabric(j_fi_info->fabric_attr, &j_fid_fabric, NULL);
+	if(fi_error != FI_SUCCESS)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	if(j_fid_fabric == NULL)
+	{
+		g_critical("Allocating j_fid_fabric did not work");
+	}
+	fi_error = 0;
+
+	//build event queue for passive endpoint
+	//PERROR: Wrong formatting of event queue attributes
+	struct fi_eq_attr eventqueue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
+	fi_error = fi_eq_open(j_fid_fabric, &eventqueue_attr, &j_fid_passive_ep_eventqueue, NULL);
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	fi_error = 0;
+
+
+	//init passive Endpoint
+	fi_error = fi_passive_ep(j_fid_fabric, j_fi_info, &passive_endpoint, NULL);
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	fi_error = 0;
+
+	fi_error = fi_pep_bind(passive_endpoint, j_fid_passive_ep_eventqueue, 0);
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	fi_error = 0;
+
+	/*
+	socket_service = g_threaded_socket_service_new(-1);
 
 	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
 
@@ -239,6 +328,7 @@ main (int argc, char** argv)
 
 		return 1;
 	}
+	*/
 
 	j_trace_init("julea-server");
 
@@ -296,10 +386,22 @@ main (int argc, char** argv)
 	jd_statistics = j_statistics_new(FALSE);
 	g_mutex_init(jd_statistics_mutex);
 
-	g_socket_service_start(socket_service); //TODO start listening
+	fi_error = fi_listen(passive_endpoint);
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	fi_error = 0;
+	/*
+	g_socket_service_start(socket_service); //TODO start listening, if called, start new thread with endpoint
 	g_signal_connect(socket_service, "run", G_CALLBACK(jd_on_run), NULL);
+	*/
 
-	//TODO replace main loop?
+	//TODO: if connreq, new thread,
+		//thread runs new active endpoint until shutdown event, then free elements
+
+
+	//TODO replace main loop
 	main_loop = g_main_loop_new(NULL, FALSE);
 
 	g_unix_signal_add(SIGHUP, jd_signal, main_loop);

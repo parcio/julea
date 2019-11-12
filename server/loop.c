@@ -29,7 +29,7 @@
 static guint jd_thread_num = 0;
 
 gboolean
-jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics) //TODO exchange connection
+jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -88,7 +88,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				if (reply != NULL)
 				{
-					j_message_send(reply, connection);
+					j_message_send(reply, endpoint);
 				}
 			}
 			break;
@@ -122,7 +122,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				if (reply != NULL)
 				{
-					j_message_send(reply, connection);
+					j_message_send(reply, endpoint);
 				}
 			}
 			break;
@@ -162,7 +162,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					if (buf == NULL)
 					{
 						// FIXME ugly
-						j_message_send(reply, connection);
+						j_message_send(reply, endpoint);
 						j_message_unref(reply);
 
 						reply = j_message_new_reply(message);
@@ -187,7 +187,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				j_backend_object_close(jd_object_backend, object);
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 				j_message_unref(reply);
 
 				j_memory_chunk_reset(memory_chunk);
@@ -211,11 +211,15 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				for (i = 0; i < operation_count; i++)
 				{
-					GInputStream* input; //TODO make Endpoint
 					gchar* buf;
 					guint64 length;
 					guint64 offset;
 					guint64 bytes_written = 0;
+
+					ssize_t error = 0;
+					struct fi_cq_msg_entry completion_queue_data;
+					struct fi_cq_err_entry completion_queue_err_entry;
+
 
 					length = j_message_get_8(message);
 					offset = j_message_get_8(message);
@@ -232,8 +236,26 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					buf = j_memory_chunk_get(memory_chunk, length);
 					g_assert(buf != NULL);
 
-					input = g_io_stream_get_input_stream(G_IO_STREAM(connection)); //TODO get the relevant Endpoint (where from? additional parameter?)
-					g_input_stream_read_all(input, buf, length, NULL, NULL, NULL); //TODO build a direct receive
+					//PERROR: this direct receive may not work
+					error = fi_recv(endpoint->endpoint, buf, (size_t) length, NULL, 0, NULL);
+					if(error!= 0)
+					{
+						g_critical("%s", *fi_strerror((int)error));
+					}
+					error = fi_cq_read(endpoint->completion_queue_transmit, &completion_queue_data, 1);
+					if(error != 0)
+					{
+						if(error == -FI_EAGAIN)
+						{
+							error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
+							g_critical("%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+						}
+						if(error < 0)
+						{
+							g_critical("%s", *fi_strerror((int)error));
+						}
+					}
+
 					j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
 
 					j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
@@ -258,7 +280,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				if (reply != NULL)
 				{
-					j_message_send(reply, connection);
+					j_message_send(reply, endpoint);
 				}
 
 				j_memory_chunk_reset(memory_chunk);
@@ -295,7 +317,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					j_backend_object_close(jd_object_backend, object);
 				}
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_STATISTICS:
@@ -339,7 +361,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					g_mutex_unlock(jd_statistics_mutex);
 				}
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_PING:
@@ -366,7 +388,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 					j_message_append_string(reply, "kv");
 				}
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_KV_PUT:
@@ -408,7 +430,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				if (reply != NULL)
 				{
-					j_message_send(reply, connection);
+					j_message_send(reply, endpoint);
 				}
 			}
 			break;
@@ -447,7 +469,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				if (reply != NULL)
 				{
-					j_message_send(reply, connection);
+					j_message_send(reply, endpoint);
 				}
 			}
 			break;
@@ -486,7 +508,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 
 				j_backend_kv_batch_execute(jd_kv_backend, batch);
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_KV_GET_ALL:
@@ -517,7 +539,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				j_message_add_operation(reply, 4);
 				j_message_append_4(reply, &zero);
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_KV_GET_BY_PREFIX:
@@ -550,7 +572,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				j_message_add_operation(reply, 4);
 				j_message_append_4(reply, &zero);
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		case J_MESSAGE_DB_SCHEMA_CREATE:
@@ -737,7 +759,7 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 						g_warn_if_reached();
 				}
 
-				j_message_send(reply, connection);
+				j_message_send(reply, endpoint);
 			}
 			break;
 		default:
