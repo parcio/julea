@@ -63,8 +63,6 @@ void j_item_get_status (JItem*, JBatch*);
 guint64 j_item_get_size (JItem*);
 gint64 j_item_get_modification_time (JItem*);
 
-guint64 j_item_get_optimal_access_size (JItem*);
-
 G_END_DECLS
 
 #endif
