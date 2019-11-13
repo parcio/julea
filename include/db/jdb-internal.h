@@ -33,6 +33,8 @@
 
 #include <julea.h>
 
+#include <db/jdb-entry.h>
+#include <db/jdb-iterator.h>
 #include <db/jdb-schema.h>
 #include <db/jdb-selector.h>
 
@@ -105,14 +107,14 @@ union JDBTypeValue
 };
 
 // Client-side wrappers for backend functions
-gboolean j_db_internal_schema_create (gchar const* namespace, gchar const* name, bson_t const* schema, JBatch* batch, GError** error);
-gboolean j_db_internal_schema_get (gchar const* namespace, gchar const* name, bson_t* schema, JBatch* batch, GError** error);
-gboolean j_db_internal_schema_delete (gchar const* namespace, gchar const* name, JBatch* batch, GError** error);
-gboolean j_db_internal_insert (gchar const* namespace, gchar const* name, bson_t const* metadata, bson_t* id, JBatch* batch, GError** error);
-gboolean j_db_internal_update (gchar const* namespace, gchar const* name, bson_t const* selector, bson_t const* metadata, JBatch* batch, GError** error);
-gboolean j_db_internal_delete (gchar const* namespace, gchar const* name, bson_t const* selector, JBatch* batch, GError** error);
-gboolean j_db_internal_query (gchar const* namespace, gchar const* name, bson_t const* selector, gpointer* iterator, JBatch* batch, GError** error);
-gboolean j_db_internal_iterate (gpointer iterator, bson_t* metadata, GError** error);
+gboolean j_db_internal_schema_create (JDBSchema* j_db_schema, JBatch* batch, GError** error);
+gboolean j_db_internal_schema_get (JDBSchema* j_db_schema, JBatch* batch, GError** error);
+gboolean j_db_internal_schema_delete (JDBSchema* j_db_schema, JBatch* batch, GError** error);
+gboolean j_db_internal_insert (JDBEntry* j_db_entry, JBatch* batch, GError** error);
+gboolean j_db_internal_update (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error);
+gboolean j_db_internal_delete (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error);
+gboolean j_db_internal_query (JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIterator* j_db_iterator, JBatch* batch, GError** error);
+gboolean j_db_internal_iterate (JDBIterator* j_db_iterator, GError** error);
 
 // Client-side additional internal functions
 bson_t* j_db_selector_get_bson (JDBSelector* selector);

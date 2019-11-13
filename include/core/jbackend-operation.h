@@ -89,6 +89,10 @@ struct JBackendOperation
 	// Output parameters
 	// The last out parameter must be of type 'J_BACKEND_OPERATION_PARAM_TYPE_ERROR'
 	JBackendOperationParam out_param[20];
+	//refcounting objects which are required for transmission - unref those after use
+	guint unref_func_count;
+	GDestroyNotify unref_funcs[20];
+	gpointer unref_values[20];
 };
 
 typedef struct JBackendOperation JBackendOperation;
