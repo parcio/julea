@@ -99,18 +99,17 @@ test_db_schema_create_delete (void)
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		ret = j_db_schema_create(schema, batch, &error);
+		// FIXME Do not pass error, will not exist anymore when batch is executed
+		ret = j_db_schema_create(schema, batch, NULL);
 		g_assert_true(ret);
-		g_assert_no_error(error);
 
-		ret = j_db_schema_delete(schema, batch, &error);
-		g_assert_true(ret);
-		g_assert_no_error(error);
-
-		// FIXME reference counting is broken, should be outside loop
-		ret = j_batch_execute(batch);
+		// FIXME Do not pass error, will not exist anymore when batch is executed
+		ret = j_db_schema_delete(schema, batch, NULL);
 		g_assert_true(ret);
 	}
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 }
 
 static
