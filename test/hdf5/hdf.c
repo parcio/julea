@@ -103,7 +103,7 @@ read_dataset (hid_t file)
 	g_assert_cmpuint(elements, ==, 3);
 
 	datatype = H5Aget_type(attribute);
-	g_assert(H5Tget_class(datatype) == H5T_INTEGER);
+	g_assert_true(H5Tget_class(datatype) == H5T_INTEGER);
 
 	H5Aread(attribute, H5T_NATIVE_INT, data_attr);
 
@@ -116,7 +116,7 @@ read_dataset (hid_t file)
 	g_assert_cmpuint(elements, ==, 6 * 7);
 
 	datatype = H5Dget_type(dataset);
-	g_assert(H5Tget_class(datatype) == H5T_INTEGER);
+	g_assert_true(H5Tget_class(datatype) == H5T_INTEGER);
 
 	H5Dread(dataset, H5T_NATIVE_INT, dataspace_ds, H5S_ALL, H5P_DEFAULT, data_ds);
 

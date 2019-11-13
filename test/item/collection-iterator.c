@@ -39,7 +39,7 @@ test_collection_iterator_new_free (void)
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		collection = j_collection_create("test-collection-iterator", batch);
 
-		g_assert(collection != NULL);
+		g_assert_true(collection != NULL);
 	}
 }
 
@@ -69,7 +69,7 @@ test_collection_iterator_next_get (void)
 		collection = j_collection_create(name, batch);
 		j_collection_delete(collection, delete_batch);
 
-		g_assert(collection != NULL);
+		g_assert_true(collection != NULL);
 	}
 
 	ret = j_batch_execute(batch);

@@ -62,10 +62,10 @@ test_list_iterator_new_free (void)
 		g_autoptr(JListIterator) iterator = NULL;
 
 		list = j_list_new(NULL);
-		g_assert(list != NULL);
+		g_assert_true(list != NULL);
 
 		iterator = j_list_iterator_new(list);
-		g_assert(iterator != NULL);
+		g_assert_true(iterator != NULL);
 	}
 }
 
@@ -79,25 +79,25 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 	(void)data;
 
 	next = j_list_iterator_next(*iterator);
-	g_assert(next);
+	g_assert_true(next);
 
 	s = j_list_iterator_get(*iterator);
 	g_assert_cmpstr(s, ==, "0");
 
 	next = j_list_iterator_next(*iterator);
-	g_assert(next);
+	g_assert_true(next);
 
 	s = j_list_iterator_get(*iterator);
 	g_assert_cmpstr(s, ==, "1");
 
 	next = j_list_iterator_next(*iterator);
-	g_assert(next);
+	g_assert_true(next);
 
 	s = j_list_iterator_get(*iterator);
 	g_assert_cmpstr(s, ==, "2");
 
 	next = j_list_iterator_next(*iterator);
-	g_assert(!next);
+	g_assert_true(!next);
 }
 
 void
