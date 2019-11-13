@@ -63,7 +63,7 @@ test_db_schema_create_delete (void)
 		g_autoptr(JDBSchema) schema = NULL;
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("test-schema_%d", i);
+		name = g_strdup_printf("test_schema_%d", i);
 
 		// FIXME namespace and name are not properly checked, "-" causes errors
 		schema = j_db_schema_new("test_ns", name, &error);
@@ -100,11 +100,11 @@ test_db_schema_create_delete (void)
 		g_assert_no_error(error);
 
 		// FIXME Do not pass error, will not exist anymore when batch is executed
-		ret = j_db_schema_create(schema, batch, &error);
+		ret = j_db_schema_create(schema, batch, NULL);
 		g_assert_true(ret);
 
 		// FIXME Do not pass error, will not exist anymore when batch is executed
-		//ret = j_db_schema_delete(schema, batch, &error);
+		ret = j_db_schema_delete(schema, batch, NULL);
 		g_assert_true(ret);
 	}
 
