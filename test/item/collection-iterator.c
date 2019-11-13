@@ -37,7 +37,7 @@ test_collection_iterator_new_free (void)
 		g_autoptr(JCollection) collection = NULL;
 
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		collection = j_collection_create("test-collection", batch);
+		collection = j_collection_create("test-collection-iterator", batch);
 
 		g_assert(collection != NULL);
 	}
@@ -65,7 +65,7 @@ test_collection_iterator_next_get (void)
 
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("test-collection-%d", i);
+		name = g_strdup_printf("test-collection-iterator-%d", i);
 		collection = j_collection_create(name, batch);
 		j_collection_delete(collection, delete_batch);
 
@@ -80,7 +80,12 @@ test_collection_iterator_next_get (void)
 	while (j_collection_iterator_next(collection_iterator))
 	{
 		g_autoptr(JCollection) collection = j_collection_iterator_get(collection_iterator);
-		(void)collection;
+
+		if (!g_str_has_prefix(j_collection_get_name(collection), "test-collection-iterator-"))
+		{
+			continue;
+		}
+
 		collections++;
 	}
 

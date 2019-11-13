@@ -167,7 +167,7 @@ setup_start ()
 	done
 
 	# Give the servers enough time to initialize properly.
-	sleep 5
+	sleep 1
 }
 
 setup_stop ()
