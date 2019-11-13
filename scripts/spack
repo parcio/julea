@@ -51,6 +51,12 @@ spack_init ()
 
 	test -f "${spack_env}" || return 1
 
+	# FIXME work around https://github.com/spack/spack/pull/13716
+	if test -f /etc/profile.d/modules.sh
+	then
+		. /etc/profile.d/modules.sh
+	fi
+
 	. "${spack_env}"
 
 	return 0
