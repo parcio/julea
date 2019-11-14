@@ -924,14 +924,10 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
 	if(error != 0)
 	{
-		if(error == -FI_EAGAIN)
+		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
 			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
-			goto end;
-		}
-		if(error < 0)
-		{
 			goto end;
 		}
 	}
@@ -955,14 +951,10 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
 	if(error != 0)
 	{
-		if(error == -FI_EAGAIN)
+		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
 			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
-			goto end;
-		}
-		if(error < 0)
-		{
 			goto end;
 		}
 	}
@@ -1035,14 +1027,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_cq_read(j_endpoint->completion_queue_transmit, &completion_queue_data, 1);
 	if(error != 0)
 	{
-		if(error == -FI_EAGAIN)
+		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
 			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
-			goto end;
-		}
-		if(error < 0)
-		{
 			goto end;
 		}
 	}
@@ -1070,14 +1058,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 			error = fi_cq_read(j_endpoint->completion_queue_transmit, &completion_queue_data, 1);
 			if(error != 0)
 			{
-				if(error == -FI_EAGAIN)
+				if(error == -FI_EAVAIL)
 				{
 					error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
 					g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
-					goto end;
-				}
-				if(error < 0)
-				{
 					goto end;
 				}
 			}
