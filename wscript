@@ -454,6 +454,7 @@ def build(ctx):
 	use_julea_db = use_julea_core + ['lib/julea', 'lib/julea-db']
 	use_julea_item = use_julea_core + ['lib/julea', 'lib/julea-item']
 	use_julea_hdf = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5'] if ctx.env.JULEA_HDF else []
+	use_julea_hdf_db = use_julea_core + ['lib/julea'] + ['lib/julea-hdf5-db'] if ctx.env.JULEA_HDF else []
 
 	include_julea_core = ['include', 'include/core']
 
@@ -471,6 +472,7 @@ def build(ctx):
 
 	if ctx.env.JULEA_HDF:
 		clients.append('hdf5')
+		clients.append('hdf5-db')
 
 	for client in clients:
 		use_extra = []
@@ -482,6 +484,12 @@ def build(ctx):
 			use_extra.append('HDF5')
 			use_extra.append('lib/julea-kv')
 			use_extra.append('lib/julea-object')
+		elif client == 'hdf5-db':
+			use_extra.append('HDF5DB')
+			use_extra.append('SQLITE')
+			use_extra.append('lib/julea-kv')
+			use_extra.append('lib/julea-object')
+			use_extra.append('lib/julea-db')
 
 		ctx.shlib(
 			source=ctx.path.ant_glob('lib/{0}/**/*.c'.format(client)),
@@ -497,7 +505,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('test/**/*.c'),
 		target='test/julea-test',
-		use=use_julea_object + use_julea_kv + use_julea_db + use_julea_item + use_julea_hdf,
+		use=use_julea_object + use_julea_kv + use_julea_db + use_julea_item + use_julea_hdf + use_julea_hdf_db,
 		includes=include_julea_core + ['test'],
 		rpath=get_rpath(ctx),
 		install_path=None
@@ -507,7 +515,7 @@ def build(ctx):
 	ctx.program(
 		source=ctx.path.ant_glob('benchmark/**/*.c'),
 		target='benchmark/julea-benchmark',
-		use=use_julea_object + use_julea_kv + use_julea_item + use_julea_hdf,
+		use=use_julea_object + use_julea_kv + use_julea_item + use_julea_hdf + use_julea_hdf_db + use_julea_db,
 		includes=include_julea_core + ['benchmark'],
 		rpath=get_rpath(ctx),
 		install_path=None

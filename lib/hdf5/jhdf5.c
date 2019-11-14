@@ -1497,7 +1497,7 @@ H5VL_class_t H5VL_julea_g =
 {
 	0,
 	JULEA,
-	"julea",	  /* name */
+	"julea-kv", /* name */
 	0,
 	H5VL_julea_init, /* initialize */
 	H5VL_julea_term, /* terminate */
@@ -1647,7 +1647,7 @@ j_hdf5_init (void)
 	julea_h5vl = H5PLget_plugin_info();
 	j_hdf5_vol = H5VLregister_connector(julea_h5vl, H5P_DEFAULT);
 	g_assert(j_hdf5_vol > 0);
-	g_assert(H5VLis_connector_registered("julea") == 1);
+	g_assert(H5VLis_connector_registered("julea-kv") == 1);
 
 	H5VLinitialize(j_hdf5_vol, H5P_DEFAULT);
 
@@ -1676,7 +1676,7 @@ j_hdf5_fini (void)
 	H5VLterminate(j_hdf5_vol);
 
 	H5VLunregister_connector(j_hdf5_vol);
-	g_assert(H5VLis_connector_registered("julea") == 0);
+	g_assert(H5VLis_connector_registered("julea-kv") == 0);
 }
 
 hid_t
