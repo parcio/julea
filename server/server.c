@@ -39,10 +39,13 @@
 #include <netinet/in.h> //for target address
 
 //libfabric high level objects
-static fid_fabric* j_fid_fabric;
-static fid_eq* j_fid_passive_ep_eventqueue;
+static fid_fabric* j_fabric;
+static fid_eq* j_pep_event_queue; //pep = passive endpoint
+static fid_pep* j_passive_endpoint;
 //libfabric config structures
-static fi_info* j_fi_info;
+static fi_info* j_info;
+
+static volatile gint thread_count = 0;
 
 static JConfiguration* jd_configuration;
 
@@ -64,7 +67,7 @@ jd_signal (gpointer data)
 
 static
 gboolean
-jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data) //TODO change connection to endpoint
+jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data) //TODO build libfabric compatible function with similar functionality
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -170,9 +173,10 @@ jd_daemon (void)
 	return TRUE;
 }
 
-//TODO
+//TODO write compare functions for different fi_infos
 static
-jboolean jd_compare_domain_infos(fid_info* info1, fid_info* info2)
+jboolean
+jd_compare_domain_infos(fid_info* info1, fid_info* info2)
 {
 	jboolean ret FALSE;
 	if( != ) goto end;
@@ -180,6 +184,76 @@ jboolean jd_compare_domain_infos(fid_info* info1, fid_info* info2)
 	ret = TRUE;
 	end:
 	return ret;
+}
+
+
+//TODO write thread function
+static
+void
+j_thread_function(gpointer fi_info)
+{
+	(fi_info*) fi_info;
+}
+
+/*
+/gets fi_info structure for internal information about available fabric ressources
+/inits fabric, passive endpoint and event queue for the endpoint.
+/Binds event queue to endpoint
+*/
+static
+void
+j_init_libfabric_ressources(fi_info* fi_hints, fi_eq_attr* event_queue_attr, int version, char* node, char* service, uint64_t flags)
+{
+	int error = 0;
+
+	//get fi_info
+	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info)
+
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+	}
+	if(j_info == NULL)
+	{
+		g_critical("Allocating j_info did not work");
+	}
+	error = 0;
+
+	//Init fabric
+	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
+	if(error != FI_SUCCESS)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+	}
+	if(j_fabric == NULL)
+	{
+		g_critical("Allocating j_fabric did not work");
+	}
+	error = 0;
+
+	//build event queue for passive endpoint
+	error = fi_eq_open(j_fabric, event_queue_attr, &j_pep_event_queue, NULL);
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+	}
+	error = 0;
+
+
+	//build passive Endpoint
+	error = fi_passive_ep(j_fabric, j_info, &j_passive_endpoint, NULL);
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	error = 0;
+
+	error = fi_pep_bind(j_passive_endpoint, j_pep_event_queue, 0);
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+	}
+	error = 0;
 }
 
 
@@ -215,9 +289,9 @@ main (int argc, char** argv)
 	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
-	fid_pep* passive_endpoint;
 
 	fi_info* fi_hints = NULL; //config object
+	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL}; //PERROR: Wrong formatting of event queue attributes
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -246,7 +320,8 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	//TODO init libfabric ressources. Up to init passive endpoint (prob new function)
+
+	//Build fabric ressources
 	fi_hints = fi_allocinfo(); //initiated object is zeroed
 
 	if(fi_hints == NULL)
@@ -262,73 +337,9 @@ main (int argc, char** argv)
 	//fi_hints.mode = 0;
 	fi_hints->domain_attr.threading = FI_THREAD_FID; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
-	//get fi_info
-	fi_error = fi_getinfo(version, node, service, flags,fi_hints, &j_fi_info)
+	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
-	}
-	if(j_fi_info == NULL)
-	{
-		g_critical("Allocating j_fi_info did not work");
-	}
-	fi_error = 0;
 
-	//Init fabric
-	fi_error = fi_fabric(j_fi_info->fabric_attr, &j_fid_fabric, NULL);
-	if(fi_error != FI_SUCCESS)
-	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
-	}
-	if(j_fid_fabric == NULL)
-	{
-		g_critical("Allocating j_fid_fabric did not work");
-	}
-	fi_error = 0;
-
-	//build event queue for passive endpoint
-	//PERROR: Wrong formatting of event queue attributes
-	struct fi_eq_attr eventqueue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
-	fi_error = fi_eq_open(j_fid_fabric, &eventqueue_attr, &j_fid_passive_ep_eventqueue, NULL);
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
-	}
-	fi_error = 0;
-
-
-	//init passive Endpoint
-	fi_error = fi_passive_ep(j_fid_fabric, j_fi_info, &passive_endpoint, NULL);
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
-	}
-	fi_error = 0;
-
-	fi_error = fi_pep_bind(passive_endpoint, j_fid_passive_ep_eventqueue, 0);
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
-	}
-	fi_error = 0;
-
-	/*
-	socket_service = g_threaded_socket_service_new(-1);
-
-	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
-
-	if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
-	{
-		if (error != NULL)
-		{
-			g_printerr("%s\n", error->message);
-			g_error_free(error);
-		}
-
-		return 1;
-	}
-	*/
 
 	j_trace_init("julea-server");
 
@@ -389,26 +400,41 @@ main (int argc, char** argv)
 	fi_error = fi_listen(passive_endpoint);
 	if(fi_error != 0)
 	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Something went horribly wrong setting passive Endpoint to listening.\n Details:\n %s", fi_strerror(fi_error));
 	}
 	fi_error = 0;
-	/*
-	g_socket_service_start(socket_service); //TODO start listening, if called, start new thread with endpoint
-	g_signal_connect(socket_service, "run", G_CALLBACK(jd_on_run), NULL);
-	*/
+
+
 
 	//TODO: if connreq, new thread,
-		//thread runs new active endpoint until shutdown event, then free elements
+	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
+	//TODO rename fi_error, since it may contain number of bytes read infos too
+	do
+	{
+		uint32_t* event = 0;
+		struct fi_eq_err_entry event_queue_err_entry;
+		struct fi_eq_cm_entry event_entry;
+		fi_error = fi_eq_sread(j_pep_event_queue, event, &event_entry, 0, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
+		if(fi_error != 0)
+		{
+			if(fi_error == -FI_EAVAIL)
+			{
+				fi_error = fi_eq_readerr(cq, &event_queue_err_entry, 0);
+				if(fi_error < 0)
+				{
+					g_critical("Something went horribly wrong reding Error Entry from event queu Error.\n Details:\n %s", fi_strerror(fi_error));
+				}
+				g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry->err_data, NULL, NULL));
+			}
+		}
+		if(event == FI_CONNREQ)
+		{
+			g_atomic_int_inc (&thread_count);
+			GThreadFunc thread_function = &j_thread_function;
+			g_thread_new(NULL, thread_function, (gpointer) event_entry);
+		}
 
-
-	//TODO replace main loop
-	main_loop = g_main_loop_new(NULL, FALSE);
-
-	g_unix_signal_add(SIGHUP, jd_signal, main_loop);
-	g_unix_signal_add(SIGINT, jd_signal, main_loop);
-	g_unix_signal_add(SIGTERM, jd_signal, main_loop);
-
-	g_main_loop_run(main_loop);
+	} while(!g_atomic_int_compare_and_exchange (&thread_count, 0, 0));
 
 	g_socket_service_stop(socket_service); //TODO end listening
 
