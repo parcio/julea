@@ -587,7 +587,7 @@ def build(ctx):
 			install_path='${LIBDIR}/julea/backend/kv'
 		)
 
-	db_backends = ['null']
+	db_backends = ['null', 'memory']
 
 	if ctx.env.JULEA_SQLITE:
 		db_backends.append('sqlite')
