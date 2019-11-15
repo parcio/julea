@@ -1,4 +1,4 @@
-/*
+j_fabric/*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
  *
@@ -79,11 +79,11 @@ typedef struct JConnectionPool JConnectionPool;
 static JConnectionPool* j_connection_pool = NULL;
 
 //libfabric high level objects
-static fid_fabric* j_fid_fabric;
-static fid_domain* j_fid_domain;
-static fid_eq* j_fid_domain_event_queue;
+static fid_fabric* j_fabric;
+static fid_domain* j_domain;
+static fid_eq* j_domain_event_queue;
 //libfabric config structures
-static fi_info* j_fi_info;
+static fi_info* j_info;
 
 
 void
@@ -153,65 +153,65 @@ j_connection_pool_init (JConfiguration* configuration)
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
 
-	//inits j_fi_info
-	//gives a linked list of available provider details into j_fi_info
-	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_fi_info)
+	//inits j_info
+	//gives a linked list of available provider details into j_info
+	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_info)
 	fi_freeinfo(fi_hints); //hints only used for config
 	if(error != 0)
 	{
 		goto end;
 	}
-	if(j_fi_info == NULL)
+	if(j_info == NULL)
 	{
-		g_critical("Allocating j_fi_info did not work");
+		g_critical("Allocating j_info did not work");
 	}
 
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
-	if(j_fi_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
+	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
 		g_critical("Demand for connections exceeds the max number of endpoints available through domain/provider");
 	}
-	if(j_fi_info->domain_attr->cq_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
+	if(j_info->domain_attr->cq_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
 	{
 		g_warning("Demand for connections exceeds the optimal number of completion queues available through domain/provider");
 	}
 
 
 	//init fabric
-	error = fi_fabric(j_fi_info->fabric_attr, &j_fid_fabric, NULL);
+	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
 	if(error != FI_SUCCESS)
 	{
 		goto end;
 	}
-	if(j_fid_fabric == NULL)
+	if(j_fabric == NULL)
 	{
-		g_critical("Allocating j_fid_fabric did not work");
+		g_critical("Allocating j_fabric did not work");
 	}
 
 	//init domain
-	error = fi_domain(j_fid_fabric, j_fi_info, &j_fid_domain, NULL);
+	error = fi_domain(j_fabric, j_info, &j_domain, NULL);
 	if(error != 0) //WHO THE HELL DID DESIGN THOSE ERROR CODES?! SUCESS IS SOMETIMES 0, SOMETIMES A DEFINED BUT NOT DOCUMENTED VALUE, ARGH
 	{
 		goto end;
 	}
-	if(j_fid_fabric == NULL)
+	if(j_fabric == NULL)
 	{
-		g_critical("Allocating j_fid_fabric did not work");
+		g_critical("Allocating j_fabric did not work");
 	}
 
 	//build event queue for domain
 	//TODO read event_queue attributes from julea config
 	//PERROR: Wrong formatting of event queue attributes
 	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
-	error = fi_eq_open(j_fid_fabric, &event_queue_attr, &j_fid_domain_event_queue, NULL);
+	error = fi_eq_open(j_fabric, &event_queue_attr, &j_domain_event_queue, NULL);
 	if(error != 0)
 	{
 		goto end;
 	}
 	//bind an event queue to domain
 	//PERROR: 0 is possibly not an acceptable parameter for fi_domain_bind (what exactly is acceptable, except 1 possible flag, is not mentioned in man)
-	error = fi_domain_bind(j_fid_domain, &j_fid_domain_event_queue->fid, 0);
+	error = fi_domain_bind(j_domain, &j_domain_event_queue->fid, 0);
 	if(error != 0)
 	{
 		goto end;
@@ -241,7 +241,7 @@ j_connection_pool_fini (void)
 	pool = g_atomic_pointer_get(&j_connection_pool);
 	g_atomic_pointer_set(&j_connection_pool, NULL);
 
-	fi_freeinfo(j_fi_info);
+	fi_freeinfo(j_info);
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
@@ -373,19 +373,19 @@ j_connection_pool_fini (void)
 
 	int error = 0;
 
-	error = fi_close(j_fid_domain_event_queue);
+	error = fi_close(j_domain_event_queue);
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
 	}
 
-	error = fi_close(j_fid_domain);
+	error = fi_close(j_domain);
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
 	}
 
-	error = fi_close(j_fid_fabric)
+	error = fi_close(j_fabric)
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
@@ -450,25 +450,25 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//Allocate Endpoint and related ressources
 			//PERROR: last param of fi_endpoint maybe mandatory. If so, build context struct with every info in it
-			error = fi_endpoint(j_fid_domain, j_fi_info, &tmp_endpoint, NULL);
+			error = fi_endpoint(j_domain, j_info, &tmp_endpoint, NULL);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
-			error = fi_eq_open(j_fid_fabric, &event_queue_attr, &tmp_event_queue, NULL);
+			error = fi_eq_open(j_fabric, &event_queue_attr, &tmp_event_queue, NULL);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
-			error = fi_cq_open(j_fid_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
+			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
-			error = fi_cq_open(j_fid_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
+			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
 			if(error != 0)
 			{
 				goto ConnectionTest;
