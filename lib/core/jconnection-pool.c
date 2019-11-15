@@ -527,6 +527,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//bind endpoint to the tmp_structures
 			endpoint->endpoint = tmp_endpoint;
+			endpoint->max_msg_size = fi_info->domain_attr.ep_cnt;
 			endpoint->event_queue = tmp_event_queue;
 			endpoint->completion_queue_receive = tmp_receive_queue;
 			endpoint->completion_queue_transmit = tmp_transmit_queue;
