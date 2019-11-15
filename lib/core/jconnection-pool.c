@@ -81,7 +81,7 @@ static JConnectionPool* j_connection_pool = NULL;
 //libfabric high level objects
 static fid_fabric* j_fid_fabric;
 static fid_domain* j_fid_domain;
-static fid_eq* j_fid_domain_eventqueue;
+static fid_eq* j_fid_domain_event_queue;
 //libfabric config structures
 static fi_info* j_fi_info;
 
@@ -201,17 +201,17 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 	//build event queue for domain
-	//TODO read eventqueue attributes from julea config
+	//TODO read event_queue attributes from julea config
 	//PERROR: Wrong formatting of event queue attributes
-	struct fi_eq_attr eventqueue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
-	error = fi_eq_open(j_fid_fabric, &eventqueue_attr, &j_fid_domain_eventqueue, NULL);
+	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
+	error = fi_eq_open(j_fid_fabric, &event_queue_attr, &j_fid_domain_event_queue, NULL);
 	if(error != 0)
 	{
 		goto end;
 	}
 	//bind an event queue to domain
 	//PERROR: 0 is possibly not an acceptable parameter for fi_domain_bind (what exactly is acceptable, except 1 possible flag, is not mentioned in man)
-	error = fi_domain_bind(j_fid_domain, &j_fid_domain_eventqueue->fid, 0);
+	error = fi_domain_bind(j_fid_domain, &j_fid_domain_event_queue->fid, 0);
 	if(error != 0)
 	{
 		goto end;
@@ -373,7 +373,7 @@ j_connection_pool_fini (void)
 
 	int error = 0;
 
-	error = fi_close(j_fid_domain_eventqueue);
+	error = fi_close(j_fid_domain_event_queue);
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
