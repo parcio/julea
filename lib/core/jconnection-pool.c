@@ -211,7 +211,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 	//bind an event queue to domain
 	//PERROR: 0 is possibly not an acceptable parameter for fi_domain_bind (what exactly is acceptable, except 1 possible flag, is not mentioned in man)
-	error = fi_domain_bind(j_fid_domain, j_fid_domain_eventqueue, 0);
+	error = fi_domain_bind(j_fid_domain, &j_fid_domain_eventqueue->fid, 0);
 	if(error != 0)
 	{
 		goto end;
@@ -475,19 +475,19 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			}
 
 			//Bind resources to Endpoint
-			error = fi_ep_bind(tmp_endpoint, tmp_event_queue, 0);
+			error = fi_ep_bind(tmp_endpoint, &tmp_event_queue->fid, 0);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
-			error = fi_ep_bind(tmp_endpoint, tmp_receive_queue, FI_RECV);
+			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_RECV);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
-			error = fi_ep_bind(tmp_endpoint, tmp_receive_queue, FI_TRANSMIT);
+			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_TRANSMIT);
 			if(error != 0)
 			{
 				goto ConnectionTest;
