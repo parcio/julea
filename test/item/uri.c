@@ -73,28 +73,28 @@ test_uri_invalid (void)
 	JURI* uri;
 
 	uri = j_uri_new("file://JULEA");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("julea:/JULEA");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("julea//JULEA");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("Julea://JULEA");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("JULEA://JULEA");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("julea://JULEA/foo/bar");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("julea://JULEA/");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 
 	uri = j_uri_new("julea://JULEA/foo/");
-	g_assert(uri == NULL);
+	g_assert_true(uri == NULL);
 }
 
 static

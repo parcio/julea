@@ -60,7 +60,7 @@ test_collection_new_free (void)
 		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 		collection = j_collection_create("test-collection", batch);
 
-		g_assert(collection != NULL);
+		g_assert_true(collection != NULL);
 	}
 }
 

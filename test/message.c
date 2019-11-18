@@ -36,7 +36,7 @@ test_message_new_ref_unref (void)
 	g_autoptr(JMessage) message = NULL;
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
-	g_assert(message != NULL);
+	g_assert_true(message != NULL);
 	j_message_ref(message);
 	j_message_unref(message);
 }
@@ -48,13 +48,13 @@ test_message_header (void)
 	g_autoptr(JMessage) message = NULL;
 
 	message = j_message_new(J_MESSAGE_OBJECT_READ, 42);
-	g_assert(message != NULL);
+	g_assert_true(message != NULL);
 
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 	j_message_add_operation(message, 0);
 
-	g_assert(j_message_get_type(message) == J_MESSAGE_OBJECT_READ);
+	g_assert_true(j_message_get_type(message) == J_MESSAGE_OBJECT_READ);
 	g_assert_cmpuint(j_message_get_count(message), ==, 3);
 }
 
@@ -67,33 +67,33 @@ test_message_append (void)
 	guint64 dummy = 42;
 
 	message = j_message_new(J_MESSAGE_NONE, 20);
-	g_assert(message != NULL);
+	g_assert_true(message != NULL);
 
 	ret = j_message_append_1(message, &dummy);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_4(message, &dummy);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_8(message, &dummy);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_n(message, &dummy, 7);
-	g_assert(ret);
+	g_assert_true(ret);
 
 	j_message_unref(message);
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
-	g_assert(message != NULL);
+	g_assert_true(message != NULL);
 
 	/* Preallocation kicks in after the tenth operation */
 	for (guint i = 0; i <= 10; i++)
 	{
 		j_message_add_operation(message, 1);
 		ret = j_message_append_1(message, &dummy);
-		g_assert(ret);
+		g_assert_true(ret);
 	}
 
 	/* FIXME
 	ret = j_message_append_1(message, &dummy);
-	g_assert(!ret);
+	g_assert_true(!ret);
 	*/
 
 	j_message_unref(message);
@@ -117,23 +117,23 @@ test_message_write_read (void)
 	input = g_memory_input_stream_new();
 
 	message_send = j_message_new(J_MESSAGE_NONE, 18);
-	g_assert(message_send != NULL);
+	g_assert_true(message_send != NULL);
 	message_recv = j_message_new(J_MESSAGE_NONE, 0);
-	g_assert(message_recv != NULL);
+	g_assert_true(message_recv != NULL);
 
 	ret = j_message_append_1(message_send, &dummy_1);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_4(message_send, &dummy_4);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_8(message_send, &dummy_8);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_n(message_send, dummy_str + 1, strlen(dummy_str + 1) + 1);
-	g_assert(ret);
+	g_assert_true(ret);
 	ret = j_message_append_string(message_send, dummy_str);
-	g_assert(ret);
+	g_assert_true(ret);
 
 	ret = j_message_write(message_send, output);
-	g_assert(ret);
+	g_assert_true(ret);
 
 	g_memory_input_stream_add_data(
 		G_MEMORY_INPUT_STREAM(input),
@@ -143,7 +143,7 @@ test_message_write_read (void)
 	);
 
 	ret = j_message_read(message_recv, input);
-	g_assert(ret);
+	g_assert_true(ret);
 
 	dummy_1 = j_message_get_1(message_recv);
 	g_assert_cmpint(dummy_1, ==, 23);
@@ -166,10 +166,10 @@ test_message_semantics (void)
 	g_autoptr(JSemantics) msg_semantics = NULL;
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
-	g_assert(semantics != NULL);
+	g_assert_true(semantics != NULL);
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
-	g_assert(message != NULL);
+	g_assert_true(message != NULL);
 
 	j_message_set_semantics(message, semantics);
 	msg_semantics = j_message_get_semantics(message);

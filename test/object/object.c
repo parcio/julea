@@ -36,7 +36,7 @@ test_object_new_free (void)
 		g_autoptr(JObject) object = NULL;
 
 		object = j_object_new("test", "test-object");
-		g_assert(object != NULL);
+		g_assert_true(object != NULL);
 	}
 }
 
@@ -58,7 +58,7 @@ test_object_create_delete (void)
 
 		name = g_strdup_printf("test-object-%u", i);
 		object = j_object_new("test", name);
-		g_assert(object != NULL);
+		g_assert_true(object != NULL);
 
 		j_object_create(object, batch);
 		j_object_delete(object, batch);
@@ -85,7 +85,7 @@ test_object_read_write (void)
 	buffer = g_malloc0(max_operation_size + 1);
 
 	object = j_object_new("test", "test-object-rw");
-	g_assert(object != NULL);
+	g_assert_true(object != NULL);
 
 	j_object_create(object, batch);
 	ret = j_batch_execute(batch);
@@ -161,7 +161,7 @@ test_object_status (void)
 	buffer = g_malloc0(42);
 
 	object = j_object_new("test", "test-object-status");
-	g_assert(object != NULL);
+	g_assert_true(object != NULL);
 
 	j_object_create(object, batch);
 	ret = j_batch_execute(batch);

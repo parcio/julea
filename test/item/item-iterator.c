@@ -41,7 +41,7 @@ test_item_iterator_new_free (void)
 		collection = j_collection_create("test-collection", batch);
 		item = j_item_create(collection, "test-item", NULL, batch);
 
-		g_assert(item != NULL);
+		g_assert_true(item != NULL);
 	}
 }
 
@@ -73,7 +73,7 @@ test_item_iterator_next_get (void)
 		item = j_item_create(collection, name, NULL, batch);
 		j_item_delete(item, delete_batch);
 
-		g_assert(item != NULL);
+		g_assert_true(item != NULL);
 	}
 
 	ret = j_batch_execute(batch);

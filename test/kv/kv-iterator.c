@@ -37,7 +37,7 @@ test_kv_iterator_new_free (void)
 
 		kv = j_kv_new("test-ns", "test-kv");
 
-		g_assert(kv != NULL);
+		g_assert_true(kv != NULL);
 	}
 }
 
@@ -70,7 +70,7 @@ test_kv_iterator_next_get (void)
 		j_kv_put(kv, value, strlen(value) + 1, g_free, batch);
 		j_kv_delete(kv, delete_batch);
 
-		g_assert(kv != NULL);
+		g_assert_true(kv != NULL);
 	}
 
 	ret = j_batch_execute(batch);
@@ -85,8 +85,8 @@ test_kv_iterator_next_get (void)
 		guint32 len;
 
 		key = j_kv_iterator_get(kv_iterator, &value, &len);
-		g_assert(g_str_has_prefix(key, "test-key-"));
-		g_assert(g_str_has_prefix(value, "test-value-"));
+		g_assert_true(g_str_has_prefix(key, "test-key-"));
+		g_assert_true(g_str_has_prefix(value, "test-value-"));
 		kvs++;
 	}
 

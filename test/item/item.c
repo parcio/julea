@@ -64,7 +64,7 @@ test_item_new_free (void)
 		collection = j_collection_create("test-collection", batch);
 		item = j_item_create(collection, "test-item", NULL, batch);
 
-		g_assert(item != NULL);
+		g_assert_true(item != NULL);
 	}
 }
 

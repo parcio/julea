@@ -53,7 +53,7 @@ test_list_new_free (void)
 		g_autoptr(JList) list = NULL;
 
 		list = j_list_new(NULL);
-		g_assert(list != NULL);
+		g_assert_true(list != NULL);
 	}
 }
 

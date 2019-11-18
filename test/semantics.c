@@ -49,9 +49,9 @@ test_semantics_new_ref_unref (void)
 		g_autoptr(JSemantics) semantics = NULL;
 
 		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-		g_assert(semantics != NULL);
+		g_assert_true(semantics != NULL);
 		semantics = j_semantics_ref(semantics);
-		g_assert(semantics != NULL);
+		g_assert_true(semantics != NULL);
 		j_semantics_unref(semantics);
 	}
 }

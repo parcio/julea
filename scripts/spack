@@ -18,7 +18,7 @@ spack_clone ()
 {
 	local spack_commit
 
-	spack_commit='ba69ebc5f7831562f0fb83fac6ea68e023bb907f'
+	spack_commit='ae6229dee20da04b2120dc97cdfae800c136e42a'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -51,9 +51,29 @@ spack_init ()
 
 	test -f "${spack_env}" || return 1
 
+	# FIXME work around https://github.com/spack/spack/pull/13716
+	if test -f /etc/profile.d/modules.sh
+	then
+		. /etc/profile.d/modules.sh
+	fi
+
 	. "${spack_env}"
 
 	return 0
+}
+
+spack_bootstrap ()
+{
+	test -n "${SPACK_DIR}" || return 1
+	test -d "${SPACK_DIR}" || return 1
+
+	(
+		cd "${SPACK_DIR}"
+
+		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
+		# Use bootstrap to install environment-modules, otherwise the shell integration might not find it.
+		./bin/spack bootstrap
+	)
 }
 
 spack_install ()
@@ -92,14 +112,7 @@ spack_get_dependencies ()
 	dependencies=''
 	mode="$1"
 
-	if test "${mode}" != 'load'
-	then
-		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
-		# Required for Spack itself
-		dependencies="${dependencies} environment-modules~X"
-	fi
-
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard' -o "${mode}" = 'install-minimal'
+	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
 	then
 		# Required for Waf
 		dependencies="${dependencies} pkgconfig"
@@ -109,20 +122,24 @@ spack_get_dependencies ()
 		dependencies="${dependencies} libbson"
 	fi
 
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full' -o "${mode}" = 'install-standard'
+	if test "${mode}" = 'full' -o "${mode}" = 'standard'
 	then
 		# Optional dependencies
 		dependencies="${dependencies} lmdb"
 		dependencies="${dependencies} sqlite"
 	fi
 
-	if test "${mode}" = 'load' -o "${mode}" = 'install-full'
+	if test "${mode}" = 'full'
 	then
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
-		dependencies="${dependencies} libmongoc"
+		dependencies="${dependencies} mongo-c-driver"
 		dependencies="${dependencies} hdf5@develop~mpi"
 		dependencies="${dependencies} mariadb-c-client"
+
+		# FIXME move to minimal
+		# FIXME set fabrics
+		dependencies="${dependencies} libfabric"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"
@@ -133,24 +150,32 @@ spack_get_dependencies ()
 
 spack_load_dependencies ()
 {
-	local minimal_pkgs
-
-	minimal_pkgs="$(spack_get_dependencies install-minimal)"
-
-	if spack_init
+	if test -z "${JULEA_SPACK_DEPENDENCIES_LOADED}"
 	then
-		for dependency in $(spack_get_dependencies load)
-		do
-			if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
-			then
-				spack_load "${dependency}"
-			else
-				if ! spack_load "${dependency}"
+		local minimal_pkgs
+
+		minimal_pkgs="$(spack_get_dependencies minimal)"
+
+		if spack_init
+		then
+			for dependency in $(spack_get_dependencies full)
+			do
+				if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
 				then
-					echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
+					spack_load "${dependency}"
+				else
+					if ! spack_load "${dependency}"
+					then
+						echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
+					fi
 				fi
-			fi
-		done
+			done
+
+			# FIXME this could be more clever by storing the actual dependencies loaded
+			JULEA_SPACK_DEPENDENCIES_LOADED=1
+
+			export JULEA_SPACK_DEPENDENCIES_LOADED
+		fi
 	fi
 }
 
@@ -164,8 +189,11 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
-		for dependency in $(spack_get_dependencies "install-${mode}")
+		spack_bootstrap
+
+		for dependency in $(spack_get_dependencies "${mode}")
 		do
+			# FIXME ignore errors?
 			spack_install "${dependency}"
 		done
 	fi

@@ -33,7 +33,7 @@ test_cache_new_free (void)
 	JCache* cache;
 
 	cache = j_cache_new(42);
-	g_assert(cache != NULL);
+	g_assert_true(cache != NULL);
 
 	j_cache_free(cache);
 }
@@ -48,13 +48,13 @@ test_cache_get (void)
 	cache = j_cache_new(3);
 
 	ret = j_cache_get(cache, 1);
-	g_assert(ret != NULL);
+	g_assert_true(ret != NULL);
 	ret = j_cache_get(cache, 1);
-	g_assert(ret != NULL);
+	g_assert_true(ret != NULL);
 	ret = j_cache_get(cache, 1);
-	g_assert(ret != NULL);
+	g_assert_true(ret != NULL);
 	ret = j_cache_get(cache, 1);
-	g_assert(ret == NULL);
+	g_assert_true(ret == NULL);
 
 	j_cache_free(cache);
 }
@@ -70,16 +70,16 @@ test_cache_release (void)
 	cache = j_cache_new(1);
 
 	ret1 = j_cache_get(cache, 1);
-	g_assert(ret1 != NULL);
+	g_assert_true(ret1 != NULL);
 	ret2 = j_cache_get(cache, 1);
-	g_assert(ret2 == NULL);
+	g_assert_true(ret2 == NULL);
 
 	j_cache_release(cache, ret1);
 
 	ret1 = j_cache_get(cache, 1);
-	g_assert(ret1 != NULL);
+	g_assert_true(ret1 != NULL);
 	ret2 = j_cache_get(cache, 1);
-	g_assert(ret2 == NULL);
+	g_assert_true(ret2 == NULL);
 
 	j_cache_free(cache);
 }

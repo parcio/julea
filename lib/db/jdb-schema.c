@@ -259,7 +259,6 @@ _error:
 		for (i = 0; i < count; i++)
 		{
 			g_free((*names)[i]);
-
 		}
 	}
 
@@ -420,7 +419,7 @@ j_db_schema_create (JDBSchema* schema, JBatch* batch, GError** error)
 
 	schema->server_side = TRUE;
 
-	if (G_UNLIKELY(!j_db_internal_schema_create(schema->namespace, schema->name, &schema->bson, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_schema_create(schema, batch, error)))
 	{
 		goto _error;
 	}
@@ -445,7 +444,7 @@ j_db_schema_get (JDBSchema* schema, JBatch* batch, GError** error)
 	schema->server_side = TRUE;
 	schema->bson_initialized = TRUE;
 
-	if (G_UNLIKELY(!j_db_internal_schema_get(schema->namespace, schema->name, &schema->bson, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_schema_get(schema, batch, error)))
 	{
 		goto _error;
 	}
@@ -465,7 +464,7 @@ j_db_schema_delete (JDBSchema* schema, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!j_db_internal_schema_delete(schema->namespace, schema->name, batch, error)))
+	if (G_UNLIKELY(!j_db_internal_schema_delete(schema, batch, error)))
 	{
 		goto _error;
 	}

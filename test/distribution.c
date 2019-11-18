@@ -102,7 +102,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
+	g_assert_true(ret);
 
 	if (type == J_DISTRIBUTION_WEIGHTED)
 	{
@@ -118,7 +118,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	g_assert_cmpuint(block_id, ==, 0);
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
+	g_assert_true(ret);
 	g_assert_cmpuint(length, ==, block_size);
 	g_assert_cmpuint(block_id, ==, 1);
 
@@ -139,7 +139,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
+	g_assert_true(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, block_size);
 	g_assert_cmpuint(block_id, ==, 2);
@@ -158,7 +158,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
+	g_assert_true(ret);
 	g_assert_cmpuint(length, ==, block_size);
 	g_assert_cmpuint(block_id, ==, 3);
 
@@ -179,7 +179,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(ret);
+	g_assert_true(ret);
 	g_assert_cmpuint(index, ==, 1);
 	g_assert_cmpuint(length, ==, 42);
 	g_assert_cmpuint(block_id, ==, 4);
@@ -198,7 +198,7 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	}
 
 	ret = j_distribution_distribute(distribution, &index, &length, &offset, &block_id);
-	g_assert(!ret);
+	g_assert_true(!ret);
 }
 
 static

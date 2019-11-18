@@ -80,12 +80,20 @@ get_port ()
 	printf '%s' "${port}"
 }
 
+get_servers ()
+{
+	local server
+
+	for server in ${SERVERS_OBJECT} ${SERVERS_KV} ${SERVERS_DB}
+	do
+		printf '%s\n' "${server}"
+	done
+}
+
 setup_init ()
 {
 	HOSTNAME="$(hostname)"
 	USER="$(id --name --user)"
-
-	MONGO_PATH="/tmp/julea-mongo-${USER}"
 
 	# FIXME make more robust
 	SERVERS_OBJECT="$(get_config | grep ^object=)"
@@ -121,10 +129,13 @@ setup_start ()
 {
 	local host
 	local server
+	local servers
 	local port
 	local port_option
 
-	for server in ${SERVERS_OBJECT}
+	servers="$(get_servers | sort --unique)"
+
+	for server in ${servers}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
@@ -138,36 +149,8 @@ setup_start ()
 		fi
 	done
 
-	for server in ${SERVERS_KV}
-	do
-		host="$(get_host "${server}")"
-		port="$(get_port "${server}")"
-
-		if test "${host}" = "${HOSTNAME}"
-		then
-			# FIXME else
-			if test "${KV_BACKEND}" = 'mongodb'
-			then
-				mkdir --parents "${MONGO_PATH}/db"
-				mongod --fork --logpath "${MONGO_PATH}/mongod.log" --logappend --dbpath "${MONGO_PATH}/db" --journal
-			fi
-		fi
-	done
-
-	for server in ${SERVERS_DB}
-	do
-		host="$(get_host "${server}")"
-		port="$(get_port "${server}")"
-
-		if test "${host}" = "${HOSTNAME}"
-		then
-			# FIXME do something
-			:
-		fi
-	done
-
 	# Give the servers enough time to initialize properly.
-	sleep 5
+	sleep 1
 }
 
 setup_stop ()
@@ -175,8 +158,11 @@ setup_stop ()
 	local host
 	local port
 	local server
+	local servers
 
-	for server in ${SERVERS_OBJECT}
+	servers="$(get_servers | sort --unique)"
+
+	for server in ${servers}
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
@@ -184,31 +170,6 @@ setup_stop ()
 		if test "${host}" = "${HOSTNAME}"
 		then
 			killall --verbose julea-server || true
-		fi
-	done
-
-	for server in ${SERVERS_KV}
-	do
-		host="$(get_host "${server}")"
-		port="$(get_port "${server}")"
-
-		if test "${host}" = "${HOSTNAME}"
-		then
-			if test "${KV_BACKEND}" = 'mongodb'
-			then
-				mongod --shutdown --dbpath "${MONGO_PATH}/db" || true
-			fi
-		fi
-	done
-
-	for server in ${SERVERS_DB}
-	do
-		host="$(get_host "${server}")"
-		port="$(get_port "${server}")"
-
-		if test "${host}" = "${HOSTNAME}"
-		then
-			:
 		fi
 	done
 }
@@ -245,14 +206,9 @@ setup_clean ()
 
 		if test "${host}" = "${HOSTNAME}"
 		then
-			if test "${KV_BACKEND}" = 'mongodb'
+			if test -n "${backend_path}"
 			then
-				rm -rf "${MONGO_PATH}"
-			else
-				if test -n "${backend_path}"
-				then
-					rm -rf "${backend_path}"
-				fi
+				rm -rf "${backend_path}"
 			fi
 		fi
 	done

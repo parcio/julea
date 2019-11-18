@@ -52,7 +52,7 @@ $ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
   --object-backend=posix --object-component=server --object-path=/tmp/julea/posix \
   --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb \
-  --db-backend=null --db-component=server --db-path=
+  --db-backend=sqlite --db-component=server --db-path=/tmp/julea/sqlite
 ```
 
 You can check whether JULEA works by executing the integrated test suite.
@@ -64,6 +64,7 @@ $ ./scripts/test.sh
 To get an idea about how to use JULEA from your own application, check out the `example` directory.
 
 ```console
+$ ./waf.sh install
 $ cd example
 $ make run
 ```

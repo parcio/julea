@@ -74,7 +74,7 @@ j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError** error)
 	iterator->valid = FALSE;
 	iterator->bson_valid = FALSE;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	ret2 = j_db_internal_query(schema->namespace, schema->name, j_db_selector_get_bson(selector), &iterator->iterator, batch, error);
+	ret2 = j_db_internal_query(schema, selector, iterator, batch, error);
 	ret = ret2 && j_batch_execute(batch);
 	j_batch_unref(batch);
 
@@ -90,7 +90,7 @@ j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError** error)
 _error:
 	if (ret2)
 	{
-		while (j_db_internal_iterate(iterator->iterator, NULL, NULL))
+		while (j_db_internal_iterate(iterator, NULL))
 		{
 			/*do nothing*/
 		}
@@ -157,7 +157,7 @@ j_db_iterator_next (JDBIterator* iterator, GError** error)
 		j_bson_destroy(&iterator->bson);
 	}
 
-	if (G_UNLIKELY(!j_db_internal_iterate(iterator->iterator, &iterator->bson, error)))
+	if (G_UNLIKELY(!j_db_internal_iterate(iterator, error)))
 	{
 		goto _error;
 	}

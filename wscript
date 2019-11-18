@@ -30,6 +30,8 @@ out = 'build'
 # CentOS 7 has GLib 2.42, CentOS 7.6 has GLib 2.56
 # Ubuntu 18.04 has GLib 2.56
 glib_version = '2.56'
+# Ubuntu 18.04 has libfabric 1.5.3
+libfabric_version = '1.5.3'
 # Ubuntu 18.04 has libbson 1.9.2
 libbson_version = '1.9.0'
 
@@ -155,6 +157,7 @@ def options(ctx):
 	ctx.add_option('--coverage', action='store_true', default=False, help='Enable coverage analysis')
 
 	ctx.add_option('--glib', action='store', default=None, help='GLib prefix')
+	ctx.add_option('--libfabric', action='store', default=None, help='libfabric prefix')
 	ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
 	ctx.add_option('--lmdb', action='store', default=None, help='LMDB prefix')
 	ctx.add_option('--libbson', action='store', default=None, help='libbson prefix')
@@ -194,6 +197,15 @@ def configure(ctx):
 			uselib_store=module.upper(),
 			pkg_config_path=get_pkg_config_path(ctx.options.glib)
 		)
+
+	check_cfg_rpath(
+		ctx,
+		package='libfabric',
+		args=['--cflags', '--libs', 'libfabric >= {0}'.format(libfabric_version)],
+		uselib_store='LIBFABRIC',
+		pkg_config_path=get_pkg_config_path(ctx.options.libfabric),
+		mandatory=False
+	)
 
 	check_cfg_rpath(
 		ctx,

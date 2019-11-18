@@ -38,7 +38,7 @@ test_object_new_free (void)
 
 		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 		object = j_distributed_object_new("test", "test-distributed-object", distribution);
-		g_assert(object != NULL);
+		g_assert_true(object != NULL);
 	}
 }
 
@@ -62,7 +62,7 @@ test_object_create_delete (void)
 		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 		name = g_strdup_printf("test-distributed-object-%u", i);
 		object = j_distributed_object_new("test", name, distribution);
-		g_assert(object != NULL);
+		g_assert_true(object != NULL);
 
 		j_distributed_object_create(object, batch);
 		j_distributed_object_delete(object, batch);
@@ -92,7 +92,7 @@ test_object_read_write (void)
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	j_distribution_set_block_size(distribution, max_operation_size + 1);
 	object = j_distributed_object_new("test", "test-distributed-object-rw", distribution);
-	g_assert(object != NULL);
+	g_assert_true(object != NULL);
 
 	j_distributed_object_create(object, batch);
 	ret = j_batch_execute(batch);
@@ -170,7 +170,7 @@ test_object_status (void)
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	object = j_distributed_object_new("test", "test-distributed-object-status", distribution);
-	g_assert(object != NULL);
+	g_assert_true(object != NULL);
 
 	j_distributed_object_create(object, batch);
 	ret = j_batch_execute(batch);

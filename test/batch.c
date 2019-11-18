@@ -47,7 +47,7 @@ test_batch_new_free (void)
 	g_autoptr(JBatch) batch = NULL;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	g_assert(batch != NULL);
+	g_assert_true(batch != NULL);
 }
 
 static
@@ -59,14 +59,14 @@ test_batch_semantics (void)
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	g_assert(j_batch_get_semantics(batch) != NULL);
+	g_assert_true(j_batch_get_semantics(batch) != NULL);
 
 	j_batch_unref(batch);
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	batch = j_batch_new(semantics);
 
-	g_assert(j_batch_get_semantics(batch) == semantics);
+	g_assert_true(j_batch_get_semantics(batch) == semantics);
 
 	j_batch_unref(batch);
 }
