@@ -173,7 +173,7 @@ jd_daemon (void)
 	return TRUE;
 }
 
-//TODO write and use compare functions for different fi_infos and domains to minimize amount of used fabric ressources
+//TODO compare function for different fi_infos and domains to minimize amount of used fabric ressources
 static
 jboolean
 jd_compare_domain_infos(fid_info* info1, fid_info* info2)

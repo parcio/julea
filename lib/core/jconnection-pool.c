@@ -630,6 +630,8 @@ j_connection_pool_pop (JBackendType backend, guint index)
 	return NULL;
 }
 
+
+//TODO deal with sever connection shutdown
 void
 j_connection_pool_push (JBackendType backend, guint index, gpointer connection)
 {
