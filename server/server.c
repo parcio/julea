@@ -179,7 +179,34 @@ jboolean
 jd_compare_domain_infos(fid_info* info1, fid_info* info2)
 {
 	jboolean ret FALSE;
-	if( != ) goto end;
+	fi_domain_attr* domain_attr1 = info1->domain_attr;
+	fi_domain_attr* domain_attr2 = info2->domain_attr;
+
+	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end; //TODO fix char compare
+	if(domain_attr1.threading != domain_attr2.threading) goto end;
+	if(domain_attr1.control_progress != domain_attr2.control_progress) goto end;
+	if(domain_attr1.data_progress != domain_attr2.data_progress) goto end;
+	if(domain_attr1.ressource_mgmt != domain_attr2.ressource_mgmt) goto end;
+	if(domain_attr1.av_type != domain_attr2.av_type) goto end;
+	if(domain_attr1.mr_mode != domain_attr2.mr_mode) goto end;
+	if(domain_attr1.mr_key_size != domain_attr2.mr_key_size) goto end;
+	if(domain_attr1.cq_data_size != domain_attr2.cq_data_size) goto end;
+	if(domain_attr1.cq_cnt != domain_attr2.cq_cnt) goto end;
+	if(domain_attr1.ep_cnt != domain_attr2.ep_cnt) goto end;
+	if(domain_attr1.tx_ctx_cnt != domain_attr2.tx_ctx_cnt) goto end;
+	if(domain_attr1.rx_ctx_cnt != domain_attr2.rx_ctx_cnt) goto end;
+	if(domain_attr1.max_ep_tx_ctx != domain_attr2.max_ep_rx_ctx) goto end;
+	if(domain_attr1.max_ep_rx_ctx != domain_attr2.max_ep_rx_ctx) goto end;
+	if(domain_attr1.max_ep_srx_ctx != domain_attr2.max_ep_srx_ctx) goto end;
+	if(domain_attr1.max_ep_stx_ctx != domain_attr2.max_ep_stx_ctx) goto end;
+	if(domain_attr1.cntr_cnt != domain_attr2.cntr_cnt) goto end;
+	if(domain_attr1.mr_iov_limit != domain_attr2.mr_iov_limit) goto end;
+	if(domain_attr1.caps != domain_attr2.caps) goto end;
+	if(domain_attr1.mode != domain_attr2.mode) goto end;
+	//if(domain_attr1->auth_key != domain_attr2->auth_key) goto end; //PERROR: wrong comparison
+	if(domain_attr1.auth_key_size != domain_attr2.auth_key_size) goto end;
+	if(domain_attr1.max_err_data != domain_attr2.max_err_data) goto end;
+	if(domain_attr1.mr_cnt != domain_attr2.mr_cnt) goto end;
 
 	ret = TRUE;
 	end:

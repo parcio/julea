@@ -145,7 +145,7 @@ setup_start ()
 			port_option=''
 			test -n "${port}" && port_option="--port ${port}"
 
-			julea-server --daemon ${port_option}
+			julea-server --daemon ${port_option} 
 		fi
 	done
 
