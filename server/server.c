@@ -216,7 +216,7 @@ jd_compare_domain_infos(fid_info* info1, fid_info* info2)
 
 //TODO dont build a domain for each thread
 static
-void
+gpointer
 j_thread_function(gpointer connection_event_entry)
 {
 	//Needed Ressources
@@ -679,8 +679,9 @@ main (int argc, char** argv)
 		if(event == FI_CONNREQ)
 		{
 			g_atomic_int_inc (&thread_count);
-			GThreadFunc thread_function = &j_thread_function;
-			g_thread_new(NULL, thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted?
+			//GThreadFunc thread_function = &j_thread_function;
+			//TODO use g_thread_new_try
+			g_thread_new(NULL, j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
 		}
 		fi_error = 0;
 	} while(!g_atomic_int_compare_and_exchange (&thread_count, 0, 0));
