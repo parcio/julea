@@ -446,7 +446,7 @@ def build(ctx):
 
 	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl=include_excl), cwd=include_dir, relative_trick=True)
 
-	use_julea_core = ['M', 'GLIB']
+	use_julea_core = ['M', 'GLIB', 'LIBFABRIC']
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
