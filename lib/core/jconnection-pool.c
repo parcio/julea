@@ -439,7 +439,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			fid_cq* tmp_transmit_queue = NULL;
 
 			//connection related definitions
-			struct sockaddr_in address;
+			struct sockaddr_in address = {0};
 			uint32_t* eq_event;
 
 			//Test Message related definitions
@@ -504,7 +504,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			//Connect Endpoint to server via port 4711
 			address.sin_family = AF_INET;
 			address.sin_port = htons(4711);
-			address.sin_addr = htonl(server); //TODO server ist atm not an IPV4 address
+			address.sin_addr = inet_aton("127.0.0.1", &(address.sin_addr.s_addr)); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
 			//PERROR: User specified data maybe required to be set
 			error = fi_connect(tmp_endpoint, &address, NULL, NULL);
