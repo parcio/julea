@@ -25,12 +25,14 @@ env:
   - JULEA_OBJECT=posix JULEA_KV=sqlite  JULEA_DB=sqlite
   # DB backends
   - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=memory
-# FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
+# We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking
   - sudo apt-get -y autoremove
 script:
-  - ./waf configure --debug --sanitize --leveldb=/usr
+  # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
+  - JULEA_SANITIZE=''; if test "${TRAVIS_COMPILER}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
+  - ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
   - ./waf
   - . ./scripts/environment.sh
   - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component=server --db-path=/tmp/julea/db/${JULEA_DB}
