@@ -55,6 +55,7 @@ j_db_schema_new (gchar const* namespace, gchar const* name, GError** error)
 	schema->bson_index_initialized = FALSE;
 	schema->ref_count = 1;
 	schema->server_side = FALSE;
+	// FIXME since schema->bson is used as the out_param in j_db_internal_schema_get, the schema passed to the backend's schema_get is initialized if and only if the backend runs on the client
 	bson_init(&schema->bson);
 
 	return schema;
