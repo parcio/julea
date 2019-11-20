@@ -30,6 +30,12 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h> //includes cqs and
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
+#include <rdma/fi_endpoint.h>
+
 G_BEGIN_DECLS
 
 enum JMessageType
@@ -62,9 +68,15 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
-struct JEndpoint;
-
-typedef JEndpoint JEndpoint;
+struct JEndpoint
+{
+	struct fid_ep* endpoint;
+	ssize_t max_msg_size; //TODO maybe replace with fi_info-struct
+	struct fid_eq* event_queue;
+	struct fid_cq*	completion_queue_transmit;
+	struct fid_cq* completion_queue_receive;
+};
+typedef struct JEndpoint JEndpoint;
 
 G_END_DECLS
 
@@ -93,8 +105,6 @@ gint32 j_message_get_4 (JMessage*);
 gint64 j_message_get_8 (JMessage*);
 gpointer j_message_get_n (JMessage*, gsize);
 gchar const* j_message_get_string (JMessage*);
-
-gboolean j_message_fi_val_message_size(ssize_t, JMessage*);
 
 gboolean j_message_send (JMessage*, gpointer);
 gboolean j_message_receive (JMessage*, gpointer);

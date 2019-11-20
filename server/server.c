@@ -37,90 +37,20 @@
 #include <rdma/fi_errno.h> //translation error numbers
 
 #include <netinet/in.h> //for target address
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 //libfabric high level objects
-static fid_fabric* j_fabric;
-static fid_eq* j_pep_event_queue; //pep = passive endpoint
-static fid_pep* j_passive_endpoint;
+static struct fid_fabric* j_fabric;
+static struct fid_eq* j_pep_event_queue; //pep = passive endpoint
+static struct fid_pep* j_passive_endpoint;
 //libfabric config structures
-static fi_info* j_info;
+static struct fi_info* j_info;
 
 static volatile gint thread_count = 0;
 
 static JConfiguration* jd_configuration;
 
-static
-gboolean
-jd_signal (gpointer data)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	GMainLoop* main_loop = data;
-
-	if (g_main_loop_is_running(main_loop))
-	{
-		g_main_loop_quit(main_loop);
-	}
-
-	return FALSE;
-}
-
-static
-gboolean
-jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	JMemoryChunk* memory_chunk;
-	g_autoptr(JMessage) message = NULL;
-	JStatistics* statistics;
-	guint64 memory_chunk_size;
-
-	(void)service;
-	(void)source_object;
-	(void)user_data;
-
-	j_helper_set_nodelay(connection, TRUE);
-
-	statistics = j_statistics_new(TRUE);
-	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
-	memory_chunk = j_memory_chunk_new(memory_chunk_size);
-
-	message = j_message_new(J_MESSAGE_NONE, 0);
-
-	while (j_message_receive(message, connection))
-	{
-		jd_handle_message(message, connection, memory_chunk, memory_chunk_size, statistics);
-	}
-
-	{
-		guint64 value;
-
-		g_mutex_lock(jd_statistics_mutex);
-
-		value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
-		j_statistics_add(jd_statistics, J_STATISTICS_FILES_CREATED, value);
-		value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
-		j_statistics_add(jd_statistics, J_STATISTICS_FILES_DELETED, value);
-		value = j_statistics_get(statistics, J_STATISTICS_SYNC);
-		j_statistics_add(jd_statistics, J_STATISTICS_SYNC, value);
-		value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
-		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_READ, value);
-		value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
-		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
-		value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
-		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
-		value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
-		j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
-
-		g_mutex_unlock(jd_statistics_mutex);
-	}
-
-	j_memory_chunk_free(memory_chunk);
-	j_statistics_free(statistics);
-
-	return TRUE;
-}
 
 static
 gboolean
@@ -175,38 +105,38 @@ jd_daemon (void)
 
 //TODO compare function for different fi_infos and domains to minimize amount of used fabric ressources
 static
-jboolean
-jd_compare_domain_infos(fid_info* info1, fid_info* info2)
+gboolean
+jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 {
-	jboolean ret FALSE;
-	fi_domain_attr* domain_attr1 = info1->domain_attr;
-	fi_domain_attr* domain_attr2 = info2->domain_attr;
+	gboolean ret = FALSE;
+	struct fi_domain_attr* domain_attr1 = info1->domain_attr;
+	struct fi_domain_attr* domain_attr2 = info2->domain_attr;
 
 	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end; //TODO fix char compare
-	if(domain_attr1.threading != domain_attr2.threading) goto end;
-	if(domain_attr1.control_progress != domain_attr2.control_progress) goto end;
-	if(domain_attr1.data_progress != domain_attr2.data_progress) goto end;
-	if(domain_attr1.ressource_mgmt != domain_attr2.ressource_mgmt) goto end;
-	if(domain_attr1.av_type != domain_attr2.av_type) goto end;
-	if(domain_attr1.mr_mode != domain_attr2.mr_mode) goto end;
-	if(domain_attr1.mr_key_size != domain_attr2.mr_key_size) goto end;
-	if(domain_attr1.cq_data_size != domain_attr2.cq_data_size) goto end;
-	if(domain_attr1.cq_cnt != domain_attr2.cq_cnt) goto end;
-	if(domain_attr1.ep_cnt != domain_attr2.ep_cnt) goto end;
-	if(domain_attr1.tx_ctx_cnt != domain_attr2.tx_ctx_cnt) goto end;
-	if(domain_attr1.rx_ctx_cnt != domain_attr2.rx_ctx_cnt) goto end;
-	if(domain_attr1.max_ep_tx_ctx != domain_attr2.max_ep_rx_ctx) goto end;
-	if(domain_attr1.max_ep_rx_ctx != domain_attr2.max_ep_rx_ctx) goto end;
-	if(domain_attr1.max_ep_srx_ctx != domain_attr2.max_ep_srx_ctx) goto end;
-	if(domain_attr1.max_ep_stx_ctx != domain_attr2.max_ep_stx_ctx) goto end;
-	if(domain_attr1.cntr_cnt != domain_attr2.cntr_cnt) goto end;
-	if(domain_attr1.mr_iov_limit != domain_attr2.mr_iov_limit) goto end;
-	if(domain_attr1.caps != domain_attr2.caps) goto end;
-	if(domain_attr1.mode != domain_attr2.mode) goto end;
+	if(domain_attr1->threading != domain_attr2->threading) goto end;
+	if(domain_attr1->control_progress != domain_attr2->control_progress) goto end;
+	if(domain_attr1->data_progress != domain_attr2->data_progress) goto end;
+	if(domain_attr1->resource_mgmt != domain_attr2->resource_mgmt) goto end;
+	if(domain_attr1->av_type != domain_attr2->av_type) goto end;
+	if(domain_attr1->mr_mode != domain_attr2->mr_mode) goto end;
+	if(domain_attr1->mr_key_size != domain_attr2->mr_key_size) goto end;
+	if(domain_attr1->cq_data_size != domain_attr2->cq_data_size) goto end;
+	if(domain_attr1->cq_cnt != domain_attr2->cq_cnt) goto end;
+	if(domain_attr1->ep_cnt != domain_attr2->ep_cnt) goto end;
+	if(domain_attr1->tx_ctx_cnt != domain_attr2->tx_ctx_cnt) goto end;
+	if(domain_attr1->rx_ctx_cnt != domain_attr2->rx_ctx_cnt) goto end;
+	if(domain_attr1->max_ep_tx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
+	if(domain_attr1->max_ep_rx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
+	if(domain_attr1->max_ep_srx_ctx != domain_attr2->max_ep_srx_ctx) goto end;
+	if(domain_attr1->max_ep_stx_ctx != domain_attr2->max_ep_stx_ctx) goto end;
+	if(domain_attr1->cntr_cnt != domain_attr2->cntr_cnt) goto end;
+	if(domain_attr1->mr_iov_limit != domain_attr2->mr_iov_limit) goto end;
+	if(domain_attr1->caps != domain_attr2->caps) goto end;
+	if(domain_attr1->mode != domain_attr2->mode) goto end;
 	//if(domain_attr1->auth_key != domain_attr2->auth_key) goto end; //PERROR: wrong comparison
-	if(domain_attr1.auth_key_size != domain_attr2.auth_key_size) goto end;
-	if(domain_attr1.max_err_data != domain_attr2.max_err_data) goto end;
-	if(domain_attr1.mr_cnt != domain_attr2.mr_cnt) goto end;
+	if(domain_attr1->auth_key_size != domain_attr2->auth_key_size) goto end;
+	if(domain_attr1->max_err_data != domain_attr2->max_err_data) goto end;
+	if(domain_attr1->mr_cnt != domain_attr2->mr_cnt) goto end;
 
 	ret = TRUE;
 	end:
@@ -223,22 +153,25 @@ j_thread_function(gpointer connection_event_entry)
 	int error = 0;
 	uint32_t event = 0;
 
-	(fi_eq_cm_entry*) connection_event_entry;
-	fi_info* info = connection_event_entry->info;
-	fid_domain* domain;
-	fid_eq* event_queue;
-	fid_ep* endpoint;
-	fid_cq* transmit_queue;
-	fid_cq* receive_queue;
+	struct fi_info* info;
+	struct fid_domain* domain;
+	struct fid_eq* event_queue;
+	struct fid_ep* endpoint;
+	struct fid_cq* transmit_queue;
+	struct fid_cq* receive_queue;
 
-	fi_eq_cm_entry* event_entry;
-	fi_eq_err_entry event_queue_err_entry;
+	struct fi_eq_cm_entry* event_entry;
+	struct fi_eq_err_entry event_queue_err_entry;
 
-	JEndpoint* jendpoint = {NULL, 0, NULL, NULL, NULL, NULL};
+	JEndpoint* jendpoint = {0};
 	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
 	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 	J_TRACE_FUNCTION(NULL);
+
+	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
+	info = event_entry->info;
+	event_entry = NULL;
 
 	//Building domain
 	error = fi_domain(j_fabric, info, &domain, NULL);
@@ -246,7 +179,7 @@ j_thread_function(gpointer connection_event_entry)
 	{
 		goto end;
 	}
-	error = fi_eq_open(j_fabric, &event_queue_attr, &event_queue, NULL)
+	error = fi_eq_open(j_fabric, &event_queue_attr, &event_queue, NULL);
 	if(error != 0)
 	{
 		goto end;
@@ -278,12 +211,12 @@ j_thread_function(gpointer connection_event_entry)
 	{
 		goto end;
 	}
-	error = fi_ep_bind(endpoint, &transmit_queue->fid, FI_TRANSMIT);
+	error = fi_ep_bind(endpoint, &(transmit_queue->fid), FI_TRANSMIT);
 	if(error != 0)
 	{
 		goto end;
 	}
-	error = fi_ep_bind(endpoint, &receive_queue->fid, FI_RECV);
+	error = fi_ep_bind(endpoint, &(receive_queue->fid), FI_RECV);
 	if(error != 0)
 	{
 		goto end;
@@ -304,90 +237,85 @@ j_thread_function(gpointer connection_event_entry)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_eq_readerr(cq, &event_queue_err_entry, 0);
+			error = fi_eq_readerr(event_queue, &event_queue_err_entry, 0);
 			if(error < 0)
 			{
 				g_critical("Something went horribly wrong reading Error Entry from event queu Error.\n Details:\n %s", fi_strerror(error));
 			}
-			g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry->err_data, NULL, NULL));
+			g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 		}
 	}
 
 	//build jendpoint
 	jendpoint->endpoint = endpoint;
-	jendpoint.max_msg_size = info->domain_attr.ep_cnt;
+	jendpoint->max_msg_size = info->domain_attr->ep_cnt;
 	jendpoint->event_queue = event_queue;
 	jendpoint->completion_queue_transmit = transmit_queue;
 	jendpoint->completion_queue_receive = receive_queue;
 
 	if(event == FI_CONNECTED)
 	{
-		loop_start:
-
-		JMemoryChunk* memory_chunk;
-		g_autoptr(JMessage) message = NULL;
-		JStatistics* statistics;
-		guint64 memory_chunk_size;
-
-		statistics = j_statistics_new(TRUE);
-		memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
-		memory_chunk = j_memory_chunk_new(memory_chunk_size);
-
-		message = j_message_new(J_MESSAGE_NONE, 0);
-
-		while (j_message_receive(message, jendpoint))
+		do
 		{
-			jd_handle_message(message, jendpoint, memory_chunk, memory_chunk_size, statistics);
-		}
+			JMemoryChunk* memory_chunk;
+			g_autoptr(JMessage) message;
+			JStatistics* statistics;
+			guint64 memory_chunk_size;
 
-		{
-			guint64 value;
+			message = NULL;
 
-			g_mutex_lock(jd_statistics_mutex);
+			statistics = j_statistics_new(TRUE);
+			memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
+			memory_chunk = j_memory_chunk_new(memory_chunk_size);
 
-			value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
-			j_statistics_add(jd_statistics, J_STATISTICS_FILES_CREATED, value);
-			value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
-			j_statistics_add(jd_statistics, J_STATISTICS_FILES_DELETED, value);
-			value = j_statistics_get(statistics, J_STATISTICS_SYNC);
-			j_statistics_add(jd_statistics, J_STATISTICS_SYNC, value);
-			value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
-			j_statistics_add(jd_statistics, J_STATISTICS_BYTES_READ, value);
-			value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
-			j_statistics_add(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
-			value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
-			j_statistics_add(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
-			value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
-			j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
+			message = j_message_new(J_MESSAGE_NONE, 0);
 
-			g_mutex_unlock(jd_statistics_mutex);
-		}
-
-		j_memory_chunk_free(memory_chunk);
-		j_statistics_free(statistics);
-
-		//TODO: read eq and complete loop
-		error = fi_eq_read(jendpoint->event_queue, &event, event_entry, sizeof(event_entry), 0);
-		if(error != 0)
-		{
-			if(error == -FI_EAVAIL)
+			while (j_message_receive(message, jendpoint))
 			{
-				error = fi_eq_readerr(cq, &event_queue_err_entry, 0);
-				if(fi_error < 0)
-				{
-					g_critical("Something went horribly wrong reading Error Entry from event queue Error.\n Details:\n %s", fi_strerror(error));
-				}
-				g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry->err_data, NULL, NULL));
+				jd_handle_message(message, jendpoint, memory_chunk, memory_chunk_size, statistics);
 			}
-		}
-		if(event == FI_SHUTDOWN) //TODOS or keys pressed. If keys pressed, send shutdown
-		{
-			goto end;
-		}
-		else
-		{
-			goto loop_start;
-		}
+
+			{
+				guint64 value;
+
+				g_mutex_lock(jd_statistics_mutex);
+
+				value = j_statistics_get(statistics, J_STATISTICS_FILES_CREATED);
+				j_statistics_add(jd_statistics, J_STATISTICS_FILES_CREATED, value);
+				value = j_statistics_get(statistics, J_STATISTICS_FILES_DELETED);
+				j_statistics_add(jd_statistics, J_STATISTICS_FILES_DELETED, value);
+				value = j_statistics_get(statistics, J_STATISTICS_SYNC);
+				j_statistics_add(jd_statistics, J_STATISTICS_SYNC, value);
+				value = j_statistics_get(statistics, J_STATISTICS_BYTES_READ);
+				j_statistics_add(jd_statistics, J_STATISTICS_BYTES_READ, value);
+				value = j_statistics_get(statistics, J_STATISTICS_BYTES_WRITTEN);
+				j_statistics_add(jd_statistics, J_STATISTICS_BYTES_WRITTEN, value);
+				value = j_statistics_get(statistics, J_STATISTICS_BYTES_RECEIVED);
+				j_statistics_add(jd_statistics, J_STATISTICS_BYTES_RECEIVED, value);
+				value = j_statistics_get(statistics, J_STATISTICS_BYTES_SENT);
+				j_statistics_add(jd_statistics, J_STATISTICS_BYTES_SENT, value);
+
+				g_mutex_unlock(jd_statistics_mutex);
+			}
+
+			j_memory_chunk_free(memory_chunk);
+			j_statistics_free(statistics);
+
+			//TODO: read eq and complete loop
+			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, sizeof(event_entry), 0);
+			if(error != 0)
+			{
+				if(error == -FI_EAVAIL)
+				{
+					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
+					if(error < 0)
+					{
+						g_critical("Something went horribly wrong reading Error Entry from event queue Error.\n Details:\n %s", fi_strerror(error));
+					}
+					g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				}
+			}
+		}while (event != FI_SHUTDOWN);
 	}
 
 
@@ -399,42 +327,37 @@ j_thread_function(gpointer connection_event_entry)
 	}
 	error = 0;
 
-	error = fi_freeinfo(info);
-	if(error != 0)
-	{
-		g_critical("Something went horribly wrong freeing info.\n Details:\n %s", fi_strerror(error));
-	}
-	error = 0;
+	fi_freeinfo(info);
 
-	error = fi_close(jendpoint->completion_queue_receive);
-	if(error != 0)
-	{
-		g_critical("Something went horribly wrong closing receive queue.\n Details:\n %s", fi_strerror(error));
-	}
-	error = 0;
-
-	error = fi_close(jendpoint->completion_queue_transmit);
-	if(error != 0)
-	{
-		g_critical("Something went horribly wrong closing transmition queue.\n Details:\n %s", fi_strerror(error));
-	}
-	error = 0;
-
-	error = fi_close(jendpoint->event_queue);
-	if(error != 0)
-	{
-		g_critical("Something went horribly wrong closing event queue.\n Details:\n %s", fi_strerror(error));
-	}
-	error = 0;
-
-	error = fi_close(jendpoint->endpoint);
+	error = fi_close(&(jendpoint->endpoint->fid));
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong closing endpoint.\n Details:\n %s", fi_strerror(error));
 	}
 	error = 0;
 
-	error = fi_close(domain);
+	error = fi_close(&(jendpoint->completion_queue_receive->fid));
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong closing receive queue.\n Details:\n %s", fi_strerror(error));
+	}
+	error = 0;
+
+	error = fi_close(&(jendpoint->completion_queue_transmit->fid));
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong closing transmition queue.\n Details:\n %s", fi_strerror(error));
+	}
+	error = 0;
+
+	error = fi_close(&(jendpoint->event_queue->fid));
+	if(error != 0)
+	{
+		g_critical("Something went horribly wrong closing event queue.\n Details:\n %s", fi_strerror(error));
+	}
+	error = 0;
+
+	error = fi_close(&(domain->fid));
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong.\n Details:\n %s", fi_strerror(error));
@@ -453,12 +376,12 @@ j_thread_function(gpointer connection_event_entry)
 */
 static
 void
-j_init_libfabric_ressources(fi_info* fi_hints, fi_eq_attr* event_queue_attr, int version, char* node, char* service, uint64_t flags)
+j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_queue_attr, const int version, const char* node, const char* service, uint64_t flags)
 {
 	int error = 0;
 
 	//get fi_info
-	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info)
+	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info);
 
 	if(error != 0)
 	{
@@ -495,14 +418,14 @@ j_init_libfabric_ressources(fi_info* fi_hints, fi_eq_attr* event_queue_attr, int
 	error = fi_passive_ep(j_fabric, j_info, &j_passive_endpoint, NULL);
 	if(error != 0)
 	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 	}
 	error = 0;
 
 	error = fi_pep_bind(j_passive_endpoint, &j_pep_event_queue->fid, 0);
 	if(error != 0)
 	{
-		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 	}
 	error = 0;
 	//TODO manipulate backlog size
@@ -536,12 +459,12 @@ main (int argc, char** argv)
 	g_autofree gchar* port_str = NULL;
 
 	int fi_error = 0;
-	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
 	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
-	fi_info* fi_hints = NULL; //config object
+	struct fi_info* fi_hints = NULL; //config object
 	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL}; //PERROR: Wrong formatting of event queue attributes
 
 	GOptionEntry entries[] = {
@@ -581,12 +504,12 @@ main (int argc, char** argv)
 	}
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	//define Fabric attributes
-	fi_hints.caps = FI_MSG | FI_SEND | FI_RECV;
+	fi_hints->caps = FI_MSG | FI_SEND | FI_RECV;
 	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
-	fi_hints->adr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
+	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
-	//fi_hints.mode = 0;
-	fi_hints->domain_attr.threading = FI_THREAD_FID; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	//fi_hints->mode = 0;
+	fi_hints->domain_attr->threading = FI_THREAD_FID; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
@@ -648,7 +571,7 @@ main (int argc, char** argv)
 	jd_statistics = j_statistics_new(FALSE);
 	g_mutex_init(jd_statistics_mutex);
 
-	fi_error = fi_listen(passive_endpoint);
+	fi_error = fi_listen(j_passive_endpoint);
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong setting passive Endpoint to listening.\n Details:\n %s", fi_strerror(fi_error));
@@ -660,20 +583,20 @@ main (int argc, char** argv)
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	do
 	{
-		uint32_t* event = 0;
-		fi_eq_err_entry event_queue_err_entry;
-		fi_eq_cm_entry event_entry;
-		fi_error = fi_eq_sread(j_pep_event_queue, event, &event_entry, 0, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
+		uint32_t event = 0;
+		struct fi_eq_err_entry event_queue_err_entry = {0};
+		struct fi_eq_cm_entry event_entry = {0};
+		fi_error = fi_eq_sread(j_pep_event_queue, &event, &event_entry, 0, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
 		if(fi_error != 0)
 		{
 			if(fi_error == -FI_EAVAIL)
 			{
-				fi_error = fi_eq_readerr(cq, &event_queue_err_entry, 0);
+				fi_error = fi_eq_readerr(j_pep_event_queue, &event_queue_err_entry, 0);
 				if(fi_error < 0)
 				{
 					g_critical("Something went horribly wrong reading Error Entry from event queu Error.\n Details:\n %s", fi_strerror(fi_error));
 				}
-				g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry->err_data, NULL, NULL));
+				g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
 		if(event == FI_CONNREQ)
@@ -681,32 +604,29 @@ main (int argc, char** argv)
 			g_atomic_int_inc (&thread_count);
 			//GThreadFunc thread_function = &j_thread_function;
 			//TODO use g_thread_new_try
-			g_thread_new(NULL, j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
+			g_thread_new(NULL, *j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
 		}
 		fi_error = 0;
 	} while(!g_atomic_int_compare_and_exchange (&thread_count, 0, 0));
 
-
-	fi_error = fi_close(j_pep_event_queue);
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error))
-	}
-	fi_error = fi_close(j_passive_endpoint);
+	fi_error = fi_close(&(j_passive_endpoint->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 	}
-	fi_error = fi_close(j_fabric);
+
+	fi_error = fi_close(&(j_pep_event_queue->fid));
+	if(fi_error != 0)
+	{
+		g_critical("Something went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error));
+	}
+
+	fi_error = fi_close(&(j_fabric->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing Fabric.\n Details:\n %s", fi_strerror(fi_error));
 	}
-	fi_error = fi_freeinfo(j_info);
-	if(fi_error != 0)
-	{
-		g_critical("Something went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
-	}
+	fi_freeinfo(j_info);
 
 	g_mutex_clear(jd_statistics_mutex);
 	j_statistics_free(jd_statistics);

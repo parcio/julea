@@ -32,6 +32,7 @@
 
 #include <core/jbackend.h>
 
+
 G_BEGIN_DECLS
 
 gpointer j_connection_pool_pop (JBackendType, guint);

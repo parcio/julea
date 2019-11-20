@@ -1,4 +1,4 @@
-j_fabric/*
+/*
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
  *
@@ -41,7 +41,10 @@ j_fabric/*
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
-#include <netinet/in.h> //for target address
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /**
  * \defgroup JConnectionPool Connection Pool
@@ -79,11 +82,11 @@ typedef struct JConnectionPool JConnectionPool;
 static JConnectionPool* j_connection_pool = NULL;
 
 //libfabric high level objects
-static fid_fabric* j_fabric;
-static fid_domain* j_domain;
-static fid_eq* j_domain_event_queue;
+static struct fid_fabric* j_fabric;
+static struct fid_domain* j_domain;
+static struct fid_eq* j_domain_event_queue;
 //libfabric config structures
-static fi_info* j_info;
+static struct fi_info* j_info;
 
 
 void
@@ -94,6 +97,19 @@ j_connection_pool_init (JConfiguration* configuration)
 	J_TRACE_FUNCTION(NULL);
 
 	JConnectionPool* pool;
+
+	//Parameter for fabric init
+	int error;
+	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
+	const char* service = "4711"; //target port (in future maybe not hardcoded)
+	uint64_t flags;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+
+	struct fi_info* fi_hints = {0}; //config object
+
+	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
+
+
 
 	g_return_if_fail(j_connection_pool == NULL);
 
@@ -128,16 +144,8 @@ j_connection_pool_init (JConfiguration* configuration)
 	g_atomic_pointer_set(&j_connection_pool, pool);
 
 //Init Libfabric Objects
-	//Parameter for fabric init
-	int error = 0;
-	int version = FI_VERSION(FI_MAJOR(1, 6); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
-	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
-
-	fi_info* fi_hints = NULL; //config object
-
-
+	error = 0;
+	flags = 0;
 
 	fi_hints = fi_allocinfo(); //initiated object is zeroed
 
@@ -147,15 +155,15 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
-	fi_hints.caps = FI_MSG | FI_SEND | FI_RECV;
+	fi_hints->caps = FI_MSG | FI_SEND | FI_RECV;
 	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
-	fi_hints->adr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
+	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
 
 	//inits j_info
 	//gives a linked list of available provider details into j_info
-	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_info)
+	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_info);
 	fi_freeinfo(fi_hints); //hints only used for config
 	if(error != 0)
 	{
@@ -203,7 +211,6 @@ j_connection_pool_init (JConfiguration* configuration)
 	//build event queue for domain
 	//TODO read event_queue attributes from julea config
 	//PERROR: Wrong formatting of event queue attributes
-	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
 	error = fi_eq_open(j_fabric, &event_queue_attr, &j_domain_event_queue, NULL);
 	if(error != 0)
 	{
@@ -234,6 +241,7 @@ j_connection_pool_fini (void)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	int error;
 	JConnectionPool* pool;
 
 	g_return_if_fail(j_connection_pool != NULL);
@@ -246,7 +254,8 @@ j_connection_pool_fini (void)
 	for (guint i = 0; i < pool->object_len; i++)
 	{
 		JEndpoint* endpoint;
-		int error = 0;
+		int error;
+		error = 0;
 
 		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
 		{
@@ -256,30 +265,30 @@ j_connection_pool_fini (void)
 				g_critical("Something went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_receive);
+
+			error = fi_close(&(endpoint->endpoint->fid));
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_transmit);
+			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->event_queue);
+			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
-
-			error = fi_close(endpoint->endpoint);
-			if(error != 0)
-			{
-				g_critical("Something went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
-			}
-			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -288,9 +297,9 @@ j_connection_pool_fini (void)
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
 		JEndpoint* endpoint;
-		int error = 0;
+		error = 0;
 
-		while ((connection = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
+		while ((endpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
 		{
 			error = fi_shutdown(endpoint->endpoint,0);
 			if(error != 0)
@@ -298,30 +307,31 @@ j_connection_pool_fini (void)
 				g_critical("Something went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_receive);
+			error = fi_close(&(endpoint->endpoint->fid));
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+
+			//PERROR: you should be able to give a complete object into fi_close, but lets see whether this works too
+			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_transmit);
+			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->event_queue);
+			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->endpoint);
-			if(error != 0)
-			{
-				g_critical("Something went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
-			}
-			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -330,9 +340,9 @@ j_connection_pool_fini (void)
 	for (guint i = 0; i < pool->db_len; i++)
 	{
 		JEndpoint* endpoint;
-		int error = 0;
+		error = 0;
 
-		while ((connection = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
+		while ((endpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
 		{
 			error = fi_shutdown(endpoint->endpoint,0);
 			if(error != 0)
@@ -340,30 +350,29 @@ j_connection_pool_fini (void)
 				g_critical("Something went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_receive);
+			error = fi_close(&(endpoint->endpoint->fid));
+			if(error != 0)
+			{
+				g_critical("Something went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
+			}
+
+			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->completion_queue_transmit);
+			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 
-			error = fi_close(endpoint->event_queue);
+			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
-
-			error = fi_close(endpoint->endpoint);
-			if(error != 0)
-			{
-				g_critical("Something went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
-			}
-			g_object_unref(endpoint);
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -371,21 +380,21 @@ j_connection_pool_fini (void)
 
 	j_configuration_unref(pool->configuration);
 
-	int error = 0;
+	error = 0;
 
-	error = fi_close(j_domain_event_queue);
+	error = fi_close(&(j_domain_event_queue->fid));
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
 	}
 
-	error = fi_close(j_domain);
+	error = fi_close(&(j_domain->fid));
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
 	}
 
-	error = fi_close(j_fabric)
+	error = fi_close(&(j_fabric->fid));
 	if(error != 0)
 	{
 		g_warning("Something went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
@@ -425,22 +434,24 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	{
 		if ((guint)g_atomic_int_add(count, 1) < j_connection_pool->max_count)
 		{
-			endpoint = NULL;
+			uint32_t eq_event;
+			int error;
 
-			int error = 0;
+			struct fid_ep* tmp_endpoint;
+			struct fid_eq* tmp_event_queue;
+			struct fid_cq* tmp_receive_queue;
+			struct fid_cq* tmp_transmit_queue;
 
 			//Endpoint related definitions
 			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
 			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
-			fid_ep* tmp_endpoint = NULL;
-			fid_eq* tmp_event_queue = NULL;
-			fid_cq* tmp_receive_queue = NULL;
-			fid_cq* tmp_transmit_queue = NULL;
 
 			//connection related definitions
 			struct sockaddr_in address = {0};
-			uint32_t* eq_event;
+
+			endpoint = NULL;
+			error = 0;
 
 			//Test Message related definitions
 			g_autoptr(JMessage) message = NULL;
@@ -504,17 +515,17 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			//Connect Endpoint to server via port 4711
 			address.sin_family = AF_INET;
 			address.sin_port = htons(4711);
-			address.sin_addr = inet_aton("127.0.0.1", &(address.sin_addr.s_addr)); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
+			inet_aton("127.0.0.1", &(address.sin_addr.s_addr)); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
 			//PERROR: User specified data maybe required to be set
-			error = fi_connect(tmp_endpoint, &address, NULL, NULL);
+			error = fi_connect(tmp_endpoint, &address, NULL, 0);
 			if(error != 0)
 			{
 				goto ConnectionTest;
 			}
 
 			//check whether connection accepted
-			error = (int) fi_eq_read(tmp_endpoint, eq_event, NULL, 0, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			error = (int) fi_eq_read(tmp_event_queue, &eq_event, NULL, 0, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
 			if(error != 0)
 			{
 				goto ConnectionTest;
@@ -527,7 +538,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//bind endpoint to the tmp_structures
 			endpoint->endpoint = tmp_endpoint;
-			endpoint->max_msg_size = fi_info->domain_attr.ep_cnt;
+			endpoint->max_msg_size = j_info->domain_attr->ep_cnt;
 			endpoint->event_queue = tmp_event_queue;
 			endpoint->completion_queue_receive = tmp_receive_queue;
 			endpoint->completion_queue_transmit = tmp_transmit_queue;
@@ -536,7 +547,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			ConnectionTest:
 			if (error != 0)
 			{
-				g_critical("%s", *fi_strerror((int)error));
+				g_critical("%s", fi_strerror((int)error));
 			}
 
 			if(endpoint == NULL)

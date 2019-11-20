@@ -36,6 +36,9 @@
 #include <jsemantics.h>
 #include <jtrace.h>
 
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h> //includes cqs and
+#include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
 
@@ -165,15 +168,17 @@ struct JMessage
 
 
 //TODO: possibly replace through a context structure given to the endpoint (but apparently 0 retrieve function in libfabric)
+/*
 struct JEndpoint
 {
-	fid_ep* endpoint;
+	struct fid_ep* endpoint;
 	ssize_t max_msg_size; //TODO maybe replace with fi_info-struct
-	fid_eq* event_queue;
-	fid_cq*	completion_queue_transmit;
-	fid_cq* completion_queue_receive;
+	struct fid_eq* event_queue;
+	struct fid_cq*	completion_queue_transmit;
+	struct fid_cq* completion_queue_receive;
 };
 typedef struct JEndpoint JEndpoint;
+*/
 
 /**
  * Returns a message's header.
@@ -329,6 +334,26 @@ j_message_ensure_size (JMessage* message, gsize length)
 	position = message->current - message->data;
 	message->data = g_realloc(message->data, message->size);
 	message->current = message->data + position;
+}
+
+
+/**
+*
+*checks whether size of the whole j_message is in the boundaries set by the maximal Message size of the used libfabric provider
+*
+*
+*\return TRUE if Message size is in boundaries, FALSE if not
+*/
+static
+gboolean
+j_message_fi_val_message_size(ssize_t max_msg_size, JMessage* message)
+{
+	gboolean ret = FALSE;
+	if( ((ssize_t)(sizeof(JMessageHeader) + j_message_length(message))) <= max_msg_size)
+	{
+		ret = TRUE;
+	}
+	return ret;
 }
 
 /**
@@ -808,23 +833,7 @@ j_message_get_string (JMessage* message)
 	return ret;
 }
 
-/**
-*
-*checks whether size of the whole j_message is in the boundaries set by the maximal Message size of the used libfabric provider
-*
-*
-*\return TRUE if Message size is in boundaries, FALSE if not
-*/
-static
-gboolean
-j_message_fi_val_message_size(ssize_t max_msg_size, JMessage* message){
-	gboolean ret = FALSE;
-	if((sizeof(JMessageHeader) + j_message_length(message)) <= max_msg_size)
-	{
-		ret = TRUE;
-	}
-	return ret;
-}
+
 
 /**
  * Reads a message from the network.
@@ -902,13 +911,16 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	gboolean ret = FALSE;
 
-	fid_ep* endpoint = j_endpoint->endpoint;
+	struct fid_ep* endpoint;
+	ssize_t error;
 
-	ssize_t error = 0;
-	gchar* custom_error_msg;
+	char* custom_error_msg;
 
 	struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
+
+	error = 0;
+	endpoint = j_endpoint->endpoint;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
@@ -926,15 +938,15 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
 	}
 	error = 0;
 
 	//TODO splice the message, not just report an error
-	if(!j_message_fi_val_message_size(endpoint->max_msg_size, message))
+	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		custom_error_msg = "Message bigger than provider max_msg_size";
 		goto end;
@@ -953,8 +965,8 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
 	}
@@ -975,7 +987,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	{
 		if(error!= 0)
 			{
-				g_critical("%s", *fi_strerror((int)error));
+				g_critical("%s", fi_strerror((int)error));
 			}
 		else
 			{
@@ -1004,11 +1016,11 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	gboolean ret = FALSE;
 
-	fid_ep* endpoint = j_endpoint->endpoint;
+	struct fid_ep* endpoint = j_endpoint->endpoint;
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
-	gchar* custom_error_msg;
+	char* custom_error_msg;
 
   struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
@@ -1029,8 +1041,8 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+			error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
+			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
 	}
@@ -1060,8 +1072,8 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 			{
 				if(error == -FI_EAVAIL)
 				{
-					error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
-					g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+					error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
+					g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					goto end;
 				}
 			}
@@ -1076,7 +1088,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	{
 		if(error!= 0)
 		{
-			g_critical("%s", *fi_strerror((int)error));
+			g_critical("%s", fi_strerror((int)error));
 		}
 		else
 		{

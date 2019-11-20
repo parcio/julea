@@ -22,6 +22,14 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h> //includes cqs and
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
+
+
 #include <julea.h>
 
 #include "server.h"
@@ -217,8 +225,8 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					guint64 bytes_written = 0;
 
 					ssize_t error = 0;
-					struct fi_cq_msg_entry completion_queue_data;
-					struct fi_cq_err_entry completion_queue_err_entry;
+					struct fi_cq_msg_entry completion_queue_data = {0};
+					struct fi_cq_err_entry completion_queue_err_entry = {0};
 
 
 					length = j_message_get_8(message);
@@ -240,19 +248,19 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					error = fi_recv(endpoint->endpoint, buf, (size_t) length, NULL, 0, NULL);
 					if(error!= 0)
 					{
-						g_critical("%s", *fi_strerror((int)error));
+						g_critical("%s", fi_strerror((int)error));
 					}
 					error = fi_cq_read(endpoint->completion_queue_transmit, &completion_queue_data, 1);
 					if(error != 0)
 					{
 						if(error == -FI_EAGAIN)
 						{
-							error = fi_cq_readerr(cq, &completion_queue_err_entry, 0);
-							g_critical("%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry->err_data, NULL, NULL));
+							error = fi_cq_readerr(endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
+							g_critical("%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 						}
 						if(error < 0)
 						{
-							g_critical("%s", *fi_strerror((int)error));
+							g_critical("%s", fi_strerror((int)error));
 						}
 					}
 

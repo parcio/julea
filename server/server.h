@@ -27,6 +27,12 @@
 #include <jmessage.h>
 #include <jstatistics.h>
 
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h> //includes cqs and
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
+
+
 G_GNUC_INTERNAL JStatistics* jd_statistics;
 G_GNUC_INTERNAL GMutex jd_statistics_mutex[1];
 
@@ -34,6 +40,6 @@ G_GNUC_INTERNAL JBackend* jd_object_backend;
 G_GNUC_INTERNAL JBackend* jd_kv_backend;
 G_GNUC_INTERNAL JBackend* jd_db_backend;
 
-G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
+G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
 
 #endif
