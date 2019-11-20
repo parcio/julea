@@ -24,6 +24,12 @@
 
 #include <julea.h>
 
+static bson_t* schema_cache = NULL;
+static bson_t* entry_cache = NULL;
+static guint32 entry_counter = 0;
+
+G_LOCK_DEFINE_STATIC(global_lock);
+
 static
 gboolean
 backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
@@ -58,6 +64,17 @@ backend_schema_create (gpointer batch, gchar const* name, bson_t const* schema, 
 	(void)name;
 	(void)schema;
 
+	G_LOCK(global_lock);
+
+	if (schema_cache != NULL)
+	{
+		bson_destroy(schema_cache);
+	}
+
+	schema_cache = bson_copy(schema);
+
+	G_UNLOCK(global_lock);
+
 	return TRUE;
 }
 
@@ -65,12 +82,27 @@ static
 gboolean
 backend_schema_get (gpointer batch, gchar const* name, bson_t* schema, GError** error)
 {
+	gboolean ret = FALSE;
+
 	(void)error;
 	(void)batch;
 	(void)name;
 	(void)schema;
 
-	return TRUE;
+	G_LOCK(global_lock);
+
+	if (schema_cache != NULL)
+	{
+		// FIXME schema is uninitialized if backend is running on the server but initialized if running on the client
+		// bson_copy_to requires the destination to be uninitialized
+		//bson_destroy(schema);
+		bson_copy_to(schema_cache, schema);
+		ret = TRUE;
+	}
+
+	G_UNLOCK(global_lock);
+
+	return ret;
 }
 
 static
@@ -80,6 +112,16 @@ backend_schema_delete (gpointer batch, gchar const* name, GError** error)
 	(void)error;
 	(void)batch;
 	(void)name;
+
+	G_LOCK(global_lock);
+
+	if (schema_cache != NULL)
+	{
+		bson_destroy(schema_cache);
+		schema_cache = NULL;
+	}
+
+	G_UNLOCK(global_lock);
 
 	return TRUE;
 }
@@ -93,6 +135,18 @@ backend_insert (gpointer batch, gchar const* name, bson_t const* metadata, bson_
 	(void)name;
 	(void)metadata;
 	(void)id;
+
+	G_LOCK(global_lock);
+
+	if (entry_cache != NULL)
+	{
+		bson_destroy(entry_cache);
+	}
+
+	entry_cache = bson_copy(metadata);
+	entry_counter++;
+
+	G_UNLOCK(global_lock);
 
 	return TRUE;
 }
@@ -119,6 +173,18 @@ backend_delete (gpointer batch, gchar const* name, bson_t const* selector, GErro
 	(void)name;
 	(void)selector;
 
+	G_LOCK(global_lock);
+
+	if (entry_cache != NULL)
+	{
+		bson_destroy(entry_cache);
+		entry_cache = NULL;
+	}
+
+	entry_counter--;
+
+	G_UNLOCK(global_lock);
+
 	return TRUE;
 }
 
@@ -126,11 +192,32 @@ static
 gboolean
 backend_query (gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
+	guint32* counter;
+
 	(void)error;
 	(void)batch;
 	(void)name;
 	(void)selector;
-	(void)iterator;
+
+	counter = g_new(guint32, 1);
+	*iterator = counter;
+
+	G_LOCK(global_lock);
+
+	if (entry_cache == NULL)
+	{
+		*counter = 0;
+	}
+	else if (selector != NULL)
+	{
+		*counter = 1;
+	}
+	else
+	{
+		*counter = entry_counter;
+	}
+
+	G_UNLOCK(global_lock);
 
 	return TRUE;
 }
@@ -139,11 +226,32 @@ static
 gboolean
 backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
 {
+	gboolean ret = TRUE;
+	guint32* counter = iterator;
+
 	(void)error;
 	(void)iterator;
 	(void)metadata;
 
-	return TRUE;
+	G_LOCK(global_lock);
+
+	if (*counter <= 0 || entry_cache == NULL)
+	{
+		g_free(counter);
+		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
+		ret = FALSE;
+		goto end;
+	}
+
+	(*counter)--;
+	// bson_copy_to requires the destination to be uninitialized
+	bson_destroy(metadata);
+	bson_copy_to(entry_cache, metadata);
+
+end:
+	G_UNLOCK(global_lock);
+
+	return ret;
 }
 
 static
@@ -159,9 +267,18 @@ static
 void
 backend_fini (void)
 {
+	if (schema_cache != NULL)
+	{
+		bson_destroy(schema_cache);
+	}
+
+	if (entry_cache != NULL)
+	{
+		bson_destroy(entry_cache);
+	}
 }
 
-static JBackend null_backend = {
+static JBackend memory_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.db = {
@@ -184,5 +301,5 @@ G_MODULE_EXPORT
 JBackend*
 backend_info (void)
 {
-	return &null_backend;
+	return &memory_backend;
 }

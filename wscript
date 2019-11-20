@@ -384,6 +384,8 @@ def configure(ctx):
 		check_and_add_flags(ctx, '--coverage', True, ['cflags', 'ldflags'])
 
 	if ctx.options.debug:
+		check_and_add_flags(ctx, ['-Og', '-g'])
+
 		check_and_add_flags(ctx, [
 			'-Waggregate-return',
 			'-Wcast-align',
@@ -415,18 +417,16 @@ def configure(ctx):
 			'-Wuninitialized',
 			'-Wwrite-strings'
 		], False)
-		check_and_add_flags(ctx, '-ggdb')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
+
+		ctx.define('JULEA_DEBUG', 1)
 	else:
 		check_and_add_flags(ctx, '-O2')
 
 	ctx.define('G_LOG_USE_STRUCTURED', 1)
-
-	if ctx.options.debug:
-		ctx.define('JULEA_DEBUG', 1)
 
 	backend_path = Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env)
 	ctx.define('JULEA_BACKEND_PATH', backend_path)
@@ -587,7 +587,7 @@ def build(ctx):
 			install_path='${LIBDIR}/julea/backend/kv'
 		)
 
-	db_backends = ['null']
+	db_backends = ['null', 'memory']
 
 	if ctx.env.JULEA_SQLITE:
 		db_backends.append('sqlite')
