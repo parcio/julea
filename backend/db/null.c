@@ -33,6 +33,9 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* ba
 	(void)semantics;
 	(void)namespace;
 
+	// Return something != NULL
+	*batch = batch;
+
 	return TRUE;
 }
 
