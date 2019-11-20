@@ -234,7 +234,7 @@ backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
 
 	if (*counter <= 0 || entry_cache == NULL)
 	{
-		g_free(iterator);
+		g_free(counter);
 		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
 		ret = FALSE;
 		goto end;
@@ -262,6 +262,15 @@ static
 void
 backend_fini (void)
 {
+	if (schema_cache != NULL)
+	{
+		bson_destroy(schema_cache);
+	}
+
+	if (entry_cache != NULL)
+	{
+		bson_destroy(entry_cache);
+	}
 }
 
 static JBackend null_backend = {
