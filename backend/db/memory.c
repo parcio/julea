@@ -24,16 +24,11 @@
 
 #include <julea.h>
 
+static bson_t* schema_cache = NULL;
+static bson_t* entry_cache = NULL;
+static guint32 entry_counter = 0;
+
 G_LOCK_DEFINE_STATIC(global_lock);
-
-static
-bson_t* schema_cache = NULL;
-
-static
-bson_t* entry_cache = NULL;
-
-static
-guint entry_counter = 0;
 
 static
 gboolean
@@ -59,6 +54,7 @@ backend_batch_execute (gpointer batch, GError** error)
 
 	return TRUE;
 }
+
 static
 gboolean
 backend_schema_create (gpointer batch, gchar const* name, bson_t const* schema, GError** error)
@@ -69,11 +65,14 @@ backend_schema_create (gpointer batch, gchar const* name, bson_t const* schema, 
 	(void)schema;
 
 	G_LOCK(global_lock);
-	if (schema_cache)
+
+	if (schema_cache != NULL)
 	{
 		bson_destroy(schema_cache);
 	}
+
 	schema_cache = bson_copy(schema);
+
 	G_UNLOCK(global_lock);
 
 	return TRUE;
@@ -83,18 +82,24 @@ static
 gboolean
 backend_schema_get (gpointer batch, gchar const* name, bson_t* schema, GError** error)
 {
+	gboolean ret = FALSE;
+
 	(void)error;
 	(void)batch;
 	(void)name;
 	(void)schema;
 
-	if (schema_cache)
+	G_LOCK(global_lock);
+
+	if (schema_cache != NULL)
 	{
 		bson_copy_to(schema_cache, schema);
-		return TRUE;
+		ret = TRUE;
 	}
 
-	return FALSE;
+	G_UNLOCK(global_lock);
+
+	return ret;
 }
 
 static
@@ -106,11 +111,13 @@ backend_schema_delete (gpointer batch, gchar const* name, GError** error)
 	(void)name;
 
 	G_LOCK(global_lock);
-	if (schema_cache)
+
+	if (schema_cache != NULL)
 	{
 		bson_destroy(schema_cache);
 		schema_cache = NULL;
 	}
+
 	G_UNLOCK(global_lock);
 
 	return TRUE;
@@ -127,12 +134,15 @@ backend_insert (gpointer batch, gchar const* name, bson_t const* metadata, bson_
 	(void)id;
 
 	G_LOCK(global_lock);
-	if (entry_cache)
+
+	if (entry_cache != NULL)
 	{
 		bson_destroy(entry_cache);
 	}
+
 	entry_cache = bson_copy(metadata);
 	entry_counter++;
+
 	G_UNLOCK(global_lock);
 
 	return TRUE;
@@ -161,12 +171,15 @@ backend_delete (gpointer batch, gchar const* name, bson_t const* selector, GErro
 	(void)selector;
 
 	G_LOCK(global_lock);
-	if (entry_cache)
+
+	if (entry_cache != NULL)
 	{
 		bson_destroy(entry_cache);
 		entry_cache = NULL;
 	}
+
 	entry_counter--;
+
 	G_UNLOCK(global_lock);
 
 	return TRUE;
@@ -176,57 +189,64 @@ static
 gboolean
 backend_query (gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
-	guint32* query_counter_local = *iterator = g_new(guint32, 1);
+	guint32* counter;
 
 	(void)error;
 	(void)batch;
 	(void)name;
 	(void)selector;
-	(void)iterator;
 
-	if (!entry_cache)
+	counter = g_new(guint32, 1);
+	*iterator = counter;
+
+	G_LOCK(global_lock);
+
+	if (entry_cache == NULL)
 	{
-		*query_counter_local = 0;
+		*counter = 0;
 	}
-	else if (selector)
+	else if (selector != NULL)
 	{
-		*query_counter_local = 1;
+		*counter = 1;
 	}
 	else
 	{
-		*query_counter_local = entry_counter;
+		*counter = entry_counter;
 	}
 
-	if (!*query_counter_local)
-	{
-		g_free(query_counter_local);
-		*iterator = NULL;
-		return FALSE;
-	}
+	G_UNLOCK(global_lock);
 
 	return TRUE;
 }
+
 static
 gboolean
 backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
 {
-	guint32* query_counter_local = iterator;
+	gboolean ret = TRUE;
+	guint32* counter = iterator;
 
 	(void)error;
 	(void)iterator;
 	(void)metadata;
 
-	if ((*query_counter_local <= 0) || (!entry_cache))
+	G_LOCK(global_lock);
+
+	if (*counter <= 0 || entry_cache == NULL)
 	{
 		g_free(iterator);
 		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	}
 
-	(*query_counter_local)--;
+	(*counter)--;
 	bson_copy_to(entry_cache, metadata);
 
-	return TRUE;
+end:
+	G_UNLOCK(global_lock);
+
+	return ret;
 }
 
 static
