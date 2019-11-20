@@ -16,10 +16,15 @@ compiler:
   - gcc
   - clang
 env:
+  # Default
   - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=sqlite
+  # Object backends
   - JULEA_OBJECT=gio   JULEA_KV=lmdb    JULEA_DB=sqlite
+  # KV backends
   - JULEA_OBJECT=posix JULEA_KV=leveldb JULEA_DB=sqlite
   - JULEA_OBJECT=posix JULEA_KV=sqlite  JULEA_DB=sqlite
+  # DB backends
+  - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=memory
 # FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking

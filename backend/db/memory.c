@@ -93,6 +93,8 @@ backend_schema_get (gpointer batch, gchar const* name, bson_t* schema, GError** 
 
 	if (schema_cache != NULL)
 	{
+		// bson_copy_to requires the destination to be uninitialized
+		bson_destroy(schema);
 		bson_copy_to(schema_cache, schema);
 		ret = TRUE;
 	}
@@ -241,6 +243,8 @@ backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
 	}
 
 	(*counter)--;
+	// bson_copy_to requires the destination to be uninitialized
+	bson_destroy(metadata);
 	bson_copy_to(entry_cache, metadata);
 
 end:
