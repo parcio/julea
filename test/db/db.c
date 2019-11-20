@@ -114,6 +114,136 @@ test_db_schema_create_delete (void)
 
 static
 void
+test_db_entry_new_free (void)
+{
+	guint const n = 100000;
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_autoptr(GError) error = NULL;
+		g_autoptr(JDBEntry) entry = NULL;
+		g_autoptr(JDBSchema) schema = NULL;
+
+		schema = j_db_schema_new("test-ns", "test-schema", &error);
+		g_assert_nonnull(schema);
+		g_assert_no_error(error);
+
+		entry = j_db_entry_new(schema, &error);
+		g_assert_nonnull(entry);
+		g_assert_no_error(error);
+	}
+}
+
+static
+void
+test_db_entry_insert_update_delete (void)
+{
+	guint const n = 1000;
+
+	gchar const* file = "demo.bp";
+	guint64 dim = 4;
+
+	g_autoptr(GError) error = NULL;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	g_autoptr(JDBEntry) delete_entry = NULL;
+	g_autoptr(JDBEntry) update_entry = NULL;
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBSelector) selector = NULL;
+	gboolean ret;
+
+	// FIXME namespace and name are not properly checked, "-" causes errors
+	schema = j_db_schema_new("test_ns", "test_schema", &error);
+	g_assert_nonnull(schema);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "file", J_DB_TYPE_STRING, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "dimensions", J_DB_TYPE_UINT64, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_create(schema, batch, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_autoptr(JDBEntry) entry = NULL;
+
+		entry = j_db_entry_new(schema, &error);
+		g_assert_nonnull(entry);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "file", file, strlen(file), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "dimensions", &dim, sizeof(dim), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_insert(entry, batch, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_batch_execute(batch);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+	}
+
+	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector);
+	g_assert_no_error(error);
+
+	ret = j_db_selector_add_field(selector, "file", J_DB_SELECTOR_OPERATOR_EQ, file, strlen(file), &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	update_entry = j_db_entry_new(schema, &error);
+	g_assert_nonnull(update_entry);
+	g_assert_no_error(error);
+
+	dim = 3;
+	ret = j_db_entry_set_field(update_entry, "dimensions", &dim, sizeof(dim), &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_entry_update(update_entry, selector, batch, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	delete_entry = j_db_entry_new(schema, &error);
+	g_assert_nonnull(delete_entry);
+	g_assert_no_error(error);
+
+	ret = j_db_entry_delete(delete_entry, selector, batch, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_delete(schema, batch, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+}
+
+static
+void
 schema_create (void)
 {
 	g_autoptr(GError) error = NULL;
@@ -392,7 +522,10 @@ test_db_all (void)
 void
 test_db (void)
 {
+	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);
 	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
+	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);
+	g_test_add_func("/db/entry/insert_update_delete", test_db_entry_insert_update_delete);
 	g_test_add_func("/db/all", test_db_all);
 }
