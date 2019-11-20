@@ -170,6 +170,7 @@ setup_stop ()
 		if test "${host}" = "${HOSTNAME}"
 		then
 			killall --verbose julea-server || true
+			break
 		fi
 	done
 }

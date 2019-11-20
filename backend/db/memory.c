@@ -278,7 +278,7 @@ backend_fini (void)
 	}
 }
 
-static JBackend null_backend = {
+static JBackend memory_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.db = {
@@ -301,5 +301,5 @@ G_MODULE_EXPORT
 JBackend*
 backend_info (void)
 {
-	return &null_backend;
+	return &memory_backend;
 }
