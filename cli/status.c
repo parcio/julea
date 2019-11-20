@@ -20,8 +20,6 @@
 
 #include "cli.h"
 
-#include <item/jitem-internal.h>
-
 gboolean
 j_cmd_status (gchar const** arguments)
 {

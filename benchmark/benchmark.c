@@ -24,8 +24,6 @@
 
 #include <julea.h>
 
-#include <jhelper-internal.h>
-
 #include "benchmark.h"
 
 static gchar* opt_machine_separator = NULL;

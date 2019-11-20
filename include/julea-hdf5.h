@@ -25,4 +25,6 @@
 
 #include <hdf5/jhdf5.h>
 
+#undef JULEA_HDF5_H
+
 #endif

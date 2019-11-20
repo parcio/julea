@@ -27,4 +27,6 @@
 #include <kv/jkv-iterator.h>
 #include <kv/jkv-uri.h>
 
+#undef JULEA_KV_H
+
 #endif

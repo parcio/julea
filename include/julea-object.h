@@ -28,4 +28,6 @@
 #include <object/jobject-iterator.h>
 #include <object/jobject-uri.h>
 
+#undef JULEA_OBJECT_H
+
 #endif

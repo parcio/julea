@@ -23,8 +23,6 @@
 #include <julea.h>
 #include <julea-item.h>
 
-#include <jbatch-internal.h>
-
 #include "test.h"
 
 static gint test_batch_flag;

@@ -22,9 +22,6 @@
 
 #include <julea.h>
 
-#include <jconfiguration.h>
-#include <jdistribution-internal.h>
-
 #include "test.h"
 
 static

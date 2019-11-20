@@ -29,4 +29,6 @@
 #include <item/jitem-iterator.h>
 #include <item/juri.h>
 
+#undef JULEA_ITEM_H
+
 #endif
