@@ -486,10 +486,8 @@ def build(ctx):
 			use_extra.append('lib/julea-object')
 		elif client == 'hdf5-db':
 			use_extra.append('HDF5DB')
-			use_extra.append('SQLITE')
-			use_extra.append('lib/julea-kv')
-			use_extra.append('lib/julea-object')
 			use_extra.append('lib/julea-db')
+			use_extra.append('lib/julea-object')
 
 		ctx.shlib(
 			source=ctx.path.ant_glob('lib/{0}/**/*.c'.format(client)),

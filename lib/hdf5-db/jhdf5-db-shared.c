@@ -35,10 +35,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 #include "jhdf5-db.h"
 
 #define _GNU_SOURCE
@@ -164,6 +160,4 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 		g_free(object);
 	}
 }
-
-#pragma GCC diagnostic pop
 #endif

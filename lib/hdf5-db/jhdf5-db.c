@@ -20,8 +20,6 @@
  * \file
  **/
 
-#define JULEA_HDF5_MAIN_COMPILES
-
 #include <julea-config.h>
 #include <julea.h>
 #include <julea-db.h>
@@ -40,9 +38,6 @@
 
 #include <hdf5.h>
 #include <H5PLextern.h>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 
 static
 herr_t
@@ -377,5 +372,3 @@ j_hdf5_set_semantics(JSemantics* semantics)
 	g_debug("julea-db j_hdf5_set_semantics");
 	//TODO FIXME implement this
 }
-
-#pragma GCC diagnostic pop

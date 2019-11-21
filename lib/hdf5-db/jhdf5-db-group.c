@@ -37,10 +37,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 #include "jhdf5-db.h"
 #include "jhdf5-db-shared.c"
 #include "jhdf5-db-link.c"
@@ -404,6 +400,4 @@ H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req)
 	H5VL_julea_db_object_unref(object);
 	return 0;
 }
-
-#pragma GCC diagnostic pop
 #endif
