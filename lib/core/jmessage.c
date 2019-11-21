@@ -914,7 +914,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	struct fid_ep* endpoint;
 	ssize_t error;
 
-	char* custom_error_msg;
+	const char* custom_error_msg;
 
 	struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
@@ -1020,7 +1020,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
-	char* custom_error_msg;
+	const char* custom_error_msg;
 
   struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;

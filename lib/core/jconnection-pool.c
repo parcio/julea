@@ -254,7 +254,6 @@ j_connection_pool_fini (void)
 	for (guint i = 0; i < pool->object_len; i++)
 	{
 		JEndpoint* endpoint;
-		int error;
 		error = 0;
 
 		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
@@ -264,6 +263,7 @@ j_connection_pool_fini (void)
 			{
 				g_critical("Something went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 
 			error = fi_close(&(endpoint->endpoint->fid));
@@ -271,24 +271,28 @@ j_connection_pool_fini (void)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -306,12 +310,14 @@ j_connection_pool_fini (void)
 			{
 				g_critical("Something went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->endpoint->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			//PERROR: you should be able to give a complete object into fi_close, but lets see whether this works too
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
@@ -319,19 +325,21 @@ j_connection_pool_fini (void)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
-
+			error = 0;
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -349,30 +357,35 @@ j_connection_pool_fini (void)
 			{
 				g_critical("Something went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->endpoint->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
 				g_critical("Something went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
+			error = 0;
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -453,7 +466,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			endpoint = NULL;
 			error = 0;
 
-			//Test Message related definitions
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
@@ -515,7 +527,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			//Connect Endpoint to server via port 4711
 			address.sin_family = AF_INET;
 			address.sin_port = htons(4711);
-			inet_aton("127.0.0.1", &(address.sin_addr.s_addr)); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
+			inet_aton("127.0.0.1", &address.sin_addr.s_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
 			//PERROR: User specified data maybe required to be set
 			error = fi_connect(tmp_endpoint, &address, NULL, 0);

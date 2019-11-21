@@ -103,7 +103,8 @@ jd_daemon (void)
 	return TRUE;
 }
 
-//TODO compare function for different fi_infos and domains to minimize amount of used fabric ressources
+//Compares function for different domain_attr
+//TODO use this to manage domains for less than 1 domain per thread
 static
 gboolean
 jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
@@ -112,7 +113,7 @@ jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	struct fi_domain_attr* domain_attr1 = info1->domain_attr;
 	struct fi_domain_attr* domain_attr2 = info2->domain_attr;
 
-	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end; //TODO fix char compare
+	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end;
 	if(domain_attr1->threading != domain_attr2->threading) goto end;
 	if(domain_attr1->control_progress != domain_attr2->control_progress) goto end;
 	if(domain_attr1->data_progress != domain_attr2->data_progress) goto end;
@@ -301,7 +302,8 @@ j_thread_function(gpointer connection_event_entry)
 			j_memory_chunk_free(memory_chunk);
 			j_statistics_free(statistics);
 
-			//TODO: read eq and complete loop
+			//Read event queue repeat loop if no shutdown sent
+			//TODO deal with keybord server stop
 			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, sizeof(event_entry), 0);
 			if(error != 0)
 			{
@@ -320,7 +322,7 @@ j_thread_function(gpointer connection_event_entry)
 
 
 	end:
-	//TODO end all ressources
+  //end all fabric resources
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong.\n Details:\n %s", fi_strerror(error));
@@ -362,11 +364,11 @@ j_thread_function(gpointer connection_event_entry)
 	{
 		g_critical("Something went horribly wrong.\n Details:\n %s", fi_strerror(error));
 	}
-	error = 0;
 
 	g_atomic_int_dec_and_test(&thread_count);
 
 	g_thread_exit(NULL);
+	return NULL; //TODO use return value for success-msg
 }
 
 /*
@@ -412,7 +414,6 @@ j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_q
 		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 	}
 	error = 0;
-
 
 	//build passive Endpoint
 	error = fi_passive_ep(j_fabric, j_info, &j_passive_endpoint, NULL);
@@ -602,8 +603,6 @@ main (int argc, char** argv)
 		if(event == FI_CONNREQ)
 		{
 			g_atomic_int_inc (&thread_count);
-			//GThreadFunc thread_function = &j_thread_function;
-			//TODO use g_thread_new_try
 			g_thread_new(NULL, *j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
 		}
 		fi_error = 0;
@@ -614,18 +613,22 @@ main (int argc, char** argv)
 	{
 		g_critical("Something went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 	}
+	fi_error = 0;
 
 	fi_error = fi_close(&(j_pep_event_queue->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error));
 	}
+	fi_error = 0;
 
 	fi_error = fi_close(&(j_fabric->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing Fabric.\n Details:\n %s", fi_strerror(fi_error));
 	}
+	fi_error = 0;
+
 	fi_freeinfo(j_info);
 
 	g_mutex_clear(jd_statistics_mutex);
