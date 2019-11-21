@@ -102,6 +102,7 @@ _thread_variables_fini(void* ptr, gboolean has_lock)
 
 	JThreadVariables* thread_variables = ptr;
 	guint i;
+	gboolean found = 0;
 
 	if (thread_variables)
 	{
@@ -113,17 +114,28 @@ _thread_variables_fini(void* ptr, gboolean has_lock)
 				if (g_array_index(all_thread_variables, JThreadVariables*, i) == thread_variables)
 				{
 					g_array_remove_index_fast(all_thread_variables, i);
+					found = 1;
 					break;
 				}
 			}
 			G_UNLOCK(all_thread_variables);
 		}
-		if (thread_variables->namespaces)
+		if (found)
 		{
-			g_hash_table_destroy(thread_variables->namespaces);
+			/*
+			 * prevent double free on shutdown
+			 * the main problem is, that some threads call their fini-function, and some others dont, especially the main thread never finalizes during the program runtime
+			 * an additional problem during finalization is that ptr may be != null, but at the same time already freed -> invalid pointer
+			 * if that ptr is contained in the array (that is found=1), than the ptr should be valid, and therefore it must be freed
+			 */
+			if (thread_variables->namespaces)
+			{
+				g_hash_table_destroy(thread_variables->namespaces);
+			}
+
+			j_sql_close(thread_variables->sql_backend);
+			g_free(thread_variables);
 		}
-		j_sql_close(thread_variables->sql_backend);
-		g_free(thread_variables);
 	}
 }
 static
@@ -140,7 +152,7 @@ sql_generic_fini(void)
 
 	JThreadVariables* current_thread_variable;
 
-	current_thread_variable = thread_variables_get(NULL);//store and release the current thread backend connection at last
+	current_thread_variable = thread_variables_get(NULL); //store and release the current thread backend connection at last
 
 	G_LOCK(all_thread_variables);
 
@@ -148,8 +160,8 @@ sql_generic_fini(void)
 	{
 		thread_variables = g_array_index(all_thread_variables, JThreadVariables*, i);
 		_thread_variables_fini(thread_variables, TRUE);
-	       if(thread_variables!=current_thread_variable)
-		       _thread_variables_fini(thread_variables, TRUE);
+		if (thread_variables != current_thread_variable)
+			_thread_variables_fini(thread_variables, TRUE);
 	}
 
 	_thread_variables_fini(current_thread_variable, TRUE);
@@ -276,19 +288,19 @@ freeJSqlCacheSQLPrepared(void* ptr)
 	if (ptr)
 	{
 		if (p->initialized)
-	{
-		if (p->variables_index)
 		{
-			g_hash_table_destroy(p->variables_index);
-		}
-		if (p->sql)
-		{
-			g_string_free(p->sql, TRUE);
-		}
-		if (p->stmt)
-		{
-			j_sql_finalize(thread_variables->sql_backend, p->stmt, NULL);
-		}
+			if (p->variables_index)
+			{
+				g_hash_table_destroy(p->variables_index);
+			}
+			if (p->sql)
+			{
+				g_string_free(p->sql, TRUE);
+			}
+			if (p->stmt)
+			{
+				j_sql_finalize(thread_variables->sql_backend, p->stmt, NULL);
+			}
 		}
 		g_free(p->namespace);
 		g_free(p->name);
@@ -1283,11 +1295,11 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, bson_
 	if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared_id->stmt, 0, J_DB_TYPE_UINT32, &value, error)))
 	{
 		goto _error;
-		}
+	}
 	if (G_UNLIKELY(!j_sql_reset(thread_variables->sql_backend, prepared_id->stmt, error)))
-		{
-			goto _error;
-		}
+	{
+		goto _error;
+	}
 	if (G_UNLIKELY(!j_bson_append_value(id, "_value", J_DB_TYPE_UINT32, &value, error)))
 	{
 		goto _error;
