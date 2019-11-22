@@ -553,6 +553,13 @@ jd_handle_message (JMessage* message, GSocketConnection* connection, JMemoryChun
 				j_message_send(reply, connection);
 			}
 			break;
+	case J_MESSAGE_RESET:
+		if (!message_matched)
+		{
+			memcpy(&backend_operation, &j_backend_operation_reset, sizeof(JBackendOperation));
+			message_matched = TRUE;
+		}
+		// fallthrough
 		case J_MESSAGE_DB_SCHEMA_CREATE:
 			if (!message_matched)
 			{

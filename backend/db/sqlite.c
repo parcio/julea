@@ -41,6 +41,7 @@
 #define sql_autoincrement_string " "
 #define sql_uint64_type " UNSIGNED BIGINT "
 #define sql_last_insert_id_string " SELECT last_insert_rowid() "
+#define sql_get_table_names "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%s_%%'"
 
 static gchar* path;
 
@@ -417,6 +418,7 @@ static
 JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_SERVER,
+	.backend_reset = backend_reset,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,

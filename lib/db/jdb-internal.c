@@ -163,6 +163,36 @@ j_backend_db_func_free (gpointer _data)
 
 static
 gboolean
+j_reset_exec(JList* operations, JSemantics* semantics)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	//FIXME call this on EVERY backend(type)
+	return j_backend_db_func_exec(operations, semantics, J_MESSAGE_RESET);
+}
+gboolean
+j_internal_reset(gchar const* namespace, JBatch* batch, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JOperation* op;
+	JBackendOperation* data;
+
+	data = g_slice_new(JBackendOperation);
+	memcpy(data, &j_backend_operation_reset, sizeof(JBackendOperation));
+	data->in_param[0].ptr_const = namespace;
+	data->out_param[0].ptr_const = error;
+	op = j_operation_new();
+	op->key = namespace;
+	op->data = data;
+	op->exec_func = j_reset_exec;
+	op->free_func = j_backend_db_func_free;
+	j_batch_add(batch, op);
+	return TRUE;
+}
+
+static
+gboolean
 j_db_schema_create_exec (JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);

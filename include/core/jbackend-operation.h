@@ -111,6 +111,8 @@ gboolean j_backend_operation_unwrap_db_update (JBackend*, gpointer, JBackendOper
 gboolean j_backend_operation_unwrap_db_delete (JBackend*, gpointer, JBackendOperation*);
 gboolean j_backend_operation_unwrap_db_query (JBackend*, gpointer, JBackendOperation*);
 
+gboolean j_backend_operation_unwrap_reset(JBackend* backend, gpointer, JBackendOperation*);
+
 gboolean j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data, guint len);
 gboolean j_backend_operation_from_message (JMessage* message, JBackendOperationParam* data, guint len);
 gboolean j_backend_operation_from_message_static (JMessage* message, JBackendOperationParam* data, guint len);
@@ -241,6 +243,22 @@ static const JBackendOperation j_backend_operation_db_query = {
 			.bson_initialized = TRUE,
 		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
+};
+
+static const JBackendOperation j_backend_operation_reset = {
+	.backend_func = j_backend_operation_unwrap_reset,
+	.in_param_count = 1,
+	.out_param_count = 1,
+	.in_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_STR,
+		},
+	},
+	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR,
+		},
 	},
 };
 

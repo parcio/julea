@@ -126,6 +126,13 @@ struct JBackend
 	JBackendType type;
 	JBackendComponent component;
 
+	/**
+	 * delete everything in the backend
+	 * \param[in] which namespace to delete
+	 * \param[out] how many "things" are deleted within the specified namespace
+	 */
+	gboolean (*backend_reset)(gpointer, GError**);
+
 	union
 	{
 		struct
@@ -431,6 +438,7 @@ gboolean j_backend_db_delete (JBackend*, gpointer, gchar const*, bson_t const*, 
 gboolean j_backend_db_query (JBackend*, gpointer, gchar const*, bson_t const*, gpointer*, GError**);
 gboolean j_backend_db_iterate (JBackend*, gpointer, bson_t*, GError**);
 
+gboolean j_backend_reset (JBackend* backend, gpointer, GError**);
 G_END_DECLS
 
 #endif

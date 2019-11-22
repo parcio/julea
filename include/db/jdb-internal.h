@@ -116,6 +116,8 @@ gboolean j_db_internal_delete (JDBEntry* j_db_entry, JDBSelector* j_db_selector,
 gboolean j_db_internal_query (JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIterator* j_db_iterator, JBatch* batch, GError** error);
 gboolean j_db_internal_iterate (JDBIterator* j_db_iterator, GError** error);
 
+gboolean j_internal_reset (gchar const* namespace, JBatch* batch, GError** error);
+
 // Client-side additional internal functions
 bson_t* j_db_selector_get_bson (JDBSelector* selector);
 
