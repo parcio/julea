@@ -119,7 +119,8 @@ jd_daemon (void)
 
 	if (pid > 0)
 	{
-		g_printerr("Daemon started as process %d.\n", pid);
+		g_message("Daemon started as process %d.", pid);
+		g_message("Log messages will be redirected to journald if possible. To view them, use journalctl GLIB_DOMAIN=%s.", G_LOG_DOMAIN);
 		_exit(0);
 	}
 	else if (pid == -1)
@@ -153,6 +154,10 @@ jd_daemon (void)
 	{
 		close(fd);
 	}
+
+	// Try to redirect GLib log messages to journald.
+	// They can be shown with: journalctl GLIB_DOMAIN=JULEA
+	g_log_set_writer_func(g_log_writer_journald, NULL, NULL);
 
 	return TRUE;
 }
@@ -195,11 +200,9 @@ main (int argc, char** argv)
 
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
-		g_option_context_free(context);
-
 		if (error)
 		{
-			g_printerr("%s\n", error->message);
+			g_warning("%s", error->message);
 			g_error_free(error);
 		}
 
@@ -219,7 +222,7 @@ main (int argc, char** argv)
 	{
 		if (error != NULL)
 		{
-			g_printerr("%s\n", error->message);
+			g_warning("%s", error->message);
 			g_error_free(error);
 		}
 
@@ -234,7 +237,7 @@ main (int argc, char** argv)
 
 	if (jd_configuration == NULL)
 	{
-		g_printerr("Could not read configuration.\n");
+		g_warning("Could not read configuration.");
 		return 1;
 	}
 
@@ -256,7 +259,7 @@ main (int argc, char** argv)
 	{
 		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
 		{
-			g_critical("Could not initialize object backend %s.\n", object_backend);
+			g_warning("Could not initialize object backend %s.\n", object_backend);
 			return 1;
 		}
 	}
@@ -265,7 +268,7 @@ main (int argc, char** argv)
 	{
 		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
-			g_critical("Could not initialize kv backend %s.\n", kv_backend);
+			g_warning("Could not initialize kv backend %s.\n", kv_backend);
 			return 1;
 		}
 	}
@@ -274,7 +277,7 @@ main (int argc, char** argv)
 	{
 		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
 		{
-			g_critical("Could not initialize db backend %s.\n", db_backend);
+			g_warning("Could not initialize db backend %s.\n", db_backend);
 			return 1;
 		}
 	}

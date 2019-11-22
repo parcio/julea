@@ -427,6 +427,7 @@ def configure(ctx):
 		check_and_add_flags(ctx, '-O2')
 
 	ctx.define('G_LOG_USE_STRUCTURED', 1)
+	ctx.define('G_LOG_DOMAIN', 'JULEA')
 
 	backend_path = Utils.subst_vars('${LIBDIR}/julea/backend', ctx.env)
 	ctx.define('JULEA_BACKEND_PATH', backend_path)
