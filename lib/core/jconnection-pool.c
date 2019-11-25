@@ -461,7 +461,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 
 			//connection related definitions
-			struct sockaddr_in address = {0};
+			struct sockaddr_in address;
 
 			endpoint = NULL;
 			error = 0;
@@ -476,51 +476,59 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_endpoint(j_domain, j_info, &tmp_endpoint, NULL);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem during client endpoint init. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			error = fi_eq_open(j_fabric, &event_queue_attr, &tmp_event_queue, NULL);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem during client endpoint event queue opening. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem during client endpoint completion queue 1 opening. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem during client endpoint completion queue 2 opening. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			//Bind resources to Endpoint
 			error = fi_ep_bind(tmp_endpoint, &tmp_event_queue->fid, 0);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem while binding event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_RECV);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem while binding completion queue 1 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_TRANSMIT);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem while binding completion queue 2 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			//enable Endpoint
 			error = fi_enable(tmp_endpoint);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 
@@ -533,18 +541,20 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_connect(tmp_endpoint, &address, NULL, 0);
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem connection the endpoint to address (probably inet_aton no valid use). \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 
 			//check whether connection accepted
 			error = (int) fi_eq_read(tmp_event_queue, &eq_event, NULL, 0, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
 			if(error != 0)
 			{
-				goto ConnectionTest;
+				g_critical("Problem reading event queue \nDetails:\n%s", fi_strerror((int)error));
+				error = 0;
 			}
 			if (eq_event != FI_CONNECTED)
 			{
-				g_critical("TMP-Endpoint has no established connection towards: %s [%d].", server, g_atomic_int_get(count));
+				g_critical("TMP-endpoint did not establish a connection.");
 			}
 
 
@@ -555,12 +565,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			endpoint->completion_queue_receive = tmp_receive_queue;
 			endpoint->completion_queue_transmit = tmp_transmit_queue;
 
-
-			ConnectionTest:
-			if (error != 0)
-			{
-				g_critical("%s", fi_strerror((int)error));
-			}
 
 			if(endpoint == NULL)
 			{
