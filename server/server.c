@@ -178,19 +178,19 @@ j_thread_function(gpointer connection_event_entry)
 	error = fi_domain(j_fabric, info, &domain, NULL);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_eq_open(j_fabric, &event_queue_attr, &event_queue, NULL);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while creating Event queue.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while creating Event queue.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_domain_bind(domain, &event_queue->fid, 0);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
@@ -198,49 +198,49 @@ j_thread_function(gpointer connection_event_entry)
 	error = fi_endpoint(domain, info, &endpoint, NULL);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &event_queue->fid, 0);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_cq_open(domain, &completion_queue_attr, &receive_queue, NULL);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_cq_open(domain, &completion_queue_attr, &transmit_queue, NULL);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &(transmit_queue->fid), FI_TRANSMIT);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &(receive_queue->fid), FI_RECV);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_enable(endpoint);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 	error = fi_accept(endpoint, NULL, 0);
 	if(error != 0)
 	{
-		g_critical("Error occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
@@ -252,7 +252,7 @@ j_thread_function(gpointer connection_event_entry)
 			error = fi_eq_readerr(event_queue, &event_queue_err_entry, 0);
 			if(error != 0)
 			{
-				g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(fi_error));
+				g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
 				error = 0;
 			}
 			else
@@ -262,8 +262,8 @@ j_thread_function(gpointer connection_event_entry)
 		}
 		else
 		{
-			g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for connection accept.\nDetails:\n%s", fi_strerror(fi_error));
-			fi_error = 0;
+			g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for connection accept.\nDetails:\n%s", fi_strerror(error));
+			error = 0;
 		}
 	}
 
@@ -330,11 +330,11 @@ j_thread_function(gpointer connection_event_entry)
 			{
 				if(error == -FI_EAVAIL)
 				{
-					event_queue_err_entry = NULL;
+					//TODO NULL event_queue_err_entry
 					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
 					if(error != 0)
 					{
-						g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(fi_error));
+						g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
 						error = 0;
 					}
 					else
@@ -344,8 +344,8 @@ j_thread_function(gpointer connection_event_entry)
 				}
 				else
 				{
-					g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for shutdown.\nDetails:\n%s", fi_strerror(fi_error));
-					fi_error = 0;
+					g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for shutdown.\nDetails:\n%s", fi_strerror(error));
+					error = 0;
 				}
 			}
 		}while (event != FI_SHUTDOWN);
