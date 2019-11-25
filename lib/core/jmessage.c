@@ -914,8 +914,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	struct fid_ep* endpoint;
 	ssize_t error;
 
-	const char* custom_error_msg;
-
 	struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
@@ -931,6 +929,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
+		g_critical("Error while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
 	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
@@ -939,16 +938,17 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			g_critical("Error on completion queue while receiving Message (JMessage Header).\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
+		g_critical("Error while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
+		goto end;
 	}
-	error = 0;
 
 	//TODO splice the message, not just report an error
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
-		custom_error_msg = "Message bigger than provider max_msg_size";
+		g_critical("Message bigger than provider max_msg_size.");
 		goto end;
 	}
 
@@ -958,6 +958,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
+		g_critical("Error while receiving Message.\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
 	error = fi_cq_read(j_endpoint->completion_queue_receive, &completion_queue_data, 1);
@@ -966,11 +967,12 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			g_critical("Error on completion queue while receiving Message.\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
+		g_critical("Error while reading completion queue after receiving Message.\nDetails:\n%s", fi_strerror((int)error));
+		goto end;
 	}
-	error = 0;
 
 
 	message->current = message->data + sizeof(JMessageHeader);
@@ -983,18 +985,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	if (error != 0 || custom_error_msg != NULL)
-	{
-		if(error!= 0)
-			{
-				g_critical("%s", fi_strerror((int)error));
-			}
-		else
-			{
-				g_critical("%s", custom_error_msg);
-			}
-	}
-
 	return ret;
 }
 
@@ -1020,7 +1010,6 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
-	const char* custom_error_msg;
 
   struct fi_cq_msg_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
@@ -1033,6 +1022,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	error = fi_send(endpoint, message->data, sizeof(JMessageHeader) + j_message_length(message), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
+		g_critical("Error while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
 
@@ -1042,16 +1032,17 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		if(error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
-			g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			g_critical("Error on completion Queue after sending Message (JMessage Header)\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
+		g_critical("Error reading completion Queue after sending Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
+		goto end;
 	}
-	error = 0;
 
 	//TODO Dont report error, but split the Message
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
-		custom_error_msg = "Message bigger than provider max_msg_size";
+		g_critical("Message bigger than provider max_msg_size");
 		goto end;
 	}
 
@@ -1065,6 +1056,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 			error = fi_send(endpoint, message->data, message_data->length, NULL, 0, NULL);
 			if ((int) error != 0)
 			{
+				g_critical("Error while sending Message Data.\nDetails:\n%s", fi_strerror((int)error));
 				goto end;
 			}
 			error = fi_cq_read(j_endpoint->completion_queue_transmit, &completion_queue_data, 1);
@@ -1073,29 +1065,18 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 				if(error == -FI_EAVAIL)
 				{
 					error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
-					g_critical("%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+					g_critical("Error on completion queue after sending Message data.\nDetails\:%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					goto end;
 				}
+				g_critical("Error while reading from completion queue after sending Message data.\nDetails:\n%s", fi_strerror((int)error));
+				goto end;
 			}
-			error = 0;
 		}
 	}
 
 	ret = TRUE;
 
 	end:
-	if (error != 0 || custom_error_msg != NULL)
-	{
-		if(error!= 0)
-		{
-			g_critical("%s", fi_strerror((int)error));
-		}
-		else
-		{
-			g_critical("%s", custom_error_msg);
-		}
-	}
-
 	return ret;
 }
 
