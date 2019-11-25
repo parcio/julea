@@ -178,16 +178,19 @@ j_thread_function(gpointer connection_event_entry)
 	error = fi_domain(j_fabric, info, &domain, NULL);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_eq_open(j_fabric, &event_queue_attr, &event_queue, NULL);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while creating Event queue.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_domain_bind(domain, &event_queue->fid, 0);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 
@@ -195,41 +198,49 @@ j_thread_function(gpointer connection_event_entry)
 	error = fi_endpoint(domain, info, &endpoint, NULL);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &event_queue->fid, 0);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_cq_open(domain, &completion_queue_attr, &receive_queue, NULL);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_cq_open(domain, &completion_queue_attr, &transmit_queue, NULL);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &(transmit_queue->fid), FI_TRANSMIT);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_ep_bind(endpoint, &(receive_queue->fid), FI_RECV);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_enable(endpoint);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 	error = fi_accept(endpoint, NULL, 0);
 	if(error != 0)
 	{
+		g_critical("Error occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(fi_error));
 		goto end;
 	}
 
@@ -239,11 +250,20 @@ j_thread_function(gpointer connection_event_entry)
 		if(error == -FI_EAVAIL)
 		{
 			error = fi_eq_readerr(event_queue, &event_queue_err_entry, 0);
-			if(error < 0)
+			if(error != 0)
 			{
-				g_critical("Something went horribly wrong reading Error Entry from event queu Error.\n Details:\n %s", fi_strerror(error));
+				g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(fi_error));
+				error = 0;
 			}
-			g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+			else
+			{
+				g_critical("Error Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+			}
+		}
+		else
+		{
+			g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for connection accept.\nDetails:\n%s", fi_strerror(fi_error));
+			fi_error = 0;
 		}
 	}
 
@@ -304,17 +324,28 @@ j_thread_function(gpointer connection_event_entry)
 
 			//Read event queue repeat loop if no shutdown sent
 			//TODO deal with keybord server stop
+			event = 0;
 			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, sizeof(event_entry), 0);
 			if(error != 0)
 			{
 				if(error == -FI_EAVAIL)
 				{
+					event_queue_err_entry = NULL;
 					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
-					if(error < 0)
+					if(error != 0)
 					{
-						g_critical("Something went horribly wrong reading Error Entry from event queue Error.\n Details:\n %s", fi_strerror(error));
+						g_critical("Error occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(fi_error));
+						error = 0;
 					}
-					g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					else
+					{
+						g_critical("Error Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					}
+				}
+				else
+				{
+					g_critical("Error occurred on Server while reading from Event queue (active Endpoint) for shutdown.\nDetails:\n%s", fi_strerror(fi_error));
+					fi_error = 0;
 				}
 			}
 		}while (event != FI_SHUTDOWN);
@@ -323,11 +354,13 @@ j_thread_function(gpointer connection_event_entry)
 
 	end:
   //end all fabric resources
+	error = 0;
+
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	fi_freeinfo(info);
 
@@ -335,29 +368,29 @@ j_thread_function(gpointer connection_event_entry)
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong closing endpoint.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	error = fi_close(&(jendpoint->completion_queue_receive->fid));
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong closing receive queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	error = fi_close(&(jendpoint->completion_queue_transmit->fid));
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong closing transmition queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	error = fi_close(&(jendpoint->event_queue->fid));
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong closing event queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	error = fi_close(&(domain->fid));
 	if(error != 0)
@@ -384,51 +417,50 @@ j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_q
 
 	//get fi_info
 	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info);
-
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong during server initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
 	if(j_info == NULL)
 	{
 		g_critical("Allocating j_info did not work");
 	}
-	error = 0;
 
 	//Init fabric
 	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
 	if(error != FI_SUCCESS)
 	{
 		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
 	if(j_fabric == NULL)
 	{
 		g_critical("Allocating j_fabric did not work");
 	}
-	error = 0;
 
 	//build event queue for passive endpoint
 	error = fi_eq_open(j_fabric, event_queue_attr, &j_pep_event_queue, NULL);
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	//build passive Endpoint
 	error = fi_passive_ep(j_fabric, j_info, &j_passive_endpoint, NULL);
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 
 	error = fi_pep_bind(j_passive_endpoint, &j_pep_event_queue->fid, 0);
 	if(error != 0)
 	{
 		g_critical("Something went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		error = 0;
 	}
-	error = 0;
 	//TODO manipulate backlog size
 }
 
@@ -575,9 +607,9 @@ main (int argc, char** argv)
 	fi_error = fi_listen(j_passive_endpoint);
 	if(fi_error != 0)
 	{
-		g_critical("Something went horribly wrong setting passive Endpoint to listening.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("Error setting passive Endpoint to listening.\n Details:\n %s", fi_strerror(fi_error));
+		fi_error = 0;
 	}
-	fi_error = 0;
 
 
 
@@ -593,11 +625,20 @@ main (int argc, char** argv)
 			if(fi_error == -FI_EAVAIL)
 			{
 				fi_error = fi_eq_readerr(j_pep_event_queue, &event_queue_err_entry, 0);
-				if(fi_error < 0)
+				if(fi_error != 0)
 				{
-					g_critical("Something went horribly wrong reading Error Entry from event queu Error.\n Details:\n %s", fi_strerror(fi_error));
+					g_critical("Error while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+					fi_error = 0;
 				}
-				g_critical("%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				else
+				{
+					g_critical("Error on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				}
+			}
+			else
+			{
+				g_critical("Error while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+				fi_error = 0;
 			}
 		}
 		if(event == FI_CONNREQ)
@@ -605,29 +646,28 @@ main (int argc, char** argv)
 			g_atomic_int_inc (&thread_count);
 			g_thread_new(NULL, *j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
 		}
-		fi_error = 0;
 	} while(!g_atomic_int_compare_and_exchange (&thread_count, 0, 0));
 
 	fi_error = fi_close(&(j_passive_endpoint->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
+		fi_error = 0;
 	}
-	fi_error = 0;
 
 	fi_error = fi_close(&(j_pep_event_queue->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error));
+		fi_error = 0;
 	}
-	fi_error = 0;
 
 	fi_error = fi_close(&(j_fabric->fid));
 	if(fi_error != 0)
 	{
 		g_critical("Something went horribly wrong closing Fabric.\n Details:\n %s", fi_strerror(fi_error));
+		fi_error = 0;
 	}
-	fi_error = 0;
 
 	fi_freeinfo(j_info);
 
