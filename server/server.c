@@ -543,7 +543,7 @@ main (int argc, char** argv)
 	}
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	//define Fabric attributes
-	fi_hints->caps = FI_MSG | FI_SEND | FI_RECV;
+	fi_hints->caps = FI_MSG; // | FI_SEND | FI_RECV;
 	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
