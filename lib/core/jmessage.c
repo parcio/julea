@@ -1065,7 +1065,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 				if(error == -FI_EAVAIL)
 				{
 					error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
-					g_critical("Error on completion queue after sending Message data.\nDetails\:%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+					g_critical("Error on completion queue after sending Message data.\nDetails\n:%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					goto end;
 				}
 				g_critical("Error while reading from completion queue after sending Message data.\nDetails:\n%s", fi_strerror((int)error));

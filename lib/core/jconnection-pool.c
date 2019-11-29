@@ -1,4 +1,5 @@
 /*
+
  * JULEA - Flexible storage framework
  * Copyright (C) 2010-2019 Michael Kuhn
  *
@@ -19,6 +20,8 @@
 /**
  * \file
  **/
+
+#define _DEFAULT_SOURCE
 
 #include <julea-config.h>
 
@@ -41,10 +44,11 @@
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <glib/gprintf.h>
 
 /**
  * \defgroup JConnectionPool Connection Pool
@@ -105,7 +109,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
-	struct fi_info* fi_hints = {0}; //config object
+	struct fi_info* fi_hints = NULL; //config object
 
 	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
 
@@ -151,12 +155,12 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	if(fi_hints == NULL)
 	{
-		g_critical("Allocating empty hints did not work");
+		g_critical("\nAllocating empty hints did not work");
 	}
 
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	fi_hints->caps = FI_MSG | FI_SEND | FI_RECV;
-	fi_hints->fabric_attr->prov_name = "sockets"; //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
@@ -171,18 +175,18 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 	if(j_info == NULL)
 	{
-		g_critical("Allocating j_info did not work");
+		g_critical("\nAllocating j_info did not work");
 	}
 
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
 	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
-		g_critical("Demand for connections exceeds the max number of endpoints available through domain/provider");
+		g_critical("\nDemand for connections exceeds the max number of endpoints available through domain/provider");
 	}
 	if(j_info->domain_attr->cq_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
 	{
-		g_warning("Demand for connections exceeds the optimal number of completion queues available through domain/provider");
+		g_warning("\nDemand for connections exceeds the optimal number of completion queues available through domain/provider");
 	}
 
 
@@ -194,7 +198,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 	if(j_fabric == NULL)
 	{
-		g_critical("Allocating j_fabric did not work");
+		g_critical("\nAllocating j_fabric did not work");
 	}
 
 	//init domain
@@ -205,7 +209,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 	if(j_fabric == NULL)
 	{
-		g_critical("Allocating j_fabric did not work");
+		g_critical("\nAllocating j_fabric did not work");
 	}
 
 	//build event queue for domain
@@ -228,7 +232,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	end:
 	if(error != 0)
 	{
-		g_critical("Something went horribly wrong during init.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong during init.\n Details:\n %s", fi_strerror(error));
 	}
 
 }
@@ -261,7 +265,7 @@ j_connection_pool_fini (void)
 			error = fi_shutdown(endpoint->endpoint,0);
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
@@ -269,28 +273,28 @@ j_connection_pool_fini (void)
 			error = fi_close(&(endpoint->endpoint->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 		}
@@ -308,14 +312,14 @@ j_connection_pool_fini (void)
 			error = fi_shutdown(endpoint->endpoint,0);
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->endpoint->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
@@ -323,21 +327,21 @@ j_connection_pool_fini (void)
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 		}
@@ -355,35 +359,35 @@ j_connection_pool_fini (void)
 			error = fi_shutdown(endpoint->endpoint,0);
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->endpoint->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->completion_queue_transmit->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 
 			error = fi_close(&(endpoint->event_queue->fid));
 			if(error != 0)
 			{
-				g_critical("Something went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
+				g_critical("\nSomething went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
 		}
@@ -398,19 +402,19 @@ j_connection_pool_fini (void)
 	error = fi_close(&(j_domain_event_queue->fid));
 	if(error != 0)
 	{
-		g_warning("Something went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
 	}
 
 	error = fi_close(&(j_domain->fid));
 	if(error != 0)
 	{
-		g_warning("Something went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
 	}
 
 	error = fi_close(&(j_fabric->fid));
 	if(error != 0)
 	{
-		g_warning("Something went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
 	}
 
 	g_free(pool->object_queues);
@@ -449,6 +453,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 		{
 			uint32_t eq_event;
 			int error;
+			ssize_t ssize_t_error;
 
 			struct fid_ep* tmp_endpoint;
 			struct fid_eq* tmp_event_queue;
@@ -459,15 +464,30 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
 			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
-
 			//connection related definitions
 			struct sockaddr_in address;
 
-			endpoint = NULL;
-			error = 0;
+			//Event queue structs
+			struct fi_eq_cm_entry connection_entry;
+			size_t connection_entry_length;
+
+			//fi_connection data
+
+			const void* connection_data;
+			size_t connection_data_length;
+
 
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
+
+
+			connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
+
+			connection_data = g_strdup("User defined Data");
+			connection_data_length = strlen("User defined Data") + 1;
+
+			endpoint = NULL;
+			error = 0;
 
 			// guint op_count;
 
@@ -476,28 +496,28 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_endpoint(j_domain, j_info, &tmp_endpoint, NULL);
 			if(error != 0)
 			{
-				g_critical("Problem during client endpoint init. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint init. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_eq_open(j_fabric, &event_queue_attr, &tmp_event_queue, NULL);
 			if(error != 0)
 			{
-				g_critical("Problem during client endpoint event queue opening. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint event queue opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
 			if(error != 0)
 			{
-				g_critical("Problem during client endpoint completion queue 1 opening. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint completion queue 1 opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
 			if(error != 0)
 			{
-				g_critical("Problem during client endpoint completion queue 2 opening. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint completion queue 2 opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
@@ -505,21 +525,21 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_ep_bind(tmp_endpoint, &tmp_event_queue->fid, 0);
 			if(error != 0)
 			{
-				g_critical("Problem while binding event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_RECV);
 			if(error != 0)
 			{
-				g_critical("Problem while binding completion queue 1 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 1 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_TRANSMIT);
 			if(error != 0)
 			{
-				g_critical("Problem while binding completion queue 2 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 2 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
@@ -527,7 +547,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_enable(tmp_endpoint);
 			if(error != 0)
 			{
-				g_critical("Problem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
@@ -535,27 +555,36 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			//Connect Endpoint to server via port 4711
 			address.sin_family = AF_INET;
 			address.sin_port = htons(4711);
-			inet_aton("127.0.0.1", &address.sin_addr.s_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
+			inet_aton("127.0.0.1", &address.sin_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
 			//PERROR: User specified data maybe required to be set
-			error = fi_connect(tmp_endpoint, &address, NULL, 0);
+			//g_printf("\n\nValue of error before fi_connect: %d\n", error);
+			error = fi_connect(tmp_endpoint, &address, connection_data, connection_data_length);
 			if(error != 0)
 			{
-				g_critical("Problem connection the endpoint to address (probably inet_aton no valid use). \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
+			g_printf("\n\nREACHED POINT AFTER CONNECTION READ!\n\n");
+
 			//check whether connection accepted
-			error = (int) fi_eq_read(tmp_event_queue, &eq_event, NULL, 0, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			ssize_t_error = 0;
+			ssize_t_error = fi_eq_sread(tmp_event_queue, &eq_event, (void*) &connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
 			if(error != 0)
 			{
-				g_critical("Problem reading event queue \nDetails:\n%s", fi_strerror((int)error));
-				error = 0;
+				g_critical("\nProblem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
+				ssize_t_error = 0;
 			}
 			if (eq_event != FI_CONNECTED)
 			{
-				g_critical("TMP-endpoint did not establish a connection.");
+				g_critical("\nTMP-endpoint did not establish a connection.");
 			}
+			else
+			{
+				g_printf("\n\nYEAH, CLIENT CONNECTED\n\n");
+			}
+			g_printf("\n\nREACHED POINT AFTER CONNECTION READ!\n\n");
 
 
 			//bind endpoint to the tmp_structures
@@ -568,7 +597,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			if(endpoint == NULL)
 			{
-				g_critical("Endpoint-binding did not work.");
+				g_critical("\nEndpoint-binding did not work.");
 			}
 
 			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
