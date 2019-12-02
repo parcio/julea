@@ -165,17 +165,24 @@ j_thread_function(gpointer connection_event_entry)
 	struct fid_cq* receive_queue;
 
 	struct fi_eq_cm_entry* event_entry;
+	uint32_t event_entry_size;
 	struct fi_eq_err_entry event_queue_err_entry;
 
-	JEndpoint* jendpoint = {0};
-	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
+	struct JEndpoint* jendpoint;
+
+	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
 	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 	J_TRACE_FUNCTION(NULL);
 
+
+	event_entry_size = (sizeof(struct fi_eq_cm_entry) + 128);
+
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
 	info = event_entry->info;
-	event_entry = NULL;
+	free(connection_event_entry);
+
+	jendpoint->max_msg_size = info->domain_attr->ep_cnt;
 
 	//Building domain
 	error = fi_domain(j_fabric, info, &domain, NULL);
@@ -184,13 +191,13 @@ j_thread_function(gpointer connection_event_entry)
 		g_critical("\nError occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_eq_open(j_fabric, &event_queue_attr, &event_queue, NULL);
+	error = fi_eq_open(j_fabric, &event_queue_attr, &jendpoint->event_queue, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Event queue.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_domain_bind(domain, &event_queue->fid, 0);
+	error = fi_domain_bind(domain, &jendpoint->event_queue->fid, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
@@ -198,61 +205,65 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	//bulding endpoint
-	error = fi_endpoint(domain, info, &endpoint, NULL);
+	error = fi_endpoint(domain, info, &jendpoint->endpoint, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(endpoint, &event_queue->fid, 0);
+
+
+	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->event_queue->fid, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &receive_queue, NULL);
+	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->receive_queue, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &transmit_queue, NULL);
+	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->transmit_queue, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(endpoint, &(transmit_queue->fid), FI_TRANSMIT);
+	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->transmit_queue->fid, FI_TRANSMIT);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(endpoint, &(receive_queue->fid), FI_RECV);
+	error = fi_ep_bind(jendpoint->endpoint, &(jendpoint->receive_queue->fid), FI_RECV);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_enable(endpoint);
+	error = fi_enable(jendpoint->endpoint);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_accept(endpoint, NULL, 0);
+	error = fi_accept(jendpoint->endpoint, NULL, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
-	error = fi_eq_sread(event_queue, &event, event_entry, sizeof(event_entry), -1, 0); //PERROR: event_entry not initialized, maybe needs init
+	event_entry = NULL;
+	event_entry = malloc(event_entry_size);
+	error = fi_eq_sread(jendpoint->event_queue, &event, event_entry, event_entry_size, -1, 0); //PERROR: event_entry not initialized, maybe needs init
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_eq_readerr(event_queue, &event_queue_err_entry, 0);
+			error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
 			if(error != 0)
 			{
 				g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
@@ -269,13 +280,7 @@ j_thread_function(gpointer connection_event_entry)
 			error = 0;
 		}
 	}
-
-	//build jendpoint
-	jendpoint->endpoint = endpoint;
-	jendpoint->max_msg_size = info->domain_attr->ep_cnt;
-	jendpoint->event_queue = event_queue;
-	jendpoint->completion_queue_transmit = transmit_queue;
-	jendpoint->completion_queue_receive = receive_queue;
+	free(event_entry);
 
 	if(event == FI_CONNECTED)
 	{
@@ -329,7 +334,9 @@ j_thread_function(gpointer connection_event_entry)
 			//Read event queue repeat loop if no shutdown sent
 			//TODO deal with keybord server stop
 			event = 0;
-			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, sizeof(event_entry), 0);
+			event_entry = NULL;
+			event_entry = malloc(event_entry_size);
+			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, event_entry_size, 0); //PERROR maybe event_data needed
 			if(error != 0)
 			{
 				if(error == -FI_EAVAIL)
@@ -352,6 +359,7 @@ j_thread_function(gpointer connection_event_entry)
 					error = 0;
 				}
 			}
+			free(event_entry);
 		}while (event != FI_SHUTDOWN);
 	}
 
@@ -362,7 +370,7 @@ j_thread_function(gpointer connection_event_entry)
 
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nError Server .\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
@@ -423,7 +431,7 @@ j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_q
 	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong during server initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong during server initializing j_info.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 	if(j_info == NULL)
@@ -498,12 +506,12 @@ main (int argc, char** argv)
 
 	int fi_error = 0;
 	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
+	const char* node = "127.0.0.1"; //Moriher //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+	uint64_t flags = FI_SOURCE;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	struct fi_info* fi_hints = NULL; //config object
-	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL}; //PERROR: Wrong formatting of event queue attributes
+	struct fi_eq_attr event_queue_attr = {50, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //2nd: FI_WRITE, 3rd: FI_WAIT_UNSPEC PERROR: Wrong formatting of event queue attributes
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -548,7 +556,7 @@ main (int argc, char** argv)
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fi_hints->mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_FID; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
@@ -623,10 +631,13 @@ main (int argc, char** argv)
 	g_printf("\n\nSERVER MAIN LOOP REACHED\n\n\n");
 	do
 	{
+		struct fi_eq_cm_entry* event_entry;
+		struct fi_eq_err_entry event_queue_err_entry;
+
 		uint32_t event = 0;
-		struct fi_eq_err_entry event_queue_err_entry = {0};
-		struct fi_eq_cm_entry event_entry = {0};
-		fi_error = fi_eq_sread(j_pep_event_queue, &event, &event_entry, 0, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
+		uint32_t event_entry_size = sizeof(event_entry) + 128;
+		event_entry = malloc(event_entry_size);
+		fi_error = fi_eq_sread(j_pep_event_queue, &event, event_entry, event_entry_size, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
 		if(fi_error != 0)
 		{
 			if(fi_error == -FI_EAVAIL)
@@ -639,22 +650,24 @@ main (int argc, char** argv)
 				}
 				else
 				{
-					g_critical("\nError on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					g_critical("\nError Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(j_pep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 				}
 			}
 			else
 			{
 				g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+				g_printf("\nEq_cm_entry: %ld.\nEvent_entry: %ld", sizeof(struct fi_eq_cm_entry), sizeof(event_entry));
 				fi_error = 0;
 			}
 		}
-		g_printf("\n\nSERVER EVENT QUEUE READ\n\n\n");
+		g_printf("\n\nSERVER EVENT QUEUE PASSED\n\n");
 		if(event == FI_CONNREQ)
 		{
-			g_printf("\n\nSERVER CONNREQ EVENT ON QUEUE\n\n\n");
+			g_printf("\n\nSERVER CONNREQ EVENT ON QUEUE\n\n");
 			g_atomic_int_inc (&thread_count);
-			g_thread_new(NULL, *j_thread_function, (gpointer) &event_entry); //PERROR: after new init of event_entry old one may be deleted? //PERROR:
+			g_thread_new(NULL, *j_thread_function, (gpointer) event_entry);
 		}
+		//free(event_entry);//PERROR: Freed before used in j_thread_function
 	} while(!(g_atomic_int_compare_and_exchange(&thread_count, 0, 0))); //thread count == 0
 
 	fi_error = fi_close(&(j_passive_endpoint->fid));

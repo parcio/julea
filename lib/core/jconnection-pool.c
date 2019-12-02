@@ -105,13 +105,13 @@ j_connection_pool_init (JConfiguration* configuration)
 	//Parameter for fabric init
 	int error;
 	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = NULL; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
+	const char* node = "127.0.0.1"; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	struct fi_info* fi_hints = NULL; //config object
 
-	struct fi_eq_attr event_queue_attr = {50, FI_WRITE, FI_WAIT_UNSPEC, 0, NULL};
+	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_SET, 0, NULL};
 
 
 
@@ -175,11 +175,14 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 	if(j_info == NULL)
 	{
-		g_critical("\nAllocating j_info did not work");
+		g_critical("\nAllocating Client j_info did not work");
 	}
 
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
+
+	/*
+	TODO: activate again
 	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
 		g_critical("\nDemand for connections exceeds the max number of endpoints available through domain/provider");
@@ -188,6 +191,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	{
 		g_warning("\nDemand for connections exceeds the optimal number of completion queues available through domain/provider");
 	}
+	*/
 
 
 	//init fabric
@@ -461,7 +465,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			struct fid_cq* tmp_transmit_queue;
 
 			//Endpoint related definitions
-			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_UNSPEC, 0, NULL}; //TODO read eq attributes from config
+			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
 			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 			//connection related definitions
@@ -498,6 +502,10 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			{
 				g_critical("\nProblem during client endpoint init. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
+			}
+			if(tmp_endpoint == NULL)
+			{
+				g_critical("Client Error creating tmp_endpoint did not work.");
 			}
 
 			error = fi_eq_open(j_fabric, &event_queue_attr, &tmp_event_queue, NULL);
@@ -562,29 +570,30 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_connect(tmp_endpoint, &address, connection_data, connection_data_length);
 			if(error != 0)
 			{
-				g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address.sin_addr), fi_strerror((int)error));
 				error = 0;
 			}
 
-			g_printf("\n\nREACHED POINT AFTER CONNECTION READ!\n\n");
+			g_printf("\n\nCLIENT REACHED POINT AFTER CONNECTION READ!\n\n");
 
 			//check whether connection accepted
+			eq_event = 0;
 			ssize_t_error = 0;
-			ssize_t_error = fi_eq_sread(tmp_event_queue, &eq_event, (void*) &connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			ssize_t_error = fi_eq_sread(tmp_event_queue, &eq_event, &connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
 			if(error != 0)
 			{
-				g_critical("\nProblem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
+				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
 				ssize_t_error = 0;
 			}
 			if (eq_event != FI_CONNECTED)
 			{
-				g_critical("\nTMP-endpoint did not establish a connection.");
+				g_critical("\n\nFI_CONNECTED: %d\neq_event: %d\nClient TMP-endpoint did not receive FI_CONNECTED to establish a connection.\n\n", FI_CONNECTED, eq_event);
 			}
 			else
 			{
-				g_printf("\n\nYEAH, CLIENT CONNECTED\n\n");
+				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
-			g_printf("\n\nREACHED POINT AFTER CONNECTION READ!\n\n");
+			g_printf("\nCLIENT REACHED POINT AFTER CONNECTION READ!\n");
 
 
 			//bind endpoint to the tmp_structures
