@@ -251,6 +251,7 @@ j_connection_pool_fini (void)
 
 	int error;
 	JConnectionPool* pool;
+	JEndpoint* endpoint;
 
 	g_return_if_fail(j_connection_pool != NULL);
 
@@ -261,7 +262,7 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
-		JEndpoint* endpoint;
+		endpoint = NULL;
 		error = 0;
 
 		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
@@ -301,6 +302,8 @@ j_connection_pool_fini (void)
 				g_critical("\nSomething went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
+			free(endpoint);
+			endpoint = NULL;
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -308,7 +311,6 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
-		JEndpoint* endpoint;
 		error = 0;
 
 		while ((endpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
@@ -348,6 +350,8 @@ j_connection_pool_fini (void)
 				g_critical("\nSomething went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
+			free(endpoint);
+			endpoint = NULL;
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -355,7 +359,6 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->db_len; i++)
 	{
-		JEndpoint* endpoint;
 		error = 0;
 
 		while ((endpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
@@ -394,6 +397,8 @@ j_connection_pool_fini (void)
 				g_critical("\nSomething went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
 			}
 			error = 0;
+			free(endpoint);
+			endpoint = NULL;
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -444,6 +449,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
+	endpoint = NULL;
 	endpoint = g_async_queue_try_pop(queue);
 
 	if (endpoint != NULL)
@@ -459,10 +465,10 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			int error;
 			ssize_t ssize_t_error;
 
-			struct fid_ep* tmp_endpoint;
-			struct fid_eq* tmp_event_queue;
-			struct fid_cq* tmp_receive_queue;
-			struct fid_cq* tmp_transmit_queue;
+			//struct fid_ep* tmp_endpoint;
+			//struct fid_eq* tmp_event_queue;
+			//struct fid_cq* tmp_receive_queue;
+			//struct fid_cq* tmp_transmit_queue;
 
 			//Endpoint related definitions
 			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
@@ -472,7 +478,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			struct sockaddr_in address;
 
 			//Event queue structs
-			struct fi_eq_cm_entry connection_entry;
+			struct fi_eq_cm_entry* connection_entry;
 			size_t connection_entry_length;
 
 			//fi_connection data
@@ -485,74 +491,71 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			g_autoptr(JMessage) reply = NULL;
 
 
+
 			connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
 
 			connection_data = g_strdup("User defined Data");
 			connection_data_length = strlen("User defined Data") + 1;
 
-			endpoint = NULL;
+			endpoint = malloc(sizeof(struct JEndpoint));
 			error = 0;
 
 			// guint op_count;
 
 			//Allocate Endpoint and related ressources
 			//PERROR: last param of fi_endpoint maybe mandatory. If so, build context struct with every info in it
-			error = fi_endpoint(j_domain, j_info, &tmp_endpoint, NULL);
+			error = fi_endpoint(j_domain, j_info, &endpoint->endpoint, NULL);
 			if(error != 0)
 			{
 				g_critical("\nProblem during client endpoint init. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
-			if(tmp_endpoint == NULL)
-			{
-				g_critical("Client Error creating tmp_endpoint did not work.");
-			}
 
-			error = fi_eq_open(j_fabric, &event_queue_attr, &tmp_event_queue, NULL);
+			error = fi_eq_open(j_fabric, &event_queue_attr, &endpoint->event_queue, NULL);
 			if(error != 0)
 			{
 				g_critical("\nProblem during client endpoint event queue opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
-			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_transmit_queue, NULL);
+			error = fi_cq_open(j_domain, &completion_queue_attr, &endpoint->completion_queue_transmit, NULL);
 			if(error != 0)
 			{
-				g_critical("\nProblem during client endpoint completion queue 1 opening. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint completion queue 1 (transmit) opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
-			error = fi_cq_open(j_domain, &completion_queue_attr, &tmp_receive_queue, NULL);
+			error = fi_cq_open(j_domain, &completion_queue_attr, &endpoint->completion_queue_receive, NULL);
 			if(error != 0)
 			{
-				g_critical("\nProblem during client endpoint completion queue 2 opening. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem during client endpoint completion queue 2 (receive) opening. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			//Bind resources to Endpoint
-			error = fi_ep_bind(tmp_endpoint, &tmp_event_queue->fid, 0);
+			error = fi_ep_bind(endpoint->endpoint, &endpoint->event_queue->fid, 0);
 			if(error != 0)
 			{
 				g_critical("\nProblem while binding event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
-			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_RECV);
+			error = fi_ep_bind(endpoint->endpoint, &endpoint->completion_queue_receive->fid, FI_RECV);
 			if(error != 0)
 			{
-				g_critical("\nProblem while binding completion queue 1 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 1 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
-			error = fi_ep_bind(tmp_endpoint, &tmp_receive_queue->fid, FI_TRANSMIT);
+			error = fi_ep_bind(endpoint->endpoint, &endpoint->completion_queue_transmit->fid, FI_TRANSMIT);
 			if(error != 0)
 			{
-				g_critical("\nProblem while binding completion queue 2 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 2 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			//enable Endpoint
-			error = fi_enable(tmp_endpoint);
+			error = fi_enable(endpoint->endpoint);
 			if(error != 0)
 			{
 				g_critical("\nProblem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
@@ -567,7 +570,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//PERROR: User specified data maybe required to be set
 			//g_printf("\n\nValue of error before fi_connect: %d\n", error);
-			error = fi_connect(tmp_endpoint, &address, connection_data, connection_data_length);
+			error = fi_connect(endpoint->endpoint, &address, NULL, 0);
 			if(error != 0)
 			{
 				g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address.sin_addr), fi_strerror((int)error));
@@ -579,7 +582,8 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			//check whether connection accepted
 			eq_event = 0;
 			ssize_t_error = 0;
-			ssize_t_error = fi_eq_sread(tmp_event_queue, &eq_event, &connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			connection_entry = malloc(connection_entry_length);
+			ssize_t_error = fi_eq_sread(endpoint->event_queue, &eq_event, connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
 			if(error != 0)
 			{
 				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
@@ -594,20 +598,11 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
 			g_printf("\nCLIENT REACHED POINT AFTER CONNECTION READ!\n");
-
+			free(connection_entry);
 
 			//bind endpoint to the tmp_structures
-			endpoint->endpoint = tmp_endpoint;
 			endpoint->max_msg_size = j_info->domain_attr->ep_cnt;
-			endpoint->event_queue = tmp_event_queue;
-			endpoint->completion_queue_receive = tmp_receive_queue;
-			endpoint->completion_queue_transmit = tmp_transmit_queue;
 
-
-			if(endpoint == NULL)
-			{
-				g_critical("\nEndpoint-binding did not work.");
-			}
 
 			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
 

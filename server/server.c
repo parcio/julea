@@ -159,16 +159,16 @@ j_thread_function(gpointer connection_event_entry)
 
 	struct fi_info* info;
 	struct fid_domain* domain;
-	struct fid_eq* event_queue;
-	struct fid_ep* endpoint;
-	struct fid_cq* transmit_queue;
-	struct fid_cq* receive_queue;
+	//struct fid_eq* event_queue;
+	//struct fid_ep* endpoint;
+	//struct fid_cq* transmit_queue;
+	//struct fid_cq* receive_queue;
 
 	struct fi_eq_cm_entry* event_entry;
 	uint32_t event_entry_size;
 	struct fi_eq_err_entry event_queue_err_entry;
 
-	struct JEndpoint* jendpoint;
+	JEndpoint* jendpoint;
 
 	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
 	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
@@ -182,6 +182,7 @@ j_thread_function(gpointer connection_event_entry)
 	info = event_entry->info;
 	free(connection_event_entry);
 
+	jendpoint = malloc(sizeof(struct JEndpoint));
 	jendpoint->max_msg_size = info->domain_attr->ep_cnt;
 
 	//Building domain
@@ -219,25 +220,25 @@ j_thread_function(gpointer connection_event_entry)
 		g_critical("\nError occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->receive_queue, NULL);
+	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->completion_queue_receive, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->transmit_queue, NULL);
+	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->completion_queue_transmit, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->transmit_queue->fid, FI_TRANSMIT);
+	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->completion_queue_transmit->fid, FI_TRANSMIT);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(jendpoint->endpoint, &(jendpoint->receive_queue->fid), FI_RECV);
+	error = fi_ep_bind(jendpoint->endpoint, &(jendpoint->completion_queue_receive->fid), FI_RECV);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
@@ -271,7 +272,7 @@ j_thread_function(gpointer connection_event_entry)
 			}
 			else
 			{
-				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
 		else
@@ -409,6 +410,8 @@ j_thread_function(gpointer connection_event_entry)
 	{
 		g_critical("\nSomething went horribly wrong.\n Details:\n %s", fi_strerror(error));
 	}
+
+	free(jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
 

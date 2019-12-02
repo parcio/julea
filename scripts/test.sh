@@ -41,7 +41,7 @@ run_test ()
 
 	setup_init
 	setup_start
-	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
+	gtester --verbose "$@" "$(which julea-test)" || ret=$?
 	setup_stop
 
 	return ${ret}
