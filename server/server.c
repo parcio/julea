@@ -156,13 +156,11 @@ j_thread_function(gpointer connection_event_entry)
 	//Needed Ressources
 	int error = 0;
 	uint32_t event = 0;
+	int shutdown_check_cntr = 0;
 
 	struct fi_info* info;
 	struct fid_domain* domain;
-	//struct fid_eq* event_queue;
-	//struct fid_ep* endpoint;
-	//struct fid_cq* transmit_queue;
-	//struct fid_cq* receive_queue;
+	struct fid_eq* domain_event_queue;
 
 	struct fi_eq_cm_entry* event_entry;
 	uint32_t event_entry_size;
@@ -171,19 +169,22 @@ j_thread_function(gpointer connection_event_entry)
 	JEndpoint* jendpoint;
 
 	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 	J_TRACE_FUNCTION(NULL);
 
+	g_printf("\nTHREAD STARTED\n");
 
 	event_entry_size = (sizeof(struct fi_eq_cm_entry) + 128);
-
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
-	info = event_entry->info;
+	info = fi_dupinfo(event_entry->info);
+	//info = event_entry->info;
+	fi_freeinfo(event_entry->info);
 	free(connection_event_entry);
 
 	jendpoint = malloc(sizeof(struct JEndpoint));
-	jendpoint->max_msg_size = info->domain_attr->ep_cnt;
+	jendpoint->max_msg_size = info->ep_attr->max_msg_size;
+
 
 	//Building domain
 	error = fi_domain(j_fabric, info, &domain, NULL);
@@ -192,13 +193,13 @@ j_thread_function(gpointer connection_event_entry)
 		g_critical("\nError occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_eq_open(j_fabric, &event_queue_attr, &jendpoint->event_queue, NULL);
+	error = fi_eq_open(j_fabric, &event_queue_attr, &domain_event_queue, NULL);
 	if(error != 0)
 	{
-		g_critical("\nError occurred on Server while creating Event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nError occurred on Server while creating Domain Event queue.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_domain_bind(domain, &jendpoint->event_queue->fid, 0);
+	error = fi_domain_bind(domain, &domain_event_queue->fid, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
@@ -213,6 +214,12 @@ j_thread_function(gpointer connection_event_entry)
 		goto end;
 	}
 
+	error = fi_eq_open(j_fabric, &event_queue_attr, &jendpoint->event_queue, NULL);
+	if(error != 0)
+	{
+		g_critical("\nError occurred on Server while creating endpoint Event queue.\n Details:\n %s", fi_strerror(error));
+		goto end;
+	}
 
 	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->event_queue->fid, 0);
 	if(error != 0)
@@ -257,9 +264,8 @@ j_thread_function(gpointer connection_event_entry)
 		goto end;
 	}
 
-	event_entry = NULL;
 	event_entry = malloc(event_entry_size);
-	error = fi_eq_sread(jendpoint->event_queue, &event, event_entry, event_entry_size, -1, 0); //PERROR: event_entry not initialized, maybe needs init
+	error = fi_eq_sread(jendpoint->event_queue, &event, event_entry, event_entry_size, -1, 0);
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -275,10 +281,13 @@ j_thread_function(gpointer connection_event_entry)
 				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
-		else
+		else if(error == -FI_EAGAIN)
 		{
-			g_critical("\nError occurred on Server while reading from Event queue (active Endpoint) for connection accept.\nDetails:\n%s", fi_strerror(error));
-			error = 0;
+			g_printf("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
+		}
+		else if(error < 0)
+		{
+			g_critical("\nError outside Error Event on Server Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(error));
 		}
 	}
 	free(event_entry);
@@ -301,7 +310,7 @@ j_thread_function(gpointer connection_event_entry)
 
 			message = j_message_new(J_MESSAGE_NONE, 0);
 
-			while (j_message_receive(message, jendpoint))
+			if(j_message_receive(message, jendpoint))
 			{
 				jd_handle_message(message, jendpoint, memory_chunk, memory_chunk_size, statistics);
 			}
@@ -334,33 +343,40 @@ j_thread_function(gpointer connection_event_entry)
 
 			//Read event queue repeat loop if no shutdown sent
 			//TODO deal with keybord server stop
-			event = 0;
-			event_entry = NULL;
-			event_entry = malloc(event_entry_size);
-			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, event_entry_size, 0); //PERROR maybe event_data needed
-			if(error != 0)
+			if(shutdown_check_cntr == 100)
 			{
-				if(error == -FI_EAVAIL)
+				shutdown_check_cntr = 0;
+				event = 0;
+				event_entry = malloc(event_entry_size);
+				error = fi_eq_read(jendpoint->event_queue, &event, event_entry, event_entry_size, 0);
+				if(error != 0)
 				{
-					//TODO NULL event_queue_err_entry
-					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
-					if(error != 0)
+					if(error == -FI_EAVAIL)
 					{
-						g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-						error = 0;
+						//TODO NULL event_queue_err_entry
+						error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
+						if(error != 0)
+						{
+							g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
+							error = 0;
+						}
+						else
+						{
+							g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						}
 					}
-					else
+					else if(error == -FI_EAGAIN)
 					{
-						g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						g_printf("\nNo Event data on event Queue on Server while reading for SHUTDOWN Event.\n");
+					}
+					else if(error < 0)
+					{
+						g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
 					}
 				}
-				else
-				{
-					g_critical("\nError occurred on Server while reading from Event queue (active Endpoint) for shutdown.\nDetails:\n%s", fi_strerror(error));
-					error = 0;
-				}
+				free(event_entry);
 			}
-			free(event_entry);
+			shutdown_check_cntr++;
 		}while (event != FI_SHUTDOWN);
 	}
 
@@ -559,7 +575,7 @@ main (int argc, char** argv)
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fi_hints->mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_UNSPEC; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
@@ -659,18 +675,18 @@ main (int argc, char** argv)
 			else
 			{
 				g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
-				g_printf("\nEq_cm_entry: %ld.\nEvent_entry: %ld", sizeof(struct fi_eq_cm_entry), sizeof(event_entry));
 				fi_error = 0;
 			}
 		}
-		g_printf("\n\nSERVER EVENT QUEUE PASSED\n\n");
 		if(event == FI_CONNREQ)
 		{
-			g_printf("\n\nSERVER CONNREQ EVENT ON QUEUE\n\n");
 			g_atomic_int_inc (&thread_count);
 			g_thread_new(NULL, *j_thread_function, (gpointer) event_entry);
 		}
-		//free(event_entry);//PERROR: Freed before used in j_thread_function
+		else
+		{
+			free(event_entry);
+		}
 	} while(!(g_atomic_int_compare_and_exchange(&thread_count, 0, 0))); //thread count == 0
 
 	fi_error = fi_close(&(j_passive_endpoint->fid));

@@ -164,6 +164,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
+	fi_hints->domain_attr->threading = FI_THREAD_UNSPEC; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	//inits j_info
 	//gives a linked list of available provider details into j_info
@@ -181,12 +182,12 @@ j_connection_pool_init (JConfiguration* configuration)
 	//validating juleas needs here
 	//PERROR: through no casting (size_t and guint)
 
-	/*
-	TODO: activate again
 	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
 		g_critical("\nDemand for connections exceeds the max number of endpoints available through domain/provider");
 	}
+	/*
+	TODO: activate again
 	if(j_info->domain_attr->cq_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count * 2 + 1) //1 active endpoint has 2 completion queues, 1 receive, 1 transmit
 	{
 		g_warning("\nDemand for connections exceeds the optimal number of completion queues available through domain/provider");
@@ -472,7 +473,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//Endpoint related definitions
 			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, 0, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 			//connection related definitions
 			struct sockaddr_in address;
@@ -483,24 +484,17 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//fi_connection data
 
-			const void* connection_data;
-			size_t connection_data_length;
-
-
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
-
-
 			connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
-
-			connection_data = g_strdup("User defined Data");
-			connection_data_length = strlen("User defined Data") + 1;
 
 			endpoint = malloc(sizeof(struct JEndpoint));
 			error = 0;
 
 			// guint op_count;
+
+			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;
 
 			//Allocate Endpoint and related ressources
 			//PERROR: last param of fi_endpoint maybe mandatory. If so, build context struct with every info in it
@@ -577,13 +571,13 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				error = 0;
 			}
 
-			g_printf("\n\nCLIENT REACHED POINT AFTER CONNECTION READ!\n\n");
+			g_printf("\nCLIENT REACHED POINT AFTER CONNECTION READ!\n");
 
 			//check whether connection accepted
 			eq_event = 0;
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
-			ssize_t_error = fi_eq_sread(endpoint->event_queue, &eq_event, connection_entry, connection_entry_length, -1, 0); //PERROR: fi_eq_read could need a buffer to report infos about the event (even if it is irrelevant here)
+			ssize_t_error = fi_eq_sread(endpoint->event_queue, &eq_event, connection_entry, connection_entry_length, -1, 0);
 			if(error != 0)
 			{
 				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
@@ -591,18 +585,14 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			}
 			if (eq_event != FI_CONNECTED)
 			{
-				g_critical("\n\nFI_CONNECTED: %d\neq_event: %d\nClient TMP-endpoint did not receive FI_CONNECTED to establish a connection.\n\n", FI_CONNECTED, eq_event);
+				g_critical("\n\nFI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\n", FI_CONNECTED, eq_event);
 			}
 			else
 			{
 				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
-			g_printf("\nCLIENT REACHED POINT AFTER CONNECTION READ!\n");
+			g_printf("\nCLIENT REACHED POINT AFTER CONNECTED READ!\n");
 			free(connection_entry);
-
-			//bind endpoint to the tmp_structures
-			endpoint->max_msg_size = j_info->domain_attr->ep_cnt;
-
 
 			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
 

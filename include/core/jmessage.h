@@ -71,7 +71,7 @@ typedef struct JMessage JMessage;
 struct JEndpoint
 {
 	struct fid_ep* endpoint;
-	ssize_t max_msg_size; //TODO maybe replace with fi_info-struct
+	size_t max_msg_size; //TODO maybe replace with fi_info-struct
 	struct fid_eq* event_queue;
 	struct fid_cq*	completion_queue_transmit;
 	struct fid_cq* completion_queue_receive;
