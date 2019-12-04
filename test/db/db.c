@@ -63,10 +63,8 @@ test_db_schema_create_delete (void)
 		g_autoptr(JDBSchema) schema = NULL;
 		g_autofree gchar* name = NULL;
 
-		name = g_strdup_printf("test_schema_%d", i);
-
-		// FIXME namespace and name are not properly checked, "-" causes errors
-		schema = j_db_schema_new("test_ns", name, &error);
+		name = g_strdup_printf("test-schema-%d", i);
+		schema = j_db_schema_new("test-ns", name, &error);
 		g_assert_nonnull(schema);
 		g_assert_no_error(error);
 
@@ -151,8 +149,7 @@ test_db_entry_insert_update_delete (void)
 	g_autoptr(JDBSelector) selector = NULL;
 	gboolean ret;
 
-	// FIXME namespace and name are not properly checked, "-" causes errors
-	schema = j_db_schema_new("test_ns", "test_schema", &error);
+	schema = j_db_schema_new("test-ns", "test-schema", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 
@@ -188,14 +185,13 @@ test_db_entry_insert_update_delete (void)
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		ret = j_db_entry_insert(entry, batch, &error);
+		// FIXME Do not pass error, will not exist anymore when batch is executed
+		ret = j_db_entry_insert(entry, batch, NULL);
 		g_assert_true(ret);
-		g_assert_no_error(error);
-
-		ret = j_batch_execute(batch);
-		g_assert_true(ret);
-		g_assert_no_error(error);
 	}
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
 
 	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector);

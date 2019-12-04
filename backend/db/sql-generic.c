@@ -593,7 +593,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 		//no ddl in transaction - most databases wont support that - continue without any open transaction
 		goto _error;
 	}
-	g_string_append_printf(sql, "CREATE TABLE %s_%s ( _id INTEGER " sql_autoincrement_string " PRIMARY KEY", batch->namespace, name);
+	g_string_append_printf(sql, "CREATE TABLE " SQL_QUOTE "%s_%s" SQL_QUOTE " ( _id INTEGER " SQL_AUTOINCREMENT_STRING " PRIMARY KEY", batch->namespace, name);
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
 	{
 		goto _error;
@@ -641,7 +641,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 				g_string_append(sql, " INTEGER");
 				break;
 			case J_DB_TYPE_UINT64:
-				g_string_append(sql, sql_uint64_type);
+				g_string_append(sql, SQL_UINT64_TYPE);
 				break;
 			case J_DB_TYPE_FLOAT64:
 				g_string_append(sql, " REAL");
@@ -700,7 +700,7 @@ backend_schema_create(gpointer _batch, gchar const* name, bson_t const* schema, 
 			}
 			sql = g_string_new(NULL);
 			first = TRUE;
-			g_string_append_printf(sql, "CREATE INDEX %s_%s_%d ON %s_%s ( ", batch->namespace, name, i, batch->namespace, name);
+			g_string_append_printf(sql, "CREATE INDEX " SQL_QUOTE "%s_%s_%d" SQL_QUOTE " ON " SQL_QUOTE "%s_%s" SQL_QUOTE " ( ", batch->namespace, name, i, batch->namespace, name);
 			if (G_UNLIKELY(!j_bson_iter_recurse_array(&iter_child, &iter_child2, error)))
 			{
 				goto _error;
@@ -1011,7 +1011,7 @@ backend_schema_delete(gpointer _batch, gchar const* name, GError** error)
 		//no ddl in transaction - most databases wont support that - continue without any open transaction
 		goto _error;
 	}
-	g_string_append_printf(sql, "DROP TABLE IF EXISTS %s_%s", batch->namespace, name);
+	g_string_append_printf(sql, "DROP TABLE IF EXISTS " SQL_QUOTE "%s_%s" SQL_QUOTE, batch->namespace, name);
 	value.val_string = batch->namespace;
 	if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, 1, J_DB_TYPE_STRING, &value, error)))
 	{
@@ -1102,7 +1102,7 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, bson_
 	{
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(id_arr_types_out, type);
-		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, sql_last_insert_id_string, &prepared_id->stmt, NULL, id_arr_types_out, error)))
+		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, SQL_LAST_INSERT_ID_STRING, &prepared_id->stmt, NULL, id_arr_types_out, error)))
 		{
 			goto _error;
 		}
@@ -1124,7 +1124,7 @@ backend_insert(gpointer _batch, gchar const* name, bson_t const* metadata, bson_
 		prepared->sql = g_string_new(NULL);
 		prepared->variables_count = 0;
 		prepared->variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-		g_string_append_printf(prepared->sql, "INSERT INTO %s_%s (", batch->namespace, name);
+		g_string_append_printf(prepared->sql, "INSERT INTO " SQL_QUOTE "%s_%s" SQL_QUOTE " (", batch->namespace, name);
 		g_hash_table_iter_init(&schema_iter, schema_cache);
 
 		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&key, &type_tmp))
@@ -1529,7 +1529,7 @@ _backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoin
 	iteratorOut->index = 0;
 	iteratorOut->arr = g_array_new(FALSE, FALSE, sizeof(guint64));
 
-	g_string_append_printf(sql, "SELECT DISTINCT _id FROM %s_%s", batch->namespace, name);
+	g_string_append_printf(sql, "SELECT DISTINCT _id FROM " SQL_QUOTE "%s_%s" SQL_QUOTE, batch->namespace, name);
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		g_string_append(sql, " WHERE ");
@@ -1669,7 +1669,7 @@ backend_update(gpointer _batch, gchar const* name, bson_t const* selector, bson_
 	}
 	variables_count = 0;
 	variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-	g_string_append_printf(sql, "UPDATE %s_%s SET ", batch->namespace, name);
+	g_string_append_printf(sql, "UPDATE " SQL_QUOTE "%s_%s" SQL_QUOTE " SET ", batch->namespace, name);
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, metadata, error)))
 	{
 		goto _error;
@@ -1859,7 +1859,7 @@ backend_delete(gpointer _batch, gchar const* name, bson_t const* selector, GErro
 	{
 		prepared->sql = g_string_new(NULL);
 		prepared->variables_count = 1;
-		g_string_append_printf(prepared->sql, "DELETE FROM %s_%s WHERE _id = ?", batch->namespace, name);
+		g_string_append_printf(prepared->sql, "DELETE FROM " SQL_QUOTE "%s_%s" SQL_QUOTE " WHERE _id = ?", batch->namespace, name);
 		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, NULL, error)))
 		{
 			goto _error;
@@ -1951,7 +1951,7 @@ backend_query(gpointer _batch, gchar const* name, bson_t const* selector, gpoint
 		g_array_append_val(arr_types_out, type);
 		variables_count++;
 	}
-	g_string_append_printf(sql, " FROM %s_%s", batch->namespace, name);
+	g_string_append_printf(sql, " FROM " SQL_QUOTE "%s_%s" SQL_QUOTE, batch->namespace, name);
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		g_string_append(sql, " WHERE ");

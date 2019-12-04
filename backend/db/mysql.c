@@ -34,10 +34,11 @@
 #define SQL_MODE_MULTI_THREAD 1
 #define SQL_MODE SQL_MODE_MULTI_THREAD
 
-#define sql_autoincrement_string " NOT NULL AUTO_INCREMENT "
-#define sql_uint64_type " BIGINT UNSIGNED "
-#define sql_last_insert_id_string " SELECT LAST_INSERT_ID() "
-#define sql_get_table_names "SELECT table_name FROM information_schema.tables WHERE table_schema = 'julea' AND table_name LIKE '%s_%%';"
+#define SQL_AUTOINCREMENT_STRING " NOT NULL AUTO_INCREMENT "
+#define SQL_UINT64_TYPE " BIGINT UNSIGNED "
+#define SQL_LAST_INSERT_ID_STRING " SELECT LAST_INSERT_ID() "
+#define SQL_QUOTE "`"
+
 static
 gchar* path;
 struct mysql_stmt_wrapper
