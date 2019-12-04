@@ -11,7 +11,8 @@ addons:
       - librados-dev
       - libfuse-dev
       - libmariadb-dev
-  mariadb: '10.1'
+services:
+  - mysql
 language: c
 compiler:
   - gcc
@@ -31,7 +32,7 @@ env:
 before_install:
   - sudo apt-get -y remove glib-networking
   - sudo apt-get -y autoremove
-  - mysql -e 'CREATE DATABASE julea;'
+  - if test "${JULEA_DB}" = 'mysql'; then mysql -e 'CREATE DATABASE julea;'; fi
 script:
   # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
   - JULEA_SANITIZE=''; if test "${TRAVIS_COMPILER}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
