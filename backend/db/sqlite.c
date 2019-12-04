@@ -186,7 +186,7 @@ j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBT
 		}
 		break;
 	case J_DB_TYPE_FLOAT32:
-		if (G_UNLIKELY(sqlite3_bind_double(stmt, idx, value->val_float32) != SQLITE_OK))
+		if (G_UNLIKELY(sqlite3_bind_double(stmt, idx, (gdouble)value->val_float32) != SQLITE_OK))
 		{
 			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
 			goto _error;

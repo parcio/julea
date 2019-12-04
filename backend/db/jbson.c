@@ -179,7 +179,7 @@ J_TRACE_FUNCTION(NULL);
 		}
 		break;
 	case J_DB_TYPE_FLOAT32:
-		if (G_UNLIKELY(!bson_append_double(bson, name, -1, value->val_float32)))
+		if (G_UNLIKELY(!bson_append_double(bson, name, -1, (gdouble)value->val_float32)))
 		{
 			g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_BSON_APPEND_FAILED, "bson append failed");
 			goto _error;

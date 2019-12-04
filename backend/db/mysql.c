@@ -528,7 +528,6 @@ j_sql_open(void)
 	J_TRACE_FUNCTION(NULL);
 
 	MYSQL* backend_db = NULL;
-	g_autofree gchar* dirname = NULL;
 
 	if (!(backend_db = mysql_init(NULL)))
 	{
