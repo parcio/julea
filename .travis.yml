@@ -39,8 +39,9 @@ script:
   - ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
   - ./waf
   - . ./scripts/environment.sh
+  - JULEA_DB_COMPONENT='server'; if test "${JULEA_DB}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
   - JULEA_DB_PATH="/tmp/julea/db/${JULEA_DB}"; if test "${JULEA_DB}" = 'mysql'; then JULEA_DB_PATH='localhost:julea:travis:'; fi
-  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component=server --db-path="${JULEA_DB_PATH}"
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
   - ./scripts/test.sh
 notifications:
   email:
