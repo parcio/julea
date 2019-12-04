@@ -74,45 +74,27 @@ thread_variables_fini(void* ptr);
 static
 GPrivate thread_variables_global = G_PRIVATE_INIT(thread_variables_fini);
 static
-GArray* all_thread_variables = NULL;
-G_LOCK_DEFINE_STATIC(all_thread_variables);
-static
 void
 sql_generic_init(void)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	G_LOCK(all_thread_variables);
-	if (!all_thread_variables)
-	{
-		all_thread_variables = g_array_new(FALSE, FALSE, sizeof(JThreadVariables*));
-	}
-	G_UNLOCK(all_thread_variables);
 }
 static
 void
-_thread_variables_fini(void* ptr, gboolean has_lock)
+sql_generic_fini(void)
+{
+	J_TRACE_FUNCTION(NULL);
+}
+static
+void
+thread_variables_fini(void* ptr)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JThreadVariables* thread_variables = ptr;
-	guint i;
 
 	if (thread_variables)
 	{
-		if (!has_lock)
-		{
-			G_LOCK(all_thread_variables);
-			for (i = 0; i < all_thread_variables->len; i++)
-			{
-				if (g_array_index(all_thread_variables, JThreadVariables*, i) == thread_variables)
-				{
-					g_array_remove_index_fast(all_thread_variables, i);
-					break;
-				}
-			}
-			G_UNLOCK(all_thread_variables);
-		}
 		if (thread_variables->namespaces)
 		{
 			g_hash_table_destroy(thread_variables->namespaces);
@@ -120,33 +102,6 @@ _thread_variables_fini(void* ptr, gboolean has_lock)
 		j_sql_close(thread_variables->sql_backend);
 		g_free(thread_variables);
 	}
-}
-static
-void
-sql_generic_fini(void)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	JThreadVariables* thread_variables;
-	guint i;
-
-	G_LOCK(all_thread_variables);
-
-	for (i = 0; i < all_thread_variables->len; i++)
-	{
-		thread_variables = g_array_index(all_thread_variables, JThreadVariables*, i);
-		_thread_variables_fini(thread_variables, TRUE);
-	}
-
-	g_array_unref(all_thread_variables);
-	all_thread_variables = NULL;
-	G_UNLOCK(all_thread_variables);
-}
-static
-void
-thread_variables_fini(void* ptr)
-{
-	_thread_variables_fini(ptr, FALSE);
 }
 static
 void
@@ -182,9 +137,6 @@ thread_variables_get(GError** error)
 		}
 		thread_variables->namespaces = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, freeJSqlCacheNames);
 		thread_variables->initialized = TRUE;
-		G_LOCK(all_thread_variables);
-		g_array_append_val(all_thread_variables, thread_variables);
-		G_UNLOCK(all_thread_variables);
 		g_private_replace(&thread_variables_global, thread_variables);
 	}
 	return thread_variables;
