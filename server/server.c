@@ -26,6 +26,7 @@
 #include <gmodule.h>
 
 #include <string.h>
+#include <unistd.h>
 
 #include <julea.h>
 
@@ -68,7 +69,8 @@ jd_daemon (void)
 
 	if (pid > 0)
 	{
-		g_printerr("Daemon started as process %d.\n", pid);
+		g_message("Daemon started as process %d.", pid);
+		g_message("Log messages will be redirected to journald if possible. To view them, use journalctl GLIB_DOMAIN=%s.", G_LOG_DOMAIN);
 		_exit(0);
 	}
 	else if (pid == -1)
@@ -103,7 +105,42 @@ jd_daemon (void)
 		close(fd);
 	}
 
+	// Try to redirect GLib log messages to journald.
+	// They can be shown with: journalctl GLIB_DOMAIN=JULEA
+	g_log_set_writer_func(g_log_writer_journald, NULL, NULL);
+
 	return TRUE;
+}
+
+
+static
+gboolean
+jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_type)
+{
+	guint count;
+
+	count = j_configuration_get_server_count(jd_configuration, backend_type);
+
+	for (guint i = 0; i < count; i++)
+	{
+		g_autoptr(GNetworkAddress) address = NULL;
+		gchar const* addr_server;
+		gchar const* server;
+		guint16 addr_port;
+
+		server = j_configuration_get_server(jd_configuration, backend_type, i);
+		address = G_NETWORK_ADDRESS(g_network_address_parse(server, 4711, NULL));
+
+		addr_server = g_network_address_get_hostname(address);
+		addr_port = g_network_address_get_port(address);
+
+		if (g_strcmp0(host, addr_server) == 0 && port == addr_port)
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 //Compares function for different domain_attr
@@ -503,6 +540,7 @@ main (int argc, char** argv)
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean opt_daemon = FALSE;
+	g_autofree gchar* opt_host = NULL;
 	gint opt_port = 4711;
 
 	JTrace* trace;
@@ -535,6 +573,7 @@ main (int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
+		{ "host", 0, 0, G_OPTION_ARG_STRING, &opt_host, "Override host name", "hostname" },
 		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
@@ -545,11 +584,9 @@ main (int argc, char** argv)
 	g_printf("\n\nSERVER STARTED\n\n");
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
-		g_option_context_free(context);
-
 		if (error)
 		{
-			g_printerr("%s\n", error->message);
+			g_warning("%s", error->message);
 			g_error_free(error);
 		}
 
@@ -560,6 +597,18 @@ main (int argc, char** argv)
 	{
 		return 1;
 	}
+
+	/*
+	TODO use
+	//gets a hostname if none given
+	if (opt_host == NULL)
+	{
+		gchar hostname[HOST_NAME_MAX + 1];
+
+		gethostname(hostname, HOST_NAME_MAX + 1);
+		opt_host = g_strdup(hostname);
+	}
+	*/
 
 
 	//Build fabric ressources
@@ -590,9 +639,13 @@ main (int argc, char** argv)
 
 	if (jd_configuration == NULL)
 	{
-		g_printerr("Could not read configuration.\n");
+		g_warning("Could not read configuration.");
 		return 1;
 	}
+
+	jd_object_backend = NULL;
+	jd_kv_backend = NULL;
+	jd_db_backend = NULL;
 
 	port_str = g_strdup_printf("%d", opt_port);
 
@@ -608,31 +661,40 @@ main (int argc, char** argv)
 	db_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_DB);
 	db_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_DB), "{PORT}", port_str);
 
-	if (j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
+	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_OBJECT)
+	    && j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
 	{
 		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
 		{
-			g_critical("\nCould not initialize object backend %s.\n", object_backend);
+			g_warning("\nCould not initialize object backend %s. \n", object_backend);
 			return 1;
 		}
+
+		g_debug("Initialized object backend %s.", object_backend);
 	}
 
-	if (j_backend_load_server(kv_backend, kv_component, J_BACKEND_TYPE_KV, &kv_module, &jd_kv_backend))
+	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_KV)
+	    && j_backend_load_server(kv_backend, kv_component, J_BACKEND_TYPE_KV, &kv_module, &jd_kv_backend))
 	{
 		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
 		{
-			g_critical("\nCould not initialize kv backend %s.\n", kv_backend);
+			g_warning("\nCould not initialize kv backend %s.\n", kv_backend);
 			return 1;
 		}
+
+		g_debug("Initialized kv backend %s.", kv_backend);
 	}
 
-	if (j_backend_load_server(db_backend, db_component, J_BACKEND_TYPE_DB, &db_module, &jd_db_backend))
+	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_DB)
+	    && j_backend_load_server(db_backend, db_component, J_BACKEND_TYPE_DB, &db_module, &jd_db_backend))
 	{
 		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
 		{
-			g_critical("\nCould not initialize db backend %s.\n", db_backend);
+			g_warning("\nCould not initialize db backend %s.\n", db_backend);
 			return 1;
 		}
+
+		g_debug("Initialized db backend %s.", db_backend);
 	}
 
 	jd_statistics = j_statistics_new(FALSE);

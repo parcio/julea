@@ -40,5 +40,7 @@ This can be used to run two servers on the same machine, as sharing backend path
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
+| memory  | ✅     | ✅     |  |
+| mysql   | ✅     | ❌     | Host, database, user and password (`localhost:julea:root:pw`) |
 | null    | ✅     | ✅     |  |
 | sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |

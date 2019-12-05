@@ -70,6 +70,19 @@ test_item_new_free (void)
 
 static
 void
+test_item_ref_unref (JItem** item, gconstpointer data)
+{
+	JItem* ref_item;
+
+	(void)data;
+
+	ref_item = j_item_ref(*item);
+	g_assert_true(*item == ref_item);
+	j_item_unref(*item);
+}
+
+static
+void
 test_item_name (JItem** item, gconstpointer data)
 {
 	(void)data;
@@ -99,6 +112,7 @@ void
 test_item (void)
 {
 	g_test_add_func("/item/item/new_free", test_item_new_free);
+	g_test_add("/item/item/ref_unref", JItem*, NULL, test_item_fixture_setup, test_item_ref_unref, test_item_fixture_teardown);
 	g_test_add("/item/item/name", JItem*, NULL, test_item_fixture_setup, test_item_name, test_item_fixture_teardown);
 	g_test_add("/item/item/size", JItem*, NULL, test_item_fixture_setup, test_item_size, test_item_fixture_teardown);
 	g_test_add("/item/item/modification_time", JItem*, NULL, test_item_fixture_setup, test_item_modification_time, test_item_fixture_teardown);

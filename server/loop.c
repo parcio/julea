@@ -380,7 +380,7 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 				num = g_atomic_int_add(&jd_thread_num, 1);
 
 				(void)num;
-				//g_print("HELLO %d\n", num);
+				//g_message("HELLO %d", num);
 
 				reply = j_message_new_reply(message);
 

@@ -11,6 +11,8 @@ addons:
       - librados-dev
       - libfuse-dev
       - libmariadb-dev
+services:
+  - mysql
 language: c
 compiler:
   - gcc
@@ -25,15 +27,21 @@ env:
   - JULEA_OBJECT=posix JULEA_KV=sqlite  JULEA_DB=sqlite
   # DB backends
   - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=memory
-# FIXME We need to remove glib-network, otherwise libproxy will cause crashes.
+  - JULEA_OBJECT=posix JULEA_KV=lmdb    JULEA_DB=mysql
+# We need to remove glib-network, otherwise libproxy will cause crashes.
 before_install:
   - sudo apt-get -y remove glib-networking
   - sudo apt-get -y autoremove
+  - if test "${JULEA_DB}" = 'mysql'; then mysql -e 'CREATE DATABASE julea;'; fi
 script:
-  - ./waf configure --debug --sanitize --leveldb=/usr
+  # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
+  - JULEA_SANITIZE=''; if test "${TRAVIS_COMPILER}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
+  - ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
   - ./waf
   - . ./scripts/environment.sh
-  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component=server --db-path=/tmp/julea/db/${JULEA_DB}
+  - JULEA_DB_COMPONENT='server'; if test "${JULEA_DB}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
+  - JULEA_DB_PATH="/tmp/julea/db/${JULEA_DB}"; if test "${JULEA_DB}" = 'mysql'; then JULEA_DB_PATH='localhost:julea:travis:'; fi
+  - julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=${JULEA_OBJECT} --object-component=server --object-path=/tmp/julea/object/${JULEA_OBJECT} --kv-backend=${JULEA_KV} --kv-component=server --kv-path=/tmp/julea/kv/${JULEA_KV} --db-backend=${JULEA_DB} --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
   - ./scripts/test.sh
 notifications:
   email:

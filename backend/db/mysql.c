@@ -34,12 +34,16 @@
 #define SQL_MODE_MULTI_THREAD 1
 #define SQL_MODE SQL_MODE_MULTI_THREAD
 
-#define sql_autoincrement_string " NOT NULL AUTO_INCREMENT "
-#define sql_uint64_type " BIGINT UNSIGNED "
-#define sql_last_insert_id_string " SELECT LAST_INSERT_ID() "
-#define sql_get_table_names "SELECT table_name FROM information_schema.tables WHERE table_schema = 'julea' AND table_name LIKE '%s_%%';"
-static
-gchar* path;
+#define SQL_AUTOINCREMENT_STRING " NOT NULL AUTO_INCREMENT "
+#define SQL_UINT64_TYPE " BIGINT UNSIGNED "
+#define SQL_LAST_INSERT_ID_STRING " SELECT LAST_INSERT_ID() "
+#define SQL_QUOTE "`"
+
+static gchar* db_host = NULL;
+static gchar* db_database = NULL;
+static gchar* db_user = NULL;
+static gchar* db_password = NULL;
+
 struct mysql_stmt_wrapper
 {
 	MYSQL_STMT* stmt;
@@ -524,21 +528,19 @@ j_sql_open(void)
 	J_TRACE_FUNCTION(NULL);
 
 	MYSQL* backend_db = NULL;
-	g_autofree gchar* dirname = NULL;
 
-	g_return_val_if_fail(path != NULL, FALSE);
 	if (!(backend_db = mysql_init(NULL)))
 	{
 		goto _error;
 	}
-	//FIXME use the path variable
+
 	if (!mysql_real_connect(backend_db,
-		    "localhost", //hostname
-		    "root", //username
-		    "1234", //password
-		    "julea", //database name
+		    db_host, //hostname
+		    db_user, //username
+		    db_password, //password
+		    db_database, //database name
 		    3306, //port number
-		    "/var/run/mysqld/mysqld.sock", //unix socket
+		    NULL, //unix socket
 		    0 //client flags
 		    ))
 	{
@@ -592,28 +594,55 @@ j_sql_abort_transaction(MYSQL* backend_db, GError** error)
 	mysql_query(backend_db, "ROLLBACK");
 	return TRUE;
 }
+
 #include "sql-generic.c"
+
 static
 gboolean
-backend_init(gchar const* _path)
+backend_init(gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_val_if_fail(_path != NULL, FALSE);
+	g_auto(GStrv) split = NULL;
 
-	path = g_strdup(_path);
+	g_return_val_if_fail(path != NULL, FALSE);
+
+	split = g_strsplit(path, ":", 0);
+
+	if (g_strv_length(split) != 4)
+	{
+		return FALSE;
+	}
+
+	db_host = g_strdup(split[0]);
+	db_database = g_strdup(split[1]);
+	db_user = g_strdup(split[2]);
+	db_password = g_strdup(split[3]);
+
+	g_return_val_if_fail(db_host != NULL, FALSE);
+	g_return_val_if_fail(db_database != NULL, FALSE);
+	g_return_val_if_fail(db_user != NULL, FALSE);
+	g_return_val_if_fail(db_password != NULL, FALSE);
+
 	sql_generic_init();
+
 	return TRUE;
 }
+
 static
 void
-backend_fini(void)
+backend_fini (void)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sql_generic_fini();
-	g_free(path);
+
+	g_free(db_host);
+	g_free(db_database);
+	g_free(db_user);
+	g_free(db_password);
 }
+
 static
 JBackend mysql_backend = {
 	.type = J_BACKEND_TYPE_DB,
@@ -636,7 +665,7 @@ JBackend mysql_backend = {
 
 G_MODULE_EXPORT
 JBackend*
-backend_info(void)
+backend_info (void)
 {
 	J_TRACE_FUNCTION(NULL);
 

@@ -48,6 +48,7 @@ main (int argc, char** argv)
 	test_object_object();
 
 	// KV client
+	test_kv_kv();
 	test_kv_iterator();
 
 	// DB client
