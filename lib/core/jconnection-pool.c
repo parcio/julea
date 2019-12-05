@@ -492,6 +492,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			endpoint = malloc(sizeof(struct JEndpoint));
 			error = 0;
 
+
 			// guint op_count;
 
 			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;

@@ -349,10 +349,10 @@ j_message_ensure_size (JMessage* message, gsize length)
 */
 static
 gboolean
-j_message_fi_val_message_size(ssize_t max_msg_size, JMessage* message)
+j_message_fi_val_message_size(size_t max_msg_size, JMessage* message)
 {
 	gboolean ret = FALSE;
-	if( ((ssize_t)(sizeof(JMessageHeader) + j_message_length(message))) <= max_msg_size)
+	if( ((size_t)(sizeof(JMessageHeader) + j_message_length(message))) <= max_msg_size)
 	{
 		ret = TRUE;
 	}
@@ -930,7 +930,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
-	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader) + 1, NULL, 0, NULL);
+	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if ((int) error != 0)
 	{
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
@@ -971,8 +971,8 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	//TODO splice the message, not just report an error
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
-		g_critical("\nMessage bigger than provider max_msg_size. (receiving)\nMax Message Size: %ld\nMessage Size: %ld\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
-		//goto end;
+		g_critical("\nMessage bigger than provider max_msg_size. (receiving)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
+		goto end;
 	}
 
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
@@ -1101,7 +1101,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	//TODO Dont report error, but split the Message
 	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
-		g_critical("\nMessage bigger than provider max_msg_size (Sending)\nMax Message Size: %ld\nMessage Size: %ld\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
+		g_critical("\nMessage bigger than provider max_msg_size (Sending)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
 		//goto end;
 	}
 

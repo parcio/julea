@@ -175,7 +175,7 @@ j_thread_function(gpointer connection_event_entry)
 
 	g_printf("\nTHREAD STARTED\n");
 
-	event_entry_size = (sizeof(struct fi_eq_cm_entry) + 128);
+	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
 	info = fi_dupinfo(event_entry->info);
 	//info = event_entry->info;
@@ -448,6 +448,7 @@ j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_q
 
 	//get fi_info
 	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info);
+
 	if(error != 0)
 	{
 		g_critical("\nSomething went horribly wrong during server initializing j_info.\n Details:\n %s", fi_strerror(error));
@@ -566,7 +567,7 @@ main (int argc, char** argv)
 
 	if(fi_hints == NULL)
 	{
-		g_critical("\nAllocating empty hints did not work");
+		g_critical("\nAllocating empty hints did not work\n");
 	}
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	//define Fabric attributes
