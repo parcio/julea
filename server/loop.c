@@ -34,6 +34,8 @@
 
 #include "server.h"
 
+#include <glib/gprintf.h>
+
 static guint jd_thread_num = 0;
 
 gboolean
@@ -225,8 +227,8 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					guint64 bytes_written = 0;
 
 					ssize_t error = 0;
-					struct fi_cq_msg_entry completion_queue_data = {0};
-					struct fi_cq_err_entry completion_queue_err_entry = {0};
+					struct fi_cq_msg_entry* completion_queue_data;
+					struct fi_cq_err_entry* completion_queue_err_entry;
 
 
 					length = j_message_get_8(message);
@@ -250,19 +252,31 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					{
 						g_critical("%s", fi_strerror((int)error));
 					}
-					error = fi_cq_read(endpoint->completion_queue_transmit, &completion_queue_data, 1);
+					completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
+					error = fi_cq_read(endpoint->completion_queue_transmit, completion_queue_data, 1);
 					if(error != 0)
 					{
-						if(error == -FI_EAGAIN)
+						if(error == -FI_EAVAIL)
 						{
-							error = fi_cq_readerr(endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
-							g_critical("%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+							completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
+							error = fi_cq_readerr(endpoint->completion_queue_transmit, completion_queue_err_entry, 0);
+							g_critical("\nError on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
+							free(completion_queue_err_entry);
 						}
-						if(error < 0)
+						else if(error == -FI_EAGAIN)
 						{
-							g_critical("%s", fi_strerror((int)error));
+							g_critical("\nNo completion data on completion Queue reading for data junks in loop.c.");
+						}
+						else if(error > 0)
+						{
+							g_printf("\nReceiving Data Junks directly in loop.c succeeded.\n");
+						}
+						else if(error < 0)
+						{
+							g_critical("\nError reading completion Queue after reading for data njunks in loop.c.\nDetails:\n%s", fi_strerror(error));
 						}
 					}
+					free(completion_queue_data);
 
 					j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
 
