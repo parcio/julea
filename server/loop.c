@@ -409,7 +409,7 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					j_message_add_operation(reply, 3);
 					j_message_append_string(reply, "kv");
 				}
-
+				g_printf("\nPing Message received on server\n");
 				j_message_send(reply, endpoint);
 			}
 			break;

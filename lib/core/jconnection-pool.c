@@ -164,7 +164,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_UNSPEC; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	//inits j_info
 	//gives a linked list of available provider details into j_info
@@ -465,6 +465,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			uint32_t eq_event;
 			int error;
 			ssize_t ssize_t_error;
+			gboolean comm_check;
 
 			//struct fid_ep* tmp_endpoint;
 			//struct fid_eq* tmp_event_queue;
@@ -572,7 +573,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				error = 0;
 			}
 
-			g_printf("\nCLIENT REACHED POINT AFTER CONNECTION READ!\n");
+			//g_printf("\nCLIENT REACHED POINT AFTER CONNECTION CALL!\n");
 
 			//check whether connection accepted
 			eq_event = 0;
@@ -592,16 +593,36 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			{
 				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
-			g_printf("\nCLIENT REACHED POINT AFTER CONNECTED READ!\n");
+			//g_printf("\nCLIENT REACHED POINT AFTER CONNECTED READ!\n");
 			free(connection_entry);
 
 			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
-
+			g_printf("\nCommcheck initiated 1\n");
+			comm_check = FALSE;
+			g_printf("\nCommcheck initiated 2\n");
 			message = j_message_new(J_MESSAGE_PING, 0);
-			j_message_send(message, endpoint);
+			g_printf("\nCommcheck initiated 3\n");
+			comm_check = j_message_send(message, (gpointer) endpoint);
+			g_printf("\nCommcheck initiated 4\n");
+			if(comm_check == FALSE)
+			{
+				g_critical("\nInitital sending check failed on Client endpoint\n");
+			}
+			else
+			{
+				g_critical("\nInitial sending check succeeded\n");
+				reply = j_message_new_reply(message);
+				comm_check = j_message_receive(reply, endpoint);
+				if(comm_check == FALSE)
+				{
+					g_critical("\nInitital receiving check failed on Client endpoint\n");
+				}
+				else
+				{
+					g_critical("\nInitial receiving check succeeded\n");
+				}
+			}
 
-			reply = j_message_new_reply(message);
-			j_message_receive(reply, endpoint);
 
 			/*
 			op_count = j_message_get_count(reply);
@@ -677,7 +698,7 @@ j_connection_pool_pop (JBackendType backend, guint index)
 		default:
 			g_assert_not_reached();
 	}
-
+	g_printf("\nconnection pool pop internal done\n");
 	return NULL;
 }
 

@@ -194,6 +194,9 @@ j_thread_function(gpointer connection_event_entry)
 	int error = 0;
 	uint32_t event = 0;
 	int shutdown_check_cntr = 0;
+	ssize_t error2 = 0;
+
+	void* buf;
 
 	struct fi_info* info;
 	struct fid_domain* domain;
@@ -288,12 +291,24 @@ j_thread_function(gpointer connection_event_entry)
 		g_critical("\nError occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
+
+	//PERROR no receive Buffer before accepting connetcion.
+
+	buf = malloc(1000);
+	error2 = fi_recv(jendpoint->endpoint, buf, 1000, NULL, 0, NULL);
+	if (error2 == 0)
+	{
+		g_printf("\n\nWTFH?!\n\n");
+	}
+	free(buf);
+
 	error = fi_enable(jendpoint->endpoint);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
+
 	error = fi_accept(jendpoint->endpoint, NULL, 0);
 	if(error != 0)
 	{
@@ -625,7 +640,7 @@ main (int argc, char** argv)
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fi_hints->mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_UNSPEC; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
