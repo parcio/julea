@@ -672,12 +672,11 @@ def build(ctx):
 		)
 
 	# Example
-	#for compiler in ('c', 'cxx'):
-	#	ctx(
-	#		features=[compiler, '{0}program'.format(compiler)],
-	#		source=ctx.path.ant_glob('example/hello-world.c'),
-	#		target='example/hello-world-{0}'.format(compiler),
-	#		use=use_julea_object + use_julea_kv,
+	#for extension in ('c', 'cc'):
+	#	ctx.program(
+	#		source=ctx.path.ant_glob('example/hello-world.{0}'.format(extension)),
+	#		target='example/hello-world-{0}'.format(extension),
+	#		use=use_julea_object + use_julea_kv + use_julea_db,
 	#		includes=include_julea_core,
 	#		rpath=get_rpath(ctx),
 	#		install_path=None

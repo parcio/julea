@@ -120,7 +120,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (JDBSelector, j_db_selector_unref)
  * \return TRUE on success, FALSE otherwise
  **/
 
-gboolean j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOperator operator, gconstpointer value, guint64 length, GError** error);
+gboolean j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
 
 /**
  * add a search field to the selector.
