@@ -253,7 +253,7 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 						g_critical("%s", fi_strerror((int)error));
 					}
 					completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
-					error = fi_cq_read(endpoint->completion_queue_transmit, completion_queue_data, 1);
+					error = fi_cq_sread(endpoint->completion_queue_transmit, completion_queue_data, 1, NULL, -1);
 					if(error != 0)
 					{
 						if(error == -FI_EAVAIL)

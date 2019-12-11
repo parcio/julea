@@ -194,9 +194,6 @@ j_thread_function(gpointer connection_event_entry)
 	int error = 0;
 	uint32_t event = 0;
 	int shutdown_check_cntr = 0;
-	ssize_t error2 = 0;
-
-	void* buf;
 
 	struct fi_info* info;
 	struct fid_domain* domain;
@@ -293,14 +290,6 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	//PERROR no receive Buffer before accepting connetcion.
-
-	buf = malloc(1000);
-	error2 = fi_recv(jendpoint->endpoint, buf, 1000, NULL, 0, NULL);
-	if (error2 == 0)
-	{
-		g_printf("\n\nWTFH?!\n\n");
-	}
-	free(buf);
 
 	error = fi_enable(jendpoint->endpoint);
 	if(error != 0)
@@ -419,7 +408,7 @@ j_thread_function(gpointer connection_event_entry)
 					}
 					else if(error == -FI_EAGAIN)
 					{
-						g_printf("\nNo Event data on event Queue on Server while reading for SHUTDOWN Event.\n");
+						//g_printf("\nNo Event data on event Queue on Server while reading for SHUTDOWN Event.\n");
 					}
 					else if(error < 0)
 					{

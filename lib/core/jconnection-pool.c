@@ -92,7 +92,6 @@ static struct fid_eq* j_domain_event_queue;
 //libfabric config structures
 static struct fi_info* j_info;
 
-
 void
 j_connection_pool_init (JConfiguration* configuration)
 {
@@ -165,6 +164,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
 	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->tx_attr->op_flags = FI_COMPLETION;
 
 	//inits j_info
 	//gives a linked list of available provider details into j_info
@@ -180,7 +180,6 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 	//validating juleas needs here
-	//PERROR: through no casting (size_t and guint)
 
 	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
 	{
@@ -219,14 +218,12 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//build event queue for domain
 	//TODO read event_queue attributes from julea config
-	//PERROR: Wrong formatting of event queue attributes
 	error = fi_eq_open(j_fabric, &event_queue_attr, &j_domain_event_queue, NULL);
 	if(error != 0)
 	{
 		goto end;
 	}
 	//bind an event queue to domain
-	//PERROR: 0 is possibly not an acceptable parameter for fi_domain_bind (what exactly is acceptable, except 1 possible flag, is not mentioned in man)
 	error = fi_domain_bind(j_domain, &j_domain_event_queue->fid, 0);
 	if(error != 0)
 	{
@@ -330,7 +327,6 @@ j_connection_pool_fini (void)
 			}
 			error = 0;
 
-			//PERROR: you should be able to give a complete object into fi_close, but lets see whether this works too
 			error = fi_close(&(endpoint->completion_queue_receive->fid));
 			if(error != 0)
 			{
@@ -499,7 +495,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;
 
 			//Allocate Endpoint and related ressources
-			//PERROR: last param of fi_endpoint maybe mandatory. If so, build context struct with every info in it
 			error = fi_endpoint(j_domain, j_info, &endpoint->endpoint, NULL);
 			if(error != 0)
 			{
@@ -539,14 +534,14 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			error = fi_ep_bind(endpoint->endpoint, &endpoint->completion_queue_receive->fid, FI_RECV);
 			if(error != 0)
 			{
-				g_critical("\nProblem while binding completion queue 1 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 2 to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
 			error = fi_ep_bind(endpoint->endpoint, &endpoint->completion_queue_transmit->fid, FI_TRANSMIT);
 			if(error != 0)
 			{
-				g_critical("\nProblem while binding completion queue 2 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nProblem while binding completion queue 1 to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
 				error = 0;
 			}
 
@@ -564,8 +559,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			address.sin_port = htons(4711);
 			inet_aton("127.0.0.1", &address.sin_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
-			//PERROR: User specified data maybe required to be set
-			//g_printf("\n\nValue of error before fi_connect: %d\n", error);
 			error = fi_connect(endpoint->endpoint, &address, NULL, 0);
 			if(error != 0)
 			{
@@ -593,33 +586,30 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			{
 				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
-			//g_printf("\nCLIENT REACHED POINT AFTER CONNECTED READ!\n");
 			free(connection_entry);
 
 			// j_helper_set_nodelay(connection, TRUE); //irrelevant at the moment, since function aims at g_socket_connection
-			g_printf("\nCommcheck initiated 1\n");
 			comm_check = FALSE;
-			g_printf("\nCommcheck initiated 2\n");
 			message = j_message_new(J_MESSAGE_PING, 0);
-			g_printf("\nCommcheck initiated 3\n");
 			comm_check = j_message_send(message, (gpointer) endpoint);
-			g_printf("\nCommcheck initiated 4\n");
 			if(comm_check == FALSE)
 			{
-				g_critical("\nInitital sending check failed on Client endpoint\n");
+				g_critical("\nInitital sending check failed on Client endpoint\n\n");
 			}
 			else
 			{
-				g_critical("\nInitial sending check succeeded\n");
+				//g_printf("\nInitial sending check succeeded\n\n");
 				reply = j_message_new_reply(message);
-				comm_check = j_message_receive(reply, endpoint);
+
+				comm_check = j_message_receive(reply, (gpointer) endpoint);
+
 				if(comm_check == FALSE)
 				{
-					g_critical("\nInitital receiving check failed on Client endpoint\n");
+					g_critical("\nInitital receiving check failed on Client endpoint\n\n");
 				}
 				else
 				{
-					g_critical("\nInitial receiving check succeeded\n");
+					//g_printf("\nInitial receiving check succeeded\n\n");
 				}
 			}
 
