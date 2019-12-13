@@ -13,7 +13,14 @@ jobs:
           sudo apt install --yes --no-install-recommends libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
       - name: Configure
         run: |
-          ./waf configure --debug
+          ./waf configure --debug --leveldb=/usr
       - name: Build
         run: |
           ./waf
+      - name: Create configuration
+        run: |
+          . ./scripts/environment.sh
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-component=server --db-path=/tmp/julea/db/sqlite
+      - name: Tests
+        run: |
+          ./scripts/test.sh
