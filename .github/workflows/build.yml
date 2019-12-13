@@ -4,14 +4,21 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Install dependencies
         run: |
           sudo apt update || true
-          sudo apt install --yes --no-install-recommends libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
+          sudo apt --yes purge glib-networking
+          sudo apt --yes autoremove
       - name: Configure
+        env:
+          CC: ${{ matrix.compiler }}
         run: |
           ./waf configure --debug --leveldb=/usr
       - name: Build
