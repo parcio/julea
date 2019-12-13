@@ -9,8 +9,8 @@ jobs:
         uses: actions/checkout@v1
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install --yes --no-install-recommends libglib2.0-dev libbson-dev
+          sudo apt update || true
+          sudo apt install --yes --no-install-recommends libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
       - name: Configure
         run: |
           ./waf configure --debug
