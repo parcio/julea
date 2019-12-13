@@ -7,10 +7,15 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
+        object: [posix, gio]
+        kv: [lmdb, leveldb, sqlite]
+        # FIXME mysql
+        db: [sqlite, memory]
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Install dependencies
+        # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
@@ -20,14 +25,15 @@ jobs:
         env:
           CC: ${{ matrix.compiler }}
         run: |
-          ./waf configure --debug --leveldb=/usr
+          JULEA_SANITIZE=''; if test "${{ matrix.compiler }}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
+          ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
       - name: Build
         run: |
           ./waf
       - name: Create configuration
         run: |
           . ./scripts/environment.sh
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-component=server --db-path=/tmp/julea/db/sqlite
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component=server --db-path="/tmp/julea/db/${{ matrix.db }}"
       - name: Tests
         run: |
           ./scripts/test.sh
