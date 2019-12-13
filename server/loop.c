@@ -245,31 +245,31 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					// Guaranteed to work because memory_chunk is reset below
 					buf = j_memory_chunk_get(memory_chunk, length);
 					g_assert(buf != NULL);
+					completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 					//PERROR: this direct receive may not work
-					error = fi_recv(endpoint->endpoint, buf, (size_t) length, NULL, 0, NULL);
+					error = fi_recv(endpoint->endpoint, (void*) buf, (size_t) length, NULL, 0, NULL);
 					if(error!= 0)
 					{
-						g_critical("%s", fi_strerror((int)error));
+						g_critical("\nError while receiving data Junks\nDetails:\n%s\n", fi_strerror((int)error));
 					}
-					completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
-					error = fi_cq_sread(endpoint->completion_queue_transmit, completion_queue_data, 1, NULL, -1);
+					error = fi_cq_sread(endpoint->completion_queue_receive, completion_queue_data, 1, NULL, -1);
 					if(error != 0)
 					{
 						if(error == -FI_EAVAIL)
 						{
 							completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
-							error = fi_cq_readerr(endpoint->completion_queue_transmit, completion_queue_err_entry, 0);
+							error = fi_cq_readerr(endpoint->completion_queue_receive, completion_queue_err_entry, 0);
 							g_critical("\nError on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
 							free(completion_queue_err_entry);
 						}
 						else if(error == -FI_EAGAIN)
 						{
-							g_critical("\nNo completion data on completion Queue reading for data junks in loop.c.");
+							g_critical("\nNo completion data on completion Queue reading for data junks in loop.c.\n");
 						}
 						else if(error > 0)
 						{
-							g_printf("\nReceiving Data Junks directly in loop.c succeeded.\n");
+							//g_printf("\nReceiving Data Junks directly in loop.c succeeded.\n");
 						}
 						else if(error < 0)
 						{

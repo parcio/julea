@@ -945,7 +945,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("\nMessage Header receiving done\n");
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, completion_queue_data, 1, NULL, 1000); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, completion_queue_data, 1, NULL, -1); //PERROR: Heap read after free Timing here
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -958,7 +958,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		}
 		else if(error == -FI_EAGAIN)
 		{
-			g_printf("\nNo completion data on completion Queue after receiving Message (JMessage Header). Normal on listening side\n");
+			//g_printf("\nNo completion data on completion Queue after receiving Message (JMessage Header). Normal on listening side\n");
 			goto end;
 		}
 		else if(error > 0)
@@ -1159,7 +1159,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
 			//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
-			error = fi_send(j_endpoint->endpoint, message->data, message_data->length, NULL, 0, NULL);
+			error = fi_send(j_endpoint->endpoint, message_data->data, message_data->length, NULL, 0, NULL);
 			if ((int) error != 0)
 			{
 				g_critical("\nError while sending Message List Data.\nDetails:\n%s", fi_strerror((int)error));
