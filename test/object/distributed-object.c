@@ -25,6 +25,9 @@
 
 #include "test.h"
 
+#include <glib/gprintf.h>
+
+
 static
 void
 test_object_new_free (void)
@@ -83,7 +86,6 @@ test_object_read_write (void)
 	guint64 max_operation_size;
 	guint64 nbytes = 0;
 	gboolean ret;
-
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);

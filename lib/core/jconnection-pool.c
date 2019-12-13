@@ -584,7 +584,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			}
 			else
 			{
-				g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
+				//g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
 			}
 			free(connection_entry);
 
@@ -688,7 +688,7 @@ j_connection_pool_pop (JBackendType backend, guint index)
 		default:
 			g_assert_not_reached();
 	}
-	g_printf("\nconnection pool pop internal done\n");
+	//g_printf("\nconnection pool pop internal done\n");
 	return NULL;
 }
 

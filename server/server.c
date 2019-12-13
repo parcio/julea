@@ -210,7 +210,7 @@ j_thread_function(gpointer connection_event_entry)
 
 	J_TRACE_FUNCTION(NULL);
 
-	g_printf("\nTHREAD STARTED\n");
+	//g_printf("\nTHREAD STARTED\n");
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
@@ -324,7 +324,7 @@ j_thread_function(gpointer connection_event_entry)
 		}
 		else if(error == -FI_EAGAIN)
 		{
-			g_printf("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
+			g_critical("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
 		}
 		else if(error < 0)
 		{
@@ -335,7 +335,7 @@ j_thread_function(gpointer connection_event_entry)
 
 	if(event == FI_CONNECTED)
 	{
-		g_printf("\nYEAH, SERVER CONNECTED!\n");
+		//g_printf("\nYEAH, SERVER CONNECTED!\n");
 		do
 		{
 			JMemoryChunk* memory_chunk;
@@ -585,7 +585,7 @@ main (int argc, char** argv)
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
-	g_printf("\n\nSERVER STARTED\n\n");
+	//g_printf("\n\nSERVER STARTED\n\n");
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
 		if (error)
@@ -714,7 +714,7 @@ main (int argc, char** argv)
 
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
-	g_printf("\n\nSERVER MAIN LOOP REACHED\n\n\n");
+	//g_printf("\n\nSERVER MAIN LOOP REACHED\n\n\n");
 	do
 	{
 		struct fi_eq_cm_entry* event_entry;
@@ -723,7 +723,7 @@ main (int argc, char** argv)
 		uint32_t event = 0;
 		uint32_t event_entry_size = sizeof(event_entry) + 128;
 		event_entry = malloc(event_entry_size);
-		fi_error = fi_eq_sread(j_pep_event_queue, &event, event_entry, event_entry_size, 300000, 0); //Timeout: 300000 = 5 min in milliseconds
+		fi_error = fi_eq_sread(j_pep_event_queue, &event, event_entry, event_entry_size, 10000, 0); //Timeout: 10000 = 10 s in milliseconds
 		if(fi_error != 0)
 		{
 			if(fi_error == -FI_EAVAIL)
@@ -741,7 +741,7 @@ main (int argc, char** argv)
 			}
 			else
 			{
-				g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+				//g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
 				fi_error = 0;
 			}
 		}
