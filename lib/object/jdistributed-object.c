@@ -32,6 +32,9 @@
 
 #include <julea.h>
 
+#include <glib/gprintf.h>
+
+
 /**
  * \defgroup JDistributedObject Distributed Object
  *
@@ -356,10 +359,50 @@ j_distributed_object_read_background_operation (gpointer data)
 
 			if (nbytes > 0)
 			{
-				GInputStream* input;
+				struct fi_cq_msg_entry* completion_queue_data;
+				struct fi_cq_err_entry* completion_queue_err_entry;
+				JEndpoint* endpoint;
+				ssize_t error;
 
-				input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
-				g_input_stream_read_all(input, read_data, nbytes, NULL, NULL, NULL);
+				endpoint = (JEndpoint*) object_connection;
+				error = 0;
+				completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
+
+				//PERROR: this direct receive may not work
+				error = fi_recv(endpoint->endpoint, (void*) read_data, (size_t) nbytes, NULL, 0, NULL);
+				if(error!= 0)
+				{
+					g_critical("\nError while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
+					goto end;
+				}
+				error = fi_cq_sread(endpoint->completion_queue_receive, completion_queue_data, 1, NULL, -1);
+				if(error != 0)
+				{
+					if(error == -FI_EAVAIL)
+					{
+						completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
+						error = fi_cq_readerr(endpoint->completion_queue_receive, completion_queue_err_entry, 0);
+						g_critical("\nError on completion Queue after reading for background write operations for distributed Objects\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
+						free(completion_queue_err_entry);
+						goto end;
+					}
+					else if(error == -FI_EAGAIN)
+					{
+						g_critical("\nNo completion data on completion Queue reading for background write operations for distributed Objects.\n");
+						goto end;
+					}
+					else if(error > 0)
+					{
+						//g_printf("\nReceiving background write operation for distributed Objects succeeded.\n");
+					}
+					else if(error < 0)
+					{
+						g_critical("\nError reading completion Queue after reading for background write operation for distributed Objects.\nDetails:\n%s", fi_strerror(error));
+						goto end;
+					}
+				}
+				end:
+				free(completion_queue_data);
 			}
 
 			g_slice_free(JDistributedObjectReadBuffer, buffer);
