@@ -1,0 +1,19 @@
+name: Build Test
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install --yes --no-install-recommends libglib2.0-dev libbson-dev
+      - name: Configure
+        run: |
+          ./waf configure --debug
+      - name: Build
+        run: |
+          ./waf
