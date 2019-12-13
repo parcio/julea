@@ -59,7 +59,7 @@ G_BEGIN_DECLS
  * \return the new schema or NULL on failure
  **/
 
-JDBSchema* j_db_schema_new (gchar const* namespace, gchar const* name, GError** error);
+JDBSchema* j_db_schema_new (gchar const* namespace_, gchar const* name, GError** error);
 
 /**
  * Increase the ref_count of the given schema.

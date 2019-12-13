@@ -926,6 +926,36 @@ H5VL_julea_file_open (const char* fname, unsigned flags, hid_t fapl_id, hid_t dx
 	return file;
 }
 
+static
+herr_t
+H5VL_julea_file_specific (void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+{
+	gint ret = -1;
+
+	(void)obj;
+	(void)dxpl_id;
+	(void)req;
+	(void)arguments;
+
+	switch (specific_type)
+	{
+		case H5VL_FILE_POST_OPEN:
+			ret = 0;
+			break;
+		case H5VL_FILE_FLUSH:
+		case H5VL_FILE_REOPEN:
+		case H5VL_FILE_MOUNT:
+		case H5VL_FILE_UNMOUNT:
+		case H5VL_FILE_IS_ACCESSIBLE:
+		case H5VL_FILE_DELETE:
+		case H5VL_FILE_IS_EQUAL:
+		default:
+			g_assert_not_reached();
+	}
+
+	return ret;
+}
+
 /**
  * Closes the file
  **/
@@ -1552,7 +1582,7 @@ H5VL_class_t H5VL_julea_g =
 		H5VL_julea_file_create, /* create */
 		H5VL_julea_file_open,   /* open */
 		NULL, //H5VL_julea_file_get,	/* get */
-		NULL,					 //H5VL_julea_file_specific,            /* specific */
+		H5VL_julea_file_specific, /* specific */
 		NULL,					 //H5VL_julea_file_optional,            /* optional */
 		H5VL_julea_file_close   /* close */
 	},

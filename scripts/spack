@@ -34,6 +34,8 @@ spack_clone ()
 
 		git fetch
 		git reset --hard "${spack_commit}"
+		# FIXME stay on the 1.12 branch until a release is made
+		sed -i "s/version('develop', branch='develop')/version('develop', branch='hdf5_1_12')/" var/spack/repos/builtin/packages/hdf5/package.py
 	)
 
 	return 0
