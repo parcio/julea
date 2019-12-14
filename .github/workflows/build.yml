@@ -1,5 +1,5 @@
-name: Build Test
-on: [push]
+name: Build
+on: [push, pull_request]
 jobs:
   build:
     name: Build
@@ -7,10 +7,6 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
-        object: [posix, gio]
-        kv: [lmdb, leveldb, sqlite]
-        # FIXME mysql
-        db: [sqlite, memory]
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -25,15 +21,10 @@ jobs:
         env:
           CC: ${{ matrix.compiler }}
         run: |
-          JULEA_SANITIZE=''; if test "${{ matrix.compiler }}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
-          ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
+          ./waf configure --prefix="${GITHUB_WORKSPACE}/julea-install" --leveldb=/usr
       - name: Build
         run: |
           ./waf
-      - name: Create configuration
+      - name: Install
         run: |
-          . ./scripts/environment.sh
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component=server --db-path="/tmp/julea/db/${{ matrix.db }}"
-      - name: Tests
-        run: |
-          ./scripts/test.sh
+          ./waf install
