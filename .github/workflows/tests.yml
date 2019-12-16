@@ -7,8 +7,17 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
-        # FIXME posix-lmdb-mysql
-        name: [posix-lmdb-sqlite, gio-lmdb-sqlite, posix-leveldb-sqlite, posix-sqlite-sqlite, posix-lmdb-memory]
+        name:
+          # Default
+          - posix-lmdb-sqlite
+          # Object backends
+          - gio-lmdb-sqlite
+          # KV backends
+          - posix-leveldb-sqlite
+          - posix-sqlite-sqlite
+          # DB backends
+          - posix-lmdb-memory
+          - posix-lmdb-mysql
         include:
           - name: posix-lmdb-sqlite
             object: posix
@@ -30,6 +39,10 @@ jobs:
             object: posix
             kv: lmdb
             db: memory
+          - name: posix-lmdb-mysql
+            object: posix
+            kv: lmdb
+            db: mysql
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -53,7 +66,13 @@ jobs:
       - name: Create configuration
         run: |
           . ./scripts/environment.sh
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component=server --db-path="/tmp/julea/db/${{ matrix.db }}"
+          JULEA_DB_COMPONENT='server'; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
+          JULEA_DB_PATH="/tmp/julea/db/${{ matrix.db }}"; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_PATH='localhost:julea:root:root'; fi
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+      - name: Create database
+        if: matrix.db == 'mysql'
+        run: |
+          mysql --user=root --password=root --execute='CREATE DATABASE julea;'
       - name: Tests
         run: |
           ./scripts/test.sh
