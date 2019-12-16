@@ -24,27 +24,24 @@
 
 #include "test.h"
 
-static
-void
-test_list_fixture_setup (JList** list, gconstpointer data)
+static void
+test_list_fixture_setup(JList** list, gconstpointer data)
 {
 	(void)data;
 
 	*list = j_list_new(g_free);
 }
 
-static
-void
-test_list_fixture_teardown (JList** list, gconstpointer data)
+static void
+test_list_fixture_teardown(JList** list, gconstpointer data)
 {
 	(void)data;
 
 	j_list_unref(*list);
 }
 
-static
-void
-test_list_new_free (void)
+static void
+test_list_new_free(void)
 {
 	guint const n = 100000;
 
@@ -57,9 +54,8 @@ test_list_new_free (void)
 	}
 }
 
-static
-void
-test_list_length (JList** list, gconstpointer data)
+static void
+test_list_length(JList** list, gconstpointer data)
 {
 	guint const n = 100000;
 	guint l;
@@ -75,9 +71,8 @@ test_list_length (JList** list, gconstpointer data)
 	g_assert_cmpuint(l, ==, n);
 }
 
-static
-void
-test_list_append (JList** list, gconstpointer data)
+static void
+test_list_append(JList** list, gconstpointer data)
 {
 	guint const n = 100000;
 
@@ -89,9 +84,8 @@ test_list_append (JList** list, gconstpointer data)
 	}
 }
 
-static
-void
-test_list_prepend (JList** list, gconstpointer data)
+static void
+test_list_prepend(JList** list, gconstpointer data)
 {
 	guint const n = 100000;
 
@@ -103,9 +97,8 @@ test_list_prepend (JList** list, gconstpointer data)
 	}
 }
 
-static
-void
-test_list_get (JList** list, gconstpointer data)
+static void
+test_list_get(JList** list, gconstpointer data)
 {
 	gchar const* s;
 
@@ -123,7 +116,7 @@ test_list_get (JList** list, gconstpointer data)
 }
 
 void
-test_list (void)
+test_list(void)
 {
 	g_test_add_func("/list/new_free", test_list_new_free);
 	g_test_add("/list/length", JList*, NULL, test_list_fixture_setup, test_list_length, test_list_fixture_teardown);

@@ -24,9 +24,8 @@
 
 #include "test.h"
 
-static
-void
-test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
+static void
+test_list_iterator_fixture_setup(JListIterator** iterator, gconstpointer data)
 {
 	g_autoptr(JList) list = NULL;
 
@@ -41,18 +40,16 @@ test_list_iterator_fixture_setup (JListIterator** iterator, gconstpointer data)
 	*iterator = j_list_iterator_new(list);
 }
 
-static
-void
-test_list_iterator_fixture_teardown (JListIterator** iterator, gconstpointer data)
+static void
+test_list_iterator_fixture_teardown(JListIterator** iterator, gconstpointer data)
 {
 	(void)data;
 
 	j_list_iterator_free(*iterator);
 }
 
-static
-void
-test_list_iterator_new_free (void)
+static void
+test_list_iterator_new_free(void)
 {
 	guint const n = 100000;
 
@@ -69,9 +66,8 @@ test_list_iterator_new_free (void)
 	}
 }
 
-static
-void
-test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
+static void
+test_list_iterator_next_get(JListIterator** iterator, gconstpointer data)
 {
 	gchar const* s;
 	gboolean next;
@@ -101,7 +97,7 @@ test_list_iterator_next_get (JListIterator** iterator, gconstpointer data)
 }
 
 void
-test_list_iterator (void)
+test_list_iterator(void)
 {
 	g_test_add_func("/list-iterator/new_free", test_list_iterator_new_free);
 	g_test_add("/list-iterator/next_get", JListIterator*, NULL, test_list_iterator_fixture_setup, test_list_iterator_next_get, test_list_iterator_fixture_teardown);

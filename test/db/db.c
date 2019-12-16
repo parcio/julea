@@ -26,9 +26,8 @@
 
 #include "test.h"
 
-static
-void
-test_db_schema_new_free (void)
+static void
+test_db_schema_new_free(void)
 {
 	guint const n = 100000;
 
@@ -43,19 +42,18 @@ test_db_schema_new_free (void)
 	}
 }
 
-static
-void
-test_db_schema_create_delete (void)
+static void
+test_db_schema_create_delete(void)
 {
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	gboolean ret;
 
-	gchar const* idx_file[] = {"file", NULL};
-	gchar const* idx_name[] = {"name", NULL};
-	gchar const* idx_min[] = {"min", NULL};
-	gchar const* idx_max[] = {"max", NULL};
+	gchar const* idx_file[] = { "file", NULL };
+	gchar const* idx_name[] = { "name", NULL };
+	gchar const* idx_min[] = { "min", NULL };
+	gchar const* idx_max[] = { "max", NULL };
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -110,9 +108,8 @@ test_db_schema_create_delete (void)
 	g_assert_true(ret);
 }
 
-static
-void
-test_db_entry_new_free (void)
+static void
+test_db_entry_new_free(void)
 {
 	guint const n = 100000;
 
@@ -132,9 +129,8 @@ test_db_entry_new_free (void)
 	}
 }
 
-static
-void
-test_db_entry_insert_update_delete (void)
+static void
+test_db_entry_insert_update_delete(void)
 {
 	guint const n = 1000;
 
@@ -238,9 +234,8 @@ test_db_entry_insert_update_delete (void)
 	g_assert_true(ret);
 }
 
-static
-void
-schema_create (void)
+static void
+schema_create(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -300,9 +295,8 @@ schema_create (void)
 	g_assert_true(success);
 }
 
-static
-void
-entry_insert (void)
+static void
+entry_insert(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -351,9 +345,8 @@ entry_insert (void)
 	g_assert_true(success);
 }
 
-static
-void
-iterator_get (void)
+static void
+iterator_get(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -408,9 +401,8 @@ iterator_get (void)
 	}
 }
 
-static
-void
-entry_update (void)
+static void
+entry_update(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -460,9 +452,8 @@ entry_update (void)
 	g_assert_true(success);
 }
 
-static
-void
-entry_delete (void)
+static void
+entry_delete(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -504,9 +495,8 @@ entry_delete (void)
 	g_assert_true(success);
 }
 
-static
-void
-test_db_all (void)
+static void
+test_db_all(void)
 {
 	schema_create();
 	entry_insert();
@@ -516,7 +506,7 @@ test_db_all (void)
 }
 
 void
-test_db (void)
+test_db(void)
 {
 	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);

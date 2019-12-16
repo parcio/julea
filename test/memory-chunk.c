@@ -26,9 +26,8 @@
 
 #include "test.h"
 
-static
-void
-test_memory_chunk_new_free (void)
+static void
+test_memory_chunk_new_free(void)
 {
 	JMemoryChunk* memory_chunk;
 
@@ -38,9 +37,8 @@ test_memory_chunk_new_free (void)
 	j_memory_chunk_free(memory_chunk);
 }
 
-static
-void
-test_memory_chunk_get (void)
+static void
+test_memory_chunk_get(void)
 {
 	JMemoryChunk* memory_chunk;
 	gpointer ret;
@@ -59,9 +57,8 @@ test_memory_chunk_get (void)
 	j_memory_chunk_free(memory_chunk);
 }
 
-static
-void
-test_memory_chunk_reset (void)
+static void
+test_memory_chunk_reset(void)
 {
 	JMemoryChunk* memory_chunk;
 	gpointer ret;
@@ -84,7 +81,7 @@ test_memory_chunk_reset (void)
 }
 
 void
-test_memory_chunk (void)
+test_memory_chunk(void)
 {
 	g_test_add_func("/memory-chunk/new_free", test_memory_chunk_new_free);
 	g_test_add_func("/memory-chunk/get", test_memory_chunk_get);
