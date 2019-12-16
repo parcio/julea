@@ -23,9 +23,8 @@
 
 #include <julea.h>
 
-static
-gboolean
-backend_create (gchar const* namespace, gchar const* path, gpointer* data)
+static gboolean
+backend_create(gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gchar* full_path;
 
@@ -39,9 +38,8 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_open (gchar const* namespace, gchar const* path, gpointer* data)
+static gboolean
+backend_open(gchar const* namespace, gchar const* path, gpointer* data)
 {
 	gchar* full_path;
 
@@ -55,9 +53,8 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer data)
+static gboolean
+backend_delete(gpointer data)
 {
 	gchar* full_path = data;
 
@@ -69,9 +66,8 @@ backend_delete (gpointer data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_close (gpointer data)
+static gboolean
+backend_close(gpointer data)
 {
 	gchar* full_path = data;
 
@@ -83,9 +79,8 @@ backend_close (gpointer data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_status (gpointer data, gint64* modification_time, guint64* size)
+static gboolean
+backend_status(gpointer data, gint64* modification_time, guint64* size)
 {
 	gchar const* full_path = data;
 
@@ -105,9 +100,8 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 	return TRUE;
 }
 
-static
-gboolean
-backend_sync (gpointer data)
+static gboolean
+backend_sync(gpointer data)
 {
 	gchar const* full_path = data;
 
@@ -117,9 +111,8 @@ backend_sync (gpointer data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+static gboolean
+backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	gchar const* full_path = data;
 
@@ -136,9 +129,8 @@ backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, gu
 	return TRUE;
 }
 
-static
-gboolean
-backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+static gboolean
+backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	gchar const* full_path = data;
 
@@ -155,23 +147,20 @@ backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offs
 	return TRUE;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	(void)path;
 
 	return TRUE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 }
 
-static
-JBackend null_backend = {
+static JBackend null_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.object = {
@@ -184,13 +173,12 @@ JBackend null_backend = {
 		.backend_status = backend_status,
 		.backend_sync = backend_sync,
 		.backend_read = backend_read,
-		.backend_write = backend_write
-	}
+		.backend_write = backend_write }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &null_backend;
 }

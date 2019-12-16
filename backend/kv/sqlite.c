@@ -37,9 +37,8 @@ typedef struct JSQLiteBatch JSQLiteBatch;
 
 static sqlite3* backend_db = NULL;
 
-static
-gboolean
-backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
+static gboolean
+backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JSQLiteBatch* batch = NULL;
 
@@ -59,9 +58,8 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* da
 	return (batch != NULL);
 }
 
-static
-gboolean
-backend_batch_execute (gpointer data)
+static gboolean
+backend_batch_execute(gpointer data)
 {
 	gboolean ret = FALSE;
 
@@ -83,9 +81,8 @@ backend_batch_execute (gpointer data)
 	return ret;
 }
 
-static
-gboolean
-backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
+static gboolean
+backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
@@ -106,9 +103,8 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer data, gchar const* key)
+static gboolean
+backend_delete(gpointer data, gchar const* key)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
@@ -127,9 +123,8 @@ backend_delete (gpointer data, gchar const* key)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
+static gboolean
+backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	JSQLiteBatch* batch = data;
 	sqlite3_stmt* stmt;
@@ -163,9 +158,8 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 	return (result != NULL);
 }
 
-static
-gboolean
-backend_get_all (gchar const* namespace, gpointer* data)
+static gboolean
+backend_get_all(gchar const* namespace, gpointer* data)
 {
 	sqlite3_stmt* stmt = NULL;
 
@@ -182,9 +176,8 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	return (stmt != NULL);
 }
 
-static
-gboolean
-backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
+static gboolean
+backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	sqlite3_stmt* stmt = NULL;
 
@@ -203,9 +196,8 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	return (stmt != NULL);
 }
 
-static
-gboolean
-backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+static gboolean
+backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	sqlite3_stmt* stmt = data;
 
@@ -227,9 +219,8 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 	return FALSE;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	g_autofree gchar* dirname = NULL;
 
@@ -261,9 +252,8 @@ error:
 	return FALSE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 	if (backend_db != NULL)
 	{
@@ -271,8 +261,7 @@ backend_fini (void)
 	}
 }
 
-static
-JBackend sqlite_backend = {
+static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.kv = {
@@ -285,13 +274,12 @@ JBackend sqlite_backend = {
 		.backend_get = backend_get,
 		.backend_get_all = backend_get_all,
 		.backend_get_by_prefix = backend_get_by_prefix,
-		.backend_iterate = backend_iterate
-	}
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &sqlite_backend;
 }

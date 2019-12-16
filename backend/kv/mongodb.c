@@ -40,9 +40,8 @@ static mongoc_client_t* backend_connection = NULL;
 static gchar* backend_host = NULL;
 static gchar* backend_database = NULL;
 
-static
-gboolean
-backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
+static gboolean
+backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JMongoDBBatch* batch;
 	bson_t command[1];
@@ -124,9 +123,8 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* da
 	return TRUE;
 }
 
-static
-gboolean
-backend_batch_execute (gpointer data)
+static gboolean
+backend_batch_execute(gpointer data)
 {
 	gboolean ret = FALSE;
 
@@ -157,9 +155,8 @@ backend_batch_execute (gpointer data)
 	return ret;
 }
 
-static
-gboolean
-backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
+static gboolean
+backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JMongoDBBatch* batch = data;
 	bson_t document[1];
@@ -197,9 +194,8 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer data, gchar const* key)
+static gboolean
+backend_delete(gpointer data, gchar const* key)
 {
 	JMongoDBBatch* batch = data;
 	bson_t document[1];
@@ -217,9 +213,8 @@ backend_delete (gpointer data, gchar const* key)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
+static gboolean
+backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
 
@@ -272,9 +267,8 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 	return ret;
 }
 
-static
-gboolean
-backend_get_all (gchar const* namespace, gpointer* data)
+static gboolean
+backend_get_all(gchar const* namespace, gpointer* data)
 {
 	gboolean ret = FALSE;
 
@@ -303,9 +297,8 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	return ret;
 }
 
-static
-gboolean
-backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
+static gboolean
+backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	gboolean ret = FALSE;
 
@@ -341,9 +334,8 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	return ret;
 }
 
-static
-gboolean
-backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+static gboolean
+backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	bson_t const* result;
 	bson_iter_t iter;
@@ -390,9 +382,8 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 	return ret;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	mongoc_uri_t* uri;
 
@@ -429,9 +420,8 @@ backend_init (gchar const* path)
 	return TRUE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 	mongoc_client_destroy(backend_connection);
 
@@ -441,8 +431,7 @@ backend_fini (void)
 	mongoc_cleanup();
 }
 
-static
-JBackend mongodb_backend = {
+static JBackend mongodb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_CLIENT,
 	.kv = {
@@ -455,13 +444,12 @@ JBackend mongodb_backend = {
 		.backend_get = backend_get,
 		.backend_get_all = backend_get_all,
 		.backend_get_by_prefix = backend_get_by_prefix,
-		.backend_iterate = backend_iterate
-	}
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &mongodb_backend;
 }
