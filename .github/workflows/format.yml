@@ -8,9 +8,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Install dependencies
+        # FIXME The images contain a custom version of Clang, so we have to use clang-format-6.0 (see https://github.com/actions/virtual-environments/blob/master/images/linux/scripts/installers/clang.sh).
         run: |
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install clang-format
+          sudo apt --yes --no-install-recommends install clang-format-6.0
       - name: Check format
         run: |
           ./scripts/format.sh
