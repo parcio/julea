@@ -44,16 +44,15 @@ struct JDBIteratorHelper
 typedef struct JDBIteratorHelper JDBIteratorHelper;
 
 GQuark
-j_db_error_quark (void)
+j_db_error_quark(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	return g_quark_from_static_string("j-db-error-quark");
 }
 
-static
-gboolean
-j_backend_db_func_exec (JList* operations, JSemantics* semantics, JMessageType type)
+static gboolean
+j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType type)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -86,8 +85,8 @@ j_backend_db_func_exec (JList* operations, JSemantics* semantics, JMessageType t
 				ret = db_backend->db.backend_batch_start( //
 					      data->in_param[0].ptr, //
 					      semantics, //
-					      &batch, &error) &&
-					ret;
+					      &batch, &error)
+				      && ret;
 			}
 
 			if (data->out_param[data->out_param_count - 1].ptr && error)
@@ -139,9 +138,8 @@ j_backend_db_func_exec (JList* operations, JSemantics* semantics, JMessageType t
 	return ret;
 }
 
-static
-void
-j_backend_db_func_free (gpointer _data)
+static void
+j_backend_db_func_free(gpointer _data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -161,9 +159,8 @@ j_backend_db_func_free (gpointer _data)
 	}
 }
 
-static
-gboolean
-j_db_schema_create_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_schema_create_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -171,7 +168,7 @@ j_db_schema_create_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_schema_create (JDBSchema* j_db_schema, JBatch* batch, GError** error)
+j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -202,9 +199,8 @@ j_db_internal_schema_create (JDBSchema* j_db_schema, JBatch* batch, GError** err
 	return TRUE;
 }
 
-static
-gboolean
-j_db_schema_get_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_schema_get_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -212,7 +208,7 @@ j_db_schema_get_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_schema_get (JDBSchema* j_db_schema, JBatch* batch, GError** error)
+j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -243,9 +239,8 @@ j_db_internal_schema_get (JDBSchema* j_db_schema, JBatch* batch, GError** error)
 	return TRUE;
 }
 
-static
-gboolean
-j_db_schema_delete_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_schema_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -253,7 +248,7 @@ j_db_schema_delete_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_schema_delete (JDBSchema* j_db_schema, JBatch* batch, GError** error)
+j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -283,9 +278,8 @@ j_db_internal_schema_delete (JDBSchema* j_db_schema, JBatch* batch, GError** err
 	return TRUE;
 }
 
-static
-gboolean
-j_db_insert_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_insert_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -293,7 +287,7 @@ j_db_insert_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_insert (JDBEntry* j_db_entry, JBatch* batch, GError** error)
+j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -325,9 +319,8 @@ j_db_internal_insert (JDBEntry* j_db_entry, JBatch* batch, GError** error)
 	return TRUE;
 }
 
-static
-gboolean
-j_db_update_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_update_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -335,7 +328,7 @@ j_db_update_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_update (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
+j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -369,9 +362,8 @@ j_db_internal_update (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* 
 	return TRUE;
 }
 
-static
-gboolean
-j_db_delete_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -379,7 +371,7 @@ j_db_delete_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_delete (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
+j_db_internal_delete(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -412,9 +404,8 @@ j_db_internal_delete (JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* 
 	return TRUE;
 }
 
-static
-gboolean
-j_db_query_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_db_query_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -422,7 +413,7 @@ j_db_query_exec (JList* operations, JSemantics* semantics)
 }
 
 gboolean
-j_db_internal_query (JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIterator* j_db_iterator, JBatch* batch, GError** error)
+j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIterator* j_db_iterator, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -465,7 +456,7 @@ j_db_internal_query (JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBIter
 }
 
 gboolean
-j_db_internal_iterate (JDBIterator* j_db_iterator, GError** error)
+j_db_internal_iterate(JDBIterator* j_db_iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -521,7 +512,7 @@ error2:
 }
 
 bson_t*
-j_db_selector_get_bson (JDBSelector* selector)
+j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 

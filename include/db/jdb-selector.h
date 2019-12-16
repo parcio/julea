@@ -79,7 +79,7 @@ G_BEGIN_DECLS
  * \return the new selector or NULL on failure
  **/
 
-JDBSelector* j_db_selector_new (JDBSchema* schema, JDBSelectorMode mode, GError** error);
+JDBSelector* j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error);
 
 /**
  * Increase the ref_count of the given selector.
@@ -90,16 +90,16 @@ JDBSelector* j_db_selector_new (JDBSchema* schema, JDBSelectorMode mode, GError*
  * \return the selector or NULL on failure
  **/
 
-JDBSelector* j_db_selector_ref (JDBSelector* selector);
+JDBSelector* j_db_selector_ref(JDBSelector* selector);
 
 /**
  * Decrease the ref_count of the given selector - and automatically call free if ref_count is 0.  This is a noop if selector == NULL.
  *
  * \param[in] selector the selector to decrease the ref_count
  **/
-void j_db_selector_unref (JDBSelector* selector);
+void j_db_selector_unref(JDBSelector* selector);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (JDBSelector, j_db_selector_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSelector, j_db_selector_unref)
 
 /**
  * add a search field to the selector.
@@ -120,7 +120,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (JDBSelector, j_db_selector_unref)
  * \return TRUE on success, FALSE otherwise
  **/
 
-gboolean j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
+gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
 
 /**
  * add a search field to the selector.
@@ -136,7 +136,7 @@ gboolean j_db_selector_add_field (JDBSelector* selector, gchar const* name, JDBS
  * \return TRUE on success, FALSE otherwise
  **/
 
-gboolean j_db_selector_add_selector (JDBSelector* selector, JDBSelector* sub_selector, GError** error);
+gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
 
 G_END_DECLS
 

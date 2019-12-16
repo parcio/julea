@@ -34,7 +34,7 @@
 #include "../../backend/db/jbson.c"
 
 JDBEntry*
-j_db_entry_new (JDBSchema* schema, GError** error)
+j_db_entry_new(JDBSchema* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -72,7 +72,7 @@ _error:
 }
 
 JDBEntry*
-j_db_entry_ref (JDBEntry* entry)
+j_db_entry_ref(JDBEntry* entry)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -84,7 +84,7 @@ j_db_entry_ref (JDBEntry* entry)
 }
 
 void
-j_db_entry_unref (JDBEntry* entry)
+j_db_entry_unref(JDBEntry* entry)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -100,7 +100,7 @@ j_db_entry_unref (JDBEntry* entry)
 }
 
 gboolean
-j_db_entry_set_field (JDBEntry* entry, gchar const* name, gconstpointer value, guint64 length, GError** error)
+j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer value, guint64 length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -172,7 +172,7 @@ _error:
 }
 
 gboolean
-j_db_entry_insert (JDBEntry* entry, JBatch* batch, GError** error)
+j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -192,7 +192,7 @@ _error:
 }
 
 gboolean
-j_db_entry_update (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error)
+j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -224,7 +224,7 @@ _error:
 }
 
 gboolean
-j_db_entry_delete (JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error)
+j_db_entry_delete(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -245,7 +245,7 @@ _error:
 }
 
 gboolean
-j_db_entry_get_id (JDBEntry* entry, gpointer* value, guint64* length, GError** error)
+j_db_entry_get_id(JDBEntry* entry, gpointer* value, guint64* length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
