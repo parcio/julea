@@ -41,14 +41,14 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JKVIterator* j_kv_iterator_new (gchar const*, gchar const*);
-JKVIterator* j_kv_iterator_new_for_index (guint32, gchar const*, gchar const*);
-void j_kv_iterator_free (JKVIterator*);
+JKVIterator* j_kv_iterator_new(gchar const*, gchar const*);
+JKVIterator* j_kv_iterator_new_for_index(guint32, gchar const*, gchar const*);
+void j_kv_iterator_free(JKVIterator*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVIterator, j_kv_iterator_free)
 
-gboolean j_kv_iterator_next (JKVIterator*);
-gchar const* j_kv_iterator_get (JKVIterator*, gconstpointer*, guint32*);
+gboolean j_kv_iterator_next(JKVIterator*);
+gchar const* j_kv_iterator_get(JKVIterator*, gconstpointer*, guint32*);
 
 G_END_DECLS
 

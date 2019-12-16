@@ -80,9 +80,8 @@ struct JKVURI
  * \param uri  A URI.
  * \param uri_ A URI string.
  **/
-static
-gboolean
-j_kv_uri_parse (JKVURI* uri, gchar const* uri_)
+static gboolean
+j_kv_uri_parse(JKVURI* uri, gchar const* uri_)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -188,7 +187,7 @@ error:
  * \return A new URI. Should be freed with j_kv_uri_free().
  **/
 JKVURI*
-j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
+j_kv_uri_new(gchar const* uri_, JKVURIScheme scheme)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -226,7 +225,7 @@ j_kv_uri_new (gchar const* uri_, JKVURIScheme scheme)
  * \param uri A URI.
  **/
 void
-j_kv_uri_free (JKVURI* uri)
+j_kv_uri_free(JKVURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -259,7 +258,7 @@ j_kv_uri_free (JKVURI* uri)
  * \return The index.
  **/
 guint32
-j_kv_uri_get_index (JKVURI* uri)
+j_kv_uri_get_index(JKVURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -284,7 +283,7 @@ j_kv_uri_get_index (JKVURI* uri)
  * \return The namespace.
  **/
 gchar const*
-j_kv_uri_get_namespace (JKVURI* uri)
+j_kv_uri_get_namespace(JKVURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -309,7 +308,7 @@ j_kv_uri_get_namespace (JKVURI* uri)
  * \return The name.
  **/
 gchar const*
-j_kv_uri_get_name (JKVURI* uri)
+j_kv_uri_get_name(JKVURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -334,7 +333,7 @@ j_kv_uri_get_name (JKVURI* uri)
  * \return The kv.
  **/
 JKV*
-j_kv_uri_get_kv (JKVURI* uri)
+j_kv_uri_get_kv(JKVURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 

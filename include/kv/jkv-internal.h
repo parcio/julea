@@ -33,7 +33,7 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JBackend* j_kv_get_backend (void);
+G_GNUC_INTERNAL JBackend* j_kv_get_backend(void);
 
 G_END_DECLS
 
