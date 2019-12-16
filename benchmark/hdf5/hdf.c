@@ -35,9 +35,8 @@
 
 #include <hdf5.h>
 
-static
-void
-set_semantics (void)
+static void
+set_semantics(void)
 {
 	g_autoptr(JSemantics) semantics = NULL;
 
@@ -45,9 +44,8 @@ set_semantics (void)
 	j_hdf5_set_semantics(semantics);
 }
 
-static
-guint
-dimensions_to_size (guint dimensions)
+static guint
+dimensions_to_size(guint dimensions)
 {
 	guint size = 1024;
 
@@ -66,9 +64,8 @@ dimensions_to_size (guint dimensions)
 	return size;
 }
 
-static
-hid_t
-create_group (hid_t file, gchar const* name)
+static hid_t
+create_group(hid_t file, gchar const* name)
 {
 	hid_t group;
 
@@ -77,9 +74,8 @@ create_group (hid_t file, gchar const* name)
 	return group;
 }
 
-static
-hid_t
-open_group (hid_t file, gchar const* name)
+static hid_t
+open_group(hid_t file, gchar const* name)
 {
 	hid_t group;
 
@@ -88,9 +84,8 @@ open_group (hid_t file, gchar const* name)
 	return group;
 }
 
-static
-void
-write_attribute (hid_t group, gchar const* name)
+static void
+write_attribute(hid_t group, gchar const* name)
 {
 	hid_t attribute;
 	hid_t dataspace;
@@ -114,9 +109,8 @@ write_attribute (hid_t group, gchar const* name)
 	H5Aclose(attribute);
 }
 
-static
-void
-read_attribute (hid_t group, gchar const* name)
+static void
+read_attribute(hid_t group, gchar const* name)
 {
 	hid_t attribute;
 	hid_t dataspace;
@@ -141,9 +135,8 @@ read_attribute (hid_t group, gchar const* name)
 	H5Aclose(attribute);
 }
 
-static
-hid_t
-create_dataset (hid_t file, gchar const* name, guint dimensions)
+static hid_t
+create_dataset(hid_t file, gchar const* name, guint dimensions)
 {
 	hid_t dataset;
 	hid_t dataspace;
@@ -163,9 +156,8 @@ create_dataset (hid_t file, gchar const* name, guint dimensions)
 	return dataset;
 }
 
-static
-hid_t
-open_dataset (hid_t file, gchar const* name)
+static hid_t
+open_dataset(hid_t file, gchar const* name)
 {
 	hid_t dataset;
 
@@ -174,9 +166,8 @@ open_dataset (hid_t file, gchar const* name)
 	return dataset;
 }
 
-static
-void
-write_dataset (hid_t dataset, guint dimensions)
+static void
+write_dataset(hid_t dataset, guint dimensions)
 {
 	guint size;
 	g_autofree int* data = NULL;
@@ -192,9 +183,8 @@ write_dataset (hid_t dataset, guint dimensions)
 	H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
 }
 
-static
-void
-read_dataset (hid_t dataset, guint dimensions)
+static void
+read_dataset(hid_t dataset, guint dimensions)
 {
 	hid_t dataspace;
 
@@ -217,9 +207,8 @@ read_dataset (hid_t dataset, guint dimensions)
 	}
 }
 
-static
-void
-benchmark_hdf_attribute_write (BenchmarkResult *result)
+static void
+benchmark_hdf_attribute_write(BenchmarkResult* result)
 {
 	guint const n = 25000;
 
@@ -253,9 +242,8 @@ benchmark_hdf_attribute_write (BenchmarkResult *result)
 	result->bytes = n * 1024 * sizeof(int);
 }
 
-static
-void
-benchmark_hdf_attribute_read (BenchmarkResult *result)
+static void
+benchmark_hdf_attribute_read(BenchmarkResult* result)
 {
 	guint const n = 25000;
 
@@ -297,9 +285,8 @@ benchmark_hdf_attribute_read (BenchmarkResult *result)
 	result->bytes = n * 1024 * sizeof(int);
 }
 
-static
-void
-_benchmark_hdf_dataset_create (BenchmarkResult *result, guint dimensions)
+static void
+_benchmark_hdf_dataset_create(BenchmarkResult* result, guint dimensions)
 {
 	guint const n = 25000;
 
@@ -332,23 +319,20 @@ _benchmark_hdf_dataset_create (BenchmarkResult *result, guint dimensions)
 	result->operations = n;
 }
 
-static
-void
-benchmark_hdf_dataset_create_4m (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_create_4m(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_create(result, 2);
 }
 
-static
-void
-benchmark_hdf_dataset_create_4k (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_create_4k(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_create(result, 1);
 }
 
-static
-void
-_benchmark_hdf_dataset_open (BenchmarkResult *result, guint dimensions)
+static void
+_benchmark_hdf_dataset_open(BenchmarkResult* result, guint dimensions)
 {
 	guint const n = 25000;
 
@@ -393,23 +377,20 @@ _benchmark_hdf_dataset_open (BenchmarkResult *result, guint dimensions)
 	result->operations = n;
 }
 
-static
-void
-benchmark_hdf_dataset_open_4m (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_open_4m(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_open(result, 2);
 }
 
-static
-void
-benchmark_hdf_dataset_open_4k (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_open_4k(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_open(result, 1);
 }
 
-static
-void
-_benchmark_hdf_dataset_write (BenchmarkResult *result, guint dimensions)
+static void
+_benchmark_hdf_dataset_write(BenchmarkResult* result, guint dimensions)
 {
 	guint const n = 512;
 
@@ -444,23 +425,20 @@ _benchmark_hdf_dataset_write (BenchmarkResult *result, guint dimensions)
 	result->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
 }
 
-static
-void
-benchmark_hdf_dataset_write_4m (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_write_4m(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_write(result, 2);
 }
 
-static
-void
-benchmark_hdf_dataset_write_4k (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_write_4k(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_write(result, 1);
 }
 
-static
-void
-_benchmark_hdf_dataset_read (BenchmarkResult *result, guint dimensions)
+static void
+_benchmark_hdf_dataset_read(BenchmarkResult* result, guint dimensions)
 {
 	guint const n = 512;
 
@@ -507,23 +485,20 @@ _benchmark_hdf_dataset_read (BenchmarkResult *result, guint dimensions)
 	result->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
 }
 
-static
-void
-benchmark_hdf_dataset_read_4m (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_read_4m(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_read(result, 2);
 }
 
-static
-void
-benchmark_hdf_dataset_read_4k (BenchmarkResult *result)
+static void
+benchmark_hdf_dataset_read_4k(BenchmarkResult* result)
 {
 	_benchmark_hdf_dataset_read(result, 1);
 }
 
-static
-void
-benchmark_hdf_file_create (BenchmarkResult *result)
+static void
+benchmark_hdf_file_create(BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -550,9 +525,8 @@ benchmark_hdf_file_create (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static
-void
-benchmark_hdf_file_open (BenchmarkResult *result)
+static void
+benchmark_hdf_file_open(BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -590,9 +564,8 @@ benchmark_hdf_file_open (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static
-void
-benchmark_hdf_group_create (BenchmarkResult *result)
+static void
+benchmark_hdf_group_create(BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -625,9 +598,8 @@ benchmark_hdf_group_create (BenchmarkResult *result)
 	result->operations = n;
 }
 
-static
-void
-benchmark_hdf_group_open (BenchmarkResult *result)
+static void
+benchmark_hdf_group_open(BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -674,7 +646,7 @@ benchmark_hdf_group_open (BenchmarkResult *result)
 #endif
 
 void
-benchmark_hdf (void)
+benchmark_hdf(void)
 {
 	// FIXME repeated runs exhibit strange behavior, objects are distributed differently etc.
 #ifdef HAVE_HDF5

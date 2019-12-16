@@ -26,9 +26,8 @@
 
 #include "benchmark.h"
 
-static
-void
-_benchmark_message_new (BenchmarkResult* result, gboolean append)
+static void
+_benchmark_message_new(BenchmarkResult* result, gboolean append)
 {
 	guint const n = 500000;
 	guint const m = 100;
@@ -60,23 +59,20 @@ _benchmark_message_new (BenchmarkResult* result, gboolean append)
 	result->operations = n;
 }
 
-static
-void
-benchmark_message_new (BenchmarkResult* result)
+static void
+benchmark_message_new(BenchmarkResult* result)
 {
 	_benchmark_message_new(result, FALSE);
 }
 
-static
-void
-benchmark_message_new_append (BenchmarkResult* result)
+static void
+benchmark_message_new_append(BenchmarkResult* result)
 {
 	_benchmark_message_new(result, TRUE);
 }
 
-static
-void
-_benchmark_message_add_operation (BenchmarkResult* result, gboolean large)
+static void
+_benchmark_message_add_operation(BenchmarkResult* result, gboolean large)
 {
 	guint const n = (large) ? 100 : 50000;
 	guint const m = (large) ? 50000 : 100;
@@ -105,22 +101,20 @@ _benchmark_message_add_operation (BenchmarkResult* result, gboolean large)
 	result->operations = n;
 }
 
-static
-void
-benchmark_message_add_operation_small (BenchmarkResult* result)
+static void
+benchmark_message_add_operation_small(BenchmarkResult* result)
 {
 	_benchmark_message_add_operation(result, FALSE);
 }
 
-static
-void
-benchmark_message_add_operation_large (BenchmarkResult* result)
+static void
+benchmark_message_add_operation_large(BenchmarkResult* result)
 {
 	_benchmark_message_add_operation(result, TRUE);
 }
 
 void
-benchmark_message (void)
+benchmark_message(void)
 {
 	j_benchmark_run("/message/new", benchmark_message_new);
 	j_benchmark_run("/message/new-append", benchmark_message_new_append);

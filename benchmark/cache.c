@@ -26,9 +26,8 @@
 
 #include "benchmark.h"
 
-static
-void
-benchmark_cache_get (BenchmarkResult* result)
+static void
+benchmark_cache_get(BenchmarkResult* result)
 {
 	guint const n = 50 * 1024 * 1024;
 
@@ -53,7 +52,7 @@ benchmark_cache_get (BenchmarkResult* result)
 }
 
 void
-benchmark_cache (void)
+benchmark_cache(void)
 {
 	j_benchmark_run("/cache", benchmark_cache_get);
 }

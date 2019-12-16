@@ -37,25 +37,25 @@ static JSemantics* j_benchmark_semantics = NULL;
 static GTimer* j_benchmark_timer = NULL;
 
 JSemantics*
-j_benchmark_get_semantics (void)
+j_benchmark_get_semantics(void)
 {
 	return j_semantics_ref(j_benchmark_semantics);
 }
 
 void
-j_benchmark_timer_start (void)
+j_benchmark_timer_start(void)
 {
 	g_timer_start(j_benchmark_timer);
 }
 
 gdouble
-j_benchmark_timer_elapsed (void)
+j_benchmark_timer_elapsed(void)
 {
 	return g_timer_elapsed(j_benchmark_timer, NULL);
 }
 
 void
-j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
+j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 {
 	BenchmarkResult result;
 	GTimer* func_timer;
@@ -144,7 +144,7 @@ j_benchmark_run (gchar const* name, BenchmarkFunc benchmark_func)
 }
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	GError* error = NULL;
 	GOptionContext* context;

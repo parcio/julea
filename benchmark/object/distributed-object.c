@@ -27,9 +27,8 @@
 
 #include "benchmark.h"
 
-static
-void
-_benchmark_distributed_object_create (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_distributed_object_create(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 100000 : 1000;
 
@@ -80,23 +79,20 @@ _benchmark_distributed_object_create (BenchmarkResult* result, gboolean use_batc
 	result->operations = n;
 }
 
-static
-void
-benchmark_distributed_object_create (BenchmarkResult* result)
+static void
+benchmark_distributed_object_create(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_create(result, FALSE);
 }
 
-static
-void
-benchmark_distributed_object_create_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_create_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_create(result, TRUE);
 }
 
-static
-void
-_benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_distributed_object_delete(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 10000;
 
@@ -154,23 +150,20 @@ _benchmark_distributed_object_delete (BenchmarkResult* result, gboolean use_batc
 	result->operations = n;
 }
 
-static
-void
-benchmark_distributed_object_delete (BenchmarkResult* result)
+static void
+benchmark_distributed_object_delete(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_delete(result, FALSE);
 }
 
-static
-void
-benchmark_distributed_object_delete_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_delete_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_delete(result, TRUE);
 }
 
-static
-void
-_benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_distributed_object_status(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 1000 : 1000;
 
@@ -226,23 +219,20 @@ _benchmark_distributed_object_status (BenchmarkResult* result, gboolean use_batc
 	result->operations = n;
 }
 
-static
-void
-benchmark_distributed_object_status (BenchmarkResult* result)
+static void
+benchmark_distributed_object_status(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_status(result, FALSE);
 }
 
-static
-void
-benchmark_distributed_object_status_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_status_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_status(result, TRUE);
 }
 
-static
-void
-_benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch, guint block_size)
+static void
+_benchmark_distributed_object_read(BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
@@ -305,23 +295,20 @@ _benchmark_distributed_object_read (BenchmarkResult* result, gboolean use_batch,
 	result->bytes = n * block_size;
 }
 
-static
-void
-benchmark_distributed_object_read (BenchmarkResult* result)
+static void
+benchmark_distributed_object_read(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_read(result, FALSE, 4 * 1024);
 }
 
-static
-void
-benchmark_distributed_object_read_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_read_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_read(result, TRUE, 4 * 1024);
 }
 
-static
-void
-_benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch, guint block_size)
+static void
+_benchmark_distributed_object_write(BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 25000 : 25000;
 
@@ -377,23 +364,20 @@ _benchmark_distributed_object_write (BenchmarkResult* result, gboolean use_batch
 	result->bytes = n * block_size;
 }
 
-static
-void
-benchmark_distributed_object_write (BenchmarkResult* result)
+static void
+benchmark_distributed_object_write(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_write(result, FALSE, 4 * 1024);
 }
 
-static
-void
-benchmark_distributed_object_write_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_write_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_write(result, TRUE, 4 * 1024);
 }
 
-static
-void
-_benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_distributed_object_unordered_create_delete(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 5000;
 
@@ -439,22 +423,20 @@ _benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result, 
 	result->operations = n * 2;
 }
 
-static
-void
-benchmark_distributed_object_unordered_create_delete (BenchmarkResult* result)
+static void
+benchmark_distributed_object_unordered_create_delete(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_unordered_create_delete(result, FALSE);
 }
 
-static
-void
-benchmark_distributed_object_unordered_create_delete_batch (BenchmarkResult* result)
+static void
+benchmark_distributed_object_unordered_create_delete_batch(BenchmarkResult* result)
 {
 	_benchmark_distributed_object_unordered_create_delete(result, TRUE);
 }
 
 void
-benchmark_distributed_object (void)
+benchmark_distributed_object(void)
 {
 	j_benchmark_run("/object/distributed-object/create", benchmark_distributed_object_create);
 	j_benchmark_run("/object/distributed-object/create-batch", benchmark_distributed_object_create_batch);

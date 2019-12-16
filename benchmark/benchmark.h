@@ -32,28 +32,28 @@ typedef struct BenchmarkResult BenchmarkResult;
 
 #include <jsemantics.h>
 
-typedef void (*BenchmarkFunc) (BenchmarkResult*);
+typedef void (*BenchmarkFunc)(BenchmarkResult*);
 
-JSemantics* j_benchmark_get_semantics (void);
+JSemantics* j_benchmark_get_semantics(void);
 
-void j_benchmark_timer_start (void);
-gdouble j_benchmark_timer_elapsed (void);
+void j_benchmark_timer_start(void);
+gdouble j_benchmark_timer_elapsed(void);
 
-void j_benchmark_run (gchar const*, BenchmarkFunc);
+void j_benchmark_run(gchar const*, BenchmarkFunc);
 
-void benchmark_background_operation (void);
-void benchmark_cache (void);
-void benchmark_memory_chunk (void);
-void benchmark_message (void);
+void benchmark_background_operation(void);
+void benchmark_cache(void);
+void benchmark_memory_chunk(void);
+void benchmark_message(void);
 
-void benchmark_kv (void);
+void benchmark_kv(void);
 
-void benchmark_distributed_object (void);
-void benchmark_object (void);
+void benchmark_distributed_object(void);
+void benchmark_object(void);
 
-void benchmark_collection (void);
-void benchmark_item (void);
+void benchmark_collection(void);
+void benchmark_item(void);
 
-void benchmark_hdf (void);
+void benchmark_hdf(void);
 
 #endif
