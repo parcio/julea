@@ -34,9 +34,8 @@
 
 static JConfiguration* jd_configuration;
 
-static
-gboolean
-jd_signal (gpointer data)
+static gboolean
+jd_signal(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -50,9 +49,8 @@ jd_signal (gpointer data)
 	return FALSE;
 }
 
-static
-gboolean
-jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
+static gboolean
+jd_on_run(GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -107,9 +105,8 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 	return TRUE;
 }
 
-static
-gboolean
-jd_daemon (void)
+static gboolean
+jd_daemon(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -163,9 +160,8 @@ jd_daemon (void)
 	return TRUE;
 }
 
-static
-gboolean
-jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_type)
+static gboolean
+jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type)
 {
 	guint count;
 
@@ -194,7 +190,7 @@ jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_typ
 }
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	J_TRACE_FUNCTION(NULL);
 

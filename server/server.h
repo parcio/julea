@@ -34,6 +34,6 @@ G_GNUC_INTERNAL JBackend* jd_object_backend;
 G_GNUC_INTERNAL JBackend* jd_kv_backend;
 G_GNUC_INTERNAL JBackend* jd_db_backend;
 
-G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
+G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
 
 #endif
