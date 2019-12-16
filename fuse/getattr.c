@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 int
-jfs_getattr (char const* path, struct stat* stbuf)
+jfs_getattr(char const* path, struct stat* stbuf)
 {
 	int ret = -ENOENT;
 

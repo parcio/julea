@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_unlink (char const* path)
+int
+jfs_unlink(char const* path)
 {
 	int ret = -ENOENT;
 

@@ -20,7 +20,8 @@
 
 #include "julea-fuse.h"
 
-void* jfs_init (struct fuse_conn_info* conn)
+void*
+jfs_init(struct fuse_conn_info* conn)
 {
 	(void)conn;
 

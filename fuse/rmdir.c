@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_rmdir (char const* path)
+int
+jfs_rmdir(char const* path)
 {
 	int ret = -ENOENT;
 

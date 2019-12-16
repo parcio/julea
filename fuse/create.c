@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_create (char const* path, mode_t mode, struct fuse_file_info* fi)
+int
+jfs_create(char const* path, mode_t mode, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 

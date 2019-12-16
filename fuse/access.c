@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_access (char const* path, int mask)
+int
+jfs_access(char const* path, int mask)
 {
 	int ret = -ENOENT;
 

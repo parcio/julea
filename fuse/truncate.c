@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_truncate (char const* path, off_t size)
+jfs_truncate(char const* path, off_t size)
 {
 	int ret = -ENOENT;
 

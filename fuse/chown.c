@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_chown (char const* path, uid_t uid, gid_t gid)
+int
+jfs_chown(char const* path, uid_t uid, gid_t gid)
 {
 	gint ret = -ENOENT;
 

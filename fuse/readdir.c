@@ -24,7 +24,7 @@
 #include <string.h>
 
 int
-jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
+jfs_readdir(char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 

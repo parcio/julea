@@ -23,25 +23,25 @@
 #include <glib.h>
 
 struct fuse_operations jfs_vtable = {
-	.access   = jfs_access,
-	.chmod    = jfs_chmod,
-	.chown    = jfs_chown,
-	.create   = jfs_create,
-	.destroy  = jfs_destroy,
-	.getattr  = jfs_getattr,
-	.init     = jfs_init,
-	.mkdir    = jfs_mkdir,
-	.read     = jfs_read,
-	.readdir  = jfs_readdir,
-	.rmdir    = jfs_rmdir,
+	.access = jfs_access,
+	.chmod = jfs_chmod,
+	.chown = jfs_chown,
+	.create = jfs_create,
+	.destroy = jfs_destroy,
+	.getattr = jfs_getattr,
+	.init = jfs_init,
+	.mkdir = jfs_mkdir,
+	.read = jfs_read,
+	.readdir = jfs_readdir,
+	.rmdir = jfs_rmdir,
 	.truncate = jfs_truncate,
-	.unlink   = jfs_unlink,
-	.utimens  = jfs_utimens,
-	.write    = jfs_write,
+	.unlink = jfs_unlink,
+	.utimens = jfs_utimens,
+	.write = jfs_write,
 };
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	gint ret;
 

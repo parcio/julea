@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_utimens (char const* path, const struct timespec ts[2])
+int
+jfs_utimens(char const* path, const struct timespec ts[2])
 {
 	int ret = -ENOENT;
 

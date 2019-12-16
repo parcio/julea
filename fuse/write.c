@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_write (char const* path, char const* buf, size_t size, off_t offset, struct fuse_file_info* fi)
+jfs_write(char const* path, char const* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 

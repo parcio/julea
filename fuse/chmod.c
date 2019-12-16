@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_chmod (char const* path, mode_t mode)
+int
+jfs_chmod(char const* path, mode_t mode)
 {
 	gint ret = -ENOENT;
 

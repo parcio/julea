@@ -20,7 +20,8 @@
 
 #include "julea-fuse.h"
 
-void jfs_destroy (void* data)
+void
+jfs_destroy(void* data)
 {
 	(void)data;
 }

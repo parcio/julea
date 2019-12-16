@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
+jfs_read(char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 

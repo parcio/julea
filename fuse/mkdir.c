@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_mkdir(char const* path, mode_t mode)
+int
+jfs_mkdir(char const* path, mode_t mode)
 {
 	int ret = -ENOENT;
 
