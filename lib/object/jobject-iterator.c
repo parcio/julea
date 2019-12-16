@@ -54,7 +54,7 @@ struct JObjectIterator
  * \return A new JObjectIterator.
  **/
 JObjectIterator*
-j_object_iterator_new (gchar const* namespace)
+j_object_iterator_new(gchar const* namespace)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -88,7 +88,7 @@ j_object_iterator_new (gchar const* namespace)
  * \param iterator A JObjectIterator.
  **/
 void
-j_object_iterator_free (JObjectIterator* iterator)
+j_object_iterator_free(JObjectIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -115,7 +115,7 @@ j_object_iterator_free (JObjectIterator* iterator)
  * \return TRUE on success, FALSE if the end of the collection is reached.
  **/
 gboolean
-j_object_iterator_next (JObjectIterator* iterator)
+j_object_iterator_next(JObjectIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -144,7 +144,7 @@ j_object_iterator_next (JObjectIterator* iterator)
  * \return A new item. Should be freed with j_object_unref().
  **/
 gchar const*
-j_object_iterator_get (JObjectIterator* iterator, guint64* index)
+j_object_iterator_get(JObjectIterator* iterator, guint64* index)
 {
 	J_TRACE_FUNCTION(NULL);
 

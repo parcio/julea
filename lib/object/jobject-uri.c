@@ -85,9 +85,8 @@ struct JObjectURI
  * \param uri  A URI.
  * \param uri_ A URI string.
  **/
-static
-gboolean
-j_object_uri_parse (JObjectURI* uri, gchar const* uri_)
+static gboolean
+j_object_uri_parse(JObjectURI* uri, gchar const* uri_)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -229,7 +228,7 @@ error:
  * \return A new URI. Should be freed with j_object_uri_free().
  **/
 JObjectURI*
-j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
+j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -268,7 +267,7 @@ j_object_uri_new (gchar const* uri_, JObjectURIScheme scheme)
  * \param uri A URI.
  **/
 void
-j_object_uri_free (JObjectURI* uri)
+j_object_uri_free(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -306,7 +305,7 @@ j_object_uri_free (JObjectURI* uri)
  * \return The index.
  **/
 guint32
-j_object_uri_get_index (JObjectURI* uri)
+j_object_uri_get_index(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -331,7 +330,7 @@ j_object_uri_get_index (JObjectURI* uri)
  * \return The namespace.
  **/
 gchar const*
-j_object_uri_get_namespace (JObjectURI* uri)
+j_object_uri_get_namespace(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -356,7 +355,7 @@ j_object_uri_get_namespace (JObjectURI* uri)
  * \return The name.
  **/
 gchar const*
-j_object_uri_get_name (JObjectURI* uri)
+j_object_uri_get_name(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -381,7 +380,7 @@ j_object_uri_get_name (JObjectURI* uri)
  * \return The object.
  **/
 JDistributedObject*
-j_object_uri_get_distributed_object (JObjectURI* uri)
+j_object_uri_get_distributed_object(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -406,7 +405,7 @@ j_object_uri_get_distributed_object (JObjectURI* uri)
  * \return The object.
  **/
 JObject*
-j_object_uri_get_object (JObjectURI* uri)
+j_object_uri_get_object(JObjectURI* uri)
 {
 	J_TRACE_FUNCTION(NULL);
 

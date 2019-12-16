@@ -65,8 +65,7 @@ struct JDistributedObjectBackgroundData
 			 * Contains #JDistributedObjectReadBuffer elements.
 			 */
 			JList* buffers;
-		}
-		read;
+		} read;
 
 		/**
 		 * The write part.
@@ -74,8 +73,7 @@ struct JDistributedObjectBackgroundData
 		struct
 		{
 			JList* bytes_written;
-		}
-		write;
+		} write;
 	};
 };
 
@@ -98,8 +96,7 @@ struct JDistributedObjectOperation
 			JDistributedObject* object;
 			gint64* modification_time;
 			guint64* size;
-		}
-		status;
+		} status;
 
 		struct
 		{
@@ -108,8 +105,7 @@ struct JDistributedObjectOperation
 			guint64 length;
 			guint64 offset;
 			guint64* bytes_read;
-		}
-		read;
+		} read;
 
 		struct
 		{
@@ -118,8 +114,7 @@ struct JDistributedObjectOperation
 			guint64 length;
 			guint64 offset;
 			guint64* bytes_written;
-		}
-		write;
+		} write;
 	};
 };
 
@@ -148,9 +143,8 @@ struct JDistributedObject
 	gint ref_count;
 };
 
-static
-void
-j_distributed_object_create_free (gpointer data)
+static void
+j_distributed_object_create_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -159,9 +153,8 @@ j_distributed_object_create_free (gpointer data)
 	j_distributed_object_unref(object);
 }
 
-static
-void
-j_distributed_object_delete_free (gpointer data)
+static void
+j_distributed_object_delete_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -170,9 +163,8 @@ j_distributed_object_delete_free (gpointer data)
 	j_distributed_object_unref(object);
 }
 
-static
-void
-j_distributed_object_status_free (gpointer data)
+static void
+j_distributed_object_status_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -183,9 +175,8 @@ j_distributed_object_status_free (gpointer data)
 	g_slice_free(JDistributedObjectOperation, operation);
 }
 
-static
-void
-j_distributed_object_read_free (gpointer data)
+static void
+j_distributed_object_read_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -196,9 +187,8 @@ j_distributed_object_read_free (gpointer data)
 	g_slice_free(JDistributedObjectOperation, operation);
 }
 
-static
-void
-j_distributed_object_write_free (gpointer data)
+static void
+j_distributed_object_write_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -218,9 +208,8 @@ j_distributed_object_write_free (gpointer data)
  *
  * \return #data.
  **/
-static
-gpointer
-j_distributed_object_create_background_operation (gpointer data)
+static gpointer
+j_distributed_object_create_background_operation(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -262,9 +251,8 @@ j_distributed_object_create_background_operation (gpointer data)
  *
  * \return #data.
  **/
-static
-gpointer
-j_distributed_object_delete_background_operation (gpointer data)
+static gpointer
+j_distributed_object_delete_background_operation(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -306,9 +294,8 @@ j_distributed_object_delete_background_operation (gpointer data)
  *
  * \return #data.
  **/
-static
-gpointer
-j_distributed_object_read_background_operation (gpointer data)
+static gpointer
+j_distributed_object_read_background_operation(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -388,9 +375,8 @@ j_distributed_object_read_background_operation (gpointer data)
  *
  * \return #data.
  **/
-static
-gpointer
-j_distributed_object_write_background_operation (gpointer data)
+static gpointer
+j_distributed_object_write_background_operation(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -444,9 +430,8 @@ j_distributed_object_write_background_operation (gpointer data)
  *
  * \return #data.
  **/
-static
-gpointer
-j_distributed_object_status_background_operation (gpointer data)
+static gpointer
+j_distributed_object_status_background_operation(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -496,9 +481,8 @@ j_distributed_object_status_background_operation (gpointer data)
 	return NULL;
 }
 
-static
-gboolean
-j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -602,9 +586,8 @@ j_distributed_object_create_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -700,9 +683,8 @@ j_distributed_object_delete_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -875,9 +857,8 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1051,9 +1032,8 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1181,7 +1161,7 @@ j_distributed_object_status_exec (JList* operations, JSemantics* semantics)
  * \return A new object. Should be freed with j_distributed_object_unref().
  **/
 JDistributedObject*
-j_distributed_object_new (gchar const* namespace, gchar const* name, JDistribution* distribution)
+j_distributed_object_new(gchar const* namespace, gchar const* name, JDistribution* distribution)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1214,7 +1194,7 @@ j_distributed_object_new (gchar const* namespace, gchar const* name, JDistributi
  * \return #object.
  **/
 JDistributedObject*
-j_distributed_object_ref (JDistributedObject* object)
+j_distributed_object_ref(JDistributedObject* object)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1235,7 +1215,7 @@ j_distributed_object_ref (JDistributedObject* object)
  * \param object An object.
  **/
 void
-j_distributed_object_unref (JDistributedObject* object)
+j_distributed_object_unref(JDistributedObject* object)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1265,7 +1245,7 @@ j_distributed_object_unref (JDistributedObject* object)
  * \return A new object. Should be freed with j_distributed_object_unref().
  **/
 void
-j_distributed_object_create (JDistributedObject* object, JBatch* batch)
+j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1293,7 +1273,7 @@ j_distributed_object_create (JDistributedObject* object, JBatch* batch)
  * \param batch      A batch.
  **/
 void
-j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
+j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1324,7 +1304,7 @@ j_distributed_object_delete (JDistributedObject* object, JBatch* batch)
  * \param batch      A batch.
  **/
 void
-j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
+j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1386,7 +1366,7 @@ j_distributed_object_read (JDistributedObject* object, gpointer data, guint64 le
  * \param batch         A batch.
  **/
 void
-j_distributed_object_write (JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
+j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1441,7 +1421,7 @@ j_distributed_object_write (JDistributedObject* object, gconstpointer data, guin
  * \param batch     A batch.
  **/
 void
-j_distributed_object_status (JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
+j_distributed_object_status(JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
