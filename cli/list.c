@@ -21,7 +21,7 @@
 #include "cli.h"
 
 gboolean
-j_cmd_list (gchar const** arguments)
+j_cmd_list(gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	g_autoptr(JURI) uri = NULL;

@@ -26,9 +26,8 @@
 #include <jmessage.h>
 #include <jstatistics.h>
 
-static
-void
-print_statistics (JStatistics* statistics)
+static void
+print_statistics(JStatistics* statistics)
 {
 	gchar* size_read;
 	gchar* size_written;
@@ -56,7 +55,7 @@ print_statistics (JStatistics* statistics)
 }
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	JConfiguration* configuration;
 	g_autoptr(JMessage) message = NULL;

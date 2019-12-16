@@ -23,7 +23,7 @@
 #include <string.h>
 
 gboolean
-j_cmd_create (gchar const** arguments, gboolean with_parents)
+j_cmd_create(gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
 	g_autoptr(JObjectURI) duri = NULL;

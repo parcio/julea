@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
