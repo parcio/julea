@@ -45,9 +45,9 @@
  */
 enum JTraceFlags
 {
-	J_TRACE_OFF     = 0,
-	J_TRACE_ECHO    = 1 << 0,
-	J_TRACE_OTF     = 1 << 1,
+	J_TRACE_OFF = 0,
+	J_TRACE_ECHO = 1 << 0,
+	J_TRACE_OTF = 1 << 1,
 	J_TRACE_SUMMARY = 1 << 2
 };
 
@@ -97,8 +97,7 @@ struct JTraceThread
 		 * Thread's process ID.
 		 **/
 		guint32 process_id;
-	}
-	otf;
+	} otf;
 #endif
 };
 
@@ -133,7 +132,7 @@ static GHashTable* otf_counter_table = NULL;
 G_LOCK_DEFINE_STATIC(j_trace_otf);
 #endif
 
-static void j_trace_thread_default_free (gpointer);
+static void j_trace_thread_default_free(gpointer);
 
 static GPrivate j_trace_thread_default = G_PRIVATE_INIT(j_trace_thread_default_free);
 static GHashTable* j_trace_summary_table = NULL;
@@ -151,9 +150,8 @@ G_LOCK_DEFINE_STATIC(j_trace_summary);
  *
  * \return A new trace thread. Should be freed with j_trace_thread_free().
  **/
-static
-JTraceThread*
-j_trace_thread_new (GThread* thread)
+static JTraceThread*
+j_trace_thread_new(GThread* thread)
 {
 	JTraceThread* trace_thread;
 
@@ -201,9 +199,8 @@ j_trace_thread_new (GThread* thread)
  *
  * \param trace_thread A trace thread.
  **/
-static
-void
-j_trace_thread_free (JTraceThread* trace_thread)
+static void
+j_trace_thread_free(JTraceThread* trace_thread)
 {
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -229,9 +226,8 @@ j_trace_thread_free (JTraceThread* trace_thread)
  *
  * \return The default trace thread.
  **/
-static
-JTraceThread*
-j_trace_thread_get_default (void)
+static JTraceThread*
+j_trace_thread_get_default(void)
 {
 	JTraceThread* trace_thread;
 
@@ -246,9 +242,8 @@ j_trace_thread_get_default (void)
 	return trace_thread;
 }
 
-static
-void
-j_trace_thread_default_free (gpointer data)
+static void
+j_trace_thread_default_free(gpointer data)
 {
 	JTraceThread* trace_thread = data;
 
@@ -266,9 +261,8 @@ j_trace_thread_default_free (gpointer data)
  * \param trace_thread A trace thread.
  * \param timestamp    A timestamp.
  **/
-static
-void
-j_trace_echo_printerr (JTraceThread* trace_thread, guint64 timestamp)
+static void
+j_trace_echo_printerr(JTraceThread* trace_thread, guint64 timestamp)
 {
 	guint i;
 
@@ -293,9 +287,8 @@ j_trace_echo_printerr (JTraceThread* trace_thread, guint64 timestamp)
  *
  * \return A time stamp in microseconds.
  **/
-static
-guint64
-j_trace_get_time (void)
+static guint64
+j_trace_get_time(void)
 {
 	GTimeVal timeval;
 	guint64 timestamp;
@@ -318,9 +311,8 @@ j_trace_get_time (void)
  *
  * \return A name.
  **/
-static
-gchar const*
-j_trace_file_operation_name (JTraceFileOperation op)
+static gchar const*
+j_trace_file_operation_name(JTraceFileOperation op)
 {
 	switch (op)
 	{
@@ -357,9 +349,8 @@ j_trace_file_operation_name (JTraceFileOperation op)
  *
  * \return TRUE if the function should be traced, FALSE otherwise.
  **/
-static
-gboolean
-j_trace_function_check (gchar const* name)
+static gboolean
+j_trace_function_check(gchar const* name)
 {
 	if (j_trace_function_patterns != NULL)
 	{
@@ -393,7 +384,7 @@ j_trace_function_check (gchar const* name)
  * \param name A trace name.
  **/
 void
-j_trace_init (gchar const* name)
+j_trace_init(gchar const* name)
 {
 	gchar const* j_trace;
 	gchar const* j_trace_function;
@@ -485,7 +476,7 @@ j_trace_init (gchar const* name)
  * \endcode
  **/
 void
-j_trace_fini (void)
+j_trace_fini(void)
 {
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -555,7 +546,7 @@ j_trace_fini (void)
  * \param name A function name.
  **/
 JTrace*
-j_trace_enter (gchar const* name, gchar const* format, ...)
+j_trace_enter(gchar const* name, gchar const* format, ...)
 {
 	JTraceThread* trace_thread;
 	JTrace* trace;
@@ -667,7 +658,7 @@ j_trace_enter (gchar const* name, gchar const* format, ...)
  * \param name A function name.
  **/
 void
-j_trace_leave (JTrace* trace)
+j_trace_leave(JTrace* trace)
 {
 	JTraceThread* trace_thread;
 	guint64 timestamp;
@@ -779,7 +770,7 @@ end:
  * \param op   A file operation.
  **/
 void
-j_trace_file_begin (gchar const* path, JTraceFileOperation op)
+j_trace_file_begin(gchar const* path, JTraceFileOperation op)
 {
 	JTraceThread* trace_thread;
 	guint64 timestamp;
@@ -843,7 +834,7 @@ j_trace_file_begin (gchar const* path, JTraceFileOperation op)
  * \param offset An offset.
  **/
 void
-j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset)
+j_trace_file_end(gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset)
 {
 	JTraceThread* trace_thread;
 	guint64 timestamp;
@@ -936,7 +927,7 @@ j_trace_file_end (gchar const* path, JTraceFileOperation op, guint64 length, gui
  * \param counter_value A counter value.
  **/
 void
-j_trace_counter (gchar const* name, guint64 counter_value)
+j_trace_counter(gchar const* name, guint64 counter_value)
 {
 	JTraceThread* trace_thread;
 	guint64 timestamp;

@@ -39,7 +39,7 @@
  **/
 
 gboolean
-j_backend_operation_unwrap_db_schema_create (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_schema_create(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -47,7 +47,7 @@ j_backend_operation_unwrap_db_schema_create (JBackend* backend, gpointer batch, 
 }
 
 gboolean
-j_backend_operation_unwrap_db_schema_get (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_schema_get(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -55,7 +55,7 @@ j_backend_operation_unwrap_db_schema_get (JBackend* backend, gpointer batch, JBa
 }
 
 gboolean
-j_backend_operation_unwrap_db_schema_delete (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_schema_delete(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -63,7 +63,7 @@ j_backend_operation_unwrap_db_schema_delete (JBackend* backend, gpointer batch, 
 }
 
 gboolean
-j_backend_operation_unwrap_db_insert (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_insert(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -85,7 +85,7 @@ _error:
 }
 
 gboolean
-j_backend_operation_unwrap_db_update (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_update(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -93,7 +93,7 @@ j_backend_operation_unwrap_db_update (JBackend* backend, gpointer batch, JBacken
 }
 
 gboolean
-j_backend_operation_unwrap_db_delete (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_delete(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -102,7 +102,7 @@ j_backend_operation_unwrap_db_delete (JBackend* backend, gpointer batch, JBacken
 
 // FIXME clean up
 gboolean
-j_backend_operation_unwrap_db_query (JBackend* backend, gpointer batch, JBackendOperation* data)
+j_backend_operation_unwrap_db_query(JBackend* backend, gpointer batch, JBackendOperation* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -146,7 +146,7 @@ _error:
 }
 
 gboolean
-j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data, guint arrlen)
+j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, guint arrlen)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -164,45 +164,45 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 		element = &data[i];
 		switch (element->type)
 		{
-		case J_BACKEND_OPERATION_PARAM_TYPE_STR:
-			if (element->ptr)
-			{
-				element->len = strlen(element->ptr) + 1;
-			}
-			else
-			{
-				element->len = 0;
-			}
-			break;
-		case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
-			break;
-		case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
-			if (element->bson_initialized && element->ptr)
-			{
-				element->len = ((bson_t*)element->ptr)->len;
-			}
-			else
-			{
-				element->len = 0;
-			}
-			break;
-		case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
-			element->len = 4;
-			error = (GError**)element->ptr;
-			if (error)
-			{
-				element->len += 4;
-				if (*error)
+			case J_BACKEND_OPERATION_PARAM_TYPE_STR:
+				if (element->ptr)
 				{
-					element->error_quark_string = g_quark_to_string((*error)->domain);
-					element->len += 4 + 4 + 4;
-					element->len += strlen(element->error_quark_string) + 1;
-					element->len += strlen((*error)->message) + 1;
+					element->len = strlen(element->ptr) + 1;
 				}
-			}
-			break;
-		default:
-			abort();
+				else
+				{
+					element->len = 0;
+				}
+				break;
+			case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
+				break;
+			case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
+				if (element->bson_initialized && element->ptr)
+				{
+					element->len = ((bson_t*)element->ptr)->len;
+				}
+				else
+				{
+					element->len = 0;
+				}
+				break;
+			case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
+				element->len = 4;
+				error = (GError**)element->ptr;
+				if (error)
+				{
+					element->len += 4;
+					if (*error)
+					{
+						element->error_quark_string = g_quark_to_string((*error)->domain);
+						element->len += 4 + 4 + 4;
+						element->len += strlen(element->error_quark_string) + 1;
+						element->len += strlen((*error)->message) + 1;
+					}
+				}
+				break;
+			default:
+				abort();
 		}
 		len += element->len;
 	}
@@ -215,45 +215,45 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
 		{
 			switch (element->type)
 			{
-			case J_BACKEND_OPERATION_PARAM_TYPE_STR:
-			case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
-				if (element->ptr)
-				{
-					j_message_append_n(message, element->ptr, element->len);
-				}
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
-				if (element->bson_initialized && element->ptr)
-				{
-					j_message_append_n(message, bson_get_data(element->ptr), element->len);
-					element->bson_initialized = FALSE;
-				}
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
-				error = (GError**)element->ptr;
-				tmp = error != NULL;
-				j_message_append_4(message, &tmp);
-				if (error)
-				{
-					tmp = *error != NULL;
-					j_message_append_4(message, &tmp);
-					if (*error)
+				case J_BACKEND_OPERATION_PARAM_TYPE_STR:
+				case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
+					if (element->ptr)
 					{
-						tmp = (*error)->code;
-						error_domain_len = strlen(element->error_quark_string) + 1;
-						error_message_len = strlen((*error)->message) + 1;
-						j_message_append_4(message, &tmp);
-						j_message_append_4(message, &error_domain_len);
-						j_message_append_4(message, &error_message_len);
-						j_message_append_n(message, element->error_quark_string, error_domain_len);
-						j_message_append_n(message, (*error)->message, error_message_len);
-						g_error_free(*error);
-						*error = NULL;
+						j_message_append_n(message, element->ptr, element->len);
 					}
-				}
-				break;
-			default:
-				abort();
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
+					if (element->bson_initialized && element->ptr)
+					{
+						j_message_append_n(message, bson_get_data(element->ptr), element->len);
+						element->bson_initialized = FALSE;
+					}
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
+					error = (GError**)element->ptr;
+					tmp = error != NULL;
+					j_message_append_4(message, &tmp);
+					if (error)
+					{
+						tmp = *error != NULL;
+						j_message_append_4(message, &tmp);
+						if (*error)
+						{
+							tmp = (*error)->code;
+							error_domain_len = strlen(element->error_quark_string) + 1;
+							error_message_len = strlen((*error)->message) + 1;
+							j_message_append_4(message, &tmp);
+							j_message_append_4(message, &error_domain_len);
+							j_message_append_4(message, &error_message_len);
+							j_message_append_n(message, element->error_quark_string, error_domain_len);
+							j_message_append_n(message, (*error)->message, error_message_len);
+							g_error_free(*error);
+							*error = NULL;
+						}
+					}
+					break;
+				default:
+					abort();
 			}
 		}
 	}
@@ -265,7 +265,7 @@ j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data,
  * the return value of this function is the same as the return value of the original function call
 */
 gboolean
-j_backend_operation_from_message (JMessage* message, JBackendOperationParam* data, guint arrlen)
+j_backend_operation_from_message(JMessage* message, JBackendOperationParam* data, guint arrlen)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -288,52 +288,52 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
 		{
 			switch (element->type)
 			{
-			case J_BACKEND_OPERATION_PARAM_TYPE_STR:
-			case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
-				*(gchar**)element->ptr = g_strdup(j_message_get_n(message, len));
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
-				ret = bson_init_static(&element->bson, j_message_get_n(message, len), len) && ret;
-				if (element->ptr)
-				{
-					bson_copy_to(&element->bson, element->ptr);
-				}
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
-				error = (GError**)element->ptr;
-				if (error)
-				{
-					if (j_message_get_4(message))
+				case J_BACKEND_OPERATION_PARAM_TYPE_STR:
+				case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
+					*(gchar**)element->ptr = g_strdup(j_message_get_n(message, len));
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
+					ret = bson_init_static(&element->bson, j_message_get_n(message, len), len) && ret;
+					if (element->ptr)
+					{
+						bson_copy_to(&element->bson, element->ptr);
+					}
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
+					error = (GError**)element->ptr;
+					if (error)
 					{
 						if (j_message_get_4(message))
 						{
-							ret = FALSE;
-							error_code = j_message_get_4(message);
-							error_domain_len = j_message_get_4(message);
-							error_message_len = j_message_get_4(message);
-							error_quark = g_quark_from_string(j_message_get_n(message, error_domain_len));
-							g_set_error_literal(error, error_quark, error_code, j_message_get_n(message, error_message_len));
+							if (j_message_get_4(message))
+							{
+								ret = FALSE;
+								error_code = j_message_get_4(message);
+								error_domain_len = j_message_get_4(message);
+								error_message_len = j_message_get_4(message);
+								error_quark = g_quark_from_string(j_message_get_n(message, error_domain_len));
+								g_set_error_literal(error, error_quark, error_code, j_message_get_n(message, error_message_len));
+							}
 						}
 					}
-				}
-				else
-				{
-					if (j_message_get_4(message))
+					else
 					{
 						if (j_message_get_4(message))
 						{
-							ret = FALSE;
-							j_message_get_4(message);
-							error_domain_len = j_message_get_4(message);
-							error_message_len = j_message_get_4(message);
-							j_message_get_n(message, error_domain_len);
-							j_message_get_n(message, error_message_len);
+							if (j_message_get_4(message))
+							{
+								ret = FALSE;
+								j_message_get_4(message);
+								error_domain_len = j_message_get_4(message);
+								error_message_len = j_message_get_4(message);
+								j_message_get_n(message, error_domain_len);
+								j_message_get_n(message, error_message_len);
+							}
 						}
 					}
-				}
-				break;
-			default:
-				abort();
+					break;
+				default:
+					abort();
 			}
 		}
 	}
@@ -345,7 +345,7 @@ j_backend_operation_from_message (JMessage* message, JBackendOperationParam* dat
  * the return value of this function is the same as the return value of the original function call
  */
 gboolean
-j_backend_operation_from_message_static (JMessage* message, JBackendOperationParam* data, guint arrlen)
+j_backend_operation_from_message_static(JMessage* message, JBackendOperationParam* data, guint arrlen)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -366,33 +366,33 @@ j_backend_operation_from_message_static (JMessage* message, JBackendOperationPar
 		{
 			switch (element->type)
 			{
-			case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
-			case J_BACKEND_OPERATION_PARAM_TYPE_STR:
-				element->ptr = j_message_get_n(message, len);
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
-				element->ptr = &element->bson;
-				ret = bson_init_static(element->ptr, j_message_get_n(message, len), len) && ret;
-				break;
-			case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
-				if (j_message_get_4(message))
-				{
-					element->ptr = &element->error_ptr;
-					element->error_ptr = NULL;
+				case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
+				case J_BACKEND_OPERATION_PARAM_TYPE_STR:
+					element->ptr = j_message_get_n(message, len);
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
+					element->ptr = &element->bson;
+					ret = bson_init_static(element->ptr, j_message_get_n(message, len), len) && ret;
+					break;
+				case J_BACKEND_OPERATION_PARAM_TYPE_ERROR:
 					if (j_message_get_4(message))
 					{
-						ret = FALSE;
-						element->error_ptr = &element->error;
-						element->error.code = j_message_get_4(message);
-						error_domain_len = j_message_get_4(message);
-						error_message_len = j_message_get_4(message);
-						element->error.domain = g_quark_from_string(j_message_get_n(message, error_domain_len));
-						element->error.message = j_message_get_n(message, error_message_len);
+						element->ptr = &element->error_ptr;
+						element->error_ptr = NULL;
+						if (j_message_get_4(message))
+						{
+							ret = FALSE;
+							element->error_ptr = &element->error;
+							element->error.code = j_message_get_4(message);
+							error_domain_len = j_message_get_4(message);
+							error_message_len = j_message_get_4(message);
+							element->error.domain = g_quark_from_string(j_message_get_n(message, error_domain_len));
+							element->error.message = j_message_get_n(message, error_message_len);
+						}
 					}
-				}
-				break;
-			default:
-				abort();
+					break;
+				default:
+					abort();
 			}
 		}
 	}

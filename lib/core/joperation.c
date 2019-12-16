@@ -43,7 +43,7 @@
  * \return A new operation. Should be freed with j_operation_free().
  **/
 JOperation*
-j_operation_new (void)
+j_operation_new(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -70,7 +70,7 @@ j_operation_new (void)
  **/
 /* FIXME */
 void
-j_operation_free (JOperation* operation)
+j_operation_free(JOperation* operation)
 {
 	J_TRACE_FUNCTION(NULL);
 

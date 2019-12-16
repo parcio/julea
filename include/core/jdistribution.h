@@ -52,23 +52,23 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JDistribution* j_distribution_new (JDistributionType);
-JDistribution* j_distribution_new_for_configuration (JDistributionType, JConfiguration*);
-JDistribution* j_distribution_new_from_bson (bson_t const*);
+JDistribution* j_distribution_new(JDistributionType);
+JDistribution* j_distribution_new_for_configuration(JDistributionType, JConfiguration*);
+JDistribution* j_distribution_new_from_bson(bson_t const*);
 
-JDistribution* j_distribution_ref (JDistribution*);
-void j_distribution_unref (JDistribution*);
+JDistribution* j_distribution_ref(JDistribution*);
+void j_distribution_unref(JDistribution*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDistribution, j_distribution_unref)
 
-bson_t* j_distribution_serialize (JDistribution*);
+bson_t* j_distribution_serialize(JDistribution*);
 
-void j_distribution_set_block_size (JDistribution*, guint64);
-void j_distribution_set (JDistribution*, gchar const*, guint64);
-void j_distribution_set2 (JDistribution*, gchar const*, guint64, guint64);
+void j_distribution_set_block_size(JDistribution*, guint64);
+void j_distribution_set(JDistribution*, gchar const*, guint64);
+void j_distribution_set2(JDistribution*, gchar const*, guint64, guint64);
 
-void j_distribution_reset (JDistribution*, guint64, guint64);
-gboolean j_distribution_distribute (JDistribution*, guint*, guint64*, guint64*, guint64*);
+void j_distribution_reset(JDistribution*, guint64, guint64);
+gboolean j_distribution_distribute(JDistribution*, guint*, guint64*, guint64*, guint64*);
 
 G_END_DECLS
 

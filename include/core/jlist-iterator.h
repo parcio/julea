@@ -41,13 +41,13 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JListIterator* j_list_iterator_new (JList*);
-void j_list_iterator_free (JListIterator*);
+JListIterator* j_list_iterator_new(JList*);
+void j_list_iterator_free(JListIterator*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
 
-gboolean j_list_iterator_next (JListIterator*);
-gpointer j_list_iterator_get (JListIterator*);
+gboolean j_list_iterator_next(JListIterator*);
+gpointer j_list_iterator_get(JListIterator*);
 
 G_END_DECLS
 

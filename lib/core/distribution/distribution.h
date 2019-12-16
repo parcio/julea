@@ -35,23 +35,23 @@
 
 struct JDistributionVTable
 {
-	gpointer (*distribution_new) (guint, guint64);
-	void (*distribution_free) (gpointer);
+	gpointer (*distribution_new)(guint, guint64);
+	void (*distribution_free)(gpointer);
 
-	void (*distribution_set) (gpointer, gchar const*, guint64);
-	void (*distribution_set2) (gpointer, gchar const*, guint64, guint64);
+	void (*distribution_set)(gpointer, gchar const*, guint64);
+	void (*distribution_set2)(gpointer, gchar const*, guint64, guint64);
 
-	void (*distribution_serialize) (gpointer, bson_t*);
-	void (*distribution_deserialize) (gpointer, bson_t const*);
+	void (*distribution_serialize)(gpointer, bson_t*);
+	void (*distribution_deserialize)(gpointer, bson_t const*);
 
-	void (*distribution_reset) (gpointer, guint64, guint64);
-	gboolean (*distribution_distribute) (gpointer, guint*, guint64*, guint64*, guint64*);
+	void (*distribution_reset)(gpointer, guint64, guint64);
+	gboolean (*distribution_distribute)(gpointer, guint*, guint64*, guint64*, guint64*);
 };
 
 typedef struct JDistributionVTable JDistributionVTable;
 
-void j_distribution_round_robin_get_vtable (JDistributionVTable*);
-void j_distribution_single_server_get_vtable (JDistributionVTable*);
-void j_distribution_weighted_get_vtable (JDistributionVTable*);
+void j_distribution_round_robin_get_vtable(JDistributionVTable*);
+void j_distribution_single_server_get_vtable(JDistributionVTable*);
+void j_distribution_weighted_get_vtable(JDistributionVTable*);
 
 #endif

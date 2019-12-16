@@ -35,23 +35,23 @@ struct JList;
 
 typedef struct JList JList;
 
-typedef void (*JListFreeFunc) (gpointer);
+typedef void (*JListFreeFunc)(gpointer);
 
-JList* j_list_new (JListFreeFunc);
-JList* j_list_ref (JList*);
-void j_list_unref (JList*);
+JList* j_list_new(JListFreeFunc);
+JList* j_list_ref(JList*);
+void j_list_unref(JList*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JList, j_list_unref)
 
-guint j_list_length (JList*);
+guint j_list_length(JList*);
 
-void j_list_append (JList*, gpointer);
-void j_list_prepend (JList*, gpointer);
+void j_list_append(JList*, gpointer);
+void j_list_prepend(JList*, gpointer);
 
-gpointer j_list_get_first (JList*);
-gpointer j_list_get_last (JList*);
+gpointer j_list_get_first(JList*);
+gpointer j_list_get_last(JList*);
 
-void j_list_delete_all (JList*);
+void j_list_delete_all(JList*);
 
 G_END_DECLS
 

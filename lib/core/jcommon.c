@@ -53,9 +53,8 @@ static gboolean j_inited = FALSE;
  *
  * \return The progran name if it can be determined, default_name otherwise.
  */
-static
-gchar*
-j_get_program_name (gchar const* default_name)
+static gchar*
+j_get_program_name(gchar const* default_name)
 {
 	gchar* program_name;
 
@@ -77,15 +76,14 @@ j_get_program_name (gchar const* default_name)
 }
 
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-static void __attribute__((constructor)) j_init (void);
-static void __attribute__((destructor)) j_fini (void);
+static void __attribute__((constructor)) j_init(void);
+static void __attribute__((destructor)) j_fini(void);
 
 /**
  * Initializes JULEA.
  */
-static
-void
-j_init (void)
+static void
+j_init(void)
 {
 	JTrace* trace;
 	g_autofree gchar* basename = NULL;
@@ -132,9 +130,8 @@ error:
 /**
  * Shuts down JULEA.
  */
-static
-void
-j_fini (void)
+static void
+j_fini(void)
 {
 	JTrace* trace;
 

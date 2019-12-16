@@ -37,17 +37,17 @@ struct JCredentials;
 
 typedef struct JCredentials JCredentials;
 
-JCredentials* j_credentials_new (void);
-JCredentials* j_credentials_ref (JCredentials*);
-void j_credentials_unref (JCredentials*);
+JCredentials* j_credentials_new(void);
+JCredentials* j_credentials_ref(JCredentials*);
+void j_credentials_unref(JCredentials*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCredentials, j_credentials_unref)
 
-guint32 j_credentials_get_user (JCredentials*);
-guint32 j_credentials_get_group (JCredentials*);
+guint32 j_credentials_get_user(JCredentials*);
+guint32 j_credentials_get_group(JCredentials*);
 
-bson_t* j_credentials_serialize (JCredentials*);
-void j_credentials_deserialize (JCredentials*, bson_t const*);
+bson_t* j_credentials_serialize(JCredentials*);
+void j_credentials_deserialize(JCredentials*, bson_t const*);
 
 G_END_DECLS
 

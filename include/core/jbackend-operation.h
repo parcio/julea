@@ -81,7 +81,7 @@ typedef struct JBackendOperationParam JBackendOperationParam;
 
 struct JBackendOperation
 {
-	gboolean (*backend_func) (struct JBackend*, gpointer, struct JBackendOperation*);
+	gboolean (*backend_func)(struct JBackend*, gpointer, struct JBackendOperation*);
 	guint in_param_count;
 	guint out_param_count;
 	// Input parameters
@@ -103,17 +103,17 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-gboolean j_backend_operation_unwrap_db_schema_create (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_schema_get (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_schema_delete (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_insert (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_update (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_delete (JBackend*, gpointer, JBackendOperation*);
-gboolean j_backend_operation_unwrap_db_query (JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_schema_create(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_schema_get(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_schema_delete(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_insert(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_update(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_delete(JBackend*, gpointer, JBackendOperation*);
+gboolean j_backend_operation_unwrap_db_query(JBackend*, gpointer, JBackendOperation*);
 
-gboolean j_backend_operation_to_message (JMessage* message, JBackendOperationParam* data, guint len);
-gboolean j_backend_operation_from_message (JMessage* message, JBackendOperationParam* data, guint len);
-gboolean j_backend_operation_from_message_static (JMessage* message, JBackendOperationParam* data, guint len);
+gboolean j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, guint len);
+gboolean j_backend_operation_from_message(JMessage* message, JBackendOperationParam* data, guint len);
+gboolean j_backend_operation_from_message_static(JMessage* message, JBackendOperationParam* data, guint len);
 
 static const JBackendOperation j_backend_operation_db_schema_create = {
 	.backend_func = j_backend_operation_unwrap_db_schema_create,

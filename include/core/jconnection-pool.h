@@ -34,8 +34,8 @@
 
 G_BEGIN_DECLS
 
-gpointer j_connection_pool_pop (JBackendType, guint);
-void j_connection_pool_push (JBackendType, guint, gpointer);
+gpointer j_connection_pool_pop(JBackendType, guint);
+void j_connection_pool_push(JBackendType, guint, gpointer);
 
 G_END_DECLS
 

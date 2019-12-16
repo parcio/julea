@@ -44,26 +44,26 @@
 
 enum JMessageSemantics
 {
-	J_MESSAGE_SEMANTICS_ATOMICITY_BATCH =             1 << 0,
-	J_MESSAGE_SEMANTICS_ATOMICITY_OPERATION =         1 << 1,
-	J_MESSAGE_SEMANTICS_ATOMICITY_NONE =              1 << 2,
-	J_MESSAGE_SEMANTICS_CONCURRENCY_OVERLAPPING =     1 << 3,
+	J_MESSAGE_SEMANTICS_ATOMICITY_BATCH = 1 << 0,
+	J_MESSAGE_SEMANTICS_ATOMICITY_OPERATION = 1 << 1,
+	J_MESSAGE_SEMANTICS_ATOMICITY_NONE = 1 << 2,
+	J_MESSAGE_SEMANTICS_CONCURRENCY_OVERLAPPING = 1 << 3,
 	J_MESSAGE_SEMANTICS_CONCURRENCY_NON_OVERLAPPING = 1 << 4,
-	J_MESSAGE_SEMANTICS_CONCURRENCY_NONE =            1 << 5,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_IMMEDIATE =       1 << 6,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_EVENTUAL =        1 << 7,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_NONE =            1 << 8,
-	J_MESSAGE_SEMANTICS_ORDERING_STRICT =             1 << 9,
-	J_MESSAGE_SEMANTICS_ORDERING_SEMI_RELAXED =       1 << 10,
-	J_MESSAGE_SEMANTICS_ORDERING_RELAXED =            1 << 11,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_IMMEDIATE =       1 << 12,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_EVENTUAL =        1 << 13,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_NONE =            1 << 14,
-	J_MESSAGE_SEMANTICS_SAFETY_STORAGE =              1 << 15,
-	J_MESSAGE_SEMANTICS_SAFETY_NETWORK =              1 << 16,
-	J_MESSAGE_SEMANTICS_SAFETY_NONE =                 1 << 17,
-	J_MESSAGE_SEMANTICS_SECURITY_STRICT =             1 << 18,
-	J_MESSAGE_SEMANTICS_SECURITY_NONE =               1 << 19
+	J_MESSAGE_SEMANTICS_CONCURRENCY_NONE = 1 << 5,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_IMMEDIATE = 1 << 6,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_EVENTUAL = 1 << 7,
+	J_MESSAGE_SEMANTICS_CONSISTENCY_NONE = 1 << 8,
+	J_MESSAGE_SEMANTICS_ORDERING_STRICT = 1 << 9,
+	J_MESSAGE_SEMANTICS_ORDERING_SEMI_RELAXED = 1 << 10,
+	J_MESSAGE_SEMANTICS_ORDERING_RELAXED = 1 << 11,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_IMMEDIATE = 1 << 12,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_EVENTUAL = 1 << 13,
+	J_MESSAGE_SEMANTICS_PERSISTENCY_NONE = 1 << 14,
+	J_MESSAGE_SEMANTICS_SAFETY_STORAGE = 1 << 15,
+	J_MESSAGE_SEMANTICS_SAFETY_NETWORK = 1 << 16,
+	J_MESSAGE_SEMANTICS_SAFETY_NONE = 1 << 17,
+	J_MESSAGE_SEMANTICS_SECURITY_STRICT = 1 << 18,
+	J_MESSAGE_SEMANTICS_SECURITY_NONE = 1 << 19
 };
 
 typedef enum JMessageSemantics JMessageSemantics;
@@ -172,9 +172,8 @@ struct JMessage
  *
  * \return The message's header.
  **/
-static
-JMessageHeader*
-j_message_header (JMessage const* message)
+static JMessageHeader*
+j_message_header(JMessage const* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -193,9 +192,8 @@ j_message_header (JMessage const* message)
  *
  * \return The message's length.
  **/
-static
-gsize
-j_message_length (JMessage const* message)
+static gsize
+j_message_length(JMessage const* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -206,9 +204,8 @@ j_message_length (JMessage const* message)
 	return GUINT32_FROM_LE(length);
 }
 
-static
-void
-j_message_data_free (gpointer data)
+static void
+j_message_data_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -228,9 +225,8 @@ j_message_data_free (gpointer data)
  *
  * \return TRUE if it is possible, FALSE otherwise.
  **/
-static
-gboolean
-j_message_can_append (JMessage const* message, gsize length)
+static gboolean
+j_message_can_append(JMessage const* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -250,18 +246,16 @@ j_message_can_append (JMessage const* message, gsize length)
  *
  * \return TRUE if it is possible, FALSE otherwise.
  **/
-static
-gboolean
-j_message_can_get (JMessage const* message, gsize length)
+static gboolean
+j_message_can_get(JMessage const* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	return (message->current + length <= message->data + sizeof(JMessageHeader) + j_message_length(message));
 }
 
-static
-void
-j_message_extend (JMessage* message, gsize length)
+static void
+j_message_extend(JMessage* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -296,9 +290,8 @@ j_message_extend (JMessage* message, gsize length)
 	message->current = message->data + position;
 }
 
-static
-void
-j_message_ensure_size (JMessage* message, gsize length)
+static void
+j_message_ensure_size(JMessage* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -328,7 +321,7 @@ j_message_ensure_size (JMessage* message, gsize length)
  * \return A new message. Should be freed with j_message_unref().
  **/
 JMessage*
-j_message_new (JMessageType op_type, gsize length)
+j_message_new(JMessageType op_type, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -367,7 +360,7 @@ j_message_new (JMessageType op_type, gsize length)
  * \return A new reply message. Should be freed with j_message_unref().
  **/
 JMessage*
-j_message_new_reply (JMessage* message)
+j_message_new_reply(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -406,7 +399,7 @@ j_message_new_reply (JMessage* message)
  * \return #message.
  **/
 JMessage*
-j_message_ref (JMessage* message)
+j_message_ref(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -427,7 +420,7 @@ j_message_ref (JMessage* message)
  * \param message A message.
  **/
 void
-j_message_unref (JMessage* message)
+j_message_unref(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -462,7 +455,7 @@ j_message_unref (JMessage* message)
  * \return The message's operation type.
  **/
 JMessageType
-j_message_get_type (JMessage const* message)
+j_message_get_type(JMessage const* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -487,7 +480,7 @@ j_message_get_type (JMessage const* message)
  * \return The message's operation count.
  **/
 guint32
-j_message_get_count (JMessage const* message)
+j_message_get_count(JMessage const* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -513,7 +506,7 @@ j_message_get_count (JMessage const* message)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_append_1 (JMessage* message, gconstpointer data)
+j_message_append_1(JMessage* message, gconstpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -545,7 +538,7 @@ j_message_append_1 (JMessage* message, gconstpointer data)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_append_4 (JMessage* message, gconstpointer data)
+j_message_append_4(JMessage* message, gconstpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -579,7 +572,7 @@ j_message_append_4 (JMessage* message, gconstpointer data)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_append_8 (JMessage* message, gconstpointer data)
+j_message_append_8(JMessage* message, gconstpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -616,7 +609,7 @@ j_message_append_8 (JMessage* message, gconstpointer data)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_append_n (JMessage* message, gconstpointer data, gsize length)
+j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -650,7 +643,7 @@ j_message_append_n (JMessage* message, gconstpointer data, gsize length)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_append_string (JMessage* message, gchar const* str)
+j_message_append_string(JMessage* message, gchar const* str)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -671,7 +664,7 @@ j_message_append_string (JMessage* message, gchar const* str)
  * \return A character.
  **/
 gchar
-j_message_get_1 (JMessage* message)
+j_message_get_1(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -698,7 +691,7 @@ j_message_get_1 (JMessage* message)
  * \return A 4-bytes integer.
  **/
 gint32
-j_message_get_4 (JMessage* message)
+j_message_get_4(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -726,7 +719,7 @@ j_message_get_4 (JMessage* message)
  * \return An 8-bytes integer.
  **/
 gint64
-j_message_get_8 (JMessage* message)
+j_message_get_8(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -753,7 +746,7 @@ j_message_get_8 (JMessage* message)
  * \return A pointer to the data.
  **/
 gpointer
-j_message_get_n (JMessage* message, gsize length)
+j_message_get_n(JMessage* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -779,7 +772,7 @@ j_message_get_n (JMessage* message, gsize length)
  * \return A string.
  **/
 gchar const*
-j_message_get_string (JMessage* message)
+j_message_get_string(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -805,7 +798,7 @@ j_message_get_string (JMessage* message)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_receive (JMessage* message, gpointer connection)
+j_message_receive(JMessage* message, gpointer connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -830,7 +823,7 @@ j_message_receive (JMessage* message, gpointer connection)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_send (JMessage* message, gpointer connection)
+j_message_send(JMessage* message, gpointer connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -863,7 +856,7 @@ j_message_send (JMessage* message, gpointer connection)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_read (JMessage* message, GInputStream* stream)
+j_message_read(JMessage* message, GInputStream* stream)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -923,7 +916,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_write (JMessage* message, GOutputStream* stream)
+j_message_write(JMessage* message, GOutputStream* stream)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -986,7 +979,7 @@ end:
  * \param length  A length.
  **/
 void
-j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
+j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1013,7 +1006,7 @@ j_message_add_send (JMessage* message, gconstpointer data, guint64 length)
  * \param length  A length.
  **/
 void
-j_message_add_operation (JMessage* message, gsize length)
+j_message_add_operation(JMessage* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1028,7 +1021,7 @@ j_message_add_operation (JMessage* message, gsize length)
 }
 
 void
-j_message_set_semantics (JMessage* message, JSemantics* semantics)
+j_message_set_semantics(JMessage* message, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1037,7 +1030,15 @@ j_message_set_semantics (JMessage* message, JSemantics* semantics)
 	g_return_if_fail(message != NULL);
 	g_return_if_fail(semantics != NULL);
 
-#define SERIALIZE_SEMANTICS(type, key) { gint tmp; tmp = j_semantics_get(semantics, J_SEMANTICS_ ## type); if (tmp == J_SEMANTICS_ ## type ## _ ## key) { serialized_semantics |= J_MESSAGE_SEMANTICS_ ## type ## _ ##key; } }
+#define SERIALIZE_SEMANTICS(type, key) \
+	{ \
+		gint tmp; \
+		tmp = j_semantics_get(semantics, J_SEMANTICS_##type); \
+		if (tmp == J_SEMANTICS_##type##_##key) \
+		{ \
+			serialized_semantics |= J_MESSAGE_SEMANTICS_##type##_##key; \
+		} \
+	}
 
 	SERIALIZE_SEMANTICS(ATOMICITY, BATCH)
 	SERIALIZE_SEMANTICS(ATOMICITY, OPERATION)
@@ -1066,7 +1067,7 @@ j_message_set_semantics (JMessage* message, JSemantics* semantics)
 }
 
 JSemantics*
-j_message_get_semantics (JMessage* message)
+j_message_get_semantics(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1082,7 +1083,11 @@ j_message_get_semantics (JMessage* message)
 	// If serialized_semantics is 0, we will end up with the default semantics.
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-#define DESERIALIZE_SEMANTICS(type, key) if (serialized_semantics & J_MESSAGE_SEMANTICS_ ## type ## _ ## key) { j_semantics_set(semantics, J_SEMANTICS_ ## type, J_SEMANTICS_ ## type ## _ ## key); }
+#define DESERIALIZE_SEMANTICS(type, key) \
+	if (serialized_semantics & J_MESSAGE_SEMANTICS_##type##_##key) \
+	{ \
+		j_semantics_set(semantics, J_SEMANTICS_##type, J_SEMANTICS_##type##_##key); \
+	}
 
 	DESERIALIZE_SEMANTICS(ATOMICITY, BATCH)
 	DESERIALIZE_SEMANTICS(ATOMICITY, OPERATION)

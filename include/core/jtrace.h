@@ -50,11 +50,11 @@ struct JTrace;
 
 typedef struct JTrace JTrace;
 
-void j_trace_init (gchar const*);
-void j_trace_fini (void);
+void j_trace_init(gchar const*);
+void j_trace_fini(void);
 
-JTrace* j_trace_enter (gchar const*, gchar const*, ...) G_GNUC_PRINTF(2, 3);
-void j_trace_leave (JTrace*);
+JTrace* j_trace_enter(gchar const*, gchar const*, ...) G_GNUC_PRINTF(2, 3);
+void j_trace_leave(JTrace*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 
@@ -76,10 +76,10 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 #endif
 #endif
 
-void j_trace_file_begin (gchar const*, JTraceFileOperation);
-void j_trace_file_end (gchar const*, JTraceFileOperation, guint64, guint64);
+void j_trace_file_begin(gchar const*, JTraceFileOperation);
+void j_trace_file_end(gchar const*, JTraceFileOperation, guint64, guint64);
 
-void j_trace_counter (gchar const*, guint64);
+void j_trace_counter(gchar const*, guint64);
 
 G_END_DECLS
 

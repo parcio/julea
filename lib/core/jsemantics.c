@@ -92,7 +92,7 @@ struct JSemantics
  * \return A new semantics object. Should be freed with j_semantics_unref().
  **/
 JSemantics*
-j_semantics_new (JSemanticsTemplate template)
+j_semantics_new(JSemanticsTemplate template_)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -109,7 +109,7 @@ j_semantics_new (JSemanticsTemplate template)
 	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
 
-	switch (template)
+	switch (template_)
 	{
 		case J_SEMANTICS_TEMPLATE_DEFAULT:
 			break;
@@ -154,7 +154,7 @@ j_semantics_new (JSemanticsTemplate template)
  * \return A new semantics object. Should be freed with j_semantics_unref().
  **/
 JSemantics*
-j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_str)
+j_semantics_new_from_string(gchar const* template_str, gchar const* semantics_str)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -343,7 +343,7 @@ j_semantics_new_from_string (gchar const* template_str, gchar const* semantics_s
  * \return The semantics.
  **/
 JSemantics*
-j_semantics_ref (JSemantics* semantics)
+j_semantics_ref(JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -369,7 +369,7 @@ j_semantics_ref (JSemantics* semantics)
  * \param semantics The semantics.
  **/
 void
-j_semantics_unref (JSemantics* semantics)
+j_semantics_unref(JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -395,7 +395,7 @@ j_semantics_unref (JSemantics* semantics)
  * \param value     The aspect's value.
  **/
 void
-j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
+j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -445,7 +445,7 @@ j_semantics_set (JSemantics* semantics, JSemanticsType key, gint value)
  * \return The aspect's value.
  **/
 gint
-j_semantics_get (JSemantics* semantics, JSemanticsType key)
+j_semantics_get(JSemantics* semantics, JSemanticsType key)
 {
 	J_TRACE_FUNCTION(NULL);
 

@@ -34,8 +34,8 @@
 
 G_BEGIN_DECLS
 
-typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
-typedef void (*JOperationFreeFunc) (gpointer);
+typedef gboolean (*JOperationExecFunc)(JList*, JSemantics*);
+typedef void (*JOperationFreeFunc)(gpointer);
 
 /**
  * An operation.
@@ -51,7 +51,7 @@ struct JOperation
 
 typedef struct JOperation JOperation;
 
-JOperation* j_operation_new (void);
+JOperation* j_operation_new(void);
 
 G_END_DECLS
 

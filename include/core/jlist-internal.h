@@ -54,7 +54,7 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JListElement* j_list_head (JList*);
+G_GNUC_INTERNAL JListElement* j_list_head(JList*);
 
 G_END_DECLS
 

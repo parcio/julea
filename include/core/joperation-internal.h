@@ -33,7 +33,7 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_operation_free (JOperation*);
+G_GNUC_INTERNAL void j_operation_free(JOperation*);
 
 G_END_DECLS
 

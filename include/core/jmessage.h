@@ -68,39 +68,39 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JMessage* j_message_new (JMessageType, gsize);
-JMessage* j_message_new_reply (JMessage*);
-JMessage* j_message_ref (JMessage*);
-void j_message_unref (JMessage*);
+JMessage* j_message_new(JMessageType, gsize);
+JMessage* j_message_new_reply(JMessage*);
+JMessage* j_message_ref(JMessage*);
+void j_message_unref(JMessage*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JMessage, j_message_unref)
 
-JMessageType j_message_get_type (JMessage const*);
-guint32 j_message_get_count (JMessage const*);
+JMessageType j_message_get_type(JMessage const*);
+guint32 j_message_get_count(JMessage const*);
 
-gboolean j_message_append_1 (JMessage*, gconstpointer);
-gboolean j_message_append_4 (JMessage*, gconstpointer);
-gboolean j_message_append_8 (JMessage*, gconstpointer);
-gboolean j_message_append_n (JMessage*, gconstpointer, gsize);
-gboolean j_message_append_string (JMessage*, gchar const*);
+gboolean j_message_append_1(JMessage*, gconstpointer);
+gboolean j_message_append_4(JMessage*, gconstpointer);
+gboolean j_message_append_8(JMessage*, gconstpointer);
+gboolean j_message_append_n(JMessage*, gconstpointer, gsize);
+gboolean j_message_append_string(JMessage*, gchar const*);
 
-gchar j_message_get_1 (JMessage*);
-gint32 j_message_get_4 (JMessage*);
-gint64 j_message_get_8 (JMessage*);
-gpointer j_message_get_n (JMessage*, gsize);
-gchar const* j_message_get_string (JMessage*);
+gchar j_message_get_1(JMessage*);
+gint32 j_message_get_4(JMessage*);
+gint64 j_message_get_8(JMessage*);
+gpointer j_message_get_n(JMessage*, gsize);
+gchar const* j_message_get_string(JMessage*);
 
-gboolean j_message_send (JMessage*, gpointer);
-gboolean j_message_receive (JMessage*, gpointer);
+gboolean j_message_send(JMessage*, gpointer);
+gboolean j_message_receive(JMessage*, gpointer);
 
-gboolean j_message_read (JMessage*, GInputStream*);
-gboolean j_message_write (JMessage*, GOutputStream*);
+gboolean j_message_read(JMessage*, GInputStream*);
+gboolean j_message_write(JMessage*, GOutputStream*);
 
-void j_message_add_send (JMessage*, gconstpointer, guint64);
-void j_message_add_operation (JMessage*, gsize);
+void j_message_add_send(JMessage*, gconstpointer, guint64);
+void j_message_add_operation(JMessage*, gsize);
 
-void j_message_set_semantics (JMessage*, JSemantics*);
-JSemantics* j_message_get_semantics (JMessage*);
+void j_message_set_semantics(JMessage*, JSemantics*);
+JSemantics* j_message_get_semantics(JMessage*);
 
 G_END_DECLS
 

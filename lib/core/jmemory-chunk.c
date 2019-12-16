@@ -70,7 +70,7 @@ struct JMemoryChunk
  * \return A new cache. Should be freed with j_memory_chunk_free().
  **/
 JMemoryChunk*
-j_memory_chunk_new (guint64 size)
+j_memory_chunk_new(guint64 size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -100,7 +100,7 @@ j_memory_chunk_new (guint64 size)
  * \param cache A cache.
  **/
 void
-j_memory_chunk_free (JMemoryChunk* cache)
+j_memory_chunk_free(JMemoryChunk* cache)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -131,7 +131,7 @@ j_memory_chunk_free (JMemoryChunk* cache)
  * \return A pointer to a segment of the cache, NULL if not enough space is available.
  **/
 gpointer
-j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
+j_memory_chunk_get(JMemoryChunk* cache, guint64 length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -151,7 +151,7 @@ j_memory_chunk_get (JMemoryChunk* cache, guint64 length)
 }
 
 void
-j_memory_chunk_reset (JMemoryChunk* cache)
+j_memory_chunk_reset(JMemoryChunk* cache)
 {
 	J_TRACE_FUNCTION(NULL);
 

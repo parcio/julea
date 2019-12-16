@@ -31,10 +31,10 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_background_operation_init (guint count);
-G_GNUC_INTERNAL void j_background_operation_fini (void);
+G_GNUC_INTERNAL void j_background_operation_init(guint count);
+G_GNUC_INTERNAL void j_background_operation_fini(void);
 
-G_GNUC_INTERNAL guint j_background_operation_get_num_threads (void);
+G_GNUC_INTERNAL guint j_background_operation_get_num_threads(void);
 
 G_END_DECLS
 

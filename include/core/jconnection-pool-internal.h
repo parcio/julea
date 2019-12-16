@@ -34,8 +34,8 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_connection_pool_init (JConfiguration*);
-G_GNUC_INTERNAL void j_connection_pool_fini (void);
+G_GNUC_INTERNAL void j_connection_pool_init(JConfiguration*);
+G_GNUC_INTERNAL void j_connection_pool_fini(void);
 
 G_END_DECLS
 

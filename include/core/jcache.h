@@ -35,11 +35,11 @@ struct JCache;
 
 typedef struct JCache JCache;
 
-JCache* j_cache_new (guint64);
-void j_cache_free (JCache*);
+JCache* j_cache_new(guint64);
+void j_cache_free(JCache*);
 
-gpointer j_cache_get (JCache*, guint64);
-void j_cache_release (JCache*, gpointer);
+gpointer j_cache_get(JCache*, guint64);
+void j_cache_release(JCache*, gpointer);
 
 G_END_DECLS
 
