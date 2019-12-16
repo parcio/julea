@@ -57,7 +57,7 @@ struct JItemIterator
  * \return A new JItemIterator.
  **/
 JItemIterator*
-j_item_iterator_new (JCollection* collection)
+j_item_iterator_new(JCollection* collection)
 {
 	JItemIterator* iterator;
 	g_autofree gchar* prefix = NULL;
@@ -79,7 +79,7 @@ j_item_iterator_new (JCollection* collection)
  * \param iterator A JItemIterator.
  **/
 void
-j_item_iterator_free (JItemIterator* iterator)
+j_item_iterator_free(JItemIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
@@ -100,7 +100,7 @@ j_item_iterator_free (JItemIterator* iterator)
  * \return TRUE on success, FALSE if the end of the collection is reached.
  **/
 gboolean
-j_item_iterator_next (JItemIterator* iterator)
+j_item_iterator_next(JItemIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
@@ -118,7 +118,7 @@ j_item_iterator_next (JItemIterator* iterator)
  * \return A new item. Should be freed with j_item_unref().
  **/
 JItem*
-j_item_iterator_get (JItemIterator* iterator)
+j_item_iterator_get(JItemIterator* iterator)
 {
 	JItem* item;
 	bson_t tmp[1];

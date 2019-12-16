@@ -81,9 +81,8 @@ struct JURI
  * \param uri  A URI.
  * \param uri_ A URI string.
  **/
-static
-gboolean
-j_uri_parse (JURI* uri, gchar const* uri_)
+static gboolean
+j_uri_parse(JURI* uri, gchar const* uri_)
 {
 	g_auto(GStrv) parts = NULL;
 	gchar const* illegal[2] = { "/", "/" };
@@ -135,9 +134,8 @@ error:
 	return FALSE;
 }
 
-static
-gboolean
-j_uri_only_last_component_not_found (JURI* uri)
+static gboolean
+j_uri_only_last_component_not_found(JURI* uri)
 {
 	gboolean ret = FALSE;
 
@@ -161,7 +159,7 @@ j_uri_only_last_component_not_found (JURI* uri)
  * \return The URI error quark.
  **/
 GQuark
-j_uri_error_quark (void)
+j_uri_error_quark(void)
 {
 	return g_quark_from_static_string("j-uri-error-quark");
 }
@@ -180,7 +178,7 @@ j_uri_error_quark (void)
  * \return A new URI. Should be freed with j_uri_free().
  **/
 JURI*
-j_uri_new (gchar const* uri_)
+j_uri_new(gchar const* uri_)
 {
 	JURI* uri;
 
@@ -216,7 +214,7 @@ j_uri_new (gchar const* uri_)
  * \param uri A URI.
  **/
 void
-j_uri_free (JURI* uri)
+j_uri_free(JURI* uri)
 {
 	g_return_if_fail(uri != NULL);
 
@@ -252,7 +250,7 @@ j_uri_free (JURI* uri)
  * \return The collection name.
  **/
 gchar const*
-j_uri_get_collection_name (JURI* uri)
+j_uri_get_collection_name(JURI* uri)
 {
 	g_return_val_if_fail(uri != NULL, NULL);
 
@@ -275,7 +273,7 @@ j_uri_get_collection_name (JURI* uri)
  * \return The item name.
  **/
 gchar const*
-j_uri_get_item_name (JURI* uri)
+j_uri_get_item_name(JURI* uri)
 {
 	g_return_val_if_fail(uri != NULL, NULL);
 
@@ -300,7 +298,7 @@ j_uri_get_item_name (JURI* uri)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_uri_get (JURI* uri, GError** error)
+j_uri_get(JURI* uri, GError** error)
 {
 	g_autoptr(JBatch) batch = NULL;
 	gboolean ret = TRUE;
@@ -383,7 +381,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_uri_create (JURI* uri, gboolean with_parents, GError** error)
+j_uri_create(JURI* uri, gboolean with_parents, GError** error)
 {
 	g_autoptr(JBatch) batch = NULL;
 	gboolean ret = TRUE;
@@ -457,7 +455,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_uri_delete (JURI* uri, GError** error)
+j_uri_delete(JURI* uri, GError** error)
 {
 	g_autoptr(JBatch) batch = NULL;
 	gboolean ret = TRUE;
@@ -508,7 +506,7 @@ end:
  * \return The collection.
  **/
 JCollection*
-j_uri_get_collection (JURI* uri)
+j_uri_get_collection(JURI* uri)
 {
 	g_return_val_if_fail(uri != NULL, NULL);
 
@@ -532,7 +530,7 @@ j_uri_get_collection (JURI* uri)
  * \return The item.
  **/
 JItem*
-j_uri_get_item (JURI* uri)
+j_uri_get_item(JURI* uri)
 {
 	g_return_val_if_fail(uri != NULL, NULL);
 

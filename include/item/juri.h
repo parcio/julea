@@ -53,8 +53,7 @@ typedef enum
 	J_URI_ERROR_STORE_EXISTS,
 	J_URI_ERROR_COLLECTION_EXISTS,
 	J_URI_ERROR_ITEM_EXISTS
-}
-JURIError;
+} JURIError;
 
 struct JURI;
 
@@ -70,22 +69,22 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-GQuark j_uri_error_quark (void);
+GQuark j_uri_error_quark(void);
 
-JURI* j_uri_new (gchar const*);
-void j_uri_free (JURI*);
+JURI* j_uri_new(gchar const*);
+void j_uri_free(JURI*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JURI, j_uri_free)
 
-gchar const* j_uri_get_collection_name (JURI*);
-gchar const* j_uri_get_item_name (JURI*);
+gchar const* j_uri_get_collection_name(JURI*);
+gchar const* j_uri_get_item_name(JURI*);
 
-gboolean j_uri_get (JURI*, GError**);
-gboolean j_uri_create (JURI*, gboolean, GError**);
-gboolean j_uri_delete (JURI*, GError**);
+gboolean j_uri_get(JURI*, GError**);
+gboolean j_uri_create(JURI*, gboolean, GError**);
+gboolean j_uri_delete(JURI*, GError**);
 
-JCollection* j_uri_get_collection (JURI*);
-JItem* j_uri_get_item (JURI*);
+JCollection* j_uri_get_collection(JURI*);
+JItem* j_uri_get_item(JURI*);
 
 /**
  * @}

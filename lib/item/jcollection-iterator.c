@@ -54,7 +54,7 @@ struct JCollectionIterator
  * \return A new JCollectionIterator.
  **/
 JCollectionIterator*
-j_collection_iterator_new (void)
+j_collection_iterator_new(void)
 {
 	JCollectionIterator* iterator;
 
@@ -70,7 +70,7 @@ j_collection_iterator_new (void)
  * \param iterator A JCollectionIterator.
  **/
 void
-j_collection_iterator_free (JCollectionIterator* iterator)
+j_collection_iterator_free(JCollectionIterator* iterator)
 {
 	g_return_if_fail(iterator != NULL);
 
@@ -90,7 +90,7 @@ j_collection_iterator_free (JCollectionIterator* iterator)
  * \return TRUE on success, FALSE if the end of the store is reached.
  **/
 gboolean
-j_collection_iterator_next (JCollectionIterator* iterator)
+j_collection_iterator_next(JCollectionIterator* iterator)
 {
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
@@ -108,7 +108,7 @@ j_collection_iterator_next (JCollectionIterator* iterator)
  * \return A new collection. Should be freed with j_collection_unref().
  **/
 JCollection*
-j_collection_iterator_get (JCollectionIterator* iterator)
+j_collection_iterator_get(JCollectionIterator* iterator)
 {
 	JCollection* collection;
 	bson_t tmp[1];

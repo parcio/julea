@@ -43,25 +43,25 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JItem* j_item_ref (JItem*);
-void j_item_unref (JItem*);
+JItem* j_item_ref(JItem*);
+void j_item_unref(JItem*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JItem, j_item_unref)
 
-gchar const* j_item_get_name (JItem*);
-JCredentials* j_item_get_credentials (JItem*);
+gchar const* j_item_get_name(JItem*);
+JCredentials* j_item_get_credentials(JItem*);
 
-JItem* j_item_create (JCollection*, gchar const*, JDistribution*, JBatch*);
-void j_item_delete (JItem*, JBatch*);
-void j_item_get (JCollection*, JItem**, gchar const*, JBatch*);
+JItem* j_item_create(JCollection*, gchar const*, JDistribution*, JBatch*);
+void j_item_delete(JItem*, JBatch*);
+void j_item_get(JCollection*, JItem**, gchar const*, JBatch*);
 
-void j_item_read (JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
-void j_item_write (JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
+void j_item_read(JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
+void j_item_write(JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_item_get_status (JItem*, JBatch*);
+void j_item_get_status(JItem*, JBatch*);
 
-guint64 j_item_get_size (JItem*);
-gint64 j_item_get_modification_time (JItem*);
+guint64 j_item_get_size(JItem*);
+gint64 j_item_get_modification_time(JItem*);
 
 G_END_DECLS
 
