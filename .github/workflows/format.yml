@@ -7,6 +7,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install clang-format
       - name: Check format
         run: |
           ./scripts/format.sh

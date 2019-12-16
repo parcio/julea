@@ -39,6 +39,12 @@ MODE='diff'
 
 test -n "$1" -a "$1" = '-f' && MODE='format'
 
+if ! command -v clang-format > /dev/null 2>&1
+then
+	printf 'clang-format is not available.\n' >&2
+	exit 1
+fi
+
 case "${MODE}" in
 	diff)
 		# Make sure to exit with an error if at least one file differs
