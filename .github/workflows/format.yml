@@ -11,7 +11,7 @@ jobs:
         # FIXME The images contain a custom version of Clang, which we have to remove first (see https://github.com/actions/virtual-environments/blob/master/images/linux/scripts/installers/clang.sh).
         run: |
           sudo apt --yes purge clang-6.0 lldb-6.0 lld-6.0
-          sudo apt --yes autoremove
+          sudo apt --yes --purge autoremove
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo apt-add-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
           sudo apt update || true
