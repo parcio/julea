@@ -340,6 +340,7 @@ main(int argc, char** argv)
 
 	// KV client
 	benchmark_kv();
+	benchmark_db();
 
 	// Object client
 	benchmark_distributed_object();
