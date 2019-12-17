@@ -30,6 +30,27 @@ usage ()
 	exit 1
 }
 
+check_clang_format ()
+{
+	local output
+	local ret
+
+	if ! command -v clang-format > /dev/null 2>&1
+	then
+		printf '%s: clang-format is not available.\n' "${SELF_BASE}" >&2
+		exit 1
+	fi
+
+	ret=0
+	output="$(printf 'int main (void) { return 0; }\n' | clang-format --style=file 2>&1)" || ret=$?
+
+	if test ${ret} -ne 0
+	then
+		printf '%s: clang-format does not work correctly:\n%s\n' "${SELF_BASE}" "${output}" >&2
+		exit 1
+	fi
+}
+
 get_files ()
 {
 	git ls-files '*.c' '*.h'
@@ -39,11 +60,7 @@ MODE='diff'
 
 test -n "$1" -a "$1" = '-f' && MODE='format'
 
-if ! command -v clang-format > /dev/null 2>&1
-then
-	printf 'clang-format is not available.\n' >&2
-	exit 1
-fi
+check_clang_format
 
 case "${MODE}" in
 	diff)
