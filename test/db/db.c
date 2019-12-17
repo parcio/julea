@@ -364,6 +364,8 @@ iterator_get(void)
 	g_autofree gdouble* min = NULL;
 	g_autofree gdouble* max = NULL;
 
+	guint entries = 0;
+
 	schema = j_db_schema_new("adios2", "variables", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
@@ -398,7 +400,11 @@ iterator_get(void)
 		success = j_db_iterator_get_field(iterator, "max", &type, (gpointer*)&max, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
+
+		entries++;
 	}
+
+	g_assert_cmpuint(entries, ==, 1);
 }
 
 static void
@@ -496,6 +502,27 @@ entry_delete(void)
 }
 
 static void
+schema_delete(void)
+{
+	g_autoptr(GError) error = NULL;
+
+	gboolean success;
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	schema = j_db_schema_new("adios2", "variables", &error);
+	g_assert_nonnull(schema);
+	g_assert_no_error(error);
+
+	success = j_db_schema_delete(schema, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+
+	success = j_batch_execute(batch);
+	g_assert_true(success);
+}
+
+static void
 test_db_all(void)
 {
 	schema_create();
@@ -503,6 +530,7 @@ test_db_all(void)
 	iterator_get();
 	entry_update();
 	entry_delete();
+	schema_delete();
 }
 
 void
