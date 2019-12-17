@@ -346,6 +346,8 @@ main(int argc, char** argv)
 	benchmark_object();
 
 	// DB client
+	benchmark_db_entry();
+	benchmark_db_iterator();
 	benchmark_db_schema();
 
 	// Item client
