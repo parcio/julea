@@ -216,6 +216,7 @@ main(int argc, char** argv)
 	gchar const* db_component;
 	g_autofree gchar* db_path = NULL;
 	g_autofree gchar* port_str = NULL;
+	guint listen_retries = 0;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -252,18 +253,33 @@ main(int argc, char** argv)
 	}
 
 	socket_service = g_threaded_socket_service_new(-1);
-
 	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
 
-	if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
+	while (TRUE)
 	{
-		if (error != NULL)
+		if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
 		{
-			g_warning("%s", error->message);
-			g_error_free(error);
+			if (error != NULL)
+			{
+				g_warning("%s", error->message);
+				g_clear_error(&error);
+			}
+
+			listen_retries++;
+
+			if (listen_retries < 10)
+			{
+				sleep(1);
+				continue;
+			}
+			else
+			{
+				g_critical("Cannot listen on port %d after %d retries, giving up.", opt_port, listen_retries);
+				return 1;
+			}
 		}
 
-		return 1;
+		break;
 	}
 
 	j_trace_init("julea-server");

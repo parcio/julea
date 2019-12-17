@@ -77,4 +77,5 @@ jobs:
       - name: Tests
         run: |
           ./scripts/test.sh
+          sleep 10
           ./scripts/test.sh
