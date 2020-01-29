@@ -103,7 +103,7 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//Parameter for fabric init
 	int error;
-	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	int version = FI_VERSION(1, 8); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
 	const char* node = "127.0.0.1"; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
@@ -470,7 +470,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			//Endpoint related definitions
 			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_CONTEXT, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 			//connection related definitions
 			struct sockaddr_in address;

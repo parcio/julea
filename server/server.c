@@ -41,6 +41,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+//signal handling
+#include<signal.h>
+#include<unistd.h>
+
 #include <glib/gprintf.h>
 
 
@@ -52,9 +56,13 @@ static struct fid_pep* j_passive_endpoint;
 static struct fi_info* j_info;
 
 static volatile gint thread_count = 0;
+static volatile gboolean j_thread_running = TRUE;
+static volatile gboolean j_server_running = TRUE;
 
 static JConfiguration* jd_configuration;
 
+void
+sig_handler (int);
 
 static
 gboolean
@@ -193,7 +201,6 @@ j_thread_function(gpointer connection_event_entry)
 	//Needed Ressources
 	int error = 0;
 	uint32_t event = 0;
-	int shutdown_check_cntr = 0;
 
 	struct fi_info* info;
 	struct fid_domain* domain;
@@ -206,7 +213,7 @@ j_thread_function(gpointer connection_event_entry)
 	JEndpoint* jendpoint;
 
 	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_CONTEXT, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
 	J_TRACE_FUNCTION(NULL);
 
@@ -222,6 +229,10 @@ j_thread_function(gpointer connection_event_entry)
 	jendpoint = malloc(sizeof(struct JEndpoint));
 	jendpoint->max_msg_size = info->ep_attr->max_msg_size;
 
+	if(j_thread_running == TRUE)
+	{
+		g_printf("\nj_thread_running == TRUE\n");
+	}
 
 	//Building domain
 	error = fi_domain(j_fabric, info, &domain, NULL);
@@ -316,19 +327,23 @@ j_thread_function(gpointer connection_event_entry)
 			{
 				g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
 				error = 0;
+				goto end;
 			}
 			else
 			{
 				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				goto end;
 			}
 		}
 		else if(error == -FI_EAGAIN)
 		{
 			g_critical("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
+			goto end;
 		}
 		else if(error < 0)
 		{
 			g_critical("\nError outside Error Event on Server Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(error));
+			goto end;
 		}
 	}
 	free(event_entry);
@@ -383,54 +398,59 @@ j_thread_function(gpointer connection_event_entry)
 			j_statistics_free(statistics);
 
 			//Read event queue repeat loop if no shutdown sent
-			//TODO deal with keybord server stop
-			if(shutdown_check_cntr == 100)
+			event = 0;
+			event_entry = malloc(event_entry_size);
+			error = fi_eq_read(jendpoint->event_queue, &event, event_entry, event_entry_size, 0);
+			if(error != 0)
 			{
-				shutdown_check_cntr = 0;
-				event = 0;
-				event_entry = malloc(event_entry_size);
-				error = fi_eq_read(jendpoint->event_queue, &event, event_entry, event_entry_size, 0);
-				if(error != 0)
+				if(error == -FI_EAVAIL)
 				{
-					if(error == -FI_EAVAIL)
+					//TODO NULL event_queue_err_entry
+					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
+					if(error != 0)
 					{
-						//TODO NULL event_queue_err_entry
-						error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
-						if(error != 0)
-						{
-							g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-							error = 0;
-						}
-						else
-						{
-							g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
-						}
+						g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
+						goto end;
 					}
-					else if(error == -FI_EAGAIN)
+					else
 					{
-						//g_printf("\nNo Event data on event Queue on Server while reading for SHUTDOWN Event.\n");
-					}
-					else if(error < 0)
-					{
-						g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
+						g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						goto end;
 					}
 				}
-				free(event_entry);
+				else if(error == -FI_EAGAIN)
+				{
+					//g_printf("\nNo Event data on event Queue on Server while reading for SHUTDOWN Event.\n");
+				}
+				else if(error < 0)
+				{
+					g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
+					goto end;
+				}
 			}
-			shutdown_check_cntr++;
-		}while (event != FI_SHUTDOWN);
+			free(event_entry);
+			if(j_thread_running == FALSE)
+				g_printf("\nj_thread_running == FALSE\n");
+		}while (!(event == FI_SHUTDOWN || j_thread_running == FALSE));
 	}
 
+	g_printf("\nEP Thread main loop finished\n");
+	fflush(stdout);
 
 	end:
-  //end all fabric resources
-	error = 0;
-
-	if(error != 0)
+	if(j_thread_running == FALSE)
 	{
-		g_critical("\nError Server .\n Details:\n %s", fi_strerror(error));
+		error = fi_shutdown(jendpoint->endpoint, 0);
+		if(error != 0)
+		{
+			g_critical("\nError on Server while shutting down connection\n.Details: \n%s", fi_strerror(error));
+		}
+		g_printf("\nThread ending via Signal\n");
 		error = 0;
 	}
+
+  //end all fabric resources
+	error = 0;
 
 	fi_freeinfo(info);
 
@@ -471,6 +491,13 @@ j_thread_function(gpointer connection_event_entry)
 	free(jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
+	if((g_atomic_int_compare_and_exchange(&thread_count, 0, 0)) && !j_thread_running)
+	{
+		j_server_running = FALSE; //set server running to false, thus ending server main loop if shutting down
+	}
+
+	g_printf("\nThread finished\n");
+	fflush(stdout);
 
 	g_thread_exit(NULL);
 	return NULL; //TODO use return value for success-msg
@@ -537,6 +564,35 @@ j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_q
 	//TODO manipulate backlog size
 }
 
+//handling caught signal for ending server
+//
+//TODO input validation for SIGTERM?
+void
+sig_handler(int signal)
+{
+	if(signal == SIGHUP|| signal == SIGINT|| signal == SIGTERM)
+	{
+		j_thread_running = FALSE; //set thread running to false, thus ending thread loops
+		if((g_atomic_int_compare_and_exchange(&thread_count, 0, 0)))
+		{
+			j_server_running = FALSE; //set server running to false, thus ending server main loop if no threads detected and signal caught
+		}
+		switch(signal)
+		{
+			case SIGHUP:
+				g_printf("\nSIGHUP caught\n");
+				break;
+			case SIGINT:
+				g_printf("\nSIGINT caught\n");
+				break;
+			case SIGTERM:
+				g_printf("\nSIGTERM caught\n");
+				break;
+			default:
+				g_critical("\nsignal handler broken\n");
+		}
+	}
+}
 
 int
 main (int argc, char** argv)
@@ -567,13 +623,15 @@ main (int argc, char** argv)
 
 
 	int fi_error = 0;
-	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = "127.0.0.1"; //Moriher //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
+	int version = FI_VERSION(1, 8); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
+	const char* node = "127.0.0.1"; //NULL if addressing Format defined
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
 	uint64_t flags = FI_SOURCE;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	struct fi_info* fi_hints = NULL; //config object
 	struct fi_eq_attr event_queue_attr = {50, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //2nd: FI_WRITE, 3rd: FI_WAIT_UNSPEC PERROR: Wrong formatting of event queue attributes
+
+	struct sigaction sig_action;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -602,6 +660,14 @@ main (int argc, char** argv)
 		return 1;
 	}
 
+	memset(&sig_action, 0, sizeof(struct sigaction));
+	sig_action.sa_handler = sig_handler;
+
+	sigaction(SIGINT, &sig_action, NULL);
+	sigaction(SIGHUP, &sig_action, NULL);
+	sigaction(SIGTERM, &sig_action, NULL);
+
+
 	/*
 	TODO use
 	//gets a hostname if none given
@@ -613,7 +679,6 @@ main (int argc, char** argv)
 		opt_host = g_strdup(hostname);
 	}
 	*/
-
 
 	//Build fabric ressources
 	fi_hints = fi_allocinfo(); //initiated object is zeroed
@@ -711,6 +776,10 @@ main (int argc, char** argv)
 		fi_error = 0;
 	}
 
+	if(j_server_running == TRUE)
+	{
+		g_printf("\nj_server_running == TRUE\n");
+	}
 
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
@@ -723,7 +792,7 @@ main (int argc, char** argv)
 		uint32_t event = 0;
 		uint32_t event_entry_size = sizeof(event_entry) + 128;
 		event_entry = malloc(event_entry_size);
-		fi_error = fi_eq_sread(j_pep_event_queue, &event, event_entry, event_entry_size, 10000, 0); //Timeout: 10000 = 10 s in milliseconds
+		fi_error = fi_eq_sread(j_pep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //Timeout: 10000 = 10 s in milliseconds
 		if(fi_error != 0)
 		{
 			if(fi_error == -FI_EAVAIL)
@@ -754,19 +823,26 @@ main (int argc, char** argv)
 		{
 			free(event_entry);
 		}
-	} while(!(g_atomic_int_compare_and_exchange(&thread_count, 0, 0))); //thread count == 0
+		if (j_server_running == FALSE)
+			g_printf("\nj_server_running == FALSE\n");
+	} while(j_server_running == TRUE);
 
-	fi_error = fi_close(&(j_passive_endpoint->fid));
-	if(fi_error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
-		fi_error = 0;
-	}
+	g_printf("\nServer Main Loop finished\n");
+
+	fi_freeinfo(j_info);
+
 
 	fi_error = fi_close(&(j_pep_event_queue->fid));
 	if(fi_error != 0)
 	{
 		g_critical("\nSomething went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error));
+		fi_error = 0;
+	}
+
+	fi_error = fi_close(&(j_passive_endpoint->fid));
+	if(fi_error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
 	}
 
@@ -777,7 +853,7 @@ main (int argc, char** argv)
 		fi_error = 0;
 	}
 
-	fi_freeinfo(j_info);
+	g_printf("\nServer Libfabric ended\n");
 
 	g_mutex_clear(jd_statistics_mutex);
 	j_statistics_free(jd_statistics);
@@ -817,6 +893,9 @@ main (int argc, char** argv)
 	j_trace_leave(trace);
 
 	j_trace_fini();
+
+	g_printf("\nServer ended\n");
+	fflush(stdout);
 
 	return 0;
 }
