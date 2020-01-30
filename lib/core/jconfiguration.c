@@ -31,6 +31,9 @@
 #include <jbackend.h>
 #include <jtrace.h>
 
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h>
+
 /**
  * \defgroup JConfiguration Configuration
  *
@@ -44,35 +47,12 @@ struct JConfiguration
 {
 	struct
 	{
-		/**
-		 * The object servers.
-		 */
-		gchar** object;
-
-		/**
-		 * The kv servers.
-		 */
-		gchar** kv;
-
-		/**
-		 * The db servers.
-		 */
-		gchar** db;
-
-		/**
-		 * The number of object servers.
-		 */
-		guint32 object_len;
-
-		/**
-		 * The number of kv servers.
-		 */
-		guint32 kv_len;
-
-		/**
-		 * The number of db servers.
-		 */
-		guint32 db_len;
+		gchar** object;			/* The object servers */
+		gchar** kv;					/* The kv servers */
+		gchar** db;					/* the db servers */
+		guint32 object_len;	/* The number of object servers */
+		guint32 kv_len;			/* The number of kv servers */
+		guint32 db_len; /* The number of db servers */
 	}
 	servers;
 
@@ -81,20 +61,9 @@ struct JConfiguration
 	 */
 	struct
 	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
+		gchar* backend;		/* The backend */
+		gchar* component;	/* The component */
+		gchar* path;			/* The path */
 	}
 	object;
 
@@ -103,47 +72,80 @@ struct JConfiguration
 	 */
 	struct
 	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
+		gchar* backend; 	/* the backend*/
+		gchar* component; /* the component */
+		gchar* path; 			/* the path */
 	}
 	kv;
+
+	guint64 max_operation_size;
+	guint32 max_connections;
+	guint64 stripe_size;
 
 	/**
 	 * The db configuration.
 	 */
 	struct
 	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
+		gchar* backend;		/* the backend */
+		gchar* component;	/* The component. */
+		gchar* path; 			/* the path*/
 	} db;
 
-	guint64 max_operation_size;
-	guint32 max_connections;
-	guint64 stripe_size;
+	/**
+	* libfabric configuration fields
+	*/
+	struct
+	{
+		/**
+		* Event queue config
+		*/
+		struct
+		{
+			size_t size;      			/* max entries on event queue */
+			uint64_t flags;     		/* operation flags */
+			fi_wait_obj	wait_obj;  	/* used wait object */
+			int signaling_vector; 	/* interrupt affinity */
+		} eq_attr;
+
+		/**
+		* Completion queue config
+		*/
+		struct
+		{
+			size_t size;      					/* max entries on completion queue, 0 indicates providers choice */
+			uint64_t flags;     				/* operation flags */
+			fi_cq_format format;    		/* format for completion entries */
+			fi_wait_obj wait_obj;  			/* used wait object */
+			int signaling_vector; 			/* interrupt affinity */
+			fi_cq_wait_cond wait_cond; 	/* additional wait condition */
+		} cq_attr;
+
+		/**
+		*	Config Parameter for get_info
+		*/
+		struct
+		{
+			int version; 		/* libfabric versioning */
+			char* node; 		/* user specified target node, format specified by info addr_format field */
+			char* service;	/* user specified port represented as string */
+			uint64_t flags;	/* user specified flags for fi_getinfo */
+
+			/**
+			*fi_info config parameters
+			*/
+			struct
+			{
+				uint64_t caps;					/* user specified provider capabilities */
+				uint64_t mode;					/* operational modes requested for providers */
+				uint32_t addr_format;		/* specifies the format for the adress input */
+				char* prov_name;				/* user requested provider */
+				fi_threading threading; /* user requested threading model */
+				uint64_t op_flags;			/* Transmit context flags */
+			} info;
+		} get_info;
+
+	} libfabric;
 
 	/**
 	 * The reference count.
@@ -272,6 +274,9 @@ j_configuration_new_for_data (GKeyFile* key_file)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	/**
+	* Julea config variables
+	*/
 	JConfiguration* configuration;
 	gchar** servers_object;
 	gchar** servers_kv;
@@ -288,9 +293,39 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
+	/**
+	* libfabric variables
+	*/
+	/* event queue variables */
+	size_t eq_size;      			/* max entries on event queue */
+	uint64_t eq_flags;     		/* event queue operation flags */
+	fi_wait_obj	eq_wait_obj;  /* used wait object on event queue */
+	int eq_signaling_vector; 	/* event queue interrupt affinity */
+	/* completion queue variables */
+	size_t cq_size;      					/* max entries on completion queue, 0 indicates providers choice */
+	uint64_t cq_flags;     				/* completion queue operation flags */
+	fi_cq_format cq_format;    		/* completion queue format for completion entries */
+	fi_wait_obj cq_wait_obj;  		/* completion queue used wait object */
+	int cq_signaling_vector; 			/* completion queue  interrupt affinity */
+	fi_cq_wait_cond cq_wait_cond; /* completion queue additional wait condition */
+	/* getinfo variables */
+	int version; 						/* libfabric versioning */
+	char* node; 						/* user specified target node, format specified by info addr_format field */
+	char* service;					/* user specified port represented as string */
+	uint64_t flags;					/* user specified flags for fi_getinfo */
+	uint64_t caps;					/* user specified provider capabilities */
+	uint64_t mode;					/* operational modes requested for providers */
+	uint32_t addr_format;		/* specifies the format for the adress input */
+	char* prov_name;				/* user requested provider */
+	fi_threading threading; /* user requested threading model */
+	uint64_t op_flags;			/* Transmit context flags */
+
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
+	/**
+	* read julea information from config-file
+	*/
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
@@ -306,7 +341,16 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
 	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
+	/**
+	* read libfabric information from config-file
+	*/
+	//TODO read this info
 
+
+	/**
+	* dont load config if vital parts are missing, free rest
+	*/
+	//TODO add libfabric relevant variables
 	if (servers_object == NULL || servers_object[0] == NULL
 	    || servers_kv == NULL || servers_kv[0] == NULL
 	    || servers_db == NULL || servers_db[0] == NULL
@@ -336,6 +380,9 @@ j_configuration_new_for_data (GKeyFile* key_file)
 		return NULL;
 	}
 
+	/**
+	* sets values in config
+	*/
 	configuration = g_slice_new(JConfiguration);
 	configuration->servers.object = servers_object;
 	configuration->servers.kv = servers_kv;
@@ -357,6 +404,10 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
 
+
+	/**
+	* set default values for not specified values by user
+	*/
 	if (configuration->max_operation_size == 0)
 	{
 		configuration->max_operation_size = 8 * 1024 * 1024;
@@ -371,6 +422,12 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	{
 		configuration->stripe_size = 4 * 1024 * 1024;
 	}
+	//TODO set values for libfabric values
+
+	/**
+	* set libfabric values for non-user config
+	*/
+	//TODO set them
 
 	return configuration;
 }
@@ -580,6 +637,9 @@ j_configuration_get_stripe_size (JConfiguration* configuration)
 
 	return configuration->stripe_size;
 }
+
+
+//TODO write geter function for libfabric values, add them as definition to jconfiguration.h
 
 /**
  * @}
