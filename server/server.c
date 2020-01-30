@@ -215,7 +215,6 @@ j_thread_function(gpointer connection_event_entry)
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
 	info = fi_dupinfo(event_entry->info);
-	//info = event_entry->info;
 	fi_freeinfo(event_entry->info);
 	free(connection_event_entry);
 
@@ -630,7 +629,8 @@ main (int argc, char** argv)
 	//TODO future support to set modes
 	//fi_hints->mode = 0;
 	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
-
+	fi_hints->tx_attr->op_flags = FI_COMPLETION;
+	
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
 
