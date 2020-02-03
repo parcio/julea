@@ -601,9 +601,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
-	/*
-	TODO use
-	//gets a hostname if none given
+	//gets a hostname (local hostname) if none given
 	if (opt_host == NULL)
 	{
 		gchar hostname[HOST_NAME_MAX + 1];
@@ -611,8 +609,6 @@ main (int argc, char** argv)
 		gethostname(hostname, HOST_NAME_MAX + 1);
 		opt_host = g_strdup(hostname);
 	}
-	*/
-
 
 	//Build fabric ressources
 	fi_hints = fi_allocinfo(); //initiated object is zeroed
@@ -630,7 +626,7 @@ main (int argc, char** argv)
 	//fi_hints->mode = 0;
 	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 	fi_hints->tx_attr->op_flags = FI_COMPLETION;
-	
+
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config
 
