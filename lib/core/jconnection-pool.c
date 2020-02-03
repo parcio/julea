@@ -106,11 +106,11 @@ j_connection_pool_init (JConfiguration* configuration)
 	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
 	const char* node = "127.0.0.1"; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
 	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags = 0;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+	uint64_t flags = FI_NUMERICHOST;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	struct fi_info* fi_hints = NULL; //config object
 
-	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_SET, 0, NULL};
+	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL};
 
 
 
@@ -146,9 +146,8 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	g_atomic_pointer_set(&j_connection_pool, pool);
 
-//Init Libfabric Objects
+	//Init Libfabric Objects
 	error = 0;
-	flags = 0;
 
 	fi_hints = fi_allocinfo(); //initiated object is zeroed
 
@@ -162,7 +161,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
-	//fabri_hints.mode = 0;
+	//fi_hints.mode = 0;
 	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 	fi_hints->tx_attr->op_flags = FI_COMPLETION;
 
