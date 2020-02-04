@@ -44,7 +44,10 @@
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
+//hostname to ip resolver includes
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -92,6 +95,10 @@ static struct fid_eq* j_domain_event_queue;
 //libfabric config structures
 static struct fi_info* j_info;
 
+
+int
+hostname_resolver(char* hostname, char* service, char* ip_return);
+
 void
 j_connection_pool_init (JConfiguration* configuration)
 {
@@ -104,9 +111,7 @@ j_connection_pool_init (JConfiguration* configuration)
 	//Parameter for fabric init
 	int error;
 	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = "127.0.0.1"; //NULL if addressing Format defined, otherwise can somehow be used to parse hostnames
-	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags = FI_NUMERICHOST;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+	//uint64_t flags = FI_NUMERICHOST;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
 
 	struct fi_info* fi_hints = NULL; //config object
 
@@ -167,7 +172,7 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//inits j_info
 	//gives a linked list of available provider details into j_info
-	error = fi_getinfo(version, node, service, flags,	fi_hints, &j_info);
+	error = fi_getinfo(version, NULL, NULL, 0, fi_hints, &j_info);
 	fi_freeinfo(fi_hints); //hints only used for config
 	if(error != 0)
 	{
@@ -718,6 +723,37 @@ j_connection_pool_push (JBackendType backend, guint index, gpointer connection)
 		default:
 			g_assert_not_reached();
 	}
+}
+
+/**
+* uses getaddrinfo to get info about the environment of hostname including hostname IP and
+* inet_ntoa to get the IP into a doted IPV4 representation for libfabric usage
+*/
+int
+hostname_resolver(char* hostname, char* service, char* ip_return)
+{
+	int ret;
+	char* ip;
+	struct addrinfo hints;
+	struct addrinfo* result;
+	memset(&hints, 0, sizeof(hints));
+	ret = getaddrinfo(hostname, service, &hints, &result);
+	if(ret != 0)
+	{
+		g_critical("getaddrinfo did not resolve hostname");
+		goto end;
+	}
+	ip = inet_ntoa(( (struct sockaddr_in* ) result->ai_addr)->sin_addr); //PERROR faulty casting
+	if(ip == NULL)
+	{
+		ret = -1;
+		g_critical("IP not parsed");
+		goto end;
+	}
+	ip_return = g_strdup(ip);
+	g_printf("\nhostname: %s\nIP: %s\n", hostname, ip_return);
+	end:
+	return ret;
 }
 
 /**
