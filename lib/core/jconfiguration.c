@@ -32,9 +32,6 @@
 #include <jtrace.h>
 
 
-//libfabric includes
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h>
 
 
 /**
@@ -103,12 +100,13 @@ struct JConfiguration
 		/**
 		* Event queue config
 		*/
+		//TODO use actual structs from libfabric (cq_attr, eq_attr, etc)/ put fi_info struct here, fill it, copy it for fi_hints and be good.
 		struct
 		{
-			size_t size;      			/* max entries on event queue */
-			guint64 flags;     			/* operation flags */
-			enum fi_wait_obj	wait_obj;  	/* used wait object */
-			gint signaling_vector; 	/* interrupt affinity */
+			guint64 size;      					/* max entries on event queue */
+			guint64 flags;     					/* operation flags */
+			enum fi_wait_obj wait_obj; 	/* used wait object */
+			gint signaling_vector; 			/* interrupt affinity */
 		} eq_attr;
 
 		/**
@@ -116,11 +114,11 @@ struct JConfiguration
 		*/
 		struct
 		{
-			size_t size;      							/* max entries on completion queue, 0 indicates providers choice */
+			guint64 size;      							/* max entries on completion queue, 0 indicates providers choice */
 			guint64 flags;     							/* operation flags */
 			enum fi_cq_format format;    		/* format for completion entries */
 			enum fi_wait_obj wait_obj;  		/* used wait object */
-			int signaling_vector; 					/* interrupt affinity */
+			gint signaling_vector; 					/* interrupt affinity */
 			enum fi_cq_wait_cond wait_cond; /* additional wait condition */
 		} cq_attr;
 
@@ -129,7 +127,7 @@ struct JConfiguration
 		*/
 		struct
 		{
-			int version; 					/* libfabric versioning */
+			gint version; 				/* libfabric versioning */
 			gchar* node; 					/* user specified target node, format specified by info addr_format field */
 			gchar* service;				/* user specified port represented as string */
 			guint64 server_flags;	/* flags for fi_getinfo */
@@ -141,7 +139,7 @@ struct JConfiguration
 			struct
 			{
 				guint64 caps;									/* user specified provider capabilities */
-				guint64 mode;									/* operational modes requested for providers */
+				guint64 modes;								/* operational modes requested for providers */
 				guint32 addr_format;					/* specifies the format for the adress input */
 				gchar* prov_name;							/* user requested provider */
 				enum fi_threading threading; 	/* user requested threading model */
@@ -159,9 +157,6 @@ struct JConfiguration
 	gint ref_count;
 };
 
-
-gboolean
-check_modes_validity(guint64 mode);
 
 gboolean
 check_prov_name_validity(gchar* prov_name);
@@ -313,12 +308,12 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	* libfabric variables
 	*/
 	/* event queue variables */
-	size_t eq_size;      								/* max entries on event queue */
+	guint64 eq_size;      							/* max entries on event queue */
 	guint64 eq_flags;     							/* event queue operation flags */
 	enum fi_wait_obj	eq_wait_obj;  		/* used wait object on event queue */
 	gint eq_signaling_vector; 					/* event queue interrupt affinity */
 	/* completion queue variables */
-	size_t cq_size;      								/* max entries on completion queue, 0 indicates providers choice */
+	guint64 cq_size;      							/* max entries on completion queue, 0 indicates providers choice */
 	guint64 cq_flags;     							/* completion queue operation flags */
 	enum fi_cq_format cq_format;    		/* completion queue format for completion entries */
 	enum fi_wait_obj cq_wait_obj;  			/* completion queue used wait object */
@@ -331,7 +326,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	guint64 client_flags;		/* flags for fi_getinfo */
 	guint64 server_flags;
 	guint64 caps;									/* user specified provider capabilities */
-	guint64 mode;									/* operational modes requested for providers */
+	guint64 modes;								/* operational modes requested for providers */
 	guint32 addr_format;					/* specifies the format for the adress input */
 	gchar* prov_name;							/* user requested provider */
 	enum fi_threading threading; 	/* user requested threading model */ //TODO make it writeable for user
@@ -364,7 +359,6 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	eq_size = (size_t) g_key_file_get_uint64(key_file, "eq", "size", NULL);
 	cq_size = (size_t) g_key_file_get_uint64(key_file, "cq", "size", NULL);
 	node = g_key_file_get_string(key_file, "libfabric", "node", NULL);
-	mode = g_key_file_get_uint64(key_file, "libfabric", "modes", NULL);
 	prov_name = g_key_file_get_string(key_file, "libfabric", "provider", NULL);
 	/*
 	* 22 capabilities available in libfabric for bitmask, but doubtful that even 10 will be combined
@@ -400,10 +394,9 @@ j_configuration_new_for_data (GKeyFile* key_file)
 			|| cq_size <= 0
 			|| eq_size <= 0
 			|| check_caps_validity(caps)
-			|| check_modes_validity(mode)
 			|| check_prov_name_validity(prov_name))
 	{
-		//if failed free components
+		//if failed free read components
 		g_free(db_backend);
 		g_free(db_component);
 		g_free(db_path);
@@ -416,7 +409,8 @@ j_configuration_new_for_data (GKeyFile* key_file)
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
 		g_strfreev(servers_db);
-		//TODO add libfabric fields
+		g_free(node);
+		g_free(prov_name);
 		return NULL;
 	}
 
@@ -435,6 +429,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 
 	version = FI_VERSION(1, 5);
 	service = g_strdup("4711");
+	modes = 0;
 	addr_format = FI_SOCKADDR_IN;
 	threading = FI_THREAD_SAFE;
 	op_flags = FI_COMPLETION;
@@ -480,7 +475,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->libfabric.get_info.server_flags = server_flags;
 	configuration->libfabric.get_info.client_flags = client_flags;
 	configuration->libfabric.get_info.info.caps = caps;
-	configuration->libfabric.get_info.info.mode = mode;
+	configuration->libfabric.get_info.info.modes = modes;
 	configuration->libfabric.get_info.info.addr_format = addr_format;
 	configuration->libfabric.get_info.info.prov_name = prov_name;
 	configuration->libfabric.get_info.info.threading = threading;
@@ -535,11 +530,6 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	if (configuration->get_info.flags == 0)
 	{
 		configuration->get_info.flags = 0;
-	}
-
-	if (configuration->get_info.info.mode == 0)
-	{
-		configuration->get_info.info.mode = 0;
 	}
 	*/
 
@@ -605,7 +595,9 @@ j_configuration_unref (JConfiguration* configuration)
 		g_strfreev(configuration->servers.kv);
 		g_strfreev(configuration->servers.db);
 
-		//TODO free JConfig libfabric fields
+		g_free(configuration->libfabric.get_info.node);
+		g_free(configuration->libfabric.get_info.service);
+		g_free(configuration->libfabric.get_info.info.prov_name);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -754,12 +746,251 @@ j_configuration_get_stripe_size (JConfiguration* configuration)
 	return configuration->stripe_size;
 }
 
+//TODO change to 3 geters with gpointer return type on fi_cq_attr fi_eq_attr & fi_info (free last here and duplicate in server/client for hints)
+
+int
+j_configuration_get_fi_version(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (int) configuration->libfabric.get_info.version;
+}
+
+char const*
+j_configuration_get_fi_node(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.node;
+}
+
+char const*
+j_configuration_get_fi_service(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.service;
+}
+
+/**
+* server: type = 0
+* client: type = 1
+*/
+uint64_t
+j_configuration_get_fi_flags(JConfiguration* configuration, int type)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	switch(type)
+	{
+		case 0:
+			return (uint64_t) configuration->libfabric.get_info.server_flags;
+		case 1:
+			return (uint64_t) configuration->libfabric.get_info.client_flags;
+		default:
+		g_assert_not_reached();
+	}
+	return NULL;
+}
+
+uint64_t
+j_configuration_get_fi_info_caps(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (uint64_t) configuration->libfabric.get_info.info.caps;
+}
+
+uint64_t
+j_configuration_get_fi_info_modes(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (uint64_t) configuration->libfabric.get_info.info.modes;
+}
+
+uint32_t
+j_configuration_get_fi_info_addr_format(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (uint32_t) configuration->libfabric.get_info.info.addr_format;
+}
+
+char const*
+j_configuration_get_fi_info_prov_name(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.info.prov_name;
+}
 
 
+enum fi_threading
+j_configuration_get_fi_info_threading(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
 
-//TODO write geter function for libfabric values, add them as definition to jconfiguration.h include typecasts
+	g_return_val_if_fail(configuration != NULL, 0);
 
-//TODO write check functions
+	return configuration->libfabric.get_info.info.threading;
+}
+
+uint64_t
+j_configuration_get_fi_info_tx_op_flags(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (uint64_t) configuration->libfabric.get_info.info.op_flags;
+}
+
+gboolean
+check_prov_name_validity(gchar* prov_name)
+{
+	gboolean ret;
+	const gchar* available_provs[7];
+	const gchar* libfabric_provs[14];
+
+	if(prov_name == NULL)
+	{
+		g_printf("\nNo specific Provider requested. If no Caps are requested either, socket Provider will be chosen.\n");
+		return TRUE;
+	}
+
+	ret = FALSE;
+	available_provs[0] = "gni";
+	available_provs[1] = "psm";
+	available_provs[2] = "psm2";
+	available_provs[3] = "rxm";
+	available_provs[4] = "sockets";
+	available_provs[5] = "verbs";
+	available_provs[6] = "bgq";
+
+	libfabric_provs[0] = "gni";
+	libfabric_provs[1] = "psm";
+	libfabric_provs[2] = "psm2";
+	libfabric_provs[3] = "rxm";
+	libfabric_provs[4] = "sockets";
+	libfabric_provs[5] = "tcp"; //should work, but added post 1.5
+	libfabric_provs[6] = "udp";
+	libfabric_provs[7] = "usnic";
+	libfabric_provs[8] = "verbs";
+	libfabric_provs[9] = "bgq";
+	libfabric_provs[10] = "Network Direct"; //PERROR not correct libfabric name, as of 1.5 experimental, thus not in available. fi_netdir
+	libfabric_provs[11] = "mlx";
+	libfabric_provs[12] = "shm"; //added post 1.5
+	libfabric_provs[13] = "efa"; //added post 1.5
+
+	for(int n = 0; n < 14; n++)
+	{
+		if(g_strcmp0(prov_name, libfabric_provs[n]) == 0)
+		{
+			for(int i = 0; i < 7; i++)
+			{
+				if(g_strcmp0(prov_name, available_provs[i]) == 0)
+				{
+					g_printf("\nSuitable Provider requested.\n");
+					ret = TRUE;
+					goto end;
+				}
+			}
+			g_printf("\nNot a Julea supported Provider.\n");
+			goto end;
+		}
+	}
+	g_printf("\nNot in the list of libfabrics supported Providers.\n");
+
+	end:
+	return ret;
+}
+
+/**
+* Checks whether requested Capabilities are acceptable
+* split into primary and secondary caps for readablitiy reasons.
+*/
+gboolean
+check_caps_validity(guint64 caps)
+{
+	gboolean ret;
+	uint64_t internal_caps;
+	uint64_t available_caps;
+	uint64_t libfabric_caps;
+	uint64_t primary_caps;
+	uint64_t secondary_caps;
+	if(caps == 0)
+	{
+		g_printf("\nNo Capabilities for Provider choice were requested. Either the requested Provider or socket Provider will be used if no other Provider was requested .\n");
+		return TRUE;
+	}
+	ret = FALSE;
+	internal_caps = (uint64_t) caps;
+	available_caps = FI_MSG 				| /* Endpoints support sending and receiving of Messages or Datagrams */
+									 FI_SEND				|	/* Endpoints support message Data Transfers */
+									 FI_RECV				| /* Endpoints support receiving message Data Transfers */
+									 FI_LOCAL_COMM 	| /* Endpoints support local host communication */
+									 FI_REMOTE_COMM;	/* Endpoints support remote nodes */
+  primary_caps = FI_MSG 					|
+								 FI_RMA						|
+								 FI_TAGGED  			|
+								 FI_ATOMIC  			|
+								 FI_MULTICAST 		|
+								 FI_NAMED_RX_CTX 	|
+								 FI_DIRECTED_RECV |
+								 FI_READ					|
+								 FI_WRITE					|
+								 FI_RECV					|
+								 FI_SEND					|
+								 FI_REMOTE_READ		|
+								 FI_REMOTE_WRITE;
+	secondary_caps = FI_MULTI_RECV  |
+	 								 FI_SOURCE			|
+									 FI_RMA_EVENT		|
+									 FI_SHARED_AV		|
+									 FI_TRIGGER			|
+									 FI_FENCE				|
+									 FI_LOCAL_COMM	|
+									 FI_REMOTE_COMM |
+									 FI_SOURCE_ERR;
+	libfabric_caps = primary_caps 	|
+									 secondary_caps;
+
+	if((libfabric_caps & internal_caps) == internal_caps)
+	{
+		if((available_caps & internal_caps) == internal_caps)
+		{
+			g_printf("\nCapabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
+			ret = TRUE;
+		}
+		else
+		{
+			g_printf("\nContains request of not supported Capabilities.\n");
+		}
+	}
+	else
+	{
+		g_printf("\nContains at least 1 invalid capability.\n");
+	}
+	return ret;
+}
+
 
 /**
  * @}
