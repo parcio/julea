@@ -31,6 +31,8 @@
 #include <jbackend.h>
 #include <jtrace.h>
 
+#include <glib/gprintf.h>
+
 
 
 
@@ -100,27 +102,12 @@ struct JConfiguration
 		/**
 		* Event queue config
 		*/
-		//TODO use actual structs from libfabric (cq_attr, eq_attr, etc)/ put fi_info struct here, fill it, copy it for fi_hints and be good.
-		struct
-		{
-			guint64 size;      					/* max entries on event queue */
-			guint64 flags;     					/* operation flags */
-			enum fi_wait_obj wait_obj; 	/* used wait object */
-			gint signaling_vector; 			/* interrupt affinity */
-		} eq_attr;
+		struct fi_eq_attr* eq_attr;
 
 		/**
 		* Completion queue config
 		*/
-		struct
-		{
-			guint64 size;      							/* max entries on completion queue, 0 indicates providers choice */
-			guint64 flags;     							/* operation flags */
-			enum fi_cq_format format;    		/* format for completion entries */
-			enum fi_wait_obj wait_obj;  		/* used wait object */
-			gint signaling_vector; 					/* interrupt affinity */
-			enum fi_cq_wait_cond wait_cond; /* additional wait condition */
-		} cq_attr;
+		struct fi_cq_attr* cq_attr;
 
 		/**
 		*	Config Parameter for get_info
@@ -136,19 +123,8 @@ struct JConfiguration
 			/**
 			*fi_info config parameters
 			*/
-			struct
-			{
-				guint64 caps;									/* user specified provider capabilities */
-				guint64 modes;								/* operational modes requested for providers */
-				guint32 addr_format;					/* specifies the format for the adress input */
-				gchar* prov_name;							/* user requested provider */
-				enum fi_threading threading; 	/* user requested threading model */
-				guint64 op_flags;							/* Transmit context flags */
-			} info;
+			struct fi_info* hints;
 		} get_info;
-
-		//TODO expand get_info if necessary (most likely for non-socket based communication)
-
 	} libfabric;
 
 	/**
@@ -305,32 +281,20 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	guint32 max_connections;
 	guint64 stripe_size;
 	/**
-	* libfabric variables
+	* libfabric variables, expand here if necessary
 	*/
-	/* event queue variables */
-	guint64 eq_size;      							/* max entries on event queue */
-	guint64 eq_flags;     							/* event queue operation flags */
-	enum fi_wait_obj	eq_wait_obj;  		/* used wait object on event queue */
-	gint eq_signaling_vector; 					/* event queue interrupt affinity */
-	/* completion queue variables */
-	guint64 cq_size;      							/* max entries on completion queue, 0 indicates providers choice */
-	guint64 cq_flags;     							/* completion queue operation flags */
-	enum fi_cq_format cq_format;    		/* completion queue format for completion entries */
-	enum fi_wait_obj cq_wait_obj;  			/* completion queue used wait object */
-	gint cq_signaling_vector; 					/* completion queue  interrupt affinity */
-	enum fi_cq_wait_cond cq_wait_cond; 	/* completion queue additional wait condition */
-	/* getinfo variables */
+	struct fi_eq_attr eq_attr;
+	int eq_size;
+	struct fi_cq_attr cq_attr;
+	int cq_size;
 	int version; 						/* libfabric versioning */
 	gchar* node; 						/* user specified target node, format specified by info addr_format field */
 	gchar* service;					/* port represented as string */
 	guint64 client_flags;		/* flags for fi_getinfo */
 	guint64 server_flags;
-	guint64 caps;									/* user specified provider capabilities */
-	guint64 modes;								/* operational modes requested for providers */
-	guint32 addr_format;					/* specifies the format for the adress input */
-	gchar* prov_name;							/* user requested provider */
-	enum fi_threading threading; 	/* user requested threading model */ //TODO make it writeable for user
-	guint64 op_flags;							/* Transmit context flags */
+	struct fi_info* hints;
+	gchar* prov_name;       /* user requested provider */
+	guint64 caps;						/* user requested capabilities */
 
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
@@ -415,28 +379,40 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	}
 
 	/**
-	* set libfabric values for non-user config
+	* set libfabric values in tmp variables
 	*/
-	eq_flags = 0;
-	eq_wait_obj =	FI_WAIT_MUTEX_COND;
-	eq_signaling_vector = 0;
+	// set event queue attributes
+	// size, flags, used wait object, signaling vector, optional wait set (if used as wait object)
+	eq_attr.size = eq_size;
+	eq_attr.flags = 0;
+	eq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+	eq_attr.signaling_vector = 0;
+	eq_attr.wait_set = NULL;
 
-	cq_flags = 0;
-	cq_format = FI_CQ_FORMAT_MSG;
-	cq_wait_obj = FI_WAIT_MUTEX_COND;
-	cq_signaling_vector = 0;
-	cq_wait_cond = FI_CQ_COND_NONE;
+	// set completion queue attributes
+	// size, flags, used format for msg, used wait object, signaling vector, additional optional wait condition, optional wait set (if used as wait object)
+	cq_attr.size = cq_size;
+	cq_attr.flags = 0;
+	cq_attr.format = FI_CQ_FORMAT_MSG;
+	cq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+	cq_attr.signaling_vector = 0;
+	cq_attr.wait_cond = FI_CQ_COND_NONE;
+	cq_attr.wait_set = NULL;
 
+	// set information for fi_getinfo call
 	version = FI_VERSION(1, 5);
 	service = g_strdup("4711");
-	modes = 0;
-	addr_format = FI_SOCKADDR_IN;
-	threading = FI_THREAD_SAFE;
-	op_flags = FI_COMPLETION;
 	server_flags = FI_SOURCE;
 	client_flags = FI_NUMERICHOST;
+	hints = fi_allocinfo();
 
-	/**
+	hints->caps = caps;
+	hints->mode = 0;
+	hints->addr_format = FI_SOCKADDR_IN;
+	hints->fabric_attr->prov_name = g_strdup(prov_name);
+	hints->domain_attr->threading = FI_THREAD_SAFE;
+	hints->tx_attr->op_flags = FI_COMPLETION;
+		/**
 	* sets values in config
 	*/
 	configuration = g_slice_new(JConfiguration);
@@ -460,27 +436,14 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
 	//libfabric config
-	configuration->libfabric.eq_attr.size = eq_size;
-	configuration->libfabric.eq_attr.flags = eq_flags;
-	configuration->libfabric.eq_attr.wait_obj = eq_wait_obj;
-	configuration->libfabric.eq_attr.signaling_vector = eq_signaling_vector;
-	configuration->libfabric.cq_attr.size = cq_size;
-	configuration->libfabric.cq_attr.flags = cq_flags;
-	configuration->libfabric.cq_attr.format = cq_format;
-	configuration->libfabric.cq_attr.wait_obj = cq_wait_obj;
-	configuration->libfabric.cq_attr.signaling_vector = cq_signaling_vector;
-	configuration->libfabric.cq_attr.wait_cond = cq_wait_cond;
+	configuration->libfabric.eq_attr = &eq_attr;
+	configuration->libfabric.cq_attr = &cq_attr;
 	configuration->libfabric.get_info.version = version;
+	configuration->libfabric.get_info.node = node;
 	configuration->libfabric.get_info.service = service;
 	configuration->libfabric.get_info.server_flags = server_flags;
 	configuration->libfabric.get_info.client_flags = client_flags;
-	configuration->libfabric.get_info.info.caps = caps;
-	configuration->libfabric.get_info.info.modes = modes;
-	configuration->libfabric.get_info.info.addr_format = addr_format;
-	configuration->libfabric.get_info.info.prov_name = prov_name;
-	configuration->libfabric.get_info.info.threading = threading;
-	configuration->libfabric.get_info.info.op_flags = op_flags;
-	configuration->libfabric.get_info.node = node;
+	configuration->libfabric.get_info.hints = hints;
 
 
 	/**
@@ -502,16 +465,12 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	}
 
 	//libfabric defaults
-	if (configuration->libfabric.eq_attr.size == 0)
+	if (configuration->libfabric.eq_attr->size == 0)
 	{
-		configuration->libfabric.eq_attr.size = 10;
+		configuration->libfabric.eq_attr->size = 10;
 	}
 
 	/* cq_attr == 0 means providers choice, thus redundant, but here for explanation
-	if (configuration->cq_attr.size == 0)
-	{
-		configuration->cq_attr.size = 0;
-	}
 	*/
 
 	//if not specified, use local machine as target
@@ -521,17 +480,10 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	}
 
 	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
-	if (configuration->libfabric.get_info.info.prov_name == NULL && configuration->libfabric.get_info.info.caps == 0)
+	if (configuration->libfabric.get_info.hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.hints->caps == 0)
 	{
-		configuration->libfabric.get_info.info.prov_name = g_strdup("sockets");
+		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
-
-	/* 0 already is neutral element, here for explanation
-	if (configuration->get_info.flags == 0)
-	{
-		configuration->get_info.flags = 0;
-	}
-	*/
 
 	return configuration;
 }
@@ -597,7 +549,8 @@ j_configuration_unref (JConfiguration* configuration)
 
 		g_free(configuration->libfabric.get_info.node);
 		g_free(configuration->libfabric.get_info.service);
-		g_free(configuration->libfabric.get_info.info.prov_name);
+
+		fi_freeinfo(configuration->libfabric.get_info.hints);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -746,7 +699,27 @@ j_configuration_get_stripe_size (JConfiguration* configuration)
 	return configuration->stripe_size;
 }
 
-//TODO change to 3 geters with gpointer return type on fi_cq_attr fi_eq_attr & fi_info (free last here and duplicate in server/client for hints)
+// libfabric getters
+
+struct fi_eq_attr*
+j_configuration_get_eq_attr(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.eq_attr;
+}
+
+struct fi_cq_attr*
+j_configuration_get_cq_attr(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.cq_attr;
+}
 
 int
 j_configuration_get_fi_version(JConfiguration* configuration)
@@ -798,69 +771,20 @@ j_configuration_get_fi_flags(JConfiguration* configuration, int type)
 		default:
 		g_assert_not_reached();
 	}
-	return NULL;
+	return -1;
 }
 
-uint64_t
-j_configuration_get_fi_info_caps(JConfiguration* configuration)
+struct fi_info*
+j_configuration_fi_get_hints(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return (uint64_t) configuration->libfabric.get_info.info.caps;
-}
-
-uint64_t
-j_configuration_get_fi_info_modes(JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return (uint64_t) configuration->libfabric.get_info.info.modes;
-}
-
-uint32_t
-j_configuration_get_fi_info_addr_format(JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return (uint32_t) configuration->libfabric.get_info.info.addr_format;
-}
-
-char const*
-j_configuration_get_fi_info_prov_name(JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return configuration->libfabric.get_info.info.prov_name;
+	return configuration->libfabric.get_info.hints;
 }
 
 
-enum fi_threading
-j_configuration_get_fi_info_threading(JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return configuration->libfabric.get_info.info.threading;
-}
-
-uint64_t
-j_configuration_get_fi_info_tx_op_flags(JConfiguration* configuration)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, 0);
-
-	return (uint64_t) configuration->libfabric.get_info.info.op_flags;
-}
 
 gboolean
 check_prov_name_validity(gchar* prov_name)
