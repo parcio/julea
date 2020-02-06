@@ -96,8 +96,8 @@ static struct fid_eq* j_domain_event_queue;
 static struct fi_info* j_info;
 
 
-int
-hostname_resolver(char* hostname, char* service, char* ip_return);
+char*
+hostname_resolver(const char* hostname, const char* service);
 
 void
 j_connection_pool_init (JConfiguration* configuration)
@@ -110,13 +110,8 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//Parameter for fabric init
 	int error;
-	int version = FI_VERSION(1, 5); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	//uint64_t flags = FI_NUMERICHOST;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
-
-	struct fi_info* fi_hints = NULL; //config object
-
-	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL};
-
+	struct fi_info* fi_hints;
+	struct fi_eq_attr event_queue_attr;
 
 
 	g_return_if_fail(j_connection_pool == NULL);
@@ -154,26 +149,22 @@ j_connection_pool_init (JConfiguration* configuration)
 	//Init Libfabric Objects
 	error = 0;
 
-	fi_hints = fi_allocinfo(); //initiated object is zeroed
+	fi_hints = fi_dupinfo(j_configuration_fi_get_hints(configuration));
 
 	if(fi_hints == NULL)
 	{
 		g_critical("\nAllocating empty hints did not work");
 	}
 
-	//TODO read hints from config (and define corresponding fields there) + or all given caps
-	fi_hints->caps = FI_MSG; // | FI_SEND | FI_RECV;
-	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
-	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
-	//TODO future support to set modes
-	//fi_hints.mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
-	fi_hints->tx_attr->op_flags = FI_COMPLETION;
-
 	//inits j_info
 	//gives a linked list of available provider details into j_info
-	error = fi_getinfo(version, NULL, NULL, 0, fi_hints, &j_info);
-	fi_freeinfo(fi_hints); //hints only used for config
+	error = fi_getinfo(j_configuration_get_fi_version(configuration),
+										 j_configuration_get_fi_node(configuration),
+										 j_configuration_get_fi_service(configuration),
+										 j_configuration_get_fi_flags(configuration, 0),
+										 fi_hints,
+										 &j_info);
+	fi_freeinfo(fi_hints); //hints only used for config //TODO test whether stable with no additional fi_hints, but direct read from config
 	if(error != 0)
 	{
 		goto end;
@@ -183,6 +174,7 @@ j_connection_pool_init (JConfiguration* configuration)
 		g_critical("\nAllocating Client j_info did not work");
 	}
 
+	event_queue_attr = * j_configuration_get_fi_eq_attr(configuration);
 	//validating juleas needs here
 
 	if(j_info->domain_attr->ep_cnt < (pool->object_len + pool->kv_len + pool->db_len) * pool->max_count + 1)
@@ -221,7 +213,6 @@ j_connection_pool_init (JConfiguration* configuration)
 	}
 
 	//build event queue for domain
-	//TODO read event_queue attributes from julea config
 	error = fi_eq_open(j_fabric, &event_queue_attr, &j_domain_event_queue, NULL);
 	if(error != 0)
 	{
@@ -466,15 +457,11 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			int error;
 			ssize_t ssize_t_error;
 			gboolean comm_check;
-
-			//struct fid_ep* tmp_endpoint;
-			//struct fid_eq* tmp_event_queue;
-			//struct fid_cq* tmp_receive_queue;
-			//struct fid_cq* tmp_transmit_queue;
+			char* target_ip;
 
 			//Endpoint related definitions
-			struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-			struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_MSG, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+			struct fi_eq_attr event_queue_attr;
+			struct fi_cq_attr completion_queue_attr;
 
 			//connection related definitions
 			struct sockaddr_in address;
@@ -484,7 +471,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			size_t connection_entry_length;
 
 			//fi_connection data
-
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
@@ -493,9 +479,8 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			endpoint = malloc(sizeof(struct JEndpoint));
 			error = 0;
 
-
-			// guint op_count;
-
+			event_queue_attr = * j_configuration_get_fi_eq_attr(j_connection_pool->configuration);
+			completion_queue_attr = * j_configuration_get_fi_cq_attr(j_connection_pool->configuration);
 			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;
 
 			//Allocate Endpoint and related ressources
@@ -557,11 +542,17 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				error = 0;
 			}
 
-
 			//Connect Endpoint to server via port 4711
+			//TODO read AF_INET config
+			target_ip = hostname_resolver(server, j_configuration_get_fi_service(j_connection_pool->configuration));
+			if(target_ip == NULL)
+			{
+				g_critical("\nProblem during hostname resolving\n");
+			}
 			address.sin_family = AF_INET;
-			address.sin_port = htons(4711);
-			inet_aton("127.0.0.1", &address.sin_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
+			address.sin_port = htons(atoi(j_configuration_get_fi_service(j_connection_pool->configuration))); //4711
+			g_printf("\ntarget_IP after resolver: %s\n", target_ip);
+			inet_aton(target_ip, &address.sin_addr); //TODO Resolve server-variable per glib resolver + insert here, most likely use aton or g_inet_address_to_bytes
 
 			error = fi_connect(endpoint->endpoint, &address, NULL, 0);
 			if(error != 0)
@@ -729,29 +720,31 @@ j_connection_pool_push (JBackendType backend, guint index, gpointer connection)
 * uses getaddrinfo to get info about the environment of hostname including hostname IP and
 * inet_ntoa to get the IP into a doted IPV4 representation for libfabric usage
 */
-int
-hostname_resolver(char* hostname, char* service, char* ip_return)
+char*
+hostname_resolver(const char* hostname, const char* service)
 {
-	int ret;
+	int error;
 	char* ip;
+	char* ret;
 	struct addrinfo hints;
 	struct addrinfo* result;
 	memset(&hints, 0, sizeof(hints));
-	ret = getaddrinfo(hostname, service, &hints, &result);
-	if(ret != 0)
+	ret = NULL;
+	ip = NULL;
+	error = getaddrinfo(hostname, service, &hints, &result);
+	if(error != 0)
 	{
 		g_critical("getaddrinfo did not resolve hostname");
 		goto end;
 	}
-	ip = inet_ntoa(( (struct sockaddr_in* ) result->ai_addr)->sin_addr); //PERROR faulty casting
+	ip = inet_ntoa(( (struct sockaddr_in* ) result->ai_addr)->sin_addr); //PERROR possible faulty casting
 	if(ip == NULL)
 	{
-		ret = -1;
 		g_critical("IP not parsed");
 		goto end;
 	}
-	ip_return = g_strdup(ip);
-	g_printf("\nhostname: %s\nIP: %s\n", hostname, ip_return);
+	ret = g_strdup(ip);
+	g_printf("\nhostname: %s\nIP: %s\n", hostname, ret);
 	end:
 	return ret;
 }
