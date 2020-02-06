@@ -702,7 +702,7 @@ j_configuration_get_stripe_size (JConfiguration* configuration)
 // libfabric getters
 
 struct fi_eq_attr*
-j_configuration_get_eq_attr(JConfiguration* configuration)
+j_configuration_get_fi_eq_attr(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -712,7 +712,7 @@ j_configuration_get_eq_attr(JConfiguration* configuration)
 }
 
 struct fi_cq_attr*
-j_configuration_get_cq_attr(JConfiguration* configuration)
+j_configuration_get_fi_cq_attr(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
