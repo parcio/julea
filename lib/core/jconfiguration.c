@@ -102,12 +102,12 @@ struct JConfiguration
 		/**
 		* Event queue config
 		*/
-		struct fi_eq_attr* eq_attr;
+		struct fi_eq_attr eq_attr;
 
 		/**
 		* Completion queue config
 		*/
-		struct fi_cq_attr* cq_attr;
+		struct fi_cq_attr cq_attr;
 
 		/**
 		*	Config Parameter for get_info
@@ -355,10 +355,10 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	    || db_backend == NULL
 	    || db_component == NULL
 	    || db_path == NULL
-			|| cq_size <= 0
-			|| eq_size <= 0
-			|| check_caps_validity(caps)
-			|| check_prov_name_validity(prov_name))
+			|| cq_size < 0
+			|| eq_size < 0
+			|| !check_caps_validity(caps)
+			|| !check_prov_name_validity(prov_name))
 	{
 		//if failed free read components
 		g_free(db_backend);
@@ -375,6 +375,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
 		g_strfreev(servers_db);
 		g_free(node);
 		g_free(prov_name);
+		g_critical("Failed to build config\n");
 		return NULL;
 	}
 
@@ -436,8 +437,8 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
 	//libfabric config
-	configuration->libfabric.eq_attr = &eq_attr;
-	configuration->libfabric.cq_attr = &cq_attr;
+	configuration->libfabric.eq_attr = eq_attr;
+	configuration->libfabric.cq_attr = cq_attr;
 	configuration->libfabric.get_info.version = version;
 	configuration->libfabric.get_info.node = node;
 	configuration->libfabric.get_info.service = service;
@@ -465,9 +466,9 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	}
 
 	//libfabric defaults
-	if (configuration->libfabric.eq_attr->size == 0)
+	if (configuration->libfabric.eq_attr.size == 0)
 	{
-		configuration->libfabric.eq_attr->size = 10;
+		configuration->libfabric.eq_attr.size = 10;
 	}
 
 	/* cq_attr == 0 means providers choice, thus redundant, but here for explanation
@@ -476,13 +477,24 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	//if not specified, use local machine as target
 	if (configuration->libfabric.get_info.node == NULL)
 	{
-		configuration->libfabric.get_info.node = g_strdup("127.0.0.1");
+		configuration->libfabric.get_info.node = g_strdup("127.0.1.1");
 	}
 
 	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
 	if (configuration->libfabric.get_info.hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.hints->caps == 0)
 	{
+		g_printf("Neither Capabilities nor Provider requested, sockets provider will be used\n");
 		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
+	}
+
+	//check contents
+	if(&configuration->libfabric.eq_attr == NULL)
+	{
+		g_critical("eq_attr failed to comply");
+	}
+	if(&configuration->libfabric.cq_attr == NULL)
+	{
+		g_critical("cq_attr failed to comply");
 	}
 
 	return configuration;
@@ -708,7 +720,7 @@ j_configuration_get_fi_eq_attr(JConfiguration* configuration)
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->libfabric.eq_attr;
+	return &configuration->libfabric.eq_attr;
 }
 
 struct fi_cq_attr*
@@ -718,7 +730,7 @@ j_configuration_get_fi_cq_attr(JConfiguration* configuration)
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->libfabric.cq_attr;
+	return &configuration->libfabric.cq_attr;
 }
 
 int
@@ -795,7 +807,6 @@ check_prov_name_validity(gchar* prov_name)
 
 	if(prov_name == NULL)
 	{
-		g_printf("\nNo specific Provider requested. If no Caps are requested either, socket Provider will be chosen.\n");
 		return TRUE;
 	}
 
@@ -831,16 +842,16 @@ check_prov_name_validity(gchar* prov_name)
 			{
 				if(g_strcmp0(prov_name, available_provs[i]) == 0)
 				{
-					g_printf("\nSuitable Provider requested.\n");
+					g_printf("Suitable Provider requested.\n");
 					ret = TRUE;
 					goto end;
 				}
 			}
-			g_printf("\nNot a Julea supported Provider.\n");
+			g_critical("\nThe requested Provider is not supported by Julea-libfabric implementation.\n");
 			goto end;
 		}
 	}
-	g_printf("\nNot in the list of libfabrics supported Providers.\n");
+	g_critical("\nThe requested Provider is no libfabric Provider.\n");
 
 	end:
 	return ret;
@@ -861,7 +872,6 @@ check_caps_validity(guint64 caps)
 	uint64_t secondary_caps;
 	if(caps == 0)
 	{
-		g_printf("\nNo Capabilities for Provider choice were requested. Either the requested Provider or socket Provider will be used if no other Provider was requested .\n");
 		return TRUE;
 	}
 	ret = FALSE;
@@ -900,17 +910,17 @@ check_caps_validity(guint64 caps)
 	{
 		if((available_caps & internal_caps) == internal_caps)
 		{
-			g_printf("\nCapabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
+			g_printf("Capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
 			ret = TRUE;
 		}
 		else
 		{
-			g_printf("\nContains request of not supported Capabilities.\n");
+			g_critical("\nRequested capabilities contain at least one capability not supported by Julea implementation.\n");
 		}
 	}
 	else
 	{
-		g_printf("\nContains at least 1 invalid capability.\n");
+		g_critical("\nRequested capabilities contain at least one non libfabric capability.\n");
 	}
 	return ret;
 }
