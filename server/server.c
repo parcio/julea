@@ -612,7 +612,7 @@ main (int argc, char** argv)
 	}
 
 	jd_configuration = j_configuration_new();
-
+	
 	//Build fabric ressources
 	event_queue_attr = * j_configuration_get_fi_eq_attr(jd_configuration);
 	fi_hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration)); //initiated object is zeroed

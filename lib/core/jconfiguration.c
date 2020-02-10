@@ -477,13 +477,13 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	//if not specified, use local machine as target
 	if (configuration->libfabric.get_info.node == NULL)
 	{
-		configuration->libfabric.get_info.node = g_strdup("127.0.1.1");
+		configuration->libfabric.get_info.node = g_strdup("127.0.0.1");
 	}
 
 	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
 	if (configuration->libfabric.get_info.hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.hints->caps == 0)
 	{
-		g_printf("Neither Capabilities nor Provider requested, sockets provider will be used\n");
+		g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used\n");
 		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
 
