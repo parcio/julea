@@ -398,21 +398,21 @@ j_connection_pool_fini (void)
 	error = fi_close(&(j_domain_event_queue->fid));
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong during closing domain event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nProblem closing domain event queue on client side.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
 	error = fi_close(&(j_domain->fid));
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong during closing domain.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nProblem closing domain on client side.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
 	error = fi_close(&(j_fabric->fid));
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong during closing fabric.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nProblem closing fabric on client side.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
