@@ -684,7 +684,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		struct fid_cq* tmp_cq_transmit;
 
 		ssize_t ssize_t_error;
-		struct sockaddr_in address;
+		struct sockaddr_in* address;
 
 		struct fi_eq_cm_entry* connection_entry;
 		uint32_t eq_event;
@@ -747,27 +747,21 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//g_printf("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
 
-		//prepare a
-		address.sin_family = AF_INET;
-		address.sin_port = htons(atoi(j_configuration_get_fi_service(j_connection_pool->configuration))); //4711
+		address = (struct sockaddr_in*) addrinfo->ai_addr;
 		//TODO change bloody ubuntu workaround ot something senseable
-		if(g_strcmp0(inet_ntoa(((struct sockaddr_in*) addrinfo->ai_addr)->sin_addr), "127.0.1.1" ) == 0)
+		if(g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1" ) == 0)
 		{
-			inet_aton("127.0.0.1", &address.sin_addr);
-		}
-		else
-		{
-			address.sin_addr = ( (struct sockaddr_in*) addrinfo->ai_addr)->sin_addr;
+			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
-		error = fi_connect(tmp_ep, &address, NULL, 0);
+		error = fi_connect(tmp_ep, address, NULL, 0);
 		if(error == -111)
 		{
-			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address.sin_addr), i + 1, size);
+			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
 		}
 		else if(error != 0)
 		{
-			g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address.sin_addr), fi_strerror(error));
+			g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address->sin_addr), fi_strerror(error));
 			error = 0;
 		}
 		else
