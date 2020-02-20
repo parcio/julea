@@ -159,11 +159,11 @@ j_connection_pool_init (JConfiguration* configuration)
 
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	fi_hints->caps = FI_MSG; // | FI_SEND | FI_RECV;
-	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	//fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Adress Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fabri_hints.mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_COMPLETION; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 	fi_hints->tx_attr->op_flags = FI_COMPLETION;
 
 	//inits j_info

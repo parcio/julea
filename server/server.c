@@ -445,8 +445,11 @@ j_thread_function(gpointer connection_event_entry)
 		{
 			g_critical("\nError on Server while shutting down connection\n.Details: \n%s", fi_strerror(error));
 		}
-		g_printf("\nThread ending via Signal\n");
+		g_printf("\nEP Thread ending via Signal\n");
 		error = 0;
+	} else
+	{
+		g_printf("\nEP Thread ending naturaly\n");
 	}
 
   //end all fabric resources
@@ -454,46 +457,54 @@ j_thread_function(gpointer connection_event_entry)
 
 	fi_freeinfo(info);
 
-	error = fi_close(&(jendpoint->endpoint->fid));
+	error = fi_close(&jendpoint->endpoint->fid);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong closing thread endpoint.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
-	error = fi_close(&(jendpoint->completion_queue_receive->fid));
+	error = fi_close(&jendpoint->completion_queue_receive->fid);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing receive queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong closing thread receive queue.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
-	error = fi_close(&(jendpoint->completion_queue_transmit->fid));
+	error = fi_close(&jendpoint->completion_queue_transmit->fid);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing transmition queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong closing thread transmition queue.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
-	error = fi_close(&(jendpoint->event_queue->fid));
+	error = fi_close(&jendpoint->event_queue->fid);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong closing thread endpoint event queue.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
-	error = fi_close(&(domain->fid));
+	error = fi_close(&domain_event_queue->fid);
 	if(error != 0)
 	{
-		g_critical("\nSomething went horribly wrong.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSomething went horribly wrong closing thread domain event queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&domain->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread domain.\n Details:\n %s", fi_strerror(error));
 	}
 
 	free(jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
-	if((g_atomic_int_compare_and_exchange(&thread_count, 0, 0)) && !j_thread_running)
+	if(g_atomic_int_compare_and_exchange(&thread_count, 0, 0) && !j_thread_running)
 	{
 		j_server_running = FALSE; //set server running to false, thus ending server main loop if shutting down
+		g_printf("\nLast Thread shut down\n");
 	}
 
 	g_printf("\nThread finished\n");
@@ -690,11 +701,11 @@ main (int argc, char** argv)
 	//TODO read hints from config (and define corresponding fields there) + or all given caps
 	//define Fabric attributes
 	fi_hints->caps = FI_MSG; // | FI_SEND | FI_RECV;
-	fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
+	//fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
 	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
 	//TODO future support to set modes
 	//fi_hints->mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_SAFE; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
+	fi_hints->domain_attr->threading = FI_THREAD_COMPLETION; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
 	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
 	fi_freeinfo(fi_hints); //hints only used for config

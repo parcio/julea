@@ -933,7 +933,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	
+
 
 	//(void*) message->data
 	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
@@ -947,7 +947,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("\nMessage Header receiving done\n");
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_1, 1, NULL, 20000); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_1, 1, NULL, 60000); //PERROR: Heap read after free Timing here
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
