@@ -924,7 +924,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	struct fi_cq_entry completion_queue_data_2;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
-	JMessage tmp_message;
+	JMessageHeader* tmp_message_header;
 
 	error = 0;
 	endpoint = j_endpoint->endpoint;
@@ -933,11 +933,11 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-
+	tmp_message_header = malloc(sizeof(JMessageHeader));
 
 	//(void*) message->data
-	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
-	if ((int) error != 0)
+	error = fi_recv(endpoint, tmp_message_header, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
+	if (error != 0)
 	{
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
@@ -947,7 +947,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("\nMessage Header receiving done\n");
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_1, 1, NULL, 60000); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_1, 1, 0, 10000); //PERROR: Heap read after free Timing here
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -959,13 +959,13 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		else if(error == -FI_EAGAIN)
 		{
 			//g_printf("\nNo completion data on completion Queue after receiving Message (JMessage Header). Normal on listening side\n");
-			//sleep(60);
 			goto end;
 		}
 		else if(error > 0)
 		{
-			//g_printf("\nMessage Header received on Completion Queue (j_message_read).\n");
-			//message->data = tmp_header;
+			//g_printf("\nMessage Header received on Completion Queue (j_message_read)\nNumber: %ld.\n", error);
+			memcpy(message->data, tmp_message_header, sizeof(JMessageHeader));
+			error = 0;
 		}
 		else if(error < 0)
 		{
@@ -986,6 +986,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
 	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
+	g_printf("\nStuff reached.");
 	if(j_message_length(message) > 0)
 	{
 		error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
@@ -1035,7 +1036,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	//free(tmp_header);
+	free(tmp_message_header);
 	return ret;
 }
 
