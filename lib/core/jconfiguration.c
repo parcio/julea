@@ -31,6 +31,11 @@
 #include <jbackend.h>
 #include <jtrace.h>
 
+#include <glib/gprintf.h>
+
+
+
+
 /**
  * \defgroup JConfiguration Configuration
  *
@@ -44,35 +49,12 @@ struct JConfiguration
 {
 	struct
 	{
-		/**
-		 * The object servers.
-		 */
-		gchar** object;
-
-		/**
-		 * The kv servers.
-		 */
-		gchar** kv;
-
-		/**
-		 * The db servers.
-		 */
-		gchar** db;
-
-		/**
-		 * The number of object servers.
-		 */
-		guint32 object_len;
-
-		/**
-		 * The number of kv servers.
-		 */
-		guint32 kv_len;
-
-		/**
-		 * The number of db servers.
-		 */
-		guint32 db_len;
+		gchar** object;			/* The object servers */
+		gchar** kv;					/* The kv servers */
+		gchar** db;					/* the db servers */
+		guint32 object_len;	/* The number of object servers */
+		guint32 kv_len;			/* The number of kv servers */
+		guint32 db_len; 		/* The number of db servers */
 	}
 	servers;
 
@@ -81,20 +63,9 @@ struct JConfiguration
 	 */
 	struct
 	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
+		gchar* backend;		/* The backend */
+		gchar* component;	/* The component */
+		gchar* path;			/* The path */
 	}
 	object;
 
@@ -103,53 +74,71 @@ struct JConfiguration
 	 */
 	struct
 	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
+		gchar* backend; 	/* the backend*/
+		gchar* component; /* the component */
+		gchar* path; 			/* the path */
 	}
 	kv;
-
-	/**
-	 * The db configuration.
-	 */
-	struct
-	{
-		/**
-		 * The backend.
-		 */
-		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
-		 * The path.
-		 */
-		gchar* path;
-	} db;
 
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
 
 	/**
+	 * The db configuration.
+	 */
+	struct
+	{
+		gchar* backend;		/* the backend */
+		gchar* component;	/* The component. */
+		gchar* path; 			/* the path*/
+	} db;
+
+	/**
+	* libfabric configuration fields
+	*/
+	struct
+	{
+		/**
+		* Event queue config
+		*/
+		struct fi_eq_attr eq_attr;
+
+		/**
+		* Completion queue config
+		*/
+		struct fi_cq_attr cq_attr;
+
+		/**
+		*	Config Parameter for get_info
+		*/
+		struct
+		{
+			gint version; 				/* libfabric versioning */
+			gchar* node; 					/* user specified target node, format specified by info addr_format field */
+			gchar* service;				/* user specified port represented as string */
+			guint64 server_flags;	/* flags for fi_getinfo */
+			guint64 client_flags;
+
+			/**
+			*fi_info config parameters
+			*/
+			struct fi_info* hints;
+		} get_info;
+	} libfabric;
+
+	/**
 	 * The reference count.
 	 */
 	gint ref_count;
 };
+
+
+gboolean
+check_prov_name_validity(gchar* prov_name);
+
+gboolean
+check_caps_validity(guint64 caps);
 
 /**
  * Returns the configuration.
@@ -272,6 +261,9 @@ j_configuration_new_for_data (GKeyFile* key_file)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	/**
+	* Julea config variables
+	*/
 	JConfiguration* configuration;
 	gchar** servers_object;
 	gchar** servers_kv;
@@ -288,9 +280,28 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
+	/**
+	* libfabric variables, expand here if necessary
+	*/
+	struct fi_eq_attr eq_attr;
+	int eq_size;
+	struct fi_cq_attr cq_attr;
+	int cq_size;
+	int version; 						/* libfabric versioning */
+	gchar* node; 						/* user specified target node, format specified by info addr_format field */
+	gchar* service;					/* port represented as string */
+	guint64 client_flags;		/* flags for fi_getinfo */
+	guint64 server_flags;
+	struct fi_info* hints;
+	gchar* prov_name;       /* user requested provider */
+	guint64 caps;						/* user requested capabilities */
+
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
+	/**
+	* read julea information from config-file
+	*/
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
@@ -306,7 +317,32 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
 	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
+	/**
+	* read user specified libfabric information from config-file
+	*/
+	eq_size = (size_t) g_key_file_get_uint64(key_file, "eq", "size", NULL);
+	cq_size = (size_t) g_key_file_get_uint64(key_file, "cq", "size", NULL);
+	node = g_key_file_get_string(key_file, "libfabric", "node", NULL);
+	prov_name = g_key_file_get_string(key_file, "libfabric", "provider", NULL);
+	/*
+	* 22 capabilities available in libfabric for bitmask, but doubtful that even 10 will be combined
+	* 13 of 22 are primary
+	* not all supported, only socket based communication supported at the moment
+	*/
+	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) |
+				 g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) |
+ 				 g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) |
+ 				 g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) |
+ 				 g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
 
+	/**
+	* check if vital components are missing
+	*/
 	if (servers_object == NULL || servers_object[0] == NULL
 	    || servers_kv == NULL || servers_kv[0] == NULL
 	    || servers_db == NULL || servers_db[0] == NULL
@@ -318,8 +354,13 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	    || kv_path == NULL
 	    || db_backend == NULL
 	    || db_component == NULL
-	    || db_path == NULL)
+	    || db_path == NULL
+			|| cq_size < 0
+			|| eq_size < 0
+			|| !check_caps_validity(caps)
+			|| !check_prov_name_validity(prov_name))
 	{
+		//if failed free read components
 		g_free(db_backend);
 		g_free(db_component);
 		g_free(db_path);
@@ -332,10 +373,49 @@ j_configuration_new_for_data (GKeyFile* key_file)
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
 		g_strfreev(servers_db);
-
+		g_free(node);
+		g_free(prov_name);
+		g_critical("Failed to build config\n");
 		return NULL;
 	}
 
+	/**
+	* set libfabric values in tmp variables
+	*/
+	// set event queue attributes
+	// size, flags, used wait object, signaling vector, optional wait set (if used as wait object)
+	eq_attr.size = eq_size;
+	eq_attr.flags = 0;
+	eq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+	eq_attr.signaling_vector = 0;
+	eq_attr.wait_set = NULL;
+
+	// set completion queue attributes
+	// size, flags, used format for msg, used wait object, signaling vector, additional optional wait condition, optional wait set (if used as wait object)
+	cq_attr.size = cq_size;
+	cq_attr.flags = 0;
+	cq_attr.format = FI_CQ_FORMAT_CONTEXT;
+	cq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+	cq_attr.signaling_vector = 0;
+	cq_attr.wait_cond = FI_CQ_COND_NONE;
+	cq_attr.wait_set = NULL;
+
+	// set information for fi_getinfo call
+	version = FI_VERSION(1, 5);
+	service = g_strdup("4711");
+	server_flags = FI_SOURCE;
+	client_flags = FI_NUMERICHOST;
+	hints = fi_allocinfo();
+
+	hints->caps = caps;
+	hints->mode = 0;
+	hints->addr_format = FI_SOCKADDR_IN;
+	hints->fabric_attr->prov_name = g_strdup(prov_name);
+	hints->domain_attr->threading = FI_THREAD_SAFE;
+	hints->tx_attr->op_flags = FI_COMPLETION;
+		/**
+	* sets values in config
+	*/
 	configuration = g_slice_new(JConfiguration);
 	configuration->servers.object = servers_object;
 	configuration->servers.kv = servers_kv;
@@ -356,7 +436,20 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
+	//libfabric config
+	configuration->libfabric.eq_attr = eq_attr;
+	configuration->libfabric.cq_attr = cq_attr;
+	configuration->libfabric.get_info.version = version;
+	configuration->libfabric.get_info.node = node;
+	configuration->libfabric.get_info.service = service;
+	configuration->libfabric.get_info.server_flags = server_flags;
+	configuration->libfabric.get_info.client_flags = client_flags;
+	configuration->libfabric.get_info.hints = hints;
 
+
+	/**
+	* set default values for not specified values by user
+	*/
 	if (configuration->max_operation_size == 0)
 	{
 		configuration->max_operation_size = 8 * 1024 * 1024;
@@ -370,6 +463,38 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	if (configuration->stripe_size == 0)
 	{
 		configuration->stripe_size = 4 * 1024 * 1024;
+	}
+
+	//libfabric defaults
+	if (configuration->libfabric.eq_attr.size == 0)
+	{
+		configuration->libfabric.eq_attr.size = 10;
+	}
+
+	/* cq_attr == 0 means providers choice, thus redundant, but here for explanation
+	*/
+
+	//if not specified, use local machine as target
+	if (configuration->libfabric.get_info.node == NULL)
+	{
+		configuration->libfabric.get_info.node = g_strdup("127.0.0.1");
+	}
+
+	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
+	if (configuration->libfabric.get_info.hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.hints->caps == 0)
+	{
+		//g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used\n");
+		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
+	}
+
+	//check contents
+	if(&configuration->libfabric.eq_attr == NULL)
+	{
+		g_critical("eq_attr failed to comply");
+	}
+	if(&configuration->libfabric.cq_attr == NULL)
+	{
+		g_critical("cq_attr failed to comply");
 	}
 
 	return configuration;
@@ -433,6 +558,11 @@ j_configuration_unref (JConfiguration* configuration)
 		g_strfreev(configuration->servers.object);
 		g_strfreev(configuration->servers.kv);
 		g_strfreev(configuration->servers.db);
+
+		g_free(configuration->libfabric.get_info.node);
+		g_free(configuration->libfabric.get_info.service);
+
+		fi_freeinfo(configuration->libfabric.get_info.hints);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -580,6 +710,221 @@ j_configuration_get_stripe_size (JConfiguration* configuration)
 
 	return configuration->stripe_size;
 }
+
+// libfabric getters
+
+struct fi_eq_attr*
+j_configuration_get_fi_eq_attr(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return &configuration->libfabric.eq_attr;
+}
+
+struct fi_cq_attr*
+j_configuration_get_fi_cq_attr(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return &configuration->libfabric.cq_attr;
+}
+
+int
+j_configuration_get_fi_version(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return (int) configuration->libfabric.get_info.version;
+}
+
+char const*
+j_configuration_get_fi_node(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.node;
+}
+
+char const*
+j_configuration_get_fi_service(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.service;
+}
+
+/**
+* server: type = 0
+* client: type = 1
+*/
+uint64_t
+j_configuration_get_fi_flags(JConfiguration* configuration, int type)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	switch(type)
+	{
+		case 0:
+			return (uint64_t) configuration->libfabric.get_info.server_flags;
+		case 1:
+			return (uint64_t) configuration->libfabric.get_info.client_flags;
+		default:
+		g_assert_not_reached();
+	}
+	return -1;
+}
+
+struct fi_info*
+j_configuration_fi_get_hints(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.get_info.hints;
+}
+
+
+
+gboolean
+check_prov_name_validity(gchar* prov_name)
+{
+	gboolean ret;
+	const gchar* available_provs[7];
+	const gchar* libfabric_provs[14];
+
+	if(prov_name == NULL)
+	{
+		return TRUE;
+	}
+
+	ret = FALSE;
+	available_provs[0] = "gni";
+	available_provs[1] = "psm";
+	available_provs[2] = "psm2";
+	available_provs[3] = "rxm";
+	available_provs[4] = "sockets";
+	available_provs[5] = "verbs";
+	available_provs[6] = "bgq";
+
+	libfabric_provs[0] = "gni";
+	libfabric_provs[1] = "psm";
+	libfabric_provs[2] = "psm2";
+	libfabric_provs[3] = "rxm";
+	libfabric_provs[4] = "sockets";
+	libfabric_provs[5] = "tcp"; //should work, but added post 1.5
+	libfabric_provs[6] = "udp";
+	libfabric_provs[7] = "usnic";
+	libfabric_provs[8] = "verbs";
+	libfabric_provs[9] = "bgq";
+	libfabric_provs[10] = "Network Direct"; //PERROR not correct libfabric name, as of 1.5 experimental, thus not in available. fi_netdir
+	libfabric_provs[11] = "mlx";
+	libfabric_provs[12] = "shm"; //added post 1.5
+	libfabric_provs[13] = "efa"; //added post 1.5
+
+	for(int n = 0; n < 14; n++)
+	{
+		if(g_strcmp0(prov_name, libfabric_provs[n]) == 0)
+		{
+			for(int i = 0; i < 7; i++)
+			{
+				if(g_strcmp0(prov_name, available_provs[i]) == 0)
+				{
+					g_printf("Suitable Provider requested.\n");
+					ret = TRUE;
+					goto end;
+				}
+			}
+			g_critical("\nThe requested Provider is not supported by Julea-libfabric implementation.\n");
+			goto end;
+		}
+	}
+	g_critical("\nThe requested Provider is no libfabric Provider.\n");
+
+	end:
+	return ret;
+}
+
+/**
+* Checks whether requested Capabilities are acceptable
+* split into primary and secondary caps for readablitiy reasons.
+*/
+gboolean
+check_caps_validity(guint64 caps)
+{
+	gboolean ret;
+	uint64_t internal_caps;
+	uint64_t available_caps;
+	uint64_t libfabric_caps;
+	uint64_t primary_caps;
+	uint64_t secondary_caps;
+	if(caps == 0)
+	{
+		return TRUE;
+	}
+	ret = FALSE;
+	internal_caps = (uint64_t) caps;
+	available_caps = FI_MSG 				| /* Endpoints support sending and receiving of Messages or Datagrams */
+									 FI_SEND				|	/* Endpoints support message Data Transfers */
+									 FI_RECV				| /* Endpoints support receiving message Data Transfers */
+									 FI_LOCAL_COMM 	| /* Endpoints support local host communication */
+									 FI_REMOTE_COMM;	/* Endpoints support remote nodes */
+  primary_caps = FI_MSG 					|
+								 FI_RMA						|
+								 FI_TAGGED  			|
+								 FI_ATOMIC  			|
+								 FI_MULTICAST 		|
+								 FI_NAMED_RX_CTX 	|
+								 FI_DIRECTED_RECV |
+								 FI_READ					|
+								 FI_WRITE					|
+								 FI_RECV					|
+								 FI_SEND					|
+								 FI_REMOTE_READ		|
+								 FI_REMOTE_WRITE;
+	secondary_caps = FI_MULTI_RECV  |
+	 								 FI_SOURCE			|
+									 FI_RMA_EVENT		|
+									 FI_SHARED_AV		|
+									 FI_TRIGGER			|
+									 FI_FENCE				|
+									 FI_LOCAL_COMM	|
+									 FI_REMOTE_COMM |
+									 FI_SOURCE_ERR;
+	libfabric_caps = primary_caps 	|
+									 secondary_caps;
+
+	if((libfabric_caps & internal_caps) == internal_caps)
+	{
+		if((available_caps & internal_caps) == internal_caps)
+		{
+			g_printf("Capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
+			ret = TRUE;
+		}
+		else
+		{
+			g_critical("\nRequested capabilities contain at least one capability not supported by Julea implementation.\n");
+		}
+	}
+	else
+	{
+		g_critical("\nRequested capabilities contain at least one non libfabric capability.\n");
+	}
+	return ret;
+}
+
 
 /**
  * @}

@@ -246,7 +246,8 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 					buf = j_memory_chunk_get(memory_chunk, length);
 					g_assert(buf != NULL);
 
-					//PERROR: this direct receive may not work
+
+
 					error = fi_recv(endpoint->endpoint, (void*) buf, (size_t) length, NULL, 0, NULL);
 					if(error!= 0)
 					{

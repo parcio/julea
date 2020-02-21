@@ -920,8 +920,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	struct fid_ep* endpoint;
 	ssize_t error;
 
-	struct fi_cq_entry completion_queue_data_1;
-	struct fi_cq_entry completion_queue_data_2;
+	struct fi_cq_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
 	JMessageHeader* tmp_message_header;
@@ -947,7 +946,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("\nMessage Header receiving done\n");
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_1, 1, 0, 10000); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, 10000); //PERROR: Heap read after free Timing here
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -986,7 +985,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
 
 	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
-	g_printf("\nStuff reached.");
 	if(j_message_length(message) > 0)
 	{
 		error = fi_recv(endpoint, message->data + sizeof(JMessageHeader), j_message_length(message), NULL, 0, NULL);
@@ -999,7 +997,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		{
 			//g_printf("\nMessage Data receiving done.\n");
 		}
-		error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data_2, 1, NULL, -1);
+		error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
 		if(error != 0)
 		{
 			if(error == -FI_EAVAIL)
@@ -1061,9 +1059,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
 
-  struct fi_cq_entry completion_queue_data_1;
-	struct fi_cq_entry completion_queue_data_2;
-	struct fi_cq_entry completion_queue_data_3;
+  struct fi_cq_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -1082,7 +1078,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("\nMessage Header sent\n");
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data_1, 1, NULL, -1);
+	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -1126,7 +1122,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		{
 			//g_printf("JMessage Data sending succeeded.");
 		}
-		error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data_2, 1, NULL, -1);
+		error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
 		if(error != 0)
 		{
 			if(error == -FI_EAVAIL)
@@ -1170,7 +1166,8 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 				//g_printf("\nMessage List Data sent.\n");
 			}
 
-			error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data_3, 1, NULL, -1);
+
+			error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
 			if(error != 0)
 			{
 				if(error == -FI_EAVAIL)

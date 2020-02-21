@@ -212,6 +212,7 @@ j_thread_function(gpointer connection_event_entry)
 
 	JEndpoint* jendpoint;
 
+
 	J_TRACE_FUNCTION(NULL);
 
 	JMemoryChunk* memory_chunk;
@@ -219,8 +220,8 @@ j_thread_function(gpointer connection_event_entry)
 	JStatistics* statistics;
 	guint64 memory_chunk_size;
 
-	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
-	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_CONTEXT, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
+	struct fi_eq_attr event_queue_attr = * j_configuration_get_fi_eq_attr(jd_configuration);
+	struct fi_cq_attr completion_queue_attr = * j_configuration_get_fi_cq_attr(jd_configuration);
 
 	message = NULL;
 
@@ -235,7 +236,6 @@ j_thread_function(gpointer connection_event_entry)
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
 	info = fi_dupinfo(event_entry->info);
-	//info = event_entry->info;
 	fi_freeinfo(event_entry->info);
 	free(connection_event_entry);
 
@@ -523,12 +523,17 @@ j_thread_function(gpointer connection_event_entry)
 */
 static
 void
-j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_queue_attr, const int version, const char* node, const char* service, uint64_t flags)
+j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_queue_attr)
 {
 	int error = 0;
 
 	//get fi_info
-	error = fi_getinfo(version, node, service, flags, fi_hints, &j_info);
+	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
+										 j_configuration_get_fi_node(jd_configuration),
+										 j_configuration_get_fi_service(jd_configuration),
+										 j_configuration_get_fi_flags(jd_configuration, 0),
+										 fi_hints,
+										 &j_info);
 
 	if(error != 0)
 	{
@@ -636,13 +641,10 @@ main (int argc, char** argv)
 
 
 	int fi_error = 0;
-	int version = FI_VERSION(1, 8); //versioning Infos from libfabric, should be hardcoded so server and client run same versions, not the available ones
-	const char* node = "127.0.0.1"; //NULL if addressing Format defined
-	const char* service = "4711"; //target port (in future maybe not hardcoded)
-	uint64_t flags = FI_SOURCE;// Alternatives: FI_NUMERICHOST (defines node to be a doted IP) // FI_SOURCE (source defined by node+service)
+
 
 	struct fi_info* fi_hints = NULL; //config object
-	struct fi_eq_attr event_queue_attr = {50, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //2nd: FI_WRITE, 3rd: FI_WAIT_UNSPEC PERROR: Wrong formatting of event queue attributes
+	struct fi_eq_attr event_queue_attr;
 
 	struct sigaction sig_action;
 
@@ -673,6 +675,7 @@ main (int argc, char** argv)
 		return 1;
 	}
 
+
 	memset(&sig_action, 0, sizeof(struct sigaction));
 	sig_action.sa_handler = sig_handler;
 
@@ -680,9 +683,6 @@ main (int argc, char** argv)
 	sigaction(SIGHUP, &sig_action, NULL);
 	sigaction(SIGTERM, &sig_action, NULL);
 
-
-	/*
-	TODO use
 	//gets a hostname if none given
 	if (opt_host == NULL)
 	{
@@ -691,33 +691,27 @@ main (int argc, char** argv)
 		gethostname(hostname, HOST_NAME_MAX + 1);
 		opt_host = g_strdup(hostname);
 	}
-	*/
+
+	jd_configuration = j_configuration_new();
 
 	//Build fabric ressources
-	fi_hints = fi_allocinfo(); //initiated object is zeroed
+	event_queue_attr = * j_configuration_get_fi_eq_attr(jd_configuration);
+	fi_hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration)); //initiated object is zeroed
 
 	if(fi_hints == NULL)
 	{
 		g_critical("\nAllocating empty hints did not work\n");
 	}
-	//TODO read hints from config (and define corresponding fields there) + or all given caps
-	//define Fabric attributes
-	fi_hints->caps = FI_MSG; // | FI_SEND | FI_RECV;
-	//fi_hints->fabric_attr->prov_name = g_strdup("sockets"); //sets later returned providers to socket providers, TODO for better performance not socket, but the best (first) available
-	fi_hints->addr_format = FI_SOCKADDR_IN; //Server-Address Format IPV4. TODO: Change server Definition in Config or base system of name resolution
-	//TODO future support to set modes
-	//fi_hints->mode = 0;
-	fi_hints->domain_attr->threading = FI_THREAD_COMPLETION; //FI_THREAD_COMPLETION or FI_THREAD_FID or FI_THREAD_SAFE
 
-	j_init_libfabric_ressources(fi_hints, &event_queue_attr, version, node, service, flags);
-	fi_freeinfo(fi_hints); //hints only used for config
+
+	j_init_libfabric_ressources(fi_hints, &event_queue_attr);
+
+	fi_freeinfo(fi_hints);
 
 
 	j_trace_init("julea-server");
 
 	trace = j_trace_enter(G_STRFUNC, NULL);
-
-	jd_configuration = j_configuration_new();
 
 	if (jd_configuration == NULL)
 	{

@@ -43,6 +43,22 @@ static gchar const* opt_db_path = NULL;
 static gint64 opt_max_operation_size = 0;
 static gint opt_max_connections = 0;
 static gint64 opt_stripe_size = 0;
+//libfabric input
+static guint64 eq_size = 0;
+static guint64 cq_size = 0;
+static gchar const* node = NULL;
+static gchar const* prov_name = NULL;
+static guint64 cap0 = 0;
+static guint64 cap1 = 0;
+static guint64 cap2 = 0;
+static guint64 cap3 = 0;
+static guint64 cap4 = 0;
+static guint64 cap5 = 0;
+static guint64 cap6 = 0;
+static guint64 cap7 = 0;
+static guint64 cap8 = 0;
+static guint64 cap9 = 0;
+
 
 static
 gchar**
@@ -121,6 +137,22 @@ write_config (gchar* path)
 	g_key_file_set_string(key_file, "db", "backend", opt_db_backend);
 	g_key_file_set_string(key_file, "db", "component", opt_db_component);
 	g_key_file_set_string(key_file, "db", "path", opt_db_path);
+	//libfabric
+	g_key_file_set_uint64(key_file, "eq", "size", eq_size);
+	g_key_file_set_uint64(key_file, "cq", "size", cq_size);
+	g_key_file_set_string(key_file, "libfabric", "node", node);
+	g_key_file_set_string(key_file, "libfabric", "provider", prov_name);
+	g_key_file_set_uint64(key_file, "capabilities", "cap0", cap0);
+	g_key_file_set_uint64(key_file, "capabilities", "cap1", cap1);
+	g_key_file_set_uint64(key_file, "capabilities", "cap2", cap2);
+	g_key_file_set_uint64(key_file, "capabilities", "cap3", cap3);
+	g_key_file_set_uint64(key_file, "capabilities", "cap4", cap4);
+	g_key_file_set_uint64(key_file, "capabilities", "cap5", cap5);
+	g_key_file_set_uint64(key_file, "capabilities", "cap6", cap6);
+	g_key_file_set_uint64(key_file, "capabilities", "cap7", cap7);
+	g_key_file_set_uint64(key_file, "capabilities", "cap8", cap8);
+	g_key_file_set_uint64(key_file, "capabilities", "cap9", cap9);
+
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
@@ -169,6 +201,20 @@ main (gint argc, gchar** argv)
 		{ "max-operation-size", 0, 0, G_OPTION_ARG_INT64, &opt_max_operation_size, "Maximum size of an operation", "0" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ "stripe-size", 0, 0, G_OPTION_ARG_INT64, &opt_stripe_size, "Default stripe size", "0" },
+		{ "eq_size", 0, 0, G_OPTION_ARG_INT64, &eq_size, "Maximum number of entries in the libfabric event queues used", "0" },
+		{ "cq_size", 0, 0, G_OPTION_ARG_INT64, &cq_size, "Maximum number of entries in the libfabric completion queues used", "0" },
+		{ "node", 0, 0, G_OPTION_ARG_STRING, &node, "Node parameter for libfabric creation calls, unstable at the moment. Doted IPV4 Format", "127.0.0.1" },
+		{ "provider-name", 0, 0, G_OPTION_ARG_STRING, &prov_name, "Requested libfabric provider. Julea checks whether a suitable provider was chosen.", "sockets" },
+		{ "capability0", 0, 0, G_OPTION_ARG_INT64, &cap0, "Field for one requested libfabric provider capability", "0" },
+		{ "capability1", 0, 0, G_OPTION_ARG_INT64, &cap1, "Field for one requested libfabric provider capability", "0" },
+		{ "capability2", 0, 0, G_OPTION_ARG_INT64, &cap2, "Field for one requested libfabric provider capability", "0" },
+		{ "capability3", 0, 0, G_OPTION_ARG_INT64, &cap3, "Field for one requested libfabric provider capability", "0" },
+		{ "capability4", 0, 0, G_OPTION_ARG_INT64, &cap4, "Field for one requested libfabric provider capability", "0" },
+		{ "capability5", 0, 0, G_OPTION_ARG_INT64, &cap5, "Field for one requested libfabric provider capability", "0" },
+		{ "capability7", 0, 0, G_OPTION_ARG_INT64, &cap7, "Field for one requested libfabric provider capability", "0" },
+		{ "capability6", 0, 0, G_OPTION_ARG_INT64, &cap6, "Field for one requested libfabric provider capability", "0" },
+		{ "capability8", 0, 0, G_OPTION_ARG_INT64, &cap8, "Field for one requested libfabric provider capability", "0" },
+		{ "capability9", 0, 0, G_OPTION_ARG_INT64, &cap9, "Field for one requested libfabric provider capability", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 

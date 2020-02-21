@@ -31,6 +31,10 @@
 
 #include <core/jbackend.h>
 
+//libfabric includes
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h>
+
 G_BEGIN_DECLS
 
 struct JConfiguration;
@@ -57,6 +61,19 @@ gchar const* j_configuration_get_backend_path (JConfiguration*, JBackendType);
 guint64 j_configuration_get_max_operation_size (JConfiguration*);
 guint32 j_configuration_get_max_connections (JConfiguration*);
 guint64 j_configuration_get_stripe_size (JConfiguration*);
+
+
+//attr info
+struct fi_eq_attr* j_configuration_get_fi_eq_attr(JConfiguration* configuration);
+struct fi_cq_attr* j_configuration_get_fi_cq_attr(JConfiguration* configuration);
+
+//get_info info
+int j_configuration_get_fi_version(JConfiguration* configuration);
+char const* j_configuration_get_fi_node(JConfiguration* configuration);
+char const* j_configuration_get_fi_service(JConfiguration* configuration);
+uint64_t j_configuration_get_fi_flags(JConfiguration* configuration, int type);
+//fi_info info
+struct fi_info* j_configuration_fi_get_hints(JConfiguration* configuration);
 
 G_END_DECLS
 
