@@ -212,10 +212,23 @@ j_thread_function(gpointer connection_event_entry)
 
 	JEndpoint* jendpoint;
 
+	J_TRACE_FUNCTION(NULL);
+
+	JMemoryChunk* memory_chunk;
+	g_autoptr(JMessage) message;
+	JStatistics* statistics;
+	guint64 memory_chunk_size;
+
 	struct fi_eq_attr event_queue_attr = {10, 0, FI_WAIT_MUTEX_COND, 0, NULL}; //TODO read eq attributes from config
 	struct fi_cq_attr completion_queue_attr = {0, 0, FI_CQ_FORMAT_CONTEXT, FI_WAIT_MUTEX_COND, 0, FI_CQ_COND_NONE, 0}; //TODO read cq attributes from config
 
-	J_TRACE_FUNCTION(NULL);
+	message = NULL;
+
+	statistics = j_statistics_new(TRUE);
+	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
+	memory_chunk = j_memory_chunk_new(memory_chunk_size);
+
+	message = j_message_new(J_MESSAGE_NONE, 0);
 
 	//g_printf("\nTHREAD STARTED\n");
 
@@ -353,18 +366,6 @@ j_thread_function(gpointer connection_event_entry)
 		//g_printf("\nYEAH, SERVER CONNECTED!\n");
 		do
 		{
-			JMemoryChunk* memory_chunk;
-			g_autoptr(JMessage) message;
-			JStatistics* statistics;
-			guint64 memory_chunk_size;
-
-			message = NULL;
-
-			statistics = j_statistics_new(TRUE);
-			memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
-			memory_chunk = j_memory_chunk_new(memory_chunk_size);
-
-			message = j_message_new(J_MESSAGE_NONE, 0);
 
 			if(j_message_receive(message, jendpoint))
 			{
@@ -394,8 +395,6 @@ j_thread_function(gpointer connection_event_entry)
 				g_mutex_unlock(jd_statistics_mutex);
 			}
 
-			j_memory_chunk_free(memory_chunk);
-			j_statistics_free(statistics);
 
 			//Read event queue repeat loop if no shutdown sent
 			event = 0;
@@ -499,6 +498,9 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	free(jendpoint);
+
+	j_memory_chunk_free(memory_chunk);
+	j_statistics_free(statistics);
 
 	g_atomic_int_dec_and_test(&thread_count);
 	if(g_atomic_int_compare_and_exchange(&thread_count, 0, 0) && !j_thread_running)
