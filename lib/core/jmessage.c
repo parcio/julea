@@ -885,15 +885,6 @@ j_message_send (JMessage* message, gpointer endpoint)
 
 	ret = j_message_write(message, (JEndpoint*) endpoint);
 
-	if(ret == FALSE)
-	{
-		g_critical("\nj_message_write failed\n");
-	}
-	else
-	 {
-		 //g_printf("\nj_message_write succeeded\n");
-	 }
-
 	//j_helper_set_cork(connection, FALSE);
 
 	return ret;
@@ -934,19 +925,14 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	tmp_message_header = malloc(sizeof(JMessageHeader));
 
-	//(void*) message->data
 	error = fi_recv(endpoint, tmp_message_header, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
-	else
-	{
-		//g_printf("\nMessage Header receiving done\n");
-	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, 10000); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, -1); //PERROR: Heap read after free Timing here
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -955,9 +941,8 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 			g_critical("\nError on completion queue while receiving Message (JMessage Header).\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
-		else if(error == -FI_EAGAIN)
+		else if(error == -FI_EAGAIN || error == -FI_ECANCELED)
 		{
-			//g_printf("\nNo completion data on completion Queue after receiving Message (JMessage Header). Normal on listening side\n");
 			goto end;
 		}
 		else if(error > 0)
@@ -993,10 +978,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 			g_critical("\nError while receiving Message.\nDetails:\n%s", fi_strerror((int)error));
 			goto end;
 		}
-		else
-		{
-			//g_printf("\nMessage Data receiving done.\n");
-		}
 		error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
 		if(error != 0)
 		{
@@ -1011,9 +992,10 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 				g_critical("\nNo completion data on completion Queue after receiving Message data. (SHOULD NOT HAPPEN, SINCE HEADER RECEIVED)\n");
 				goto end;
 			}
-			else if(error > 0)
+			else if(error == -FI_ECANCELED)
 			{
-				//g_printf("\nMessage Data received on Completion Queue\n.");
+				g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n");
+				goto end;
 			}
 			else if(error < 0)
 			{
@@ -1073,10 +1055,6 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
-	else
-	{
-		//g_printf("\nMessage Header sent\n");
-	}
 
 	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
 	if(error != 0)
@@ -1092,9 +1070,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 			g_critical("\nNo completion data on completion Queue after sending Message (JMessage Header).");
 			goto end;
 		}
-		else if(error > 0)
+		else if(error == -FI_ECANCELED)
 		{
-			//g_printf("\nMessage Header sending on Completion Queue.\n");
+			g_printf("\nData transfer (JMessage Header) canceled through interrupt. Last data transfer not completed\n");
+			goto end;
 		}
 		else if(error < 0)
 		{
@@ -1136,9 +1115,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 				g_critical("\nNo completion data on completion Queue after sending Message Data.");
 				goto end;
 			}
-			else if(error > 0)
+			else if(error == -FI_ECANCELED)
 			{
-				//g_printf("\nMessage Data sending on Completion Queue.\n");
+				g_printf("\nData transfer (Message Data) canceled via interrupt. Data Transfer not completed\n");
+				goto end;
 			}
 			else if(error < 0)
 			{
@@ -1181,9 +1161,10 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 					g_critical("\nNo completion data on completion Queue after sending Message List data.");
 					goto end;
 				}
-				else if(error > 0)
+				else if(error == -FI_ECANCELED)
 				{
-					//g_printf("\nMessage List Data Completion on Completion queue \n\n.");
+					g_printf("\nData transfer (data junk) canceled via interupt. Data transfer not completed.\n");
+					goto end;
 				}
 				else if(error < 0)
 				{

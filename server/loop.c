@@ -265,6 +265,10 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 						{
 							g_critical("\nNo completion data on completion Queue reading for data junks in loop.c.\n");
 						}
+						else if(error == -FI_ECANCELED)
+						{
+							g_printf("\nData Transfer canceled while receiving data junks in loop.c. Transfer not completed\n");
+						}
 						else if(error > 0)
 						{
 							//g_printf("\nReceiving Data Junks directly in loop.c succeeded.\n");
