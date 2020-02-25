@@ -3,7 +3,7 @@
  * Copyright (C) 2017 Olga Perevalova
  * Copyright (C) 2017 Eugen Betke
  * Copyright (C) 2018-2019 Johannes Coym
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
