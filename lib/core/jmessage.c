@@ -914,8 +914,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	struct fi_cq_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
-	JMessageHeader* tmp_message_header;
-
 	error = 0;
 	endpoint = j_endpoint->endpoint;
 
@@ -923,16 +921,14 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	tmp_message_header = malloc(sizeof(JMessageHeader));
-
-	error = fi_recv(endpoint, tmp_message_header, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
+	error = fi_recv(endpoint, message->data, (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
 
-	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, -1); //PERROR: Heap read after free Timing here
+	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, -1);
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
@@ -948,7 +944,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 		else if(error > 0)
 		{
 			//g_printf("\nMessage Header received on Completion Queue (j_message_read)\nNumber: %ld.\n", error);
-			memcpy(message->data, tmp_message_header, sizeof(JMessageHeader));
 			error = 0;
 		}
 		else if(error < 0)
@@ -1016,7 +1011,6 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	ret = TRUE;
 
 	end:
-	free(tmp_message_header);
 	return ret;
 }
 
