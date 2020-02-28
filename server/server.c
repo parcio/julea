@@ -195,69 +195,46 @@ jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	return ret;
 }
 
-
-//TODO dont build a domain for each thread
-static
-gpointer
-j_thread_function(gpointer connection_event_entry)
+/**
+* inits ressources for endpoint-threads
+*/
+gboolean j_thread_init(struct fi_info* info,
+											 struct fid_domain** domain,
+										 	 struct fid_eq** domain_eq,
+										 	 JEndpoint** jendpoint)
 {
-	//Needed Ressources
-	int error = 0;
-	uint32_t event = 0;
-	gboolean berror;
-
-	struct fi_info* info;
-	struct fid_domain* domain;
-	struct fid_eq* domain_event_queue;
+	int error;
+	uint32_t event;
+	gboolean ret;
 
 	struct fi_eq_cm_entry* event_entry;
 	uint32_t event_entry_size;
 	struct fi_eq_err_entry event_queue_err_entry;
 
-	JEndpoint* jendpoint;
-
-
-	J_TRACE_FUNCTION(NULL);
-
-	JMemoryChunk* memory_chunk;
-	g_autoptr(JMessage) message;
-	JStatistics* statistics;
-	guint64 memory_chunk_size;
-
 	struct fi_eq_attr event_queue_attr = * j_configuration_get_fi_eq_attr(jd_configuration);
 	struct fi_cq_attr completion_queue_attr = * j_configuration_get_fi_cq_attr(jd_configuration);
 
-	message = NULL;
-
-	statistics = j_statistics_new(TRUE);
-	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
-	memory_chunk = j_memory_chunk_new(memory_chunk_size);
-
-	message = j_message_new(J_MESSAGE_NONE, 0);
+	error = 0;
+	event = 0;
+	ret = FALSE;
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
-	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
-	info = fi_dupinfo(event_entry->info);
-	fi_freeinfo(event_entry->info);
-	free(connection_event_entry);
+	(* jendpoint) = malloc(sizeof(struct JEndpoint));
+	(* jendpoint)->max_msg_size = info->ep_attr->max_msg_size;
 
-	jendpoint = malloc(sizeof(struct JEndpoint));
-	jendpoint->max_msg_size = info->ep_attr->max_msg_size;
-
-	//Building domain
-	error = fi_domain(j_fabric, info, &domain, NULL);
+	error = fi_domain(j_fabric, info, domain, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_eq_open(j_fabric, &event_queue_attr, &domain_event_queue, NULL);
+	error = fi_eq_open(j_fabric, &event_queue_attr, domain_eq, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Domain Event queue.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_domain_bind(domain, &domain_event_queue->fid, 0);
+	error = fi_domain_bind(* domain, &(* domain_eq)->fid, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
@@ -265,45 +242,45 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	//bulding endpoint
-	error = fi_endpoint(domain, info, &jendpoint->endpoint, NULL);
+	error = fi_endpoint(* domain, info, &(* jendpoint)->endpoint, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
-	error = fi_eq_open(j_fabric, &event_queue_attr, &jendpoint->event_queue, NULL);
+	error = fi_eq_open(j_fabric, &event_queue_attr, &(* jendpoint)->event_queue, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating endpoint Event queue.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
-	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->event_queue->fid, 0);
+	error = fi_ep_bind((* jendpoint)->endpoint, &(* jendpoint)->event_queue->fid, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->completion_queue_receive, NULL);
+	error = fi_cq_open(* domain, &completion_queue_attr, &(* jendpoint)->completion_queue_receive, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(domain, &completion_queue_attr, &jendpoint->completion_queue_transmit, NULL);
+	error = fi_cq_open(* domain, &completion_queue_attr, &(* jendpoint)->completion_queue_transmit, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->completion_queue_transmit->fid, FI_TRANSMIT);
+	error = fi_ep_bind((* jendpoint)->endpoint, &(* jendpoint)->completion_queue_transmit->fid, FI_TRANSMIT);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_ep_bind(jendpoint->endpoint, &jendpoint->completion_queue_receive->fid, FI_RECV);
+	error = fi_ep_bind((* jendpoint)->endpoint, &(* jendpoint)->completion_queue_receive->fid, FI_RECV);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
@@ -311,20 +288,20 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	g_mutex_lock(&thread_cq_array_mutex);
-	g_ptr_array_add(thread_cq_array, jendpoint->completion_queue_receive);
-	g_ptr_array_add(thread_cq_array, jendpoint->completion_queue_transmit);
+	g_ptr_array_add(thread_cq_array, (* jendpoint)->completion_queue_receive);
+	g_ptr_array_add(thread_cq_array, (* jendpoint)->completion_queue_transmit);
 	g_mutex_unlock(&thread_cq_array_mutex);
 
 	//PERROR no receive Buffer before accepting connetcion.
 
-	error = fi_enable(jendpoint->endpoint);
+	error = fi_enable((* jendpoint)->endpoint);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
-	error = fi_accept(jendpoint->endpoint, NULL, 0);
+	error = fi_accept((* jendpoint)->endpoint, NULL, 0);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
@@ -332,12 +309,12 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	event_entry = malloc(event_entry_size);
-	error = fi_eq_sread(jendpoint->event_queue, &event, event_entry, event_entry_size, -1, 0);
+	error = fi_eq_sread((* jendpoint)->event_queue, &event, event_entry, event_entry_size, -1, 0);
 	if(error != 0)
 	{
 		if(error == -FI_EAVAIL)
 		{
-			error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
+			error = fi_eq_readerr((* jendpoint)->event_queue, &event_queue_err_entry, 0);
 			if(error != 0)
 			{
 				g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
@@ -346,7 +323,7 @@ j_thread_function(gpointer connection_event_entry)
 			}
 			else
 			{
-				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((* jendpoint)->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 				goto end;
 			}
 		}
@@ -364,6 +341,148 @@ j_thread_function(gpointer connection_event_entry)
 	free(event_entry);
 
 	if(event == FI_CONNECTED)
+	{
+		ret = TRUE;
+	}
+	end:
+	return ret;
+}
+
+/**
+* shuts down thread ressources
+*/
+void
+thread_shutdown_libfabric (struct fi_info* info,
+													 struct fid_domain* domain,
+												   struct fid_eq* domain_eq,
+												 	 JEndpoint* jendpoint)
+{
+	int error;
+	gboolean berror;
+
+	error = 0;
+	berror = FALSE;
+
+	//if shutdown initiated by server initiate a shutdown event on peer
+	if(j_thread_running == FALSE)
+	{
+		error = fi_shutdown(jendpoint->endpoint, 0);
+		if(error != 0)
+		{
+			g_critical("\nError on Server while shutting down connection\n.Details: \n%s", fi_strerror(error));
+		}
+		error = 0;
+	}
+
+  //end all fabric resources
+	error = 0;
+
+	fi_freeinfo(info);
+
+	//remove cq of ending thread from thread_cq_array
+	g_mutex_lock(&thread_cq_array_mutex);
+	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_receive);
+	if(berror == FALSE)
+	{
+		g_critical("\nRemoving cq_recv information from thread_cq_array did not work.\n");
+	}
+	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_transmit);
+	if(berror == FALSE)
+	{
+		g_critical("\nRemoving cq_transmit information from thread_cq_array did not work.\n");
+	}
+	g_mutex_unlock(&thread_cq_array_mutex);
+
+	error = fi_close(&jendpoint->endpoint->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread endpoint.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&jendpoint->completion_queue_receive->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread receive queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&jendpoint->completion_queue_transmit->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread transmition queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&jendpoint->event_queue->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread endpoint event queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&domain_eq->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread domain event queue.\n Details:\n %s", fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&domain->fid);
+	if(error != 0)
+	{
+		g_critical("\nSomething went horribly wrong closing thread domain.\n Details:\n %s", fi_strerror(error));
+	}
+
+	free(jendpoint);
+}
+
+//TODO dont build a domain for each thread
+/**
+* Main function for each spawned endpoint-thread
+*/
+static
+gpointer
+j_thread_function(gpointer connection_event_entry)
+{
+	//Needed Ressources
+	int error = 0;
+	uint32_t event = 0;
+
+	struct fi_info* info;
+	struct fid_domain* domain;
+	struct fid_eq* domain_event_queue;
+
+	struct fi_eq_cm_entry* event_entry;
+	uint32_t event_entry_size;
+	struct fi_eq_err_entry event_queue_err_entry;
+
+	JEndpoint* jendpoint;
+
+	J_TRACE_FUNCTION(NULL);
+
+	JMemoryChunk* memory_chunk;
+	g_autoptr(JMessage) message;
+	JStatistics* statistics;
+	guint64 memory_chunk_size;
+
+
+	message = NULL;
+
+	statistics = j_statistics_new(TRUE);
+	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
+	memory_chunk = j_memory_chunk_new(memory_chunk_size);
+
+	message = j_message_new(J_MESSAGE_NONE, 0);
+
+	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
+	event_entry = (struct fi_eq_cm_entry*) connection_event_entry;
+
+	info = fi_dupinfo(event_entry->info);
+	fi_freeinfo(event_entry->info);
+	free(connection_event_entry);
+
+	if(j_thread_init(info, &domain, &domain_event_queue, &jendpoint) == TRUE)
 	{
 		do
 		{
@@ -433,80 +552,11 @@ j_thread_function(gpointer connection_event_entry)
 	}
 
 	end:
-	if(j_thread_running == FALSE)
-	{
-		error = fi_shutdown(jendpoint->endpoint, 0);
-		if(error != 0)
-		{
-			g_critical("\nError on Server while shutting down connection\n.Details: \n%s", fi_strerror(error));
-		}
-		error = 0;
-	}
-
-  //end all fabric resources
-	error = 0;
-
-	fi_freeinfo(info);
-
-	//remove cq of ending thread from thread_cq_array
-	g_mutex_lock(&thread_cq_array_mutex);
-	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_receive);
-	if(berror == FALSE)
-	{
-		g_critical("\nRemoving cq_recv information from thread_cq_array did not work.\n");
-	}
-	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_transmit);
-	if(berror == FALSE)
-	{
-		g_critical("\nRemoving cq_transmit information from thread_cq_array did not work.\n");
-	}
-	g_mutex_unlock(&thread_cq_array_mutex);
-
-	error = fi_close(&jendpoint->endpoint->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread endpoint.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&jendpoint->completion_queue_receive->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread receive queue.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&jendpoint->completion_queue_transmit->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread transmition queue.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&jendpoint->event_queue->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread endpoint event queue.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&domain_event_queue->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread domain event queue.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&domain->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread domain.\n Details:\n %s", fi_strerror(error));
-	}
-
-	free(jendpoint);
 
 	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
+
+	thread_shutdown_libfabric(info, domain, domain_event_queue, jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
 	if(g_atomic_int_compare_and_exchange(&thread_count, 0, 0) && !j_thread_running)
