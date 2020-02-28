@@ -44,13 +44,6 @@
 #include <rdma/fi_cm.h> //connection management
 #include <rdma/fi_errno.h> //translation error numbers
 
-//hostname to ip resolver includes
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <glib/gprintf.h>
 
 /**
@@ -99,13 +92,6 @@ static struct fi_info* j_info;
 char*
 hostname_resolver(const char* hostname, const char* service);
 */
-
-
-gboolean
-hostname_resolver(const char* hostname, const char* service, struct addrinfo** addrinfo_ret, uint* amount);
-
-gboolean
-hostname_connector(const char* hostname, const char* service, JEndpoint* endpoint);
 
 
 void
@@ -230,6 +216,114 @@ j_connection_pool_init (JConfiguration* configuration)
 	;
 }
 
+/**
+* Checks whether endpoint has a shutdown message on event queue
+*
+*/
+gboolean
+j_endpoint_shutdown_test (JEndpoint* endpoint, const gchar* location)
+{
+	int error;
+	gboolean ret;
+
+	uint32_t event;
+	struct fi_eq_cm_entry* event_entry;
+	struct fi_eq_err_entry event_queue_err_entry;
+
+	ret = FALSE;
+	error = 0;
+
+	event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
+	error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
+	if(error != 0)
+	{
+		if(error == -FI_EAVAIL)
+		{
+			error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
+			if(error != 0)
+			{
+				g_critical("\nError occurred on Client while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
+			}
+			else
+			{
+				g_critical("\nError Message on Client, on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+			}
+		}
+		else if(error == -FI_EAGAIN)
+		{
+			ret = FALSE;
+		}
+		else if(error < 0)
+		{
+			g_critical("\nError while reading event queue (%s) after reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
+		}
+	}
+	free(event_entry);
+	if(event == FI_SHUTDOWN)
+	{
+		ret = TRUE;
+	}
+	return ret;
+}
+
+
+/**
+* closes the JEndpoint given and all associated objects
+*
+*/
+void
+j_endpoint_fini (JEndpoint* endpoint, JMessage* message , gboolean send_shutdown_message, const gchar* location)
+{
+	int error = 0;
+
+	//empty wakeup message for server Thread shutdown
+	if(send_shutdown_message == TRUE)
+	{
+		gboolean berror;
+		berror = j_message_send(message, endpoint);
+		if(berror == FALSE)
+		{
+			g_critical("\nSending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
+		}
+		error = fi_shutdown(endpoint->endpoint,0);
+		if(error != 0)
+		{
+			g_critical("\nSomething went horribly wrong during %s connection shutdown.\n Details:\n %s", location, fi_strerror(error));
+			error = 0;
+		}
+	}
+
+	error = fi_close(&endpoint->endpoint->fid);
+	if(error != 0)
+	{
+		g_critical("\nProblem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&endpoint->completion_queue_receive->fid);
+	if(error != 0)
+	{
+		g_critical("\nProblem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&endpoint->completion_queue_transmit->fid);
+	if(error != 0)
+	{
+		g_critical("\nProblem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(error));
+		error = 0;
+	}
+
+	error = fi_close(&endpoint->event_queue->fid);
+	if(error != 0)
+	{
+		g_critical("\nProblem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(error));
+		error = 0;
+	}
+	free(endpoint);
+	endpoint = NULL;
+}
+
 /*
 /closes the connection_pool and all associated objects
 */
@@ -239,22 +333,17 @@ j_connection_pool_fini (void)
 	J_TRACE_FUNCTION(NULL);
 
 	int error;
-	gboolean berror;
 	gboolean server_shutdown_happened;
 	JConnectionPool* pool;
 	JEndpoint* endpoint;
 	JMessage* message;
-
-	struct fi_eq_cm_entry* event_entry;
-	uint32_t event;
-	struct fi_eq_err_entry event_queue_err_entry;
 
 	g_return_if_fail(j_connection_pool != NULL);
 
 	pool = g_atomic_pointer_get(&j_connection_pool);
 	g_atomic_pointer_set(&j_connection_pool, NULL);
 
-	 message = j_message_new(J_MESSAGE_NONE, 0);
+	message = j_message_new(J_MESSAGE_NONE, 0);
 
 	fi_freeinfo(j_info);
 
@@ -263,168 +352,27 @@ j_connection_pool_fini (void)
 
 	if ((endpoint = g_async_queue_try_pop(pool->object_queues[0].queue)) != NULL)
 	{
-		event = 0;
-		event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
-		error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
-		if(error != 0)
-		{
-			if(error == -FI_EAVAIL)
-			{
-				error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
-				if(error != 0)
-				{
-					g_critical("\nError occurred on Client while reading Error Message from Event queue (object) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-				}
-				else
-				{
-					g_critical("\nError Message on Client, on Event queue (object) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
-				}
-			}
-			else if(error == -FI_EAGAIN)
-			{
-				// server_shutdown_happened = FALSE;
-			}
-			else if(error < 0)
-			{
-				g_critical("\nError while reading event queue(object) after reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-			}
-		}
-		if(event == FI_SHUTDOWN)
-		{
-			server_shutdown_happened = TRUE;
-			g_printf("\nshutdown event read.\n");
-		}
-		free(event_entry);
+		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "object");
 		g_async_queue_push_front(pool->object_queues[0].queue, endpoint);
 	}
 
 	else if ((endpoint = g_async_queue_try_pop(pool->kv_queues[0].queue)) != NULL)
 	{
-		event = 0;
-		event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
-		error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
-		if(error != 0)
-		{
-			if(error == -FI_EAVAIL)
-			{
-				error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
-				if(error != 0)
-				{
-					g_critical("\nError occurred on Client while reading Error Message from Event queue (kv) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-				}
-				else
-				{
-					g_critical("\nError Message on Client, on Event queue (kv) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
-				}
-			}
-			else if(error == -FI_EAGAIN)
-			{
-				// server_shutdown_happened = FALSE;
-			}
-			else if(error < 0)
-			{
-				g_critical("\nError while reading event queue(kv) after reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-			}
-		}
-		if(event == FI_SHUTDOWN)
-		{
-			server_shutdown_happened = TRUE;
-			g_printf("\nshutdown event read.\n");
-		}
-		free(event_entry);
+		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "kv");
 		g_async_queue_push_front(pool->kv_queues[0].queue, endpoint);
 	}
 	else if ((endpoint = g_async_queue_try_pop(pool->db_queues[0].queue)) != NULL)
 	{
-		event = 0;
-		event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
-		error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
-		if(error != 0)
-		{
-			if(error == -FI_EAVAIL)
-			{
-				error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
-				if(error != 0)
-				{
-					g_critical("\nError occurred on Client while reading Error Message from Event queue (db) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-				}
-				else
-				{
-					g_critical("\nError Message on Client, on Event queue (db) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
-				}
-			}
-			else if(error == -FI_EAGAIN)
-			{
-				// server_shutdown_happened = FALSE;
-			}
-			else if(error < 0)
-			{
-				g_critical("\nError while reading event queue(db) after reading for shutdown.\nDetails:\n%s", fi_strerror(error));
-			}
-		}
-		if(event == FI_SHUTDOWN)
-		{
-			server_shutdown_happened = TRUE;
-			g_printf("\nshutdown event read.\n");
-		}
-		free(event_entry);
+		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "db");
 		g_async_queue_push_front(pool->db_queues[0].queue, endpoint);
 	}
 
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
-		endpoint = NULL;
-		error = 0;
-		berror = FALSE;
-
 		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
 		{
-			//empty wakeup message for server Thread shutdown
-			if(server_shutdown_happened == FALSE)
-			{
-				berror = j_message_send(message, endpoint);
-				if(berror == FALSE)
-				{
-					g_critical("\nSending wakeup message while connection pool (object queues) shutdown did not work.\n");
-				}
-				error = fi_shutdown(endpoint->endpoint,0);
-				if(error != 0)
-				{
-					g_critical("\nSomething went horribly wrong during object connection shutdown.\n Details:\n %s", fi_strerror(error));
-					error = 0;
-				}
-			}
-
-			error = fi_close(&endpoint->endpoint->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing object-Endpoint.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_receive->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing object-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_transmit->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing object-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->event_queue->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing object-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-			free(endpoint);
-			endpoint = NULL;
+			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "object");
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -432,58 +380,9 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
-		error = 0;
-		endpoint = NULL;
-		berror = FALSE;
-
 		while ((endpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
 		{
-			//empty wakeup message for server Thread shutdown
-			if(server_shutdown_happened == FALSE)
-			{
-				berror = j_message_send(message, endpoint);
-				if(berror == FALSE)
-				{
-					g_critical("\nSending wakeup message while connection pool (kv queues) shutdown did not work.\n");
-				}
-				error = fi_shutdown(endpoint->endpoint,0);
-				if(error != 0)
-				{
-					g_critical("\nSomething went horribly wrong during kv connection shutdown.\n Details:\n %s", fi_strerror(error));
-					error = 0;
-				}
-			}
-
-
-			error = fi_close(&endpoint->endpoint->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing kv-Endpoint.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_receive->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing kv-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_transmit->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing kv-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->event_queue->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing kv-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-			free(endpoint);
-			endpoint = NULL;
+			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "kv");
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -491,58 +390,9 @@ j_connection_pool_fini (void)
 
 	for (guint i = 0; i < pool->db_len; i++)
 	{
-		error = 0;
-		endpoint = NULL;
-		berror = FALSE;
-
 		while ((endpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
 		{
-			//empty wakeup message for server Thread shutdown
-			if(server_shutdown_happened == FALSE)
-			{
-				berror = j_message_send(message, endpoint);
-				if(berror == FALSE)
-				{
-					g_critical("\nSending wakeup message while connection pool (db queues) shutdown did not work.\n");
-				}
-				error = fi_shutdown(endpoint->endpoint,0);
-				if(error != 0)
-				{
-					g_critical("\nSomething went horribly wrong during db connection shutdown.\n Details:\n %s", fi_strerror(error));
-					error = 0;
-				}
-			}
-
-
-			error = fi_close(&endpoint->endpoint->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing db-Endpoint.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_receive->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing db-Endpoint receive completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->completion_queue_transmit->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing db-Endpoint transmit completion queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-
-			error = fi_close(&endpoint->event_queue->fid);
-			if(error != 0)
-			{
-				g_critical("\nSomething went horribly wrong during closing db-Endpoint event queue.\n Details:\n %s", fi_strerror(error));
-				error = 0;
-			}
-			free(endpoint);
-			endpoint = NULL;
+			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "db");
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -605,7 +455,16 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 	if (endpoint != NULL)
 	{
-		return endpoint;
+		if(j_endpoint_shutdown_test (endpoint, "pop") == TRUE)
+		{
+			//TODO init a finish of this connection_pool?
+			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
+			g_warning("\nShutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
+		}
+		else
+		{
+			return endpoint;
+		}
 	}
 
 	if ((guint)g_atomic_int_get(count) < j_connection_pool->max_count)
@@ -973,48 +832,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 	return ret;
 }
 
-
-/**
-* uses getaddrinfo to get info about the environment of hostname including hostname IP and
-* inet_ntoa to get the IP into a doted IPV4 representation for libfabric usage
-*/
-/*
-char*
-hostname_resolver(const char* hostname, const char* service)
-{
-	int error;
-	char* ip;
-	char* ret;
-	struct addrinfo* hints;
-	struct addrinfo* addrinfo_ret;
-
-	hints = malloc(sizeof(struct addrinfo));
-	memset(hints, 0, sizeof(struct addrinfo));
-	ret = NULL;
-	ip = NULL;
-
-	error = getaddrinfo(hostname, service, hints, &addrinfo_ret);
-	if(error != 0)
-	{
-		g_critical("\ngetaddrinfo did not resolve hostname\n");
-		goto end;
-	}
-
-	if(ip == NULL)
-	{
-		g_critical("\nIP not parsed\n");
-		goto end;
-	}
-
-	ret = g_strdup(ip);
-	g_printf("\nhostname: %s\nIP: %s\n", hostname, ret);
-
-	end:
-	freeaddrinfo(hints);
-	freeaddrinfo(addrinfo_ret);
-	return g_strdup("127.0.0.1"); //return ret;
-}
-*/
 
 /**
  * @}
