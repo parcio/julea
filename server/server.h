@@ -40,8 +40,8 @@ G_GNUC_INTERNAL JBackend* jd_object_backend;
 G_GNUC_INTERNAL JBackend* jd_kv_backend;
 G_GNUC_INTERNAL JBackend* jd_db_backend;
 
-G_GNUC_INTERNAL gboolean j_thread_init(struct fi_info*, struct fid_domain**, struct fid_eq**, JEndpoint**);
-G_GNUC_INTERNAL void thread_shutdown_libfabric (struct fi_info*, struct fid_domain*, struct fid_eq*, JEndpoint*);
+G_GNUC_INTERNAL gboolean j_thread_libfabric_ress_init(struct fi_info*, struct fid_domain**, struct fid_eq**, JEndpoint**);
+G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown (struct fi_info*, struct fid_domain*, struct fid_eq*, JEndpoint*);
 
 G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
 

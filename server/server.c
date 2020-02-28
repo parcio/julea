@@ -198,10 +198,10 @@ jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 /**
 * inits ressources for endpoint-threads
 */
-gboolean j_thread_init(struct fi_info* info,
-											 struct fid_domain** domain,
-										 	 struct fid_eq** domain_eq,
-										 	 JEndpoint** jendpoint)
+gboolean j_thread_libfabric_ress_init(struct fi_info* info,
+											 								struct fid_domain** domain,
+										 	 								struct fid_eq** domain_eq,
+										 	 								JEndpoint** jendpoint)
 {
 	int error;
 	uint32_t event;
@@ -352,10 +352,10 @@ gboolean j_thread_init(struct fi_info* info,
 * shuts down thread ressources
 */
 void
-thread_shutdown_libfabric (struct fi_info* info,
-													 struct fid_domain* domain,
-												   struct fid_eq* domain_eq,
-												 	 JEndpoint* jendpoint)
+j_thread_libfabric_ress_shutdown (struct fi_info* info,
+													 			struct fid_domain* domain,
+												   			struct fid_eq* domain_eq,
+												 	 			JEndpoint* jendpoint)
 {
 	int error;
 	gboolean berror;
@@ -482,7 +482,7 @@ j_thread_function(gpointer connection_event_entry)
 	fi_freeinfo(event_entry->info);
 	free(connection_event_entry);
 
-	if(j_thread_init(info, &domain, &domain_event_queue, &jendpoint) == TRUE)
+	if(j_thread_libfabric_ress_init(info, &domain, &domain_event_queue, &jendpoint) == TRUE)
 	{
 		do
 		{
@@ -556,7 +556,7 @@ j_thread_function(gpointer connection_event_entry)
 	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
 
-	thread_shutdown_libfabric(info, domain, domain_event_queue, jendpoint);
+	j_thread_libfabric_ress_shutdown(info, domain, domain_event_queue, jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
 	if(g_atomic_int_compare_and_exchange(&thread_count, 0, 0) && !j_thread_running)
@@ -576,7 +576,7 @@ j_thread_function(gpointer connection_event_entry)
 */
 static
 void
-j_init_libfabric_ressources(struct fi_info* fi_hints, struct fi_eq_attr* event_queue_attr)
+j_libfabric_ress_init(struct fi_info* fi_hints, struct fi_eq_attr* event_queue_attr)
 {
 	int error = 0;
 
@@ -773,7 +773,7 @@ main (int argc, char** argv)
 		g_critical("\nAllocating empty hints did not work\n");
 	}
 
-	j_init_libfabric_ressources(fi_hints, &event_queue_attr);
+	j_libfabric_ress_init(fi_hints, &event_queue_attr);
 	fi_freeinfo(fi_hints);
 
 
