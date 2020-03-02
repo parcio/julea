@@ -22,14 +22,6 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and
-#include <rdma/fi_endpoint.h>
-#include <rdma/fi_cm.h> //connection management
-#include <rdma/fi_errno.h> //translation error numbers
-
-
 #include <julea.h>
 
 #include "server.h"

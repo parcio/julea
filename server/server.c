@@ -32,11 +32,6 @@
 
 #include "server.h"
 
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and
-#include <rdma/fi_cm.h> //connection management
-#include <rdma/fi_errno.h> //translation error numbers
-
 #include <netinet/in.h> //for target address
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -61,17 +56,6 @@ static GMutex thread_cq_array_mutex;
 
 static JConfiguration* jd_configuration;
 
-//TODO data structure over domains
-//structure to minimize amount of domains in memory
-static struct domain_info
-{
-	struct fid_domain* domain;
-	struct fi_info* info;
-	gint refcount;
-};
-
-void
-sig_handler (int);
 
 static
 gboolean
@@ -160,46 +144,6 @@ jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_typ
 	return FALSE;
 }
 
-//Compares function for different domain_attr
-//TODO use this to manage domains for less than 1 domain per thread
-static
-gboolean
-jd_compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
-{
-	gboolean ret = FALSE;
-	struct fi_domain_attr* domain_attr1 = info1->domain_attr;
-	struct fi_domain_attr* domain_attr2 = info2->domain_attr;
-
-	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end;
-	if(domain_attr1->threading != domain_attr2->threading) goto end;
-	if(domain_attr1->control_progress != domain_attr2->control_progress) goto end;
-	if(domain_attr1->data_progress != domain_attr2->data_progress) goto end;
-	if(domain_attr1->resource_mgmt != domain_attr2->resource_mgmt) goto end;
-	if(domain_attr1->av_type != domain_attr2->av_type) goto end;
-	if(domain_attr1->mr_mode != domain_attr2->mr_mode) goto end;
-	if(domain_attr1->mr_key_size != domain_attr2->mr_key_size) goto end;
-	if(domain_attr1->cq_data_size != domain_attr2->cq_data_size) goto end;
-	if(domain_attr1->cq_cnt != domain_attr2->cq_cnt) goto end;
-	if(domain_attr1->ep_cnt != domain_attr2->ep_cnt) goto end;
-	if(domain_attr1->tx_ctx_cnt != domain_attr2->tx_ctx_cnt) goto end;
-	if(domain_attr1->rx_ctx_cnt != domain_attr2->rx_ctx_cnt) goto end;
-	if(domain_attr1->max_ep_tx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
-	if(domain_attr1->max_ep_rx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
-	if(domain_attr1->max_ep_srx_ctx != domain_attr2->max_ep_srx_ctx) goto end;
-	if(domain_attr1->max_ep_stx_ctx != domain_attr2->max_ep_stx_ctx) goto end;
-	if(domain_attr1->cntr_cnt != domain_attr2->cntr_cnt) goto end;
-	if(domain_attr1->mr_iov_limit != domain_attr2->mr_iov_limit) goto end;
-	if(domain_attr1->caps != domain_attr2->caps) goto end;
-	if(domain_attr1->mode != domain_attr2->mode) goto end;
-	//if(domain_attr1->auth_key != domain_attr2->auth_key) goto end; //PERROR: wrong comparison
-	if(domain_attr1->auth_key_size != domain_attr2->auth_key_size) goto end;
-	if(domain_attr1->max_err_data != domain_attr2->max_err_data) goto end;
-	if(domain_attr1->mr_cnt != domain_attr2->mr_cnt) goto end;
-
-	ret = TRUE;
-	end:
-	return ret;
-}
 
 /**
 * inits ressources for endpoint-threads
@@ -359,9 +303,9 @@ gboolean j_thread_libfabric_ress_init(struct fi_info* info,
 */
 void
 j_thread_libfabric_ress_shutdown (struct fi_info* info,
-													 			struct fid_domain* domain,
-												   			struct fid_eq* domain_eq,
-												 	 			JEndpoint* jendpoint)
+													 			  struct fid_domain* domain,
+												   		   	struct fid_eq* domain_eq,
+												 	 		  	JEndpoint* jendpoint)
 {
 	int error;
 	gboolean berror;

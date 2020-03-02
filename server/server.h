@@ -33,6 +33,11 @@
 #include <rdma/fi_errno.h> //translation error numbers
 
 
+struct RefCountedDomain;
+struct DomainCategory;
+typedef struct RefCountedDomain RefCountedDomain;
+typedef struct DomainCategory DomainCategory;
+
 G_GNUC_INTERNAL JStatistics* jd_statistics;
 G_GNUC_INTERNAL GMutex jd_statistics_mutex[1];
 
@@ -42,6 +47,22 @@ G_GNUC_INTERNAL JBackend* jd_db_backend;
 
 G_GNUC_INTERNAL gboolean j_thread_libfabric_ress_init(struct fi_info*, struct fid_domain**, struct fid_eq**, JEndpoint**);
 G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown (struct fi_info*, struct fid_domain*, struct fid_eq*, JEndpoint*);
+
+G_GNUC_INTERNAL void sig_handler (int);
+
+/**
+* domain management functions
+*/
+G_GNUC_INTERNAL void domain_ref (RefCountedDomain*);
+G_GNUC_INTERNAL void domain_unref (RefCountedDomain*);
+G_GNUC_INTERNAL void domain_manager_init (void);
+G_GNUC_INTERNAL void domain_manager_fini (void);
+G_GNUC_INTERNAL gboolean domain_request(struct fid_fabric*, struct fi_info* , JConfiguration*, RefCountedDomain**);
+G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info* info, DomainCategory** rc_cat);
+G_GNUC_INTERNAL void domain_category_ref (DomainCategory* category);
+G_GNUC_INTERNAL void domain_category_unref (DomainCategory* category);
+G_GNUC_INTERNAL gboolean domain_new_internal (struct fid_fabric*, struct fi_info*, JConfiguration*, RefCountedDomain**);
+G_GNUC_INTERNAL gboolean compare_domain_infos(struct fi_info*, struct fi_info*);
 
 G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
 
