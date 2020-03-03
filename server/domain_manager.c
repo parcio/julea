@@ -200,9 +200,6 @@ domain_unref (RefCountedDomain* rc_domain)
 {
 	g_return_if_fail(rc_domain != NULL);
 
-	g_printf("\nNumber of categories before ending one domain: %d", domain_manager->len);
-	g_printf("\nNumber of domains in category before ending one domain: %d", rc_domain->category->ref_count);
-
 	if(g_atomic_int_dec_and_test(&rc_domain->ref_count) == TRUE)
 	{
 		int error;
