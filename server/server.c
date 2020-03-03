@@ -149,8 +149,7 @@ jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_typ
 * inits ressources for endpoint-threads
 */
 gboolean j_thread_libfabric_ress_init(struct fi_info* info,
-											 								struct fid_domain** domain,
-										 	 								struct fid_eq** domain_eq,
+											 								RefCountedDomain** rc_domain,
 										 	 								JEndpoint** jendpoint)
 {
 	int error;
@@ -172,27 +171,14 @@ gboolean j_thread_libfabric_ress_init(struct fi_info* info,
 	(* jendpoint) = malloc(sizeof(struct JEndpoint));
 	(* jendpoint)->max_msg_size = info->ep_attr->max_msg_size;
 
-	error = fi_domain(j_fabric, info, domain, NULL);
-	if(error != 0)
+	domain_manager_init();
+	if(domain_request(j_fabric, info, jd_configuration, rc_domain) != TRUE)
 	{
-		g_critical("\nError occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
-		goto end;
-	}
-	error = fi_eq_open(j_fabric, &event_queue_attr, domain_eq, NULL);
-	if(error != 0)
-	{
-		g_critical("\nError occurred on Server while creating Domain Event queue.\n Details:\n %s", fi_strerror(error));
-		goto end;
-	}
-	error = fi_domain_bind(* domain, &(* domain_eq)->fid, 0);
-	if(error != 0)
-	{
-		g_critical("\nError occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
 
 	//bulding endpoint
-	error = fi_endpoint(* domain, info, &(* jendpoint)->endpoint, NULL);
+	error = fi_endpoint((* rc_domain)->domain, info, &(* jendpoint)->endpoint, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(error));
@@ -212,13 +198,13 @@ gboolean j_thread_libfabric_ress_init(struct fi_info* info,
 		g_critical("\nError occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(* domain, &completion_queue_attr, &(* jendpoint)->completion_queue_receive, NULL);
+	error = fi_cq_open((* rc_domain)->domain, &completion_queue_attr, &(* jendpoint)->completion_queue_receive, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	error = fi_cq_open(* domain, &completion_queue_attr, &(* jendpoint)->completion_queue_transmit, NULL);
+	error = fi_cq_open((* rc_domain)->domain, &completion_queue_attr, &(* jendpoint)->completion_queue_transmit, NULL);
 	if(error != 0)
 	{
 		g_critical("\nError occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
@@ -303,8 +289,7 @@ gboolean j_thread_libfabric_ress_init(struct fi_info* info,
 */
 void
 j_thread_libfabric_ress_shutdown (struct fi_info* info,
-													 			  struct fid_domain* domain,
-												   		   	struct fid_eq* domain_eq,
+													 			  RefCountedDomain* rc_domain,
 												 	 		  	JEndpoint* jendpoint)
 {
 	int error;
@@ -371,18 +356,8 @@ j_thread_libfabric_ress_shutdown (struct fi_info* info,
 		error = 0;
 	}
 
-	error = fi_close(&domain_eq->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread domain event queue.\n Details:\n %s", fi_strerror(error));
-		error = 0;
-	}
-
-	error = fi_close(&domain->fid);
-	if(error != 0)
-	{
-		g_critical("\nSomething went horribly wrong closing thread domain.\n Details:\n %s", fi_strerror(error));
-	}
+	domain_unref(rc_domain);
+	domain_manager_fini();
 
 	free(jendpoint);
 }
@@ -400,8 +375,7 @@ j_thread_function(gpointer connection_event_entry)
 	uint32_t event = 0;
 
 	struct fi_info* info;
-	struct fid_domain* domain;
-	struct fid_eq* domain_event_queue;
+	RefCountedDomain* rc_domain;
 
 	struct fi_eq_cm_entry* event_entry;
 	uint32_t event_entry_size;
@@ -432,7 +406,7 @@ j_thread_function(gpointer connection_event_entry)
 	fi_freeinfo(event_entry->info);
 	free(connection_event_entry);
 
-	if(j_thread_libfabric_ress_init(info, &domain, &domain_event_queue, &jendpoint) == TRUE)
+	if(j_thread_libfabric_ress_init(info, &rc_domain, &jendpoint) == TRUE)
 	{
 		do
 		{
@@ -505,7 +479,7 @@ j_thread_function(gpointer connection_event_entry)
 	j_memory_chunk_free(memory_chunk);
 	j_statistics_free(statistics);
 
-	j_thread_libfabric_ress_shutdown(info, domain, domain_event_queue, jendpoint);
+	j_thread_libfabric_ress_shutdown(info, rc_domain, jendpoint);
 
 	g_atomic_int_dec_and_test(&thread_count);
 	if(g_atomic_int_compare_and_exchange(&thread_count, 0, 0) && !j_thread_running)

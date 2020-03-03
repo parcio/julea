@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,24 +30,13 @@
 
 
 //structures to minimize amount of domains in memory
-static GPtrArray* domain_manager; //TODO ref + unref domain_manager on each ref and unref of substructures
+static GPtrArray* domain_manager;
 static GMutex domain_management_mutex;
 
-static struct RefCountedDomain
-{
-	struct fid_domain* domain;
-	struct fid_eq* domain_eq;
-  DomainCategory* category;
-	gint ref_count;
-};
 
-static struct DomainCategory
-{
-	struct fi_info* info; //should be dublicated in here
-	//TODO sortable numeration structure over RefCountedDomains
-  gint ref_count;
-};
-
+/**
+* inits the outer level of the domain_manager
+*/
 void
 domain_manager_init (void)
 {
@@ -56,6 +45,9 @@ domain_manager_init (void)
 }
 
 
+/**
+* shuts the outer level of the domain_manager down
+*/
 void
 domain_manager_fini (void)
 {
@@ -63,13 +55,13 @@ domain_manager_fini (void)
   g_mutex_clear(&domain_management_mutex);
 }
 
+
 /**
 * Request a domain with given info configuration.
 * If no domain with that configuration present, a new one will be created and associated with the fabric given.
 * Returns TRUE if success and a referenced counted domain is in the rc_domain argument.
 * domain_manager_init needs to be called first.
 */
-//TODO Implement //check refcount <= max endpoints of domain
 gboolean
 domain_request(struct fid_fabric* fabric, struct fi_info* info, JConfiguration* configuration, RefCountedDomain** rc_domain)
 {
@@ -80,54 +72,97 @@ domain_request(struct fid_fabric* fabric, struct fi_info* info, JConfiguration* 
 
   if(domain_category_search(info, &category) == TRUE)
   {
-    //TODO decide whether domain has space, if so, return domain, increase refcount
-    //else call domain_new_internal, increase refcount of cat, add new domain, set a pointer to category in rc_domain
+		GSList* current;
+
+		current = category->domain_list;
+    while(current != NULL)
+		{
+			if( ((RefCountedDomain*)current->data)->ref_count < category->info->domain_attr->ep_cnt)
+			{
+				(* rc_domain) = (RefCountedDomain*) current->data;
+				domain_ref((* rc_domain));
+				break;
+			}
+			else
+			{
+				current = category->domain_list->next;
+			}
+		}
+		//if end of list reached without available space in any domain, create new domain
+		if(current == NULL)
+		{
+			if (domain_new_internal(fabric, info, configuration, category, rc_domain) != TRUE)
+			{
+				g_critical("\nProblem initiating a new domain on server.");
+				goto end;
+			}
+			category->domain_list = g_slist_append(category->domain_list, (* rc_domain));
+			domain_category_ref(category);
+		}
     ret = TRUE;
-    goto end;
   }
   else
   {
-    category = malloc(sizeof(DomainCategory));
-    // TODO call domain_new_internal, add a new category with the new domain, set refcount of cat to 1, set a pointer to category in rc_domain
-    domain_new_internal(fabric, info, configuration, rc_domain);
+		if (domain_category_new_internal(fabric, info, configuration, &category, rc_domain) != TRUE)
+		{
+			g_critical("\nProblem initiating a new domain category on server.");
+			goto end;
+		}
     ret = TRUE;
-    goto end;
   }
 
-  end:
+	end:
   return ret;
 }
 
+
 /**
-* Searches manager 0 to domain_manager->len for fitting category.
+* Searches manager for fitting category.
 * if found, return said category + true
 * if not found return NULL + false
 */
-//TODO implement
 gboolean
 domain_category_search(struct fi_info* info, DomainCategory** rc_cat)
 {
   gboolean ret;
+	DomainCategory* tmp_cat;
 
-  ret = FALSE;
+	(* rc_cat) = NULL;
+	tmp_cat = NULL;
+	ret = FALSE;
 
-  end:
+	g_mutex_lock(&domain_management_mutex);
+	for (guint i = 0; i < domain_manager->len; i++)
+	{
+		tmp_cat = g_ptr_array_index(domain_manager,i);
+		if(compare_domain_infos(info, tmp_cat->info) == TRUE)
+		{
+			(* rc_cat) = tmp_cat;
+			ret = TRUE;
+			break;
+		}
+	}
+
+	g_mutex_unlock(&domain_management_mutex);
   return ret;
 }
 
-//TODO sort function with highest ref count in front
 
-
+/**
+* increases ref_count of a DomainCategory
+*/
 void
 domain_category_ref (DomainCategory* category)
 {
   g_return_if_fail(category != NULL);
 
 	g_atomic_int_inc(&category->ref_count);
-  //TODO sort category list
 }
 
 
+/**
+* Decreases ref_count of a DomainCategory. If ref_count reaches 0, structure is freed and ref_count of domain_manager is reduced
+*/
 void
 domain_category_unref (DomainCategory* category)
 {
@@ -135,17 +170,17 @@ domain_category_unref (DomainCategory* category)
 
   if(g_atomic_int_dec_and_test(&category->ref_count) == TRUE)
   {
+		fi_freeinfo(category->info);
+		g_slist_free(category->domain_list);
     g_ptr_array_remove (domain_manager, category);
+		g_ptr_array_unref(domain_manager);
     free(category);
-  }
-  else
-  {
-    //TODO sort category list structure
   }
 }
 
+
 /**
-* Increases refcount of domain
+* Increases ref_count of domain
 */
 void
 domain_ref (RefCountedDomain* rc_domain)
@@ -153,12 +188,11 @@ domain_ref (RefCountedDomain* rc_domain)
 	g_return_if_fail(rc_domain != NULL);
 
   g_atomic_int_inc(&rc_domain->ref_count);
-
-  domain_category_ref(rc_domain->category);
 }
 
+
 /**
-* Decreases refcount of domain, frees it if reached 0.
+* Decreases ref_count of domain, frees it if reached 0.
 * deletes category from manager if no entries in category left.
 */
 void
@@ -166,13 +200,15 @@ domain_unref (RefCountedDomain* rc_domain)
 {
 	g_return_if_fail(rc_domain != NULL);
 
+	g_printf("\nNumber of categories before ending one domain: %d", domain_manager->len);
+	g_printf("\nNumber of domains in category before ending one domain: %d", rc_domain->category->ref_count);
+
 	if(g_atomic_int_dec_and_test(&rc_domain->ref_count) == TRUE)
 	{
 		int error;
 
 		error = 0;
 
-		g_mutex_lock(&domain_management_mutex);
 		error = fi_close(&rc_domain->domain_eq->fid);
 		if(error != 0)
 		{
@@ -186,13 +222,43 @@ domain_unref (RefCountedDomain* rc_domain)
 		}
 		domain_category_unref(rc_domain->category);
 		free(rc_domain);
-		g_mutex_unlock(&domain_management_mutex);
 	}
 }
 
-
+/**
+* Builds a new category with a ref_count of 1 and first domain entry on list and adds it to domain_manager
+*/
 gboolean
-domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfiguration* configuration, RefCountedDomain** rc_domain)
+domain_category_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfiguration* configuration, DomainCategory** category, RefCountedDomain** rc_domain)
+{
+	gboolean ret;
+
+	ret = FALSE;
+
+	(* category) = malloc(sizeof(DomainCategory));
+	(* category)->domain_list = NULL;
+	(* category)->info = fi_dupinfo(info);
+	(* category)->ref_count = 0;
+	if(domain_new_internal(fabric, info, configuration, (* category), rc_domain) != TRUE)
+	{
+		goto end;
+	}
+	(* category)->domain_list = g_slist_append((* category)->domain_list, (* rc_domain));
+
+	g_ptr_array_add(domain_manager, category);
+	domain_manager = g_ptr_array_ref(domain_manager);
+
+	ret = TRUE;
+
+	end:
+	return ret;
+}
+
+/**
+* Allocates a new reference counted domain (with internal objects) with a ref_count of 1
+*/
+gboolean
+domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfiguration* configuration, DomainCategory* category, RefCountedDomain** rc_domain)
 {
   gboolean ret;
   int error;
@@ -202,7 +268,6 @@ domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfigura
   ret = FALSE;
   event_queue_attr = * j_configuration_get_fi_eq_attr(configuration);
   * rc_domain = malloc(sizeof(RefCountedDomain));
-
 
   error = fi_domain(fabric, info, &(* rc_domain)->domain, NULL);
 	if(error != 0)
@@ -223,7 +288,9 @@ domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfigura
 		goto end;
 	}
 
-  (* rc_domain)->category = NULL;
+	(* rc_domain)->ref_count = 1;
+  (* rc_domain)->category = category;
+	domain_category_ref(category);
 
   ret = TRUE;
 
@@ -232,14 +299,25 @@ domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfigura
 }
 
 
-//Compares function for different domain_attr
-//TODO use this to manage domains for less than 1 domain per thread
+/**
+*Compares if 2 fi_info structures if they contain the same attributes for domains
+*/
 gboolean
 compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 {
-	gboolean ret = FALSE;
-	struct fi_domain_attr* domain_attr1 = info1->domain_attr;
-	struct fi_domain_attr* domain_attr2 = info2->domain_attr;
+	gboolean ret;
+	struct fi_domain_attr* domain_attr1;
+	struct fi_domain_attr* domain_attr2;
+
+	if(info1 == info2)
+	{
+			ret = TRUE;
+			goto end;
+	}
+
+	ret = FALSE;
+	domain_attr1 = info1->domain_attr;
+	domain_attr2 = info2->domain_attr;
 
 	if(strcmp(domain_attr1->name, domain_attr2->name) != 0) goto end;
 	if(domain_attr1->threading != domain_attr2->threading) goto end;
@@ -262,12 +340,13 @@ compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	if(domain_attr1->mr_iov_limit != domain_attr2->mr_iov_limit) goto end;
 	if(domain_attr1->caps != domain_attr2->caps) goto end;
 	if(domain_attr1->mode != domain_attr2->mode) goto end;
-	//if(domain_attr1->auth_key != domain_attr2->auth_key) goto end; //PERROR: wrong comparison
+	if(* domain_attr1->auth_key != * domain_attr2->auth_key) goto end;
 	if(domain_attr1->auth_key_size != domain_attr2->auth_key_size) goto end;
 	if(domain_attr1->max_err_data != domain_attr2->max_err_data) goto end;
 	if(domain_attr1->mr_cnt != domain_attr2->mr_cnt) goto end;
 
 	ret = TRUE;
 	end:
+	g_printf("\nDomain comparison succeeded");
 	return ret;
 }
