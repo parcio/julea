@@ -28,6 +28,8 @@
 
 #include <glib/gprintf.h>
 
+#include <stdio_ext.h>
+
 
 //structures to minimize amount of domains in memory
 static GPtrArray* domain_manager;
@@ -40,7 +42,7 @@ static GMutex domain_management_mutex;
 void
 domain_manager_init (void)
 {
-  domain_manager = g_ptr_array_new ();
+  domain_manager = g_ptr_array_new();
   g_mutex_init(&domain_management_mutex);
 }
 
@@ -242,11 +244,10 @@ domain_category_new_internal (struct fid_fabric* fabric, struct fi_info* info, J
 	}
 	(* category)->domain_list = g_slist_append((* category)->domain_list, (* rc_domain));
 
-	g_ptr_array_add(domain_manager, category);
-	domain_manager = g_ptr_array_ref(domain_manager);
+	g_ptr_array_add(domain_manager, (gpointer) (* category));
+	g_ptr_array_ref(domain_manager);
 
 	ret = TRUE;
-
 	end:
 	return ret;
 }
@@ -265,6 +266,11 @@ domain_new_internal (struct fid_fabric* fabric, struct fi_info* info, JConfigura
   ret = FALSE;
   event_queue_attr = * j_configuration_get_fi_eq_attr(configuration);
   * rc_domain = malloc(sizeof(RefCountedDomain));
+
+  if(info->domain_attr->ep_cnt < 6)
+  {
+    g_warning("\nLibfabric tries to allocate a new domain with %ld maximal connections. Max connections supported by underlying hardware possibly reached.", info->domain_attr->ep_cnt - g_slist_length(category->domain_list));
+  }
 
   error = fi_domain(fabric, info, &(* rc_domain)->domain, NULL);
 	if(error != 0)
@@ -329,7 +335,7 @@ compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	if(domain_attr1->ep_cnt != domain_attr2->ep_cnt) goto end;
 	if(domain_attr1->tx_ctx_cnt != domain_attr2->tx_ctx_cnt) goto end;
 	if(domain_attr1->rx_ctx_cnt != domain_attr2->rx_ctx_cnt) goto end;
-	if(domain_attr1->max_ep_tx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
+	if(domain_attr1->max_ep_tx_ctx != domain_attr2->max_ep_tx_ctx) goto end;
 	if(domain_attr1->max_ep_rx_ctx != domain_attr2->max_ep_rx_ctx) goto end;
 	if(domain_attr1->max_ep_srx_ctx != domain_attr2->max_ep_srx_ctx) goto end;
 	if(domain_attr1->max_ep_stx_ctx != domain_attr2->max_ep_stx_ctx) goto end;
@@ -337,13 +343,13 @@ compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	if(domain_attr1->mr_iov_limit != domain_attr2->mr_iov_limit) goto end;
 	if(domain_attr1->caps != domain_attr2->caps) goto end;
 	if(domain_attr1->mode != domain_attr2->mode) goto end;
-	if(* domain_attr1->auth_key != * domain_attr2->auth_key) goto end;
+	//if(domain_attr1->auth_key  domain_attr2->auth_key) goto end; FIXME comparison for unsigned char array of unknown length needed, compare by memcmp
 	if(domain_attr1->auth_key_size != domain_attr2->auth_key_size) goto end;
 	if(domain_attr1->max_err_data != domain_attr2->max_err_data) goto end;
 	if(domain_attr1->mr_cnt != domain_attr2->mr_cnt) goto end;
 
 	ret = TRUE;
 	end:
-	g_printf("\nDomain comparison succeeded");
+  _flushlbf();
 	return ret;
 }

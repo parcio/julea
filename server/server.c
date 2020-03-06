@@ -171,7 +171,6 @@ gboolean j_thread_libfabric_ress_init(struct fi_info* info,
 	(* jendpoint) = malloc(sizeof(struct JEndpoint));
 	(* jendpoint)->max_msg_size = info->ep_attr->max_msg_size;
 
-	domain_manager_init();
 	if(domain_request(j_fabric, info, jd_configuration, rc_domain) != TRUE)
 	{
 		goto end;
@@ -357,7 +356,6 @@ j_thread_libfabric_ress_shutdown (struct fi_info* info,
 	}
 
 	domain_unref(rc_domain);
-	domain_manager_fini();
 
 	free(jendpoint);
 }
@@ -778,6 +776,8 @@ main (int argc, char** argv)
 	thread_cq_array = g_ptr_array_new();
 	g_mutex_init(&thread_cq_array_mutex);
 
+	domain_manager_init();
+
 	fi_error = fi_listen(passive_endpoint);
 	if(fi_error != 0)
 	{
@@ -846,6 +846,7 @@ main (int argc, char** argv)
 		fi_error = 0;
 	}
 
+	domain_manager_fini();
 	g_ptr_array_unref(thread_cq_array);
 	g_mutex_clear(&thread_cq_array_mutex);
 
