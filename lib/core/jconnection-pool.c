@@ -450,6 +450,7 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
+	start:
 	endpoint = NULL;
 	endpoint = g_async_queue_try_pop(queue);
 
@@ -458,8 +459,9 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 		if(j_endpoint_shutdown_test (endpoint, "pop") == TRUE)
 		{
 			//TODO init a finish of this connection_pool?
-			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
 			g_warning("\nShutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
+			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
+			goto start;
 		}
 		else
 		{
