@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -52,9 +52,8 @@ static leveldb_readoptions_t* backend_read_options = NULL;
 static leveldb_writeoptions_t* backend_write_options = NULL;
 static leveldb_writeoptions_t* backend_write_options_sync = NULL;
 
-static
-gboolean
-backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
+static gboolean
+backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	JLevelDBBatch* batch;
 
@@ -71,9 +70,8 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* da
 	return (batch != NULL);
 }
 
-static
-gboolean
-backend_batch_execute (gpointer data)
+static gboolean
+backend_batch_execute(gpointer data)
 {
 	JLevelDBBatch* batch = data;
 
@@ -98,9 +96,8 @@ backend_batch_execute (gpointer data)
 	return (leveldb_error == NULL);
 }
 
-static
-gboolean
-backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
+static gboolean
+backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
@@ -115,9 +112,8 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer data, gchar const* key)
+static gboolean
+backend_delete(gpointer data, gchar const* key)
 {
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
@@ -131,9 +127,8 @@ backend_delete (gpointer data, gchar const* key)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
+static gboolean
+backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	JLevelDBBatch* batch = data;
 	g_autofree gchar* nskey = NULL;
@@ -157,9 +152,8 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 	return (result != NULL);
 }
 
-static
-gboolean
-backend_get_all (gchar const* namespace, gpointer* data)
+static gboolean
+backend_get_all(gchar const* namespace, gpointer* data)
 {
 	JLevelDBIterator* iterator = NULL;
 	leveldb_iterator_t* it;
@@ -183,9 +177,8 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	return (iterator != NULL);
 }
 
-static
-gboolean
-backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
+static gboolean
+backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	JLevelDBIterator* iterator = NULL;
 	leveldb_iterator_t* it;
@@ -210,9 +203,8 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	return (iterator != NULL);
 }
 
-static
-gboolean
-backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+static gboolean
+backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	JLevelDBIterator* iterator = data;
 
@@ -257,9 +249,8 @@ out:
 	return FALSE;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	leveldb_options_t* options;
 	g_autofree gchar* dirname = NULL;
@@ -285,9 +276,8 @@ backend_init (gchar const* path)
 	return (backend_db != NULL);
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 	leveldb_readoptions_destroy(backend_read_options);
 	leveldb_writeoptions_destroy(backend_write_options);
@@ -299,8 +289,7 @@ backend_fini (void)
 	}
 }
 
-static
-JBackend leveldb_backend = {
+static JBackend leveldb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.kv = {
@@ -313,13 +302,12 @@ JBackend leveldb_backend = {
 		.backend_get = backend_get,
 		.backend_get_all = backend_get_all,
 		.backend_get_by_prefix = backend_get_by_prefix,
-		.backend_iterate = backend_iterate
-	}
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &leveldb_backend;
 }

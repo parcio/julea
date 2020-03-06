@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,9 +24,8 @@
 
 #include "test.h"
 
-static
-void
-test_distribution_fixture_setup (JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_fixture_setup(JConfiguration** configuration, gconstpointer data)
 {
 	GKeyFile* key_file;
 	gchar const* servers[] = { "localhost", "localhost", NULL };
@@ -52,18 +51,16 @@ test_distribution_fixture_setup (JConfiguration** configuration, gconstpointer d
 	g_key_file_free(key_file);
 }
 
-static
-void
-test_distribution_fixture_teardown (JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_fixture_teardown(JConfiguration** configuration, gconstpointer data)
 {
 	(void)data;
 
 	j_configuration_unref(*configuration);
 }
 
-static
-void
-test_distribution_distribute (JDistributionType type, JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_distribute(JDistributionType type, JConfiguration** configuration, gconstpointer data)
 {
 	g_autoptr(JDistribution) distribution = NULL;
 	gboolean ret;
@@ -198,29 +195,26 @@ test_distribution_distribute (JDistributionType type, JConfiguration** configura
 	g_assert_true(!ret);
 }
 
-static
-void
-test_distribution_round_robin (JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_round_robin(JConfiguration** configuration, gconstpointer data)
 {
 	test_distribution_distribute(J_DISTRIBUTION_ROUND_ROBIN, configuration, data);
 }
 
-static
-void
-test_distribution_single_server (JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_single_server(JConfiguration** configuration, gconstpointer data)
 {
 	test_distribution_distribute(J_DISTRIBUTION_SINGLE_SERVER, configuration, data);
 }
 
-static
-void
-test_distribution_weighted (JConfiguration** configuration, gconstpointer data)
+static void
+test_distribution_weighted(JConfiguration** configuration, gconstpointer data)
 {
 	test_distribution_distribute(J_DISTRIBUTION_WEIGHTED, configuration, data);
 }
 
 void
-test_distribution (void)
+test_distribution(void)
 {
 	g_test_add("/distribution/round_robin", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_round_robin, test_distribution_fixture_teardown);
 	g_test_add("/distribution/single_server", JConfiguration*, NULL, test_distribution_fixture_setup, test_distribution_single_server, test_distribution_fixture_teardown);

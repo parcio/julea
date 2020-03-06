@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -119,16 +119,16 @@ struct JSemantics;
 
 typedef struct JSemantics JSemantics;
 
-JSemantics* j_semantics_new (JSemanticsTemplate);
-JSemantics* j_semantics_new_from_string (gchar const*, gchar const*);
+JSemantics* j_semantics_new(JSemanticsTemplate);
+JSemantics* j_semantics_new_from_string(gchar const*, gchar const*);
 
-JSemantics* j_semantics_ref (JSemantics*);
-void j_semantics_unref (JSemantics*);
+JSemantics* j_semantics_ref(JSemantics*);
+void j_semantics_unref(JSemantics*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
 
-void j_semantics_set (JSemantics*, JSemanticsType, gint);
-gint j_semantics_get (JSemantics*, JSemanticsType);
+void j_semantics_set(JSemantics*, JSemanticsType, gint);
+gint j_semantics_get(JSemantics*, JSemanticsType);
 
 G_END_DECLS
 

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,7 @@
 #include "cli.h"
 
 gboolean
-j_cmd_delete (gchar const** arguments)
+j_cmd_delete(gchar const** arguments)
 {
 	gboolean ret = TRUE;
 	g_autoptr(JBatch) batch = NULL;

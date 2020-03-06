@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,9 +26,8 @@
 
 #include "benchmark.h"
 
-static
-void
-benchmark_memory_chunk_get (BenchmarkResult* result)
+static void
+benchmark_memory_chunk_get(BenchmarkResult* result)
 {
 	guint const n = 50 * 1024 * 1024;
 
@@ -53,7 +52,7 @@ benchmark_memory_chunk_get (BenchmarkResult* result)
 }
 
 void
-benchmark_memory_chunk (void)
+benchmark_memory_chunk(void)
 {
 	j_benchmark_run("/memory_chunk", benchmark_memory_chunk_get);
 }

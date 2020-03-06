@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -50,8 +50,7 @@ struct JKVOperation
 			guint32* value_len;
 			JKVGetFunc func;
 			gpointer data;
-		}
-		get;
+		} get;
 
 		struct
 		{
@@ -59,8 +58,7 @@ struct JKVOperation
 			gpointer* value;
 			guint32 value_len;
 			GDestroyNotify value_destroy;
-		}
-		put;
+		} put;
 	};
 };
 
@@ -96,15 +94,14 @@ static JBackend* j_kv_backend = NULL;
 static GModule* j_kv_module = NULL;
 
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-static void __attribute__((constructor)) j_kv_init (void);
-static void __attribute__((destructor)) j_kv_fini (void);
+static void __attribute__((constructor)) j_kv_init(void);
+static void __attribute__((destructor)) j_kv_fini(void);
 
 /**
  * Initializes the kv client.
  */
-static
-void
-j_kv_init (void)
+static void
+j_kv_init(void)
 {
 	gchar const* kv_backend;
 	gchar const* kv_component;
@@ -131,9 +128,8 @@ j_kv_init (void)
 /**
  * Shuts down the kv client.
  */
-static
-void
-j_kv_fini (void)
+static void
+j_kv_fini(void)
 {
 	if (j_kv_backend == NULL && j_kv_module == NULL)
 	{
@@ -151,9 +147,8 @@ j_kv_fini (void)
 	}
 }
 
-static
-void
-j_kv_put_free (gpointer data)
+static void
+j_kv_put_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -169,9 +164,8 @@ j_kv_put_free (gpointer data)
 	g_slice_free(JKVOperation, operation);
 }
 
-static
-void
-j_kv_delete_free (gpointer data)
+static void
+j_kv_delete_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -180,9 +174,8 @@ j_kv_delete_free (gpointer data)
 	j_kv_unref(kv);
 }
 
-static
-void
-j_kv_get_free (gpointer data)
+static void
+j_kv_get_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -193,9 +186,8 @@ j_kv_get_free (gpointer data)
 	g_slice_free(JKVOperation, operation);
 }
 
-static
-gboolean
-j_kv_put_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_kv_put_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -295,9 +287,8 @@ j_kv_put_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_kv_delete_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_kv_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -387,9 +378,8 @@ j_kv_delete_exec (JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-static
-gboolean
-j_kv_get_exec (JList* operations, JSemantics* semantics)
+static gboolean
+j_kv_get_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -543,7 +533,7 @@ j_kv_get_exec (JList* operations, JSemantics* semantics)
  * \return A new key-value pair. Should be freed with j_kv_unref().
  **/
 JKV*
-j_kv_new (gchar const* namespace, gchar const* key)
+j_kv_new(gchar const* namespace, gchar const* key)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -577,7 +567,7 @@ j_kv_new (gchar const* namespace, gchar const* key)
  * \return A new key-value pair. Should be freed with j_kv_unref().
  **/
 JKV*
-j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
+j_kv_new_for_index(guint32 index, gchar const* namespace, gchar const* key)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -611,7 +601,7 @@ j_kv_new_for_index (guint32 index, gchar const* namespace, gchar const* key)
  * \return key-value pair.
  **/
 JKV*
-j_kv_ref (JKV* kv)
+j_kv_ref(JKV* kv)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -632,7 +622,7 @@ j_kv_ref (JKV* kv)
  * \param kv A key-value pair.
  **/
 void
-j_kv_unref (JKV* kv)
+j_kv_unref(JKV* kv)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -658,7 +648,7 @@ j_kv_unref (JKV* kv)
  * \param batch A batch.
  **/
 void
-j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
+j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -693,7 +683,7 @@ j_kv_put (JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destr
  * \param batch      A batch.
  **/
 void
-j_kv_delete (JKV* kv, JBatch* batch)
+j_kv_delete(JKV* kv, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -720,7 +710,7 @@ j_kv_delete (JKV* kv, JBatch* batch)
  * \param batch     A batch.
  **/
 void
-j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
+j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -755,7 +745,7 @@ j_kv_get (JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
  * \param batch     A batch.
  **/
 void
-j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
+j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -787,7 +777,7 @@ j_kv_get_callback (JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
  * \return The kv backend.
  */
 JBackend*
-j_kv_get_backend (void)
+j_kv_get_backend(void)
 {
 	return j_kv_backend;
 }

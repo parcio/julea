@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_read (char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
+jfs_read(char const* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 

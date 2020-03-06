@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2017-2019 Michael Kuhn
+# Copyright (C) 2017-2020 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +18,8 @@ spack_clone ()
 {
 	local spack_commit
 
-	spack_commit='ae6229dee20da04b2120dc97cdfae800c136e42a'
+	# FIXME maybe use release branch instead
+	spack_commit='8d8925c725491cf028ef6c1b93e431dcb200f439'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -53,29 +54,9 @@ spack_init ()
 
 	test -f "${spack_env}" || return 1
 
-	# FIXME work around https://github.com/spack/spack/pull/13716
-	if test -f /etc/profile.d/modules.sh
-	then
-		. /etc/profile.d/modules.sh
-	fi
-
 	. "${spack_env}"
 
 	return 0
-}
-
-spack_bootstrap ()
-{
-	test -n "${SPACK_DIR}" || return 1
-	test -d "${SPACK_DIR}" || return 1
-
-	(
-		cd "${SPACK_DIR}"
-
-		# FIXME only install if necessary? (command -v module > /dev/null 2>&1)
-		# Use bootstrap to install environment-modules, otherwise the shell integration might not find it.
-		./bin/spack bootstrap
-	)
 }
 
 spack_install ()
@@ -191,8 +172,6 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
-		spack_bootstrap
-
 		for dependency in $(spack_get_dependencies "${mode}")
 		do
 			# FIXME ignore errors?

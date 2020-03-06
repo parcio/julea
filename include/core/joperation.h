@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,8 +34,8 @@
 
 G_BEGIN_DECLS
 
-typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
-typedef void (*JOperationFreeFunc) (gpointer);
+typedef gboolean (*JOperationExecFunc)(JList*, JSemantics*);
+typedef void (*JOperationFreeFunc)(gpointer);
 
 /**
  * An operation.
@@ -51,7 +51,7 @@ struct JOperation
 
 typedef struct JOperation JOperation;
 
-JOperation* j_operation_new (void);
+JOperation* j_operation_new(void);
 
 G_END_DECLS
 

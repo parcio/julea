@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,20 +42,20 @@ typedef struct JKV JKV;
  *
  * The callback will receive a pointer to the data (must be freed by the caller), the data's length and a pointer to optional user-provided data.
  */
-typedef void (*JKVGetFunc) (gpointer, guint32, gpointer);
+typedef void (*JKVGetFunc)(gpointer, guint32, gpointer);
 
-JKV* j_kv_new (gchar const*, gchar const*);
-JKV* j_kv_new_for_index (guint32, gchar const*, gchar const*);
-JKV* j_kv_ref (JKV*);
-void j_kv_unref (JKV*);
+JKV* j_kv_new(gchar const*, gchar const*);
+JKV* j_kv_new_for_index(guint32, gchar const*, gchar const*);
+JKV* j_kv_ref(JKV*);
+void j_kv_unref(JKV*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKV, j_kv_unref)
 
-void j_kv_put (JKV*, gpointer, guint32, GDestroyNotify, JBatch*);
-void j_kv_delete (JKV*, JBatch*);
+void j_kv_put(JKV*, gpointer, guint32, GDestroyNotify, JBatch*);
+void j_kv_delete(JKV*, JBatch*);
 
-void j_kv_get (JKV*, gpointer*, guint32*, JBatch*);
-void j_kv_get_callback (JKV*, JKVGetFunc, gpointer, JBatch*);
+void j_kv_get(JKV*, gpointer*, guint32*, JBatch*);
+void j_kv_get_callback(JKV*, JKVGetFunc, gpointer, JBatch*);
 
 G_END_DECLS
 

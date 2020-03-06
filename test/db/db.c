@@ -1,7 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,9 +26,8 @@
 
 #include "test.h"
 
-static
-void
-test_db_schema_new_free (void)
+static void
+test_db_schema_new_free(void)
 {
 	guint const n = 100000;
 
@@ -43,19 +42,18 @@ test_db_schema_new_free (void)
 	}
 }
 
-static
-void
-test_db_schema_create_delete (void)
+static void
+test_db_schema_create_delete(void)
 {
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	gboolean ret;
 
-	gchar const* idx_file[] = {"file", NULL};
-	gchar const* idx_name[] = {"name", NULL};
-	gchar const* idx_min[] = {"min", NULL};
-	gchar const* idx_max[] = {"max", NULL};
+	gchar const* idx_file[] = { "file", NULL };
+	gchar const* idx_name[] = { "name", NULL };
+	gchar const* idx_min[] = { "min", NULL };
+	gchar const* idx_max[] = { "max", NULL };
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -110,9 +108,8 @@ test_db_schema_create_delete (void)
 	g_assert_true(ret);
 }
 
-static
-void
-test_db_entry_new_free (void)
+static void
+test_db_entry_new_free(void)
 {
 	guint const n = 100000;
 
@@ -132,9 +129,8 @@ test_db_entry_new_free (void)
 	}
 }
 
-static
-void
-test_db_entry_insert_update_delete (void)
+static void
+test_db_entry_insert_update_delete(void)
 {
 	guint const n = 1000;
 
@@ -238,9 +234,8 @@ test_db_entry_insert_update_delete (void)
 	g_assert_true(ret);
 }
 
-static
-void
-schema_create (void)
+static void
+schema_create(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -300,9 +295,8 @@ schema_create (void)
 	g_assert_true(success);
 }
 
-static
-void
-entry_insert (void)
+static void
+entry_insert(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -351,9 +345,8 @@ entry_insert (void)
 	g_assert_true(success);
 }
 
-static
-void
-iterator_get (void)
+static void
+iterator_get(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -370,6 +363,8 @@ iterator_get (void)
 	g_autofree guint64* dim = NULL;
 	g_autofree gdouble* min = NULL;
 	g_autofree gdouble* max = NULL;
+
+	guint entries = 0;
 
 	schema = j_db_schema_new("adios2", "variables", &error);
 	g_assert_nonnull(schema);
@@ -405,12 +400,15 @@ iterator_get (void)
 		success = j_db_iterator_get_field(iterator, "max", &type, (gpointer*)&max, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
+
+		entries++;
 	}
+
+	g_assert_cmpuint(entries, ==, 1);
 }
 
-static
-void
-entry_update (void)
+static void
+entry_update(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -460,9 +458,8 @@ entry_update (void)
 	g_assert_true(success);
 }
 
-static
-void
-entry_delete (void)
+static void
+entry_delete(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -504,19 +501,40 @@ entry_delete (void)
 	g_assert_true(success);
 }
 
-static
-void
-test_db_all (void)
+static void
+schema_delete(void)
+{
+	g_autoptr(GError) error = NULL;
+
+	gboolean success;
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	schema = j_db_schema_new("adios2", "variables", &error);
+	g_assert_nonnull(schema);
+	g_assert_no_error(error);
+
+	success = j_db_schema_delete(schema, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+
+	success = j_batch_execute(batch);
+	g_assert_true(success);
+}
+
+static void
+test_db_all(void)
 {
 	schema_create();
 	entry_insert();
 	iterator_get();
 	entry_update();
 	entry_delete();
+	schema_delete();
 }
 
 void
-test_db (void)
+test_db(void)
 {
 	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -49,11 +49,11 @@ struct JStatistics;
 
 typedef struct JStatistics JStatistics;
 
-JStatistics* j_statistics_new (gboolean);
-void j_statistics_free (JStatistics*);
+JStatistics* j_statistics_new(gboolean);
+void j_statistics_free(JStatistics*);
 
-guint64 j_statistics_get (JStatistics*, JStatisticsType);
-void j_statistics_add (JStatistics*, JStatisticsType, guint64);
+guint64 j_statistics_get(JStatistics*, JStatisticsType);
+void j_statistics_add(JStatistics*, JStatisticsType, guint64);
 
 G_END_DECLS
 

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,9 +25,8 @@
 
 #include "test.h"
 
-static
-void
-test_item_iterator_new_free (void)
+static void
+test_item_iterator_new_free(void)
 {
 	guint const n = 100000;
 
@@ -45,9 +44,8 @@ test_item_iterator_new_free (void)
 	}
 }
 
-static
-void
-test_item_iterator_next_get (void)
+static void
+test_item_iterator_next_get(void)
 {
 	guint const n = 1000;
 
@@ -95,7 +93,7 @@ test_item_iterator_next_get (void)
 }
 
 void
-test_item_iterator (void)
+test_item_iterator(void)
 {
 	g_test_add_func("/item/item-iterator/new_free", test_item_iterator_new_free);
 	g_test_add_func("/item/item-iterator/next_get", test_item_iterator_next_get);

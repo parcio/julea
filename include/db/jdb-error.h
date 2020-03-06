@@ -52,7 +52,7 @@ enum JDBError
 
 typedef enum JDBError JDBError;
 
-GQuark j_db_error_quark (void);
+GQuark j_db_error_quark(void);
 
 G_END_DECLS
 

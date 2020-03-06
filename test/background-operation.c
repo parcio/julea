@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,18 +26,16 @@
 
 #include "test.h"
 
-static
-gpointer
-on_background_operation_completed (gpointer data)
+static gpointer
+on_background_operation_completed(gpointer data)
 {
 	(void)data;
 
 	return NULL;
 }
 
-static
-void
-test_background_operation_new_ref_unref (void)
+static void
+test_background_operation_new_ref_unref(void)
 {
 	JBackgroundOperation* background_operation;
 
@@ -47,9 +45,8 @@ test_background_operation_new_ref_unref (void)
 	j_background_operation_unref(background_operation);
 }
 
-static
-void
-test_background_operation_wait (void)
+static void
+test_background_operation_wait(void)
 {
 	JBackgroundOperation* background_operation;
 
@@ -60,7 +57,7 @@ test_background_operation_wait (void)
 }
 
 void
-test_background_operation (void)
+test_background_operation(void)
 {
 	g_test_add_func("/background_operation/new_ref_unref", test_background_operation_new_ref_unref);
 	g_test_add_func("/background_operation/wait", test_background_operation_wait);

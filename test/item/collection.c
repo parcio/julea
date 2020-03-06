@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,9 +25,8 @@
 
 #include "test.h"
 
-static
-void
-test_collection_fixture_setup (JCollection** collection, gconstpointer data)
+static void
+test_collection_fixture_setup(JCollection** collection, gconstpointer data)
 {
 	g_autoptr(JBatch) batch = NULL;
 
@@ -37,18 +36,16 @@ test_collection_fixture_setup (JCollection** collection, gconstpointer data)
 	*collection = j_collection_create("test-collection", batch);
 }
 
-static
-void
-test_collection_fixture_teardown (JCollection** collection, gconstpointer data)
+static void
+test_collection_fixture_teardown(JCollection** collection, gconstpointer data)
 {
 	(void)data;
 
 	j_collection_unref(*collection);
 }
 
-static
-void
-test_collection_new_free (void)
+static void
+test_collection_new_free(void)
 {
 	guint const n = 100000;
 
@@ -64,9 +61,8 @@ test_collection_new_free (void)
 	}
 }
 
-static
-void
-test_collection_name (JCollection** collection, gconstpointer data)
+static void
+test_collection_name(JCollection** collection, gconstpointer data)
 {
 	(void)data;
 
@@ -74,7 +70,7 @@ test_collection_name (JCollection** collection, gconstpointer data)
 }
 
 void
-test_collection (void)
+test_collection(void)
 {
 	g_test_add_func("/item/collection/new_free", test_collection_new_free);
 	g_test_add("/item/collection/name", JCollection*, NULL, test_collection_fixture_setup, test_collection_name, test_collection_fixture_teardown);

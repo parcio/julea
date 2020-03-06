@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # JULEA - Flexible storage framework
-# Copyright (C) 2013-2019 Michael Kuhn
+# Copyright (C) 2013-2020 Michael Kuhn
 # Copyright (C) 2013 Anna Fuchs
 #
 # This program is free software: you can redistribute it and/or modify

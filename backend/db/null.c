@@ -1,7 +1,7 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2019 Michael Kuhn
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,9 +24,8 @@
 
 #include <julea.h>
 
-static
-gboolean
-backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
+static gboolean
+backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -39,9 +38,8 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* ba
 	return TRUE;
 }
 
-static
-gboolean
-backend_batch_execute (gpointer batch, GError** error)
+static gboolean
+backend_batch_execute(gpointer batch, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -49,21 +47,8 @@ backend_batch_execute (gpointer batch, GError** error)
 	return TRUE;
 }
 
-static
-gboolean
-backend_schema_create (gpointer batch, gchar const* name, bson_t const* schema, GError** error)
-{
-	(void)error;
-	(void)batch;
-	(void)name;
-	(void)schema;
-
-	return TRUE;
-}
-
-static
-gboolean
-backend_schema_get (gpointer batch, gchar const* name, bson_t* schema, GError** error)
+static gboolean
+backend_schema_create(gpointer batch, gchar const* name, bson_t const* schema, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -73,9 +58,19 @@ backend_schema_get (gpointer batch, gchar const* name, bson_t* schema, GError** 
 	return TRUE;
 }
 
-static
-gboolean
-backend_schema_delete (gpointer batch, gchar const* name, GError** error)
+static gboolean
+backend_schema_get(gpointer batch, gchar const* name, bson_t* schema, GError** error)
+{
+	(void)error;
+	(void)batch;
+	(void)name;
+	(void)schema;
+
+	return TRUE;
+}
+
+static gboolean
+backend_schema_delete(gpointer batch, gchar const* name, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -84,9 +79,8 @@ backend_schema_delete (gpointer batch, gchar const* name, GError** error)
 	return TRUE;
 }
 
-static
-gboolean
-backend_insert (gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
+static gboolean
+backend_insert(gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -97,9 +91,8 @@ backend_insert (gpointer batch, gchar const* name, bson_t const* metadata, bson_
 	return TRUE;
 }
 
-static
-gboolean
-backend_update (gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
+static gboolean
+backend_update(gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -110,9 +103,8 @@ backend_update (gpointer batch, gchar const* name, bson_t const* selector, bson_
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer batch, gchar const* name, bson_t const* selector, GError** error)
+static gboolean
+backend_delete(gpointer batch, gchar const* name, bson_t const* selector, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -122,9 +114,8 @@ backend_delete (gpointer batch, gchar const* name, bson_t const* selector, GErro
 	return TRUE;
 }
 
-static
-gboolean
-backend_query (gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+static gboolean
+backend_query(gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
 	(void)error;
 	(void)batch;
@@ -135,9 +126,8 @@ backend_query (gpointer batch, gchar const* name, bson_t const* selector, gpoint
 	return TRUE;
 }
 
-static
-gboolean
-backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
+static gboolean
+backend_iterate(gpointer iterator, bson_t* metadata, GError** error)
 {
 	(void)error;
 	(void)iterator;
@@ -146,18 +136,16 @@ backend_iterate (gpointer iterator, bson_t* metadata, GError** error)
 	return TRUE;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	(void)path;
 
 	return TRUE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 }
 
@@ -176,13 +164,12 @@ static JBackend null_backend = {
 		.backend_query = backend_query,
 		.backend_iterate = backend_iterate,
 		.backend_batch_start = backend_batch_start,
-		.backend_batch_execute = backend_batch_execute
-	}
+		.backend_batch_execute = backend_batch_execute }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &null_backend;
 }

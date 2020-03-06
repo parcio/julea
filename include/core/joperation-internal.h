@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,7 +33,7 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_operation_free (JOperation*);
+G_GNUC_INTERNAL void j_operation_free(JOperation*);
 
 G_END_DECLS
 

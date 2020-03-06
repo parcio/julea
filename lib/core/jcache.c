@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -66,7 +66,7 @@ struct JCache
  * \return A new cache. Should be freed with j_cache_free().
  **/
 JCache*
-j_cache_new (guint64 size)
+j_cache_new(guint64 size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -98,7 +98,7 @@ j_cache_new (guint64 size)
  * \param cache A cache.
  **/
 void
-j_cache_free (JCache* cache)
+j_cache_free(JCache* cache)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -139,7 +139,7 @@ j_cache_free (JCache* cache)
  * \return A pointer to a segment of the cache, NULL if not enough space is available.
  **/
 gpointer
-j_cache_get (JCache* cache, guint64 length)
+j_cache_get(JCache* cache, guint64 length)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -166,7 +166,7 @@ end:
 }
 
 void
-j_cache_release (JCache* cache, gpointer data)
+j_cache_release(JCache* cache, gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 

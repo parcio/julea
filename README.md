@@ -1,6 +1,8 @@
 # JULEA
 
-[![Build Status](https://travis-ci.org/wr-hamburg/julea.svg?branch=master)](https://travis-ci.org/wr-hamburg/julea)
+[![Format](https://github.com/wr-hamburg/julea/workflows/Format/badge.svg)](https://github.com/wr-hamburg/julea/actions)
+[![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
+[![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 
 JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object and key-value backends that can either be client-side or server-side;

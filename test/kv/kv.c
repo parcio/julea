@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,9 +25,8 @@
 
 #include "test.h"
 
-static
-void
-test_kv_new_free (void)
+static void
+test_kv_new_free(void)
 {
 	guint const n = 100000;
 
@@ -40,9 +39,8 @@ test_kv_new_free (void)
 	}
 }
 
-static
-void
-test_kv_ref_unref (void)
+static void
+test_kv_ref_unref(void)
 {
 	guint const n = 100000;
 
@@ -61,9 +59,8 @@ test_kv_ref_unref (void)
 	}
 }
 
-static
-void
-test_kv_put_delete (void)
+static void
+test_kv_put_delete(void)
 {
 	guint const n = 100;
 
@@ -91,9 +88,8 @@ test_kv_put_delete (void)
 	g_assert_true(ret);
 }
 
-static
-void
-test_kv_get (void)
+static void
+test_kv_get(void)
 {
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
@@ -124,9 +120,8 @@ test_kv_get (void)
 	g_assert_true(ret);
 }
 
-static
-void
-get_callback (gpointer value, guint32 length, gpointer data)
+static void
+get_callback(gpointer value, guint32 length, gpointer data)
 {
 	g_assert_cmpstr(value, ==, "kv-value");
 	g_assert_cmpuint(length, ==, strlen("kv-value") + 1);
@@ -135,9 +130,8 @@ get_callback (gpointer value, guint32 length, gpointer data)
 	g_free(value);
 }
 
-static
-void
-test_kv_get_callback (void)
+static void
+test_kv_get_callback(void)
 {
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
@@ -164,7 +158,7 @@ test_kv_get_callback (void)
 }
 
 void
-test_kv_kv (void)
+test_kv_kv(void)
 {
 	g_test_add_func("/kv/kv/new_free", test_kv_new_free);
 	g_test_add_func("/kv/kv/ref_unref", test_kv_ref_unref);

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -40,15 +40,14 @@ static JBackend* j_db_backend = NULL;
 static GModule* j_db_module = NULL;
 
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
-static void __attribute__((constructor)) j_db_init (void);
-static void __attribute__((destructor)) j_db_fini (void);
+static void __attribute__((constructor)) j_db_init(void);
+static void __attribute__((destructor)) j_db_fini(void);
 
 /**
  * Initializes the db client.
  */
-static
-void
-j_db_init (void)
+static void
+j_db_init(void)
 {
 	gchar const* db_backend;
 	gchar const* db_component;
@@ -75,9 +74,8 @@ j_db_init (void)
 /**
  * Shuts down the db client.
  */
-static
-void
-j_db_fini (void)
+static void
+j_db_fini(void)
 {
 	if (j_db_backend == NULL && j_db_module == NULL)
 	{
@@ -101,7 +99,7 @@ j_db_fini (void)
  * \return The db backend.
  */
 JBackend*
-j_db_get_backend (void)
+j_db_get_backend(void)
 {
 	return j_db_backend;
 }

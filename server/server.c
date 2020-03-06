@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -57,9 +57,8 @@ static GMutex thread_cq_array_mutex;
 static JConfiguration* jd_configuration;
 
 
-static
-gboolean
-jd_daemon (void)
+static gboolean
+jd_daemon(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -618,7 +617,7 @@ j_libfabric_ress_init(struct fi_info** info, struct fid_pep** passive_ep, struct
 
 
 int
-main (int argc, char** argv)
+main(int argc, char** argv)
 {
 	J_TRACE_FUNCTION(NULL);
 

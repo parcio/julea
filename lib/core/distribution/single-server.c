@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -84,9 +84,8 @@ typedef struct JDistributionSingleServer JDistributionSingleServer;
  *
  * \return TRUE on success, FALSE if the distribution is finished.
  **/
-static
-gboolean
-distribution_distribute (gpointer data, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
+static gboolean
+distribution_distribute(gpointer data, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -114,9 +113,8 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	return TRUE;
 }
 
-static
-gpointer
-distribution_new (guint server_count, guint64 stripe_size)
+static gpointer
+distribution_new(guint server_count, guint64 stripe_size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -142,9 +140,8 @@ distribution_new (guint server_count, guint64 stripe_size)
  *
  * \param distribution A distribution.
  **/
-static
-void
-distribution_free (gpointer data)
+static void
+distribution_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -164,9 +161,8 @@ distribution_free (gpointer data)
  * \param distribution A distribution.
  * \param index        An index.
  */
-static
-void
-distribution_set (gpointer data, gchar const* key, guint64 value)
+static void
+distribution_set(gpointer data, gchar const* key, guint64 value)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -198,9 +194,8 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-static
-void
-distribution_serialize (gpointer data, bson_t* b)
+static void
+distribution_serialize(gpointer data, bson_t* b)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -223,9 +218,8 @@ distribution_serialize (gpointer data, bson_t* b)
  * \param distribution distribution.
  * \param b           A BSON object.
  **/
-static
-void
-distribution_deserialize (gpointer data, bson_t const* b)
+static void
+distribution_deserialize(gpointer data, bson_t const* b)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -269,9 +263,8 @@ distribution_deserialize (gpointer data, bson_t const* b)
  *
  * \return A new distribution. Should be freed with j_distribution_unref().
  **/
-static
-void
-distribution_reset (gpointer data, guint64 length, guint64 offset)
+static void
+distribution_reset(gpointer data, guint64 length, guint64 offset)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -284,7 +277,7 @@ distribution_reset (gpointer data, guint64 length, guint64 offset)
 }
 
 void
-j_distribution_single_server_get_vtable (JDistributionVTable* vtable)
+j_distribution_single_server_get_vtable(JDistributionVTable* vtable)
 {
 	J_TRACE_FUNCTION(NULL);
 

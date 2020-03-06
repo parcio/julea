@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,9 +27,8 @@
 
 #include "benchmark.h"
 
-static
-void
-_benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_object_create(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 100000;
 
@@ -78,23 +77,20 @@ _benchmark_object_create (BenchmarkResult* result, gboolean use_batch)
 	result->operations = n;
 }
 
-static
-void
-benchmark_object_create (BenchmarkResult* result)
+static void
+benchmark_object_create(BenchmarkResult* result)
 {
 	_benchmark_object_create(result, FALSE);
 }
 
-static
-void
-benchmark_object_create_batch (BenchmarkResult* result)
+static void
+benchmark_object_create_batch(BenchmarkResult* result)
 {
 	_benchmark_object_create(result, TRUE);
 }
 
-static
-void
-_benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_object_delete(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 100000;
 
@@ -150,23 +146,20 @@ _benchmark_object_delete (BenchmarkResult* result, gboolean use_batch)
 	result->operations = n;
 }
 
-static
-void
-benchmark_object_delete (BenchmarkResult* result)
+static void
+benchmark_object_delete(BenchmarkResult* result)
 {
 	_benchmark_object_delete(result, FALSE);
 }
 
-static
-void
-benchmark_object_delete_batch (BenchmarkResult* result)
+static void
+benchmark_object_delete_batch(BenchmarkResult* result)
 {
 	_benchmark_object_delete(result, TRUE);
 }
 
-static
-void
-_benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_object_status(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 200000;
 
@@ -220,23 +213,20 @@ _benchmark_object_status (BenchmarkResult* result, gboolean use_batch)
 	result->operations = n;
 }
 
-static
-void
-benchmark_object_status (BenchmarkResult* result)
+static void
+benchmark_object_status(BenchmarkResult* result)
 {
 	_benchmark_object_status(result, FALSE);
 }
 
-static
-void
-benchmark_object_status_batch (BenchmarkResult* result)
+static void
+benchmark_object_status_batch(BenchmarkResult* result)
 {
 	_benchmark_object_status(result, TRUE);
 }
 
-static
-void
-_benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block_size)
+static void
+_benchmark_object_read(BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = 200000;
 
@@ -297,23 +287,20 @@ _benchmark_object_read (BenchmarkResult* result, gboolean use_batch, guint block
 	result->bytes = n * block_size;
 }
 
-static
-void
-benchmark_object_read (BenchmarkResult* result)
+static void
+benchmark_object_read(BenchmarkResult* result)
 {
 	_benchmark_object_read(result, FALSE, 4 * 1024);
 }
 
-static
-void
-benchmark_object_read_batch (BenchmarkResult* result)
+static void
+benchmark_object_read_batch(BenchmarkResult* result)
 {
 	_benchmark_object_read(result, TRUE, 4 * 1024);
 }
 
-static
-void
-_benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint block_size)
+static void
+_benchmark_object_write(BenchmarkResult* result, gboolean use_batch, guint block_size)
 {
 	guint const n = 200000;
 
@@ -367,23 +354,20 @@ _benchmark_object_write (BenchmarkResult* result, gboolean use_batch, guint bloc
 	result->bytes = n * block_size;
 }
 
-static
-void
-benchmark_object_write (BenchmarkResult* result)
+static void
+benchmark_object_write(BenchmarkResult* result)
 {
 	_benchmark_object_write(result, FALSE, 4 * 1024);
 }
 
-static
-void
-benchmark_object_write_batch (BenchmarkResult* result)
+static void
+benchmark_object_write_batch(BenchmarkResult* result)
 {
 	_benchmark_object_write(result, TRUE, 4 * 1024);
 }
 
-static
-void
-_benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use_batch)
+static void
+_benchmark_object_unordered_create_delete(BenchmarkResult* result, gboolean use_batch)
 {
 	guint const n = 100000;
 
@@ -427,22 +411,20 @@ _benchmark_object_unordered_create_delete (BenchmarkResult* result, gboolean use
 	result->operations = n * 2;
 }
 
-static
-void
-benchmark_object_unordered_create_delete (BenchmarkResult* result)
+static void
+benchmark_object_unordered_create_delete(BenchmarkResult* result)
 {
 	_benchmark_object_unordered_create_delete(result, FALSE);
 }
 
-static
-void
-benchmark_object_unordered_create_delete_batch (BenchmarkResult* result)
+static void
+benchmark_object_unordered_create_delete_batch(BenchmarkResult* result)
 {
 	_benchmark_object_unordered_create_delete(result, TRUE);
 }
 
 void
-benchmark_object (void)
+benchmark_object(void)
 {
 	j_benchmark_run("/object/object/create", benchmark_object_create);
 	j_benchmark_run("/object/object/create-batch", benchmark_object_create_batch);

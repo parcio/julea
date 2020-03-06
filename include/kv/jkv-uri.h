@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -57,16 +57,16 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JKVURI* j_kv_uri_new (gchar const*, JKVURIScheme);
-void j_kv_uri_free (JKVURI*);
+JKVURI* j_kv_uri_new(gchar const*, JKVURIScheme);
+void j_kv_uri_free(JKVURI*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVURI, j_kv_uri_free)
 
-guint32 j_kv_uri_get_index (JKVURI*);
-gchar const* j_kv_uri_get_namespace (JKVURI*);
-gchar const* j_kv_uri_get_name (JKVURI*);
+guint32 j_kv_uri_get_index(JKVURI*);
+gchar const* j_kv_uri_get_namespace(JKVURI*);
+gchar const* j_kv_uri_get_name(JKVURI*);
 
-JKV* j_kv_uri_get_kv (JKVURI*);
+JKV* j_kv_uri_get_kv(JKVURI*);
 
 /**
  * @}

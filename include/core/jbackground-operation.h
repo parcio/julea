@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,15 +35,15 @@ struct JBackgroundOperation;
 
 typedef struct JBackgroundOperation JBackgroundOperation;
 
-typedef gpointer (*JBackgroundOperationFunc) (gpointer);
+typedef gpointer (*JBackgroundOperationFunc)(gpointer);
 
-JBackgroundOperation* j_background_operation_new (JBackgroundOperationFunc, gpointer);
-JBackgroundOperation* j_background_operation_ref (JBackgroundOperation*);
-void j_background_operation_unref (JBackgroundOperation*);
+JBackgroundOperation* j_background_operation_new(JBackgroundOperationFunc, gpointer);
+JBackgroundOperation* j_background_operation_ref(JBackgroundOperation*);
+void j_background_operation_unref(JBackgroundOperation*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBackgroundOperation, j_background_operation_unref)
 
-gpointer j_background_operation_wait (JBackgroundOperation*);
+gpointer j_background_operation_wait(JBackgroundOperation*);
 
 G_END_DECLS
 

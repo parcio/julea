@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,7 @@
  **/
 
 GQuark
-j_backend_bson_error_quark (void)
+j_backend_bson_error_quark(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -46,7 +46,7 @@ j_backend_bson_error_quark (void)
 }
 
 GQuark
-j_backend_db_error_quark (void)
+j_backend_db_error_quark(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -54,20 +54,19 @@ j_backend_db_error_quark (void)
 }
 
 GQuark
-j_backend_sql_error_quark (void)
+j_backend_sql_error_quark(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	return g_quark_from_static_string("j-backend-sql-error-quark");
 }
 
-static
-GModule*
-j_backend_load (gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
+static GModule*
+j_backend_load(gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JBackend* (*module_backend_info) (void) = NULL;
+	JBackend* (*module_backend_info)(void) = NULL;
 
 	JBackend* tmp_backend = NULL;
 	GModule* module = NULL;
@@ -77,7 +76,7 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 	gchar* type_path = NULL;
 	gchar const* type_str = NULL;
 
-	switch(type)
+	switch (type)
 	{
 		case J_BACKEND_TYPE_OBJECT:
 			type_str = "object";
@@ -208,7 +207,7 @@ error:
 }
 
 gboolean
-j_backend_load_client (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
+j_backend_load_client(gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -232,7 +231,7 @@ j_backend_load_client (gchar const* name, gchar const* component, JBackendType t
 }
 
 gboolean
-j_backend_load_server (gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
+j_backend_load_server(gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -256,7 +255,7 @@ j_backend_load_server (gchar const* name, gchar const* component, JBackendType t
 }
 
 gboolean
-j_backend_object_init (JBackend* backend, gchar const* path)
+j_backend_object_init(JBackend* backend, gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -275,7 +274,7 @@ j_backend_object_init (JBackend* backend, gchar const* path)
 }
 
 void
-j_backend_object_fini (JBackend* backend)
+j_backend_object_fini(JBackend* backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -289,7 +288,7 @@ j_backend_object_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
+j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -310,7 +309,7 @@ j_backend_object_create (JBackend* backend, gchar const* namespace, gchar const*
 }
 
 gboolean
-j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
+j_backend_object_open(JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -331,7 +330,7 @@ j_backend_object_open (JBackend* backend, gchar const* namespace, gchar const* p
 }
 
 gboolean
-j_backend_object_delete (JBackend* backend, gpointer data)
+j_backend_object_delete(JBackend* backend, gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -350,7 +349,7 @@ j_backend_object_delete (JBackend* backend, gpointer data)
 }
 
 gboolean
-j_backend_object_close (JBackend* backend, gpointer data)
+j_backend_object_close(JBackend* backend, gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -369,7 +368,7 @@ j_backend_object_close (JBackend* backend, gpointer data)
 }
 
 gboolean
-j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_time, guint64* size)
+j_backend_object_status(JBackend* backend, gpointer data, gint64* modification_time, guint64* size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -390,7 +389,7 @@ j_backend_object_status (JBackend* backend, gpointer data, gint64* modification_
 }
 
 gboolean
-j_backend_object_sync (JBackend* backend, gpointer data)
+j_backend_object_sync(JBackend* backend, gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -409,7 +408,7 @@ j_backend_object_sync (JBackend* backend, gpointer data)
 }
 
 gboolean
-j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+j_backend_object_read(JBackend* backend, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -430,7 +429,7 @@ j_backend_object_read (JBackend* backend, gpointer data, gpointer buffer, guint6
 }
 
 gboolean
-j_backend_object_write (JBackend* backend, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+j_backend_object_write(JBackend* backend, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -451,7 +450,7 @@ j_backend_object_write (JBackend* backend, gpointer data, gconstpointer buffer, 
 }
 
 gboolean
-j_backend_kv_init (JBackend* backend, gchar const* path)
+j_backend_kv_init(JBackend* backend, gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -470,7 +469,7 @@ j_backend_kv_init (JBackend* backend, gchar const* path)
 }
 
 void
-j_backend_kv_fini (JBackend* backend)
+j_backend_kv_fini(JBackend* backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -484,7 +483,7 @@ j_backend_kv_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch)
+j_backend_kv_batch_start(JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -505,7 +504,7 @@ j_backend_kv_batch_start (JBackend* backend, gchar const* namespace, JSemantics*
 }
 
 gboolean
-j_backend_kv_batch_execute (JBackend* backend, gpointer batch)
+j_backend_kv_batch_execute(JBackend* backend, gpointer batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -524,7 +523,7 @@ j_backend_kv_batch_execute (JBackend* backend, gpointer batch)
 }
 
 gboolean
-j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, gconstpointer value, guint32 value_len)
+j_backend_kv_put(JBackend* backend, gpointer batch, gchar const* key, gconstpointer value, guint32 value_len)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -545,7 +544,7 @@ j_backend_kv_put (JBackend* backend, gpointer batch, gchar const* key, gconstpoi
 }
 
 gboolean
-j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
+j_backend_kv_delete(JBackend* backend, gpointer batch, gchar const* key)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -565,7 +564,7 @@ j_backend_kv_delete (JBackend* backend, gpointer batch, gchar const* key)
 }
 
 gboolean
-j_backend_kv_get (JBackend* backend, gpointer batch, gchar const* key, gpointer* value, guint32* value_len)
+j_backend_kv_get(JBackend* backend, gpointer batch, gchar const* key, gpointer* value, guint32* value_len)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -587,7 +586,7 @@ j_backend_kv_get (JBackend* backend, gpointer batch, gchar const* key, gpointer*
 }
 
 gboolean
-j_backend_kv_get_all (JBackend* backend, gchar const* namespace, gpointer* iterator)
+j_backend_kv_get_all(JBackend* backend, gchar const* namespace, gpointer* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -607,7 +606,7 @@ j_backend_kv_get_all (JBackend* backend, gchar const* namespace, gpointer* itera
 }
 
 gboolean
-j_backend_kv_get_by_prefix (JBackend* backend, gchar const* namespace, gchar const* prefix, gpointer* iterator)
+j_backend_kv_get_by_prefix(JBackend* backend, gchar const* namespace, gchar const* prefix, gpointer* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -627,7 +626,7 @@ j_backend_kv_get_by_prefix (JBackend* backend, gchar const* namespace, gchar con
 	return ret;
 }
 gboolean
-j_backend_kv_iterate (JBackend* backend, gpointer iterator, gchar const** key, gconstpointer* value, guint32* value_len)
+j_backend_kv_iterate(JBackend* backend, gpointer iterator, gchar const** key, gconstpointer* value, guint32* value_len)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -649,7 +648,7 @@ j_backend_kv_iterate (JBackend* backend, gpointer iterator, gchar const** key, g
 }
 
 gboolean
-j_backend_db_init (JBackend* backend, gchar const* path)
+j_backend_db_init(JBackend* backend, gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -668,7 +667,7 @@ j_backend_db_init (JBackend* backend, gchar const* path)
 }
 
 void
-j_backend_db_fini (JBackend* backend)
+j_backend_db_fini(JBackend* backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -682,7 +681,7 @@ j_backend_db_fini (JBackend* backend)
 }
 
 gboolean
-j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
+j_backend_db_batch_start(JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -704,7 +703,7 @@ j_backend_db_batch_start (JBackend* backend, gchar const* namespace, JSemantics*
 }
 
 gboolean
-j_backend_db_batch_execute (JBackend* backend, gpointer batch, GError** error)
+j_backend_db_batch_execute(JBackend* backend, gpointer batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -724,7 +723,7 @@ j_backend_db_batch_execute (JBackend* backend, gpointer batch, GError** error)
 }
 
 gboolean
-j_backend_db_schema_create (JBackend* backend, gpointer batch, gchar const* name, bson_t const* schema, GError** error)
+j_backend_db_schema_create(JBackend* backend, gpointer batch, gchar const* name, bson_t const* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -746,7 +745,7 @@ j_backend_db_schema_create (JBackend* backend, gpointer batch, gchar const* name
 }
 
 gboolean
-j_backend_db_schema_get (JBackend* backend, gpointer batch, gchar const* name, bson_t* schema, GError** error)
+j_backend_db_schema_get(JBackend* backend, gpointer batch, gchar const* name, bson_t* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -767,7 +766,7 @@ j_backend_db_schema_get (JBackend* backend, gpointer batch, gchar const* name, b
 }
 
 gboolean
-j_backend_db_schema_delete (JBackend* backend, gpointer batch, gchar const* name, GError** error)
+j_backend_db_schema_delete(JBackend* backend, gpointer batch, gchar const* name, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -788,7 +787,7 @@ j_backend_db_schema_delete (JBackend* backend, gpointer batch, gchar const* name
 }
 
 gboolean
-j_backend_db_insert (JBackend* backend, gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
+j_backend_db_insert(JBackend* backend, gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -811,7 +810,7 @@ j_backend_db_insert (JBackend* backend, gpointer batch, gchar const* name, bson_
 }
 
 gboolean
-j_backend_db_update (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
+j_backend_db_update(JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -834,7 +833,7 @@ j_backend_db_update (JBackend* backend, gpointer batch, gchar const* name, bson_
 }
 
 gboolean
-j_backend_db_delete (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, GError** error)
+j_backend_db_delete(JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -855,7 +854,7 @@ j_backend_db_delete (JBackend* backend, gpointer batch, gchar const* name, bson_
 }
 
 gboolean
-j_backend_db_query (JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+j_backend_db_query(JBackend* backend, gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -877,7 +876,7 @@ j_backend_db_query (JBackend* backend, gpointer batch, gchar const* name, bson_t
 }
 
 gboolean
-j_backend_db_iterate (JBackend* backend, gpointer iterator, bson_t* metadata, GError** error)
+j_backend_db_iterate(JBackend* backend, gpointer iterator, bson_t* metadata, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 

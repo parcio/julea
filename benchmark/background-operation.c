@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,9 +28,8 @@
 
 gint benchmark_background_operation_counter;
 
-static
-gpointer
-on_background_operation_completed (gpointer data)
+static gpointer
+on_background_operation_completed(gpointer data)
 {
 	(void)data;
 
@@ -39,9 +38,8 @@ on_background_operation_completed (gpointer data)
 	return NULL;
 }
 
-static
-void
-benchmark_background_operation_new_ref_unref (BenchmarkResult* result)
+static void
+benchmark_background_operation_new_ref_unref(BenchmarkResult* result)
 {
 	guint const n = 100000;
 
@@ -70,7 +68,7 @@ benchmark_background_operation_new_ref_unref (BenchmarkResult* result)
 }
 
 void
-benchmark_background_operation (void)
+benchmark_background_operation(void)
 {
 	j_benchmark_run("/background-operation", benchmark_background_operation_new_ref_unref);
 }

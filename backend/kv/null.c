@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,9 +23,8 @@
 
 #include <julea.h>
 
-static
-gboolean
-backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* data)
+static gboolean
+backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
@@ -38,18 +37,16 @@ backend_batch_start (gchar const* namespace, JSemantics* semantics, gpointer* da
 	return TRUE;
 }
 
-static
-gboolean
-backend_batch_execute (gpointer data)
+static gboolean
+backend_batch_execute(gpointer data)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	return TRUE;
 }
 
-static
-gboolean
-backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
+static gboolean
+backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -60,9 +57,8 @@ backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	return TRUE;
 }
 
-static
-gboolean
-backend_delete (gpointer data, gchar const* key)
+static gboolean
+backend_delete(gpointer data, gchar const* key)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -70,9 +66,8 @@ backend_delete (gpointer data, gchar const* key)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
+static gboolean
+backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -85,9 +80,8 @@ backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get_all (gchar const* namespace, gpointer* data)
+static gboolean
+backend_get_all(gchar const* namespace, gpointer* data)
 {
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
@@ -97,9 +91,8 @@ backend_get_all (gchar const* namespace, gpointer* data)
 	return TRUE;
 }
 
-static
-gboolean
-backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* data)
+static gboolean
+backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
 {
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
@@ -110,9 +103,8 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 	return TRUE;
 }
 
-static
-gboolean
-backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+static gboolean
+backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
@@ -125,23 +117,20 @@ backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32
 	return FALSE;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	(void)path;
 
 	return TRUE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 }
 
-static
-JBackend null_backend = {
+static JBackend null_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.kv = {
@@ -154,13 +143,12 @@ JBackend null_backend = {
 		.backend_get = backend_get,
 		.backend_get_all = backend_get_all,
 		.backend_get_by_prefix = backend_get_by_prefix,
-		.backend_iterate = backend_iterate
-	}
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &null_backend;
 }

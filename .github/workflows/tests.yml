@@ -1,0 +1,81 @@
+name: Tests
+on: [push]
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        name:
+          # Default
+          - posix-lmdb-sqlite
+          # Object backends
+          - gio-lmdb-sqlite
+          # KV backends
+          - posix-leveldb-sqlite
+          - posix-sqlite-sqlite
+          # DB backends
+          - posix-lmdb-memory
+          - posix-lmdb-mysql
+        include:
+          - name: posix-lmdb-sqlite
+            object: posix
+            kv: lmdb
+            db: sqlite
+          - name: gio-lmdb-sqlite
+            object: gio
+            kv: lmdb
+            db: sqlite
+          - name: posix-leveldb-sqlite
+            object: posix
+            kv: leveldb
+            db: sqlite
+          - name: posix-sqlite-sqlite
+            object: posix
+            kv: sqlite
+            db: sqlite
+          - name: posix-lmdb-memory
+            object: posix
+            kv: lmdb
+            db: memory
+          - name: posix-lmdb-mysql
+            object: posix
+            kv: lmdb
+            db: mysql
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Install dependencies
+        # We need to remove glib-network, otherwise libproxy might cause crashes.
+        run: |
+          sudo apt --yes purge glib-networking
+          sudo apt --yes --purge autoremove
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
+      - name: Configure
+        env:
+          CC: ${{ matrix.compiler }}
+        # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
+        run: |
+          JULEA_SANITIZE=''; if test "${{ matrix.compiler }}" = 'clang'; then JULEA_SANITIZE='--sanitize'; fi
+          ./waf configure --debug --leveldb=/usr ${JULEA_SANITIZE}
+      - name: Build
+        run: |
+          ./waf
+      - name: Create configuration
+        # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
+        run: |
+          . ./scripts/environment.sh
+          JULEA_DB_COMPONENT='server'; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
+          JULEA_DB_PATH="/tmp/julea/db/${{ matrix.db }}"; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:julea:root:root'; fi
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+      - name: Create database
+        if: matrix.db == 'mysql'
+        run: |
+          mysql --user=root --password=root --execute='CREATE DATABASE julea;'
+      - name: Tests
+        run: |
+          ./scripts/test.sh
+          sleep 10
+          ./scripts/test.sh

@@ -34,7 +34,7 @@
 #include "../../backend/db/jbson.c"
 
 JDBIterator*
-j_db_iterator_new (JDBSchema* schema, JDBSelector* selector, GError** error)
+j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -102,7 +102,7 @@ _error:
 }
 
 JDBIterator*
-j_db_iterator_ref (JDBIterator* iterator)
+j_db_iterator_ref(JDBIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -114,7 +114,7 @@ j_db_iterator_ref (JDBIterator* iterator)
 }
 
 void
-j_db_iterator_unref (JDBIterator* iterator)
+j_db_iterator_unref(JDBIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -144,7 +144,7 @@ j_db_iterator_unref (JDBIterator* iterator)
 }
 
 gboolean
-j_db_iterator_next (JDBIterator* iterator, GError** error)
+j_db_iterator_next(JDBIterator* iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -174,7 +174,7 @@ _error:
 }
 
 gboolean
-j_db_iterator_get_field (JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
+j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 

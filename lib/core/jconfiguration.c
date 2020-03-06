@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -146,7 +146,7 @@ check_caps_validity(guint64 caps);
  * \return The configuration.
  */
 JConfiguration*
-j_configuration (void)
+j_configuration(void)
 {
 	static JConfiguration* configuration = NULL;
 
@@ -168,7 +168,7 @@ j_configuration (void)
  * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
-j_configuration_new (void)
+j_configuration_new(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -257,7 +257,7 @@ out:
  * \return A new configuration. Should be freed with j_configuration_unref().
  **/
 JConfiguration*
-j_configuration_new_for_data (GKeyFile* key_file)
+j_configuration_new_for_data(GKeyFile* key_file)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -514,7 +514,7 @@ j_configuration_new_for_data (GKeyFile* key_file)
  * \return #configuration.
  **/
 JConfiguration*
-j_configuration_ref (JConfiguration* configuration)
+j_configuration_ref(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -535,7 +535,7 @@ j_configuration_ref (JConfiguration* configuration)
  * \param configuration A configuration.
  **/
 void
-j_configuration_unref (JConfiguration* configuration)
+j_configuration_unref(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -569,7 +569,7 @@ j_configuration_unref (JConfiguration* configuration)
 }
 
 gchar const*
-j_configuration_get_server (JConfiguration* configuration, JBackendType backend, guint32 index)
+j_configuration_get_server(JConfiguration* configuration, JBackendType backend, guint32 index)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -594,7 +594,7 @@ j_configuration_get_server (JConfiguration* configuration, JBackendType backend,
 }
 
 guint32
-j_configuration_get_server_count (JConfiguration* configuration, JBackendType backend)
+j_configuration_get_server_count(JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -616,7 +616,7 @@ j_configuration_get_server_count (JConfiguration* configuration, JBackendType ba
 }
 
 gchar const*
-j_configuration_get_backend (JConfiguration* configuration, JBackendType backend)
+j_configuration_get_backend(JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -638,7 +638,7 @@ j_configuration_get_backend (JConfiguration* configuration, JBackendType backend
 }
 
 gchar const*
-j_configuration_get_backend_component (JConfiguration* configuration, JBackendType backend)
+j_configuration_get_backend_component(JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -660,7 +660,7 @@ j_configuration_get_backend_component (JConfiguration* configuration, JBackendTy
 }
 
 gchar const*
-j_configuration_get_backend_path (JConfiguration* configuration, JBackendType backend)
+j_configuration_get_backend_path(JConfiguration* configuration, JBackendType backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -682,7 +682,7 @@ j_configuration_get_backend_path (JConfiguration* configuration, JBackendType ba
 }
 
 guint64
-j_configuration_get_max_operation_size (JConfiguration* configuration)
+j_configuration_get_max_operation_size(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -692,7 +692,7 @@ j_configuration_get_max_operation_size (JConfiguration* configuration)
 }
 
 guint32
-j_configuration_get_max_connections (JConfiguration* configuration)
+j_configuration_get_max_connections(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -702,7 +702,7 @@ j_configuration_get_max_connections (JConfiguration* configuration)
 }
 
 guint64
-j_configuration_get_stripe_size (JConfiguration* configuration)
+j_configuration_get_stripe_size(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 

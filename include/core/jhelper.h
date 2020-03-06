@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,12 +34,12 @@
 
 G_BEGIN_DECLS
 
-guint64 j_helper_atomic_add (guint64 volatile*, guint64);
-gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
-guint32 j_helper_hash (gchar const*);
+guint64 j_helper_atomic_add(guint64 volatile*, guint64);
+gboolean j_helper_execute_parallel(JBackgroundOperationFunc, gpointer*, guint);
+guint32 j_helper_hash(gchar const*);
 // FIXME get rid of GSocketConnection
-void j_helper_set_nodelay (GSocketConnection*, gboolean);
-gchar* j_helper_str_replace (gchar const*, gchar const*, gchar const*);
+void j_helper_set_nodelay(GSocketConnection*, gboolean);
+gchar* j_helper_str_replace(gchar const*, gchar const*, gchar const*);
 
 G_END_DECLS
 

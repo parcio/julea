@@ -1,7 +1,7 @@
 /*
 
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -95,7 +95,7 @@ hostname_resolver(const char* hostname, const char* service);
 
 
 void
-j_connection_pool_init (JConfiguration* configuration)
+j_connection_pool_init(JConfiguration* configuration)
 {
 
 	// Pool Init
@@ -328,7 +328,7 @@ j_endpoint_fini (JEndpoint* endpoint, JMessage* message , gboolean send_shutdown
 /closes the connection_pool and all associated objects
 */
 void
-j_connection_pool_fini (void)
+j_connection_pool_fini(void)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -565,7 +565,7 @@ j_connection_pool_push_internal (GAsyncQueue* queue, JEndpoint* endpoint)
 }
 
 gpointer
-j_connection_pool_pop (JBackendType backend, guint index)
+j_connection_pool_pop(JBackendType backend, guint index)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -592,7 +592,7 @@ j_connection_pool_pop (JBackendType backend, guint index)
 
 //TODO deal with sever connection shutdown
 void
-j_connection_pool_push (JBackendType backend, guint index, gpointer connection)
+j_connection_pool_push(JBackendType backend, guint index, gpointer connection)
 {
 	J_TRACE_FUNCTION(NULL);
 

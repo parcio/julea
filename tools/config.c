@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -60,9 +60,8 @@ static guint64 cap8 = 0;
 static guint64 cap9 = 0;
 
 
-static
-gchar**
-string_split (gchar const* string)
+static gchar**
+string_split(gchar const* string)
 {
 	guint i;
 	guint len;
@@ -79,9 +78,8 @@ string_split (gchar const* string)
 	return arr;
 }
 
-static
-gboolean
-read_config (gchar* path)
+static gboolean
+read_config(gchar* path)
 {
 	gboolean ret = TRUE;
 	g_autoptr(GFile) file = NULL;
@@ -105,9 +103,8 @@ end:
 	return ret;
 }
 
-static
-gboolean
-write_config (gchar* path)
+static gboolean
+write_config(gchar* path)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean ret = TRUE;
@@ -174,7 +171,7 @@ write_config (gchar* path)
 }
 
 gint
-main (gint argc, gchar** argv)
+main(gint argc, gchar** argv)
 {
 	GError* error = NULL;
 	g_autoptr(GOptionContext) context = NULL;
@@ -238,8 +235,7 @@ main (gint argc, gchar** argv)
 	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_servers_db == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL || opt_db_backend == NULL || opt_db_component == NULL || opt_db_path == NULL))
 	    || opt_max_operation_size < 0
 	    || opt_max_connections < 0
-	    || opt_stripe_size < 0
-	)
+	    || opt_stripe_size < 0)
 	{
 		g_autofree gchar* help = NULL;
 

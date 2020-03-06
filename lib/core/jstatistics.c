@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -84,9 +84,8 @@ struct JStatistics
 	guint64 bytes_sent;
 };
 
-static
-gchar const*
-j_statistics_get_type_name (JStatisticsType type)
+static gchar const*
+j_statistics_get_type_name(JStatisticsType type)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -128,7 +127,7 @@ j_statistics_get_type_name (JStatisticsType type)
  * \return A new statistics. Should be freed with j_statistics_free().
  **/
 JStatistics*
-j_statistics_new (gboolean trace)
+j_statistics_new(gboolean trace)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -159,7 +158,7 @@ j_statistics_new (gboolean trace)
  * \param statistics A statistics.
  **/
 void
-j_statistics_free (JStatistics* statistics)
+j_statistics_free(JStatistics* statistics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -169,7 +168,7 @@ j_statistics_free (JStatistics* statistics)
 }
 
 guint64
-j_statistics_get (JStatistics* statistics, JStatisticsType type)
+j_statistics_get(JStatistics* statistics, JStatisticsType type)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -212,7 +211,7 @@ j_statistics_get (JStatistics* statistics, JStatisticsType type)
 }
 
 void
-j_statistics_add (JStatistics* statistics, JStatisticsType type, guint64 value)
+j_statistics_add(JStatistics* statistics, JStatisticsType type, guint64 value)
 {
 	J_TRACE_FUNCTION(NULL);
 

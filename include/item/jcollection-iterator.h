@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,13 +41,13 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JCollectionIterator* j_collection_iterator_new (void);
-void j_collection_iterator_free (JCollectionIterator*);
+JCollectionIterator* j_collection_iterator_new(void);
+void j_collection_iterator_free(JCollectionIterator*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCollectionIterator, j_collection_iterator_free)
 
-gboolean j_collection_iterator_next (JCollectionIterator*);
-JCollection* j_collection_iterator_get (JCollectionIterator*);
+gboolean j_collection_iterator_next(JCollectionIterator*);
+JCollection* j_collection_iterator_get(JCollectionIterator*);
 
 G_END_DECLS
 

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,26 +41,26 @@ struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
 
-JConfiguration* j_configuration (void);
+JConfiguration* j_configuration(void);
 
-JConfiguration* j_configuration_new (void);
-JConfiguration* j_configuration_new_for_data (GKeyFile*);
+JConfiguration* j_configuration_new(void);
+JConfiguration* j_configuration_new_for_data(GKeyFile*);
 
-JConfiguration* j_configuration_ref (JConfiguration*);
-void j_configuration_unref (JConfiguration*);
+JConfiguration* j_configuration_ref(JConfiguration*);
+void j_configuration_unref(JConfiguration*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JConfiguration, j_configuration_unref)
 
-gchar const* j_configuration_get_server (JConfiguration*, JBackendType, guint32);
-guint32 j_configuration_get_server_count (JConfiguration*, JBackendType);
+gchar const* j_configuration_get_server(JConfiguration*, JBackendType, guint32);
+guint32 j_configuration_get_server_count(JConfiguration*, JBackendType);
 
-gchar const* j_configuration_get_backend (JConfiguration*, JBackendType);
-gchar const* j_configuration_get_backend_component (JConfiguration*, JBackendType);
-gchar const* j_configuration_get_backend_path (JConfiguration*, JBackendType);
+gchar const* j_configuration_get_backend(JConfiguration*, JBackendType);
+gchar const* j_configuration_get_backend_component(JConfiguration*, JBackendType);
+gchar const* j_configuration_get_backend_path(JConfiguration*, JBackendType);
 
-guint64 j_configuration_get_max_operation_size (JConfiguration*);
-guint32 j_configuration_get_max_connections (JConfiguration*);
-guint64 j_configuration_get_stripe_size (JConfiguration*);
+guint64 j_configuration_get_max_operation_size(JConfiguration*);
+guint32 j_configuration_get_max_connections(JConfiguration*);
+guint64 j_configuration_get_stripe_size(JConfiguration*);
 
 
 //attr info

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,9 +35,8 @@ typedef struct JBackendFile JBackendFile;
 
 static gchar* jd_backend_path = NULL;
 
-static
-gboolean
-backend_create (gchar const* namespace, gchar const* path, gpointer* data)
+static gboolean
+backend_create(gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
 	GFile* file;
@@ -69,9 +68,8 @@ backend_create (gchar const* namespace, gchar const* path, gpointer* data)
 	return (stream != NULL);
 }
 
-static
-gboolean
-backend_open (gchar const* namespace, gchar const* path, gpointer* data)
+static gboolean
+backend_open(gchar const* namespace, gchar const* path, gpointer* data)
 {
 	JBackendFile* bf;
 	GFile* file;
@@ -96,9 +94,8 @@ backend_open (gchar const* namespace, gchar const* path, gpointer* data)
 	return (stream != NULL);
 }
 
-static
-gboolean
-backend_delete (gpointer data)
+static gboolean
+backend_delete(gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
@@ -120,9 +117,8 @@ backend_delete (gpointer data)
 	return ret;
 }
 
-static
-gboolean
-backend_close (gpointer data)
+static gboolean
+backend_close(gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
@@ -138,9 +134,8 @@ backend_close (gpointer data)
 	return ret;
 }
 
-static
-gboolean
-backend_status (gpointer data, gint64* modification_time, guint64* size)
+static gboolean
+backend_status(gpointer data, gint64* modification_time, guint64* size)
 {
 	JBackendFile* bf = data;
 	gboolean ret = TRUE;
@@ -178,9 +173,8 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 	return ret;
 }
 
-static
-gboolean
-backend_sync (gpointer data)
+static gboolean
+backend_sync(gpointer data)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
@@ -196,9 +190,8 @@ backend_sync (gpointer data)
 	return ret;
 }
 
-static
-gboolean
-backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+static gboolean
+backend_read(gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
@@ -224,9 +217,8 @@ backend_read (gpointer data, gpointer buffer, guint64 length, guint64 offset, gu
 	return ret;
 }
 
-static
-gboolean
-backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+static gboolean
+backend_write(gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendFile* bf = data;
 	gboolean ret;
@@ -252,9 +244,8 @@ backend_write (gpointer data, gconstpointer buffer, guint64 length, guint64 offs
 	return ret;
 }
 
-static
-gboolean
-backend_init (gchar const* path)
+static gboolean
+backend_init(gchar const* path)
 {
 	GFile* file;
 
@@ -267,15 +258,13 @@ backend_init (gchar const* path)
 	return TRUE;
 }
 
-static
-void
-backend_fini (void)
+static void
+backend_fini(void)
 {
 	g_free(jd_backend_path);
 }
 
-static
-JBackend gio_backend = {
+static JBackend gio_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.object = {
@@ -288,13 +277,12 @@ JBackend gio_backend = {
 		.backend_status = backend_status,
 		.backend_sync = backend_sync,
 		.backend_read = backend_read,
-		.backend_write = backend_write
-	}
+		.backend_write = backend_write }
 };
 
 G_MODULE_EXPORT
 JBackend*
-backend_info (void)
+backend_info(void)
 {
 	return &gio_backend;
 }

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,7 +22,8 @@
 
 #include <errno.h>
 
-int jfs_utimens (char const* path, const struct timespec ts[2])
+int
+jfs_utimens(char const* path, const struct timespec ts[2])
 {
 	int ret = -ENOENT;
 

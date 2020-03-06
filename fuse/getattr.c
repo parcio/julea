@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 int
-jfs_getattr (char const* path, struct stat* stbuf)
+jfs_getattr(char const* path, struct stat* stbuf)
 {
 	int ret = -ENOENT;
 

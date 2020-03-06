@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,7 +23,7 @@
 #include <string.h>
 
 gboolean
-j_cmd_create (gchar const** arguments, gboolean with_parents)
+j_cmd_create(gchar const** arguments, gboolean with_parents)
 {
 	gboolean ret = TRUE;
 	g_autoptr(JObjectURI) duri = NULL;

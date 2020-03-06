@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,11 +35,11 @@ struct JObjectIterator;
 
 typedef struct JObjectIterator JObjectIterator;
 
-JObjectIterator* j_object_iterator_new (gchar const*);
-void j_object_iterator_free (JObjectIterator*);
+JObjectIterator* j_object_iterator_new(gchar const*);
+void j_object_iterator_free(JObjectIterator*);
 
-gboolean j_object_iterator_next (JObjectIterator*);
-gchar const* j_object_iterator_get (JObjectIterator*, guint64*);
+gboolean j_object_iterator_next(JObjectIterator*);
+gchar const* j_object_iterator_get(JObjectIterator*, guint64*);
 
 G_END_DECLS
 

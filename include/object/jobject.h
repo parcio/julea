@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -37,20 +37,20 @@ struct JObject;
 
 typedef struct JObject JObject;
 
-JObject* j_object_new (gchar const*, gchar const*);
-JObject* j_object_new_for_index (guint32, gchar const*, gchar const*);
-JObject* j_object_ref (JObject*);
-void j_object_unref (JObject*);
+JObject* j_object_new(gchar const*, gchar const*);
+JObject* j_object_new_for_index(guint32, gchar const*, gchar const*);
+JObject* j_object_ref(JObject*);
+void j_object_unref(JObject*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObject, j_object_unref)
 
-void j_object_create (JObject*, JBatch*);
-void j_object_delete (JObject*, JBatch*);
+void j_object_create(JObject*, JBatch*);
+void j_object_delete(JObject*, JBatch*);
 
-void j_object_read (JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
-void j_object_write (JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
+void j_object_read(JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
+void j_object_write(JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
-void j_object_status (JObject*, gint64*, guint64*, JBatch*);
+void j_object_status(JObject*, gint64*, guint64*, JBatch*);
 
 G_END_DECLS
 

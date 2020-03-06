@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2010-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,9 +26,8 @@
 
 #include "test.h"
 
-static
-void
-test_cache_new_free (void)
+static void
+test_cache_new_free(void)
 {
 	JCache* cache;
 
@@ -38,9 +37,8 @@ test_cache_new_free (void)
 	j_cache_free(cache);
 }
 
-static
-void
-test_cache_get (void)
+static void
+test_cache_get(void)
 {
 	JCache* cache;
 	gpointer ret;
@@ -59,9 +57,8 @@ test_cache_get (void)
 	j_cache_free(cache);
 }
 
-static
-void
-test_cache_release (void)
+static void
+test_cache_release(void)
 {
 	JCache* cache;
 	gpointer ret1;
@@ -85,7 +82,7 @@ test_cache_release (void)
 }
 
 void
-test_cache (void)
+test_cache(void)
 {
 	g_test_add_func("/cache/new_free", test_cache_new_free);
 	g_test_add_func("/cache/get", test_cache_get);

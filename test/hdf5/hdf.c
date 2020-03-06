@@ -1,7 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2018-2019 Johannes Coym
- * Copyright (C) 2019 Michael Kuhn
+ * Copyright (C) 2019-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -36,7 +36,7 @@
 #include <hdf5.h>
 
 static void
-write_dataset (hid_t file)
+write_dataset(hid_t file)
 {
 	hid_t attribute;
 	hid_t dataset;
@@ -82,7 +82,7 @@ write_dataset (hid_t file)
 }
 
 static void
-read_dataset (hid_t file)
+read_dataset(hid_t file)
 {
 	hid_t attribute;
 	hid_t dataset;
@@ -133,7 +133,7 @@ read_dataset (hid_t file)
 }
 
 static void
-test_hdf_read_write (void)
+test_hdf_read_write(void)
 {
 	hid_t file;
 
@@ -148,7 +148,7 @@ test_hdf_read_write (void)
 #endif
 
 void
-test_hdf (void)
+test_hdf(void)
 {
 #ifdef HAVE_HDF5
 	g_test_add_func("/hdf5/read_write", test_hdf_read_write);

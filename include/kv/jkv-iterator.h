@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2019 Michael Kuhn
+ * Copyright (C) 2017-2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,14 +41,14 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JKVIterator* j_kv_iterator_new (gchar const*, gchar const*);
-JKVIterator* j_kv_iterator_new_for_index (guint32, gchar const*, gchar const*);
-void j_kv_iterator_free (JKVIterator*);
+JKVIterator* j_kv_iterator_new(gchar const*, gchar const*);
+JKVIterator* j_kv_iterator_new_for_index(guint32, gchar const*, gchar const*);
+void j_kv_iterator_free(JKVIterator*);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVIterator, j_kv_iterator_free)
 
-gboolean j_kv_iterator_next (JKVIterator*);
-gchar const* j_kv_iterator_get (JKVIterator*, gconstpointer*, guint32*);
+gboolean j_kv_iterator_next(JKVIterator*);
+gchar const* j_kv_iterator_get(JKVIterator*, gconstpointer*, guint32*);
 
 G_END_DECLS
 
