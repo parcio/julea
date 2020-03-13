@@ -81,7 +81,7 @@ domain_request(struct fid_fabric* fabric,
     while(current != NULL)
 		{
 			if(   ((RefCountedDomain*)current->data)->ref_count < category->info->domain_attr->ep_cnt
-         || ((RefCountedDomain*)current->data)->ref_count < category->info->domain_attr->cq_cnt)
+         || ((RefCountedDomain*)current->data)->ref_count * 2 < category->info->domain_attr->cq_cnt) // 2 cqs per endpoint
 			{
 				(* rc_domain) = (RefCountedDomain*) current->data;
 				domain_ref((* rc_domain));
