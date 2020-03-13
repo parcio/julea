@@ -52,7 +52,7 @@ jobs:
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev libfabric-dev
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
