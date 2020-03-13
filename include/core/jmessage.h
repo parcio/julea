@@ -30,11 +30,9 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and
-#include <rdma/fi_cm.h> //connection management
-#include <rdma/fi_errno.h> //translation error numbers
 #include <rdma/fi_endpoint.h>
+
+#include <j_fi_domain_manager.h>
 
 G_BEGIN_DECLS
 
@@ -71,11 +69,13 @@ typedef struct JMessage JMessage;
 struct JEndpoint
 {
 	struct fid_ep* endpoint;
-	size_t max_msg_size; //TODO maybe replace with fi_info-struct
+	size_t max_msg_size; //TODO maybe replace with fi_info-struct ?
 	struct fid_eq* event_queue;
-	struct fid_cq*	completion_queue_transmit;
+	struct fid_cq* completion_queue_transmit;
 	struct fid_cq* completion_queue_receive;
+	RefCountedDomain* rc_domain;
 };
+
 typedef struct JEndpoint JEndpoint;
 
 G_END_DECLS

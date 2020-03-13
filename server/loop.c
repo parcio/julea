@@ -25,6 +25,7 @@
 #include <julea.h>
 
 #include "server.h"
+#include "thread.h"
 
 #include <glib/gprintf.h>
 

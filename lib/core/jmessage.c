@@ -170,19 +170,6 @@ struct JMessage
 };
 
 
-//TODO: possibly replace through a context structure given to the endpoint (but apparently 0 retrieve function in libfabric)
-/*
-struct JEndpoint
-{
-	struct fid_ep* endpoint;
-	ssize_t max_msg_size; //TODO maybe replace with fi_info-struct
-	struct fid_eq* event_queue;
-	struct fid_cq*	completion_queue_transmit;
-	struct fid_cq* completion_queue_receive;
-};
-typedef struct JEndpoint JEndpoint;
-*/
-
 /**
  * Returns a message's header.
  *
