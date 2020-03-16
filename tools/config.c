@@ -135,20 +135,20 @@ write_config(gchar* path)
 	g_key_file_set_string(key_file, "db", "component", opt_db_component);
 	g_key_file_set_string(key_file, "db", "path", opt_db_path);
 	//libfabric
-	g_key_file_set_uint64(key_file, "eq", "size", eq_size);
-	g_key_file_set_uint64(key_file, "cq", "size", cq_size);
-	g_key_file_set_string(key_file, "libfabric", "node", node);
-	g_key_file_set_string(key_file, "libfabric", "provider", prov_name);
-	g_key_file_set_uint64(key_file, "capabilities", "cap0", cap0);
-	g_key_file_set_uint64(key_file, "capabilities", "cap1", cap1);
-	g_key_file_set_uint64(key_file, "capabilities", "cap2", cap2);
-	g_key_file_set_uint64(key_file, "capabilities", "cap3", cap3);
-	g_key_file_set_uint64(key_file, "capabilities", "cap4", cap4);
-	g_key_file_set_uint64(key_file, "capabilities", "cap5", cap5);
-	g_key_file_set_uint64(key_file, "capabilities", "cap6", cap6);
-	g_key_file_set_uint64(key_file, "capabilities", "cap7", cap7);
-	g_key_file_set_uint64(key_file, "capabilities", "cap8", cap8);
-	g_key_file_set_uint64(key_file, "capabilities", "cap9", cap9);
+	if(eq_size != 0) g_key_file_set_uint64(key_file, "eq", "size", eq_size);
+	if(cq_size != 0) g_key_file_set_uint64(key_file, "cq", "size", cq_size);
+	if(node != NULL) g_key_file_set_string(key_file, "libfabric", "node", node);
+	if(prov_name != NULL)g_key_file_set_string(key_file, "libfabric", "provider", prov_name);
+	if(cap0 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap0", cap0);
+	if(cap1 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap1", cap1);
+	if(cap2 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap2", cap2);
+	if(cap3 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap3", cap3);
+	if(cap4 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap4", cap4);
+	if(cap5 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap5", cap5);
+	if(cap6 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap6", cap6);
+	if(cap7 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap7", cap7);
+	if(cap8 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap8", cap8);
+	if(cap9 != 0) g_key_file_set_uint64(key_file, "capabilities", "cap9", cap9);
 
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
