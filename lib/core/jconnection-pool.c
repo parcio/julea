@@ -739,7 +739,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		else
 		{
 			//check whether connection accepted
-			eq_event = 5;
+			eq_event = 0;
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
