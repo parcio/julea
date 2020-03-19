@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='8d8925c725491cf028ef6c1b93e431dcb200f439'
+	spack_commit='14e2c42bcef0cf1b233b70eda23a75e269ba8d92'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -35,8 +35,6 @@ spack_clone ()
 
 		git fetch
 		git reset --hard "${spack_commit}"
-		# FIXME stay on the 1.12 branch until a release is made
-		sed -i "s/version('develop', branch='develop')/version('develop', branch='hdf5_1_12')/" var/spack/repos/builtin/packages/hdf5/package.py
 	)
 
 	return 0
@@ -117,7 +115,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5@develop~mpi"
+		dependencies="${dependencies} hdf5~mpi"
 		dependencies="${dependencies} mariadb-c-client"
 
 		# FIXME move to minimal
