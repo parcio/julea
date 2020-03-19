@@ -918,9 +918,6 @@ H5VL_julea_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dx
 
 	switch (specific_type)
 	{
-		case H5VL_FILE_POST_OPEN:
-			ret = 0;
-			break;
 		case H5VL_FILE_FLUSH:
 		case H5VL_FILE_REOPEN:
 		case H5VL_FILE_MOUNT:
@@ -1379,8 +1376,6 @@ H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __
 			break;
 		case H5VL_DATASET_GET_DCPL:
 			break;
-		case H5VL_DATASET_GET_OFFSET:
-			break;
 		case H5VL_DATASET_GET_SPACE:
 		{
 			hid_t* ret_id = va_arg(arguments, hid_t*);
@@ -1491,103 +1486,110 @@ H5VL_julea_dataset_close(void* dset, hid_t dxpl_id __attribute__((unused)), void
  * The class providing the functions to HDF5
  **/
 static const H5VL_class_t H5VL_julea_g = {
-	0,
-	JULEA,
-	"julea", /* name */
-	0,
-	H5VL_julea_init, /* initialize */
-	H5VL_julea_term, /* terminate */
-	{
-		0,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL },
-	{ NULL,
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL },
-	{
-		/* attribute_cls */
-		H5VL_julea_attr_create, /* create */
-		H5VL_julea_attr_open, /* open */
-		H5VL_julea_attr_read, /* read */
-		H5VL_julea_attr_write, /* write */
-		H5VL_julea_attr_get, /* get */
-		NULL, //H5VL_julea_attr_specific,              /* specific */
-		NULL, //H5VL_julea_attr_optional,              /* optional */
-		H5VL_julea_attr_close /* close */
+	.version = 0,
+	.value = JULEA,
+	.name = "julea",
+	.cap_flags = 0,
+	.initialize = H5VL_julea_init,
+	.terminate = H5VL_julea_term,
+	.info_cls = {
+		.size = 0,
+		.copy = NULL,
+		.cmp = NULL,
+		.free = NULL,
+		.to_str = NULL,
+		.from_str = NULL,
 	},
-	{
-		/* dataset_cls */
-		H5VL_julea_dataset_create, /* create */
-		H5VL_julea_dataset_open, /* open */
-		H5VL_julea_dataset_read, /* read */
-		H5VL_julea_dataset_write, /* write */
-		H5VL_julea_dataset_get, /* get */
-		NULL, //H5VL_julea_dataset_specific,          /* specific */
-		NULL, //H5VL_julea_dataset_optional,          /* optional */
-		H5VL_julea_dataset_close /* close */
+	.wrap_cls = {
+		.get_object = NULL,
+		.get_wrap_ctx = NULL,
+		.wrap_object = NULL,
+		.unwrap_object = NULL,
+		.free_wrap_ctx = NULL,
 	},
-	{
-		/* datatype_cls */
-		NULL, //H5VL_julea_datatype_commit, /* commit */
-		NULL, //H5VL_julea_datatype_open,   /* open */
-		NULL, //H5VL_julea_datatype_get,	/* get_size */
-		NULL, //H5VL_julea_datatype_specific,         /* specific */
-		NULL, //H5VL_julea_datatype_optional,         /* optional */
-		NULL, //H5VL_julea_datatype_close   /* close */
+	.attr_cls = {
+		.create = H5VL_julea_attr_create,
+		.open = H5VL_julea_attr_open,
+		.read = H5VL_julea_attr_read,
+		.write = H5VL_julea_attr_write,
+		.get = H5VL_julea_attr_get,
+		.specific = NULL,
+		.optional = NULL,
+		.close = H5VL_julea_attr_close,
 	},
-	{
-		/* file_cls */
-		H5VL_julea_file_create, /* create */
-		H5VL_julea_file_open, /* open */
-		NULL, //H5VL_julea_file_get,	/* get */
-		H5VL_julea_file_specific, /* specific */
-		NULL, //H5VL_julea_file_optional,            /* optional */
-		H5VL_julea_file_close /* close */
+	.dataset_cls = {
+		.create = H5VL_julea_dataset_create,
+		.open = H5VL_julea_dataset_open,
+		.read = H5VL_julea_dataset_read,
+		.write = H5VL_julea_dataset_write,
+		.get = H5VL_julea_dataset_get,
+		.specific = NULL,
+		.optional = NULL,
+		.close = H5VL_julea_dataset_close,
 	},
-	{
-		/* group_cls */
-		H5VL_julea_group_create, /* create */
-		H5VL_julea_group_open, /* open */
-		NULL, //H5VL_julea_group_get,	/* get */
-		NULL, //H5VL_julea_group_specific,           /* specific */
-		NULL, //H5VL_julea_group_optional,           /* optional */
-		H5VL_julea_group_close /* close */
+	.datatype_cls = {
+		.commit = NULL,
+		.open = NULL,
+		.get = NULL,
+		.specific = NULL,
+		.optional = NULL,
+		.close = NULL,
 	},
-	{
-		/* link_cls */
-		NULL, //H5VL_julea_link_create,                /* create */
-		NULL, //H5VL_julea_link_copy,                  /* copy */
-		NULL, //H5VL_julea_link_move,                  /* move */
-		NULL, //H5VL_julea_link_get,                   /* get */
-		NULL, //H5VL_julea_link_specific,              /* specific */
-		NULL, //H5VL_julea_link_optional,              /* optional */
+	.file_cls = {
+		.create = H5VL_julea_file_create,
+		.open = H5VL_julea_file_open,
+		.get = NULL,
+		.specific = H5VL_julea_file_specific,
+		.optional = NULL,
+		.close = H5VL_julea_file_close,
 	},
-	{
-		/* object_cls */
-		NULL, //H5VL_julea_object_open,                        /* open */
-		NULL, //H5VL_julea_object_copy,                /* copy */
-		NULL, //H5VL_julea_object_get,                 /* get */
-		NULL, //H5VL_julea_object_specific,                    /* specific */
-		NULL, //H5VL_julea_object_optional,            /* optional */
+	.group_cls = {
+		.create = H5VL_julea_group_create,
+		.open = H5VL_julea_group_open,
+		.get = NULL,
+		.specific = NULL,
+		.optional = NULL,
+		.close = H5VL_julea_group_close,
 	},
-	{ // H5VL_request_class_t
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL },
-	{ // H5VL_blob_class_t
-	  NULL,
-	  NULL,
-	  NULL,
-	  NULL },
-	NULL
+	.link_cls = {
+		.create = NULL,
+		.copy = NULL,
+		.move = NULL,
+		.get = NULL,
+		.specific = NULL,
+		.optional = NULL,
+	},
+	.object_cls = {
+		.open = NULL,
+		.copy = NULL,
+		.get = NULL,
+		.specific = NULL,
+		.optional = NULL,
+	},
+	.introspect_cls = {
+		.get_conn_cls = NULL,
+		.opt_query = NULL,
+	},
+	.request_cls = {
+		.wait = NULL,
+		.notify = NULL,
+		.cancel = NULL,
+		.specific = NULL,
+		.optional = NULL,
+		.free = NULL,
+	},
+	.blob_cls = {
+		.put = NULL,
+		.get = NULL,
+		.specific = NULL,
+		.optional = NULL,
+	},
+	.token_cls = {
+		.cmp = NULL,
+		.to_str = NULL,
+		.from_str = NULL,
+	},
+	.optional = NULL
 };
 
 /**
@@ -1635,7 +1637,7 @@ j_hdf5_init(void)
 	julea_h5vl = H5PLget_plugin_info();
 	j_hdf5_vol = H5VLregister_connector(julea_h5vl, H5P_DEFAULT);
 	g_assert(j_hdf5_vol > 0);
-	g_assert(H5VLis_connector_registered("julea") == 1);
+	g_assert(H5VLis_connector_registered_by_name("julea") == 1);
 
 	H5VLinitialize(j_hdf5_vol, H5P_DEFAULT);
 
@@ -1663,7 +1665,7 @@ j_hdf5_fini(void)
 	H5VLterminate(j_hdf5_vol);
 
 	H5VLunregister_connector(j_hdf5_vol);
-	g_assert(H5VLis_connector_registered("julea") == 0);
+	g_assert(H5VLis_connector_registered_by_name("julea") == 0);
 }
 
 hid_t
