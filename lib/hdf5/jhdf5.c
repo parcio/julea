@@ -1482,6 +1482,31 @@ H5VL_julea_dataset_close(void* dset, hid_t dxpl_id __attribute__((unused)), void
 	return 1;
 }
 
+static const H5VL_class_t H5VL_julea_g;
+
+static herr_t
+H5VL_julea_introspect_get_conn_cls(void* obj, H5VL_get_conn_lvl_t lvl, const struct H5VL_class_t** conn_cls)
+{
+	(void)obj;
+	(void)lvl;
+
+	*conn_cls = &H5VL_julea_g;
+
+	return 0;
+}
+
+static herr_t
+H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, hbool_t* supported)
+{
+	(void)obj;
+	(void)cls;
+	(void)opt_type;
+
+	*supported = FALSE;
+
+	return 0;
+}
+
 /**
  * The class providing the functions to HDF5
  **/
@@ -1567,8 +1592,8 @@ static const H5VL_class_t H5VL_julea_g = {
 		.optional = NULL,
 	},
 	.introspect_cls = {
-		.get_conn_cls = NULL,
-		.opt_query = NULL,
+		.get_conn_cls = H5VL_julea_introspect_get_conn_cls,
+		.opt_query = H5VL_julea_introspect_opt_query,
 	},
 	.request_cls = {
 		.wait = NULL,
