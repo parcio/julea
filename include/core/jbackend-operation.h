@@ -50,23 +50,24 @@ typedef enum JBackendOperationParamType JBackendOperationParamType;
 
 struct JBackendOperationParam
 {
-	JBackendOperationParamType type;
-
 	// Only for temporary static storage
 	union
 	{
 		struct
 		{
-			gboolean bson_initialized;
 			bson_t bson;
 		};
+
 		struct
 		{
-			const gchar* error_quark_string;
 			GError error;
+
 			GError* error_ptr;
+
+			const gchar* error_quark_string;
 		};
 	};
+
 	union
 	{
 		gconstpointer ptr_const;
@@ -75,24 +76,32 @@ struct JBackendOperationParam
 
 	// Length of ptr data
 	gint len;
+
+	JBackendOperationParamType type;
+
+	// FIXME this belongs to the bson member but is here for alignment purposes
+	gboolean bson_initialized;
 };
 
 typedef struct JBackendOperationParam JBackendOperationParam;
 
 struct JBackendOperation
 {
-	gboolean (*backend_func)(struct JBackend*, gpointer, struct JBackendOperation*);
-	guint in_param_count;
-	guint out_param_count;
 	// Input parameters
-	JBackendOperationParam in_param[20];
+	JBackendOperationParam in_param[5];
 	// Output parameters
 	// The last out parameter must be of type 'J_BACKEND_OPERATION_PARAM_TYPE_ERROR'
-	JBackendOperationParam out_param[20];
+	JBackendOperationParam out_param[5];
+
+	gboolean (*backend_func)(struct JBackend*, gpointer, struct JBackendOperation*);
+
 	//refcounting objects which are required for transmission - unref those after use
+	GDestroyNotify unref_funcs[5];
+	gpointer unref_values[5];
+
+	guint in_param_count;
+	guint out_param_count;
 	guint unref_func_count;
-	GDestroyNotify unref_funcs[20];
-	gpointer unref_values[20];
 };
 
 typedef struct JBackendOperation JBackendOperation;
