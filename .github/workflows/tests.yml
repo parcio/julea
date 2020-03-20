@@ -1,5 +1,5 @@
 name: Tests
-on: [push]
+on: [push, pull_request]
 jobs:
   tests:
     name: Tests
@@ -73,6 +73,7 @@ jobs:
       - name: Create database
         if: matrix.db == 'mysql'
         run: |
+          sudo systemctl start mysql.service
           mysql --user=root --password=root --execute='CREATE DATABASE julea;'
       - name: Tests
         run: |
