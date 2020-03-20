@@ -43,7 +43,7 @@ j_db_entry_new(JDBSchema* schema, GError** error)
 	g_return_val_if_fail(schema != NULL, NULL);
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-	entry = g_slice_new(JDBEntry);
+	entry = j_helper_alloc_aligned(128, sizeof(JDBEntry));
 
 	if (G_UNLIKELY(!j_bson_init(&entry->bson, error)))
 	{
@@ -95,7 +95,7 @@ j_db_entry_unref(JDBEntry* entry)
 		j_db_schema_unref(entry->schema);
 		j_bson_destroy(&entry->bson);
 		j_bson_destroy(&entry->id);
-		g_slice_free(JDBEntry, entry);
+		g_free(entry);
 	}
 }
 

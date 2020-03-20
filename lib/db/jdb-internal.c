@@ -423,7 +423,7 @@ j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBItera
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	helper = g_slice_new(JDBIteratorHelper);
+	helper = j_helper_alloc_aligned(128, sizeof(JDBIteratorHelper));
 	helper->initialized = FALSE;
 	memset(&helper->bson, 0, sizeof(bson_t));
 	j_db_iterator->iterator = helper;
@@ -506,7 +506,7 @@ _error:
 	j_bson_destroy(&helper->bson);
 
 error2:
-	g_slice_free(JDBIteratorHelper, helper);
+	g_free(helper);
 
 	return FALSE;
 }

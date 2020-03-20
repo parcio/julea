@@ -382,8 +382,7 @@ def configure(ctx):
 
 	if ctx.options.sanitize:
 		check_and_add_flags(ctx, '-fsanitize=address', False, ['cflags', 'ldflags'])
-		# FIXME enable ubsan?
-		# check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
+		check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
 
 	if ctx.options.coverage:
 		check_and_add_flags(ctx, '--coverage', True, ['cflags', 'ldflags'])

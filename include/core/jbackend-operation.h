@@ -85,6 +85,7 @@ struct JBackendOperationParam
 
 typedef struct JBackendOperationParam JBackendOperationParam;
 
+// FIXME this also needs to be allocated with alignment but appears to be large enough to the default allocator does the right thing
 struct JBackendOperation
 {
 	// Input parameters
