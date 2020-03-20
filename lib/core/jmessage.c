@@ -121,11 +121,18 @@ struct JMessageHeader
 
 typedef struct JMessageHeader JMessageHeader;
 
+G_STATIC_ASSERT(sizeof(JMessageHeader) == 5 * sizeof(guint32));
+
 /**
  * A message.
  **/
 struct JMessage
 {
+	/**
+	 * The header.
+	 */
+	JMessageHeader header;
+
 	/**
 	 * The current size.
 	 **/
@@ -133,7 +140,6 @@ struct JMessage
 
 	/**
 	 * The data.
-	 * This also contains a JMessageHeader.
 	 **/
 	gchar* data;
 
@@ -161,26 +167,6 @@ struct JMessage
 };
 
 /**
- * Returns a message's header.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's header.
- **/
-static JMessageHeader*
-j_message_header(JMessage const* message)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	return (JMessageHeader*)message->data;
-}
-
-/**
  * Returns a message's length.
  *
  * \private
@@ -199,7 +185,7 @@ j_message_length(JMessage const* message)
 
 	guint32 length;
 
-	length = j_message_header(message)->length;
+	length = message->header.length;
 
 	return GUINT32_FROM_LE(length);
 }
@@ -251,7 +237,7 @@ j_message_can_get(JMessage const* message, gsize length)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	return (message->current + length <= message->data + sizeof(JMessageHeader) + j_message_length(message));
+	return (message->current + length <= message->data + j_message_length(message));
 }
 
 static void
@@ -271,7 +257,7 @@ j_message_extend(JMessage* message, gsize length)
 
 	current_length = j_message_length(message);
 
-	if (sizeof(JMessageHeader) + current_length + length <= message->size)
+	if (current_length + length <= message->size)
 	{
 		return;
 	}
@@ -330,21 +316,22 @@ j_message_new(JMessageType op_type, gsize length)
 
 	//g_return_val_if_fail(op_type != J_MESSAGE_NONE, NULL);
 
+	length = MAX(256, length);
 	rand = g_random_int();
 
 	message = g_slice_new(JMessage);
-	message->size = sizeof(JMessageHeader) + length;
+	message->size = length;
 	message->data = g_malloc(message->size);
-	message->current = message->data + sizeof(JMessageHeader);
+	message->current = message->data;
 	message->send_list = j_list_new(j_message_data_free);
 	message->original_message = NULL;
 	message->ref_count = 1;
 
-	j_message_header(message)->length = GUINT32_TO_LE(0);
-	j_message_header(message)->id = GUINT32_TO_LE(rand);
-	j_message_header(message)->semantics = GUINT32_TO_LE(0);
-	j_message_header(message)->op_type = GUINT32_TO_LE(op_type);
-	j_message_header(message)->op_count = GUINT32_TO_LE(0);
+	message->header.length = GUINT32_TO_LE(0);
+	message->header.id = GUINT32_TO_LE(rand);
+	message->header.semantics = GUINT32_TO_LE(0);
+	message->header.op_type = GUINT32_TO_LE(op_type);
+	message->header.op_count = GUINT32_TO_LE(0);
 
 	return message;
 }
@@ -369,18 +356,18 @@ j_message_new_reply(JMessage* message)
 	g_return_val_if_fail(message != NULL, NULL);
 
 	reply = g_slice_new(JMessage);
-	reply->size = sizeof(JMessageHeader);
+	reply->size = 256;
 	reply->data = g_malloc(reply->size);
-	reply->current = reply->data + sizeof(JMessageHeader);
+	reply->current = reply->data;
 	reply->send_list = j_list_new(j_message_data_free);
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
-	j_message_header(reply)->length = GUINT32_TO_LE(0);
-	j_message_header(reply)->id = j_message_header(message)->id;
-	j_message_header(reply)->semantics = GUINT32_TO_LE(0);
-	j_message_header(reply)->op_type = j_message_header(message)->op_type;
-	j_message_header(reply)->op_count = GUINT32_TO_LE(0);
+	reply->header.length = GUINT32_TO_LE(0);
+	reply->header.id = message->header.id;
+	reply->header.semantics = GUINT32_TO_LE(0);
+	reply->header.op_type = message->header.op_type;
+	reply->header.op_count = GUINT32_TO_LE(0);
 
 	return reply;
 }
@@ -463,7 +450,7 @@ j_message_get_type(JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, J_MESSAGE_NONE);
 
-	op_type = j_message_header(message)->op_type;
+	op_type = message->header.op_type;
 	op_type = GUINT32_FROM_LE(op_type);
 
 	return op_type;
@@ -488,7 +475,7 @@ j_message_get_count(JMessage const* message)
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	op_count = j_message_header(message)->op_count;
+	op_count = message->header.op_count;
 	op_count = GUINT32_FROM_LE(op_count);
 
 	return op_count;
@@ -520,7 +507,7 @@ j_message_append_1(JMessage* message, gconstpointer data)
 	message->current += 1;
 
 	new_length = j_message_length(message) + 1;
-	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+	message->header.length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -554,7 +541,7 @@ j_message_append_4(JMessage* message, gconstpointer data)
 	message->current += 4;
 
 	new_length = j_message_length(message) + 4;
-	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+	message->header.length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -588,7 +575,7 @@ j_message_append_8(JMessage* message, gconstpointer data)
 	message->current += 8;
 
 	new_length = j_message_length(message) + 8;
-	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+	message->header.length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -623,7 +610,7 @@ j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 	message->current += length;
 
 	new_length = j_message_length(message) + length;
-	j_message_header(message)->length = GUINT32_TO_LE(new_length);
+	message->header.length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
 }
@@ -868,28 +855,23 @@ j_message_read(JMessage* message, GInputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (!g_input_stream_read_all(stream, message->data, sizeof(JMessageHeader), &bytes_read, NULL, &error))
+	if (!g_input_stream_read_all(stream, &(message->header), sizeof(JMessageHeader), &bytes_read, NULL, &error) || bytes_read != sizeof(JMessageHeader))
 	{
 		goto end;
 	}
 
-	if (bytes_read == 0)
+	j_message_ensure_size(message, j_message_length(message));
+
+	if (!g_input_stream_read_all(stream, message->data, j_message_length(message), &bytes_read, NULL, &error) || bytes_read != j_message_length(message))
 	{
 		goto end;
 	}
 
-	j_message_ensure_size(message, sizeof(JMessageHeader) + j_message_length(message));
-
-	if (!g_input_stream_read_all(stream, message->data + sizeof(JMessageHeader), j_message_length(message), &bytes_read, NULL, &error))
-	{
-		goto end;
-	}
-
-	message->current = message->data + sizeof(JMessageHeader);
+	message->current = message->data;
 
 	if (message->original_message != NULL)
 	{
-		g_assert(j_message_header(message)->id == j_message_header(message->original_message)->id);
+		g_assert(message->header.id == message->original_message->header.id);
 	}
 
 	ret = TRUE;
@@ -929,12 +911,12 @@ j_message_write(JMessage* message, GOutputStream* stream)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(stream != NULL, FALSE);
 
-	if (!g_output_stream_write_all(stream, message->data, sizeof(JMessageHeader) + j_message_length(message), &bytes_written, NULL, &error))
+	if (!g_output_stream_write_all(stream, &(message->header), sizeof(JMessageHeader), &bytes_written, NULL, &error) || bytes_written != sizeof(JMessageHeader))
 	{
 		goto end;
 	}
 
-	if (bytes_written == 0)
+	if (!g_output_stream_write_all(stream, message->data, j_message_length(message), &bytes_written, NULL, &error) || bytes_written != j_message_length(message))
 	{
 		goto end;
 	}
@@ -1015,7 +997,7 @@ j_message_add_operation(JMessage* message, gsize length)
 	g_return_if_fail(message != NULL);
 
 	new_op_count = j_message_get_count(message) + 1;
-	j_message_header(message)->op_count = GUINT32_TO_LE(new_op_count);
+	message->header.op_count = GUINT32_TO_LE(new_op_count);
 
 	j_message_extend(message, length);
 }
@@ -1063,7 +1045,7 @@ j_message_set_semantics(JMessage* message, JSemantics* semantics)
 
 #undef SERIALIZE_SEMANTICS
 
-	j_message_header(message)->semantics = GUINT32_TO_LE(serialized_semantics);
+	message->header.semantics = GUINT32_TO_LE(serialized_semantics);
 }
 
 JSemantics*
@@ -1077,7 +1059,7 @@ j_message_get_semantics(JMessage* message)
 
 	g_return_val_if_fail(message != NULL, NULL);
 
-	serialized_semantics = j_message_header(message)->semantics;
+	serialized_semantics = message->header.semantics;
 	serialized_semantics = GUINT32_FROM_LE(serialized_semantics);
 
 	// If serialized_semantics is 0, we will end up with the default semantics.
