@@ -21,7 +21,7 @@ jobs:
         env:
           CC: ${{ matrix.compiler }}
         run: |
-          ./waf configure --prefix="${GITHUB_WORKSPACE}/julea-install" --leveldb=/usr
+          ./waf configure --prefix="${GITHUB_WORKSPACE}/julea-install" --error --leveldb=/usr
       - name: Build
         run: |
           ./waf
