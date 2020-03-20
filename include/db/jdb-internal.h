@@ -42,49 +42,62 @@ G_BEGIN_DECLS
 
 struct JDBEntry
 {
-	JDBSchema* schema;
 	bson_t bson;
-	gint ref_count;
 	bson_t id;
+
+	JDBSchema* schema;
+
+	gint ref_count;
 };
 
 struct JDBIterator
 {
+	bson_t bson;
+
 	JDBSchema* schema;
 	JDBSelector* selector;
+
 	gpointer iterator;
+
+	gint ref_count;
+
 	gboolean valid;
 	gboolean bson_valid;
-	bson_t bson;
-	gint ref_count;
 };
 
 struct JDBSchemaIndex
 {
-	guint variable_count;
 	GHashTable* variables;
+
+	guint variable_count;
 };
 
 struct JDBSchema
 {
-	gchar* namespace;
-	gchar* name;
-	gboolean bson_initialized;
 	bson_t bson;
-	gboolean bson_index_initialized;
+	bson_t bson_index;
+
 	GHashTable* variables; //contains char*
 	GArray* index; //contains GHashTable * which contain char*
-	bson_t bson_index;
+
+	gchar* namespace;
+	gchar* name;
+
 	guint bson_index_count;
-	gboolean server_side;
 	gint ref_count;
+
+	gboolean bson_initialized;
+	gboolean bson_index_initialized;
+	gboolean server_side;
 };
 
 struct JDBSelector
 {
+	bson_t bson;
+
 	JDBSelectorMode mode;
 	JDBSchema* schema;
-	bson_t bson;
+
 	guint bson_count;
 	gint ref_count;
 };
