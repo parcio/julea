@@ -153,6 +153,7 @@ def options(ctx):
 	#ctx.load('compiler_cxx')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
+	ctx.add_option('--error', action='store_true', default=False, help='Enable -Werror')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 	ctx.add_option('--coverage', action='store_true', default=False, help='Enable coverage analysis')
 
@@ -180,6 +181,10 @@ def configure(ctx):
 	check_and_add_flags(ctx, '-std=c11')
 	check_and_add_flags(ctx, '-fdiagnostics-color', False)
 	check_and_add_flags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
+
+	if ctx.options.error:
+		check_and_add_flags(ctx, '-Werror')
+
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
@@ -572,7 +577,10 @@ def build(ctx):
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
 			# lmdb bug
-			cflags = ['-Wno-discarded-qualifiers']
+			if ctx.env.CC_NAME == 'clang':
+				cflags = ['-Wno-incompatible-pointer-types-discards-qualifiers']
+			else:
+				cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
 		elif backend == 'sqlite':
@@ -606,6 +614,11 @@ def build(ctx):
 			# MariaDB bug
 			# https://jira.mariadb.org/browse/CONC-381
 			cflags = ['-Wno-strict-prototypes']
+			# MySQL bug
+			if ctx.env.CC_NAME == 'clang':
+				cflags += ['-Wno-incompatible-pointer-types-discards-qualifiers']
+			else:
+				cflags += ['-Wno-discarded-qualifiers']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],

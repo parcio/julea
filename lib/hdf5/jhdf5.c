@@ -299,32 +299,34 @@ j_hdf5_deserialize_attribute_data(const bson_t* b, void* data, size_t data_size)
  * \return type_data the encoded type data
  **/
 static void*
-j_hdf5_deserialize_type(const bson_t* b)
+j_hdf5_deserialize_type(bson_t const* b)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	bson_iter_t iterator;
-	const void* buf;
-	bson_subtype_t bs;
-	// FIXME might be uninitialized
-	void* type_data;
-	size_t type_size;
+	void const* buf = NULL;
+
+	void* type_data = NULL;
+	size_t type_size = 0;
 
 	bson_iter_init(&iterator, b);
+
 	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
 		key = bson_iter_key(&iterator);
 
+		// FIXME why do we need tsize? can be gotten from tdata below
 		if (g_strcmp0(key, "tsize") == 0)
 		{
 			type_size = bson_iter_int32(&iterator);
 			type_data = malloc(type_size);
 		}
 	}
+
 	bson_iter_init(&iterator, b);
-	bs = BSON_SUBTYPE_BINARY;
+
 	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
@@ -333,10 +335,18 @@ j_hdf5_deserialize_type(const bson_t* b)
 
 		if (g_strcmp0(key, "tdata") == 0)
 		{
+			bson_subtype_t bs;
+
+			bs = BSON_SUBTYPE_BINARY;
 			bson_iter_binary(&iterator, &bs, (uint32_t*)&type_size, (const uint8_t**)&buf);
 		}
 	}
-	memcpy(type_data, buf, type_size);
+
+	if (type_data != NULL && buf != NULL)
+	{
+		memcpy(type_data, buf, type_size);
+	}
+
 	return type_data;
 }
 
@@ -348,32 +358,34 @@ j_hdf5_deserialize_type(const bson_t* b)
  * \return space_data the encoded space data
  **/
 static void*
-j_hdf5_deserialize_space(const bson_t* b)
+j_hdf5_deserialize_space(bson_t const* b)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	bson_iter_t iterator;
-	const void* buf;
-	bson_subtype_t bs;
-	// FIXME might be uninitialized
-	void* space_data;
-	size_t space_size;
+	const void* buf = NULL;
+
+	void* space_data = NULL;
+	size_t space_size = 0;
 
 	bson_iter_init(&iterator, b);
+
 	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
 
 		key = bson_iter_key(&iterator);
 
+		// FIXME why do we need ssize? can be gotten from sdata below
 		if (g_strcmp0(key, "ssize") == 0)
 		{
 			space_size = bson_iter_int32(&iterator);
 			space_data = malloc(space_size);
 		}
 	}
+
 	bson_iter_init(&iterator, b);
-	bs = BSON_SUBTYPE_BINARY;
+
 	while (bson_iter_next(&iterator))
 	{
 		gchar const* key;
@@ -382,10 +394,18 @@ j_hdf5_deserialize_space(const bson_t* b)
 
 		if (g_strcmp0(key, "sdata") == 0)
 		{
+			bson_subtype_t bs;
+
+			bs = BSON_SUBTYPE_BINARY;
 			bson_iter_binary(&iterator, &bs, (uint32_t*)&space_size, (const uint8_t**)&buf);
 		}
 	}
-	memcpy(space_data, buf, space_size);
+
+	if (space_data != NULL && buf != NULL)
+	{
+		memcpy(space_data, buf, space_size);
+	}
+
 	return space_data;
 }
 
