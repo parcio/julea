@@ -126,9 +126,6 @@ gboolean j_backend_operation_from_message(JMessage* message, JBackendOperationPa
 gboolean j_backend_operation_from_message_static(JMessage* message, JBackendOperationParam* data, guint len);
 
 static const JBackendOperation j_backend_operation_db_schema_create = {
-	.backend_func = j_backend_operation_unwrap_db_schema_create,
-	.in_param_count = 3,
-	.out_param_count = 1,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -142,101 +139,101 @@ static const JBackendOperation j_backend_operation_db_schema_create = {
 			.type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR,
 		},
 	},
+	.backend_func = j_backend_operation_unwrap_db_schema_create,
+	.in_param_count = 3,
+	.out_param_count = 1,
 };
 
 static const JBackendOperation j_backend_operation_db_schema_get = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+	},
+	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_schema_get,
 	.in_param_count = 2,
 	.out_param_count = 2,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-	},
-	.out_param = {
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_schema_delete = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_schema_delete,
 	.in_param_count = 2,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_insert = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
 	.out_param_count = 2,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_update = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_update,
 	.in_param_count = 4,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_delete = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_delete,
 	.in_param_count = 3,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_query = {
-	.backend_func = j_backend_operation_unwrap_db_query,
-	.in_param_count = 3,
-	.out_param_count = 2,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -252,6 +249,9 @@ static const JBackendOperation j_backend_operation_db_query = {
 		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
+	.backend_func = j_backend_operation_unwrap_db_query,
+	.in_param_count = 3,
+	.out_param_count = 2,
 };
 
 G_END_DECLS
