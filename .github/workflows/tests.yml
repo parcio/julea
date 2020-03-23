@@ -45,7 +45,9 @@ jobs:
             db: mysql
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
       - name: Install dependencies
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
