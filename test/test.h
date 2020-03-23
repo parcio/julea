@@ -23,6 +23,7 @@ void test_background_operation(void);
 void test_batch(void);
 void test_cache(void);
 void test_configuration(void);
+void test_credentials(void);
 void test_distribution(void);
 void test_list(void);
 void test_list_iterator(void);
