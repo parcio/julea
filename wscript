@@ -550,11 +550,11 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/object/{0}.c'.format(backend)],
-			target='backend/object/{0}'.format(backend),
+			target='backend/object-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/object'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	kv_backends = ['null']
@@ -594,12 +594,12 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/kv/{0}.c'.format(backend)],
-			target='backend/kv/{0}'.format(backend),
+			target='backend/kv-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/kv'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	db_backends = ['null', 'memory']
@@ -628,12 +628,12 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],
-			target='backend/db/{0}'.format(backend),
+			target='backend/db-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/db'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	# Command line
