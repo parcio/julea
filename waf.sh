@@ -25,7 +25,7 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/scripts/common"
 . "${SELF_DIR}/scripts/spack"
 
-SPACK_DIR="$(get_directory "${SELF_DIR}/dependencies")"
+SPACK_DIR="$(get_directory "${SELF_DIR}")/dependencies"
 
 spack_load_dependencies
 
