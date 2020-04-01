@@ -24,10 +24,10 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/common"
 . "${SELF_DIR}/spack"
 
-set_path
-set_library_path
-set_pkg_config_path
-set_backend_path
+set_path || return 1
+set_library_path || return 1
+set_pkg_config_path || return 1
+set_backend_path || return 1
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 
