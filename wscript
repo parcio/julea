@@ -176,8 +176,6 @@ def configure(ctx):
 	ctx.load('gnu_dirs')
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
-	ctx.env.JULEA_DEBUG = ctx.options.debug
-
 	check_and_add_flags(ctx, '-std=c11')
 	check_and_add_flags(ctx, '-fdiagnostics-color', False)
 	check_and_add_flags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
