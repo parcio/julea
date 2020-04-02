@@ -34,3 +34,6 @@ set_backend_path
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 spack_load_dependencies
+
+# FIXME The Spack pkg-config does not search in global directories and Meson does not provide a way to override this
+export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig"

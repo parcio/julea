@@ -95,7 +95,8 @@ spack_get_dependencies ()
 
 	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
 	then
-		# Required for Waf
+		# Required for building JULEA
+		dependencies="${dependencies} meson"
 		dependencies="${dependencies} pkgconfig"
 
 		# Mandatory dependencies
@@ -115,7 +116,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5~mpi"
+		dependencies="${dependencies} hdf5~mpi@1.12:"
 		dependencies="${dependencies} mariadb-c-client"
 
 		# FIXME move to minimal
