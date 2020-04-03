@@ -10,12 +10,24 @@ The `install-dependencies.sh` script installs all dependencies into the `depende
 $ ./scripts/install-dependencies.sh
 ```
 
+By default, the script only installs a minimal set of packages that are necessary for JULEA's operation.
+If you want to install additional dependencies for optional backends or clients, specify a mode (`minimal`, `standard` or `full`):
+
+```console
+$ ./scripts/install-dependencies.sh full
+```
+
 ## Manual Installation
 
 Alternatively, you can install the dependencies manually.
 Most of them should be available within the repositories of Linux distributions.
 
 ### Required Dependencies
+
+- Meson and Ninja
+  - Debian: `apt install meson ninja-build`
+  - Fedora: `dnf install meson ninja-build`
+  - Arch Linux: `pacman -S meson ninja`
 
 - GLib
   - Debian: `apt install libglib2.0-dev`

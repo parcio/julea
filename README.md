@@ -5,7 +5,7 @@
 [![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 
 JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
-To be able to rapidly prototype new approaches, it offers object and key-value backends that can either be client-side or server-side;
+To be able to rapidly prototype new approaches, it offers object, key-value and database backends that can either be client-side or server-side;
 backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.
 
 Additionally, JULEA allows dynamically adapting the I/O operations' semantics and can thus be adjusted to different use-cases.
@@ -24,7 +24,7 @@ $ cd julea
 ```
 
 JULEA has two mandatory dependencies (GLib and libbson) and several optional ones that enable additional functionality.
-The dependencies can either be installed using your operating system's package manager or with JULEA's `install-dependencies` script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
+The dependencies can either be installed using [your operating system's package manager](doc/dependencies.md#manual-installation) or with JULEA's `install-dependencies` script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
 By default, the script will install a useful subset of dependencies;
 if you want to install all of them, call it with the `full` argument.
 
