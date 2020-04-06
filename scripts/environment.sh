@@ -24,6 +24,8 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/common"
 . "${SELF_DIR}/spack"
 
+JULEA_ENVIRONMENT=1
+
 set_path
 set_library_path
 set_pkg_config_path
@@ -32,3 +34,15 @@ set_backend_path
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 
 spack_load_dependencies
+
+# Do not filter out paths contained in CPATH and LIBRARY_PATH.
+PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
+PKG_CONFIG_ALLOW_SYSTEM_LIBS=1
+
+export PKG_CONFIG_ALLOW_SYSTEM_CFLAGS
+export PKG_CONFIG_ALLOW_SYSTEM_LIBS
+
+# FIXME The Spack pkg-config does not search in global directories and Meson does not provide a way to override this
+PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib64/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"
+
+export PKG_CONFIG_PATH

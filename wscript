@@ -176,8 +176,6 @@ def configure(ctx):
 	ctx.load('gnu_dirs')
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
-	ctx.env.JULEA_DEBUG = ctx.options.debug
-
 	check_and_add_flags(ctx, '-std=c11')
 	check_and_add_flags(ctx, '-fdiagnostics-color', False)
 	check_and_add_flags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
@@ -392,10 +390,13 @@ def configure(ctx):
 
 		check_and_add_flags(ctx, [
 			'-Waggregate-return',
-			'-Wcast-align',
+			'-Wcast-align=strict',
 			'-Wcast-qual',
+			#'-Wconversion',
 			'-Wdeclaration-after-statement',
+			'-Wdisabled-optimization',
 			'-Wdouble-promotion',
+			#'-Wduplicated-branches',
 			'-Wduplicated-cond',
 			'-Wfloat-equal',
 			'-Wformat=2',
@@ -411,9 +412,13 @@ def configure(ctx):
 			'-Wnested-externs',
 			'-Wnull-dereference',
 			'-Wold-style-definition',
+			'-Wpacked',
+			#'-Wpadded',
 			'-Wredundant-decls',
 			'-Wrestrict',
 			'-Wshadow',
+			#'-Wsign-conversion',
+			'-Wstack-protector',
 			'-Wstrict-prototypes',
 			'-Wswitch-default',
 			'-Wswitch-enum',
@@ -543,11 +548,11 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/object/{0}.c'.format(backend)],
-			target='backend/object/{0}'.format(backend),
+			target='backend/object-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/object'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	kv_backends = ['null']
@@ -587,12 +592,12 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/kv/{0}.c'.format(backend)],
-			target='backend/kv/{0}'.format(backend),
+			target='backend/kv-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/kv'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	db_backends = ['null', 'memory']
@@ -621,12 +626,12 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],
-			target='backend/db/{0}'.format(backend),
+			target='backend/db-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/db'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	# Command line

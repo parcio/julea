@@ -72,8 +72,8 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	GModule* module = NULL;
 	// Unused in release builds
 	gchar const* backend_path G_GNUC_UNUSED = NULL;
+	gchar* module_name = NULL;
 	gchar* path = NULL;
-	gchar* type_path = NULL;
 	gchar const* type_str = NULL;
 
 	switch (type)
@@ -94,21 +94,33 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 #ifdef JULEA_DEBUG
 	if ((backend_path = g_getenv("JULEA_BACKEND_PATH")) != NULL)
 	{
-		type_path = g_build_filename(backend_path, type_str, NULL);
-		path = g_module_build_path(type_path, name);
+		module_name = g_strdup_printf("%s-%s", type_str, name);
+		path = g_module_build_path(backend_path, module_name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(type_path);
+
+		if (module == NULL)
+		{
+			g_warning("Could not load module %s.", path);
+		}
+
 		g_free(path);
+		g_free(module_name);
 	}
 #endif
 
 	if (module == NULL)
 	{
-		type_path = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
-		path = g_module_build_path(type_path, name);
+		module_name = g_strdup_printf("%s-%s", type_str, name);
+		path = g_module_build_path(JULEA_BACKEND_PATH, name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(type_path);
+
+		if (module == NULL)
+		{
+			g_warning("Could not load module %s.", path);
+		}
+
 		g_free(path);
+		g_free(module_name);
 	}
 
 	if (module == NULL)

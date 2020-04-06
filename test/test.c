@@ -36,6 +36,7 @@ main(int argc, char** argv)
 	test_batch();
 	test_cache();
 	test_configuration();
+	test_credentials();
 	test_distribution();
 	test_list();
 	test_list_iterator();

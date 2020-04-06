@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='14e2c42bcef0cf1b233b70eda23a75e269ba8d92'
+	spack_commit='dcc4aabce1d14dfa02b92fff34fba89eacd3ea71'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -76,13 +76,17 @@ spack_install ()
 
 spack_load ()
 {
+	local pkg_loaded
 	local spack_pkg
 
+	pkg_loaded='YES'
 	spack_pkg="$1"
 
 	test -n "${spack_pkg}" || return 1
 
-	spack load --dependencies "${spack_pkg}"
+	spack load --dependencies "${spack_pkg}" || pkg_loaded='NO'
+
+	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
 }
 
 spack_get_dependencies ()
@@ -95,7 +99,8 @@ spack_get_dependencies ()
 
 	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
 	then
-		# Required for Waf
+		# Required for building JULEA
+		dependencies="${dependencies} meson"
 		dependencies="${dependencies} pkgconfig"
 
 		# Mandatory dependencies
@@ -115,7 +120,7 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5~mpi"
+		dependencies="${dependencies} hdf5~mpi@1.12:"
 		dependencies="${dependencies} mariadb-c-client"
 
 		# FIXME move to minimal
@@ -133,23 +138,11 @@ spack_load_dependencies ()
 {
 	if test -z "${JULEA_SPACK_DEPENDENCIES_LOADED}"
 	then
-		local minimal_pkgs
-
-		minimal_pkgs="$(spack_get_dependencies minimal)"
-
 		if spack_init
 		then
 			for dependency in $(spack_get_dependencies full)
 			do
-				if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
-				then
-					spack_load "${dependency}"
-				else
-					if ! spack_load "${dependency}"
-					then
-						echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
-					fi
-				fi
+				spack_load "${dependency}"
 			done
 
 			# FIXME this could be more clever by storing the actual dependencies loaded
@@ -157,6 +150,8 @@ spack_load_dependencies ()
 
 			export JULEA_SPACK_DEPENDENCIES_LOADED
 		fi
+	else
+		printf 'Dependencies have already been loaded, skipping.\n'
 	fi
 }
 
