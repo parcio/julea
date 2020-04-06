@@ -14,23 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-find_meson_build_directory ()
-{
-	local build_dir
-	local root
-
-	root="$1"
-
-	test -n "${root}" || return 1
-	test -d "${root}" || return 1
-
-	# We just return the first directory we find for now
-	build_dir="$(find "${root}" -maxdepth 2 -name meson-private | head --lines=1)"
-	build_dir="${build_dir%/meson-private}"
-
-	printf '%s' "${build_dir}"
-}
-
 get_directory ()
 {
 	local directory
@@ -52,7 +35,7 @@ error_build_directory_not_found ()
 
 	printf 'Build directory could not be found.\n' >&2
 	printf '* If you have installed JULEA, please set JULEA_PREFIX to the prefix you have installed it in.\n' >&2
-	printf '* If you want to use an uninstalled version, make sure the build directory is called "build".\n' >&2
+	printf '* If you want to use an uninstalled version, make sure the build directory is called "bld".\n' >&2
 
 	exit 1
 }
@@ -61,18 +44,15 @@ set_path ()
 {
 	local build_dir
 
-	build_dir="$(find_meson_build_directory "${SELF_DIR}/..")"
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
 
 	if test -n "${JULEA_PREFIX}"
 	then
 		PATH="${JULEA_PREFIX}/bin:${PATH}"
-	elif test -n "${build_dir}"
-	then
-		PATH="${build_dir}:${PATH}"
 	else
-		build_dir="$(get_directory "${SELF_DIR}/../build")" || error_build_directory_not_found
+		test -d "${build_dir}" || error_build_directory_not_found
 
-		PATH="${build_dir}/benchmark:${build_dir}/server:${build_dir}/test:${build_dir}/tools:${PATH}"
+		PATH="${build_dir}:${PATH}"
 	fi
 
 	export PATH
@@ -82,18 +62,15 @@ set_library_path ()
 {
 	local build_dir
 
-	build_dir="$(find_meson_build_directory "${SELF_DIR}/..")"
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
 
 	if test -n "${JULEA_PREFIX}"
 	then
 		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib:${LD_LIBRARY_PATH}"
-	elif test -n "${build_dir}"
-	then
-		LD_LIBRARY_PATH="${build_dir}:${LD_LIBRARY_PATH}"
 	else
-		build_dir="$(get_directory "${SELF_DIR}/../build")" || error_build_directory_not_found
+		test -d "${build_dir}" || error_build_directory_not_found
 
-		LD_LIBRARY_PATH="${build_dir}/lib:${LD_LIBRARY_PATH}"
+		LD_LIBRARY_PATH="${build_dir}:${LD_LIBRARY_PATH}"
 	fi
 
 	export LD_LIBRARY_PATH
@@ -103,19 +80,16 @@ set_pkg_config_path ()
 {
 	local build_dir
 
-	build_dir="$(find_meson_build_directory "${SELF_DIR}/..")"
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
 
 	if test -n "${JULEA_PREFIX}"
 	then
 		PKG_CONFIG_PATH="${JULEA_PREFIX}/lib64/pkgconfig:${JULEA_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-	elif test -n "${build_dir}"
-	then
+	else
+		test -d "${build_dir}" || error_build_directory_not_found
+
 		# FIXME
 		return 0
-	else
-		build_dir="$(get_directory "${SELF_DIR}/../build")" || error_build_directory_not_found
-
-		PKG_CONFIG_PATH="${build_dir}/pkg-config:${PKG_CONFIG_PATH}"
 	fi
 
 	export PKG_CONFIG_PATH
@@ -125,18 +99,15 @@ set_backend_path ()
 {
 	local build_dir
 
-	build_dir="$(find_meson_build_directory "${SELF_DIR}/..")"
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
 
 	if test -n "${JULEA_PREFIX}"
 	then
 		return 0
-	elif test -n "${build_dir}"
-	then
-		JULEA_BACKEND_PATH="${build_dir}"
 	else
-		build_dir="$(get_directory "${SELF_DIR}/../build")" || error_build_directory_not_found
+		test -d "${build_dir}" || error_build_directory_not_found
 
-		JULEA_BACKEND_PATH="${build_dir}/backend"
+		JULEA_BACKEND_PATH="${build_dir}"
 	fi
 
 	export JULEA_BACKEND_PATH

@@ -7,6 +7,9 @@ example/hello-world
 # Doxygen
 html/
 
+# Meson
+bld*/
+
 # Patch
 *.orig
 *.rej
@@ -16,11 +19,3 @@ html/
 
 # Vim
 *.swp
-
-# Waf
-build*/
-waf-extras/*.pyc
-waf-extras/__pycache__/
-.lock-waf*
-.waf-*/
-.waf3-*/

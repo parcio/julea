@@ -32,19 +32,19 @@ if you want to install all of them, call it with the `full` argument.
 $ ./scripts/install-dependencies.sh
 ```
 
-After the dependencies have been installed, JULEA has to be configured and compiled using [Waf](https://waf.io/);
-the different configuration and build options can be shown with `./waf --help`.
-The `waf.sh` script is a wrapper around Waf that makes sure that the dependencies installed in the previous step are found.
-
-```console
-$ ./waf.sh configure --debug --sanitize
-$ ./waf.sh build
-```
-
-To allow JULEA's binaries and dependencies to be found, the environment has to be loaded.
+To allow the dependencies to be found, the JULEA environment has to be loaded.
+This also ensures that JULEA's binaries and libraries are found later.
 
 ```console
 $ . ./scripts/environment.sh
+```
+
+JULEA now has to be configured using [Meson](https://mesonbuild.com/) and compiled using [Ninja](https://ninja-build.org/);
+the different configuration and build options can be shown with `meson setup --help`.
+
+```console
+$ meson setup -Db_sanitize=address,undefined bld
+$ ninja -C bld
 ```
 
 Finally, a JULEA configuration has to be created.
@@ -66,7 +66,7 @@ $ ./scripts/test.sh
 To get an idea about how to use JULEA from your own application, check out the `example` directory.
 
 ```console
-$ ./waf.sh install
+$ ninja -C bld install
 $ cd example
 $ make run
 ```
