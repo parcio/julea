@@ -62,8 +62,12 @@ jobs:
           CC: ${{ matrix.compiler }}
         # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
         run: |
-          JULEA_SANITIZE='none'; if test "${{ matrix.compiler }}" = 'clang'; then JULEA_SANITIZE='address,undefined'; fi
-          meson setup -Db_sanitize="${JULEA_SANITIZE}" bld
+          if test "${{ matrix.compiler }}" = 'clang'
+          then
+            meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
+          else
+            meson setup bld
+          fi
       - name: Build
         run: |
           ninja -C bld
