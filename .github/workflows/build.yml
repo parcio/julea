@@ -25,18 +25,7 @@ jobs:
         env:
           CC: ${{ matrix.compiler }}
         run: |
-          ./waf configure --prefix="${GITHUB_WORKSPACE}/julea-install" --error --leveldb=/usr
-      - name: Build
-        run: |
-          ./waf
-      - name: Install
-        run: |
-          ./waf install
-      - name: Configure
-        env:
-          CC: ${{ matrix.compiler }}
-        run: |
-          meson setup --prefix="${GITHUB_WORKSPACE}/meson-install" --buildtype=release --werror bld
+          meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
       - name: Build
         run: |
           ninja -C bld
