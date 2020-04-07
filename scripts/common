@@ -88,7 +88,7 @@ set_pkg_config_path ()
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
 
-		# FIXME
+		# FIXME Meson 0.54 has support for uninstalled pkg-config files
 		return 0
 	fi
 

@@ -597,7 +597,14 @@ if fuse_dep.found()
 	)
 endif
 
-# FIXME example
+#add_languages('cpp')
+
+#foreach lang: ['c', 'cc']
+#	executable('hello-word-@0@'.format(lang), files('example/hello-world.@0@'.format(lang)),
+#		dependencies: [glib_dep, libbson_dep, julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db']],
+#		include_directories: julea_incs,
+#	)
+#endforeach
 
 # Install
 
