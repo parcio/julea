@@ -28,26 +28,38 @@
 static void
 test_kv_new_free(void)
 {
-	guint const n = 100000;
+	guint const n = 1000;
+
+	guint32 server_count;
 
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JKV) kv = NULL;
 
 		kv = j_kv_new("test", "test-kv");
-		g_assert_true(kv != NULL);
+		g_assert_nonnull(kv);
+	}
+
+	server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_KV);
+
+	for (guint i = 0; i < server_count; i++)
+	{
+		g_autoptr(JKV) kv = NULL;
+
+		kv = j_kv_new_for_index(i, "test", "test-kv");
+		g_assert_nonnull(kv);
 	}
 }
 
 static void
 test_kv_ref_unref(void)
 {
-	guint const n = 100000;
+	guint const n = 1000;
 
 	g_autoptr(JKV) kv = NULL;
 
 	kv = j_kv_new("test", "test-kv");
-	g_assert_true(kv != NULL);
+	g_assert_nonnull(kv);
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -78,7 +90,7 @@ test_kv_put_delete(void)
 
 		name = g_strdup_printf("test-kv-%u", i);
 		kv = j_kv_new("test", name);
-		g_assert_true(kv != NULL);
+		g_assert_nonnull(kv);
 
 		j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 		j_kv_delete(kv, batch);
@@ -102,7 +114,7 @@ test_kv_get(void)
 	value = g_strdup("kv-value");
 
 	kv = j_kv_new("test", "test-kv");
-	g_assert_true(kv != NULL);
+	g_assert_nonnull(kv);
 
 	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 	ret = j_batch_execute(batch);
@@ -142,7 +154,7 @@ test_kv_get_callback(void)
 	value = g_strdup("kv-value");
 
 	kv = j_kv_new("test", "test-kv");
-	g_assert_true(kv != NULL);
+	g_assert_nonnull(kv);
 
 	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 	ret = j_batch_execute(batch);

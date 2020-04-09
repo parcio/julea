@@ -28,15 +28,26 @@
 static void
 test_kv_iterator_new_free(void)
 {
-	guint const n = 100000;
+	guint const n = 1000;
+
+	guint32 server_count;
 
 	for (guint i = 0; i < n; i++)
 	{
-		g_autoptr(JKV) kv = NULL;
+		g_autoptr(JKVIterator) iterator = NULL;
 
-		kv = j_kv_new("test-ns", "test-kv");
+		iterator = j_kv_iterator_new("test-ns", "test-kv");
+		g_assert_nonnull(iterator);
+	}
 
-		g_assert_true(kv != NULL);
+	server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_KV);
+
+	for (guint i = 0; i < server_count; i++)
+	{
+		g_autoptr(JKVIterator) iterator = NULL;
+
+		iterator = j_kv_iterator_new_for_index(i, "test-ns", "test-kv");
+		g_assert_nonnull(iterator);
 	}
 }
 
@@ -49,6 +60,7 @@ test_kv_iterator_next_get(void)
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JKVIterator) kv_iterator = NULL;
 	gboolean ret;
+	guint32 server_count;
 
 	guint kvs = 0;
 
@@ -68,7 +80,7 @@ test_kv_iterator_next_get(void)
 		j_kv_put(kv, value, strlen(value) + 1, g_free, batch);
 		j_kv_delete(kv, delete_batch);
 
-		g_assert_true(kv != NULL);
+		g_assert_nonnull(kv);
 	}
 
 	ret = j_batch_execute(batch);
@@ -88,10 +100,34 @@ test_kv_iterator_next_get(void)
 		kvs++;
 	}
 
-	ret = j_batch_execute(delete_batch);
-	g_assert_true(ret);
+	g_assert_cmpuint(kvs, ==, n);
+
+	kvs = 0;
+	server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_KV);
+
+	for (guint i = 0; i < server_count; i++)
+	{
+		g_autoptr(JKVIterator) iterator = NULL;
+
+		iterator = j_kv_iterator_new_for_index(i, "test-ns", NULL);
+
+		while (j_kv_iterator_next(iterator))
+		{
+			gchar const* key;
+			gconstpointer value;
+			guint32 len;
+
+			key = j_kv_iterator_get(iterator, &value, &len);
+			g_assert_true(g_str_has_prefix(key, "test-key-"));
+			g_assert_true(g_str_has_prefix(value, "test-value-"));
+			kvs++;
+		}
+	}
 
 	g_assert_cmpuint(kvs, ==, n);
+
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
 }
 
 void
