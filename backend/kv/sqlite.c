@@ -91,7 +91,7 @@ backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	sqlite3_prepare_v2(backend_db, "INSERT INTO julea (namespace, key, value) VALUES (?, ?, ?);", -1, &stmt, NULL);
+	sqlite3_prepare_v2(backend_db, "INSERT OR REPLACE INTO julea (namespace, key, value) VALUES (?, ?, ?);", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, batch->namespace, -1, NULL);
 	sqlite3_bind_text(stmt, 2, key, -1, NULL);
 	sqlite3_bind_blob(stmt, 3, value, len, NULL);
