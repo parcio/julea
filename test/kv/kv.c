@@ -101,6 +101,36 @@ test_kv_put_delete(void)
 }
 
 static void
+test_kv_put_update(void)
+{
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
+	g_autofree gchar* get_value;
+	g_autofree gchar* value1 = NULL;
+	g_autofree gchar* value2 = NULL;
+	guint32 get_len;
+	gboolean ret;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	value1 = g_strdup("first-value");
+	value2 = g_strdup("second-value");
+
+	kv = j_kv_new("test", "test-kv-update");
+	g_assert_nonnull(kv);
+
+	j_kv_put(kv, value1, strlen(value1) + 1, NULL, batch);
+	j_kv_put(kv, value2, strlen(value2) + 1, NULL, batch);
+	j_kv_get(kv, (gpointer)&get_value, &get_len, batch);
+	j_kv_delete(kv, batch);
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	g_assert_cmpstr(get_value, ==, value2);
+	g_assert_cmpuint(get_len, ==, strlen(value2) + 1);
+}
+
+static void
 test_kv_get(void)
 {
 	g_autoptr(JBatch) batch = NULL;
@@ -175,6 +205,7 @@ test_kv_kv(void)
 	g_test_add_func("/kv/kv/new_free", test_kv_new_free);
 	g_test_add_func("/kv/kv/ref_unref", test_kv_ref_unref);
 	g_test_add_func("/kv/kv/put_delete", test_kv_put_delete);
+	g_test_add_func("/kv/kv/put_update", test_kv_put_update);
 	g_test_add_func("/kv/kv/get", test_kv_get);
 	g_test_add_func("/kv/kv/get_callback", test_kv_get_callback);
 }
