@@ -192,13 +192,19 @@ mariadb_dep = dependency('libmariadb',
 if not mariadb_dep.found()
 	# FIXME This should use Meson's config-tool
 	# FIXME Add some status output
-	mariadb_cflags = run_command('mariadb_config', '--cflags').stdout().strip().split()
-	mariadb_libs = run_command('mariadb_config', '--libs').stdout().strip().split()
-
-	mariadb_dep = declare_dependency(
-		compile_args: mariadb_cflags,
-		link_args: mariadb_libs,
+	mariadb_config = find_program('mariadb_config',
+		required: false
 	)
+
+	if mariadb_config.found()
+		mariadb_cflags = run_command(mariadb_config, '--cflags').stdout().strip().split()
+		mariadb_libs = run_command(mariadb_config, '--libs').stdout().strip().split()
+
+		mariadb_dep = declare_dependency(
+			compile_args: mariadb_cflags,
+			link_args: mariadb_libs,
+		)
+	endif
 endif
 
 # Compiler checks
