@@ -4,9 +4,9 @@
 [![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 [![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 
-JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
-To be able to rapidly prototype new approaches, it offers object, key-value and database backends that can either be client-side or server-side;
-backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.
+JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
+To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
+Support for popular storage technologies such as POSIX, LevelDB and MongoDB is already included.
 
 Additionally, JULEA allows dynamically adapting the I/O operations' semantics and can thus be adjusted to different use-cases.
 It runs completely in user space, which eases development and debugging.
