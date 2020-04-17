@@ -150,19 +150,19 @@ struct JBackend
 
 		struct
 		{
-			gboolean (*backend_init)(gchar const*);
-			void (*backend_fini)(void);
+			gboolean (*backend_init)(gchar const*, gpointer*);
+			void (*backend_fini)(gpointer);
 
-			gboolean (*backend_batch_start)(gchar const*, JSemantics*, gpointer*);
-			gboolean (*backend_batch_execute)(gpointer);
+			gboolean (*backend_batch_start)(gpointer, gchar const*, JSemantics*, gpointer*);
+			gboolean (*backend_batch_execute)(gpointer, gpointer);
 
-			gboolean (*backend_put)(gpointer, gchar const*, gconstpointer, guint32);
-			gboolean (*backend_delete)(gpointer, gchar const*);
-			gboolean (*backend_get)(gpointer, gchar const*, gpointer*, guint32*);
+			gboolean (*backend_put)(gpointer, gpointer, gchar const*, gconstpointer, guint32);
+			gboolean (*backend_delete)(gpointer, gpointer, gchar const*);
+			gboolean (*backend_get)(gpointer, gpointer, gchar const*, gpointer*, guint32*);
 
-			gboolean (*backend_get_all)(gchar const*, gpointer*);
-			gboolean (*backend_get_by_prefix)(gchar const*, gchar const*, gpointer*);
-			gboolean (*backend_iterate)(gpointer, gchar const**, gconstpointer*, guint32*);
+			gboolean (*backend_get_all)(gpointer, gchar const*, gpointer*);
+			gboolean (*backend_get_by_prefix)(gpointer, gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_iterate)(gpointer, gpointer, gchar const**, gconstpointer*, guint32*);
 		} kv;
 
 		struct

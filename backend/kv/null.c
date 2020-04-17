@@ -24,52 +24,60 @@
 #include <julea.h>
 
 static gboolean
-backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
+backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* backend_batch)
 {
-	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
-
+	(void)backend_data;
 	(void)semantics;
 
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
+
 	// Return something != NULL
-	*data = data;
+	*backend_batch = backend_batch;
 
 	return TRUE;
 }
 
 static gboolean
-backend_batch_execute(gpointer data)
+backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 {
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
 	return TRUE;
 }
 
 static gboolean
-backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
+backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gconstpointer value, guint32 len)
 {
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+	(void)len;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	(void)len;
-
 	return TRUE;
 }
 
 static gboolean
-backend_delete(gpointer data, gchar const* key)
+backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 {
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 
 	return TRUE;
 }
 
 static gboolean
-backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
+backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpointer* value, guint32* len)
 {
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
@@ -81,32 +89,38 @@ backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 }
 
 static gboolean
-backend_get_all(gchar const* namespace, gpointer* data)
+backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend_iterator)
 {
-	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
 
-	*data = NULL;
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+
+	*backend_iterator = NULL;
 
 	return TRUE;
 }
 
 static gboolean
-backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
+backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* backend_iterator)
 {
+	(void)backend_data;
+
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
-	*data = NULL;
+	*backend_iterator = NULL;
 
 	return TRUE;
 }
 
 static gboolean
-backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** key, gconstpointer* value, guint32* len)
 {
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
@@ -118,16 +132,18 @@ backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32*
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
 	(void)path;
+	(void)backend_data;
 
 	return TRUE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
+	(void)backend_data;
 }
 
 static JBackend null_backend = {

@@ -474,7 +474,7 @@ j_backend_kv_init(JBackend* backend, gchar const* path)
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->kv.backend_init(path);
+		ret = backend->kv.backend_init(path, &(backend->data));
 	}
 
 	return ret;
@@ -490,7 +490,7 @@ j_backend_kv_fini(JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->kv.backend_fini();
+		backend->kv.backend_fini(backend->data);
 	}
 }
 
@@ -509,7 +509,7 @@ j_backend_kv_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		J_TRACE("backend_batch_start", "%s, %p, %p", namespace, (gpointer)semantics, (gpointer)batch);
-		ret = backend->kv.backend_batch_start(namespace, semantics, batch);
+		ret = backend->kv.backend_batch_start(backend->data, namespace, semantics, batch);
 	}
 
 	return ret;
@@ -528,7 +528,7 @@ j_backend_kv_batch_execute(JBackend* backend, gpointer batch)
 
 	{
 		J_TRACE("backend_batch_execute", "%p", batch);
-		ret = backend->kv.backend_batch_execute(batch);
+		ret = backend->kv.backend_batch_execute(backend->data, batch);
 	}
 
 	return ret;
@@ -549,7 +549,7 @@ j_backend_kv_put(JBackend* backend, gpointer batch, gchar const* key, gconstpoin
 
 	{
 		J_TRACE("backend_put", "%p, %s, %p, %u", batch, key, (gconstpointer)value, value_len);
-		ret = backend->kv.backend_put(batch, key, value, value_len);
+		ret = backend->kv.backend_put(backend->data, batch, key, value, value_len);
 	}
 
 	return ret;
@@ -569,7 +569,7 @@ j_backend_kv_delete(JBackend* backend, gpointer batch, gchar const* key)
 
 	{
 		J_TRACE("backend_delete", "%p, %s", batch, key);
-		ret = backend->kv.backend_delete(batch, key);
+		ret = backend->kv.backend_delete(backend->data, batch, key);
 	}
 
 	return ret;
@@ -591,7 +591,7 @@ j_backend_kv_get(JBackend* backend, gpointer batch, gchar const* key, gpointer* 
 
 	{
 		J_TRACE("backend_get", "%p, %s, %p, %p", batch, key, (gpointer)value, (gpointer)value_len);
-		ret = backend->kv.backend_get(batch, key, value, value_len);
+		ret = backend->kv.backend_get(backend->data, batch, key, value, value_len);
 	}
 
 	return ret;
@@ -611,7 +611,7 @@ j_backend_kv_get_all(JBackend* backend, gchar const* namespace, gpointer* iterat
 
 	{
 		J_TRACE("backend_get_all", "%s, %p", namespace, (gpointer)iterator);
-		ret = backend->kv.backend_get_all(namespace, iterator);
+		ret = backend->kv.backend_get_all(backend->data, namespace, iterator);
 	}
 
 	return ret;
@@ -632,7 +632,7 @@ j_backend_kv_get_by_prefix(JBackend* backend, gchar const* namespace, gchar cons
 
 	{
 		J_TRACE("backend_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
-		ret = backend->kv.backend_get_by_prefix(namespace, prefix, iterator);
+		ret = backend->kv.backend_get_by_prefix(backend->data, namespace, prefix, iterator);
 	}
 
 	return ret;
@@ -653,7 +653,7 @@ j_backend_kv_iterate(JBackend* backend, gpointer iterator, gchar const** key, gc
 
 	{
 		J_TRACE("backend_iterate", "%p, %p, %p, %p", iterator, (gpointer)key, (gpointer)value, (gpointer)value_len);
-		ret = backend->kv.backend_iterate(iterator, key, value, value_len);
+		ret = backend->kv.backend_iterate(backend->data, iterator, key, value, value_len);
 	}
 
 	return ret;
