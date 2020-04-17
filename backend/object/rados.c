@@ -36,18 +36,18 @@ struct JBackendData
 
 typedef struct JBackendData JBackendData;
 
-struct JBackendFile
+struct JBackendObject
 {
 	gchar* path;
 };
 
-typedef struct JBackendFile JBackendFile;
+typedef struct JBackendObject JBackendObject;
 
 static gboolean
-backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
 {
 	JBackendData* bd = backend_data;
-	JBackendFile* bf;
+	JBackendObject* bo;
 	gchar* full_path = g_strconcat(namespace, path, NULL);
 	gint ret = 0;
 
@@ -57,18 +57,18 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 
 	g_return_val_if_fail(ret == 0, FALSE);
 
-	bf = g_slice_new(JBackendFile);
-	bf->path = full_path;
+	bo = g_slice_new(JBackendObject);
+	bo->path = full_path;
 
-	*data = bf;
+	*backend_object = bo;
 
 	return TRUE;
 }
 
 static gboolean
-backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
 {
-	JBackendFile* bf;
+	JBackendObject* bo;
 	gchar* full_path = g_strconcat(namespace, path, NULL);
 	gint ret = 0;
 
@@ -79,61 +79,61 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 
 	g_return_val_if_fail(ret == 0, FALSE);
 
-	bf = g_slice_new(JBackendFile);
-	bf->path = full_path;
+	bo = g_slice_new(JBackendObject);
+	bo->path = full_path;
 
-	*data = bf;
+	*backend_object = bo;
 
 	return TRUE;
 }
 
 static gboolean
-backend_delete(gpointer backend_data, gpointer data)
+backend_delete(gpointer backend_data, gpointer backend_object)
 {
 	JBackendData* bd = backend_data;
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 	gint ret = 0;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_DELETE);
-	ret = rados_remove(bd->backend_io, bf->path);
-	j_trace_file_end(bf->path, J_TRACE_FILE_DELETE, 0, 0);
+	j_trace_file_begin(bo->path, J_TRACE_FILE_DELETE);
+	ret = rados_remove(bd->backend_io, bo->path);
+	j_trace_file_end(bo->path, J_TRACE_FILE_DELETE, 0, 0);
 
-	g_free(bf->path);
-	g_slice_free(JBackendFile, bf);
+	g_free(bo->path);
+	g_slice_free(JBackendObject, bo);
 
 	return (ret == 0 ? TRUE : FALSE);
 }
 
 static gboolean
-backend_close(gpointer backend_data, gpointer data)
+backend_close(gpointer backend_data, gpointer backend_object)
 {
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 
 	(void)backend_data;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_CLOSE);
-	j_trace_file_end(bf->path, J_TRACE_FILE_CLOSE, 0, 0);
+	j_trace_file_begin(bo->path, J_TRACE_FILE_CLOSE);
+	j_trace_file_end(bo->path, J_TRACE_FILE_CLOSE, 0, 0);
 
-	g_free(bf->path);
-	g_slice_free(JBackendFile, bf);
+	g_free(bo->path);
+	g_slice_free(JBackendObject, bo);
 
 	return TRUE;
 }
 
 static gboolean
-backend_status(gpointer backend_data, gpointer data, gint64* modification_time, guint64* size)
+backend_status(gpointer backend_data, gpointer backend_object, gint64* modification_time, guint64* size)
 {
 	JBackendData* bd = backend_data;
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 	gboolean ret = TRUE;
 	gint64 modification_time_ = 0;
 	guint64 size_ = 0;
 
 	if (modification_time != NULL || size != NULL)
 	{
-		j_trace_file_begin(bf->path, J_TRACE_FILE_STATUS);
-		ret = (rados_stat(bd->backend_io, bf->path, &size_, &modification_time_) == 0);
-		j_trace_file_end(bf->path, J_TRACE_FILE_STATUS, 0, 0);
+		j_trace_file_begin(bo->path, J_TRACE_FILE_STATUS);
+		ret = (rados_stat(bd->backend_io, bo->path, &size_, &modification_time_) == 0);
+		j_trace_file_end(bo->path, J_TRACE_FILE_STATUS, 0, 0);
 
 		if (ret && modification_time != NULL)
 		{
@@ -151,28 +151,28 @@ backend_status(gpointer backend_data, gpointer data, gint64* modification_time, 
 
 /* Not implemented */
 static gboolean
-backend_sync(gpointer backend_data, gpointer data)
+backend_sync(gpointer backend_data, gpointer backend_object)
 {
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 
 	(void)backend_data;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_SYNC);
-	j_trace_file_end(bf->path, J_TRACE_FILE_SYNC, 0, 0);
+	j_trace_file_begin(bo->path, J_TRACE_FILE_SYNC);
+	j_trace_file_end(bo->path, J_TRACE_FILE_SYNC, 0, 0);
 
 	return TRUE;
 }
 
 static gboolean
-backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer backend_data, gpointer backend_object, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	JBackendData* bd = backend_data;
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 	gint ret = 0;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_READ);
-	ret = rados_read(bd->backend_io, bf->path, buffer, length, offset);
-	j_trace_file_end(bf->path, J_TRACE_FILE_READ, length, offset);
+	j_trace_file_begin(bo->path, J_TRACE_FILE_READ);
+	ret = rados_read(bd->backend_io, bo->path, buffer, length, offset);
+	j_trace_file_end(bo->path, J_TRACE_FILE_READ, length, offset);
 
 	g_return_val_if_fail(ret >= 0, FALSE);
 
@@ -185,15 +185,15 @@ backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 leng
 }
 
 static gboolean
-backend_write(gpointer backend_data, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer backend_data, gpointer backend_object, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	JBackendData* bd = backend_data;
-	JBackendFile* bf = data;
+	JBackendObject* bo = backend_object;
 	gint ret = 0;
 
-	j_trace_file_begin(bf->path, J_TRACE_FILE_WRITE);
-	ret = rados_write(bd->backend_io, bf->path, buffer, length, offset);
-	j_trace_file_end(bf->path, J_TRACE_FILE_WRITE, length, offset);
+	j_trace_file_begin(bo->path, J_TRACE_FILE_WRITE);
+	ret = rados_write(bd->backend_io, bo->path, buffer, length, offset);
+	j_trace_file_end(bo->path, J_TRACE_FILE_WRITE, length, offset);
 
 	g_return_val_if_fail(ret == 0, FALSE);
 

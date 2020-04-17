@@ -24,7 +24,7 @@
 #include <julea.h>
 
 static gboolean
-backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
 {
 	gchar* full_path;
 
@@ -35,13 +35,13 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	*data = full_path;
+	*backend_object = full_path;
 
 	return TRUE;
 }
 
 static gboolean
-backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* data)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
 {
 	gchar* full_path;
 
@@ -52,15 +52,15 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
-	*data = full_path;
+	*backend_object = full_path;
 
 	return TRUE;
 }
 
 static gboolean
-backend_delete(gpointer backend_data, gpointer data)
+backend_delete(gpointer backend_data, gpointer backend_object)
 {
-	gchar* full_path = data;
+	gchar* full_path = backend_object;
 
 	(void)backend_data;
 
@@ -73,9 +73,9 @@ backend_delete(gpointer backend_data, gpointer data)
 }
 
 static gboolean
-backend_close(gpointer backend_data, gpointer data)
+backend_close(gpointer backend_data, gpointer backend_object)
 {
-	gchar* full_path = data;
+	gchar* full_path = backend_object;
 
 	(void)backend_data;
 
@@ -88,9 +88,9 @@ backend_close(gpointer backend_data, gpointer data)
 }
 
 static gboolean
-backend_status(gpointer backend_data, gpointer data, gint64* modification_time, guint64* size)
+backend_status(gpointer backend_data, gpointer backend_object, gint64* modification_time, guint64* size)
 {
-	gchar const* full_path = data;
+	gchar const* full_path = backend_object;
 
 	(void)backend_data;
 
@@ -111,9 +111,9 @@ backend_status(gpointer backend_data, gpointer data, gint64* modification_time, 
 }
 
 static gboolean
-backend_sync(gpointer backend_data, gpointer data)
+backend_sync(gpointer backend_data, gpointer backend_object)
 {
-	gchar const* full_path = data;
+	gchar const* full_path = backend_object;
 
 	(void)backend_data;
 
@@ -124,9 +124,9 @@ backend_sync(gpointer backend_data, gpointer data)
 }
 
 static gboolean
-backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer backend_data, gpointer backend_object, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
-	gchar const* full_path = data;
+	gchar const* full_path = backend_object;
 
 	(void)backend_data;
 	(void)buffer;
@@ -143,9 +143,9 @@ backend_read(gpointer backend_data, gpointer data, gpointer buffer, guint64 leng
 }
 
 static gboolean
-backend_write(gpointer backend_data, gpointer data, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer backend_data, gpointer backend_object, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
-	gchar const* full_path = data;
+	gchar const* full_path = backend_object;
 
 	(void)backend_data;
 	(void)buffer;
