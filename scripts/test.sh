@@ -41,6 +41,7 @@ run_test ()
 
 	setup_init
 	setup_start
+	# FIXME gtester is deprecated, replace with tappy?
 	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
 	setup_stop
 

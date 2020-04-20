@@ -135,9 +135,9 @@ test_kv_get(void)
 {
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
-	g_autofree gchar* get_value;
+	g_autofree gchar* get_value = NULL;
 	g_autofree gchar* value = NULL;
-	guint32 get_len;
+	guint32 get_len = 42;
 	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -145,6 +145,13 @@ test_kv_get(void)
 
 	kv = j_kv_new("test", "test-kv");
 	g_assert_nonnull(kv);
+
+	j_kv_get(kv, (gpointer)&get_value, &get_len, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+
+	g_assert_null(get_value);
+	g_assert_cmpuint(get_len, ==, 42);
 
 	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 	ret = j_batch_execute(batch);
@@ -162,6 +169,8 @@ test_kv_get(void)
 	g_assert_true(ret);
 }
 
+static guint num_callbacks = 0;
+
 static void
 get_callback(gpointer value, guint32 length, gpointer data)
 {
@@ -170,6 +179,8 @@ get_callback(gpointer value, guint32 length, gpointer data)
 	g_assert_null(data);
 
 	g_free(value);
+
+	num_callbacks++;
 }
 
 static void
@@ -186,6 +197,10 @@ test_kv_get_callback(void)
 	kv = j_kv_new("test", "test-kv");
 	g_assert_nonnull(kv);
 
+	j_kv_get_callback(kv, get_callback, NULL, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+
 	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
@@ -197,6 +212,8 @@ test_kv_get_callback(void)
 	j_kv_delete(kv, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	g_assert_cmpuint(num_callbacks, ==, 1);
 }
 
 void
