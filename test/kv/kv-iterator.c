@@ -35,9 +35,13 @@ test_kv_iterator_new_free(void)
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JKVIterator) iterator = NULL;
+		g_autoptr(JKVIterator) iterator_prefix = NULL;
 
-		iterator = j_kv_iterator_new("test-ns", "test-kv");
+		iterator = j_kv_iterator_new("test-ns", NULL);
 		g_assert_nonnull(iterator);
+
+		iterator_prefix = j_kv_iterator_new("test-ns", "test-kv");
+		g_assert_nonnull(iterator_prefix);
 	}
 
 	server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_KV);
@@ -45,9 +49,13 @@ test_kv_iterator_new_free(void)
 	for (guint i = 0; i < server_count; i++)
 	{
 		g_autoptr(JKVIterator) iterator = NULL;
+		g_autoptr(JKVIterator) iterator_prefix = NULL;
 
-		iterator = j_kv_iterator_new_for_index(i, "test-ns", "test-kv");
+		iterator = j_kv_iterator_new_for_index(i, "test-ns", NULL);
 		g_assert_nonnull(iterator);
+
+		iterator_prefix = j_kv_iterator_new_for_index(i, "test-ns", "test-kv");
+		g_assert_nonnull(iterator_prefix);
 	}
 }
 
@@ -59,6 +67,7 @@ test_kv_iterator_next_get(void)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JKVIterator) kv_iterator = NULL;
+	g_autoptr(JKVIterator) kv_iterator_prefix = NULL;
 	gboolean ret;
 	guint32 server_count;
 
@@ -74,7 +83,7 @@ test_kv_iterator_next_get(void)
 		g_autofree gchar* key = NULL;
 		gchar* value = NULL;
 
-		key = g_strdup_printf("test-key-%d", i);
+		key = g_strdup_printf("test-key-%d-%d", i % 2, i);
 		value = g_strdup_printf("test-value-%d", i);
 		kv = j_kv_new("test-ns", key);
 		j_kv_put(kv, value, strlen(value) + 1, g_free, batch);
@@ -125,6 +134,47 @@ test_kv_iterator_next_get(void)
 	}
 
 	g_assert_cmpuint(kvs, ==, n);
+
+	kvs = 0;
+	kv_iterator_prefix = j_kv_iterator_new("test-ns", "test-key-1-");
+
+	while (j_kv_iterator_next(kv_iterator_prefix))
+	{
+		gchar const* key;
+		gconstpointer value;
+		guint32 len;
+
+		key = j_kv_iterator_get(kv_iterator_prefix, &value, &len);
+		g_assert_true(g_str_has_prefix(key, "test-key-1-"));
+		g_assert_true(g_str_has_prefix(value, "test-value-"));
+		kvs++;
+	}
+
+	g_assert_cmpuint(kvs, ==, n / 2);
+
+	kvs = 0;
+	server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_KV);
+
+	for (guint i = 0; i < server_count; i++)
+	{
+		g_autoptr(JKVIterator) iterator = NULL;
+
+		iterator = j_kv_iterator_new_for_index(i, "test-ns", "test-key-1-");
+
+		while (j_kv_iterator_next(iterator))
+		{
+			gchar const* key;
+			gconstpointer value;
+			guint32 len;
+
+			key = j_kv_iterator_get(iterator, &value, &len);
+			g_assert_true(g_str_has_prefix(key, "test-key-1-"));
+			g_assert_true(g_str_has_prefix(value, "test-value-"));
+			kvs++;
+		}
+	}
+
+	g_assert_cmpuint(kvs, ==, n / 2);
 
 	ret = j_batch_execute(delete_batch);
 	g_assert_true(ret);
