@@ -167,10 +167,22 @@ backend_status(gpointer backend_data, gpointer backend_object, gint64* modificat
 
 		if (modification_time != NULL)
 		{
+#if GLIB_CHECK_VERSION(2, 62, 0)
+			GDateTime* date_time;
+
+			date_time = g_file_info_get_modification_date_time(file_info);
+
+			if (date_time != NULL)
+			{
+				*modification_time = g_date_time_to_unix(date_time) * G_USEC_PER_SEC + g_date_time_get_microsecond(date_time);
+				g_date_time_unref(date_time);
+			}
+#else
 			GTimeVal time_val;
 
 			g_file_info_get_modification_time(file_info, &time_val);
 			*modification_time = time_val.tv_sec * G_USEC_PER_SEC + time_val.tv_usec;
+#endif
 		}
 
 		if (size != NULL)

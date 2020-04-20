@@ -245,10 +245,10 @@ julea_conf.set_quoted('G_LOG_DOMAIN', 'JULEA')
 julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('libdir') / 'julea' / 'backend')
 
 if get_option('debug')
-	julea_conf.set('G_DISABLE_DEPRECATED', 1)
+	julea_conf.set('JULEA_DEBUG', 1)
+else
 	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 	julea_conf.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
-	julea_conf.set('JULEA_DEBUG', 1)
 endif
 
 if hdf_dep.found()

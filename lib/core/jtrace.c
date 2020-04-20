@@ -183,7 +183,7 @@ j_trace_thread_new(GThread* thread)
 		trace_thread->otf.process_id = g_atomic_int_add(&otf_process_id, 1);
 
 		OTF_Writer_writeDefProcess(otf_writer, 0, trace_thread->otf.process_id, trace_thread->thread_name, 0);
-		OTF_Writer_writeBeginProcess(otf_writer, j_trace_get_time(), trace_thread->otf.process_id);
+		OTF_Writer_writeBeginProcess(otf_writer, g_get_real_time(), trace_thread->otf.process_id);
 	}
 #endif
 
@@ -212,7 +212,7 @@ j_trace_thread_free(JTraceThread* trace_thread)
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
-		OTF_Writer_writeEndProcess(otf_writer, j_trace_get_time(), trace_thread->otf.process_id);
+		OTF_Writer_writeEndProcess(otf_writer, g_get_real_time(), trace_thread->otf.process_id);
 	}
 #endif
 
@@ -272,31 +272,6 @@ j_trace_echo_printerr(JTraceThread* trace_thread, guint64 timestamp)
 	{
 		g_printerr("  ");
 	}
-}
-
-/**
- * Returns the current time.
- *
- * \private
- *
- * \code
- * guint64 timestamp;
- *
- * timestamp = j_trace_get_time();
- * \endcode
- *
- * \return A time stamp in microseconds.
- **/
-static guint64
-j_trace_get_time(void)
-{
-	GTimeVal timeval;
-	guint64 timestamp;
-
-	g_get_current_time(&timeval);
-	timestamp = (timeval.tv_sec * G_USEC_PER_SEC) + timeval.tv_usec;
-
-	return timestamp;
 }
 
 /**
@@ -568,7 +543,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		return NULL;
 	}
 
-	timestamp = j_trace_get_time();
+	timestamp = g_get_real_time();
 
 	trace = g_slice_new(JTrace);
 	trace->name = g_strdup(name);
@@ -687,7 +662,7 @@ j_trace_leave(JTrace* trace)
 	}
 
 	trace_thread->function_depth--;
-	timestamp = j_trace_get_time();
+	timestamp = g_get_real_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
@@ -783,7 +758,7 @@ j_trace_file_begin(gchar const* path, JTraceFileOperation op)
 	}
 
 	trace_thread = j_trace_thread_get_default();
-	timestamp = j_trace_get_time();
+	timestamp = g_get_real_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
@@ -845,7 +820,7 @@ j_trace_file_end(gchar const* path, JTraceFileOperation op, guint64 length, guin
 	}
 
 	trace_thread = j_trace_thread_get_default();
-	timestamp = j_trace_get_time();
+	timestamp = g_get_real_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
@@ -940,7 +915,7 @@ j_trace_counter(gchar const* name, guint64 counter_value)
 	g_return_if_fail(name != NULL);
 
 	trace_thread = j_trace_thread_get_default();
-	timestamp = j_trace_get_time();
+	timestamp = g_get_real_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
