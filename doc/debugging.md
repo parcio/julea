@@ -17,7 +17,7 @@ If this produces too much output, a filter can be set using the `JULEA_TRACE_FUN
 The variable can contain a list of function wildcards that are separated by commas.
 The wildcards support `*` and `?`.
 
-### Coverage
+## Coverage
 
 Generating a coverage report requires the `gcovr` tool to be installed.
 If it is not available on your system, you can install it as an [additional dependency](dependencies.md#additional-dependencies).

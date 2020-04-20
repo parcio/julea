@@ -36,7 +36,7 @@ test_kv_new_free(void)
 	{
 		g_autoptr(JKV) kv = NULL;
 
-		kv = j_kv_new("test", "test-kv");
+		kv = j_kv_new("test", "test-kv-new-free");
 		g_assert_nonnull(kv);
 	}
 
@@ -46,7 +46,7 @@ test_kv_new_free(void)
 	{
 		g_autoptr(JKV) kv = NULL;
 
-		kv = j_kv_new_for_index(i, "test", "test-kv");
+		kv = j_kv_new_for_index(i, "test", "test-kv-new-free-index");
 		g_assert_nonnull(kv);
 	}
 }
@@ -58,7 +58,7 @@ test_kv_ref_unref(void)
 
 	g_autoptr(JKV) kv = NULL;
 
-	kv = j_kv_new("test", "test-kv");
+	kv = j_kv_new("test", "test-kv-ref-unref");
 	g_assert_nonnull(kv);
 
 	for (guint i = 0; i < n; i++)
@@ -74,30 +74,27 @@ test_kv_ref_unref(void)
 static void
 test_kv_put_delete(void)
 {
-	guint const n = 100;
-
 	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* value = NULL;
 	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
-	for (guint i = 0; i < n; i++)
-	{
-		g_autoptr(JKV) kv = NULL;
-		g_autofree gchar* name = NULL;
+	kv = j_kv_new("test", "test-kv-put-delete");
+	g_assert_nonnull(kv);
 
-		name = g_strdup_printf("test-kv-%u", i);
-		kv = j_kv_new("test", name);
-		g_assert_nonnull(kv);
-
-		j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
-		j_kv_delete(kv, batch);
-	}
+	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
+	j_kv_delete(kv, batch);
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	j_kv_delete(kv, batch);
+	ret = j_batch_execute(batch);
+	// FIXME this should return FALSE
+	//g_assert_false(ret);
 }
 
 static void
@@ -115,7 +112,7 @@ test_kv_put_update(void)
 	value1 = g_strdup("first-value");
 	value2 = g_strdup("second-value");
 
-	kv = j_kv_new("test", "test-kv-update");
+	kv = j_kv_new("test", "test-kv-put-update");
 	g_assert_nonnull(kv);
 
 	j_kv_put(kv, value1, strlen(value1) + 1, NULL, batch);
@@ -143,7 +140,7 @@ test_kv_get(void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
-	kv = j_kv_new("test", "test-kv");
+	kv = j_kv_new("test", "test-kv-get");
 	g_assert_nonnull(kv);
 
 	j_kv_get(kv, (gpointer)&get_value, &get_len, batch);
@@ -194,7 +191,7 @@ test_kv_get_callback(void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
-	kv = j_kv_new("test", "test-kv");
+	kv = j_kv_new("test", "test-kv-get-callback");
 	g_assert_nonnull(kv);
 
 	j_kv_get_callback(kv, get_callback, NULL, batch);

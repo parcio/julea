@@ -40,7 +40,7 @@ test_kv_iterator_new_free(void)
 		iterator = j_kv_iterator_new("test-ns", NULL);
 		g_assert_nonnull(iterator);
 
-		iterator_prefix = j_kv_iterator_new("test-ns", "test-kv");
+		iterator_prefix = j_kv_iterator_new("test-ns", "test-kv-new-free");
 		g_assert_nonnull(iterator_prefix);
 	}
 
@@ -54,7 +54,7 @@ test_kv_iterator_new_free(void)
 		iterator = j_kv_iterator_new_for_index(i, "test-ns", NULL);
 		g_assert_nonnull(iterator);
 
-		iterator_prefix = j_kv_iterator_new_for_index(i, "test-ns", "test-kv");
+		iterator_prefix = j_kv_iterator_new_for_index(i, "test-ns", "test-kv-new-free-index");
 		g_assert_nonnull(iterator_prefix);
 	}
 }
@@ -83,7 +83,7 @@ test_kv_iterator_next_get(void)
 		g_autofree gchar* key = NULL;
 		gchar* value = NULL;
 
-		key = g_strdup_printf("test-key-%d-%d", i % 2, i);
+		key = g_strdup_printf("test-key-next-get-%d-%d", i % 2, i);
 		value = g_strdup_printf("test-value-%d", i);
 		kv = j_kv_new("test-ns", key);
 		j_kv_put(kv, value, strlen(value) + 1, g_free, batch);
@@ -104,7 +104,7 @@ test_kv_iterator_next_get(void)
 		guint32 len;
 
 		key = j_kv_iterator_get(kv_iterator, &value, &len);
-		g_assert_true(g_str_has_prefix(key, "test-key-"));
+		g_assert_true(g_str_has_prefix(key, "test-key-next-get-"));
 		g_assert_true(g_str_has_prefix(value, "test-value-"));
 		kvs++;
 	}
@@ -127,7 +127,7 @@ test_kv_iterator_next_get(void)
 			guint32 len;
 
 			key = j_kv_iterator_get(iterator, &value, &len);
-			g_assert_true(g_str_has_prefix(key, "test-key-"));
+			g_assert_true(g_str_has_prefix(key, "test-key-next-get-"));
 			g_assert_true(g_str_has_prefix(value, "test-value-"));
 			kvs++;
 		}
@@ -136,7 +136,7 @@ test_kv_iterator_next_get(void)
 	g_assert_cmpuint(kvs, ==, n);
 
 	kvs = 0;
-	kv_iterator_prefix = j_kv_iterator_new("test-ns", "test-key-1-");
+	kv_iterator_prefix = j_kv_iterator_new("test-ns", "test-key-next-get-1-");
 
 	while (j_kv_iterator_next(kv_iterator_prefix))
 	{
@@ -145,7 +145,7 @@ test_kv_iterator_next_get(void)
 		guint32 len;
 
 		key = j_kv_iterator_get(kv_iterator_prefix, &value, &len);
-		g_assert_true(g_str_has_prefix(key, "test-key-1-"));
+		g_assert_true(g_str_has_prefix(key, "test-key-next-get-1-"));
 		g_assert_true(g_str_has_prefix(value, "test-value-"));
 		kvs++;
 	}
@@ -159,7 +159,7 @@ test_kv_iterator_next_get(void)
 	{
 		g_autoptr(JKVIterator) iterator = NULL;
 
-		iterator = j_kv_iterator_new_for_index(i, "test-ns", "test-key-1-");
+		iterator = j_kv_iterator_new_for_index(i, "test-ns", "test-key-next-get-1-");
 
 		while (j_kv_iterator_next(iterator))
 		{
@@ -168,7 +168,7 @@ test_kv_iterator_next_get(void)
 			guint32 len;
 
 			key = j_kv_iterator_get(iterator, &value, &len);
-			g_assert_true(g_str_has_prefix(key, "test-key-1-"));
+			g_assert_true(g_str_has_prefix(key, "test-key-next-get-1-"));
 			g_assert_true(g_str_has_prefix(value, "test-value-"));
 			kvs++;
 		}
