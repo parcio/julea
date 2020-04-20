@@ -151,7 +151,7 @@ spack_load_dependencies ()
 			export JULEA_SPACK_DEPENDENCIES_LOADED
 		fi
 	else
-		printf 'Dependencies have already been loaded, skipping.\n'
+		printf 'Dependencies have already been loaded, skipping.\n' >&2
 	fi
 }
 

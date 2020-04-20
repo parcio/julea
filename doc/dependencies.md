@@ -17,6 +17,16 @@ If you want to install additional dependencies for optional backends or clients,
 $ ./scripts/install-dependencies.sh full
 ```
 
+### Additional Dependencies
+
+After JULEA's environment has been loaded, the `spack` command can also be used to install and load additional dependencies:
+
+```console
+$ . ./scripts/environment.sh
+$ spack install py-gcovr
+$ spack load py-gcovr
+```
+
 ## Manual Installation
 
 Alternatively, you can install the dependencies manually.
