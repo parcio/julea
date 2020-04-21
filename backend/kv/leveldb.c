@@ -273,16 +273,12 @@ backend_init(gchar const* path, gpointer* backend_data)
 	JLevelDBData* bd;
 	leveldb_options_t* options;
 	g_autofree gchar* dirname = NULL;
+	gint const compressions[] = { leveldb_snappy_compression, leveldb_no_compression };
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
-
-	options = leveldb_options_create();
-	leveldb_options_set_create_if_missing(options, 1);
-	// FIXME check whether snappy is available
-	leveldb_options_set_compression(options, leveldb_snappy_compression);
 
 	bd = g_slice_new(JLevelDBData);
 	bd->read_options = leveldb_readoptions_create();
@@ -290,7 +286,21 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd->write_options_sync = leveldb_writeoptions_create();
 	leveldb_writeoptions_set_sync(bd->write_options_sync, 1);
 
-	bd->db = leveldb_open(options, path, NULL);
+	options = leveldb_options_create();
+	leveldb_options_set_create_if_missing(options, 1);
+
+	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
+	{
+		g_autofree gchar* error = NULL;
+
+		leveldb_options_set_compression(options, compressions[i]);
+		bd->db = leveldb_open(options, path, &error);
+
+		if (bd->db != NULL)
+		{
+			break;
+		}
+	}
 
 	leveldb_options_destroy(options);
 

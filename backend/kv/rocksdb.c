@@ -273,16 +273,12 @@ backend_init(gchar const* path, gpointer* backend_data)
 	JRocksDBData* bd;
 	rocksdb_options_t* options;
 	g_autofree gchar* dirname = NULL;
+	gint const compressions[] = { rocksdb_lz4_compression, rocksdb_snappy_compression, rocksdb_no_compression };
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
-
-	options = rocksdb_options_create();
-	rocksdb_options_set_create_if_missing(options, 1);
-	// FIXME check whether lz4 is available
-	rocksdb_options_set_compression(options, rocksdb_no_compression);
 
 	bd = g_slice_new(JRocksDBData);
 	bd->read_options = rocksdb_readoptions_create();
@@ -290,7 +286,21 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd->write_options_sync = rocksdb_writeoptions_create();
 	rocksdb_writeoptions_set_sync(bd->write_options_sync, 1);
 
-	bd->db = rocksdb_open(options, path, NULL);
+	options = rocksdb_options_create();
+	rocksdb_options_set_create_if_missing(options, 1);
+
+	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
+	{
+		g_autofree gchar* error = NULL;
+
+		rocksdb_options_set_compression(options, compressions[i]);
+		bd->db = rocksdb_open(options, path, &error);
+
+		if (bd->db != NULL)
+		{
+			break;
+		}
+	}
 
 	rocksdb_options_destroy(options);
 
