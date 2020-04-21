@@ -51,37 +51,41 @@ Most of them should be available within the repositories of Linux distributions.
 
 ### Optional Dependencies
 
+- FUSE
+  - Debian: `apt install libfuse-dev`
+  - Fedora: `dnf install fuse-devel`
+  - Arch Linux: `pacman -S fuse2`
+
 - LevelDB
   - Debian: `apt install libleveldb-dev`
   - Fedora: `dnf install leveldb-devel`
   - Arch Linux: `pacman -S leveldb`
-
-- LMDB
-  - Debian: `apt install liblmdb-dev`
-  - Fedora: `dnf install lmdb-devel`
-  - Arch Linux: `pacman -S lmdb`
 
 - libmongoc
   - Debian: `apt install libmongoc-dev`
   - Fedora: `dnf install mongo-c-driver-devel`
   - Arch Linux: `pacman -S libmongoc`
 
-- SQLite
-  - Debian: `apt install libsqlite3-dev`
-  - Fedora: `dnf install sqlite-devel`
-  - Arch Linux: `pacman -S sqlite`
-
 - librados
   - Debian: `apt install librados-dev`
   - Fedora: `dnf install librados-devel`
   - Arch Linux: `pacman -S ceph-libs`
 
-- FUSE
-  - Debian: `apt install libfuse-dev`
-  - Fedora: `dnf install fuse-devel`
-  - Arch Linux: `pacman -S fuse2`
+- LMDB
+  - Debian: `apt install liblmdb-dev`
+  - Fedora: `dnf install lmdb-devel`
+  - Arch Linux: `pacman -S lmdb`
 
 - MariaDB
   - Debian: `apt install libmariadb-dev`
   - Fedora: `dnf install mariadb-connector-c-devel`
   - Arch Linux: `pacman -S mariadb-libs`
+
+- RocksDB
+  - Debian: `apt install librocksdb-dev`
+  - Arch Linux: `pacman -S rocksdb`
+
+- SQLite
+  - Debian: `apt install libsqlite3-dev`
+  - Fedora: `dnf install sqlite-devel`
+  - Arch Linux: `pacman -S sqlite`

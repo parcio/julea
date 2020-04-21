@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2020 Michael Kuhn
+ * Copyright (C) 2020 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,53 +23,53 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#include <leveldb/c.h>
+#include <rocksdb/c.h>
 
 #include <julea.h>
 
-struct JLevelDBBatch
+struct JRocksDBBatch
 {
-	leveldb_writebatch_t* batch;
+	rocksdb_writebatch_t* batch;
 	gchar* namespace;
 	JSemantics* semantics;
 };
 
-typedef struct JLevelDBBatch JLevelDBBatch;
+typedef struct JRocksDBBatch JRocksDBBatch;
 
-struct JLevelDBData
+struct JRocksDBData
 {
-	leveldb_t* db;
+	rocksdb_t* db;
 
-	leveldb_readoptions_t* read_options;
-	leveldb_writeoptions_t* write_options;
-	leveldb_writeoptions_t* write_options_sync;
+	rocksdb_readoptions_t* read_options;
+	rocksdb_writeoptions_t* write_options;
+	rocksdb_writeoptions_t* write_options_sync;
 };
 
-typedef struct JLevelDBData JLevelDBData;
+typedef struct JRocksDBData JRocksDBData;
 
-struct JLevelDBIterator
+struct JRocksDBIterator
 {
-	leveldb_iterator_t* iterator;
+	rocksdb_iterator_t* iterator;
 	gboolean first;
 	gchar* prefix;
 	gsize namespace_len;
 };
 
-typedef struct JLevelDBIterator JLevelDBIterator;
+typedef struct JRocksDBIterator JRocksDBIterator;
 
 static gboolean
 backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* backend_batch)
 {
-	JLevelDBBatch* batch;
+	JRocksDBBatch* batch;
 
 	(void)backend_data;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	batch = g_slice_new(JLevelDBBatch);
+	batch = g_slice_new(JRocksDBBatch);
 
-	batch->batch = leveldb_writebatch_create();
+	batch->batch = rocksdb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
 	batch->semantics = j_semantics_ref(semantics);
 
@@ -81,12 +81,12 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 static gboolean
 backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 {
-	JLevelDBBatch* batch = backend_batch;
-	JLevelDBData* bd = backend_data;
+	JRocksDBBatch* batch = backend_batch;
+	JRocksDBData* bd = backend_data;
 
-	g_autofree gchar* leveldb_error = NULL;
+	g_autofree gchar* rocksdb_error = NULL;
 
-	leveldb_writeoptions_t* write_options = bd->write_options;
+	rocksdb_writeoptions_t* write_options = bd->write_options;
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
@@ -95,20 +95,20 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 		write_options = bd->write_options_sync;
 	}
 
-	leveldb_write(bd->db, write_options, batch->batch, &leveldb_error);
+	rocksdb_write(bd->db, write_options, batch->batch, &rocksdb_error);
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
-	leveldb_writebatch_destroy(batch->batch);
-	g_slice_free(JLevelDBBatch, batch);
+	rocksdb_writebatch_destroy(batch->batch);
+	g_slice_free(JRocksDBBatch, batch);
 
-	return (leveldb_error == NULL);
+	return (rocksdb_error == NULL);
 }
 
 static gboolean
 backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gconstpointer value, guint32 len)
 {
-	JLevelDBBatch* batch = backend_batch;
+	JRocksDBBatch* batch = backend_batch;
 	g_autofree gchar* nskey = NULL;
 
 	(void)backend_data;
@@ -118,7 +118,7 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 	g_return_val_if_fail(value != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	leveldb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, value, len);
+	rocksdb_writebatch_put(batch->batch, nskey, strlen(nskey) + 1, value, len);
 
 	return TRUE;
 }
@@ -126,7 +126,7 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 static gboolean
 backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 {
-	JLevelDBBatch* batch = backend_batch;
+	JRocksDBBatch* batch = backend_batch;
 	g_autofree gchar* nskey = NULL;
 
 	(void)backend_data;
@@ -135,7 +135,7 @@ backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 	g_return_val_if_fail(key != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	leveldb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
+	rocksdb_writebatch_delete(batch->batch, nskey, strlen(nskey) + 1);
 
 	return TRUE;
 }
@@ -143,8 +143,8 @@ backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 static gboolean
 backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpointer* value, guint32* len)
 {
-	JLevelDBBatch* batch = backend_batch;
-	JLevelDBData* bd = backend_data;
+	JRocksDBBatch* batch = backend_batch;
+	JRocksDBData* bd = backend_data;
 	g_autofree gchar* nskey = NULL;
 	g_autofree gpointer result = NULL;
 	gsize result_len;
@@ -155,7 +155,7 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 	g_return_val_if_fail(len != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	result = leveldb_get(bd->db, bd->read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
+	result = rocksdb_get(bd->db, bd->read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
 
 	if (result != NULL)
 	{
@@ -169,18 +169,18 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 static gboolean
 backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend_iterator)
 {
-	JLevelDBData* bd = backend_data;
-	JLevelDBIterator* iterator = NULL;
-	leveldb_iterator_t* it;
+	JRocksDBData* bd = backend_data;
+	JRocksDBIterator* iterator = NULL;
+	rocksdb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
-	it = leveldb_create_iterator(bd->db, bd->read_options);
+	it = rocksdb_create_iterator(bd->db, bd->read_options);
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JLevelDBIterator);
+		iterator = g_slice_new(JRocksDBIterator);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:", namespace);
@@ -195,19 +195,19 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 static gboolean
 backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* backend_iterator)
 {
-	JLevelDBData* bd = backend_data;
-	JLevelDBIterator* iterator = NULL;
-	leveldb_iterator_t* it;
+	JRocksDBData* bd = backend_data;
+	JRocksDBIterator* iterator = NULL;
+	rocksdb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
-	it = leveldb_create_iterator(bd->db, bd->read_options);
+	it = rocksdb_create_iterator(bd->db, bd->read_options);
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JLevelDBIterator);
+		iterator = g_slice_new(JRocksDBIterator);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
@@ -222,7 +222,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 static gboolean
 backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** key, gconstpointer* value, guint32* len)
 {
-	JLevelDBIterator* iterator = backend_iterator;
+	JRocksDBIterator* iterator = backend_iterator;
 
 	(void)backend_data;
 
@@ -232,20 +232,20 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 
 	if (iterator->first)
 	{
-		leveldb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
+		rocksdb_iter_seek(iterator->iterator, iterator->prefix, strlen(iterator->prefix));
 		iterator->first = FALSE;
 	}
 	else
 	{
-		leveldb_iter_next(iterator->iterator);
+		rocksdb_iter_next(iterator->iterator);
 	}
 
-	if (leveldb_iter_valid(iterator->iterator))
+	if (rocksdb_iter_valid(iterator->iterator))
 	{
 		gchar const* key_;
 		gsize tmp;
 
-		key_ = leveldb_iter_key(iterator->iterator, &tmp);
+		key_ = rocksdb_iter_key(iterator->iterator, &tmp);
 
 		if (!g_str_has_prefix(key_, iterator->prefix))
 		{
@@ -253,7 +253,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 		}
 
 		*key = key_ + iterator->namespace_len;
-		*value = leveldb_iter_value(iterator->iterator, &tmp);
+		*value = rocksdb_iter_value(iterator->iterator, &tmp);
 		*len = tmp;
 
 		return TRUE;
@@ -261,8 +261,8 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 
 out:
 	g_free(iterator->prefix);
-	leveldb_iter_destroy(iterator->iterator);
-	g_slice_free(JLevelDBIterator, iterator);
+	rocksdb_iter_destroy(iterator->iterator);
+	g_slice_free(JRocksDBIterator, iterator);
 
 	return FALSE;
 }
@@ -270,8 +270,8 @@ out:
 static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
-	JLevelDBData* bd;
-	leveldb_options_t* options;
+	JRocksDBData* bd;
+	rocksdb_options_t* options;
 	g_autofree gchar* dirname = NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
@@ -279,20 +279,20 @@ backend_init(gchar const* path, gpointer* backend_data)
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
 
-	options = leveldb_options_create();
-	leveldb_options_set_create_if_missing(options, 1);
-	// FIXME check whether snappy is available
-	leveldb_options_set_compression(options, leveldb_snappy_compression);
+	options = rocksdb_options_create();
+	rocksdb_options_set_create_if_missing(options, 1);
+	// FIXME check whether lz4 is available
+	rocksdb_options_set_compression(options, rocksdb_lz4_compression);
 
-	bd = g_slice_new(JLevelDBData);
-	bd->read_options = leveldb_readoptions_create();
-	bd->write_options = leveldb_writeoptions_create();
-	bd->write_options_sync = leveldb_writeoptions_create();
-	leveldb_writeoptions_set_sync(bd->write_options_sync, 1);
+	bd = g_slice_new(JRocksDBData);
+	bd->read_options = rocksdb_readoptions_create();
+	bd->write_options = rocksdb_writeoptions_create();
+	bd->write_options_sync = rocksdb_writeoptions_create();
+	rocksdb_writeoptions_set_sync(bd->write_options_sync, 1);
 
-	bd->db = leveldb_open(options, path, NULL);
+	bd->db = rocksdb_open(options, path, NULL);
 
-	leveldb_options_destroy(options);
+	rocksdb_options_destroy(options);
 
 	*backend_data = bd;
 
@@ -302,21 +302,21 @@ backend_init(gchar const* path, gpointer* backend_data)
 static void
 backend_fini(gpointer backend_data)
 {
-	JLevelDBData* bd = backend_data;
+	JRocksDBData* bd = backend_data;
 
-	leveldb_readoptions_destroy(bd->read_options);
-	leveldb_writeoptions_destroy(bd->write_options);
-	leveldb_writeoptions_destroy(bd->write_options_sync);
+	rocksdb_readoptions_destroy(bd->read_options);
+	rocksdb_writeoptions_destroy(bd->write_options);
+	rocksdb_writeoptions_destroy(bd->write_options_sync);
 
 	if (bd->db != NULL)
 	{
-		leveldb_close(bd->db);
+		rocksdb_close(bd->db);
 	}
 
-	g_slice_free(JLevelDBData, bd);
+	g_slice_free(JRocksDBData, bd);
 }
 
-static JBackend leveldb_backend = {
+static JBackend rocksdb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.kv = {
@@ -336,5 +336,5 @@ G_MODULE_EXPORT
 JBackend*
 backend_info(void)
 {
-	return &leveldb_backend;
+	return &rocksdb_backend;
 }

@@ -94,6 +94,8 @@ libmongoc_version = '1.9.0'
 sqlite_version = '3.22.0'
 # Ubuntu 18.04 has MariaDB Connector/C 3.0.3
 mariadb_version = '3.0.3'
+# Ubuntu 18.04 has RocksDB 5.8.8
+rocksdb_version = '5.8.8'
 
 # Dependencies
 
@@ -205,6 +207,20 @@ if not mariadb_dep.found()
 			link_args: mariadb_libs,
 		)
 	endif
+endif
+
+rocksdb_dep = dependency('rocksdb',
+	version: '>= @0@'.format(rocksdb_version),
+	required: false,
+	#include_type: 'system'
+)
+
+# Ubuntu's package does not ship a pkg-config file
+if not rocksdb_dep.found()
+	rocksdb_dep = cc.find_library('rocksdb',
+		has_headers: ['rocksdb/c.h'],
+		required: false,
+	)
 endif
 
 # Compiler checks
@@ -490,6 +506,10 @@ if libmongoc_dep.found()
 	julea_backends += 'kv/mongodb'
 endif
 
+if rocksdb_dep.found()
+	julea_backends += 'kv/rocksdb'
+endif
+
 if sqlite_dep.found()
 	julea_backends += 'kv/sqlite'
 	julea_backends += 'db/sqlite'
@@ -523,6 +543,10 @@ foreach backend: julea_backends
 		extra_deps += lmdb_dep
 	elif backend == 'kv/mongodb'
 		extra_deps += libmongoc_dep
+	elif backend == 'kv/rocksdb'
+		# rocksdb bug
+		extra_args += '-Wno-strict-prototypes'
+		extra_deps += rocksdb_dep
 	elif backend == 'kv/sqlite' or backend == 'db/sqlite'
 		extra_deps += sqlite_dep
 	elif backend == 'db/mysql'

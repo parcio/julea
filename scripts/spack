@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='c62f18304d8d5f6e5686dcb31587692e127228b0'
+	spack_commit='6c8e15ee18ff11f96a4cbf99a232e90f5b090050'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -122,6 +122,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} mongo-c-driver"
 		dependencies="${dependencies} hdf5~mpi@1.12:"
 		dependencies="${dependencies} mariadb-c-client"
+		dependencies="${dependencies} rocksdb"
 
 		# FIXME move to minimal
 		# FIXME set fabrics
