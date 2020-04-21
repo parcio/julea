@@ -282,7 +282,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	options = rocksdb_options_create();
 	rocksdb_options_set_create_if_missing(options, 1);
 	// FIXME check whether lz4 is available
-	rocksdb_options_set_compression(options, rocksdb_lz4_compression);
+	rocksdb_options_set_compression(options, rocksdb_no_compression);
 
 	bd = g_slice_new(JRocksDBData);
 	bd->read_options = rocksdb_readoptions_create();
