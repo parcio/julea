@@ -34,7 +34,7 @@ jobs:
             db: sqlite
           - name: posix-rocksdb-sqlite
             object: posix
-            kv: rocks
+            kv: rocksdb
             db: sqlite
           - name: posix-sqlite-sqlite
             object: posix
