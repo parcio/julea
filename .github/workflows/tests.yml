@@ -4,6 +4,7 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-18.04
+    timeout-minutes: 30
     strategy:
       matrix:
         compiler: [gcc, clang]
