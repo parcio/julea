@@ -70,6 +70,9 @@ $ cd example
 $ make run
 ```
 
+The version is JULEA built using this guide is mainly meant for development and debugging.
+If you want to deploy a release version of JULEA, please refer to the documentation about [installation and usage](doc/installation-usage.md).
+
 ## Citing JULEA
 
 If you want to cite JULEA, please use the following paper:
