@@ -43,7 +43,7 @@ JULEA now has to be configured using [Meson](https://mesonbuild.com/) and compil
 the different configuration and build options can be shown with `meson setup --help`.
 
 ```console
-$ meson setup -Db_sanitize=address,undefined bld
+$ meson setup --prefix="${HOME}/julea-install" -Db_sanitize=address,undefined bld
 $ ninja -C bld
 ```
 
