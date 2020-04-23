@@ -66,7 +66,6 @@ $ ./scripts/test.sh
 To get an idea about how to use JULEA from your own application, check out the `example` directory.
 
 ```console
-$ ninja -C bld install
 $ cd example
 $ make run
 ```
