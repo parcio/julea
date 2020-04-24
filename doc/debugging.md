@@ -24,7 +24,7 @@ If it is not available on your system, you can install it as an [additional depe
 The following steps set up everything to generate a coverage report:
 
 ```console
-$ . ./scripts/environment.sh
+$ . scripts/environment.sh
 $ spack install py-gcovr
 $ spack load py-gcovr
 $ meson setup -Db_coverage=true bld

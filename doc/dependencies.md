@@ -22,7 +22,7 @@ $ ./scripts/install-dependencies.sh full
 After JULEA's environment has been loaded, the `spack` command can also be used to install and load additional dependencies:
 
 ```console
-$ . ./scripts/environment.sh
+$ . scripts/environment.sh
 $ spack install py-gcovr
 $ spack load py-gcovr
 ```

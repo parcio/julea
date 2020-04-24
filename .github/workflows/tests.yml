@@ -80,7 +80,7 @@ jobs:
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
-          . ./scripts/environment.sh
+          . scripts/environment.sh
           JULEA_DB_COMPONENT='server'; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.db }}"; if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:julea:root:root'; fi
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"

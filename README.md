@@ -36,7 +36,7 @@ To allow the dependencies to be found, the JULEA environment has to be loaded.
 This also ensures that JULEA's binaries and libraries are found later.
 
 ```console
-$ . ./scripts/environment.sh
+$ . scripts/environment.sh
 ```
 
 JULEA now has to be configured using [Meson](https://mesonbuild.com/) and compiled using [Ninja](https://ninja-build.org/);

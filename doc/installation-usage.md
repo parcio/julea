@@ -7,7 +7,7 @@ First of all, JULEA's environment has to be loaded with the environment variable
 
 ```console
 $ export JULEA_PREFIX="${HOME}/julea-install"
-$ . ./scripts/environment.sh
+$ . scripts/environment.sh
 ```
 
 Afterwards, JULEA has to be built and installed in release mode:
