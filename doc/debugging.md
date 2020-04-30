@@ -2,7 +2,8 @@
 
 There are several ways to debug JULEA.
 Moreover, developers should be aware of the fact that debug builds of JULEA can behave differently than release builds:
-The `JULEA_BACKEND_PATH` environment variable can be used to override JULEA's internal backend path only in debug builds.
+1. The `JULEA_BACKEND_PATH` environment variable can be used to override JULEA's internal backend path only in debug builds.
+2. Tracing via `JULEA_TRACE` is only available in debug builds.
 
 ## Tracing
 
