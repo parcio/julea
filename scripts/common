@@ -66,7 +66,7 @@ set_library_path ()
 
 	if test -n "${JULEA_PREFIX}"
 	then
-		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib:${LD_LIBRARY_PATH}"
+		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib/x86_64-linux-gnu:${JULEA_PREFIX}/lib:${LD_LIBRARY_PATH}"
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
 
