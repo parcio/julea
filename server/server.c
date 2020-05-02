@@ -32,7 +32,14 @@
 
 #include "server.h"
 
-static JConfiguration* jd_configuration;
+JStatistics* jd_statistics = NULL;
+GMutex jd_statistics_mutex[1] = { NULL };
+
+JBackend* jd_object_backend = NULL;
+JBackend* jd_kv_backend = NULL;
+JBackend* jd_db_backend = NULL;
+
+static JConfiguration* jd_configuration = NULL;
 
 static gboolean
 jd_signal(gpointer data)
