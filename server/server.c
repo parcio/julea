@@ -33,7 +33,7 @@
 #include "server.h"
 
 JStatistics* jd_statistics = NULL;
-GMutex jd_statistics_mutex[1] = { NULL };
+GMutex jd_statistics_mutex[1] = { 0 };
 
 JBackend* jd_object_backend = NULL;
 JBackend* jd_kv_backend = NULL;
