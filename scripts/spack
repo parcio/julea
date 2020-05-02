@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='6c8e15ee18ff11f96a4cbf99a232e90f5b090050'
+	spack_commit='1bc104e00e255798602073488279c0bc18fd1f09'
 
 	test -n "${SPACK_DIR}" || return 1
 
