@@ -167,11 +167,11 @@ struct JBackend
 
 		struct
 		{
-			gboolean (*backend_init)(gchar const*);
-			void (*backend_fini)(void);
+			gboolean (*backend_init)(gchar const*, gpointer*);
+			void (*backend_fini)(gpointer);
 
-			gboolean (*backend_batch_start)(gchar const*, JSemantics*, gpointer*, GError**);
-			gboolean (*backend_batch_execute)(gpointer, GError**);
+			gboolean (*backend_batch_start)(gpointer, gchar const*, JSemantics*, gpointer*, GError**);
+			gboolean (*backend_batch_execute)(gpointer, gpointer, GError**);
 
 			/**
 			* Create a schema
@@ -192,7 +192,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_create)(gpointer, gchar const*, bson_t const*, GError**);
+			gboolean (*backend_schema_create)(gpointer, gpointer, gchar const*, bson_t const*, GError**);
 
 			/**
 			* Obtains information about a schema
@@ -213,7 +213,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_get)(gpointer, gchar const*, bson_t*, GError**);
+			gboolean (*backend_schema_get)(gpointer, gpointer, gchar const*, bson_t*, GError**);
 
 			/**
 			* Delete a schema
@@ -223,7 +223,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_schema_delete)(gpointer, gchar const*, GError**);
+			gboolean (*backend_schema_delete)(gpointer, gpointer, gchar const*, GError**);
 
 			/**
 			* Insert data into a schema
@@ -245,7 +245,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_insert)(gpointer, gchar const*, bson_t const*, bson_t*, GError**);
+			gboolean (*backend_insert)(gpointer, gpointer, gchar const*, bson_t const*, bson_t*, GError**);
 
 			/**
 			* Updates data
@@ -283,7 +283,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_update)(gpointer, gchar const*, bson_t const*, bson_t const*, GError**);
+			gboolean (*backend_update)(gpointer, gpointer, gchar const*, bson_t const*, bson_t const*, GError**);
 
 			/**
 			* Deletes data
@@ -314,7 +314,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_delete)(gpointer, gchar const*, bson_t const*, GError**);
+			gboolean (*backend_delete)(gpointer, gpointer, gchar const*, bson_t const*, GError**);
 
 			/**
 			* Creates an iterator
@@ -346,7 +346,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_query)(gpointer, gchar const*, bson_t const*, gpointer*, GError**);
+			gboolean (*backend_query)(gpointer, gpointer, gchar const*, bson_t const*, gpointer*, GError**);
 
 			/**
 			* Obtains metadata
@@ -368,7 +368,7 @@ struct JBackend
 			*
 			* \return TRUE on success, FALSE otherwise.
 			**/
-			gboolean (*backend_iterate)(gpointer, bson_t*, GError**);
+			gboolean (*backend_iterate)(gpointer, gpointer, bson_t*, GError**);
 		} db;
 	};
 };

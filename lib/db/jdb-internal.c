@@ -82,11 +82,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		{
 			if (!batch)
 			{
-				ret = db_backend->db.backend_batch_start( //
-					      data->in_param[0].ptr, //
-					      semantics, //
-					      &batch, &error)
-				      && ret;
+				ret = j_backend_db_batch_start(db_backend, data->in_param[0].ptr, semantics, &batch, &error) && ret;
 			}
 
 			if (data->out_param[data->out_param_count - 1].ptr && error)
@@ -110,7 +106,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		{
 			if (!error)
 			{
-				ret = db_backend->db.backend_batch_execute(batch, NULL) && ret;
+				ret = j_backend_db_batch_execute(db_backend, batch, NULL) && ret;
 			}
 			else
 			{

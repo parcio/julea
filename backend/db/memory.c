@@ -24,19 +24,25 @@
 
 #include <julea.h>
 
-static bson_t* schema_cache = NULL;
-static bson_t* entry_cache = NULL;
-static guint32 entry_counter = 0;
+struct JMemoryData
+{
+	bson_t* schema_cache;
+	bson_t* entry_cache;
+	guint32 entry_counter;
 
-G_LOCK_DEFINE_STATIC(global_lock);
+	GMutex lock[1];
+};
+
+typedef struct JMemoryData JMemoryData;
 
 static gboolean
-backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
+backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* batch, GError** error)
 {
-	(void)error;
-	(void)batch;
+	(void)backend_data;
 	(void)semantics;
 	(void)namespace;
+	(void)batch;
+	(void)error;
 
 	// Return something != NULL
 	*batch = batch;
@@ -45,157 +51,169 @@ backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* bat
 }
 
 static gboolean
-backend_batch_execute(gpointer batch, GError** error)
+backend_batch_execute(gpointer backend_data, gpointer batch, GError** error)
 {
-	(void)error;
+	(void)backend_data;
 	(void)batch;
+	(void)error;
 
 	return TRUE;
 }
 
 static gboolean
-backend_schema_create(gpointer batch, gchar const* name, bson_t const* schema, GError** error)
+backend_schema_create(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* schema, GError** error)
 {
-	(void)error;
+	JMemoryData* bd = backend_data;
+
 	(void)batch;
 	(void)name;
 	(void)schema;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (schema_cache != NULL)
+	if (bd->schema_cache != NULL)
 	{
-		bson_destroy(schema_cache);
+		bson_destroy(bd->schema_cache);
 	}
 
-	schema_cache = bson_copy(schema);
+	bd->schema_cache = bson_copy(schema);
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return TRUE;
 }
 
 static gboolean
-backend_schema_get(gpointer batch, gchar const* name, bson_t* schema, GError** error)
+backend_schema_get(gpointer backend_data, gpointer batch, gchar const* name, bson_t* schema, GError** error)
 {
 	gboolean ret = FALSE;
+	JMemoryData* bd = backend_data;
 
-	(void)error;
 	(void)batch;
 	(void)name;
 	(void)schema;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (schema_cache != NULL)
+	if (bd->schema_cache != NULL)
 	{
 		// FIXME schema is uninitialized if backend is running on the server but initialized if running on the client
 		// bson_copy_to requires the destination to be uninitialized
 		//bson_destroy(schema);
-		bson_copy_to(schema_cache, schema);
+		bson_copy_to(bd->schema_cache, schema);
 		ret = TRUE;
 	}
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return ret;
 }
 
 static gboolean
-backend_schema_delete(gpointer batch, gchar const* name, GError** error)
+backend_schema_delete(gpointer backend_data, gpointer batch, gchar const* name, GError** error)
 {
-	(void)error;
+	JMemoryData* bd = backend_data;
+
 	(void)batch;
 	(void)name;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (schema_cache != NULL)
+	if (bd->schema_cache != NULL)
 	{
-		bson_destroy(schema_cache);
-		schema_cache = NULL;
+		bson_destroy(bd->schema_cache);
+		bd->schema_cache = NULL;
 	}
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return TRUE;
 }
 
 static gboolean
-backend_insert(gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
+backend_insert(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
 {
-	(void)error;
+	JMemoryData* bd = backend_data;
+
 	(void)batch;
 	(void)name;
 	(void)metadata;
 	(void)id;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (entry_cache != NULL)
+	if (bd->entry_cache != NULL)
 	{
-		bson_destroy(entry_cache);
+		bson_destroy(bd->entry_cache);
 	}
 
-	entry_cache = bson_copy(metadata);
-	entry_counter++;
+	bd->entry_cache = bson_copy(metadata);
+	bd->entry_counter++;
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return TRUE;
 }
 
 static gboolean
-backend_update(gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
+backend_update(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
 {
-	(void)error;
+	(void)backend_data;
 	(void)batch;
 	(void)name;
 	(void)selector;
 	(void)metadata;
+	(void)error;
 
 	return TRUE;
 }
 
 static gboolean
-backend_delete(gpointer batch, gchar const* name, bson_t const* selector, GError** error)
+backend_delete(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* selector, GError** error)
 {
-	(void)error;
+	JMemoryData* bd = backend_data;
+
 	(void)batch;
 	(void)name;
 	(void)selector;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (entry_cache != NULL)
+	if (bd->entry_cache != NULL)
 	{
-		bson_destroy(entry_cache);
-		entry_cache = NULL;
+		bson_destroy(bd->entry_cache);
+		bd->entry_cache = NULL;
 	}
 
-	entry_counter--;
+	bd->entry_counter--;
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return TRUE;
 }
 
 static gboolean
-backend_query(gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+backend_query(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
+	JMemoryData* bd = backend_data;
 	guint32* counter;
 
-	(void)error;
 	(void)batch;
 	(void)name;
 	(void)selector;
+	(void)error;
 
 	counter = g_new(guint32, 1);
 	*iterator = counter;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (entry_cache == NULL)
+	if (bd->entry_cache == NULL)
 	{
 		*counter = 0;
 	}
@@ -205,27 +223,28 @@ backend_query(gpointer batch, gchar const* name, bson_t const* selector, gpointe
 	}
 	else
 	{
-		*counter = entry_counter;
+		*counter = bd->entry_counter;
 	}
 
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return TRUE;
 }
 
 static gboolean
-backend_iterate(gpointer iterator, bson_t* metadata, GError** error)
+backend_iterate(gpointer backend_data, gpointer iterator, bson_t* metadata, GError** error)
 {
 	gboolean ret = TRUE;
 	guint32* counter = iterator;
+	JMemoryData* bd = backend_data;
 
-	(void)error;
 	(void)iterator;
 	(void)metadata;
+	(void)error;
 
-	G_LOCK(global_lock);
+	g_mutex_lock(bd->lock);
 
-	if (*counter <= 0 || entry_cache == NULL)
+	if (*counter <= 0 || bd->entry_cache == NULL)
 	{
 		g_free(counter);
 		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
@@ -236,34 +255,49 @@ backend_iterate(gpointer iterator, bson_t* metadata, GError** error)
 	(*counter)--;
 	// bson_copy_to requires the destination to be uninitialized
 	bson_destroy(metadata);
-	bson_copy_to(entry_cache, metadata);
+	bson_copy_to(bd->entry_cache, metadata);
 
 end:
-	G_UNLOCK(global_lock);
+	g_mutex_unlock(bd->lock);
 
 	return ret;
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
+	JMemoryData* bd;
+
 	(void)path;
+
+	bd = g_slice_new(JMemoryData);
+	bd->schema_cache = NULL;
+	bd->entry_cache = NULL;
+	bd->entry_counter = 0;
+	g_mutex_init(bd->lock);
+
+	*backend_data = bd;
 
 	return TRUE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
-	if (schema_cache != NULL)
+	JMemoryData* bd = backend_data;
+
+	if (bd->schema_cache != NULL)
 	{
-		bson_destroy(schema_cache);
+		bson_destroy(bd->schema_cache);
 	}
 
-	if (entry_cache != NULL)
+	if (bd->entry_cache != NULL)
 	{
-		bson_destroy(entry_cache);
+		bson_destroy(bd->entry_cache);
 	}
+
+	g_mutex_clear(bd->lock);
+	g_slice_free(JMemoryData, bd);
 }
 
 static JBackend memory_backend = {

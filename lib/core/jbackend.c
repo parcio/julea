@@ -672,7 +672,7 @@ j_backend_db_init(JBackend* backend, gchar const* path)
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->db.backend_init(path);
+		ret = backend->db.backend_init(path, &(backend->data));
 	}
 
 	return ret;
@@ -688,7 +688,7 @@ j_backend_db_fini(JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->db.backend_fini();
+		backend->db.backend_fini(backend->data);
 	}
 }
 
@@ -708,7 +708,7 @@ j_backend_db_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		J_TRACE("backend_batch_start", "%s, %p, %p, %p", namespace, (gpointer)semantics, (gpointer)batch, (gpointer)error);
-		ret = backend->db.backend_batch_start(namespace, semantics, batch, error);
+		ret = backend->db.backend_batch_start(backend->data, namespace, semantics, batch, error);
 	}
 
 	return ret;
@@ -728,7 +728,7 @@ j_backend_db_batch_execute(JBackend* backend, gpointer batch, GError** error)
 
 	{
 		J_TRACE("backend_batch_execute", "%p, %p", batch, (gpointer)error);
-		ret = backend->db.backend_batch_execute(batch, error);
+		ret = backend->db.backend_batch_execute(backend->data, batch, error);
 	}
 
 	return ret;
@@ -750,7 +750,7 @@ j_backend_db_schema_create(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		J_TRACE("backend_schema_create", "%p, %s, %p, %p", batch, name, (gconstpointer)schema, (gpointer)error);
-		ret = backend->db.backend_schema_create(batch, name, schema, error);
+		ret = backend->db.backend_schema_create(backend->data, batch, name, schema, error);
 	}
 
 	return ret;
@@ -771,7 +771,7 @@ j_backend_db_schema_get(JBackend* backend, gpointer batch, gchar const* name, bs
 
 	{
 		J_TRACE("backend_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
-		ret = backend->db.backend_schema_get(batch, name, schema, error);
+		ret = backend->db.backend_schema_get(backend->data, batch, name, schema, error);
 	}
 
 	return ret;
@@ -792,7 +792,7 @@ j_backend_db_schema_delete(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		J_TRACE("backend_schema_delete", "%p, %s, %p", batch, name, (gpointer)error);
-		ret = backend->db.backend_schema_delete(batch, name, error);
+		ret = backend->db.backend_schema_delete(backend->data, batch, name, error);
 	}
 
 	return ret;
@@ -815,7 +815,7 @@ j_backend_db_insert(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_insert", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)metadata, (gpointer)id, (gpointer)error);
-		ret = backend->db.backend_insert(batch, name, metadata, id, error);
+		ret = backend->db.backend_insert(backend->data, batch, name, metadata, id, error);
 	}
 
 	return ret;
@@ -838,7 +838,7 @@ j_backend_db_update(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_update", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gconstpointer)metadata, (gpointer)error);
-		ret = backend->db.backend_update(batch, name, selector, metadata, error);
+		ret = backend->db.backend_update(backend->data, batch, name, selector, metadata, error);
 	}
 
 	return ret;
@@ -859,7 +859,7 @@ j_backend_db_delete(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_delete", "%p, %s, %p, %p", batch, name, (gconstpointer)selector, (gpointer)error);
-		ret = backend->db.backend_delete(batch, name, selector, error);
+		ret = backend->db.backend_delete(backend->data, batch, name, selector, error);
 	}
 
 	return ret;
@@ -881,7 +881,7 @@ j_backend_db_query(JBackend* backend, gpointer batch, gchar const* name, bson_t 
 
 	{
 		J_TRACE("backend_query", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gpointer)iterator, (gpointer)error);
-		ret = backend->db.backend_query(batch, name, selector, iterator, error);
+		ret = backend->db.backend_query(backend->data, batch, name, selector, iterator, error);
 	}
 
 	return ret;
@@ -902,7 +902,7 @@ j_backend_db_iterate(JBackend* backend, gpointer iterator, bson_t* metadata, GEr
 
 	{
 		J_TRACE("backend_iterate", "%p, %p, %p", iterator, (gpointer)metadata, (gpointer)error);
-		ret = backend->db.backend_iterate(iterator, metadata, error);
+		ret = backend->db.backend_iterate(backend->data, iterator, metadata, error);
 	}
 
 	return ret;
