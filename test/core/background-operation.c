@@ -57,8 +57,8 @@ test_background_operation_wait(void)
 }
 
 void
-test_background_operation(void)
+test_core_background_operation(void)
 {
-	g_test_add_func("/background_operation/new_ref_unref", test_background_operation_new_ref_unref);
-	g_test_add_func("/background_operation/wait", test_background_operation_wait);
+	g_test_add_func("/core/background_operation/new_ref_unref", test_background_operation_new_ref_unref);
+	g_test_add_func("/core/background_operation/wait", test_background_operation_wait);
 }

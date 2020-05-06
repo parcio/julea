@@ -102,7 +102,7 @@ test_item_modification_time(JItem** item, gconstpointer data)
 }
 
 void
-test_item(void)
+test_item_item(void)
 {
 	g_test_add_func("/item/item/new_free", test_item_new_free);
 	g_test_add("/item/item/ref_unref", JItem*, NULL, test_item_fixture_setup, test_item_ref_unref, test_item_fixture_teardown);

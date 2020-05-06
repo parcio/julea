@@ -82,9 +82,9 @@ test_cache_release(void)
 }
 
 void
-test_cache(void)
+test_core_cache(void)
 {
-	g_test_add_func("/cache/new_free", test_cache_new_free);
-	g_test_add_func("/cache/get", test_cache_get);
-	g_test_add_func("/cache/release", test_cache_release);
+	g_test_add_func("/core/cache/new_free", test_cache_new_free);
+	g_test_add_func("/core/cache/get", test_cache_get);
+	g_test_add_func("/core/cache/release", test_cache_release);
 }

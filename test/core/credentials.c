@@ -80,9 +80,9 @@ test_credentials_serialize(void)
 }
 
 void
-test_credentials(void)
+test_core_credentials(void)
 {
-	g_test_add_func("/credentials/new_ref_unref", test_credentials_new_ref_unref);
-	g_test_add_func("/credentials/get", test_credentials_get);
-	g_test_add_func("/credentials/serialize", test_credentials_serialize);
+	g_test_add_func("/core/credentials/new_ref_unref", test_credentials_new_ref_unref);
+	g_test_add_func("/core/credentials/get", test_credentials_get);
+	g_test_add_func("/core/credentials/serialize", test_credentials_serialize);
 }

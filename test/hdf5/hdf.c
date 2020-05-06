@@ -148,7 +148,7 @@ test_hdf_read_write(void)
 #endif
 
 void
-test_hdf(void)
+test_hdf_hdf(void)
 {
 #ifdef HAVE_HDF5
 	g_test_add_func("/hdf5/read_write", test_hdf_read_write);

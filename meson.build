@@ -420,13 +420,18 @@ if hdf_dep.found()
 endif
 
 julea_test_srcs = files([
-	'test/background-operation.c',
-	'test/batch.c',
-	'test/cache.c',
-	'test/configuration.c',
-	'test/credentials.c',
+	'test/core/background-operation.c',
+	'test/core/batch.c',
+	'test/core/cache.c',
+	'test/core/configuration.c',
+	'test/core/credentials.c',
+	'test/core/distribution.c',
+	'test/core/list.c',
+	'test/core/list-iterator.c',
+	'test/core/memory-chunk.c',
+	'test/core/message.c',
+	'test/core/semantics.c',
 	'test/db/db.c',
-	'test/distribution.c',
 	'test/hdf5/hdf.c',
 	'test/item/collection.c',
 	'test/item/collection-iterator.c',
@@ -435,13 +440,8 @@ julea_test_srcs = files([
 	'test/item/uri.c',
 	'test/kv/kv.c',
 	'test/kv/kv-iterator.c',
-	'test/list.c',
-	'test/list-iterator.c',
-	'test/memory-chunk.c',
-	'test/message.c',
 	'test/object/distributed-object.c',
 	'test/object/object.c',
-	'test/semantics.c',
 	'test/test.c',
 ])
 

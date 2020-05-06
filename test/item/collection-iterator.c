@@ -94,7 +94,7 @@ test_collection_iterator_next_get(void)
 }
 
 void
-test_collection_iterator(void)
+test_item_collection_iterator(void)
 {
 	g_test_add_func("/item/collection-iterator/new_free", test_collection_iterator_new_free);
 	g_test_add_func("/item/collection-iterator/next_get", test_collection_iterator_next_get);

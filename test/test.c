@@ -32,17 +32,17 @@ main(int argc, char** argv)
 	g_test_init(&argc, &argv, NULL);
 
 	// Core
-	test_background_operation();
-	test_batch();
-	test_cache();
-	test_configuration();
-	test_credentials();
-	test_distribution();
-	test_list();
-	test_list_iterator();
-	test_memory_chunk();
-	test_message();
-	test_semantics();
+	test_core_background_operation();
+	test_core_batch();
+	test_core_cache();
+	test_core_configuration();
+	test_core_credentials();
+	test_core_distribution();
+	test_core_list();
+	test_core_list_iterator();
+	test_core_memory_chunk();
+	test_core_message();
+	test_core_semantics();
 
 	// Object client
 	test_object_distributed_object();
@@ -50,20 +50,20 @@ main(int argc, char** argv)
 
 	// KV client
 	test_kv_kv();
-	test_kv_iterator();
+	test_kv_kv_iterator();
 
 	// DB client
-	test_db();
+	test_db_db();
 
 	// Item client
-	test_collection();
-	test_collection_iterator();
-	test_item();
-	test_item_iterator();
-	test_uri();
+	test_item_collection();
+	test_item_collection_iterator();
+	test_item_item();
+	test_item_item_iterator();
+	test_item_uri();
 
 	// HDF5 client
-	test_hdf();
+	test_hdf_hdf();
 
 	ret = g_test_run();
 
