@@ -111,7 +111,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	if (module == NULL)
 	{
 		module_name = g_strdup_printf("%s-%s", type_str, name);
-		path = g_module_build_path(JULEA_BACKEND_PATH, name);
+		path = g_module_build_path(JULEA_BACKEND_PATH, module_name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
 
 		if (module == NULL)
