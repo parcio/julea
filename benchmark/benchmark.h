@@ -55,5 +55,6 @@ void benchmark_collection(void);
 void benchmark_item(void);
 
 void benchmark_hdf(void);
+void benchmark_hdf_dai(void);
 
 #endif
