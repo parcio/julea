@@ -80,6 +80,8 @@ jobs:
       - name: Set up MariaDB
         if: matrix.db == 'mysql' && matrix.db-server == 'mariadb'
         run: |
+          sudo apt --yes purge mysql-server mysql-server-5.7
+          sudo apt --yes --purge autoremove
           sudo apt --yes --no-install-recommends install mariadb-server
           sudo systemctl start mariadb.service
           sudo mariadb --execute="CREATE DATABASE juleadb;"
