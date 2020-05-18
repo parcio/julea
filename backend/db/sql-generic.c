@@ -141,8 +141,9 @@ thread_variables_get(gpointer backend_data, GError** error)
 					   "namespace VARCHAR(255),"
 					   "name VARCHAR(255),"
 					   "varname VARCHAR(255),"
-					   "vartype INTEGER,"
-					   "PRIMARY KEY (namespace, name, varname)"
+					   "vartype INTEGER"
+					   // FIXME figure out whether we should add an index instead
+					   //"PRIMARY KEY (namespace, name, varname)"
 					   ")",
 					   error)))
 		{
