@@ -369,7 +369,7 @@ j_sql_open(gpointer backend_data)
 
 	g_return_val_if_fail(bd->path != NULL, FALSE);
 
-	if (strncmp("memory", bd->path, 5))
+	if (g_strcmp0(bd->path, "memory") != 0)
 	{
 		dirname = g_path_get_dirname(bd->path);
 		g_mkdir_with_parents(dirname, 0700);
@@ -380,7 +380,7 @@ j_sql_open(gpointer backend_data)
 	}
 	else
 	{
-		if (G_UNLIKELY(sqlite3_open(":memory:", &backend_db) != SQLITE_OK))
+		if (G_UNLIKELY(sqlite3_open_v2("julea-db", &backend_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL) != SQLITE_OK))
 		{
 			goto _error;
 		}
