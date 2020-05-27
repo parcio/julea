@@ -46,7 +46,7 @@ j_db_schema_new(gchar const* namespace, gchar const* name, GError** error)
 
 	(void)error;
 
-	schema = g_slice_new(JDBSchema);
+	schema = j_helper_alloc_aligned(128, sizeof(JDBSchema));
 	schema->namespace = g_strdup(namespace);
 	schema->name = g_strdup(name);
 	schema->variables = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
@@ -107,7 +107,7 @@ j_db_schema_unref(JDBSchema* schema)
 			bson_destroy(&schema->bson_index);
 		}
 
-		g_slice_free(JDBSchema, schema);
+		g_free(schema);
 	}
 }
 

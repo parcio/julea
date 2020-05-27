@@ -4,27 +4,32 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-18.04
+    timeout-minutes: 30
     strategy:
       matrix:
         compiler: [gcc, clang]
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
       - name: Install dependencies
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev libfabric-dev libfabric1
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev libfabric-dev libfabric1
+          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+          sudo pip3 install meson
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
         run: |
-          ./waf configure --prefix="${GITHUB_WORKSPACE}/julea-install" --leveldb=/usr
+          meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
       - name: Build
         run: |
-          ./waf
+          ninja -C bld
       - name: Install
         run: |
-          ./waf install
+          ninja -C bld install

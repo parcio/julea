@@ -43,7 +43,7 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-	selector = g_slice_new(JDBSelector);
+	selector = j_helper_alloc_aligned(128, sizeof(JDBSelector));
 	selector->ref_count = 1;
 	selector->mode = mode;
 	selector->bson_count = 0;
@@ -92,7 +92,7 @@ j_db_selector_unref(JDBSelector* selector)
 	{
 		j_db_schema_unref(selector->schema);
 		bson_destroy(&selector->bson);
-		g_slice_free(JDBSelector, selector);
+		g_free(selector);
 	}
 }
 

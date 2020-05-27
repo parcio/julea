@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='8d8925c725491cf028ef6c1b93e431dcb200f439'
+	spack_commit='1bc104e00e255798602073488279c0bc18fd1f09'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -35,8 +35,6 @@ spack_clone ()
 
 		git fetch
 		git reset --hard "${spack_commit}"
-		# FIXME stay on the 1.12 branch until a release is made
-		sed -i "s/version('develop', branch='develop')/version('develop', branch='hdf5_1_12')/" var/spack/repos/builtin/packages/hdf5/package.py
 	)
 
 	return 0
@@ -78,13 +76,17 @@ spack_install ()
 
 spack_load ()
 {
+	local pkg_loaded
 	local spack_pkg
 
+	pkg_loaded='YES'
 	spack_pkg="$1"
 
 	test -n "${spack_pkg}" || return 1
 
-	spack load --dependencies "${spack_pkg}"
+	spack load --dependencies "${spack_pkg}" || pkg_loaded='NO'
+
+	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
 }
 
 spack_get_dependencies ()
@@ -97,7 +99,8 @@ spack_get_dependencies ()
 
 	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
 	then
-		# Required for Waf
+		# Required for building JULEA
+		dependencies="${dependencies} meson"
 		dependencies="${dependencies} pkgconfig"
 
 		# Mandatory dependencies
@@ -117,8 +120,9 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5@develop~mpi"
+		dependencies="${dependencies} hdf5~mpi@1.12:"
 		dependencies="${dependencies} mariadb-c-client"
+		dependencies="${dependencies} rocksdb"
 
 		# FIXME move to minimal
 		# FIXME set fabrics
@@ -135,23 +139,11 @@ spack_load_dependencies ()
 {
 	if test -z "${JULEA_SPACK_DEPENDENCIES_LOADED}"
 	then
-		local minimal_pkgs
-
-		minimal_pkgs="$(spack_get_dependencies minimal)"
-
 		if spack_init
 		then
 			for dependency in $(spack_get_dependencies full)
 			do
-				if test "${minimal_pkgs#*${dependency}}" != "${minimal_pkgs}"
-				then
-					spack_load "${dependency}"
-				else
-					if ! spack_load "${dependency}"
-					then
-						echo "Dependency ${dependency} cannot be loaded. If you have not installed it, you can ignore the error above." >&2
-					fi
-				fi
+				spack_load "${dependency}"
 			done
 
 			# FIXME this could be more clever by storing the actual dependencies loaded
@@ -159,6 +151,8 @@ spack_load_dependencies ()
 
 			export JULEA_SPACK_DEPENDENCIES_LOADED
 		fi
+	else
+		printf 'Dependencies have already been loaded, skipping.\n' >&2
 	fi
 }
 

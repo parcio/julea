@@ -85,11 +85,13 @@ j_db_fini(void)
 	if (j_db_backend != NULL)
 	{
 		j_backend_db_fini(j_db_backend);
+		j_db_backend = NULL;
 	}
 
-	if (j_db_module)
+	if (j_db_module != NULL)
 	{
 		g_module_close(j_db_module);
+		j_db_module = NULL;
 	}
 }
 

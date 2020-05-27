@@ -72,8 +72,8 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	GModule* module = NULL;
 	// Unused in release builds
 	gchar const* backend_path G_GNUC_UNUSED = NULL;
+	gchar* module_name = NULL;
 	gchar* path = NULL;
-	gchar* type_path = NULL;
 	gchar const* type_str = NULL;
 
 	switch (type)
@@ -94,21 +94,33 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 #ifdef JULEA_DEBUG
 	if ((backend_path = g_getenv("JULEA_BACKEND_PATH")) != NULL)
 	{
-		type_path = g_build_filename(backend_path, type_str, NULL);
-		path = g_module_build_path(type_path, name);
+		module_name = g_strdup_printf("%s-%s", type_str, name);
+		path = g_module_build_path(backend_path, module_name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(type_path);
+
+		if (module == NULL)
+		{
+			g_warning("Could not load module %s.", path);
+		}
+
 		g_free(path);
+		g_free(module_name);
 	}
 #endif
 
 	if (module == NULL)
 	{
-		type_path = g_build_filename(JULEA_BACKEND_PATH, type_str, NULL);
-		path = g_module_build_path(type_path, name);
+		module_name = g_strdup_printf("%s-%s", type_str, name);
+		path = g_module_build_path(JULEA_BACKEND_PATH, module_name);
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
-		g_free(type_path);
+
+		if (module == NULL)
+		{
+			g_warning("Could not load module %s.", path);
+		}
+
 		g_free(path);
+		g_free(module_name);
 	}
 
 	if (module == NULL)
@@ -267,7 +279,7 @@ j_backend_object_init(JBackend* backend, gchar const* path)
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->object.backend_init(path);
+		ret = backend->object.backend_init(path, &(backend->data));
 	}
 
 	return ret;
@@ -283,7 +295,7 @@ j_backend_object_fini(JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->object.backend_fini();
+		backend->object.backend_fini(backend->data);
 	}
 }
 
@@ -302,7 +314,7 @@ j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* 
 
 	{
 		J_TRACE("backend_create", "%s, %s, %p", namespace, path, (gpointer)data);
-		ret = backend->object.backend_create(namespace, path, data);
+		ret = backend->object.backend_create(backend->data, namespace, path, data);
 	}
 
 	return ret;
@@ -323,7 +335,7 @@ j_backend_object_open(JBackend* backend, gchar const* namespace, gchar const* pa
 
 	{
 		J_TRACE("backend_open", "%s, %s, %p", namespace, path, (gpointer)data);
-		ret = backend->object.backend_open(namespace, path, data);
+		ret = backend->object.backend_open(backend->data, namespace, path, data);
 	}
 
 	return ret;
@@ -342,7 +354,7 @@ j_backend_object_delete(JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_delete", "%p", data);
-		ret = backend->object.backend_delete(data);
+		ret = backend->object.backend_delete(backend->data, data);
 	}
 
 	return ret;
@@ -361,7 +373,7 @@ j_backend_object_close(JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_close", "%p", data);
-		ret = backend->object.backend_close(data);
+		ret = backend->object.backend_close(backend->data, data);
 	}
 
 	return ret;
@@ -382,7 +394,7 @@ j_backend_object_status(JBackend* backend, gpointer data, gint64* modification_t
 
 	{
 		J_TRACE("backend_status", "%p, %p, %p", data, (gpointer)modification_time, (gpointer)size);
-		ret = backend->object.backend_status(data, modification_time, size);
+		ret = backend->object.backend_status(backend->data, data, modification_time, size);
 	}
 
 	return ret;
@@ -401,7 +413,7 @@ j_backend_object_sync(JBackend* backend, gpointer data)
 
 	{
 		J_TRACE("backend_sync", "%p", data);
-		ret = backend->object.backend_sync(data);
+		ret = backend->object.backend_sync(backend->data, data);
 	}
 
 	return ret;
@@ -422,7 +434,7 @@ j_backend_object_read(JBackend* backend, gpointer data, gpointer buffer, guint64
 
 	{
 		J_TRACE("backend_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_read);
-		ret = backend->object.backend_read(data, buffer, length, offset, bytes_read);
+		ret = backend->object.backend_read(backend->data, data, buffer, length, offset, bytes_read);
 	}
 
 	return ret;
@@ -443,7 +455,7 @@ j_backend_object_write(JBackend* backend, gpointer data, gconstpointer buffer, g
 
 	{
 		J_TRACE("backend_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_written);
-		ret = backend->object.backend_write(data, buffer, length, offset, bytes_written);
+		ret = backend->object.backend_write(backend->data, data, buffer, length, offset, bytes_written);
 	}
 
 	return ret;
@@ -462,7 +474,7 @@ j_backend_kv_init(JBackend* backend, gchar const* path)
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->kv.backend_init(path);
+		ret = backend->kv.backend_init(path, &(backend->data));
 	}
 
 	return ret;
@@ -478,7 +490,7 @@ j_backend_kv_fini(JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->kv.backend_fini();
+		backend->kv.backend_fini(backend->data);
 	}
 }
 
@@ -497,7 +509,7 @@ j_backend_kv_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		J_TRACE("backend_batch_start", "%s, %p, %p", namespace, (gpointer)semantics, (gpointer)batch);
-		ret = backend->kv.backend_batch_start(namespace, semantics, batch);
+		ret = backend->kv.backend_batch_start(backend->data, namespace, semantics, batch);
 	}
 
 	return ret;
@@ -516,7 +528,7 @@ j_backend_kv_batch_execute(JBackend* backend, gpointer batch)
 
 	{
 		J_TRACE("backend_batch_execute", "%p", batch);
-		ret = backend->kv.backend_batch_execute(batch);
+		ret = backend->kv.backend_batch_execute(backend->data, batch);
 	}
 
 	return ret;
@@ -537,7 +549,7 @@ j_backend_kv_put(JBackend* backend, gpointer batch, gchar const* key, gconstpoin
 
 	{
 		J_TRACE("backend_put", "%p, %s, %p, %u", batch, key, (gconstpointer)value, value_len);
-		ret = backend->kv.backend_put(batch, key, value, value_len);
+		ret = backend->kv.backend_put(backend->data, batch, key, value, value_len);
 	}
 
 	return ret;
@@ -557,7 +569,7 @@ j_backend_kv_delete(JBackend* backend, gpointer batch, gchar const* key)
 
 	{
 		J_TRACE("backend_delete", "%p, %s", batch, key);
-		ret = backend->kv.backend_delete(batch, key);
+		ret = backend->kv.backend_delete(backend->data, batch, key);
 	}
 
 	return ret;
@@ -579,7 +591,7 @@ j_backend_kv_get(JBackend* backend, gpointer batch, gchar const* key, gpointer* 
 
 	{
 		J_TRACE("backend_get", "%p, %s, %p, %p", batch, key, (gpointer)value, (gpointer)value_len);
-		ret = backend->kv.backend_get(batch, key, value, value_len);
+		ret = backend->kv.backend_get(backend->data, batch, key, value, value_len);
 	}
 
 	return ret;
@@ -599,7 +611,7 @@ j_backend_kv_get_all(JBackend* backend, gchar const* namespace, gpointer* iterat
 
 	{
 		J_TRACE("backend_get_all", "%s, %p", namespace, (gpointer)iterator);
-		ret = backend->kv.backend_get_all(namespace, iterator);
+		ret = backend->kv.backend_get_all(backend->data, namespace, iterator);
 	}
 
 	return ret;
@@ -620,7 +632,7 @@ j_backend_kv_get_by_prefix(JBackend* backend, gchar const* namespace, gchar cons
 
 	{
 		J_TRACE("backend_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
-		ret = backend->kv.backend_get_by_prefix(namespace, prefix, iterator);
+		ret = backend->kv.backend_get_by_prefix(backend->data, namespace, prefix, iterator);
 	}
 
 	return ret;
@@ -641,7 +653,7 @@ j_backend_kv_iterate(JBackend* backend, gpointer iterator, gchar const** key, gc
 
 	{
 		J_TRACE("backend_iterate", "%p, %p, %p, %p", iterator, (gpointer)key, (gpointer)value, (gpointer)value_len);
-		ret = backend->kv.backend_iterate(iterator, key, value, value_len);
+		ret = backend->kv.backend_iterate(backend->data, iterator, key, value, value_len);
 	}
 
 	return ret;
@@ -660,7 +672,7 @@ j_backend_db_init(JBackend* backend, gchar const* path)
 
 	{
 		J_TRACE("backend_init", "%s", path);
-		ret = backend->db.backend_init(path);
+		ret = backend->db.backend_init(path, &(backend->data));
 	}
 
 	return ret;
@@ -676,7 +688,7 @@ j_backend_db_fini(JBackend* backend)
 
 	{
 		J_TRACE("backend_fini", NULL);
-		backend->db.backend_fini();
+		backend->db.backend_fini(backend->data);
 	}
 }
 
@@ -696,7 +708,7 @@ j_backend_db_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		J_TRACE("backend_batch_start", "%s, %p, %p, %p", namespace, (gpointer)semantics, (gpointer)batch, (gpointer)error);
-		ret = backend->db.backend_batch_start(namespace, semantics, batch, error);
+		ret = backend->db.backend_batch_start(backend->data, namespace, semantics, batch, error);
 	}
 
 	return ret;
@@ -716,7 +728,7 @@ j_backend_db_batch_execute(JBackend* backend, gpointer batch, GError** error)
 
 	{
 		J_TRACE("backend_batch_execute", "%p, %p", batch, (gpointer)error);
-		ret = backend->db.backend_batch_execute(batch, error);
+		ret = backend->db.backend_batch_execute(backend->data, batch, error);
 	}
 
 	return ret;
@@ -738,7 +750,7 @@ j_backend_db_schema_create(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		J_TRACE("backend_schema_create", "%p, %s, %p, %p", batch, name, (gconstpointer)schema, (gpointer)error);
-		ret = backend->db.backend_schema_create(batch, name, schema, error);
+		ret = backend->db.backend_schema_create(backend->data, batch, name, schema, error);
 	}
 
 	return ret;
@@ -759,7 +771,7 @@ j_backend_db_schema_get(JBackend* backend, gpointer batch, gchar const* name, bs
 
 	{
 		J_TRACE("backend_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
-		ret = backend->db.backend_schema_get(batch, name, schema, error);
+		ret = backend->db.backend_schema_get(backend->data, batch, name, schema, error);
 	}
 
 	return ret;
@@ -780,7 +792,7 @@ j_backend_db_schema_delete(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		J_TRACE("backend_schema_delete", "%p, %s, %p", batch, name, (gpointer)error);
-		ret = backend->db.backend_schema_delete(batch, name, error);
+		ret = backend->db.backend_schema_delete(backend->data, batch, name, error);
 	}
 
 	return ret;
@@ -803,7 +815,7 @@ j_backend_db_insert(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_insert", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)metadata, (gpointer)id, (gpointer)error);
-		ret = backend->db.backend_insert(batch, name, metadata, id, error);
+		ret = backend->db.backend_insert(backend->data, batch, name, metadata, id, error);
 	}
 
 	return ret;
@@ -826,7 +838,7 @@ j_backend_db_update(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_update", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gconstpointer)metadata, (gpointer)error);
-		ret = backend->db.backend_update(batch, name, selector, metadata, error);
+		ret = backend->db.backend_update(backend->data, batch, name, selector, metadata, error);
 	}
 
 	return ret;
@@ -847,7 +859,7 @@ j_backend_db_delete(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		J_TRACE("backend_delete", "%p, %s, %p, %p", batch, name, (gconstpointer)selector, (gpointer)error);
-		ret = backend->db.backend_delete(batch, name, selector, error);
+		ret = backend->db.backend_delete(backend->data, batch, name, selector, error);
 	}
 
 	return ret;
@@ -869,7 +881,7 @@ j_backend_db_query(JBackend* backend, gpointer batch, gchar const* name, bson_t 
 
 	{
 		J_TRACE("backend_query", "%p, %s, %p, %p, %p", batch, name, (gconstpointer)selector, (gpointer)iterator, (gpointer)error);
-		ret = backend->db.backend_query(batch, name, selector, iterator, error);
+		ret = backend->db.backend_query(backend->data, batch, name, selector, iterator, error);
 	}
 
 	return ret;
@@ -890,7 +902,7 @@ j_backend_db_iterate(JBackend* backend, gpointer iterator, bson_t* metadata, GEr
 
 	{
 		J_TRACE("backend_iterate", "%p, %p, %p", iterator, (gpointer)metadata, (gpointer)error);
-		ret = backend->db.backend_iterate(iterator, metadata, error);
+		ret = backend->db.backend_iterate(backend->data, iterator, metadata, error);
 	}
 
 	return ret;

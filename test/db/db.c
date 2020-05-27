@@ -534,7 +534,7 @@ test_db_all(void)
 }
 
 void
-test_db(void)
+test_db_db(void)
 {
 	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);

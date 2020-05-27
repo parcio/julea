@@ -50,23 +50,24 @@ typedef enum JBackendOperationParamType JBackendOperationParamType;
 
 struct JBackendOperationParam
 {
-	JBackendOperationParamType type;
-
 	// Only for temporary static storage
 	union
 	{
 		struct
 		{
-			gboolean bson_initialized;
 			bson_t bson;
 		};
+
 		struct
 		{
-			const gchar* error_quark_string;
 			GError error;
+
 			GError* error_ptr;
+
+			const gchar* error_quark_string;
 		};
 	};
+
 	union
 	{
 		gconstpointer ptr_const;
@@ -75,24 +76,33 @@ struct JBackendOperationParam
 
 	// Length of ptr data
 	gint len;
+
+	JBackendOperationParamType type;
+
+	// FIXME this belongs to the bson member but is here for alignment purposes
+	gboolean bson_initialized;
 };
 
 typedef struct JBackendOperationParam JBackendOperationParam;
 
+// FIXME this also needs to be allocated with alignment but appears to be large enough to the default allocator does the right thing
 struct JBackendOperation
 {
-	gboolean (*backend_func)(struct JBackend*, gpointer, struct JBackendOperation*);
-	guint in_param_count;
-	guint out_param_count;
 	// Input parameters
-	JBackendOperationParam in_param[20];
+	JBackendOperationParam in_param[5];
 	// Output parameters
 	// The last out parameter must be of type 'J_BACKEND_OPERATION_PARAM_TYPE_ERROR'
-	JBackendOperationParam out_param[20];
+	JBackendOperationParam out_param[5];
+
+	gboolean (*backend_func)(struct JBackend*, gpointer, struct JBackendOperation*);
+
 	//refcounting objects which are required for transmission - unref those after use
+	GDestroyNotify unref_funcs[5];
+	gpointer unref_values[5];
+
+	guint in_param_count;
+	guint out_param_count;
 	guint unref_func_count;
-	GDestroyNotify unref_funcs[20];
-	gpointer unref_values[20];
 };
 
 typedef struct JBackendOperation JBackendOperation;
@@ -116,9 +126,6 @@ gboolean j_backend_operation_from_message(JMessage* message, JBackendOperationPa
 gboolean j_backend_operation_from_message_static(JMessage* message, JBackendOperationParam* data, guint len);
 
 static const JBackendOperation j_backend_operation_db_schema_create = {
-	.backend_func = j_backend_operation_unwrap_db_schema_create,
-	.in_param_count = 3,
-	.out_param_count = 1,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -132,101 +139,101 @@ static const JBackendOperation j_backend_operation_db_schema_create = {
 			.type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR,
 		},
 	},
+	.backend_func = j_backend_operation_unwrap_db_schema_create,
+	.in_param_count = 3,
+	.out_param_count = 1,
 };
 
 static const JBackendOperation j_backend_operation_db_schema_get = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+	},
+	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_schema_get,
 	.in_param_count = 2,
 	.out_param_count = 2,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-	},
-	.out_param = {
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_schema_delete = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_schema_delete,
 	.in_param_count = 2,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_insert = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_insert,
 	.in_param_count = 3,
 	.out_param_count = 2,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_update = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_update,
 	.in_param_count = 4,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_delete = {
+	.in_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
+		{
+			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
+			.bson_initialized = TRUE,
+		},
+	},
+	.out_param = {
+		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
+	},
 	.backend_func = j_backend_operation_unwrap_db_delete,
 	.in_param_count = 3,
 	.out_param_count = 1,
-	.in_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
-		{
-			.type = J_BACKEND_OPERATION_PARAM_TYPE_BSON,
-			.bson_initialized = TRUE,
-		},
-	},
-	.out_param = {
-		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
-	},
 };
 
 static const JBackendOperation j_backend_operation_db_query = {
-	.backend_func = j_backend_operation_unwrap_db_query,
-	.in_param_count = 3,
-	.out_param_count = 2,
 	.in_param = {
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_STR },
@@ -242,6 +249,9 @@ static const JBackendOperation j_backend_operation_db_query = {
 		},
 		{ .type = J_BACKEND_OPERATION_PARAM_TYPE_ERROR },
 	},
+	.backend_func = j_backend_operation_unwrap_db_query,
+	.in_param_count = 3,
+	.out_param_count = 2,
 };
 
 G_END_DECLS

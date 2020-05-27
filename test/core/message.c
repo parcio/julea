@@ -41,6 +41,19 @@ test_message_new_ref_unref(void)
 }
 
 static void
+test_message_reply(void)
+{
+	g_autoptr(JMessage) message = NULL;
+	g_autoptr(JMessage) reply = NULL;
+
+	message = j_message_new(J_MESSAGE_NONE, 0);
+	g_assert_true(message != NULL);
+
+	reply = j_message_new_reply(message);
+	g_assert_true(reply != NULL);
+}
+
+static void
 test_message_header(void)
 {
 	g_autoptr(JMessage) message = NULL;
@@ -180,11 +193,12 @@ test_message_semantics(void)
 }
 
 void
-test_message(void)
+test_core_message(void)
 {
-	g_test_add_func("/message/new_ref_unref", test_message_new_ref_unref);
-	g_test_add_func("/message/header", test_message_header);
-	g_test_add_func("/message/append", test_message_append);
-	//g_test_add_func("/message/write_read", test_message_write_read);
-	g_test_add_func("/message/semantics", test_message_semantics);
+	g_test_add_func("/core/message/new_ref_unref", test_message_new_ref_unref);
+	g_test_add_func("/core/message/reply", test_message_reply);
+	g_test_add_func("/core/message/header", test_message_header);
+	g_test_add_func("/core/message/append", test_message_append);
+	//g_test_add_func("/core/message/write_read", test_message_write_read);
+	g_test_add_func("/core/message/semantics", test_message_semantics);
 }

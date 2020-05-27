@@ -39,10 +39,15 @@
 #define SQL_LAST_INSERT_ID_STRING " SELECT LAST_INSERT_ID() "
 #define SQL_QUOTE "`"
 
-static gchar* db_host = NULL;
-static gchar* db_database = NULL;
-static gchar* db_user = NULL;
-static gchar* db_password = NULL;
+struct JMySQLData
+{
+	gchar* db_host;
+	gchar* db_database;
+	gchar* db_user;
+	gchar* db_password;
+};
+
+typedef struct JMySQLData JMySQLData;
 
 struct mysql_stmt_wrapper
 {
@@ -58,6 +63,7 @@ struct mysql_stmt_wrapper
 	guint param_count_out;
 	guint param_count_total;
 };
+
 typedef struct mysql_stmt_wrapper mysql_stmt_wrapper;
 
 static gboolean
@@ -69,28 +75,31 @@ j_sql_finalize(MYSQL* backend_db, void* _stmt, GError** error)
 	gint status;
 	mysql_stmt_wrapper* wrapper = _stmt;
 
-	g_return_val_if_fail(backend_db != NULL, FALSE);
-	g_return_val_if_fail(_stmt != NULL, FALSE);
-
 	(void)backend_db;
 	(void)error;
+
+	g_return_val_if_fail(backend_db != NULL, FALSE);
+	g_return_val_if_fail(_stmt != NULL, FALSE);
 
 	if (wrapper->stmt && (status = mysql_stmt_close(wrapper->stmt)))
 	{
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FINALIZE, "sql finalize failed error was  (%d):'%s'", status, mysql_stmt_error(wrapper->stmt));
 		goto _error;
 	}
+
 	for (i = 0; i < wrapper->param_count_out; i++)
 	{
 		if (wrapper->bind_out[i].buffer_type == MYSQL_TYPE_STRING)
 		{
 			g_free(wrapper->bind_out[i].buffer);
 		}
+
 		if (wrapper->bind_out[i].buffer_type == MYSQL_TYPE_BLOB)
 		{
 			g_free(wrapper->bind_out[i].buffer);
 		}
 	}
+
 	g_free(wrapper->bind_in);
 	g_free(wrapper->bind_out);
 	g_free(wrapper->buffer);
@@ -98,7 +107,9 @@ j_sql_finalize(MYSQL* backend_db, void* _stmt, GError** error)
 	g_free(wrapper->is_error);
 	g_free(wrapper->length);
 	g_free(wrapper);
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -119,16 +130,19 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 
 	wrapper = *_wrapper = g_new0(mysql_stmt_wrapper, 1);
+
 	if (!(wrapper->stmt = mysql_stmt_init(backend_db)))
 	{
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> '%s'", sql, mysql_stmt_error(wrapper->stmt));
 		goto _error;
 	}
+
 	if ((status = mysql_stmt_prepare(wrapper->stmt, sql, strlen(sql))))
 	{
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> (%d):'%s'", sql, status, mysql_stmt_error(wrapper->stmt));
 		goto _error;
 	}
+
 	wrapper->param_count_in = types_in ? types_in->len : 0;
 	wrapper->param_count_out = types_out ? types_out->len : 0;
 	wrapper->param_count_total = wrapper->param_count_in > wrapper->param_count_out ? wrapper->param_count_in : wrapper->param_count_out;
@@ -139,11 +153,14 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 	wrapper->is_error = g_new0(my_bool, wrapper->param_count_total);
 	wrapper->length = g_new0(unsigned long, wrapper->param_count_total);
 	wrapper->active = FALSE;
+
 	for (i = 0; i < wrapper->param_count_in; i++)
 	{
 		wrapper->bind_in[i].is_null = &wrapper->is_null[i];
 		wrapper->bind_in[i].error = &wrapper->is_error[i];
+
 		type = g_array_index(types_in, JDBType, i);
+
 		switch (type)
 		{
 			case J_DB_TYPE_SINT32:
@@ -189,12 +206,15 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 				goto _error;
 		}
 	}
+
 	for (i = 0; i < wrapper->param_count_out; i++)
 	{
 		wrapper->bind_out[i].is_null = &wrapper->is_null[i];
 		wrapper->bind_out[i].error = &wrapper->is_error[i];
 		wrapper->bind_out[i].length = &wrapper->length[i];
+
 		type = g_array_index(types_out, JDBType, i);
+
 		switch (type)
 		{
 			case J_DB_TYPE_SINT32:
@@ -241,7 +261,9 @@ j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in,
 				goto _error;
 		}
 	}
+
 	return TRUE;
+
 _error:
 	j_sql_finalize(backend_db, wrapper, NULL);
 	return FALSE;
@@ -254,11 +276,12 @@ j_sql_bind_null(MYSQL* backend_db, void* _stmt, guint idx, GError** error)
 
 	mysql_stmt_wrapper* wrapper = _stmt;
 
+	(void)backend_db;
+	(void)error;
+
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 
-	(void)backend_db;
-	(void)error;
 	idx--; //sqlite index start with 1, mysql index start with 0
 	wrapper->is_null[idx] = 1;
 
@@ -272,12 +295,14 @@ j_sql_column(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeVal
 
 	mysql_stmt_wrapper* wrapper = _stmt;
 
+	(void)backend_db;
+
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	(void)backend_db;
 	memset(value, 0, sizeof(*value));
+
 	switch (type)
 	{
 		case J_DB_TYPE_SINT32:
@@ -310,7 +335,9 @@ j_sql_column(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeVal
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -322,11 +349,12 @@ j_sql_bind_value(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTyp
 
 	mysql_stmt_wrapper* wrapper = _stmt;
 
+	(void)backend_db;
+
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
-	(void)backend_db;
 	idx--; //sqlite index start with 1, mysql index start with 0
 	wrapper->is_null[idx] = 0;
 
@@ -352,14 +380,12 @@ j_sql_bind_value(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTyp
 			break;
 		case J_DB_TYPE_STRING:
 			wrapper->is_null[idx] = value->val_string == NULL;
-			// FIXME -Wdiscarded-qualifiers
 			wrapper->bind_in[idx].buffer = value->val_string;
 			wrapper->bind_in[idx].buffer_length = value->val_string != 0 ? strlen(value->val_string) : 0;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
 			break;
 		case J_DB_TYPE_BLOB:
 			wrapper->is_null[idx] = value->val_blob == NULL;
-			// FIXME -Wdiscarded-qualifiers
 			wrapper->bind_in[idx].buffer = value->val_blob;
 			wrapper->bind_in[idx].buffer_length = value->val_blob_length;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
@@ -369,10 +395,13 @@ j_sql_bind_value(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTyp
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
+
 static gboolean
 j_sql_reset(MYSQL* backend_db, void* _stmt, GError** error)
 {
@@ -380,10 +409,12 @@ j_sql_reset(MYSQL* backend_db, void* _stmt, GError** error)
 
 	mysql_stmt_wrapper* wrapper = _stmt;
 
-	g_return_val_if_fail(backend_db != NULL, FALSE);
-	g_return_val_if_fail(_stmt != NULL, FALSE);
 	(void)backend_db;
 	(void)error;
+
+	g_return_val_if_fail(backend_db != NULL, FALSE);
+	g_return_val_if_fail(_stmt != NULL, FALSE);
+
 	wrapper->active = FALSE;
 
 	return TRUE;
@@ -397,35 +428,43 @@ j_sql_exec(MYSQL* backend_db, const char* sql, GError** error)
 	mysql_stmt_wrapper* stmt;
 	gint status;
 
+	(void)backend_db;
+	(void)error;
+
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(sql != NULL, FALSE);
 
-	(void)backend_db;
-	(void)error;
 	if (G_UNLIKELY(!j_sql_prepare(backend_db, sql, &stmt, NULL, NULL, error)))
 	{
 		goto _error2;
 	}
+
 	if ((status = mysql_stmt_execute(stmt->stmt)))
 	{
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was  (%d):'%s'", status, mysql_stmt_error(stmt->stmt));
 		goto _error;
 	}
+
 	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, error)))
 	{
 		goto _error2;
 	}
+
 	return TRUE;
+
 _error:
 	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, NULL)))
 	{
 		goto _error2;
 	}
+
 	return FALSE;
+
 _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
+
 static gboolean
 j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 {
@@ -434,11 +473,13 @@ j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 	mysql_stmt_wrapper* wrapper = _stmt;
 	gint status;
 
+	(void)backend_db;
+	(void)error;
+
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 	g_return_val_if_fail(found != NULL, FALSE);
-	(void)backend_db;
-	(void)error;
+
 	if (!wrapper->active)
 	{
 		if (wrapper->param_count_in)
@@ -449,6 +490,7 @@ j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 				goto _error;
 			}
 		}
+
 		if (wrapper->param_count_out)
 		{
 			if ((status = mysql_stmt_bind_result(wrapper->stmt, wrapper->bind_out)))
@@ -457,11 +499,13 @@ j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 				goto _error;
 			}
 		}
+
 		if ((status = mysql_stmt_execute(wrapper->stmt)))
 		{
 			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was  (%d):'%s'", status, mysql_stmt_error(wrapper->stmt));
 			goto _error;
 		}
+
 		if (wrapper->param_count_out)
 		{
 			if ((status = mysql_stmt_store_result(wrapper->stmt)))
@@ -472,6 +516,7 @@ j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 		}
 		wrapper->active = TRUE;
 	}
+
 	if (wrapper->param_count_out)
 	{
 		*found = mysql_stmt_fetch(wrapper->stmt) == 0;
@@ -480,10 +525,13 @@ j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
 	{
 		*found = TRUE;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
+
 static gboolean
 j_sql_step_and_reset_check_done(MYSQL* backend_db, void* _stmt, GError** error)
 {
@@ -493,30 +541,38 @@ j_sql_step_and_reset_check_done(MYSQL* backend_db, void* _stmt, GError** error)
 
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
+
 	if (G_UNLIKELY(!j_sql_step(backend_db, _stmt, &sql_found, error)))
 	{
 		goto _error;
 	}
+
 	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, error)))
 	{
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, NULL)))
 	{
 		goto _error2;
 	}
+
 	return FALSE;
+
 _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
+
 static void*
-j_sql_open(void)
+j_sql_open(gpointer backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JMySQLData* bd = backend_data;
 	MYSQL* backend_db = NULL;
 
 	if (!(backend_db = mysql_init(NULL)))
@@ -525,10 +581,10 @@ j_sql_open(void)
 	}
 
 	if (!mysql_real_connect(backend_db,
-				db_host, //hostname
-				db_user, //username
-				db_password, //password
-				db_database, //database name
+				bd->db_host, //hostname
+				bd->db_user, //username
+				bd->db_password, //password
+				bd->db_database, //database name
 				3306, //port number
 				NULL, //unix socket
 				0 //client flags
@@ -538,11 +594,14 @@ j_sql_open(void)
 	}
 
 	return backend_db;
+
 _error:
 	fprintf(stderr, "%s\n", mysql_error(backend_db));
 	mysql_close(backend_db);
+
 	return NULL;
 }
+
 static void
 j_sql_close(MYSQL* backend_db)
 {
@@ -553,41 +612,51 @@ j_sql_close(MYSQL* backend_db)
 		mysql_close(backend_db);
 	}
 }
+
 static gboolean
 j_sql_start_transaction(MYSQL* backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)error;
+
 	mysql_query(backend_db, "START TRANSACTION");
+
 	return TRUE;
 }
+
 static gboolean
 j_sql_commit_transaction(MYSQL* backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)error;
+
 	mysql_query(backend_db, "COMMIT");
+
 	return TRUE;
 }
+
 static gboolean
 j_sql_abort_transaction(MYSQL* backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)error;
+
 	mysql_query(backend_db, "ROLLBACK");
+
 	return TRUE;
 }
 
 #include "sql-generic.c"
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JMySQLData* bd;
 	g_auto(GStrv) split = NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
@@ -599,15 +668,18 @@ backend_init(gchar const* path)
 		return FALSE;
 	}
 
-	db_host = g_strdup(split[0]);
-	db_database = g_strdup(split[1]);
-	db_user = g_strdup(split[2]);
-	db_password = g_strdup(split[3]);
+	bd = g_slice_new(JMySQLData);
+	bd->db_host = g_strdup(split[0]);
+	bd->db_database = g_strdup(split[1]);
+	bd->db_user = g_strdup(split[2]);
+	bd->db_password = g_strdup(split[3]);
 
-	g_return_val_if_fail(db_host != NULL, FALSE);
-	g_return_val_if_fail(db_database != NULL, FALSE);
-	g_return_val_if_fail(db_user != NULL, FALSE);
-	g_return_val_if_fail(db_password != NULL, FALSE);
+	g_return_val_if_fail(bd->db_host != NULL, FALSE);
+	g_return_val_if_fail(bd->db_database != NULL, FALSE);
+	g_return_val_if_fail(bd->db_user != NULL, FALSE);
+	g_return_val_if_fail(bd->db_password != NULL, FALSE);
+
+	*backend_data = bd;
 
 	sql_generic_init();
 
@@ -615,16 +687,19 @@ backend_init(gchar const* path)
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JMySQLData* bd = backend_data;
+
 	sql_generic_fini();
 
-	g_free(db_host);
-	g_free(db_database);
-	g_free(db_user);
-	g_free(db_password);
+	g_free(bd->db_host);
+	g_free(bd->db_database);
+	g_free(bd->db_user);
+	g_free(bd->db_password);
+	g_slice_free(JMySQLData, bd);
 }
 
 static JBackend mysql_backend = {

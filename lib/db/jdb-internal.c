@@ -82,11 +82,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		{
 			if (!batch)
 			{
-				ret = db_backend->db.backend_batch_start( //
-					      data->in_param[0].ptr, //
-					      semantics, //
-					      &batch, &error)
-				      && ret;
+				ret = j_backend_db_batch_start(db_backend, data->in_param[0].ptr, semantics, &batch, &error) && ret;
 			}
 
 			if (data->out_param[data->out_param_count - 1].ptr && error)
@@ -110,7 +106,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		{
 			if (!error)
 			{
-				ret = db_backend->db.backend_batch_execute(batch, NULL) && ret;
+				ret = j_backend_db_batch_execute(db_backend, batch, NULL) && ret;
 			}
 			else
 			{
@@ -423,7 +419,7 @@ j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBItera
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	helper = g_slice_new(JDBIteratorHelper);
+	helper = j_helper_alloc_aligned(128, sizeof(JDBIteratorHelper));
 	helper->initialized = FALSE;
 	memset(&helper->bson, 0, sizeof(bson_t));
 	j_db_iterator->iterator = helper;
@@ -506,7 +502,7 @@ _error:
 	j_bson_destroy(&helper->bson);
 
 error2:
-	g_slice_free(JDBIteratorHelper, helper);
+	g_free(helper);
 
 	return FALSE;
 }

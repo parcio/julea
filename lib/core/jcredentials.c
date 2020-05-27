@@ -57,8 +57,8 @@ j_credentials_new(void)
 	JCredentials* credentials;
 
 	credentials = g_slice_new(JCredentials);
-	credentials->user = geteuid();
-	credentials->group = getegid();
+	credentials->user = getuid();
+	credentials->group = getgid();
 	credentials->ref_count = 1;
 
 	return credentials;
@@ -121,7 +121,7 @@ j_credentials_get_group(JCredentials* credentials)
  *
  * \param credentials Credentials.
  *
- * \return A new BSON object. Should be freed with g_slice_free().
+ * \return A new BSON object. Should be freed with bson_destroy().
  **/
 bson_t*
 j_credentials_serialize(JCredentials* credentials)

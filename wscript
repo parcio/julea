@@ -153,6 +153,7 @@ def options(ctx):
 	#ctx.load('compiler_cxx')
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
+	ctx.add_option('--error', action='store_true', default=False, help='Enable -Werror')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
 	ctx.add_option('--coverage', action='store_true', default=False, help='Enable coverage analysis')
 
@@ -175,11 +176,13 @@ def configure(ctx):
 	ctx.load('gnu_dirs')
 	ctx.load('clang_compilation_database', tooldir='waf-extras')
 
-	ctx.env.JULEA_DEBUG = ctx.options.debug
-
 	check_and_add_flags(ctx, '-std=c11')
 	check_and_add_flags(ctx, '-fdiagnostics-color', False)
 	check_and_add_flags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
+
+	if ctx.options.error:
+		check_and_add_flags(ctx, '-Werror')
+
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
@@ -377,8 +380,7 @@ def configure(ctx):
 
 	if ctx.options.sanitize:
 		check_and_add_flags(ctx, '-fsanitize=address', False, ['cflags', 'ldflags'])
-		# FIXME enable ubsan?
-		# check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
+		check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
 
 	if ctx.options.coverage:
 		check_and_add_flags(ctx, '--coverage', True, ['cflags', 'ldflags'])
@@ -388,10 +390,13 @@ def configure(ctx):
 
 		check_and_add_flags(ctx, [
 			'-Waggregate-return',
-			'-Wcast-align',
+			'-Wcast-align=strict',
 			'-Wcast-qual',
+			#'-Wconversion',
 			'-Wdeclaration-after-statement',
+			'-Wdisabled-optimization',
 			'-Wdouble-promotion',
+			#'-Wduplicated-branches',
 			'-Wduplicated-cond',
 			'-Wfloat-equal',
 			'-Wformat=2',
@@ -407,9 +412,13 @@ def configure(ctx):
 			'-Wnested-externs',
 			'-Wnull-dereference',
 			'-Wold-style-definition',
+			'-Wpacked',
+			#'-Wpadded',
 			'-Wredundant-decls',
 			'-Wrestrict',
 			'-Wshadow',
+			#'-Wsign-conversion',
+			'-Wstack-protector',
 			'-Wstrict-prototypes',
 			'-Wswitch-default',
 			'-Wswitch-enum',
@@ -539,11 +548,11 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/object/{0}.c'.format(backend)],
-			target='backend/object/{0}'.format(backend),
+			target='backend/object-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/object'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	kv_backends = ['null']
@@ -572,7 +581,10 @@ def build(ctx):
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
 			# lmdb bug
-			cflags = ['-Wno-discarded-qualifiers']
+			if ctx.env.CC_NAME == 'clang':
+				cflags = ['-Wno-incompatible-pointer-types-discards-qualifiers']
+			else:
+				cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']
 		elif backend == 'sqlite':
@@ -580,12 +592,12 @@ def build(ctx):
 
 		ctx.shlib(
 			source=['backend/kv/{0}.c'.format(backend)],
-			target='backend/kv/{0}'.format(backend),
+			target='backend/kv-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/kv'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	db_backends = ['null', 'memory']
@@ -606,15 +618,20 @@ def build(ctx):
 			# MariaDB bug
 			# https://jira.mariadb.org/browse/CONC-381
 			cflags = ['-Wno-strict-prototypes']
+			# MySQL bug
+			if ctx.env.CC_NAME == 'clang':
+				cflags += ['-Wno-incompatible-pointer-types-discards-qualifiers']
+			else:
+				cflags += ['-Wno-discarded-qualifiers']
 
 		ctx.shlib(
 			source=['backend/db/{0}.c'.format(backend)],
-			target='backend/db/{0}'.format(backend),
+			target='backend/db-{0}'.format(backend),
 			use=use_julea_backend + ['lib/julea'] + use_extra,
 			includes=include_julea_core,
 			cflags=cflags,
 			rpath=get_rpath(ctx),
-			install_path='${LIBDIR}/julea/backend/db'
+			install_path='${LIBDIR}/julea/backend'
 		)
 
 	# Command line

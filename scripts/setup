@@ -47,6 +47,9 @@ get_config ()
 		fi
 	done
 
+	printf 'JULEA configuration could not be found.\n' >&2
+	printf 'If you do not want to use the default configuration, please set JULEA_CONFIG.\n' >&2
+
 	return 1
 }
 

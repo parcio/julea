@@ -137,7 +137,7 @@ test_uri_get(void)
 }
 
 void
-test_uri(void)
+test_item_uri(void)
 {
 	g_test_add_func("/item/uri/new_free", test_uri_new_free);
 	g_test_add_func("/item/uri/valid", test_uri_valid);

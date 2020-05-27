@@ -35,6 +35,7 @@ This can be used to run two servers on the same machine, as sharing backend path
 | mongodb | ✅     | ❌     | Host name and database name (`localhost:julea`) |
 | null    | ✅     | ✅     |  |
 | sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
+| rocksdb | ❌     | ✅     | Path to a directory (`/var/storage/rocksdb`) |
 
 ## Database Backends
 
@@ -43,4 +44,4 @@ This can be used to run two servers on the same machine, as sharing backend path
 | memory  | ✅     | ✅     |  |
 | mysql   | ✅     | ❌     | Host, database, user and password (`localhost:julea:root:pw`) |
 | null    | ✅     | ✅     |  |
-| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
+| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) or `memory` for an in-memory database |

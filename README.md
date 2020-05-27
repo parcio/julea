@@ -4,9 +4,9 @@
 [![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 [![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 
-JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
-To be able to rapidly prototype new approaches, it offers object and key-value backends that can either be client-side or server-side;
-backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.
+JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
+To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
+Support for popular storage technologies such as POSIX, LevelDB and MongoDB is already included.
 
 Additionally, JULEA allows dynamically adapting the I/O operations' semantics and can thus be adjusted to different use-cases.
 It runs completely in user space, which eases development and debugging.
@@ -24,7 +24,7 @@ $ cd julea
 ```
 
 JULEA has two mandatory dependencies (GLib and libbson) and several optional ones that enable additional functionality.
-The dependencies can either be installed using your operating system's package manager or with JULEA's `install-dependencies` script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
+The dependencies can either be installed using [your operating system's package manager](doc/dependencies.md#manual-installation) or with JULEA's `install-dependencies` script that installs them into the `dependencies` subdirectory using [Spack](https://spack.io/).
 By default, the script will install a useful subset of dependencies;
 if you want to install all of them, call it with the `full` argument.
 
@@ -32,19 +32,19 @@ if you want to install all of them, call it with the `full` argument.
 $ ./scripts/install-dependencies.sh
 ```
 
-After the dependencies have been installed, JULEA has to be configured and compiled using [Waf](https://waf.io/);
-the different configuration and build options can be shown with `./waf --help`.
-The `waf.sh` script is a wrapper around Waf that makes sure that the dependencies installed in the previous step are found.
+To allow the dependencies to be found, the JULEA environment has to be loaded.
+This also ensures that JULEA's binaries and libraries are found later.
 
 ```console
-$ ./waf.sh configure --debug --sanitize
-$ ./waf.sh build
+$ . scripts/environment.sh
 ```
 
-To allow JULEA's binaries and dependencies to be found, the environment has to be loaded.
+JULEA now has to be configured using [Meson](https://mesonbuild.com/) and compiled using [Ninja](https://ninja-build.org/);
+the different configuration and build options can be shown with `meson setup --help`.
 
 ```console
-$ . ./scripts/environment.sh
+$ meson setup --prefix="${HOME}/julea-install" -Db_sanitize=address,undefined bld
+$ ninja -C bld
 ```
 
 Finally, a JULEA configuration has to be created.
@@ -66,10 +66,12 @@ $ ./scripts/test.sh
 To get an idea about how to use JULEA from your own application, check out the `example` directory.
 
 ```console
-$ ./waf.sh install
 $ cd example
 $ make run
 ```
+
+The version is JULEA built using this guide is mainly meant for development and debugging.
+If you want to deploy a release version of JULEA, please refer to the documentation about [installation and usage](doc/installation-usage.md).
 
 ## Citing JULEA
 
