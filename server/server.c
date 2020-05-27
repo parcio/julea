@@ -57,6 +57,14 @@ static GMutex thread_cq_array_mutex;
 static JConfiguration* jd_configuration;
 
 
+JStatistics* jd_statistics = NULL;
+GMutex jd_statistics_mutex[1] = {0};
+
+JBackend* jd_object_backend = NULL;
+JBackend* jd_kv_backend = NULL;
+JBackend* jd_db_backend = NULL;
+
+
 static gboolean
 jd_daemon(void)
 {
