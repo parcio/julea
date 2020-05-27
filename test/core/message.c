@@ -109,7 +109,8 @@ test_message_append(void)
 	j_message_unref(message);
 }
 
-//TODO build fabric resources to give an endpoint to message read + write functions
+//TODO build fabric resources to give an endpoint to message read + write functions if test is to be used
+/**
 static
 void
 test_message_write_read (void)
@@ -166,6 +167,7 @@ test_message_write_read (void)
 	dummy_str = j_message_get_string(message_recv);
 	g_assert_cmpstr(dummy_str, ==, "42");
 }
+*/
 
 static void
 test_message_semantics(void)
