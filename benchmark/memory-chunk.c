@@ -29,30 +29,33 @@
 static void
 benchmark_memory_chunk_get(BenchmarkResult* result)
 {
-	guint const n = 50 * 1024 * 1024;
+	guint const n = 10000000;
 
 	JMemoryChunk* memory_chunk;
-	gdouble elapsed;
 
 	memory_chunk = j_memory_chunk_new(n);
 
 	j_benchmark_timer_start();
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		j_memory_chunk_get(memory_chunk, 1);
+		for (guint i = 0; i < n; i++)
+		{
+			j_memory_chunk_get(memory_chunk, 1);
+		}
+
+		j_memory_chunk_reset(memory_chunk);
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
+	j_benchmark_timer_stop();
 
 	j_memory_chunk_free(memory_chunk);
 
-	result->elapsed_time = elapsed;
 	result->operations = n;
 }
 
 void
 benchmark_memory_chunk(void)
 {
-	j_benchmark_run("/memory_chunk", benchmark_memory_chunk_get);
+	j_benchmark_run("/memory-chunk/get-reset", benchmark_memory_chunk_get);
 }

@@ -29,33 +29,33 @@
 static void
 _benchmark_message_new(BenchmarkResult* result, gboolean append)
 {
-	guint const n = 500000;
+	guint const n = 100000;
 	guint const m = 100;
 	guint64 const dummy = 42;
 	gsize const size = m * sizeof(guint64);
 
-	gdouble elapsed;
-
 	j_benchmark_timer_start();
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		g_autoptr(JMessage) message = NULL;
-
-		message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
-
-		if (append)
+		for (guint i = 0; i < n; i++)
 		{
-			for (guint j = 0; j < m; j++)
+			g_autoptr(JMessage) message = NULL;
+
+			message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
+
+			if (append)
 			{
-				j_message_append_8(message, &dummy);
+				for (guint j = 0; j < m; j++)
+				{
+					j_message_append_8(message, &dummy);
+				}
 			}
 		}
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
+	j_benchmark_timer_stop();
 
-	result->elapsed_time = elapsed;
 	result->operations = n;
 }
 
@@ -74,30 +74,30 @@ benchmark_message_new_append(BenchmarkResult* result)
 static void
 _benchmark_message_add_operation(BenchmarkResult* result, gboolean large)
 {
-	guint const n = (large) ? 100 : 50000;
-	guint const m = (large) ? 50000 : 100;
+	guint const n = (large) ? 100 : 10000;
+	guint const m = (large) ? 10000 : 100;
 	guint64 const dummy = 42;
-
-	gdouble elapsed;
 
 	j_benchmark_timer_start();
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		g_autoptr(JMessage) message = NULL;
-
-		message = j_message_new(J_MESSAGE_NONE, 0);
-
-		for (guint j = 0; j < m; j++)
+		for (guint i = 0; i < n; i++)
 		{
-			j_message_add_operation(message, sizeof(guint64));
-			j_message_append_8(message, &dummy);
+			g_autoptr(JMessage) message = NULL;
+
+			message = j_message_new(J_MESSAGE_NONE, 0);
+
+			for (guint j = 0; j < m; j++)
+			{
+				j_message_add_operation(message, sizeof(guint64));
+				j_message_append_8(message, &dummy);
+			}
 		}
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
+	j_benchmark_timer_stop();
 
-	result->elapsed_time = elapsed;
 	result->operations = n;
 }
 

@@ -20,12 +20,15 @@
 
 #include <glib.h>
 
+#include <locale.h>
 #include <string.h>
 
 #include <julea.h>
 
 #include "benchmark.h"
 
+static gint opt_duration = 1;
+static gboolean opt_list = FALSE;
 static gchar* opt_machine_separator = NULL;
 static gboolean opt_machine_readable = FALSE;
 static gchar* opt_path = NULL;
@@ -35,6 +38,9 @@ static gchar* opt_template = NULL;
 static JSemantics* j_benchmark_semantics = NULL;
 
 static GTimer* j_benchmark_timer = NULL;
+static gboolean j_benchmark_timer_started = FALSE;
+
+static guint j_benchmark_iterations = 0;
 
 JSemantics*
 j_benchmark_get_semantics(void)
@@ -45,22 +51,44 @@ j_benchmark_get_semantics(void)
 void
 j_benchmark_timer_start(void)
 {
-	g_timer_start(j_benchmark_timer);
+	if (!j_benchmark_timer_started)
+	{
+		g_timer_start(j_benchmark_timer);
+		j_benchmark_timer_started = TRUE;
+	}
+	else
+	{
+		g_timer_continue(j_benchmark_timer);
+	}
 }
 
-gdouble
-j_benchmark_timer_elapsed(void)
+void
+j_benchmark_timer_stop(void)
 {
-	return g_timer_elapsed(j_benchmark_timer, NULL);
+	g_timer_stop(j_benchmark_timer);
+}
+
+gboolean
+j_benchmark_iterate(void)
+{
+	if (j_benchmark_iterations == 0 || g_timer_elapsed(j_benchmark_timer, NULL) < opt_duration)
+	{
+		j_benchmark_iterations++;
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 void
 j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 {
 	BenchmarkResult result;
-	GTimer* func_timer;
+	g_autoptr(GTimer) func_timer = NULL;
 	g_autofree gchar* left = NULL;
-	gdouble elapsed;
+	gdouble elapsed_time;
+	gdouble elapsed_total;
 
 	g_return_if_fail(name != NULL);
 	g_return_if_fail(benchmark_func != NULL);
@@ -77,8 +105,13 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 		}
 	}
 
+	if (opt_list)
+	{
+		g_print("%s\n", name);
+		return;
+	}
+
 	func_timer = g_timer_new();
-	result.elapsed_time = 0.0;
 	result.operations = 0;
 	result.bytes = 0;
 
@@ -92,36 +125,47 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 		g_print("%s", name);
 	}
 
+	j_benchmark_timer_started = FALSE;
+	j_benchmark_iterations = 0;
+
 	g_timer_start(func_timer);
 	(*benchmark_func)(&result);
-	elapsed = g_timer_elapsed(func_timer, NULL);
+	elapsed_total = g_timer_elapsed(func_timer, NULL);
+
+	elapsed_time = g_timer_elapsed(j_benchmark_timer, NULL);
+
+	if (j_benchmark_iterations > 1)
+	{
+		result.operations *= j_benchmark_iterations;
+		result.bytes *= j_benchmark_iterations;
+	}
 
 	if (!opt_machine_readable)
 	{
-		g_print("%.3f seconds", result.elapsed_time);
+		g_print("%.3f seconds", elapsed_time);
 
 		if (result.operations != 0)
 		{
-			g_print(" (%.0f/s)", (gdouble)result.operations / result.elapsed_time);
+			g_print(" (%.0f/s)", (gdouble)result.operations / elapsed_time);
 		}
 
 		if (result.bytes != 0)
 		{
 			g_autofree gchar* size = NULL;
 
-			size = g_format_size((gdouble)result.bytes / result.elapsed_time);
+			size = g_format_size((gdouble)result.bytes / elapsed_time);
 			g_print(" (%s/s)", size);
 		}
 
-		g_print(" [%.3f seconds]\n", elapsed);
+		g_print(" [%.3f seconds]\n", elapsed_total);
 	}
 	else
 	{
-		g_print("%s%f", opt_machine_separator, result.elapsed_time);
+		g_print("%s%f", opt_machine_separator, elapsed_time);
 
 		if (result.operations != 0)
 		{
-			g_print("%s%f", opt_machine_separator, (gdouble)result.operations / result.elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)result.operations / elapsed_time);
 		}
 		else
 		{
@@ -130,17 +174,20 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 
 		if (result.bytes != 0)
 		{
-			g_print("%s%f", opt_machine_separator, (gdouble)result.bytes / result.elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)result.bytes / elapsed_time);
 		}
 		else
 		{
 			g_print("%s-", opt_machine_separator);
 		}
 
-		g_print("%s%f\n", opt_machine_separator, elapsed);
+		g_print("%s%f\n", opt_machine_separator, elapsed_total);
 	}
 
-	g_timer_destroy(func_timer);
+	if (j_benchmark_iterations > 1000 * (guint)opt_duration)
+	{
+		g_warning("Benchmark %s performed %d iterations, consider adjusting iteration workload.", name, j_benchmark_iterations);
+	}
 }
 
 int
@@ -150,6 +197,8 @@ main(int argc, char** argv)
 	GOptionContext* context;
 
 	GOptionEntry entries[] = {
+		{ "duration", 'd', 0, G_OPTION_ARG_INT, &opt_duration, "Approximate duration in seconds per benchmark", "1" },
+		{ "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available benchmarks", NULL },
 		{ "machine-readable", 'm', 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
 		{ "machine-separator", 0, 0, G_OPTION_ARG_STRING, &opt_machine_separator, "Separator for machine-readable output", "\\t" },
 		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", NULL },
@@ -157,6 +206,9 @@ main(int argc, char** argv)
 		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);

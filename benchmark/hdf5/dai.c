@@ -136,193 +136,209 @@ read_attribute(hid_t group, gchar const* name)
 static void
 benchmark_hdf_dai_native(BenchmarkResult* result)
 {
-	guint const n = 250;
+	guint const n = 25;
 
-	gdouble elapsed;
+	guint iter = 0;
 
 	set_semantics();
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		hid_t file;
-		hid_t group;
-		g_autofree gchar* name = NULL;
-
-		name = g_strdup_printf("benchmark-dai-native-%u.h5", i);
-		file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
-		group = H5Gcreate2(file, "benchmark-dai-native", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-		for (guint j = 0; j < n; j++)
+		for (guint i = 0; i < n; i++)
 		{
-			g_autofree gchar* aname = NULL;
+			hid_t file;
+			hid_t group;
+			g_autofree gchar* name = NULL;
 
-			aname = g_strdup_printf("benchmark-dai-native-%u", j);
-			write_attribute(group, aname);
+			name = g_strdup_printf("benchmark-dai-native-%u.h5", i + (iter * n));
+			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
+			group = H5Gcreate2(file, "benchmark-dai-native", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+			for (guint j = 0; j < n * 10; j++)
+			{
+				g_autofree gchar* aname = NULL;
+
+				aname = g_strdup_printf("benchmark-dai-native-%u", j);
+				write_attribute(group, aname);
+			}
+
+			H5Gclose(group);
+			H5Fclose(file);
 		}
 
-		H5Gclose(group);
-		H5Fclose(file);
-	}
+		j_benchmark_timer_start();
 
-	j_benchmark_timer_start();
-
-	for (guint i = 0; i < n; i++)
-	{
-		hid_t file;
-		hid_t group;
-		g_autofree gchar* name = NULL;
-
-		name = g_strdup_printf("benchmark-dai-native-%u.h5", i);
-		file = H5Fopen(name, H5F_ACC_RDWR, j_hdf5_get_fapl());
-		group = H5Gopen2(file, "benchmark-dai-native", H5P_DEFAULT);
-
-		for (guint j = 0; j < n; j++)
+		for (guint i = 0; i < n; i++)
 		{
-			g_autofree gchar* aname = NULL;
+			hid_t file;
+			hid_t group;
+			g_autofree gchar* name = NULL;
 
-			aname = g_strdup_printf("benchmark-dai-native-%u", j);
-			read_attribute(group, aname);
+			name = g_strdup_printf("benchmark-dai-native-%u.h5", i + (iter * n));
+			file = H5Fopen(name, H5F_ACC_RDWR, j_hdf5_get_fapl());
+			group = H5Gopen2(file, "benchmark-dai-native", H5P_DEFAULT);
+
+			for (guint j = 0; j < n * 10; j++)
+			{
+				g_autofree gchar* aname = NULL;
+
+				aname = g_strdup_printf("benchmark-dai-native-%u", j);
+				read_attribute(group, aname);
+			}
+
+			H5Gclose(group);
+			H5Fclose(file);
 		}
 
-		H5Gclose(group);
-		H5Fclose(file);
+		j_benchmark_timer_stop();
+
+		iter++;
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
-	result->elapsed_time = elapsed;
-	result->operations = n * n;
+	result->operations = n * n * 10;
 }
 
 static void
 benchmark_hdf_dai_get(BenchmarkResult* result)
 {
-	guint const n = 250;
+	guint const n = 25;
 
 	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JKV) object = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
-	gdouble elapsed;
+	guint iter = 0;
 
 	set_semantics();
-
-	for (guint i = 0; i < n; i++)
-	{
-		hid_t file;
-		hid_t group;
-		g_autofree gchar* name = NULL;
-
-		name = g_strdup_printf("benchmark-dai-get-%u.h5", i);
-		file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
-		group = H5Gcreate2(file, "benchmark-dai-get", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-		for (guint j = 0; j < n; j++)
-		{
-			g_autofree gchar* aname = NULL;
-
-			aname = g_strdup_printf("benchmark-dai-get-%u", j);
-			write_attribute(group, aname);
-		}
-
-		H5Gclose(group);
-		H5Fclose(file);
-	}
-
-	j_benchmark_timer_start();
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		g_autofree gchar* name = NULL;
-
-		name = g_strdup_printf("benchmark-dai-get-%u.h5/benchmark-dai-get", i);
-
-		for (guint j = 0; j < n; j++)
+		for (guint i = 0; i < n; i++)
 		{
-			g_autoptr(JKV) kv = NULL;
-			g_autofree gchar* aname = NULL;
-			g_autofree gchar* value = NULL;
-			guint32 len = 0;
-			gpointer adata = NULL;
-			gsize alen = 0;
+			hid_t file;
+			hid_t group;
+			g_autofree gchar* name = NULL;
 
-			aname = g_strdup_printf("%s/benchmark-dai-get-%u", name, j);
-			kv = j_kv_new("hdf5", aname);
-			j_kv_get(kv, (gpointer)&value, &len, batch);
+			name = g_strdup_printf("benchmark-dai-get-%u.h5", i + (iter * n));
+			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
+			group = H5Gcreate2(file, "benchmark-dai-get", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-			if (!j_batch_execute(batch))
+			for (guint j = 0; j < n * 10; j++)
 			{
-				g_assert_not_reached();
+				g_autofree gchar* aname = NULL;
+
+				aname = g_strdup_printf("benchmark-dai-get-%u", j);
+				write_attribute(group, aname);
 			}
 
-			deserialize_attribute_data(value, len, &adata, &alen);
+			H5Gclose(group);
+			H5Fclose(file);
 		}
+
+		j_benchmark_timer_start();
+
+		for (guint i = 0; i < n; i++)
+		{
+			g_autofree gchar* name = NULL;
+
+			name = g_strdup_printf("benchmark-dai-get-%u.h5/benchmark-dai-get", i + (iter * n));
+
+			for (guint j = 0; j < n * 10; j++)
+			{
+				g_autoptr(JKV) kv = NULL;
+				g_autofree gchar* aname = NULL;
+				g_autofree gchar* value = NULL;
+				guint32 len = 0;
+				gpointer adata = NULL;
+				gsize alen = 0;
+
+				aname = g_strdup_printf("%s/benchmark-dai-get-%u", name, j);
+				kv = j_kv_new("hdf5", aname);
+				j_kv_get(kv, (gpointer)&value, &len, batch);
+
+				if (!j_batch_execute(batch))
+				{
+					g_assert_not_reached();
+				}
+
+				deserialize_attribute_data(value, len, &adata, &alen);
+			}
+		}
+
+		j_benchmark_timer_stop();
+
+		iter++;
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
-	result->elapsed_time = elapsed;
-	result->operations = n * n;
+	result->operations = n * n * 10;
 }
 
 static void
 benchmark_hdf_dai_iterator(BenchmarkResult* result)
 {
-	guint const n = 250;
+	guint const n = 25;
 
-	g_autoptr(JKVIterator) kv_iterator = NULL;
-	gdouble elapsed;
+	guint iter = 0;
+	guint attrs = 0;
 
 	set_semantics();
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate())
 	{
-		hid_t file;
-		hid_t group;
-		g_autofree gchar* name = NULL;
+		g_autoptr(JKVIterator) kv_iterator = NULL;
 
-		name = g_strdup_printf("benchmark-dai-iterator-%u.h5", i);
-		file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
-		group = H5Gcreate2(file, "benchmark-dai-iterator", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-		for (guint j = 0; j < n; j++)
+		for (guint i = 0; i < n; i++)
 		{
-			g_autofree gchar* aname = NULL;
+			hid_t file;
+			hid_t group;
+			g_autofree gchar* name = NULL;
 
-			aname = g_strdup_printf("benchmark-dai-iterator-%u", j);
-			write_attribute(group, aname);
+			name = g_strdup_printf("benchmark-dai-iterator-%u.h5", i + (iter * n));
+			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
+			group = H5Gcreate2(file, "benchmark-dai-iterator", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+			for (guint j = 0; j < n * 10; j++)
+			{
+				g_autofree gchar* aname = NULL;
+
+				aname = g_strdup_printf("benchmark-dai-iterator-%u", j);
+				write_attribute(group, aname);
+			}
+
+			H5Gclose(group);
+			H5Fclose(file);
 		}
 
-		H5Gclose(group);
-		H5Fclose(file);
-	}
+		j_benchmark_timer_start();
 
-	j_benchmark_timer_start();
+		kv_iterator = j_kv_iterator_new("hdf5", "benchmark-dai-iterator-");
 
-	kv_iterator = j_kv_iterator_new("hdf5", "benchmark-dai-iterator-");
-
-	while (j_kv_iterator_next(kv_iterator))
-	{
-		gchar const* key;
-		gconstpointer value;
-		guint32 len;
-		gpointer adata = NULL;
-		gsize alen = 0;
-
-		key = j_kv_iterator_get(kv_iterator, &value, &len);
-
-		if (!g_str_has_suffix(key, "_ts"))
+		while (j_kv_iterator_next(kv_iterator))
 		{
-			deserialize_attribute_data(value, len, &adata, &alen);
+			gchar const* key;
+			gconstpointer value;
+			guint32 len;
+			gpointer adata = NULL;
+			gsize alen = 0;
+
+			key = j_kv_iterator_get(kv_iterator, &value, &len);
+
+			if (!g_str_has_suffix(key, "_ts"))
+			{
+				if (deserialize_attribute_data(value, len, &adata, &alen))
+				{
+					attrs++;
+				}
+			}
 		}
+
+		j_benchmark_timer_stop();
+
+		iter++;
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
-
-	result->elapsed_time = elapsed;
-	result->operations = n * n;
+	result->operations = attrs / iter;
 }
 
 #endif

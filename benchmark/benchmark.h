@@ -23,7 +23,6 @@
 
 struct BenchmarkResult
 {
-	gdouble elapsed_time;
 	guint64 operations;
 	guint64 bytes;
 };
@@ -37,7 +36,9 @@ typedef void (*BenchmarkFunc)(BenchmarkResult*);
 JSemantics* j_benchmark_get_semantics(void);
 
 void j_benchmark_timer_start(void);
-gdouble j_benchmark_timer_elapsed(void);
+void j_benchmark_timer_stop(void);
+
+gboolean j_benchmark_iterate(void);
 
 void j_benchmark_run(gchar const*, BenchmarkFunc);
 
