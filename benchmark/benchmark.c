@@ -254,6 +254,9 @@ main(int argc, char** argv)
 	benchmark_distributed_object();
 	benchmark_object();
 
+	// DB client
+	benchmark_db_schema();
+
 	// Item client
 	benchmark_collection();
 	benchmark_item();

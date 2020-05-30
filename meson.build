@@ -454,6 +454,7 @@ julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',
 	'benchmark/cache.c',
+	'benchmark/db/schema.c',
 	'benchmark/hdf5/dai.c',
 	'benchmark/hdf5/hdf.c',
 	'benchmark/item/collection.c',
@@ -466,7 +467,7 @@ julea_benchmark_srcs = files([
 ])
 
 executable('julea-benchmark', julea_benchmark_srcs,
-	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['item']] + hdf_deps,
+	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('benchmark')],
 )
 

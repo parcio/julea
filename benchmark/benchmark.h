@@ -52,6 +52,8 @@ void benchmark_kv(void);
 void benchmark_distributed_object(void);
 void benchmark_object(void);
 
+void benchmark_db_schema(void);
+
 void benchmark_collection(void);
 void benchmark_item(void);
 
