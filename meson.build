@@ -71,6 +71,11 @@ if get_option('debug')
 	add_project_arguments(args, language: 'c')
 endif
 
+# FIXME Some versions of libbson trigger this warning
+if meson.get_compiler('c').get_id() == 'clang'
+	add_project_arguments('-Wno-newline-eof', language: 'c')
+endif
+
 # FIXME rpath is not set for dependencies
 # FIXME Also check for pkg-config files in /usr (worked around in environment.sh)
 # FIXME Allow specifying dependency prefixes?
