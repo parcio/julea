@@ -82,7 +82,7 @@ jobs:
         run: |
           sudo systemctl start mysql.service
           mysql --user=root --password=root --execute="CREATE DATABASE juleadb;"
-          mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED BY 'aeluj';"
+          mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED WITH mysql_native_password BY 'aeluj';"
           mysql --user=root --password=root --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
       - name: Set up MariaDB
         if: matrix.db == 'mysql' && matrix.db-server == 'mariadb'
