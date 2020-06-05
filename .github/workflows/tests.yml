@@ -97,6 +97,7 @@ jobs:
           fi
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
+          sudo rm --recursive --force /var/lib/mysql
           sudo apt --yes --no-install-recommends install mariadb-server
           sudo systemctl start mariadb.service
           sudo mariadb --execute="CREATE DATABASE juleadb;"
