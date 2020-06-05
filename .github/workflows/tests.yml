@@ -3,10 +3,11 @@ on: [push, pull_request]
 jobs:
   tests:
     name: Tests
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
       matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
         name:
           # Default
@@ -66,10 +67,16 @@ jobs:
         run: |
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
+          sudo aa-remove-unknown
           sudo apt update || true
           sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev
-          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
-          sudo pip3 install meson
+          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          then
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+            sudo pip3 install meson
+          else
+            sudo apt --yes --no-install-recommends install meson ninja-build
+          fi
       - name: Set up MySQL
         if: matrix.db == 'mysql' && matrix.db-server == 'mysql'
         run: |
@@ -80,8 +87,10 @@ jobs:
       - name: Set up MariaDB
         if: matrix.db == 'mysql' && matrix.db-server == 'mariadb'
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
+        # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
           sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
+          sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt --yes --no-install-recommends install mariadb-server
@@ -92,13 +101,16 @@ jobs:
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
-        # FIXME GCC's sanitizer seems to produce false positives regarding a stack overflow in the db client. Re-enable with newer GCC/Ubuntu.
+        # FIXME Ubuntu 18.04's GCC sanitizer seems to produce false positives regarding a stack overflow in the db client.
         run: |
           if test "${{ matrix.compiler }}" = 'clang'
           then
             meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
-          else
+          elif test "${{ matrix.os }}" = 'ubuntu-18.04'
+          then
             meson setup bld
+          else
+            meson setup -Db_sanitize=address,undefined bld
           fi
       - name: Build
         run: |
