@@ -134,7 +134,7 @@ read_attribute(hid_t group, gchar const* name)
 }
 
 static void
-benchmark_hdf_dai_native(BenchmarkResult* result)
+benchmark_hdf_dai_native(BenchmarkRun* run)
 {
 	guint const n = 25;
 
@@ -142,7 +142,7 @@ benchmark_hdf_dai_native(BenchmarkResult* result)
 
 	set_semantics();
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -166,7 +166,7 @@ benchmark_hdf_dai_native(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -190,16 +190,16 @@ benchmark_hdf_dai_native(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
-	result->operations = n * n * 10;
+	run->operations = n * n * 10;
 }
 
 static void
-benchmark_hdf_dai_get(BenchmarkResult* result)
+benchmark_hdf_dai_get(BenchmarkRun* run)
 {
 	guint const n = 25;
 
@@ -212,7 +212,7 @@ benchmark_hdf_dai_get(BenchmarkResult* result)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -236,7 +236,7 @@ benchmark_hdf_dai_get(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -266,16 +266,16 @@ benchmark_hdf_dai_get(BenchmarkResult* result)
 			}
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
-	result->operations = n * n * 10;
+	run->operations = n * n * 10;
 }
 
 static void
-benchmark_hdf_dai_iterator(BenchmarkResult* result)
+benchmark_hdf_dai_iterator(BenchmarkRun* run)
 {
 	guint const n = 25;
 
@@ -284,7 +284,7 @@ benchmark_hdf_dai_iterator(BenchmarkResult* result)
 
 	set_semantics();
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		g_autoptr(JKVIterator) kv_iterator = NULL;
 
@@ -310,7 +310,7 @@ benchmark_hdf_dai_iterator(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		kv_iterator = j_kv_iterator_new("hdf5", "benchmark-dai-iterator-");
 
@@ -333,12 +333,12 @@ benchmark_hdf_dai_iterator(BenchmarkResult* result)
 			}
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
-	result->operations = attrs / iter;
+	run->operations = attrs / iter;
 }
 
 #endif
@@ -347,8 +347,8 @@ void
 benchmark_hdf_dai(void)
 {
 #ifdef HAVE_HDF5
-	j_benchmark_run("/hdf5/dai/native", benchmark_hdf_dai_native);
-	j_benchmark_run("/hdf5/dai/get", benchmark_hdf_dai_get);
-	j_benchmark_run("/hdf5/dai/iterator", benchmark_hdf_dai_iterator);
+	j_benchmark_add("/hdf5/dai/native", benchmark_hdf_dai_native);
+	j_benchmark_add("/hdf5/dai/get", benchmark_hdf_dai_get);
+	j_benchmark_add("/hdf5/dai/iterator", benchmark_hdf_dai_iterator);
 #endif
 }

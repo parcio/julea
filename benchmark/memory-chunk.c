@@ -27,7 +27,7 @@
 #include "benchmark.h"
 
 static void
-benchmark_memory_chunk_get(BenchmarkResult* result)
+benchmark_memory_chunk_get(BenchmarkRun* run)
 {
 	guint const n = 10000000;
 
@@ -35,9 +35,9 @@ benchmark_memory_chunk_get(BenchmarkResult* result)
 
 	memory_chunk = j_memory_chunk_new(n);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -47,15 +47,15 @@ benchmark_memory_chunk_get(BenchmarkResult* result)
 		j_memory_chunk_reset(memory_chunk);
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
 	j_memory_chunk_free(memory_chunk);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 void
 benchmark_memory_chunk(void)
 {
-	j_benchmark_run("/memory-chunk/get-reset", benchmark_memory_chunk_get);
+	j_benchmark_add("/memory-chunk/get-reset", benchmark_memory_chunk_get);
 }

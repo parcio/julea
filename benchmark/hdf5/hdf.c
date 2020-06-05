@@ -208,7 +208,7 @@ read_dataset(hid_t dataset, guint dimensions)
 }
 
 static void
-benchmark_hdf_attribute_write(BenchmarkResult* result)
+benchmark_hdf_attribute_write(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -221,9 +221,9 @@ benchmark_hdf_attribute_write(BenchmarkResult* result)
 	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 	group = create_group(file, "benchmark-attribute-write");
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -239,14 +239,14 @@ benchmark_hdf_attribute_write(BenchmarkResult* result)
 	H5Gclose(group);
 	H5Fclose(file);
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n;
-	result->bytes = n * 1024 * sizeof(int);
+	run->operations = n;
+	run->bytes = n * 1024 * sizeof(int);
 }
 
 static void
-benchmark_hdf_attribute_read(BenchmarkResult* result)
+benchmark_hdf_attribute_read(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -259,7 +259,7 @@ benchmark_hdf_attribute_read(BenchmarkResult* result)
 	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 	group = create_group(file, "benchmark-attribute-read");
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -269,7 +269,7 @@ benchmark_hdf_attribute_read(BenchmarkResult* result)
 			write_attribute(group, name);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -279,7 +279,7 @@ benchmark_hdf_attribute_read(BenchmarkResult* result)
 			read_attribute(group, name);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
@@ -287,12 +287,12 @@ benchmark_hdf_attribute_read(BenchmarkResult* result)
 	H5Gclose(group);
 	H5Fclose(file);
 
-	result->operations = n;
-	result->bytes = n * 1024 * sizeof(int);
+	run->operations = n;
+	run->bytes = n * 1024 * sizeof(int);
 }
 
 static void
-_benchmark_hdf_dataset_create(BenchmarkResult* result, guint dimensions)
+_benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 1000;
 
@@ -303,9 +303,9 @@ _benchmark_hdf_dataset_create(BenchmarkResult* result, guint dimensions)
 
 	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -323,25 +323,25 @@ _benchmark_hdf_dataset_create(BenchmarkResult* result, guint dimensions)
 
 	H5Fclose(file);
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_hdf_dataset_create_4m(BenchmarkResult* result)
+benchmark_hdf_dataset_create_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_create(result, 2);
+	_benchmark_hdf_dataset_create(run, 2);
 }
 
 static void
-benchmark_hdf_dataset_create_4k(BenchmarkResult* result)
+benchmark_hdf_dataset_create_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_create(result, 1);
+	_benchmark_hdf_dataset_create(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_open(BenchmarkResult* result, guint dimensions)
+_benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 1000;
 
@@ -352,7 +352,7 @@ _benchmark_hdf_dataset_open(BenchmarkResult* result, guint dimensions)
 
 	file = H5Fcreate("benchmark-dataset-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -365,7 +365,7 @@ _benchmark_hdf_dataset_open(BenchmarkResult* result, guint dimensions)
 			H5Dclose(dataset);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -378,30 +378,30 @@ _benchmark_hdf_dataset_open(BenchmarkResult* result, guint dimensions)
 			H5Dclose(dataset);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
 	H5Fclose(file);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_hdf_dataset_open_4m(BenchmarkResult* result)
+benchmark_hdf_dataset_open_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_open(result, 2);
+	_benchmark_hdf_dataset_open(run, 2);
 }
 
 static void
-benchmark_hdf_dataset_open_4k(BenchmarkResult* result)
+benchmark_hdf_dataset_open_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_open(result, 1);
+	_benchmark_hdf_dataset_open(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_write(BenchmarkResult* result, guint dimensions)
+_benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 100;
 
@@ -412,9 +412,9 @@ _benchmark_hdf_dataset_write(BenchmarkResult* result, guint dimensions)
 
 	file = H5Fcreate("benchmark-dataset-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -433,26 +433,26 @@ _benchmark_hdf_dataset_write(BenchmarkResult* result, guint dimensions)
 
 	H5Fclose(file);
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n;
-	result->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
+	run->operations = n;
+	run->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
 }
 
 static void
-benchmark_hdf_dataset_write_4m(BenchmarkResult* result)
+benchmark_hdf_dataset_write_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_write(result, 2);
+	_benchmark_hdf_dataset_write(run, 2);
 }
 
 static void
-benchmark_hdf_dataset_write_4k(BenchmarkResult* result)
+benchmark_hdf_dataset_write_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_write(result, 1);
+	_benchmark_hdf_dataset_write(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_read(BenchmarkResult* result, guint dimensions)
+_benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 100;
 
@@ -463,7 +463,7 @@ _benchmark_hdf_dataset_read(BenchmarkResult* result, guint dimensions)
 
 	file = H5Fcreate("benchmark-dataset-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -477,7 +477,7 @@ _benchmark_hdf_dataset_read(BenchmarkResult* result, guint dimensions)
 			H5Dclose(dataset);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -491,31 +491,31 @@ _benchmark_hdf_dataset_read(BenchmarkResult* result, guint dimensions)
 			H5Dclose(dataset);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
 	H5Fclose(file);
 
-	result->operations = n;
-	result->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
+	run->operations = n;
+	run->bytes = n * dimensions_to_size(dimensions) * sizeof(int);
 }
 
 static void
-benchmark_hdf_dataset_read_4m(BenchmarkResult* result)
+benchmark_hdf_dataset_read_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_read(result, 2);
+	_benchmark_hdf_dataset_read(run, 2);
 }
 
 static void
-benchmark_hdf_dataset_read_4k(BenchmarkResult* result)
+benchmark_hdf_dataset_read_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_read(result, 1);
+	_benchmark_hdf_dataset_read(run, 1);
 }
 
 static void
-benchmark_hdf_file_create(BenchmarkResult* result)
+benchmark_hdf_file_create(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -523,9 +523,9 @@ benchmark_hdf_file_create(BenchmarkResult* result)
 
 	set_semantics();
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -541,13 +541,13 @@ benchmark_hdf_file_create(BenchmarkResult* result)
 		iter++;
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_hdf_file_open(BenchmarkResult* result)
+benchmark_hdf_file_open(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -555,7 +555,7 @@ benchmark_hdf_file_open(BenchmarkResult* result)
 
 	set_semantics();
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -567,7 +567,7 @@ benchmark_hdf_file_open(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -579,16 +579,16 @@ benchmark_hdf_file_open(BenchmarkResult* result)
 			H5Fclose(file);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_hdf_group_create(BenchmarkResult* result)
+benchmark_hdf_group_create(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -599,9 +599,9 @@ benchmark_hdf_group_create(BenchmarkResult* result)
 
 	file = H5Fcreate("benchmark-group-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -619,13 +619,13 @@ benchmark_hdf_group_create(BenchmarkResult* result)
 
 	H5Fclose(file);
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_hdf_group_open(BenchmarkResult* result)
+benchmark_hdf_group_open(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -636,7 +636,7 @@ benchmark_hdf_group_open(BenchmarkResult* result)
 
 	file = H5Fcreate("benchmark-group-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, j_hdf5_get_fapl());
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -649,7 +649,7 @@ benchmark_hdf_group_open(BenchmarkResult* result)
 			H5Gclose(group);
 		}
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -662,14 +662,14 @@ benchmark_hdf_group_open(BenchmarkResult* result)
 			H5Gclose(group);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		iter++;
 	}
 
 	H5Fclose(file);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 #endif
@@ -679,19 +679,19 @@ benchmark_hdf(void)
 {
 	// FIXME repeated runs exhibit strange behavior, objects are distributed differently etc.
 #ifdef HAVE_HDF5
-	j_benchmark_run("/hdf5/attribute/write", benchmark_hdf_attribute_write);
-	j_benchmark_run("/hdf5/attribute/read", benchmark_hdf_attribute_read);
-	j_benchmark_run("/hdf5/dataset4M/create", benchmark_hdf_dataset_create_4m);
-	j_benchmark_run("/hdf5/dataset4M/open", benchmark_hdf_dataset_open_4m);
-	j_benchmark_run("/hdf5/dataset4M/write", benchmark_hdf_dataset_write_4m);
-	j_benchmark_run("/hdf5/dataset4M/read", benchmark_hdf_dataset_read_4m);
-	j_benchmark_run("/hdf5/dataset4K/create", benchmark_hdf_dataset_create_4k);
-	j_benchmark_run("/hdf5/dataset4K/open", benchmark_hdf_dataset_open_4k);
-	j_benchmark_run("/hdf5/dataset4K/write", benchmark_hdf_dataset_write_4k);
-	j_benchmark_run("/hdf5/dataset4K/read", benchmark_hdf_dataset_read_4k);
-	j_benchmark_run("/hdf5/file/create", benchmark_hdf_file_create);
-	j_benchmark_run("/hdf5/file/open", benchmark_hdf_file_open);
-	j_benchmark_run("/hdf5/group/create", benchmark_hdf_group_create);
-	j_benchmark_run("/hdf5/group/open", benchmark_hdf_group_open);
+	j_benchmark_add("/hdf5/attribute/write", benchmark_hdf_attribute_write);
+	j_benchmark_add("/hdf5/attribute/read", benchmark_hdf_attribute_read);
+	j_benchmark_add("/hdf5/dataset4M/create", benchmark_hdf_dataset_create_4m);
+	j_benchmark_add("/hdf5/dataset4M/open", benchmark_hdf_dataset_open_4m);
+	j_benchmark_add("/hdf5/dataset4M/write", benchmark_hdf_dataset_write_4m);
+	j_benchmark_add("/hdf5/dataset4M/read", benchmark_hdf_dataset_read_4m);
+	j_benchmark_add("/hdf5/dataset4K/create", benchmark_hdf_dataset_create_4k);
+	j_benchmark_add("/hdf5/dataset4K/open", benchmark_hdf_dataset_open_4k);
+	j_benchmark_add("/hdf5/dataset4K/write", benchmark_hdf_dataset_write_4k);
+	j_benchmark_add("/hdf5/dataset4K/read", benchmark_hdf_dataset_read_4k);
+	j_benchmark_add("/hdf5/file/create", benchmark_hdf_file_create);
+	j_benchmark_add("/hdf5/file/open", benchmark_hdf_file_open);
+	j_benchmark_add("/hdf5/group/create", benchmark_hdf_group_create);
+	j_benchmark_add("/hdf5/group/open", benchmark_hdf_group_open);
 #endif
 }

@@ -26,7 +26,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_collection_create(BenchmarkResult* result, gboolean use_batch)
+_benchmark_collection_create(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -39,9 +39,9 @@ _benchmark_collection_create(BenchmarkResult* result, gboolean use_batch)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -66,29 +66,29 @@ _benchmark_collection_create(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		ret = j_batch_execute(delete_batch);
 		g_assert_true(ret);
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_collection_create(BenchmarkResult* result)
+benchmark_collection_create(BenchmarkRun* run)
 {
-	_benchmark_collection_create(result, FALSE);
+	_benchmark_collection_create(run, FALSE);
 }
 
 static void
-benchmark_collection_create_batch(BenchmarkResult* result)
+benchmark_collection_create_batch(BenchmarkRun* run)
 {
-	_benchmark_collection_create(result, TRUE);
+	_benchmark_collection_create(run, TRUE);
 }
 
 static void
-_benchmark_collection_delete(BenchmarkResult* result, gboolean use_batch)
+_benchmark_collection_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -99,7 +99,7 @@ _benchmark_collection_delete(BenchmarkResult* result, gboolean use_batch)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -113,7 +113,7 @@ _benchmark_collection_delete(BenchmarkResult* result, gboolean use_batch)
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -140,26 +140,26 @@ _benchmark_collection_delete(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_collection_delete(BenchmarkResult* result)
+benchmark_collection_delete(BenchmarkRun* run)
 {
-	_benchmark_collection_delete(result, FALSE);
+	_benchmark_collection_delete(run, FALSE);
 }
 
 static void
-benchmark_collection_delete_batch(BenchmarkResult* result)
+benchmark_collection_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_collection_delete(result, TRUE);
+	_benchmark_collection_delete(run, TRUE);
 }
 
 static void
-benchmark_collection_delete_batch_without_get(BenchmarkResult* result)
+benchmark_collection_delete_batch_without_get(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -172,7 +172,7 @@ benchmark_collection_delete_batch_without_get(BenchmarkResult* result)
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -188,19 +188,19 @@ benchmark_collection_delete_batch_without_get(BenchmarkResult* result)
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		ret = j_batch_execute(delete_batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-_benchmark_collection_unordered_create_delete(BenchmarkResult* result, gboolean use_batch)
+_benchmark_collection_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -211,9 +211,9 @@ _benchmark_collection_unordered_create_delete(BenchmarkResult* result, gboolean 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -238,32 +238,32 @@ _benchmark_collection_unordered_create_delete(BenchmarkResult* result, gboolean 
 		}
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
-	result->operations = n * 2;
+	run->operations = n * 2;
 }
 
 static void
-benchmark_collection_unordered_create_delete(BenchmarkResult* result)
+benchmark_collection_unordered_create_delete(BenchmarkRun* run)
 {
-	_benchmark_collection_unordered_create_delete(result, FALSE);
+	_benchmark_collection_unordered_create_delete(run, FALSE);
 }
 
 static void
-benchmark_collection_unordered_create_delete_batch(BenchmarkResult* result)
+benchmark_collection_unordered_create_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_collection_unordered_create_delete(result, TRUE);
+	_benchmark_collection_unordered_create_delete(run, TRUE);
 }
 
 void
 benchmark_collection(void)
 {
-	j_benchmark_run("/item/collection/create", benchmark_collection_create);
-	j_benchmark_run("/item/collection/create-batch", benchmark_collection_create_batch);
-	j_benchmark_run("/item/collection/delete", benchmark_collection_delete);
-	j_benchmark_run("/item/collection/delete-batch", benchmark_collection_delete_batch);
-	j_benchmark_run("/item/collection/delete-batch-without-get", benchmark_collection_delete_batch_without_get);
-	j_benchmark_run("/item/collection/unordered-create-delete", benchmark_collection_unordered_create_delete);
-	j_benchmark_run("/item/collection/unordered-create-delete-batch", benchmark_collection_unordered_create_delete_batch);
+	j_benchmark_add("/item/collection/create", benchmark_collection_create);
+	j_benchmark_add("/item/collection/create-batch", benchmark_collection_create_batch);
+	j_benchmark_add("/item/collection/delete", benchmark_collection_delete);
+	j_benchmark_add("/item/collection/delete-batch", benchmark_collection_delete_batch);
+	j_benchmark_add("/item/collection/delete-batch-without-get", benchmark_collection_delete_batch_without_get);
+	j_benchmark_add("/item/collection/unordered-create-delete", benchmark_collection_unordered_create_delete);
+	j_benchmark_add("/item/collection/unordered-create-delete-batch", benchmark_collection_unordered_create_delete_batch);
 	/* FIXME get */
 }

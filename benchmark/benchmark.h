@@ -21,26 +21,31 @@
 
 #include <glib.h>
 
-struct BenchmarkResult
+struct BenchmarkRun
 {
+	gchar* name;
+	void (*func)(struct BenchmarkRun*);
+	GTimer* timer;
+	gboolean timer_started;
+	guint iterations;
 	guint64 operations;
 	guint64 bytes;
 };
 
-typedef struct BenchmarkResult BenchmarkResult;
+typedef struct BenchmarkRun BenchmarkRun;
 
 #include <jsemantics.h>
 
-typedef void (*BenchmarkFunc)(BenchmarkResult*);
+typedef void (*BenchmarkFunc)(BenchmarkRun*);
 
 JSemantics* j_benchmark_get_semantics(void);
 
-void j_benchmark_timer_start(void);
-void j_benchmark_timer_stop(void);
+void j_benchmark_timer_start(BenchmarkRun*);
+void j_benchmark_timer_stop(BenchmarkRun*);
 
-gboolean j_benchmark_iterate(void);
+gboolean j_benchmark_iterate(BenchmarkRun*);
 
-void j_benchmark_run(gchar const*, BenchmarkFunc);
+void j_benchmark_add(gchar const*, BenchmarkFunc);
 
 void benchmark_background_operation(void);
 void benchmark_cache(void);

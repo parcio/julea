@@ -28,7 +28,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_item_create(BenchmarkResult* result, gboolean use_batch)
+_benchmark_item_create(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -46,9 +46,9 @@ _benchmark_item_create(BenchmarkResult* result, gboolean use_batch)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -73,7 +73,7 @@ _benchmark_item_create(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		ret = j_batch_execute(delete_batch);
 		g_assert_true(ret);
@@ -83,23 +83,23 @@ _benchmark_item_create(BenchmarkResult* result, gboolean use_batch)
 	ret = j_batch_execute(delete_batch);
 	g_assert_true(ret);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_item_create(BenchmarkResult* result)
+benchmark_item_create(BenchmarkRun* run)
 {
-	_benchmark_item_create(result, FALSE);
+	_benchmark_item_create(run, FALSE);
 }
 
 static void
-benchmark_item_create_batch(BenchmarkResult* result)
+benchmark_item_create_batch(BenchmarkRun* run)
 {
-	_benchmark_item_create(result, TRUE);
+	_benchmark_item_create(run, TRUE);
 }
 
 static void
-_benchmark_item_delete(BenchmarkResult* result, gboolean use_batch)
+_benchmark_item_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -117,7 +117,7 @@ _benchmark_item_delete(BenchmarkResult* result, gboolean use_batch)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -131,7 +131,7 @@ _benchmark_item_delete(BenchmarkResult* result, gboolean use_batch)
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -158,30 +158,30 @@ _benchmark_item_delete(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 	}
 
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_item_delete(BenchmarkResult* result)
+benchmark_item_delete(BenchmarkRun* run)
 {
-	_benchmark_item_delete(result, FALSE);
+	_benchmark_item_delete(run, FALSE);
 }
 
 static void
-benchmark_item_delete_batch(BenchmarkResult* result)
+benchmark_item_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_item_delete(result, TRUE);
+	_benchmark_item_delete(run, TRUE);
 }
 
 static void
-benchmark_item_delete_batch_without_get(BenchmarkResult* result)
+benchmark_item_delete_batch_without_get(BenchmarkRun* run)
 {
 	guint const n = 1000;
 
@@ -199,7 +199,7 @@ benchmark_item_delete_batch_without_get(BenchmarkResult* result)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -215,23 +215,23 @@ benchmark_item_delete_batch_without_get(BenchmarkResult* result)
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		ret = j_batch_execute(delete_batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 	}
 
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-_benchmark_item_get_status(BenchmarkResult* result, gboolean use_batch)
+_benchmark_item_get_status(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -255,9 +255,9 @@ _benchmark_item_get_status(BenchmarkResult* result, gboolean use_batch)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -277,30 +277,30 @@ _benchmark_item_get_status(BenchmarkResult* result, gboolean use_batch)
 		}
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_item_get_status(BenchmarkResult* result)
+benchmark_item_get_status(BenchmarkRun* run)
 {
-	_benchmark_item_get_status(result, FALSE);
+	_benchmark_item_get_status(run, FALSE);
 }
 
 static void
-benchmark_item_get_status_batch(BenchmarkResult* result)
+benchmark_item_get_status_batch(BenchmarkRun* run)
 {
-	_benchmark_item_get_status(result, TRUE);
+	_benchmark_item_get_status(run, TRUE);
 }
 
 static void
-_benchmark_item_read(BenchmarkResult* result, gboolean use_batch, guint block_size)
+_benchmark_item_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -329,9 +329,9 @@ _benchmark_item_read(BenchmarkResult* result, gboolean use_batch, guint block_si
 	g_assert_true(ret);
 	g_assert_cmpuint(nb, ==, n * block_size);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -353,31 +353,31 @@ _benchmark_item_read(BenchmarkResult* result, gboolean use_batch, guint block_si
 		}
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n;
-	result->bytes = n * block_size;
+	run->operations = n;
+	run->bytes = n * block_size;
 }
 
 static void
-benchmark_item_read(BenchmarkResult* result)
+benchmark_item_read(BenchmarkRun* run)
 {
-	_benchmark_item_read(result, FALSE, 4 * 1024);
+	_benchmark_item_read(run, FALSE, 4 * 1024);
 }
 
 static void
-benchmark_item_read_batch(BenchmarkResult* result)
+benchmark_item_read_batch(BenchmarkRun* run)
 {
-	_benchmark_item_read(result, TRUE, 4 * 1024);
+	_benchmark_item_read(run, TRUE, 4 * 1024);
 }
 
 static void
-_benchmark_item_write(BenchmarkResult* result, gboolean use_batch, guint block_size)
+_benchmark_item_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -399,9 +399,9 @@ _benchmark_item_write(BenchmarkResult* result, gboolean use_batch, guint block_s
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -423,31 +423,31 @@ _benchmark_item_write(BenchmarkResult* result, gboolean use_batch, guint block_s
 		}
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
 	j_item_delete(item, batch);
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n;
-	result->bytes = n * block_size;
+	run->operations = n;
+	run->bytes = n * block_size;
 }
 
 static void
-benchmark_item_write(BenchmarkResult* result)
+benchmark_item_write(BenchmarkRun* run)
 {
-	_benchmark_item_write(result, FALSE, 4 * 1024);
+	_benchmark_item_write(run, FALSE, 4 * 1024);
 }
 
 static void
-benchmark_item_write_batch(BenchmarkResult* result)
+benchmark_item_write_batch(BenchmarkRun* run)
 {
-	_benchmark_item_write(result, TRUE, 4 * 1024);
+	_benchmark_item_write(run, TRUE, 4 * 1024);
 }
 
 static void
-_benchmark_item_unordered_create_delete(BenchmarkResult* result, gboolean use_batch)
+_benchmark_item_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -463,9 +463,9 @@ _benchmark_item_unordered_create_delete(BenchmarkResult* result, gboolean use_ba
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -490,42 +490,42 @@ _benchmark_item_unordered_create_delete(BenchmarkResult* result, gboolean use_ba
 		}
 	}
 
-	j_benchmark_timer_stop();
+	j_benchmark_timer_stop(run);
 
 	j_collection_delete(collection, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	result->operations = n * 2;
+	run->operations = n * 2;
 }
 
 static void
-benchmark_item_unordered_create_delete(BenchmarkResult* result)
+benchmark_item_unordered_create_delete(BenchmarkRun* run)
 {
-	_benchmark_item_unordered_create_delete(result, FALSE);
+	_benchmark_item_unordered_create_delete(run, FALSE);
 }
 
 static void
-benchmark_item_unordered_create_delete_batch(BenchmarkResult* result)
+benchmark_item_unordered_create_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_item_unordered_create_delete(result, TRUE);
+	_benchmark_item_unordered_create_delete(run, TRUE);
 }
 
 void
 benchmark_item(void)
 {
-	j_benchmark_run("/item/item/create", benchmark_item_create);
-	j_benchmark_run("/item/item/create-batch", benchmark_item_create_batch);
-	j_benchmark_run("/item/item/delete", benchmark_item_delete);
-	j_benchmark_run("/item/item/delete-batch", benchmark_item_delete_batch);
-	j_benchmark_run("/item/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
-	j_benchmark_run("/item/item/get-status", benchmark_item_get_status);
-	j_benchmark_run("/item/item/get-status-batch", benchmark_item_get_status_batch);
+	j_benchmark_add("/item/item/create", benchmark_item_create);
+	j_benchmark_add("/item/item/create-batch", benchmark_item_create_batch);
+	j_benchmark_add("/item/item/delete", benchmark_item_delete);
+	j_benchmark_add("/item/item/delete-batch", benchmark_item_delete_batch);
+	j_benchmark_add("/item/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
+	j_benchmark_add("/item/item/get-status", benchmark_item_get_status);
+	j_benchmark_add("/item/item/get-status-batch", benchmark_item_get_status_batch);
 	/* FIXME get */
-	j_benchmark_run("/item/item/read", benchmark_item_read);
-	j_benchmark_run("/item/item/read-batch", benchmark_item_read_batch);
-	j_benchmark_run("/item/item/write", benchmark_item_write);
-	j_benchmark_run("/item/item/write-batch", benchmark_item_write_batch);
-	j_benchmark_run("/item/item/unordered-create-delete", benchmark_item_unordered_create_delete);
-	j_benchmark_run("/item/item/unordered-create-delete-batch", benchmark_item_unordered_create_delete_batch);
+	j_benchmark_add("/item/item/read", benchmark_item_read);
+	j_benchmark_add("/item/item/read-batch", benchmark_item_read_batch);
+	j_benchmark_add("/item/item/write", benchmark_item_write);
+	j_benchmark_add("/item/item/write-batch", benchmark_item_write_batch);
+	j_benchmark_add("/item/item/unordered-create-delete", benchmark_item_unordered_create_delete);
+	j_benchmark_add("/item/item/unordered-create-delete-batch", benchmark_item_unordered_create_delete_batch);
 }

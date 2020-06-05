@@ -37,10 +37,8 @@ static gchar* opt_template = NULL;
 
 static JSemantics* j_benchmark_semantics = NULL;
 
-static GTimer* j_benchmark_timer = NULL;
-static gboolean j_benchmark_timer_started = FALSE;
-
-static guint j_benchmark_iterations = 0;
+static GList* j_benchmarks = NULL;
+static gsize j_benchmark_name_max = 0;
 
 JSemantics*
 j_benchmark_get_semantics(void)
@@ -49,31 +47,37 @@ j_benchmark_get_semantics(void)
 }
 
 void
-j_benchmark_timer_start(void)
+j_benchmark_timer_start(BenchmarkRun* run)
 {
-	if (!j_benchmark_timer_started)
+	g_return_if_fail(run != NULL);
+
+	if (!run->timer_started)
 	{
-		g_timer_start(j_benchmark_timer);
-		j_benchmark_timer_started = TRUE;
+		g_timer_start(run->timer);
+		run->timer_started = TRUE;
 	}
 	else
 	{
-		g_timer_continue(j_benchmark_timer);
+		g_timer_continue(run->timer);
 	}
 }
 
 void
-j_benchmark_timer_stop(void)
+j_benchmark_timer_stop(BenchmarkRun* run)
 {
-	g_timer_stop(j_benchmark_timer);
+	g_return_if_fail(run != NULL);
+
+	g_timer_stop(run->timer);
 }
 
 gboolean
-j_benchmark_iterate(void)
+j_benchmark_iterate(BenchmarkRun* run)
 {
-	if (j_benchmark_iterations == 0 || g_timer_elapsed(j_benchmark_timer, NULL) < opt_duration)
+	g_return_val_if_fail(run != NULL, FALSE);
+
+	if (run->iterations == 0 || g_timer_elapsed(run->timer, NULL) < opt_duration)
 	{
-		j_benchmark_iterations++;
+		run->iterations++;
 
 		return TRUE;
 	}
@@ -82,13 +86,9 @@ j_benchmark_iterate(void)
 }
 
 void
-j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
+j_benchmark_add(gchar const* name, BenchmarkFunc benchmark_func)
 {
-	BenchmarkResult result;
-	g_autoptr(GTimer) func_timer = NULL;
-	g_autofree gchar* left = NULL;
-	gdouble elapsed_time;
-	gdouble elapsed_total;
+	BenchmarkRun* run;
 
 	g_return_if_fail(name != NULL);
 	g_return_if_fail(benchmark_func != NULL);
@@ -105,55 +105,95 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 		}
 	}
 
+	j_benchmark_name_max = MAX(j_benchmark_name_max, strlen(name));
+
+	run = g_new(BenchmarkRun, 1);
+	run->name = g_strdup(name);
+	run->func = benchmark_func;
+	run->timer = g_timer_new();
+	run->timer_started = FALSE;
+	run->iterations = 0;
+	run->operations = 0;
+	run->bytes = 0;
+
+	j_benchmarks = g_list_prepend(j_benchmarks, run);
+}
+
+static void
+j_benchmark_run_free(gpointer data)
+{
+	BenchmarkRun* run = data;
+
+	g_return_if_fail(data != NULL);
+
+	g_timer_destroy(run->timer);
+	g_free(run->name);
+	g_free(run);
+}
+
+static void
+j_benchmark_run_one(BenchmarkRun* run)
+{
+	g_autoptr(GTimer) func_timer = NULL;
+	gdouble elapsed_time;
+	gdouble elapsed_total;
+
+	g_return_if_fail(run != NULL);
+
 	if (opt_list)
 	{
-		g_print("%s\n", name);
+		g_print("%s\n", run->name);
 		return;
 	}
 
 	func_timer = g_timer_new();
-	result.operations = 0;
-	result.bytes = 0;
 
 	if (!opt_machine_readable)
 	{
-		left = g_strconcat(name, ":", NULL);
-		g_print("%-50s ", left);
+		g_autofree gchar* left = NULL;
+		gsize pad;
+
+		left = g_strconcat(run->name, ":", NULL);
+		pad = j_benchmark_name_max + 2 - strlen(left);
+
+		g_print("%s", left);
+
+		for (guint i = 0; i < pad; i++)
+		{
+			g_print(" ");
+		}
 	}
 	else
 	{
-		g_print("%s", name);
+		g_print("%s", run->name);
 	}
 
-	j_benchmark_timer_started = FALSE;
-	j_benchmark_iterations = 0;
-
 	g_timer_start(func_timer);
-	(*benchmark_func)(&result);
+	(*run->func)(run);
 	elapsed_total = g_timer_elapsed(func_timer, NULL);
 
-	elapsed_time = g_timer_elapsed(j_benchmark_timer, NULL);
+	elapsed_time = g_timer_elapsed(run->timer, NULL);
 
-	if (j_benchmark_iterations > 1)
+	if (run->iterations > 1)
 	{
-		result.operations *= j_benchmark_iterations;
-		result.bytes *= j_benchmark_iterations;
+		run->operations *= run->iterations;
+		run->bytes *= run->iterations;
 	}
 
 	if (!opt_machine_readable)
 	{
 		g_print("%.3f seconds", elapsed_time);
 
-		if (result.operations != 0)
+		if (run->operations != 0)
 		{
-			g_print(" (%.0f/s)", (gdouble)result.operations / elapsed_time);
+			g_print(" (%.0f/s)", (gdouble)run->operations / elapsed_time);
 		}
 
-		if (result.bytes != 0)
+		if (run->bytes != 0)
 		{
 			g_autofree gchar* size = NULL;
 
-			size = g_format_size((gdouble)result.bytes / elapsed_time);
+			size = g_format_size((gdouble)run->bytes / elapsed_time);
 			g_print(" (%s/s)", size);
 		}
 
@@ -163,18 +203,18 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 	{
 		g_print("%s%f", opt_machine_separator, elapsed_time);
 
-		if (result.operations != 0)
+		if (run->operations != 0)
 		{
-			g_print("%s%f", opt_machine_separator, (gdouble)result.operations / elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)run->operations / elapsed_time);
 		}
 		else
 		{
 			g_print("%s-", opt_machine_separator);
 		}
 
-		if (result.bytes != 0)
+		if (run->bytes != 0)
 		{
-			g_print("%s%f", opt_machine_separator, (gdouble)result.bytes / elapsed_time);
+			g_print("%s%f", opt_machine_separator, (gdouble)run->bytes / elapsed_time);
 		}
 		else
 		{
@@ -184,10 +224,57 @@ j_benchmark_run(gchar const* name, BenchmarkFunc benchmark_func)
 		g_print("%s%f\n", opt_machine_separator, elapsed_total);
 	}
 
-	if (j_benchmark_iterations > 1000 * (guint)opt_duration)
+	if (run->iterations > 1000 * (guint)opt_duration)
 	{
-		g_warning("Benchmark %s performed %d iterations, consider adjusting iteration workload.", name, j_benchmark_iterations);
+		g_warning("Benchmark %s performed %d iterations, consider adjusting iteration workload.", run->name, run->iterations);
 	}
+}
+
+static void
+j_benchmark_run_all(void)
+{
+	GList* benchmark;
+
+	if (!opt_machine_readable)
+	{
+		gchar const* left;
+		gchar const* right;
+		gsize pad;
+
+		left = "Name";
+		right = "Duration (Operations/s) (Throughput/s) [Total Duration]";
+		pad = j_benchmark_name_max + 2 - strlen(left);
+
+		g_print("Name");
+
+		for (guint i = 0; i < pad; i++)
+		{
+			g_print(" ");
+		}
+
+		g_print("%s\n", right);
+
+		for (guint i = 0; i < j_benchmark_name_max + 2 + strlen(right); i++)
+		{
+			g_print("-");
+		}
+
+		g_print("\n");
+	}
+	else
+	{
+		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
+	}
+
+	j_benchmarks = g_list_reverse(j_benchmarks);
+
+	for (benchmark = j_benchmarks; benchmark != NULL; benchmark = benchmark->next)
+	{
+		j_benchmark_run_one(benchmark->data);
+	}
+
+	g_list_free_full(j_benchmarks, j_benchmark_run_free);
+	j_benchmarks = NULL;
 }
 
 int
@@ -217,7 +304,7 @@ main(int argc, char** argv)
 	{
 		g_option_context_free(context);
 
-		if (error)
+		if (error != NULL)
 		{
 			g_printerr("%s\n", error->message);
 			g_error_free(error);
@@ -234,12 +321,6 @@ main(int argc, char** argv)
 	}
 
 	j_benchmark_semantics = j_semantics_new_from_string(opt_template, opt_semantics);
-	j_benchmark_timer = g_timer_new();
-
-	if (opt_machine_readable)
-	{
-		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
-	}
 
 	// Core
 	benchmark_background_operation();
@@ -265,7 +346,8 @@ main(int argc, char** argv)
 	benchmark_hdf();
 	benchmark_hdf_dai();
 
-	g_timer_destroy(j_benchmark_timer);
+	j_benchmark_run_all();
+
 	j_semantics_unref(j_benchmark_semantics);
 
 	g_free(opt_machine_separator);

@@ -26,7 +26,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_db_schema_create(BenchmarkResult* result, gboolean use_batch)
+_benchmark_db_schema_create(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 100;
 
@@ -39,9 +39,9 @@ _benchmark_db_schema_create(BenchmarkResult* result, gboolean use_batch)
 	batch = j_batch_new(semantics);
 	delete_batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -78,29 +78,29 @@ _benchmark_db_schema_create(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 
 		ret = j_batch_execute(delete_batch);
 		g_assert_true(ret);
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_db_schema_create(BenchmarkResult* result)
+benchmark_db_schema_create(BenchmarkRun* run)
 {
-	_benchmark_db_schema_create(result, FALSE);
+	_benchmark_db_schema_create(run, FALSE);
 }
 
 static void
-benchmark_db_schema_create_batch(BenchmarkResult* result)
+benchmark_db_schema_create_batch(BenchmarkRun* run)
 {
-	_benchmark_db_schema_create(result, TRUE);
+	_benchmark_db_schema_create(run, TRUE);
 }
 
 static void
-_benchmark_db_schema_delete(BenchmarkResult* result, gboolean use_batch)
+_benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 100;
 
@@ -111,7 +111,7 @@ _benchmark_db_schema_delete(BenchmarkResult* result, gboolean use_batch)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	while (j_benchmark_iterate())
+	while (j_benchmark_iterate(run))
 	{
 		for (guint i = 0; i < n; i++)
 		{
@@ -137,7 +137,7 @@ _benchmark_db_schema_delete(BenchmarkResult* result, gboolean use_batch)
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
 
-		j_benchmark_timer_start();
+		j_benchmark_timer_start(run);
 
 		for (guint i = 0; i < n; i++)
 		{
@@ -163,29 +163,29 @@ _benchmark_db_schema_delete(BenchmarkResult* result, gboolean use_batch)
 			g_assert_true(ret);
 		}
 
-		j_benchmark_timer_stop();
+		j_benchmark_timer_stop(run);
 	}
 
-	result->operations = n;
+	run->operations = n;
 }
 
 static void
-benchmark_db_schema_delete(BenchmarkResult* result)
+benchmark_db_schema_delete(BenchmarkRun* run)
 {
-	_benchmark_db_schema_delete(result, FALSE);
+	_benchmark_db_schema_delete(run, FALSE);
 }
 
 static void
-benchmark_db_schema_delete_batch(BenchmarkResult* result)
+benchmark_db_schema_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_db_schema_delete(result, TRUE);
+	_benchmark_db_schema_delete(run, TRUE);
 }
 
 void
 benchmark_db_schema(void)
 {
-	j_benchmark_run("/db/schema/create", benchmark_db_schema_create);
-	j_benchmark_run("/db/schema/create-batch", benchmark_db_schema_create_batch);
-	j_benchmark_run("/db/schema/delete", benchmark_db_schema_delete);
-	j_benchmark_run("/db/schema/delete-batch", benchmark_db_schema_delete_batch);
+	j_benchmark_add("/db/schema/create", benchmark_db_schema_create);
+	j_benchmark_add("/db/schema/create-batch", benchmark_db_schema_create_batch);
+	j_benchmark_add("/db/schema/delete", benchmark_db_schema_delete);
+	j_benchmark_add("/db/schema/delete-batch", benchmark_db_schema_delete_batch);
 }
