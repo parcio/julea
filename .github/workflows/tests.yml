@@ -89,8 +89,12 @@ jobs:
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
         # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
-          sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
-          sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
+          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          then
+            sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
+          else
+            sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
+          fi
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt --yes --no-install-recommends install mariadb-server
