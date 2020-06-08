@@ -487,15 +487,6 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
 
-	//check contents
-	if(&configuration->libfabric.eq_attr == NULL)
-	{
-		g_critical("eq_attr failed to comply");
-	}
-	if(&configuration->libfabric.cq_attr == NULL)
-	{
-		g_critical("cq_attr failed to comply");
-	}
 
 	return configuration;
 }

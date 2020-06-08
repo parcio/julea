@@ -660,7 +660,6 @@ julea_client_hdrs = {
 		'include/core/jsemantics.h',
 		'include/core/jstatistics.h',
 		'include/core/jtrace.h',
-		'include/core/j_fi_domain_manager.h',
 	]),
 	'db': files([
 		'include/db/jdb-entry.h',
