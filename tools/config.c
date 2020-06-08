@@ -22,6 +22,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <locale.h>
 #include <string.h>
 
 static gboolean opt_user = FALSE;
@@ -214,6 +215,9 @@ main(gint argc, gchar** argv)
 		{ "capability9", 0, 0, G_OPTION_ARG_INT64, &cap9, "Field for one requested libfabric provider capability", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);

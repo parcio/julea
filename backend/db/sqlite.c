@@ -46,6 +46,7 @@
 struct JSQLiteData
 {
 	gchar* path;
+	sqlite3* db;
 };
 
 typedef struct JSQLiteData JSQLiteData;
@@ -369,7 +370,7 @@ j_sql_open(gpointer backend_data)
 
 	g_return_val_if_fail(bd->path != NULL, FALSE);
 
-	if (g_strcmp0(bd->path, "memory") != 0)
+	if (g_strcmp0(bd->path, ":memory:") != 0)
 	{
 		dirname = g_path_get_dirname(bd->path);
 		g_mkdir_with_parents(dirname, 0700);
@@ -380,7 +381,9 @@ j_sql_open(gpointer backend_data)
 	}
 	else
 	{
-		if (G_UNLIKELY(sqlite3_open_v2("julea-db", &backend_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL) != SQLITE_OK))
+		// The shared cache is disabled when SQLITE_OPEN_URI is not set.
+		// Make sure it is by specifying it in the flags and using the file: prefix.
+		if (G_UNLIKELY(sqlite3_open_v2("file:julea-db", &backend_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL) != SQLITE_OK))
 		{
 			goto _error;
 		}
@@ -441,6 +444,13 @@ backend_init(gchar const* _path, gpointer* backend_data)
 
 	bd = g_slice_new(JSQLiteData);
 	bd->path = g_strdup(_path);
+	bd->db = NULL;
+
+	if (g_strcmp0(bd->path, ":memory:") == 0)
+	{
+		// Hold an extra reference to the shared in-memory database to make sure it is not freed.
+		sqlite3_open_v2("file:julea-db", &(bd->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL);
+	}
 
 	*backend_data = bd;
 
@@ -457,6 +467,11 @@ backend_fini(gpointer backend_data)
 	JSQLiteData* bd = backend_data;
 
 	sql_generic_fini();
+
+	if (bd->db != NULL)
+	{
+		sqlite3_close(bd->db);
+	}
 
 	g_free(bd->path);
 	g_slice_free(JSQLiteData, bd);

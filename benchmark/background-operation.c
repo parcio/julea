@@ -39,36 +39,37 @@ on_background_operation_completed(gpointer data)
 }
 
 static void
-benchmark_background_operation_new_ref_unref(BenchmarkResult* result)
+benchmark_background_operation_new_ref_unref(BenchmarkRun* run)
 {
 	guint const n = 100000;
 
 	JBackgroundOperation* background_operation;
-	gdouble elapsed;
 
-	g_atomic_int_set(&benchmark_background_operation_counter, 0);
+	j_benchmark_timer_start(run);
 
-	j_benchmark_timer_start();
-
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate(run))
 	{
-		background_operation = j_background_operation_new(on_background_operation_completed, NULL);
-		j_background_operation_unref(background_operation);
+		g_atomic_int_set(&benchmark_background_operation_counter, 0);
+
+		for (guint i = 0; i < n; i++)
+		{
+			background_operation = j_background_operation_new(on_background_operation_completed, NULL);
+			j_background_operation_unref(background_operation);
+		}
+
+		/* FIXME overhead? */
+		while ((guint64)g_atomic_int_get(&benchmark_background_operation_counter) != n)
+		{
+		}
 	}
 
-	/* FIXME overhead? */
-	while (g_atomic_int_get(&benchmark_background_operation_counter) != (gint)n)
-	{
-	}
+	j_benchmark_timer_stop(run);
 
-	elapsed = j_benchmark_timer_elapsed();
-
-	result->elapsed_time = elapsed;
-	result->operations = n;
+	run->operations = n;
 }
 
 void
 benchmark_background_operation(void)
 {
-	j_benchmark_run("/background-operation", benchmark_background_operation_new_ref_unref);
+	j_benchmark_add("/background-operation/new", benchmark_background_operation_new_ref_unref);
 }

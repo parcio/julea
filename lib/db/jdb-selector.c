@@ -97,7 +97,7 @@ j_db_selector_unref(JDBSelector* selector)
 }
 
 gboolean
-j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator, gconstpointer value, guint64 length, GError** error)
+j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -134,7 +134,7 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 		goto _error;
 	}
 
-	val.val_uint32 = operator;
+	val.val_uint32 = operator_;
 
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_operator", J_DB_TYPE_UINT32, &val, error)))
 	{

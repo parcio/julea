@@ -3,10 +3,11 @@ on: [push, pull_request]
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
     steps:
       - name: Checkout
@@ -18,10 +19,16 @@ jobs:
         run: |
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
+          sudo aa-remove-unknown
           sudo apt update || true
           sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev libfabric-dev libfabric1
-          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
-          sudo pip3 install meson
+          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          then
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+            sudo pip3 install meson
+          else
+            sudo apt --yes --no-install-recommends install meson ninja-build
+          fi
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}

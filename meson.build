@@ -71,6 +71,11 @@ if get_option('debug')
 	add_project_arguments(args, language: 'c')
 endif
 
+# FIXME Some versions of libbson trigger this warning
+if meson.get_compiler('c').get_id() == 'clang'
+	add_project_arguments('-Wno-newline-eof', language: 'c')
+endif
+
 # FIXME rpath is not set for dependencies
 # FIXME Also check for pkg-config files in /usr (worked around in environment.sh)
 # FIXME Allow specifying dependency prefixes?
@@ -455,6 +460,7 @@ julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',
 	'benchmark/cache.c',
+	'benchmark/db/schema.c',
 	'benchmark/hdf5/dai.c',
 	'benchmark/hdf5/hdf.c',
 	'benchmark/item/collection.c',
@@ -467,7 +473,7 @@ julea_benchmark_srcs = files([
 ])
 
 executable('julea-benchmark', julea_benchmark_srcs,
-	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['item']] + hdf_deps,
+	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('benchmark')],
 )
 

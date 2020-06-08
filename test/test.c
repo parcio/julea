@@ -20,6 +20,8 @@
 
 #include <glib.h>
 
+#include <locale.h>
+
 #include <julea.h>
 
 #include "test.h"
@@ -28,6 +30,9 @@ int
 main(int argc, char** argv)
 {
 	gint ret;
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	g_test_init(&argc, &argv, NULL);
 

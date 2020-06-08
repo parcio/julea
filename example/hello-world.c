@@ -21,6 +21,7 @@
 #include <julea-kv.h>
 #include <julea-db.h>
 
+#include <locale.h>
 #include <stdio.h>
 
 int
@@ -37,6 +38,9 @@ main(int argc, char** argv)
 
 	(void)argc;
 	(void)argv;
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	// FIXME: this example does not clean up after itself and will only work if the object, kv pair and db entry do not exist already
 	// FIXME: add more error checking

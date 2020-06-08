@@ -21,27 +21,27 @@ This can be used to run two servers on the same machine, as sharing backend path
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
-| gio     | ❌     | ✅     | Path to a directory (`/var/storage/gio`) |
-| null    | ✅     | ✅     |  |
-| posix   | ❌     | ✅     | Path to a directory (`/var/storage/posix`) |
-| rados   | ✅     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
+| gio     | ❌     | ✔     | Path to a directory (`/var/storage/gio`) |
+| null    | ✔     | ✔     |  |
+| posix   | ❌     | ✔     | Path to a directory (`/var/storage/posix`) |
+| rados   | ✔     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
 
 ## Key-Value Backends
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
-| leveldb | ❌     | ✅     | Path to a directory (`/var/storage/leveldb`) |
-| lmdb    | ❌     | ✅     | Path to a directory (`/var/storage/lmdb`) |
-| mongodb | ✅     | ❌     | Host name and database name (`localhost:julea`) |
-| null    | ✅     | ✅     |  |
-| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) |
-| rocksdb | ❌     | ✅     | Path to a directory (`/var/storage/rocksdb`) |
+| leveldb | ❌     | ✔     | Path to a directory (`/var/storage/leveldb`) |
+| lmdb    | ❌     | ✔     | Path to a directory (`/var/storage/lmdb`) |
+| mongodb | ✔     | ❌     | Host name and database name (`localhost:julea`) |
+| null    | ✔     | ✔     |  |
+| sqlite  | ❌     | ✔     | Path to a file (`/var/storage/sqlite.db`) |
+| rocksdb | ❌     | ✔     | Path to a directory (`/var/storage/rocksdb`) |
 
 ## Database Backends
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
-| memory  | ✅     | ✅     |  |
-| mysql   | ✅     | ❌     | Host, database, user and password (`localhost:julea:root:pw`) |
-| null    | ✅     | ✅     |  |
-| sqlite  | ❌     | ✅     | Path to a file (`/var/storage/sqlite.db`) or `memory` for an in-memory database |
+| memory  | ✔     | ✔     |  |
+| mysql   | ✔     | ❌     | Host, database, user and password (`localhost:julea:root:pw`) |
+| null    | ✔     | ✔     |  |
+| sqlite  | ❌     | ✔     | Path to a file (`/var/storage/sqlite.db`) or `:memory:` for an in-memory database |

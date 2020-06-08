@@ -426,7 +426,15 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 	if (bd->connection != NULL)
 	{
-		ret = mongoc_client_get_server_status(bd->connection, NULL, NULL, NULL);
+		bson_t cmd[1];
+		bson_t reply[1];
+
+		bson_init(cmd);
+		bson_append_int32(cmd, "serverStatus", -1, 1);
+
+		ret = mongoc_client_read_command_with_opts(bd->connection, bd->database, cmd, NULL, NULL, reply, NULL);
+		bson_destroy(reply);
+		bson_destroy(cmd);
 	}
 
 	if (!ret)

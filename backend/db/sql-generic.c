@@ -710,7 +710,7 @@ backend_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 		else
 		{
 			counter++;
-			g_string_append_printf(sql, ", %s", j_bson_iter_key(&iter, error));
+			g_string_append_printf(sql, ", " SQL_QUOTE "%s" SQL_QUOTE, j_bson_iter_key(&iter, error));
 
 			if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &value, error)))
 			{
@@ -840,7 +840,7 @@ backend_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 				}
 
 				string_tmp = value.val_string;
-				g_string_append_printf(sql, "%s", string_tmp);
+				g_string_append_printf(sql, SQL_QUOTE "%s" SQL_QUOTE, string_tmp);
 			}
 
 			g_string_append(sql, " )");
@@ -1337,7 +1337,7 @@ backend_insert(gpointer backend_data, gpointer _batch, gchar const* name, bson_t
 			}
 
 			prepared->variables_count++;
-			g_string_append_printf(prepared->sql, "%s", key);
+			g_string_append_printf(prepared->sql, SQL_QUOTE "%s" SQL_QUOTE, key);
 			g_array_append_val(arr_types_in, type);
 			g_hash_table_insert(prepared->variables_index, g_strdup(key), GINT_TO_POINTER(prepared->variables_count));
 		}
@@ -1582,7 +1582,7 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 			}
 
 			string_tmp = value.val_string;
-			g_string_append_printf(sql, "%s ", string_tmp);
+			g_string_append_printf(sql, SQL_QUOTE "%s" SQL_QUOTE " ", string_tmp);
 
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
@@ -2024,7 +2024,7 @@ backend_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t
 
 		type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
 		g_array_append_val(arr_types_in, type);
-		g_string_append_printf(sql, "%s = ?", string_tmp);
+		g_string_append_printf(sql, SQL_QUOTE "%s" SQL_QUOTE " = ?", string_tmp);
 		g_hash_table_insert(variables_index, g_strdup(string_tmp), GINT_TO_POINTER(variables_count));
 	}
 
@@ -2320,7 +2320,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		if (strcmp(string_tmp, "_id") == 0)
 			continue;
 
-		g_string_append_printf(sql, ", %s", string_tmp);
+		g_string_append_printf(sql, ", " SQL_QUOTE "%s" SQL_QUOTE, string_tmp);
 		g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup(string_tmp));
 		g_array_append_val(arr_types_out, type);
 		variables_count++;

@@ -27,97 +27,98 @@
 #include "benchmark.h"
 
 static void
-_benchmark_message_new(BenchmarkResult* result, gboolean append)
+_benchmark_message_new(BenchmarkRun* run, gboolean append)
 {
-	guint const n = 500000;
+	guint const n = 100000;
 	guint const m = 100;
 	guint64 const dummy = 42;
 	gsize const size = m * sizeof(guint64);
 
-	gdouble elapsed;
+	j_benchmark_timer_start(run);
 
-	j_benchmark_timer_start();
-
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate(run))
 	{
-		g_autoptr(JMessage) message = NULL;
-
-		message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
-
-		if (append)
+		for (guint i = 0; i < n; i++)
 		{
+			g_autoptr(JMessage) message = NULL;
+
+			message = j_message_new(J_MESSAGE_NONE, (append) ? size : 0);
+
+			if (append)
+			{
+				for (guint j = 0; j < m; j++)
+				{
+					j_message_append_8(message, &dummy);
+				}
+			}
+		}
+	}
+
+	j_benchmark_timer_stop(run);
+
+	run->operations = n;
+}
+
+static void
+benchmark_message_new(BenchmarkRun* run)
+{
+	_benchmark_message_new(run, FALSE);
+}
+
+static void
+benchmark_message_new_append(BenchmarkRun* run)
+{
+	_benchmark_message_new(run, TRUE);
+}
+
+static void
+_benchmark_message_add_operation(BenchmarkRun* run, gboolean large)
+{
+	guint const n = (large) ? 100 : 10000;
+	guint const m = (large) ? 10000 : 100;
+	guint64 const dummy = 42;
+
+	j_benchmark_timer_start(run);
+
+	while (j_benchmark_iterate(run))
+	{
+		for (guint i = 0; i < n; i++)
+		{
+			g_autoptr(JMessage) message = NULL;
+
+			message = j_message_new(J_MESSAGE_NONE, 0);
+
 			for (guint j = 0; j < m; j++)
 			{
+				j_message_add_operation(message, sizeof(guint64));
 				j_message_append_8(message, &dummy);
 			}
 		}
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
+	j_benchmark_timer_stop(run);
 
-	result->elapsed_time = elapsed;
-	result->operations = n;
+	run->operations = n;
+	run->bytes = n * m * sizeof(guint64);
 }
 
 static void
-benchmark_message_new(BenchmarkResult* result)
+benchmark_message_add_operation_small(BenchmarkRun* run)
 {
-	_benchmark_message_new(result, FALSE);
+	_benchmark_message_add_operation(run, FALSE);
 }
 
 static void
-benchmark_message_new_append(BenchmarkResult* result)
+benchmark_message_add_operation_large(BenchmarkRun* run)
 {
-	_benchmark_message_new(result, TRUE);
-}
-
-static void
-_benchmark_message_add_operation(BenchmarkResult* result, gboolean large)
-{
-	guint const n = (large) ? 100 : 50000;
-	guint const m = (large) ? 50000 : 100;
-	guint64 const dummy = 42;
-
-	gdouble elapsed;
-
-	j_benchmark_timer_start();
-
-	for (guint i = 0; i < n; i++)
-	{
-		g_autoptr(JMessage) message = NULL;
-
-		message = j_message_new(J_MESSAGE_NONE, 0);
-
-		for (guint j = 0; j < m; j++)
-		{
-			j_message_add_operation(message, sizeof(guint64));
-			j_message_append_8(message, &dummy);
-		}
-	}
-
-	elapsed = j_benchmark_timer_elapsed();
-
-	result->elapsed_time = elapsed;
-	result->operations = n;
-}
-
-static void
-benchmark_message_add_operation_small(BenchmarkResult* result)
-{
-	_benchmark_message_add_operation(result, FALSE);
-}
-
-static void
-benchmark_message_add_operation_large(BenchmarkResult* result)
-{
-	_benchmark_message_add_operation(result, TRUE);
+	_benchmark_message_add_operation(run, TRUE);
 }
 
 void
 benchmark_message(void)
 {
-	j_benchmark_run("/message/new", benchmark_message_new);
-	j_benchmark_run("/message/new-append", benchmark_message_new_append);
-	j_benchmark_run("/message/add-operation-small", benchmark_message_add_operation_small);
-	j_benchmark_run("/message/add-operation-large", benchmark_message_add_operation_large);
+	j_benchmark_add("/message/new", benchmark_message_new);
+	j_benchmark_add("/message/new-append", benchmark_message_new_append);
+	j_benchmark_add("/message/add-operation-small", benchmark_message_add_operation_small);
+	j_benchmark_add("/message/add-operation-large", benchmark_message_add_operation_large);
 }
