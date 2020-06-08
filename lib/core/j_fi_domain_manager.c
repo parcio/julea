@@ -359,7 +359,10 @@ compare_domain_infos(struct fi_info* info1, struct fi_info* info2)
 	if(domain_attr1->caps != domain_attr2->caps) goto end;
 	if(domain_attr1->mode != domain_attr2->mode) goto end;
 	if(domain_attr1->auth_key_size != domain_attr2->auth_key_size) goto end;
-  if(memcmp(domain_attr1->auth_key, domain_attr2->auth_key, domain_attr1->auth_key_size) != 0) goto end;
+  if(domain_attr1->auth_key_size > 0)
+  {
+    if(memcmp(domain_attr1->auth_key, domain_attr2->auth_key, domain_attr1->auth_key_size) != 0) goto end;
+  }
 	if(domain_attr1->max_err_data != domain_attr2->max_err_data) goto end;
 	if(domain_attr1->mr_cnt != domain_attr2->mr_cnt) goto end;
 
