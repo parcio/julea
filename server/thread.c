@@ -405,10 +405,13 @@ j_thread_function(gpointer thread_data)
 
 
 void
-thread_unblock(gpointer completion_queue, gpointer user_data)
+//TODO replace workaround
+//thread_unblock(gpointer completion_queue, gpointer user_data)
+thread_unblock(struct fid_cq* completion_queue)
 {
 	int error = 0;
-	error = fi_cq_signal((struct fid_cq*) completion_queue);
+	//error = fi_cq_signal((struct fid_cq*) completion_queue);
+	error = fi_cq_signal(completion_queue);
 	if(error != 0)
 	{
 		g_critical("\nError waking up Threads\nDetails:\n %s", fi_strerror(error));

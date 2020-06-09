@@ -168,7 +168,12 @@ sig_handler(int signal)
 		else
 		{
 			g_mutex_lock(&thread_cq_array_mutex);
-			g_ptr_array_foreach(thread_cq_array, thread_unblock, NULL);
+			//TODO replace workaround
+			//g_ptr_array_foreach(thread_cq_array, thread_unblock, NULL);
+			for (guint i = 0; i < thread_cq_array->len; i++)
+			{
+				thread_unblock((struct fid_cq*) g_ptr_array_index(thread_cq_array, i));
+			}
 			g_mutex_unlock(&thread_cq_array_mutex);
 		}
 		switch(signal)
@@ -277,7 +282,6 @@ main(int argc, char** argv)
 
 	JTrace* trace;
 	GError* error = NULL;
-	g_autoptr(GMainLoop) main_loop = NULL;
 	GModule* object_module = NULL;
 	GModule* kv_module = NULL;
 	GModule* db_module = NULL;
