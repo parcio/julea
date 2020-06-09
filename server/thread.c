@@ -185,7 +185,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	}
 	else
 	{
-		g_printf("\nServer has problems with connection, no FI_CONNECTED event.\n")
+		g_printf("\nServer has problems with connection, no FI_CONNECTED event.\n");
 	}
 end:
 	return ret;
