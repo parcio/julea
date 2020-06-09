@@ -33,33 +33,31 @@
 
 #include <rdma/fi_domain.h>
 
-
 struct ThreadData
 {
-  struct fi_eq_cm_entry* event_entry;
-  JConfiguration* j_configuration;
-  struct fid_fabric* fabric;
-  GPtrArray* thread_cq_array; // for registration in waking threads
-  GMutex* thread_cq_array_mutex; // for registration in waking threads
-  volatile gboolean* server_running;
-  volatile gboolean* thread_running;
-  volatile gint* thread_count;
-  JStatistics* j_statistics;
-  GMutex* j_statistics_mutex;
-  DomainManager* domain_manager;
+	struct fi_eq_cm_entry* event_entry;
+	JConfiguration* j_configuration;
+	struct fid_fabric* fabric;
+	GPtrArray* thread_cq_array; // for registration in waking threads
+	GMutex* thread_cq_array_mutex; // for registration in waking threads
+	volatile gboolean* server_running;
+	volatile gboolean* thread_running;
+	volatile gint* thread_count;
+	JStatistics* j_statistics;
+	GMutex* j_statistics_mutex;
+	DomainManager* domain_manager;
 };
 typedef struct ThreadData ThreadData;
-
 
 G_GNUC_INTERNAL JStatistics* j_statistics;
 G_GNUC_INTERNAL GMutex* j_statistics_mutex;
 
 gpointer j_thread_function(gpointer connection_event_entry);
 G_GNUC_INTERNAL gboolean j_thread_libfabric_ress_init(struct fi_info*, RefCountedDomain**, JEndpoint**);
-G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown (struct fi_info*, RefCountedDomain*, JEndpoint*);
+G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown(struct fi_info*, RefCountedDomain*, JEndpoint*);
 //void thread_unblock(gpointer completion_queue, gpointer user_data);
 void thread_unblock(struct fid_cq* completion_queue);
 
-G_GNUC_INTERNAL gboolean jd_handle_message (JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
+G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
 
 #endif

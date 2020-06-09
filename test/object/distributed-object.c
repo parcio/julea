@@ -27,10 +27,8 @@
 
 #include <glib/gprintf.h>
 
-
-static
-void
-test_object_new_free (void)
+static void
+test_object_new_free(void)
 {
 	guint const n = 100000;
 

@@ -32,7 +32,7 @@
 static guint jd_thread_num = 0;
 
 gboolean
-jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
+jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -240,32 +240,32 @@ jd_handle_message (JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_
 				buf = j_memory_chunk_get(memory_chunk, length);
 				g_assert(buf != NULL);
 
-				error = fi_recv(endpoint->endpoint, (void*) buf, (size_t) length, NULL, 0, NULL);
-				if(error!= 0)
+				error = fi_recv(endpoint->endpoint, (void*)buf, (size_t)length, NULL, 0, NULL);
+				if (error != 0)
 				{
 					g_critical("\nError while receiving data Junks\nDetails:\n%s\n", fi_strerror((int)error));
 				}
 				error = fi_cq_sread(endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
-				if(error != 0)
+				if (error != 0)
 				{
-					if(error == -FI_EAVAIL)
+					if (error == -FI_EAVAIL)
 					{
 						error = fi_cq_readerr(endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
 						g_critical("\nError on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					}
-					else if(error == -FI_EAGAIN)
+					else if (error == -FI_EAGAIN)
 					{
 						g_critical("\nNo completion data on completion Queue reading for data junks in loop.c.\n");
 					}
-					else if(error == -FI_ECANCELED)
+					else if (error == -FI_ECANCELED)
 					{
 						g_printf("\nData Transfer canceled while receiving data junks in loop.c. Transfer not completed\n");
 					}
-					else if(error > 0)
+					else if (error > 0)
 					{
 						//g_printf("\nReceiving Data Junks directly in loop.c succeeded.\n");
 					}
-					else if(error < 0)
+					else if (error < 0)
 					{
 						g_critical("\nError reading completion Queue after reading for data njunks in loop.c.\nDetails:\n%s", fi_strerror(error));
 					}

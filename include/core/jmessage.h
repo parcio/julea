@@ -109,8 +109,8 @@ gchar const* j_message_get_string(JMessage*);
 gboolean j_message_send(JMessage*, gpointer);
 gboolean j_message_receive(JMessage*, gpointer);
 
-gboolean j_message_read (JMessage*, JEndpoint*);
-gboolean j_message_write (JMessage*, JEndpoint*);
+gboolean j_message_read(JMessage*, JEndpoint*);
+gboolean j_message_write(JMessage*, JEndpoint*);
 
 void j_message_add_send(JMessage*, gconstpointer, guint64);
 void j_message_add_operation(JMessage*, gsize);

@@ -34,7 +34,6 @@
 
 #include <glib/gprintf.h>
 
-
 /**
  * \defgroup JDistributedObject Distributed Object
  *
@@ -351,21 +350,21 @@ j_distributed_object_read_background_operation(gpointer data)
 				JEndpoint* endpoint;
 				ssize_t error;
 
-				endpoint = (JEndpoint*) object_connection;
+				endpoint = (JEndpoint*)object_connection;
 				error = 0;
 				completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 				//PERROR: this direct receive may not work
-				error = fi_recv(endpoint->endpoint, (void*) read_data, (size_t) nbytes, NULL, 0, NULL);
-				if(error!= 0)
+				error = fi_recv(endpoint->endpoint, (void*)read_data, (size_t)nbytes, NULL, 0, NULL);
+				if (error != 0)
 				{
 					g_critical("\nError while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
 					goto end;
 				}
 				error = fi_cq_sread(endpoint->completion_queue_receive, completion_queue_data, 1, NULL, -1);
-				if(error != 0)
+				if (error != 0)
 				{
-					if(error == -FI_EAVAIL)
+					if (error == -FI_EAVAIL)
 					{
 						completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
 						error = fi_cq_readerr(endpoint->completion_queue_receive, completion_queue_err_entry, 0);
@@ -373,22 +372,22 @@ j_distributed_object_read_background_operation(gpointer data)
 						free(completion_queue_err_entry);
 						goto end;
 					}
-					else if(error == -FI_EAGAIN)
+					else if (error == -FI_EAGAIN)
 					{
 						g_critical("\nNo completion data on completion Queue reading for background write operations for distributed Objects.\n");
 						goto end;
 					}
-					else if(error > 0)
+					else if (error > 0)
 					{
 						//g_printf("\nReceiving background write operation for distributed Objects succeeded.\n");
 					}
-					else if(error < 0)
+					else if (error < 0)
 					{
 						g_critical("\nError reading completion Queue after reading for background write operation for distributed Objects.\nDetails:\n%s", fi_strerror(error));
 						goto end;
 					}
 				}
-				end:
+			end:
 				free(completion_queue_data);
 			}
 

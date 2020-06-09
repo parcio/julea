@@ -91,11 +91,9 @@ static struct fi_info* j_info;
 
 static DomainManager* domain_manager;
 
-
 void
 j_connection_pool_init(JConfiguration* configuration)
 {
-
 	// Pool Init
 	J_TRACE_FUNCTION(NULL);
 
@@ -141,24 +139,24 @@ j_connection_pool_init(JConfiguration* configuration)
 
 	//inits j_info
 	error = fi_getinfo(j_configuration_get_fi_version(configuration),
-										 j_configuration_get_fi_node(configuration),
-										 j_configuration_get_fi_service(configuration),
-										 j_configuration_get_fi_flags(configuration, 0),
-										 j_configuration_fi_get_hints(configuration),
-										 &j_info);
+			   j_configuration_get_fi_node(configuration),
+			   j_configuration_get_fi_service(configuration),
+			   j_configuration_get_fi_flags(configuration, 0),
+			   j_configuration_fi_get_hints(configuration),
+			   &j_info);
 
-	if(error != 0)
+	if (error != 0)
 	{
 		goto end;
 	}
-	if(j_info == NULL)
+	if (j_info == NULL)
 	{
 		g_critical("\nAllocating Client j_info did not work");
 	}
 
 	//init fabric
 	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
-	if(error != FI_SUCCESS)
+	if (error != FI_SUCCESS)
 	{
 		g_critical("\nAllocating fabric on client side did not work\nDetails:\n %s", fi_strerror(error));
 		goto end;
@@ -166,8 +164,7 @@ j_connection_pool_init(JConfiguration* configuration)
 
 	domain_manager = domain_manager_init();
 
-	end:
-	;
+end:;
 }
 
 /**
@@ -175,7 +172,7 @@ j_connection_pool_init(JConfiguration* configuration)
 *
 */
 gboolean
-j_endpoint_shutdown_test (JEndpoint* endpoint, const gchar* location)
+j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 {
 	int error;
 	gboolean ret;
@@ -189,12 +186,12 @@ j_endpoint_shutdown_test (JEndpoint* endpoint, const gchar* location)
 
 	event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
 	error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
-	if(error != 0)
+	if (error != 0)
 	{
-		if(error == -FI_EAVAIL)
+		if (error == -FI_EAVAIL)
 		{
 			error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
-			if(error != 0)
+			if (error != 0)
 			{
 				g_critical("\nError occurred on Client while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
 			}
@@ -203,44 +200,43 @@ j_endpoint_shutdown_test (JEndpoint* endpoint, const gchar* location)
 				g_critical("\nError Message on Client, on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
-		else if(error == -FI_EAGAIN)
+		else if (error == -FI_EAGAIN)
 		{
 			ret = FALSE;
 		}
-		else if(error < 0)
+		else if (error < 0)
 		{
 			g_critical("\nError while reading event queue (%s) after reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
 		}
 	}
 	free(event_entry);
-	if(event == FI_SHUTDOWN)
+	if (event == FI_SHUTDOWN)
 	{
 		ret = TRUE;
 	}
 	return ret;
 }
 
-
 /**
 * closes the JEndpoint given and all associated objects
 *
 */
 void
-j_endpoint_fini (JEndpoint* endpoint, JMessage* message , gboolean send_shutdown_message, const gchar* location)
+j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_message, const gchar* location)
 {
 	int error = 0;
 
 	//empty wakeup message for server Thread shutdown
-	if(send_shutdown_message == TRUE)
+	if (send_shutdown_message == TRUE)
 	{
 		gboolean berror;
 		berror = j_message_send(message, endpoint);
-		if(berror == FALSE)
+		if (berror == FALSE)
 		{
 			g_critical("\nSending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
 		}
-		error = fi_shutdown(endpoint->endpoint,0);
-		if(error != 0)
+		error = fi_shutdown(endpoint->endpoint, 0);
+		if (error != 0)
 		{
 			g_critical("\nSomething went horribly wrong during %s connection shutdown.\n Details:\n %s", location, fi_strerror(error));
 			error = 0;
@@ -248,28 +244,28 @@ j_endpoint_fini (JEndpoint* endpoint, JMessage* message , gboolean send_shutdown
 	}
 
 	error = fi_close(&endpoint->endpoint->fid);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nProblem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(error));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->completion_queue_receive->fid);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nProblem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(error));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->completion_queue_transmit->fid);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nProblem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(error));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->event_queue->fid);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nProblem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(error));
 		error = 0;
@@ -305,7 +301,6 @@ j_connection_pool_fini(void)
 
 	server_shutdown_happened = FALSE;
 
-
 	if ((endpoint = g_async_queue_try_pop(pool->object_queues[0].queue)) != NULL)
 	{
 		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "object");
@@ -322,7 +317,6 @@ j_connection_pool_fini(void)
 		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "db");
 		g_async_queue_push_front(pool->db_queues[0].queue, endpoint);
 	}
-
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
@@ -361,7 +355,7 @@ j_connection_pool_fini(void)
 	error = 0;
 
 	error = fi_close(&j_fabric->fid);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nProblem closing fabric on client side.\n Details:\n %s", fi_strerror(error));
 		error = 0;
@@ -383,9 +377,8 @@ j_connection_pool_fini(void)
 * Returns first Element from respective queue or  if none found
 *
 */
-static
-gpointer
-j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* server)
+static gpointer
+j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* server)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -394,13 +387,13 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
-	start:
+start:
 	endpoint = NULL;
 	endpoint = g_async_queue_try_pop(queue);
 
 	if (endpoint != NULL)
 	{
-		if(j_endpoint_shutdown_test (endpoint, "pop") == TRUE)
+		if (j_endpoint_shutdown_test(endpoint, "pop") == TRUE)
 		{
 			g_warning("\nShutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
 			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
@@ -426,15 +419,15 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 
 			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;
 
-			if(hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), endpoint) != TRUE)
+			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), endpoint) != TRUE)
 			{
 				g_critical("\nhostname_connector could not connect Endpoint to given hostname\n");
 			}
 
 			comm_check = FALSE;
 			message = j_message_new(J_MESSAGE_PING, 0);
-			comm_check = j_message_send(message, (gpointer) endpoint);
-			if(comm_check == FALSE)
+			comm_check = j_message_send(message, (gpointer)endpoint);
+			if (comm_check == FALSE)
 			{
 				g_critical("\nInitital sending check failed on Client endpoint\n\n");
 			}
@@ -442,9 +435,9 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 			{
 				reply = j_message_new_reply(message);
 
-				comm_check = j_message_receive(reply, (gpointer) endpoint);
+				comm_check = j_message_receive(reply, (gpointer)endpoint);
 
-				if(comm_check == FALSE)
+				if (comm_check == FALSE)
 				{
 					g_critical("\nInitital receiving check failed on Client endpoint\n\n");
 				}
@@ -453,7 +446,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 					//g_printf("\nInitial check succeeded\n\n");
 				}
 			}
-
 
 			/*
 			op_count = j_message_get_count(reply);
@@ -478,7 +470,6 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				}
 			}
 			*/
-
 		}
 		else
 		{
@@ -496,9 +487,8 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 	return endpoint;
 }
 
-static
-void
-j_connection_pool_push_internal (GAsyncQueue* queue, JEndpoint* endpoint)
+static void
+j_connection_pool_push_internal(GAsyncQueue* queue, JEndpoint* endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -533,8 +523,6 @@ j_connection_pool_pop(JBackendType backend, guint index)
 	return NULL;
 }
 
-
-
 void
 j_connection_pool_push(JBackendType backend, guint index, gpointer connection)
 {
@@ -562,7 +550,6 @@ j_connection_pool_push(JBackendType backend, guint index, gpointer connection)
 	}
 }
 
-
 /**
 * makes an IPV4 lookup for the given hostname + port,
 * returns it into the addrinfo_ret structure and gives info about how many entries there are in the structure via size parameter
@@ -580,27 +567,27 @@ hostname_resolver(const char* hostname, const char* service, struct addrinfo** a
 	ret = FALSE;
 
 	error = getaddrinfo(hostname, service, hints, addrinfo_ret);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\ngetaddrinfo did not resolve hostname\n");
 		goto end;
 	}
 
-	if(* addrinfo_ret != NULL)
+	if (*addrinfo_ret != NULL)
 	{
 		uint tmp_size;
 		struct addrinfo* tmp_addr;
 
 		tmp_size = 1;
-		tmp_addr = * addrinfo_ret;
+		tmp_addr = *addrinfo_ret;
 
-		while(tmp_addr->ai_next)
+		while (tmp_addr->ai_next)
 		{
 			tmp_addr = tmp_addr->ai_next;
 			tmp_size++;
 		}
 
-		* size = tmp_size;
+		*size = tmp_size;
 		ret = TRUE;
 	}
 	else
@@ -609,11 +596,10 @@ hostname_resolver(const char* hostname, const char* service, struct addrinfo** a
 		goto end;
 	}
 
-	end:
+end:
 	freeaddrinfo(hints);
 	return ret;
 }
-
 
 /**
 * builds an libfabric endpoint + associated ressources, connects it to given hostname + port and returns said ressources JEndpoint argument
@@ -631,7 +617,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 	ret = FALSE;
 
-	if(hostname_resolver(hostname, service, &addrinfo, &size) != TRUE)
+	if (hostname_resolver(hostname, service, &addrinfo, &size) != TRUE)
 	{
 		g_critical("\nHostname was not resolved into a addrinfo representation\n");
 		goto end;
@@ -657,7 +643,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		error = 0;
 
-		if(!domain_request(j_fabric, j_info, j_connection_pool->configuration, &rc_domain, domain_manager))
+		if (!domain_request(j_fabric, j_info, j_connection_pool->configuration, &rc_domain, domain_manager))
 		{
 			g_printf("\nDomain request failed on client side.\n");
 			goto end;
@@ -665,25 +651,25 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//Allocate Endpoint and related ressources
 		error = fi_endpoint(rc_domain->domain, j_info, &tmp_ep, NULL);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem initing tmp endpoint in resolver on client. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
 		}
 		error = fi_eq_open(j_fabric, j_configuration_get_fi_eq_attr(j_connection_pool->configuration), &tmp_eq, NULL);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem opening tmp event queue in resolver on client. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
 		}
 		error = fi_cq_open(rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &tmp_cq_transmit, NULL);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem opening tmp transmit transmit completion queue on client. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
 		}
 		error = fi_cq_open(rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &tmp_cq_rcv, NULL);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem opening tmp transmit receive completion queue on client. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
@@ -691,19 +677,19 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//Bind resources to Endpoint
 		error = fi_ep_bind(tmp_ep, &tmp_eq->fid, 0);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem while binding tmp event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
 		}
 		error = fi_ep_bind(tmp_ep, &tmp_cq_rcv->fid, FI_RECV);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem while binding completion queue to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
 		}
 		error = fi_ep_bind(tmp_ep, &tmp_cq_transmit->fid, FI_TRANSMIT);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem while binding completion queue to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
@@ -711,7 +697,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//enable Endpoint
 		error = fi_enable(tmp_ep);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
 			error = 0;
@@ -719,19 +705,19 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//g_printf("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
 
-		address = (struct sockaddr_in*) addrinfo->ai_addr;
+		address = (struct sockaddr_in*)addrinfo->ai_addr;
 		//TODO change bloody ubuntu workaround ot something senseable
-		if(g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1" ) == 0)
+		if (g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1") == 0)
 		{
 			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
 		error = fi_connect(tmp_ep, address, NULL, 0);
-		if(error == -111)
+		if (error == -111)
 		{
 			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
 		}
-		else if(error != 0)
+		else if (error != 0)
 		{
 			g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address->sin_addr), fi_strerror(error));
 			error = 0;
@@ -743,7 +729,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
-			if(error != 0)
+			if (error != 0)
 			{
 				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
 				ssize_t_error = 0;
@@ -769,22 +755,22 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		error = 0;
 		error = fi_close(&tmp_ep->fid);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem closing tmp endpoint on client\nDetails:\n%s", fi_strerror(error));
 		}
 		error = fi_close(&tmp_cq_rcv->fid);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem closing tmp endpoint completion queue (receive) on client\nDetails:\n%s", fi_strerror(error));
 		}
 		error = fi_close(&tmp_cq_transmit->fid);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem closing tmp endpoint completion queue (transmit) on client\nDetails:\n%s", fi_strerror(error));
 		}
 		error = fi_close(&tmp_eq->fid);
-		if(error != 0)
+		if (error != 0)
 		{
 			g_critical("\nProblem closing tmp endpoint event queue on client\nDetails:\n%s", fi_strerror(error));
 		}
@@ -794,11 +780,10 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		addrinfo = addrinfo->ai_next;
 	}
 
-	end:
+end:
 	freeaddrinfo(addrinfo);
 	return ret;
 }
-
 
 /**
  * @}

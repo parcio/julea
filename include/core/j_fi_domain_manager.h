@@ -16,58 +16,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- #ifndef JULEA_DOMAIN_MANAGER_H
- #define JULEA_DOMAIN_MANAGER_H
+#ifndef JULEA_DOMAIN_MANAGER_H
+#define JULEA_DOMAIN_MANAGER_H
 
- #include <glib.h>
- #include <gio/gio.h>
+#include <glib.h>
+#include <gio/gio.h>
 
- #include <jstatistics.h>
- #include <jconfiguration.h>
+#include <jstatistics.h>
+#include <jconfiguration.h>
 
- #include <rdma/fi_cm.h> //connection management
- #include <rdma/fi_errno.h> //translation error numbers
+#include <rdma/fi_cm.h> //connection management
+#include <rdma/fi_errno.h> //translation error numbers
 
+// structs for domain management
+struct DomainManager
+{
+	GPtrArray* cat_list;
+	GMutex dm_mutex;
+};
+typedef struct DomainManager DomainManager;
 
- // structs for domain management
- struct DomainManager
- {
-   GPtrArray* cat_list;
-   GMutex dm_mutex;
- };
- typedef struct DomainManager DomainManager;
+struct DomainCategory
+{
+	struct fi_info* info;
+	GSList* domain_list;
+	guint ref_count;
+};
+typedef struct DomainCategory DomainCategory;
 
- struct DomainCategory
- {
- 	struct fi_info* info;
- 	GSList* domain_list;
-  guint ref_count;
- };
- typedef struct DomainCategory DomainCategory;
+struct RefCountedDomain
+{
+	struct fid_domain* domain;
+	struct fid_eq* domain_eq;
+	DomainCategory* category;
+	guint ref_count;
+};
+typedef struct RefCountedDomain RefCountedDomain;
 
- struct RefCountedDomain
- {
- 	struct fid_domain* domain;
- 	struct fid_eq* domain_eq;
-  DomainCategory* category;
- 	guint ref_count;
- };
- typedef struct RefCountedDomain RefCountedDomain;
-
-
- /**
+/**
  * domain management functions
  */
- G_GNUC_INTERNAL void domain_ref (RefCountedDomain*);
- void domain_unref (RefCountedDomain*, DomainManager*, const gchar*);
- DomainManager* domain_manager_init (void);
- void domain_manager_fini (DomainManager*);
- gboolean domain_request(struct fid_fabric*, struct fi_info* , JConfiguration*, RefCountedDomain**, DomainManager*);
- G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, DomainManager*);
- G_GNUC_INTERNAL void domain_category_ref (DomainCategory*);
- G_GNUC_INTERNAL void domain_category_unref (DomainCategory*, DomainManager*);
- G_GNUC_INTERNAL gboolean domain_new_internal (struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, RefCountedDomain**);
- G_GNUC_INTERNAL gboolean domain_category_new_internal (struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, RefCountedDomain**, DomainManager*);
- G_GNUC_INTERNAL gboolean compare_domain_infos(struct fi_info*, struct fi_info*);
+G_GNUC_INTERNAL void domain_ref(RefCountedDomain*);
+void domain_unref(RefCountedDomain*, DomainManager*, const gchar*);
+DomainManager* domain_manager_init(void);
+void domain_manager_fini(DomainManager*);
+gboolean domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, RefCountedDomain**, DomainManager*);
+G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, DomainManager*);
+G_GNUC_INTERNAL void domain_category_ref(DomainCategory*);
+G_GNUC_INTERNAL void domain_category_unref(DomainCategory*, DomainManager*);
+G_GNUC_INTERNAL gboolean domain_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, RefCountedDomain**);
+G_GNUC_INTERNAL gboolean domain_category_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, RefCountedDomain**, DomainManager*);
+G_GNUC_INTERNAL gboolean compare_domain_infos(struct fi_info*, struct fi_info*);
 
- #endif
+#endif

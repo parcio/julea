@@ -36,6 +36,6 @@ G_GNUC_INTERNAL extern JBackend* jd_object_backend;
 G_GNUC_INTERNAL extern JBackend* jd_kv_backend;
 G_GNUC_INTERNAL extern JBackend* jd_db_backend;
 
-G_GNUC_INTERNAL void sig_handler (int);
+G_GNUC_INTERNAL void sig_handler(int);
 
 #endif

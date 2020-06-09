@@ -44,7 +44,6 @@
 
 #include <glib/gprintf.h>
 
-
 /**
  * \defgroup JMessage Message
  *
@@ -175,7 +174,6 @@ struct JMessage
 	gint ref_count;
 };
 
-
 /**
  * Returns a message's length.
  *
@@ -305,7 +303,6 @@ j_message_ensure_size(JMessage* message, gsize length)
 	message->current = message->data + position;
 }
 
-
 /**
 *
 *checks whether size of the whole j_message is in the boundaries set by the maximal Message size of the used libfabric provider
@@ -313,12 +310,11 @@ j_message_ensure_size(JMessage* message, gsize length)
 *
 *\return TRUE if Message size is in boundaries, FALSE if not
 */
-static
-gboolean
+static gboolean
 j_message_fi_val_message_size(size_t max_msg_size, JMessage* message)
 {
 	gboolean ret = FALSE;
-	if( ((size_t)(sizeof(JMessageHeader) + j_message_length(message))) <= max_msg_size)
+	if (((size_t)(sizeof(JMessageHeader) + j_message_length(message))) <= max_msg_size)
 	{
 		ret = TRUE;
 	}
@@ -803,8 +799,6 @@ j_message_get_string(JMessage* message)
 	return ret;
 }
 
-
-
 /**
  * Reads a message from the network.
  *
@@ -817,14 +811,14 @@ j_message_get_string(JMessage* message)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_receive (JMessage* message, gpointer endpoint)
+j_message_receive(JMessage* message, gpointer endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	return j_message_read(message, (JEndpoint*) endpoint);
+	return j_message_read(message, (JEndpoint*)endpoint);
 }
 
 /**
@@ -839,14 +833,14 @@ j_message_receive (JMessage* message, gpointer endpoint)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_send (JMessage* message, gpointer endpoint)
+j_message_send(JMessage* message, gpointer endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	return j_message_write(message, (JEndpoint*) endpoint);
+	return j_message_write(message, (JEndpoint*)endpoint);
 }
 
 /**
@@ -861,7 +855,7 @@ j_message_send (JMessage* message, gpointer endpoint)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_read (JMessage* message, JEndpoint* j_endpoint)
+j_message_read(JMessage* message, JEndpoint* j_endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -880,7 +874,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	error = fi_recv(endpoint, (void*) &(message->header), (size_t) sizeof(JMessageHeader), NULL, 0, NULL);
+	error = fi_recv(endpoint, (void*)&(message->header), (size_t)sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
@@ -888,34 +882,32 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 	}
 
 	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, 0, -1);
-	if(error != 0)
+	if (error != 0)
 	{
-		if(error == -FI_EAVAIL)
+		if (error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
 			g_critical("\nError on completion queue while receiving Message (JMessage Header).\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
-		else if(error == -FI_EAGAIN || error == -FI_ECANCELED)
+		else if (error == -FI_EAGAIN || error == -FI_ECANCELED)
 		{
 			goto end;
 		}
-		else if(error > 0)
+		else if (error > 0)
 		{
 			//g_printf("\nMessage Header received on Completion Queue (j_message_read)\nNumber: %ld.\n", error);
 			error = 0;
 		}
-		else if(error < 0)
+		else if (error < 0)
 		{
 			g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
 			goto end;
 		}
 	}
 
-
-
 	//TODO splice the message, not just report an error
-	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
+	if (!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		g_critical("\nMessage bigger than provider max_msg_size. (receiving)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
 		goto end;
@@ -925,38 +917,36 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 	error = fi_recv(endpoint, message->data, j_message_length(message), NULL, 0, NULL);
-	if ((int) error != 0)
+	if ((int)error != 0)
 	{
 		g_critical("\nError while receiving Message.\nDetails:\n%s", fi_strerror((int)error));
 		goto end;
 	}
 	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
-	if(error != 0)
+	if (error != 0)
 	{
-		if(error == -FI_EAVAIL)
+		if (error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
 			g_critical("\nError on completion queue while receiving Message Data.\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
-		else if(error == -FI_EAGAIN)
+		else if (error == -FI_EAGAIN)
 		{
 			g_critical("\nNo completion data on completion Queue after receiving Message data. (SHOULD NOT HAPPEN, SINCE HEADER RECEIVED)\n");
 			goto end;
 		}
-		else if(error == -FI_ECANCELED)
+		else if (error == -FI_ECANCELED)
 		{
 			g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n");
 			goto end;
 		}
-		else if(error < 0)
+		else if (error < 0)
 		{
 			g_critical("\nError while reading completion queue after receiving Message data.\nDetails:\n%s", fi_strerror(error));
 			goto end;
 		}
 	}
-
-
 
 	message->current = message->data;
 
@@ -967,7 +957,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
 
 	ret = TRUE;
 
-	end:
+end:
 	return ret;
 }
 
@@ -983,7 +973,7 @@ j_message_read (JMessage* message, JEndpoint* j_endpoint)
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_write (JMessage* message, JEndpoint* j_endpoint)
+j_message_write(JMessage* message, JEndpoint* j_endpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -992,15 +982,14 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
 
-  struct fi_cq_entry completion_queue_data;
+	struct fi_cq_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 
-
 	//TODO descriptor (4th field) may needs to be set, if local machine shall be used (provider dependent)
-	error = fi_send(j_endpoint->endpoint, (void*) &(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
+	error = fi_send(j_endpoint->endpoint, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
@@ -1008,25 +997,25 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	}
 
 	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
-	if(error != 0)
+	if (error != 0)
 	{
-		if(error == -FI_EAVAIL)
+		if (error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
 			g_critical("\nError on completion Queue after sending Message (JMessage Header)\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
-		else if(error == -FI_EAGAIN)
+		else if (error == -FI_EAGAIN)
 		{
 			g_critical("\nNo completion data on completion Queue after sending Message (JMessage Header).");
 			goto end;
 		}
-		else if(error == -FI_ECANCELED)
+		else if (error == -FI_ECANCELED)
 		{
 			g_printf("\nData transfer (JMessage Header) canceled through interrupt. Last data transfer not completed\n");
 			goto end;
 		}
-		else if(error < 0)
+		else if (error < 0)
 		{
 			g_critical("\nError reading completion Queue after sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
 			goto end;
@@ -1034,15 +1023,14 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 	}
 
 	//TODO Dont report error, but split the Message
-	if(!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
+	if (!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		g_critical("\nMessage bigger than provider max_msg_size (Sending)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
 		goto end;
 	}
 
-
-	error = fi_send(j_endpoint->endpoint, message->data, (size_t) j_message_length(message), NULL, 0, NULL);
-	if(error != 0)
+	error = fi_send(j_endpoint->endpoint, message->data, (size_t)j_message_length(message), NULL, 0, NULL);
+	if (error != 0)
 	{
 		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(error));
 		goto end;
@@ -1052,25 +1040,25 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 		//g_printf("JMessage Data sending succeeded.");
 	}
 	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
-	if(error != 0)
+	if (error != 0)
 	{
-		if(error == -FI_EAVAIL)
+		if (error == -FI_EAVAIL)
 		{
 			error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
 			g_critical("\nError on completion Queue after sending Message Data\nDetails:\n%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 			goto end;
 		}
-		else if(error == -FI_EAGAIN)
+		else if (error == -FI_EAGAIN)
 		{
 			g_critical("\nNo completion data on completion Queue after sending Message Data.");
 			goto end;
 		}
-		else if(error == -FI_ECANCELED)
+		else if (error == -FI_ECANCELED)
 		{
 			g_printf("\nData transfer (Message Data) canceled via interrupt. Data Transfer not completed\n");
 			goto end;
 		}
-		else if(error < 0)
+		else if (error < 0)
 		{
 			g_critical("\nError reading completion Queue after sending Message Data.\nDetails:\n%s", fi_strerror(error));
 			goto end;
@@ -1087,7 +1075,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 			//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 			error = fi_send(j_endpoint->endpoint, message_data->data, message_data->length, NULL, 0, NULL);
-			if ((int) error != 0)
+			if ((int)error != 0)
 			{
 				g_critical("\nError while sending Message List Data.\nDetails:\n%s", fi_strerror((int)error));
 				goto end;
@@ -1097,27 +1085,26 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 				//g_printf("\nMessage List Data sent.\n");
 			}
 
-
 			error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
-			if(error != 0)
+			if (error != 0)
 			{
-				if(error == -FI_EAVAIL)
+				if (error == -FI_EAVAIL)
 				{
 					error = fi_cq_readerr(j_endpoint->completion_queue_transmit, &completion_queue_err_entry, 0);
 					g_critical("\nError on completion queue after sending Message data.\nDetails\n:%s", fi_cq_strerror(j_endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					goto end;
 				}
-				else if(error == -FI_EAGAIN)
+				else if (error == -FI_EAGAIN)
 				{
 					g_critical("\nNo completion data on completion Queue after sending Message List data.");
 					goto end;
 				}
-				else if(error == -FI_ECANCELED)
+				else if (error == -FI_ECANCELED)
 				{
 					g_printf("\nData transfer (data junk) canceled via interupt. Data transfer not completed.\n");
 					goto end;
 				}
-				else if(error < 0)
+				else if (error < 0)
 				{
 					g_critical("\nError while reading completion queue after sending Message List data.\nDetails:\n%s", fi_strerror(error));
 					goto end;
@@ -1128,7 +1115,7 @@ j_message_write (JMessage* message, JEndpoint* j_endpoint)
 
 	ret = TRUE;
 
-	end:
+end:
 	return ret;
 }
 

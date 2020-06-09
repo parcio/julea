@@ -38,11 +38,10 @@
 #include <arpa/inet.h>
 
 //signal handling
-#include<signal.h>
-#include<unistd.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include <glib/gprintf.h>
-
 
 //libfabric high level object
 static struct fid_fabric* j_fabric;
@@ -57,14 +56,12 @@ static GMutex thread_cq_array_mutex;
 
 static JConfiguration* jd_configuration;
 
-
 JStatistics* jd_statistics = NULL;
-GMutex jd_statistics_mutex[1] = {0};
+GMutex jd_statistics_mutex[1] = { 0 };
 
 JBackend* jd_object_backend = NULL;
 JBackend* jd_kv_backend = NULL;
 JBackend* jd_db_backend = NULL;
-
 
 static gboolean
 jd_daemon(void)
@@ -121,10 +118,8 @@ jd_daemon(void)
 	return TRUE;
 }
 
-
-static
-gboolean
-jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_type)
+static gboolean
+jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type)
 {
 	guint count;
 
@@ -158,10 +153,10 @@ jd_is_server_for_backend (gchar const* host, gint port, JBackendType backend_typ
 void
 sig_handler(int signal)
 {
-	if(signal == SIGHUP || signal == SIGINT || signal == SIGTERM)
+	if (signal == SIGHUP || signal == SIGINT || signal == SIGTERM)
 	{
 		j_thread_running = FALSE; //set thread running to false, thus ending thread loops
-		if((g_atomic_int_compare_and_exchange(&thread_count, 0, 0)))
+		if ((g_atomic_int_compare_and_exchange(&thread_count, 0, 0)))
 		{
 			j_server_running = FALSE; //set server running to false, thus ending server main loop if no threads detected and signal caught
 		}
@@ -172,11 +167,11 @@ sig_handler(int signal)
 			//g_ptr_array_foreach(thread_cq_array, thread_unblock, NULL);
 			for (guint i = 0; i < thread_cq_array->len; i++)
 			{
-				thread_unblock((struct fid_cq*) g_ptr_array_index(thread_cq_array, i));
+				thread_unblock((struct fid_cq*)g_ptr_array_index(thread_cq_array, i));
 			}
 			g_mutex_unlock(&thread_cq_array_mutex);
 		}
-		switch(signal)
+		switch (signal)
 		{
 			case SIGHUP:
 				g_printf("\nSIGHUP caught\n");
@@ -198,8 +193,7 @@ sig_handler(int signal)
 /inits fabric, passive endpoint and event queue for the endpoint.
 /Binds event queue to endpoint
 */
-static
-void
+static void
 j_libfabric_ress_init(struct fi_info** info, struct fid_pep** passive_ep, struct fid_eq** passive_ep_event_queue)
 {
 	int error = 0;
@@ -210,66 +204,65 @@ j_libfabric_ress_init(struct fi_info** info, struct fid_pep** passive_ep, struct
 	event_queue_attr = j_configuration_get_fi_eq_attr(jd_configuration);
 	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration));
 
-	if(hints == NULL)
+	if (hints == NULL)
 	{
 		g_critical("\nAllocating empty hints did not work\n");
 	}
 
 	//get fi_info
 	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-										 j_configuration_get_fi_node(jd_configuration),
-										 j_configuration_get_fi_service(jd_configuration),
-										 j_configuration_get_fi_flags(jd_configuration, 0),
-										 hints,
-										 info);
-	if(error != 0)
+			   j_configuration_get_fi_node(jd_configuration),
+			   j_configuration_get_fi_service(jd_configuration),
+			   j_configuration_get_fi_flags(jd_configuration, 0),
+			   hints,
+			   info);
+	if (error != 0)
 	{
 		g_critical("\nSomething went horribly wrong during server initializing info struct.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
-	if(* info == NULL)
+	if (*info == NULL)
 	{
 		g_critical("\nAllocating info struct did not work");
 	}
 	fi_freeinfo(hints);
 
 	//Init fabric
-	error = fi_fabric((* info)->fabric_attr, &j_fabric, NULL);
-	if(error != FI_SUCCESS)
+	error = fi_fabric((*info)->fabric_attr, &j_fabric, NULL);
+	if (error != FI_SUCCESS)
 	{
 		g_critical("\nSomething went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
-	if(j_fabric == NULL)
+	if (j_fabric == NULL)
 	{
 		g_critical("\nAllocating j_fabric did not work");
 	}
 
 	//build event queue for passive endpoint
 	error = fi_eq_open(j_fabric, event_queue_attr, passive_ep_event_queue, NULL);
-	if(error != 0)
+	if (error != 0)
 	{
 		g_critical("\nSomething went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
 	//build passive Endpoint
-	error = fi_passive_ep(j_fabric, * info, passive_ep, NULL);
-	if(error != 0)
+	error = fi_passive_ep(j_fabric, *info, passive_ep, NULL);
+	if (error != 0)
 	{
 		g_critical("\nSomething went horribly wrong during server-initializing libfabric ressources.\n Details:\n %s", fi_strerror(error));
 		error = 0;
 	}
 
-	error = fi_pep_bind(* passive_ep, &(* passive_ep_event_queue)->fid, 0);
-	if(error != 0)
+	error = fi_pep_bind(*passive_ep, &(*passive_ep_event_queue)->fid, 0);
+	if (error != 0)
 	{
 		g_critical("\nSomething went horribly wrong during server-initializing libfabric ressources.\nDetails:\n %s", fi_strerror(error));
 		error = 0;
 	}
 	//TODO manipulate backlog size
 }
-
 
 int
 main(int argc, char** argv)
@@ -439,7 +432,7 @@ main(int argc, char** argv)
 	domain_manager = domain_manager_init();
 
 	fi_error = fi_listen(passive_endpoint);
-	if(fi_error != 0)
+	if (fi_error != 0)
 	{
 		g_critical("\nError setting passive Endpoint to listening.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
@@ -451,12 +444,12 @@ main(int argc, char** argv)
 		event = 0;
 		event_entry = malloc(event_entry_size);
 		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
-		if(fi_error != 0)
+		if (fi_error != 0)
 		{
-			if(fi_error == -FI_EAVAIL)
+			if (fi_error == -FI_EAVAIL)
 			{
 				fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
-				if(fi_error != 0)
+				if (fi_error != 0)
 				{
 					g_critical("\nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
 					fi_error = 0;
@@ -472,7 +465,7 @@ main(int argc, char** argv)
 				fi_error = 0;
 			}
 		}
-		if(event == FI_CONNREQ)
+		if (event == FI_CONNREQ)
 		{
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data
@@ -487,32 +480,32 @@ main(int argc, char** argv)
 			thread_data->j_statistics = jd_statistics;
 			thread_data->j_statistics_mutex = &jd_statistics_mutex[0];
 			thread_data->domain_manager = domain_manager;
-			g_thread_new(NULL, *j_thread_function, (gpointer) thread_data);
+			g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
 		}
 		else
 		{
 			free(event_entry);
 		}
-	} while(j_server_running == TRUE);
+	} while (j_server_running == TRUE);
 
 	fi_freeinfo(info);
 
 	fi_error = fi_close(&passive_ep_event_queue->fid);
-	if(fi_error != 0)
+	if (fi_error != 0)
 	{
 		g_critical("\nSomething went horribly wrong closing passive Endpoint Event Queue.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
 	}
 
 	fi_error = fi_close(&passive_endpoint->fid);
-	if(fi_error != 0)
+	if (fi_error != 0)
 	{
 		g_critical("\nSomething went horribly wrong closing passive Endpoint.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
 	}
 
 	fi_error = fi_close(&j_fabric->fid);
-	if(fi_error != 0)
+	if (fi_error != 0)
 	{
 		g_critical("\nSomething went horribly wrong closing Fabric.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;

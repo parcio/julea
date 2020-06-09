@@ -33,9 +33,6 @@
 
 #include <glib/gprintf.h>
 
-
-
-
 /**
  * \defgroup JConfiguration Configuration
  *
@@ -49,36 +46,33 @@ struct JConfiguration
 {
 	struct
 	{
-		gchar** object;			/* The object servers */
-		gchar** kv;					/* The kv servers */
-		gchar** db;					/* the db servers */
-		guint32 object_len;	/* The number of object servers */
-		guint32 kv_len;			/* The number of kv servers */
-		guint32 db_len; 		/* The number of db servers */
-	}
-	servers;
+		gchar** object; /* The object servers */
+		gchar** kv; /* The kv servers */
+		gchar** db; /* the db servers */
+		guint32 object_len; /* The number of object servers */
+		guint32 kv_len; /* The number of kv servers */
+		guint32 db_len; /* The number of db servers */
+	} servers;
 
 	/**
 	 * The object configuration.
 	 */
 	struct
 	{
-		gchar* backend;		/* The backend */
-		gchar* component;	/* The component */
-		gchar* path;			/* The path */
-	}
-	object;
+		gchar* backend; /* The backend */
+		gchar* component; /* The component */
+		gchar* path; /* The path */
+	} object;
 
 	/**
 	 * The kv configuration.
 	 */
 	struct
 	{
-		gchar* backend; 	/* the backend*/
+		gchar* backend; /* the backend*/
 		gchar* component; /* the component */
-		gchar* path; 			/* the path */
-	}
-	kv;
+		gchar* path; /* the path */
+	} kv;
 
 	guint64 max_operation_size;
 	guint32 max_connections;
@@ -89,9 +83,9 @@ struct JConfiguration
 	 */
 	struct
 	{
-		gchar* backend;		/* the backend */
-		gchar* component;	/* The component. */
-		gchar* path; 			/* the path*/
+		gchar* backend; /* the backend */
+		gchar* component; /* The component. */
+		gchar* path; /* the path*/
 	} db;
 
 	/**
@@ -114,10 +108,10 @@ struct JConfiguration
 		*/
 		struct
 		{
-			gint version; 				/* libfabric versioning */
-			gchar* node; 					/* user specified target node, format specified by info addr_format field */
-			gchar* service;				/* user specified port represented as string */
-			guint64 server_flags;	/* flags for fi_getinfo */
+			gint version; /* libfabric versioning */
+			gchar* node; /* user specified target node, format specified by info addr_format field */
+			gchar* service; /* user specified port represented as string */
+			guint64 server_flags; /* flags for fi_getinfo */
 			guint64 client_flags;
 
 			/**
@@ -132,7 +126,6 @@ struct JConfiguration
 	 */
 	gint ref_count;
 };
-
 
 gboolean
 check_prov_name_validity(gchar* prov_name);
@@ -287,15 +280,14 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	int eq_size;
 	struct fi_cq_attr cq_attr;
 	int cq_size;
-	int version; 						/* libfabric versioning */
-	gchar* node; 						/* user specified target node, format specified by info addr_format field */
-	gchar* service;					/* port represented as string */
-	guint64 client_flags;		/* flags for fi_getinfo */
+	int version; /* libfabric versioning */
+	gchar* node; /* user specified target node, format specified by info addr_format field */
+	gchar* service; /* port represented as string */
+	guint64 client_flags; /* flags for fi_getinfo */
 	guint64 server_flags;
 	struct fi_info* hints;
-	gchar* prov_name;       /* user requested provider */
-	guint64 caps;						/* user requested capabilities */
-
+	gchar* prov_name; /* user requested provider */
+	guint64 caps; /* user requested capabilities */
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
@@ -320,8 +312,8 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	/**
 	* read user specified libfabric information from config-file
 	*/
-	eq_size = (size_t) g_key_file_get_uint64(key_file, "eq", "size", NULL);
-	cq_size = (size_t) g_key_file_get_uint64(key_file, "cq", "size", NULL);
+	eq_size = (size_t)g_key_file_get_uint64(key_file, "eq", "size", NULL);
+	cq_size = (size_t)g_key_file_get_uint64(key_file, "cq", "size", NULL);
 	node = g_key_file_get_string(key_file, "libfabric", "node", NULL);
 	prov_name = g_key_file_get_string(key_file, "libfabric", "provider", NULL);
 	/*
@@ -329,16 +321,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	* 13 of 22 are primary
 	* not all supported, only socket based communication supported at the moment
 	*/
-	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) |
-				 g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) |
- 				 g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) |
- 				 g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) |
- 				 g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
+	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
 
 	/**
 	* check if vital components are missing
@@ -355,10 +338,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || db_backend == NULL
 	    || db_component == NULL
 	    || db_path == NULL
-			|| cq_size < 0
-			|| eq_size < 0
-			|| !check_caps_validity(caps)
-			|| !check_prov_name_validity(prov_name))
+	    || cq_size < 0
+	    || eq_size < 0
+	    || !check_caps_validity(caps)
+	    || !check_prov_name_validity(prov_name))
 	{
 		//if failed free read components
 		g_free(db_backend);
@@ -413,7 +396,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	hints->fabric_attr->prov_name = g_strdup(prov_name);
 	hints->domain_attr->threading = FI_THREAD_SAFE;
 	hints->tx_attr->op_flags = FI_COMPLETION;
-		/**
+	/**
 	* sets values in config
 	*/
 	configuration = g_slice_new(JConfiguration);
@@ -445,7 +428,6 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->libfabric.get_info.server_flags = server_flags;
 	configuration->libfabric.get_info.client_flags = client_flags;
 	configuration->libfabric.get_info.hints = hints;
-
 
 	/**
 	* set default values for not specified values by user
@@ -486,7 +468,6 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		//g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used\n");
 		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
-
 
 	return configuration;
 }
@@ -731,7 +712,7 @@ j_configuration_get_fi_version(JConfiguration* configuration)
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return (int) configuration->libfabric.get_info.version;
+	return (int)configuration->libfabric.get_info.version;
 }
 
 char const*
@@ -765,14 +746,14 @@ j_configuration_get_fi_flags(JConfiguration* configuration, int type)
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	switch(type)
+	switch (type)
 	{
 		case 0:
-			return (uint64_t) configuration->libfabric.get_info.server_flags;
+			return (uint64_t)configuration->libfabric.get_info.server_flags;
 		case 1:
-			return (uint64_t) configuration->libfabric.get_info.client_flags;
+			return (uint64_t)configuration->libfabric.get_info.client_flags;
 		default:
-		g_assert_not_reached();
+			g_assert_not_reached();
 	}
 	return -1;
 }
@@ -787,8 +768,6 @@ j_configuration_fi_get_hints(JConfiguration* configuration)
 	return configuration->libfabric.get_info.hints;
 }
 
-
-
 gboolean
 check_prov_name_validity(gchar* prov_name)
 {
@@ -796,7 +775,7 @@ check_prov_name_validity(gchar* prov_name)
 	const gchar* available_provs[7];
 	const gchar* libfabric_provs[14];
 
-	if(prov_name == NULL)
+	if (prov_name == NULL)
 	{
 		return TRUE;
 	}
@@ -825,13 +804,13 @@ check_prov_name_validity(gchar* prov_name)
 	libfabric_provs[12] = "shm"; //added post 1.5
 	libfabric_provs[13] = "efa"; //added post 1.5
 
-	for(int n = 0; n < 14; n++)
+	for (int n = 0; n < 14; n++)
 	{
-		if(g_strcmp0(prov_name, libfabric_provs[n]) == 0)
+		if (g_strcmp0(prov_name, libfabric_provs[n]) == 0)
 		{
-			for(int i = 0; i < 7; i++)
+			for (int i = 0; i < 7; i++)
 			{
-				if(g_strcmp0(prov_name, available_provs[i]) == 0)
+				if (g_strcmp0(prov_name, available_provs[i]) == 0)
 				{
 					g_printf("Suitable Provider requested.\n");
 					ret = TRUE;
@@ -844,7 +823,7 @@ check_prov_name_validity(gchar* prov_name)
 	}
 	g_critical("\nThe requested Provider is no libfabric Provider.\n");
 
-	end:
+end:
 	return ret;
 }
 
@@ -861,45 +840,24 @@ check_caps_validity(guint64 caps)
 	uint64_t libfabric_caps;
 	uint64_t primary_caps;
 	uint64_t secondary_caps;
-	if(caps == 0)
+	if (caps == 0)
 	{
 		return TRUE;
 	}
 	ret = FALSE;
-	internal_caps = (uint64_t) caps;
-	available_caps = FI_MSG 				| /* Endpoints support sending and receiving of Messages or Datagrams */
-									 FI_SEND				|	/* Endpoints support message Data Transfers */
-									 FI_RECV				| /* Endpoints support receiving message Data Transfers */
-									 FI_LOCAL_COMM 	| /* Endpoints support local host communication */
-									 FI_REMOTE_COMM;	/* Endpoints support remote nodes */
-  primary_caps = FI_MSG 					|
-								 FI_RMA						|
-								 FI_TAGGED  			|
-								 FI_ATOMIC  			|
-								 FI_MULTICAST 		|
-								 FI_NAMED_RX_CTX 	|
-								 FI_DIRECTED_RECV |
-								 FI_READ					|
-								 FI_WRITE					|
-								 FI_RECV					|
-								 FI_SEND					|
-								 FI_REMOTE_READ		|
-								 FI_REMOTE_WRITE;
-	secondary_caps = FI_MULTI_RECV  |
-	 								 FI_SOURCE			|
-									 FI_RMA_EVENT		|
-									 FI_SHARED_AV		|
-									 FI_TRIGGER			|
-									 FI_FENCE				|
-									 FI_LOCAL_COMM	|
-									 FI_REMOTE_COMM |
-									 FI_SOURCE_ERR;
-	libfabric_caps = primary_caps 	|
-									 secondary_caps;
+	internal_caps = (uint64_t)caps;
+	available_caps = FI_MSG | /* Endpoints support sending and receiving of Messages or Datagrams */
+			 FI_SEND | /* Endpoints support message Data Transfers */
+			 FI_RECV | /* Endpoints support receiving message Data Transfers */
+			 FI_LOCAL_COMM | /* Endpoints support local host communication */
+			 FI_REMOTE_COMM; /* Endpoints support remote nodes */
+	primary_caps = FI_MSG | FI_RMA | FI_TAGGED | FI_ATOMIC | FI_MULTICAST | FI_NAMED_RX_CTX | FI_DIRECTED_RECV | FI_READ | FI_WRITE | FI_RECV | FI_SEND | FI_REMOTE_READ | FI_REMOTE_WRITE;
+	secondary_caps = FI_MULTI_RECV | FI_SOURCE | FI_RMA_EVENT | FI_SHARED_AV | FI_TRIGGER | FI_FENCE | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_SOURCE_ERR;
+	libfabric_caps = primary_caps | secondary_caps;
 
-	if((libfabric_caps & internal_caps) == internal_caps)
+	if ((libfabric_caps & internal_caps) == internal_caps)
 	{
-		if((available_caps & internal_caps) == internal_caps)
+		if ((available_caps & internal_caps) == internal_caps)
 		{
 			g_printf("Capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
 			ret = TRUE;
@@ -915,7 +873,6 @@ check_caps_validity(guint64 caps)
 	}
 	return ret;
 }
-
 
 /**
  * @}

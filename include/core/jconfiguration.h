@@ -62,7 +62,6 @@ guint64 j_configuration_get_max_operation_size(JConfiguration*);
 guint32 j_configuration_get_max_connections(JConfiguration*);
 guint64 j_configuration_get_stripe_size(JConfiguration*);
 
-
 //attr info
 struct fi_eq_attr* j_configuration_get_fi_eq_attr(JConfiguration* configuration);
 struct fi_cq_attr* j_configuration_get_fi_cq_attr(JConfiguration* configuration);
