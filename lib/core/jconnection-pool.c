@@ -746,7 +746,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 				endpoint->completion_queue_receive = tmp_cq_rcv;
 				endpoint->rc_domain = rc_domain;
 				ret = TRUE;
-				//g_printf("\nYEAH, CONNECTED EVENT ON CLIENT EVENT QUEUE\n");
+				g_printf("\nConnected event on client even queue\n");
 				free(connection_entry);
 				break;
 			}

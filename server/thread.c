@@ -141,6 +141,10 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 		g_critical("\nError occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
+	else
+	{
+		g_printf("\nServer accepted connection request\n");
+	}
 
 	event_entry = malloc(event_entry_size);
 	error = fi_eq_sread((*jendpoint)->event_queue, &event, event_entry, event_entry_size, -1, 0);
@@ -176,7 +180,12 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 
 	if (event == FI_CONNECTED)
 	{
+		g_printf("\nServer event is FI_CONNECTED\n");
 		ret = TRUE;
+	}
+	else
+	{
+		g_printf("\nServer has problems with connection, no FI_CONNECTED event.\n")
 	}
 end:
 	return ret;
