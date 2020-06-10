@@ -467,7 +467,7 @@ main(int argc, char** argv)
 		}
 		if (event == FI_CONNREQ)
 		{
-			g_printf("SERVER: FI_CONNREQ found");
+			g_printf("\nSERVER: FI_CONNREQ found");
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data
 			thread_data->event_entry = event_entry;

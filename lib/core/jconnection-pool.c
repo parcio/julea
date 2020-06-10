@@ -617,7 +617,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 	ret = FALSE;
 
-	g_printf("CLIENT: hostname connector started");
+	g_printf("\nCLIENT: hostname connector started");
 
 	if (hostname_resolver(hostname, service, &addrinfo, &size) != TRUE)
 	{
@@ -649,6 +649,14 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		{
 			g_printf("\nDomain request failed on client side.\n");
 			goto end;
+		}
+
+		address = (struct sockaddr_in*)addrinfo->ai_addr;
+		//TODO change bloody ubuntu workaround ot something senseable
+
+		if (g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1") == 0)
+		{
+			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
 		g_printf("\nCLIENT: target IP:%s\n", inet_ntoa(address->sin_addr));
@@ -709,13 +717,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		//g_printf("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
 
-		address = (struct sockaddr_in*)addrinfo->ai_addr;
-		//TODO change bloody ubuntu workaround ot something senseable
-		if (g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1") == 0)
-		{
-			inet_aton("127.0.0.1", &address->sin_addr);
-		}
-
 		error = fi_connect(tmp_ep, address, NULL, 0);
 		if (error == -111)
 		{
@@ -750,7 +751,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 				endpoint->completion_queue_receive = tmp_cq_rcv;
 				endpoint->rc_domain = rc_domain;
 				ret = TRUE;
-				g_printf("\nConnected event on client even queue\n");
+				g_printf("\nCLIENT: Connected event on client even queue");
 				free(connection_entry);
 				break;
 			}

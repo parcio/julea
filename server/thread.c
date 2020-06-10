@@ -321,7 +321,7 @@ j_thread_function(gpointer thread_data)
 
 	g_atomic_int_inc(thread_count);
 
-	g_printf("\nSERVER: Thread initiated\n");
+	g_printf("\nSERVER: Thread initiated");
 
 	if (j_thread_libfabric_ress_init(info, &rc_domain, &jendpoint) == TRUE)
 	{
