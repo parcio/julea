@@ -617,11 +617,15 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 	ret = FALSE;
 
+	g_printf("CLIENT: hostname connector started");
+
 	if (hostname_resolver(hostname, service, &addrinfo, &size) != TRUE)
 	{
 		g_critical("\nHostname was not resolved into a addrinfo representation\n");
 		goto end;
 	}
+
+	g_printf("");
 
 	connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
 
@@ -648,6 +652,8 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			g_printf("\nDomain request failed on client side.\n");
 			goto end;
 		}
+
+		g_printf("\nCLIENT: target IP:%s\n", inet_ntoa(address->sin_addr));
 
 		//Allocate Endpoint and related ressources
 		error = fi_endpoint(rc_domain->domain, j_info, &tmp_ep, NULL);

@@ -143,7 +143,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	}
 	else
 	{
-		g_printf("\nServer accepted connection request\n");
+		g_printf("\nSERVER: accepted connection\n");
 	}
 
 	event_entry = malloc(event_entry_size);
@@ -180,7 +180,6 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 
 	if (event == FI_CONNECTED)
 	{
-		g_printf("\nServer event is FI_CONNECTED\n");
 		ret = TRUE;
 	}
 	else
@@ -321,6 +320,8 @@ j_thread_function(gpointer thread_data)
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
 	g_atomic_int_inc(thread_count);
+
+	g_printf("\nSERVER: Thread initiated\n");
 
 	if (j_thread_libfabric_ress_init(info, &rc_domain, &jendpoint) == TRUE)
 	{

@@ -467,6 +467,7 @@ main(int argc, char** argv)
 		}
 		if (event == FI_CONNREQ)
 		{
+			g_printf("SERVER: FI_CONNREQ found");
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data
 			thread_data->event_entry = event_entry;
@@ -484,6 +485,7 @@ main(int argc, char** argv)
 		}
 		else
 		{
+			g_printf("\nSERVER: No connection request");
 			free(event_entry);
 		}
 	} while (j_server_running == TRUE);
@@ -554,7 +556,7 @@ main(int argc, char** argv)
 
 	j_trace_fini();
 
-	g_printf("\nServer shutdown finished.\n");
+	g_printf("\nSERVER: shutdown finished.\n");
 
 	fflush(stdout);
 
