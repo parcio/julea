@@ -730,11 +730,12 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		else
 		{
 			//check whether connection accepted
+			g_printf("\nfi_connect succeeded\n");
 			eq_event = 0;
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
-			if (error != 0)
+			if (ssize_t_error != 0) //FIX: this should not be error !=0, but ssize_t_error != 0
 			{
 				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
 				ssize_t_error = 0;
