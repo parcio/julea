@@ -625,8 +625,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		goto end;
 	}
 
-	g_printf("");
-
 	connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
 
 	for (uint i = 0; i < size; i++)
