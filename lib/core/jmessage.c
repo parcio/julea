@@ -1082,7 +1082,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 			}
 			else
 			{
-				//g_printf("\nMessage List Data sent.\n");
+				//g_debug("\nMessage List Data sent.\n");
 			}
 
 			error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);

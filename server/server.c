@@ -174,16 +174,16 @@ sig_handler(int signal)
 		switch (signal)
 		{
 			case SIGHUP:
-				g_printf("\nSIGHUP caught\n");
+				g_printf("\nSERVER: SIGHUP caught\n");
 				break;
 			case SIGINT:
-				g_printf("\nSIGINT caught\n");
+				g_printf("\nSERVER: SIGINT caught\n");
 				break;
 			case SIGTERM:
-				g_printf("\nSIGTERM caught\n");
+				g_printf("\nSERVER: SIGTERM caught\n");
 				break;
 			default:
-				g_critical("\nsignal handler broken\n");
+				g_critical("\nSERVER: signal handler broken\n");
 		}
 	}
 }
@@ -320,7 +320,7 @@ main(int argc, char** argv)
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
-	//g_printf("\n\nSERVER STARTED\n\n");
+	//g_debug("\n\nSERVER STARTED\n\n");
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
 		if (error)
@@ -467,7 +467,7 @@ main(int argc, char** argv)
 		}
 		if (event == FI_CONNREQ)
 		{
-			g_printf("\nSERVER: FI_CONNREQ found");
+			g_debug("\nSERVER: FI_CONNREQ found");
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data
 			thread_data->event_entry = event_entry;
@@ -485,7 +485,7 @@ main(int argc, char** argv)
 		}
 		else
 		{
-			//g_printf("\nSERVER: No connection request");
+			//g_debug("\nSERVER: No connection request");
 			free(event_entry);
 		}
 	} while (j_server_running == TRUE);

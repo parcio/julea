@@ -141,10 +141,6 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 		g_critical("\nError occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
 		goto end;
 	}
-	else
-	{
-		g_printf("\nSERVER: accepted connection\n");
-	}
 
 	event_entry = malloc(event_entry_size);
 	error = fi_eq_sread((*jendpoint)->event_queue, &event, event_entry, event_entry_size, -1, 0);
@@ -180,11 +176,12 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 
 	if (event == FI_CONNECTED)
 	{
+		g_debug("SERVER: Connected event on eq");
 		ret = TRUE;
 	}
 	else
 	{
-		g_printf("\nServer has problems with connection, no FI_CONNECTED event.\n");
+		g_critical("\nServer has problems with connection, no FI_CONNECTED event.\n");
 	}
 end:
 	return ret;
@@ -400,7 +397,7 @@ end:
 	if (g_atomic_int_compare_and_exchange(thread_count, 0, 0) && !(*j_thread_running))
 	{
 		*j_server_running = FALSE; //set server running to false, thus ending server main loop if shutting down
-		g_printf("\nLast Thread finished\n");
+		g_printf("\nSERVER: Last Thread finished\n");
 	}
 
 	g_thread_exit(NULL);

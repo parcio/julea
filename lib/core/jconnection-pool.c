@@ -369,7 +369,7 @@ j_connection_pool_fini(void)
 
 	g_slice_free(JConnectionPool, pool);
 
-	g_printf("\nClient shutdown finished\n");
+	g_printf("\nCLIENT: shutdown finished\n");
 }
 
 /**
@@ -443,7 +443,7 @@ start:
 				}
 				else
 				{
-					//g_printf("\nInitial check succeeded\n\n");
+					g_debug("\nInitial check succeeded\n\n");
 				}
 			}
 
@@ -617,11 +617,9 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 	ret = FALSE;
 
-	g_printf("\nCLIENT: hostname connector started");
-
 	if (hostname_resolver(hostname, service, &addrinfo, &size) != TRUE)
 	{
-		g_critical("\nHostname was not resolved into a addrinfo representation\n");
+		g_critical("\nCLIENT: Hostname was not resolved into a addrinfo representation\n");
 		goto end;
 	}
 
@@ -649,7 +647,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		if (!domain_request(j_fabric, j_info, j_connection_pool->configuration, &rc_domain, domain_manager))
 		{
-			g_printf("\nDomain request failed on client side.\n");
+			g_critical("\nDomain request failed on client side.\n");
 			goto end;
 		}
 
@@ -661,7 +659,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
-		g_printf("\nCLIENT: target IP:%s\n", inet_ntoa(address->sin_addr));
+		g_debug("\nCLIENT: target IP:%s\n", inet_ntoa(address->sin_addr));
 
 		//Allocate Endpoint and related ressources
 		error = fi_endpoint(rc_domain->domain, j_info, &tmp_ep, NULL);
@@ -717,7 +715,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			error = 0;
 		}
 
-		//g_printf("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
+		g_debug("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
 
 		error = fi_connect(tmp_ep, address, NULL, 0);
 		if (error == -111)
@@ -732,12 +730,10 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		else
 		{
 			//check whether connection accepted
-			g_printf("\nCLIENT: fi_connect succeeded\n");
 			eq_event = 0;
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
 
-			g_printf("\nCLIENT: engaged eq reading");
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
 
 			if (ssize_t_error < 0) //FIX: this should not be error !=0, but ssize_t_error != 0
@@ -787,7 +783,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 					endpoint->completion_queue_receive = tmp_cq_rcv;
 					endpoint->rc_domain = rc_domain;
 					ret = TRUE;
-					g_printf("\nCLIENT: Connected event on client even queue");
+					g_debug("\nCLIENT: Connected event on client even queue");
 					free(connection_entry);
 					break;
 				}
