@@ -444,7 +444,7 @@ main(int argc, char** argv)
 		event = 0;
 		event_entry = malloc(event_entry_size);
 		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
-		if (fi_error != 0)
+		if (fi_error < 0)
 		{
 			if (fi_error == -FI_EAVAIL)
 			{
@@ -485,7 +485,7 @@ main(int argc, char** argv)
 		}
 		else
 		{
-			g_printf("\nSERVER: No connection request");
+			//g_printf("\nSERVER: No connection request");
 			free(event_entry);
 		}
 	} while (j_server_running == TRUE);

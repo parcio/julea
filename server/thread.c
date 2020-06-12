@@ -148,7 +148,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 
 	event_entry = malloc(event_entry_size);
 	error = fi_eq_sread((*jendpoint)->event_queue, &event, event_entry, event_entry_size, -1, 0);
-	if (error != 0)
+	if (error < 0)
 	{
 		if (error == -FI_EAVAIL)
 		{
@@ -170,7 +170,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 			g_critical("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
 			goto end;
 		}
-		else if (error < 0)
+		else
 		{
 			g_critical("\nError outside Error Event on Server Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(error));
 			goto end;

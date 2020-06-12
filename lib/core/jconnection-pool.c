@@ -638,6 +638,8 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		ssize_t ssize_t_error;
 		struct sockaddr_in* address;
 
+		struct fi_eq_err_entry event_queue_err_entry;
+
 		struct fi_eq_cm_entry* connection_entry;
 		uint32_t eq_event;
 
@@ -730,31 +732,65 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		else
 		{
 			//check whether connection accepted
-			g_printf("\nfi_connect succeeded\n");
+			g_printf("\nCLIENT: fi_connect succeeded\n");
 			eq_event = 0;
 			ssize_t_error = 0;
 			connection_entry = malloc(connection_entry_length);
+
+			g_printf("\nCLIENT: engaged eq reading");
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
-			if (ssize_t_error != 0) //FIX: this should not be error !=0, but ssize_t_error != 0
+
+			if (ssize_t_error < 0) //FIX: this should not be error !=0, but ssize_t_error != 0
 			{
-				g_critical("\nClient Problem reading event queue \nDetails:\n%s", fi_strerror(ssize_t_error));
-				ssize_t_error = 0;
-			}
-			if (eq_event != FI_CONNECTED)
-			{
-				g_critical("\n\nFI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\nAfter Fix IP:%s\nBefore Fix IP:%s", FI_CONNECTED, eq_event, inet_ntoa(address->sin_addr), inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
+				if (ssize_t_error == FI_EBUSY)
+				{
+					g_critical("\nCLIENT: EQ still busy \nDetails:\n%s\nssize_t_error: %ld", fi_strerror(ssize_t_error), ssize_t_error);
+					ssize_t_error = 0;
+				}
+				else if (ssize_t_error == -FI_EAVAIL)
+				{
+					ssize_t_error = fi_eq_readerr(tmp_eq, &event_queue_err_entry, 0);
+					if (ssize_t_error != 0)
+					{
+						g_critical("\nCLIENT: Error occoured while reading tmp_eq for error message.\nDetails:\n%s", fi_strerror(ssize_t_error));
+						ssize_t_error = 0;
+						goto end;
+					}
+					else
+					{
+						g_critical("\nCLIENT: Error on tmp_eq while reading for FI_CONNECTED.\nDetails:\n%s", fi_eq_strerror(tmp_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						goto end;
+					}
+				}
+				else if (ssize_t_error == -FI_EAGAIN)
+				{
+					g_critical("\nCLIENT: No Event data on tmp_eq while reading for FI_CONNECTED.\n");
+					goto end;
+				}
+				else if (ssize_t_error < 0)
+				{
+					g_critical("\nCLIENT: Other error while reading for tmp_eq for FI_CONNECTED.\nDetails:\n%s", fi_strerror(ssize_t_error));
+					goto end;
+				}
 			}
 			else
 			{
-				endpoint->endpoint = tmp_ep;
-				endpoint->event_queue = tmp_eq;
-				endpoint->completion_queue_transmit = tmp_cq_transmit;
-				endpoint->completion_queue_receive = tmp_cq_rcv;
-				endpoint->rc_domain = rc_domain;
-				ret = TRUE;
-				g_printf("\nCLIENT: Connected event on client even queue");
-				free(connection_entry);
-				break;
+				if (eq_event != FI_CONNECTED)
+				{
+					g_critical("\nCLIENT: FI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\nAfter Fix IP:%s\nBefore Fix IP:%s", FI_CONNECTED, eq_event, inet_ntoa(address->sin_addr), inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
+				}
+				else
+				{
+					endpoint->endpoint = tmp_ep;
+					endpoint->event_queue = tmp_eq;
+					endpoint->completion_queue_transmit = tmp_cq_transmit;
+					endpoint->completion_queue_receive = tmp_cq_rcv;
+					endpoint->rc_domain = rc_domain;
+					ret = TRUE;
+					g_printf("\nCLIENT: Connected event on client even queue");
+					free(connection_entry);
+					break;
+				}
 			}
 			free(connection_entry);
 		}
