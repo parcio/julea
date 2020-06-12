@@ -153,7 +153,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 		if (error == -FI_EAVAIL)
 		{
 			error = fi_eq_readerr((*jendpoint)->event_queue, &event_queue_err_entry, 0);
-			if (error != 0)
+			if (error < 0)
 			{
 				g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
 				error = 0;
@@ -364,7 +364,7 @@ j_thread_function(gpointer thread_data)
 				if (error == -FI_EAVAIL)
 				{
 					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
-					if (error != 0)
+					if (error < 0)
 					{
 						g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
 						goto end;

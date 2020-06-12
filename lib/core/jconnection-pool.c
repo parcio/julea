@@ -191,7 +191,7 @@ j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 		if (error == -FI_EAVAIL)
 		{
 			error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
-			if (error != 0)
+			if (error < 0)
 			{
 				g_critical("\nError occurred on Client while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
 			}
@@ -750,7 +750,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 				else if (ssize_t_error == -FI_EAVAIL)
 				{
 					ssize_t_error = fi_eq_readerr(tmp_eq, &event_queue_err_entry, 0);
-					if (ssize_t_error != 0)
+					if (ssize_t_error < 0)
 					{
 						g_critical("\nCLIENT: Error occoured while reading tmp_eq for error message.\nDetails:\n%s", fi_strerror(ssize_t_error));
 						ssize_t_error = 0;

@@ -449,7 +449,7 @@ main(int argc, char** argv)
 			if (fi_error == -FI_EAVAIL)
 			{
 				fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
-				if (fi_error != 0)
+				if (fi_error < 0)
 				{
 					g_critical("\nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
 					fi_error = 0;
