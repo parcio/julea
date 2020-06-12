@@ -715,7 +715,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			error = 0;
 		}
 
-		g_debug("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(( (struct sockaddr_in* ) addrinfo->ai_addr)->sin_addr));
+		g_debug("\nAfter Resolver:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
 
 		error = fi_connect(tmp_ep, address, NULL, 0);
 		if (error == -111)
