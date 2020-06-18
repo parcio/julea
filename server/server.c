@@ -305,6 +305,7 @@ main(int argc, char** argv)
 	struct fi_eq_err_entry event_queue_err_entry;
 
 	struct ifaddrs *own_addr;
+	struct ifaddrs *first_own_addr;
 
 	ThreadData* thread_data;
 
@@ -446,6 +447,7 @@ main(int argc, char** argv)
 
 	//debug
 	fi_error = getifaddrs(&own_addr);
+	first_own_addr = own_addr;
 	if (fi_error < 0)
 	{
 		g_critical("\nSERVER: getifaddrs failed\n");
@@ -459,14 +461,17 @@ main(int argc, char** argv)
 		fflush(stdout);
 		own_addr = own_addr->ifa_next;
 	}
+	freeifaddrs(first_own_addr);
 
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
+	printf("SERVER: Main loop started."); //debug
+	fflush(stdout);
 	do
 	{
 		event = 0;
 		event_entry = malloc(event_entry_size);
-		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
+		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 10000, 0); //timeout 5th argument in ms
 		if (fi_error < 0)
 		{
 			if (fi_error == -FI_EAVAIL)
@@ -474,12 +479,12 @@ main(int argc, char** argv)
 				fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
 				if (fi_error < 0)
 				{
-					g_critical("\nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+					g_critical("\nSERVER:nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
 					fi_error = 0;
 				}
 				else
 				{
-					g_critical("\nError Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					g_critical("\nSERVER: Error Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 				}
 			}
 			else
@@ -509,8 +514,8 @@ main(int argc, char** argv)
 		}
 		else
 		{
-			//printf("\nSERVER: No connection request"); //DEBUG
-			//fflush(stdout);
+			printf("\nSERVER: No connection request"); //DEBUG
+			fflush(stdout);
 			free(event_entry);
 		}
 	} while (j_server_running == TRUE);
