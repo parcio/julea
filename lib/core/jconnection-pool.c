@@ -658,8 +658,10 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		}
 
 		error = fi_getinfo(j_configuration_get_fi_version(global_config),
-				   inet_ntoa(address->sin_addr),
-				   j_configuration_get_fi_service(global_config),
+					 NULL,
+					 //inet_ntoa(address->sin_addr),
+				   //j_configuration_get_fi_service(global_config),
+					 NULL,
 				   j_configuration_get_fi_flags(global_config, 0),
 				   j_configuration_fi_get_hints(global_config),
 				   &con_info);
