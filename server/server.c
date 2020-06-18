@@ -463,7 +463,7 @@ main(int argc, char** argv)
 	freeifaddrs(first_own_addr);
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
-	printf("SERVER: Main loop started."); //debug
+	printf("\nSERVER: Main loop started\n"); //debug
 	fflush(stdout);
 	do
 	{
@@ -493,7 +493,7 @@ main(int argc, char** argv)
 		}
 		if (event == FI_CONNREQ)
 		{
-			printf("\nSERVER: FI_CONNREQ found"); //debug
+			printf("\nSERVER: FI_CONNREQ found\n"); //debug
 			fflush(stdout);
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data

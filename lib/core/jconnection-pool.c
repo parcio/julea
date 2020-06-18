@@ -754,7 +754,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 					}
 					else if (event_queue_err_entry.prov_errno != FI_ECONNREFUSED)
 					{
-						g_critical("\nCLIENT: Error on tmp_eq while reading for FI_CONNECTED.\nDetails:\n%s", fi_eq_strerror(tmp_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						g_critical("\nCLIENT: Error on tmp_eq while reading for FI_CONNECTED.\nDetails:\n%s\nErrno: %d\nFI_ECONNREFUSED: %d\n", fi_eq_strerror(tmp_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0), event_queue_err_entry.prov_errno, FI_ECONNREFUSED);
 						goto end;
 					}
 					else
