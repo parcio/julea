@@ -141,7 +141,7 @@ j_connection_pool_init(JConfiguration* configuration)
 	//inits j_info
 	error = fi_getinfo(j_configuration_get_fi_version(configuration),
 			   //j_configuration_get_fi_node(configuration),
-				 NULL ,
+			   NULL,
 			   j_configuration_get_fi_service(configuration),
 			   j_configuration_get_fi_flags(configuration, 0),
 			   j_configuration_fi_get_hints(configuration),
@@ -658,10 +658,10 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		}
 
 		error = fi_getinfo(j_configuration_get_fi_version(global_config),
-					 NULL,
-					 //inet_ntoa(address->sin_addr),
+				   NULL,
+				   //inet_ntoa(address->sin_addr),
 				   //j_configuration_get_fi_service(global_config),
-					 NULL,
+				   NULL,
 				   j_configuration_get_fi_flags(global_config, 0),
 				   j_configuration_fi_get_hints(global_config),
 				   &con_info);
