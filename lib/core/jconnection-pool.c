@@ -753,10 +753,15 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 						ssize_t_error = 0;
 						goto end;
 					}
-					else
+					else if (event_queue_err_entry.prov_errno != FI_ECONNREFUSED)
 					{
 						g_critical("\nCLIENT: Error on tmp_eq while reading for FI_CONNECTED.\nDetails:\n%s", fi_eq_strerror(tmp_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 						goto end;
+					}
+					else
+					{
+						printf("\nCLIENT: Connection refused with %s\n", inet_ntoa(address->sin_addr));
+						fflush(stdout);
 					}
 				}
 				else if (ssize_t_error == -FI_EAGAIN)
