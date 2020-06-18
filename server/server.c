@@ -471,7 +471,7 @@ main(int argc, char** argv)
 	{
 		event = 0;
 		event_entry = malloc(event_entry_size);
-		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 10000, 0); //timeout 5th argument in ms
+		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
 		if (fi_error < 0)
 		{
 			if (fi_error == -FI_EAVAIL)
