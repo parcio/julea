@@ -752,7 +752,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 						ssize_t_error = 0;
 						goto end;
 					}
-					else if (event_queue_err_entry.prov_errno != FI_ECONNREFUSED)
+					else if (event_queue_err_entry.prov_errno != -FI_ECONNREFUSED)
 					{
 						g_critical("\nCLIENT: Error on tmp_eq while reading for FI_CONNECTED.\nDetails:\n%s\nErrno: %d\nFI_ECONNREFUSED: %d\n", fi_eq_strerror(tmp_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0), event_queue_err_entry.prov_errno, FI_ECONNREFUSED);
 						goto end;
@@ -776,7 +776,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			}
 			else
 			{
-				if (eq_event != -FI_CONNECTED)
+				if (eq_event != FI_CONNECTED)
 				{
 					g_critical("\nCLIENT: FI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\nAfter Fix IP:%s\nBefore Fix IP:%s", FI_CONNECTED, eq_event, inet_ntoa(address->sin_addr), inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
 				}
