@@ -305,6 +305,7 @@ main(int argc, char** argv)
 
 	struct ifaddrs* own_addr;
 	struct ifaddrs* first_own_addr;
+	char my_hostname[HOST_NAME_MAX + 1];
 
 	ThreadData* thread_data;
 
@@ -452,7 +453,13 @@ main(int argc, char** argv)
 		g_critical("\nSERVER: getifaddrs failed\n");
 	}
 
-	printf("\nSERVER network adresses:\n");
+	fi_error = gethostname(my_hostname, HOST_NAME_MAX + 1);
+	if (fi_error < 0)
+	{
+		g_critical("SERVER: gethostname failed");
+	}
+
+	printf("\nSERVER network adresses:\n	Hostname:%s\n", my_hostname);
 	fflush(stdout);
 	while (own_addr != NULL)
 	{
