@@ -106,7 +106,6 @@ jobs:
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
-          G_MESSAGES_DEBUG: all
         # FIXME Ubuntu 18.04's GCC sanitizer seems to produce false positives regarding a stack overflow in the db client.
         run: |
           if test "${{ matrix.compiler }}" = 'clang'

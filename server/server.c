@@ -37,6 +37,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include <ifaddrs.h>
+
+
 //signal handling
 #include <signal.h>
 #include <unistd.h>
@@ -301,6 +304,8 @@ main(int argc, char** argv)
 	struct fi_eq_cm_entry* event_entry;
 	struct fi_eq_err_entry event_queue_err_entry;
 
+	struct ifaddrs *own_addr;
+
 	ThreadData* thread_data;
 
 	DomainManager* domain_manager;
@@ -320,7 +325,8 @@ main(int argc, char** argv)
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
-	//g_debug("\n\nSERVER STARTED\n\n");
+	printf("\n\nSERVER STARTED\n\n"); //debug
+	fflush(stdout);
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
 		if (error)
@@ -438,6 +444,23 @@ main(int argc, char** argv)
 		fi_error = 0;
 	}
 
+	//debug
+	fi_error = getifaddrs(&own_addr);
+	if (fi_error < 0)
+	{
+		g_critical("\nSERVER: getifaddrs failed\n");
+	}
+
+	printf("\nSERVER network adresses:\n");
+	fflush(stdout);
+	while (own_addr != NULL)
+	{
+		printf("	Interface Name: %s\n	IP Address: %s\n\n", own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*) own_addr->ifa_addr)->sin_addr));
+		fflush(stdout);
+		own_addr = own_addr->ifa_next;
+	}
+
+
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	do
 	{
@@ -467,7 +490,8 @@ main(int argc, char** argv)
 		}
 		if (event == FI_CONNREQ)
 		{
-			g_debug("\nSERVER: FI_CONNREQ found");
+			printf("\nSERVER: FI_CONNREQ found"); //debug
+			fflush(stdout);
 			thread_data = malloc(sizeof(ThreadData) + 128);
 			//TODO put relevatn data into thread data
 			thread_data->event_entry = event_entry;
@@ -485,7 +509,8 @@ main(int argc, char** argv)
 		}
 		else
 		{
-			//g_debug("\nSERVER: No connection request");
+			//printf("\nSERVER: No connection request"); //DEBUG
+			//fflush(stdout);
 			free(event_entry);
 		}
 	} while (j_server_running == TRUE);
