@@ -776,7 +776,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			}
 			else
 			{
-				if (eq_event != FI_CONNECTED)
+				if (eq_event != -FI_CONNECTED)
 				{
 					g_critical("\nCLIENT: FI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\nAfter Fix IP:%s\nBefore Fix IP:%s", FI_CONNECTED, eq_event, inet_ntoa(address->sin_addr), inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
 				}
