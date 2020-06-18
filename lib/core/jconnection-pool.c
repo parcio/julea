@@ -660,7 +660,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
-
 		//Allocate Endpoint and related ressources
 		error = fi_endpoint(rc_domain->domain, j_info, &tmp_ep, NULL);
 		if (error != 0)

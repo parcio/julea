@@ -39,7 +39,6 @@
 
 #include <ifaddrs.h>
 
-
 //signal handling
 #include <signal.h>
 #include <unistd.h>
@@ -304,8 +303,8 @@ main(int argc, char** argv)
 	struct fi_eq_cm_entry* event_entry;
 	struct fi_eq_err_entry event_queue_err_entry;
 
-	struct ifaddrs *own_addr;
-	struct ifaddrs *first_own_addr;
+	struct ifaddrs* own_addr;
+	struct ifaddrs* first_own_addr;
 
 	ThreadData* thread_data;
 
@@ -457,12 +456,11 @@ main(int argc, char** argv)
 	fflush(stdout);
 	while (own_addr != NULL)
 	{
-		printf("	Interface Name: %s\n	IP Address: %s\n\n", own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*) own_addr->ifa_addr)->sin_addr));
+		printf("	Interface Name: %s\n	IP Address: %s\n\n", own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)own_addr->ifa_addr)->sin_addr));
 		fflush(stdout);
 		own_addr = own_addr->ifa_next;
 	}
 	freeifaddrs(first_own_addr);
-
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	printf("SERVER: Main loop started."); //debug
