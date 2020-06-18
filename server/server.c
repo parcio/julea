@@ -213,7 +213,8 @@ j_libfabric_ress_init(struct fi_info** info, struct fid_pep** passive_ep, struct
 
 	//get fi_info
 	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-			   j_configuration_get_fi_node(jd_configuration),
+			   //j_configuration_get_fi_node(jd_configuration),
+				 "127.0.0.1",
 			   j_configuration_get_fi_service(jd_configuration),
 			   j_configuration_get_fi_flags(jd_configuration, 0),
 			   hints,

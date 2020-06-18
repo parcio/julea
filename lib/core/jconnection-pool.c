@@ -86,14 +86,15 @@ static JConnectionPool* j_connection_pool = NULL;
 //libfabric high level objects
 static struct fid_fabric* j_fabric;
 
-//libfabric config structures
-static struct fi_info* j_info;
-
 static DomainManager* domain_manager;
+
+static JConfiguration* global_config;
 
 void
 j_connection_pool_init(JConfiguration* configuration)
 {
+	struct fi_info* j_info;
+
 	// Pool Init
 	J_TRACE_FUNCTION(NULL);
 
@@ -139,13 +140,14 @@ j_connection_pool_init(JConfiguration* configuration)
 
 	//inits j_info
 	error = fi_getinfo(j_configuration_get_fi_version(configuration),
-			   j_configuration_get_fi_node(configuration),
+			   //j_configuration_get_fi_node(configuration),
+				 NULL ,
 			   j_configuration_get_fi_service(configuration),
 			   j_configuration_get_fi_flags(configuration, 0),
 			   j_configuration_fi_get_hints(configuration),
 			   &j_info);
 
-	if (error != 0)
+	if (error < 0)
 	{
 		goto end;
 	}
@@ -161,6 +163,10 @@ j_connection_pool_init(JConfiguration* configuration)
 		g_critical("\nAllocating fabric on client side did not work\nDetails:\n %s", fi_strerror(error));
 		goto end;
 	}
+
+	fi_freeinfo(j_info);
+
+	global_config = configuration;
 
 	domain_manager = domain_manager_init();
 
@@ -297,8 +303,6 @@ j_connection_pool_fini(void)
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
-	fi_freeinfo(j_info);
-
 	server_shutdown_happened = FALSE;
 
 	if ((endpoint = g_async_queue_try_pop(pool->object_queues[0].queue)) != NULL)
@@ -416,8 +420,6 @@ start:
 			g_autoptr(JMessage) reply = NULL;
 
 			endpoint = malloc(sizeof(struct JEndpoint));
-
-			endpoint->max_msg_size = j_info->ep_attr->max_msg_size;
 
 			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), endpoint) != TRUE)
 			{
@@ -633,6 +635,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		struct fid_eq* tmp_eq;
 		struct fid_cq* tmp_cq_rcv;
 		struct fid_cq* tmp_cq_transmit;
+		struct fi_info* con_info;
 
 		ssize_t ssize_t_error;
 		struct sockaddr_in* address;
@@ -646,12 +649,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		error = 0;
 
-		if (!domain_request(j_fabric, j_info, j_connection_pool->configuration, &rc_domain, domain_manager))
-		{
-			g_critical("\nDomain request failed on client side.\n");
-			goto end;
-		}
-
 		address = (struct sockaddr_in*)addrinfo->ai_addr;
 		//TODO change bloody ubuntu workaround ot something senseable
 
@@ -660,8 +657,26 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
+		error = fi_getinfo(j_configuration_get_fi_version(global_config),
+				   inet_ntoa(address->sin_addr),
+				   j_configuration_get_fi_service(global_config),
+				   j_configuration_get_fi_flags(global_config, 0),
+				   j_configuration_fi_get_hints(global_config),
+				   &con_info);
+		if (error < 0)
+		{
+			g_critical("\nCLIENT: fi_getinfo on con_info failed\n");
+			goto end;
+		}
+
+		if (!domain_request(j_fabric, con_info, j_connection_pool->configuration, &rc_domain, domain_manager))
+		{
+			g_critical("\nDomain request failed on client side.\n");
+			goto end;
+		}
+
 		//Allocate Endpoint and related ressources
-		error = fi_endpoint(rc_domain->domain, j_info, &tmp_ep, NULL);
+		error = fi_endpoint(rc_domain->domain, con_info, &tmp_ep, NULL);
 		if (error != 0)
 		{
 			g_critical("\nProblem initing tmp endpoint in resolver on client. \nDetails:\n%s", fi_strerror((int)error));
@@ -787,13 +802,16 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 					endpoint->completion_queue_transmit = tmp_cq_transmit;
 					endpoint->completion_queue_receive = tmp_cq_rcv;
 					endpoint->rc_domain = rc_domain;
+					endpoint->max_msg_size = con_info->ep_attr->max_msg_size;
 					ret = TRUE;
 					printf("\nCLIENT: Connected event on client even queue\n"); //debug
 					fflush(stdout);
+					fi_freeinfo(con_info);
 					free(connection_entry);
 					break;
 				}
 			}
+			fi_freeinfo(con_info);
 			free(connection_entry);
 		}
 
