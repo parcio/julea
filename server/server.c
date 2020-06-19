@@ -576,13 +576,13 @@ main(int argc, char** argv)
 		}
 	} while (j_server_running == TRUE);
 
+	//CLosing ressources
+
 	for (guint i = 0; i < g_slist_length(passive_ep_list); i++)
 	{
 		struct PepListEntry* entry;
 
 		entry = (struct PepListEntry*)g_slist_nth_data(passive_ep_list, i);
-		//debug
-		printf("\nSERVER: shutting down %d out of %d\n", i + 1, g_slist_length(passive_ep_list));
 		fflush(stdout);
 
 		fi_error = fi_close(&entry->pep->fid);
@@ -595,14 +595,14 @@ main(int argc, char** argv)
 		free(g_slist_nth_data(passive_ep_list, i));
 	}
 
+	g_slist_free(passive_ep_list);
+
 	fi_error = fi_close(&passive_ep_event_queue->fid);
 	if (fi_error != 0)
 	{
 		g_critical("\nSERVER: Error shutting down passive event queue.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
 	}
-
-	g_slist_free(passive_ep_list);
 
 	fi_error = fi_close(&j_fabric->fid);
 	if (fi_error != 0)
