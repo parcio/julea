@@ -41,6 +41,7 @@ run_test ()
 
 	setup_init
 	setup_start
+	#valgrind --leak-check=yes gtester --verbose "$@" "$(which julea-test)" || ret=$?
 	gtester --verbose "$@" "$(which julea-test)" || ret=$?
 	setup_stop
 

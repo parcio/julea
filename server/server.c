@@ -351,6 +351,7 @@ main(int argc, char** argv)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	gboolean allow_main_loop = FALSE;
 	gboolean opt_daemon = FALSE;
 	g_autofree gchar* opt_host = NULL;
 	gint opt_port = 4711;
@@ -454,8 +455,12 @@ main(int argc, char** argv)
 	passive_ep_list = NULL;
 	if (!j_libfabric_ress_init(passive_ep_list, &info, &passive_ep_event_queue))
 	{
-		g_critical("SERVER: init of libfabric ressources did not work");
+		g_critical("\ninit of libfabric ressources did not work\n");
 		return 1;
+	}
+	else
+	{
+		allow_main_loop = TRUE;
 	}
 
 	jd_object_backend = NULL;
@@ -521,63 +526,66 @@ main(int argc, char** argv)
 	domain_manager = domain_manager_init();
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
-	printf("\nSERVER: Main loop started\n"); //debug
-	fflush(stdout);
-	do
+	if (allow_main_loop)
 	{
-		event = 0;
-		event_entry = malloc(event_entry_size);
-		fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
-		if (fi_error < 0)
+		printf("\nSERVER: Main loop started\n"); //debug
+		fflush(stdout);
+		do
 		{
-			if (fi_error == -FI_EAVAIL)
+			event = 0;
+			event_entry = malloc(event_entry_size);
+			fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
+			if (fi_error < 0)
 			{
-				fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
-				if (fi_error < 0)
+				if (fi_error == -FI_EAVAIL)
 				{
-					g_critical("\nSERVER:nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
-					fi_error = 0;
+					fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
+					if (fi_error < 0)
+					{
+						g_critical("\nSERVER:nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+						fi_error = 0;
+					}
+					else
+					{
+						g_critical("\nSERVER: Error Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					}
 				}
 				else
 				{
-					g_critical("\nSERVER: Error Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+					//g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error)); //Can happen through device busy
+					fi_error = 0;
 				}
+			}
+			if (event == FI_CONNREQ && j_server_running == TRUE)
+			{
+				printf("\nSERVER: FI_CONNREQ found\n"); //debug
+				fflush(stdout);
+				thread_data = malloc(sizeof(ThreadData) + 128);
+				//TODO put relevatn data into thread data
+				thread_data->event_entry = event_entry;
+				thread_data->j_configuration = jd_configuration;
+				thread_data->thread_cq_array = thread_cq_array;
+				thread_data->thread_cq_array_mutex = &thread_cq_array_mutex;
+				thread_data->fabric = j_fabric;
+				thread_data->server_running = &j_server_running;
+				thread_data->thread_running = &j_thread_running;
+				thread_data->thread_count = &thread_count;
+				thread_data->j_statistics = jd_statistics;
+				thread_data->j_statistics_mutex = &jd_statistics_mutex[0];
+				thread_data->domain_manager = domain_manager;
+				g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
 			}
 			else
 			{
-				//g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error)); //Can happen through device busy
-				fi_error = 0;
+				//printf("\nSERVER: No connection request"); //DEBUG
+				//fflush(stdout);
+				free(event_entry);
 			}
-		}
-		if (event == FI_CONNREQ && j_server_running == TRUE)
-		{
-			printf("\nSERVER: FI_CONNREQ found\n"); //debug
-			fflush(stdout);
-			thread_data = malloc(sizeof(ThreadData) + 128);
-			//TODO put relevatn data into thread data
-			thread_data->event_entry = event_entry;
-			thread_data->j_configuration = jd_configuration;
-			thread_data->thread_cq_array = thread_cq_array;
-			thread_data->thread_cq_array_mutex = &thread_cq_array_mutex;
-			thread_data->fabric = j_fabric;
-			thread_data->server_running = &j_server_running;
-			thread_data->thread_running = &j_thread_running;
-			thread_data->thread_count = &thread_count;
-			thread_data->j_statistics = jd_statistics;
-			thread_data->j_statistics_mutex = &jd_statistics_mutex[0];
-			thread_data->domain_manager = domain_manager;
-			g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
-		}
-		else
-		{
-			//printf("\nSERVER: No connection request"); //DEBUG
-			//fflush(stdout);
-			free(event_entry);
-		}
-	} while (j_server_running == TRUE);
+		} while (j_server_running == TRUE);
+	}
 
-	//CLosing ressources
-
+	//==CLosing ressources==
+	//	Close endpoints & associated fi_infos
 	for (guint i = 0; i < g_slist_length(passive_ep_list); i++)
 	{
 		struct PepListEntry* entry;
@@ -597,6 +605,7 @@ main(int argc, char** argv)
 
 	g_slist_free(passive_ep_list);
 
+	// close passive event queue
 	fi_error = fi_close(&passive_ep_event_queue->fid);
 	if (fi_error != 0)
 	{
@@ -604,6 +613,7 @@ main(int argc, char** argv)
 		fi_error = 0;
 	}
 
+	// close fabric
 	fi_error = fi_close(&j_fabric->fid);
 	if (fi_error != 0)
 	{
@@ -611,11 +621,14 @@ main(int argc, char** argv)
 		fi_error = 0;
 	}
 
+	// close main free info
 	fi_freeinfo(info);
 
 	domain_manager_fini(domain_manager);
 	g_ptr_array_unref(thread_cq_array);
 	g_mutex_clear(&thread_cq_array_mutex);
+
+	//close libfabric done
 
 	g_mutex_clear(jd_statistics_mutex);
 	j_statistics_free(jd_statistics);
