@@ -549,7 +549,7 @@ main(int argc, char** argv)
 				fi_error = 0;
 			}
 		}
-		if (event == FI_CONNREQ)
+		if (event == FI_CONNREQ && j_server_running == TRUE)
 		{
 			printf("\nSERVER: FI_CONNREQ found\n"); //debug
 			fflush(stdout);
