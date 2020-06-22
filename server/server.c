@@ -68,7 +68,7 @@ JBackend* jd_db_backend = NULL;
 struct PepListEntry
 {
 	struct fi_info* info;
-	struct fid_pep* pep;
+	struct fid_pep** pep;
 };
 
 static gboolean
@@ -202,7 +202,7 @@ sig_handler(int signal)
 /Binds event queue to endpoint
 */
 static gboolean
-j_libfabric_ress_init(GSList* passive_ep_list, struct fi_info** info, struct fid_eq** passive_ep_event_queue)
+j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fid_eq** passive_ep_event_queue)
 {
 	int error;
 	gboolean ret;
@@ -295,7 +295,7 @@ j_libfabric_ress_init(GSList* passive_ep_list, struct fi_info** info, struct fid
 				   j_configuration_get_fi_flags(jd_configuration, 0),
 				   hints,
 				   &tmp_info);
-		if (error != 0 && error != -61)
+		if (error != 0 && error != -61) //TODO add the error code representation
 		{
 			g_critical("\nSERVER: Error during initializing fi_info struct.\n Details:\n %s", fi_strerror(error));
 			goto end;
@@ -326,9 +326,9 @@ j_libfabric_ress_init(GSList* passive_ep_list, struct fi_info** info, struct fid
 
 			entry = malloc(sizeof(struct PepListEntry));
 			entry->info = tmp_info;
-			entry->pep = passive_ep;
+			entry->pep = &passive_ep;
 
-			passive_ep_list = g_slist_prepend(passive_ep_list, (gpointer)entry);
+			*passive_ep_list = g_slist_append(*passive_ep_list, (gpointer)entry); //TODO: does not work as intended, is not returning the wanted list, try 3 pointer model
 			//debug
 			printf("\n	Ep established for\n		Interface Name: %s\n		IP Address: %s\n", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
 			fflush(stdout);
@@ -344,6 +344,7 @@ end:
 	fi_freeinfo(hints);
 	return ret;
 	//TODO manipulate backlog size
+	//TODO if fail, remove ressources already build
 }
 
 int
@@ -452,8 +453,9 @@ main(int argc, char** argv)
 		return 1;
 	}
 
+
 	passive_ep_list = NULL;
-	if (!j_libfabric_ress_init(passive_ep_list, &info, &passive_ep_event_queue))
+	if (!j_libfabric_ress_init((&passive_ep_list), &info, &passive_ep_event_queue))
 	{
 		g_critical("\ninit of libfabric ressources did not work\n");
 		return 1;
@@ -556,10 +558,10 @@ main(int argc, char** argv)
 					fi_error = 0;
 				}
 			}
-			if (event == FI_CONNREQ && j_server_running == TRUE)
+			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
-				printf("\nSERVER: FI_CONNREQ found\n"); //debug
-				fflush(stdout);
+				printf("\nSERVER: FI_CONNREQ found\nPeP Amount: %d\n", g_slist_length(passive_ep_list)); //debug
+
 				thread_data = malloc(sizeof(ThreadData) + 128);
 				//TODO put relevatn data into thread data
 				thread_data->event_entry = event_entry;
@@ -575,6 +577,18 @@ main(int argc, char** argv)
 				thread_data->domain_manager = domain_manager;
 				g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
 			}
+			else if (event == FI_CONNREQ && !j_thread_running && j_server_running)
+			{
+				printf("\nSERVER: FI_CONNREQ during shutdown (ep threads shutting down, main loop still running)\n"); //DEBUG
+				fflush(stdout);
+
+				//fi_error = fi_reject(, event_entry->fid, NULL,0);
+				if (fi_error < 0)
+				{
+					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(fi_error));
+				}
+				free(event_entry);
+			}
 			else
 			{
 				//printf("\nSERVER: No connection request"); //DEBUG
@@ -584,28 +598,10 @@ main(int argc, char** argv)
 		} while (j_server_running == TRUE);
 	}
 
-	//==CLosing ressources==
-	//	Close endpoints & associated fi_infos
-	for (guint i = 0; i < g_slist_length(passive_ep_list); i++)
-	{
-		struct PepListEntry* entry;
-
-		entry = (struct PepListEntry*)g_slist_nth_data(passive_ep_list, i);
-		fflush(stdout);
-
-		fi_error = fi_close(&entry->pep->fid);
-		if (fi_error != 0)
-		{
-			g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", i + 1, g_slist_length(passive_ep_list), fi_strerror(fi_error));
-			fi_error = 0;
-		}
-		fi_freeinfo(entry->info);
-		free(g_slist_nth_data(passive_ep_list, i));
-	}
-
-	g_slist_free(passive_ep_list);
 
 	// close passive event queue
+	printf("\nSERVER: Close pep_eq\n"); //debug
+	fflush(stdout);
 	fi_error = fi_close(&passive_ep_event_queue->fid);
 	if (fi_error != 0)
 	{
@@ -613,7 +609,40 @@ main(int argc, char** argv)
 		fi_error = 0;
 	}
 
+
+	//==CLosing ressources==
+	//	Close endpoints & associated fi_infos
+	/*
+	for (guint i = 0; i < g_slist_length(passive_ep_list); i++)
+	{
+		struct PepListEntry* entry;
+
+		printf("\nSERVER: Finishing %d. PePListEntry\n", i + 1); //debug
+		fflush(stdout);
+
+		entry = (struct PepListEntry*)g_slist_nth_data(passive_ep_list, i);
+
+		printf("\n	close PeP\n"); //debug
+		fflush(stdout);
+		fi_error = fi_close(&(*(entry->pep))->fid);
+		if (fi_error != 0)
+		{
+			g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", i + 1, g_slist_length(passive_ep_list), fi_strerror(fi_error));
+			fi_error = 0;
+		}
+		printf("\n	close fi_info\n"); //debug
+		fflush(stdout);
+		fi_freeinfo(entry->info);
+		//free(g_slist_nth_data(passive_ep_list, i));
+	}
+	*/
+
+	g_slist_free(passive_ep_list);
+
+
 	// close fabric
+	printf("\nSERVER: Close fabric\n"); //debug
+	fflush(stdout);
 	fi_error = fi_close(&j_fabric->fid);
 	if (fi_error != 0)
 	{
@@ -622,6 +651,8 @@ main(int argc, char** argv)
 	}
 
 	// close main free info
+	printf("\nSERVER: Close info\n"); //debug
+	fflush(stdout);
 	fi_freeinfo(info);
 
 	domain_manager_fini(domain_manager);
