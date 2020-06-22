@@ -110,12 +110,12 @@ jobs:
         run: |
           if test "${{ matrix.compiler }}" = 'clang'
           then
-            meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
+            meson setup -Db_sanitize=none -Db_lundef=false bld
           elif test "${{ matrix.os }}" = 'ubuntu-18.04'
           then
             meson setup bld
           else
-            meson setup -Db_sanitize=address,undefined bld
+            meson setup -Db_sanitize=none bld
           fi
       - name: Build
         run: |
