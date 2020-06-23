@@ -563,7 +563,6 @@ main(int argc, char** argv)
 				printf("\nSERVER: FI_CONNREQ found\nPeP Amount: %d\n", g_slist_length(passive_ep_list)); //debug
 
 				thread_data = malloc(sizeof(ThreadData) + 128);
-				//TODO put relevatn data into thread data
 				thread_data->event_entry = event_entry;
 				thread_data->j_configuration = jd_configuration;
 				thread_data->thread_cq_array = thread_cq_array;
@@ -582,7 +581,7 @@ main(int argc, char** argv)
 				printf("\nSERVER: FI_CONNREQ during shutdown (ep threads shutting down, main loop still running)\n"); //DEBUG
 				fflush(stdout);
 
-				//fi_error = fi_reject(, event_entry->fid, NULL,0);
+				//fi_error = fi_reject(, event_entry->fid, NULL,0); //TODO find corresponding pep OOOR hope that hefty fixes me
 				if (fi_error < 0)
 				{
 					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(fi_error));

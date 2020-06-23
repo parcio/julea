@@ -132,5 +132,5 @@ jobs:
       - name: Tests
         run: |
           ./scripts/test.sh
-          sleep 10
+          sleep 300
           ./scripts/test.sh
