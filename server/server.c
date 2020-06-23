@@ -161,6 +161,8 @@ jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type
 void
 sig_handler(int signal)
 {
+	printf("\nSERVER: sig_handler invoked\n");
+	fflush(stdout); //debug
 	if (signal == SIGHUP || signal == SIGINT || signal == SIGTERM)
 	{
 		j_thread_running = FALSE; //set thread running to false, thus ending thread loops
@@ -390,7 +392,7 @@ main(int argc, char** argv)
 
 	GSList* passive_ep_list;
 
-	struct sigaction sig_action;
+	struct sigaction* sig_action;
 
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
@@ -426,12 +428,12 @@ main(int argc, char** argv)
 	fi_error = 0;
 	event_entry_size = sizeof(event_entry) + 128;
 
-	memset(&sig_action, 0, sizeof(struct sigaction));
-	sig_action.sa_handler = sig_handler;
+	sig_action = g_malloc(sizeof(struct sigaction));
+	sig_action->sa_handler = sig_handler;
 
-	sigaction(SIGINT, &sig_action, NULL);
-	sigaction(SIGHUP, &sig_action, NULL);
-	sigaction(SIGTERM, &sig_action, NULL);
+	sigaction(SIGINT, sig_action, NULL);
+	sigaction(SIGHUP, sig_action, NULL);
+	sigaction(SIGTERM, sig_action, NULL);
 
 	//gets a hostname if none given
 	if (opt_host == NULL)
@@ -692,6 +694,8 @@ main(int argc, char** argv)
 	{
 		g_module_close(object_module);
 	}
+
+	g_free(sig_action);
 
 	j_configuration_unref(jd_configuration);
 
