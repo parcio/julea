@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- // 頑張って！
+// 頑張って！
 
 #include <julea-config.h>
 
@@ -29,8 +29,8 @@
 
 #include "benchmark.h"
 
-#define N 524288
-#define N_GET_DIVIDER (N >> 10)
+#define N (1 << 12)
+#define N_GET_DIVIDER (N >> 8)
 #define N_PRIME 11971
 #define N_MODULUS 256
 #define CLASS_MODULUS (N >> 3)
@@ -121,9 +121,8 @@ _benchmark_db_prepare_scheme(gchar const* namespace, gboolean use_batch, gboolea
 }
 
 static void
-_benchmark_db_insert(BenchmarkResult* result, JDBSchema* scheme, gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, gboolean use_timer)
+_benchmark_db_insert(BenchmarkRun* run, JDBSchema* scheme, gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, gboolean use_timer)
 {
-    gdouble elapsed;
     gboolean ret;
     g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -138,88 +137,83 @@ _benchmark_db_insert(BenchmarkResult* result, JDBSchema* scheme, gchar const* na
     if(use_timer)
     {
         g_assert_null(scheme);
-        g_assert_nonnull(result);
+        g_assert_nonnull(run);
 
         b_scheme = _benchmark_db_prepare_scheme(namespace,use_batch,use_index_all,use_index_single,batch,delete_batch);
         g_assert_nonnull(b_scheme);
 
-        j_benchmark_timer_start();
+        j_benchmark_timer_start(run);
     }
     else
     {
         g_assert_true(use_batch);
-        g_assert_null(result);
+        g_assert_null(run);
         g_assert_nonnull(scheme);
 
         b_scheme = scheme;
     }
 
-    for(gint i = 0; i < N; i++)
-    {
-        //define N 524288
-        //define N_GET_DIVIDER (N >> 10)
-        //define N_PRIME 11971
-        //define N_MODULUS 256
-        //define CLASS_MODULUS (N >> 3)
-        //define CLASS_LIMIT (CLASS_MODULUS >> 1)
-        //define SIGNED_FACTOR N_PRIME
-        //define USIGNED_FACTOR N_PRIME
-        //define FLOAT_FACTOR (3.1415926)
-
-        gint64 i_signed = ((i * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT;
-        guint64 i_usigned = ((i * USIGNED_FACTOR) % CLASS_MODULUS);
-        gdouble i_float = i_signed * FLOAT_FACTOR;
-        g_autofree gchar* string = _benchmark_db_get_identifier(i);
-        g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
-        g_assert_null(b_s_error);
-
-        ret = j_db_entry_set_field(entry,"string",string,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
-        ret = j_db_entry_set_field(entry,"float",&i_float,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
-        ret = j_db_entry_set_field(entry,"sint",&i_signed,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
-        ret = j_db_entry_set_field(entry,"uint",&i_usigned,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
-
-        ret = j_db_entry_insert(entry,batch,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
-
-        if(!use_batch)
-        {
-            ret = j_batch_execute(batch);
-            g_assert_true(ret);
-        }
-    }
-
-    if (use_batch || !use_timer)
+    while (true)
 	{
-		ret = j_batch_execute(batch);
-		g_assert_true(ret);
-	}
+        for(gint i = 0; i < N; i++)
+        {
+            gint64 i_signed = ((i * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT;
+            guint64 i_usigned = ((i * USIGNED_FACTOR) % CLASS_MODULUS);
+            gdouble i_float = i_signed * FLOAT_FACTOR;
+            g_autofree gchar* string = _benchmark_db_get_identifier(i);
+            g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
+            g_assert_null(b_s_error);
+
+            ret = j_db_entry_set_field(entry,"string",string,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+            ret = j_db_entry_set_field(entry,"float",&i_float,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+            ret = j_db_entry_set_field(entry,"sint",&i_signed,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+            ret = j_db_entry_set_field(entry,"uint",&i_usigned,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+
+            ret = j_db_entry_insert(entry,batch,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+
+            if(!use_batch)
+            {
+                ret = j_batch_execute(batch);
+                g_assert_true(ret);
+            }
+        }
+
+        if (use_batch || !use_timer)
+	    {
+		    ret = j_batch_execute(batch);
+		    g_assert_true(ret);
+	    }
+        if(use_timer && j_benchmark_iterate(run))
+            continue;
+        else
+            break;
+    }
 
     // Reuse Insert function for other Benchmarks with use_timer flag
     if(use_timer)
     {
-        elapsed = j_benchmark_timer_elapsed();
-
-        //ret = j_batch_execute(delete_batch);
+        j_benchmark_timer_stop(run);
+        ret = j_batch_execute(delete_batch);
         g_assert_true(ret);
 
-        result->elapsed_time = elapsed;
-        result->operations = N;
+        run->operations = N;
     }
 }
 
 static void
-_benchmark_db_get_simple(BenchmarkResult* result, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
+_benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
 {
-    gdouble elapsed;
+
     gboolean ret;
     g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -234,51 +228,52 @@ _benchmark_db_get_simple(BenchmarkResult* result, gchar const* namespace, gboole
     b_scheme = _benchmark_db_prepare_scheme(namespace,false,use_index_all,use_index_single,batch,delete_batch);
     
     g_assert_nonnull(b_scheme);
-    g_assert_nonnull(result);
+    g_assert_nonnull(run);
     
     _benchmark_db_insert(NULL,b_scheme,NULL,true,false,false,false);
 
-    j_benchmark_timer_start();
+    j_benchmark_timer_start(run);
 
-    for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+    while(j_benchmark_iterate(run))
     {
-        JDBType field_type;
-        g_autofree gpointer field_value;
-        gsize field_length;
-        g_autoptr(JDBIterator) iterator;
-        g_autofree gchar* string = _benchmark_db_get_identifier(i);
-        g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
+        for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+        {
+            JDBType field_type;
+            g_autofree gpointer field_value;
+            gsize field_length;
+            g_autoptr(JDBIterator) iterator;
+            g_autofree gchar* string = _benchmark_db_get_identifier(i);
+            g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
 
-        ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        iterator = j_db_iterator_new(b_scheme,selector,&b_s_error);
-        g_assert_nonnull(iterator);
-        g_assert_null(b_s_error);
+            iterator = j_db_iterator_new(b_scheme,selector,&b_s_error);
+            g_assert_nonnull(iterator);
+            g_assert_null(b_s_error);
 
-        ret = j_db_iterator_next(iterator,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_iterator_next(iterator,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        ret = j_db_iterator_get_field(iterator,"string",&field_type,&field_value,&field_length,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_iterator_get_field(iterator,"string",&field_type,&field_value,&field_length,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
+        }
     }
 
-    elapsed = j_benchmark_timer_elapsed();
+    j_benchmark_timer_stop(run);
 
     ret = j_batch_execute(delete_batch);
     g_assert_true(ret);
-
-    result->elapsed_time = elapsed;
-    result->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
+    run->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
 }
 
 static void
-_benchmark_db_get_range(BenchmarkResult* result, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
+_benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
 {
-    gdouble elapsed;
+
     gboolean ret;
     g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -293,12 +288,13 @@ _benchmark_db_get_range(BenchmarkResult* result, gchar const* namespace, gboolea
     b_scheme = _benchmark_db_prepare_scheme(namespace,false,use_index_all,use_index_single,batch,delete_batch);
     
     g_assert_nonnull(b_scheme);
-    g_assert_nonnull(result);
+    g_assert_nonnull(run);
     
     _benchmark_db_insert(NULL,b_scheme,NULL,true,false,false,false);
 
-    j_benchmark_timer_start();
+    j_benchmark_timer_start(run);
 
+    while(j_benchmark_iterate(run))
     for(gint i = 0; i < N_GET_DIVIDER; i++)
     {
         JDBType field_type;
@@ -332,19 +328,18 @@ _benchmark_db_get_range(BenchmarkResult* result, gchar const* namespace, gboolea
         g_assert_null(b_s_error);
     }
 
-    elapsed = j_benchmark_timer_elapsed();
+    j_benchmark_timer_stop(run);
 
     ret = j_batch_execute(delete_batch);
     g_assert_true(ret);
 
-    result->elapsed_time = elapsed;
-    result->operations = N_GET_DIVIDER;
+    run->operations = N_GET_DIVIDER;
 }
 
 static void
-_benchmark_db_delete(BenchmarkResult* result, gchar const* namespace,gboolean use_batch, gboolean use_index_all, gboolean use_index_single)
+_benchmark_db_delete(BenchmarkRun* run, gchar const* namespace,gboolean use_batch, gboolean use_index_all, gboolean use_index_single)
 {
-    gdouble elapsed;
+
     gboolean ret;
     g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -359,52 +354,53 @@ _benchmark_db_delete(BenchmarkResult* result, gchar const* namespace,gboolean us
     b_scheme = _benchmark_db_prepare_scheme(namespace,false,use_index_all,use_index_single,batch,delete_batch);
     
     g_assert_nonnull(b_scheme);
-    g_assert_nonnull(result);
+    g_assert_nonnull(run);
     
     _benchmark_db_insert(NULL,b_scheme,NULL,true,false,false,false);
 
-    j_benchmark_timer_start();
+    j_benchmark_timer_start(run);
 
-    for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+    while(j_benchmark_iterate(run))
     {
-        g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
-        g_autofree gchar* string = _benchmark_db_get_identifier(i);
-        g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
+        for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+        {
+            g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
+            g_autofree gchar* string = _benchmark_db_get_identifier(i);
+            g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
 
-        ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        ret = j_db_entry_delete(entry,selector,batch,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_entry_delete(entry,selector,batch,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        if(!use_batch)
+            if(!use_batch)
+            {
+                ret = j_batch_execute(batch);
+                g_assert_true(ret);
+            }
+        }
+
+        if (use_batch)
         {
             ret = j_batch_execute(batch);
             g_assert_true(ret);
         }
     }
-
-    if (use_batch)
-	{
-		ret = j_batch_execute(batch);
-		g_assert_true(ret);
-	}
-
-    elapsed = j_benchmark_timer_elapsed();
+    j_benchmark_timer_stop(run);
 
     ret = j_batch_execute(delete_batch);
     g_assert_true(ret);
 
-    result->elapsed_time = elapsed;
-    result->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
+    run->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
 }
 
 static void
-_benchmark_db_update(BenchmarkResult* result, gchar const* namespace,gboolean use_batch, gboolean use_index_all, gboolean use_index_single)
+_benchmark_db_update(BenchmarkRun* run, gchar const* namespace,gboolean use_batch, gboolean use_index_all, gboolean use_index_single)
 {
-    gdouble elapsed;
+
     gboolean ret;
     g_autoptr(JBatch) delete_batch = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -419,280 +415,280 @@ _benchmark_db_update(BenchmarkResult* result, gchar const* namespace,gboolean us
     b_scheme = _benchmark_db_prepare_scheme(namespace,false,use_index_all,use_index_single,batch,delete_batch);
     
     g_assert_nonnull(b_scheme);
-    g_assert_nonnull(result);
+    g_assert_nonnull(run);
     
     _benchmark_db_insert(NULL,b_scheme,NULL,true,false,false,false);
 
-    j_benchmark_timer_start();
+    j_benchmark_timer_start(run);
 
-    for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+    while(j_benchmark_iterate(run))
     {
-        gint64 i_signed = (((i+ N_PRIME) * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT;        
-        g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
-        g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
-        g_autofree gchar* string = _benchmark_db_get_identifier(i);
+        for(gint i = 0; i < ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) ); i++)
+        {
+            gint64 i_signed = (((i+ N_PRIME) * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT;        
+            g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme,J_DB_SELECTOR_MODE_AND,&b_s_error);
+            g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme,&b_s_error);
+            g_autofree gchar* string = _benchmark_db_get_identifier(i);
 
-        g_assert_null(b_s_error);
+            g_assert_null(b_s_error);
 
-        ret = j_db_entry_set_field(entry,"sint",&i_signed,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_entry_set_field(entry,"sint",&i_signed,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_selector_add_field(selector,"string",J_DB_SELECTOR_OPERATOR_EQ,string,0,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        ret = j_db_entry_update(entry,selector,batch,&b_s_error);
-        g_assert_true(ret);
-        g_assert_null(b_s_error);
+            ret = j_db_entry_update(entry,selector,batch,&b_s_error);
+            g_assert_true(ret);
+            g_assert_null(b_s_error);
 
-        if(!use_batch)
+            if(!use_batch)
+            {
+                ret = j_batch_execute(batch);
+                g_assert_true(ret);
+            }
+        }
+        if (use_batch)
         {
             ret = j_batch_execute(batch);
             g_assert_true(ret);
         }
     }
-
-    if (use_batch)
-	{
-		ret = j_batch_execute(batch);
-		g_assert_true(ret);
-	}
-
-    elapsed = j_benchmark_timer_elapsed();
+    j_benchmark_timer_stop(run);
 
     ret = j_batch_execute(delete_batch);
     g_assert_true(ret);
 
-    result->elapsed_time = elapsed;
-    result->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
+    run->operations = ( (use_index_all || use_index_single) ? N : ( N / N_GET_DIVIDER) );
 }
 
 static void
-benchmark_db_insert(BenchmarkResult* result)
+benchmark_db_insert(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert",false,false,false,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert",false,false,false,true);
 }
 
 static void
-benchmark_db_insert_batch(BenchmarkResult* result)
+benchmark_db_insert_batch(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_batch",true,false,false,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_batch",true,false,false,true);
 }
 
 static void
-benchmark_db_insert_index_single(BenchmarkResult* result)
+benchmark_db_insert_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_index_single",false,false,true,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_index_single",false,false,true,true);
 }
 
 static void
-benchmark_db_insert_batch_index_single(BenchmarkResult* result)
+benchmark_db_insert_batch_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_batch_index_single",true,false,true,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_batch_index_single",true,false,true,true);
 }
 
 static void
-benchmark_db_insert_index_all(BenchmarkResult* result)
+benchmark_db_insert_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_index_all",false,true,false,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_index_all",false,true,false,true);
 }
 
 static void
-benchmark_db_insert_batch_index_all(BenchmarkResult* result)
+benchmark_db_insert_batch_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_batch_index_all",true,true,false,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_batch_index_all",true,true,false,true);
 }
 
 static void
-benchmark_db_insert_index_mixed(BenchmarkResult* result)
+benchmark_db_insert_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_index_mixed",false,true,true,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_index_mixed",false,true,true,true);
 }
 
 static void
-benchmark_db_insert_batch_index_mixed(BenchmarkResult* result)
+benchmark_db_insert_batch_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_insert(result,NULL,"benchmark_insert_batch_index_mixed",true,true,true,true);
+    _benchmark_db_insert(run,NULL,"benchmark_insert_batch_index_mixed",true,true,true,true);
 }
 
 static void
-benchmark_db_get_simple(BenchmarkResult* result)
+benchmark_db_get_simple(BenchmarkRun* run)
 {
-    _benchmark_db_get_simple(result,"benchmark_get_simple",false,false);
+    _benchmark_db_get_simple(run,"benchmark_get_simple",false,false);
 }
 
 static void
-benchmark_db_get_simple_index_single(BenchmarkResult* result)
+benchmark_db_get_simple_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_get_simple(result,"benchmark_get_simple_index_single",false,true);
+    _benchmark_db_get_simple(run,"benchmark_get_simple_index_single",false,true);
 }
 
 static void
-benchmark_db_get_simple_index_all(BenchmarkResult* result)
+benchmark_db_get_simple_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_get_simple(result,"benchmark_get_simple_index_all",true,false);
+    _benchmark_db_get_simple(run,"benchmark_get_simple_index_all",true,false);
 }
 
 static void
-benchmark_db_get_simple_index_mixed(BenchmarkResult* result)
+benchmark_db_get_simple_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_get_simple(result,"benchmark_get_simple_index_mixed",true,true);
+    _benchmark_db_get_simple(run,"benchmark_get_simple_index_mixed",true,true);
 }
 
 static void
-benchmark_db_get_range(BenchmarkResult* result)
+benchmark_db_get_range(BenchmarkRun* run)
 {
-    _benchmark_db_get_range(result,"benchmark_get_range",false,false);
+    _benchmark_db_get_range(run,"benchmark_get_range",false,false);
 }
 
 static void
-benchmark_db_get_range_index_single(BenchmarkResult* result)
+benchmark_db_get_range_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_get_range(result,"benchmark_get_range_index_single",false,true);
+    _benchmark_db_get_range(run,"benchmark_get_range_index_single",false,true);
 }
 
 static void
-benchmark_db_get_range_index_all(BenchmarkResult* result)
+benchmark_db_get_range_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_get_range(result,"benchmark_get_range_index_all",true,false);
+    _benchmark_db_get_range(run,"benchmark_get_range_index_all",true,false);
 }
 
 static void
-benchmark_db_get_range_index_mixed(BenchmarkResult* result)
+benchmark_db_get_range_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_get_range(result,"benchmark_get_range_index_mixed",true,true);
+    _benchmark_db_get_range(run,"benchmark_get_range_index_mixed",true,true);
 }
 
 static void
-benchmark_db_delete(BenchmarkResult* result)
+benchmark_db_delete(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete",false,false,false);
+    _benchmark_db_delete(run,"benchmark_delete",false,false,false);
 }
 
 static void
-benchmark_db_delete_batch(BenchmarkResult* result)
+benchmark_db_delete_batch(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_batch",true,false,false);
+    _benchmark_db_delete(run,"benchmark_delete_batch",true,false,false);
 }
 
 static void
-benchmark_db_delete_index_single(BenchmarkResult* result)
+benchmark_db_delete_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_index_single",false,false,true);
+    _benchmark_db_delete(run,"benchmark_delete_index_single",false,false,true);
 }
 
 static void
-benchmark_db_delete_batch_index_single(BenchmarkResult* result)
+benchmark_db_delete_batch_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_batch_index_single",true,false,true);
+    _benchmark_db_delete(run,"benchmark_delete_batch_index_single",true,false,true);
 }
 
 static void
-benchmark_db_delete_index_all(BenchmarkResult* result)
+benchmark_db_delete_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_index_all",false,true,false);
+    _benchmark_db_delete(run,"benchmark_delete_index_all",false,true,false);
 }
 
 static void
-benchmark_db_delete_batch_index_all(BenchmarkResult* result)
+benchmark_db_delete_batch_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_batch_index_all",true,true,false);
+    _benchmark_db_delete(run,"benchmark_delete_batch_index_all",true,true,false);
 }
 
 static void
-benchmark_db_delete_index_mixed(BenchmarkResult* result)
+benchmark_db_delete_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_index_mixed",false,true,true);
+    _benchmark_db_delete(run,"benchmark_delete_index_mixed",false,true,true);
 }
 
 static void
-benchmark_db_delete_batch_index_mixed(BenchmarkResult* result)
+benchmark_db_delete_batch_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_delete(result,"benchmark_delete_batch_index_mixed",true,true,true);
+    _benchmark_db_delete(run,"benchmark_delete_batch_index_mixed",true,true,true);
 }
 
 static void
-benchmark_db_update(BenchmarkResult* result)
+benchmark_db_update(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update",false,false,false);
+    _benchmark_db_update(run,"benchmark_update",false,false,false);
 }
 
 static void
-benchmark_db_update_batch(BenchmarkResult* result)
+benchmark_db_update_batch(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_batch",true,false,false);
+    _benchmark_db_update(run,"benchmark_update_batch",true,false,false);
 }
 
 static void
-benchmark_db_update_index_single(BenchmarkResult* result)
+benchmark_db_update_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_index_single",false,false,true);
+    _benchmark_db_update(run,"benchmark_update_index_single",false,false,true);
 }
 
 static void
-benchmark_db_update_batch_index_single(BenchmarkResult* result)
+benchmark_db_update_batch_index_single(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_batch_index_single",true,false,true);
+    _benchmark_db_update(run,"benchmark_update_batch_index_single",true,false,true);
 }
 
 static void
-benchmark_db_update_index_all(BenchmarkResult* result)
+benchmark_db_update_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_index_all",false,true,false);
+    _benchmark_db_update(run,"benchmark_update_index_all",false,true,false);
 }
 
 static void
-benchmark_db_update_batch_index_all(BenchmarkResult* result)
+benchmark_db_update_batch_index_all(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_batch_index_all",true,true,false);
+    _benchmark_db_update(run,"benchmark_update_batch_index_all",true,true,false);
 }
 
 static void
-benchmark_db_update_index_mixed(BenchmarkResult* result)
+benchmark_db_update_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_index_mixed",false,true,true);
+    _benchmark_db_update(run,"benchmark_update_index_mixed",false,true,true);
 }
 
 static void
-benchmark_db_update_batch_index_mixed(BenchmarkResult* result)
+benchmark_db_update_batch_index_mixed(BenchmarkRun* run)
 {
-    _benchmark_db_update(result,"benchmark_update_batch_index_mixed",true,true,true);
+    _benchmark_db_update(run,"benchmark_update_batch_index_mixed",true,true,true);
 }
 
 void
 benchmark_db(void)
 {
-	j_benchmark_run("/db/insert", benchmark_db_insert);
-    j_benchmark_run("/db/insert-batch", benchmark_db_insert_batch);
-    j_benchmark_run("/db/insert-index-single", benchmark_db_insert_index_single);
-    j_benchmark_run("/db/insert-batch-index-single", benchmark_db_insert_batch_index_single);
-    j_benchmark_run("/db/insert-index-all", benchmark_db_insert_index_all);
-    j_benchmark_run("/db/insert-batch-index-all", benchmark_db_insert_batch_index_all);
-    j_benchmark_run("/db/insert-index-mixed", benchmark_db_insert_index_mixed);
-    j_benchmark_run("/db/insert-batch-index-mixed", benchmark_db_insert_batch_index_mixed);
-    j_benchmark_run("/db/get-simple", benchmark_db_get_simple);
-    j_benchmark_run("/db/get-simple-index-single", benchmark_db_get_simple_index_single);
-    j_benchmark_run("/db/get-simple-index-all", benchmark_db_get_simple_index_all);
-    j_benchmark_run("/db/get-simple-index-mixed", benchmark_db_get_simple_index_mixed);
-    j_benchmark_run("/db/get-range", benchmark_db_get_range);
-    j_benchmark_run("/db/get-range-index-single", benchmark_db_get_range_index_single);
-    j_benchmark_run("/db/get-range-index-all", benchmark_db_get_range_index_all);
-    j_benchmark_run("/db/get-range-index-mixed", benchmark_db_get_range_index_mixed);
-    j_benchmark_run("/db/delete", benchmark_db_delete);
-    j_benchmark_run("/db/delete-batch", benchmark_db_delete_batch);
-    j_benchmark_run("/db/delete-index-single", benchmark_db_delete_index_single);
-    j_benchmark_run("/db/delete-batch-index-single", benchmark_db_delete_batch_index_single);
-    j_benchmark_run("/db/delete-index-all", benchmark_db_delete_index_all);
-    j_benchmark_run("/db/delete-batch-index-all", benchmark_db_delete_batch_index_all);
-    j_benchmark_run("/db/delete-index-mixed", benchmark_db_delete_index_mixed);
-    j_benchmark_run("/db/delete-batch-index-mixed", benchmark_db_delete_batch_index_mixed);
-    j_benchmark_run("/db/update", benchmark_db_update);
-    j_benchmark_run("/db/update-batch", benchmark_db_update_batch);
-    j_benchmark_run("/db/update-index-single", benchmark_db_update_index_single);
-    j_benchmark_run("/db/update-batch-index-single", benchmark_db_update_batch_index_single);
-    j_benchmark_run("/db/update-index-all", benchmark_db_update_index_all);
-    j_benchmark_run("/db/update-batch-index-all", benchmark_db_update_batch_index_all);
-    j_benchmark_run("/db/update-index-mixed", benchmark_db_update_index_mixed);
-    j_benchmark_run("/db/update-batch-index-mixed", benchmark_db_update_batch_index_mixed);
+	j_benchmark_add("/db/insert", benchmark_db_insert);
+    j_benchmark_add("/db/insert-batch", benchmark_db_insert_batch);
+    j_benchmark_add("/db/insert-index-single", benchmark_db_insert_index_single);
+    j_benchmark_add("/db/insert-batch-index-single", benchmark_db_insert_batch_index_single);
+    j_benchmark_add("/db/insert-index-all", benchmark_db_insert_index_all);
+    j_benchmark_add("/db/insert-batch-index-all", benchmark_db_insert_batch_index_all);
+    j_benchmark_add("/db/insert-index-mixed", benchmark_db_insert_index_mixed);
+    j_benchmark_add("/db/insert-batch-index-mixed", benchmark_db_insert_batch_index_mixed);
+    j_benchmark_add("/db/get-simple", benchmark_db_get_simple);
+    j_benchmark_add("/db/get-simple-index-single", benchmark_db_get_simple_index_single);
+    j_benchmark_add("/db/get-simple-index-all", benchmark_db_get_simple_index_all);
+    j_benchmark_add("/db/get-simple-index-mixed", benchmark_db_get_simple_index_mixed);
+    j_benchmark_add("/db/get-range", benchmark_db_get_range);
+    j_benchmark_add("/db/get-range-index-single", benchmark_db_get_range_index_single);
+    j_benchmark_add("/db/get-range-index-all", benchmark_db_get_range_index_all);
+    j_benchmark_add("/db/get-range-index-mixed", benchmark_db_get_range_index_mixed);
+    j_benchmark_add("/db/delete", benchmark_db_delete);
+    j_benchmark_add("/db/delete-batch", benchmark_db_delete_batch);
+    j_benchmark_add("/db/delete-index-single", benchmark_db_delete_index_single);
+    j_benchmark_add("/db/delete-batch-index-single", benchmark_db_delete_batch_index_single);
+    j_benchmark_add("/db/delete-index-all", benchmark_db_delete_index_all);
+    j_benchmark_add("/db/delete-batch-index-all", benchmark_db_delete_batch_index_all);
+    j_benchmark_add("/db/delete-index-mixed", benchmark_db_delete_index_mixed);
+    j_benchmark_add("/db/delete-batch-index-mixed", benchmark_db_delete_batch_index_mixed);
+    j_benchmark_add("/db/update", benchmark_db_update);
+    j_benchmark_add("/db/update-batch", benchmark_db_update_batch);
+    j_benchmark_add("/db/update-index-single", benchmark_db_update_index_single);
+    j_benchmark_add("/db/update-batch-index-single", benchmark_db_update_batch_index_single);
+    j_benchmark_add("/db/update-index-all", benchmark_db_update_index_all);
+    j_benchmark_add("/db/update-batch-index-all", benchmark_db_update_batch_index_all);
+    j_benchmark_add("/db/update-index-mixed", benchmark_db_update_index_mixed);
+    j_benchmark_add("/db/update-batch-index-mixed", benchmark_db_update_batch_index_mixed);
 }
