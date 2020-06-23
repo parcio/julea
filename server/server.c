@@ -455,7 +455,6 @@ main(int argc, char** argv)
 		return 1;
 	}
 
-
 	passive_ep_list = NULL;
 	if (!j_libfabric_ress_init((&passive_ep_list), &info, &passive_ep_event_queue))
 	{
@@ -599,7 +598,6 @@ main(int argc, char** argv)
 		} while (j_server_running == TRUE);
 	}
 
-
 	// close passive event queue
 	printf("\nSERVER: Close pep_eq\n"); //debug
 	fflush(stdout);
@@ -609,7 +607,6 @@ main(int argc, char** argv)
 		g_critical("\nSERVER: Error shutting down passive event queue.\n Details:\n %s", fi_strerror(fi_error));
 		fi_error = 0;
 	}
-
 
 	//==CLosing ressources==
 	//	Close endpoints & associated fi_infos
@@ -639,7 +636,6 @@ main(int argc, char** argv)
 	*/
 
 	g_slist_free(passive_ep_list);
-
 
 	// close fabric
 	printf("\nSERVER: Close fabric\n"); //debug
