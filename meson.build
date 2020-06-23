@@ -476,6 +476,7 @@ julea_benchmark_srcs = files([
 	'benchmark/benchmark.c',
 	'benchmark/cache.c',
 	'benchmark/db/schema.c',
+	'benchmark/db/db.c',
 	'benchmark/hdf5/dai.c',
 	'benchmark/hdf5/hdf.c',
 	'benchmark/item/collection.c',
