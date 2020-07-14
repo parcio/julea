@@ -672,7 +672,7 @@ main(int argc, char** argv)
 		int len;
 
 		len = 0;
-		if(pep_list != NULL)
+		if (pep_list != NULL)
 		{
 			len++;
 			while (pep_list->next != NULL)
