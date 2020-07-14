@@ -65,11 +65,15 @@ JBackend* jd_object_backend = NULL;
 JBackend* jd_kv_backend = NULL;
 JBackend* jd_db_backend = NULL;
 
-struct PepListEntry
+struct PepList
 {
 	struct fi_info* info;
-	struct fid_pep** pep;
+	struct fid_pep* pep;
+	struct PepList* next;
+	struct PepList* first;
+	int cntr;
 };
+typedef struct PepList PepList;
 
 static gboolean
 jd_daemon(void)
@@ -204,12 +208,14 @@ sig_handler(int signal)
 /Binds event queue to endpoint
 */
 static gboolean
-j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fid_eq** passive_ep_event_queue)
+j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq** passive_ep_event_queue)
 {
 	int error;
 	gboolean ret;
 	struct fi_eq_attr* event_queue_attr;
 	struct fi_info* hints;
+
+	struct fid_pep* passive_ep;
 
 	struct ifaddrs* current_own_addr;
 	struct ifaddrs* own_addr_list;
@@ -218,7 +224,6 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 	error = 0;
 	ret = FALSE;
 	event_queue_attr = j_configuration_get_fi_eq_attr(jd_configuration);
-	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration));
 
 	error = getifaddrs(&current_own_addr);
 	own_addr_list = current_own_addr;
@@ -235,6 +240,7 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 		goto end;
 	}
 
+	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration));
 	if (hints == NULL)
 	{
 		g_critical("\nSERVER: Allocating empty hints did not work\n");
@@ -264,12 +270,12 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 	if (error != FI_SUCCESS)
 	{
 		g_critical("\nSERVER: Error during initializing fi_fabric\n Details:\n %s", fi_strerror(error));
-		goto end;
+		goto end_fabric;
 	}
 	if (j_fabric == NULL)
 	{
 		g_critical("\nSERVER: Allocating fi_fabric did not work");
-		goto end;
+		goto end_fabric;
 	}
 
 	//build event queue for passive endpoint
@@ -277,19 +283,33 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error initializing event_queue\n Details:\n %s", fi_strerror(error));
-		goto end;
+		goto end_eq;
 	}
+
+	/**
+	if ((*info)->src_addr == NULL)
+	{
+		printf("\nSERVER: fi_info src_addr is NULL, SUCCESS\n");
+		fflush(stdout);
+	}
+	else
+	{
+		printf("\nSERVER: fi_info: %s\n", inet_ntoa( ((struct sockaddr_in*) (*info)->src_addr)->sin_addr ));
+
+	}
+	*/
 
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
 	printf("\nSERVER Network Adresses:\n	Hostname:%s\n", my_hostname);
-	fflush(stdout);
 
 	while (current_own_addr != NULL)
 	{
 		struct fid_pep* passive_ep;
 		struct fi_info* tmp_info;
-		struct PepListEntry* entry;
+		PepList* pep_list_next;
+		gboolean error_occoured;
 
+		error_occoured = FALSE;
 		//get fi_info
 		error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
 				   inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
@@ -300,7 +320,7 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 		if (error != 0 && error != -61) //TODO add the error code representation
 		{
 			g_critical("\nSERVER: Error during initializing fi_info struct.\n Details:\n %s", fi_strerror(error));
-			goto end;
+			error_occoured = TRUE;
 		}
 		else if (error == 0)
 		{
@@ -309,28 +329,49 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(error));
-				goto end;
+				error_occoured = TRUE;
 			}
 
 			error = fi_pep_bind(passive_ep, &(*passive_ep_event_queue)->fid, 0);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error binding passive Endpoint to %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(error));
-				goto end;
+				error_occoured = TRUE;
 			}
 
 			error = fi_listen(passive_ep);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error setting passive Endpoint to listening to %s-Interface with IP: %s\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(error));
-				goto end;
+				error_occoured = TRUE;
 			}
 
-			entry = malloc(sizeof(struct PepListEntry));
-			entry->info = tmp_info;
-			entry->pep = &passive_ep;
+			if ((*pep_list) == NULL)
+			{
+				(*pep_list) = malloc(sizeof(struct PepList));
+				(*pep_list)->first = (*pep_list);
+				(*pep_list)->info = tmp_info;
+				(*pep_list)->pep = passive_ep;
+				(*pep_list)->next = NULL;
+				(*pep_list)->cntr = 0;
+			}
+			else
+			{
+				pep_list_next = malloc(sizeof(struct PepList));
+				pep_list_next->first = (*pep_list)->first;
+				pep_list_next->info = tmp_info;
+				pep_list_next->pep = passive_ep;
+				pep_list_next->next = NULL;
+				pep_list_next->cntr = (*pep_list)->cntr++;
+				(*pep_list)->next = pep_list_next;
+				(*pep_list) = pep_list_next;
+			}
 
-			*passive_ep_list = g_slist_append(*passive_ep_list, (gpointer)entry); //TODO: does not work as intended, is not returning the wanted list, try 3 pointer model
+			if (error_occoured)
+			{
+				goto end_bld_peps;
+			}
+
 			//debug
 			printf("\n	Ep established for\n		Interface Name: %s\n		IP Address: %s\n", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
 			fflush(stdout);
@@ -339,7 +380,24 @@ j_libfabric_ress_init(GSList** passive_ep_list, struct fi_info** info, struct fi
 		current_own_addr = current_own_addr->ifa_next;
 	}
 
+	(*pep_list) = (*pep_list)->first;
 	ret = TRUE;
+	goto end;
+
+end_bld_peps:
+	(*pep_list) = (*pep_list)->first;
+	while ((*pep_list) != NULL)
+	{
+		fi_close(&(*pep_list)->pep->fid);
+		fi_freeinfo((*pep_list)->info);
+		(*pep_list) = (*pep_list)->next;
+	}
+
+end_eq:
+	fi_close(&j_fabric->fid);
+
+end_fabric:
+	fi_freeinfo(info);
 
 end:
 	freeifaddrs(own_addr_list);
@@ -390,7 +448,7 @@ main(int argc, char** argv)
 
 	DomainManager* domain_manager;
 
-	GSList* passive_ep_list;
+	PepList* pep_list;
 
 	struct sigaction* sig_action;
 
@@ -455,8 +513,8 @@ main(int argc, char** argv)
 		return 1;
 	}
 
-	passive_ep_list = NULL;
-	if (!j_libfabric_ress_init((&passive_ep_list), &info, &passive_ep_event_queue))
+	pep_list = NULL;
+	if (!j_libfabric_ress_init(&pep_list, &info, &passive_ep_event_queue))
 	{
 		g_critical("\ninit of libfabric ressources did not work\n");
 		return 1;
@@ -610,30 +668,45 @@ main(int argc, char** argv)
 
 	//==CLosing ressources==
 	//	Close endpoints & associated fi_infos
-	/*
-	for (guint i = 0; i < g_slist_length(passive_ep_list); i++)
 	{
-		struct PepListEntry* entry;
+		int debug_cntr;
+		int len;
 
-		printf("\nSERVER: Finishing %d. PePListEntry\n", i + 1); //debug
-		fflush(stdout);
-
-		entry = (struct PepListEntry*)g_slist_nth_data(passive_ep_list, i);
-
-		printf("\n	close PeP\n"); //debug
-		fflush(stdout);
-		fi_error = fi_close(&(*(entry->pep))->fid);
-		if (fi_error != 0)
+		len = 0;
+		while (pep_list != NULL)
 		{
-			g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", i + 1, g_slist_length(passive_ep_list), fi_strerror(fi_error));
-			fi_error = 0;
+			len++;
+			pep_list = pep_list->next;
 		}
-		printf("\n	close fi_info\n"); //debug
+
+		debug_cntr = 0;
+		pep_list = pep_list->first;
+
+		printf("\nSERVER: Finishing PepList of %d\n", len); //debug
 		fflush(stdout);
-		fi_freeinfo(entry->info);
-		//free(g_slist_nth_data(passive_ep_list, i));
+
+		while (pep_list != NULL)
+		{
+			printf("\nSERVER: Finishing %d. PePListEntry\n", debug_cntr + 1); //debug
+			fflush(stdout);
+			printf("\n	close PeP\n"); //debug
+			fflush(stdout);
+
+			fi_error = fi_close(&pep_list->pep->fid);
+			if (fi_error != 0)
+			{
+				g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", debug_cntr + 1, len, fi_strerror(fi_error));
+				fi_error = 0;
+			}
+
+			printf("\n	close fi_info\n"); //debug
+			fflush(stdout);
+			fi_freeinfo(pep_list->info);
+
+			pep_list = pep_list->next;
+			debug_cntr++;
+		}
 	}
-	*/
 
 	g_slist_free(passive_ep_list);
 
