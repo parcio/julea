@@ -215,8 +215,6 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 	struct fi_eq_attr* event_queue_attr;
 	struct fi_info* hints;
 
-	struct fid_pep* passive_ep;
-
 	struct ifaddrs* current_own_addr;
 	struct ifaddrs* own_addr_list;
 	char my_hostname[HOST_NAME_MAX + 1];
@@ -237,14 +235,14 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 	if (error < 0)
 	{
 		g_critical("SERVER: gethostname failed");
-		goto end;
+		goto end_hostname;
 	}
 
 	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration));
 	if (hints == NULL)
 	{
 		g_critical("\nSERVER: Allocating empty hints did not work\n");
-		goto end;
+		goto end_hints;
 	}
 
 	//get fi_info
@@ -257,12 +255,12 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error while initiating fi_info for fabric & eq.\n Details:\n %s", fi_strerror(error));
-		goto end;
+		goto end_info;
 	}
 	if (*info == NULL)
 	{
 		g_critical("\nSERVER: Allocating fi_info struct did not work");
-		goto end;
+		goto end_info;
 	}
 
 	//Init fabric
@@ -382,7 +380,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 
 	(*pep_list) = (*pep_list)->first;
 	ret = TRUE;
-	goto end;
+	goto end_info;
 
 end_bld_peps:
 	(*pep_list) = (*pep_list)->first;
@@ -392,19 +390,18 @@ end_bld_peps:
 		fi_freeinfo((*pep_list)->info);
 		(*pep_list) = (*pep_list)->next;
 	}
-
 end_eq:
 	fi_close(&j_fabric->fid);
-
 end_fabric:
-	fi_freeinfo(info);
-
-end:
-	freeifaddrs(own_addr_list);
+	fi_freeinfo(*info);
+end_info:
 	fi_freeinfo(hints);
+end_hints:
+	freeifaddrs(own_addr_list);
+end_hostname:
+end:
 	return ret;
 	//TODO manipulate backlog size
-	//TODO if fail, remove ressources already build
 }
 
 int
@@ -619,7 +616,7 @@ main(int argc, char** argv)
 			}
 			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
-				printf("\nSERVER: FI_CONNREQ found\nPeP Amount: %d\n", g_slist_length(passive_ep_list)); //debug
+				printf("\nSERVER: FI_CONNREQ found\n"); //debug
 
 				thread_data = malloc(sizeof(ThreadData) + 128);
 				thread_data->event_entry = event_entry;
@@ -668,26 +665,34 @@ main(int argc, char** argv)
 
 	//==CLosing ressources==
 	//	Close endpoints & associated fi_infos
+
+	// begin debug
 	{
 		int debug_cntr;
 		int len;
 
 		len = 0;
-		while (pep_list != NULL)
+		if(pep_list != NULL)
 		{
 			len++;
-			pep_list = pep_list->next;
+			while (pep_list->next != NULL)
+			{
+				len++;
+				pep_list = pep_list->next;
+			}
 		}
 
 		debug_cntr = 0;
 		pep_list = pep_list->first;
 
-		printf("\nSERVER: Finishing PepList of %d\n", len); //debug
+		printf("\nSERVER: Finishing PepList of size %d\n", len); //debug
 		fflush(stdout);
 
 		while (pep_list != NULL)
 		{
-			printf("\nSERVER: Finishing %d. PePListEntry\n", debug_cntr + 1); //debug
+			PepList* tmp_pep_list;
+
+			printf("\nSERVER: Finishing PepList entry %d\n", debug_cntr); //debug
 			fflush(stdout);
 			printf("\n	close PeP\n"); //debug
 			fflush(stdout);
@@ -703,12 +708,13 @@ main(int argc, char** argv)
 			fflush(stdout);
 			fi_freeinfo(pep_list->info);
 
-			pep_list = pep_list->next;
+			tmp_pep_list = pep_list->next;
+			free(pep_list);
+			pep_list = tmp_pep_list;
+
 			debug_cntr++;
 		}
 	}
-
-	g_slist_free(passive_ep_list);
 
 	// close fabric
 	printf("\nSERVER: Close fabric\n"); //debug
