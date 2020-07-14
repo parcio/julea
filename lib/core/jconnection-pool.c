@@ -735,7 +735,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		fflush(stdout);
 
 		error = fi_connect(tmp_ep, address, NULL, 0);
-		if (error == -111)
+		if (error == -111) //FIX use real libfabric error messages
 		{
 			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
 		}
