@@ -88,7 +88,6 @@ static struct fid_fabric* j_fabric;
 
 static DomainManager* domain_manager;
 
-
 void
 j_connection_pool_init(JConfiguration* configuration)
 {
