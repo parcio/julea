@@ -88,7 +88,6 @@ static struct fid_fabric* j_fabric;
 
 static DomainManager* domain_manager;
 
-static JConfiguration* global_config;
 
 void
 j_connection_pool_init(JConfiguration* configuration)
@@ -165,8 +164,6 @@ j_connection_pool_init(JConfiguration* configuration)
 	}
 
 	fi_freeinfo(j_info);
-
-	global_config = configuration;
 
 	domain_manager = domain_manager_init();
 
@@ -657,13 +654,11 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			inet_aton("127.0.0.1", &address->sin_addr);
 		}
 
-		error = fi_getinfo(j_configuration_get_fi_version(global_config),
+		error = fi_getinfo(j_configuration_get_fi_version(j_connection_pool->configuration),
 				   NULL,
-				   //inet_ntoa(address->sin_addr),
-				   //j_configuration_get_fi_service(global_config),
 				   NULL,
-				   j_configuration_get_fi_flags(global_config, 0),
-				   j_configuration_fi_get_hints(global_config),
+				   j_configuration_get_fi_flags(j_connection_pool->configuration, 0),
+				   j_configuration_fi_get_hints(j_connection_pool->configuration),
 				   &con_info);
 		if (error < 0)
 		{
