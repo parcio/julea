@@ -593,7 +593,7 @@ main(int argc, char** argv)
 						g_critical("\nSERVER: Error Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 					}
 				}
-				else if (fi_error != -FI_EAGAIN && fi_error != -FI_EINTR)
+				else if (fi_error != -FI_EAGAIN && fi_error != -EINTR)
 				{
 					g_critical("\nSERVER: Error while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(abs(fi_error)));
 					fi_error = 0;
