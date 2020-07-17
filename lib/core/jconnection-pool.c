@@ -151,14 +151,14 @@ j_connection_pool_init(JConfiguration* configuration)
 	}
 	if (j_info == NULL)
 	{
-		g_critical("\nAllocating Client j_info did not work");
+		g_critical("\nCLIENT: allocating j_info did not work");
 	}
 
 	//init fabric
 	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
 	if (error != FI_SUCCESS)
 	{
-		g_critical("\nAllocating fabric on client side did not work\nDetails:\n %s", fi_strerror(error));
+		g_critical("\nCLIENT: Allocating fabric did not work\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
@@ -195,11 +195,11 @@ j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 			error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
 			if (error < 0)
 			{
-				g_critical("\nError occurred on Client while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
+				g_critical("\nCLIENT: Error occurred while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(abs(error)), location);
 			}
 			else
 			{
-				g_critical("\nError Message on Client, on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nCLIENT: Error Message on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
 		else if (error == -FI_EAGAIN)
@@ -208,7 +208,7 @@ j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 		}
 		else if (error < 0)
 		{
-			g_critical("\nError while reading event queue (%s) after reading for shutdown.\nDetails:\n%s", fi_strerror(error), location);
+			g_critical("\nCLIENT: Error while reading event queue (%s) after reading for shutdown.\nDetails:\n%s", fi_strerror(abs(error)), location);
 		}
 	}
 	free(event_entry);
@@ -235,12 +235,12 @@ j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_m
 		berror = j_message_send(message, endpoint);
 		if (berror == FALSE)
 		{
-			g_critical("\nSending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
+			g_critical("\nCLIENT: Sending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
 		}
 		error = fi_shutdown(endpoint->endpoint, 0);
 		if (error != 0)
 		{
-			g_critical("\nSomething went horribly wrong during %s connection shutdown.\n Details:\n %s", location, fi_strerror(error));
+			g_critical("\nCLIENT: Error during %s connection shutdown.\n Details:\n %s", location, fi_strerror(abs(error)));
 			error = 0;
 		}
 	}
@@ -248,28 +248,28 @@ j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_m
 	error = fi_close(&endpoint->endpoint->fid);
 	if (error != 0)
 	{
-		g_critical("\nProblem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(error));
+		g_critical("\nCLIENT: Problem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->completion_queue_receive->fid);
 	if (error != 0)
 	{
-		g_critical("\nProblem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(error));
+		g_critical("\nCLIENT: Problem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->completion_queue_transmit->fid);
 	if (error != 0)
 	{
-		g_critical("\nProblem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(error));
+		g_critical("\nCLIENT: Problem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&endpoint->event_queue->fid);
 	if (error != 0)
 	{
-		g_critical("\nProblem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(error));
+		g_critical("\nCLIENT: Problem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
@@ -357,7 +357,7 @@ j_connection_pool_fini(void)
 	error = fi_close(&j_fabric->fid);
 	if (error != 0)
 	{
-		g_critical("\nProblem closing fabric on client side.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nCLIENT: Problem closing fabric.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
@@ -395,7 +395,7 @@ start:
 	{
 		if (j_endpoint_shutdown_test(endpoint, "pop") == TRUE)
 		{
-			g_warning("\nShutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
+			g_warning("\nCLIENT: Shutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
 			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
 			goto start;
 		}
@@ -419,7 +419,7 @@ start:
 
 			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), endpoint) != TRUE)
 			{
-				g_critical("\nhostname_connector could not connect Endpoint to given hostname\n");
+				g_critical("\nCLIENT: hostname_connector could not connect Endpoint to given hostname\n");
 			}
 
 			comm_check = FALSE;
@@ -427,7 +427,7 @@ start:
 			comm_check = j_message_send(message, (gpointer)endpoint);
 			if (comm_check == FALSE)
 			{
-				g_critical("\nInitital sending check failed on Client endpoint\n\n");
+				g_critical("\nCLIENT: Initital sending check failed on endpoint\n\n");
 			}
 			else
 			{
@@ -437,7 +437,7 @@ start:
 
 				if (comm_check == FALSE)
 				{
-					g_critical("\nInitital receiving check failed on Client endpoint\n\n");
+					g_critical("\nCLIENT: Initital receiving check failed on endpoint\n\n");
 				}
 				else
 				{
@@ -568,7 +568,7 @@ hostname_resolver(const char* hostname, const char* service, struct addrinfo** a
 	error = getaddrinfo(hostname, service, hints, addrinfo_ret);
 	if (error != 0)
 	{
-		g_critical("\ngetaddrinfo did not resolve hostname\n");
+		g_critical("\nCLIENT: getaddrinfo did not resolve hostname\n");
 		goto end;
 	}
 
@@ -667,7 +667,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 		if (!domain_request(j_fabric, con_info, j_connection_pool->configuration, &rc_domain, domain_manager))
 		{
-			g_critical("\nDomain request failed on client side.\n");
+			g_critical("\nCLIENT: Domain request failed.\n");
 			goto end;
 		}
 
@@ -675,25 +675,25 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = fi_endpoint(rc_domain->domain, con_info, &tmp_ep, NULL);
 		if (error != 0)
 		{
-			g_critical("\nProblem initing tmp endpoint in resolver on client. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem initing tmp endpoint in resolver. \nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 		error = fi_eq_open(j_fabric, j_configuration_get_fi_eq_attr(j_connection_pool->configuration), &tmp_eq, NULL);
 		if (error != 0)
 		{
-			g_critical("\nProblem opening tmp event queue in resolver on client. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem opening tmp event queue in resolver.\nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 		error = fi_cq_open(rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &tmp_cq_transmit, NULL);
 		if (error != 0)
 		{
-			g_critical("\nProblem opening tmp transmit transmit completion queue on client. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem opening tmp transmit transmit completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 		error = fi_cq_open(rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &tmp_cq_rcv, NULL);
 		if (error != 0)
 		{
-			g_critical("\nProblem opening tmp transmit receive completion queue on client. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem opening tmp transmit receive completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 
@@ -701,19 +701,19 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = fi_ep_bind(tmp_ep, &tmp_eq->fid, 0);
 		if (error != 0)
 		{
-			g_critical("\nProblem while binding tmp event queue to endpoint. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem while binding tmp event queue to endpoint. \nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 		error = fi_ep_bind(tmp_ep, &tmp_cq_rcv->fid, FI_RECV);
 		if (error != 0)
 		{
-			g_critical("\nProblem while binding completion queue to endpoint as receive queue. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem while binding completion queue to endpoint as receive queue. \nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 		error = fi_ep_bind(tmp_ep, &tmp_cq_transmit->fid, FI_TRANSMIT);
 		if (error != 0)
 		{
-			g_critical("\nProblem while binding completion queue to endpoint as transmit queue. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem while binding completion queue to endpoint as transmit queue. \nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 
@@ -721,7 +721,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = fi_enable(tmp_ep);
 		if (error != 0)
 		{
-			g_critical("\nProblem while enabling endpoint. \nDetails:\n%s", fi_strerror((int)error));
+			g_critical("\nCLIENT: Problem while enabling endpoint. \nDetails:\n%s", fi_strerror(abs(error)));
 			error = 0;
 		}
 
@@ -731,11 +731,11 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = fi_connect(tmp_ep, address, NULL, 0);
 		if (error == -FI_ECONNREFUSED)
 		{
-			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
+			g_printf("\nCLIENT: Connection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
 		}
 		else if (error != 0)
 		{
-			g_critical("\nProblem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address->sin_addr), fi_strerror(error));
+			g_critical("\nCLIENT: Problem with fi_connect call. Client Side.\nDetails:\nIP-Addr: %s\n%s", inet_ntoa(address->sin_addr), fi_strerror(abs(error)));
 			error = 0;
 		}
 		else
@@ -751,7 +751,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			{
 				if (ssize_t_error == FI_EBUSY)
 				{
-					g_critical("\nCLIENT: EQ still busy \nDetails:\n%s\nssize_t_error: %ld", fi_strerror(ssize_t_error), ssize_t_error);
+					g_critical("\nCLIENT: EQ still busy \nDetails:\n%s", fi_strerror(labs(ssize_t_error)));
 					ssize_t_error = 0;
 				}
 				else if (ssize_t_error == -FI_EAVAIL)
@@ -759,7 +759,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 					ssize_t_error = fi_eq_readerr(tmp_eq, &event_queue_err_entry, 0);
 					if (ssize_t_error < 0)
 					{
-						g_critical("\nCLIENT: Error occoured while reading tmp_eq for error message.\nDetails:\n%s", fi_strerror(ssize_t_error));
+						g_critical("\nCLIENT: Error occoured while reading tmp_eq for error message.\nDetails:\n%s", fi_strerror(labs(ssize_t_error)));
 						ssize_t_error = 0;
 						goto end;
 					}
@@ -781,7 +781,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 				}
 				else if (ssize_t_error < 0)
 				{
-					g_critical("\nCLIENT: Other error while reading for tmp_eq for FI_CONNECTED.\nDetails:\n%s", fi_strerror(ssize_t_error));
+					g_critical("\nCLIENT: Other error while reading for tmp_eq for FI_CONNECTED.\nDetails:\n%s", fi_strerror(labs(ssize_t_error)));
 					goto end;
 				}
 			}
@@ -815,22 +815,22 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = fi_close(&tmp_ep->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing tmp endpoint on client\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nCLIENT: Problem closing tmp endpoint\nDetails:\n%s", fi_strerror(abs(error)));
 		}
 		error = fi_close(&tmp_cq_rcv->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing tmp endpoint completion queue (receive) on client\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nCLIENT: Problem closing tmp endpoint completion queue (receive)\nDetails:\n%s", fi_strerror(abs(error)));
 		}
 		error = fi_close(&tmp_cq_transmit->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing tmp endpoint completion queue (transmit) on client\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nCLIENT: Problem closing tmp endpoint completion queue (transmit)\nDetails:\n%s", fi_strerror(abs(error)));
 		}
 		error = fi_close(&tmp_eq->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing tmp endpoint event queue on client\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nCLIENT: Problem closing tmp endpoint event queue\nDetails:\n%s", fi_strerror(abs(error)));
 		}
 
 		domain_unref(rc_domain, domain_manager, "tmp endpoint on client");

@@ -877,7 +877,7 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 	error = fi_recv(endpoint, (void*)&(message->header), (size_t)sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
+		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
 
@@ -901,7 +901,7 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 		}
 		else if (error < 0)
 		{
-			g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
 	}
@@ -919,7 +919,7 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 	error = fi_recv(endpoint, message->data, j_message_length(message), NULL, 0, NULL);
 	if ((int)error != 0)
 	{
-		g_critical("\nError while receiving Message.\nDetails:\n%s", fi_strerror((int)error));
+		g_critical("\nError while receiving Message.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
 	error = fi_cq_sread(j_endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
@@ -943,7 +943,7 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 		}
 		else if (error < 0)
 		{
-			g_critical("\nError while reading completion queue after receiving Message data.\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nError while reading completion queue after receiving Message data.\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
 	}
@@ -992,7 +992,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 	error = fi_send(j_endpoint->endpoint, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror((int)error));
+		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
 
@@ -1017,7 +1017,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 		}
 		else if (error < 0)
 		{
-			g_critical("\nError reading completion Queue after sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nError reading completion Queue after sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
 	}
@@ -1032,7 +1032,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 	error = fi_send(j_endpoint->endpoint, message->data, (size_t)j_message_length(message), NULL, 0, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(error));
+		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
 	else
@@ -1060,7 +1060,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 		}
 		else if (error < 0)
 		{
-			g_critical("\nError reading completion Queue after sending Message Data.\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nError reading completion Queue after sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
 	}
@@ -1077,7 +1077,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 			error = fi_send(j_endpoint->endpoint, message_data->data, message_data->length, NULL, 0, NULL);
 			if ((int)error != 0)
 			{
-				g_critical("\nError while sending Message List Data.\nDetails:\n%s", fi_strerror((int)error));
+				g_critical("\nError while sending Message List Data.\nDetails:\n%s", fi_strerror(labs(error)));
 				goto end;
 			}
 			else
@@ -1107,7 +1107,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 				}
 				else if (error < 0)
 				{
-					g_critical("\nError while reading completion queue after sending Message List data.\nDetails:\n%s", fi_strerror(error));
+					g_critical("\nError while reading completion queue after sending Message List data.\nDetails:\n%s", fi_strerror(labs(error)));
 					goto end;
 				}
 			}

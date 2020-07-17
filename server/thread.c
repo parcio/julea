@@ -79,45 +79,45 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	error = fi_endpoint((*rc_domain)->domain, info, &(*jendpoint)->endpoint, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while creating active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
 	error = fi_eq_open(j_fabric, &event_queue_attr, &(*jendpoint)->event_queue, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating endpoint Event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while creating endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
 	error = fi_ep_bind((*jendpoint)->endpoint, &(*jendpoint)->event_queue->fid, 0);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while binding Event queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while binding Event queue to active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_cq_open((*rc_domain)->domain, &completion_queue_attr, &(*jendpoint)->completion_queue_receive, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating Completion receive queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while creating Completion receive queue for active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_cq_open((*rc_domain)->domain, &completion_queue_attr, &(*jendpoint)->completion_queue_transmit, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_ep_bind((*jendpoint)->endpoint, &(*jendpoint)->completion_queue_transmit->fid, FI_TRANSMIT);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_ep_bind((*jendpoint)->endpoint, &(*jendpoint)->completion_queue_receive->fid, FI_RECV);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
@@ -131,14 +131,14 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	error = fi_enable((*jendpoint)->endpoint);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while enabling Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while enabling Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
 	error = fi_accept((*jendpoint)->endpoint, NULL, 0);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while accepting connection request.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error occurred while accepting connection request.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
@@ -151,24 +151,24 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 			error = fi_eq_readerr((*jendpoint)->event_queue, &event_queue_err_entry, 0);
 			if (error < 0)
 			{
-				g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(error));
+				g_critical("\nSERVER: Error occurred while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(abs(error)));
 				error = 0;
 				goto end;
 			}
 			else
 			{
-				g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((*jendpoint)->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nSERVER: Error Message on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((*jendpoint)->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 				goto end;
 			}
 		}
 		else if (error == -FI_EAGAIN)
 		{
-			g_critical("\nNo Event data on Server Event Queue while reading for CONNECTED Event.\n");
+			g_critical("\nSERVER: No Event data on Event Queue while reading for CONNECTED Event.\n");
 			goto end;
 		}
 		else
 		{
-			g_critical("\nError outside Error Event on Server Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(error));
+			g_critical("\nSERVER: Error outside Error Event on Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(abs(error)));
 			goto end;
 		}
 	}
@@ -182,7 +182,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	}
 	else
 	{
-		g_critical("\nServer has problems with connection, no FI_CONNECTED event.\n");
+		g_critical("\nSERVER: Problem with connection, no FI_CONNECTED event.\n");
 	}
 end:
 	return ret;
@@ -208,7 +208,7 @@ j_thread_libfabric_ress_shutdown(struct fi_info* info,
 		error = fi_shutdown(jendpoint->endpoint, 0);
 		if (error != 0)
 		{
-			g_critical("\nError on Server while shutting down connection\n.Details: \n%s", fi_strerror(error));
+			g_critical("\nSERVER: Error while shutting down connection\n.Details: \n%s", fi_strerror(abs(error)));
 		}
 		error = 0;
 	}
@@ -223,40 +223,40 @@ j_thread_libfabric_ress_shutdown(struct fi_info* info,
 	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_receive);
 	if (berror == FALSE)
 	{
-		g_critical("\nRemoving cq_recv information from thread_cq_array did not work.\n");
+		g_critical("\nSERVER: Removing cq_recv information from thread_cq_array did not work.\n");
 	}
 	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->completion_queue_transmit);
 	if (berror == FALSE)
 	{
-		g_critical("\nRemoving cq_transmit information from thread_cq_array did not work.\n");
+		g_critical("\nSERVER: Removing cq_transmit information from thread_cq_array did not work.\n");
 	}
 	g_mutex_unlock(thread_cq_array_mutex);
 
 	error = fi_close(&jendpoint->endpoint->fid);
 	if (error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing thread endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error closing thread endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->completion_queue_receive->fid);
 	if (error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing thread receive queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error closing thread receive queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->completion_queue_transmit->fid);
 	if (error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing thread transmition queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error closing thread transmition queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->event_queue->fid);
 	if (error != 0)
 	{
-		g_critical("\nSomething went horribly wrong closing thread endpoint event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error thread endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
@@ -364,12 +364,12 @@ j_thread_function(gpointer thread_data)
 					error = fi_eq_readerr(jendpoint->event_queue, &event_queue_err_entry, 0);
 					if (error < 0)
 					{
-						g_critical("\nError occurred on Server while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(error));
+						g_critical("\nSERVER: Error occurred while reading Error Message from Event queue (active Endpoint) reading for shutdown.\nDetails:\n%s", fi_strerror(abs(error)));
 						goto end;
 					}
 					else
 					{
-						g_critical("\nError Message on Server, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+						g_critical("\nSERVER: Error Message, on Event queue (active Endpoint) reading for shutdown .\nDetails:\n%s", fi_eq_strerror(jendpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 						goto end;
 					}
 				}
@@ -379,7 +379,7 @@ j_thread_function(gpointer thread_data)
 				}
 				else if (error < 0)
 				{
-					g_critical("\nError while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(error));
+					g_critical("\nSERVER: Error while reading completion queue after receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(abs(error)));
 					goto end;
 				}
 			}
@@ -406,15 +406,12 @@ end:
 }
 
 void
-//TODO replace workaround
-//thread_unblock(gpointer completion_queue, gpointer user_data)
 thread_unblock(struct fid_cq* completion_queue)
 {
 	int error = 0;
-	//error = fi_cq_signal((struct fid_cq*) completion_queue);
 	error = fi_cq_signal(completion_queue);
 	if (error != 0)
 	{
-		g_critical("\nError waking up Threads\nDetails:\n %s", fi_strerror(error));
+		g_critical("\nSERVER: Error waking up Threads\nDetails:\n %s", fi_strerror(abs(error)));
 	}
 }
