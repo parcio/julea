@@ -165,8 +165,6 @@ jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type
 void
 sig_handler(int signal)
 {
-	printf("\nSERVER: sig_handler invoked\n");
-	fflush(stdout); //debug
 	if (signal == SIGHUP || signal == SIGINT || signal == SIGTERM)
 	{
 		j_thread_running = FALSE; //set thread running to false, thus ending thread loops
@@ -177,8 +175,6 @@ sig_handler(int signal)
 		else
 		{
 			g_mutex_lock(&thread_cq_array_mutex);
-			//TODO replace workaround
-			//g_ptr_array_foreach(thread_cq_array, thread_unblock, NULL);
 			for (guint i = 0; i < thread_cq_array->len; i++)
 			{
 				thread_unblock((struct fid_cq*)g_ptr_array_index(thread_cq_array, i));
@@ -284,21 +280,9 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 		goto end_eq;
 	}
 
-	/**
-	if ((*info)->src_addr == NULL)
-	{
-		printf("\nSERVER: fi_info src_addr is NULL, SUCCESS\n");
-		fflush(stdout);
-	}
-	else
-	{
-		printf("\nSERVER: fi_info: %s\n", inet_ntoa( ((struct sockaddr_in*) (*info)->src_addr)->sin_addr ));
-
-	}
-	*/
-
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
-	printf("\nSERVER Network Adresses:\n	Hostname:%s\n", my_hostname);
+	//debug
+	//printf("\nSERVER Network Adresses:\n	Hostname:%s\n", my_hostname);
 
 	while (current_own_addr != NULL)
 	{
@@ -315,7 +299,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 				   j_configuration_get_fi_flags(jd_configuration, 0),
 				   hints,
 				   &tmp_info);
-		if (error != 0 && error != -61) //TODO add the error code representation
+		if (error != 0 && error != -FI_ENODATA)
 		{
 			g_critical("\nSERVER: Error during initializing fi_info struct.\n Details:\n %s", fi_strerror(error));
 			error_occoured = TRUE;
@@ -371,8 +355,8 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 			}
 
 			//debug
-			printf("\n	Ep established for\n		Interface Name: %s\n		IP Address: %s\n", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
-			fflush(stdout);
+			//printf("\n	Ep established for\n		Interface Name: %s\n		IP Address: %s\n", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
+			//fflush(stdout);
 		}
 
 		current_own_addr = current_own_addr->ifa_next;
@@ -462,8 +446,8 @@ main(int argc, char** argv)
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 
-	printf("\n\nSERVER STARTED\n\n"); //debug
-	fflush(stdout);
+	//printf("\n\nSERVER STARTED\n\n"); //debug
+	//fflush(stdout);
 	if (!g_option_context_parse(context, &argc, &argv, &error))
 	{
 		if (error)
@@ -586,8 +570,8 @@ main(int argc, char** argv)
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	if (allow_main_loop)
 	{
-		printf("\nSERVER: Main loop started\n"); //debug
-		fflush(stdout);
+		// printf("\nSERVER: Main loop started\n"); //debug
+		//fflush(stdout);
 		do
 		{
 			event = 0;
@@ -600,7 +584,7 @@ main(int argc, char** argv)
 					fi_error = fi_eq_readerr(passive_ep_event_queue, &event_queue_err_entry, 0);
 					if (fi_error < 0)
 					{
-						g_critical("\nSERVER:nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error));
+						g_critical("\nSERVER:nError while reading errormessage from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(-fi_error));
 						fi_error = 0;
 					}
 					else
@@ -608,15 +592,17 @@ main(int argc, char** argv)
 						g_critical("\nSERVER: Error Message on Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_eq_strerror(passive_ep_event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 					}
 				}
-				else
+				else if (fi_error != -FI_EAGAIN && fi_error != -FI_EINTR)
 				{
-					//g_critical("\nError while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(fi_error)); //Can happen through device busy
+					g_critical("\nSERVER: Error while reading from Event queue (passive Endpoint) in main loop.\nDetails:\n%s", fi_strerror(-fi_error));
 					fi_error = 0;
 				}
 			}
 			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
-				printf("\nSERVER: FI_CONNREQ found\n"); //debug
+				//printf("\nSERVER: FI_CONNREQ found\n"); //debug
+				//printf("\nSERVER: connreq src_addr: %s\n", inet_ntoa( ((struct sockaddr_in*) event_entry->info->src_addr)->sin_addr ));
+				//fflush(stdout);
 
 				thread_data = malloc(sizeof(ThreadData) + 128);
 				thread_data->event_entry = event_entry;
@@ -634,13 +620,30 @@ main(int argc, char** argv)
 			}
 			else if (event == FI_CONNREQ && !j_thread_running && j_server_running)
 			{
-				printf("\nSERVER: FI_CONNREQ during shutdown (ep threads shutting down, main loop still running)\n"); //DEBUG
-				fflush(stdout);
+				PepList* first_entry;
 
-				//fi_error = fi_reject(, event_entry->fid, NULL,0); //TODO find corresponding pep OOOR hope that hefty fixes me
+				first_entry = pep_list;
+
+				printf("\nSERVER: FI_CONNREQ during shutdown. Will be declined\n");
+				fflush(stdout);
+				if (pep_list != NULL)
+				{
+					while (pep_list != NULL)
+					{
+						if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)event_entry->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)event_entry->info->src_addr)->sin_port)
+						{
+							fi_error = fi_reject(pep_list->pep, event_entry->fid, NULL, 0);
+							break;
+						}
+						pep_list = pep_list->next;
+					}
+				}
+
+				pep_list = first_entry;
+
 				if (fi_error < 0)
 				{
-					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(fi_error));
+					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(-fi_error));
 				}
 				free(event_entry);
 			}
@@ -654,8 +657,8 @@ main(int argc, char** argv)
 	}
 
 	// close passive event queue
-	printf("\nSERVER: Close pep_eq\n"); //debug
-	fflush(stdout);
+	// printf("\nSERVER: Close pep_eq\n"); //debug
+	// fflush(stdout);
 	fi_error = fi_close(&passive_ep_event_queue->fid);
 	if (fi_error != 0)
 	{
@@ -666,9 +669,7 @@ main(int argc, char** argv)
 	//==CLosing ressources==
 	//	Close endpoints & associated fi_infos
 
-	// begin debug
 	{
-		int debug_cntr;
 		int len;
 
 		len = 0;
@@ -682,53 +683,50 @@ main(int argc, char** argv)
 			}
 		}
 
-		debug_cntr = 0;
 		pep_list = pep_list->first;
 
-		printf("\nSERVER: Finishing PepList of size %d\n", len); //debug
-		fflush(stdout);
+		//printf("\nSERVER: Finishing PepList of size %d\n", len); //debug
+		//fflush(stdout);
 
 		while (pep_list != NULL)
 		{
 			PepList* tmp_pep_list;
 
-			printf("\nSERVER: Finishing PepList entry %d\n", debug_cntr); //debug
-			fflush(stdout);
-			printf("\n	close PeP\n"); //debug
-			fflush(stdout);
+			//printf("\nSERVER: Finishing PepList entry %d\n", pep_list->cntr); //debug
+			//fflush(stdout);
+			//printf("\n	close PeP\n"); //debug
+			//fflush(stdout);
 
 			fi_error = fi_close(&pep_list->pep->fid);
 			if (fi_error != 0)
 			{
-				g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", debug_cntr + 1, len, fi_strerror(fi_error));
+				g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", pep_list->cntr + 1, len, fi_strerror(-fi_error));
 				fi_error = 0;
 			}
 
-			printf("\n	close fi_info\n"); //debug
-			fflush(stdout);
+			//printf("\n	close fi_info\n"); //debug
+			//fflush(stdout);
 			fi_freeinfo(pep_list->info);
 
 			tmp_pep_list = pep_list->next;
 			free(pep_list);
 			pep_list = tmp_pep_list;
-
-			debug_cntr++;
 		}
 	}
 
 	// close fabric
-	printf("\nSERVER: Close fabric\n"); //debug
-	fflush(stdout);
+	//printf("\nSERVER: Close fabric\n"); //debug
+	//fflush(stdout);
 	fi_error = fi_close(&j_fabric->fid);
 	if (fi_error != 0)
 	{
-		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(fi_error));
+		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(-fi_error));
 		fi_error = 0;
 	}
 
 	// close main free info
-	printf("\nSERVER: Close info\n"); //debug
-	fflush(stdout);
+	//printf("\nSERVER: Close info\n"); //debug
+	//fflush(stdout);
 	fi_freeinfo(info);
 
 	domain_manager_fini(domain_manager);

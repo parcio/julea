@@ -441,8 +441,8 @@ start:
 				}
 				else
 				{
-					printf("\nCLIENT: Initial data transfer check succeeded\n\n"); //debug
-					fflush(stdout);
+					//printf("\nCLIENT: Initial data transfer check succeeded\n\n"); //debug
+					//fflush(stdout);
 				}
 			}
 
@@ -725,11 +725,11 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			error = 0;
 		}
 
-		printf("\nClient: Target information:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr)); //debug
-		fflush(stdout);
+		//printf("\nClient: Target information:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr)); //debug
+		//fflush(stdout);
 
 		error = fi_connect(tmp_ep, address, NULL, 0);
-		if (error == -111) //FIX use real libfabric error messages
+		if (error == -FI_ECONNREFUSED)
 		{
 			g_printf("\nConnection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
 		}
@@ -800,8 +800,8 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 					endpoint->rc_domain = rc_domain;
 					endpoint->max_msg_size = con_info->ep_attr->max_msg_size;
 					ret = TRUE;
-					printf("\nCLIENT: Connected event on client even queue\n"); //debug
-					fflush(stdout);
+					//printf("\nCLIENT: Connected event on client even queue\n"); //debug
+					//fflush(stdout);
 					fi_freeinfo(con_info);
 					free(connection_entry);
 					break;
