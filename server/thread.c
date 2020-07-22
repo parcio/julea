@@ -126,7 +126,7 @@ j_thread_libfabric_ress_init(struct fi_info* info,
 	g_ptr_array_add(thread_cq_array, (*jendpoint)->completion_queue_transmit);
 	g_mutex_unlock(thread_cq_array_mutex);
 
-	//PERROR no receive Buffer before accepting connetcion.
+	// PERROR no receive Buffer before accepting connection. (should not happen due to the inner workings of Julea)
 
 	error = fi_enable((*jendpoint)->endpoint);
 	if (error != 0)

@@ -646,8 +646,8 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 		error = 0;
 
 		address = (struct sockaddr_in*)addrinfo->ai_addr;
-		//TODO change bloody ubuntu workaround ot something senseable
 
+		//TODO change ubuntu workaround to something senseable
 		if (g_strcmp0(inet_ntoa(address->sin_addr), "127.0.1.1") == 0)
 		{
 			inet_aton("127.0.0.1", &address->sin_addr);
@@ -747,7 +747,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 
 			ssize_t_error = fi_eq_sread(tmp_eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
 
-			if (ssize_t_error < 0) //FIX: this should not be error !=0, but ssize_t_error != 0
+			if (ssize_t_error < 0)
 			{
 				if (ssize_t_error == FI_EBUSY)
 				{
@@ -789,7 +789,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 			{
 				if (eq_event != FI_CONNECTED)
 				{
-					g_critical("\nCLIENT: FI_CONNECTED: %d\neq_event: %d\nClient endpoint did not receive FI_CONNECTED to establish a connection.\n\nAfter Fix IP:%s\nBefore Fix IP:%s", FI_CONNECTED, eq_event, inet_ntoa(address->sin_addr), inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr));
+					g_critical("\nCLIENT: Endpoint did not receive FI_CONNECTED to establish a connection.\n");
 				}
 				else
 				{

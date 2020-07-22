@@ -906,7 +906,7 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 		}
 	}
 
-	//TODO splice the message, not just report an error
+	// TODO Dont report error, but split the Message
 	if (!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		g_critical("\nMessage bigger than provider max_msg_size. (receiving)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
@@ -915,7 +915,6 @@ j_message_read(JMessage* message, JEndpoint* j_endpoint)
 
 	j_message_ensure_size(message, j_message_length(message));
 
-	//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 	error = fi_recv(endpoint, message->data, j_message_length(message), NULL, 0, NULL);
 	if ((int)error != 0)
 	{
@@ -988,7 +987,6 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(j_endpoint != NULL, FALSE);
 
-	//TODO descriptor (4th field) may needs to be set, if local machine shall be used (provider dependent)
 	error = fi_send(j_endpoint->endpoint, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
 	if (error != 0)
 	{
@@ -1022,7 +1020,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 		}
 	}
 
-	//TODO Dont report error, but split the Message
+	// TODO Dont report error, but split the Message
 	if (!j_message_fi_val_message_size(j_endpoint->max_msg_size, message))
 	{
 		g_critical("\nMessage bigger than provider max_msg_size (Sending)\nMax Message Size: %zu\nMessage Size: %zu\n", j_endpoint->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
@@ -1037,7 +1035,7 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 	}
 	else
 	{
-		//g_printf("JMessage Data sending succeeded.");
+		//g_printf("JMessage Data sending succeeded."); debug
 	}
 	error = fi_cq_sread(j_endpoint->completion_queue_transmit, &completion_queue_data, 1, NULL, -1);
 	if (error != 0)
@@ -1073,7 +1071,6 @@ j_message_write(JMessage* message, JEndpoint* j_endpoint)
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			//TODO descriptor (4th field) may be set, if local machine shall be used (provider dependent)
 			error = fi_send(j_endpoint->endpoint, message_data->data, message_data->length, NULL, 0, NULL);
 			if ((int)error != 0)
 			{

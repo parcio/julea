@@ -385,7 +385,7 @@ end_hints:
 end_hostname:
 end:
 	return ret;
-	//TODO manipulate backlog size
+	// TODO manipulate backlog size
 }
 
 int
