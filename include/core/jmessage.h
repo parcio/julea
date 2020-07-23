@@ -68,12 +68,18 @@ typedef struct JMessage JMessage;
 
 struct JEndpoint
 {
-	struct fid_ep* endpoint;
-	size_t max_msg_size; //TODO maybe replace with fi_info-struct ?
-	struct fid_eq* event_queue;
-	struct fid_cq* completion_queue_transmit;
-	struct fid_cq* completion_queue_receive;
-	RefCountedDomain* rc_domain;
+	struct fid_ep* ep_msg; // ep = endpoint
+	struct fid_ep* ep_rdma;
+	struct fi_info* info_msg;
+	struct fi_info* info_rdma;
+	struct fid_eq* eq_msg; // eq = event queue
+	struct fid_eq* eq_rmda;
+	struct fid_cq* cq_transmit_msg; // cq = completion queue
+	struct fid_cq* cq_receive_msg;
+	struct fid_cq* cq_transmit_rdma;
+	struct fid_cq* cq_receive_rdma;
+	RefCountedDomain* rc_domain_msg;
+	RefCountedDomain* rc_domain_rdma;
 };
 
 typedef struct JEndpoint JEndpoint;

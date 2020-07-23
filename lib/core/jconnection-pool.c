@@ -91,7 +91,7 @@ static DomainManager* domain_manager;
 void
 j_connection_pool_init(JConfiguration* configuration)
 {
-	struct fi_info* j_info;
+	struct fi_info* info;
 
 	// Pool Init
 	J_TRACE_FUNCTION(NULL);
@@ -136,33 +136,33 @@ j_connection_pool_init(JConfiguration* configuration)
 	//Init Libfabric Objects
 	error = 0;
 
-	//inits j_info
+	//inits info
 	error = fi_getinfo(j_configuration_get_fi_version(configuration),
 			   //j_configuration_get_fi_node(configuration),
 			   NULL,
 			   j_configuration_get_fi_service(configuration),
 			   j_configuration_get_fi_flags(configuration, 0),
 			   j_configuration_fi_get_hints(configuration),
-			   &j_info);
+			   &info);
 
 	if (error < 0)
 	{
 		goto end;
 	}
-	if (j_info == NULL)
+	if (info == NULL)
 	{
-		g_critical("\nCLIENT: allocating j_info did not work");
+		g_critical("\nCLIENT: allocating info for fabric did not work");
 	}
 
 	//init fabric
-	error = fi_fabric(j_info->fabric_attr, &j_fabric, NULL);
+	error = fi_fabric(info->fabric_attr, &j_fabric, NULL);
 	if (error != FI_SUCCESS)
 	{
 		g_critical("\nCLIENT: Allocating fabric did not work\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
-	fi_freeinfo(j_info);
+	fi_freeinfo(info);
 
 	domain_manager = domain_manager_init();
 
@@ -174,7 +174,7 @@ end:;
 *
 */
 gboolean
-j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
+j_endpoint_shutdown_test(JEndpoint* jendpoint, const gchar* location)
 {
 	int error;
 	gboolean ret;
@@ -187,19 +187,19 @@ j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 	error = 0;
 
 	event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
-	error = fi_eq_read(endpoint->event_queue, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
+	error = fi_eq_read(jendpoint->eq_msg, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
 	if (error != 0)
 	{
 		if (error == -FI_EAVAIL)
 		{
-			error = fi_eq_readerr(endpoint->event_queue, &event_queue_err_entry, 0);
+			error = fi_eq_readerr(jendpoint->eq_msg, &event_queue_err_entry, 0);
 			if (error < 0)
 			{
 				g_critical("\nCLIENT: Error occurred while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(abs(error)), location);
 			}
 			else
 			{
-				g_critical("\nCLIENT: Error Message on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(endpoint->event_queue, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nCLIENT: Error Message on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(jendpoint->eq_msg, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
 		else if (error == -FI_EAGAIN)
@@ -224,7 +224,7 @@ j_endpoint_shutdown_test(JEndpoint* endpoint, const gchar* location)
 *
 */
 void
-j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_message, const gchar* location)
+j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_message, const gchar* location)
 {
 	int error = 0;
 
@@ -232,12 +232,12 @@ j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_m
 	if (send_shutdown_message == TRUE)
 	{
 		gboolean berror;
-		berror = j_message_send(message, endpoint);
+		berror = j_message_send(message, jendpoint);
 		if (berror == FALSE)
 		{
 			g_critical("\nCLIENT: Sending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
 		}
-		error = fi_shutdown(endpoint->endpoint, 0);
+		error = fi_shutdown(jendpoint->ep_msg, 0);
 		if (error != 0)
 		{
 			g_critical("\nCLIENT: Error during %s connection shutdown.\n Details:\n %s", location, fi_strerror(abs(error)));
@@ -245,37 +245,39 @@ j_endpoint_fini(JEndpoint* endpoint, JMessage* message, gboolean send_shutdown_m
 		}
 	}
 
-	error = fi_close(&endpoint->endpoint->fid);
+	error = fi_close(&jendpoint->ep_msg->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&endpoint->completion_queue_receive->fid);
+	error = fi_close(&jendpoint->cq_receive_msg->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&endpoint->completion_queue_transmit->fid);
+	error = fi_close(&jendpoint->cq_transmit_msg->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&endpoint->event_queue->fid);
+	error = fi_close(&jendpoint->eq_msg->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	domain_unref(endpoint->rc_domain, domain_manager, "client");
+	fi_freeinfo(jendpoint->info_msg);
 
-	free(endpoint);
+	domain_unref(jendpoint->rc_domain_msg, domain_manager, "client");
+
+	free(jendpoint);
 }
 
 /*
@@ -289,7 +291,7 @@ j_connection_pool_fini(void)
 	int error;
 	gboolean server_shutdown_happened;
 	JConnectionPool* pool;
-	JEndpoint* endpoint;
+	JEndpoint* jendpoint;
 	JMessage* message;
 
 	g_return_if_fail(j_connection_pool != NULL);
@@ -301,28 +303,28 @@ j_connection_pool_fini(void)
 
 	server_shutdown_happened = FALSE;
 
-	if ((endpoint = g_async_queue_try_pop(pool->object_queues[0].queue)) != NULL)
+	if ((jendpoint = g_async_queue_try_pop(pool->object_queues[0].queue)) != NULL)
 	{
-		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "object");
-		g_async_queue_push_front(pool->object_queues[0].queue, endpoint);
+		server_shutdown_happened = j_endpoint_shutdown_test(jendpoint, "object");
+		g_async_queue_push_front(pool->object_queues[0].queue, jendpoint);
 	}
 
-	else if ((endpoint = g_async_queue_try_pop(pool->kv_queues[0].queue)) != NULL)
+	else if ((jendpoint = g_async_queue_try_pop(pool->kv_queues[0].queue)) != NULL)
 	{
-		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "kv");
-		g_async_queue_push_front(pool->kv_queues[0].queue, endpoint);
+		server_shutdown_happened = j_endpoint_shutdown_test(jendpoint, "kv");
+		g_async_queue_push_front(pool->kv_queues[0].queue, jendpoint);
 	}
-	else if ((endpoint = g_async_queue_try_pop(pool->db_queues[0].queue)) != NULL)
+	else if ((jendpoint = g_async_queue_try_pop(pool->db_queues[0].queue)) != NULL)
 	{
-		server_shutdown_happened = j_endpoint_shutdown_test(endpoint, "db");
-		g_async_queue_push_front(pool->db_queues[0].queue, endpoint);
+		server_shutdown_happened = j_endpoint_shutdown_test(jendpoint, "db");
+		g_async_queue_push_front(pool->db_queues[0].queue, jendpoint);
 	}
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
-		while ((endpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
+		while ((jendpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "object");
+			j_endpoint_fini(jendpoint, message, !server_shutdown_happened, "object");
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -330,9 +332,9 @@ j_connection_pool_fini(void)
 
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
-		while ((endpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
+		while ((jendpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "kv");
+			j_endpoint_fini(jendpoint, message, !server_shutdown_happened, "kv");
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -340,9 +342,9 @@ j_connection_pool_fini(void)
 
 	for (guint i = 0; i < pool->db_len; i++)
 	{
-		while ((endpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
+		while ((jendpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(endpoint, message, !server_shutdown_happened, "db");
+			j_endpoint_fini(jendpoint, message, !server_shutdown_happened, "db");
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -382,26 +384,26 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JEndpoint* endpoint;
+	JEndpoint* jendpoint;
 
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
 
 start:
-	endpoint = NULL;
-	endpoint = g_async_queue_try_pop(queue);
+	jendpoint = NULL;
+	jendpoint = g_async_queue_try_pop(queue);
 
-	if (endpoint != NULL)
+	if (jendpoint != NULL)
 	{
-		if (j_endpoint_shutdown_test(endpoint, "pop") == TRUE)
+		if (j_endpoint_shutdown_test(jendpoint, "pop"))
 		{
 			g_warning("\nCLIENT: Shutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
-			j_endpoint_fini(endpoint, NULL, FALSE, "pop");
+			j_endpoint_fini(jendpoint, NULL, FALSE, "pop");
 			goto start;
 		}
 		else
 		{
-			return endpoint;
+			return jendpoint;
 		}
 	}
 
@@ -415,29 +417,29 @@ start:
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
-			endpoint = malloc(sizeof(struct JEndpoint));
+			jendpoint = malloc(sizeof(struct JEndpoint));
 
-			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), endpoint) != TRUE)
+			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), jendpoint) != TRUE)
 			{
-				g_critical("\nCLIENT: hostname_connector could not connect Endpoint to given hostname\n");
+				g_critical("\nCLIENT: hostname_connector could not connect JEndpoint to given hostname\n");
 			}
 
 			comm_check = FALSE;
 			message = j_message_new(J_MESSAGE_PING, 0);
-			comm_check = j_message_send(message, (gpointer)endpoint);
+			comm_check = j_message_send(message, (gpointer)jendpoint);
 			if (comm_check == FALSE)
 			{
-				g_critical("\nCLIENT: Initital sending check failed on endpoint\n\n");
+				g_critical("\nCLIENT: Initital sending check failed\n\n");
 			}
 			else
 			{
 				reply = j_message_new_reply(message);
 
-				comm_check = j_message_receive(reply, (gpointer)endpoint);
+				comm_check = j_message_receive(reply, (gpointer)jendpoint);
 
 				if (comm_check == FALSE)
 				{
-					g_critical("\nCLIENT: Initital receiving check failed on endpoint\n\n");
+					g_critical("\nCLIENT: Initital receiving check failed on jendpoint\n\n");
 				}
 				else
 				{
@@ -476,25 +478,25 @@ start:
 		}
 	}
 
-	if (endpoint != NULL)
+	if (jendpoint != NULL)
 	{
-		return endpoint;
+		return jendpoint;
 	}
 
-	endpoint = g_async_queue_pop(queue);
+	jendpoint = g_async_queue_pop(queue);
 
-	return endpoint;
+	return jendpoint;
 }
 
 static void
-j_connection_pool_push_internal(GAsyncQueue* queue, JEndpoint* endpoint)
+j_connection_pool_push_internal(GAsyncQueue* queue, JEndpoint* jendpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_if_fail(queue != NULL);
-	g_return_if_fail(endpoint != NULL);
+	g_return_if_fail(jendpoint != NULL);
 
-	g_async_queue_push(queue, endpoint);
+	g_async_queue_push(queue, jendpoint);
 }
 
 gpointer
@@ -606,7 +608,7 @@ end:
 * TODO has a nasty workaround for ubuntus split between local machine name IP and localhost, FIXME
 */
 gboolean
-hostname_connector(const char* hostname, const char* service, JEndpoint* endpoint)
+hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoint)
 {
 	gboolean ret;
 	uint size;
@@ -793,12 +795,12 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* endpoin
 				}
 				else
 				{
-					endpoint->endpoint = tmp_ep;
-					endpoint->event_queue = tmp_eq;
-					endpoint->completion_queue_transmit = tmp_cq_transmit;
-					endpoint->completion_queue_receive = tmp_cq_rcv;
-					endpoint->rc_domain = rc_domain;
-					endpoint->max_msg_size = con_info->ep_attr->max_msg_size;
+					jendpoint->ep_msg = tmp_ep;
+					jendpoint->eq_msg = tmp_eq;
+					jendpoint->cq_transmit_msg = tmp_cq_transmit;
+					jendpoint->cq_receive_msg = tmp_cq_rcv;
+					jendpoint->rc_domain_msg = rc_domain;
+					jendpoint->info_msg = fi_dupinfo(con_info);
 					ret = TRUE;
 					//printf("\nCLIENT: Connected event on client even queue\n"); //debug
 					//fflush(stdout);

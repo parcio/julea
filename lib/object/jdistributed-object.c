@@ -347,28 +347,28 @@ j_distributed_object_read_background_operation(gpointer data)
 			{
 				struct fi_cq_msg_entry* completion_queue_data;
 				struct fi_cq_err_entry* completion_queue_err_entry;
-				JEndpoint* endpoint;
+				JEndpoint* jendpoint;
 				ssize_t error;
 
-				endpoint = (JEndpoint*)object_connection;
+				jendpoint = (JEndpoint*)object_connection;
 				error = 0;
 				completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 				//PERROR: this direct receive may not work
-				error = fi_recv(endpoint->endpoint, (void*)read_data, (size_t)nbytes, NULL, 0, NULL);
+				error = fi_recv(jendpoint->ep_msg, (void*)read_data, (size_t)nbytes, NULL, 0, NULL);
 				if (error != 0)
 				{
 					g_critical("\nError while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
 					goto end;
 				}
-				error = fi_cq_sread(endpoint->completion_queue_receive, completion_queue_data, 1, NULL, -1);
+				error = fi_cq_sread(jendpoint->cq_receive_msg, completion_queue_data, 1, NULL, -1);
 				if (error != 0)
 				{
 					if (error == -FI_EAVAIL)
 					{
 						completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
-						error = fi_cq_readerr(endpoint->completion_queue_receive, completion_queue_err_entry, 0);
-						g_critical("\nError on completion Queue after reading for background write operations for distributed Objects\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
+						error = fi_cq_readerr(jendpoint->cq_receive_msg, completion_queue_err_entry, 0);
+						g_critical("\nError on completion Queue after reading for background write operations for distributed Objects\nDetails:\n%s", fi_cq_strerror(jendpoint->cq_receive_msg, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
 						free(completion_queue_err_entry);
 						goto end;
 					}

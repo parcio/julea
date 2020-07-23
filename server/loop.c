@@ -32,7 +32,7 @@
 static guint jd_thread_num = 0;
 
 gboolean
-jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
+jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -91,7 +91,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			if (reply != NULL)
 			{
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 		}
 		break;
@@ -125,7 +125,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			if (reply != NULL)
 			{
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 		}
 		break;
@@ -165,7 +165,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 				if (buf == NULL)
 				{
 					// FIXME ugly
-					j_message_send(reply, endpoint);
+					j_message_send(reply, jendpoint);
 					j_message_unref(reply);
 
 					reply = j_message_new_reply(message);
@@ -190,7 +190,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			j_backend_object_close(jd_object_backend, object);
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 			j_message_unref(reply);
 
 			j_memory_chunk_reset(memory_chunk);
@@ -240,18 +240,18 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 				buf = j_memory_chunk_get(memory_chunk, length);
 				g_assert(buf != NULL);
 
-				error = fi_recv(endpoint->endpoint, (void*)buf, (size_t)length, NULL, 0, NULL);
+				error = fi_recv(jendpoint->ep_msg, (void*)buf, (size_t)length, NULL, 0, NULL);
 				if (error != 0)
 				{
 					g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));
 				}
-				error = fi_cq_sread(endpoint->completion_queue_receive, &completion_queue_data, 1, NULL, -1);
+				error = fi_cq_sread(jendpoint->cq_receive_msg, &completion_queue_data, 1, NULL, -1);
 				if (error != 0)
 				{
 					if (error == -FI_EAVAIL)
 					{
-						error = fi_cq_readerr(endpoint->completion_queue_receive, &completion_queue_err_entry, 0);
-						g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(endpoint->completion_queue_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+						error = fi_cq_readerr(jendpoint->cq_receive_msg, &completion_queue_err_entry, 0);
+						g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->cq_receive_msg, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					}
 					else if (error == -FI_EAGAIN)
 					{
@@ -295,7 +295,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			if (reply != NULL)
 			{
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 
 			j_memory_chunk_reset(memory_chunk);
@@ -332,7 +332,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 				j_backend_object_close(jd_object_backend, object);
 			}
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_STATISTICS:
@@ -376,7 +376,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 				g_mutex_unlock(jd_statistics_mutex);
 			}
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_PING:
@@ -403,7 +403,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 				j_message_append_string(reply, "kv");
 			}
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_KV_PUT:
@@ -445,7 +445,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			if (reply != NULL)
 			{
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 		}
 		break;
@@ -484,7 +484,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			if (reply != NULL)
 			{
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 		}
 		break;
@@ -523,7 +523,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 
 			j_backend_kv_batch_execute(jd_kv_backend, batch);
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_KV_GET_ALL:
@@ -554,7 +554,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 			j_message_add_operation(reply, 4);
 			j_message_append_4(reply, &zero);
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_KV_GET_BY_PREFIX:
@@ -587,7 +587,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 			j_message_add_operation(reply, 4);
 			j_message_append_4(reply, &zero);
 
-			j_message_send(reply, endpoint);
+			j_message_send(reply, jendpoint);
 		}
 		break;
 		case J_MESSAGE_DB_SCHEMA_CREATE:
@@ -774,7 +774,7 @@ jd_handle_message(JMessage* message, JEndpoint* endpoint, JMemoryChunk* memory_c
 						g_warn_if_reached();
 				}
 
-				j_message_send(reply, endpoint);
+				j_message_send(reply, jendpoint);
 			}
 			break;
 		default:

@@ -53,9 +53,8 @@ G_GNUC_INTERNAL JStatistics* j_statistics;
 G_GNUC_INTERNAL GMutex* j_statistics_mutex;
 
 gpointer j_thread_function(gpointer connection_event_entry);
-G_GNUC_INTERNAL gboolean j_thread_libfabric_ress_init(struct fi_info*, RefCountedDomain**, JEndpoint**);
-G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown(struct fi_info*, RefCountedDomain*, JEndpoint*);
-//void thread_unblock(gpointer completion_queue, gpointer user_data);
+G_GNUC_INTERNAL gboolean j_thread_libfabric_ress_init(gpointer, RefCountedDomain**, JEndpoint**);
+G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown(RefCountedDomain*, JEndpoint*);
 void thread_unblock(struct fid_cq* completion_queue);
 
 G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
