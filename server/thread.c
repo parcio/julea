@@ -259,7 +259,7 @@ j_thread_libfabric_ress_shutdown(RefCountedDomain* rc_domain, JEndpoint* jendpoi
 	{
 		g_critical("\nSERVER: Error thread endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
-  }
+	}
 
 	domain_unref(rc_domain, domain_manager, "server thread");
 
