@@ -187,19 +187,19 @@ j_endpoint_shutdown_test(JEndpoint* jendpoint, const gchar* location)
 	error = 0;
 
 	event_entry = malloc(sizeof(struct fi_eq_cm_entry) + 128);
-	error = fi_eq_read(jendpoint->eq_msg, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
+	error = fi_eq_read(jendpoint->msg_eq, &event, event_entry, sizeof(struct fi_eq_cm_entry) + 128, 0);
 	if (error != 0)
 	{
 		if (error == -FI_EAVAIL)
 		{
-			error = fi_eq_readerr(jendpoint->eq_msg, &event_queue_err_entry, 0);
+			error = fi_eq_readerr(jendpoint->msg_eq, &event_queue_err_entry, 0);
 			if (error < 0)
 			{
 				g_critical("\nCLIENT: Error occurred while reading Error Message from Event queue (%s) reading for shutdown.\nDetails:\n%s", fi_strerror(abs(error)), location);
 			}
 			else
 			{
-				g_critical("\nCLIENT: Error Message on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(jendpoint->eq_msg, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nCLIENT: Error Message on Event queue (%s) reading for shutdown .\nDetails:\n%s", location, fi_eq_strerror(jendpoint->msg_eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 			}
 		}
 		else if (error == -FI_EAGAIN)
@@ -237,7 +237,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 		{
 			g_critical("\nCLIENT: Sending wakeup message while connection pool (%s queues) shutdown did not work.\n", location);
 		}
-		error = fi_shutdown(jendpoint->ep_msg, 0);
+		error = fi_shutdown(jendpoint->msg_ep, 0);
 		if (error != 0)
 		{
 			g_critical("\nCLIENT: Error during %s connection shutdown.\n Details:\n %s", location, fi_strerror(abs(error)));
@@ -245,37 +245,37 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 		}
 	}
 
-	error = fi_close(&jendpoint->ep_msg->fid);
+	error = fi_close(&jendpoint->msg_ep->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&jendpoint->cq_receive_msg->fid);
+	error = fi_close(&jendpoint->msg_cq_receive->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint receive completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&jendpoint->cq_transmit_msg->fid);
+	error = fi_close(&jendpoint->msg_cq_transmit->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint transmit completion queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	error = fi_close(&jendpoint->eq_msg->fid);
+	error = fi_close(&jendpoint->msg_eq->fid);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem closing %s-Endpoint event queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	fi_freeinfo(jendpoint->info_msg);
+	fi_freeinfo(jendpoint->msg_info);
 
-	domain_unref(jendpoint->rc_domain_msg, domain_manager, "client");
+	domain_unref(jendpoint->msg_rc_domain, domain_manager, "client");
 
 	free(jendpoint);
 }
@@ -795,12 +795,12 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoi
 				}
 				else
 				{
-					jendpoint->ep_msg = tmp_ep;
-					jendpoint->eq_msg = tmp_eq;
-					jendpoint->cq_transmit_msg = tmp_cq_transmit;
-					jendpoint->cq_receive_msg = tmp_cq_rcv;
-					jendpoint->rc_domain_msg = rc_domain;
-					jendpoint->info_msg = fi_dupinfo(con_info);
+					jendpoint->msg_ep = tmp_ep;
+					jendpoint->msg_eq = tmp_eq;
+					jendpoint->msg_cq_transmit = tmp_cq_transmit;
+					jendpoint->msg_cq_receive = tmp_cq_rcv;
+					jendpoint->msg_rc_domain = rc_domain;
+					jendpoint->msg_info = fi_dupinfo(con_info);
 					ret = TRUE;
 					//printf("\nCLIENT: Connected event on client even queue\n"); //debug
 					//fflush(stdout);

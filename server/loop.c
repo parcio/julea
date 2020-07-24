@@ -240,18 +240,18 @@ jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_
 				buf = j_memory_chunk_get(memory_chunk, length);
 				g_assert(buf != NULL);
 
-				error = fi_recv(jendpoint->ep_msg, (void*)buf, (size_t)length, NULL, 0, NULL);
+				error = fi_recv(jendpoint->msg_ep, (void*)buf, (size_t)length, NULL, 0, NULL);
 				if (error != 0)
 				{
 					g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));
 				}
-				error = fi_cq_sread(jendpoint->cq_receive_msg, &completion_queue_data, 1, NULL, -1);
+				error = fi_cq_sread(jendpoint->msg_cq_receive, &completion_queue_data, 1, NULL, -1);
 				if (error != 0)
 				{
 					if (error == -FI_EAVAIL)
 					{
-						error = fi_cq_readerr(jendpoint->cq_receive_msg, &completion_queue_err_entry, 0);
-						g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->cq_receive_msg, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+						error = fi_cq_readerr(jendpoint->msg_cq_receive, &completion_queue_err_entry, 0);
+						g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->msg_cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					}
 					else if (error == -FI_EAGAIN)
 					{

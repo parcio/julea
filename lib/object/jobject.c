@@ -545,20 +545,20 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 					completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 					//PERROR: this direct receive may not work
-					error = fi_recv(jendpoint->ep_msg, (void*)data, (size_t)nbytes, NULL, 0, NULL);
+					error = fi_recv(jendpoint->msg_ep, (void*)data, (size_t)nbytes, NULL, 0, NULL);
 					if (error != 0)
 					{
 						g_critical("\nError while receiving background write operation for JObjects\nDetails:\n%s\n", fi_strerror((int)error));
 						goto end;
 					}
-					error = fi_cq_sread(jendpoint->cq_receive_msg, completion_queue_data, 1, NULL, -1);
+					error = fi_cq_sread(jendpoint->msg_cq_receive, completion_queue_data, 1, NULL, -1);
 					if (error != 0)
 					{
 						if (error == -FI_EAVAIL)
 						{
 							completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
-							error = fi_cq_readerr(jendpoint->cq_receive_msg, completion_queue_err_entry, 0);
-							g_critical("\nError on completion Queue after reading for background write operations for JObjects\nDetails:\n%s", fi_cq_strerror(jendpoint->cq_receive_msg, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
+							error = fi_cq_readerr(jendpoint->msg_cq_receive, completion_queue_err_entry, 0);
+							g_critical("\nError on completion Queue after reading for background write operations for JObjects\nDetails:\n%s", fi_cq_strerror(jendpoint->msg_cq_receive, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
 							free(completion_queue_err_entry);
 							goto end;
 						}

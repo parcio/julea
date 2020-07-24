@@ -68,18 +68,23 @@ typedef struct JMessage JMessage;
 
 struct JEndpoint
 {
-	struct fid_ep* ep_msg; // ep = endpoint
-	struct fid_ep* ep_rdma;
-	struct fi_info* info_msg;
-	struct fi_info* info_rdma;
-	struct fid_eq* eq_msg; // eq = event queue
-	struct fid_eq* eq_rmda;
-	struct fid_cq* cq_transmit_msg; // cq = completion queue
-	struct fid_cq* cq_receive_msg;
-	struct fid_cq* cq_transmit_rdma;
-	struct fid_cq* cq_receive_rdma;
-	RefCountedDomain* rc_domain_msg;
-	RefCountedDomain* rc_domain_rdma;
+	// msg structures
+	struct fid_ep* msg_ep; // ep = endpoint
+	struct fi_info* msg_info;
+	struct fid_eq* msg_eq; // eq = event queue
+	struct fid_cq* msg_cq_transmit; // cq = completion queue
+	struct fid_cq* msg_cq_receive;
+	RefCountedDomain* msg_rc_domain;
+	// rdma structures
+	struct fid_ep* rdma_ep;
+	struct fi_info* rdma_info;
+	struct fid_eq* rdma_eq;
+	struct fid_cq* rdma_cq_transmit;
+	struct fid_cq* rdma_cq_receive;
+	RefCountedDomain* rdma_rc_domain;
+	const void* rdma_mem_buf; //memory buffer
+	size_t rdma_buf_len;
+	struct fid_mr* rdma_mem_region;
 };
 
 typedef struct JEndpoint JEndpoint;
