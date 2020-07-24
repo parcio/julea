@@ -108,7 +108,7 @@ struct JConfiguration
 		*/
 		struct
 		{
-			gint version; /* libfabric versioning */
+			gint version; /* libfabric interface version */
 			gchar* node; /* user specified target node, format specified by info addr_format field */
 			gchar* service; /* user specified port represented as string */
 			guint64 server_flags; /* flags for fi_getinfo */
@@ -117,7 +117,8 @@ struct JConfiguration
 			/**
 			*fi_info config parameters
 			*/
-			struct fi_info* hints;
+			struct fi_info* msg_hints;
+			struct fi_info* rdma_hints;
 		} get_info;
 	} libfabric;
 
@@ -285,7 +286,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* service; /* port represented as string */
 	guint64 client_flags; /* flags for fi_getinfo */
 	guint64 server_flags;
-	struct fi_info* hints;
+	struct fi_info* msg_hints;
 	gchar* prov_name; /* user requested provider */
 	guint64 caps; /* user requested capabilities */
 
@@ -321,7 +322,16 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	* 13 of 22 are primary
 	* not all supported, only socket based communication supported at the moment
 	*/
-	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) | g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
+	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) |
+		g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
 
 	/**
 	* check if vital components are missing
@@ -388,14 +398,14 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	service = g_strdup("4711");
 	server_flags = FI_SOURCE;
 	client_flags = FI_NUMERICHOST;
-	hints = fi_allocinfo();
+	msg_hints = fi_allocinfo();
 
-	hints->caps = caps;
-	hints->mode = 0;
-	hints->addr_format = FI_SOCKADDR_IN;
-	hints->fabric_attr->prov_name = g_strdup(prov_name);
-	hints->domain_attr->threading = FI_THREAD_SAFE;
-	hints->tx_attr->op_flags = FI_COMPLETION;
+	msg_hints->caps = caps;
+	msg_hints->mode = 0;
+	msg_hints->addr_format = FI_SOCKADDR_IN;
+	msg_hints->fabric_attr->prov_name = g_strdup(prov_name);
+	msg_hints->domain_attr->threading = FI_THREAD_SAFE;
+	msg_hints->tx_attr->op_flags = FI_COMPLETION;
 	/**
 	* sets values in config
 	*/
@@ -427,7 +437,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->libfabric.get_info.service = service;
 	configuration->libfabric.get_info.server_flags = server_flags;
 	configuration->libfabric.get_info.client_flags = client_flags;
-	configuration->libfabric.get_info.hints = hints;
+	configuration->libfabric.get_info.msg_hints = msg_hints;
 
 	/**
 	* set default values for not specified values by user
@@ -465,10 +475,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	*/
 
 	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
-	if (configuration->libfabric.get_info.hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.hints->caps == 0)
+	if (configuration->libfabric.get_info.msg_hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.msg_hints->caps == 0)
 	{
 		//g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used\n");
-		configuration->libfabric.get_info.hints->fabric_attr->prov_name = g_strdup("sockets");
+		configuration->libfabric.get_info.msg_hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
 
 	return configuration;
@@ -536,7 +546,7 @@ j_configuration_unref(JConfiguration* configuration)
 		g_free(configuration->libfabric.get_info.node);
 		g_free(configuration->libfabric.get_info.service);
 
-		fi_freeinfo(configuration->libfabric.get_info.hints);
+		fi_freeinfo(configuration->libfabric.get_info.msg_hints);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -761,13 +771,13 @@ j_configuration_get_fi_flags(JConfiguration* configuration, int type)
 }
 
 struct fi_info*
-j_configuration_fi_get_hints(JConfiguration* configuration)
+j_configuration_fi_get_msg_hints(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->libfabric.get_info.hints;
+	return configuration->libfabric.get_info.msg_hints;
 }
 
 gboolean

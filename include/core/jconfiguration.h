@@ -72,7 +72,7 @@ char const* j_configuration_get_fi_node(JConfiguration* configuration);
 char const* j_configuration_get_fi_service(JConfiguration* configuration);
 uint64_t j_configuration_get_fi_flags(JConfiguration* configuration, int type);
 //fi_info info
-struct fi_info* j_configuration_fi_get_hints(JConfiguration* configuration);
+struct fi_info* j_configuration_fi_get_msg_hints(JConfiguration* configuration);
 
 G_END_DECLS
 

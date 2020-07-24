@@ -141,8 +141,8 @@ j_connection_pool_init(JConfiguration* configuration)
 			   //j_configuration_get_fi_node(configuration),
 			   NULL,
 			   j_configuration_get_fi_service(configuration),
-			   j_configuration_get_fi_flags(configuration, 0),
-			   j_configuration_fi_get_hints(configuration),
+			   j_configuration_get_fi_flags(configuration, 1),
+			   j_configuration_fi_get_msg_hints(configuration),
 			   &info);
 
 	if (error < 0)
@@ -658,8 +658,8 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoi
 		error = fi_getinfo(j_configuration_get_fi_version(j_connection_pool->configuration),
 				   NULL,
 				   NULL,
-				   j_configuration_get_fi_flags(j_connection_pool->configuration, 0),
-				   j_configuration_fi_get_hints(j_connection_pool->configuration),
+				   j_configuration_get_fi_flags(j_connection_pool->configuration, 1),
+				   j_configuration_fi_get_msg_hints(j_connection_pool->configuration),
 				   &con_info);
 		if (error < 0)
 		{

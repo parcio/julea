@@ -82,9 +82,11 @@ struct JEndpoint
 	struct fid_cq* rdma_cq_transmit;
 	struct fid_cq* rdma_cq_receive;
 	RefCountedDomain* rdma_rc_domain;
-	const void* rdma_mem_buf; //memory buffer
+	const void* rdma_mem_buf; // memory buffer to expose
 	size_t rdma_buf_len;
 	struct fid_mr* rdma_mem_region;
+	uint64_t rdma_virt_addr; // virtual address of peer mem region // needed?
+	uint64_t rdma_key; // key to provide for access on peer mem region // needed?
 };
 
 typedef struct JEndpoint JEndpoint;
