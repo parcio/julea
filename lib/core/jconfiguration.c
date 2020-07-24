@@ -129,10 +129,10 @@ struct JConfiguration
 };
 
 gboolean
-check_prov_name_validity(gchar* prov_name);
+check_prov_name_validity(gchar* prov_name, JConnectionType connection_type);
 
 gboolean
-check_caps_validity(guint64 caps);
+check_caps_validity(guint64 caps, JConnectionType connection_type);
 
 /**
  * Returns the configuration.
@@ -287,8 +287,11 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	guint64 client_flags; /* flags for fi_getinfo */
 	guint64 server_flags;
 	struct fi_info* msg_hints;
-	gchar* prov_name; /* user requested provider */
-	guint64 caps; /* user requested capabilities */
+	struct fi_info* rdma_hints;
+	gchar* msg_prov_name; /* user requested provider (msg) */
+	gchar* rdma_prov_name; /* user requested provider (rmda) */
+	guint64 msg_caps; /* user requested capabilities for messages */
+	guint64 rdma_caps; /* user requested capabilities for rmda */
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
@@ -316,22 +319,16 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	eq_size = (size_t)g_key_file_get_uint64(key_file, "eq", "size", NULL);
 	cq_size = (size_t)g_key_file_get_uint64(key_file, "cq", "size", NULL);
 	node = g_key_file_get_string(key_file, "libfabric", "node", NULL);
-	prov_name = g_key_file_get_string(key_file, "libfabric", "provider", NULL);
+	msg_prov_name = g_key_file_get_string(key_file, "libfabric", "msg_provider", NULL);
+	rdma_prov_name = g_key_file_get_string(key_file, "libfabric", "rdma_provider", NULL);
 	/*
 	* 22 capabilities available in libfabric for bitmask, but doubtful that even 10 will be combined
 	* 13 of 22 are primary
 	* not all supported, only socket based communication supported at the moment
 	*/
-	caps = g_key_file_get_uint64(key_file, "capabilities", "cap0", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap1", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap2", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap3", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap4", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap5", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap6", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap7", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap8", NULL) |
-		g_key_file_get_uint64(key_file, "capabilities", "cap9", NULL);
+	msg_caps = g_key_file_get_uint64(key_file, "msg_capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap1", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap2", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap3", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap4", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap5", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap6", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap7", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap8", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap9", NULL);
+
+	rdma_caps = g_key_file_get_uint64(key_file, "rdma_capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap1", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap2", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap3", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap4", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap5", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap6", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap7", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap8", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap9", NULL);
 
 	/**
 	* check if vital components are missing
@@ -350,8 +347,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || db_path == NULL
 	    || cq_size < 0
 	    || eq_size < 0
-	    || !check_caps_validity(caps)
-	    || !check_prov_name_validity(prov_name))
+	    || !check_caps_validity(msg_caps, J_MSG)
+	    || !check_prov_name_validity(msg_prov_name, J_MSG)
+	    || !check_caps_validity(rdma_caps, J_RDMA)
+	    || !check_prov_name_validity(rdma_prov_name, J_RDMA))
 	{
 		//if failed free read components
 		g_free(db_backend);
@@ -367,7 +366,8 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		g_strfreev(servers_kv);
 		g_strfreev(servers_db);
 		g_free(node);
-		g_free(prov_name);
+		g_free(msg_prov_name);
+		g_free(rdma_prov_name);
 		g_critical("Failed to build config\n");
 		return NULL;
 	}
@@ -398,14 +398,23 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	service = g_strdup("4711");
 	server_flags = FI_SOURCE;
 	client_flags = FI_NUMERICHOST;
-	msg_hints = fi_allocinfo();
 
-	msg_hints->caps = caps;
+	msg_hints = fi_allocinfo();
+	msg_hints->caps = msg_caps;
 	msg_hints->mode = 0;
 	msg_hints->addr_format = FI_SOCKADDR_IN;
-	msg_hints->fabric_attr->prov_name = g_strdup(prov_name);
+	msg_hints->fabric_attr->prov_name = g_strdup(msg_prov_name);
 	msg_hints->domain_attr->threading = FI_THREAD_SAFE;
 	msg_hints->tx_attr->op_flags = FI_COMPLETION;
+
+	rdma_hints = fi_allocinfo(); // TODO set rdma hints
+	rdma_hints->caps = rdma_caps;
+	rdma_hints->mode = 0;
+	rdma_hints->addr_format = FI_SOCKADDR_IN;
+	rdma_hints->fabric_attr->prov_name = g_strdup(rdma_prov_name);
+	rdma_hints->domain_attr->threading = FI_THREAD_SAFE;
+	rdma_hints->tx_attr->op_flags = FI_COMPLETION;
+
 	/**
 	* sets values in config
 	*/
@@ -438,6 +447,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->libfabric.get_info.server_flags = server_flags;
 	configuration->libfabric.get_info.client_flags = client_flags;
 	configuration->libfabric.get_info.msg_hints = msg_hints;
+	configuration->libfabric.get_info.rdma_hints = rdma_hints;
 
 	/**
 	* set default values for not specified values by user
@@ -477,8 +487,15 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
 	if (configuration->libfabric.get_info.msg_hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.msg_hints->caps == 0)
 	{
-		//g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used\n");
+		// g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used for message data transfer\n");
 		configuration->libfabric.get_info.msg_hints->fabric_attr->prov_name = g_strdup("sockets");
+	}
+
+	//if neither a special provider is required NOR required capabilities are specified the sockets provider is used
+	if (configuration->libfabric.get_info.rdma_hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.rdma_hints->caps == 0)
+	{
+		// g_printf("\nNeither Capabilities nor Provider requested, udp provider will be used for rdma data transfer\n");
+		configuration->libfabric.get_info.rdma_hints->fabric_attr->prov_name = g_strdup("udp"); // TODO choose a standard provider for rdma
 	}
 
 	return configuration;
@@ -547,6 +564,7 @@ j_configuration_unref(JConfiguration* configuration)
 		g_free(configuration->libfabric.get_info.service);
 
 		fi_freeinfo(configuration->libfabric.get_info.msg_hints);
+		fi_freeinfo(configuration->libfabric.get_info.rdma_hints);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -747,22 +765,18 @@ j_configuration_get_fi_service(JConfiguration* configuration)
 	return configuration->libfabric.get_info.service;
 }
 
-/**
-* server: type = 0
-* client: type = 1
-*/
 uint64_t
-j_configuration_get_fi_flags(JConfiguration* configuration, int type)
+j_configuration_get_fi_flags(JConfiguration* configuration, JRequestType request_type)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	switch (type)
+	switch (request_type)
 	{
-		case 0:
+		case J_SERVER:
 			return (uint64_t)configuration->libfabric.get_info.server_flags;
-		case 1:
+		case J_CLIENT:
 			return (uint64_t)configuration->libfabric.get_info.client_flags;
 		default:
 			g_assert_not_reached();
@@ -771,21 +785,31 @@ j_configuration_get_fi_flags(JConfiguration* configuration, int type)
 }
 
 struct fi_info*
-j_configuration_fi_get_msg_hints(JConfiguration* configuration)
+j_configuration_fi_get_hints(JConfiguration* configuration, JConnectionType connection_type)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(configuration != NULL, 0);
 
-	return configuration->libfabric.get_info.msg_hints;
+	switch (connection_type)
+	{
+		case J_MSG:
+			return configuration->libfabric.get_info.msg_hints;
+		case J_RDMA:
+			return configuration->libfabric.get_info.rdma_hints;
+		default:
+			g_assert_not_reached();
+	}
+	return NULL;
 }
 
 gboolean
-check_prov_name_validity(gchar* prov_name)
+check_prov_name_validity(gchar* prov_name, JConnectionType connection_type)
 {
 	gboolean ret;
-	const gchar* available_provs[7];
+	GSList* available_provs;
 	const gchar* libfabric_provs[14];
+	const gchar* type;
 
 	if (prov_name == NULL)
 	{
@@ -793,13 +817,28 @@ check_prov_name_validity(gchar* prov_name)
 	}
 
 	ret = FALSE;
-	available_provs[0] = "gni";
-	available_provs[1] = "psm";
-	available_provs[2] = "psm2";
-	available_provs[3] = "rxm";
-	available_provs[4] = "sockets";
-	available_provs[5] = "verbs";
-	available_provs[6] = "bgq";
+
+	available_provs = NULL;
+
+	switch (connection_type)
+	{
+		case J_MSG:
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("gni"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("psm"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("psm2"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("rxm"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("sockets"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("verbs"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("bgq"));
+			type = "Message";
+			break;
+		case J_RDMA: // TODO set RDMA possible providers
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("udp")); //check fi_udp man page
+			type = "RDMA";
+			break;
+		default:
+			g_assert_not_reached();
+	}
 
 	libfabric_provs[0] = "gni";
 	libfabric_provs[1] = "psm";
@@ -820,22 +859,27 @@ check_prov_name_validity(gchar* prov_name)
 	{
 		if (g_strcmp0(prov_name, libfabric_provs[n]) == 0)
 		{
-			for (int i = 0; i < 7; i++)
+			for (guint i = 0; i < g_slist_length(available_provs); i++)
 			{
-				if (g_strcmp0(prov_name, available_provs[i]) == 0)
+				if (g_strcmp0(prov_name, (gchar*)g_slist_nth_data(available_provs, i)) == 0)
 				{
-					g_printf("Suitable Provider requested.\n");
+					g_printf("Suitable %s-Provider requested.\n", type);
 					ret = TRUE;
 					goto end;
 				}
 			}
-			g_critical("\nThe requested Provider is not supported by Julea-libfabric implementation.\n");
+			g_critical("\nThe requested %s-Provider is not supported by Julea-libfabric implementation.\n", type);
 			goto end;
 		}
 	}
-	g_critical("\nThe requested Provider is no libfabric Provider.\n");
+	g_critical("\nThe requested %s-Provider is no libfabric Provider.\n", type);
 
 end:
+	for (guint i = 0; i < g_slist_length(available_provs); i++)
+	{
+		g_free((gchar*)g_slist_nth_data(available_provs, i));
+	}
+	g_slist_free(available_provs);
 	return ret;
 }
 
@@ -844,7 +888,7 @@ end:
 * split into primary and secondary caps for readablitiy reasons.
 */
 gboolean
-check_caps_validity(guint64 caps)
+check_caps_validity(guint64 caps, JConnectionType connection_type)
 {
 	gboolean ret;
 	uint64_t internal_caps;
@@ -852,17 +896,33 @@ check_caps_validity(guint64 caps)
 	uint64_t libfabric_caps;
 	uint64_t primary_caps;
 	uint64_t secondary_caps;
+	const gchar* type;
+
 	if (caps == 0)
 	{
 		return TRUE;
 	}
+
 	ret = FALSE;
 	internal_caps = (uint64_t)caps;
-	available_caps = FI_MSG | /* Endpoints support sending and receiving of Messages or Datagrams */
-			 FI_SEND | /* Endpoints support message Data Transfers */
-			 FI_RECV | /* Endpoints support receiving message Data Transfers */
-			 FI_LOCAL_COMM | /* Endpoints support local host communication */
-			 FI_REMOTE_COMM; /* Endpoints support remote nodes */
+
+	switch (connection_type)
+	{
+		case J_MSG:
+			available_caps = FI_MSG | /* Endpoints support sending and receiving of Messages or Datagrams */
+					 FI_SEND | /* Endpoints support message Data Transfers */
+					 FI_RECV | /* Endpoints support receiving message Data Transfers */
+					 FI_LOCAL_COMM | /* Endpoints support local host communication */
+					 FI_REMOTE_COMM; /* Endpoints support remote nodes */
+			type = "Message";
+			break;
+		case J_RDMA: // TODO set RDMA possible Caps
+			available_caps = FI_RMA | FI_WRITE | FI_READ;
+			type = "RDMA";
+			break;
+		default:
+			g_assert_not_reached();
+	}
 	primary_caps = FI_MSG | FI_RMA | FI_TAGGED | FI_ATOMIC | FI_MULTICAST | FI_NAMED_RX_CTX | FI_DIRECTED_RECV | FI_READ | FI_WRITE | FI_RECV | FI_SEND | FI_REMOTE_READ | FI_REMOTE_WRITE;
 	secondary_caps = FI_MULTI_RECV | FI_SOURCE | FI_RMA_EVENT | FI_SHARED_AV | FI_TRIGGER | FI_FENCE | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_SOURCE_ERR;
 	libfabric_caps = primary_caps | secondary_caps;
@@ -871,17 +931,17 @@ check_caps_validity(guint64 caps)
 	{
 		if ((available_caps & internal_caps) == internal_caps)
 		{
-			g_printf("Capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n");
+			g_printf("%s-capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n", type);
 			ret = TRUE;
 		}
 		else
 		{
-			g_critical("\nRequested capabilities contain at least one capability not supported by Julea implementation.\n");
+			g_critical("\nRequested %s-capabilities contain at least one capability not supported by Julea implementation.\n", type);
 		}
 	}
 	else
 	{
-		g_critical("\nRequested capabilities contain at least one non libfabric capability.\n");
+		g_critical("\nRequested %s-capabilities contain at least one non libfabric capability.\n", type);
 	}
 	return ret;
 }

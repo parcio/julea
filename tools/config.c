@@ -48,17 +48,28 @@ static gint64 opt_stripe_size = 0;
 static guint64 eq_size = 0;
 static guint64 cq_size = 0;
 static gchar const* node = NULL;
-static gchar const* prov_name = NULL;
-static guint64 cap0 = 0;
-static guint64 cap1 = 0;
-static guint64 cap2 = 0;
-static guint64 cap3 = 0;
-static guint64 cap4 = 0;
-static guint64 cap5 = 0;
-static guint64 cap6 = 0;
-static guint64 cap7 = 0;
-static guint64 cap8 = 0;
-static guint64 cap9 = 0;
+static gchar const* msg_prov_name = NULL;
+static guint64 msg_cap0 = 0;
+static guint64 msg_cap1 = 0;
+static guint64 msg_cap2 = 0;
+static guint64 msg_cap3 = 0;
+static guint64 msg_cap4 = 0;
+static guint64 msg_cap5 = 0;
+static guint64 msg_cap6 = 0;
+static guint64 msg_cap7 = 0;
+static guint64 msg_cap8 = 0;
+static guint64 msg_cap9 = 0;
+static gchar const* rdma_prov_name = NULL;
+static guint64 rdma_cap0 = 0;
+static guint64 rdma_cap1 = 0;
+static guint64 rdma_cap2 = 0;
+static guint64 rdma_cap3 = 0;
+static guint64 rdma_cap4 = 0;
+static guint64 rdma_cap5 = 0;
+static guint64 rdma_cap6 = 0;
+static guint64 rdma_cap7 = 0;
+static guint64 rdma_cap8 = 0;
+static guint64 rdma_cap9 = 0;
 
 static gchar**
 string_split(gchar const* string)
@@ -141,28 +152,50 @@ write_config(gchar* path)
 		g_key_file_set_uint64(key_file, "cq", "size", cq_size);
 	if (node != NULL)
 		g_key_file_set_string(key_file, "libfabric", "node", node);
-	if (prov_name != NULL)
-		g_key_file_set_string(key_file, "libfabric", "provider", prov_name);
-	if (cap0 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap0", cap0);
-	if (cap1 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap1", cap1);
-	if (cap2 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap2", cap2);
-	if (cap3 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap3", cap3);
-	if (cap4 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap4", cap4);
-	if (cap5 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap5", cap5);
-	if (cap6 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap6", cap6);
-	if (cap7 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap7", cap7);
-	if (cap8 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap8", cap8);
-	if (cap9 != 0)
-		g_key_file_set_uint64(key_file, "capabilities", "cap9", cap9);
+	if (msg_prov_name != NULL)
+		g_key_file_set_string(key_file, "libfabric", "msg_provider", msg_prov_name);
+	if (msg_cap0 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap0", msg_cap0);
+	if (msg_cap1 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap1", msg_cap1);
+	if (msg_cap2 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap2", msg_cap2);
+	if (msg_cap3 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap3", msg_cap3);
+	if (msg_cap4 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap4", msg_cap4);
+	if (msg_cap5 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap5", msg_cap5);
+	if (msg_cap6 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap6", msg_cap6);
+	if (msg_cap7 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap7", msg_cap7);
+	if (msg_cap8 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap8", msg_cap8);
+	if (msg_cap9 != 0)
+		g_key_file_set_uint64(key_file, "msg_capabilities", "msg_cap9", msg_cap9);
+	if (rdma_prov_name != NULL)
+		g_key_file_set_string(key_file, "libfabric", "rdma_provider", rdma_prov_name);
+	if (rdma_cap0 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap0", rdma_cap0);
+	if (rdma_cap1 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap1", rdma_cap1);
+	if (rdma_cap2 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap2", rdma_cap2);
+	if (rdma_cap3 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap3", rdma_cap3);
+	if (rdma_cap4 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap4", rdma_cap4);
+	if (rdma_cap5 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap5", rdma_cap5);
+	if (rdma_cap6 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap6", rdma_cap6);
+	if (rdma_cap7 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap7", rdma_cap7);
+	if (rdma_cap8 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap8", rdma_cap8);
+	if (rdma_cap9 != 0)
+		g_key_file_set_uint64(key_file, "rdma_capabilities", "rdma_cap9", rdma_cap9);
 
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
@@ -215,17 +248,28 @@ main(gint argc, gchar** argv)
 		{ "eq_size", 0, 0, G_OPTION_ARG_INT64, &eq_size, "Maximum number of entries in the libfabric event queues used", "0" },
 		{ "cq_size", 0, 0, G_OPTION_ARG_INT64, &cq_size, "Maximum number of entries in the libfabric completion queues used", "0" },
 		{ "node", 0, 0, G_OPTION_ARG_STRING, &node, "Node parameter for libfabric creation calls, unstable at the moment. Doted IPV4 Format", "127.0.0.1" },
-		{ "provider-name", 0, 0, G_OPTION_ARG_STRING, &prov_name, "Requested libfabric provider. Julea checks whether a suitable provider was chosen.", "sockets" },
-		{ "capability0", 0, 0, G_OPTION_ARG_INT64, &cap0, "Field for one requested libfabric provider capability", "0" },
-		{ "capability1", 0, 0, G_OPTION_ARG_INT64, &cap1, "Field for one requested libfabric provider capability", "0" },
-		{ "capability2", 0, 0, G_OPTION_ARG_INT64, &cap2, "Field for one requested libfabric provider capability", "0" },
-		{ "capability3", 0, 0, G_OPTION_ARG_INT64, &cap3, "Field for one requested libfabric provider capability", "0" },
-		{ "capability4", 0, 0, G_OPTION_ARG_INT64, &cap4, "Field for one requested libfabric provider capability", "0" },
-		{ "capability5", 0, 0, G_OPTION_ARG_INT64, &cap5, "Field for one requested libfabric provider capability", "0" },
-		{ "capability7", 0, 0, G_OPTION_ARG_INT64, &cap7, "Field for one requested libfabric provider capability", "0" },
-		{ "capability6", 0, 0, G_OPTION_ARG_INT64, &cap6, "Field for one requested libfabric provider capability", "0" },
-		{ "capability8", 0, 0, G_OPTION_ARG_INT64, &cap8, "Field for one requested libfabric provider capability", "0" },
-		{ "capability9", 0, 0, G_OPTION_ARG_INT64, &cap9, "Field for one requested libfabric provider capability", "0" },
+		{ "msg-provider-name", 0, 0, G_OPTION_ARG_STRING, &msg_prov_name, "Requested libfabric message provider. Julea checks whether a suitable provider was chosen.", "sockets" },
+		{ "msg-capability0", 0, 0, G_OPTION_ARG_INT64, &msg_cap0, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability1", 0, 0, G_OPTION_ARG_INT64, &msg_cap1, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability2", 0, 0, G_OPTION_ARG_INT64, &msg_cap2, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability3", 0, 0, G_OPTION_ARG_INT64, &msg_cap3, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability4", 0, 0, G_OPTION_ARG_INT64, &msg_cap4, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability5", 0, 0, G_OPTION_ARG_INT64, &msg_cap5, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability6", 0, 0, G_OPTION_ARG_INT64, &msg_cap6, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability7", 0, 0, G_OPTION_ARG_INT64, &msg_cap7, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability8", 0, 0, G_OPTION_ARG_INT64, &msg_cap8, "Field for one requested libfabric message provider capability", "0" },
+		{ "msg-capability9", 0, 0, G_OPTION_ARG_INT64, &msg_cap9, "Field for one requested libfabric message provider capability", "0" },
+		{ "rdma-provider-name", 0, 0, G_OPTION_ARG_STRING, &rdma_prov_name, "Requested libfabric rmda provider. Julea checks whether a suitable provider was chosen.", "udp" },
+		{ "rdma-capability0", 0, 0, G_OPTION_ARG_INT64, &rdma_cap0, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability1", 0, 0, G_OPTION_ARG_INT64, &rdma_cap1, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability2", 0, 0, G_OPTION_ARG_INT64, &rdma_cap2, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability3", 0, 0, G_OPTION_ARG_INT64, &rdma_cap3, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability4", 0, 0, G_OPTION_ARG_INT64, &rdma_cap4, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability5", 0, 0, G_OPTION_ARG_INT64, &rdma_cap5, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability6", 0, 0, G_OPTION_ARG_INT64, &rdma_cap6, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability7", 0, 0, G_OPTION_ARG_INT64, &rdma_cap7, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability8", 0, 0, G_OPTION_ARG_INT64, &rdma_cap8, "Field for one requested libfabric rdma provider capability", "0" },
+		{ "rdma-capability9", 0, 0, G_OPTION_ARG_INT64, &rdma_cap9, "Field for one requested libfabric rdma provider capability", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 

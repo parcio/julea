@@ -234,7 +234,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 		goto end_hostname;
 	}
 
-	hints = fi_dupinfo(j_configuration_fi_get_msg_hints(jd_configuration));
+	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration, J_MSG));
 	if (hints == NULL)
 	{
 		g_critical("\nSERVER: Allocating empty hints did not work\n");
@@ -245,7 +245,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
 			   NULL,
 			   j_configuration_get_fi_service(jd_configuration),
-			   j_configuration_get_fi_flags(jd_configuration, 0),
+			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
 			   hints,
 			   info);
 	if (error != 0)
