@@ -326,9 +326,27 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	* 13 of 22 are primary
 	* not all supported, only socket based communication supported at the moment
 	*/
-	msg_caps = g_key_file_get_uint64(key_file, "msg_capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap1", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap2", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap3", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap4", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap5", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap6", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap7", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap8", NULL) | g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap9", NULL);
+	msg_caps = g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap0", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap1", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap2", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap3", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap4", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap5", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap6", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap7", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap8", NULL) | /**/
+		   g_key_file_get_uint64(key_file, "msg_capabilities", "msg_cap9", NULL);
 
-	rdma_caps = g_key_file_get_uint64(key_file, "rdma_capabilities", "cap0", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap1", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap2", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap3", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap4", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap5", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap6", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap7", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap8", NULL) | g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap9", NULL);
+	rdma_caps = g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap0", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap1", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap2", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap3", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap4", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap5", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap6", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap7", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap8", NULL) | /**/
+		    g_key_file_get_uint64(key_file, "rdma_capabilities", "rdma_cap9", NULL);
 
 	/**
 	* check if vital components are missing
@@ -917,21 +935,44 @@ check_caps_validity(guint64 caps, JConnectionType connection_type)
 			type = "Message";
 			break;
 		case J_RDMA: // TODO set RDMA possible Caps
-			available_caps = FI_RMA | FI_WRITE | FI_READ;
+			available_caps = FI_RMA | /**/
+					 FI_WRITE | /**/
+					 FI_READ; /**/
 			type = "RDMA";
 			break;
 		default:
 			g_assert_not_reached();
 	}
-	primary_caps = FI_MSG | FI_RMA | FI_TAGGED | FI_ATOMIC | FI_MULTICAST | FI_NAMED_RX_CTX | FI_DIRECTED_RECV | FI_READ | FI_WRITE | FI_RECV | FI_SEND | FI_REMOTE_READ | FI_REMOTE_WRITE;
-	secondary_caps = FI_MULTI_RECV | FI_SOURCE | FI_RMA_EVENT | FI_SHARED_AV | FI_TRIGGER | FI_FENCE | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_SOURCE_ERR;
+	primary_caps = FI_MSG | FI_RMA | /**/
+		       FI_TAGGED | /**/
+		       FI_ATOMIC | /**/
+		       FI_MULTICAST | /**/
+		       FI_NAMED_RX_CTX | /**/
+		       FI_DIRECTED_RECV | /**/
+		       FI_READ | /**/
+		       FI_WRITE | /**/
+		       FI_RECV | /**/
+		       FI_SEND | /**/
+		       FI_REMOTE_READ | /**/
+		       FI_REMOTE_WRITE; /**/
+
+	secondary_caps = FI_MULTI_RECV | /**/
+			 FI_SOURCE | /**/
+			 FI_RMA_EVENT | /**/
+			 FI_SHARED_AV | /**/
+			 FI_TRIGGER | /**/
+			 FI_FENCE | /**/
+			 FI_LOCAL_COMM | /**/
+			 FI_REMOTE_COMM | /**/
+			 FI_SOURCE_ERR; /**/
+
 	libfabric_caps = primary_caps | secondary_caps;
 
 	if ((libfabric_caps & internal_caps) == internal_caps)
 	{
 		if ((available_caps & internal_caps) == internal_caps)
 		{
-			g_printf("%s-capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n", type);
+			g_printf("\n%s-capabilities accepted. Does not guarantee a chosen combination of capabilities to result in a valid Provider\n", type);
 			ret = TRUE;
 		}
 		else
