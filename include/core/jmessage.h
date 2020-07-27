@@ -69,24 +69,31 @@ typedef struct JMessage JMessage;
 struct JEndpoint
 {
 	// msg structures
-	struct fid_ep* msg_ep; // ep = endpoint
-	struct fi_info* msg_info;
-	struct fid_eq* msg_eq; // eq = event queue
-	struct fid_cq* msg_cq_transmit; // cq = completion queue
-	struct fid_cq* msg_cq_receive;
-	RefCountedDomain* msg_rc_domain;
+	struct
+	{
+		struct fid_ep* ep; // ep = endpoint
+		struct fi_info* info; // info struct, contains close to all information for a certain libfabric config
+		struct fid_eq* eq; // eq = event queue
+		struct fid_cq* cq_transmit; // cq = completion queue
+		struct fid_cq* cq_receive;
+		RefCountedDomain* rc_domain;
+	} msg;
+
 	// rdma structures
-	struct fid_ep* rdma_ep;
-	struct fi_info* rdma_info;
-	struct fid_eq* rdma_eq;
-	struct fid_cq* rdma_cq_transmit;
-	struct fid_cq* rdma_cq_receive;
-	RefCountedDomain* rdma_rc_domain;
-	const void* rdma_mem_buf; // memory buffer to expose
-	size_t rdma_buf_len;
-	struct fid_mr* rdma_mem_region;
-	uint64_t rdma_virt_addr; // virtual address of peer mem region // needed?
-	uint64_t rdma_key; // key to provide for access on peer mem region // needed?
+	struct
+	{
+		struct fid_ep* ep;
+		struct fi_info* info;
+		struct fid_eq* eq;
+		struct fid_cq* cq_transmit;
+		struct fid_cq* cq_receive;
+		RefCountedDomain* rc_domain;
+		const void* mem_buf; // memory buffer to expose
+		size_t buf_len;
+		struct fid_mr* mem_region;
+		uint64_t virt_addr; // virtual address of peer mem region // needed?
+		uint64_t key; // key to provide for access on peer mem region // needed?
+	} rdma;
 };
 
 typedef struct JEndpoint JEndpoint;
