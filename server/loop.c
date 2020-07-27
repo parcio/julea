@@ -240,7 +240,7 @@ jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_
 				buf = j_memory_chunk_get(memory_chunk, length);
 				g_assert(buf != NULL);
 
-				error = fi_recv(jendpoint->msg.ep, (void*)buf, (size_t)length, NULL, 0, NULL);
+				error = fi_recv(jendpoint->msg.ep, (void*)buf, (size_t)length, NULL, 0, NULL); //todo use fi_read/fi_readmsg
 				if (error != 0)
 				{
 					g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));

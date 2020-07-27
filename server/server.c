@@ -416,20 +416,12 @@ main(int argc, char** argv)
 	g_autofree gchar* port_str = NULL;
 
 	int fi_error;
-	uint32_t event;
-	uint32_t event_entry_size;
 
 	struct fi_info* info;
 	struct fid_eq* passive_ep_event_queue;
-
-	struct fi_eq_cm_entry* event_entry;
-	struct fi_eq_err_entry event_queue_err_entry;
-
-	ThreadData* thread_data;
+	PepList* pep_list;
 
 	DomainManager* domain_manager;
-
-	PepList* pep_list;
 
 	struct sigaction* sig_action;
 
@@ -466,7 +458,6 @@ main(int argc, char** argv)
 	}
 
 	fi_error = 0;
-	event_entry_size = sizeof(event_entry) + 128;
 
 	sig_action = g_malloc(sizeof(struct sigaction));
 	sig_action->sa_handler = sig_handler;
@@ -571,13 +562,33 @@ main(int argc, char** argv)
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	if (allow_main_loop)
 	{
+		GSList* connreq_list;
+		uint32_t event_entry_size;
+
 		// printf("\nSERVER: Main loop started\n"); //debug
 		//fflush(stdout);
+
+		// libfabric event entries need more space than the size of the struct due to possible protocoll padding, 128 was an example size, real is smaller.
+		// in addition space for the identifiers is added (JConData + the 37 needed for the uuid string)
+		event_entry_size = sizeof(struct fi_eq_cm_entry*) + 128 + sizeof(struct JConData);
+		connreq_list = NULL;
+
 		do
 		{
+			ssize_t connreq_size;
+			gboolean connreq_found;
+			uint32_t event;
+			struct fi_eq_cm_entry* event_entry;
+			struct fi_eq_err_entry event_queue_err_entry;
+			JConData* con_data;
+			ThreadData* thread_data;
+
+			thread_data = NULL;
 			event = 0;
 			event_entry = malloc(event_entry_size);
+
 			fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
+			connreq_size = fi_error;
 			if (fi_error < 0)
 			{
 				if (fi_error == -FI_EAVAIL)
@@ -601,23 +612,92 @@ main(int argc, char** argv)
 			}
 			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
-				//printf("\nSERVER: FI_CONNREQ found\n"); //debug
-				//printf("\nSERVER: connreq src_addr: %s\n", inet_ntoa( ((struct sockaddr_in*) event_entry->info->src_addr)->sin_addr ));
-				//fflush(stdout);
+				// printf("\nSERVER: FI_CONNREQ found\n"); //debug
+				// printf("	total size: %ld\n	event_entry_size: %d\n	offset start: %ld\n	event-entry*: %p\n	con_data*: %p\n", connreq_size, event_entry_size, connreq_size - sizeof(struct JConData), (void*) event_entry, (void*) con_data);
+				// fflush(stdout);
 
-				thread_data = malloc(sizeof(ThreadData) + 128);
-				thread_data->event_entry = event_entry;
-				thread_data->j_configuration = jd_configuration;
-				thread_data->thread_cq_array = thread_cq_array;
-				thread_data->thread_cq_array_mutex = &thread_cq_array_mutex;
-				thread_data->fabric = j_fabric;
-				thread_data->server_running = &j_server_running;
-				thread_data->thread_running = &j_thread_running;
-				thread_data->thread_count = &thread_count;
-				thread_data->j_statistics = jd_statistics;
-				thread_data->j_statistics_mutex = &jd_statistics_mutex[0];
-				thread_data->domain_manager = domain_manager;
-				g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
+				// calculates offset after which user data (JConData) begins, cast to char* because char* are incremented by 1 byte and the numbers are in number of bytes
+				con_data = (JConData*)(((char*)event_entry) + (connreq_size - sizeof(struct JConData)));
+				connreq_found = FALSE;
+
+				for (guint i = 0; g_slist_length(connreq_list); i++)
+				{
+					thread_data = g_slist_nth_data(connreq_list, i);
+					if (g_strcmp0(thread_data->connection.uuid, con_data->uuid) == 0)
+					{
+						connreq_found = TRUE;
+						break;
+					}
+				}
+
+				// if a corresponding connreq is found, add the 2nd request to the thread data and start a thread
+				if (connreq_found)
+				{
+					if (con_data->type == J_MSG)
+					{
+						if (thread_data->connection.rdma_event_entry == NULL)
+						{
+							g_critical("\nFaulty ThreadData on connreq_list. Found no RDMA request.\n");
+						}
+						else
+						{
+							thread_data->connection.msg_event_entry = event_entry;
+						}
+					}
+					else if (con_data->type == J_RDMA)
+					{
+						if (thread_data->connection.msg_event_entry == NULL)
+						{
+							g_critical("\nFaulty ThreadData on connreq_list. Found no MSG request.\n");
+						}
+						else
+						{
+							thread_data->connection.rdma_event_entry = event_entry;
+						}
+					}
+					else
+					{
+						g_critical("\nSERVER: Did not read a valid connection type from connreq while holding a valid connreq pair\n");
+					}
+
+					g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
+					connreq_list = g_slist_remove(connreq_list, (gpointer)thread_data);
+				}
+				else // if no corresponding thread data is found, build a new thread_data with the first connreq and add to list
+				{
+					if (!g_uuid_string_is_valid(con_data->uuid))
+					{
+						g_critical("\nSERVER: Did not read a valid uuid from connreq\n");
+					}
+					thread_data = malloc(sizeof(ThreadData) + 128);
+					switch (con_data->type)
+					{
+						case J_MSG:
+							thread_data->connection.msg_event_entry = event_entry;
+							thread_data->connection.rdma_event_entry = NULL;
+							break;
+						case J_RDMA:
+							thread_data->connection.msg_event_entry = NULL;
+							thread_data->connection.rdma_event_entry = event_entry;
+							break;
+						default:
+							g_assert_not_reached();
+					}
+					thread_data->connection.msg_event_entry = event_entry;
+					thread_data->connection.j_configuration = jd_configuration;
+					thread_data->connection.fabric = j_fabric;
+					thread_data->connection.domain_manager = domain_manager;
+					thread_data->connection.uuid = g_strdup(con_data->uuid);
+					thread_data->julea_state.thread_cq_array = thread_cq_array;
+					thread_data->julea_state.thread_cq_array_mutex = &thread_cq_array_mutex;
+					thread_data->julea_state.server_running = &j_server_running;
+					thread_data->julea_state.thread_running = &j_thread_running;
+					thread_data->julea_state.thread_count = &thread_count;
+					thread_data->julea_state.j_statistics = jd_statistics;
+					thread_data->julea_state.j_statistics_mutex = &jd_statistics_mutex[0];
+
+					connreq_list = g_slist_append(connreq_list, (gpointer)thread_data);
+				}
 			}
 			else if (event == FI_CONNREQ && !j_thread_running && j_server_running)
 			{

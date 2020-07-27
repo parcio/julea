@@ -644,6 +644,9 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoi
 
 		RefCountedDomain* rc_domain;
 
+		JConData* con_data;
+		gchar* tmp_uuid;
+
 		error = 0;
 
 		address = (struct sockaddr_in*)addrinfo->ai_addr;
@@ -729,7 +732,13 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoi
 		//printf("\nClient: Target information:\n   hostname: %s\n   IP: %s\n", hostname, inet_ntoa(((struct sockaddr_in*)addrinfo->ai_addr)->sin_addr)); //debug
 		//fflush(stdout);
 
-		error = fi_connect(tmp_ep, address, NULL, 0);
+		con_data = malloc(sizeof(struct JConData));
+		con_data->type = J_MSG;
+		tmp_uuid = g_uuid_string_random(); //direct insert sadly leads to memory leaks due to not freed original.
+		g_strlcpy(con_data->uuid, tmp_uuid, 37);
+		g_free(tmp_uuid);
+
+		error = fi_connect(tmp_ep, address, (void*)con_data, sizeof(struct JConData));
 		if (error == -FI_ECONNREFUSED)
 		{
 			g_printf("\nCLIENT: Connection refused with %s resolved to %s\nEntry %d out of %d\n", hostname, inet_ntoa(address->sin_addr), i + 1, size);
@@ -805,11 +814,13 @@ hostname_connector(const char* hostname, const char* service, JEndpoint* jendpoi
 					//fflush(stdout);
 					fi_freeinfo(con_info);
 					free(connection_entry);
+					free(con_data);
 					break;
 				}
 			}
 			fi_freeinfo(con_info);
 			free(connection_entry);
+			free(con_data);
 		}
 
 		error = 0;

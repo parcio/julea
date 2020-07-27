@@ -95,8 +95,14 @@ struct JEndpoint
 		uint64_t key; // key to provide for access on peer mem region // needed?
 	} rdma;
 };
-
 typedef struct JEndpoint JEndpoint;
+
+struct JConData
+{
+	gchar uuid[37];
+	JConnectionType type;
+};
+typedef struct JConData JConData;
 
 G_END_DECLS
 

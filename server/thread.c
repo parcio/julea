@@ -66,11 +66,13 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	(*jendpoint) = malloc(sizeof(struct JEndpoint));
-	(*jendpoint)->msg.info = fi_dupinfo(((ThreadData*)thread_data)->event_entry->info);
+	(*jendpoint)->msg.info = fi_dupinfo(((ThreadData*)thread_data)->connection.msg_event_entry->info);
 
 	// got everything out of the connection request we need, so ressources can be freed;
-	fi_freeinfo(((ThreadData*)thread_data)->event_entry->info);
-	free(((ThreadData*)thread_data)->event_entry);
+	fi_freeinfo(((ThreadData*)thread_data)->connection.msg_event_entry->info);
+	free(((ThreadData*)thread_data)->connection.msg_event_entry);
+	// free(((ThreadData*)thread_data)->connection.rdma_event_entry); //TODO activate
+	g_free(((ThreadData*)thread_data)->connection.uuid);
 	free(thread_data);
 
 	if (domain_request(j_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
@@ -291,16 +293,16 @@ j_thread_function(gpointer thread_data)
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 
-	j_fabric = ((ThreadData*)thread_data)->fabric;
-	j_thread_running = ((ThreadData*)thread_data)->thread_running;
-	j_server_running = ((ThreadData*)thread_data)->server_running;
-	thread_cq_array = ((ThreadData*)thread_data)->thread_cq_array;
-	thread_cq_array_mutex = ((ThreadData*)thread_data)->thread_cq_array_mutex;
-	thread_count = ((ThreadData*)thread_data)->thread_count;
-	jd_configuration = ((ThreadData*)thread_data)->j_configuration;
-	j_statistics = ((ThreadData*)thread_data)->j_statistics;
-	j_statistics_mutex = ((ThreadData*)thread_data)->j_statistics_mutex;
-	domain_manager = ((ThreadData*)thread_data)->domain_manager;
+	j_fabric = ((ThreadData*)thread_data)->connection.fabric;
+	jd_configuration = ((ThreadData*)thread_data)->connection.j_configuration;
+	domain_manager = ((ThreadData*)thread_data)->connection.domain_manager;
+	j_thread_running = ((ThreadData*)thread_data)->julea_state.thread_running;
+	j_server_running = ((ThreadData*)thread_data)->julea_state.server_running;
+	thread_cq_array = ((ThreadData*)thread_data)->julea_state.thread_cq_array;
+	thread_cq_array_mutex = ((ThreadData*)thread_data)->julea_state.thread_cq_array_mutex;
+	thread_count = ((ThreadData*)thread_data)->julea_state.thread_count;
+	j_statistics = ((ThreadData*)thread_data)->julea_state.j_statistics;
+	j_statistics_mutex = ((ThreadData*)thread_data)->julea_state.j_statistics_mutex;
 
 	message = NULL;
 

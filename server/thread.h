@@ -35,17 +35,26 @@
 
 struct ThreadData
 {
-	struct fi_eq_cm_entry* event_entry;
-	JConfiguration* j_configuration;
-	struct fid_fabric* fabric;
-	GPtrArray* thread_cq_array; // for registration in waking threads
-	GMutex* thread_cq_array_mutex; // for registration in waking threads
-	volatile gboolean* server_running;
-	volatile gboolean* thread_running;
-	volatile gint* thread_count;
-	JStatistics* j_statistics;
-	GMutex* j_statistics_mutex;
-	DomainManager* domain_manager;
+	struct
+	{
+		struct fi_eq_cm_entry* msg_event_entry;
+		struct fi_eq_cm_entry* rdma_event_entry;
+		struct fid_fabric* fabric;
+		JConfiguration* j_configuration;
+		DomainManager* domain_manager;
+		gchar* uuid;
+	} connection;
+
+	struct
+	{
+		GPtrArray* thread_cq_array; // for registration in waking threads
+		GMutex* thread_cq_array_mutex; // for registration in waking threads
+		volatile gboolean* server_running;
+		volatile gboolean* thread_running;
+		volatile gint* thread_count;
+		JStatistics* j_statistics;
+		GMutex* j_statistics_mutex;
+	} julea_state;
 };
 typedef struct ThreadData ThreadData;
 
