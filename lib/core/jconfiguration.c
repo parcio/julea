@@ -429,8 +429,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 
 	// julea intern config for rdma // TODO set rdma hints
 	rdma_hints = fi_allocinfo();
-	rdma_hints->caps = rdma_caps |
-										 FI_RMA_EVENT; // necessary for julea rdma
+	rdma_hints->caps = rdma_caps | FI_RMA_EVENT; // necessary for julea rdma
 	rdma_hints->mode = 0;
 	rdma_hints->ep_attr->type = FI_EP_MSG;
 	rdma_hints->addr_format = FI_SOCKADDR_IN;
@@ -948,7 +947,7 @@ check_caps_validity(guint64 caps, JConnectionType connection_type)
 			g_assert_not_reached();
 	}
 	primary_caps = FI_MSG | /**/
-					 FI_RMA | /**/
+		       FI_RMA | /**/
 		       FI_TAGGED | /**/
 		       FI_ATOMIC | /**/
 		       FI_MULTICAST | /**/
