@@ -71,6 +71,7 @@ struct JEndpoint
 	// msg structures
 	struct
 	{
+		gboolean is_connected;
 		struct fid_ep* ep; // ep = endpoint
 		struct fi_info* info; // info struct, contains close to all information for a certain libfabric config
 		struct fid_eq* eq; // eq = event queue
@@ -82,6 +83,7 @@ struct JEndpoint
 	// rdma structures
 	struct
 	{
+		gboolean is_connected;
 		struct fid_ep* ep;
 		struct fi_info* info;
 		struct fid_eq* eq;
