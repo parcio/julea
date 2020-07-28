@@ -43,9 +43,9 @@
 enum JConnectionRet
 {
 	J_CON_ACCEPTED,
-  J_CON_MSG_REFUSED,
-  J_CON_RDMA_REFUSED,
-  J_CON_FAILED
+	J_CON_MSG_REFUSED,
+	J_CON_RDMA_REFUSED,
+	J_CON_FAILED
 };
 typedef enum JConnectionRet JConnectionRet;
 

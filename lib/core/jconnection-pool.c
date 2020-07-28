@@ -503,11 +503,11 @@ j_endpoint_init(JEndpoint* jendpoint)
 	error = 0;
 
 	error = fi_getinfo(j_configuration_get_fi_version(j_connection_pool->configuration),
-				 NULL,
-				 NULL,
-				 j_configuration_get_fi_flags(j_connection_pool->configuration, J_CLIENT),
-				 j_configuration_fi_get_hints(j_connection_pool->configuration, J_MSG),
-				 &jendpoint->msg.info);
+			   NULL,
+			   NULL,
+			   j_configuration_get_fi_flags(j_connection_pool->configuration, J_CLIENT),
+			   j_configuration_fi_get_hints(j_connection_pool->configuration, J_MSG),
+			   &jendpoint->msg.info);
 	if (error < 0)
 	{
 		g_critical("\nCLIENT: fi_getinfo for msg info failed\n");
@@ -515,11 +515,11 @@ j_endpoint_init(JEndpoint* jendpoint)
 	}
 
 	error = fi_getinfo(j_configuration_get_fi_version(j_connection_pool->configuration),
-				 NULL,
-				 NULL,
-				 j_configuration_get_fi_flags(j_connection_pool->configuration, J_CLIENT),
-				 j_configuration_fi_get_hints(j_connection_pool->configuration, J_RDMA),
-				 &jendpoint->rdma.info);
+			   NULL,
+			   NULL,
+			   j_configuration_get_fi_flags(j_connection_pool->configuration, J_CLIENT),
+			   j_configuration_fi_get_hints(j_connection_pool->configuration, J_RDMA),
+			   &jendpoint->rdma.info);
 	if (error < 0)
 	{
 		g_critical("\nCLIENT: fi_getinfo for rdma info failed\n");
@@ -646,7 +646,7 @@ j_endpoint_init(JEndpoint* jendpoint)
 	// set connection flags
 
 	jendpoint->msg.is_connected = FALSE;
-	jendpoint->rdma.is_connected = FALSE; 
+	jendpoint->rdma.is_connected = FALSE;
 
 	// TODO build special rdma Ressources
 
@@ -665,7 +665,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 	int error = 0;
 
 	//empty wakeup message for server Thread shutdown
-	if (send_shutdown_message)
+	if (send_shutdown_message && (jendpoint->msg.is_connected || jendpoint->rdma.is_connected))
 	{
 		gboolean berror;
 		berror = j_message_send(message, jendpoint);
@@ -725,7 +725,6 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 
 	domain_unref(jendpoint->msg.rc_domain, domain_manager, "msg client");
 
-
 	error = fi_close(&jendpoint->rdma.ep->fid);
 	if (error != 0)
 	{
@@ -781,7 +780,6 @@ j_endpoint_connect(JEndpoint* jendpoint, const char* hostname, struct sockaddr_i
 
 	JConData* con_data;
 	gchar* tmp_uuid;
-
 
 	error = 0;
 	ssize_t_error = 0;
@@ -875,7 +873,6 @@ j_endpoint_connect(JEndpoint* jendpoint, const char* hostname, struct sockaddr_i
 			//fflush(stdout);
 		}
 	}
-
 
 	ssize_t_error = fi_eq_sread(jendpoint->rdma.eq, &eq_event, connection_entry, connection_entry_length, -1, 0);
 	if (ssize_t_error < 0)
@@ -1013,7 +1010,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint** jendpo
 		goto end;
 	}
 
-
 	for (uint i = 0; i < size; i++)
 	{
 		address = (struct sockaddr_in*)addrinfo->ai_addr;
@@ -1064,7 +1060,6 @@ hostname_connector(const char* hostname, const char* service, JEndpoint** jendpo
 
 		addrinfo = addrinfo->ai_next;
 	}
-
 
 end:
 	freeaddrinfo(addrinfo);
