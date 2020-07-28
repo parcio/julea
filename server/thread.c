@@ -43,6 +43,17 @@ static JConfiguration* jd_configuration;
 
 static DomainManager* domain_manager;
 
+void
+thread_unblock(struct fid_cq* completion_queue)
+{
+	int error = 0;
+	error = fi_cq_signal(completion_queue);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error waking up Threads\nDetails:\n %s", fi_strerror(abs(error)));
+	}
+}
+
 /**
 * inits ressources for endpoint-threads
 */
@@ -63,16 +74,18 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	error = 0;
 	event = 0;
 	ret = FALSE;
-
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
+
 	(*jendpoint) = malloc(sizeof(struct JEndpoint));
-	(*jendpoint)->msg.info = fi_dupinfo(((ThreadData*)thread_data)->connection.msg_event_entry->info);
+	(*jendpoint)->msg.info = fi_dupinfo(((ThreadData*)thread_data)->connection.msg_info);
+	(*jendpoint)->rdma.info = fi_dupinfo(((ThreadData*)thread_data)->connection.rdma_info);
+	(*jendpoint)->msg.is_connected = FALSE;
+	(*jendpoint)->rdma.is_connected = FALSE;
 
 	// got everything out of the connection request we need, so ressources can be freed;
-	fi_freeinfo(((ThreadData*)thread_data)->connection.msg_event_entry->info);
-	free(((ThreadData*)thread_data)->connection.msg_event_entry);
-	// free(((ThreadData*)thread_data)->connection.rdma_event_entry); //TODO activate
 	g_free(((ThreadData*)thread_data)->connection.uuid);
+	fi_freeinfo(((ThreadData*)thread_data)->connection.rdma_info);
+	fi_freeinfo(((ThreadData*)thread_data)->connection.msg_info);
 	free(thread_data);
 
 	if (domain_request(j_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
@@ -183,6 +196,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	{
 		// printf("\nSERVER: Connected event on eq\n"); //debug
 		// fflush(stdout);
+		(*jendpoint)->msg.is_connected = TRUE;
 		ret = TRUE;
 	}
 	else
@@ -264,6 +278,7 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 	domain_unref(jendpoint->msg.rc_domain, domain_manager, "server thread");
 
 	fi_freeinfo(jendpoint->msg.info);
+	fi_freeinfo(jendpoint->rdma.info);
 
 	free(jendpoint);
 }
@@ -398,15 +413,4 @@ end:
 
 	g_thread_exit(NULL);
 	return NULL;
-}
-
-void
-thread_unblock(struct fid_cq* completion_queue)
-{
-	int error = 0;
-	error = fi_cq_signal(completion_queue);
-	if (error != 0)
-	{
-		g_critical("\nSERVER: Error waking up Threads\nDetails:\n %s", fi_strerror(abs(error)));
-	}
 }

@@ -564,6 +564,7 @@ main(int argc, char** argv)
 	{
 		GSList* connreq_list;
 		uint32_t event_entry_size;
+		ThreadData* thread_data;
 
 		// printf("\nSERVER: Main loop started\n"); //debug
 		//fflush(stdout);
@@ -581,7 +582,6 @@ main(int argc, char** argv)
 			struct fi_eq_cm_entry* event_entry;
 			struct fi_eq_err_entry event_queue_err_entry;
 			JConData* con_data;
-			ThreadData* thread_data;
 
 			thread_data = NULL;
 			event = 0;
@@ -635,24 +635,24 @@ main(int argc, char** argv)
 				{
 					if (con_data->type == J_MSG)
 					{
-						if (thread_data->connection.rdma_event_entry == NULL)
+						if (thread_data->connection.rdma_info == NULL)
 						{
 							g_critical("\nFaulty ThreadData on connreq_list. Found no RDMA request.\n");
 						}
 						else
 						{
-							thread_data->connection.msg_event_entry = event_entry;
+							thread_data->connection.msg_info = fi_dupinfo(event_entry->info);
 						}
 					}
 					else if (con_data->type == J_RDMA)
 					{
-						if (thread_data->connection.msg_event_entry == NULL)
+						if (thread_data->connection.msg_info == NULL)
 						{
 							g_critical("\nFaulty ThreadData on connreq_list. Found no MSG request.\n");
 						}
 						else
 						{
-							thread_data->connection.rdma_event_entry = event_entry;
+							thread_data->connection.rdma_info = fi_dupinfo(event_entry->info);
 						}
 					}
 					else
@@ -669,21 +669,20 @@ main(int argc, char** argv)
 					{
 						g_critical("\nSERVER: Did not read a valid uuid from connreq\n");
 					}
-					thread_data = malloc(sizeof(ThreadData) + 128);
+					thread_data = malloc(sizeof(ThreadData));
 					switch (con_data->type)
 					{
 						case J_MSG:
-							thread_data->connection.msg_event_entry = event_entry;
-							thread_data->connection.rdma_event_entry = NULL;
+							thread_data->connection.msg_info = fi_dupinfo(event_entry->info);
+							thread_data->connection.rdma_info = NULL;
 							break;
 						case J_RDMA:
-							thread_data->connection.msg_event_entry = NULL;
-							thread_data->connection.rdma_event_entry = event_entry;
+							thread_data->connection.msg_info = NULL;
+							thread_data->connection.rdma_info = fi_dupinfo(event_entry->info);
 							break;
 						default:
 							g_assert_not_reached();
 					}
-					thread_data->connection.msg_event_entry = event_entry;
 					thread_data->connection.j_configuration = jd_configuration;
 					thread_data->connection.fabric = j_fabric;
 					thread_data->connection.domain_manager = domain_manager;
@@ -726,15 +725,31 @@ main(int argc, char** argv)
 				{
 					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(abs(fi_error)));
 				}
-				free(event_entry);
 			}
 			else
 			{
 				//printf("\nSERVER: No connection request"); //DEBUG
 				//fflush(stdout);
-				free(event_entry);
 			}
+			free(event_entry);
 		} while (j_server_running == TRUE);
+
+		// close possible event entries left on connreq_list
+		for (guint i = 0; g_slist_length(connreq_list); i++)
+		{
+			thread_data = g_slist_nth_data(connreq_list, i);
+
+			if (thread_data->connection.msg_info != NULL)
+			{
+				fi_freeinfo(thread_data->connection.msg_info);
+			}
+			if (thread_data->connection.rdma_info != NULL)
+			{
+				fi_freeinfo(thread_data->connection.rdma_info);
+			}
+			free(thread_data);
+		}
+		g_slist_free(connreq_list);
 	}
 
 	// close passive event queue
@@ -748,7 +763,7 @@ main(int argc, char** argv)
 	}
 
 	//==CLosing ressources==
-	//	Close endpoints & associated fi_infos
+	//	Close passive endpoints & associated fi_infos
 
 	{
 		int len;
