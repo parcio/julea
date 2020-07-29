@@ -355,7 +355,7 @@ start:
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
-			jendpoint = malloc(sizeof(struct JEndpoint));
+			jendpoint = NULL;
 
 			if (hostname_connector(server, j_configuration_get_fi_service(j_connection_pool->configuration), &jendpoint) != TRUE)
 			{
