@@ -62,7 +62,8 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 {
 	int error;
 	uint32_t event;
-	gboolean ret;
+	gboolean ret_msg;
+	gboolean ret_rdma;
 
 	struct fi_eq_cm_entry* event_entry;
 	uint32_t event_entry_size;
@@ -73,8 +74,10 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	error = 0;
 	event = 0;
-	ret = FALSE;
+	ret_msg = FALSE;
+	ret_rdma = FALSE;
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
+	event_entry = malloc(event_entry_size);
 
 	(*jendpoint) = malloc(sizeof(struct JEndpoint));
 	(*jendpoint)->msg.info = fi_dupinfo(((ThreadData*)thread_data)->connection.msg_info);
@@ -88,54 +91,55 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	fi_freeinfo(((ThreadData*)thread_data)->connection.msg_info);
 	free(thread_data);
 
+	//bulding endpoint
+	//msg
 	if (domain_request(j_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
 	{
 		goto end;
 	}
 
-	//bulding endpoint
 	error = fi_endpoint((*jendpoint)->msg.rc_domain->domain, (*jendpoint)->msg.info, &(*jendpoint)->msg.ep, NULL);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while creating active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while creating active msg Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
 	error = fi_eq_open(j_fabric, &event_queue_attr, &(*jendpoint)->msg.eq, NULL);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while creating endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while creating msg endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
 	error = fi_ep_bind((*jendpoint)->msg.ep, &(*jendpoint)->msg.eq->fid, 0);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while binding Event queue to active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while binding Event queue to msg active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_cq_open((*jendpoint)->msg.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->msg.cq_receive, NULL);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while creating Completion receive queue for active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while creating Completion receive queue for msg active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_cq_open((*jendpoint)->msg.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->msg.cq_transmit, NULL);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for msg active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_ep_bind((*jendpoint)->msg.ep, &(*jendpoint)->msg.cq_transmit->fid, FI_TRANSMIT);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while binding Completion transmit queue to active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while binding Completion transmit queue to msg active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_ep_bind((*jendpoint)->msg.ep, &(*jendpoint)->msg.cq_receive->fid, FI_RECV);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while binding Completion receive queue to active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while binding Completion receive queue to msg active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
@@ -149,18 +153,94 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	error = fi_enable((*jendpoint)->msg.ep);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error occurred while enabling Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error occurred while enabling msg Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
 
+	//rdma
+	if (domain_request(j_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager) != TRUE)
+	{
+		goto end;
+	}
+
+	error = fi_endpoint((*jendpoint)->rdma.rc_domain->domain, (*jendpoint)->rdma.info, &(*jendpoint)->rdma.ep, NULL);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while creating rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+
+	error = fi_eq_open(j_fabric, &event_queue_attr, &(*jendpoint)->rdma.eq, NULL);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while creating rdma endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+
+	error = fi_ep_bind((*jendpoint)->rdma.ep, &(*jendpoint)->rdma.eq->fid, 0);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while binding Event queue to rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	error = fi_cq_open((*jendpoint)->rdma.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->rdma.cq_receive, NULL);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while creating Completion receive queue for rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	error = fi_cq_open((*jendpoint)->rdma.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->rdma.cq_transmit, NULL);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for rdma active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	error = fi_ep_bind((*jendpoint)->rdma.ep, &(*jendpoint)->rdma.cq_transmit->fid, FI_TRANSMIT);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while binding Completion transmit queue to rdma active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	error = fi_ep_bind((*jendpoint)->rdma.ep, &(*jendpoint)->rdma.cq_receive->fid, FI_RECV);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while binding Completion receive queue to rdma active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+
+	g_mutex_lock(thread_cq_array_mutex);
+	g_ptr_array_add(thread_cq_array, (*jendpoint)->rdma.cq_transmit);
+	g_ptr_array_add(thread_cq_array, (*jendpoint)->rdma.cq_receive);
+	g_mutex_unlock(thread_cq_array_mutex);
+
+	// TODO build rdma extra ressources
+
+	// PERROR no receive Buffer before accepting connection. (should not happen due to the inner workings of Julea)
+
+	error = fi_enable((*jendpoint)->rdma.ep);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while enabling rdma Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+
+	// accept both endpoints
 	error = fi_accept((*jendpoint)->msg.ep, NULL, 0);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while accepting connection request.\n Details:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
+	error = fi_accept((*jendpoint)->rdma.ep, NULL, 0);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error occurred while accepting connection request.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
 
-	event_entry = malloc(event_entry_size);
+	event = 0;
+
+	//read msg event queue for CONNECTED event
 	error = fi_eq_sread((*jendpoint)->msg.eq, &event, event_entry, event_entry_size, -1, 0);
 	if (error < 0)
 	{
@@ -169,42 +249,86 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 			error = fi_eq_readerr((*jendpoint)->msg.eq, &event_queue_err_entry, 0);
 			if (error < 0)
 			{
-				g_critical("\nSERVER: Error occurred while reading Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(abs(error)));
+				g_critical("\nSERVER: Error occurred while reading Error Message from msg Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(abs(error)));
 				error = 0;
 				goto end;
 			}
 			else
 			{
-				g_critical("\nSERVER: Error Message on Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((*jendpoint)->msg.eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				g_critical("\nSERVER: Error Message on msg Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((*jendpoint)->msg.eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
 				goto end;
 			}
 		}
 		else if (error == -FI_EAGAIN)
 		{
-			g_critical("\nSERVER: No Event data on Event Queue while reading for CONNECTED Event.\n");
+			g_critical("\nSERVER: No Event data on msg Event Queue while reading for CONNECTED Event.\n");
 			goto end;
 		}
 		else
 		{
-			g_critical("\nSERVER: Error outside Error Event on Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(abs(error)));
+			g_critical("\nSERVER: Error outside Error msg Event on Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(abs(error)));
 			goto end;
 		}
 	}
-	free(event_entry);
 
 	if (event == FI_CONNECTED)
 	{
 		// printf("\nSERVER: Connected event on eq\n"); //debug
 		// fflush(stdout);
 		(*jendpoint)->msg.is_connected = TRUE;
-		ret = TRUE;
+		ret_msg = TRUE;
 	}
 	else
 	{
-		g_critical("\nSERVER: Problem with connection, no FI_CONNECTED event.\n");
+		g_critical("\nSERVER: Problem with connection, no msg FI_CONNECTED.\n");
 	}
+
+	//read rdma event queue for CONNECTED event
+	error = fi_eq_sread((*jendpoint)->rdma.eq, &event, event_entry, event_entry_size, -1, 0);
+	if (error < 0)
+	{
+		if (error == -FI_EAVAIL)
+		{
+			error = fi_eq_readerr((*jendpoint)->rdma.eq, &event_queue_err_entry, 0);
+			if (error < 0)
+			{
+				g_critical("\nSERVER: Error occurred while reading rdma Error Message from Event queue (active Endpoint) reading for connection accept.\nDetails:\n%s", fi_strerror(abs(error)));
+				error = 0;
+				goto end;
+			}
+			else
+			{
+				g_critical("\nSERVER: Error Message on rdma Event queue (active Endpoint) reading for connection accept available .\nDetails:\n%s", fi_eq_strerror((*jendpoint)->msg.eq, event_queue_err_entry.prov_errno, event_queue_err_entry.err_data, NULL, 0));
+				goto end;
+			}
+		}
+		else if (error == -FI_EAGAIN)
+		{
+			g_critical("\nSERVER: No Event data on rdma Event Queue while reading for CONNECTED Event.\n");
+			goto end;
+		}
+		else
+		{
+			g_critical("\nSERVER: Error outside rdma Error Event on Event Queue while reading for CONNECTED Event.\nDetails:\n%s", fi_strerror(abs(error)));
+			goto end;
+		}
+	}
+
+	if (event == FI_CONNECTED)
+	{
+		// printf("\nSERVER: Connected event on eq\n"); //debug
+		// fflush(stdout);
+		(*jendpoint)->rdma.is_connected = TRUE;
+		ret_rdma = TRUE;
+	}
+	else
+	{
+		g_critical("\nSERVER: Problem with connection, no rdma FI_CONNECTED.\n");
+	}
+
 end:
-	return ret;
+	free(event_entry);
+	return ret_msg && ret_rdma;
 }
 
 /**
@@ -214,10 +338,8 @@ void
 j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 {
 	int error;
-	gboolean berror;
 
 	error = 0;
-	berror = FALSE;
 
 	//if shutdown initiated by server initiate a shutdown event on peer
 	if ((*j_thread_running) == FALSE)
@@ -225,60 +347,101 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 		error = fi_shutdown(jendpoint->msg.ep, 0);
 		if (error != 0)
 		{
-			g_critical("\nSERVER: Error while shutting down connection\n.Details: \n%s", fi_strerror(abs(error)));
+			g_critical("\nSERVER: Error while shutting down msg connection\n.Details: \n%s", fi_strerror(abs(error)));
 		}
-		error = 0;
+		error = fi_shutdown(jendpoint->rdma.ep, 0);
+		if (error != 0)
+		{
+			g_critical("\nSERVER: Error while shutting down rdma connection\n.Details: \n%s", fi_strerror(abs(error)));
+		}
 	}
 
 	//end all fabric resources
-	error = 0;
-
+	//close msg part
 	//remove cq of ending thread from thread_cq_array
 	g_mutex_lock(thread_cq_array_mutex);
-	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->msg.cq_receive);
-	if (berror == FALSE)
+	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->msg.cq_receive))
 	{
-		g_critical("\nSERVER: Removing cq_recv information from thread_cq_array did not work.\n");
+		g_critical("\nSERVER: Removing msg cq_recv information from thread_cq_array did not work.\n");
 	}
-	berror = g_ptr_array_remove_fast(thread_cq_array, jendpoint->msg.cq_transmit);
-	if (berror == FALSE)
+	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->msg.cq_transmit))
 	{
-		g_critical("\nSERVER: Removing cq_transmit information from thread_cq_array did not work.\n");
+		g_critical("\nSERVER: Removing msg cq_transmit information from thread_cq_array did not work.\n");
 	}
 	g_mutex_unlock(thread_cq_array_mutex);
 
 	error = fi_close(&jendpoint->msg.ep->fid);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error closing thread endpoint.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error closing thread msg endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->msg.cq_receive->fid);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error closing thread receive queue.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error closing thread msg receive queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->msg.cq_transmit->fid);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error closing thread transmition queue.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error closing thread msg transmition queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
 	error = fi_close(&jendpoint->msg.eq->fid);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error thread endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
+		g_critical("\nSERVER: Error thread msg endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
+		error = 0;
+	}
+	domain_unref(jendpoint->msg.rc_domain, domain_manager, "server thread msg");
+	fi_freeinfo(jendpoint->msg.info);
+
+	// close rdma part
+	g_mutex_lock(thread_cq_array_mutex);
+	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->rdma.cq_receive))
+	{
+		g_critical("\nSERVER: Removing rdma cq_recv information from thread_cq_array did not work.\n");
+	}
+	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->rdma.cq_transmit))
+	{
+		g_critical("\nSERVER: Removing rdma cq_transmit information from thread_cq_array did not work.\n");
+	}
+	g_mutex_unlock(thread_cq_array_mutex);
+
+	error = fi_close(&jendpoint->rdma.ep->fid);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error closing thread rdma endpoint.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
 
-	domain_unref(jendpoint->msg.rc_domain, domain_manager, "server thread");
+	error = fi_close(&jendpoint->rdma.cq_receive->fid);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error closing thread rdma receive queue.\n Details:\n %s", fi_strerror(abs(error)));
+		error = 0;
+	}
 
-	fi_freeinfo(jendpoint->msg.info);
+	error = fi_close(&jendpoint->rdma.cq_transmit->fid);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error closing thread rdma transmition queue.\n Details:\n %s", fi_strerror(abs(error)));
+		error = 0;
+	}
+
+	error = fi_close(&jendpoint->rdma.eq->fid);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error thread rdma endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
+		error = 0;
+	}
+	domain_unref(jendpoint->rdma.rc_domain, domain_manager, "server thread rdma");
 	fi_freeinfo(jendpoint->rdma.info);
+	// TODO free rmda additional parts
 
 	free(jendpoint);
 }
