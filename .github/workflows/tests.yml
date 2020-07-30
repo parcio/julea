@@ -7,7 +7,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        os: #[ubuntu-20.04]
+        os: [ubuntu-20.04]
         #, ubuntu-18.04]
         compiler: [gcc, clang]
         name:
