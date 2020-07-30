@@ -241,7 +241,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 		goto end_hints;
 	}
 
-	//get fi_info
+	//get fabric fi_info
 	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
 			   NULL,
 			   j_configuration_get_fi_service(jd_configuration),
@@ -635,24 +635,24 @@ main(int argc, char** argv)
 				{
 					if (con_data->type == J_MSG)
 					{
-						if (thread_data->connection.rdma_info == NULL)
+						if (thread_data->connection.rdma_event == NULL)
 						{
 							g_critical("\nFaulty ThreadData on connreq_list. Found no RDMA request.\n");
 						}
 						else
 						{
-							thread_data->connection.msg_info = fi_dupinfo(event_entry->info);
+							thread_data->connection.msg_event = event_entry;
 						}
 					}
 					else if (con_data->type == J_RDMA)
 					{
-						if (thread_data->connection.msg_info == NULL)
+						if (thread_data->connection.msg_event == NULL)
 						{
 							g_critical("\nFaulty ThreadData on connreq_list. Found no MSG request.\n");
 						}
 						else
 						{
-							thread_data->connection.rdma_info = fi_dupinfo(event_entry->info);
+							thread_data->connection.rdma_event = event_entry;
 						}
 					}
 					else
@@ -673,12 +673,12 @@ main(int argc, char** argv)
 					switch (con_data->type)
 					{
 						case J_MSG:
-							thread_data->connection.msg_info = fi_dupinfo(event_entry->info);
-							thread_data->connection.rdma_info = NULL;
+							thread_data->connection.msg_event = event_entry;
+							thread_data->connection.rdma_event = NULL;
 							break;
 						case J_RDMA:
-							thread_data->connection.msg_info = NULL;
-							thread_data->connection.rdma_info = fi_dupinfo(event_entry->info);
+							thread_data->connection.msg_event = NULL;
+							thread_data->connection.rdma_event = event_entry;
 							break;
 						default:
 							g_assert_not_reached();
@@ -698,58 +698,63 @@ main(int argc, char** argv)
 					connreq_list = g_slist_append(connreq_list, (gpointer)thread_data);
 				}
 			}
-			else if (event == FI_CONNREQ && !j_thread_running && j_server_running)
-			{
-				PepList* first_entry;
-
-				first_entry = pep_list;
-
-				printf("\nSERVER: FI_CONNREQ during shutdown. Will be declined\n");
-				fflush(stdout);
-				if (pep_list != NULL)
-				{
-					while (pep_list != NULL)
-					{
-						if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)event_entry->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)event_entry->info->src_addr)->sin_port)
-						{
-							fi_error = fi_reject(pep_list->pep, event_entry->fid, NULL, 0);
-							break;
-						}
-						pep_list = pep_list->next;
-					}
-				}
-
-				pep_list = first_entry;
-
-				if (fi_error < 0)
-				{
-					g_critical("\nSERVER: Error while rejecting connreq due to server closing down.\nDetails:\n%s)", fi_strerror(abs(fi_error)));
-				}
-			}
 			else
 			{
 				//printf("\nSERVER: No connection request"); //DEBUG
 				//fflush(stdout);
+				free(event_entry);
 			}
-			free(event_entry);
 		} while (j_server_running == TRUE);
 
-		// close possible event entries left on connreq_list
-		for (guint i = 0; g_slist_length(connreq_list); i++)
+		// close possible event entries left on connreq_list + deny connreq
 		{
-			thread_data = g_slist_nth_data(connreq_list, i);
+			PepList* first_entry;
+			first_entry = pep_list;
 
-			if (thread_data->connection.msg_info != NULL)
+			for (guint i = 0; g_slist_length(connreq_list); i++)
 			{
-				fi_freeinfo(thread_data->connection.msg_info);
+				thread_data = g_slist_nth_data(connreq_list, i);
+
+				if (thread_data->connection.msg_event != NULL)
+				{
+					if (pep_list != NULL)
+					{
+						while (pep_list != NULL)
+						{
+							if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_port)
+							{
+								fi_error = fi_reject(pep_list->pep, thread_data->connection.msg_event->fid, NULL, 0);
+								break;
+							}
+							pep_list = pep_list->next;
+						}
+					}
+					pep_list = first_entry;
+					fi_freeinfo(thread_data->connection.msg_event->info);
+					free(thread_data->connection.msg_event);
+				}
+				if (thread_data->connection.rdma_event != NULL)
+				{
+					if (pep_list != NULL)
+					{
+						while (pep_list != NULL)
+						{
+							if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_port)
+							{
+								fi_error = fi_reject(pep_list->pep, thread_data->connection.rdma_event->fid, NULL, 0);
+								break;
+							}
+							pep_list = pep_list->next;
+						}
+					}
+					pep_list = first_entry;
+					fi_freeinfo(thread_data->connection.rdma_event->info);
+					free(thread_data->connection.rdma_event);
+				}
+				free(thread_data);
 			}
-			if (thread_data->connection.rdma_info != NULL)
-			{
-				fi_freeinfo(thread_data->connection.rdma_info);
-			}
-			free(thread_data);
+			g_slist_free(connreq_list);
 		}
-		g_slist_free(connreq_list);
 	}
 
 	// close passive event queue

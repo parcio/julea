@@ -37,8 +37,8 @@ struct ThreadData
 {
 	struct
 	{
-		struct fi_info* msg_info;
-		struct fi_info* rdma_info;
+		struct fi_eq_cm_entry* msg_event;
+		struct fi_eq_cm_entry* rdma_event;
 		struct fid_fabric* fabric;
 		JConfiguration* j_configuration;
 		DomainManager* domain_manager;
