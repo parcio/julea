@@ -87,6 +87,10 @@ uint64_t j_configuration_get_fi_flags(JConfiguration*, JRequestType);
 //fi_info info
 struct fi_info* j_configuration_fi_get_hints(JConfiguration*, JConnectionType);
 
+//get mreg configurations
+uint64_t j_configuration_fi_get_mr_access(JConfiguration*);
+uint64_t j_configuration_fi_get_mr_flags(JConfiguration*);
+
 G_END_DECLS
 
 #endif
