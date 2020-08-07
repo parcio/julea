@@ -301,8 +301,8 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* rdma_prov_name; /* user requested provider (rmda) */
 	guint64 msg_caps; /* user requested capabilities for messages */
 	guint64 rdma_caps; /* user requested capabilities for rmda */
-	guint64_t msg_necessary_caps;
-	guint64_t rdma_necessary_caps;
+	guint64 msg_necessary_caps;
+	guint64 rdma_necessary_caps;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
