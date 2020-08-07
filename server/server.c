@@ -198,7 +198,6 @@ sig_handler(int signal)
 	}
 }
 
-
 static gboolean
 j_libfabric_fabric_init(void)
 {
@@ -272,10 +271,9 @@ j_libfabric_fabric_init(void)
 
 	ret = TRUE;
 
-	end:
+end:
 	return ret;
 }
-
 
 /*
 /gets fi_info structure for internal information about available fabric ressources
@@ -312,7 +310,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 		goto end_hostname;
 	}
 
-	if(!j_libfabric_fabric_init())
+	if (!j_libfabric_fabric_init())
 	{
 		goto end_hints;
 	}
@@ -339,11 +337,11 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 		error_occoured = FALSE;
 		//get fi_info
 		error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-				   						 inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
-				   				 		 j_configuration_get_fi_service(jd_configuration),
-				   				 		 j_configuration_get_fi_flags(jd_configuration, 0),
-				   				 		 j_configuration_fi_get_hints(jd_configuration, J_MSG),
-				   				 		 &tmp_info);
+				   inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
+				   j_configuration_get_fi_service(jd_configuration),
+				   j_configuration_get_fi_flags(jd_configuration, 0),
+				   j_configuration_fi_get_hints(jd_configuration, J_MSG),
+				   &tmp_info);
 		if (error != 0 && error != -FI_ENODATA)
 		{
 			g_critical("\nSERVER: Error during initializing msg fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));

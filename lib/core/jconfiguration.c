@@ -128,7 +128,7 @@ struct JConfiguration
 		{
 			uint64_t mr_access;
 			uint64_t mr_flags;
-		}rdma_config;
+		} rdma_config;
 	} libfabric;
 
 	/**
@@ -444,10 +444,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 
 	// julea intern config for rdma // TODO set rdma hints
 
-	rdma_necessary_caps = FI_RMA |	//
-												FI_READ | //
-												FI_REMOTE_READ | //
-												FI_RMA_EVENT;
+	rdma_necessary_caps = FI_RMA | //
+			      FI_READ | //
+			      FI_REMOTE_READ | //
+			      FI_RMA_EVENT;
 	rdma_hints = fi_allocinfo();
 	rdma_hints->caps = rdma_caps | rdma_necessary_caps; // necessary for julea rdma
 	rdma_hints->mode = 0;
@@ -455,19 +455,19 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	rdma_hints->addr_format = FI_SOCKADDR_IN;
 	rdma_hints->fabric_attr->prov_name = g_strdup(rdma_prov_name);
 	rdma_hints->domain_attr->threading = FI_THREAD_SAFE;
-	rdma_hints->domain_attr->mr_mode = FI_MR_ALLOCATED ; // | // memory regions need to be allocated
-																		 // FI_MR_ENDPOINT | // binding mrs to endpoints is required
-																		 // FI_MR_RMA_EVENT;	// memory regions need to be bound to completion queues
+	rdma_hints->domain_attr->mr_mode = FI_MR_ALLOCATED; // | // memory regions need to be allocated
+		// FI_MR_ENDPOINT | // binding mrs to endpoints is required
+		// FI_MR_RMA_EVENT;	// memory regions need to be bound to completion queues
 	rdma_hints->tx_attr->op_flags = FI_COMPLETION;
 
-	configuration->libfabric.rdma_config.mr_access =  FI_READ |  // TODO check whether it works with 4 availbilities
-																										FI_REMOTE_READ; // | //
-																								 		//FI_WRITE | //
-																								 		//FI_REMOTE_WRITE;
+	configuration->libfabric.rdma_config.mr_access = FI_READ | // TODO check whether it works with 4 availbilities
+							 FI_REMOTE_READ; // | //
+	//FI_WRITE | //
+	//FI_REMOTE_WRITE;
 
-	configuration->libfabric.rdma_config.mr_flags =  0;
-																									 // FI_RMA_EVENT | // Needed for generating completion messages
-																								 	 // FI_RMA_PMEM; // TODO atm it is permanent memory, unsure wether needed.
+	configuration->libfabric.rdma_config.mr_flags = 0;
+	// FI_RMA_EVENT | // Needed for generating completion messages
+	// FI_RMA_PMEM; // TODO atm it is permanent memory, unsure wether needed.
 
 	/**
 	* sets values in config
@@ -856,7 +856,6 @@ j_configuration_fi_get_hints(JConfiguration* configuration, JConnectionType conn
 	return NULL;
 }
 
-
 uint64_t
 j_configuration_fi_get_mr_access(JConfiguration* configuration)
 {
@@ -876,7 +875,6 @@ j_configuration_fi_get_mr_flags(JConfiguration* configuration)
 
 	return configuration->libfabric.rdma_config.mr_flags;
 }
-
 
 gboolean
 check_prov_name_validity(gchar* prov_name, JConnectionType connection_type)

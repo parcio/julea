@@ -410,9 +410,9 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 	}
 	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->rdma.cq_transmit))
 	{
-	 	g_critical("\nSERVER: Removing rdma cq_transmit information from thread_cq_array did not work.\n");
+		g_critical("\nSERVER: Removing rdma cq_transmit information from thread_cq_array did not work.\n");
 	}
-  g_mutex_unlock(thread_cq_array_mutex);
+	g_mutex_unlock(thread_cq_array_mutex);
 
 	error = fi_close(&jendpoint->rdma.ep->fid);
 	if (error != 0)

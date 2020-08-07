@@ -64,7 +64,7 @@ domain_request(struct fid_fabric* fabric,
 	       JConfiguration* configuration,
 	       RefCountedDomain** rc_domain,
 	       DomainManager* domain_manager,
-			 	 const gchar* location)
+	       const gchar* location)
 {
 	gboolean ret;
 	DomainCategory* category;
@@ -233,7 +233,7 @@ domain_category_new_internal(struct fid_fabric* fabric,
 			     DomainCategory** category,
 			     RefCountedDomain** rc_domain,
 			     DomainManager* domain_manager,
-				 	 const gchar* location)
+			     const gchar* location)
 {
 	gboolean ret;
 
@@ -267,7 +267,7 @@ domain_new_internal(struct fid_fabric* fabric,
 		    JConfiguration* configuration,
 		    DomainCategory* category,
 		    RefCountedDomain** rc_domain,
-				const gchar* location)
+		    const gchar* location)
 {
 	gboolean ret;
 	int error;
