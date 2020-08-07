@@ -63,14 +63,15 @@ domain_request(struct fid_fabric* fabric,
 	       struct fi_info* info,
 	       JConfiguration* configuration,
 	       RefCountedDomain** rc_domain,
-	       DomainManager* domain_manager)
+	       DomainManager* domain_manager,
+			 	 const gchar* location)
 {
 	gboolean ret;
 	DomainCategory* category;
 
 	ret = FALSE;
 
-	if (domain_category_search(info, &category, domain_manager) == TRUE)
+	if (domain_category_search(info, &category, domain_manager))
 	{
 		GSList* current;
 
@@ -92,9 +93,9 @@ domain_request(struct fid_fabric* fabric,
 		//if end of list reached without available space in any domain, create new domain
 		if (current == NULL)
 		{
-			if (domain_new_internal(fabric, info, configuration, category, rc_domain) != TRUE)
+			if (!domain_new_internal(fabric, info, configuration, category, rc_domain, location))
 			{
-				g_critical("\nProblem initiating a new domain on server.");
+				g_critical("\nProblem initiating a new domain on %s.", location);
 				goto end;
 			}
 			category->domain_list = g_slist_append(category->domain_list, (*rc_domain));
@@ -104,9 +105,9 @@ domain_request(struct fid_fabric* fabric,
 	}
 	else
 	{
-		if (domain_category_new_internal(fabric, info, configuration, &category, rc_domain, domain_manager) != TRUE)
+		if (!domain_category_new_internal(fabric, info, configuration, &category, rc_domain, domain_manager, location))
 		{
-			g_critical("\nProblem initiating a new domain category on server.");
+			g_critical("\nProblem initiating a new domain category on %s.", location);
 			goto end;
 		}
 		ret = TRUE;
@@ -135,7 +136,7 @@ domain_category_search(struct fi_info* info, DomainCategory** rc_cat, DomainMana
 	for (guint i = 0; i < domain_manager->cat_list->len; i++)
 	{
 		tmp_cat = g_ptr_array_index(domain_manager->cat_list, i);
-		if (compare_domain_infos(info, tmp_cat->info) == TRUE)
+		if (compare_domain_infos(info, tmp_cat->info))
 		{
 			(*rc_cat) = tmp_cat;
 			ret = TRUE;
@@ -209,13 +210,13 @@ domain_unref(RefCountedDomain* rc_domain, DomainManager* domain_manager, const g
 		error = fi_close(&rc_domain->domain_eq->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing domain event queue of active endpoint on %s.\n Details:\n %s", fi_strerror(error), location);
+			g_critical("\nProblem closing domain event queue of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
 			error = 0;
 		}
 		error = fi_close(&rc_domain->domain->fid);
 		if (error != 0)
 		{
-			g_critical("\nProblem closing domain of active endpoint on %s.\n Details:\n %s", fi_strerror(error), location);
+			g_critical("\nProblem closing domain of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
 		}
 		domain_category_unref(rc_domain->category, domain_manager);
 		free(rc_domain);
@@ -231,7 +232,8 @@ domain_category_new_internal(struct fid_fabric* fabric,
 			     JConfiguration* configuration,
 			     DomainCategory** category,
 			     RefCountedDomain** rc_domain,
-			     DomainManager* domain_manager)
+			     DomainManager* domain_manager,
+				 	 const gchar* location)
 {
 	gboolean ret;
 
@@ -241,7 +243,7 @@ domain_category_new_internal(struct fid_fabric* fabric,
 	(*category)->domain_list = NULL;
 	(*category)->info = fi_dupinfo(info);
 	(*category)->ref_count = 0;
-	if (domain_new_internal(fabric, info, configuration, (*category), rc_domain) != TRUE)
+	if (domain_new_internal(fabric, info, configuration, (*category), rc_domain, location))
 	{
 		goto end;
 	}
@@ -263,7 +265,8 @@ domain_new_internal(struct fid_fabric* fabric,
 		    struct fi_info* info,
 		    JConfiguration* configuration,
 		    DomainCategory* category,
-		    RefCountedDomain** rc_domain)
+		    RefCountedDomain** rc_domain,
+				const gchar* location)
 {
 	gboolean ret;
 	int error;
@@ -276,25 +279,25 @@ domain_new_internal(struct fid_fabric* fabric,
 
 	if (info->domain_attr->ep_cnt < 6)
 	{
-		g_warning("\nLibfabric tries to allocate a new domain with %ld maximal connections. Max connections supported by underlying hardware possibly reached.", info->domain_attr->ep_cnt - g_slist_length(category->domain_list));
+		g_warning("\nLibfabric tries to allocate a new domain with %ld maximal connections on %s. Max connections supported by underlying hardware possibly reached.", info->domain_attr->ep_cnt - g_slist_length(category->domain_list), location);
 	}
 
 	error = fi_domain(fabric, info, &(*rc_domain)->domain, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating domain for active Endpoint.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nError occurred on %s while creating domain for active Endpoint.\n Details:\n %s", location, fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_eq_open(fabric, &event_queue_attr, &(*rc_domain)->domain_eq, NULL);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while creating Domain Event queue.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nError occurred on %s while creating Domain Event queue.\n Details:\n %s", location, fi_strerror(abs(error)));
 		goto end;
 	}
 	error = fi_domain_bind((*rc_domain)->domain, &(*rc_domain)->domain_eq->fid, 0);
 	if (error != 0)
 	{
-		g_critical("\nError occurred on Server while binding Event queue to Domain.\n Details:\n %s", fi_strerror(error));
+		g_critical("\nError occurred on %s while binding Event queue to Domain.\n Details:\n %s", location, fi_strerror(abs(error)));
 		goto end;
 	}
 

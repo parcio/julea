@@ -60,12 +60,12 @@ G_GNUC_INTERNAL void domain_ref(RefCountedDomain*);
 void domain_unref(RefCountedDomain*, DomainManager*, const gchar*);
 DomainManager* domain_manager_init(void);
 void domain_manager_fini(DomainManager*);
-gboolean domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, RefCountedDomain**, DomainManager*);
+gboolean domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, RefCountedDomain**, DomainManager*, const gchar*);
 G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, DomainManager*);
 G_GNUC_INTERNAL void domain_category_ref(DomainCategory*);
 G_GNUC_INTERNAL void domain_category_unref(DomainCategory*, DomainManager*);
-G_GNUC_INTERNAL gboolean domain_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, RefCountedDomain**);
-G_GNUC_INTERNAL gboolean domain_category_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, RefCountedDomain**, DomainManager*);
+G_GNUC_INTERNAL gboolean domain_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, RefCountedDomain**, const gchar*);
+G_GNUC_INTERNAL gboolean domain_category_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, RefCountedDomain**, DomainManager*, const gchar*);
 G_GNUC_INTERNAL gboolean compare_domain_infos(struct fi_info*, struct fi_info*);
 
 #endif
