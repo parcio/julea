@@ -33,13 +33,22 @@
 
 #include <rdma/fi_domain.h>
 
+struct JFabric
+{
+	struct fid_fabric* msg_fabric;
+	struct fi_info* msg_info;
+	struct fid_fabric* rdma_fabric;
+	struct fi_info* rdma_info;
+};
+typedef struct JFabric JFabric;
+
 struct ThreadData
 {
 	struct
 	{
 		struct fi_eq_cm_entry* msg_event;
 		struct fi_eq_cm_entry* rdma_event;
-		struct fid_fabric* fabric;
+		JFabric* fabric;
 		JConfiguration* j_configuration;
 		DomainManager* domain_manager;
 		gchar* uuid;

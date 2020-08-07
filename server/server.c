@@ -46,7 +46,7 @@
 #include <glib/gprintf.h>
 
 //libfabric high level object
-static struct fid_fabric* j_fabric;
+static JFabric* jfabric;
 
 //thread & server flags
 static volatile gint thread_count = 0;
@@ -198,18 +198,96 @@ sig_handler(int signal)
 	}
 }
 
+
+static gboolean
+j_libfabric_fabric_init(void)
+{
+	gboolean ret;
+	int error;
+
+	ret = FALSE;
+	error = 0;
+
+	jfabric = malloc(sizeof(struct JFabric));
+
+	//get fabric fi_info
+	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
+			   NULL,
+			   j_configuration_get_fi_service(jd_configuration),
+			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
+			   j_configuration_fi_get_hints(jd_configuration, J_MSG),
+			   &jfabric->msg_info);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error while initiating fi_info for msg fabric & eq.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	if (jfabric->msg_info == NULL)
+	{
+		g_critical("\nSERVER: Allocating msg fi_info struct did not work");
+		goto end;
+	}
+
+	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
+			   NULL,
+			   j_configuration_get_fi_service(jd_configuration),
+			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
+			   j_configuration_fi_get_hints(jd_configuration, J_RDMA),
+			   &jfabric->rdma_info);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error while initiating fi_info for rdma fabric.\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	if (jfabric->rdma_info == NULL)
+	{
+		g_critical("\nSERVER: Allocating rdma fi_info struct did not work");
+		goto end;
+	}
+
+	//Init fabric
+	error = fi_fabric(jfabric->msg_info->fabric_attr, &jfabric->msg_fabric, NULL);
+	if (error != FI_SUCCESS)
+	{
+		g_critical("\nSERVER: Error during initializing msg fabric\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	if (jfabric->msg_fabric == NULL)
+	{
+		g_critical("\nSERVER: Allocating msg fabric did not work");
+		goto end;
+	}
+
+	error = fi_fabric(jfabric->rdma_info->fabric_attr, &jfabric->rdma_fabric, NULL);
+	if (error != FI_SUCCESS)
+	{
+		g_critical("\nSERVER: Error during initializing rdma fabric\n Details:\n %s", fi_strerror(abs(error)));
+		goto end;
+	}
+	if (jfabric->msg_fabric == NULL)
+	{
+		g_critical("\nSERVER: Allocating rdma fabric did not work");
+		goto end;
+	}
+
+	ret = TRUE;
+
+	end:
+	return ret;
+}
+
+
 /*
 /gets fi_info structure for internal information about available fabric ressources
 /inits fabric, passive endpoint and event queue for the endpoint.
 /Binds event queue to endpoint
 */
 static gboolean
-j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq** passive_ep_event_queue)
+j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue)
 {
 	int error;
 	gboolean ret;
 	struct fi_eq_attr* event_queue_attr;
-	struct fi_info* hints;
 
 	struct ifaddrs* current_own_addr;
 	struct ifaddrs* own_addr_list;
@@ -234,50 +312,17 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 		goto end_hostname;
 	}
 
-	hints = fi_dupinfo(j_configuration_fi_get_hints(jd_configuration, J_MSG));
-	if (hints == NULL)
+	if(!j_libfabric_fabric_init())
 	{
-		g_critical("\nSERVER: Allocating empty hints did not work\n");
 		goto end_hints;
 	}
 
-	//get fabric fi_info
-	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-			   NULL,
-			   j_configuration_get_fi_service(jd_configuration),
-			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
-			   hints,
-			   info);
-	if (error != 0)
-	{
-		g_critical("\nSERVER: Error while initiating fi_info for fabric & eq.\n Details:\n %s", fi_strerror(abs(error)));
-		goto end_info;
-	}
-	if (*info == NULL)
-	{
-		g_critical("\nSERVER: Allocating fi_info struct did not work");
-		goto end_info;
-	}
-
-	//Init fabric
-	error = fi_fabric((*info)->fabric_attr, &j_fabric, NULL);
-	if (error != FI_SUCCESS)
-	{
-		g_critical("\nSERVER: Error during initializing fi_fabric\n Details:\n %s", fi_strerror(abs(error)));
-		goto end_fabric;
-	}
-	if (j_fabric == NULL)
-	{
-		g_critical("\nSERVER: Allocating fi_fabric did not work");
-		goto end_fabric;
-	}
-
 	//build event queue for passive endpoint
-	error = fi_eq_open(j_fabric, event_queue_attr, passive_ep_event_queue, NULL);
+	error = fi_eq_open(jfabric->msg_fabric, event_queue_attr, passive_ep_event_queue, NULL);
 	if (error != 0)
 	{
-		g_critical("\nSERVER: Error initializing event_queue\n Details:\n %s", fi_strerror(abs(error)));
-		goto end_eq;
+		g_critical("\nSERVER: Error initializing msg event_queue\n Details:\n %s", fi_strerror(abs(error)));
+		goto end_hints;
 	}
 
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
@@ -294,20 +339,20 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 		error_occoured = FALSE;
 		//get fi_info
 		error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-				   inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
-				   j_configuration_get_fi_service(jd_configuration),
-				   j_configuration_get_fi_flags(jd_configuration, 0),
-				   hints,
-				   &tmp_info);
+				   						 inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
+				   				 		 j_configuration_get_fi_service(jd_configuration),
+				   				 		 j_configuration_get_fi_flags(jd_configuration, 0),
+				   				 		 j_configuration_fi_get_hints(jd_configuration, J_MSG),
+				   				 		 &tmp_info);
 		if (error != 0 && error != -FI_ENODATA)
 		{
-			g_critical("\nSERVER: Error during initializing fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));
+			g_critical("\nSERVER: Error during initializing msg fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));
 			error_occoured = TRUE;
 		}
 		else if (error == 0)
 		{
 			//build passive Endpoints
-			error = fi_passive_ep(j_fabric, tmp_info, &passive_ep, NULL);
+			error = fi_passive_ep(jfabric->msg_fabric, tmp_info, &passive_ep, NULL);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
@@ -364,7 +409,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fi_info** info, struct fid_eq**
 
 	(*pep_list) = (*pep_list)->first;
 	ret = TRUE;
-	goto end_info;
+	goto end_hints;
 
 end_bld_peps:
 	(*pep_list) = (*pep_list)->first;
@@ -374,12 +419,6 @@ end_bld_peps:
 		fi_freeinfo((*pep_list)->info);
 		(*pep_list) = (*pep_list)->next;
 	}
-end_eq:
-	fi_close(&j_fabric->fid);
-end_fabric:
-	fi_freeinfo(*info);
-end_info:
-	fi_freeinfo(hints);
 end_hints:
 	freeifaddrs(own_addr_list);
 end_hostname:
@@ -417,7 +456,6 @@ main(int argc, char** argv)
 
 	int fi_error;
 
-	struct fi_info* info;
 	struct fid_eq* passive_ep_event_queue;
 	PepList* pep_list;
 
@@ -487,7 +525,7 @@ main(int argc, char** argv)
 	}
 
 	pep_list = NULL;
-	if (!j_libfabric_ress_init(&pep_list, &info, &passive_ep_event_queue))
+	if (!j_libfabric_ress_init(&pep_list, &passive_ep_event_queue))
 	{
 		g_critical("\nSERVER: init of libfabric ressources did not work\n");
 		return 1;
@@ -684,7 +722,7 @@ main(int argc, char** argv)
 							g_assert_not_reached();
 					}
 					thread_data->connection.j_configuration = jd_configuration;
-					thread_data->connection.fabric = j_fabric;
+					thread_data->connection.fabric = jfabric;
 					thread_data->connection.domain_manager = domain_manager;
 					thread_data->connection.uuid = g_strdup(con_data->uuid);
 					thread_data->julea_state.thread_cq_array = thread_cq_array;
@@ -818,7 +856,13 @@ main(int argc, char** argv)
 	// close fabric
 	//printf("\nSERVER: Close fabric\n"); //debug
 	//fflush(stdout);
-	fi_error = fi_close(&j_fabric->fid);
+	fi_error = fi_close(&jfabric->msg_fabric->fid);
+	if (fi_error != 0)
+	{
+		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(abs(fi_error)));
+		fi_error = 0;
+	}
+	fi_error = fi_close(&jfabric->rdma_fabric->fid);
 	if (fi_error != 0)
 	{
 		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(abs(fi_error)));
@@ -828,7 +872,9 @@ main(int argc, char** argv)
 	// close main free info
 	//printf("\nSERVER: Close info\n"); //debug
 	//fflush(stdout);
-	fi_freeinfo(info);
+	fi_freeinfo(jfabric->msg_info);
+	fi_freeinfo(jfabric->rdma_info);
+	free(jfabric);
 
 	domain_manager_fini(domain_manager);
 	g_ptr_array_unref(thread_cq_array);

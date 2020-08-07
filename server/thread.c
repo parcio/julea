@@ -29,7 +29,7 @@
 
 #include "thread.h"
 
-static struct fid_fabric* j_fabric;
+static JFabric* jfabric;
 
 static volatile gboolean* j_thread_running;
 static volatile gboolean* j_server_running;
@@ -95,7 +95,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	//bulding endpoint
 	//msg
-	if (domain_request(j_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
+	if (domain_request(jfabric->msg_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
 	{
 		goto end;
 	}
@@ -107,7 +107,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 		goto end;
 	}
 
-	error = fi_eq_open(j_fabric, &event_queue_attr, &(*jendpoint)->msg.eq, NULL);
+	error = fi_eq_open(jfabric->msg_fabric, &event_queue_attr, &(*jendpoint)->msg.eq, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating msg endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
@@ -160,7 +160,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	}
 
 	//rdma
-	if (domain_request(j_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager) != TRUE)
+	if (domain_request(jfabric->rdma_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager) != TRUE)
 	{
 		goto end;
 	}
@@ -172,7 +172,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 		goto end;
 	}
 
-	error = fi_eq_open(j_fabric, &event_queue_attr, &(*jendpoint)->rdma.eq, NULL);
+	error = fi_eq_open(jfabric->rdma_fabric, &event_queue_attr, &(*jendpoint)->rdma.eq, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating rdma endpoint Event queue.\nDetails:\n %s", fi_strerror(abs(error)));
@@ -214,8 +214,6 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	g_ptr_array_add(thread_cq_array, (*jendpoint)->rdma.cq_transmit);
 	g_ptr_array_add(thread_cq_array, (*jendpoint)->rdma.cq_receive);
 	g_mutex_unlock(thread_cq_array_mutex);
-
-	// TODO build rdma extra ressources
 
 	// PERROR no receive Buffer before accepting connection. (should not happen due to the inner workings of Julea)
 
@@ -410,9 +408,9 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 	}
 	if (!g_ptr_array_remove_fast(thread_cq_array, jendpoint->rdma.cq_transmit))
 	{
-		g_critical("\nSERVER: Removing rdma cq_transmit information from thread_cq_array did not work.\n");
+	 	g_critical("\nSERVER: Removing rdma cq_transmit information from thread_cq_array did not work.\n");
 	}
-	g_mutex_unlock(thread_cq_array_mutex);
+  g_mutex_unlock(thread_cq_array_mutex);
 
 	error = fi_close(&jendpoint->rdma.ep->fid);
 	if (error != 0)
@@ -443,7 +441,6 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 	}
 	domain_unref(jendpoint->rdma.rc_domain, domain_manager, "server thread rdma");
 	fi_freeinfo(jendpoint->rdma.info);
-	// TODO free rmda additional parts
 
 	free(jendpoint);
 }
@@ -473,7 +470,7 @@ j_thread_function(gpointer thread_data)
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 
-	j_fabric = ((ThreadData*)thread_data)->connection.fabric;
+	jfabric = ((ThreadData*)thread_data)->connection.fabric;
 	jd_configuration = ((ThreadData*)thread_data)->connection.j_configuration;
 	domain_manager = ((ThreadData*)thread_data)->connection.domain_manager;
 	j_thread_running = ((ThreadData*)thread_data)->julea_state.thread_running;
