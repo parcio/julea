@@ -243,8 +243,9 @@ domain_category_new_internal(struct fid_fabric* fabric,
 	(*category)->domain_list = NULL;
 	(*category)->info = fi_dupinfo(info);
 	(*category)->ref_count = 0;
-	if (domain_new_internal(fabric, info, configuration, (*category), rc_domain, location))
+	if (!domain_new_internal(fabric, info, configuration, (*category), rc_domain, location))
 	{
+		g_critical("domain_new_internal failed on %s", location);
 		goto end;
 	}
 	(*category)->domain_list = g_slist_append((*category)->domain_list, (*rc_domain));

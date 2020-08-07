@@ -443,7 +443,11 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	msg_hints->tx_attr->op_flags = FI_COMPLETION;
 
 	// julea intern config for rdma // TODO set rdma hints
-	rdma_necessary_caps = FI_EP_MSG;
+
+	rdma_necessary_caps = FI_RMA |	//
+												FI_READ | //
+												FI_REMOTE_READ | //
+												FI_RMA_EVENT;
 	rdma_hints = fi_allocinfo();
 	rdma_hints->caps = rdma_caps | rdma_necessary_caps; // necessary for julea rdma
 	rdma_hints->mode = 0;
@@ -544,7 +548,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	if (configuration->libfabric.get_info.rdma_hints->fabric_attr->prov_name == NULL && configuration->libfabric.get_info.rdma_hints->caps == rdma_necessary_caps)
 	{
 		// g_printf("\nNeither Capabilities nor Provider requested, sockets provider will be used for rdma data transfer\n");
-		configuration->libfabric.get_info.rdma_hints->fabric_attr->prov_name = g_strdup("rxm");
+		configuration->libfabric.get_info.rdma_hints->fabric_attr->prov_name = g_strdup("sockets");
 	}
 
 	return configuration;
@@ -902,7 +906,6 @@ check_prov_name_validity(gchar* prov_name, JConnectionType connection_type)
 			break;
 		case J_RDMA:
 			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("gni"));
-			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("rxm"));
 			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("sockets"));
 			type = "RDMA";
 			break;

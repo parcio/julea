@@ -510,7 +510,7 @@ j_endpoint_init(JEndpoint* jendpoint)
 			   &jendpoint->msg.info);
 	if (error < 0)
 	{
-		g_critical("\nCLIENT: fi_getinfo for msg info failed\n");
+		g_critical("\nCLIENT: fi_getinfo for msg info failed\nDetails:\n%s\n", fi_strerror(abs(error)));
 		goto end;
 	}
 
@@ -522,17 +522,17 @@ j_endpoint_init(JEndpoint* jendpoint)
 			   &jendpoint->rdma.info);
 	if (error < 0)
 	{
-		g_critical("\nCLIENT: fi_getinfo for rdma info failed\n");
+		g_critical("\nCLIENT: fi_getinfo for rdma info failed\nDetails:\n%s\n", fi_strerror(abs(error)));
 		goto end;
 	}
 
-	if (!domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager))
+	if (!domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager, "Client msg"))
 	{
 		g_critical("\nCLIENT: msg-Domain request failed.\n");
 		goto end;
 	}
 
-	if (!domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager))
+	if (!domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager, "Client rdma"))
 	{
 		g_critical("\nCLIENT: rdma-Domain request failed.\n");
 		goto end;

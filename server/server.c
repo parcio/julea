@@ -232,7 +232,7 @@ j_libfabric_fabric_init(void)
 			   NULL,
 			   j_configuration_get_fi_service(jd_configuration),
 			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
-			   j_configuration_fi_get_hints(jd_configuration, J_RDMA),
+			   j_configuration_fi_get_hints(jd_configuration, J_MSG),
 			   &jfabric->rdma_info);
 	if (error != 0)
 	{

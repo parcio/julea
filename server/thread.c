@@ -95,8 +95,9 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	//bulding endpoint
 	//msg
-	if (domain_request(jfabric->msg_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager) != TRUE)
+	if (!domain_request(jfabric->msg_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager, "Server Thread msg"))
 	{
+		g_critical("\nSERVER: Error occurred while requesting msg domain on server.\n");
 		goto end;
 	}
 
@@ -160,8 +161,9 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	}
 
 	//rdma
-	if (domain_request(jfabric->rdma_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager) != TRUE)
+	if (!domain_request(jfabric->rdma_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager, "Server Thread rdma"))
 	{
+		g_critical("\nSERVER: Error occurred while requesting rdma domain on server.\n");
 		goto end;
 	}
 
