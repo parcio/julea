@@ -93,6 +93,7 @@ struct JConfiguration
 	*/
 	struct
 	{
+		JConnectionType communication_type;
 		/**
 		* Event queue config
 		*/
@@ -501,6 +502,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->libfabric.get_info.client_flags = client_flags;
 	configuration->libfabric.get_info.msg_hints = msg_hints;
 	configuration->libfabric.get_info.rdma_hints = rdma_hints;
+	configuration->libfabric.communication_type = J_RDMA;
 
 	/**
 	* set default values for not specified values by user
@@ -874,6 +876,16 @@ j_configuration_fi_get_mr_flags(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->libfabric.rdma_config.mr_flags;
+}
+
+JConnectionType
+j_configuration_fi_get_comm_type(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->libfabric.communication_type;
 }
 
 gboolean

@@ -91,6 +91,8 @@ struct fi_info* j_configuration_fi_get_hints(JConfiguration*, JConnectionType);
 uint64_t j_configuration_fi_get_mr_access(JConfiguration*);
 uint64_t j_configuration_fi_get_mr_flags(JConfiguration*);
 
+JConnectionType j_configuration_fi_get_comm_type(JConfiguration* configuration);
+
 G_END_DECLS
 
 #endif
