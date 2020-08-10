@@ -172,6 +172,9 @@ struct JMessage
 	 * The reference count.
 	 **/
 	gint ref_count;
+
+	KeyList* key_list;
+	KeyList* key_list_current;
 };
 
 /**
@@ -840,7 +843,15 @@ j_message_send(JMessage* message, gpointer endpoint)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	return j_message_write(message, (JEndpoint*)endpoint);
+	switch(j_configuration_fi_get_comm_type(j_configuration()))
+	{
+		case J_MSG:
+			return j_message_write_msg(message, (JEndpoint*)endpoint);
+		case J_RDMA:
+			return j_message_write_rdma(message, (JEndpoint*)endpoint);
+		default:
+			return FALSE;
+	}
 }
 
 /**
@@ -969,7 +980,7 @@ end:
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean
-j_message_write(JMessage* message, JEndpoint* jendpoint)
+j_message_write_msg(JMessage* message, JEndpoint* jendpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1111,6 +1122,148 @@ j_message_write(JMessage* message, JEndpoint* jendpoint)
 	ret = TRUE;
 
 end:
+	return ret;
+}
+
+gboolean
+j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret = FALSE;
+
+	g_autoptr(JListIterator) iterator = NULL;
+	ssize_t error = 0;
+
+	struct fi_cq_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(jendpoint != NULL, FALSE);
+
+	if (message->send_list != NULL)
+	{
+		guint counter;
+		KeyList* tmp_key;
+		iterator = j_list_iterator_new(message->send_list);
+		message->key_list = (KeyList*) message->current;
+		counter = 0;
+
+		while (j_list_iterator_next(iterator))
+		{
+			tmp_key = malloc(sizeof(KeyList));
+			tmp_key->length = j_list_length(message->send_list);
+			tmp_key->key = 25; //TODO generate keys from list element pointer
+
+			message->key_list_current = (KeyList*) message->current;
+
+			if(!j_message_append_n(message, tmp_key, sizeof(KeyList)))
+			{
+				g_critical("\nError while appending keys to jmessage\n");
+				free(tmp_key);
+				goto end;
+			}
+
+			if(counter < message->key_list->length)
+			{
+				message->key_list_current->next = (KeyList*) message->current;
+			}
+			else
+			{
+				message->key_list_current->next = 0;
+			}
+
+			counter++;
+			free(tmp_key);
+		}
+	}
+
+	error = fi_send(jendpoint->msg.ep, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
+	if (error != 0)
+	{
+		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
+		goto end;
+	}
+
+	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
+	if (error != 0)
+	{
+		if (error == -FI_EAVAIL)
+		{
+			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
+			g_critical("\nError on completion Queue after sending Message (JMessage Header)\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			goto end;
+		}
+		else if (error == -FI_EAGAIN)
+		{
+			g_critical("\nNo completion data on completion Queue after sending Message (JMessage Header).");
+			goto end;
+		}
+		else if (error == -FI_ECANCELED)
+		{
+			g_printf("\nData transfer (JMessage Header) canceled through interrupt. Last data transfer not completed\n");
+			goto end;
+		}
+		else if (error < 0)
+		{
+			g_critical("\nError reading completion Queue after sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+	}
+
+	// TODO Dont report error, but split the Message
+	if (!j_message_fi_val_message_size(jendpoint->msg.info->ep_attr->max_msg_size, message))
+	{
+		g_critical("\nMessage bigger than provider max_msg_size (Sending)\nMax Message Size: %zu\nMessage Size: %zu\n", jendpoint->msg.info->ep_attr->max_msg_size, sizeof(JMessageHeader) + j_message_length(message));
+		goto end;
+	}
+
+	error = fi_send(jendpoint->msg.ep, message->data, (size_t)j_message_length(message), NULL, 0, NULL);
+	if (error != 0)
+	{
+		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
+		goto end;
+	}
+	else
+	{
+		//g_printf("JMessage Data sending succeeded."); debug
+	}
+	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
+	if (error != 0)
+	{
+		if (error == -FI_EAVAIL)
+		{
+			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
+			g_critical("\nError on completion Queue after sending Message Data\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			goto end;
+		}
+		else if (error == -FI_EAGAIN)
+		{
+			g_critical("\nNo completion data on completion Queue after sending Message Data.");
+			goto end;
+		}
+		else if (error == -FI_ECANCELED)
+		{
+			g_printf("\nData transfer (Message Data) canceled via interrupt. Data Transfer not completed\n");
+			goto end;
+		}
+		else if (error < 0)
+		{
+			g_critical("\nError reading completion Queue after sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+	}
+
+
+	if (message->send_list != NULL)
+	{
+		//TODO wait for wakeup message
+	}
+
+
+	ret = TRUE;
+
+	end:
 	return ret;
 }
 

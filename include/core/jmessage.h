@@ -101,6 +101,14 @@ struct JConData
 };
 typedef struct JConData JConData;
 
+struct KeyList
+{
+	uint64_t key;
+	guint length;
+	struct KeyList* next;
+};
+typedef struct KeyList KeyList;
+
 G_END_DECLS
 
 #include <core/jsemantics.h>
@@ -129,10 +137,12 @@ gint64 j_message_get_8(JMessage*);
 gpointer j_message_get_n(JMessage*, gsize);
 gchar const* j_message_get_string(JMessage*);
 
-gboolean j_message_send(JMessage*, gpointer);
 gboolean j_message_receive(JMessage*, gpointer);
+gboolean j_message_send(JMessage*, gpointer);
 
 gboolean j_message_read(JMessage*, JEndpoint*);
+G_GNUC_INTERNAL gboolean j_message_write_msg(JMessage*, JEndpoint*);
+G_GNUC_INTERNAL gboolean j_message_write_rdma(JMessage*, JEndpoint*);
 gboolean j_message_write(JMessage*, JEndpoint*);
 
 void j_message_add_send(JMessage*, gconstpointer, guint64);
