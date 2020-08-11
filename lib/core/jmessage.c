@@ -516,6 +516,19 @@ j_message_get_count(JMessage const* message)
 	return op_count;
 }
 
+
+JConnectionType
+j_message_get_comm_type(JMessage* message)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(message != NULL, 0);
+
+	return message->comm_type;
+}
+
+
+
 /**
  * Appends 1 byte to a message.
  *

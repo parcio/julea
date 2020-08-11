@@ -151,6 +151,8 @@ void j_message_add_operation(JMessage*, gsize);
 void j_message_set_semantics(JMessage*, JSemantics*);
 JSemantics* j_message_get_semantics(JMessage*);
 
+JConnectionType j_message_get_comm_type(JMessage*);
+
 G_END_DECLS
 
 #endif
