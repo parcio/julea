@@ -716,6 +716,7 @@ main(int argc, char** argv)
 							thread_data->connection.msg_event = NULL;
 							thread_data->connection.rdma_event = event_entry;
 							break;
+						case J_UNDEFINED:
 						default:
 							g_assert_not_reached();
 					}
