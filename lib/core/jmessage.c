@@ -173,8 +173,10 @@ struct JMessage
 	 **/
 	gint ref_count;
 
-	KeyList* key_list;
-	KeyList* key_list_current;
+	JConnectionType comm_type; // contains information over the requested connection type for the peer
+
+	KeyList* key_list;					// pointer to first element of key_list
+	KeyList* key_list_current;	// pointer to current element of key_list (standard placement is key_list)
 };
 
 /**
@@ -362,6 +364,8 @@ j_message_new(JMessageType op_type, gsize length)
 	message->header.op_type = GUINT32_TO_LE(op_type);
 	message->header.op_count = GUINT32_TO_LE(0);
 
+	message->comm_type = J_UNDEFINED;
+
 	return message;
 }
 
@@ -397,6 +401,8 @@ j_message_new_reply(JMessage* message)
 	reply->header.semantics = GUINT32_TO_LE(0);
 	reply->header.op_type = message->header.op_type;
 	reply->header.op_count = GUINT32_TO_LE(0);
+
+	reply->comm_type = message->comm_type;
 
 	return reply;
 }
@@ -825,7 +831,7 @@ j_message_receive(JMessage* message, gpointer endpoint)
 }
 
 /**
- * Writes a message to the network.
+ * Writes a message to the network. Type of communication is either based on type of prior communication (in case of response) or the one set in configuration
  *
  * \code
  * \endcode
@@ -843,13 +849,20 @@ j_message_send(JMessage* message, gpointer endpoint)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	switch(j_configuration_fi_get_comm_type(j_configuration()))
+	if(!(message->comm_type == J_MSG || message->comm_type == J_RDMA))
+	{
+		message->comm_type = j_configuration_fi_get_comm_type(j_configuration());
+	}
+
+	switch(message->comm_type)
 	{
 		case J_MSG:
 			return j_message_write_msg(message, (JEndpoint*)endpoint);
 		case J_RDMA:
 			return j_message_write_rdma(message, (JEndpoint*)endpoint);
+		case J_UNDEFINED:
 		default:
+			g_critical("\nERROR on sending message, no valid connection type requested\n");
 			return FALSE;
 	}
 }
@@ -969,13 +982,13 @@ end:
 }
 
 /**
- * Writes a message to the network.
+ * Writes a message to the network based on message communication
  *
  * \code
  * \endcode
  *
  * \param message A message.
- * \parem stream  A network stream.
+ * \parem jendpoint a connected jendpoint.
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
@@ -1125,12 +1138,25 @@ end:
 	return ret;
 }
 
+
+
+/**
+* Communicates data, JMessage and JHeader via fi_send (message base communication) and memory chunks via rdma based communication
+* procedure:
+*		checks whether message to send has additional data to send, if so registers those memory regions in libfabric domain and generates for each a unique key (adds those keys to message)
+*		sends message and header to peer
+*		waits for peer to read memory reagions if additional data present
+*		removes memory regions from libfabric
+* returns TRUE if successful
+*/
 gboolean
 j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret = FALSE;
+
+	GSList* mr_list = NULL;
 
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
@@ -1151,9 +1177,13 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 
 		while (j_list_iterator_next(iterator))
 		{
+			struct fid_mr* memory_region;
+
+			JMessageData* message_data = j_list_iterator_get(iterator);
+
 			tmp_key = malloc(sizeof(KeyList));
 			tmp_key->length = j_list_length(message->send_list);
-			tmp_key->key = 25; //TODO generate keys from list element pointer
+			tmp_key->key = counter; //TODO generate keys from list element pointer
 
 			message->key_list_current = (KeyList*) message->current;
 
@@ -1170,12 +1200,37 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			}
 			else
 			{
-				message->key_list_current->next = 0;
+				message->key_list_current->next = NULL;
+			}
+			counter++;
+
+			error = fi_mr_reg(jendpoint->rdma.rc_domain->domain,
+												message_data->data,
+												message_data->length,
+												j_configuration_fi_get_mr_access(j_configuration()),
+												0,
+												message->key_list_current->key,
+												j_configuration_fi_get_mr_flags(j_configuration()),
+												&memory_region,
+												NULL
+												);
+			if(error != 0)
+			{
+				g_critical("\nError while registering memory region\nDetails:\n%s", fi_strerror(labs(error)));
 			}
 
-			counter++;
+			error = fi_mr_bind(memory_region, &jendpoint->rdma.ep->fid, 0);
+			if(error != 0)
+			{
+				g_critical("\nError while binding memory region to endpoint\nDeatils:\n%s", fi_strerror(labs(error)));
+			}
+
+			printf("\nSENDING: current key: %ld, tmp_key: %ld\n", message->key_list_current->key, tmp_key->key); //debug
+
+			mr_list = g_slist_prepend(mr_list, (gpointer) memory_region);
 			free(tmp_key);
 		}
+		message->key_list_current = message->key_list;
 	}
 
 	error = fi_send(jendpoint->msg.ep, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
@@ -1257,15 +1312,65 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 
 	if (message->send_list != NULL)
 	{
-		//TODO wait for wakeup message
+		int* wakeup_buf;
+
+		wakeup_buf = malloc(sizeof(int));
+
+		printf("\nSENDING: send_list found 2\n"); //debug
+
+		error = fi_recv(jendpoint->rdma.ep, (void*) wakeup_buf, sizeof(int), NULL, 0, NULL);
+		if (error != 0)
+		{
+			g_critical("\nError receiving wakeup message.\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+		error = fi_cq_sread(jendpoint->rdma.cq_receive, &completion_queue_data, 1, NULL, -1);
+		if (error != 0)
+		{
+			if (error == -FI_EAVAIL)
+			{
+				error = fi_cq_readerr(jendpoint->rdma.cq_receive, &completion_queue_err_entry, 0);
+				g_critical("\nError on completion queue while receiving wakeup message.\nDetails:\n%s", fi_cq_strerror(jendpoint->rdma.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+				goto end;
+			}
+			else if (error == -FI_EAGAIN)
+			{
+				g_critical("\nNo completion data on completion Queue after receiving wakeup message.\n");
+				goto end;
+			}
+			else if (error == -FI_ECANCELED)
+			{
+				g_critical("\nShutdown initiated while receiving wakeup message.\n");
+				goto end;
+			}
+			else if (error < 0)
+			{
+				g_critical("\nError while reading completion queue for receiving wakeup message.\nDetails:\n%s", fi_strerror(labs(error)));
+				goto end;
+			}
+			free(wakeup_buf);
+		}
 	}
 
 
 	ret = TRUE;
 
 	end:
+	if(mr_list != NULL)
+	{
+		for(guint i = 0; i < g_slist_length(mr_list); i++)
+		{
+			error = fi_close(&((struct fid_mr*) g_slist_nth_data(mr_list, i))->fid);
+			if(error != 0)
+			{
+				g_critical("\nERROR closing fid_mrs after sending\nDetails:\n%s", fi_strerror(labs(error)));
+			}
+		}
+		g_slist_free(mr_list);
+	}
 	return ret;
 }
+
 
 /**
  * Adds new data to send to a message.
