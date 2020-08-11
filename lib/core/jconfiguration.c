@@ -852,6 +852,7 @@ j_configuration_fi_get_hints(JConfiguration* configuration, JConnectionType conn
 			return configuration->libfabric.get_info.msg_hints;
 		case J_RDMA:
 			return configuration->libfabric.get_info.rdma_hints;
+		case J_UNDEFINED:
 		default:
 			g_assert_not_reached();
 	}
@@ -919,6 +920,7 @@ check_prov_name_validity(gchar* prov_name, JConnectionType connection_type)
 			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("sockets"));
 			type = "RDMA";
 			break;
+		case J_UNDEFINED:
 		default:
 			g_assert_not_reached();
 	}
@@ -1005,6 +1007,7 @@ check_caps_validity(guint64 caps, JConnectionType connection_type)
 					 FI_READ; /**/
 			type = "RDMA";
 			break;
+		case J_UNDEFINED:
 		default:
 			g_assert_not_reached();
 	}

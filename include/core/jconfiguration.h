@@ -43,7 +43,8 @@ typedef struct JConfiguration JConfiguration;
 enum JConnectionType
 {
 	J_MSG,
-	J_RDMA
+	J_RDMA,
+	J_UNDEFINED
 };
 typedef enum JConnectionType JConnectionType;
 
