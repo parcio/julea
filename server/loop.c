@@ -31,6 +31,213 @@
 
 static guint jd_thread_num = 0;
 
+void
+handle_chunks_msg(JMessage* message,
+		  JEndpoint* jendpoint,
+		  guint32 operation_count,
+		  JMemoryChunk* memory_chunk,
+		  guint64 memory_chunk_size,
+		  gpointer object,
+		  JStatistics* statistics,
+		  JMessage* reply);
+
+void
+handle_chunks_rdma(JMessage* message,
+		   JEndpoint* jendpoint,
+		   guint32 operation_count,
+		   JMemoryChunk* memory_chunk,
+		   guint64 memory_chunk_size,
+		   gpointer object,
+		   JStatistics* statistics,
+		   JMessage* reply);
+
+void
+handle_chunks_msg(JMessage* message,
+		  JEndpoint* jendpoint,
+		  guint32 operation_count,
+		  JMemoryChunk* memory_chunk,
+		  guint64 memory_chunk_size,
+		  gpointer object,
+		  JStatistics* statistics,
+		  JMessage* reply)
+{
+	for (guint i = 0; i < operation_count; i++)
+	{
+		gchar* buf;
+		guint64 length;
+		guint64 offset;
+		guint64 bytes_written = 0;
+		ssize_t error = 0;
+
+		struct fi_cq_entry completion_queue_data;
+		struct fi_cq_err_entry completion_queue_err_entry;
+
+		length = j_message_get_8(message);
+		offset = j_message_get_8(message);
+
+		error = 0;
+
+		if (length > memory_chunk_size)
+		{
+			// FIXME return proper error
+			j_message_add_operation(reply, sizeof(guint64));
+			j_message_append_8(reply, &bytes_written);
+			continue;
+		}
+
+		// Guaranteed to work because memory_chunk is reset below
+		buf = j_memory_chunk_get(memory_chunk, length);
+		g_assert(buf != NULL);
+
+		error = fi_recv(jendpoint->msg.ep, (void*)buf, (size_t)length, NULL, 0, NULL);
+		if (error != 0)
+		{
+			g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));
+		}
+		error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
+		if (error != 0)
+		{
+			if (error == -FI_EAVAIL)
+			{
+				error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
+				g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			}
+			else if (error == -FI_EAGAIN)
+			{
+				g_critical("\nSERVER: No completion data on completion Queue reading for data junks in loop.c.\n");
+			}
+			else if (error == -FI_ECANCELED)
+			{
+				g_printf("\nSERVER: Data Transfer canceled while receiving data junks in loop.c. Transfer not completed\n");
+			}
+			else if (error > 0)
+			{
+				//g_printf("\nSERVER: Receiving Data Junks directly in loop.c succeeded.\n");
+			}
+			else if (error < 0)
+			{
+				g_critical("\nSERVER: Error reading completion Queue after reading for data junks in loop.c.\nDetails:\n%s", fi_strerror(labs(error)));
+			}
+		}
+
+		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
+
+		j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+		if (reply != NULL)
+		{
+			j_message_add_operation(reply, sizeof(guint64));
+			j_message_append_8(reply, &bytes_written);
+		}
+
+		j_memory_chunk_reset(memory_chunk);
+	}
+}
+
+void
+handle_chunks_rdma(JMessage* message,
+		   JEndpoint* jendpoint,
+		   guint32 operation_count,
+		   JMemoryChunk* memory_chunk,
+		   guint64 memory_chunk_size,
+		   gpointer object,
+		   JStatistics* statistics,
+		   JMessage* reply)
+{
+	int* wakeup_buf;
+
+	struct fi_cq_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
+
+	ssize_t error = 0;
+
+	for (guint i = 0; i < operation_count; i++)
+	{
+		gchar* buf;
+		guint64 length;
+		guint64 offset;
+		guint64 bytes_written = 0;
+
+		length = j_message_get_8(message);
+		offset = j_message_get_8(message);
+
+		printf("\nSERVER: found key: %ld\n", j_message_get_key(message, i));
+
+		if (length > memory_chunk_size)
+		{
+			// FIXME return proper error
+			j_message_add_operation(reply, sizeof(guint64));
+			j_message_append_8(reply, &bytes_written);
+			continue;
+		}
+
+		// Guaranteed to work because memory_chunk is reset below
+		buf = j_memory_chunk_get(memory_chunk, length);
+		g_assert(buf != NULL);
+
+		//TODO rdma read here
+		error = fi_read(jendpoint->rdma.ep,
+				(void*)buf, //target buffer
+				(size_t)length, //buffer length
+				NULL, // file descriptor
+				0, // dest addr (only for unconnected)
+				0, // 0-based offset for source memory address
+				j_message_get_key(message, i), // corresponding key
+				NULL); //context
+		if (error != 0)
+		{
+			g_critical("\nSERVER: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
+		}
+
+		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
+
+		j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+		if (reply != NULL)
+		{
+			j_message_add_operation(reply, sizeof(guint64));
+			j_message_append_8(reply, &bytes_written);
+		}
+
+		j_memory_chunk_reset(memory_chunk);
+	}
+
+	wakeup_buf = malloc(sizeof(int));
+
+	printf("\nSERVER: Reached waiting point for fi_read finish\n"); //debug
+
+	error = fi_send(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
+	if (error != 0)
+	{
+		g_critical("\nSERVER: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
+	}
+	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
+	if (error != 0)
+	{
+		if (error == -FI_EAVAIL)
+		{
+			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
+			g_critical("\nSERVER: Error on completion Queue after sending wakeup Message from loop\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+		}
+		else if (error == -FI_EAGAIN)
+		{
+			g_critical("\nSERVER: No completion data on completion Queue after sending wakeup Message from loop.");
+		}
+		else if (error == -FI_ECANCELED)
+		{
+			g_printf("\nSERVER: wakeup Message data transfer in loop canceled through interrupt.\n");
+		}
+		else if (error < 0)
+		{
+			g_critical("\nSERVER: Error reading completion Queue after sending wakeup Message from loop.\nDetails:\n%s", fi_strerror(labs(error)));
+		}
+	}
+
+	free(wakeup_buf);
+}
+
 gboolean
 jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
@@ -212,77 +419,32 @@ jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_
 			// FIXME return value
 			j_backend_object_open(jd_object_backend, namespace, path, &object);
 
-			for (i = 0; i < operation_count; i++)
+			//TODO fix bug where message does not hold correct commtype
+			switch (j_message_get_comm_type(message))
 			{
-				gchar* buf;
-				guint64 length;
-				guint64 offset;
-				guint64 bytes_written = 0;
-				ssize_t error = 0;
-
-				struct fi_cq_entry completion_queue_data;
-				struct fi_cq_err_entry completion_queue_err_entry;
-
-				length = j_message_get_8(message);
-				offset = j_message_get_8(message);
-
-				error = 0;
-
-				if (length > memory_chunk_size)
-				{
-					// FIXME return proper error
-					j_message_add_operation(reply, sizeof(guint64));
-					j_message_append_8(reply, &bytes_written);
-					continue;
-				}
-
-				// Guaranteed to work because memory_chunk is reset below
-				buf = j_memory_chunk_get(memory_chunk, length);
-				g_assert(buf != NULL);
-
-				error = fi_recv(jendpoint->msg.ep, (void*)buf, (size_t)length, NULL, 0, NULL); //todo use fi_read/fi_readmsg
-				if (error != 0)
-				{
-					g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));
-				}
-				error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
-				if (error != 0)
-				{
-					if (error == -FI_EAVAIL)
-					{
-						error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
-						g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
-					}
-					else if (error == -FI_EAGAIN)
-					{
-						g_critical("\nSERVER: No completion data on completion Queue reading for data junks in loop.c.\n");
-					}
-					else if (error == -FI_ECANCELED)
-					{
-						g_printf("\nSERVER: Data Transfer canceled while receiving data junks in loop.c. Transfer not completed\n");
-					}
-					else if (error > 0)
-					{
-						//g_printf("\nSERVER: Receiving Data Junks directly in loop.c succeeded.\n");
-					}
-					else if (error < 0)
-					{
-						g_critical("\nSERVER: Error reading completion Queue after reading for data junks in loop.c.\nDetails:\n%s", fi_strerror(labs(error)));
-					}
-				}
-
-				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
-
-				j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
-				j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
-
-				if (reply != NULL)
-				{
-					j_message_add_operation(reply, sizeof(guint64));
-					j_message_append_8(reply, &bytes_written);
-				}
-
-				j_memory_chunk_reset(memory_chunk);
+				case J_MSG:
+					handle_chunks_msg(message,
+							  jendpoint,
+							  operation_count,
+							  memory_chunk,
+							  memory_chunk_size,
+							  object,
+							  statistics,
+							  reply);
+					break;
+				case J_RDMA:
+					handle_chunks_rdma(message,
+							   jendpoint,
+							   operation_count,
+							   memory_chunk,
+							   memory_chunk_size,
+							   object,
+							   statistics,
+							   reply);
+					break;
+				case J_UNDEFINED:
+				default:
+					g_critical("\nSERVER: loop did not receive a correct comm type\n");
 			}
 
 			if (safety == J_SEMANTICS_SAFETY_STORAGE)

@@ -491,6 +491,11 @@ j_thread_function(gpointer thread_data)
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
+	if (j_message_get_comm_type(message) == J_MSG)
+	{
+		printf("\nSERVER: J_MSG Type spotted\n"); //debug
+	}
+
 	g_atomic_int_inc(thread_count);
 
 	//g_printf("\nSERVER: Thread initiated\n"); //debug

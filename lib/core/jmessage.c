@@ -124,12 +124,17 @@ struct JMessageHeader
 	 * The operation count.
 	 **/
 	guint32 op_count;
+
+	JConnectionType comm_type; // contains information over the requested connection type for the peer
+
+	size_t first_key; //position of the first key in data
+	guint32 key_number; // number of keys located in data
 };
 #pragma pack()
 
 typedef struct JMessageHeader JMessageHeader;
 
-G_STATIC_ASSERT(sizeof(JMessageHeader) == 5 * sizeof(guint32));
+G_STATIC_ASSERT(sizeof(JMessageHeader) == 6 * sizeof(guint32) + sizeof(JConnectionType) + sizeof(size_t));
 
 /**
  * A message.
@@ -172,11 +177,6 @@ struct JMessage
 	 * The reference count.
 	 **/
 	gint ref_count;
-
-	JConnectionType comm_type; // contains information over the requested connection type for the peer
-
-	KeyList* key_list;					// pointer to first element of key_list
-	KeyList* key_list_current;	// pointer to current element of key_list (standard placement is key_list)
 };
 
 /**
@@ -364,7 +364,7 @@ j_message_new(JMessageType op_type, gsize length)
 	message->header.op_type = GUINT32_TO_LE(op_type);
 	message->header.op_count = GUINT32_TO_LE(0);
 
-	message->comm_type = J_UNDEFINED;
+	message->header.comm_type = J_UNDEFINED;
 
 	return message;
 }
@@ -402,7 +402,7 @@ j_message_new_reply(JMessage* message)
 	reply->header.op_type = message->header.op_type;
 	reply->header.op_count = GUINT32_TO_LE(0);
 
-	reply->comm_type = message->comm_type;
+	reply->header.comm_type = message->header.comm_type;
 
 	return reply;
 }
@@ -516,7 +516,6 @@ j_message_get_count(JMessage const* message)
 	return op_count;
 }
 
-
 JConnectionType
 j_message_get_comm_type(JMessage* message)
 {
@@ -524,10 +523,25 @@ j_message_get_comm_type(JMessage* message)
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	return message->comm_type;
+	return message->header.comm_type;
 }
 
+/**
+* returns current key, advances key_list_current if possible by one
+*/
+uint64_t
+j_message_get_key(JMessage* message, guint key_position)
+{
+	uint64_t* ret_key;
 
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(message != NULL, 0);
+
+	ret_key = (uint64_t*)(message->data + message->header.first_key + key_position * sizeof(uint64_t));
+
+	return *ret_key;
+}
 
 /**
  * Appends 1 byte to a message.
@@ -862,12 +876,12 @@ j_message_send(JMessage* message, gpointer endpoint)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(endpoint != NULL, FALSE);
 
-	if(!(message->comm_type == J_MSG || message->comm_type == J_RDMA))
+	if (!(message->header.comm_type == J_MSG || message->header.comm_type == J_RDMA))
 	{
-		message->comm_type = j_configuration_fi_get_comm_type(j_configuration());
+		message->header.comm_type = j_configuration_fi_get_comm_type(j_configuration());
 	}
 
-	switch(message->comm_type)
+	switch (message->header.comm_type)
 	{
 		case J_MSG:
 			return j_message_write_msg(message, (JEndpoint*)endpoint);
@@ -1151,8 +1165,6 @@ end:
 	return ret;
 }
 
-
-
 /**
 * Communicates data, JMessage and JHeader via fi_send (message base communication) and memory chunks via rdma based communication
 * procedure:
@@ -1180,70 +1192,56 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(jendpoint != NULL, FALSE);
 
-	if (message->send_list != NULL)
+	if (j_list_length(message->send_list) != 0)
 	{
 		guint counter;
-		KeyList* tmp_key;
 		iterator = j_list_iterator_new(message->send_list);
-		message->key_list = (KeyList*) message->current;
+		message->header.first_key = message->current - message->data;
+		message->header.key_number = j_list_length(message->send_list);
+
 		counter = 0;
 
 		while (j_list_iterator_next(iterator))
 		{
 			struct fid_mr* memory_region;
+			uint64_t tmp_key;
 
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			tmp_key = malloc(sizeof(KeyList));
-			tmp_key->length = j_list_length(message->send_list);
-			tmp_key->key = counter; //TODO generate keys from list element pointer
+			tmp_key = counter; //TODO generate keys from list element pointer
 
-			message->key_list_current = (KeyList*) message->current;
-
-			if(!j_message_append_n(message, tmp_key, sizeof(KeyList)))
+			if (!j_message_append_n(message, &tmp_key, sizeof(uint64_t)))
 			{
 				g_critical("\nError while appending keys to jmessage\n");
-				free(tmp_key);
 				goto end;
 			}
 
-			if(counter < message->key_list->length)
-			{
-				message->key_list_current->next = (KeyList*) message->current;
-			}
-			else
-			{
-				message->key_list_current->next = NULL;
-			}
-			counter++;
+			printf("\nSENDING: current key: %ld, tmp_key: %ld\n", j_message_get_key(message, counter), tmp_key); //debug
 
 			error = fi_mr_reg(jendpoint->rdma.rc_domain->domain,
-												message_data->data,
-												message_data->length,
-												j_configuration_fi_get_mr_access(j_configuration()),
-												0,
-												message->key_list_current->key,
-												j_configuration_fi_get_mr_flags(j_configuration()),
-												&memory_region,
-												NULL
-												);
-			if(error != 0)
+					  message_data->data,
+					  message_data->length,
+					  j_configuration_fi_get_mr_access(j_configuration()),
+					  0,
+					  j_message_get_key(message, counter),
+					  j_configuration_fi_get_mr_flags(j_configuration()),
+					  &memory_region,
+					  NULL);
+			if (error != 0)
 			{
 				g_critical("\nError while registering memory region\nDetails:\n%s", fi_strerror(labs(error)));
 			}
 
+			/* TODO: find why binding not possible
 			error = fi_mr_bind(memory_region, &jendpoint->rdma.ep->fid, 0);
 			if(error != 0)
 			{
 				g_critical("\nError while binding memory region to endpoint\nDeatils:\n%s", fi_strerror(labs(error)));
-			}
+			}*/
 
-			printf("\nSENDING: current key: %ld, tmp_key: %ld\n", message->key_list_current->key, tmp_key->key); //debug
-
-			mr_list = g_slist_prepend(mr_list, (gpointer) memory_region);
-			free(tmp_key);
+			mr_list = g_slist_prepend(mr_list, (gpointer)memory_region);
+			counter++;
 		}
-		message->key_list_current = message->key_list;
 	}
 
 	error = fi_send(jendpoint->msg.ep, (void*)&(message->header), sizeof(JMessageHeader), NULL, 0, NULL);
@@ -1269,7 +1267,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		}
 		else if (error == -FI_ECANCELED)
 		{
-			g_printf("\nData transfer (JMessage Header) canceled through interrupt. Last data transfer not completed\n");
+			g_printf("\nData transfer (JMessage Header rdma) canceled through interrupt. Last data transfer not completed\n");
 			goto end;
 		}
 		else if (error < 0)
@@ -1322,28 +1320,27 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		}
 	}
 
-
-	if (message->send_list != NULL)
+	if (j_list_length(message->send_list) != 0)
 	{
 		int* wakeup_buf;
 
+		printf("\nSENDING: waiting for wakeup message\n"); //debug
+
 		wakeup_buf = malloc(sizeof(int));
 
-		printf("\nSENDING: send_list found 2\n"); //debug
-
-		error = fi_recv(jendpoint->rdma.ep, (void*) wakeup_buf, sizeof(int), NULL, 0, NULL);
+		error = fi_recv(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
 		if (error != 0)
 		{
 			g_critical("\nError receiving wakeup message.\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
-		error = fi_cq_sread(jendpoint->rdma.cq_receive, &completion_queue_data, 1, NULL, -1);
+		error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
 		if (error != 0)
 		{
 			if (error == -FI_EAVAIL)
 			{
-				error = fi_cq_readerr(jendpoint->rdma.cq_receive, &completion_queue_err_entry, 0);
-				g_critical("\nError on completion queue while receiving wakeup message.\nDetails:\n%s", fi_cq_strerror(jendpoint->rdma.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+				error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
+				g_critical("\nError on completion queue while receiving wakeup message.\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 				goto end;
 			}
 			else if (error == -FI_EAGAIN)
@@ -1365,16 +1362,15 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		}
 	}
 
-
 	ret = TRUE;
 
-	end:
-	if(mr_list != NULL)
+end:
+	if (mr_list != NULL)
 	{
-		for(guint i = 0; i < g_slist_length(mr_list); i++)
+		for (guint i = 0; i < g_slist_length(mr_list); i++)
 		{
-			error = fi_close(&((struct fid_mr*) g_slist_nth_data(mr_list, i))->fid);
-			if(error != 0)
+			error = fi_close(&((struct fid_mr*)g_slist_nth_data(mr_list, i))->fid);
+			if (error != 0)
 			{
 				g_critical("\nERROR closing fid_mrs after sending\nDetails:\n%s", fi_strerror(labs(error)));
 			}
@@ -1383,7 +1379,6 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 	}
 	return ret;
 }
-
 
 /**
  * Adds new data to send to a message.

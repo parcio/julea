@@ -31,6 +31,7 @@
 #include <gio/gio.h>
 
 #include <rdma/fi_endpoint.h>
+#include <rdma/fi_rma.h>
 
 #include <j_fi_domain_manager.h>
 
@@ -101,14 +102,6 @@ struct JConData
 };
 typedef struct JConData JConData;
 
-struct KeyList
-{
-	uint64_t key;
-	guint length;
-	struct KeyList* next;
-};
-typedef struct KeyList KeyList;
-
 G_END_DECLS
 
 #include <core/jsemantics.h>
@@ -152,6 +145,7 @@ void j_message_set_semantics(JMessage*, JSemantics*);
 JSemantics* j_message_get_semantics(JMessage*);
 
 JConnectionType j_message_get_comm_type(JMessage*);
+uint64_t j_message_get_key(JMessage*, guint);
 
 G_END_DECLS
 
