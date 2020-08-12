@@ -532,15 +532,15 @@ j_message_get_comm_type(JMessage* message)
 uint64_t
 j_message_get_key(JMessage* message, guint key_position)
 {
-	uint64_t* ret_key;
+	gchar* ret_key;
 
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	ret_key = (uint64_t*)(message->data + message->header.first_key + key_position * sizeof(uint64_t));
+	ret_key = message->data + message->header.first_key + key_position * sizeof(uint64_t);
 
-	return *ret_key;
+	return *((uint64_t*) ret_key);
 }
 
 /**
@@ -1183,6 +1183,8 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 
 	GSList* mr_list = NULL;
 
+	GRand* key_generator;
+
 	g_autoptr(JListIterator) iterator = NULL;
 	ssize_t error = 0;
 
@@ -1191,6 +1193,8 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(jendpoint != NULL, FALSE);
+
+	key_generator = g_rand_new();
 
 	if (j_list_length(message->send_list) != 0)
 	{
@@ -1204,19 +1208,21 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		while (j_list_iterator_next(iterator))
 		{
 			struct fid_mr* memory_region;
-			uint64_t tmp_key;
+			uint64_t key;
 
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			tmp_key = counter; //TODO generate keys from list element pointer
+			//key = ((uint64_t) g_rand_int(key_generator)) << 32 | (uint64_t) g_rand_int(key_generator);
+			key = (uint64_t) g_rand_int(key_generator);
+			//key = (uint64_t) j_list_iterator_get(iterator); //TODO generate keys from list element pointer
 
-			if (!j_message_append_n(message, &tmp_key, sizeof(uint64_t)))
+			if (!j_message_append_n(message, &key, sizeof(uint64_t)))
 			{
 				g_critical("\nError while appending keys to jmessage\n");
 				goto end;
 			}
 
-			printf("\nSENDING: current key: %ld, tmp_key: %ld\n", j_message_get_key(message, counter), tmp_key); //debug
+			printf("\nSENDING:          setting key: %lu\n", j_message_get_key(message, counter)); //debug
 
 			error = fi_mr_reg(jendpoint->rdma.rc_domain->domain,
 					  message_data->data,
@@ -1324,14 +1330,13 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 	{
 		int* wakeup_buf;
 
-		printf("\nSENDING: waiting for wakeup message\n"); //debug
-
 		wakeup_buf = malloc(sizeof(int));
 
 		error = fi_recv(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
 		if (error != 0)
 		{
 			g_critical("\nError receiving wakeup message.\nDetails:\n%s", fi_strerror(labs(error)));
+			free(wakeup_buf);
 			goto end;
 		}
 		error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
@@ -1341,21 +1346,25 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			{
 				error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
 				g_critical("\nError on completion queue while receiving wakeup message.\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+				free(wakeup_buf);
 				goto end;
 			}
 			else if (error == -FI_EAGAIN)
 			{
 				g_critical("\nNo completion data on completion Queue after receiving wakeup message.\n");
+				free(wakeup_buf);
 				goto end;
 			}
 			else if (error == -FI_ECANCELED)
 			{
 				g_critical("\nShutdown initiated while receiving wakeup message.\n");
+				free(wakeup_buf);
 				goto end;
 			}
 			else if (error < 0)
 			{
 				g_critical("\nError while reading completion queue for receiving wakeup message.\nDetails:\n%s", fi_strerror(labs(error)));
+				free(wakeup_buf);
 				goto end;
 			}
 			free(wakeup_buf);
@@ -1377,6 +1386,8 @@ end:
 		}
 		g_slist_free(mr_list);
 	}
+
+	g_rand_free(key_generator);
 	return ret;
 }
 

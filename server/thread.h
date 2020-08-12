@@ -76,5 +76,7 @@ G_GNUC_INTERNAL void j_thread_libfabric_ress_shutdown(JEndpoint*);
 void thread_unblock(struct fid_cq* completion_queue);
 
 G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
+G_GNUC_INTERNAL void handle_chunks_msg(JMessage*,	JEndpoint*, guint32, JMemoryChunk*, guint64, gpointer, JStatistics*, JMessage*);
+G_GNUC_INTERNAL void handle_chunks_rdma(JMessage*,	JEndpoint*, guint32, JMemoryChunk*, guint64, gpointer, JStatistics*, JMessage*);
 
 #endif

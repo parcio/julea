@@ -31,25 +31,6 @@
 
 static guint jd_thread_num = 0;
 
-void
-handle_chunks_msg(JMessage* message,
-		  JEndpoint* jendpoint,
-		  guint32 operation_count,
-		  JMemoryChunk* memory_chunk,
-		  guint64 memory_chunk_size,
-		  gpointer object,
-		  JStatistics* statistics,
-		  JMessage* reply);
-
-void
-handle_chunks_rdma(JMessage* message,
-		   JEndpoint* jendpoint,
-		   guint32 operation_count,
-		   JMemoryChunk* memory_chunk,
-		   guint64 memory_chunk_size,
-		   gpointer object,
-		   JStatistics* statistics,
-		   JMessage* reply);
 
 void
 handle_chunks_msg(JMessage* message,
@@ -162,7 +143,6 @@ handle_chunks_rdma(JMessage* message,
 		length = j_message_get_8(message);
 		offset = j_message_get_8(message);
 
-		printf("\nSERVER: found key: %ld\n", j_message_get_key(message, i));
 
 		if (length > memory_chunk_size)
 		{
@@ -176,7 +156,8 @@ handle_chunks_rdma(JMessage* message,
 		buf = j_memory_chunk_get(memory_chunk, length);
 		g_assert(buf != NULL);
 
-		//TODO rdma read here
+		printf("\nSERVER:             found key: %lu\n", j_message_get_key(message, i)); //debug
+
 		error = fi_read(jendpoint->rdma.ep,
 				(void*)buf, //target buffer
 				(size_t)length, //buffer length
@@ -205,8 +186,6 @@ handle_chunks_rdma(JMessage* message,
 	}
 
 	wakeup_buf = malloc(sizeof(int));
-
-	printf("\nSERVER: Reached waiting point for fi_read finish\n"); //debug
 
 	error = fi_send(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
 	if (error != 0)

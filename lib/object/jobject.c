@@ -419,15 +419,16 @@ j_object_receive_data_chunks(JMessage* message, JEndpoint* endpoint, JListIterat
 
 //TODO
 gboolean
-j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
+j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListIterator* it, guint32* reply_operation_count)
 {
 	gboolean ret;
+	ssize_t error;
 
-	struct fi_cq_msg_entry* completion_queue_data;
-	struct fi_cq_err_entry* completion_queue_err_entry;
+	struct fi_cq_msg_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
 
+	error = 0;
 	ret = FALSE;
-	completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
 
 	for (guint i = 0; i < *reply_operation_count && j_list_iterator_next(it); i++)
 	{
@@ -442,26 +443,19 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* endpoint, JListIt
 
 		if (nbytes > 0)
 		{
-
-			ssize_t error;
-
-			error = 0;
-
-			error = fi_recv(endpoint->msg.ep, (void*)data, (size_t)nbytes, NULL, 0, NULL);
+			error = fi_recv(jendpoint->msg.ep, (void*)data, (size_t)nbytes, NULL, 0, NULL);
 			if (error != 0)
 			{
 				g_critical("\nError while receiving background write operation for JObjects\nDetails:\n%s\n", fi_strerror((int)error));
 				goto end;
 			}
-			error = fi_cq_sread(endpoint->msg.cq_receive, completion_queue_data, 1, NULL, -1);
+			error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
 			if (error != 0)
 			{
 				if (error == -FI_EAVAIL)
 				{
-					completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
-					error = fi_cq_readerr(endpoint->msg.cq_receive, completion_queue_err_entry, 0);
-					g_critical("\nError on completion Queue after reading for background write operations for JObjects\nDetails:\n%s", fi_cq_strerror(endpoint->msg.cq_receive, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
-					free(completion_queue_err_entry);
+					error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
+					g_critical("\nError on completion Queue after reading for background write operations for JObjects\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
 					goto end;
 				}
 				else if (error == -FI_EAGAIN)
@@ -484,27 +478,91 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* endpoint, JListIt
 
 	ret = TRUE;
 	end:
-	free(completion_queue_data);
 	return ret;
 }
 
 //TODO
 gboolean
-j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
+j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JListIterator* it, guint32* reply_operation_count)
 {
 	gboolean ret;
+	ssize_t error;
+
+	int* wakeup_buf;
+
+	struct fi_cq_msg_entry completion_queue_data;
+	struct fi_cq_err_entry completion_queue_err_entry;
 
 	ret = FALSE;
+	error = 0;
 
+	for (guint i = 0; i < *reply_operation_count && j_list_iterator_next(it); i++)
+	{
+		JObjectOperation* operation = j_list_iterator_get(it);
+		gpointer data = operation->read.data;
+		guint64* bytes_read = operation->read.bytes_read;
 
-	message = NULL;
-	endpoint = NULL;
-	it = NULL;
-	if(message == NULL && endpoint == NULL && it == NULL)
-	goto end;
+		guint64 nbytes;
+
+		nbytes = j_message_get_8(message);
+		j_helper_atomic_add(bytes_read, nbytes);
+
+		if (nbytes > 0)
+		{
+			printf("\nJObject:            found key: %lu\n", j_message_get_key(message, i)); //debug
+
+			error = fi_read(jendpoint->rdma.ep,
+					(void*)data, //target buffer
+					(size_t)nbytes, //buffer length
+					NULL, // file descriptor
+					0, // dest addr (only for unconnected)
+					0, // 0-based offset for source memory address
+					j_message_get_key(message, i), // corresponding key
+					NULL); //context
+			if (error != 0)
+			{
+				g_critical("\nJObject: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
+			}
+		}
+	}
+
+	wakeup_buf = malloc(sizeof(int));
+
+	error = fi_send(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
+	if (error != 0)
+	{
+		g_critical("\nJObject: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
+		goto end;
+	}
+	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
+	if (error != 0)
+	{
+		if (error == -FI_EAVAIL)
+		{
+			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
+			g_critical("\nJObject: Error on completion Queue after sending wakeup Message from loop\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
+			goto end;
+		}
+		else if (error == -FI_EAGAIN)
+		{
+			g_critical("\nJObject: No completion data on completion Queue after sending wakeup Message from loop.");
+			goto end;
+		}
+		else if (error == -FI_ECANCELED)
+		{
+			g_critical("\nJObject: wakeup Message data transfer in loop canceled through interrupt.\n");
+			goto end;
+		}
+		else if (error < 0)
+		{
+			g_critical("\nJObject: Error reading completion Queue after sending wakeup Message from loop.\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+	}
 
 	ret = TRUE;
 	end:
+	free(wakeup_buf);
 	return ret;
 }
 
