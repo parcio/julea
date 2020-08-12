@@ -419,7 +419,6 @@ jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_
 			// FIXME return value
 			j_backend_object_open(jd_object_backend, namespace, path, &object);
 
-			//TODO fix bug where message does not hold correct commtype
 			switch (j_message_get_comm_type(message))
 			{
 				case J_MSG:

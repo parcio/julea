@@ -287,6 +287,114 @@ j_distributed_object_delete_background_operation(gpointer data)
 	return NULL;
 }
 
+gboolean
+j_distributed_object_receive_data_chunks(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(endpoint != NULL, FALSE);
+	g_return_val_if_fail(it != NULL, FALSE);
+
+	switch (j_message_get_comm_type(message))
+	{
+		case J_MSG:
+			return j_distributed_object_receive_data_chunks_msg(message, endpoint, it, reply_operation_count);
+		case J_RDMA:
+			return j_distributed_object_receive_data_chunks_rdma(message, endpoint, it, reply_operation_count);
+		case J_UNDEFINED:
+		default:
+			g_critical("\nERROR on receiving data chunks on distributed jobject, no valid connection type requested\n");
+			return FALSE;
+	}
+}
+
+//TODO
+gboolean
+j_distributed_object_receive_data_chunks_msg(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
+{
+	gboolean ret;
+
+	struct fi_cq_msg_entry* completion_queue_data;
+	struct fi_cq_err_entry* completion_queue_err_entry;
+
+	ret = FALSE;
+	completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
+
+	for (guint i = 0; i < *reply_operation_count && j_list_iterator_next(it); i++)
+	{
+		JDistributedObjectReadBuffer* buffer = j_list_iterator_get(it);
+		gchar* read_data = buffer->data;
+		guint64* bytes_read = buffer->bytes_read;
+
+		guint64 nbytes;
+
+		nbytes = j_message_get_8(message);
+		j_helper_atomic_add(bytes_read, nbytes);
+
+		if (nbytes > 0)
+		{
+			ssize_t error;
+
+			error = 0;
+
+			error = fi_recv(endpoint->msg.ep, (void*)read_data, (size_t)nbytes, NULL, 0, NULL);
+			if (error != 0)
+			{
+				g_critical("\nError while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
+				goto end;
+			}
+			error = fi_cq_sread(endpoint->msg.cq_receive, completion_queue_data, 1, NULL, -1);
+			if (error != 0)
+			{
+				if (error == -FI_EAVAIL)
+				{
+					completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
+					error = fi_cq_readerr(endpoint->msg.cq_receive, completion_queue_err_entry, 0);
+					g_critical("\nError on completion Queue after reading for background write operations for distributed Objects\nDetails:\n%s", fi_cq_strerror(endpoint->msg.cq_receive, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
+					free(completion_queue_err_entry);
+					goto end;
+				}
+				else if (error == -FI_EAGAIN)
+				{
+					g_critical("\nNo completion data on completion Queue reading for background write operations for distributed Objects.\n");
+					goto end;
+				}
+				else if (error > 0)
+				{
+					//g_printf("\nReceiving background write operation for distributed Objects succeeded.\n");
+				}
+				else if (error < 0)
+				{
+					g_critical("\nError reading completion Queue after reading for background write operation for distributed Objects.\nDetails:\n%s", fi_strerror(error));
+					goto end;
+				}
+			}
+		}
+		g_slice_free(JDistributedObjectReadBuffer, buffer);
+	}
+
+	ret = TRUE;
+	end:
+	free(completion_queue_data);
+	return ret;
+}
+
+//TODO
+gboolean
+j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
+{
+	gboolean ret;
+
+	ret = FALSE;
+
+
+
+	ret = TRUE;
+	end:
+	return ret;
+}
+
 /**
  * Executes write operations in a background operation.
  *
@@ -332,66 +440,10 @@ j_distributed_object_read_background_operation(gpointer data)
 
 		reply_operation_count = j_message_get_count(reply);
 
-		for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
+		//TODO here
+		if(!j_distributed_object_receive_data_chunks(reply, (JEndpoint*) object_connection, it, &reply_operation_count))
 		{
-			JDistributedObjectReadBuffer* buffer = j_list_iterator_get(it);
-			gchar* read_data = buffer->data;
-			guint64* bytes_read = buffer->bytes_read;
-
-			guint64 nbytes;
-
-			nbytes = j_message_get_8(reply);
-			j_helper_atomic_add(bytes_read, nbytes);
-
-			if (nbytes > 0)
-			{
-				struct fi_cq_msg_entry* completion_queue_data;
-				struct fi_cq_err_entry* completion_queue_err_entry;
-				JEndpoint* jendpoint;
-				ssize_t error;
-
-				jendpoint = (JEndpoint*)object_connection;
-				error = 0;
-				completion_queue_data = malloc(sizeof(struct fi_cq_msg_entry));
-
-				//PERROR: this direct receive may not work
-				error = fi_recv(jendpoint->msg.ep, (void*)read_data, (size_t)nbytes, NULL, 0, NULL);
-				if (error != 0)
-				{
-					g_critical("\nError while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
-					goto end;
-				}
-				error = fi_cq_sread(jendpoint->msg.cq_receive, completion_queue_data, 1, NULL, -1);
-				if (error != 0)
-				{
-					if (error == -FI_EAVAIL)
-					{
-						completion_queue_err_entry = malloc(sizeof(struct fi_cq_err_entry));
-						error = fi_cq_readerr(jendpoint->msg.cq_receive, completion_queue_err_entry, 0);
-						g_critical("\nError on completion Queue after reading for background write operations for distributed Objects\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry->prov_errno, completion_queue_err_entry->err_data, NULL, 0));
-						free(completion_queue_err_entry);
-						goto end;
-					}
-					else if (error == -FI_EAGAIN)
-					{
-						g_critical("\nNo completion data on completion Queue reading for background write operations for distributed Objects.\n");
-						goto end;
-					}
-					else if (error > 0)
-					{
-						//g_printf("\nReceiving background write operation for distributed Objects succeeded.\n");
-					}
-					else if (error < 0)
-					{
-						g_critical("\nError reading completion Queue after reading for background write operation for distributed Objects.\nDetails:\n%s", fi_strerror(error));
-						goto end;
-					}
-				}
-			end:
-				free(completion_queue_data);
-			}
-
-			g_slice_free(JDistributedObjectReadBuffer, buffer);
+			g_critical("\nERROR while distributed jobject receiving data chunks\n");
 		}
 
 		operations_done += reply_operation_count;

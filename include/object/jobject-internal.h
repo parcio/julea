@@ -35,6 +35,16 @@ G_BEGIN_DECLS
 
 G_GNUC_INTERNAL JBackend* j_object_get_backend(void);
 
+// internal data chunk receive for jobject
+G_GNUC_INTERNAL gboolean j_object_receive_data_chunks(JMessage*, JEndpoint*, JListIterator*, guint32*);
+G_GNUC_INTERNAL gboolean j_object_receive_data_chunks_msg(JMessage*, JEndpoint*, JListIterator*, guint32*);
+G_GNUC_INTERNAL gboolean j_object_receive_data_chunks_rdma(JMessage*, JEndpoint*, JListIterator*, guint32*);
+
+// internal data chunk receive for jdistributed_object
+G_GNUC_INTERNAL gboolean j_distributed_object_receive_data_chunks(JMessage*, JEndpoint*, JListIterator*, guint32*);
+G_GNUC_INTERNAL gboolean j_distributed_object_receive_data_chunks_msg(JMessage*, JEndpoint*, JListIterator*, guint32*);
+G_GNUC_INTERNAL gboolean j_distributed_object_receive_data_chunks_rdma(JMessage*, JEndpoint*, JListIterator*, guint32*);
+
 G_END_DECLS
 
 #endif
