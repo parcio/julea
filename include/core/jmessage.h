@@ -30,7 +30,6 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <jendpoint.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 

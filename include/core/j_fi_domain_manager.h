@@ -47,8 +47,8 @@ void j_domain_manager_fini(JDomainManager*);
 gboolean j_domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, JRefCountedDomain**, JDomainManager*, const gchar*);
 void j_domain_unref(JRefCountedDomain*, JDomainManager*, const gchar*);
 
-struct fid_domain* j_get_domain (JRefCountedDomain*);
-struct fid_eq* j_get_domain_eq (JRefCountedDomain*);
+struct fid_domain* j_get_domain(JRefCountedDomain*);
+struct fid_eq* j_get_domain_eq(JRefCountedDomain*);
 
 G_GNUC_INTERNAL void domain_ref(JRefCountedDomain*);
 G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, JDomainManager*);
