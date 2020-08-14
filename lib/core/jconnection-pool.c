@@ -86,7 +86,7 @@ static JConnectionPool* j_connection_pool = NULL;
 //libfabric high level objects
 static struct fid_fabric* j_fabric;
 
-static DomainManager* domain_manager;
+static JDomainManager* domain_manager;
 
 void
 j_connection_pool_init(JConfiguration* configuration)
@@ -163,7 +163,7 @@ j_connection_pool_init(JConfiguration* configuration)
 
 	fi_freeinfo(info);
 
-	domain_manager = domain_manager_init();
+	domain_manager = j_domain_manager_init();
 
 end:;
 }
@@ -305,7 +305,7 @@ j_connection_pool_fini(void)
 	g_free(pool->kv_queues);
 	g_free(pool->db_queues);
 
-	domain_manager_fini(domain_manager);
+	j_domain_manager_fini(domain_manager);
 
 	g_slice_free(JConnectionPool, pool);
 
@@ -526,20 +526,20 @@ j_endpoint_init(JEndpoint* jendpoint)
 		goto end;
 	}
 
-	if (!domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager, "Client msg"))
+	if (!j_domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager, "Client msg"))
 	{
 		g_critical("\nCLIENT: msg-Domain request failed.\n");
 		goto end;
 	}
 
-	if (!domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager, "Client rdma"))
+	if (!j_domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager, "Client rdma"))
 	{
 		g_critical("\nCLIENT: rdma-Domain request failed.\n");
 		goto end;
 	}
 
 	//Allocate Endpoint and related ressources
-	error = fi_endpoint(jendpoint->msg.rc_domain->domain, jendpoint->msg.info, &jendpoint->msg.ep, NULL);
+	error = fi_endpoint(j_get_domain(jendpoint->msg.rc_domain), jendpoint->msg.info, &jendpoint->msg.ep, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem with init of msg jendpoint. \nDetails:\n%s", fi_strerror(abs(error)));
@@ -551,20 +551,20 @@ j_endpoint_init(JEndpoint* jendpoint)
 		g_critical("\nCLIENT: Problem opening msg event queue.\nDetails:\n%s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open(jendpoint->msg.rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->msg.cq_transmit, NULL);
+	error = fi_cq_open(j_get_domain(jendpoint->msg.rc_domain), j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->msg.cq_transmit, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem opening msg transmit completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open(jendpoint->msg.rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->msg.cq_receive, NULL);
+	error = fi_cq_open(j_get_domain(jendpoint->msg.rc_domain), j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->msg.cq_receive, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem opening msg receive completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
 		goto end;
 	}
 
-	error = fi_endpoint(jendpoint->rdma.rc_domain->domain, jendpoint->rdma.info, &jendpoint->rdma.ep, NULL);
+	error = fi_endpoint(j_get_domain(jendpoint->rdma.rc_domain), jendpoint->rdma.info, &jendpoint->rdma.ep, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem with init of rdma jendpoint. \nDetails:\n%s", fi_strerror(abs(error)));
@@ -576,13 +576,13 @@ j_endpoint_init(JEndpoint* jendpoint)
 		g_critical("\nCLIENT: Problem opening rdma event queue.\nDetails:\n%s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open(jendpoint->rdma.rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->rdma.cq_transmit, NULL);
+	error = fi_cq_open(j_get_domain(jendpoint->rdma.rc_domain), j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->rdma.cq_transmit, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem opening rdma transmit completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open(jendpoint->rdma.rc_domain->domain, j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->rdma.cq_receive, NULL);
+	error = fi_cq_open(j_get_domain(jendpoint->rdma.rc_domain), j_configuration_get_fi_cq_attr(j_connection_pool->configuration), &jendpoint->rdma.cq_receive, NULL);
 	if (error != 0)
 	{
 		g_critical("\nCLIENT: Problem opening rdma receive completion queue.\nDetails:\n%s", fi_strerror(abs(error)));
@@ -723,7 +723,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 
 	fi_freeinfo(jendpoint->msg.info);
 
-	domain_unref(jendpoint->msg.rc_domain, domain_manager, "msg client");
+	j_domain_unref(jendpoint->msg.rc_domain, domain_manager, "msg client");
 
 	error = fi_close(&jendpoint->rdma.ep->fid);
 	if (error != 0)
@@ -755,7 +755,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 
 	fi_freeinfo(jendpoint->rdma.info);
 
-	domain_unref(jendpoint->rdma.rc_domain, domain_manager, "rdma client");
+	j_domain_unref(jendpoint->rdma.rc_domain, domain_manager, "rdma client");
 
 	//TODO close jendpoint->rmda rdma ressources
 

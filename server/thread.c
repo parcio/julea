@@ -41,7 +41,7 @@ static volatile gint* thread_count;
 
 static JConfiguration* jd_configuration;
 
-static DomainManager* domain_manager;
+static JDomainManager* domain_manager;
 
 void
 thread_unblock(struct fid_cq* completion_queue)
@@ -95,13 +95,13 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	//bulding endpoint
 	//msg
-	if (!domain_request(jfabric->msg_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager, "Server Thread msg"))
+	if (!j_domain_request(jfabric->msg_fabric, (*jendpoint)->msg.info, jd_configuration, &(*jendpoint)->msg.rc_domain, domain_manager, "Server Thread msg"))
 	{
 		g_critical("\nSERVER: Error occurred while requesting msg domain on server.\n");
 		goto end;
 	}
 
-	error = fi_endpoint((*jendpoint)->msg.rc_domain->domain, (*jendpoint)->msg.info, &(*jendpoint)->msg.ep, NULL);
+	error = fi_endpoint(j_get_domain((*jendpoint)->msg.rc_domain), (*jendpoint)->msg.info, &(*jendpoint)->msg.ep, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating active msg Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
@@ -121,13 +121,13 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 		g_critical("\nSERVER: Error occurred while binding Event queue to msg active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open((*jendpoint)->msg.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->msg.cq_receive, NULL);
+	error = fi_cq_open(j_get_domain((*jendpoint)->msg.rc_domain), &completion_queue_attr, &(*jendpoint)->msg.cq_receive, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating Completion receive queue for msg active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open((*jendpoint)->msg.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->msg.cq_transmit, NULL);
+	error = fi_cq_open(j_get_domain((*jendpoint)->msg.rc_domain), &completion_queue_attr, &(*jendpoint)->msg.cq_transmit, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for msg active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
@@ -161,13 +161,13 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	}
 
 	//rdma
-	if (!domain_request(jfabric->rdma_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager, "Server Thread rdma"))
+	if (!j_domain_request(jfabric->rdma_fabric, (*jendpoint)->rdma.info, jd_configuration, &(*jendpoint)->rdma.rc_domain, domain_manager, "Server Thread rdma"))
 	{
 		g_critical("\nSERVER: Error occurred while requesting rdma domain on server.\n");
 		goto end;
 	}
 
-	error = fi_endpoint((*jendpoint)->rdma.rc_domain->domain, (*jendpoint)->rdma.info, &(*jendpoint)->rdma.ep, NULL);
+	error = fi_endpoint(j_get_domain((*jendpoint)->rdma.rc_domain), (*jendpoint)->rdma.info, &(*jendpoint)->rdma.ep, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
@@ -187,13 +187,13 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 		g_critical("\nSERVER: Error occurred while binding Event queue to rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open((*jendpoint)->rdma.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->rdma.cq_receive, NULL);
+	error = fi_cq_open(j_get_domain((*jendpoint)->rdma.rc_domain), &completion_queue_attr, &(*jendpoint)->rdma.cq_receive, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating Completion receive queue for rdma active Endpoint.\nDetails:\n %s", fi_strerror(abs(error)));
 		goto end;
 	}
-	error = fi_cq_open((*jendpoint)->rdma.rc_domain->domain, &completion_queue_attr, &(*jendpoint)->rdma.cq_transmit, NULL);
+	error = fi_cq_open(j_get_domain((*jendpoint)->rdma.rc_domain), &completion_queue_attr, &(*jendpoint)->rdma.cq_transmit, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error occurred while creating Completion transmit queue for rdma active Endpoint.\n Details:\n %s", fi_strerror(abs(error)));
@@ -399,7 +399,7 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 		g_critical("\nSERVER: Error thread msg endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
-	domain_unref(jendpoint->msg.rc_domain, domain_manager, "server thread msg");
+	j_domain_unref(jendpoint->msg.rc_domain, domain_manager, "server thread msg");
 	fi_freeinfo(jendpoint->msg.info);
 
 	// close rdma part
@@ -441,7 +441,7 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 		g_critical("\nSERVER: Error thread rdma endpoint event queue.\n Details:\n %s", fi_strerror(abs(error)));
 		error = 0;
 	}
-	domain_unref(jendpoint->rdma.rc_domain, domain_manager, "server thread rdma");
+	j_domain_unref(jendpoint->rdma.rc_domain, domain_manager, "server thread rdma");
 	fi_freeinfo(jendpoint->rdma.info);
 
 	free(jendpoint);

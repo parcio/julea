@@ -50,7 +50,7 @@ struct ThreadData
 		struct fi_eq_cm_entry* rdma_event;
 		JFabric* fabric;
 		JConfiguration* j_configuration;
-		DomainManager* domain_manager;
+		JDomainManager* domain_manager;
 		gchar* uuid;
 	} connection;
 

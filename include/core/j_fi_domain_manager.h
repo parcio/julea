@@ -29,43 +29,33 @@
 #include <rdma/fi_errno.h> //translation error numbers
 
 // structs for domain management
-struct DomainManager
-{
-	GPtrArray* cat_list;
-	GMutex dm_mutex;
-};
-typedef struct DomainManager DomainManager;
+struct JDomainManager;
+typedef struct JDomainManager JDomainManager;
 
-struct DomainCategory
-{
-	struct fi_info* info;
-	GSList* domain_list;
-	guint ref_count;
-};
+struct JRefCountedDomain;
+typedef struct JRefCountedDomain JRefCountedDomain;
+
+struct DomainCategory;
 typedef struct DomainCategory DomainCategory;
-
-struct RefCountedDomain
-{
-	struct fid_domain* domain;
-	struct fid_eq* domain_eq;
-	DomainCategory* category;
-	guint ref_count;
-};
-typedef struct RefCountedDomain RefCountedDomain;
 
 /**
  * domain management functions
  */
-G_GNUC_INTERNAL void domain_ref(RefCountedDomain*);
-void domain_unref(RefCountedDomain*, DomainManager*, const gchar*);
-DomainManager* domain_manager_init(void);
-void domain_manager_fini(DomainManager*);
-gboolean domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, RefCountedDomain**, DomainManager*, const gchar*);
-G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, DomainManager*);
+JDomainManager* j_domain_manager_init(void);
+void j_domain_manager_fini(JDomainManager*);
+
+gboolean j_domain_request(struct fid_fabric*, struct fi_info*, JConfiguration*, JRefCountedDomain**, JDomainManager*, const gchar*);
+void j_domain_unref(JRefCountedDomain*, JDomainManager*, const gchar*);
+
+struct fid_domain* j_get_domain (JRefCountedDomain*);
+struct fid_eq* j_get_domain_eq (JRefCountedDomain*);
+
+G_GNUC_INTERNAL void domain_ref(JRefCountedDomain*);
+G_GNUC_INTERNAL gboolean domain_category_search(struct fi_info*, DomainCategory**, JDomainManager*);
 G_GNUC_INTERNAL void domain_category_ref(DomainCategory*);
-G_GNUC_INTERNAL void domain_category_unref(DomainCategory*, DomainManager*);
-G_GNUC_INTERNAL gboolean domain_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, RefCountedDomain**, const gchar*);
-G_GNUC_INTERNAL gboolean domain_category_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, RefCountedDomain**, DomainManager*, const gchar*);
+G_GNUC_INTERNAL void domain_category_unref(DomainCategory*, JDomainManager*);
+G_GNUC_INTERNAL gboolean domain_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory*, JRefCountedDomain**, const gchar*);
+G_GNUC_INTERNAL gboolean domain_category_new_internal(struct fid_fabric*, struct fi_info*, JConfiguration*, DomainCategory**, JRefCountedDomain**, JDomainManager*, const gchar*);
 G_GNUC_INTERNAL gboolean compare_domain_infos(struct fi_info*, struct fi_info*);
 
 #endif

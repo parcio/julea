@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <jendpoint.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 
@@ -78,7 +79,7 @@ struct JEndpoint
 		struct fid_eq* eq; // eq = event queue
 		struct fid_cq* cq_transmit; // cq = completion queue
 		struct fid_cq* cq_receive;
-		RefCountedDomain* rc_domain;
+		JRefCountedDomain* rc_domain;
 	} msg;
 
 	// rdma structures
@@ -90,7 +91,7 @@ struct JEndpoint
 		struct fid_eq* eq;
 		struct fid_cq* cq_transmit;
 		struct fid_cq* cq_receive;
-		RefCountedDomain* rc_domain;
+		JRefCountedDomain* rc_domain;
 	} rdma;
 };
 typedef struct JEndpoint JEndpoint;

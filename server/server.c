@@ -457,7 +457,7 @@ main(int argc, char** argv)
 	struct fid_eq* passive_ep_event_queue;
 	PepList* pep_list;
 
-	DomainManager* domain_manager;
+	JDomainManager* domain_manager;
 
 	struct sigaction* sig_action;
 
@@ -593,7 +593,7 @@ main(int argc, char** argv)
 	thread_cq_array = g_ptr_array_new();
 	g_mutex_init(&thread_cq_array_mutex);
 
-	domain_manager = domain_manager_init();
+	domain_manager = j_domain_manager_init();
 
 	//thread runs new active endpoint until shutdown event, then free elements //g_atomic_int_dec_and_test ()
 	if (allow_main_loop)
@@ -875,7 +875,7 @@ main(int argc, char** argv)
 	fi_freeinfo(jfabric->rdma_info);
 	free(jfabric);
 
-	domain_manager_fini(domain_manager);
+	j_domain_manager_fini(domain_manager);
 	g_ptr_array_unref(thread_cq_array);
 	g_mutex_clear(&thread_cq_array_mutex);
 

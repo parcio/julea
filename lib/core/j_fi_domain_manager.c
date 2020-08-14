@@ -27,25 +27,49 @@
 
 #include <stdio_ext.h>
 
+
+struct JDomainManager
+{
+	GPtrArray* cat_list;
+	GMutex dm_mutex;
+};
+
+struct JRefCountedDomain
+{
+	struct fid_domain* domain;
+	struct fid_eq* domain_eq;
+	DomainCategory* category;
+	guint ref_count;
+};
+
+struct DomainCategory
+{
+	struct fi_info* info;
+	GSList* domain_list;
+	guint ref_count;
+};
+
+
+
 /**
 * inits the outer level of the domain_manager
 */
-DomainManager*
-domain_manager_init(void)
+JDomainManager*
+j_domain_manager_init(void)
 {
-	DomainManager* domain_manager;
+	JDomainManager* domain_manager;
 
-	domain_manager = malloc(sizeof(DomainManager));
+	domain_manager = malloc(sizeof(JDomainManager));
 	g_mutex_init(&domain_manager->dm_mutex);
 	domain_manager->cat_list = g_ptr_array_new();
 	return domain_manager;
 }
 
 /**
-* shuts the outer level of the domain_manager down
+* shuts the outer level of the domain_manager down, only call when each domain is deleted via j_domain_unref
 */
 void
-domain_manager_fini(DomainManager* domain_manager)
+j_domain_manager_fini(JDomainManager* domain_manager)
 {
 	g_ptr_array_unref(domain_manager->cat_list);
 	g_mutex_clear(&domain_manager->dm_mutex);
@@ -56,14 +80,14 @@ domain_manager_fini(DomainManager* domain_manager)
 * Request a domain with given info configuration.
 * If no domain with that configuration present, a new one will be created and associated with the fabric given.
 * Returns TRUE if success and a referenced counted domain is in the rc_domain argument.
-* domain_manager_init needs to be called first.
+* j_domain_manager_init needs to be called first.
 */
 gboolean
-domain_request(struct fid_fabric* fabric,
+j_domain_request(struct fid_fabric* fabric,
 	       struct fi_info* info,
 	       JConfiguration* configuration,
-	       RefCountedDomain** rc_domain,
-	       DomainManager* domain_manager,
+	       JRefCountedDomain** rc_domain,
+	       JDomainManager* domain_manager,
 	       const gchar* location)
 {
 	gboolean ret;
@@ -78,10 +102,10 @@ domain_request(struct fid_fabric* fabric,
 		current = category->domain_list;
 		while (current != NULL)
 		{
-			if (((RefCountedDomain*)current->data)->ref_count < category->info->domain_attr->ep_cnt
-			    || ((RefCountedDomain*)current->data)->ref_count * 2 < category->info->domain_attr->cq_cnt) // 2 cqs per endpoint
+			if (((JRefCountedDomain*)current->data)->ref_count < category->info->domain_attr->ep_cnt
+			    || ((JRefCountedDomain*)current->data)->ref_count * 2 < category->info->domain_attr->cq_cnt) // 2 cqs per endpoint
 			{
-				(*rc_domain) = (RefCountedDomain*)current->data;
+				(*rc_domain) = (JRefCountedDomain*)current->data;
 				domain_ref((*rc_domain));
 				break;
 			}
@@ -118,12 +142,73 @@ end:
 }
 
 /**
+* Decreases ref_count of domain, frees it if reached 0.
+* deletes category from manager if no entries in category left.
+*/
+void
+j_domain_unref(JRefCountedDomain* rc_domain, JDomainManager* domain_manager, const gchar* location)
+{
+	g_return_if_fail(rc_domain != NULL);
+	/*
+	g_printf("\nrc_domain->ref_count %d\n", rc_domain->ref_count);
+	g_printf("domain_manager->cat_list->len: %d\n", domain_manager->cat_list->len);
+	g_printf("rc_domain->category->domain_list size: %d\n", g_slist_length(rc_domain->category->domain_list));
+	*/
+	if (g_atomic_int_dec_and_test(&rc_domain->ref_count) == TRUE)
+	{
+		int error;
+
+		error = 0;
+
+		error = fi_close(&rc_domain->domain_eq->fid);
+		if (error != 0)
+		{
+			g_critical("\nProblem closing domain event queue of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
+			error = 0;
+		}
+		error = fi_close(&rc_domain->domain->fid);
+		if (error != 0)
+		{
+			g_critical("\nProblem closing domain of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
+		}
+		domain_category_unref(rc_domain->category, domain_manager);
+		free(rc_domain);
+	}
+}
+
+/**
+* returns the fid_domain hold by respective JRefCountedDomain
+*/
+struct fid_domain* j_get_domain (JRefCountedDomain* rc_domain)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(rc_domain != NULL, NULL);
+	g_return_val_if_fail(rc_domain->domain != NULL, NULL);
+
+	return rc_domain->domain;
+}
+
+/**
+* returns the event queue associated with respective JRefCountedDomain
+*/
+struct fid_eq* j_get_domain_eq (JRefCountedDomain* rc_domain)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(rc_domain != NULL, NULL);
+	g_return_val_if_fail(rc_domain->domain_eq != NULL, NULL);
+
+	return rc_domain->domain_eq;
+}
+
+/**
 * Searches manager for fitting category.
 * if found, return said category + true
 * if not found return NULL + false
 */
 gboolean
-domain_category_search(struct fi_info* info, DomainCategory** rc_cat, DomainManager* domain_manager)
+domain_category_search(struct fi_info* info, DomainCategory** rc_cat, JDomainManager* domain_manager)
 {
 	gboolean ret;
 	DomainCategory* tmp_cat;
@@ -163,7 +248,7 @@ domain_category_ref(DomainCategory* category)
 * Decreases ref_count of a DomainCategory. If ref_count reaches 0, structure is freed and ref_count of domain_manager is reduced
 */
 void
-domain_category_unref(DomainCategory* category, DomainManager* domain_manager)
+domain_category_unref(DomainCategory* category, JDomainManager* domain_manager)
 {
 	g_return_if_fail(category != NULL);
 
@@ -181,47 +266,13 @@ domain_category_unref(DomainCategory* category, DomainManager* domain_manager)
 * Increases ref_count of domain
 */
 void
-domain_ref(RefCountedDomain* rc_domain)
+domain_ref(JRefCountedDomain* rc_domain)
 {
 	g_return_if_fail(rc_domain != NULL);
 
 	g_atomic_int_inc(&rc_domain->ref_count);
 }
 
-/**
-* Decreases ref_count of domain, frees it if reached 0.
-* deletes category from manager if no entries in category left.
-*/
-void
-domain_unref(RefCountedDomain* rc_domain, DomainManager* domain_manager, const gchar* location)
-{
-	g_return_if_fail(rc_domain != NULL);
-	/*
-  g_printf("\nrc_domain->ref_count %d\n", rc_domain->ref_count);
-  g_printf("domain_manager->cat_list->len: %d\n", domain_manager->cat_list->len);
-  g_printf("rc_domain->category->domain_list size: %d\n", g_slist_length(rc_domain->category->domain_list));
-  */
-	if (g_atomic_int_dec_and_test(&rc_domain->ref_count) == TRUE)
-	{
-		int error;
-
-		error = 0;
-
-		error = fi_close(&rc_domain->domain_eq->fid);
-		if (error != 0)
-		{
-			g_critical("\nProblem closing domain event queue of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
-			error = 0;
-		}
-		error = fi_close(&rc_domain->domain->fid);
-		if (error != 0)
-		{
-			g_critical("\nProblem closing domain of active endpoint on %s.\n Details:\n %s", fi_strerror(abs(error)), location);
-		}
-		domain_category_unref(rc_domain->category, domain_manager);
-		free(rc_domain);
-	}
-}
 
 /**
 * Builds a new category with a ref_count of 1 and first domain entry on list and adds it to domain_manager
@@ -231,8 +282,8 @@ domain_category_new_internal(struct fid_fabric* fabric,
 			     struct fi_info* info,
 			     JConfiguration* configuration,
 			     DomainCategory** category,
-			     RefCountedDomain** rc_domain,
-			     DomainManager* domain_manager,
+			     JRefCountedDomain** rc_domain,
+			     JDomainManager* domain_manager,
 			     const gchar* location)
 {
 	gboolean ret;
@@ -266,7 +317,7 @@ domain_new_internal(struct fid_fabric* fabric,
 		    struct fi_info* info,
 		    JConfiguration* configuration,
 		    DomainCategory* category,
-		    RefCountedDomain** rc_domain,
+		    JRefCountedDomain** rc_domain,
 		    const gchar* location)
 {
 	gboolean ret;
@@ -276,7 +327,7 @@ domain_new_internal(struct fid_fabric* fabric,
 	error = 0;
 	ret = FALSE;
 	event_queue_attr = *j_configuration_get_fi_eq_attr(configuration);
-	*rc_domain = malloc(sizeof(RefCountedDomain));
+	*rc_domain = malloc(sizeof(JRefCountedDomain));
 
 	if (info->domain_attr->ep_cnt < 6)
 	{
