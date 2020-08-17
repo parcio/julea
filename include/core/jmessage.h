@@ -67,41 +67,6 @@ struct JMessage;
 
 typedef struct JMessage JMessage;
 
-struct JEndpoint
-{
-	// msg structures
-	struct
-	{
-		gboolean is_connected;
-		struct fid_ep* ep; // ep = endpoint
-		struct fi_info* info; // info struct, contains close to all information for a certain libfabric config
-		struct fid_eq* eq; // eq = event queue
-		struct fid_cq* cq_transmit; // cq = completion queue
-		struct fid_cq* cq_receive;
-		JRefCountedDomain* rc_domain;
-	} msg;
-
-	// rdma structures
-	struct
-	{
-		gboolean is_connected;
-		struct fid_ep* ep;
-		struct fi_info* info;
-		struct fid_eq* eq;
-		struct fid_cq* cq_transmit;
-		struct fid_cq* cq_receive;
-		JRefCountedDomain* rc_domain;
-	} rdma;
-};
-typedef struct JEndpoint JEndpoint;
-
-struct JConData
-{
-	gchar uuid[37];
-	JConnectionType type;
-};
-typedef struct JConData JConData;
-
 G_END_DECLS
 
 #include <core/jsemantics.h>

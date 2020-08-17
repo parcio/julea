@@ -198,83 +198,6 @@ sig_handler(int signal)
 	}
 }
 
-static gboolean
-j_libfabric_fabric_init(void)
-{
-	gboolean ret;
-	int error;
-
-	ret = FALSE;
-	error = 0;
-
-	jfabric = malloc(sizeof(struct JFabric));
-
-	//get fabric fi_info
-	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-			   NULL,
-			   j_configuration_get_fi_service(jd_configuration),
-			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
-			   j_configuration_fi_get_hints(jd_configuration, J_MSG),
-			   &jfabric->msg_info);
-	if (error != 0)
-	{
-		g_critical("\nSERVER: Error while initiating fi_info for msg fabric & eq.\n Details:\n %s", fi_strerror(abs(error)));
-		goto end;
-	}
-	if (jfabric->msg_info == NULL)
-	{
-		g_critical("\nSERVER: Allocating msg fi_info struct did not work");
-		goto end;
-	}
-
-	error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-			   NULL,
-			   j_configuration_get_fi_service(jd_configuration),
-			   j_configuration_get_fi_flags(jd_configuration, J_SERVER),
-			   j_configuration_fi_get_hints(jd_configuration, J_MSG),
-			   &jfabric->rdma_info);
-	if (error != 0)
-	{
-		g_critical("\nSERVER: Error while initiating fi_info for rdma fabric.\n Details:\n %s", fi_strerror(abs(error)));
-		goto end;
-	}
-	if (jfabric->rdma_info == NULL)
-	{
-		g_critical("\nSERVER: Allocating rdma fi_info struct did not work");
-		goto end;
-	}
-
-	//Init fabric
-	error = fi_fabric(jfabric->msg_info->fabric_attr, &jfabric->msg_fabric, NULL);
-	if (error != FI_SUCCESS)
-	{
-		g_critical("\nSERVER: Error during initializing msg fabric\n Details:\n %s", fi_strerror(abs(error)));
-		goto end;
-	}
-	if (jfabric->msg_fabric == NULL)
-	{
-		g_critical("\nSERVER: Allocating msg fabric did not work");
-		goto end;
-	}
-
-	error = fi_fabric(jfabric->rdma_info->fabric_attr, &jfabric->rdma_fabric, NULL);
-	if (error != FI_SUCCESS)
-	{
-		g_critical("\nSERVER: Error during initializing rdma fabric\n Details:\n %s", fi_strerror(abs(error)));
-		goto end;
-	}
-	if (jfabric->msg_fabric == NULL)
-	{
-		g_critical("\nSERVER: Allocating rdma fabric did not work");
-		goto end;
-	}
-
-	ret = TRUE;
-
-end:
-	return ret;
-}
-
 /*
 /gets fi_info structure for internal information about available fabric ressources
 /inits fabric, passive endpoint and event queue for the endpoint.
@@ -310,7 +233,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 		goto end_hostname;
 	}
 
-	if (!j_libfabric_fabric_init())
+	if (!j_fabric_init(&jfabric, J_SERVER, jd_configuration, "SERVER"))
 	{
 		goto end_hints;
 	}
@@ -350,7 +273,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 		else if (error == 0)
 		{
 			//build passive Endpoints
-			error = fi_passive_ep(jfabric->msg_fabric, tmp_info, &passive_ep, NULL);
+			error = fi_passive_ep(j_get_fabric(jfabric, J_MSG), tmp_info, &passive_ep, NULL);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
@@ -853,27 +776,7 @@ main(int argc, char** argv)
 	}
 
 	// close fabric
-	//printf("\nSERVER: Close fabric\n"); //debug
-	//fflush(stdout);
-	fi_error = fi_close(&jfabric->msg_fabric->fid);
-	if (fi_error != 0)
-	{
-		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(abs(fi_error)));
-		fi_error = 0;
-	}
-	fi_error = fi_close(&jfabric->rdma_fabric->fid);
-	if (fi_error != 0)
-	{
-		g_critical("\nSERVER: Error closing fi_fabric.\n Details:\n %s", fi_strerror(abs(fi_error)));
-		fi_error = 0;
-	}
-
-	// close main free info
-	//printf("\nSERVER: Close info\n"); //debug
-	//fflush(stdout);
-	fi_freeinfo(jfabric->msg_info);
-	fi_freeinfo(jfabric->rdma_info);
-	free(jfabric);
+	j_fabric_fini(jfabric, "SERVER");
 
 	j_domain_manager_fini(domain_manager);
 	g_ptr_array_unref(thread_cq_array);

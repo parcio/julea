@@ -49,9 +49,6 @@ handle_chunks_msg(JMessage* message,
 		guint64 bytes_written = 0;
 		ssize_t error = 0;
 
-		struct fi_cq_entry completion_queue_data;
-		struct fi_cq_err_entry completion_queue_err_entry;
-
 		length = j_message_get_8(message);
 		offset = j_message_get_8(message);
 
@@ -69,35 +66,14 @@ handle_chunks_msg(JMessage* message,
 		buf = j_memory_chunk_get(memory_chunk, length);
 		g_assert(buf != NULL);
 
-		error = fi_recv(jendpoint->msg.ep, (void*)buf, (size_t)length, NULL, 0, NULL);
+		error = fi_recv(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)buf, (size_t)length, NULL, 0, NULL);
 		if (error != 0)
 		{
-			g_critical("\nSERVER: Error while receiving data Junks\nDetails:\n%s\n", fi_strerror(labs(error)));
+			g_critical("\nSERVER: Error while receiving data Chunks via msg\nDetails:\n%s\n", fi_strerror(labs(error)));
 		}
-		error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
-		if (error != 0)
+		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "SERVER", "msg chunk receive"))
 		{
-			if (error == -FI_EAVAIL)
-			{
-				error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
-				g_critical("\nSERVER: Error on completion Queue after reading for data Junks on Server\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
-			}
-			else if (error == -FI_EAGAIN)
-			{
-				g_critical("\nSERVER: No completion data on completion Queue reading for data junks in loop.c.\n");
-			}
-			else if (error == -FI_ECANCELED)
-			{
-				g_printf("\nSERVER: Data Transfer canceled while receiving data junks in loop.c. Transfer not completed\n");
-			}
-			else if (error > 0)
-			{
-				//g_printf("\nSERVER: Receiving Data Junks directly in loop.c succeeded.\n");
-			}
-			else if (error < 0)
-			{
-				g_critical("\nSERVER: Error reading completion Queue after reading for data junks in loop.c.\nDetails:\n%s", fi_strerror(labs(error)));
-			}
+			g_critical("\nSERVER: Error while reading completion queue for receiving data chunks via msg\n");
 		}
 
 		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
@@ -127,9 +103,6 @@ handle_chunks_rdma(JMessage* message,
 {
 	int* wakeup_buf;
 
-	struct fi_cq_entry completion_queue_data;
-	struct fi_cq_err_entry completion_queue_err_entry;
-
 	ssize_t error = 0;
 
 	for (guint i = 0; i < operation_count; i++)
@@ -156,7 +129,7 @@ handle_chunks_rdma(JMessage* message,
 
 		printf("\nSERVER:             found key: %lu\n", j_message_get_key(message, i)); //debug
 
-		error = fi_read(jendpoint->rdma.ep,
+		error = fi_read(j_endpoint_get_endpoint(jendpoint, J_RDMA),
 				(void*)buf, //target buffer
 				(size_t)length, //buffer length
 				NULL, // file descriptor
@@ -185,33 +158,15 @@ handle_chunks_rdma(JMessage* message,
 
 	wakeup_buf = malloc(sizeof(int));
 
-	error = fi_send(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
+	error = fi_send(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
 	}
-	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
-	if (error != 0)
+	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "SERVER", "wakup Message after rdma chunk read"))
 	{
-		if (error == -FI_EAVAIL)
-		{
-			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
-			g_critical("\nSERVER: Error on completion Queue after sending wakeup Message from loop\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
-		}
-		else if (error == -FI_EAGAIN)
-		{
-			g_critical("\nSERVER: No completion data on completion Queue after sending wakeup Message from loop.");
-		}
-		else if (error == -FI_ECANCELED)
-		{
-			g_printf("\nSERVER: wakeup Message data transfer in loop canceled through interrupt.\n");
-		}
-		else if (error < 0)
-		{
-			g_critical("\nSERVER: Error reading completion Queue after sending wakeup Message from loop.\nDetails:\n%s", fi_strerror(labs(error)));
-		}
+		g_critical("\nSERVER: failed to read completion queue after sending wakup message to signal completion of rdma chunk read\n");
 	}
-
 	free(wakeup_buf);
 }
 

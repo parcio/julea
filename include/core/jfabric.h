@@ -31,12 +31,10 @@
 struct JFabric;
 typedef struct JFabric JFabric;
 
-
 gboolean j_fabric_init(JFabric**, JRequestType, JConfiguration*, const gchar*);
 gboolean j_fabric_fini(JFabric*, const gchar*);
 
 struct fid_fabric* j_get_fabric(JFabric*, JConnectionType);
 struct fi_info* j_get_info(JFabric*, JConnectionType);
-
 
 #endif

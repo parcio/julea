@@ -424,9 +424,6 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListI
 	gboolean ret;
 	ssize_t error;
 
-	struct fi_cq_msg_entry completion_queue_data;
-	struct fi_cq_err_entry completion_queue_err_entry;
-
 	error = 0;
 	ret = FALSE;
 
@@ -443,35 +440,15 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListI
 
 		if (nbytes > 0)
 		{
-			error = fi_recv(jendpoint->msg.ep, (void*)data, (size_t)nbytes, NULL, 0, NULL);
+			error = fi_recv(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)data, (size_t)nbytes, NULL, 0, NULL);
 			if (error != 0)
 			{
-				g_critical("\nError while receiving background write operation for JObjects\nDetails:\n%s\n", fi_strerror((int)error));
+				g_critical("\nCLIENT: Error while receiving background write operation for JObjects\nDetails:\n%s\n", fi_strerror((int)error));
 				goto end;
 			}
-			error = fi_cq_sread(jendpoint->msg.cq_receive, &completion_queue_data, 1, NULL, -1);
-			if (error != 0)
+			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "CLIENT", "jobject"))
 			{
-				if (error == -FI_EAVAIL)
-				{
-					error = fi_cq_readerr(jendpoint->msg.cq_receive, &completion_queue_err_entry, 0);
-					g_critical("\nError on completion Queue after reading for background write operations for JObjects\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_receive, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
-					goto end;
-				}
-				else if (error == -FI_EAGAIN)
-				{
-					g_critical("\nNo completion data on completion Queue reading for background write operations for JObjects.\n");
-					goto end;
-				}
-				else if (error > 0)
-				{
-					//g_printf("\nReceiving background write operation for distributed Objects succeeded.\n");
-				}
-				else if (error < 0)
-				{
-					g_critical("\nError reading completion Queue after reading for background write operation for JObjects.\nDetails:\n%s", fi_strerror(error));
-					goto end;
-				}
+				goto end;
 			}
 		}
 	}
@@ -489,9 +466,6 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 	ssize_t error;
 
 	int* wakeup_buf;
-
-	struct fi_cq_msg_entry completion_queue_data;
-	struct fi_cq_err_entry completion_queue_err_entry;
 
 	ret = FALSE;
 	error = 0;
@@ -511,7 +485,7 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 		{
 			printf("\nJObject:            found key: %lu\n", j_message_get_key(message, i)); //debug
 
-			error = fi_read(jendpoint->rdma.ep,
+			error = fi_read(j_endpoint_get_endpoint(jendpoint, J_RDMA),
 					(void*)data, //target buffer
 					(size_t)nbytes, //buffer length
 					NULL, // file descriptor
@@ -528,36 +502,15 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 
 	wakeup_buf = malloc(sizeof(int));
 
-	error = fi_send(jendpoint->msg.ep, (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
+	error = fi_send(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)wakeup_buf, sizeof(int), NULL, 0, NULL);
 	if (error != 0)
 	{
 		g_critical("\nJObject: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	error = fi_cq_sread(jendpoint->msg.cq_transmit, &completion_queue_data, 1, NULL, -1);
-	if (error != 0)
+	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jobject"))
 	{
-		if (error == -FI_EAVAIL)
-		{
-			error = fi_cq_readerr(jendpoint->msg.cq_transmit, &completion_queue_err_entry, 0);
-			g_critical("\nJObject: Error on completion Queue after sending wakeup Message from loop\nDetails:\n%s", fi_cq_strerror(jendpoint->msg.cq_transmit, completion_queue_err_entry.prov_errno, completion_queue_err_entry.err_data, NULL, 0));
-			goto end;
-		}
-		else if (error == -FI_EAGAIN)
-		{
-			g_critical("\nJObject: No completion data on completion Queue after sending wakeup Message from loop.");
-			goto end;
-		}
-		else if (error == -FI_ECANCELED)
-		{
-			g_critical("\nJObject: wakeup Message data transfer in loop canceled through interrupt.\n");
-			goto end;
-		}
-		else if (error < 0)
-		{
-			g_critical("\nJObject: Error reading completion Queue after sending wakeup Message from loop.\nDetails:\n%s", fi_strerror(labs(error)));
-			goto end;
-		}
+		goto end;
 	}
 
 	ret = TRUE;
