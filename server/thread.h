@@ -31,8 +31,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <rdma/fi_domain.h>
-
 struct JFabric
 {
 	struct fid_fabric* msg_fabric;

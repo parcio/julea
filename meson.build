@@ -324,7 +324,9 @@ julea_srcs = files([
 	'lib/core/jsemantics.c',
 	'lib/core/jstatistics.c',
 	'lib/core/jtrace.c',
-	'lib/core/j_fi_domain_manager.c',
+	'lib/core/jdomain_manager.c',
+	'lib/core/jfabric.c',
+	'lib/core/jendpoint.c',
 ])
 
 julea_lib = shared_library('julea', julea_srcs,
@@ -666,6 +668,9 @@ julea_client_hdrs = {
 		'include/core/jsemantics.h',
 		'include/core/jstatistics.h',
 		'include/core/jtrace.h',
+		'include/core/jdomain_manager.h',
+		'include/core/jfabric.h',
+		'include/core/jendpoint.h',
 	]),
 	'db': files([
 		'include/db/jdb-entry.h',

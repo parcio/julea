@@ -38,15 +38,8 @@
 #include <jmessage.h>
 #include <jtrace.h>
 
-//libfabric interfaces for used Objects
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h> //includes cqs and
-#include <rdma/fi_cm.h> //connection management
-#include <rdma/fi_errno.h> //translation error numbers
-
 #include <glib/gprintf.h>
 
-#include <j_fi_domain_manager.h>
 
 /**
  * \defgroup JConnectionPool Connection Pool

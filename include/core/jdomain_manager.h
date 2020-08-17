@@ -25,8 +25,10 @@
 #include <jstatistics.h>
 #include <jconfiguration.h>
 
+#include <jfabric.h>
+
 #include <rdma/fi_cm.h> //connection management
-#include <rdma/fi_errno.h> //translation error numbers
+#include <rdma/fi_domain.h>
 
 // structs for domain management
 struct JDomainManager;

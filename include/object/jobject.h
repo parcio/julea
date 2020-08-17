@@ -31,6 +31,8 @@
 
 #include <julea.h>
 
+#include <core/jmessage.h>
+
 G_BEGIN_DECLS
 
 struct JObject;

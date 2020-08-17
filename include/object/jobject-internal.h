@@ -31,6 +31,8 @@
 
 #include <julea.h>
 
+#include <core/jmessage.h>
+
 G_BEGIN_DECLS
 
 G_GNUC_INTERNAL JBackend* j_object_get_backend(void);

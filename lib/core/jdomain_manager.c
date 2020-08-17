@@ -21,7 +21,7 @@
 
 #include <julea.h>
 
-#include <j_fi_domain_manager.h>
+#include <jdomain_manager.h>
 
 #include <glib/gprintf.h>
 

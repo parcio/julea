@@ -33,7 +33,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 
-#include <j_fi_domain_manager.h>
+#include <jendpoint.h>
 
 G_BEGIN_DECLS
 
