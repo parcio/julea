@@ -519,13 +519,13 @@ j_endpoint_init(JEndpoint* jendpoint)
 		goto end;
 	}
 
-	if (!j_domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager, "Client msg"))
+	if (!j_domain_request(j_fabric, jendpoint->msg.info, j_connection_pool->configuration, &jendpoint->msg.rc_domain, domain_manager, "CLIENT", "msg"))
 	{
 		g_critical("\nCLIENT: msg-Domain request failed.\n");
 		goto end;
 	}
 
-	if (!j_domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager, "Client rdma"))
+	if (!j_domain_request(j_fabric, jendpoint->rdma.info, j_connection_pool->configuration, &jendpoint->rdma.rc_domain, domain_manager, "CLIENT", "rdma"))
 	{
 		g_critical("\nCLIENT: rdma-Domain request failed.\n");
 		goto end;
@@ -716,7 +716,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 
 	fi_freeinfo(jendpoint->msg.info);
 
-	j_domain_unref(jendpoint->msg.rc_domain, domain_manager, "msg client");
+	j_domain_unref(jendpoint->msg.rc_domain, domain_manager, "CLIENT", "msg");
 
 	error = fi_close(&jendpoint->rdma.ep->fid);
 	if (error != 0)
@@ -748,7 +748,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JMessage* message, gboolean send_shutdown_
 
 	fi_freeinfo(jendpoint->rdma.info);
 
-	j_domain_unref(jendpoint->rdma.rc_domain, domain_manager, "rdma client");
+	j_domain_unref(jendpoint->rdma.rc_domain, domain_manager, "CLIENT", "rdma");
 
 	//TODO close jendpoint->rmda rdma ressources
 
