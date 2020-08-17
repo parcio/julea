@@ -261,7 +261,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, const gcha
 	//empty wakeup message for server Thread shutdown
 	if (jendpoint->msg.connection_status || jendpoint->rdma.connection_status)
 	{
-		if (j_endpoint_shutdown_test(jendpoint, location))
+		if (!j_endpoint_shutdown_test(jendpoint, location))
 		{
 			gboolean berror;
 			JMessage* message;
@@ -384,7 +384,7 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 
 	error = 0;
 	ret = J_CON_FAILED;
-	connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128; //TODO use this to get additional info, like keys, etc
+	connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
 	connection_entry = malloc(connection_entry_length);
 
 	con_data = malloc(sizeof(struct JConData));
@@ -469,6 +469,7 @@ end:
 
 /**
 * returns TRUE on successful read
+* TODO build a returntype for a) successful read, b) error and c) nothing there/canceled
 */
 gboolean
 j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
@@ -500,7 +501,7 @@ j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
 		}
 		else if (error == -FI_ECANCELED)
 		{
-			g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n");
+			// g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n"); TODO
 			goto end;
 		}
 		else if (error < 0)
@@ -558,8 +559,11 @@ j_endpoint_read_event_queue(struct fid_eq* event_queue,
 		}
 		else if (error == -FI_EAGAIN)
 		{
+			/*
+      TODO is there a non-blocking case where -FI_EAGAIN is not succeeded?
 			g_critical("\n%s: No Event data on Event Queue (%s).\n", broad_location, specific_location);
 			goto end;
+      */
 		}
 		else
 		{
@@ -594,7 +598,7 @@ j_endpoint_shutdown_test(JEndpoint* jendpoint, const gchar* location)
 					 &event,
 					 event_entry,
 					 event_entry_size,
-					 1000,
+					 1,
 					 &event_queue_err_entry,
 					 location,
 					 "msg shutdown test"))
@@ -612,7 +616,7 @@ j_endpoint_shutdown_test(JEndpoint* jendpoint, const gchar* location)
 					 &event,
 					 event_entry,
 					 event_entry_size,
-					 1000,
+					 1,
 					 &event_queue_err_entry,
 					 location,
 					 "rdma shutdown test"))
