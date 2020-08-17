@@ -477,7 +477,7 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListI
 	}
 
 	ret = TRUE;
-	end:
+end:
 	return ret;
 }
 
@@ -561,13 +561,10 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 	}
 
 	ret = TRUE;
-	end:
+end:
 	free(wakeup_buf);
 	return ret;
 }
-
-
-
 
 static gboolean
 j_object_read_exec(JList* operations, JSemantics* semantics)
@@ -690,9 +687,9 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 			reply_operation_count = j_message_get_count(reply);
 
 			//TODO here
-			if(!j_object_receive_data_chunks(reply, (JEndpoint*) object_connection, it, &reply_operation_count))
+			if (!j_object_receive_data_chunks(reply, (JEndpoint*)object_connection, it, &reply_operation_count))
 			{
-			  g_critical("\nERROR while jobject receiving data chunks\n");
+				g_critical("\nERROR while jobject receiving data chunks\n");
 			}
 
 			operations_done += reply_operation_count;

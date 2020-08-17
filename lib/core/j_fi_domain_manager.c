@@ -27,7 +27,6 @@
 
 #include <stdio_ext.h>
 
-
 struct JDomainManager
 {
 	GPtrArray* cat_list;
@@ -48,8 +47,6 @@ struct DomainCategory
 	GSList* domain_list;
 	guint ref_count;
 };
-
-
 
 /**
 * inits the outer level of the domain_manager
@@ -84,11 +81,11 @@ j_domain_manager_fini(JDomainManager* domain_manager)
 */
 gboolean
 j_domain_request(struct fid_fabric* fabric,
-	       struct fi_info* info,
-	       JConfiguration* configuration,
-	       JRefCountedDomain** rc_domain,
-	       JDomainManager* domain_manager,
-	       const gchar* location)
+		 struct fi_info* info,
+		 JConfiguration* configuration,
+		 JRefCountedDomain** rc_domain,
+		 JDomainManager* domain_manager,
+		 const gchar* location)
 {
 	gboolean ret;
 	DomainCategory* category;
@@ -179,7 +176,8 @@ j_domain_unref(JRefCountedDomain* rc_domain, JDomainManager* domain_manager, con
 /**
 * returns the fid_domain hold by respective JRefCountedDomain
 */
-struct fid_domain* j_get_domain (JRefCountedDomain* rc_domain)
+struct fid_domain*
+j_get_domain(JRefCountedDomain* rc_domain)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -192,7 +190,8 @@ struct fid_domain* j_get_domain (JRefCountedDomain* rc_domain)
 /**
 * returns the event queue associated with respective JRefCountedDomain
 */
-struct fid_eq* j_get_domain_eq (JRefCountedDomain* rc_domain)
+struct fid_eq*
+j_get_domain_eq(JRefCountedDomain* rc_domain)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -272,7 +271,6 @@ domain_ref(JRefCountedDomain* rc_domain)
 
 	g_atomic_int_inc(&rc_domain->ref_count);
 }
-
 
 /**
 * Builds a new category with a ref_count of 1 and first domain entry on list and adds it to domain_manager

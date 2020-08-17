@@ -31,7 +31,6 @@
 
 static guint jd_thread_num = 0;
 
-
 void
 handle_chunks_msg(JMessage* message,
 		  JEndpoint* jendpoint,
@@ -142,7 +141,6 @@ handle_chunks_rdma(JMessage* message,
 
 		length = j_message_get_8(message);
 		offset = j_message_get_8(message);
-
 
 		if (length > memory_chunk_size)
 		{

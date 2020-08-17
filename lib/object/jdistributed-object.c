@@ -373,7 +373,7 @@ j_distributed_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendp
 	}
 
 	ret = TRUE;
-	end:
+end:
 	free(completion_queue_data);
 	return ret;
 }
@@ -458,9 +458,8 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 		}
 	}
 
-
 	ret = TRUE;
-	end:
+end:
 	free(wakeup_buf);
 	return ret;
 }
@@ -511,7 +510,7 @@ j_distributed_object_read_background_operation(gpointer data)
 		reply_operation_count = j_message_get_count(reply);
 
 		//TODO here
-		if(!j_distributed_object_receive_data_chunks(reply, (JEndpoint*) object_connection, it, &reply_operation_count))
+		if (!j_distributed_object_receive_data_chunks(reply, (JEndpoint*)object_connection, it, &reply_operation_count))
 		{
 			g_critical("\nERROR while distributed jobject receiving data chunks\n");
 		}
