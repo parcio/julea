@@ -376,7 +376,7 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 
 		if (nbytes > 0)
 		{
-			printf("\nJDistributedObject: found key: %lu\n", j_message_get_key(message, i)); //debug
+			//printf("\nJDistributedObject: found key: %lu\n", j_message_get_key(message, i)); //debug
 
 			error = fi_read(j_endpoint_get_endpoint(jendpoint, J_RDMA),
 					(void*)read_data, //target buffer

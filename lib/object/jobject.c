@@ -483,7 +483,7 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 
 		if (nbytes > 0)
 		{
-			printf("\nJObject:            found key: %lu\n", j_message_get_key(message, i)); //debug
+			//printf("\nJObject:            found key: %lu\n", j_message_get_key(message, i)); //debug
 
 			error = fi_read(j_endpoint_get_endpoint(jendpoint, J_RDMA),
 					(void*)data, //target buffer

@@ -1092,7 +1092,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 				goto end;
 			}
 
-			printf("\nSENDING:          setting key: %lu\n", j_message_get_key(message, counter)); //debug
+			//printf("\nSENDING:          setting key: %lu\n", j_message_get_key(message, counter)); //debug
 
 			error = fi_mr_reg(j_endpoint_get_domain(jendpoint, J_RDMA),
 					  message_data->data,

@@ -127,7 +127,7 @@ handle_chunks_rdma(JMessage* message,
 		buf = j_memory_chunk_get(memory_chunk, length);
 		g_assert(buf != NULL);
 
-		printf("\nSERVER:             found key: %lu\n", j_message_get_key(message, i)); //debug
+		//printf("\nSERVER:             found key: %lu\n", j_message_get_key(message, i)); //debug
 
 		error = fi_read(j_endpoint_get_endpoint(jendpoint, J_RDMA),
 				(void*)buf, //target buffer
