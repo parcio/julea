@@ -65,15 +65,12 @@ JBackend* jd_object_backend = NULL;
 JBackend* jd_kv_backend = NULL;
 JBackend* jd_db_backend = NULL;
 
-struct PepList
+struct PepListEntry
 {
 	struct fi_info* info;
 	struct fid_pep* pep;
-	struct PepList* next;
-	struct PepList* first;
-	int cntr;
 };
-typedef struct PepList PepList;
+typedef struct PepListEntry PepListEntry;
 
 static gboolean
 jd_daemon(void)
@@ -204,38 +201,38 @@ sig_handler(int signal)
 /Binds event queue to endpoint
 */
 static gboolean
-j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue)
+j_libfabric_ress_init(GSList** pep_list, struct fid_eq** passive_ep_event_queue)
 {
 	int error;
 	gboolean ret;
 	struct fi_eq_attr* event_queue_attr;
 
-	struct ifaddrs* current_own_addr;
 	struct ifaddrs* own_addr_list;
+	struct ifaddrs* current_own_addr;
 	char my_hostname[HOST_NAME_MAX + 1];
 
 	error = 0;
 	ret = FALSE;
 	event_queue_attr = j_configuration_get_fi_eq_attr(jd_configuration);
 
-	error = getifaddrs(&current_own_addr);
-	own_addr_list = current_own_addr;
+	error = getifaddrs(&own_addr_list);
 	if (error < 0)
 	{
 		g_critical("\nSERVER: getifaddrs failed\n");
 		goto end;
 	}
+	current_own_addr = own_addr_list;
 
 	error = gethostname(my_hostname, HOST_NAME_MAX + 1);
 	if (error < 0)
 	{
 		g_critical("SERVER: gethostname failed");
-		goto end_hostname;
+		goto end;
 	}
 
 	if (!j_fabric_init(&jfabric, J_SERVER, jd_configuration, "SERVER"))
 	{
-		goto end_hints;
+		goto end;
 	}
 
 	//build event queue for passive endpoint
@@ -243,7 +240,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error initializing msg event_queue\n Details:\n %s", fi_strerror(abs(error)));
-		goto end_hints;
+		goto end;
 	}
 
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
@@ -252,98 +249,55 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 
 	while (current_own_addr != NULL)
 	{
-		struct fid_pep* passive_ep;
-		struct fi_info* tmp_info;
-		PepList* pep_list_next;
-		gboolean error_occoured;
+		PepListEntry* pep_list_entry;
+		struct fi_info* info;
 
-		error_occoured = FALSE;
 		//get fi_info
 		error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
 				   inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
 				   j_configuration_get_fi_service(jd_configuration),
 				   j_configuration_get_fi_flags(jd_configuration, 0),
 				   j_configuration_fi_get_hints(jd_configuration, J_MSG),
-				   &tmp_info);
+				   &info);
 		if (error != 0 && error != -FI_ENODATA)
 		{
 			g_critical("\nSERVER: Error during initializing msg fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));
-			error_occoured = TRUE;
+			goto end;
 		}
 		else if (error == 0)
 		{
+			pep_list_entry = malloc(sizeof(PepListEntry));
+			pep_list_entry->info = info;
+
 			//build passive Endpoints
-			error = fi_passive_ep(j_get_fabric(jfabric, J_MSG), tmp_info, &passive_ep, NULL);
+			error = fi_passive_ep(j_get_fabric(jfabric, J_MSG), pep_list_entry->info, &pep_list_entry->pep, NULL);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
-				error_occoured = TRUE;
+				goto end;
 			}
 
-			error = fi_pep_bind(passive_ep, &(*passive_ep_event_queue)->fid, 0);
+			error = fi_pep_bind(pep_list_entry->pep, &(*passive_ep_event_queue)->fid, 0);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error binding passive Endpoint to %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
-				error_occoured = TRUE;
+				goto end;
 			}
 
-			error = fi_listen(passive_ep);
+			error = fi_listen(pep_list_entry->pep);
 			if (error != 0)
 			{
 				g_critical("\nSERVER: Error setting passive Endpoint to listening to %s-Interface with IP: %s\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
-				error_occoured = TRUE;
+				goto end;
 			}
-
-			if ((*pep_list) == NULL)
-			{
-				(*pep_list) = malloc(sizeof(struct PepList));
-				(*pep_list)->first = (*pep_list);
-				(*pep_list)->info = tmp_info;
-				(*pep_list)->pep = passive_ep;
-				(*pep_list)->next = NULL;
-				(*pep_list)->cntr = 0;
-			}
-			else
-			{
-				pep_list_next = malloc(sizeof(struct PepList));
-				pep_list_next->first = (*pep_list)->first;
-				pep_list_next->info = tmp_info;
-				pep_list_next->pep = passive_ep;
-				pep_list_next->next = NULL;
-				pep_list_next->cntr = (*pep_list)->cntr++;
-				(*pep_list)->next = pep_list_next;
-				(*pep_list) = pep_list_next;
-			}
-
-			if (error_occoured)
-			{
-				goto end_bld_peps;
-			}
-
-			//debug
-			//printf("\n	Ep established for\n		Interface Name: %s\n		IP Address: %s\n", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
-			//fflush(stdout);
+			*pep_list = g_slist_append(*pep_list, (gpointer)pep_list_entry);
 		}
-
 		current_own_addr = current_own_addr->ifa_next;
 	}
 
-	(*pep_list) = (*pep_list)->first;
 	ret = TRUE;
-	goto end_hints;
-
-end_bld_peps:
-	(*pep_list) = (*pep_list)->first;
-	while ((*pep_list) != NULL)
-	{
-		fi_close(&(*pep_list)->pep->fid);
-		fi_freeinfo((*pep_list)->info);
-		(*pep_list) = (*pep_list)->next;
-	}
-end_hints:
-	freeifaddrs(own_addr_list);
-end_hostname:
 end:
+	freeifaddrs(own_addr_list);
 	return ret;
 	// TODO manipulate backlog size
 }
@@ -378,7 +332,7 @@ main(int argc, char** argv)
 	int fi_error;
 
 	struct fid_eq* passive_ep_event_queue;
-	PepList* pep_list;
+	GSList* pep_list;
 
 	JDomainManager* domain_manager;
 
@@ -668,48 +622,43 @@ main(int argc, char** argv)
 
 		// close possible event entries left on connreq_list + deny connreq
 		{
-			PepList* first_entry;
-			first_entry = pep_list;
+			PepListEntry* pep_list_entry;
 
-			for (guint i = 0; g_slist_length(connreq_list); i++)
+			for (guint i = 0; i < g_slist_length(connreq_list); i++)
 			{
 				thread_data = g_slist_nth_data(connreq_list, i);
 
-				if (thread_data->connection.msg_event != NULL)
+				for (guint n = 0; n < g_slist_length(pep_list); n++)
 				{
-					if (pep_list != NULL)
+					gboolean break_occoured;
+					break_occoured = FALSE;
+
+					if (thread_data->connection.msg_event != NULL)
 					{
-						while (pep_list != NULL)
+						pep_list_entry = g_slist_nth_data(pep_list, n);
+						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_port)
 						{
-							if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_port)
-							{
-								fi_error = fi_reject(pep_list->pep, thread_data->connection.msg_event->fid, NULL, 0);
-								break;
-							}
-							pep_list = pep_list->next;
+							fi_error = fi_reject(pep_list_entry->pep, thread_data->connection.msg_event->fid, NULL, 0);
+							fi_freeinfo(thread_data->connection.msg_event->info);
+							free(thread_data->connection.msg_event);
+							break_occoured = TRUE;
 						}
 					}
-					pep_list = first_entry;
-					fi_freeinfo(thread_data->connection.msg_event->info);
-					free(thread_data->connection.msg_event);
-				}
-				if (thread_data->connection.rdma_event != NULL)
-				{
-					if (pep_list != NULL)
+					if (thread_data->connection.rdma_event != NULL)
 					{
-						while (pep_list != NULL)
+						pep_list_entry = g_slist_nth_data(pep_list, n);
+						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_port)
 						{
-							if (((struct sockaddr_in*)pep_list->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_port)
-							{
-								fi_error = fi_reject(pep_list->pep, thread_data->connection.rdma_event->fid, NULL, 0);
-								break;
-							}
-							pep_list = pep_list->next;
+							fi_error = fi_reject(pep_list_entry->pep, thread_data->connection.rdma_event->fid, NULL, 0);
+							fi_freeinfo(thread_data->connection.rdma_event->info);
+							free(thread_data->connection.rdma_event);
+							break_occoured = TRUE;
 						}
 					}
-					pep_list = first_entry;
-					fi_freeinfo(thread_data->connection.rdma_event->info);
-					free(thread_data->connection.rdma_event);
+					if (break_occoured)
+					{
+						break;
+					}
 				}
 				free(thread_data);
 			}
@@ -730,49 +679,27 @@ main(int argc, char** argv)
 	//==CLosing ressources==
 	//	Close passive endpoints & associated fi_infos
 
+	//printf("\nSERVER: Finishing PepList of size %d\n", g_slist_length(pep_list)); //debug
+	//fflush(stdout);
+
+	for (guint i = 0; i < g_slist_length(pep_list); i++)
 	{
-		int len;
+		PepListEntry* pep_list_entry;
 
-		len = 0;
-		if (pep_list != NULL)
-		{
-			len++;
-			while (pep_list->next != NULL)
-			{
-				len++;
-				pep_list = pep_list->next;
-			}
-		}
-
-		pep_list = pep_list->first;
-
-		//printf("\nSERVER: Finishing PepList of size %d\n", len); //debug
+		//printf("\nSERVER: Finishing PepList entry %d\n", i); //debug
 		//fflush(stdout);
 
-		while (pep_list != NULL)
+		pep_list_entry = g_slist_nth_data(pep_list, i);
+
+		//printf("\n	close PeP\n"); //debug
+		//fflush(stdout);
+		fi_error = fi_close(&pep_list_entry->pep->fid);
+		if (fi_error != 0)
 		{
-			PepList* tmp_pep_list;
-
-			//printf("\nSERVER: Finishing PepList entry %d\n", pep_list->cntr); //debug
-			//fflush(stdout);
-			//printf("\n	close PeP\n"); //debug
-			//fflush(stdout);
-
-			fi_error = fi_close(&pep_list->pep->fid);
-			if (fi_error != 0)
-			{
-				g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", pep_list->cntr + 1, len, fi_strerror(abs(fi_error)));
-				fi_error = 0;
-			}
-
-			//printf("\n	close fi_info\n"); //debug
-			//fflush(stdout);
-			fi_freeinfo(pep_list->info);
-
-			tmp_pep_list = pep_list->next;
-			free(pep_list);
-			pep_list = tmp_pep_list;
+			g_critical("\nSERVER: Error closing passive Endpoint %d out of %d.\n Details:\n %s", i + 1, g_slist_length(pep_list), fi_strerror(abs(fi_error)));
+			fi_error = 0;
 		}
+		fi_freeinfo(pep_list_entry->info);
 	}
 
 	// close fabric
