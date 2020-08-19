@@ -31,14 +31,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-struct JFabric
-{
-	struct fid_fabric* msg_fabric;
-	struct fi_info* msg_info;
-	struct fid_fabric* rdma_fabric;
-	struct fi_info* rdma_info;
-};
-typedef struct JFabric JFabric;
 
 struct ThreadData
 {

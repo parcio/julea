@@ -239,7 +239,7 @@ j_libfabric_ress_init(PepList** pep_list, struct fid_eq** passive_ep_event_queue
 	}
 
 	//build event queue for passive endpoint
-	error = fi_eq_open(jfabric->msg_fabric, event_queue_attr, passive_ep_event_queue, NULL);
+	error = fi_eq_open(j_get_fabric(jfabric, J_MSG), event_queue_attr, passive_ep_event_queue, NULL);
 	if (error != 0)
 	{
 		g_critical("\nSERVER: Error initializing msg event_queue\n Details:\n %s", fi_strerror(abs(error)));
