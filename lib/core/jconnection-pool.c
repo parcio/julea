@@ -151,7 +151,7 @@ j_connection_pool_fini(void)
 	{
 		while ((jendpoint = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(jendpoint, domain_manager, j_endpoint_shutdown_test(jendpoint, "CLIENT"), TRUE, "CLIENT");
 		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
@@ -161,7 +161,7 @@ j_connection_pool_fini(void)
 	{
 		while ((jendpoint = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(jendpoint, domain_manager, j_endpoint_shutdown_test(jendpoint, "CLIENT"), TRUE, "CLIENT");
 		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
@@ -171,7 +171,7 @@ j_connection_pool_fini(void)
 	{
 		while ((jendpoint = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
 		{
-			j_endpoint_fini(jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(jendpoint, domain_manager, j_endpoint_shutdown_test(jendpoint, "CLIENT"), TRUE, "CLIENT");
 		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
@@ -216,7 +216,7 @@ start:
 		if (j_endpoint_shutdown_test(jendpoint, "CLIENT"))
 		{
 			g_warning("\nCLIENT: Shutdown Event present on this endpoint. Server most likely ended, thus no longer available.\n");
-			j_endpoint_fini(jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(jendpoint, domain_manager, TRUE, FALSE, "CLIENT");
 			goto start;
 		}
 		else
@@ -462,7 +462,7 @@ hostname_connector(const char* hostname, const char* service, JEndpoint** jendpo
 				     "CLIENT"))
 		{
 			g_critical("\nCLIENT: tmp_jendpoint init failed\n");
-			j_endpoint_fini(tmp_jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(tmp_jendpoint, domain_manager, FALSE, FALSE, "CLIENT");
 			goto end;
 		}
 
@@ -477,13 +477,13 @@ hostname_connector(const char* hostname, const char* service, JEndpoint** jendpo
 		}
 		else if (con_ret == J_CON_MSG_REFUSED)
 		{
-			j_endpoint_fini(tmp_jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(tmp_jendpoint, domain_manager, FALSE, FALSE, "CLIENT");
 			g_critical("\nCLIENT: msg tmp_jendpoint connreq was refused\n");
 			goto end;
 		}
 		else if (con_ret == J_CON_RDMA_REFUSED)
 		{
-			j_endpoint_fini(tmp_jendpoint, domain_manager, "CLIENT");
+			j_endpoint_fini(tmp_jendpoint, domain_manager, FALSE, FALSE, "CLIENT");
 			g_critical("\nCLIENT: rdma tmp_jendpoint connreq was refused\n");
 			goto end;
 		}

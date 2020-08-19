@@ -164,25 +164,6 @@ end:
 void
 j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 {
-	int error;
-
-	error = 0;
-
-	//if shutdown initiated by server initiate a shutdown event on peer
-	if ((*j_thread_running) == FALSE)
-	{
-		error = fi_shutdown(j_endpoint_get_endpoint(jendpoint, J_MSG), 0);
-		if (error != 0)
-		{
-			g_critical("\nSERVER: Error while shutting down msg connection\n.Details: \n%s", fi_strerror(abs(error)));
-		}
-		error = fi_shutdown(j_endpoint_get_endpoint(jendpoint, J_RDMA), 0);
-		if (error != 0)
-		{
-			g_critical("\nSERVER: Error while shutting down rdma connection\n.Details: \n%s", fi_strerror(abs(error)));
-		}
-	}
-
 	//end all fabric resources
 	//close msg part
 	//remove cq of ending thread from thread_cq_array
@@ -205,7 +186,7 @@ j_thread_libfabric_ress_shutdown(JEndpoint* jendpoint)
 	}
 	g_mutex_unlock(thread_cq_array_mutex);
 
-	j_endpoint_fini(jendpoint, domain_manager, "SERVER");
+	j_endpoint_fini(jendpoint, domain_manager, j_endpoint_shutdown_test(jendpoint, "SERVER"), FALSE, "SERVER");
 }
 
 /**

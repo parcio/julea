@@ -250,9 +250,10 @@ end:
 
 /**
 * closes the JEndpoint given and all associated objects
+* needs the jendpoint, the respective domain_manager and the information whether the peer is expected to be waiting for input, so a wakeup needs to happen
 */
 void
-j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, const gchar* location)
+j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, gboolean shutdown_test, gboolean wakeup_needed, const gchar* location)
 {
 	int error;
 
@@ -261,7 +262,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, const gcha
 	//empty wakeup message for server Thread shutdown
 	if (jendpoint->msg.connection_status || jendpoint->rdma.connection_status)
 	{
-		if (!j_endpoint_shutdown_test(jendpoint, location))
+		if (wakeup_needed)
 		{
 			gboolean berror;
 			JMessage* message;
@@ -270,10 +271,15 @@ j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, const gcha
 			message = j_message_new(J_MESSAGE_NONE, 0);
 
 			berror = j_message_send(message, jendpoint);
-			if (berror == FALSE)
+			if (!berror)
 			{
 				g_critical("\n%s: Sending wakeup message while jendpoint shutdown did not work.\n", location);
 			}
+			j_message_unref(message);
+		}
+
+		if (!shutdown_test)
+		{
 			if (jendpoint->msg.connection_status)
 			{
 				error = fi_shutdown(jendpoint->msg.ep, 0);
@@ -283,7 +289,7 @@ j_endpoint_fini(JEndpoint* jendpoint, JDomainManager* domain_manager, const gcha
 					error = 0;
 				}
 			}
-			else if (jendpoint->rdma.connection_status)
+			if (jendpoint->rdma.connection_status)
 			{
 				error = fi_shutdown(jendpoint->rdma.ep, 0);
 				if (error != 0)
