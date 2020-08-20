@@ -1082,8 +1082,8 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			//key = ((uint64_t) g_rand_int(key_generator)) << 32 | (uint64_t) g_rand_int(key_generator);
-			key = (uint64_t)g_rand_int(key_generator);
+			key = ((uint64_t)g_rand_int(key_generator)) << 32 | (uint64_t)g_rand_int(key_generator);
+			//key = (uint64_t)g_rand_int(key_generator);
 			//key = (uint64_t) j_list_iterator_get(iterator); //TODO generate keys from list element pointer
 
 			if (!j_message_append_n(message, &key, sizeof(uint64_t)))
