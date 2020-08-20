@@ -468,6 +468,11 @@ j_message_unref(JMessage* message)
 			j_list_unref(message->send_list);
 		}
 
+		if (message->key_buf != NULL)
+		{
+			free(message->key_buf);
+		}
+
 		g_free(message->data);
 
 		g_slice_free(JMessage, message);
@@ -845,6 +850,7 @@ j_message_free_keys(JMessage* message)
 	J_TRACE_FUNCTION(NULL);
 
 	free(message->key_buf);
+	message->key_buf = NULL;
 }
 
 /**
