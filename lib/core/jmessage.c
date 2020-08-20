@@ -468,11 +468,6 @@ j_message_unref(JMessage* message)
 			j_list_unref(message->send_list);
 		}
 
-		if (message->key_buf != NULL)
-		{
-			free(message->key_buf);
-		}
-
 		g_free(message->data);
 
 		g_slice_free(JMessage, message);
@@ -1216,6 +1211,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			free(wakeup_buf);
 			goto end;
 		}
+		j_message_free_keys(message);
 		free(wakeup_buf);
 	}
 

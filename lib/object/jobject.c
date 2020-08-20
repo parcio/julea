@@ -515,6 +515,7 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 
 	ret = TRUE;
 end:
+	j_message_free_keys(message);
 	free(wakeup_buf);
 	return ret;
 }
