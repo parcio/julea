@@ -111,6 +111,7 @@ JSemantics* j_message_get_semantics(JMessage*);
 
 JConnectionType j_message_get_comm_type(JMessage*);
 uint64_t j_message_get_key(JMessage*, guint);
+void j_message_free_keys(JMessage*);
 
 G_END_DECLS
 

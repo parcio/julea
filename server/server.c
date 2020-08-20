@@ -484,7 +484,7 @@ main(int argc, char** argv)
 
 		// libfabric event entries need more space than the size of the struct due to possible protocoll padding, 128 was an example size, real is smaller.
 		// in addition space for the identifiers is added (JConData + the 37 needed for the uuid string)
-		event_entry_size = sizeof(struct fi_eq_cm_entry*) + 128 + sizeof(struct JConData);
+		event_entry_size = sizeof(struct fi_eq_cm_entry*) + 128 + sizeof(JConData);
 		connreq_list = NULL;
 
 		do

@@ -167,6 +167,7 @@ handle_chunks_rdma(JMessage* message,
 	{
 		g_critical("\nSERVER: failed to read completion queue after sending wakup message to signal completion of rdma chunk read\n");
 	}
+	j_message_free_keys(message);
 	free(wakeup_buf);
 }
 

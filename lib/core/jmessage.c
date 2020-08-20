@@ -121,14 +121,15 @@ struct JMessageHeader
 
 	JConnectionType comm_type; // contains information over the requested connection type for the peer
 
-	size_t first_key; //position of the first key in data
+	gboolean data_chunks;
+
 	guint32 key_number; // number of keys located in data
 };
 #pragma pack()
 
 typedef struct JMessageHeader JMessageHeader;
 
-G_STATIC_ASSERT(sizeof(JMessageHeader) == 6 * sizeof(guint32) + sizeof(JConnectionType) + sizeof(size_t));
+G_STATIC_ASSERT(sizeof(JMessageHeader) == 6 * sizeof(guint32) + sizeof(JConnectionType) + sizeof(gboolean));
 
 /**
  * A message.
@@ -160,6 +161,11 @@ struct JMessage
 	 * Contains JMessageData elements.
 	 **/
 	JList* send_list;
+
+	/**
+	* A buffer for key_number (see header) uint64_t keys
+	*/
+	uint64_t* key_buf;
 
 	/**
 	 * The original message.
@@ -352,13 +358,17 @@ j_message_new(JMessageType op_type, gsize length)
 	message->original_message = NULL;
 	message->ref_count = 1;
 
+	message->key_buf = NULL;
+
 	message->header.length = GUINT32_TO_LE(0);
 	message->header.id = GUINT32_TO_LE(rand);
 	message->header.semantics = GUINT32_TO_LE(0);
 	message->header.op_type = GUINT32_TO_LE(op_type);
 	message->header.op_count = GUINT32_TO_LE(0);
 
+	message->header.data_chunks = FALSE;
 	message->header.comm_type = J_UNDEFINED;
+	message->header.key_number = 0;
 
 	return message;
 }
@@ -390,13 +400,17 @@ j_message_new_reply(JMessage* message)
 	reply->original_message = j_message_ref(message);
 	reply->ref_count = 1;
 
+	reply->key_buf = NULL;
+
 	reply->header.length = GUINT32_TO_LE(0);
 	reply->header.id = message->header.id;
 	reply->header.semantics = GUINT32_TO_LE(0);
 	reply->header.op_type = message->header.op_type;
 	reply->header.op_count = GUINT32_TO_LE(0);
 
+	reply->header.data_chunks = FALSE;
 	reply->header.comm_type = message->header.comm_type;
+	reply->header.key_number = 0;
 
 	return reply;
 }
@@ -452,6 +466,11 @@ j_message_unref(JMessage* message)
 		if (message->send_list != NULL)
 		{
 			j_list_unref(message->send_list);
+		}
+
+		if (message->key_buf != NULL)
+		{
+			free(message->key_buf);
 		}
 
 		g_free(message->data);
@@ -526,15 +545,11 @@ j_message_get_comm_type(JMessage* message)
 uint64_t
 j_message_get_key(JMessage* message, guint key_position)
 {
-	gchar* ret_key;
-
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(message != NULL, 0);
 
-	ret_key = message->data + message->header.first_key + key_position * sizeof(uint64_t);
-
-	return *((uint64_t*)ret_key);
+	return message->key_buf[key_position];
 }
 
 /**
@@ -829,6 +844,14 @@ j_message_get_string(JMessage* message)
 	return ret;
 }
 
+void
+j_message_free_keys(JMessage* message)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	free(message->key_buf);
+}
+
 /**
  * Reads a message from the network.
  *
@@ -922,6 +945,21 @@ j_message_read(JMessage* message, JEndpoint* jendpoint)
 	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "JMessage Header"))
 	{
 		goto end;
+	}
+
+	if (message->header.data_chunks)
+	{
+		message->key_buf = malloc(message->header.key_number * sizeof(uint64_t));
+		error = fi_recv(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)message->key_buf, message->header.key_number * sizeof(uint64_t), NULL, 0, NULL);
+		if (error != 0)
+		{
+			g_critical("\nError while receiving Message (Key_buf).\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "key_buf"))
+		{
+			goto end;
+		}
 	}
 
 	// TODO Dont report error, but split the Message
@@ -1070,10 +1108,11 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 	{
 		guint counter;
 		iterator = j_list_iterator_new(message->send_list);
-		message->header.first_key = message->current - message->data;
 		message->header.key_number = j_list_length(message->send_list);
+		message->header.data_chunks = TRUE;
 
 		counter = 0;
+		message->key_buf = malloc(message->header.key_number * sizeof(uint64_t));
 
 		while (j_list_iterator_next(iterator))
 		{
@@ -1086,11 +1125,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			//key = (uint64_t)g_rand_int(key_generator);
 			//key = (uint64_t) j_list_iterator_get(iterator); //TODO generate keys from list element pointer
 
-			if (!j_message_append_n(message, &key, sizeof(uint64_t)))
-			{
-				g_critical("\nError while appending keys to jmessage\n");
-				goto end;
-			}
+			message->key_buf[counter] = key;
 
 			//printf("\nSENDING:          setting key: %lu\n", j_message_get_key(message, counter)); //debug
 
@@ -1131,6 +1166,20 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		goto end;
 	}
 
+	if (message->header.data_chunks)
+	{
+		error = fi_send(j_endpoint_get_endpoint(jendpoint, J_MSG), (void*)message->key_buf, message->header.key_number * sizeof(uint64_t), NULL, 0, NULL);
+		if (error != 0)
+		{
+			g_critical("\nError while sending Message (key transmition).\nDetails:\n%s", fi_strerror(labs(error)));
+			goto end;
+		}
+		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "key transmition"))
+		{
+			goto end;
+		}
+	}
+
 	// TODO Dont report error, but split the Message
 	if (!j_message_fi_val_message_size(j_endpoint_get_info(jendpoint, J_MSG), message))
 	{
@@ -1149,7 +1198,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		goto end;
 	}
 
-	if (j_list_length(message->send_list) != 0)
+	if (message->header.data_chunks)
 	{
 		int* wakeup_buf;
 
