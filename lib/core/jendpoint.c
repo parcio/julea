@@ -50,6 +50,13 @@ struct JEndpoint
 	} rdma;
 };
 
+struct JConData
+{
+	gchar uuid[37]; // a glib UUID is 37 byte
+	JConnectionType type;
+};
+typedef struct JConData JConData;
+
 /**
 * Inits a JEndpoint with all ressources, both msg and rdma endpoint including their needed ressources
 * returns TRUE if successful and false if an error happened
@@ -386,18 +393,14 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 	size_t connection_entry_length;
 
 	JConData* con_data;
-	gchar* tmp_uuid;
 
 	error = 0;
 	ret = J_CON_FAILED;
 	connection_entry_length = sizeof(struct fi_eq_cm_entry) + 128;
 	connection_entry = malloc(connection_entry_length);
 
-	con_data = malloc(sizeof(struct JConData));
-	con_data->type = J_MSG;
-	tmp_uuid = g_uuid_string_random(); //direct insert sadly leads to memory leaks due to not freed original.
-	g_strlcpy(con_data->uuid, tmp_uuid, 37); //gchar* representation of uuid string is of 37 bytes
-	g_free(tmp_uuid);
+	con_data = j_con_data_new();
+	j_con_data_set_con_type(con_data, J_MSG);
 
 	// connect msg endpoint
 	error = fi_connect(jendpoint->msg.ep, address, (void*)con_data, sizeof(struct JConData));
@@ -412,7 +415,7 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 	}
 
 	// connect rdma endpoint
-	con_data->type = J_RDMA;
+	j_con_data_set_con_type(con_data, J_RDMA);
 	error = fi_connect(jendpoint->rdma.ep, address, (void*)con_data, sizeof(struct JConData));
 	if (error == -FI_ECONNREFUSED)
 	{
@@ -468,7 +471,7 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 
 	ret = J_CON_ACCEPTED;
 end:
-	free(con_data);
+  j_con_data_free(con_data);
 	free(connection_entry);
 	return ret;
 }
@@ -853,4 +856,63 @@ j_endpoint_set_connected(JEndpoint* jendpoint, JConnectionType con_type)
 	}
 
 	return TRUE;
+}
+
+
+JConData*
+j_con_data_new(void)
+{
+	JConData* con_data;
+	gchar* tmp_uuid;
+
+	con_data = malloc(sizeof(struct JConData));
+	con_data->type = J_UNDEFINED;
+	tmp_uuid = g_uuid_string_random(); //direct insert sadly leads to memory leaks due to not freed original.
+	g_strlcpy(con_data->uuid, tmp_uuid, 37); //gchar* representation of uuid string is of 37 bytes
+	g_free(tmp_uuid);
+
+	return con_data;
+}
+
+void
+j_con_data_free(JConData* con_data)
+{
+	free(con_data);
+}
+
+void
+j_con_data_set_con_type(JConData* con_data, JConnectionType type)
+{
+	con_data->type = type;
+}
+
+JConnectionType
+j_con_data_get_con_type(JConData* con_data)
+{
+	return con_data->type;
+}
+
+gchar*
+j_con_data_get_uuid(JConData* con_data)
+{
+	return con_data->uuid;
+}
+
+size_t
+j_con_data_get_size(void)
+{
+	return sizeof(JConData);
+}
+
+/**
+* gets JConData* from a fi_eq_cm_entry
+* retrieved JConData is part of the fi_eq_cm_entry data block, so will be freed when it is freed
+*
+* the JConData part of a fi_eq_cm_entry is the last part. Thus the pointer to JConData is the whole size of the entry minus the size of JConData
+* conreq_size is returned of successful read of a passive endpoint
+*/
+JConData*
+j_con_data_retrieve (struct fi_eq_cm_entry* event_entry, ssize_t conreq_size)
+{
+	return (JConData*)(((char*)event_entry) + (conreq_size - sizeof(struct JConData)));
 }

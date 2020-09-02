@@ -484,23 +484,23 @@ main(int argc, char** argv)
 
 		// libfabric event entries need more space than the size of the struct due to possible protocoll padding, 128 was an example size, real is smaller.
 		// in addition space for the identifiers is added (JConData + the 37 needed for the uuid string)
-		event_entry_size = sizeof(struct fi_eq_cm_entry*) + 128 + sizeof(JConData);
+		event_entry_size = sizeof(struct fi_eq_cm_entry*) + 128 + j_con_data_get_size();
 		connreq_list = NULL;
 
 		do
 		{
-			ssize_t connreq_size;
+			ssize_t con_req_size;
 			uint32_t event;
 			struct fi_eq_cm_entry* event_entry;
 			struct fi_eq_err_entry event_queue_err_entry;
 			JConData* con_data;
 
+			con_req_size = 0;
 			thread_data = NULL;
 			event = 0;
 			event_entry = malloc(event_entry_size);
 
 			fi_error = fi_eq_sread(passive_ep_event_queue, &event, event_entry, event_entry_size, 1000, 0); //timeout 5th argument in ms
-			connreq_size = fi_error;
 			if (fi_error < 0)
 			{
 				if (fi_error == -FI_EAVAIL)
@@ -522,31 +522,33 @@ main(int argc, char** argv)
 					fi_error = 0;
 				}
 			}
+			else
+			{
+				con_req_size = fi_error;
+			}
+
 			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
-				gboolean connreq_found;
-				// printf("\nSERVER: FI_CONNREQ found\n"); //debug
-				// printf("	total size: %ld\n	event_entry_size: %d\n	offset start: %ld\n	event-entry*: %p\n	con_data*: %p\n", connreq_size, event_entry_size, connreq_size - sizeof(struct JConData), (void*) event_entry, (void*) con_data);
-				// fflush(stdout);
+				gboolean con_req_found;
 
-				// calculates offset after which user data (JConData) begins, cast to char* because char* are incremented by 1 byte and the numbers are in number of bytes
-				con_data = (JConData*)(((char*)event_entry) + (connreq_size - sizeof(struct JConData)));
-				connreq_found = FALSE;
+				con_data = j_con_data_retrieve(event_entry, con_req_size);
+
+				con_req_found = FALSE;
 
 				for (guint i = 0; g_slist_length(connreq_list); i++)
 				{
 					thread_data = g_slist_nth_data(connreq_list, i);
-					if (g_strcmp0(j_thread_data_get_uuid(thread_data), con_data->uuid) == 0)
+					if (g_strcmp0(j_thread_data_get_uuid(thread_data), j_con_data_get_uuid(con_data)) == 0)
 					{
-						connreq_found = TRUE;
+						con_req_found = TRUE;
 						break;
 					}
 				}
 
 				// if a corresponding connreq is found, add the 2nd request to the thread data and start a thread
-				if (connreq_found)
+				if (con_req_found)
 				{
-					if (con_data->type == J_MSG)
+					if (j_con_data_get_con_type(con_data) == J_MSG)
 					{
 						if (j_thread_data_get_rdma_event(thread_data) == NULL)
 						{
@@ -557,7 +559,7 @@ main(int argc, char** argv)
 							j_thread_data_set_msg_event(thread_data, event_entry);
 						}
 					}
-					else if (con_data->type == J_RDMA)
+					else if (j_con_data_get_con_type(con_data) == J_RDMA)
 					{
 						if (j_thread_data_get_msg_event(thread_data) == NULL)
 						{
@@ -585,14 +587,14 @@ main(int argc, char** argv)
 				}
 				else // if no corresponding thread data is found, build a new thread_data with the first connreq and add to list
 				{
-					if (!g_uuid_string_is_valid(con_data->uuid))
+					if (!g_uuid_string_is_valid(j_con_data_get_uuid(con_data)))
 					{
 						g_critical("\nSERVER: Did not read a valid uuid from connreq\n");
 					}
 					thread_data = j_thread_data_new(jd_configuration,
 														jfabric,
 														domain_manager,
-														con_data->uuid,
+														j_con_data_get_uuid(con_data),
 														thread_cq_array,
 														&thread_cq_array_mutex,
 														&j_server_running,
@@ -601,7 +603,7 @@ main(int argc, char** argv)
 														jd_statistics,
 														&jd_statistics_mutex[0]);
 
-					switch (con_data->type)
+					switch (j_con_data_get_con_type(con_data))
 					{
 						case J_MSG:
 							j_thread_data_set_msg_event(thread_data, event_entry);
