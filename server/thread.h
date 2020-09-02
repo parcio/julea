@@ -31,7 +31,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 struct ThreadData;
 typedef struct ThreadData ThreadData;
 
@@ -54,6 +53,6 @@ void j_thread_data_set_rdma_event(ThreadData*, struct fi_eq_cm_entry*);
 gboolean j_thread_data_check_completion(ThreadData*);
 struct fi_eq_cm_entry* j_thread_data_get_msg_event(ThreadData*);
 struct fi_eq_cm_entry* j_thread_data_get_rdma_event(ThreadData*);
-gchar* j_thread_data_get_uuid(ThreadData* );
+gchar* j_thread_data_get_uuid(ThreadData*);
 
 #endif

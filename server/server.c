@@ -592,16 +592,16 @@ main(int argc, char** argv)
 						g_critical("\nSERVER: Did not read a valid uuid from connreq\n");
 					}
 					thread_data = j_thread_data_new(jd_configuration,
-														jfabric,
-														domain_manager,
-														j_con_data_get_uuid(con_data),
-														thread_cq_array,
-														&thread_cq_array_mutex,
-														&j_server_running,
-														&j_thread_running,
-														&thread_count,
-														jd_statistics,
-														&jd_statistics_mutex[0]);
+									jfabric,
+									domain_manager,
+									j_con_data_get_uuid(con_data),
+									thread_cq_array,
+									&thread_cq_array_mutex,
+									&j_server_running,
+									&j_thread_running,
+									&thread_count,
+									jd_statistics,
+									&jd_statistics_mutex[0]);
 
 					switch (j_con_data_get_con_type(con_data))
 					{
@@ -644,7 +644,7 @@ main(int argc, char** argv)
 					{
 						pep_list_entry = g_slist_nth_data(pep_list, n);
 						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)j_thread_data_get_msg_event(thread_data)->info->src_addr)->sin_addr.s_addr
-						 && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)j_thread_data_get_msg_event(thread_data)->info->src_addr)->sin_port)
+						    && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)j_thread_data_get_msg_event(thread_data)->info->src_addr)->sin_port)
 						{
 							fi_error = fi_reject(pep_list_entry->pep, j_thread_data_get_msg_event(thread_data)->fid, NULL, 0);
 							fi_freeinfo(j_thread_data_get_msg_event(thread_data)->info);

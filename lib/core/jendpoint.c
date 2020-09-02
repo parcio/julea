@@ -471,7 +471,7 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 
 	ret = J_CON_ACCEPTED;
 end:
-  j_con_data_free(con_data);
+	j_con_data_free(con_data);
 	free(connection_entry);
 	return ret;
 }
@@ -858,7 +858,6 @@ j_endpoint_set_connected(JEndpoint* jendpoint, JConnectionType con_type)
 	return TRUE;
 }
 
-
 JConData*
 j_con_data_new(void)
 {
@@ -912,7 +911,7 @@ j_con_data_get_size(void)
 * conreq_size is returned of successful read of a passive endpoint
 */
 JConData*
-j_con_data_retrieve (struct fi_eq_cm_entry* event_entry, ssize_t conreq_size)
+j_con_data_retrieve(struct fi_eq_cm_entry* event_entry, ssize_t conreq_size)
 {
 	return (JConData*)(((char*)event_entry) + (conreq_size - sizeof(struct JConData)));
 }

@@ -54,7 +54,6 @@ struct ThreadData
 };
 typedef struct ThreadData ThreadData;
 
-
 static JFabric* jfabric;
 
 static volatile gboolean* j_thread_running;
@@ -246,7 +245,6 @@ j_thread_function(gpointer thread_data)
 	j_statistics = ((ThreadData*)thread_data)->julea_state.j_statistics;
 	j_statistics_mutex = ((ThreadData*)thread_data)->julea_state.j_statistics_mutex;
 
-
 	message = NULL;
 
 	statistics = j_statistics_new(TRUE);
@@ -344,19 +342,18 @@ end:
 	return NULL;
 }
 
-
 ThreadData*
 j_thread_data_new(JConfiguration* configuration_in,
-									JFabric* jfabric_in,
-									JDomainManager* domain_manager_in,
-									gchar* uuid_in,
-									GPtrArray* thread_cq_array_in,
-									GMutex* thread_cq_array_mutex_in,
-									volatile gboolean* server_running_in,
-									volatile gboolean* thread_running_in,
-									volatile gint* thread_count_in,
-									JStatistics* j_statistics_in,
-									GMutex* j_statistics_mutex_in)
+		  JFabric* jfabric_in,
+		  JDomainManager* domain_manager_in,
+		  gchar* uuid_in,
+		  GPtrArray* thread_cq_array_in,
+		  GMutex* thread_cq_array_mutex_in,
+		  volatile gboolean* server_running_in,
+		  volatile gboolean* thread_running_in,
+		  volatile gint* thread_count_in,
+		  JStatistics* j_statistics_in,
+		  GMutex* j_statistics_mutex_in)
 {
 	ThreadData* thread_data;
 
@@ -383,12 +380,12 @@ void
 j_thread_data_free(ThreadData* thread_data)
 {
 	g_free(thread_data->connection.uuid);
-	if(thread_data->connection.msg_event != NULL)
+	if (thread_data->connection.msg_event != NULL)
 	{
 		fi_freeinfo(thread_data->connection.msg_event->info);
 		free(thread_data->connection.msg_event);
 	}
-	if(thread_data->connection.rdma_event != NULL)
+	if (thread_data->connection.rdma_event != NULL)
 	{
 		fi_freeinfo(thread_data->connection.rdma_event->info);
 		free(thread_data->connection.rdma_event);

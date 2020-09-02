@@ -70,14 +70,13 @@ struct fid_eq* j_endpoint_get_domain_eq(JEndpoint*, JConnectionType);
 // setters
 gboolean j_endpoint_set_connected(JEndpoint*, JConnectionType);
 
-
 //uuid
 JConData* j_con_data_new(void);
 void j_con_data_free(JConData*);
 void j_con_data_set_con_type(JConData*, JConnectionType);
 JConnectionType j_con_data_get_con_type(JConData*);
 gchar* j_con_data_get_uuid(JConData*);
-JConData* j_con_data_retrieve (struct fi_eq_cm_entry*, ssize_t);
+JConData* j_con_data_retrieve(struct fi_eq_cm_entry*, ssize_t);
 size_t j_con_data_get_size(void);
 
 #endif
