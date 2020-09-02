@@ -31,29 +31,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-struct ThreadData
-{
-	struct
-	{
-		struct fi_eq_cm_entry* msg_event;
-		struct fi_eq_cm_entry* rdma_event;
-		JFabric* fabric;
-		JConfiguration* j_configuration;
-		JDomainManager* domain_manager;
-		gchar* uuid;
-	} connection;
 
-	struct
-	{
-		GPtrArray* thread_cq_array; // for registration in waking threads
-		GMutex* thread_cq_array_mutex; // for registration in waking threads
-		volatile gboolean* server_running;
-		volatile gboolean* thread_running;
-		volatile gint* thread_count;
-		JStatistics* j_statistics;
-		GMutex* j_statistics_mutex;
-	} julea_state;
-};
+struct ThreadData;
 typedef struct ThreadData ThreadData;
 
 G_GNUC_INTERNAL JStatistics* j_statistics;
@@ -67,5 +46,14 @@ void thread_unblock(struct fid_cq* completion_queue);
 G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, JEndpoint*, JMemoryChunk*, guint64, JStatistics*);
 G_GNUC_INTERNAL void handle_chunks_msg(JMessage*, JEndpoint*, guint32, JMemoryChunk*, guint64, gpointer, JStatistics*, JMessage*);
 G_GNUC_INTERNAL void handle_chunks_rdma(JMessage*, JEndpoint*, guint32, JMemoryChunk*, guint64, gpointer, JStatistics*, JMessage*);
+
+ThreadData* j_thread_data_new(JConfiguration*, JFabric*, JDomainManager*, gchar*, GPtrArray*, GMutex*, volatile gboolean*, volatile gboolean*, volatile gint*, JStatistics*, GMutex*);
+void j_thread_data_free(ThreadData*);
+void j_thread_data_set_msg_event(ThreadData*, struct fi_eq_cm_entry*);
+void j_thread_data_set_rdma_event(ThreadData*, struct fi_eq_cm_entry*);
+gboolean j_thread_data_check_completion(ThreadData*);
+struct fi_eq_cm_entry* j_thread_data_get_msg_event(ThreadData*);
+struct fi_eq_cm_entry* j_thread_data_get_rdma_event(ThreadData*);
+gchar* j_thread_data_get_uuid(ThreadData* );
 
 #endif

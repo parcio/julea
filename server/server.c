@@ -490,7 +490,6 @@ main(int argc, char** argv)
 		do
 		{
 			ssize_t connreq_size;
-			gboolean connreq_found;
 			uint32_t event;
 			struct fi_eq_cm_entry* event_entry;
 			struct fi_eq_err_entry event_queue_err_entry;
@@ -525,6 +524,7 @@ main(int argc, char** argv)
 			}
 			if (event == FI_CONNREQ && j_server_running && j_thread_running)
 			{
+				gboolean connreq_found;
 				// printf("\nSERVER: FI_CONNREQ found\n"); //debug
 				// printf("	total size: %ld\n	event_entry_size: %d\n	offset start: %ld\n	event-entry*: %p\n	con_data*: %p\n", connreq_size, event_entry_size, connreq_size - sizeof(struct JConData), (void*) event_entry, (void*) con_data);
 				// fflush(stdout);
@@ -536,7 +536,7 @@ main(int argc, char** argv)
 				for (guint i = 0; g_slist_length(connreq_list); i++)
 				{
 					thread_data = g_slist_nth_data(connreq_list, i);
-					if (g_strcmp0(thread_data->connection.uuid, con_data->uuid) == 0)
+					if (g_strcmp0(j_thread_data_get_uuid(thread_data), con_data->uuid) == 0)
 					{
 						connreq_found = TRUE;
 						break;
@@ -548,24 +548,24 @@ main(int argc, char** argv)
 				{
 					if (con_data->type == J_MSG)
 					{
-						if (thread_data->connection.rdma_event == NULL)
+						if (j_thread_data_get_rdma_event(thread_data) == NULL)
 						{
-							g_critical("\nFaulty ThreadData on connreq_list. Found no RDMA request.\n");
+							g_critical("\nSERVER: Faulty ThreadData on connreq_list. Found no RDMA request.\n");
 						}
 						else
 						{
-							thread_data->connection.msg_event = event_entry;
+							j_thread_data_set_msg_event(thread_data, event_entry);
 						}
 					}
 					else if (con_data->type == J_RDMA)
 					{
-						if (thread_data->connection.msg_event == NULL)
+						if (j_thread_data_get_msg_event(thread_data) == NULL)
 						{
-							g_critical("\nFaulty ThreadData on connreq_list. Found no MSG request.\n");
+							g_critical("\nSERVER: Faulty ThreadData on connreq_list. Found no MSG request.\n");
 						}
 						else
 						{
-							thread_data->connection.rdma_event = event_entry;
+							j_thread_data_set_rdma_event(thread_data, event_entry);
 						}
 					}
 					else
@@ -573,8 +573,15 @@ main(int argc, char** argv)
 						g_critical("\nSERVER: Did not read a valid connection type from connreq while holding a valid connreq pair\n");
 					}
 
-					g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
-					connreq_list = g_slist_remove(connreq_list, (gpointer)thread_data);
+					if (j_thread_data_check_completion(thread_data))
+					{
+						g_thread_new(NULL, *j_thread_function, (gpointer)thread_data);
+						connreq_list = g_slist_remove(connreq_list, (gpointer)thread_data);
+					}
+					else
+					{
+						g_critical("\nSERVER: Tried to start thread with incomplete ThreadData");
+					}
 				}
 				else // if no corresponding thread data is found, build a new thread_data with the first connreq and add to list
 				{
@@ -582,32 +589,30 @@ main(int argc, char** argv)
 					{
 						g_critical("\nSERVER: Did not read a valid uuid from connreq\n");
 					}
-					thread_data = malloc(sizeof(ThreadData));
+					thread_data = j_thread_data_new(jd_configuration,
+														jfabric,
+														domain_manager,
+														con_data->uuid,
+														thread_cq_array,
+														&thread_cq_array_mutex,
+														&j_server_running,
+														&j_thread_running,
+														&thread_count,
+														jd_statistics,
+														&jd_statistics_mutex[0]);
+
 					switch (con_data->type)
 					{
 						case J_MSG:
-							thread_data->connection.msg_event = event_entry;
-							thread_data->connection.rdma_event = NULL;
+							j_thread_data_set_msg_event(thread_data, event_entry);
 							break;
 						case J_RDMA:
-							thread_data->connection.msg_event = NULL;
-							thread_data->connection.rdma_event = event_entry;
+							j_thread_data_set_rdma_event(thread_data, event_entry);
 							break;
 						case J_UNDEFINED:
 						default:
 							g_assert_not_reached();
 					}
-					thread_data->connection.j_configuration = jd_configuration;
-					thread_data->connection.fabric = jfabric;
-					thread_data->connection.domain_manager = domain_manager;
-					thread_data->connection.uuid = g_strdup(con_data->uuid);
-					thread_data->julea_state.thread_cq_array = thread_cq_array;
-					thread_data->julea_state.thread_cq_array_mutex = &thread_cq_array_mutex;
-					thread_data->julea_state.server_running = &j_server_running;
-					thread_data->julea_state.thread_running = &j_thread_running;
-					thread_data->julea_state.thread_count = &thread_count;
-					thread_data->julea_state.j_statistics = jd_statistics;
-					thread_data->julea_state.j_statistics_mutex = &jd_statistics_mutex[0];
 
 					connreq_list = g_slist_append(connreq_list, (gpointer)thread_data);
 				}
@@ -633,25 +638,26 @@ main(int argc, char** argv)
 					gboolean break_occoured;
 					break_occoured = FALSE;
 
-					if (thread_data->connection.msg_event != NULL)
+					if (j_thread_data_get_msg_event(thread_data) != NULL)
 					{
 						pep_list_entry = g_slist_nth_data(pep_list, n);
-						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.msg_event->info->src_addr)->sin_port)
+						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)j_thread_data_get_msg_event(thread_data)->info->src_addr)->sin_addr.s_addr
+						 && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)j_thread_data_get_msg_event(thread_data)->info->src_addr)->sin_port)
 						{
-							fi_error = fi_reject(pep_list_entry->pep, thread_data->connection.msg_event->fid, NULL, 0);
-							fi_freeinfo(thread_data->connection.msg_event->info);
-							free(thread_data->connection.msg_event);
+							fi_error = fi_reject(pep_list_entry->pep, j_thread_data_get_msg_event(thread_data)->fid, NULL, 0);
+							fi_freeinfo(j_thread_data_get_msg_event(thread_data)->info);
+							free(j_thread_data_get_msg_event(thread_data));
 							break_occoured = TRUE;
 						}
 					}
-					if (thread_data->connection.rdma_event != NULL)
+					if (j_thread_data_get_rdma_event(thread_data) != NULL)
 					{
 						pep_list_entry = g_slist_nth_data(pep_list, n);
-						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)thread_data->connection.rdma_event->info->src_addr)->sin_port)
+						if (((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_addr.s_addr == ((struct sockaddr_in*)j_thread_data_get_rdma_event(thread_data)->info->src_addr)->sin_addr.s_addr && ((struct sockaddr_in*)pep_list_entry->info->src_addr)->sin_port == ((struct sockaddr_in*)j_thread_data_get_rdma_event(thread_data)->info->src_addr)->sin_port)
 						{
-							fi_error = fi_reject(pep_list_entry->pep, thread_data->connection.rdma_event->fid, NULL, 0);
-							fi_freeinfo(thread_data->connection.rdma_event->info);
-							free(thread_data->connection.rdma_event);
+							fi_error = fi_reject(pep_list_entry->pep, j_thread_data_get_rdma_event(thread_data)->fid, NULL, 0);
+							fi_freeinfo(j_thread_data_get_rdma_event(thread_data)->info);
+							free(j_thread_data_get_rdma_event(thread_data));
 							break_occoured = TRUE;
 						}
 					}

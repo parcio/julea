@@ -29,6 +29,32 @@
 
 #include "thread.h"
 
+struct ThreadData
+{
+	struct
+	{
+		struct fi_eq_cm_entry* msg_event;
+		struct fi_eq_cm_entry* rdma_event;
+		JFabric* jfabric;
+		JConfiguration* configuration;
+		JDomainManager* domain_manager;
+		gchar* uuid;
+	} connection;
+
+	struct
+	{
+		GPtrArray* thread_cq_array; // for registration in waking threads
+		GMutex* thread_cq_array_mutex; // for registration in waking threads
+		volatile gboolean* server_running;
+		volatile gboolean* thread_running;
+		volatile gint* thread_count;
+		JStatistics* j_statistics;
+		GMutex* j_statistics_mutex;
+	} julea_state;
+};
+typedef struct ThreadData ThreadData;
+
+
 static JFabric* jfabric;
 
 static volatile gboolean* j_thread_running;
@@ -147,12 +173,7 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 	}
 
 end:
-	g_free(((ThreadData*)thread_data)->connection.uuid);
-	fi_freeinfo(((ThreadData*)thread_data)->connection.msg_event->info);
-	fi_freeinfo(((ThreadData*)thread_data)->connection.rdma_event->info);
-	free(((ThreadData*)thread_data)->connection.msg_event);
-	free(((ThreadData*)thread_data)->connection.rdma_event);
-	free((ThreadData*)thread_data);
+	j_thread_data_free((ThreadData*)thread_data);
 
 	free(event_entry);
 	return ret_msg && ret_rdma;
@@ -214,8 +235,8 @@ j_thread_function(gpointer thread_data)
 
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 
-	jfabric = ((ThreadData*)thread_data)->connection.fabric;
-	jd_configuration = ((ThreadData*)thread_data)->connection.j_configuration;
+	jfabric = ((ThreadData*)thread_data)->connection.jfabric;
+	jd_configuration = ((ThreadData*)thread_data)->connection.configuration;
 	domain_manager = ((ThreadData*)thread_data)->connection.domain_manager;
 	j_thread_running = ((ThreadData*)thread_data)->julea_state.thread_running;
 	j_server_running = ((ThreadData*)thread_data)->julea_state.server_running;
@@ -224,6 +245,7 @@ j_thread_function(gpointer thread_data)
 	thread_count = ((ThreadData*)thread_data)->julea_state.thread_count;
 	j_statistics = ((ThreadData*)thread_data)->julea_state.j_statistics;
 	j_statistics_mutex = ((ThreadData*)thread_data)->julea_state.j_statistics_mutex;
+
 
 	message = NULL;
 
@@ -320,4 +342,92 @@ end:
 
 	g_thread_exit(NULL);
 	return NULL;
+}
+
+
+ThreadData*
+j_thread_data_new(JConfiguration* configuration_in,
+									JFabric* jfabric_in,
+									JDomainManager* domain_manager_in,
+									gchar* uuid_in,
+									GPtrArray* thread_cq_array_in,
+									GMutex* thread_cq_array_mutex_in,
+									volatile gboolean* server_running_in,
+									volatile gboolean* thread_running_in,
+									volatile gint* thread_count_in,
+									JStatistics* j_statistics_in,
+									GMutex* j_statistics_mutex_in)
+{
+	ThreadData* thread_data;
+
+	thread_data = malloc(sizeof(ThreadData));
+
+	thread_data->connection.rdma_event = NULL;
+	thread_data->connection.msg_event = NULL;
+	thread_data->connection.jfabric = jfabric_in;
+	thread_data->connection.configuration = configuration_in;
+	thread_data->connection.domain_manager = domain_manager_in;
+	thread_data->connection.uuid = g_strdup(uuid_in);
+	thread_data->julea_state.thread_cq_array = thread_cq_array_in;
+	thread_data->julea_state.thread_cq_array_mutex = thread_cq_array_mutex_in;
+	thread_data->julea_state.server_running = server_running_in;
+	thread_data->julea_state.thread_running = thread_running_in;
+	thread_data->julea_state.thread_count = thread_count_in;
+	thread_data->julea_state.j_statistics = j_statistics_in;
+	thread_data->julea_state.j_statistics_mutex = j_statistics_mutex_in;
+
+	return thread_data;
+}
+
+void
+j_thread_data_free(ThreadData* thread_data)
+{
+	g_free(thread_data->connection.uuid);
+	if(thread_data->connection.msg_event != NULL)
+	{
+		fi_freeinfo(thread_data->connection.msg_event->info);
+		free(thread_data->connection.msg_event);
+	}
+	if(thread_data->connection.rdma_event != NULL)
+	{
+		fi_freeinfo(thread_data->connection.rdma_event->info);
+		free(thread_data->connection.rdma_event);
+	}
+	free(thread_data);
+}
+
+void
+j_thread_data_set_rdma_event(ThreadData* thread_data, struct fi_eq_cm_entry* event_entry)
+{
+	thread_data->connection.rdma_event = event_entry;
+}
+
+void
+j_thread_data_set_msg_event(ThreadData* thread_data, struct fi_eq_cm_entry* event_entry)
+{
+	thread_data->connection.msg_event = event_entry;
+}
+
+gboolean
+j_thread_data_check_completion(ThreadData* thread_data)
+{
+	return thread_data->connection.rdma_event != NULL && thread_data->connection.msg_event != NULL;
+}
+
+struct fi_eq_cm_entry*
+j_thread_data_get_msg_event(ThreadData* thread_data)
+{
+	return thread_data->connection.msg_event;
+}
+
+struct fi_eq_cm_entry*
+j_thread_data_get_rdma_event(ThreadData* thread_data)
+{
+	return thread_data->connection.rdma_event;
+}
+
+gchar*
+j_thread_data_get_uuid(ThreadData* thread_data)
+{
+	return thread_data->connection.uuid;
 }
