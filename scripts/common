@@ -87,7 +87,6 @@ set_pkg_config_path ()
 		PKG_CONFIG_PATH="${JULEA_PREFIX}/lib64/pkgconfig:${JULEA_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${JULEA_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
-		test -d "${build_dir}/meson-uninstalled" || return 0
 
 		PKG_CONFIG_PATH="${build_dir}/meson-uninstalled:${PKG_CONFIG_PATH}"
 	fi
