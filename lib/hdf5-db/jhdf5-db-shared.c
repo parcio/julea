@@ -41,8 +41,7 @@
 
 #define JULEA_DB 530
 
-static
-char*
+static char*
 H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -65,8 +64,7 @@ H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
 	return str;
 }
 
-static
-void
+static void
 H5VL_julea_db_error_handler(GError* error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -77,8 +75,7 @@ H5VL_julea_db_error_handler(GError* error)
 	}
 }
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_object_ref(JHDF5Object_t* object)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -88,8 +85,7 @@ H5VL_julea_db_object_ref(JHDF5Object_t* object)
 	g_atomic_int_inc(&object->ref_count);
 	return object;
 }
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_object_new(JHDF5ObjectType type)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -105,8 +101,7 @@ H5VL_julea_db_object_new(JHDF5ObjectType type)
 	object->type = type;
 	return object;
 }
-static
-void
+static void
 H5VL_julea_db_object_unref(JHDF5Object_t* object)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -115,46 +110,46 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 	{
 		switch (object->type)
 		{
-		case J_HDF5_OBJECT_TYPE_FILE:
-			g_free(object->file.name);
-			break;
-		case J_HDF5_OBJECT_TYPE_DATASET:
-			H5VL_julea_db_object_unref(object->dataset.file);
-			g_free(object->dataset.name);
-			if (object->dataset.distribution)
-			{
-				j_distribution_unref(object->dataset.distribution);
-			}
-			if (object->dataset.object)
-			{
-				j_distributed_object_unref(object->dataset.object);
-			}
-			break;
-		case J_HDF5_OBJECT_TYPE_ATTR:
-			H5VL_julea_db_object_unref(object->attr.file);
-			g_free(object->attr.name);
-			if (object->attr.distribution)
-			{
-				j_distribution_unref(object->attr.distribution);
-			}
-			if (object->attr.object)
-			{
-				j_distributed_object_unref(object->attr.object);
-			}
-			break;
-		case J_HDF5_OBJECT_TYPE_GROUP:
-			H5VL_julea_db_object_unref(object->group.file);
-			g_free(object->group.name);
-			break;
-		case J_HDF5_OBJECT_TYPE_DATATYPE:
-			g_free(object->datatype.data);
-			break;
-		case J_HDF5_OBJECT_TYPE_SPACE:
-			g_free(object->space.data);
-			break;
-		case _J_HDF5_OBJECT_TYPE_COUNT:
-		default:
-			g_assert_not_reached();
+			case J_HDF5_OBJECT_TYPE_FILE:
+				g_free(object->file.name);
+				break;
+			case J_HDF5_OBJECT_TYPE_DATASET:
+				H5VL_julea_db_object_unref(object->dataset.file);
+				g_free(object->dataset.name);
+				if (object->dataset.distribution)
+				{
+					j_distribution_unref(object->dataset.distribution);
+				}
+				if (object->dataset.object)
+				{
+					j_distributed_object_unref(object->dataset.object);
+				}
+				break;
+			case J_HDF5_OBJECT_TYPE_ATTR:
+				H5VL_julea_db_object_unref(object->attr.file);
+				g_free(object->attr.name);
+				if (object->attr.distribution)
+				{
+					j_distribution_unref(object->attr.distribution);
+				}
+				if (object->attr.object)
+				{
+					j_distributed_object_unref(object->attr.object);
+				}
+				break;
+			case J_HDF5_OBJECT_TYPE_GROUP:
+				H5VL_julea_db_object_unref(object->group.file);
+				g_free(object->group.name);
+				break;
+			case J_HDF5_OBJECT_TYPE_DATATYPE:
+				g_free(object->datatype.data);
+				break;
+			case J_HDF5_OBJECT_TYPE_SPACE:
+				g_free(object->space.data);
+				break;
+			case _J_HDF5_OBJECT_TYPE_COUNT:
+			default:
+				g_assert_not_reached();
 		}
 		g_free(object->backend_id);
 		g_free(object);

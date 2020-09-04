@@ -42,13 +42,10 @@
 
 #define _GNU_SOURCE
 
-static
-JDBSchema* julea_db_schema_space_header = NULL;
-static
-JDBSchema* julea_db_schema_space = NULL;
+static JDBSchema* julea_db_schema_space_header = NULL;
+static JDBSchema* julea_db_schema_space = NULL;
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_space_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -65,8 +62,7 @@ H5VL_julea_db_space_term(void)
 	julea_db_schema_space = NULL;
 	return 0;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_space_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -191,8 +187,7 @@ _error:
 	return 1;
 }
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_space_decode(void* backend_id, guint64 backend_id_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -247,8 +242,7 @@ _error:
 	return NULL;
 }
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_space_encode(hid_t* type_id)
 {
 	J_TRACE_FUNCTION(NULL);

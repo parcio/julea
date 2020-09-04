@@ -45,11 +45,9 @@
 
 #define _GNU_SOURCE
 
-static
-JDBSchema* julea_db_schema_file = NULL;
+static JDBSchema* julea_db_schema_file = NULL;
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -62,8 +60,7 @@ H5VL_julea_db_file_term(void)
 	return 0;
 }
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -138,10 +135,9 @@ _error:
 	return 1;
 }
 
-static
-void*
+static void*
 H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id,
-	hid_t fapl_id, hid_t dxpl_id, void** req)
+			  hid_t fapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -252,8 +248,7 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return NULL;
 }
-static
-void*
+static void*
 H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -307,8 +302,7 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return NULL;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -320,10 +314,9 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type,
-	hid_t dxpl_id, void** req, va_list arguments)
+			    hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -334,8 +327,7 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type,
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -347,8 +339,7 @@ H5VL_julea_db_file_optional(void* obj, hid_t dxpl_id, void** req, va_list argume
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_file_close(void* obj, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);

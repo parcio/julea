@@ -44,11 +44,9 @@
 
 #define _GNU_SOURCE
 
-static
-JDBSchema* julea_db_schema_dataset = NULL;
+static JDBSchema* julea_db_schema_dataset = NULL;
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -61,8 +59,7 @@ H5VL_julea_db_dataset_term(void)
 	return 0;
 }
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -174,8 +171,7 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return 1;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_truncate_file(void* obj)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -221,11 +217,10 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return 1;
 }
-static
-void*
+static void*
 H5VL_julea_db_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name,
-	hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id,
-	hid_t dapl_id, hid_t dxpl_id, void** req)
+			     hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id,
+			     hid_t dapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -244,24 +239,24 @@ H5VL_julea_db_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, con
 
 	switch (parent->type)
 	{
-	case J_HDF5_OBJECT_TYPE_FILE:
-		file = parent;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATASET:
-		file = parent->dataset.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_ATTR:
-		file = parent->attr.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_GROUP:
-		file = parent->group.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATATYPE:
-	case J_HDF5_OBJECT_TYPE_SPACE:
-	case _J_HDF5_OBJECT_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
-		j_goto_error();
+		case J_HDF5_OBJECT_TYPE_FILE:
+			file = parent;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			file = parent->dataset.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			file = parent->attr.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			file = parent->group.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+		case J_HDF5_OBJECT_TYPE_SPACE:
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+		default:
+			g_assert_not_reached();
+			j_goto_error();
 	}
 
 	if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
@@ -349,10 +344,9 @@ _error:
 	H5VL_julea_db_object_unref(object);
 	return NULL;
 }
-static
-void*
+static void*
 H5VL_julea_db_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name,
-	hid_t dapl_id, hid_t dxpl_id, void** req)
+			   hid_t dapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -378,24 +372,24 @@ H5VL_julea_db_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const
 
 	switch (parent->type)
 	{
-	case J_HDF5_OBJECT_TYPE_FILE:
-		file = parent;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATASET:
-		file = parent->dataset.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_ATTR:
-		file = parent->attr.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_GROUP:
-		file = parent->group.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATATYPE:
-	case J_HDF5_OBJECT_TYPE_SPACE:
-	case _J_HDF5_OBJECT_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
-		j_goto_error();
+		case J_HDF5_OBJECT_TYPE_FILE:
+			file = parent;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			file = parent->dataset.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			file = parent->attr.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			file = parent->group.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+		case J_HDF5_OBJECT_TYPE_SPACE:
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+		default:
+			g_assert_not_reached();
+			j_goto_error();
 	}
 
 	if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
@@ -500,8 +494,7 @@ struct JHDF5IndexRange
 };
 typedef struct JHDF5IndexRange JHDF5IndexRange;
 
-static
-GArray*
+static GArray*
 H5VL_julea_db_space_hdf5_to_range(hid_t mem_space_id, hid_t stored_space_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -529,175 +522,175 @@ H5VL_julea_db_space_hdf5_to_range(hid_t mem_space_id, hid_t stored_space_id)
 	}
 	switch (sel_type)
 	{
-	case H5S_SEL_POINTS:
-	{
-		hssize_t npoints = 0;
-		hssize_t point_current = 0;
-		hssize_t point_current_index = 0;
-		g_autofree hsize_t* point_current_arr = NULL;
-		guint skipsize;
+		case H5S_SEL_POINTS:
+		{
+			hssize_t npoints = 0;
+			hssize_t point_current = 0;
+			hssize_t point_current_index = 0;
+			g_autofree hsize_t* point_current_arr = NULL;
+			guint skipsize;
 
-		point_current_arr = g_new(hsize_t, stored_ndims);
-		if ((npoints = H5Sget_select_elem_npoints(mem_space_id)) <= 0)
-		{
-			j_goto_error();
-		}
-	_start:
-		while (point_current_index < npoints)
-		{
-			if (H5Sget_select_elem_pointlist(mem_space_id, point_current_index, 1, point_current_arr) < 0)
+			point_current_arr = g_new(hsize_t, stored_ndims);
+			if ((npoints = H5Sget_select_elem_npoints(mem_space_id)) <= 0)
 			{
 				j_goto_error();
 			}
-			point_current = point_current_arr[stored_ndims - 1];
-			skipsize = stored_dims[stored_ndims - 1];
-			for (i = 2; i <= (guint)stored_ndims; i++)
+		_start:
+			while (point_current_index < npoints)
 			{
-				point_current += point_current_arr[stored_ndims - i] * skipsize;
-				skipsize *= stored_dims[stored_ndims - i];
+				if (H5Sget_select_elem_pointlist(mem_space_id, point_current_index, 1, point_current_arr) < 0)
+				{
+					j_goto_error();
+				}
+				point_current = point_current_arr[stored_ndims - 1];
+				skipsize = stored_dims[stored_ndims - 1];
+				for (i = 2; i <= (guint)stored_ndims; i++)
+				{
+					point_current += point_current_arr[stored_ndims - i] * skipsize;
+					skipsize *= stored_dims[stored_ndims - i];
+				}
+				if (range_valid)
+				{
+					if ((guint64)point_current == range.stop + 1)
+					{
+						range.stop++;
+					}
+					else
+					{
+						g_array_append_val(range_arr, range);
+						range.start = point_current;
+						range.stop = point_current;
+					}
+				}
+				else
+				{
+					range.start = point_current;
+					range.stop = point_current;
+					range_valid = TRUE;
+					goto _start;
+				}
+				point_current_index++;
 			}
 			if (range_valid)
 			{
-				if ((guint64)point_current == range.stop + 1)
-				{
-					range.stop++;
-				}
-				else
-				{
-					g_array_append_val(range_arr, range);
-					range.start = point_current;
-					range.stop = point_current;
-				}
+				g_array_append_val(range_arr, range);
 			}
-			else
-			{
-				range.start = point_current;
-				range.stop = point_current;
-				range_valid = TRUE;
-				goto _start;
-			}
-			point_current_index++;
 		}
-		if (range_valid)
+		break;
+		case H5S_SEL_HYPERSLABS:
 		{
-			g_array_append_val(range_arr, range);
-		}
-	}
-	break;
-	case H5S_SEL_HYPERSLABS:
-	{
-		g_autofree hsize_t* hyperspab_counters = NULL;
-		g_autofree hsize_t* hyperspab_coordinates = NULL;
-		g_autofree hsize_t* hyperspab_skip_size = NULL;
-		hssize_t hyperslab_count;
-		hssize_t hyperslab_index;
-		gint current_counter;
-		gboolean found;
-		gboolean first;
+			g_autofree hsize_t* hyperspab_counters = NULL;
+			g_autofree hsize_t* hyperspab_coordinates = NULL;
+			g_autofree hsize_t* hyperspab_skip_size = NULL;
+			hssize_t hyperslab_count;
+			hssize_t hyperslab_index;
+			gint current_counter;
+			gboolean found;
+			gboolean first;
 
-		if ((hyperslab_count = H5Sget_select_hyper_nblocks(mem_space_id)) < 0)
-		{
-			j_goto_error();
-		}
-		hyperspab_coordinates = g_new(hsize_t, stored_ndims * 2);
-		hyperspab_counters = g_new(hsize_t, stored_ndims);
-		hyperspab_skip_size = g_new(hsize_t, stored_ndims);
-		hyperspab_skip_size[stored_ndims - 1] = 1;
-		for (i = stored_ndims - 1; i > 0; i--)
-		{
-			hyperspab_skip_size[i - 1] = hyperspab_skip_size[i] * stored_dims[i];
-		}
-		//iterate over all hyperslabs
-		for (hyperslab_index = 0; hyperslab_index < hyperslab_count; hyperslab_index++)
-		{
-			if (H5Sget_select_hyper_blocklist(mem_space_id, hyperslab_index, 1, hyperspab_coordinates) < 0)
+			if ((hyperslab_count = H5Sget_select_hyper_nblocks(mem_space_id)) < 0)
 			{
 				j_goto_error();
 			}
-
-			for (i = 0; i < (guint)stored_ndims; i++)
+			hyperspab_coordinates = g_new(hsize_t, stored_ndims * 2);
+			hyperspab_counters = g_new(hsize_t, stored_ndims);
+			hyperspab_skip_size = g_new(hsize_t, stored_ndims);
+			hyperspab_skip_size[stored_ndims - 1] = 1;
+			for (i = stored_ndims - 1; i > 0; i--)
 			{
-				hyperspab_counters[i] = hyperspab_coordinates[i];
+				hyperspab_skip_size[i - 1] = hyperspab_skip_size[i] * stored_dims[i];
 			}
-			current_counter = stored_ndims - 1;
-			first = TRUE;
-			//within a hyperslab - iterate over the dimensions
-
-			do
+			//iterate over all hyperslabs
+			for (hyperslab_index = 0; hyperslab_index < hyperslab_count; hyperslab_index++)
 			{
-				//update current counter
-				found = FALSE;
-				while (current_counter >= 0)
+				if (H5Sget_select_hyper_blocklist(mem_space_id, hyperslab_index, 1, hyperspab_coordinates) < 0)
 				{
-					if ((hyperspab_counters[current_counter] < hyperspab_coordinates[stored_ndims + current_counter]) || first)
-					{
-						found = TRUE;
-						first = FALSE;
-						break;
-					}
-					for (i = 0; i < (guint)stored_ndims; i++)
-					{
-						//reset counters
-						hyperspab_counters[current_counter] = hyperspab_coordinates[i];
-					}
-					current_counter--;
+					j_goto_error();
 				}
-				if (!found)
-				{
-					break;
-				}
-				//calculate output range
-				range_tmp.start = 0;
+
 				for (i = 0; i < (guint)stored_ndims; i++)
 				{
-					range_tmp.start += hyperspab_counters[i] * hyperspab_skip_size[i];
+					hyperspab_counters[i] = hyperspab_coordinates[i];
 				}
-				range_tmp.stop = range_tmp.start + hyperspab_coordinates[stored_ndims * 2 - 1] - hyperspab_coordinates[stored_ndims - 1];
-				if (!range_valid)
+				current_counter = stored_ndims - 1;
+				first = TRUE;
+				//within a hyperslab - iterate over the dimensions
+
+				do
 				{
-					range.start = range_tmp.start;
-					range.stop = range_tmp.stop;
-					range_valid = TRUE;
-				}
-				else
-				{
-					if (range.stop + 1 == range_tmp.start)
-					{ //merge consecutive ranges
-						range.stop = range_tmp.stop;
+					//update current counter
+					found = FALSE;
+					while (current_counter >= 0)
+					{
+						if ((hyperspab_counters[current_counter] < hyperspab_coordinates[stored_ndims + current_counter]) || first)
+						{
+							found = TRUE;
+							first = FALSE;
+							break;
+						}
+						for (i = 0; i < (guint)stored_ndims; i++)
+						{
+							//reset counters
+							hyperspab_counters[current_counter] = hyperspab_coordinates[i];
+						}
+						current_counter--;
 					}
-					else
-					{ //append range if the next has a gap
-						g_array_append_val(range_arr, range);
+					if (!found)
+					{
+						break;
+					}
+					//calculate output range
+					range_tmp.start = 0;
+					for (i = 0; i < (guint)stored_ndims; i++)
+					{
+						range_tmp.start += hyperspab_counters[i] * hyperspab_skip_size[i];
+					}
+					range_tmp.stop = range_tmp.start + hyperspab_coordinates[stored_ndims * 2 - 1] - hyperspab_coordinates[stored_ndims - 1];
+					if (!range_valid)
+					{
 						range.start = range_tmp.start;
 						range.stop = range_tmp.stop;
+						range_valid = TRUE;
 					}
-				}
-				hyperspab_counters[current_counter]++;
-			} while (1);
+					else
+					{
+						if (range.stop + 1 == range_tmp.start)
+						{ //merge consecutive ranges
+							range.stop = range_tmp.stop;
+						}
+						else
+						{ //append range if the next has a gap
+							g_array_append_val(range_arr, range);
+							range.start = range_tmp.start;
+							range.stop = range_tmp.stop;
+						}
+					}
+					hyperspab_counters[current_counter]++;
+				} while (1);
+			}
+			if (range_valid)
+			{
+				g_array_append_val(range_arr, range);
+			}
 		}
-		if (range_valid)
+		break;
+		case H5S_SEL_ALL:
 		{
+			range.start = 0;
+			range.stop = 1;
+			for (i = 0; i < (guint)stored_ndims; i++)
+			{
+				range.stop *= stored_dims[i];
+			}
 			g_array_append_val(range_arr, range);
 		}
-	}
-	break;
-	case H5S_SEL_ALL:
-	{
-		range.start = 0;
-		range.stop = 1;
-		for (i = 0; i < (guint)stored_ndims; i++)
-		{
-			range.stop *= stored_dims[i];
-		}
-		g_array_append_val(range_arr, range);
-	}
-	break;
-	case H5S_SEL_N:
-	case H5S_SEL_ERROR:
-	case H5S_SEL_NONE:
-	default:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
+		break;
+		case H5S_SEL_N:
+		case H5S_SEL_ERROR:
+		case H5S_SEL_NONE:
+		default:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
 	}
 	//TODO for speedup: sort the array of ranges and merge if possible
 	return range_arr;
@@ -706,19 +699,18 @@ _error:
 	return NULL;
 }
 
-#define calculate_statistics_helper(_buf, _target_extension)                                    \
-	do                                                                                      \
-	{                                                                                       \
-		for (i = 0; i < n; i++)                                                         \
-		{                                                                               \
-			if (_buf < object->dataset.statistics.min_value##_target_extension)     \
+#define calculate_statistics_helper(_buf, _target_extension) \
+	do \
+	{ \
+		for (i = 0; i < n; i++) \
+		{ \
+			if (_buf < object->dataset.statistics.min_value##_target_extension) \
 				object->dataset.statistics.min_value##_target_extension = _buf; \
-			if (_buf > object->dataset.statistics.max_value##_target_extension)     \
+			if (_buf > object->dataset.statistics.max_value##_target_extension) \
 				object->dataset.statistics.max_value##_target_extension = _buf; \
-		}                                                                               \
+		} \
 	} while (0)
-static
-void
+static void
 calculate_statistics(JHDF5Object_t* object, const void* buf, gsize bytes, hid_t memory_type)
 {
 	guint i;
@@ -779,10 +771,9 @@ calculate_statistics(JHDF5Object_t* object, const void* buf, gsize bytes, hid_t 
 	}
 }
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_write(void* obj, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id,
-	hid_t xfer_plist_id, const void* buf, void** req)
+			    hid_t xfer_plist_id, const void* buf, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -866,10 +857,9 @@ H5VL_julea_db_dataset_write(void* obj, hid_t mem_type_id, hid_t mem_space_id, hi
 _error:
 	return 1;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_read(void* obj, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id,
-	hid_t xfer_plist_id, void* buf, void** req)
+			   hid_t xfer_plist_id, void* buf, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -956,8 +946,7 @@ H5VL_julea_db_dataset_read(void* obj, hid_t mem_type_id, hid_t mem_space_id, hid
 _error:
 	return 1;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -968,27 +957,26 @@ H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id,
 
 	switch (get_type)
 	{
-	case H5VL_DATASET_GET_SPACE:
-		*(va_arg(arguments, hid_t*)) = object->dataset.space->space.hdf5_id;
-		break;
-	case H5VL_DATASET_GET_TYPE:
-		*(va_arg(arguments, hid_t*)) = object->dataset.datatype->datatype.hdf5_id;
-		break;
-	case H5VL_DATASET_GET_DAPL:
-	case H5VL_DATASET_GET_DCPL:
-	case H5VL_DATASET_GET_OFFSET:
-	case H5VL_DATASET_GET_SPACE_STATUS:
-	case H5VL_DATASET_GET_STORAGE_SIZE:
-	default:
-		g_assert_not_reached();
-		exit(1);
+		case H5VL_DATASET_GET_SPACE:
+			*(va_arg(arguments, hid_t*)) = object->dataset.space->space.hdf5_id;
+			break;
+		case H5VL_DATASET_GET_TYPE:
+			*(va_arg(arguments, hid_t*)) = object->dataset.datatype->datatype.hdf5_id;
+			break;
+		case H5VL_DATASET_GET_DAPL:
+		case H5VL_DATASET_GET_DCPL:
+		case H5VL_DATASET_GET_OFFSET:
+		case H5VL_DATASET_GET_SPACE_STATUS:
+		case H5VL_DATASET_GET_STORAGE_SIZE:
+		default:
+			g_assert_not_reached();
+			exit(1);
 	}
 	return 0;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type,
-	hid_t dxpl_id, void** req, va_list arguments)
+			       hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -999,8 +987,7 @@ H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type,
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1012,8 +999,7 @@ H5VL_julea_db_dataset_optional(void* obj, hid_t dxpl_id, void** req, va_list arg
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_dataset_close(void* obj, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);

@@ -41,15 +41,12 @@
 
 #define _GNU_SOURCE
 
-static
-JDBSchema* julea_db_schema_datatype_header = NULL;
+static JDBSchema* julea_db_schema_datatype_header = NULL;
 #define _bswap16(a, b) *(guint16*)b = (((*(const guint16*)a) & 0x00FF) << 8) | (((*(const guint16*)a) & 0xFF00) >> 8)
 #define _bswap32(a, b) *(guint32*)b = (((*(const guint32*)a) & 0x000000FF) << 24) | (((*(const guint32*)a) & 0x0000FF00) << 8) | (((*(const guint32*)a) & 0x00FF0000) >> 8) | (((*(const guint32*)a) & 0xFF000000) >> 24)
-#define _bswap64(a, b) *(guint64*)b = (((*(const guint64*)a) & 0x00000000000000FFULL) << 56) | (((*(const guint64*)a) & 0x000000000000FF00ULL) << 40) | (((*(const guint64*)a) & 0x0000000000FF0000ULL) << 24) | \
-	(((*(const guint64*)a) & 0x00000000FF000000ULL) << 8) | (((*(const guint64*)a) & 0x000000FF00000000ULL) >> 8) | (((*(const guint64*)a) & 0x0000FF0000000000ULL) >> 24) | (((*(const guint64*)a) & 0x00FF000000000000ULL) >> 40) | (((*(const guint64*)a) & 0xFF00000000000000ULL) >> 56)
+#define _bswap64(a, b) *(guint64*)b = (((*(const guint64*)a) & 0x00000000000000FFULL) << 56) | (((*(const guint64*)a) & 0x000000000000FF00ULL) << 40) | (((*(const guint64*)a) & 0x0000000000FF0000ULL) << 24) | (((*(const guint64*)a) & 0x00000000FF000000ULL) << 8) | (((*(const guint64*)a) & 0x000000FF00000000ULL) >> 8) | (((*(const guint64*)a) & 0x0000FF0000000000ULL) >> 24) | (((*(const guint64*)a) & 0x00FF000000000000ULL) >> 40) | (((*(const guint64*)a) & 0xFF00000000000000ULL) >> 56)
 
-static
-const void*
+static const void*
 H5VL_julea_db_datatype_convert_type_change(hid_t type_id_from, hid_t type_id_to, const char* from_buf, char* target_buf, guint count)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -58,52 +55,51 @@ H5VL_julea_db_datatype_convert_type_change(hid_t type_id_from, hid_t type_id_to,
 	g_assert(H5Tget_size(type_id_from) == H5Tget_size(type_id_to));
 	switch (H5Tget_class(type_id_from))
 	{
-	case H5T_FLOAT: // no conversion
-		break;
-	case H5T_INTEGER: // no conversion
-		break;
-	case H5T_STRING:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_BITFIELD:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_OPAQUE:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_COMPOUND:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_REFERENCE:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_ENUM:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_VLEN:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_ARRAY:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_NO_CLASS:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_TIME:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	case H5T_NCLASSES:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
-	default:
-		g_critical("%s NOT implemented !!", G_STRLOC);
-		abort();
+		case H5T_FLOAT: // no conversion
+			break;
+		case H5T_INTEGER: // no conversion
+			break;
+		case H5T_STRING:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_BITFIELD:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_OPAQUE:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_COMPOUND:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_REFERENCE:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_ENUM:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_VLEN:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_ARRAY:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_NO_CLASS:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_TIME:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		case H5T_NCLASSES:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
+		default:
+			g_critical("%s NOT implemented !!", G_STRLOC);
+			abort();
 	}
 	return target_buf;
 }
 
-static
-const void*
+static const void*
 H5VL_julea_db_datatype_convert_type(hid_t type_id_from, hid_t type_id_to, const char* from_buf, char* tmp_buf, guint count)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -114,8 +110,7 @@ H5VL_julea_db_datatype_convert_type(hid_t type_id_from, hid_t type_id_to, const 
 	}
 	return H5VL_julea_db_datatype_convert_type_change(type_id_from, type_id_to, from_buf, tmp_buf, count);
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -127,8 +122,7 @@ H5VL_julea_db_datatype_term(void)
 	julea_db_schema_datatype_header = NULL;
 	return 0;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -237,8 +231,7 @@ _error:
 	return 1;
 }
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_datatype_decode(void* backend_id, guint64 backend_id_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -298,8 +291,7 @@ _error:
 	return NULL;
 }
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_datatype_encode(hid_t* type_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -460,28 +452,25 @@ _error:
 	return NULL;
 }
 
-static
-void*
+static void*
 H5VL_julea_db_datatype_commit(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t type_id,
-	hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id, void** req)
+			      hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-void*
+static void*
 H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name,
-	hid_t tapl_id, hid_t dxpl_id, void** req)
+			    hid_t tapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -489,18 +478,16 @@ H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_i
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_type,
-	hid_t dxpl_id, void** req, va_list arguments)
+				hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -508,8 +495,7 @@ H5VL_julea_db_datatype_optional(void* obj, hid_t dxpl_id, void** req, va_list ar
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);

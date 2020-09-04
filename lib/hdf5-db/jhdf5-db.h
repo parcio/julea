@@ -105,29 +105,24 @@ struct JHDF5Object_t
 
 /*internal helper functions*/
 
-static
-void
+static void
 H5VL_julea_db_error_handler(GError* error);
-static
-char*
+static char*
 H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len);
 
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_object_new(JHDF5ObjectType type);
-static
-JHDF5Object_t*
+static JHDF5Object_t*
 H5VL_julea_db_object_ref(JHDF5Object_t* object);
-static
-void
+static void
 H5VL_julea_db_object_unref(JHDF5Object_t* object);
 
-#define j_goto_error()                   \
-	do                               \
-	{                                \
-		G_DEBUG_HERE();          \
+#define j_goto_error() \
+	do \
+	{ \
+		G_DEBUG_HERE(); \
 		g_debug("goto _error;"); \
-		goto _error;             \
+		goto _error; \
 	} while (0)
 
 #endif

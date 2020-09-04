@@ -43,11 +43,9 @@
 
 #define _GNU_SOURCE
 
-static
-JDBSchema* julea_db_schema_group = NULL;
+static JDBSchema* julea_db_schema_group = NULL;
 
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -59,8 +57,7 @@ H5VL_julea_db_group_term(void)
 	julea_db_schema_group = NULL;
 	return 0;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -148,8 +145,7 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return 1;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_truncate_file(void* obj)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -195,10 +191,9 @@ _error:
 	H5VL_julea_db_error_handler(error);
 	return 1;
 }
-static
-void*
+static void*
 H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name,
-	hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req)
+			   hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -217,24 +212,24 @@ H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const
 
 	switch (parent->type)
 	{
-	case J_HDF5_OBJECT_TYPE_FILE:
-		file = parent;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATASET:
-		file = parent->dataset.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_ATTR:
-		file = parent->attr.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_GROUP:
-		file = parent->group.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATATYPE:
-	case J_HDF5_OBJECT_TYPE_SPACE:
-	case _J_HDF5_OBJECT_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
-		j_goto_error();
+		case J_HDF5_OBJECT_TYPE_FILE:
+			file = parent;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			file = parent->dataset.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			file = parent->attr.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			file = parent->group.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+		case J_HDF5_OBJECT_TYPE_SPACE:
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+		default:
+			g_assert_not_reached();
+			j_goto_error();
 	}
 
 	if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
@@ -283,10 +278,9 @@ _error:
 	H5VL_julea_db_object_unref(object);
 	return NULL;
 }
-static
-void*
+static void*
 H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name,
-	hid_t gapl_id, hid_t dxpl_id, void** req)
+			 hid_t gapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -302,24 +296,24 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 
 	switch (parent->type)
 	{
-	case J_HDF5_OBJECT_TYPE_FILE:
-		file = parent;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATASET:
-		file = parent->dataset.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_ATTR:
-		file = parent->attr.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_GROUP:
-		file = parent->group.file;
-		break;
-	case J_HDF5_OBJECT_TYPE_DATATYPE:
-	case J_HDF5_OBJECT_TYPE_SPACE:
-	case _J_HDF5_OBJECT_TYPE_COUNT:
-	default:
-		g_assert_not_reached();
-		j_goto_error();
+		case J_HDF5_OBJECT_TYPE_FILE:
+			file = parent;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			file = parent->dataset.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			file = parent->attr.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			file = parent->group.file;
+			break;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+		case J_HDF5_OBJECT_TYPE_SPACE:
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+		default:
+			g_assert_not_reached();
+			j_goto_error();
 	}
 
 	if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
@@ -347,8 +341,7 @@ _error:
 	H5VL_julea_db_object_unref(object);
 	return NULL;
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -360,10 +353,9 @@ H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, voi
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type,
-	hid_t dxpl_id, void** req, va_list arguments)
+			     hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -374,8 +366,7 @@ H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type,
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -387,8 +378,7 @@ H5VL_julea_db_group_optional(void* obj, hid_t dxpl_id, void** req, va_list argum
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-static
-herr_t
+static herr_t
 H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
