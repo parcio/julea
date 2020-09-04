@@ -76,6 +76,12 @@ if meson.get_compiler('c').get_id() == 'clang'
 	add_project_arguments('-Wno-newline-eof', language: 'c')
 endif
 
+sanitize_cflags = ''
+
+if get_option('b_sanitize') != 'none'
+	sanitize_cflags = '-fsanitize=' + get_option('b_sanitize')
+endif
+
 # FIXME rpath is not set for dependencies
 # FIXME Also check for pkg-config files in /usr (worked around in environment.sh)
 # FIXME Allow specifying dependency prefixes?
@@ -339,6 +345,7 @@ julea_dep = declare_dependency(link_with: julea_lib)
 
 pkg_config.generate(julea_lib,
 	description: 'Flexible storage framework',
+	extra_cflags: sanitize_cflags,
 	subdirs: 'julea',
 	requires_private: [glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep],
 	url: 'https://github.com/wr-hamburg/julea',
@@ -409,6 +416,7 @@ foreach client, srcs: julea_client_srcs
 	if client != 'hdf5'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
+			extra_cflags: sanitize_cflags,
 			subdirs: 'julea',
 			requires: julea_lib,
 			url: 'https://github.com/wr-hamburg/julea',
