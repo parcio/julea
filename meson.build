@@ -384,7 +384,18 @@ if hdf_dep.found()
 	julea_client_srcs += {
 		'hdf5': files([
 			'lib/hdf5/jhdf5.c',
-		])
+		]),
+#		'hdf5-db': files([
+#			'lib/hdf5-db/jhdf5-db.c',
+#			'lib/hdf5-db/jhdf5-db-attr.c',
+#			'lib/hdf5-db/jhdf5-db-dataset.c',
+#			'lib/hdf5-db/jhdf5-db-datatype.c',
+#			'lib/hdf5-db/jhdf5-db-file.c',
+#			'lib/hdf5-db/jhdf5-db-group.c',
+#			'lib/hdf5-db/jhdf5-db-link.c',
+#			'lib/hdf5-db/jhdf5-db-shared.c',
+#			'lib/hdf5-db/jhdf5-db-space.c',
+#		])
 	}
 endif
 
@@ -400,12 +411,16 @@ foreach client, srcs: julea_client_srcs
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
 		extra_deps += hdf_dep
+	elif client == 'hdf5-db'
+		extra_deps += julea_client_deps['object']
+		extra_deps += julea_client_deps['db']
+		extra_deps += hdf_dep
 	endif
 
 	julea_client_lib = shared_library('julea-@0@'.format(client), julea_client_srcs[client],
 		dependencies: common_deps + [julea_dep] + extra_deps,
 		include_directories: julea_incs,
-		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.to_upper())],
+		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.underscorify().to_upper())],
 		#soversion: meson.project_version().split('.')[0],
 		#version: meson.project_version(),
 		install: true,

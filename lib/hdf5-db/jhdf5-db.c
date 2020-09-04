@@ -20,11 +20,15 @@
  * \file
  **/
 
+// FIXME
+#define H5Sencode_vers 1
+
 #include <julea-config.h>
-#include <julea.h>
-#include <julea-db.h>
-#include <julea-object.h>
+
 #include <glib.h>
+
+#include <hdf5.h>
+#include <H5PLextern.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,10 +38,11 @@
 #include <unistd.h>
 #include <string.h>
 
-#define H5Sencode_vers 1
+#include <hdf5/jhdf5.h>
 
-#include <hdf5.h>
-#include <H5PLextern.h>
+#include <julea.h>
+#include <julea-db.h>
+#include <julea-object.h>
 
 static herr_t
 H5VL_julea_db_attr_init(hid_t vipl_id);
@@ -312,7 +317,7 @@ j_hdf5_init(void)
 	g_debug("julea-db j_hdf5_init");
 	j_hdf5_vol = H5VLregister_connector(&H5VL_julea_db_g, H5P_DEFAULT);
 	g_assert(j_hdf5_vol > 0);
-	g_assert(H5VLis_connector_registered("julea-db") == 1);
+	g_assert(H5VLis_connector_registered_by_name("julea-db") == 1);
 
 	H5VLinitialize(j_hdf5_vol, H5P_DEFAULT);
 
@@ -333,7 +338,7 @@ j_hdf5_fini(void)
 	H5VLterminate(j_hdf5_vol);
 
 	H5VLunregister_connector(j_hdf5_vol);
-	g_assert(H5VLis_connector_registered("julea-db") == 0);
+	g_assert(H5VLis_connector_registered_by_name("julea-db") == 0);
 }
 
 hid_t

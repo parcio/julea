@@ -965,7 +965,6 @@ H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id,
 			break;
 		case H5VL_DATASET_GET_DAPL:
 		case H5VL_DATASET_GET_DCPL:
-		case H5VL_DATASET_GET_OFFSET:
 		case H5VL_DATASET_GET_SPACE_STATUS:
 		case H5VL_DATASET_GET_STORAGE_SIZE:
 		default:

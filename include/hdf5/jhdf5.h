@@ -23,7 +23,7 @@
 #ifndef JULEA_HDF5_HDF5_H
 #define JULEA_HDF5_HDF5_H
 
-#if !defined(JULEA_HDF5_H) && !defined(JULEA_HDF5_COMPILATION)
+#if !defined(JULEA_HDF5_H) && !defined(JULEA_HDF5_COMPILATION) && !defined(JULEA_HDF5_DB_COMPILATION)
 #error "Only <julea-hdf5.h> can be included directly."
 #endif
 
