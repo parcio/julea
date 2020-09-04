@@ -72,6 +72,7 @@ test_object_read_write(void)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JObject) object = NULL;
 	g_autofree gchar* buffer = NULL;
+	g_autofree gchar* buffer2 = NULL;
 	guint64 max_operation_size;
 	guint64 nbytes = 0;
 	gboolean ret;
@@ -136,6 +137,16 @@ test_object_read_write(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
+
+	buffer2 = g_malloc0(max_operation_size + 1);
+	memset(buffer2, 'j', max_operation_size + 1);
+
+	j_object_write(object, buffer2, max_operation_size + 1, 0, &nbytes, batch);
+	j_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_cmpuint(nbytes, ==, 2 * max_operation_size + 2);
+	g_assert_cmpmem(buffer, max_operation_size + 1, buffer2, max_operation_size + 1);
 
 	j_object_delete(object, batch);
 	ret = j_batch_execute(batch);
