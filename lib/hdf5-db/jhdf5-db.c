@@ -36,7 +36,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <string.h>
 
 #include <hdf5/jhdf5.h>
 
@@ -44,44 +43,34 @@
 #include <julea-db.h>
 #include <julea-object.h>
 
-static herr_t
-H5VL_julea_db_attr_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_attr_term(void);
-static herr_t
-H5VL_julea_db_dataset_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_dataset_term(void);
-static herr_t
-H5VL_julea_db_datatype_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_datatype_term(void);
-static herr_t
-H5VL_julea_db_file_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_file_term(void);
-static herr_t
-H5VL_julea_db_group_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_group_term(void);
-static herr_t
-H5VL_julea_db_space_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_space_term(void);
-static herr_t
-H5VL_julea_db_link_init(hid_t vipl_id);
-static herr_t
-H5VL_julea_db_link_term(void);
+#include "jhdf5-db.h"
+
+static herr_t H5VL_julea_db_attr_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_attr_term(void);
+static herr_t H5VL_julea_db_dataset_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_dataset_term(void);
+static herr_t H5VL_julea_db_datatype_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_datatype_term(void);
+static herr_t H5VL_julea_db_file_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_file_term(void);
+static herr_t H5VL_julea_db_group_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_group_term(void);
+static herr_t H5VL_julea_db_space_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_space_term(void);
+static herr_t H5VL_julea_db_link_init(hid_t vipl_id);
+static herr_t H5VL_julea_db_link_term(void);
 
 #include "jhdf5-db.h"
+
+// FIXME order is important
 #include "jhdf5-db-shared.c"
-#include "jhdf5-db-file.c"
-#include "jhdf5-db-dataset.c"
-#include "jhdf5-db-attr.c"
+#include "jhdf5-db-link.c"
 #include "jhdf5-db-group.c"
 #include "jhdf5-db-datatype.c"
 #include "jhdf5-db-space.c"
-#include "jhdf5-db-link.c"
+#include "jhdf5-db-attr.c"
+#include "jhdf5-db-dataset.c"
+#include "jhdf5-db-file.c"
 
 #define _GNU_SOURCE
 
@@ -97,31 +86,37 @@ H5VL_julea_db_init(hid_t vipl_id)
 		G_DEBUG_HERE();
 		goto _error_file;
 	}
+
 	if (H5VL_julea_db_dataset_init(vipl_id))
 	{
 		G_DEBUG_HERE();
 		goto _error_dataset;
 	}
+
 	if (H5VL_julea_db_attr_init(vipl_id))
 	{
 		G_DEBUG_HERE();
 		goto _error_attr;
 	}
+
 	if (H5VL_julea_db_datatype_init(vipl_id))
 	{
 		G_DEBUG_HERE();
 		goto _error_datatype;
 	}
+
 	if (H5VL_julea_db_group_init(vipl_id))
 	{
 		G_DEBUG_HERE();
 		goto _error_group;
 	}
+
 	if (H5VL_julea_db_space_init(vipl_id))
 	{
 		G_DEBUG_HERE();
 		goto _error_space;
 	}
+
 	if (H5VL_julea_db_link_init(vipl_id))
 	{
 		G_DEBUG_HERE();
@@ -129,18 +124,25 @@ H5VL_julea_db_init(hid_t vipl_id)
 	}
 
 	return 0;
+
 _error_link:
 	H5VL_julea_db_link_term();
+
 _error_space:
 	H5VL_julea_db_space_term();
+
 _error_group:
 	H5VL_julea_db_group_term();
+
 _error_datatype:
 	H5VL_julea_db_datatype_term();
+
 _error_attr:
 	H5VL_julea_db_attr_term();
+
 _error_dataset:
 	H5VL_julea_db_dataset_term();
+
 _error_file:
 	H5VL_julea_db_file_term();
 
@@ -156,38 +158,45 @@ H5VL_julea_db_term(void)
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_space_term())
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_group_term())
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_datatype_term())
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_attr_term())
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_dataset_term())
 	{
 		j_goto_error();
 	}
+
 	if (H5VL_julea_db_file_term())
 	{
 		j_goto_error();
 	}
+
 	return 0;
+
 _error:
 	return 1;
 }
 
 /**
  * The class providing the functions to HDF5
- * @see dependencies/opt/spack/linux-ubuntu19.04-x86_64/gcc-8.3.0/hdf5-develop-4iami4kalqj7xgv2x2uv25dnzvz4xzwf/include/H5VLconnector.h
  **/
 static const H5VL_class_t H5VL_julea_db_g = {
 	.version = 0,
@@ -281,19 +290,12 @@ static const H5VL_class_t H5VL_julea_db_g = {
 	.optional = NULL
 };
 
-static hid_t j_hdf5_fapl = -1;
-static hid_t j_hdf5_vol = -1;
-
-static void __attribute__((constructor)) j_hdf5_init(void);
-static void __attribute__((destructor)) j_hdf5_fini(void);
-
 /**
  * Provides the plugin type
  **/
 H5PL_type_t
 H5PLget_plugin_type(void)
 {
-	g_debug("julea-db H5PLget_plugin_type");
 	return H5PL_TYPE_VOL;
 }
 
@@ -303,18 +305,24 @@ H5PLget_plugin_type(void)
 const void*
 H5PLget_plugin_info(void)
 {
-	g_debug("julea-db H5PLget_plugin_info");
 	return &H5VL_julea_db_g;
 }
+
+static hid_t j_hdf5_fapl = -1;
+static hid_t j_hdf5_vol = -1;
+
+// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+static void __attribute__((constructor)) j_hdf5_init(void);
+static void __attribute__((destructor)) j_hdf5_fini(void);
 
 static void
 j_hdf5_init(void)
 {
-	if ((j_hdf5_fapl != -1) && (j_hdf5_vol != -1))
+	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1)
 	{
 		return;
 	}
-	g_debug("julea-db j_hdf5_init");
+
 	j_hdf5_vol = H5VLregister_connector(&H5VL_julea_db_g, H5P_DEFAULT);
 	g_assert(j_hdf5_vol > 0);
 	g_assert(H5VLis_connector_registered_by_name("julea-db") == 1);
@@ -328,11 +336,11 @@ j_hdf5_init(void)
 static void
 j_hdf5_fini(void)
 {
-	if ((j_hdf5_fapl == -1) && (j_hdf5_vol == -1))
+	if (j_hdf5_fapl == -1 && j_hdf5_vol == -1)
 	{
 		return;
 	}
-	g_debug("julea-db j_hdf5_fini");
+
 	H5Pclose(j_hdf5_fapl);
 
 	H5VLterminate(j_hdf5_vol);
@@ -344,13 +352,13 @@ j_hdf5_fini(void)
 hid_t
 j_hdf5_get_fapl(void)
 {
-	g_debug("julea-db j_hdf5_get_fapl");
 	return j_hdf5_fapl;
 }
 
 void
 j_hdf5_set_semantics(JSemantics* semantics)
 {
-	g_debug("julea-db j_hdf5_set_semantics");
-	//TODO FIXME implement this
+	(void)semantics;
+
+	//FIXME implement this
 }

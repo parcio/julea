@@ -1672,15 +1672,12 @@ static void __attribute__((destructor)) j_hdf5_fini(void);
 static void
 j_hdf5_init(void)
 {
-	H5VL_class_t const* julea_h5vl;
-
 	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1 && j_hdf5_semantics != NULL)
 	{
 		return;
 	}
 
-	julea_h5vl = H5PLget_plugin_info();
-	j_hdf5_vol = H5VLregister_connector(julea_h5vl, H5P_DEFAULT);
+	j_hdf5_vol = H5VLregister_connector(&H5VL_julea_g, H5P_DEFAULT);
 	g_assert(j_hdf5_vol > 0);
 	g_assert(H5VLis_connector_registered_by_name("julea") == 1);
 

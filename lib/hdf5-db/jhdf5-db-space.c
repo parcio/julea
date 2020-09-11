@@ -20,9 +20,6 @@
  * \file
  **/
 
-#ifndef JULEA_DB_HDF5_SPACE_C
-#define JULEA_DB_HDF5_SPACE_C
-
 #include <julea-config.h>
 #include <julea.h>
 #include <julea-db.h>
@@ -38,7 +35,6 @@
 #include <string.h>
 
 #include "jhdf5-db.h"
-#include "jhdf5-db-shared.c"
 
 #define _GNU_SOURCE
 
@@ -393,4 +389,3 @@ _error:
 	H5VL_julea_db_object_unref(object);
 	return NULL;
 }
-#endif

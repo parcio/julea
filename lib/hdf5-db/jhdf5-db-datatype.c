@@ -19,8 +19,6 @@
 /**
  * \file
  **/
-#ifndef JULEA_DB_HDF5_DATATYPE_C
-#define JULEA_DB_HDF5_DATATYPE_C
 
 #include <julea-config.h>
 #include <julea.h>
@@ -37,7 +35,6 @@
 #include <string.h>
 
 #include "jhdf5-db.h"
-#include "jhdf5-db-shared.c"
 
 #define _GNU_SOURCE
 
@@ -488,7 +485,7 @@ H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_typ
 	abort();
 }
 static herr_t
-H5VL_julea_db_datatype_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_datatype_optional(void* obj, H5VL_datatype_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -503,4 +500,3 @@ H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req)
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-#endif

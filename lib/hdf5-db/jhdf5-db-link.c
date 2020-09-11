@@ -20,9 +20,6 @@
  * \file
  **/
 
-#ifndef JULEA_DB_HDF5_LINK_C
-#define JULEA_DB_HDF5_LINK_C
-
 #include <julea-config.h>
 #include <julea.h>
 #include <julea-db.h>
@@ -38,7 +35,6 @@
 #include <string.h>
 
 #include "jhdf5-db.h"
-#include "jhdf5-db-shared.c"
 
 #define _GNU_SOURCE
 
@@ -490,11 +486,10 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	abort();
 }
 static herr_t
-H5VL_julea_db_link_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	abort();
 }
-#endif

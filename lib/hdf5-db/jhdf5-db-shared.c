@@ -19,8 +19,7 @@
 /**
  * \file
  **/
-#ifndef JULEA_DB_HDF5_SHARED_C
-#define JULEA_DB_HDF5_SHARED_C
+
 #include <julea-config.h>
 #include <julea.h>
 #include <julea-db.h>
@@ -155,4 +154,3 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 		g_free(object);
 	}
 }
-#endif

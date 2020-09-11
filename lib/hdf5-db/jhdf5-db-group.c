@@ -20,9 +20,6 @@
  * \file
  **/
 
-#ifndef JULEA_DB_HDF5_GROUP_C
-#define JULEA_DB_HDF5_GROUP_C
-
 #include <julea-config.h>
 #include <julea.h>
 #include <julea-db.h>
@@ -38,8 +35,6 @@
 #include <string.h>
 
 #include "jhdf5-db.h"
-#include "jhdf5-db-shared.c"
-#include "jhdf5-db-link.c"
 
 #define _GNU_SOURCE
 
@@ -367,7 +362,7 @@ H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type,
 	abort();
 }
 static herr_t
-H5VL_julea_db_group_optional(void* obj, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -390,4 +385,3 @@ H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req)
 	H5VL_julea_db_object_unref(object);
 	return 0;
 }
-#endif
