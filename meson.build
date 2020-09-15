@@ -76,6 +76,12 @@ if meson.get_compiler('c').get_id() == 'clang'
 	add_project_arguments('-Wno-newline-eof', language: 'c')
 endif
 
+sanitize_cflags = ''
+
+if get_option('b_sanitize') != 'none'
+	sanitize_cflags = '-fsanitize=' + get_option('b_sanitize')
+endif
+
 # FIXME rpath is not set for dependencies
 # FIXME Also check for pkg-config files in /usr (worked around in environment.sh)
 # FIXME Allow specifying dependency prefixes?
@@ -342,6 +348,7 @@ julea_dep = declare_dependency(link_with: julea_lib)
 
 pkg_config.generate(julea_lib,
 	description: 'Flexible storage framework',
+	extra_cflags: sanitize_cflags,
 	subdirs: 'julea',
 	requires_private: [glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep],
 	url: 'https://github.com/wr-hamburg/julea',
@@ -380,7 +387,10 @@ if hdf_dep.found()
 	julea_client_srcs += {
 		'hdf5': files([
 			'lib/hdf5/jhdf5.c',
-		])
+		]),
+#		'hdf5-db': files([
+#			'lib/hdf5-db/jhdf5-db.c',
+#		])
 	}
 endif
 
@@ -396,12 +406,16 @@ foreach client, srcs: julea_client_srcs
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
 		extra_deps += hdf_dep
+	elif client == 'hdf5-db'
+		extra_deps += julea_client_deps['object']
+		extra_deps += julea_client_deps['db']
+		extra_deps += hdf_dep
 	endif
 
 	julea_client_lib = shared_library('julea-@0@'.format(client), julea_client_srcs[client],
 		dependencies: common_deps + [julea_dep] + extra_deps,
 		include_directories: julea_incs,
-		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.to_upper())],
+		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.underscorify().to_upper())],
 		#soversion: meson.project_version().split('.')[0],
 		#version: meson.project_version(),
 		install: true,
@@ -412,6 +426,7 @@ foreach client, srcs: julea_client_srcs
 	if client != 'hdf5'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
+			extra_cflags: sanitize_cflags,
 			subdirs: 'julea',
 			requires: julea_lib,
 			url: 'https://github.com/wr-hamburg/julea',
