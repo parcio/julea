@@ -299,7 +299,6 @@ j_libfabric_ress_init(GSList** pep_list, struct fid_eq** passive_ep_event_queue)
 end:
 	freeifaddrs(own_addr_list);
 	return ret;
-	// TODO manipulate backlog size
 }
 
 int

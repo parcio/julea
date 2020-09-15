@@ -287,6 +287,9 @@ j_distributed_object_delete_background_operation(gpointer data)
 	return NULL;
 }
 
+/**
+* TODO function description
+*/
 gboolean
 j_distributed_object_receive_data_chunks(JMessage* message, JEndpoint* endpoint, JListIterator* it, guint32* reply_operation_count)
 {
@@ -309,7 +312,9 @@ j_distributed_object_receive_data_chunks(JMessage* message, JEndpoint* endpoint,
 	}
 }
 
-//TODO
+/**
+* TODO function description
+*/
 gboolean
 j_distributed_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListIterator* it, guint32* reply_operation_count)
 {
@@ -351,7 +356,9 @@ end:
 	return ret;
 }
 
-//TODO
+/**
+* TODO function description
+*/
 gboolean
 j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JListIterator* it, guint32* reply_operation_count)
 {
@@ -389,6 +396,11 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 			if (error != 0)
 			{
 				g_critical("\nJDistributedObject: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
+			}
+
+			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "CLIENT", "jdistributed_object reading for fi_read completion"))
+			{
+				g_critical("\nCLIENT: Error while reading for completion event for fi_read operation on jdistributed_object\n");
 			}
 		}
 		g_slice_free(JDistributedObjectReadBuffer, buffer);
@@ -460,7 +472,6 @@ j_distributed_object_read_background_operation(gpointer data)
 
 		reply_operation_count = j_message_get_count(reply);
 
-		//TODO here
 		if (!j_distributed_object_receive_data_chunks(reply, (JEndpoint*)object_connection, it, &reply_operation_count))
 		{
 			g_critical("\nERROR while distributed jobject receiving data chunks\n");

@@ -510,7 +510,7 @@ j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
 		}
 		else if (error == -FI_ECANCELED)
 		{
-			// g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n"); TODO
+			// g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n"); TODO actviate when return types done
 			goto end;
 		}
 		else if (error < 0)

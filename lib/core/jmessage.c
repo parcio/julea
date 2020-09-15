@@ -1144,13 +1144,6 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 				g_critical("\nError while registering memory region\nDetails:\n%s", fi_strerror(labs(error)));
 			}
 
-			/* TODO: find why binding to endpoint not possible
-			error = fi_mr_bind(memory_region, &j_endpoint_get_endpoint(jendpoint, J_RDMA)->fid, 0);
-			if(error != 0)
-			{
-				g_critical("\nError while binding memory region to endpoint\nDeatils:\n%s", fi_strerror(labs(error)));
-			}*/
-
 			mr_list = g_slist_prepend(mr_list, (gpointer)memory_region);
 			counter++;
 		}

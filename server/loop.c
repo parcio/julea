@@ -31,6 +31,9 @@
 
 static guint jd_thread_num = 0;
 
+/**
+* TODO function description
+*/
 void
 handle_chunks_msg(JMessage* message,
 		  JEndpoint* jendpoint,
@@ -91,6 +94,9 @@ handle_chunks_msg(JMessage* message,
 	}
 }
 
+/**
+* TODO function description
+*/
 void
 handle_chunks_rdma(JMessage* message,
 		   JEndpoint* jendpoint,
@@ -140,6 +146,11 @@ handle_chunks_rdma(JMessage* message,
 		if (error != 0)
 		{
 			g_critical("\nSERVER: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
+		}
+
+		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "SERVER", "loop reading for fi_read completion"))
+		{
+			g_critical("\nSERVER: Error while reading for completion event for fi_read operation on loop\n");
 		}
 
 		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);

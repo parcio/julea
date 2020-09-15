@@ -502,7 +502,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->libfabric.get_info.client_flags = client_flags;
 	configuration->libfabric.get_info.msg_hints = msg_hints;
 	configuration->libfabric.get_info.rdma_hints = rdma_hints;
-	configuration->libfabric.communication_type = J_RDMA; //here SWAP COMMTYPE
+	configuration->libfabric.communication_type = J_RDMA; //here SWAP COMMTYPE CHANGE
 
 	/**
 	* set default values for not specified values by user
