@@ -441,6 +441,7 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jdistributed Object"))
 	{
 		case J_READ_QUEUE_ERROR:
+			free(wakeup_buf);
 			g_critical("\nCLIENT: Error while reading for completion event for sending wakeup message on j_distributed_object\n");
 			goto end;
 			break;
@@ -449,16 +450,17 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 		case J_READ_QUEUE_NO_EVENT:
 			break;
 		case J_READ_QUEUE_CANCELED:
+			free(wakeup_buf);
 			goto end;
 			break;
 		default:
 			g_assert_not_reached();
 	}
 
+	free(wakeup_buf);
 	ret = TRUE;
 end:
 	j_message_free_keys(message);
-	free(wakeup_buf);
 	return ret;
 }
 
