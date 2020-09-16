@@ -428,45 +428,69 @@ j_endpoint_connect(JEndpoint* jendpoint, struct sockaddr_in* address, const gcha
 	}
 
 	//check whether msg connection accepted
-	if (!j_endpoint_read_event_queue(jendpoint->msg.eq, &eq_event, connection_entry, connection_entry_length, -1, &event_queue_err_entry, "CLIENT", "msg CONNECTED"))
+	switch (j_endpoint_read_event_queue(jendpoint->msg.eq, &eq_event, connection_entry, connection_entry_length, -1, &event_queue_err_entry, "CLIENT", "msg CONNECTED"))
 	{
-		if (event_queue_err_entry.prov_errno == -FI_ECONNREFUSED)
-		{
-			g_critical("%s: Connection refused with %s", location, inet_ntoa(address->sin_addr));
-			ret = J_CON_MSG_REFUSED;
-		}
-		goto end;
-	}
-	if (eq_event != FI_CONNECTED)
-	{
-		g_critical("\n%s: msg Endpoint did not receive FI_CONNECTED to establish a connection.\n", location);
-	}
-	else
-	{
-		jendpoint->msg.connection_status = TRUE;
-		//printf("\%s: Connected event on msg client even queue\n", location); //debug
-		//fflush(stdout);
+		case J_READ_QUEUE_ERROR:
+			if (event_queue_err_entry.prov_errno == -FI_ECONNREFUSED)
+			{
+				g_critical("%s: Connection refused with %s", location, inet_ntoa(address->sin_addr));
+				ret = J_CON_MSG_REFUSED;
+			}
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			if (eq_event != FI_CONNECTED)
+			{
+				g_critical("\n%s: msg Endpoint did not receive FI_CONNECTED to establish a connection.\n", location);
+			}
+			else
+			{
+				jendpoint->msg.connection_status = TRUE;
+				//printf("\%s: Connected event on msg client even queue\n", location); //debug
+				//fflush(stdout);
+			}
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			goto end; //case should not happen here
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
-	//check whether msg connection accepted
-	if (!j_endpoint_read_event_queue(jendpoint->rdma.eq, &eq_event, connection_entry, connection_entry_length, -1, &event_queue_err_entry, "CLIENT", "rdma CONNECTED"))
+	//check whether rdma connection accepted
+	switch (j_endpoint_read_event_queue(jendpoint->rdma.eq, &eq_event, connection_entry, connection_entry_length, -1, &event_queue_err_entry, "CLIENT", "rdma CONNECTED"))
 	{
-		if (event_queue_err_entry.prov_errno == -FI_ECONNREFUSED)
-		{
-			g_critical("%s: Connection refused with %s", location, inet_ntoa(address->sin_addr));
-			ret = J_CON_RDMA_REFUSED;
-		}
-		goto end;
-	}
-	if (eq_event != FI_CONNECTED)
-	{
-		g_critical("\n%s: rdma Endpoint did not receive FI_CONNECTED to establish a connection.\n", location);
-	}
-	else
-	{
-		jendpoint->rdma.connection_status = TRUE;
-		//printf("\%s: Connected event on msg client even queue\n", location); //debug
-		//fflush(stdout);
+		case J_READ_QUEUE_ERROR:
+			if (event_queue_err_entry.prov_errno == -FI_ECONNREFUSED)
+			{
+				g_critical("%s: Connection refused with %s", location, inet_ntoa(address->sin_addr));
+				ret = J_CON_RDMA_REFUSED;
+			}
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			if (eq_event != FI_CONNECTED)
+			{
+				g_critical("\n%s: rdma Endpoint did not receive FI_CONNECTED to establish a connection.\n", location);
+			}
+			else
+			{
+				jendpoint->rdma.connection_status = TRUE;
+				//printf("\%s: Connected event on rdma client even queue\n", location); //debug
+				//fflush(stdout);
+			}
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			goto end; //case should not happen here
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	ret = J_CON_ACCEPTED;
@@ -480,19 +504,19 @@ end:
 * returns TRUE on successful read
 * TODO build a returntype for a) successful read, b) error and c) nothing there/canceled
 */
-gboolean
+JReadQueueRet
 j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
 				 int timeout,
 				 const gchar* broad_location,
 				 const gchar* specific_location)
 {
-	gboolean ret;
+	JReadQueueRet ret;
 	ssize_t error;
 
 	struct fi_cq_entry completion_queue_data;
 	struct fi_cq_err_entry completion_queue_err_entry;
 
-	ret = FALSE;
+	ret = J_READ_QUEUE_ERROR;
 	error = 0;
 
 	error = fi_cq_sread(completion_queue, &completion_queue_data, 1, 0, timeout);
@@ -506,11 +530,13 @@ j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
 		}
 		else if (error == -FI_EAGAIN)
 		{
+			ret = J_READ_QUEUE_NO_EVENT;
 			goto end;
 		}
 		else if (error == -FI_ECANCELED)
 		{
-			// g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n"); TODO actviate when return types done
+			// g_critical("\nShutdown initiated while receiving Data, last transfer most likely not completed.\n"); TODO put this into relevant cases after call
+			ret = J_READ_QUEUE_CANCELED;
 			goto end;
 		}
 		else if (error < 0)
@@ -520,7 +546,7 @@ j_endpoint_read_completion_queue(struct fid_cq* completion_queue,
 		}
 	}
 
-	ret = TRUE;
+	ret = J_READ_QUEUE_SUCCESS;
 end:
 	return ret;
 }
@@ -532,7 +558,7 @@ end:
 * returns true on successful read.
 * TODO expand cases
 */
-gboolean
+JReadQueueRet
 j_endpoint_read_event_queue(struct fid_eq* event_queue,
 			    uint32_t* event,
 			    void* event_entry,
@@ -542,10 +568,10 @@ j_endpoint_read_event_queue(struct fid_eq* event_queue,
 			    const gchar* broad_location,
 			    const gchar* specific_location)
 {
-	gboolean ret;
+	JReadQueueRet ret;
 	int error;
 
-	ret = FALSE;
+	ret = J_READ_QUEUE_ERROR;
 	error = 0;
 
 	error = fi_eq_sread(event_queue, event, event_entry, event_entry_size, timeout, 0);
@@ -568,11 +594,13 @@ j_endpoint_read_event_queue(struct fid_eq* event_queue,
 		}
 		else if (error == -FI_EAGAIN)
 		{
-			/*
-      TODO is there a non-blocking case where -FI_EAGAIN is not succeeded?
-			g_critical("\n%s: No Event data on Event Queue (%s).\n", broad_location, specific_location);
+			ret = J_READ_QUEUE_NO_EVENT;
 			goto end;
-      */
+		}
+		else if (error == -FI_ECANCELED)
+		{
+			ret = J_READ_QUEUE_CANCELED;
+			goto end;
 		}
 		else
 		{
@@ -581,7 +609,7 @@ j_endpoint_read_event_queue(struct fid_eq* event_queue,
 		}
 	}
 
-	ret = TRUE;
+	ret = J_READ_QUEUE_SUCCESS;
 end:
 	return ret;
 }
@@ -603,36 +631,54 @@ j_endpoint_shutdown_test(JEndpoint* jendpoint, const gchar* location)
 	event_entry_size = sizeof(struct fi_eq_cm_entry) + 128;
 	event_entry = malloc(event_entry_size);
 
-	if (!j_endpoint_read_event_queue(j_endpoint_get_event_queue(jendpoint, J_MSG),
-					 &event,
-					 event_entry,
-					 event_entry_size,
-					 1,
-					 &event_queue_err_entry,
-					 location,
-					 "msg shutdown test"))
+	switch (j_endpoint_read_event_queue(j_endpoint_get_event_queue(jendpoint, J_MSG),
+					    &event,
+					    event_entry,
+					    event_entry_size,
+					    1,
+					    &event_queue_err_entry,
+					    location,
+					    "msg shutdown test"))
 	{
-		g_critical("\n%s: Error with shutdown Test for msg endpoint\n", location);
+		case J_READ_QUEUE_ERROR:
+			g_critical("\n%s: Error with shutdown Test for msg endpoint\n", location);
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			break;
+		default:
+			g_assert_not_reached();
 	}
-
 	if (event == FI_SHUTDOWN)
 	{
 		ret = TRUE;
 		goto end;
 	}
 
-	if (!j_endpoint_read_event_queue(j_endpoint_get_event_queue(jendpoint, J_RDMA),
-					 &event,
-					 event_entry,
-					 event_entry_size,
-					 1,
-					 &event_queue_err_entry,
-					 location,
-					 "rdma shutdown test"))
+	switch (j_endpoint_read_event_queue(j_endpoint_get_event_queue(jendpoint, J_RDMA),
+					    &event,
+					    event_entry,
+					    event_entry_size,
+					    1,
+					    &event_queue_err_entry,
+					    location,
+					    "rdma shutdown test"))
 	{
-		g_critical("\n%s: Error with shutdown Test for rdma endpoint\n", location);
+		case J_READ_QUEUE_ERROR:
+			g_critical("\n%s: Error with shutdown Test for rdma endpoint\n", location);
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			break;
+		default:
+			g_assert_not_reached();
 	}
-
 	if (event == FI_SHUTDOWN)
 	{
 		ret = TRUE;

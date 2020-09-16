@@ -343,9 +343,21 @@ j_distributed_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendp
 				g_critical("\nCLIENT: Error while receiving background write operation for distributed Objects\nDetails:\n%s\n", fi_strerror((int)error));
 				goto end;
 			}
-			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "CLIENT", "distributed object"))
+			switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "CLIENT", "distributed object"))
 			{
-				goto end;
+				case J_READ_QUEUE_ERROR:
+					g_critical("\nCLIENT: Error reading for completion Event on distributed object msg receive data chunks on distributed object\n");
+					goto end;
+					break;
+				case J_READ_QUEUE_SUCCESS:
+					break;
+				case J_READ_QUEUE_NO_EVENT:
+					break;
+				case J_READ_QUEUE_CANCELED:
+					goto end;
+					break;
+				default:
+					g_assert_not_reached();
 			}
 		}
 		g_slice_free(JDistributedObjectReadBuffer, buffer);
@@ -398,9 +410,20 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 				g_critical("\nJDistributedObject: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
 			}
 
-			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "CLIENT", "jdistributed_object reading for fi_read completion"))
+			switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "CLIENT", "jdistributed_object reading for fi_read completion"))
 			{
-				g_critical("\nCLIENT: Error while reading for completion event for fi_read operation on jdistributed_object\n");
+				case J_READ_QUEUE_ERROR:
+					g_critical("\nCLIENT: Error while reading for completion event for fi_read operation on jdistributed_object\n");
+					break;
+				case J_READ_QUEUE_SUCCESS:
+					break;
+				case J_READ_QUEUE_NO_EVENT:
+					break;
+				case J_READ_QUEUE_CANCELED:
+					goto end;
+					break;
+				default:
+					g_assert_not_reached();
 			}
 		}
 		g_slice_free(JDistributedObjectReadBuffer, buffer);
@@ -415,9 +438,21 @@ j_distributed_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jend
 		g_critical("\nJDistributedObject: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jdistributed Object"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jdistributed Object"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			g_critical("\nCLIENT: Error while reading for completion event for sending wakeup message on j_distributed_object\n");
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	ret = TRUE;

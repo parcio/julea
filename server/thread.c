@@ -138,37 +138,61 @@ j_thread_libfabric_ress_init(gpointer thread_data, JEndpoint** jendpoint)
 
 	//read msg event queue for CONNECTED event
 
-	if (!j_endpoint_read_event_queue(j_endpoint_get_event_queue(*jendpoint, J_MSG), &event, event_entry, event_entry_size, -1, &event_queue_err_entry, "SERVER", "msg CONNECTED"))
+	switch (j_endpoint_read_event_queue(j_endpoint_get_event_queue(*jendpoint, J_MSG), &event, event_entry, event_entry_size, -1, &event_queue_err_entry, "SERVER", "msg CONNECTED"))
 	{
-		goto end;
-	}
-	if (event == FI_CONNECTED)
-	{
-		// printf("\nSERVER: Connected event on eq\n"); //debug
-		// fflush(stdout);
-		j_endpoint_set_connected(*jendpoint, J_MSG);
-		ret_msg = TRUE;
-	}
-	else
-	{
-		g_critical("\nSERVER: Problem with connection, no msg FI_CONNECTED.\n");
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			if (event == FI_CONNECTED)
+			{
+				// printf("\nSERVER: Connected event on eq\n"); //debug
+				// fflush(stdout);
+				j_endpoint_set_connected(*jendpoint, J_MSG);
+				ret_msg = TRUE;
+			}
+			else
+			{
+				g_critical("\nSERVER: Problem with connection, no msg FI_CONNECTED.\n");
+			}
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			goto end; //case should not happen here
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	//read rdma event queue for CONNECTED event
-	if (!j_endpoint_read_event_queue(j_endpoint_get_event_queue(*jendpoint, J_RDMA), &event, event_entry, event_entry_size, -1, &event_queue_err_entry, "SERVER", "rdma CONNECTED"))
+	switch (j_endpoint_read_event_queue(j_endpoint_get_event_queue(*jendpoint, J_RDMA), &event, event_entry, event_entry_size, -1, &event_queue_err_entry, "SERVER", "rdma CONNECTED"))
 	{
-		goto end;
-	}
-	if (event == FI_CONNECTED)
-	{
-		// printf("\nSERVER: Connected event on eq\n"); //debug
-		// fflush(stdout);
-		j_endpoint_set_connected(*jendpoint, J_RDMA);
-		ret_rdma = TRUE;
-	}
-	else
-	{
-		g_critical("\nSERVER: Problem with connection, no rdma FI_CONNECTED.\n");
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			if (event == FI_CONNECTED)
+			{
+				// printf("\nSERVER: Connected event on eq\n"); //debug
+				// fflush(stdout);
+				j_endpoint_set_connected(*jendpoint, J_RDMA);
+				ret_rdma = TRUE;
+			}
+			else
+			{
+				g_critical("\nSERVER: Problem with connection, no rdma FI_CONNECTED.\n");
+			}
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			goto end; //case should not happen here
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 end:

@@ -451,9 +451,21 @@ j_object_receive_data_chunks_msg(JMessage* message, JEndpoint* jendpoint, JListI
 				g_critical("\nCLIENT: Error while receiving background write operation for JObjects\nDetails:\n%s\n", fi_strerror((int)error));
 				goto end;
 			}
-			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "CLIENT", "jobject"))
+			switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "CLIENT", "jobject"))
 			{
-				goto end;
+				case J_READ_QUEUE_ERROR:
+					g_critical("\nCLIENT: Error reading for completion Event on jobject msg receive data chunks\n");
+					goto end;
+					break;
+				case J_READ_QUEUE_SUCCESS:
+					break;
+				case J_READ_QUEUE_NO_EVENT:
+					break;
+				case J_READ_QUEUE_CANCELED:
+					goto end;
+					break;
+				default:
+					g_assert_not_reached();
 			}
 		}
 	}
@@ -505,9 +517,20 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 				g_critical("\nJObject: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
 			}
 
-			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "CLIENT", "jbject reading for fi_read completion"))
+			switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "CLIENT", "jbject reading for fi_read completion"))
 			{
-				g_critical("\nCLIENT: Error while reading for completion event for fi_read operation on jobject\n");
+				case J_READ_QUEUE_ERROR:
+					g_critical("\nCLIENT: Error while reading for completion event for fi_read operation on jobject\n");
+					break;
+				case J_READ_QUEUE_SUCCESS:
+					break;
+				case J_READ_QUEUE_NO_EVENT:
+					break;
+				case J_READ_QUEUE_CANCELED:
+					goto end;
+					break;
+				default:
+					g_assert_not_reached();
 			}
 		}
 	}
@@ -520,9 +543,21 @@ j_object_receive_data_chunks_rdma(JMessage* message, JEndpoint* jendpoint, JList
 		g_critical("\nJObject: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jobject"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "CLIENT", "jobject"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			g_critical("\nCLIENT: Error reading for completion Event for rdma wakeup message on jobject\n");
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	ret = TRUE;

@@ -943,11 +943,23 @@ j_message_read(JMessage* message, JEndpoint* jendpoint)
 		g_critical("\nError while receiving Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "JMessage Header"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "RECEIVING", "JMessage Header"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
+	//receive keys for rdma memory access
 	if (message->header.data_chunks)
 	{
 		message->key_buf = malloc(message->header.key_number * sizeof(uint64_t));
@@ -957,9 +969,20 @@ j_message_read(JMessage* message, JEndpoint* jendpoint)
 			g_critical("\nError while receiving Message (Key_buf).\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
-		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "key_buf"))
+		switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "key_buf"))
 		{
-			goto end;
+			case J_READ_QUEUE_ERROR:
+				goto end;
+				break;
+			case J_READ_QUEUE_SUCCESS:
+				break;
+			case J_READ_QUEUE_NO_EVENT:
+				break;
+			case J_READ_QUEUE_CANCELED:
+				goto end;
+				break;
+			default:
+				g_assert_not_reached();
 		}
 	}
 
@@ -978,9 +1001,20 @@ j_message_read(JMessage* message, JEndpoint* jendpoint)
 		g_critical("\nError while receiving Message.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "JMessage"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Receiving", "JMessage"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	message->current = message->data;
@@ -1027,9 +1061,20 @@ j_message_write_msg(JMessage* message, JEndpoint* jendpoint)
 		goto end;
 	}
 
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage Header"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "TRANSMIT", "JMessage Header"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	// TODO Dont report error, but split the Message
@@ -1045,9 +1090,20 @@ j_message_write_msg(JMessage* message, JEndpoint* jendpoint)
 		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	if (message->send_list != NULL)
@@ -1064,9 +1120,20 @@ j_message_write_msg(JMessage* message, JEndpoint* jendpoint)
 				g_critical("\nError while sending Message List Data.\nDetails:\n%s", fi_strerror(labs(error)));
 				goto end;
 			}
-			if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage list"))
+			switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage list"))
 			{
-				goto end;
+				case J_READ_QUEUE_ERROR:
+					goto end;
+					break;
+				case J_READ_QUEUE_SUCCESS:
+					break;
+				case J_READ_QUEUE_NO_EVENT:
+					break;
+				case J_READ_QUEUE_CANCELED:
+					goto end;
+					break;
+				default:
+					g_assert_not_reached();
 			}
 		}
 	}
@@ -1155,9 +1222,20 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		g_critical("\nError while sending Message (JMessage Header).\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage Header"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage Header"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	if (message->header.data_chunks)
@@ -1168,9 +1246,20 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			g_critical("\nError while sending Message (key transmition).\nDetails:\n%s", fi_strerror(labs(error)));
 			goto end;
 		}
-		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "key transmition"))
+		switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "key transmition"))
 		{
-			goto end;
+			case J_READ_QUEUE_ERROR:
+				goto end;
+				break;
+			case J_READ_QUEUE_SUCCESS:
+				break;
+			case J_READ_QUEUE_NO_EVENT:
+				break;
+			case J_READ_QUEUE_CANCELED:
+				goto end;
+				break;
+			default:
+				g_assert_not_reached();
 		}
 	}
 
@@ -1187,9 +1276,20 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 		g_critical("\nError while sending Message Data.\nDetails:\n%s", fi_strerror(labs(error)));
 		goto end;
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "Transmit", "JMessage"))
 	{
-		goto end;
+		case J_READ_QUEUE_ERROR:
+			goto end;
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			goto end;
+			break;
+		default:
+			g_assert_not_reached();
 	}
 
 	if (message->header.data_chunks)
@@ -1205,10 +1305,21 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			free(wakeup_buf);
 			goto end;
 		}
-		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Transmit", "JMessage list data completion message"))
+		switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "Transmit", "JMessage list data completion message"))
 		{
-			free(wakeup_buf);
-			goto end;
+			case J_READ_QUEUE_ERROR:
+				free(wakeup_buf);
+				goto end;
+				break;
+			case J_READ_QUEUE_SUCCESS:
+				break;
+			case J_READ_QUEUE_NO_EVENT:
+				break;
+			case J_READ_QUEUE_CANCELED:
+				goto end;
+				break;
+			default:
+				g_assert_not_reached();
 		}
 		j_message_free_keys(message);
 		free(wakeup_buf);

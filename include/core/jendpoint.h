@@ -42,6 +42,15 @@ enum JConnectionRet
 };
 typedef enum JConnectionRet JConnectionRet;
 
+enum JReadQueueRet
+{
+	J_READ_QUEUE_SUCCESS,
+	J_READ_QUEUE_ERROR,
+	J_READ_QUEUE_NO_EVENT,
+	J_READ_QUEUE_CANCELED
+};
+typedef enum JReadQueueRet JReadQueueRet;
+
 struct JConData;
 typedef struct JConData JConData;
 
@@ -51,8 +60,8 @@ typedef struct JEndpoint JEndpoint;
 gboolean j_endpoint_init(JEndpoint**, JFabric*, JDomainManager*, JConfiguration*, struct fi_info*, struct fi_info*, const gchar*);
 void j_endpoint_fini(JEndpoint*, JDomainManager*, gboolean, gboolean, const gchar*);
 
-gboolean j_endpoint_read_completion_queue(struct fid_cq*, int, const gchar*, const gchar*);
-gboolean j_endpoint_read_event_queue(struct fid_eq*, uint32_t*, void*, size_t, int, struct fi_eq_err_entry*, const gchar*, const gchar*);
+JReadQueueRet j_endpoint_read_completion_queue(struct fid_cq*, int, const gchar*, const gchar*);
+JReadQueueRet j_endpoint_read_event_queue(struct fid_eq*, uint32_t*, void*, size_t, int, struct fi_eq_err_entry*, const gchar*, const gchar*);
 
 JConnectionRet j_endpoint_connect(JEndpoint*, struct sockaddr_in*, const gchar*);
 

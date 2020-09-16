@@ -74,9 +74,19 @@ handle_chunks_msg(JMessage* message,
 		{
 			g_critical("\nSERVER: Error while receiving data Chunks via msg\nDetails:\n%s\n", fi_strerror(labs(error)));
 		}
-		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "SERVER", "msg chunk receive"))
+		switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_RECV), -1, "SERVER", "msg chunk receive"))
 		{
-			g_critical("\nSERVER: Error while reading completion queue for receiving data chunks via msg\n");
+			case J_READ_QUEUE_ERROR:
+				g_critical("\nSERVER: Error while reading completion queue for receiving data chunks via msg\n");
+				break;
+			case J_READ_QUEUE_SUCCESS:
+				break;
+			case J_READ_QUEUE_NO_EVENT:
+				break;
+			case J_READ_QUEUE_CANCELED:
+				break;
+			default:
+				g_assert_not_reached();
 		}
 
 		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
@@ -148,9 +158,19 @@ handle_chunks_rdma(JMessage* message,
 			g_critical("\nSERVER: Error while rdma chunk read. \nDetails:\n%s", fi_strerror(labs(error)));
 		}
 
-		if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "SERVER", "loop reading for fi_read completion"))
+		switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_RDMA, FI_TRANSMIT), -1, "SERVER", "loop reading for fi_read completion"))
 		{
-			g_critical("\nSERVER: Error while reading for completion event for fi_read operation on loop\n");
+			case J_READ_QUEUE_ERROR:
+				g_critical("\nSERVER: Error while reading for completion event for fi_read operation on loop\n");
+				break;
+			case J_READ_QUEUE_SUCCESS:
+				break;
+			case J_READ_QUEUE_NO_EVENT:
+				break;
+			case J_READ_QUEUE_CANCELED:
+				break;
+			default:
+				g_assert_not_reached();
 		}
 
 		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
@@ -174,10 +194,21 @@ handle_chunks_rdma(JMessage* message,
 	{
 		g_critical("\nSERVER: Error while sending wakeup Message in loop.\nDetails:\n%s", fi_strerror(labs(error)));
 	}
-	if (!j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "SERVER", "wakup Message after rdma chunk read"))
+	switch (j_endpoint_read_completion_queue(j_endpoint_get_completion_queue(jendpoint, J_MSG, FI_TRANSMIT), -1, "SERVER", "wakup Message after rdma chunk read"))
 	{
-		g_critical("\nSERVER: failed to read completion queue after sending wakup message to signal completion of rdma chunk read\n");
+		case J_READ_QUEUE_ERROR:
+			g_critical("\nSERVER: failed to read completion queue after sending wakup message to signal completion of rdma chunk read\n");
+			break;
+		case J_READ_QUEUE_SUCCESS:
+			break;
+		case J_READ_QUEUE_NO_EVENT:
+			break;
+		case J_READ_QUEUE_CANCELED:
+			break;
+		default:
+			g_assert_not_reached();
 	}
+
 	j_message_free_keys(message);
 	free(wakeup_buf);
 }
