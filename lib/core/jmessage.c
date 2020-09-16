@@ -1316,6 +1316,7 @@ j_message_write_rdma(JMessage* message, JEndpoint* jendpoint)
 			case J_READ_QUEUE_NO_EVENT:
 				break;
 			case J_READ_QUEUE_CANCELED:
+				free(wakeup_buf);
 				goto end;
 				break;
 			default:
