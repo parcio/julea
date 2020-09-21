@@ -34,6 +34,7 @@ $ ./scripts/install-dependencies.sh
 
 To allow the dependencies to be found, the JULEA environment has to be loaded.
 This also ensures that JULEA's binaries and libraries are found later.
+Make sure to load the script using `. ` instead of executing it with `./` because the environment changes will not persist otherwise.
 
 ```console
 $ . scripts/environment.sh
