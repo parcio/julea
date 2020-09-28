@@ -420,7 +420,7 @@ foreach client, srcs: julea_client_srcs
 
 	julea_client_deps += {client: declare_dependency(link_with: julea_client_lib)}
 
-	if client != 'hdf5'
+	if client != 'hdf5' and client != 'hdf5-db'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
 			extra_cflags: sanitize_cflags,
