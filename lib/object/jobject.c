@@ -53,6 +53,11 @@ struct JObjectOperation
 		struct
 		{
 			JObject* object;
+		} sync;
+
+		struct
+		{
+			JObject* object;
 			gpointer data;
 			guint64 length;
 			guint64 offset;
@@ -185,6 +190,18 @@ j_object_status_free(gpointer data)
 	JObjectOperation* operation = data;
 
 	j_object_unref(operation->status.object);
+
+	g_slice_free(JObjectOperation, operation);
+}
+
+static void
+j_object_sync_free(gpointer data)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JObjectOperation* operation = data;
+
+	j_object_unref(operation->sync.object);
 
 	g_slice_free(JObjectOperation, operation);
 }
@@ -819,6 +836,97 @@ j_object_status_exec(JList* operations, JSemantics* semantics)
 	return ret;
 }
 
+static gboolean
+j_object_sync_exec(JList* operations, JSemantics* semantics)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	// FIXME check return value for messages
+	gboolean ret = TRUE;
+
+	JBackend* object_backend;
+	JListIterator* it;
+	g_autoptr(JMessage) message = NULL;
+	gchar const* namespace;
+	gsize namespace_len;
+	guint32 index;
+
+	g_return_val_if_fail(operations != NULL, FALSE);
+	g_return_val_if_fail(semantics != NULL, FALSE);
+
+	{
+		JObjectOperation* operation = j_list_get_first(operations);
+		JObject* object = operation->sync.object;
+
+		g_assert(operation != NULL);
+		g_assert(object != NULL);
+
+		namespace = object->namespace;
+		namespace_len = strlen(namespace) + 1;
+		index = object->index;
+	}
+
+	it = j_list_iterator_new(operations);
+	object_backend = j_object_get_backend();
+
+	if (object_backend == NULL)
+	{
+		message = j_message_new(J_MESSAGE_OBJECT_SYNC, namespace_len);
+		j_message_set_semantics(message, semantics);
+		j_message_append_n(message, namespace, namespace_len);
+	}
+
+	while (j_list_iterator_next(it))
+	{
+		JObjectOperation* operation = j_list_iterator_get(it);
+		JObject* object = operation->sync.object;
+
+		if (object_backend != NULL)
+		{
+			gpointer object_handle;
+
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_sync(object_backend, object_handle) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
+		}
+		else
+		{
+			gsize name_len;
+
+			name_len = strlen(object->name) + 1;
+
+			j_message_add_operation(message, name_len);
+			j_message_append_n(message, object->name, name_len);
+		}
+	}
+
+	j_list_iterator_free(it);
+
+	if (object_backend == NULL)
+	{
+		JSemanticsSafety safety;
+		gpointer object_connection;
+
+		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
+		j_message_send(message, object_connection);
+
+		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		{
+			g_autoptr(JMessage) reply = NULL;
+
+			reply = j_message_new_reply(message);
+			j_message_receive(reply, object_connection);
+
+			// FIXME do something with reply
+		}
+
+		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
+	}
+
+	return ret;
+}
+
 /**
  * Creates a new object.
  *
@@ -1147,6 +1255,37 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	operation->data = iop;
 	operation->exec_func = j_object_status_exec;
 	operation->free_func = j_object_status_free;
+
+	j_batch_add(batch, operation);
+}
+
+/**
+ * Sync an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object    An object.
+ * \param batch     A batch.
+ **/
+void
+j_object_sync(JObject* object, JBatch* batch)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JObjectOperation* iop;
+	JOperation* operation;
+
+	g_return_if_fail(object != NULL);
+
+	iop = g_slice_new(JObjectOperation);
+	iop->sync.object = j_object_ref(object);
+
+	operation = j_operation_new();
+	operation->key = object;
+	operation->data = iop;
+	operation->exec_func = j_object_sync_exec;
+	operation->free_func = j_object_sync_free;
 
 	j_batch_add(batch, operation);
 }
