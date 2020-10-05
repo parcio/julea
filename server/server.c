@@ -249,48 +249,72 @@ j_libfabric_ress_init(GSList** pep_list, struct fid_eq** passive_ep_event_queue)
 
 	while (current_own_addr != NULL)
 	{
-		PepListEntry* pep_list_entry;
-		struct fi_info* info;
+		gboolean duplication;
 
-		//get fi_info
-		error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
-				   inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
-				   j_configuration_get_fi_service(jd_configuration),
-				   j_configuration_get_fi_flags(jd_configuration, 0),
-				   j_configuration_fi_get_hints(jd_configuration, J_MSG),
-				   &info);
-		if (error != 0 && error != -FI_ENODATA)
+		duplication = FALSE;
+
+		if (*pep_list != NULL)
 		{
-			g_critical("\nSERVER: Error during initializing msg fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));
-			goto end;
+			for (guint i = 0; i < g_slist_length(*pep_list); i++)
+			{
+				struct fi_info* listening_info;
+				listening_info = ((PepListEntry*) g_slist_nth_data(*pep_list, i))->info;
+				if (g_strcmp0(inet_ntoa(((struct sockaddr_in*) listening_info->src_addr)->sin_addr), inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0)
+				{
+					duplication = TRUE;
+					break;
+				}
+			}
 		}
-		else if (error == 0)
+
+		if (!(g_strcmp0("1.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
+				  g_strcmp0("2.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
+				  g_strcmp0("3.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
+					duplication))
 		{
-			pep_list_entry = malloc(sizeof(PepListEntry));
-			pep_list_entry->info = info;
+			PepListEntry* pep_list_entry;
+			struct fi_info* info;
 
-			//build passive Endpoints
-			error = fi_passive_ep(j_get_fabric(jfabric, J_MSG), pep_list_entry->info, &pep_list_entry->pep, NULL);
-			if (error != 0)
+			//get fi_info
+			error = fi_getinfo(j_configuration_get_fi_version(jd_configuration),
+						 inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr),
+					   j_configuration_get_fi_service(jd_configuration),
+					   j_configuration_get_fi_flags(jd_configuration, 0),
+					   j_configuration_fi_get_hints(jd_configuration, J_MSG),
+					   &info);
+			if (error != 0 && error != -FI_ENODATA)
 			{
-				g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
+				g_critical("\nSERVER: Error during initializing msg fi_info struct.\n Details:\n %s", fi_strerror(abs(error)));
 				goto end;
 			}
-
-			error = fi_pep_bind(pep_list_entry->pep, &(*passive_ep_event_queue)->fid, 0);
-			if (error != 0)
+			else if (error == 0)
 			{
-				g_critical("\nSERVER: Error binding passive Endpoint to %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
-				goto end;
-			}
+				pep_list_entry = malloc(sizeof(PepListEntry));
+				pep_list_entry->info = info;
 
-			error = fi_listen(pep_list_entry->pep);
-			if (error != 0)
-			{
-				g_critical("\nSERVER: Error setting passive Endpoint to listening to %s-Interface with IP: %s\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
-				goto end;
+				//build passive Endpoints
+				error = fi_passive_ep(j_get_fabric(jfabric, J_MSG), pep_list_entry->info, &pep_list_entry->pep, NULL);
+				if (error != 0)
+				{
+					g_critical("\nSERVER: Error building passive Endpoint for %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
+					goto end;
+				}
+
+				error = fi_pep_bind(pep_list_entry->pep, &(*passive_ep_event_queue)->fid, 0);
+				if (error != 0)
+				{
+					g_critical("\nSERVER: Error binding passive Endpoint to %s-Interface with IP: %s.\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
+					goto end;
+				}
+
+				error = fi_listen(pep_list_entry->pep);
+				if (error != 0)
+				{
+					g_critical("\nSERVER: Error setting passive Endpoint to listening to %s-Interface with IP: %s\nDetails:\n %s", current_own_addr->ifa_name, inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr), fi_strerror(abs(error)));
+					goto end;
+				}
+				*pep_list = g_slist_append(*pep_list, (gpointer)pep_list_entry);
 			}
-			*pep_list = g_slist_append(*pep_list, (gpointer)pep_list_entry);
 		}
 		current_own_addr = current_own_addr->ifa_next;
 	}

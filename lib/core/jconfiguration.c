@@ -427,7 +427,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	cq_attr.wait_set = NULL;
 
 	// set information for fi_getinfo call
-	version = FI_VERSION(1, 5);
+	version = FI_VERSION(1, 9);
 	service = g_strdup("4711");
 	server_flags = FI_SOURCE;
 	client_flags = FI_NUMERICHOST;
@@ -909,15 +909,15 @@ check_prov_name_validity(gchar* prov_name, JConnectionType connection_type)
 	switch (connection_type)
 	{
 		case J_MSG:
-			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("gni"));
-			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("rxm"));
 			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("sockets"));
-			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("bgq"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("tcp"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("verbs"));
 			type = "Message";
 			break;
 		case J_RDMA:
-			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("gni"));
 			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("sockets"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("tcp"));
+			available_provs = g_slist_append(available_provs, (gpointer)g_strdup("verbs"));
 			type = "RDMA";
 			break;
 		case J_UNDEFINED:
