@@ -15,4 +15,5 @@ Its goal is to provide a solid foundation for storage research and teaching.
 * [Installation and Usage](installation-usage.md)
 * [Configuration](configuration.md)
 * [Debugging](debugging.md)
-* [Implementing a backend](implementing-backend.md)
+* [Implementing a Backend](implementing-backend.md)
+* [HDF5 Support](hdf5.md)
