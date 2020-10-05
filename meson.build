@@ -385,9 +385,9 @@ if hdf_dep.found()
 		'hdf5': files([
 			'lib/hdf5/jhdf5.c',
 		]),
-#		'hdf5-db': files([
-#			'lib/hdf5-db/jhdf5-db.c',
-#		])
+		'hdf5-db': files([
+			'lib/hdf5-db/jhdf5-db.c',
+		])
 	}
 endif
 
