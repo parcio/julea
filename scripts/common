@@ -111,3 +111,21 @@ set_backend_path ()
 
 	export JULEA_BACKEND_PATH
 }
+
+set_hdf_path ()
+{
+	local build_dir
+
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+
+	if test -n "${JULEA_PREFIX}"
+	then
+		HDF5_PLUGIN_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib/x86_64-linux-gnu:${JULEA_PREFIX}/lib:${HDF5_PLUGIN_PATH}"
+	else
+		test -d "${build_dir}" || error_build_directory_not_found
+
+		HDF5_PLUGIN_PATH="${build_dir}:${HDF5_PLUGIN_PATH}"
+	fi
+
+	export HDF5_PLUGIN_PATH
+}

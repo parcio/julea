@@ -1657,9 +1657,6 @@ H5PLget_plugin_info(void)
 
 // FIXME separate JULEA-specific code from VOL code
 
-static hid_t j_hdf5_fapl = -1;
-static hid_t j_hdf5_vol = -1;
-
 static JSemantics* j_hdf5_semantics = NULL;
 
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
@@ -1672,19 +1669,10 @@ static void __attribute__((destructor)) j_hdf5_fini(void);
 static void
 j_hdf5_init(void)
 {
-	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1 && j_hdf5_semantics != NULL)
+	if (j_hdf5_semantics != NULL)
 	{
 		return;
 	}
-
-	j_hdf5_vol = H5VLregister_connector(&H5VL_julea_g, H5P_DEFAULT);
-	g_assert(j_hdf5_vol > 0);
-	g_assert(H5VLis_connector_registered_by_name("julea") == 1);
-
-	H5VLinitialize(j_hdf5_vol, H5P_DEFAULT);
-
-	j_hdf5_fapl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(j_hdf5_fapl, j_hdf5_vol, NULL);
 
 	j_hdf5_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 }
@@ -1695,25 +1683,13 @@ j_hdf5_init(void)
 static void
 j_hdf5_fini(void)
 {
-	if (j_hdf5_fapl == -1 && j_hdf5_vol == -1 && j_hdf5_semantics == NULL)
+	if (j_hdf5_semantics == NULL)
 	{
 		return;
 	}
 
 	j_semantics_unref(j_hdf5_semantics);
-
-	H5Pclose(j_hdf5_fapl);
-
-	H5VLterminate(j_hdf5_vol);
-
-	H5VLunregister_connector(j_hdf5_vol);
-	g_assert(H5VLis_connector_registered_by_name("julea") == 0);
-}
-
-hid_t
-j_hdf5_get_fapl(void)
-{
-	return j_hdf5_fapl;
+	j_hdf5_semantics = NULL;
 }
 
 void

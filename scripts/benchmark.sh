@@ -32,6 +32,7 @@ SELF_BASE="${SELF_PATH##*/}"
 set_path
 set_library_path
 set_backend_path
+set_hdf_path
 
 run_benchmark ()
 {

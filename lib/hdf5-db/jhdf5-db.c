@@ -348,9 +348,6 @@ H5PLget_plugin_info(void)
 	return &H5VL_julea_db_g;
 }
 
-static hid_t j_hdf5_fapl = -1;
-static hid_t j_hdf5_vol = -1;
-
 // FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_hdf5_init(void);
 static void __attribute__((destructor)) j_hdf5_fini(void);
@@ -358,41 +355,11 @@ static void __attribute__((destructor)) j_hdf5_fini(void);
 static void
 j_hdf5_init(void)
 {
-	if (j_hdf5_fapl != -1 && j_hdf5_vol != -1)
-	{
-		return;
-	}
-
-	j_hdf5_vol = H5VLregister_connector(&H5VL_julea_db_g, H5P_DEFAULT);
-	g_assert(j_hdf5_vol > 0);
-	g_assert(H5VLis_connector_registered_by_name("julea-db") == 1);
-
-	H5VLinitialize(j_hdf5_vol, H5P_DEFAULT);
-
-	j_hdf5_fapl = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_vol(j_hdf5_fapl, j_hdf5_vol, NULL);
 }
 
 static void
 j_hdf5_fini(void)
 {
-	if (j_hdf5_fapl == -1 && j_hdf5_vol == -1)
-	{
-		return;
-	}
-
-	H5Pclose(j_hdf5_fapl);
-
-	H5VLterminate(j_hdf5_vol);
-
-	H5VLunregister_connector(j_hdf5_vol);
-	g_assert(H5VLis_connector_registered_by_name("julea-db") == 0);
-}
-
-hid_t
-j_hdf5_get_fapl(void)
-{
-	return j_hdf5_fapl;
 }
 
 void

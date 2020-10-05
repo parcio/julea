@@ -435,6 +435,7 @@ endforeach
 hdf_deps = []
 
 if hdf_dep.found()
+	# FIXME refactor, we do not really want to link to the HDF5 VOL plugins anymore
 	hdf_deps += julea_client_deps['hdf5']
 	hdf_deps += hdf_dep
 endif

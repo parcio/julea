@@ -35,7 +35,6 @@
 
 G_BEGIN_DECLS
 
-hid_t j_hdf5_get_fapl(void);
 void j_hdf5_set_semantics(JSemantics*);
 
 G_END_DECLS
