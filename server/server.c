@@ -243,6 +243,15 @@ j_libfabric_ress_init(GSList** pep_list, struct fid_eq** passive_ep_event_queue)
 		goto end;
 	}
 
+	printf("\n======= own addresses =======\n\n");
+	while (current_own_addr != NULL)
+	{
+		printf("%s\n", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
+		current_own_addr = current_own_addr->ifa_next;
+	}
+	printf("\n===== ===== ===== ===== =====\n");
+
+	current_own_addr = own_addr_list;
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
 	//debug
 	//printf("\nSERVER Network Adresses:\n	Hostname:%s\n", my_hostname);
