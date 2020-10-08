@@ -50,7 +50,7 @@ j_fabric_init(JFabric** jfabric, JRequestType req_type, JConfiguration* configur
 			   NULL,
 			   j_configuration_get_fi_service(configuration),
 			   j_configuration_get_fi_flags(configuration, req_type),
-				 j_configuration_fi_get_hints(configuration, J_MSG),
+			   j_configuration_fi_get_hints(configuration, J_MSG),
 			   &(*jfabric)->msg_info);
 	if (error != 0)
 	{
