@@ -243,43 +243,40 @@ j_libfabric_ress_init(GSList** pep_list, struct fid_eq** passive_ep_event_queue)
 		goto end;
 	}
 
-	printf("\n======= own addresses =======\n\n");
-	while (current_own_addr != NULL)
-	{
-		printf("%s\n", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr));
-		current_own_addr = current_own_addr->ifa_next;
-	}
-	printf("\n===== ===== ===== ===== =====\n");
-
-	current_own_addr = own_addr_list;
 	//go through all interfaces, build new fi_info for each, pass info to respective new passive_ep, put it in queue, return queue
 	//debug
 	//printf("\nSERVER Network Adresses:\n	Hostname:%s\n", my_hostname);
 
 	while (current_own_addr != NULL)
 	{
-		gboolean duplication;
+		gboolean ip_problem;
 
-		duplication = FALSE;
+		ip_problem = FALSE;
 
-		if (*pep_list != NULL)
+		// check if entry is of AF_INET family
+		if (current_own_addr->ifa_addr->sa_family != AF_INET)
 		{
-			for (guint i = 0; i < g_slist_length(*pep_list); i++)
+			ip_problem = TRUE;
+		}
+		else
+		{
+			// check if entry is already in pep_list
+			if (*pep_list != NULL)
 			{
-				struct fi_info* listening_info;
-				listening_info = ((PepListEntry*) g_slist_nth_data(*pep_list, i))->info;
-				if (g_strcmp0(inet_ntoa(((struct sockaddr_in*) listening_info->src_addr)->sin_addr), inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0)
+				for (guint i = 0; i < g_slist_length(*pep_list); i++)
 				{
-					duplication = TRUE;
-					break;
+					struct fi_info* listening_info;
+					listening_info = ((PepListEntry*) g_slist_nth_data(*pep_list, i))->info;
+					if (g_strcmp0(inet_ntoa(((struct sockaddr_in*) listening_info->src_addr)->sin_addr), inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0)
+					{
+						ip_problem = TRUE;
+						break;
+					}
 				}
 			}
 		}
 
-		if (!(g_strcmp0("1.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
-				  g_strcmp0("2.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
-				  g_strcmp0("3.0.0.0", inet_ntoa(((struct sockaddr_in*)current_own_addr->ifa_addr)->sin_addr)) == 0 ||
-					duplication))
+		if (!ip_problem)
 		{
 			PepListEntry* pep_list_entry;
 			struct fi_info* info;

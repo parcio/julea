@@ -427,7 +427,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	cq_attr.wait_set = NULL;
 
 	// set information for fi_getinfo call
-	version = FI_VERSION(1, 9);
+	version = FI_VERSION(1, 6);
 	service = g_strdup("4711");
 	server_flags = FI_SOURCE;
 	client_flags = FI_NUMERICHOST;
