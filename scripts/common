@@ -43,16 +43,23 @@ error_build_directory_not_found ()
 set_path ()
 {
 	local build_dir
+	local old_path
 
 	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	old_path="${PATH}"
 
 	if test -n "${JULEA_PREFIX}"
 	then
-		PATH="${JULEA_PREFIX}/bin:${PATH}"
+		PATH="${JULEA_PREFIX}/bin"
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
 
-		PATH="${build_dir}:${PATH}"
+		PATH="${build_dir}"
+	fi
+
+	if test -n "${old_path}"
+	then
+		PATH="${PATH}:${old_path}"
 	fi
 
 	export PATH
@@ -61,16 +68,23 @@ set_path ()
 set_library_path ()
 {
 	local build_dir
+	local old_path
 
 	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	old_path="${LD_LIBRARY_PATH}"
 
 	if test -n "${JULEA_PREFIX}"
 	then
-		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib/x86_64-linux-gnu:${JULEA_PREFIX}/lib:${LD_LIBRARY_PATH}"
+		LD_LIBRARY_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib/x86_64-linux-gnu:${JULEA_PREFIX}/lib"
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
 
-		LD_LIBRARY_PATH="${build_dir}:${LD_LIBRARY_PATH}"
+		LD_LIBRARY_PATH="${build_dir}"
+	fi
+
+	if test -n "${old_path}"
+	then
+		LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${old_path}"
 	fi
 
 	export LD_LIBRARY_PATH
@@ -79,16 +93,23 @@ set_library_path ()
 set_pkg_config_path ()
 {
 	local build_dir
+	local old_path
 
 	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	old_path="${PKG_CONFIG_PATH}"
 
 	if test -n "${JULEA_PREFIX}"
 	then
-		PKG_CONFIG_PATH="${JULEA_PREFIX}/lib64/pkgconfig:${JULEA_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${JULEA_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+		PKG_CONFIG_PATH="${JULEA_PREFIX}/lib64/pkgconfig:${JULEA_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${JULEA_PREFIX}/lib/pkgconfig"
 	else
 		test -d "${build_dir}" || error_build_directory_not_found
 
-		PKG_CONFIG_PATH="${build_dir}/meson-uninstalled:${PKG_CONFIG_PATH}"
+		PKG_CONFIG_PATH="${build_dir}/meson-uninstalled"
+	fi
+
+	if test -n "${old_path}"
+	then
+		PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${old_path}"
 	fi
 
 	export PKG_CONFIG_PATH
@@ -110,4 +131,29 @@ set_backend_path ()
 	fi
 
 	export JULEA_BACKEND_PATH
+}
+
+set_hdf_path ()
+{
+	local build_dir
+	local old_path
+
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	old_path="${HDF5_PLUGIN_PATH}"
+
+	if test -n "${JULEA_PREFIX}"
+	then
+		HDF5_PLUGIN_PATH="${JULEA_PREFIX}/lib64:${JULEA_PREFIX}/lib/x86_64-linux-gnu:${JULEA_PREFIX}/lib"
+	else
+		test -d "${build_dir}" || error_build_directory_not_found
+
+		HDF5_PLUGIN_PATH="${build_dir}"
+	fi
+
+	if test -n "${old_path}"
+	then
+		HDF5_PLUGIN_PATH="${HDF5_PLUGIN_PATH}:${old_path}"
+	fi
+
+	export HDF5_PLUGIN_PATH
 }

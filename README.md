@@ -34,6 +34,7 @@ $ ./scripts/install-dependencies.sh
 
 To allow the dependencies to be found, the JULEA environment has to be loaded.
 This also ensures that JULEA's binaries and libraries are found later.
+Make sure to load the script using `. ` instead of executing it with `./` because the environment changes will not persist otherwise.
 
 ```console
 $ . scripts/environment.sh
@@ -52,9 +53,9 @@ Finally, a JULEA configuration has to be created.
 ```console
 $ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
-  --object-backend=posix --object-component=server --object-path=/tmp/julea/posix \
-  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb \
-  --db-backend=sqlite --db-component=server --db-path=/tmp/julea/sqlite
+  --object-backend=posix --object-component=server --object-path="/tmp/julea-$(id -u)/posix" \
+  --kv-backend=lmdb --kv-component=server --kv-path="/tmp/julea-$(id -u)/lmdb" \
+  --db-backend=sqlite --db-component=server --db-path="/tmp/julea-$(id -u)/sqlite"
 ```
 
 You can check whether JULEA works by executing the integrated test suite.

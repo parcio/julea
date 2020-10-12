@@ -190,6 +190,39 @@ test_object_status(void)
 	g_assert_true(ret);
 }
 
+static void
+test_object_sync(void)
+{
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JObject) object = NULL;
+	g_autofree gchar* buffer = NULL;
+	guint64 nbytes = 0;
+	gboolean ret;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	buffer = g_malloc0(42);
+
+	object = j_object_new("test", "test-object-sync");
+	g_assert_true(object != NULL);
+
+	j_object_create(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	j_object_write(object, buffer, 42, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_cmpuint(nbytes, ==, 42);
+
+	j_object_sync(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	j_object_delete(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+}
+
 void
 test_object_object(void)
 {
@@ -197,4 +230,5 @@ test_object_object(void)
 	g_test_add_func("/object/object/create_delete", test_object_create_delete);
 	g_test_add_func("/object/object/read_write", test_object_read_write);
 	g_test_add_func("/object/object/status", test_object_status);
+	g_test_add_func("/object/object/sync", test_object_sync);
 }

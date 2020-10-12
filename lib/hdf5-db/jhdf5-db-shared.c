@@ -21,10 +21,11 @@
  **/
 
 #include <julea-config.h>
-#include <julea.h>
-#include <julea-db.h>
-#include <julea-object.h>
+
 #include <glib.h>
+
+#include <hdf5.h>
+#include <H5PLextern.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,13 +33,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <string.h>
+
+#include <hdf5/jhdf5.h>
+
+#include <julea.h>
+#include <julea-db.h>
+#include <julea-object.h>
 
 #include "jhdf5-db.h"
-
-#define _GNU_SOURCE
-
-#define JULEA_DB 530
 
 static char*
 H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
@@ -54,12 +56,15 @@ H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
 
 	memcpy(str, prefix, prefix_len);
 	pout += prefix_len;
+
 	while (pin < pin_end)
 	{
 		*pout++ = hex[(*pin >> 4) & 0xF];
 		*pout++ = hex[(*pin++) & 0xF];
 	}
+
 	*pout = 0;
+
 	return str;
 }
 
@@ -82,8 +87,10 @@ H5VL_julea_db_object_ref(JHDF5Object_t* object)
 	g_return_val_if_fail(object != NULL, NULL);
 
 	g_atomic_int_inc(&object->ref_count);
+
 	return object;
 }
+
 static JHDF5Object_t*
 H5VL_julea_db_object_new(JHDF5ObjectType type)
 {
@@ -98,8 +105,10 @@ H5VL_julea_db_object_new(JHDF5ObjectType type)
 	object->backend_id_len = 0;
 	object->ref_count = 1;
 	object->type = type;
+
 	return object;
 }
+
 static void
 H5VL_julea_db_object_unref(JHDF5Object_t* object)
 {
@@ -115,26 +124,32 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 			case J_HDF5_OBJECT_TYPE_DATASET:
 				H5VL_julea_db_object_unref(object->dataset.file);
 				g_free(object->dataset.name);
+
 				if (object->dataset.distribution)
 				{
 					j_distribution_unref(object->dataset.distribution);
 				}
+
 				if (object->dataset.object)
 				{
 					j_distributed_object_unref(object->dataset.object);
 				}
+
 				break;
 			case J_HDF5_OBJECT_TYPE_ATTR:
 				H5VL_julea_db_object_unref(object->attr.file);
 				g_free(object->attr.name);
+
 				if (object->attr.distribution)
 				{
 					j_distribution_unref(object->attr.distribution);
 				}
+
 				if (object->attr.object)
 				{
 					j_distributed_object_unref(object->attr.object);
 				}
+
 				break;
 			case J_HDF5_OBJECT_TYPE_GROUP:
 				H5VL_julea_db_object_unref(object->group.file);
@@ -150,6 +165,7 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 			default:
 				g_assert_not_reached();
 		}
+
 		g_free(object->backend_id);
 		g_free(object);
 	}

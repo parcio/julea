@@ -24,12 +24,35 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/common"
 . "${SELF_DIR}/spack"
 
+JULEA_ENVIRONMENT_SOURCED=1
+
+# See https://stackoverflow.com/a/28776166
+if test -n "${BASH_VERSION}"
+then
+	(return 0 2>/dev/null) || JULEA_ENVIRONMENT_SOURCED=0
+elif test -n "${ZSH_EVAL_CONTEXT}"
+then
+	case "${ZSH_EVAL_CONTEXT}" in
+		*:file)
+			;;
+		*)
+			JULEA_ENVIRONMENT_SOURCED=0
+			;;
+	esac
+fi
+
+if test "${JULEA_ENVIRONMENT_SOURCED}" -eq 0
+then
+	printf 'Warning: This script should be sourced using ". %s", otherwise changes to the environment will not persist.\n' "${SELF_PATH}" >&2
+fi
+
 JULEA_ENVIRONMENT=1
 
 set_path
 set_library_path
 set_pkg_config_path
 set_backend_path
+set_hdf_path
 
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 

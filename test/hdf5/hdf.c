@@ -137,7 +137,7 @@ test_hdf_read_write(void)
 {
 	hid_t file;
 
-	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, j_hdf5_get_fapl());
+	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	write_dataset(file);
 	read_dataset(file);
@@ -151,6 +151,12 @@ void
 test_hdf_hdf(void)
 {
 #ifdef HAVE_HDF5
+	if (g_getenv("HDF5_VOL_CONNECTOR") == NULL)
+	{
+		// Running tests only makes sense for our HDF5 clients
+		return;
+	}
+
 	g_test_add_func("/hdf5/read_write", test_hdf_read_write);
 #endif
 }
