@@ -502,7 +502,7 @@ jd_handle_message(JMessage* message, JEndpoint* jendpoint, JMemoryChunk* memory_
 
 			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 			{
-				j_message_send(reply, connection);
+				j_message_send(reply, jendpoint);
 			}
 		}
 		break;
