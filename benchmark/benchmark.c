@@ -140,6 +140,11 @@ j_benchmark_run_one(BenchmarkRun* run)
 
 	g_return_if_fail(run != NULL);
 
+	if (j_benchmark_name_max == 0)
+	{
+		return;
+	}
+
 	if (opt_list)
 	{
 		g_print("%s\n", run->name);
@@ -234,6 +239,11 @@ static void
 j_benchmark_run_all(void)
 {
 	GList* benchmark;
+
+	if (j_benchmarks == NULL || j_benchmark_name_max == 0)
+	{
+		return;
+	}
 
 	if (!opt_machine_readable)
 	{
