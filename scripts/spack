@@ -125,7 +125,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} rocksdb"
 
 		# FIXME move to minimal
-		dependencies="${dependencies} libfabric#fabrics=tcp,udp,verbs,rxd,rxm"
+		dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"
