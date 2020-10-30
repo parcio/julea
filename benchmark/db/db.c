@@ -354,12 +354,12 @@ _benchmark_db_delete(BenchmarkRun* run, gchar const* namespace, gboolean use_bat
 	g_assert_nonnull(b_scheme);
 	g_assert_nonnull(run);
 
-	_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
-
-	j_benchmark_timer_start(run);
-
 	while (j_benchmark_iterate(run))
 	{
+		_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
+
+		j_benchmark_timer_start(run);
+
 		for (gint i = 0; i < ((use_index_all || use_index_single) ? N : (N / N_GET_DIVIDER)); i++)
 		{
 			g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme, &b_s_error);
@@ -386,8 +386,9 @@ _benchmark_db_delete(BenchmarkRun* run, gchar const* namespace, gboolean use_bat
 			ret = j_batch_execute(batch);
 			g_assert_true(ret);
 		}
+
+		j_benchmark_timer_stop(run);
 	}
-	j_benchmark_timer_stop(run);
 
 	ret = j_batch_execute(delete_batch);
 	g_assert_true(ret);
