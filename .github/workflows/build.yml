@@ -9,12 +9,14 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
+        dependencies: [system, spack]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
       - name: Install dependencies
+        if: matrix.dependencies == 'system'
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
           sudo apt --yes purge glib-networking
@@ -29,6 +31,17 @@ jobs:
           else
             sudo apt --yes --no-install-recommends install meson ninja-build
           fi
+      - name: Cache dependencies
+        id: cache
+        if: matrix.dependencies == 'spack'
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: ${{ matrix.os }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Install dependencies
+        if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/install-dependencies.sh full
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
