@@ -159,6 +159,12 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
+# FIXME hdf5 dependency? https://mesonbuild.com/Dependencies.html#hdf5
+#hdf_dep = dependency('hdf5',
+#	language: 'c',
+#	required: false,
+#)
+
 hdf_dep = cc.find_library('hdf5',
 	has_headers: ['hdf5.h', 'H5PLextern.h'],
 	required: false,

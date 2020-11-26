@@ -4,7 +4,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 90
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: dependencies
-          key: ${{ matrix.os }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
