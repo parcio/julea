@@ -265,7 +265,6 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(GError) error = NULL;
-	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
 	JHDF5Object_t* file;

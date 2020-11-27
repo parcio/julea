@@ -299,7 +299,6 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 	g_autoptr(JDBSelector) selector = NULL;
 	JHDF5Object_t* object = NULL;
 	JDBType type;
-	g_autofree void* value = NULL;
 
 	(void)flags;
 	(void)fapl_id;

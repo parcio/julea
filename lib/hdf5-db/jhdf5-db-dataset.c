@@ -258,8 +258,6 @@ H5VL_julea_db_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, con
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(JDBSelector) selector = NULL;
 	g_autofree char* hex_buf = NULL;
 	JHDF5Object_t* object = NULL;
 	JHDF5Object_t* parent = obj;

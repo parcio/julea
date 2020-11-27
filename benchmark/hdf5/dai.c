@@ -45,7 +45,7 @@ set_semantics(void)
 }
 
 static gboolean
-deserialize_attribute_data(gconstpointer value, guint32 len, gpointer* data, gsize* data_size)
+deserialize_attribute_data(gconstpointer value, guint32 len, gconstpointer* data, gsize* data_size)
 {
 	bson_t bson[1];
 	bson_iter_t iterator;
@@ -250,7 +250,7 @@ benchmark_hdf_dai_get(BenchmarkRun* run)
 				g_autofree gchar* aname = NULL;
 				g_autofree gchar* value = NULL;
 				guint32 len = 0;
-				gpointer adata = NULL;
+				gconstpointer adata = NULL;
 				gsize alen = 0;
 
 				aname = g_strdup_printf("%s/benchmark-dai-get-%u", name, j);
@@ -319,7 +319,7 @@ benchmark_hdf_dai_iterator(BenchmarkRun* run)
 			gchar const* key;
 			gconstpointer value;
 			guint32 len;
-			gpointer adata = NULL;
+			gconstpointer adata = NULL;
 			gsize alen = 0;
 
 			key = j_kv_iterator_get(kv_iterator, &value, &len);

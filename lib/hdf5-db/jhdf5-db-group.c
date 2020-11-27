@@ -228,9 +228,6 @@ H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(JDBSelector) selector = NULL;
-	g_autofree char* hex_buf = NULL;
 	JHDF5Object_t* object = NULL;
 	JHDF5Object_t* parent = obj;
 	JHDF5Object_t* file;
@@ -332,8 +329,6 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(JDBSelector) selector = NULL;
 	JHDF5Object_t* object = NULL;
 	JHDF5Object_t* parent = obj;
 	JHDF5Object_t* file;
