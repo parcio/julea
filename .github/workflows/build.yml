@@ -42,15 +42,17 @@ jobs:
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
           ./scripts/install-dependencies.sh full
-          . scripts/environment.sh
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
         run: |
+          . scripts/environment.sh
           meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
       - name: Build
         run: |
+          . scripts/environment.sh
           ninja -C bld
       - name: Install
         run: |
+          . scripts/environment.sh
           ninja -C bld install
