@@ -17,3 +17,4 @@ Its goal is to provide a solid foundation for storage research and teaching.
 * [Debugging](debugging.md)
 * [Implementing a Backend](implementing-backend.md)
 * [HDF5 Support](hdf5.md)
+* [Container Support](container.md)
