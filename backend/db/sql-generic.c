@@ -970,7 +970,7 @@ backend_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 _error:
 	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, NULL)))
 	{
-		goto _error;
+		goto _error2;
 	}
 
 	if (sql)
@@ -978,6 +978,9 @@ _error:
 		g_string_free(sql, TRUE);
 	}
 
+	return FALSE;
+
+_error2:
 	return FALSE;
 }
 
