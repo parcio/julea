@@ -1,0 +1,9 @@
+FROM ghcr.io/vittel1/julea-ubuntu-deps-standard:1.0.0
+
+WORKDIR /julea
+COPY . .
+
+SHELL ["/bin/bash", "-c"]
+RUN . scripts/environment.sh && \
+	meson setup --prefix="${HOME}/julea-install" -Db_sanitize=address,undefined bld && \
+	ninja -C bld
