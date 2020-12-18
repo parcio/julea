@@ -78,7 +78,11 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 	{
 		data = j_list_iterator_get(iter_send);
 
-		if (db_backend != NULL)
+		if (db_backend == NULL)
+		{
+			ret = j_backend_operation_to_message(message, data->in_param, data->in_param_count) && ret;
+		}
+		else
 		{
 			if (!batch)
 			{
@@ -94,27 +98,9 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 				ret = data->backend_func(db_backend, batch, data) && ret;
 			}
 		}
-		else
-		{
-			ret = j_backend_operation_to_message(message, data->in_param, data->in_param_count) && ret;
-		}
 	}
 
-	if (db_backend != NULL)
-	{
-		if (data != NULL)
-		{
-			if (!error)
-			{
-				ret = j_backend_db_batch_execute(db_backend, batch, NULL) && ret;
-			}
-			else
-			{
-				g_error_free(error);
-			}
-		}
-	}
-	else
+	if (db_backend == NULL)
 	{
 		db_connection = j_connection_pool_pop(J_BACKEND_TYPE_DB, 0);
 		j_message_send(message, db_connection);
@@ -129,6 +115,20 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_DB, 0, db_connection);
+	}
+	else
+	{
+		if (data != NULL)
+		{
+			if (!error)
+			{
+				ret = j_backend_db_batch_execute(db_backend, batch, NULL) && ret;
+			}
+			else
+			{
+				g_error_free(error);
+			}
+		}
 	}
 
 	return ret;

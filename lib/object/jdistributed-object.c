@@ -596,14 +596,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 	{
 		JDistributedObject* object = j_list_iterator_get(it);
 
-		if (object_backend != NULL)
-		{
-			gpointer object_handle;
-
-			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_object_close(object_backend, object_handle) && ret;
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gsize name_len;
 
@@ -615,6 +608,13 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 				j_message_add_operation(messages[i], name_len);
 				j_message_append_n(messages[i], object->name, name_len);
 			}
+		}
+		else
+		{
+			gpointer object_handle;
+
+			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
 		}
 	}
 
@@ -693,14 +693,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 	{
 		JDistributedObject* object = j_list_iterator_get(it);
 
-		if (object_backend != NULL)
-		{
-			gpointer object_handle;
-
-			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_object_delete(object_backend, object_handle) && ret;
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gsize name_len;
 
@@ -712,6 +705,13 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 				j_message_add_operation(messages[i], name_len);
 				j_message_append_n(messages[i], object->name, name_len);
 			}
+		}
+		else
+		{
+			gpointer object_handle;
+
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_delete(object_backend, object_handle) && ret;
 		}
 	}
 
@@ -776,11 +776,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 	it = j_list_iterator_new(operations);
 	object_backend = j_object_get_backend();
 
-	if (object_backend != NULL)
-	{
-		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-	}
-	else
+	if (object_backend == NULL)
 	{
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
@@ -794,6 +790,10 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 			messages[i] = NULL;
 			br_lists[i] = NULL;
 		}
+	}
+	else
+	{
+		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 	}
 
 	/*
@@ -813,14 +813,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_READ);
 
-		if (object_backend != NULL)
-		{
-			guint64 nbytes = 0;
-
-			ret = j_backend_object_read(object_backend, object_handle, data, length, offset, &nbytes) && ret;
-			j_helper_atomic_add(bytes_read, nbytes);
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gchar* new_data;
 			guint32 index;
@@ -865,15 +858,18 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 				new_data += new_length;
 			}
 		}
+		else
+		{
+			guint64 nbytes = 0;
+
+			ret = j_backend_object_read(object_backend, object_handle, data, length, offset, &nbytes) && ret;
+			j_helper_atomic_add(bytes_read, nbytes);
+		}
 
 		j_trace_file_end(object->name, J_TRACE_FILE_READ, length, offset);
 	}
 
-	if (object_backend != NULL)
-	{
-		ret = j_backend_object_close(object_backend, object_handle) && ret;
-	}
-	else
+	if (object_backend == NULL)
 	{
 		g_autofree gpointer* background_data = NULL;
 
@@ -900,6 +896,10 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
+	}
+	else
+	{
+		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
 
 	/*
@@ -950,11 +950,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 	it = j_list_iterator_new(operations);
 	object_backend = j_object_get_backend();
 
-	if (object_backend != NULL)
-	{
-		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-	}
-	else
+	if (object_backend == NULL)
 	{
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
@@ -968,6 +964,10 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			messages[i] = NULL;
 			bw_lists[i] = NULL;
 		}
+	}
+	else
+	{
+		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 	}
 
 	/*
@@ -987,14 +987,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 
 		j_trace_file_begin(object->name, J_TRACE_FILE_WRITE);
 
-		if (object_backend != NULL)
-		{
-			guint64 nbytes = 0;
-
-			ret = j_backend_object_write(object_backend, object_handle, data, length, offset, &nbytes) && ret;
-			j_helper_atomic_add(bytes_written, nbytes);
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gchar const* new_data;
 			guint32 index;
@@ -1040,15 +1033,18 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 				}
 			}
 		}
+		else
+		{
+			guint64 nbytes = 0;
+
+			ret = j_backend_object_write(object_backend, object_handle, data, length, offset, &nbytes) && ret;
+			j_helper_atomic_add(bytes_written, nbytes);
+		}
 
 		j_trace_file_end(object->name, J_TRACE_FILE_WRITE, length, offset);
 	}
 
-	if (object_backend != NULL)
-	{
-		ret = j_backend_object_close(object_backend, object_handle) && ret;
-	}
-	else
+	if (object_backend == NULL)
 	{
 		g_autofree gpointer* background_data = NULL;
 
@@ -1075,6 +1071,10 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
+	}
+	else
+	{
+		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
 
 	/*
@@ -1153,15 +1153,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 			*size = 0;
 		}
 
-		if (object_backend != NULL)
-		{
-			gpointer object_handle;
-
-			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
-			ret = j_backend_object_close(object_backend, object_handle) && ret;
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gsize name_len;
 
@@ -1173,6 +1165,14 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 				j_message_add_operation(messages[i], name_len);
 				j_message_append_n(messages[i], object->name, name_len);
 			}
+		}
+		else
+		{
+			gpointer object_handle;
+
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
 		}
 	}
 
@@ -1253,15 +1253,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 		JDistributedObjectOperation* operation = j_list_iterator_get(it);
 		JDistributedObject* object = operation->sync.object;
 
-		if (object_backend != NULL)
-		{
-			gpointer object_handle;
-
-			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_object_sync(object_backend, object_handle) && ret;
-			ret = j_backend_object_close(object_backend, object_handle) && ret;
-		}
-		else
+		if (object_backend == NULL)
 		{
 			gsize name_len;
 
@@ -1273,6 +1265,14 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 				j_message_add_operation(messages[i], name_len);
 				j_message_append_n(messages[i], object->name, name_len);
 			}
+		}
+		else
+		{
+			gpointer object_handle;
+
+			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+			ret = j_backend_object_sync(object_backend, object_handle) && ret;
+			ret = j_backend_object_close(object_backend, object_handle) && ret;
 		}
 	}
 
