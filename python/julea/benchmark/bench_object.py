@@ -1,6 +1,6 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2019 Johannes Coym
-# Copyright (C) 2017-2019 Michael Kuhn
+# Copyright (C) 2019-2020 Johannes Coym
+# Copyright (C) 2017-2020 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -72,7 +72,7 @@ def bench_delete(use_batch):
 
 def bench_status(use_batch):
     n = 200000
-    dummy = bytearray(1)
+    dummy = bytes(1)
 
     with JBatch(J_SEMANTICS_TEMPLATE_DEFAULT) as batch:
         o = JObject("python", "benchmark")
@@ -101,7 +101,7 @@ def bench_status(use_batch):
 
 def bench_read(use_batch, block_size):
     n = 200000
-    dummy = bytearray(block_size)
+    dummy = bytes(block_size)
 
     with JBatch(J_SEMANTICS_TEMPLATE_DEFAULT) as batch:
         o = JObject("python", "benchmark")
@@ -132,7 +132,7 @@ def bench_read(use_batch, block_size):
 
 def bench_write(use_batch, block_size):
     n = 200000
-    dummy = bytearray(block_size)
+    dummy = bytes(block_size)
 
     with JBatch(J_SEMANTICS_TEMPLATE_DEFAULT) as batch:
         o = JObject("python", "benchmark")

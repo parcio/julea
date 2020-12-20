@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2019 Johannes Coym
+# Copyright (C) 2019-2020 Johannes Coym
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -79,7 +79,7 @@ class JDistributedObject:
         """Writes an object
 
         Args:
-            value: A bytearray holding the data to write
+            value: bytes holding the data to write
             offset: The offset where the data is written
             batch: A batch
         Returns:
@@ -87,11 +87,10 @@ class JDistributedObject:
                            (Access with bytes_written.value)
         """
         length = ctypes.c_ulonglong(len(value))
-        value2 = ctypes.create_string_buffer(length.value)
-        value2.raw = value
+        value2 = ctypes.c_char_p(value)
         bytes_written = ctypes.c_ulonglong(0)
         JULEA_OBJECT.j_distributed_object_write(
-            self.object, ctypes.byref(value2), length, offset,
+            self.object, value2, length, offset,
             ctypes.byref(bytes_written), batch.get_pointer())
         return bytes_written
 
@@ -104,13 +103,13 @@ class JDistributedObject:
             batch: A batch
         Returns:
             value: The ctype with the data that was read
-                   (Access data with value.raw)
+                   (Access data with value.value)
             bytes_read: A c_ulonglong with the bytes read
                         (Access with bytes_read.value)
         """
-        value = ctypes.create_string_buffer(length)
+        value = ctypes.c_char_p(bytes(length))
         bytes_read = ctypes.c_ulonglong(0)
         JULEA_OBJECT.j_distributed_object_read(
-            self.object, ctypes.byref(value), length, offset,
+            self.object, value, length, offset,
             ctypes.byref(bytes_read), batch.get_pointer())
         return value, bytes_read

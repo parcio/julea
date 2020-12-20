@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2019 Johannes Coym
+# Copyright (C) 2019-2020 Johannes Coym
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -51,13 +51,12 @@ class JKV:
         """Writes a Key-Value pair
 
         Args:
-            value: A bytearray of data to be written in the KV pair
+            value: bytes of data to be written in the KV pair
             batch: A batch
         """
         length = ctypes.c_ulong(len(value))
-        value2 = ctypes.create_string_buffer(length.value)
-        value2.raw = value
-        JULEA_KV.j_kv_put(self.kv, ctypes.byref(value2),
+        value2 = ctypes.c_char_p(value)
+        JULEA_KV.j_kv_put(self.kv, value2,
                           length, None, batch.get_pointer())
 
     def get(self, batch):

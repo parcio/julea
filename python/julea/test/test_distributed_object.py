@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2019 Johannes Coym
+# Copyright (C) 2019-2020 Johannes Coym
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -47,7 +47,7 @@ def test_read_write():
 
     out = o.read(5, 0, batch)
     batch.execute()
-    assert out[0].raw.decode('utf-8') == "dummy"
+    assert out[0].value.decode('utf-8') == "dummy"
     assert out[1].value == 5
 
     o.delete(batch)
@@ -64,7 +64,7 @@ def test_status():
     o.create(batch)
     batch.execute()
 
-    dummy = bytearray(42)
+    dummy = bytes(42)
     o.write(dummy, 0, batch)
     batch.execute()
 
