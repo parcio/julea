@@ -32,6 +32,7 @@ export G_SLICE=debug-blocks
 set_path
 set_library_path
 set_backend_path
+set_hdf_path
 
 run_test ()
 {
@@ -41,6 +42,7 @@ run_test ()
 
 	setup_init
 	setup_start
+	# FIXME gtester is deprecated, replace with tappy?
 	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
 	setup_stop
 

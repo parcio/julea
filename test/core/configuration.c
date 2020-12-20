@@ -121,9 +121,9 @@ test_configuration_get(void)
 }
 
 void
-test_configuration(void)
+test_core_configuration(void)
 {
-	g_test_add_func("/configuration/new_ref_unref", test_configuration_new_ref_unref);
-	g_test_add_func("/configuration/new_for_data", test_configuration_new_for_data);
-	g_test_add_func("/configuration/get", test_configuration_get);
+	g_test_add_func("/core/configuration/new_ref_unref", test_configuration_new_ref_unref);
+	g_test_add_func("/core/configuration/new_for_data", test_configuration_new_for_data);
+	g_test_add_func("/core/configuration/get", test_configuration_get);
 }

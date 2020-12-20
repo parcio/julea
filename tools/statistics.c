@@ -20,6 +20,8 @@
 
 #include <glib.h>
 
+#include <locale.h>
+
 #include <julea.h>
 
 #include <jconnection-pool.h>
@@ -64,6 +66,9 @@ main(int argc, char** argv)
 
 	(void)argc;
 	(void)argv;
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	get_all = 1;
 	configuration = j_configuration();

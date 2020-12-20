@@ -25,6 +25,7 @@
 #include <gio/gio.h>
 #include <gmodule.h>
 
+#include <locale.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -32,7 +33,14 @@
 
 #include "server.h"
 
-static JConfiguration* jd_configuration;
+JStatistics* jd_statistics = NULL;
+GMutex jd_statistics_mutex[1] = { 0 };
+
+JBackend* jd_object_backend = NULL;
+JBackend* jd_kv_backend = NULL;
+JBackend* jd_db_backend = NULL;
+
+static JConfiguration* jd_configuration = NULL;
 
 static gboolean
 jd_signal(gpointer data)
@@ -224,6 +232,9 @@ main(int argc, char** argv)
 		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);

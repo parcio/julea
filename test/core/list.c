@@ -116,11 +116,11 @@ test_list_get(JList** list, gconstpointer data)
 }
 
 void
-test_list(void)
+test_core_list(void)
 {
-	g_test_add_func("/list/new_free", test_list_new_free);
-	g_test_add("/list/length", JList*, NULL, test_list_fixture_setup, test_list_length, test_list_fixture_teardown);
-	g_test_add("/list/append", JList*, NULL, test_list_fixture_setup, test_list_append, test_list_fixture_teardown);
-	g_test_add("/list/prepend", JList*, NULL, test_list_fixture_setup, test_list_prepend, test_list_fixture_teardown);
-	g_test_add("/list/get", JList*, NULL, test_list_fixture_setup, test_list_get, test_list_fixture_teardown);
+	g_test_add_func("/core/list/new_free", test_list_new_free);
+	g_test_add("/core/list/length", JList*, NULL, test_list_fixture_setup, test_list_length, test_list_fixture_teardown);
+	g_test_add("/core/list/append", JList*, NULL, test_list_fixture_setup, test_list_append, test_list_fixture_teardown);
+	g_test_add("/core/list/prepend", JList*, NULL, test_list_fixture_setup, test_list_prepend, test_list_fixture_teardown);
+	g_test_add("/core/list/get", JList*, NULL, test_list_fixture_setup, test_list_get, test_list_fixture_teardown);
 }

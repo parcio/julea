@@ -51,6 +51,7 @@ void j_object_read(JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
 void j_object_write(JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
 void j_object_status(JObject*, gint64*, guint64*, JBatch*);
+void j_object_sync(JObject*, JBatch*);
 
 G_END_DECLS
 

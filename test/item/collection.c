@@ -70,7 +70,7 @@ test_collection_name(JCollection** collection, gconstpointer data)
 }
 
 void
-test_collection(void)
+test_item_collection(void)
 {
 	g_test_add_func("/item/collection/new_free", test_collection_new_free);
 	g_test_add("/item/collection/name", JCollection*, NULL, test_collection_fixture_setup, test_collection_name, test_collection_fixture_teardown);

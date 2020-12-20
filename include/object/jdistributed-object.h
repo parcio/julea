@@ -50,6 +50,7 @@ void j_distributed_object_read(JDistributedObject*, gpointer, guint64, guint64, 
 void j_distributed_object_write(JDistributedObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
 
 void j_distributed_object_status(JDistributedObject*, gint64*, guint64*, JBatch*);
+void j_distributed_object_sync(JDistributedObject*, JBatch*);
 
 G_END_DECLS
 

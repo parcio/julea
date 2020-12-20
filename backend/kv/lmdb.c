@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_C_SOURCE 200809L
-
 #include <julea-config.h>
 
 #include <glib.h>
@@ -36,6 +34,14 @@ struct JLMDBBatch
 
 typedef struct JLMDBBatch JLMDBBatch;
 
+struct JLMDBData
+{
+	MDB_env* env;
+	MDB_dbi dbi;
+};
+
+typedef struct JLMDBData JLMDBData;
+
 struct JLMDBIterator
 {
 	MDB_cursor* cursor;
@@ -47,19 +53,17 @@ struct JLMDBIterator
 
 typedef struct JLMDBIterator JLMDBIterator;
 
-static MDB_env* backend_env = NULL;
-static MDB_dbi backend_dbi;
-
 static gboolean
-backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
+backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* data)
 {
+	JLMDBData* bd = backend_data;
 	JLMDBBatch* batch = NULL;
 	MDB_txn* txn;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	if (mdb_txn_begin(backend_env, NULL, 0, &txn) == 0)
+	if (mdb_txn_begin(bd->env, NULL, 0, &txn) == 0)
 	{
 		batch = g_slice_new(JLMDBBatch);
 		batch->txn = txn;
@@ -73,11 +77,13 @@ backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* dat
 }
 
 static gboolean
-backend_batch_execute(gpointer data)
+backend_batch_execute(gpointer backend_data, gpointer data)
 {
 	gboolean ret = FALSE;
 
 	JLMDBBatch* batch = data;
+
+	(void)backend_data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
@@ -98,8 +104,9 @@ backend_batch_execute(gpointer data)
 }
 
 static gboolean
-backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
+backend_put(gpointer backend_data, gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
+	JLMDBData* bd = backend_data;
 	JLMDBBatch* batch = data;
 	MDB_val m_key;
 	MDB_val m_value;
@@ -116,12 +123,13 @@ backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 	m_value.mv_size = len;
 	m_value.mv_data = value;
 
-	return (mdb_put(batch->txn, backend_dbi, &m_key, &m_value, 0) == 0);
+	return (mdb_put(batch->txn, bd->dbi, &m_key, &m_value, 0) == 0);
 }
 
 static gboolean
-backend_delete(gpointer data, gchar const* key)
+backend_delete(gpointer backend_data, gpointer data, gchar const* key)
 {
+	JLMDBData* bd = backend_data;
 	JLMDBBatch* batch = data;
 	MDB_val m_key;
 	g_autofree gchar* nskey = NULL;
@@ -134,14 +142,15 @@ backend_delete(gpointer data, gchar const* key)
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 
-	return (mdb_del(batch->txn, backend_dbi, &m_key, NULL) == 0);
+	return (mdb_del(batch->txn, bd->dbi, &m_key, NULL) == 0);
 }
 
 static gboolean
-backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
+backend_get(gpointer backend_data, gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
 
+	JLMDBData* bd = backend_data;
 	JLMDBBatch* batch = data;
 	MDB_val m_key;
 	MDB_val m_value;
@@ -157,7 +166,7 @@ backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 
-	if (mdb_get(batch->txn, backend_dbi, &m_key, &m_value) == 0)
+	if (mdb_get(batch->txn, bd->dbi, &m_key, &m_value) == 0)
 	{
 		// FIXME check whether copies can be avoided
 		*value = g_memdup(m_value.mv_data, m_value.mv_size);
@@ -170,8 +179,9 @@ backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 }
 
 static gboolean
-backend_get_all(gchar const* namespace, gpointer* data)
+backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* data)
 {
+	JLMDBData* bd = backend_data;
 	JLMDBIterator* iterator = NULL;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
@@ -182,8 +192,8 @@ backend_get_all(gchar const* namespace, gpointer* data)
 	iterator->prefix = g_strdup_printf("%s:", namespace);
 	iterator->namespace_len = strlen(namespace) + 1;
 
-	mdb_txn_begin(backend_env, NULL, 0, &(iterator->txn));
-	mdb_cursor_open(iterator->txn, backend_dbi, &(iterator->cursor));
+	mdb_txn_begin(bd->env, NULL, 0, &(iterator->txn));
+	mdb_cursor_open(iterator->txn, bd->dbi, &(iterator->cursor));
 
 	*data = iterator;
 
@@ -191,8 +201,9 @@ backend_get_all(gchar const* namespace, gpointer* data)
 }
 
 static gboolean
-backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
+backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* data)
 {
+	JLMDBData* bd = backend_data;
 	JLMDBIterator* iterator = NULL;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
@@ -204,8 +215,8 @@ backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* dat
 	iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
 	iterator->namespace_len = strlen(namespace) + 1;
 
-	mdb_txn_begin(backend_env, NULL, 0, &(iterator->txn));
-	mdb_cursor_open(iterator->txn, backend_dbi, &(iterator->cursor));
+	mdb_txn_begin(bd->env, NULL, 0, &(iterator->txn));
+	mdb_cursor_open(iterator->txn, bd->dbi, &(iterator->cursor));
 
 	*data = iterator;
 
@@ -213,12 +224,14 @@ backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* dat
 }
 
 static gboolean
-backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+backend_iterate(gpointer backend_data, gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	JLMDBIterator* iterator = data;
 	MDB_cursor_op cursor_op = MDB_NEXT;
 	MDB_val m_key;
 	MDB_val m_value;
+
+	(void)backend_data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
@@ -260,33 +273,36 @@ out:
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
+	JLMDBData* bd;
 	MDB_txn* txn;
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
 	g_mkdir_with_parents(path, 0700);
 
-	if (mdb_env_create(&backend_env) == 0)
+	bd = g_slice_new(JLMDBData);
+
+	if (mdb_env_create(&(bd->env)) == 0)
 	{
 		// FIXME grow mapsize dynamically (default is 10 MiB)
-		if (mdb_env_set_mapsize(backend_env, (gsize)4 * 1024 * 1024 * 1024) != 0)
+		if (mdb_env_set_mapsize(bd->env, (gsize)4 * 1024 * 1024 * 1024) != 0)
 		{
 			goto error;
 		}
 
-		if (mdb_env_open(backend_env, path, 0, 0600) != 0)
+		if (mdb_env_open(bd->env, path, 0, 0600) != 0)
 		{
 			goto error;
 		}
 
-		if (mdb_txn_begin(backend_env, NULL, 0, &txn) != 0)
+		if (mdb_txn_begin(bd->env, NULL, 0, &txn) != 0)
 		{
 			goto error;
 		}
 
-		if (mdb_dbi_open(txn, NULL, 0, &backend_dbi) != 0)
+		if (mdb_dbi_open(txn, NULL, 0, &(bd->dbi)) != 0)
 		{
 			goto error;
 		}
@@ -297,21 +313,28 @@ backend_init(gchar const* path)
 		}
 	}
 
-	return (backend_env != NULL);
+	*backend_data = bd;
+
+	return (bd->env != NULL);
 
 error:
-	mdb_env_close(backend_env);
+	mdb_env_close(bd->env);
+	g_slice_free(JLMDBData, bd);
 
 	return FALSE;
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
-	if (backend_env != NULL)
+	JLMDBData* bd = backend_data;
+
+	if (bd->env != NULL)
 	{
-		mdb_env_close(backend_env);
+		mdb_env_close(bd->env);
 	}
+
+	g_slice_free(JLMDBData, bd);
 }
 
 static JBackend lmdb_backend = {

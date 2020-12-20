@@ -4,9 +4,9 @@
 [![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 [![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
 
-JULEA is a flexible storage framework that allows offering arbitrary client interfaces to applications.
-To be able to rapidly prototype new approaches, it offers object, key-value and database backends that can either be client-side or server-side;
-backends for popular storage technologies such as POSIX, LevelDB and MongoDB have already been implemented.
+JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
+To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
+Support for popular storage technologies such as POSIX, LevelDB and MongoDB is already included.
 
 Additionally, JULEA allows dynamically adapting the I/O operations' semantics and can thus be adjusted to different use-cases.
 It runs completely in user space, which eases development and debugging.
@@ -34,16 +34,17 @@ $ ./scripts/install-dependencies.sh
 
 To allow the dependencies to be found, the JULEA environment has to be loaded.
 This also ensures that JULEA's binaries and libraries are found later.
+Make sure to load the script using `. ` instead of executing it with `./` because the environment changes will not persist otherwise.
 
 ```console
-$ . ./scripts/environment.sh
+$ . scripts/environment.sh
 ```
 
 JULEA now has to be configured using [Meson](https://mesonbuild.com/) and compiled using [Ninja](https://ninja-build.org/);
 the different configuration and build options can be shown with `meson setup --help`.
 
 ```console
-$ meson setup -Db_sanitize=address,undefined bld
+$ meson setup --prefix="${HOME}/julea-install" -Db_sanitize=address,undefined bld
 $ ninja -C bld
 ```
 
@@ -52,9 +53,9 @@ Finally, a JULEA configuration has to be created.
 ```console
 $ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
-  --object-backend=posix --object-component=server --object-path=/tmp/julea/posix \
-  --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/lmdb \
-  --db-backend=sqlite --db-component=server --db-path=/tmp/julea/sqlite
+  --object-backend=posix --object-component=server --object-path="/tmp/julea-$(id -u)/posix" \
+  --kv-backend=lmdb --kv-component=server --kv-path="/tmp/julea-$(id -u)/lmdb" \
+  --db-backend=sqlite --db-component=server --db-path="/tmp/julea-$(id -u)/sqlite"
 ```
 
 You can check whether JULEA works by executing the integrated test suite.
@@ -66,10 +67,12 @@ $ ./scripts/test.sh
 To get an idea about how to use JULEA from your own application, check out the `example` directory.
 
 ```console
-$ ninja -C bld install
 $ cd example
 $ make run
 ```
+
+The version is JULEA built using this guide is mainly meant for development and debugging.
+If you want to deploy a release version of JULEA, please refer to the documentation about [installation and usage](doc/installation-usage.md).
 
 ## Citing JULEA
 

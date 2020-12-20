@@ -71,6 +71,17 @@ if get_option('debug')
 	add_project_arguments(args, language: 'c')
 endif
 
+# FIXME Some versions of libbson trigger this warning
+if meson.get_compiler('c').get_id() == 'clang'
+	add_project_arguments('-Wno-newline-eof', language: 'c')
+endif
+
+sanitize_cflags = ''
+
+if get_option('b_sanitize') != 'none'
+	sanitize_cflags = '-fsanitize=' + get_option('b_sanitize')
+endif
+
 # FIXME rpath is not set for dependencies
 # FIXME Also check for pkg-config files in /usr (worked around in environment.sh)
 # FIXME Allow specifying dependency prefixes?
@@ -94,6 +105,8 @@ libmongoc_version = '1.9.0'
 sqlite_version = '3.22.0'
 # Ubuntu 18.04 has MariaDB Connector/C 3.0.3
 mariadb_version = '3.0.3'
+# Ubuntu 18.04 has RocksDB 5.8.8
+rocksdb_version = '5.8.8'
 
 # Dependencies
 
@@ -146,6 +159,12 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
+# FIXME hdf5 dependency? https://mesonbuild.com/Dependencies.html#hdf5
+#hdf_dep = dependency('hdf5',
+#	language: 'c',
+#	required: false,
+#)
+
 hdf_dep = cc.find_library('hdf5',
 	has_headers: ['hdf5.h', 'H5PLextern.h'],
 	required: false,
@@ -192,12 +211,32 @@ mariadb_dep = dependency('libmariadb',
 if not mariadb_dep.found()
 	# FIXME This should use Meson's config-tool
 	# FIXME Add some status output
-	mariadb_cflags = run_command('mariadb_config', '--cflags').stdout().strip().split()
-	mariadb_libs = run_command('mariadb_config', '--libs').stdout().strip().split()
+	mariadb_config = find_program('mariadb_config',
+		required: false
+	)
 
-	mariadb_dep = declare_dependency(
-		compile_args: mariadb_cflags,
-		link_args: mariadb_libs,
+	if mariadb_config.found()
+		mariadb_cflags = run_command(mariadb_config, '--cflags').stdout().strip().split()
+		mariadb_libs = run_command(mariadb_config, '--libs').stdout().strip().split()
+
+		mariadb_dep = declare_dependency(
+			compile_args: mariadb_cflags,
+			link_args: mariadb_libs,
+		)
+	endif
+endif
+
+rocksdb_dep = dependency('rocksdb',
+	version: '>= @0@'.format(rocksdb_version),
+	required: false,
+	#include_type: 'system'
+)
+
+# Ubuntu's package does not ship a pkg-config file
+if not rocksdb_dep.found()
+	rocksdb_dep = cc.find_library('rocksdb',
+		has_headers: ['rocksdb/c.h'],
+		required: false,
 	)
 endif
 
@@ -239,10 +278,9 @@ julea_conf.set_quoted('G_LOG_DOMAIN', 'JULEA')
 julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('libdir') / 'julea' / 'backend')
 
 if get_option('debug')
-	julea_conf.set('G_DISABLE_DEPRECATED', 1)
-	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
-	julea_conf.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 	julea_conf.set('JULEA_DEBUG', 1)
+else
+	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 endif
 
 if hdf_dep.found()
@@ -313,6 +351,7 @@ julea_dep = declare_dependency(link_with: julea_lib)
 
 pkg_config.generate(julea_lib,
 	description: 'Flexible storage framework',
+	extra_cflags: sanitize_cflags,
 	subdirs: 'julea',
 	requires_private: [glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep],
 	url: 'https://github.com/wr-hamburg/julea',
@@ -351,6 +390,9 @@ if hdf_dep.found()
 	julea_client_srcs += {
 		'hdf5': files([
 			'lib/hdf5/jhdf5.c',
+		]),
+		'hdf5-db': files([
+			'lib/hdf5-db/jhdf5-db.c',
 		])
 	}
 endif
@@ -367,12 +409,16 @@ foreach client, srcs: julea_client_srcs
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
 		extra_deps += hdf_dep
+	elif client == 'hdf5-db'
+		extra_deps += julea_client_deps['object']
+		extra_deps += julea_client_deps['db']
+		extra_deps += hdf_dep
 	endif
 
 	julea_client_lib = shared_library('julea-@0@'.format(client), julea_client_srcs[client],
 		dependencies: common_deps + [julea_dep] + extra_deps,
 		include_directories: julea_incs,
-		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.to_upper())],
+		c_args: ['-DJULEA_@0@_COMPILATION'.format(client.underscorify().to_upper())],
 		#soversion: meson.project_version().split('.')[0],
 		#version: meson.project_version(),
 		install: true,
@@ -380,9 +426,10 @@ foreach client, srcs: julea_client_srcs
 
 	julea_client_deps += {client: declare_dependency(link_with: julea_client_lib)}
 
-	if client != 'hdf5'
+	if client != 'hdf5' and client != 'hdf5-db'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
+			extra_cflags: sanitize_cflags,
 			subdirs: 'julea',
 			requires: julea_lib,
 			url: 'https://github.com/wr-hamburg/julea',
@@ -394,18 +441,24 @@ endforeach
 hdf_deps = []
 
 if hdf_dep.found()
+	# FIXME refactor, we do not really want to link to the HDF5 VOL plugins anymore
 	hdf_deps += julea_client_deps['hdf5']
 	hdf_deps += hdf_dep
 endif
 
 julea_test_srcs = files([
-	'test/background-operation.c',
-	'test/batch.c',
-	'test/cache.c',
-	'test/configuration.c',
-	'test/credentials.c',
+	'test/core/background-operation.c',
+	'test/core/batch.c',
+	'test/core/cache.c',
+	'test/core/configuration.c',
+	'test/core/credentials.c',
+	'test/core/distribution.c',
+	'test/core/list.c',
+	'test/core/list-iterator.c',
+	'test/core/memory-chunk.c',
+	'test/core/message.c',
+	'test/core/semantics.c',
 	'test/db/db.c',
-	'test/distribution.c',
 	'test/hdf5/hdf.c',
 	'test/item/collection.c',
 	'test/item/collection-iterator.c',
@@ -414,13 +467,8 @@ julea_test_srcs = files([
 	'test/item/uri.c',
 	'test/kv/kv.c',
 	'test/kv/kv-iterator.c',
-	'test/list.c',
-	'test/list-iterator.c',
-	'test/memory-chunk.c',
-	'test/message.c',
 	'test/object/distributed-object.c',
 	'test/object/object.c',
-	'test/semantics.c',
 	'test/test.c',
 ])
 
@@ -433,6 +481,10 @@ julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',
 	'benchmark/cache.c',
+	'benchmark/db/entry.c',
+	'benchmark/db/iterator.c',
+	'benchmark/db/schema.c',
+	'benchmark/hdf5/dai.c',
 	'benchmark/hdf5/hdf.c',
 	'benchmark/item/collection.c',
 	'benchmark/item/item.c',
@@ -444,7 +496,7 @@ julea_benchmark_srcs = files([
 ])
 
 executable('julea-benchmark', julea_benchmark_srcs,
-	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['item']] + hdf_deps,
+	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('benchmark')],
 )
 
@@ -484,6 +536,10 @@ if libmongoc_dep.found()
 	julea_backends += 'kv/mongodb'
 endif
 
+if rocksdb_dep.found()
+	julea_backends += 'kv/rocksdb'
+endif
+
 if sqlite_dep.found()
 	julea_backends += 'kv/sqlite'
 	julea_backends += 'db/sqlite'
@@ -517,6 +573,10 @@ foreach backend: julea_backends
 		extra_deps += lmdb_dep
 	elif backend == 'kv/mongodb'
 		extra_deps += libmongoc_dep
+	elif backend == 'kv/rocksdb'
+		# rocksdb bug
+		extra_args += '-Wno-strict-prototypes'
+		extra_deps += rocksdb_dep
 	elif backend == 'kv/sqlite' or backend == 'db/sqlite'
 		extra_deps += sqlite_dep
 	elif backend == 'db/mysql'
@@ -597,7 +657,14 @@ if fuse_dep.found()
 	)
 endif
 
-# FIXME example
+#add_languages('cpp')
+
+#foreach lang: ['c', 'cc']
+#	executable('hello-word-@0@'.format(lang), files('example/hello-world.@0@'.format(lang)),
+#		dependencies: [glib_dep, libbson_dep, julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db']],
+#		include_directories: julea_incs,
+#	)
+#endforeach
 
 # Install
 

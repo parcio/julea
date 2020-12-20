@@ -109,7 +109,7 @@ j_kv_uri_parse(JKVURI* uri, gchar const* uri_)
 			break;
 	}
 
-	if (!g_str_has_prefix(uri_, scheme_prefix))
+	if (scheme_prefix == NULL || !g_str_has_prefix(uri_, scheme_prefix))
 	{
 		goto error;
 	}

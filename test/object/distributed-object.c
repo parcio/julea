@@ -77,6 +77,7 @@ test_object_read_write(void)
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JDistributedObject) object = NULL;
 	g_autofree gchar* buffer = NULL;
+	g_autofree gchar* buffer2 = NULL;
 	guint64 max_operation_size;
 	guint64 nbytes = 0;
 	gboolean ret;
@@ -144,6 +145,16 @@ test_object_read_write(void)
 	g_assert_true(ret);
 	g_assert_cmpuint(nbytes, ==, 3 * max_operation_size);
 
+	buffer2 = g_malloc0(max_operation_size + 1);
+	memset(buffer2, 'j', max_operation_size + 1);
+
+	j_distributed_object_write(object, buffer2, max_operation_size + 1, 0, &nbytes, batch);
+	j_distributed_object_read(object, buffer, max_operation_size + 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_cmpuint(nbytes, ==, 2 * max_operation_size + 2);
+	g_assert_cmpmem(buffer, max_operation_size + 1, buffer2, max_operation_size + 1);
+
 	j_distributed_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
@@ -188,6 +199,41 @@ test_object_status(void)
 	g_assert_true(ret);
 }
 
+static void
+test_object_sync(void)
+{
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JDistribution) distribution = NULL;
+	g_autoptr(JDistributedObject) object = NULL;
+	g_autofree gchar* buffer = NULL;
+	guint64 nbytes = 0;
+	gboolean ret;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	buffer = g_malloc0(42);
+
+	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
+	object = j_distributed_object_new("test", "test-distributed-object-sync", distribution);
+	g_assert_true(object != NULL);
+
+	j_distributed_object_create(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	j_distributed_object_write(object, buffer, 42, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+	g_assert_cmpuint(nbytes, ==, 42);
+
+	j_distributed_object_sync(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	j_distributed_object_delete(object, batch);
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+}
+
 void
 test_object_distributed_object(void)
 {
@@ -195,4 +241,5 @@ test_object_distributed_object(void)
 	g_test_add_func("/object/distributed-object/create_delete", test_object_create_delete);
 	g_test_add_func("/object/distributed-object/read_write", test_object_read_write);
 	g_test_add_func("/object/distributed-object/status", test_object_status);
+	g_test_add_func("/object/distributed-object/sync", test_object_sync);
 }

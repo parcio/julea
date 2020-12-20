@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='dcc4aabce1d14dfa02b92fff34fba89eacd3ea71'
+	spack_commit='cc53ff162fa09e4378c318bbb8e7d7f6ebeca500'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -57,20 +57,15 @@ spack_init ()
 	return 0
 }
 
-spack_install ()
+spack_cmd ()
 {
-	local spack_pkg
-
-	spack_pkg="$1"
-
 	test -n "${SPACK_DIR}" || return 1
 	test -d "${SPACK_DIR}" || return 1
-	test -n "${spack_pkg}" || return 1
 
 	(
 		cd "${SPACK_DIR}"
 
-		./bin/spack install "${spack_pkg}"
+		./bin/spack "$@"
 	)
 }
 
@@ -120,12 +115,12 @@ spack_get_dependencies ()
 		# Optional dependencies
 		dependencies="${dependencies} leveldb"
 		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5~mpi@1.12:"
+		dependencies="${dependencies} hdf5#@1.12:#~mpi"
 		dependencies="${dependencies} mariadb-c-client"
+		dependencies="${dependencies} rocksdb"
 
 		# FIXME move to minimal
-		# FIXME set fabrics
-		dependencies="${dependencies} libfabric"
+		dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 		#dependencies="${dependencies} mpi"
 		#dependencies="${dependencies} otf"
@@ -142,6 +137,7 @@ spack_load_dependencies ()
 		then
 			for dependency in $(spack_get_dependencies full)
 			do
+				dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
 				spack_load "${dependency}"
 			done
 
@@ -151,7 +147,7 @@ spack_load_dependencies ()
 			export JULEA_SPACK_DEPENDENCIES_LOADED
 		fi
 	else
-		printf 'Dependencies have already been loaded, skipping.\n'
+		printf 'Dependencies have already been loaded, skipping.\n' >&2
 	fi
 }
 
@@ -165,10 +161,15 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
+		spack_cmd mark --implicit --all
+
 		for dependency in $(spack_get_dependencies "${mode}")
 		do
+			dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
 			# FIXME ignore errors?
-			spack_install "${dependency}"
+			spack_cmd install "${dependency}"
 		done
+
+		spack_cmd gc --yes-to-all
 	fi
 }

@@ -50,10 +50,9 @@ test_db_schema_create_delete(void)
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	gboolean ret;
 
-	gchar const* idx_file[] = { "file", NULL };
-	gchar const* idx_name[] = { "name", NULL };
-	gchar const* idx_min[] = { "min", NULL };
-	gchar const* idx_max[] = { "max", NULL };
+	gchar const* idx_string[] = { "string-0", NULL };
+	gchar const* idx_uint[] = { "uint-0", NULL };
+	gchar const* idx_float[] = { "float-0", NULL };
 
 	for (guint i = 0; i < n; i++)
 	{
@@ -66,32 +65,32 @@ test_db_schema_create_delete(void)
 		g_assert_nonnull(schema);
 		g_assert_no_error(error);
 
-		ret = j_db_schema_add_field(schema, "file", J_DB_TYPE_STRING, &error);
+		ret = j_db_schema_add_field(schema, "string-0", J_DB_TYPE_STRING, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_field(schema, "name", J_DB_TYPE_STRING, &error);
+		ret = j_db_schema_add_field(schema, "string-1", J_DB_TYPE_STRING, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_field(schema, "dimensions", J_DB_TYPE_UINT64, &error);
+		ret = j_db_schema_add_field(schema, "uint-0", J_DB_TYPE_UINT64, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_field(schema, "min", J_DB_TYPE_FLOAT64, &error);
+		ret = j_db_schema_add_field(schema, "uint-1", J_DB_TYPE_UINT64, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_field(schema, "max", J_DB_TYPE_FLOAT64, &error);
+		ret = j_db_schema_add_field(schema, "float-0", J_DB_TYPE_FLOAT64, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		ret = j_db_schema_add_field(schema, "float-1", J_DB_TYPE_FLOAT64, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		ret = j_db_schema_add_index(schema, idx_file, &error);
+		ret = j_db_schema_add_index(schema, idx_string, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_index(schema, idx_name, &error);
+		ret = j_db_schema_add_index(schema, idx_uint, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		ret = j_db_schema_add_index(schema, idx_min, &error);
-		g_assert_true(ret);
-		g_assert_no_error(error);
-		ret = j_db_schema_add_index(schema, idx_max, &error);
+		ret = j_db_schema_add_index(schema, idx_float, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
@@ -149,11 +148,11 @@ test_db_entry_insert_update_delete(void)
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 
-	ret = j_db_schema_add_field(schema, "file", J_DB_TYPE_STRING, &error);
+	ret = j_db_schema_add_field(schema, "string-0", J_DB_TYPE_STRING, &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
-	ret = j_db_schema_add_field(schema, "dimensions", J_DB_TYPE_UINT64, &error);
+	ret = j_db_schema_add_field(schema, "uint-0", J_DB_TYPE_UINT64, &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
@@ -173,11 +172,11 @@ test_db_entry_insert_update_delete(void)
 		g_assert_nonnull(entry);
 		g_assert_no_error(error);
 
-		ret = j_db_entry_set_field(entry, "file", file, strlen(file), &error);
+		ret = j_db_entry_set_field(entry, "string-0", file, strlen(file), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		ret = j_db_entry_set_field(entry, "dimensions", &dim, sizeof(dim), &error);
+		ret = j_db_entry_set_field(entry, "uint-0", &dim, sizeof(dim), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
@@ -193,7 +192,7 @@ test_db_entry_insert_update_delete(void)
 	g_assert_nonnull(selector);
 	g_assert_no_error(error);
 
-	ret = j_db_selector_add_field(selector, "file", J_DB_SELECTOR_OPERATOR_EQ, file, strlen(file), &error);
+	ret = j_db_selector_add_field(selector, "string-0", J_DB_SELECTOR_OPERATOR_EQ, file, strlen(file), &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
@@ -202,7 +201,7 @@ test_db_entry_insert_update_delete(void)
 	g_assert_no_error(error);
 
 	dim = 3;
-	ret = j_db_entry_set_field(update_entry, "dimensions", &dim, sizeof(dim), &error);
+	ret = j_db_entry_set_field(update_entry, "uint-0", &dim, sizeof(dim), &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
@@ -534,7 +533,7 @@ test_db_all(void)
 }
 
 void
-test_db(void)
+test_db_db(void)
 {
 	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);

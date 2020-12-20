@@ -43,7 +43,13 @@
 #define SQL_LAST_INSERT_ID_STRING " SELECT last_insert_rowid() "
 #define SQL_QUOTE "\""
 
-static gchar* path;
+struct JSQLiteData
+{
+	gchar* path;
+	sqlite3* db;
+};
+
+typedef struct JSQLiteData JSQLiteData;
 
 static gboolean
 j_sql_finalize(sqlite3* backend_db, void* _stmt, GError** error)
@@ -57,7 +63,9 @@ j_sql_finalize(sqlite3* backend_db, void* _stmt, GError** error)
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FINALIZE, "sql finalize failed error was '%s'", sqlite3_errmsg(backend_db));
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -68,6 +76,7 @@ j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GArray* types_i
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt** stmt = _stmt;
+
 	(void)types_in;
 	(void)types_out;
 
@@ -76,9 +85,12 @@ j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GArray* types_i
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> '%s'", sql, sqlite3_errmsg(backend_db));
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	j_sql_finalize(backend_db, *stmt, NULL);
+
 	return FALSE;
 }
 
@@ -94,7 +106,9 @@ j_sql_bind_null(sqlite3* backend_db, void* _stmt, guint idx, GError** error)
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -107,7 +121,9 @@ j_sql_column(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeV
 	sqlite3_stmt* stmt = _stmt;
 
 	(void)backend_db;
+
 	memset(value, 0, sizeof(*value));
+
 	switch (type)
 	{
 		case J_DB_TYPE_SINT32:
@@ -140,7 +156,9 @@ j_sql_column(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeV
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -149,6 +167,7 @@ static gboolean
 j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
+
 	sqlite3_stmt* stmt = _stmt;
 
 	switch (type)
@@ -214,14 +233,18 @@ j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBT
 			g_set_error_literal(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_INVALID_TYPE, "sql invalid type");
 			goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
+
 static gboolean
 j_sql_reset(sqlite3* backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
+
 	sqlite3_stmt* stmt = _stmt;
 
 	if (G_UNLIKELY(sqlite3_reset(stmt) != SQLITE_OK))
@@ -229,7 +252,9 @@ j_sql_reset(sqlite3* backend_db, void* _stmt, GError** error)
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_RESET, "sql reset failed error was '%s'", sqlite3_errmsg(backend_db));
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
@@ -243,6 +268,7 @@ j_sql_step(sqlite3* backend_db, void* _stmt, gboolean* found, GError** error)
 	guint ret;
 	ret = sqlite3_step(stmt);
 	*found = ret == SQLITE_ROW;
+
 	if (ret != SQLITE_ROW)
 	{
 		if (G_UNLIKELY(ret == SQLITE_CONSTRAINT))
@@ -256,14 +282,18 @@ j_sql_step(sqlite3* backend_db, void* _stmt, gboolean* found, GError** error)
 			goto _error;
 		}
 	}
+
 	return TRUE;
+
 _error:
 	return FALSE;
 }
+
 static gboolean
 j_sql_exec(sqlite3* backend_db, const char* sql, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
+
 	sqlite3_stmt* stmt;
 	gboolean found;
 
@@ -271,25 +301,32 @@ j_sql_exec(sqlite3* backend_db, const char* sql, GError** error)
 	{
 		goto _error2;
 	}
+
 	if (G_UNLIKELY(!j_sql_step(backend_db, stmt, &found, error)))
 	{
 		goto _error;
 	}
+
 	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, error)))
 	{
 		goto _error2;
 	}
+
 	return TRUE;
+
 _error:
 	if (G_UNLIKELY(!j_sql_finalize(backend_db, stmt, NULL)))
 	{
 		goto _error2;
 	}
+
 	return FALSE;
+
 _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
+
 static gboolean
 j_sql_step_and_reset_check_done(sqlite3* backend_db, void* _stmt, GError** error)
 {
@@ -300,43 +337,53 @@ j_sql_step_and_reset_check_done(sqlite3* backend_db, void* _stmt, GError** error
 	{
 		goto _error;
 	}
+
 	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, error)))
 	{
 		goto _error;
 	}
+
 	return TRUE;
+
 _error:
 	if (G_UNLIKELY(!j_sql_reset(backend_db, _stmt, NULL)))
 	{
 		goto _error2;
 	}
+
 	return FALSE;
+
 _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
+
 static void*
-j_sql_open(void)
+j_sql_open(gpointer backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
+
+	JSQLiteData* bd = backend_data;
 
 	sqlite3* backend_db = NULL;
 	g_autofree gchar* dirname = NULL;
 
-	g_return_val_if_fail(path != NULL, FALSE);
+	g_return_val_if_fail(bd->path != NULL, FALSE);
 
-	if (strncmp("memory", path, 5))
+	if (g_strcmp0(bd->path, ":memory:") != 0)
 	{
-		dirname = g_path_get_dirname(path);
+		dirname = g_path_get_dirname(bd->path);
 		g_mkdir_with_parents(dirname, 0700);
-		if (G_UNLIKELY(sqlite3_open(path, &backend_db) != SQLITE_OK))
+		if (G_UNLIKELY(sqlite3_open(bd->path, &backend_db) != SQLITE_OK))
 		{
 			goto _error;
 		}
 	}
 	else
 	{
-		if (G_UNLIKELY(sqlite3_open(":memory:", &backend_db) != SQLITE_OK))
+		// The shared cache is disabled when SQLITE_OPEN_URI is not set.
+		// Make sure it is by specifying it in the flags and using the file: prefix.
+		if (G_UNLIKELY(sqlite3_open_v2("file:julea-db", &backend_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL) != SQLITE_OK))
 		{
 			goto _error;
 		}
@@ -347,10 +394,13 @@ j_sql_open(void)
 	}
 
 	return backend_db;
+
 _error:
 	sqlite3_close(backend_db);
+
 	return NULL;
 }
+
 static void
 j_sql_close(sqlite3* backend_db)
 {
@@ -358,6 +408,7 @@ j_sql_close(sqlite3* backend_db)
 
 	sqlite3_close(backend_db);
 }
+
 static gboolean
 j_sql_start_transaction(sqlite3* backend_db, GError** error)
 {
@@ -365,6 +416,7 @@ j_sql_start_transaction(sqlite3* backend_db, GError** error)
 
 	return j_sql_exec(backend_db, "BEGIN TRANSACTION", error);
 }
+
 static gboolean
 j_sql_commit_transaction(sqlite3* backend_db, GError** error)
 {
@@ -372,6 +424,7 @@ j_sql_commit_transaction(sqlite3* backend_db, GError** error)
 
 	return j_sql_exec(backend_db, "COMMIT", error);
 }
+
 static gboolean
 j_sql_abort_transaction(sqlite3* backend_db, GError** error)
 {
@@ -379,24 +432,51 @@ j_sql_abort_transaction(sqlite3* backend_db, GError** error)
 
 	return j_sql_exec(backend_db, "ROLLBACK", error);
 }
+
 #include "sql-generic.c"
+
 static gboolean
-backend_init(gchar const* _path)
+backend_init(gchar const* _path, gpointer* backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	path = g_strdup(_path);
+	JSQLiteData* bd;
+
+	bd = g_slice_new(JSQLiteData);
+	bd->path = g_strdup(_path);
+	bd->db = NULL;
+
+	if (g_strcmp0(bd->path, ":memory:") == 0)
+	{
+		// Hold an extra reference to the shared in-memory database to make sure it is not freed.
+		sqlite3_open_v2("file:julea-db", &(bd->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL);
+	}
+
+	*backend_data = bd;
+
 	sql_generic_init();
+
 	return TRUE;
 }
+
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JSQLiteData* bd = backend_data;
+
 	sql_generic_fini();
-	g_free(path);
+
+	if (bd->db != NULL)
+	{
+		sqlite3_close(bd->db);
+	}
+
+	g_free(bd->path);
+	g_slice_free(JSQLiteData, bd);
 }
+
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_SERVER,

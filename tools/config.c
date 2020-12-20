@@ -22,6 +22,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <locale.h>
 #include <string.h>
 
 static gboolean opt_user = FALSE;
@@ -153,7 +154,7 @@ main(gint argc, gchar** argv)
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
 		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2:port" },
 		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "Key-value servers to use", "host1,host2:port" },
-		{ "db-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_db, "Key-value servers to use", "host1,host2:port" },
+		{ "db-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_db, "Database servers to use", "host1,host2:port" },
 		{ "object-backend", 0, 0, G_OPTION_ARG_STRING, &opt_object_backend, "Object backend to use", "posix|null|gio|…" },
 		{ "object-component", 0, 0, G_OPTION_ARG_STRING, &opt_object_component, "Object component to use", "client|server" },
 		{ "object-path", 0, 0, G_OPTION_ARG_STRING, &opt_object_path, "Object path to use", "/path/to/storage" },
@@ -161,13 +162,16 @@ main(gint argc, gchar** argv)
 		{ "kv-component", 0, 0, G_OPTION_ARG_STRING, &opt_kv_component, "Key-value component to use", "client|server" },
 		{ "kv-path", 0, 0, G_OPTION_ARG_STRING, &opt_kv_path, "Key-value path to use", "/path/to/storage" },
 		{ "db-backend", 0, 0, G_OPTION_ARG_STRING, &opt_db_backend, "Database backend to use", "sqlite|null|…" },
-		{ "db-component", 0, 0, G_OPTION_ARG_STRING, &opt_db_component, "Key-value component to use", "client|server" },
-		{ "db-path", 0, 0, G_OPTION_ARG_STRING, &opt_db_path, "Key-value path to use", "/path/to/storage" },
+		{ "db-component", 0, 0, G_OPTION_ARG_STRING, &opt_db_component, "Database component to use", "client|server" },
+		{ "db-path", 0, 0, G_OPTION_ARG_STRING, &opt_db_path, "Database path to use", "/path/to/storage" },
 		{ "max-operation-size", 0, 0, G_OPTION_ARG_INT64, &opt_max_operation_size, "Maximum size of an operation", "0" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ "stripe-size", 0, 0, G_OPTION_ARG_INT64, &opt_stripe_size, "Default stripe size", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
+
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);

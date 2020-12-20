@@ -139,11 +139,13 @@ j_kv_fini(void)
 	if (j_kv_backend != NULL)
 	{
 		j_backend_kv_fini(j_kv_backend);
+		j_kv_backend = NULL;
 	}
 
-	if (j_kv_module)
+	if (j_kv_module != NULL)
 	{
 		g_module_close(j_kv_module);
+		j_kv_module = NULL;
 	}
 }
 
@@ -220,11 +222,7 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_get_backend();
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -238,16 +236,16 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
+	else
+	{
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
+	}
 
 	while (j_list_iterator_next(it))
 	{
 		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (kv_backend != NULL)
-		{
-			ret = j_backend_kv_put(kv_backend, kv_batch, kop->put.kv->key, kop->put.value, kop->put.value_len) && ret;
-		}
-		else
+		if (kv_backend == NULL)
 		{
 			gsize key_len;
 
@@ -258,13 +256,13 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 			j_message_append_4(message, &(kop->put.value_len));
 			j_message_append_n(message, kop->put.value, kop->put.value_len);
 		}
+		else
+		{
+			ret = j_backend_kv_put(kv_backend, kv_batch, kop->put.kv->key, kop->put.value, kop->put.value_len) && ret;
+		}
 	}
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		gpointer kv_connection;
 
@@ -282,6 +280,10 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
+	}
+	else
+	{
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
 	}
 
 	return ret;
@@ -321,26 +323,22 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_get_backend();
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		message = j_message_new(J_MESSAGE_KV_DELETE, namespace_len);
 		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
+	}
+	else
+	{
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
 	}
 
 	while (j_list_iterator_next(it))
 	{
 		JKV* kv = j_list_iterator_get(it);
 
-		if (kv_backend != NULL)
-		{
-			ret = j_backend_kv_delete(kv_backend, kv_batch, kv->key) && ret;
-		}
-		else
+		if (kv_backend == NULL)
 		{
 			gsize key_len;
 
@@ -349,13 +347,13 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 			j_message_add_operation(message, key_len);
 			j_message_append_n(message, kv->key, key_len);
 		}
+		else
+		{
+			ret = j_backend_kv_delete(kv_backend, kv_batch, kv->key) && ret;
+		}
 	}
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		gpointer kv_connection;
 
@@ -373,6 +371,10 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
+	}
+	else
+	{
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
 	}
 
 	return ret;
@@ -410,11 +412,7 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_get_backend();
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		/**
 		 * Force safe semantics to make the server send a reply.
@@ -428,12 +426,25 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 		j_message_set_semantics(message, semantics);
 		j_message_append_n(message, namespace, namespace_len);
 	}
+	else
+	{
+		ret = j_backend_kv_batch_start(kv_backend, namespace, semantics, &kv_batch);
+	}
 
 	while (j_list_iterator_next(it))
 	{
 		JKVOperation* kop = j_list_iterator_get(it);
 
-		if (kv_backend != NULL)
+		if (kv_backend == NULL)
+		{
+			gsize key_len;
+
+			key_len = strlen(kop->get.kv->key) + 1;
+
+			j_message_add_operation(message, key_len);
+			j_message_append_n(message, kop->get.kv->key, key_len);
+		}
+		else
 		{
 			if (kop->get.func != NULL)
 			{
@@ -453,22 +464,9 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
 			}
 		}
-		else
-		{
-			gsize key_len;
-
-			key_len = strlen(kop->get.kv->key) + 1;
-
-			j_message_add_operation(message, key_len);
-			j_message_append_n(message, kop->get.kv->key, key_len);
-		}
 	}
 
-	if (kv_backend != NULL)
-	{
-		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
-	}
-	else
+	if (kv_backend == NULL)
 	{
 		g_autoptr(JListIterator) iter = NULL;
 		g_autoptr(JMessage) reply = NULL;
@@ -513,6 +511,10 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
+	}
+	else
+	{
+		ret = j_backend_kv_batch_execute(kv_backend, kv_batch) && ret;
 	}
 
 	return ret;

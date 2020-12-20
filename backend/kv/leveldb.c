@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_C_SOURCE 200809L
-
 #include <julea-config.h>
 
 #include <glib.h>
@@ -36,6 +34,17 @@ struct JLevelDBBatch
 
 typedef struct JLevelDBBatch JLevelDBBatch;
 
+struct JLevelDBData
+{
+	leveldb_t* db;
+
+	leveldb_readoptions_t* read_options;
+	leveldb_writeoptions_t* write_options;
+	leveldb_writeoptions_t* write_options_sync;
+};
+
+typedef struct JLevelDBData JLevelDBData;
+
 struct JLevelDBIterator
 {
 	leveldb_iterator_t* iterator;
@@ -46,47 +55,45 @@ struct JLevelDBIterator
 
 typedef struct JLevelDBIterator JLevelDBIterator;
 
-static leveldb_t* backend_db = NULL;
-
-static leveldb_readoptions_t* backend_read_options = NULL;
-static leveldb_writeoptions_t* backend_write_options = NULL;
-static leveldb_writeoptions_t* backend_write_options_sync = NULL;
-
 static gboolean
-backend_batch_start(gchar const* namespace, JSemantics* semantics, gpointer* data)
+backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* backend_batch)
 {
 	JLevelDBBatch* batch;
 
+	(void)backend_data;
+
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
 	batch = g_slice_new(JLevelDBBatch);
 
 	batch->batch = leveldb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
 	batch->semantics = j_semantics_ref(semantics);
-	*data = batch;
+
+	*backend_batch = batch;
 
 	return (batch != NULL);
 }
 
 static gboolean
-backend_batch_execute(gpointer data)
+backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 {
-	JLevelDBBatch* batch = data;
+	JLevelDBBatch* batch = backend_batch;
+	JLevelDBData* bd = backend_data;
 
 	g_autofree gchar* leveldb_error = NULL;
 
-	leveldb_writeoptions_t* write_options = backend_write_options;
+	leveldb_writeoptions_t* write_options = bd->write_options;
 
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
 	{
-		write_options = backend_write_options_sync;
+		write_options = bd->write_options_sync;
 	}
 
-	leveldb_write(backend_db, write_options, batch->batch, &leveldb_error);
+	leveldb_write(bd->db, write_options, batch->batch, &leveldb_error);
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
@@ -97,12 +104,14 @@ backend_batch_execute(gpointer data)
 }
 
 static gboolean
-backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
+backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gconstpointer value, guint32 len)
 {
-	JLevelDBBatch* batch = data;
+	JLevelDBBatch* batch = backend_batch;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 
@@ -113,12 +122,14 @@ backend_put(gpointer data, gchar const* key, gconstpointer value, guint32 len)
 }
 
 static gboolean
-backend_delete(gpointer data, gchar const* key)
+backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 {
-	JLevelDBBatch* batch = data;
+	JLevelDBBatch* batch = backend_batch;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
@@ -128,20 +139,21 @@ backend_delete(gpointer data, gchar const* key)
 }
 
 static gboolean
-backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
+backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpointer* value, guint32* len)
 {
-	JLevelDBBatch* batch = data;
+	JLevelDBBatch* batch = backend_batch;
+	JLevelDBData* bd = backend_data;
 	g_autofree gchar* nskey = NULL;
 	g_autofree gpointer result = NULL;
 	gsize result_len;
 
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
-	result = leveldb_get(backend_db, backend_read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
+	result = leveldb_get(bd->db, bd->read_options, nskey, strlen(nskey) + 1, &result_len, NULL);
 
 	if (result != NULL)
 	{
@@ -153,15 +165,16 @@ backend_get(gpointer data, gchar const* key, gpointer* value, guint32* len)
 }
 
 static gboolean
-backend_get_all(gchar const* namespace, gpointer* data)
+backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend_iterator)
 {
+	JLevelDBData* bd = backend_data;
 	JLevelDBIterator* iterator = NULL;
 	leveldb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
-	it = leveldb_create_iterator(backend_db, backend_read_options);
+	it = leveldb_create_iterator(bd->db, bd->read_options);
 
 	if (it != NULL)
 	{
@@ -171,23 +184,24 @@ backend_get_all(gchar const* namespace, gpointer* data)
 		iterator->prefix = g_strdup_printf("%s:", namespace);
 		iterator->namespace_len = strlen(namespace) + 1;
 
-		*data = iterator;
+		*backend_iterator = iterator;
 	}
 
 	return (iterator != NULL);
 }
 
 static gboolean
-backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* data)
+backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* backend_iterator)
 {
+	JLevelDBData* bd = backend_data;
 	JLevelDBIterator* iterator = NULL;
 	leveldb_iterator_t* it;
 
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(prefix != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
-	it = leveldb_create_iterator(backend_db, backend_read_options);
+	it = leveldb_create_iterator(bd->db, bd->read_options);
 
 	if (it != NULL)
 	{
@@ -197,18 +211,20 @@ backend_get_by_prefix(gchar const* namespace, gchar const* prefix, gpointer* dat
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
 		iterator->namespace_len = strlen(namespace) + 1;
 
-		*data = iterator;
+		*backend_iterator = iterator;
 	}
 
 	return (iterator != NULL);
 }
 
 static gboolean
-backend_iterate(gpointer data, gchar const** key, gconstpointer* value, guint32* len)
+backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** key, gconstpointer* value, guint32* len)
 {
-	JLevelDBIterator* iterator = data;
+	JLevelDBIterator* iterator = backend_iterator;
 
-	g_return_val_if_fail(data != NULL, FALSE);
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
@@ -250,43 +266,62 @@ out:
 }
 
 static gboolean
-backend_init(gchar const* path)
+backend_init(gchar const* path, gpointer* backend_data)
 {
+	JLevelDBData* bd;
 	leveldb_options_t* options;
 	g_autofree gchar* dirname = NULL;
+	gint const compressions[] = { leveldb_snappy_compression, leveldb_no_compression };
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
 
+	bd = g_slice_new(JLevelDBData);
+	bd->read_options = leveldb_readoptions_create();
+	bd->write_options = leveldb_writeoptions_create();
+	bd->write_options_sync = leveldb_writeoptions_create();
+	leveldb_writeoptions_set_sync(bd->write_options_sync, 1);
+
 	options = leveldb_options_create();
 	leveldb_options_set_create_if_missing(options, 1);
-	leveldb_options_set_compression(options, leveldb_snappy_compression);
 
-	backend_read_options = leveldb_readoptions_create();
-	backend_write_options = leveldb_writeoptions_create();
-	backend_write_options_sync = leveldb_writeoptions_create();
-	leveldb_writeoptions_set_sync(backend_write_options_sync, 1);
+	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
+	{
+		g_autofree gchar* error = NULL;
 
-	backend_db = leveldb_open(options, path, NULL);
+		leveldb_options_set_compression(options, compressions[i]);
+		bd->db = leveldb_open(options, path, &error);
+
+		if (bd->db != NULL)
+		{
+			break;
+		}
+	}
 
 	leveldb_options_destroy(options);
 
-	return (backend_db != NULL);
+	*backend_data = bd;
+
+	return (bd->db != NULL);
 }
 
 static void
-backend_fini(void)
+backend_fini(gpointer backend_data)
 {
-	leveldb_readoptions_destroy(backend_read_options);
-	leveldb_writeoptions_destroy(backend_write_options);
-	leveldb_writeoptions_destroy(backend_write_options_sync);
+	JLevelDBData* bd = backend_data;
 
-	if (backend_db != NULL)
+	leveldb_readoptions_destroy(bd->read_options);
+	leveldb_writeoptions_destroy(bd->write_options);
+	leveldb_writeoptions_destroy(bd->write_options_sync);
+
+	if (bd->db != NULL)
 	{
-		leveldb_close(backend_db);
+		leveldb_close(bd->db);
 	}
+
+	g_slice_free(JLevelDBData, bd);
 }
 
 static JBackend leveldb_backend = {

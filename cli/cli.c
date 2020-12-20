@@ -85,7 +85,8 @@ main(int argc, char** argv)
 	g_autofree gchar const** arguments = NULL;
 	gint i;
 
-	setlocale(LC_ALL, "");
+	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
+	setlocale(LC_ALL, "C.UTF-8");
 
 	basename = g_path_get_basename(argv[0]);
 	g_set_prgname(basename);

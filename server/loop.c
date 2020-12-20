@@ -298,6 +298,41 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			j_message_send(reply, connection);
 		}
 		break;
+		case J_MESSAGE_OBJECT_SYNC:
+		{
+			g_autoptr(JMessage) reply = NULL;
+			gpointer object;
+
+			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			{
+				reply = j_message_new_reply(message);
+			}
+
+			namespace = j_message_get_string(message);
+
+			for (i = 0; i < operation_count; i++)
+			{
+				path = j_message_get_string(message);
+
+				if (j_backend_object_open(jd_object_backend, namespace, path, &object))
+				{
+					j_backend_object_sync(jd_object_backend, object);
+					j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
+					j_backend_object_close(jd_object_backend, object);
+				}
+
+				if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+				{
+					j_message_add_operation(reply, 0);
+				}
+			}
+
+			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			{
+				j_message_send(reply, connection);
+			}
+		}
+		break;
 		case J_MESSAGE_STATISTICS:
 		{
 			g_autoptr(JMessage) reply = NULL;
@@ -364,6 +399,12 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			{
 				j_message_add_operation(reply, 3);
 				j_message_append_string(reply, "kv");
+			}
+
+			if (jd_db_backend != NULL)
+			{
+				j_message_add_operation(reply, 3);
+				j_message_append_string(reply, "db");
 			}
 
 			j_message_send(reply, connection);

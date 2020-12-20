@@ -27,32 +27,36 @@
 #include "benchmark.h"
 
 static void
-benchmark_cache_get(BenchmarkResult* result)
+benchmark_cache_get_release(BenchmarkRun* run)
 {
-	guint const n = 50 * 1024 * 1024;
+	guint const n = 100000;
 
 	JCache* cache;
-	gdouble elapsed;
 
 	cache = j_cache_new(n);
 
-	j_benchmark_timer_start();
+	j_benchmark_timer_start(run);
 
-	for (guint i = 0; i < n; i++)
+	while (j_benchmark_iterate(run))
 	{
-		j_cache_get(cache, 1);
+		for (guint i = 0; i < n; i++)
+		{
+			gpointer buf;
+
+			buf = j_cache_get(cache, 1);
+			j_cache_release(cache, buf);
+		}
 	}
 
-	elapsed = j_benchmark_timer_elapsed();
+	j_benchmark_timer_stop(run);
 
 	j_cache_free(cache);
 
-	result->elapsed_time = elapsed;
-	result->operations = n;
+	run->operations = n * 2;
 }
 
 void
 benchmark_cache(void)
 {
-	j_benchmark_run("/cache", benchmark_cache_get);
+	j_benchmark_add("/cache/get-release", benchmark_cache_get_release);
 }
