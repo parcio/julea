@@ -231,7 +231,7 @@ j_benchmark_run_one(BenchmarkRun* run)
 
 	if (run->iterations > 1000 * (guint)opt_duration)
 	{
-		g_warning("Benchmark %s performed %d iterations, consider adjusting iteration workload.", run->name, run->iterations);
+		g_warning("Benchmark %s performed %d iteration(s) in a duration of %d second(s), consider adjusting iteration workload.", run->name, run->iterations, opt_duration);
 	}
 }
 
@@ -316,7 +316,7 @@ main(int argc, char** argv)
 
 		if (error != NULL)
 		{
-			g_printerr("%s\n", error->message);
+			g_printerr("Error: %s\n", error->message);
 			g_error_free(error);
 		}
 
@@ -324,6 +324,13 @@ main(int argc, char** argv)
 	}
 
 	g_option_context_free(context);
+
+	if (opt_duration <= 0)
+	{
+		g_printerr("Error: Duration has to be greater than 0\n");
+
+		return 1;
+	}
 
 	if (opt_machine_separator == NULL)
 	{
