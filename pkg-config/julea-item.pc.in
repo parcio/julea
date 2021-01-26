@@ -1,6 +1,0 @@
-Name: @APPNAME@
-Description: Flexible storage framework
-URL: https://github.com/wr-hamburg/julea
-Version: @VERSION@
-Requires: julea = @VERSION@, julea-object = @VERSION@, julea-kv = @VERSION@
-Libs: -ljulea-item

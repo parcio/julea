@@ -1,9 +1,9 @@
 # JULEA
 
-[![Format](https://github.com/wr-hamburg/julea/workflows/Format/badge.svg)](https://github.com/wr-hamburg/julea/actions)
-[![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
-[![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
-[![Dependencies](https://github.com/wr-hamburg/julea/workflows/Dependencies/badge.svg)](https://github.com/wr-hamburg/julea/actions)
+[![Format](https://github.com/julea-io/julea/workflows/Format/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Build](https://github.com/julea-io/julea/workflows/Build/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Tests](https://github.com/julea-io/julea/workflows/Tests/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions)
 
 JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
@@ -20,7 +20,7 @@ For more information, please refer to the [documentation](doc/README.md).
 To use JULEA, first clone the Git repository and enter the directory.
 
 ```console
-$ git clone https://github.com/wr-hamburg/julea.git
+$ git clone https://github.com/julea-io/julea.git
 $ cd julea
 ```
 
