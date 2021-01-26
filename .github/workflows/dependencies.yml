@@ -1,0 +1,21 @@
+name: Dependencies
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+jobs:
+  dependencies:
+    name: Dependencies
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+        compiler: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Install dependencies
+        run: |
+          ./scripts/install-dependencies.sh full
