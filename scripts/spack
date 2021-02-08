@@ -161,6 +161,11 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
+		if test -n "${CI}"
+		then
+			spack_cmd config add 'packages:all:target:[x86_64]'
+		fi
+
 		spack_cmd mark --implicit --all
 
 		for dependency in $(spack_get_dependencies "${mode}")
