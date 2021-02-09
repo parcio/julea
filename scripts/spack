@@ -163,7 +163,7 @@ spack_install_dependencies ()
 	then
 		if test -n "${CI}"
 		then
-			spack_cmd config add 'packages:all:target:[x86_64]'
+			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
 		fi
 
 		spack_cmd mark --implicit --all
