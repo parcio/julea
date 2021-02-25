@@ -34,6 +34,7 @@ static gboolean opt_machine_readable = FALSE;
 static gchar* opt_path = NULL;
 static gchar* opt_semantics = NULL;
 static gchar* opt_template = NULL;
+static gchar* opt_namespace = NULL;
 
 static JSemantics* j_benchmark_semantics = NULL;
 
@@ -115,6 +116,7 @@ j_benchmark_add(gchar const* name, BenchmarkFunc benchmark_func)
 	run->iterations = 0;
 	run->operations = 0;
 	run->bytes = 0;
+	run->namespace = opt_namespace ? opt_namespace : "benchmark";
 
 	j_benchmarks = g_list_prepend(j_benchmarks, run);
 }
@@ -301,6 +303,7 @@ main(int argc, char** argv)
 		{ "path", 'p', 0, G_OPTION_ARG_STRING, &opt_path, "Benchmark path to use", NULL },
 		{ "semantics", 's', 0, G_OPTION_ARG_STRING, &opt_semantics, "Semantics to use", NULL },
 		{ "template", 't', 0, G_OPTION_ARG_STRING, &opt_template, "Semantics template to use", NULL },
+		{ "namespace", 'n', 0, G_OPTION_ARG_STRING, &opt_namespace, "Namespace for benchmark to use", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -373,6 +376,7 @@ main(int argc, char** argv)
 	g_free(opt_path);
 	g_free(opt_semantics);
 	g_free(opt_template);
+	g_free(opt_namespace);
 
 	return 0;
 }
