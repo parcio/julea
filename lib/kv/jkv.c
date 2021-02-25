@@ -136,15 +136,23 @@ j_kv_fini(void)
 		return;
 	}
 
+	gboolean do_unload = TRUE;
 	if (j_kv_backend != NULL)
 	{
+		if (j_kv_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE)
+		{
+			do_unload = false;
+		}
 		j_backend_kv_fini(j_kv_backend);
 		j_kv_backend = NULL;
 	}
 
 	if (j_kv_module != NULL)
 	{
-		g_module_close(j_kv_module);
+		if (do_unload)
+		{
+			g_module_close(j_kv_module);
+		}
 		j_kv_module = NULL;
 	}
 }

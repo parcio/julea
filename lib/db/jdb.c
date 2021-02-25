@@ -82,15 +82,23 @@ j_db_fini(void)
 		return;
 	}
 
+	gboolean do_unload = TRUE;
 	if (j_db_backend != NULL)
 	{
+		if (j_db_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE)
+		{
+			do_unload = false;
+		}
 		j_backend_db_fini(j_db_backend);
 		j_db_backend = NULL;
 	}
 
 	if (j_db_module != NULL)
 	{
-		g_module_close(j_db_module);
+		if (do_unload)
+		{
+			g_module_close(j_db_module);
+		}
 		j_db_module = NULL;
 	}
 }

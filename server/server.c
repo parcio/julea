@@ -393,17 +393,17 @@ main(int argc, char** argv)
 		j_backend_object_fini(jd_object_backend);
 	}
 
-	if (db_module != NULL)
+	if (jd_db_backend && db_module && !(jd_db_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE))
 	{
 		g_module_close(db_module);
 	}
 
-	if (kv_module != NULL)
+	if (jd_kv_backend && kv_module && !(jd_kv_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE))
 	{
 		g_module_close(kv_module);
 	}
 
-	if (object_module)
+	if (jd_object_backend && object_module && !(jd_object_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE))
 	{
 		g_module_close(object_module);
 	}

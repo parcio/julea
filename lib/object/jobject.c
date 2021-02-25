@@ -149,15 +149,23 @@ j_object_fini(void)
 		return;
 	}
 
+	gboolean do_unload = TRUE;
 	if (j_object_backend != NULL)
 	{
+		if (j_object_backend->component & J_BACKEND_COMPONENT_NOT_UNLOADABLE)
+		{
+			do_unload = false;
+		}
 		j_backend_object_fini(j_object_backend);
 		j_object_backend = NULL;
 	}
 
 	if (j_object_module != NULL)
 	{
-		g_module_close(j_object_module);
+		if (do_unload)
+		{
+			g_module_close(j_object_module);
+		}
 		j_object_module = NULL;
 	}
 }
