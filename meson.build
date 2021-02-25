@@ -386,6 +386,9 @@ julea_client_srcs = {
 	])
 }
 
+# We need an extra array so that foreach preserves the client order
+julea_clients = ['object', 'kv', 'db', 'item']
+
 if hdf_dep.found()
 	julea_client_srcs += {
 		'hdf5': files([
@@ -395,11 +398,14 @@ if hdf_dep.found()
 			'lib/hdf5-db/jhdf5-db.c',
 		])
 	}
+
+	julea_clients += ['hdf5', 'hdf5-db']
 endif
 
 julea_client_deps = {}
 
-foreach client, srcs: julea_client_srcs
+foreach client: julea_clients
+	srcs = julea_client_srcs[client]
 	extra_deps = []
 
 	if client == 'item'
