@@ -159,16 +159,45 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
-# FIXME hdf5 dependency? https://mesonbuild.com/Dependencies.html#hdf5
+# FIXME Spack's hdf5 package does not ship a pkg-config file and the config-tool variant does not work correctly at the moment (see https://github.com/mesonbuild/meson/pull/8423)
 #hdf_dep = dependency('hdf5',
 #	language: 'c',
 #	required: false,
 #)
 
-hdf_dep = cc.find_library('hdf5',
-	has_headers: ['hdf5.h', 'H5PLextern.h'],
-	required: false,
-)
+hdf_dep = disabler()
+
+if not hdf_dep.found()
+	hdf_config = find_program('h5cc',
+		required: false,
+	)
+
+	if hdf_config.found()
+		hdf_cflags_out = run_command(hdf_config, '-show', '-c').stdout().strip().split()
+		hdf_libs_out = run_command(hdf_config, '-show', '-shlib').stdout().strip().split()
+
+		hdf_cflags = []
+
+		foreach cflag: hdf_cflags_out
+			if cflag.startswith('-I') or cflag.startswith('-f') or cflag.startswith('-D')
+				hdf_cflags += cflag
+			endif
+		endforeach
+
+		hdf_libs = []
+
+		foreach lib: hdf_libs_out
+			if lib.startswith('-L') or lib.startswith('-l') or lib.startswith('-Wl')
+				hdf_libs += lib
+			endif
+		endforeach
+
+		hdf_dep = declare_dependency(
+			compile_args: hdf_cflags,
+			link_args: hdf_libs,
+		)
+	endif
+endif
 
 fuse_dep = dependency('fuse',
 	required: false,
@@ -212,7 +241,7 @@ if not mariadb_dep.found()
 	# FIXME This should use Meson's config-tool
 	# FIXME Add some status output
 	mariadb_config = find_program('mariadb_config',
-		required: false
+		required: false,
 	)
 
 	if mariadb_config.found()
