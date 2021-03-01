@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2020 Michael Kuhn
+ * Copyright (C) 2017-2021 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -139,7 +139,14 @@ j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 	iterator->replies = g_new0(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
 
-	if (iterator->kv_backend != NULL)
+	if (iterator->kv_backend == NULL)
+	{
+		for (guint32 i = 0; i < iterator->replies_n; i++)
+		{
+			iterator->replies[i] = fetch_reply(i, namespace, prefix);
+		}
+	}
+	else
 	{
 		if (prefix == NULL)
 		{
@@ -148,13 +155,6 @@ j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 		else
 		{
 			j_backend_kv_get_by_prefix(iterator->kv_backend, namespace, prefix, &(iterator->cursor));
-		}
-	}
-	else
-	{
-		for (guint32 i = 0; i < iterator->replies_n; i++)
-		{
-			iterator->replies[i] = fetch_reply(i, namespace, prefix);
 		}
 	}
 
@@ -186,7 +186,11 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 	iterator->replies = g_new0(JMessage*, 1);
 	iterator->replies_cur = 0;
 
-	if (iterator->kv_backend != NULL)
+	if (iterator->kv_backend == NULL)
+	{
+		iterator->replies[0] = fetch_reply(index, namespace, prefix);
+	}
+	else
 	{
 		if (prefix == NULL)
 		{
@@ -196,10 +200,6 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 		{
 			j_backend_kv_get_by_prefix(iterator->kv_backend, namespace, prefix, &(iterator->cursor));
 		}
-	}
-	else
-	{
-		iterator->replies[0] = fetch_reply(index, namespace, prefix);
 	}
 
 	return iterator;
@@ -249,11 +249,7 @@ j_kv_iterator_next(JKVIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (iterator->kv_backend != NULL)
-	{
-		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
-	}
-	else
+	if (iterator->kv_backend == NULL)
 	{
 	retry:
 		iterator->len = j_message_get_4(iterator->replies[iterator->replies_cur]);
@@ -270,6 +266,10 @@ j_kv_iterator_next(JKVIterator* iterator)
 			iterator->replies_cur++;
 			goto retry;
 		}
+	}
+	else
+	{
+		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
 	}
 
 	return ret;

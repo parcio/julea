@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2020 Michael Kuhn
+ * Copyright (C) 2010-2021 Michael Kuhn
  * Copyright (C) 2019 Benjamin Warnke
  *
  * This program is free software: you can redistribute it and/or modify
@@ -399,6 +399,12 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			{
 				j_message_add_operation(reply, 3);
 				j_message_append_string(reply, "kv");
+			}
+
+			if (jd_db_backend != NULL)
+			{
+				j_message_add_operation(reply, 3);
+				j_message_append_string(reply, "db");
 			}
 
 			j_message_send(reply, connection);

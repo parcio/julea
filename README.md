@@ -1,8 +1,9 @@
 # JULEA
 
-[![Format](https://github.com/wr-hamburg/julea/workflows/Format/badge.svg)](https://github.com/wr-hamburg/julea/actions)
-[![Build](https://github.com/wr-hamburg/julea/workflows/Build/badge.svg)](https://github.com/wr-hamburg/julea/actions)
-[![Tests](https://github.com/wr-hamburg/julea/workflows/Tests/badge.svg)](https://github.com/wr-hamburg/julea/actions)
+[![Format](https://github.com/julea-io/julea/workflows/Format/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Build](https://github.com/julea-io/julea/workflows/Build/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Tests](https://github.com/julea-io/julea/workflows/Tests/badge.svg)](https://github.com/julea-io/julea/actions)
+[![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions)
 
 JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
@@ -19,7 +20,7 @@ For more information, please refer to the [documentation](doc/README.md).
 To use JULEA, first clone the Git repository and enter the directory.
 
 ```console
-$ git clone https://github.com/wr-hamburg/julea.git
+$ git clone https://github.com/julea-io/julea.git
 $ cd julea
 ```
 
@@ -78,4 +79,4 @@ If you want to deploy a release version of JULEA, please refer to the documentat
 
 If you want to cite JULEA, please use the following paper:
 
-- [JULEA: A Flexible Storage Framework for HPC](https://link.springer.com/chapter/10.1007/978-3-319-67630-2_51) (Michael Kuhn), In High Performance Computing, Lecture Notes in Computer Science (10524), (Editors: Julian Kunkel, Rio Yokota, Michela Taufer, John Shalf), Springer International Publishing, ISC High Performance 2017, Frankfurt, Germany, ISBN: 978-3-319-67629-6, 2017-11
+- [JULEA: A Flexible Storage Framework for HPC](https://doi.org/10.1007/978-3-319-67630-2_51) (Michael Kuhn), In High Performance Computing, Lecture Notes in Computer Science (10524), (Editors: Julian Kunkel, Rio Yokota, Michela Taufer, John Shalf), Springer International Publishing, ISC High Performance 2017, Frankfurt, Germany, ISBN: 978-3-319-67629-6, 2017-11

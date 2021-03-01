@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2017-2020 Michael Kuhn
+# Copyright (C) 2017-2021 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='cc53ff162fa09e4378c318bbb8e7d7f6ebeca500'
+	spack_commit='459171b97361807e4736f8b2986eef365034e3de'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -161,6 +161,11 @@ spack_install_dependencies ()
 
 	if spack_clone
 	then
+		if test -n "${CI}"
+		then
+			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
+		fi
+
 		spack_cmd mark --implicit --all
 
 		for dependency in $(spack_get_dependencies "${mode}")

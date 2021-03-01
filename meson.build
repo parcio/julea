@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2020 Michael Kuhn
+# Copyright (C) 2020-2021 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -159,16 +159,45 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
-# FIXME hdf5 dependency? https://mesonbuild.com/Dependencies.html#hdf5
+# FIXME Spack's hdf5 package does not ship a pkg-config file and the config-tool variant does not work correctly at the moment (see https://github.com/mesonbuild/meson/pull/8423)
 #hdf_dep = dependency('hdf5',
 #	language: 'c',
 #	required: false,
 #)
 
-hdf_dep = cc.find_library('hdf5',
-	has_headers: ['hdf5.h', 'H5PLextern.h'],
-	required: false,
-)
+hdf_dep = disabler()
+
+if not hdf_dep.found()
+	hdf_config = find_program('h5cc',
+		required: false,
+	)
+
+	if hdf_config.found()
+		hdf_cflags_out = run_command(hdf_config, '-show', '-c').stdout().strip().split()
+		hdf_libs_out = run_command(hdf_config, '-show', '-shlib').stdout().strip().split()
+
+		hdf_cflags = []
+
+		foreach cflag: hdf_cflags_out
+			if cflag.startswith('-I') or cflag.startswith('-f') or cflag.startswith('-D')
+				hdf_cflags += cflag
+			endif
+		endforeach
+
+		hdf_libs = []
+
+		foreach lib: hdf_libs_out
+			if lib.startswith('-L') or lib.startswith('-l') or lib.startswith('-Wl')
+				hdf_libs += lib
+			endif
+		endforeach
+
+		hdf_dep = declare_dependency(
+			compile_args: hdf_cflags,
+			link_args: hdf_libs,
+		)
+	endif
+endif
 
 fuse_dep = dependency('fuse',
 	required: false,
@@ -212,7 +241,7 @@ if not mariadb_dep.found()
 	# FIXME This should use Meson's config-tool
 	# FIXME Add some status output
 	mariadb_config = find_program('mariadb_config',
-		required: false
+		required: false,
 	)
 
 	if mariadb_config.found()
@@ -354,7 +383,7 @@ pkg_config.generate(julea_lib,
 	extra_cflags: sanitize_cflags,
 	subdirs: 'julea',
 	requires_private: [glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep],
-	url: 'https://github.com/wr-hamburg/julea',
+	url: 'https://github.com/julea-io/julea',
 )
 
 julea_client_srcs = {
@@ -386,6 +415,9 @@ julea_client_srcs = {
 	])
 }
 
+# We need an extra array so that foreach preserves the client order
+julea_clients = ['object', 'kv', 'db', 'item']
+
 if hdf_dep.found()
 	julea_client_srcs += {
 		'hdf5': files([
@@ -395,11 +427,14 @@ if hdf_dep.found()
 			'lib/hdf5-db/jhdf5-db.c',
 		])
 	}
+
+	julea_clients += ['hdf5', 'hdf5-db']
 endif
 
 julea_client_deps = {}
 
-foreach client, srcs: julea_client_srcs
+foreach client: julea_clients
+	srcs = julea_client_srcs[client]
 	extra_deps = []
 
 	if client == 'item'
@@ -432,7 +467,7 @@ foreach client, srcs: julea_client_srcs
 			extra_cflags: sanitize_cflags,
 			subdirs: 'julea',
 			requires: julea_lib,
-			url: 'https://github.com/wr-hamburg/julea',
+			url: 'https://github.com/julea-io/julea',
 		)
 	endif
 endforeach
@@ -481,6 +516,8 @@ julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',
 	'benchmark/cache.c',
+	'benchmark/db/entry.c',
+	'benchmark/db/iterator.c',
 	'benchmark/db/schema.c',
 	'benchmark/hdf5/dai.c',
 	'benchmark/hdf5/hdf.c',

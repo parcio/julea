@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2020 Michael Kuhn
+ * Copyright (C) 2017-2021 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -72,7 +72,7 @@ j_object_iterator_new(gchar const* namespace)
 	iterator->servers = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	iterator->message = NULL;
 
-	if (iterator->object_backend != NULL)
+	if (iterator->object_backend == NULL)
 	{
 	}
 	else
@@ -123,7 +123,7 @@ j_object_iterator_next(JObjectIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 
-	if (iterator->object_backend != NULL)
+	if (iterator->object_backend == NULL)
 	{
 	}
 	else

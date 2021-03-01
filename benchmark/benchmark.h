@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2020 Michael Kuhn
+ * Copyright (C) 2010-2021 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -57,6 +57,8 @@ void benchmark_kv(void);
 void benchmark_distributed_object(void);
 void benchmark_object(void);
 
+void benchmark_db_entry(void);
+void benchmark_db_iterator(void);
 void benchmark_db_schema(void);
 
 void benchmark_collection(void);
