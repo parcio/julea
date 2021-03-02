@@ -47,6 +47,8 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	selector->ref_count = 1;
 	selector->mode = mode;
 	selector->bson_count = 0;
+	selector->join_schema = NULL;
+	selector->join_schema_count = 0;
 	bson_init(&selector->bson);
 	selector->schema = j_db_schema_ref(schema);
 
@@ -90,6 +92,12 @@ j_db_selector_unref(JDBSelector* selector)
 
 	if (g_atomic_int_dec_and_test(&selector->ref_count))
 	{
+		for(guint i=0; i<selector->join_schema_count; i++)
+		{
+			j_db_schema_unref(selector->join_schema[i]);
+		}	
+		g_free(selector->join_schema);
+
 		j_db_schema_unref(selector->schema);
 		bson_destroy(&selector->bson);
 		g_free(selector);
@@ -123,6 +131,16 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
 
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, buf, &bson, error)))
+	{
+		goto _error;
+	}
+
+	GString* table_name = g_string_new(NULL);
+	g_string_append_printf(table_name, "%s_%s", selector->schema->namespace, selector->schema->name);
+
+	val.val_string = table_name->str;
+
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "_table", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
@@ -191,6 +209,51 @@ _error:
 	return FALSE;
 }
 
+void
+j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_selector)
+{
+	if( selector == sub_selector)
+	{
+		return;
+	}
+
+	gboolean new_schema = true;
+	for(guint i=0; i<selector->join_schema_count; i++)
+	{
+		if( selector->join_schema[i] == sub_selector->schema)
+		{
+			new_schema = false;
+			break;
+		}
+	}
+	if (new_schema)
+	{
+		g_atomic_int_inc(&selector->join_schema_count);
+		selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) + selector->join_schema_count);
+		selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->schema);
+	}			
+	
+	for(guint i=0; i<sub_selector->join_schema_count; i++)
+	{
+		guint j=0;
+		gboolean new_schema = true;
+		for(; j<selector->join_schema_count; j++)
+		{
+			if( selector->join_schema[j] == sub_selector->join_schema[i])
+			{
+				new_schema = false;
+				break;
+			}
+		}	
+		if (new_schema)
+		{
+			g_atomic_int_inc(&selector->join_schema_count);
+			selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) + selector->join_schema_count);
+			selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->join_schema[i]);
+		}			
+	}
+}
+
 gboolean
 j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error)
 {
@@ -201,8 +264,10 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
 	g_return_val_if_fail(selector != sub_selector, FALSE);
-	g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
+	//g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_db_selector_sync_schemas_for_join(selector, sub_selector);
 
 	if (G_UNLIKELY(!sub_selector->bson_count))
 	{
@@ -230,3 +295,123 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 _error:
 	return FALSE;
 }
+
+gboolean
+j_db_selector_finalize(JDBSelector* selector, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_t bson;
+	JDBType type;
+	JDBTypeValue val;
+
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	if (G_UNLIKELY(!j_bson_append_array_begin(&selector->bson, "tables", &bson, error)))
+	{
+		goto _error;
+	}
+	
+	val.val_string = selector->schema->namespace;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "namespace0", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	val.val_string = selector->schema->name;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "name0", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	for(guint i=0; i<selector->join_schema_count; i++)
+	{
+		GString* key = g_string_new(NULL);
+		g_string_append_printf(key, "namespace%d", i+1);
+
+		val.val_string = selector->join_schema[i]->namespace;
+		if (G_UNLIKELY(!j_bson_append_value(&bson, key, J_DB_TYPE_STRING, &val, error)))
+		{
+			goto _error;
+		}
+
+		GString* keyex = g_string_new(NULL);
+		g_string_append_printf(keyex, "name%d", i+1);
+
+		val.val_string = selector->join_schema[i]->name;
+		if (G_UNLIKELY(!j_bson_append_value(&bson, keyex, J_DB_TYPE_STRING, &val, error)))
+		{
+			goto _error;
+		}
+	}
+
+	if (G_UNLIKELY(!j_bson_append_array_end(&selector->bson, &bson, error)))
+	{
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+gboolean
+j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSelector* sub_selector, gchar const *sub_selector_field, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_t bson;
+	JDBType type;
+	JDBTypeValue val;
+
+	GString* selector_tablename = g_string_new(NULL);
+	GString* sub_selector_tablename = g_string_new(NULL);
+
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(sub_selector != NULL, FALSE);
+	g_return_val_if_fail(selector != sub_selector, FALSE);
+	g_return_val_if_fail(selector->schema != sub_selector->schema, TRUE);
+	g_return_val_if_fail(selector_field != NULL, FALSE);
+	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, "join", &bson, error)))
+	{
+		goto _error;
+	}
+	
+	g_string_append_printf(selector_tablename, "%s_%s.%s", selector->schema->namespace, selector->schema->name, selector_field);
+
+	val.val_string = selector_tablename->str;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "0", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	g_string_append_printf(sub_selector_tablename, "%s_%s.%s", sub_selector->schema->namespace, sub_selector->schema->name, sub_selector_field);
+
+	val.val_string = sub_selector_tablename->str;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "1", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_append_document_end(&selector->bson, &bson, error)))
+	{
+		goto _error;
+	}
+
+	g_string_free(selector_tablename, TRUE);
+	g_string_free(sub_selector_tablename, TRUE);
+
+	return TRUE;
+
+_error:
+	g_string_free(selector_tablename, TRUE);
+	g_string_free(sub_selector_tablename, TRUE);
+
+	return FALSE;
+}
+

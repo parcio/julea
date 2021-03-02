@@ -111,6 +111,8 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
 
 gboolean j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
 
+gboolean j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
+
 G_END_DECLS
 
 #endif

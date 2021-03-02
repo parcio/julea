@@ -97,6 +97,9 @@ struct JDBSelector
 
 	JDBSelectorMode mode;
 	JDBSchema* schema;
+	
+	JDBSchema** join_schema;
+	guint join_schema_count;
 
 	guint bson_count;
 	gint ref_count;

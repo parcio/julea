@@ -53,6 +53,7 @@ struct JSqlCacheSQLPrepared
 	void* stmt;
 	guint variables_count;
 	GHashTable* variables_index;
+	GHashTable* variables_type;
 	gboolean initialized;
 	gchar* namespace;
 	gchar* name;
@@ -1663,6 +1664,476 @@ _error:
 }
 
 static gboolean
+build_selector_queryex(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guint* variables_count, GArray* arr_types_in, GHashTable* schema_cache, GHashTable* variables_type, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JDBSelectorMode mode_child;
+	gboolean equals;
+	gboolean has_next;
+	JDBSelectorOperator op;
+	gboolean first = TRUE;
+	const char* string_tmp;
+	JDBTypeValue value;
+	bson_iter_t iterchild;
+	JThreadVariables* thread_variables = NULL;
+	JDBType type;
+
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	{
+		goto _error;
+	}
+
+	g_string_append(sql, "( ");
+
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "tables", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "join", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+		{
+			goto _error;
+		}
+
+		if (!first)
+		{
+			switch (mode)
+			{
+				case J_DB_SELECTOR_MODE_AND:
+					g_string_append(sql, " AND ");
+					break;
+				case J_DB_SELECTOR_MODE_OR:
+					g_string_append(sql, " OR ");
+					break;
+				default:
+					g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
+					goto _error;
+			}
+		}
+
+		first = FALSE;
+
+		if (j_bson_iter_find(&iterchild, "_mode", NULL))
+		{
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_UINT32, &value, error)))
+			{
+				goto _error;
+			}
+
+			mode_child = value.val_uint32;
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!build_selector_query(backend_data, &iterchild, sql, mode_child, variables_count, arr_types_in, schema_cache, error)))
+			{
+				goto _error;
+			}
+		}
+		else
+		{
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			JDBTypeValue table_name;
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_table", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &table_name, error)))
+			{
+				goto _error;
+			}
+			
+			
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_name", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+			{
+				goto _error;
+			}
+
+			string_tmp = value.val_string;
+			g_string_append_printf(sql, "%s." SQL_QUOTE "%s" SQL_QUOTE, table_name.val_string, string_tmp);
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_value", error)))
+			{
+				goto _error;
+			}
+
+			//type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+			type = GPOINTER_TO_UINT(g_hash_table_lookup(variables_type, string_tmp));
+			g_array_append_val(arr_types_in, type);
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_operator", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_UINT32, &value, error)))
+			{
+				goto _error;
+			}
+
+			op = value.val_uint32;
+
+			switch (op)
+			{
+				case J_DB_SELECTOR_OPERATOR_LT:
+					g_string_append(sql, "<");
+					break;
+				case J_DB_SELECTOR_OPERATOR_LE:
+					g_string_append(sql, "<=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_GT:
+					g_string_append(sql, ">");
+					break;
+				case J_DB_SELECTOR_OPERATOR_GE:
+					g_string_append(sql, ">=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_EQ:
+					g_string_append(sql, "=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_NE:
+					g_string_append(sql, "!=");
+					break;
+				default:
+					g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_COMPARATOR_INVALID, "comparator invalid");
+					goto _error;
+			}
+
+			(*variables_count)++;
+
+			g_string_append_printf(sql, " ?");
+		}
+	}
+
+	g_string_append(sql, " )");
+
+	if (first)
+	{
+		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_SELECTOR_EMPTY, "selector empty");
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+static gboolean
+build_query_selection_part(bson_t const* selector, gpointer backend_data, GString* sql, JSqlBatch* batch, GHashTable* variables_index, GHashTable* variables_type, guint* variables_count, GArray* arr_types_out, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_iter_t iter;
+	bson_iter_t iterchild;
+
+	gboolean has_next;
+	JDBTypeValue value;
+	JThreadVariables* thread_variables = NULL;
+
+	GString* tables_sql = g_string_new(NULL);
+
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	{
+		goto _error;
+	}
+
+	if (!selector || !j_bson_has_enough_keys(selector, 2, NULL))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_find(&iter, "tables", error)))
+	{
+		goto _error;
+	}
+	
+	if (G_UNLIKELY(!j_bson_iter_recurse_array(&iter, &iterchild, error)))
+	{
+		goto _error;
+	}
+
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(&iterchild, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		GString* table_name = g_string_new(NULL);
+		if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+		{
+			goto _error;
+		}
+
+		g_string_append(table_name, value.val_string);
+
+
+		if (G_UNLIKELY(!j_bson_iter_next(&iterchild, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+		{
+			goto _error;
+		}
+		g_string_append(table_name, "_");
+		g_string_append(table_name, value.val_string);
+
+		GHashTable* schema_cache = NULL;
+		GHashTableIter schema_iter;
+		JDBType type;
+		char* string_tmp;
+		gpointer type_tmp;
+
+		if (!(schema_cache = getCacheSchema(backend_data, batch, value.val_string, error)))
+		{
+			goto _error;
+		}
+
+		g_hash_table_iter_init(&schema_iter, schema_cache);
+
+		if ( sql->len > 0)
+		{
+			g_string_append(sql, ", ");
+		}			
+
+		GString* field_name = g_string_new(NULL);
+		g_string_append_printf(field_name, "%s._id", table_name->str);  
+		
+		g_string_append_printf(sql, "%s._id", table_name->str);
+		g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(field_name->str));
+		type = J_DB_TYPE_UINT32;
+		g_hash_table_insert(variables_type, g_strdup(field_name->str), GINT_TO_POINTER(type));
+		g_array_append_val(arr_types_out, type);
+		(*variables_count)++;
+
+		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
+		{
+			type = GPOINTER_TO_INT(type_tmp);
+
+			if (strcmp(string_tmp, "_id") == 0)
+				continue;
+			g_string_free(field_name, TRUE);
+			field_name = NULL;
+			field_name = g_string_new(NULL);
+			g_string_append_printf(field_name, "%s.%s", table_name->str, string_tmp);  
+
+			g_string_append_printf(sql, ", %s." SQL_QUOTE "%s" SQL_QUOTE, table_name->str,string_tmp);
+			g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(field_name->str));
+			g_hash_table_insert(variables_type, g_strdup(field_name->str), GINT_TO_POINTER(type_tmp));
+			g_array_append_val(arr_types_out, type);
+			(*variables_count)++;
+		}
+
+		if ( tables_sql->len > 0)
+		{
+			g_string_append(tables_sql, ", ");
+		}			
+		g_string_append_printf(tables_sql, SQL_QUOTE "%s" SQL_QUOTE, table_name->str);
+	}
+
+	g_string_append(sql, " FROM ");
+	g_string_append(sql, tables_sql->str);
+
+	if (tables_sql)
+	{
+		g_string_free(tables_sql, TRUE);
+		tables_sql = NULL;
+		
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+static gboolean
+build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sql, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_iter_t iter;
+	bson_iter_t iterchild;
+
+	gboolean has_next;
+	gboolean equals;
+	JDBTypeValue value;
+	JThreadVariables* thread_variables = NULL;
+
+	GString* join_sql = NULL;
+
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	{
+		goto _error;
+	}
+
+	if (!selector || !j_bson_has_enough_keys(selector, 2, NULL))
+	{
+		goto _error;
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
+	{
+		goto _error;
+	}
+
+	while (TRUE)
+	{
+	
+		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "join", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (!equals)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(&iter, &iterchild, error)))
+		{
+			goto _error;
+		}
+
+		join_sql = g_string_new(NULL);
+		while (TRUE)
+		{
+			if (G_UNLIKELY(!j_bson_iter_next(&iterchild, &has_next, error)))
+			{
+				goto _error;
+			}
+
+			if (!has_next)
+			{
+				break;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+			{
+				goto _error;
+			}
+
+			if ( join_sql->len > 0) 
+			{
+				g_string_append(join_sql, "=");
+			}
+
+			g_string_append_printf(join_sql, "%s", value.val_string);
+		}
+
+		if ( sql->len > 0)
+		{
+			g_string_append(sql, " AND ");
+		}			
+		g_string_append_printf(sql, "%s", join_sql->str);
+		
+		if (join_sql)
+		{
+			g_string_free(join_sql, TRUE);
+			join_sql = NULL;
+		}
+	}
+	
+	return TRUE;
+
+_error:
+	if (join_sql)
+	{
+		g_string_free(join_sql, TRUE);
+		join_sql = NULL;
+	}
+
+	return FALSE;
+}
+
+static gboolean
 bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1769,6 +2240,161 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 _error:
 	return FALSE;
 }
+
+static gboolean
+bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* schema_cache, GHashTable* variables_index , GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_iter_t iterchild;
+	JDBTypeValue value;
+	JDBType type;
+	gboolean has_next;
+	gboolean equals;
+	JThreadVariables* thread_variables = NULL;
+	char const* string_tmp;
+
+	GString* fieldname = NULL;
+
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	{
+		goto _error;
+	}
+
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "tables", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			break;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "join", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+		{
+			goto _error;
+		}
+
+		if (j_bson_iter_find(&iterchild, "_mode", NULL))
+		{
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!bind_selector_queryex(backend_data, &iterchild, prepared, variables_count, variables_index, schema_cache, error)))
+			{
+				goto _error;
+			}
+		}
+		else
+		{
+			(*variables_count)++;
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			JDBTypeValue table_name;
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_table", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &table_name, error)))
+			{
+				goto _error;
+			}
+						
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_name", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
+			{
+				goto _error;
+			}
+
+			fieldname = g_string_new(NULL);
+			g_string_append_printf(fieldname, "%s.%s" , table_name.val_string, value.val_string);
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_value", error)))
+			{
+				goto _error;
+			}
+
+			type = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, (gpointer)fieldname->str));
+			
+			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, type, &value, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, *variables_count, type, &value, error)))
+			{
+				goto _error;
+			}
+	
+			if (fieldname)
+			{
+				g_string_free(fieldname, TRUE);
+				fieldname = NULL;
+			}
+		}
+	}
+
+	return TRUE;
+
+_error:
+	if (fieldname)
+	{
+		g_string_free(fieldname, TRUE);
+		fieldname = NULL;
+	}
+
+	return FALSE;
+}
+
 static gboolean
 _backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
@@ -2283,7 +2909,11 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL;
+	GHashTable* variables_type = NULL;
 	GString* sql = g_string_new(NULL);
+	GString* sql_selection_part = g_string_new(NULL);
+	GString* sql_join_part = g_string_new(NULL);
+	GString* sql_condition_part = g_string_new(NULL);
 	JThreadVariables* thread_variables = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
 	g_autoptr(GArray) arr_types_out = NULL;
@@ -2300,6 +2930,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	}
 
 	variables_index = g_hash_table_new_full(g_direct_hash, NULL, NULL, g_free);
+	variables_type = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	g_string_append(sql, "SELECT ");
 	variables_count = 0;
 
@@ -2308,33 +2939,19 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		goto _error;
 	}
 
-	g_hash_table_iter_init(&schema_iter, schema_cache);
+	build_query_selection_part(selector, backend_data, sql_selection_part, batch, variables_index, variables_type, &variables_count, arr_types_out, error);
+	g_string_append(sql, sql_selection_part->str);
 
-	g_string_append(sql, "_id");
-	g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup("_id"));
-	type = J_DB_TYPE_UINT32;
-	g_array_append_val(arr_types_out, type);
-	variables_count++;
+	build_query_join_part(selector, backend_data, sql_join_part, error);
 
-	while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
+	if (sql_join_part->len >0)
 	{
-		type = GPOINTER_TO_INT(type_tmp);
-
-		if (strcmp(string_tmp, "_id") == 0)
-			continue;
-
-		g_string_append_printf(sql, ", " SQL_QUOTE "%s" SQL_QUOTE, string_tmp);
-		g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup(string_tmp));
-		g_array_append_val(arr_types_out, type);
-		variables_count++;
+		g_string_append(sql, " WHERE ");
+		g_string_append(sql, sql_join_part->str);
 	}
-
-	g_string_append_printf(sql, " FROM " SQL_QUOTE "%s_%s" SQL_QUOTE, batch->namespace, name);
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
-		g_string_append(sql, " WHERE ");
-
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
 		{
 			goto _error;
@@ -2359,12 +2976,26 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 
 		variables_count2 = 0;
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, &variables_count2, arr_types_in, schema_cache, error)))
+		if (G_UNLIKELY(!build_selector_queryex(backend_data, &iter, sql_condition_part, mode_child, &variables_count2, arr_types_in, schema_cache, variables_type, error)))
 		{
 			goto _error;
 		}
 	}
 
+	if (sql_condition_part->len >0)
+	{
+		if (sql_join_part->len > 0)
+		{
+			g_string_append(sql, " AND ");
+		}
+		else
+		{
+			g_string_append(sql, " WHERE ");
+		}
+		
+		g_string_append(sql, sql_condition_part->str);
+	}
+	
 	prepared = getCachePrepared(backend_data, batch->namespace, name, sql->str, error);
 
 	if (G_UNLIKELY(!prepared))
@@ -2377,6 +3008,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		prepared->sql = g_string_new(sql->str);
 		prepared->variables_index = variables_index;
 		prepared->variables_count = variables_count;
+		prepared->variables_type = variables_type;
 
 		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, arr_types_out, error)))
 		{
@@ -2388,6 +3020,8 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	{
 		g_hash_table_destroy(variables_index);
 		variables_index = NULL;
+		g_hash_table_destroy(variables_type);
+		variables_type = NULL;
 	}
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
@@ -2399,7 +3033,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 
 		variables_count2 = 0;
 
-		if (G_UNLIKELY(!bind_selector_query(backend_data, &iter, prepared, &variables_count2, schema_cache, error)))
+		if (G_UNLIKELY(!bind_selector_queryex(backend_data, &iter, prepared, &variables_count2, variables_type, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -2413,9 +3047,14 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		sql = NULL;
 	}
 
+	g_string_free(sql_selection_part, TRUE);
+	g_string_free(sql_join_part, TRUE);
+	g_string_free(sql_condition_part, TRUE);
+
 	return TRUE;
 
 _error:
+
 	if (sql)
 	{
 		g_string_free(sql, TRUE);
@@ -2426,6 +3065,15 @@ _error:
 	{
 		g_hash_table_destroy(variables_index);
 	}
+
+	if (variables_type)
+	{
+		g_hash_table_destroy(variables_type);
+	}
+
+	g_string_free(sql_selection_part, TRUE);
+	g_string_free(sql_join_part, TRUE);
+	g_string_free(sql_condition_part, TRUE);
 
 	return FALSE;
 }
@@ -2473,7 +3121,15 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 		for (i = 0; i < prepared->variables_count; i++)
 		{
 			string_tmp = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+
+			if ( prepared->variables_type != NULL)
+			{
+				type = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, string_tmp));
+			}
+			else
+			{
+				type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+			}
 
 			if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, i, type, &value, error)))
 			{

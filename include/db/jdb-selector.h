@@ -138,6 +138,10 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
 
 gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
 
+gboolean j_db_selector_finalize(JDBSelector* selector, GError** error);
+
+gboolean j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSelector* sub_selector, gchar const *sub_selector_field, GError** error);
+
 G_END_DECLS
 
 #endif
