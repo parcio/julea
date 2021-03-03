@@ -32,6 +32,15 @@ struct JBackendData
 
 typedef struct JBackendData JBackendData;
 
+struct JBackendIterator
+{
+	GFileEnumerator* iterator;
+	gchar* prefix;
+	gsize namespace_len;
+};
+
+typedef struct JBackendIterator JBackendIterator;
+
 struct JBackendObject
 {
 	gchar* path;
@@ -274,6 +283,104 @@ backend_write(gpointer backend_data, gpointer backend_object, gconstpointer buff
 }
 
 static gboolean
+backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend_iterator)
+{
+	JBackendData* bd = backend_data;
+	JBackendIterator* iterator = NULL;
+	g_autoptr(GFile) file = NULL;
+	GFileEnumerator* it;
+	g_autofree gchar* full_path = NULL;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+
+	full_path = g_build_filename(bd->path, namespace, NULL);
+	file = g_file_new_for_path(full_path);
+	it = g_file_enumerate_children(file, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+	if (it != NULL)
+	{
+		iterator = g_slice_new(JBackendIterator);
+		iterator->iterator = it;
+		iterator->prefix = NULL;
+		iterator->namespace_len = strlen(full_path) + 1;
+
+		*backend_iterator = iterator;
+	}
+
+	return (iterator != NULL);
+}
+
+static gboolean
+backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* backend_iterator)
+{
+	JBackendData* bd = backend_data;
+	JBackendIterator* iterator = NULL;
+	g_autoptr(GFile) file = NULL;
+	GFileEnumerator* it;
+	g_autofree gchar* full_path = NULL;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(prefix != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+
+	full_path = g_build_filename(bd->path, namespace, NULL);
+	file = g_file_new_for_path(full_path);
+	it = g_file_enumerate_children(file, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+	if (it != NULL)
+	{
+		iterator = g_slice_new(JBackendIterator);
+		iterator->iterator = it;
+		iterator->prefix = g_strdup(prefix);
+		iterator->namespace_len = strlen(full_path) + 1;
+
+		*backend_iterator = iterator;
+	}
+
+	return (iterator != NULL);
+}
+
+static gboolean
+backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** name)
+{
+	JBackendIterator* iterator = backend_iterator;
+	GFile* file;
+
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+
+	while (g_file_enumerator_iterate(iterator->iterator, NULL, &file, NULL, NULL))
+	{
+		gchar const* name_;
+
+		if (file == NULL)
+		{
+			break;
+		}
+
+		name_ = g_file_peek_path(file);
+
+		if (iterator->prefix != NULL && !g_str_has_prefix(name_ + iterator->namespace_len, iterator->prefix))
+		{
+			continue;
+		}
+
+		*name = name_ + iterator->namespace_len;
+
+		return TRUE;
+	}
+
+	g_free(iterator->prefix);
+	g_object_unref(iterator->iterator);
+	g_slice_free(JBackendIterator, iterator);
+
+	return FALSE;
+}
+
+static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
 	JBackendData* bd;
@@ -313,7 +420,10 @@ static JBackend gio_backend = {
 		.backend_status = backend_status,
 		.backend_sync = backend_sync,
 		.backend_read = backend_read,
-		.backend_write = backend_write }
+		.backend_write = backend_write,
+		.backend_get_all = backend_get_all,
+		.backend_get_by_prefix = backend_get_by_prefix,
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT

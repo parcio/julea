@@ -162,6 +162,44 @@ backend_write(gpointer backend_data, gpointer backend_object, gconstpointer buff
 }
 
 static gboolean
+backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend_iterator)
+{
+	(void)backend_data;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+
+	*backend_iterator = NULL;
+
+	return TRUE;
+}
+
+static gboolean
+backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const* prefix, gpointer* backend_iterator)
+{
+	(void)backend_data;
+	(void)prefix;
+
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+
+	*backend_iterator = NULL;
+
+	return TRUE;
+}
+
+static gboolean
+backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** name)
+{
+	(void)backend_data;
+
+	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+
+	return FALSE;
+}
+
+static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
 	(void)backend_data;
@@ -189,7 +227,10 @@ static JBackend null_backend = {
 		.backend_status = backend_status,
 		.backend_sync = backend_sync,
 		.backend_read = backend_read,
-		.backend_write = backend_write }
+		.backend_write = backend_write,
+		.backend_get_all = backend_get_all,
+		.backend_get_by_prefix = backend_get_by_prefix,
+		.backend_iterate = backend_iterate }
 };
 
 G_MODULE_EXPORT
