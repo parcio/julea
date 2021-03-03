@@ -24,6 +24,7 @@ void test_core_batch(void);
 void test_core_cache(void);
 void test_core_configuration(void);
 void test_core_credentials(void);
+void test_core_dir_iterator(void);
 void test_core_distribution(void);
 void test_core_list(void);
 void test_core_list_iterator(void);

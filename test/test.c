@@ -42,6 +42,7 @@ main(int argc, char** argv)
 	test_core_cache();
 	test_core_configuration();
 	test_core_credentials();
+	test_core_dir_iterator();
 	test_core_distribution();
 	test_core_list();
 	test_core_list_iterator();

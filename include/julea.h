@@ -40,6 +40,7 @@
 #include <core/jconfiguration.h>
 #include <core/jconnection-pool.h>
 #include <core/jcredentials.h>
+#include <core/jdir-iterator.h>
 #include <core/jdistribution.h>
 #include <core/jhelper.h>
 #include <core/jlist.h>
