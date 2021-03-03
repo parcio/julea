@@ -53,6 +53,7 @@ main(int argc, char** argv)
 	// Object client
 	test_object_distributed_object();
 	test_object_object();
+	test_object_object_iterator();
 
 	// KV client
 	test_kv_kv();
