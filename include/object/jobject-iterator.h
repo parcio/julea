@@ -35,11 +35,14 @@ struct JObjectIterator;
 
 typedef struct JObjectIterator JObjectIterator;
 
-JObjectIterator* j_object_iterator_new(gchar const*);
+JObjectIterator* j_object_iterator_new(gchar const*, gchar const*);
+JObjectIterator* j_object_iterator_new_for_index(guint32, gchar const*, gchar const*);
 void j_object_iterator_free(JObjectIterator*);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObjectIterator, j_object_iterator_free)
+
 gboolean j_object_iterator_next(JObjectIterator*);
-gchar const* j_object_iterator_get(JObjectIterator*, guint64*);
+gchar const* j_object_iterator_get(JObjectIterator*);
 
 G_END_DECLS
 

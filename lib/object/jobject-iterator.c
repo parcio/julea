@@ -33,50 +33,162 @@
 /**
  * \defgroup JObjectIterator Object Iterator
  *
- * Data structures and functions for iterating over objects.
+ * Data structures and functions for iterating over stores.
  *
  * @{
  **/
 
 struct JObjectIterator
 {
-	gchar* namespace;
 	JBackend* object_backend;
-	guint32 servers;
-	JMessage* message;
+
+	/**
+	 * The iterate cursor.
+	 **/
+	gpointer cursor;
+
+	/**
+	 * The current name.
+	 **/
+	gchar const* name;
+
+	JMessage** replies;
+	guint32 replies_n;
+	guint32 replies_cur;
 };
+
+static JMessage*
+fetch_reply(guint32 index, gchar const* namespace, gchar const* prefix)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_autoptr(JMessage) message = NULL;
+	JMessage* reply;
+	JMessageType message_type;
+	gpointer object_connection;
+	gsize namespace_len;
+	gsize prefix_len;
+
+	namespace_len = strlen(namespace) + 1;
+
+	if (prefix == NULL)
+	{
+		message_type = J_MESSAGE_OBJECT_GET_ALL;
+		prefix_len = 0;
+	}
+	else
+	{
+		message_type = J_MESSAGE_OBJECT_GET_BY_PREFIX;
+		prefix_len = strlen(prefix) + 1;
+	}
+
+	message = j_message_new(message_type, namespace_len + prefix_len);
+	j_message_append_n(message, namespace, namespace_len);
+
+	if (prefix != NULL)
+	{
+		j_message_append_n(message, prefix, prefix_len);
+	}
+
+	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
+	j_message_send(message, object_connection);
+
+	reply = j_message_new_reply(message);
+	j_message_receive(reply, object_connection);
+
+	j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
+
+	return reply;
+}
 
 /**
  * Creates a new JObjectIterator.
  *
- * \param collection A JCollection.
+ * \param store A JStore.
  *
  * \return A new JObjectIterator.
  **/
 JObjectIterator*
-j_object_iterator_new(gchar const* namespace)
+j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JObjectIterator* iterator;
 
-	JConfiguration* configuration;
+	JConfiguration* configuration = j_configuration();
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 
-	configuration = j_configuration();
+	/* FIXME still necessary? */
+	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JObjectIterator);
-	iterator->namespace = g_strdup(namespace);
 	iterator->object_backend = j_object_get_backend();
-	iterator->servers = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
-	iterator->message = NULL;
+	iterator->cursor = NULL;
+	iterator->name = NULL;
+	iterator->replies_n = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
+	iterator->replies = g_new0(JMessage*, iterator->replies_n);
+	iterator->replies_cur = 0;
 
 	if (iterator->object_backend == NULL)
 	{
+		for (guint32 i = 0; i < iterator->replies_n; i++)
+		{
+			iterator->replies[i] = fetch_reply(i, namespace, prefix);
+		}
 	}
 	else
 	{
+		if (prefix == NULL)
+		{
+			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+		}
+		else
+		{
+			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+		}
+	}
+
+	return iterator;
+}
+
+JObjectIterator*
+j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* prefix)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JObjectIterator* iterator;
+
+	JConfiguration* configuration = j_configuration();
+
+	g_return_val_if_fail(namespace != NULL, NULL);
+	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), NULL);
+
+	/* FIXME still necessary? */
+	//j_operation_cache_flush();
+
+	iterator = g_slice_new(JObjectIterator);
+	iterator->object_backend = j_object_get_backend();
+	iterator->cursor = NULL;
+	iterator->name = NULL;
+	iterator->replies_n = 1;
+	iterator->replies = g_new0(JMessage*, 1);
+	iterator->replies_cur = 0;
+
+	if (iterator->object_backend == NULL)
+	{
+		iterator->replies[0] = fetch_reply(index, namespace, prefix);
+	}
+	else
+	{
+		if (prefix == NULL)
+		{
+			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+		}
+		else
+		{
+			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+		}
 	}
 
 	return iterator;
@@ -94,25 +206,28 @@ j_object_iterator_free(JObjectIterator* iterator)
 
 	g_return_if_fail(iterator != NULL);
 
-	if (iterator->message != NULL)
+	for (guint32 i = 0; i < iterator->replies_n; i++)
 	{
-		j_message_unref(iterator->message);
+		if (iterator->replies[i] != NULL)
+		{
+			j_message_unref(iterator->replies[i]);
+		}
 	}
 
-	g_free(iterator->namespace);
+	g_free(iterator->replies);
 
 	g_slice_free(JObjectIterator, iterator);
 }
 
 /**
- * Checks whether another item is available.
+ * Checks whether another collection is available.
  *
  * \code
  * \endcode
  *
- * \param iterator A collection iterator.
+ * \param iterator A store iterator.
  *
- * \return TRUE on success, FALSE if the end of the collection is reached.
+ * \return TRUE on success, FALSE if the end of the store is reached.
  **/
 gboolean
 j_object_iterator_next(JObjectIterator* iterator)
@@ -125,34 +240,45 @@ j_object_iterator_next(JObjectIterator* iterator)
 
 	if (iterator->object_backend == NULL)
 	{
+	retry:
+		iterator->name = j_message_get_string(iterator->replies[iterator->replies_cur]);
+
+		if (iterator->name[0] != '\0')
+		{
+			ret = TRUE;
+		}
+		else if (iterator->replies_cur < iterator->replies_n - 1)
+		{
+			iterator->replies_cur++;
+			goto retry;
+		}
 	}
 	else
 	{
+		// FIXME ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
 	}
 
 	return ret;
 }
 
 /**
- * Returns the current item.
+ * Returns the current collection.
  *
  * \code
  * \endcode
  *
- * \param iterator A collection iterator.
+ * \param iterator A store iterator.
  *
- * \return A new item. Should be freed with j_object_unref().
+ * \return A new collection. Should be freed with j_object_unref().
  **/
 gchar const*
-j_object_iterator_get(JObjectIterator* iterator, guint64* index)
+j_object_iterator_get(JObjectIterator* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	(void)index;
-
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	return NULL;
+	return iterator->name;
 }
 
 /**
