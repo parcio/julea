@@ -35,7 +35,7 @@ main(int argc, char** argv)
 	setlocale(LC_ALL, "C.UTF-8");
 
 	g_test_init(&argc, &argv, NULL);
-
+/*
 	// Core
 	test_core_background_operation();
 	test_core_batch();
@@ -69,6 +69,9 @@ main(int argc, char** argv)
 
 	// HDF5 client
 	test_hdf_hdf();
+*/
+	// JOIN queries
+	test_join_queries();
 
 	ret = g_test_run();
 
