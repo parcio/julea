@@ -161,7 +161,10 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 		    || tmp_backend->object.backend_status == NULL
 		    || tmp_backend->object.backend_sync == NULL
 		    || tmp_backend->object.backend_read == NULL
-		    || tmp_backend->object.backend_write == NULL)
+		    || tmp_backend->object.backend_write == NULL
+		    || tmp_backend->object.backend_get_all == NULL
+		    || tmp_backend->object.backend_get_by_prefix == NULL
+		    || tmp_backend->object.backend_iterate == NULL)
 		{
 			goto error;
 		}
@@ -355,6 +358,66 @@ j_backend_object_delete(JBackend* backend, gpointer data)
 	{
 		J_TRACE("backend_delete", "%p", data);
 		ret = backend->object.backend_delete(backend->data, data);
+	}
+
+	return ret;
+}
+
+gboolean
+j_backend_object_get_all(JBackend* backend, gchar const* namespace, gpointer* iterator)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(iterator != NULL, FALSE);
+
+	{
+		J_TRACE("backend_get_all", "%s, %p", namespace, (gpointer)iterator);
+		ret = backend->object.backend_get_all(backend->data, namespace, iterator);
+	}
+
+	return ret;
+}
+
+gboolean
+j_backend_object_get_by_prefix(JBackend* backend, gchar const* namespace, gchar const* prefix, gpointer* iterator)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(prefix != NULL, FALSE);
+	g_return_val_if_fail(iterator != NULL, FALSE);
+
+	{
+		J_TRACE("backend_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
+		ret = backend->object.backend_get_by_prefix(backend->data, namespace, prefix, iterator);
+	}
+
+	return ret;
+}
+gboolean
+j_backend_object_iterate(JBackend* backend, gpointer iterator, gchar const** name)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
+	g_return_val_if_fail(iterator != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+
+	{
+		J_TRACE("backend_iterate", "%p, %p", iterator, (gpointer)name);
+		ret = backend->object.backend_iterate(backend->data, iterator, name);
 	}
 
 	return ret;

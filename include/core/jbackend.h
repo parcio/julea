@@ -146,6 +146,10 @@ struct JBackend
 
 			gboolean (*backend_read)(gpointer, gpointer, gpointer, guint64, guint64, guint64*);
 			gboolean (*backend_write)(gpointer, gpointer, gconstpointer, guint64, guint64, guint64*);
+
+			gboolean (*backend_get_all)(gpointer, gchar const*, gpointer*);
+			gboolean (*backend_get_by_prefix)(gpointer, gchar const*, gchar const*, gpointer*);
+			gboolean (*backend_iterate)(gpointer, gpointer, gchar const**);
 		} object;
 
 		struct
@@ -398,6 +402,10 @@ gboolean j_backend_object_sync(JBackend*, gpointer);
 
 gboolean j_backend_object_read(JBackend*, gpointer, gpointer, guint64, guint64, guint64*);
 gboolean j_backend_object_write(JBackend*, gpointer, gconstpointer, guint64, guint64, guint64*);
+
+gboolean j_backend_object_get_all(JBackend*, gchar const*, gpointer*);
+gboolean j_backend_object_get_by_prefix(JBackend*, gchar const*, gchar const*, gpointer*);
+gboolean j_backend_object_iterate(JBackend*, gpointer, gchar const**);
 
 gboolean j_backend_kv_init(JBackend*, gchar const*);
 void j_backend_kv_fini(JBackend*);
