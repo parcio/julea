@@ -126,6 +126,64 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			}
 		}
 		break;
+		case J_MESSAGE_OBJECT_GET_ALL:
+		{
+			g_autoptr(JMessage) reply = NULL;
+			gpointer iterator;
+			gchar const* empty = "";
+
+			reply = j_message_new_reply(message);
+			namespace = j_message_get_string(message);
+
+			if (j_backend_object_get_all(jd_object_backend, namespace, &iterator))
+			{
+				while (j_backend_object_iterate(jd_object_backend, iterator, &key))
+				{
+					gsize key_len;
+
+					key_len = strlen(key) + 1;
+
+					j_message_add_operation(reply, key_len);
+					j_message_append_string(reply, key);
+				}
+			}
+
+			j_message_add_operation(reply, 1);
+			j_message_append_string(reply, empty);
+
+			j_message_send(reply, connection);
+		}
+		break;
+		case J_MESSAGE_OBJECT_GET_BY_PREFIX:
+		{
+			g_autoptr(JMessage) reply = NULL;
+			gchar const* prefix;
+			gpointer iterator;
+			gchar const* empty = "";
+
+			reply = j_message_new_reply(message);
+			namespace = j_message_get_string(message);
+			prefix = j_message_get_string(message);
+
+			if (j_backend_object_get_by_prefix(jd_object_backend, namespace, prefix, &iterator))
+			{
+				while (j_backend_object_iterate(jd_object_backend, iterator, &key))
+				{
+					gsize key_len;
+
+					key_len = strlen(key) + 1;
+
+					j_message_add_operation(reply, key_len);
+					j_message_append_string(reply, key);
+				}
+			}
+
+			j_message_add_operation(reply, 1);
+			j_message_append_string(reply, empty);
+
+			j_message_send(reply, connection);
+		}
+		break;
 		case J_MESSAGE_OBJECT_READ:
 		{
 			JMessage* reply;
