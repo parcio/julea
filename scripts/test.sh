@@ -48,6 +48,7 @@ run_test ()
 	ret=0
 
 	# FIXME gtester is deprecated, replace with tappy?
+	# shellcheck disable=SC2230
 	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
 
 	return ${ret}
