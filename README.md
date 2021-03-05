@@ -62,7 +62,9 @@ $ julea-config --user \
 You can check whether JULEA works by executing the integrated test suite.
 
 ```console
+$ ./scripts/setup.sh start
 $ ./scripts/test.sh
+$ ./scripts/setup.sh stop
 ```
 
 To get an idea about how to use JULEA from your own application, check out the `example` directory.

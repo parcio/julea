@@ -24,8 +24,6 @@ SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
-# shellcheck source=scripts/setup
-. "${SELF_DIR}/setup"
 # shellcheck source=scripts/spack
 . "${SELF_DIR}/spack"
 
@@ -49,11 +47,8 @@ run_test ()
 
 	ret=0
 
-	setup_init
-	setup_start
 	# FIXME gtester is deprecated, replace with tappy?
 	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
-	setup_stop
 
 	return ${ret}
 }

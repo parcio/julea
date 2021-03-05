@@ -30,6 +30,8 @@ $ spack install py-gcovr
 $ spack load py-gcovr
 $ meson setup -Db_coverage=true bld
 $ ninja -C bld
+$ ./scripts/setup.sh start
 $ ./scripts/test.sh
+$ ./scripts/setup.sh stop
 $ ninja -C bld coverage
 ```

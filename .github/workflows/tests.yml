@@ -131,6 +131,8 @@ jobs:
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
+          ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
           ./scripts/test.sh
+          ./scripts/setup.sh stop
