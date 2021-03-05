@@ -15,13 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SELF_ZERO="$0"
+# shellcheck disable=SC2169
 test -n "${BASH_VERSION}" && SELF_ZERO="${BASH_SOURCE[0]}"
 
 SELF_PATH="$(readlink --canonicalize-existing -- "${SELF_ZERO}")"
 SELF_DIR="${SELF_PATH%/*}"
+# shellcheck disable=SC2034
 SELF_BASE="${SELF_PATH##*/}"
 
+# shellcheck source=scripts/common
 . "${SELF_DIR}/common"
+# shellcheck source=scripts/spack
 . "${SELF_DIR}/spack"
 
 JULEA_ENVIRONMENT_SOURCED=1

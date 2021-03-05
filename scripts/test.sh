@@ -22,9 +22,18 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
+# shellcheck source=scripts/common
 . "${SELF_DIR}/common"
+# shellcheck source=scripts/setup
 . "${SELF_DIR}/setup"
+# shellcheck source=scripts/spack
 . "${SELF_DIR}/spack"
+
+usage ()
+{
+	echo "Usage: ${SELF_BASE} [arguments]"
+	exit 1
+}
 
 #export G_SLICE=always-malloc
 export G_SLICE=debug-blocks

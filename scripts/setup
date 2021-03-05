@@ -38,6 +38,7 @@ get_config ()
 		return 0
 	fi
 
+	# shellcheck disable=SC2001
 	for config_dir in $(echo "${XDG_CONFIG_DIRS:-/etc/xdg}" | sed 's/:/ /g')
 	do
 		if test -f "${config_dir}/julea/${config_name}"
@@ -115,9 +116,12 @@ setup_init ()
 	SERVERS_OBJECT="${SERVERS_OBJECT%;}"
 	SERVERS_KV="${SERVERS_KV%;}"
 	SERVERS_DB="${SERVERS_DB%;}"
-	SERVERS_OBJECT=$(echo ${SERVERS_OBJECT} | sed 's/;/ /g')
-	SERVERS_KV=$(echo ${SERVERS_KV} | sed 's/;/ /g')
-	SERVERS_DB=$(echo ${SERVERS_DB} | sed 's/;/ /g')
+	# shellcheck disable=SC2001
+	SERVERS_OBJECT=$(echo "${SERVERS_OBJECT}" | sed 's/;/ /g')
+	# shellcheck disable=SC2001
+	SERVERS_KV=$(echo "${SERVERS_KV}" | sed 's/;/ /g')
+	# shellcheck disable=SC2001
+	SERVERS_DB=$(echo "${SERVERS_DB}" | sed 's/;/ /g')
 
 	OBJECT_BACKEND="${OBJECT_BACKEND#backend=}"
 	KV_BACKEND="${KV_BACKEND#backend=}"
@@ -148,6 +152,7 @@ setup_start ()
 			port_option=''
 			test -n "${port}" && port_option="--port ${port}"
 
+			# shellcheck disable=SC2086
 			julea-server --daemon --host "${host}" ${port_option}
 		fi
 	done

@@ -22,6 +22,7 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
+# shellcheck source=scripts/common
 . "${SELF_DIR}/common"
 
 usage ()
@@ -66,14 +67,14 @@ case "${MODE}" in
 	diff)
 		# Make sure to exit with an error if at least one file differs
 		get_files | ( ret=0
-		while read file
+		while read -r file
 		do
 			diff -u "${file}" <(clang-format --style=file "${file}") || ret=$?
 		done
 		exit ${ret} ) || exit $?
 		;;
 	format)
-		get_files | while read file
+		get_files | while read -r file
 		do
 			clang-format -i --style=file "${file}"
 		done

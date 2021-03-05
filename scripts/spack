@@ -31,7 +31,7 @@ spack_clone ()
 	test -d "${SPACK_DIR}" || return 1
 
 	(
-		cd "${SPACK_DIR}"
+		cd "${SPACK_DIR}" || return 1
 
 		git fetch
 		git reset --hard "${spack_commit}"
@@ -42,7 +42,6 @@ spack_clone ()
 
 spack_init ()
 {
-	local modules_dir
 	local spack_env
 
 	test -n "${SPACK_DIR}" || return 1
@@ -52,6 +51,7 @@ spack_init ()
 
 	test -f "${spack_env}" || return 1
 
+	# shellcheck source=/dev/null
 	. "${spack_env}"
 
 	return 0
@@ -63,7 +63,7 @@ spack_cmd ()
 	test -d "${SPACK_DIR}" || return 1
 
 	(
-		cd "${SPACK_DIR}"
+		cd "${SPACK_DIR}" || return 1
 
 		./bin/spack "$@"
 	)

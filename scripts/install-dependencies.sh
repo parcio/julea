@@ -22,7 +22,9 @@ SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
 SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
 
+# shellcheck source=scripts/common
 . "${SELF_DIR}/common"
+# shellcheck source=scripts/spack
 . "${SELF_DIR}/spack"
 
 usage ()

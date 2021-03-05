@@ -13,3 +13,6 @@ jobs:
       - name: Check format
         run: |
           ./scripts/format.sh
+      - name: Check shell scripts
+        run: |
+          ./scripts/check.sh
