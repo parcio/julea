@@ -512,6 +512,10 @@ j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	/*
+	 * Checks if the selector is not NULL. Relaxing the other condition as selector can have no BSON document (or condition attached to it).
+	 * E.g. Select * from TableA - in this query there is no condition part. 
+	 */
 	if (selector /*&& selector->bson_count > 0*/)
 	{
 		return &selector->bson;
