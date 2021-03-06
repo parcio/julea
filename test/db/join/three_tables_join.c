@@ -21,7 +21,7 @@
  * In this test case a JOIN operation is performed on the following three tables. 
  * It is taken from https://javarevisited.blogspot.com/2012/11/how-to-join-three-tables-in-sql-query-mysql-sqlserver.html#axzz6oIxnmRfc.
  *
- * Table (reffered as TableA in this test case):
+ * Table (reffered as empTable in this test case):
  * +--------+----------+--------+
  *| emp_id | emp_name | salary |
  *+--------+----------+--------+
@@ -31,7 +31,7 @@
  *| 4      | Tom      |   8000
  *
  *
- * Table (reffered as TableB in this test case):
+ * Table (reffered as deptTable in this test case):
  *+---------+-----------+
  *| dept_id | dept_name |
  *+---------+-----------+
@@ -41,7 +41,7 @@
  *+---------+-----------+
  *
  *
- * Table (reffered as TableC in this test case):
+ * Table (reffered as refTable in this test case):
  *+--------+---------+
  *| emp_id | dept_id |
  *+--------+---------+
@@ -51,9 +51,9 @@
  *|      4 |     102 |
  *+--------+---------+
  *
- * Query: SELECT namespace_tableC._id, namespace_tableC."deptid", namespace_tableC."empid", namespace_tableA._id, namespace_tableA."empname", namespace_tableA."salary", 
- * namespace_tableA."empid", namespace_tableB._id, namespace_tableB."deptid", namespace_tableB."deptname" FROM "namespace_tableC", "namespace_tableA", "namespace_tableB" 
- * WHERE namespace_tableC.empid=namespace_tableA.empid AND namespace_tableC.deptid=namespace_tableB.deptid
+ * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
+ * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
+ * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
  *
  * Output: 
  *+----------+-----------+
@@ -77,7 +77,7 @@
 #include "test.h"
 
 static void
-schema_create_tableA(void)
+schema_create_empTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -89,7 +89,7 @@ schema_create_tableA(void)
 		"empid", NULL
 	};
 
-	schema = j_db_schema_new("namespace", "tableA", &error);
+	schema = j_db_schema_new("namespace", "empTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_add_field(schema, "empid", J_DB_TYPE_UINT64, &error);
@@ -114,7 +114,7 @@ schema_create_tableA(void)
 }
 
 static void
-entry_insert_tableA(guint64 empid, gchar const* empname, guint64 salary)
+entry_insert_empTable(guint64 empid, gchar const* empname, guint64 salary)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -123,7 +123,7 @@ entry_insert_tableA(guint64 empid, gchar const* empname, guint64 salary)
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableA", &error);
+	schema = j_db_schema_new("namespace", "empTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_get(schema, batch, &error);
@@ -152,7 +152,7 @@ entry_insert_tableA(guint64 empid, gchar const* empname, guint64 salary)
 }
 
 static void
-schema_create_tableB(void)
+schema_create_deptTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -164,7 +164,7 @@ schema_create_tableB(void)
 		"deptid", NULL
 	};
 
-	schema = j_db_schema_new("namespace", "tableB", &error);
+	schema = j_db_schema_new("namespace", "deptTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_add_field(schema, "deptid", J_DB_TYPE_UINT64, &error);
@@ -186,7 +186,7 @@ schema_create_tableB(void)
 }
 
 static void
-entry_insert_tableB(guint64 deptid, gchar const* deptname)
+entry_insert_deptTable(guint64 deptid, gchar const* deptname)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -195,7 +195,7 @@ entry_insert_tableB(guint64 deptid, gchar const* deptname)
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableB", &error);
+	schema = j_db_schema_new("namespace", "deptTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_get(schema, batch, &error);
@@ -221,7 +221,7 @@ entry_insert_tableB(guint64 deptid, gchar const* deptname)
 }
 
 static void
-schema_create_tableC(void)
+schema_create_refTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -233,7 +233,7 @@ schema_create_tableC(void)
 		"empid", NULL
 	};
 
-	schema = j_db_schema_new("namespace", "tableC", &error);
+	schema = j_db_schema_new("namespace", "refTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_add_field(schema, "empid", J_DB_TYPE_UINT64, &error);
@@ -255,7 +255,7 @@ schema_create_tableC(void)
 }
 
 static void
-entry_insert_tableC(guint64 empid, guint64 deptid)
+entry_insert_refTable(guint64 empid, guint64 deptid)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -264,7 +264,7 @@ entry_insert_tableC(guint64 empid, guint64 deptid)
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableC", &error);
+	schema = j_db_schema_new("namespace", "refTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 	success = j_db_schema_get(schema, batch, &error);
@@ -295,54 +295,54 @@ perform_join_on_table1_table2_table3(void)
 	g_autoptr(GError) error = NULL;
 
 	gboolean success = TRUE;
-	g_autoptr(JDBSchema) schema_tableA = NULL;
-	g_autoptr(JDBSchema) schema_tableB = NULL;
-	g_autoptr(JDBSchema) schema_tableC = NULL;
-	g_autoptr(JDBSelector) selector_tableA = NULL;
-	g_autoptr(JDBSelector) selector_tableB = NULL;
-	g_autoptr(JDBSelector) selector_tableC = NULL;
+	g_autoptr(JDBSchema) schema_empTable = NULL;
+	g_autoptr(JDBSchema) schema_deptTable = NULL;
+	g_autoptr(JDBSchema) schema_refTable = NULL;
+	g_autoptr(JDBSelector) selector_empTable = NULL;
+	g_autoptr(JDBSelector) selector_deptTable = NULL;
+	g_autoptr(JDBSelector) selector_refTable = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	JDBType type;
 	guint64 len;
 
-	schema_tableA = j_db_schema_new("namespace", "tableA", &error);
-	g_assert_nonnull(schema_tableA);
+	schema_empTable = j_db_schema_new("namespace", "empTable", &error);
+	g_assert_nonnull(schema_empTable);
 	g_assert_no_error(error);
-	schema_tableB = j_db_schema_new("namespace", "tableB", &error);
-	g_assert_nonnull(schema_tableB);
+	schema_deptTable = j_db_schema_new("namespace", "deptTable", &error);
+	g_assert_nonnull(schema_deptTable);
 	g_assert_no_error(error);
-	schema_tableC = j_db_schema_new("namespace", "tableC", &error);
-	g_assert_nonnull(schema_tableC);
+	schema_refTable = j_db_schema_new("namespace", "refTable", &error);
+	g_assert_nonnull(schema_refTable);
 	g_assert_no_error(error);
-	success = j_db_schema_get(schema_tableA, batch, &error);
+	success = j_db_schema_get(schema_empTable, batch, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
-	success = j_db_schema_get(schema_tableB, batch, &error);
+	success = j_db_schema_get(schema_deptTable, batch, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
-	success = j_db_schema_get(schema_tableC, batch, &error);
+	success = j_db_schema_get(schema_refTable, batch, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
 	success = j_batch_execute(batch);
 	g_assert_true(success);
 
-	selector_tableA = j_db_selector_new(schema_tableA, J_DB_SELECTOR_MODE_OR, &error);
-	g_assert_nonnull(selector_tableA);
+	selector_empTable = j_db_selector_new(schema_empTable, J_DB_SELECTOR_MODE_OR, &error);
+	g_assert_nonnull(selector_empTable);
 	g_assert_no_error(error);
-	selector_tableB = j_db_selector_new(schema_tableB, J_DB_SELECTOR_MODE_AND, &error);
-	g_assert_nonnull(selector_tableB);
+	selector_deptTable = j_db_selector_new(schema_deptTable, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector_deptTable);
 	g_assert_no_error(error);
-	selector_tableC = j_db_selector_new(schema_tableC, J_DB_SELECTOR_MODE_AND, &error);
-	g_assert_nonnull(selector_tableC);
+	selector_refTable = j_db_selector_new(schema_refTable, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector_refTable);
 	g_assert_no_error(error);
-	j_db_selector_add_selector(selector_tableC, selector_tableA, NULL);
-	j_db_selector_add_selector(selector_tableC, selector_tableB, NULL);
-	j_db_selector_add_join(selector_tableC, "empid", selector_tableA, "empid", NULL);
-	j_db_selector_add_join(selector_tableC, "deptid", selector_tableB, "deptid", NULL);
+	j_db_selector_add_selector(selector_refTable, selector_empTable, NULL);
+	j_db_selector_add_selector(selector_refTable, selector_deptTable, NULL);
+	j_db_selector_add_join(selector_refTable, "empid", selector_empTable, "empid", NULL);
+	j_db_selector_add_join(selector_refTable, "deptid", selector_deptTable, "deptid", NULL);
 
-	iterator = j_db_iterator_new(schema_tableC, selector_tableC, &error);
+	iterator = j_db_iterator_new(schema_refTable, selector_refTable, &error);
 	g_assert_nonnull(iterator);
 	g_assert_no_error(error);
 
@@ -351,10 +351,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -367,10 +367,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -383,10 +383,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -399,10 +399,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -412,7 +412,7 @@ perform_join_on_table1_table2_table3(void)
 }
 
 static void
-schema_delete_tableA(void)
+schema_delete_empTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -420,7 +420,7 @@ schema_delete_tableA(void)
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableA", &error);
+	schema = j_db_schema_new("namespace", "empTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 
@@ -433,7 +433,7 @@ schema_delete_tableA(void)
 }
 
 static void
-schema_delete_tableB(void)
+schema_delete_deptTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -441,7 +441,7 @@ schema_delete_tableB(void)
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableB", &error);
+	schema = j_db_schema_new("namespace", "deptTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 
@@ -454,7 +454,7 @@ schema_delete_tableB(void)
 }
 
 static void
-schema_delete_tableC(void)
+schema_delete_refTable(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -462,7 +462,7 @@ schema_delete_tableC(void)
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	schema = j_db_schema_new("namespace", "tableC", &error);
+	schema = j_db_schema_new("namespace", "refTable", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
 
@@ -477,27 +477,27 @@ schema_delete_tableC(void)
 static void
 test_three_tables_join_query_1(void)
 {
-	schema_create_tableA();
-	entry_insert_tableA(1, "James", 2000);
-	entry_insert_tableA(2, "Jack", 4000);
-	entry_insert_tableA(3, "Henry", 6000);
-	entry_insert_tableA(4, "Tom", 8000);
+	schema_create_empTable();
+	entry_insert_empTable(1, "James", 2000);
+	entry_insert_empTable(2, "Jack", 4000);
+	entry_insert_empTable(3, "Henry", 6000);
+	entry_insert_empTable(4, "Tom", 8000);
 
-	schema_create_tableB();
-	entry_insert_tableB(101, "Sales");
-	entry_insert_tableB(102, "Marketing");
-	entry_insert_tableB(103, "Finance");
+	schema_create_deptTable();
+	entry_insert_deptTable(101, "Sales");
+	entry_insert_deptTable(102, "Marketing");
+	entry_insert_deptTable(103, "Finance");
 
-	schema_create_tableC();
-	entry_insert_tableC(1, 101);
-	entry_insert_tableC(2, 102);
-	entry_insert_tableC(3, 103);
-	entry_insert_tableC(4, 102);
+	schema_create_refTable();
+	entry_insert_refTable(1, 101);
+	entry_insert_refTable(2, 102);
+	entry_insert_refTable(3, 103);
+	entry_insert_refTable(4, 102);
 
 	perform_join_on_table1_table2_table3();
-	schema_delete_tableA();
-	schema_delete_tableB();
-	schema_delete_tableC();
+	schema_delete_empTable();
+	schema_delete_deptTable();
+	schema_delete_refTable();
 }
 
 void
