@@ -373,15 +373,15 @@ schema_delete_ordersTable(void)
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	schema = j_db_schema_new("namespace", "ordersTable", &error);
-	g_assert_nonnull(schema);
-	g_assert_no_error(error);
+	//g_assert_nonnull(schema);
+	//g_assert_no_error(error);
 
 	success = j_db_schema_delete(schema, batch, &error);
-	g_assert_true(success);
-	g_assert_no_error(error);
+	//g_assert_true(success);
+	//g_assert_no_error(error);
 
 	success = j_batch_execute(batch);
-	g_assert_true(success);
+	//g_assert_true(success);
 }
 
 static void
@@ -394,20 +394,23 @@ schema_delete_customersTable(void)
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	schema = j_db_schema_new("namespace", "customersTable", &error);
-	g_assert_nonnull(schema);
-	g_assert_no_error(error);
+	//g_assert_nonnull(schema);
+	//g_assert_no_error(error);
 
 	success = j_db_schema_delete(schema, batch, &error);
-	g_assert_true(success);
-	g_assert_no_error(error);
+	//g_assert_true(success);
+	//g_assert_no_error(error);
 
 	success = j_batch_execute(batch);
-	g_assert_true(success);
+	//g_assert_true(success);
 }
 
 static void
 test_two_tables_join_query_1(void)
 {
+	schema_delete_ordersTable();
+	schema_delete_customersTable();
+
 	schema_create_ordersTable();
 	entry_insert_ordersTable(1, "07/04/1776", 234.56, 1);
 	entry_insert_ordersTable(2, "03/14/1760", 78.50, 3);
