@@ -351,10 +351,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -367,10 +367,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -383,10 +383,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -399,10 +399,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
