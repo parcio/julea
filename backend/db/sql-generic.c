@@ -1672,7 +1672,6 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 	gboolean equals;
 	gboolean has_next;
 	JDBSelectorOperator op;
-	gboolean first = TRUE;
 	const char* string_tmp;
 	JDBTypeValue value;
 	bson_iter_t iterchild;
@@ -1780,8 +1779,10 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 					{
 						case J_DB_SELECTOR_MODE_AND:
 							g_string_append(sub_sql, " AND ");
+							break;
 						case J_DB_SELECTOR_MODE_OR:
 							g_string_append(sub_sql, " OR ");
+							break;
 						default:
 							g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
 							goto _error;
@@ -2123,7 +2124,7 @@ _error:
 }
 
 static gboolean
-build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sql, GError** error)
+build_query_join_part(bson_t const* selector, GString* sql, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -2353,7 +2354,6 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 	gboolean has_next;
 	gboolean equals;
 	JThreadVariables* thread_variables = NULL;
-	char const* string_tmp;
 
 	GString* fieldname = NULL;
 
@@ -2995,18 +2995,11 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	J_TRACE_FUNCTION(NULL);
 
 	JDBSelectorMode mode_child;
-	GHashTableIter schema_iter;
-
-	GHashTable* schema_cache = NULL;
-	JDBType type;
-	gpointer type_tmp;
-
 	JSqlBatch* batch = _batch;
 	bson_iter_t iter;
 	guint variables_count;
 	guint variables_count2;
 	JDBTypeValue value;
-	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
 	GHashTable* variables_index = NULL; // Maintains indices for the fields (or columns) in the query so that their respective values can be fetched from the resultant vector using the indices.
 	GHashTable* variables_type = NULL; // Maintains data types of the fields (or columns) that are involved in the query.
@@ -3045,7 +3038,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	g_string_append(sql, sql_selection_part->str);
 
 	// Formulate the join part of the query.
-	build_query_join_part(selector, backend_data, sql_join_part, error);
+	build_query_join_part(selector, sql_join_part, error);
 
 	// Extend the query string.
 	if (sql_join_part->len > 0)
