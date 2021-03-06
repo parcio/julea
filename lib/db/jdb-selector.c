@@ -323,77 +323,6 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	bson_t bson;
-	JDBType type;
-	JDBTypeValue val;
-
-	g_return_val_if_fail(selector != NULL, FALSE);
-	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
-
-	/*
-	 * In the following code snippet the table's information is added as a BSON array. 
-	 * BSON array has a key named "tables", and the tables' names are added to it as BSON array-items. 
-	 */
-
-	if (G_UNLIKELY(!j_bson_append_array_begin(&selector->bson, "tables", &bson, error)))
-	{
-		goto _error;
-	}
-
-	// Add namespace for the primary selector.
-	val.val_string = selector->schema->namespace;
-	if (G_UNLIKELY(!j_bson_append_value(&bson, "namespace0", J_DB_TYPE_STRING, &val, error)))
-	{
-		goto _error;
-	}
-
-	// Add table name for the primary selector.
-	val.val_string = selector->schema->name;
-	if (G_UNLIKELY(!j_bson_append_value(&bson, "name0", J_DB_TYPE_STRING, &val, error)))
-	{
-		goto _error;
-	}
-
-	// This code snippet iterates through the data structure that maintains information regarding the secondary schemas and pushes their info to BSON objects.
-	for (guint i = 0; i < selector->join_schema_count; i++)
-	{
-		GString* key = g_string_new(NULL);
-		g_string_append_printf(key, "namespace%d", i + 1);
-
-		// Add namespace for the i-th secondary selector.
-		val.val_string = selector->join_schema[i]->namespace;
-		if (G_UNLIKELY(!j_bson_append_value(&bson, key, J_DB_TYPE_STRING, &val, error)))
-		{
-			goto _error;
-		}
-
-		GString* keyex = g_string_new(NULL);
-		g_string_append_printf(keyex, "name%d", i + 1);
-
-		// Add table name for the i-th secondary selector.
-		val.val_string = selector->join_schema[i]->name;
-		if (G_UNLIKELY(!j_bson_append_value(&bson, keyex, J_DB_TYPE_STRING, &val, error)))
-		{
-			goto _error;
-		}
-	}
-
-	// Finalize the BSON array.
-	if (G_UNLIKELY(!j_bson_append_array_end(&selector->bson, &bson, error)))
-	{
-		goto _error;
-	}
-
-	return TRUE;
-_error:
-	return FALSE;
-}
-
-gboolean
-j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	bson_t bson;
 	JDBTypeValue val;
 	GString* key_name = NULL;
 	GString* key_namespace = NULL;
@@ -484,5 +413,69 @@ _error:
 	{
 		g_string_free(key_name, TRUE);
 	}
+	return FALSE;
+}
+
+gboolean
+j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_t bson;
+	JDBType type;
+	JDBTypeValue val;
+
+	GString* selector_tablename = g_string_new(NULL);
+	GString* sub_selector_tablename = g_string_new(NULL);
+
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(sub_selector != NULL, FALSE);
+	g_return_val_if_fail(selector != sub_selector, FALSE);
+	g_return_val_if_fail(selector->schema != sub_selector->schema, TRUE);
+	g_return_val_if_fail(selector_field != NULL, FALSE);
+	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/*
+	 * In the following code snippet the join information is added as a BSON document. 
+	 * BSON document has a key named "join", and the fields' names that are involved in join are added as BSON document-items. 
+	 */
+
+	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, "join", &bson, error)))
+	{
+		goto _error;
+	}
+
+	// Prepare the field name (for selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
+	g_string_append_printf(selector_tablename, "%s_%s.%s", selector->schema->namespace, selector->schema->name, selector_field);
+	val.val_string = selector_tablename->str;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "0", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	// Prepare the field name (for sub_selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
+	g_string_append_printf(sub_selector_tablename, "%s_%s.%s", sub_selector->schema->namespace, sub_selector->schema->name, sub_selector_field);
+	val.val_string = sub_selector_tablename->str;
+	if (G_UNLIKELY(!j_bson_append_value(&bson, "1", J_DB_TYPE_STRING, &val, error)))
+	{
+		goto _error;
+	}
+
+	// Finalize the BSON document.
+	if (G_UNLIKELY(!j_bson_append_document_end(&selector->bson, &bson, error)))
+	{
+		goto _error;
+	}
+
+	g_string_free(selector_tablename, TRUE);
+	g_string_free(sub_selector_tablename, TRUE);
+
+	return TRUE;
+
+_error:
+	g_string_free(selector_tablename, TRUE);
+	g_string_free(sub_selector_tablename, TRUE);
+
 	return FALSE;
 }
