@@ -214,12 +214,18 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 {
 	if( selector == sub_selector)
 	{
+		// Ignore and return as same selector is passed as "selector" and "sub_selector" (mistakenly).
 		return;
 	}
 
+	/*
+	 * If sub_selector belongs to a different schema then it indicates the request contains join operations therefore the details 
+	 * of sub_selector (i.e. secondary schema) should be added to the selector (i.e. primary selector).
+	 */
 	gboolean new_schema = true;
 	for(guint i=0; i<selector->join_schema_count; i++)
 	{
+		// Check if the schema of sub_selector has already been added to the selector. 
 		if( selector->join_schema[i] == sub_selector->schema)
 		{
 			new_schema = false;
@@ -228,11 +234,21 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 	}
 	if (new_schema)
 	{
+		// Increment the counter.
 		g_atomic_int_inc(&selector->join_schema_count);
-		selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) + selector->join_schema_count);
+		// Extending memory to add schema for sub_selector.
+		selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
+		// Add the schema of sub_selector to the selector.
 		selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->schema);
 	}			
 	
+	
+	/*
+	 * Move secondary schemas from sub_selector to the primary selector. 
+	 * The secondary selector (i.e. sub_selector) might contains schemas' information that would be added to it when it was passed as
+	 * a primary selector. Therefore, the case when the secondary selector further has secondary schemas, the following code snippet 
+	 * moves them to the current primary selector (i.e. selector).
+	 */
 	for(guint i=0; i<sub_selector->join_schema_count; i++)
 	{
 		guint j=0;
@@ -241,14 +257,18 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 		{
 			if( selector->join_schema[j] == sub_selector->join_schema[i])
 			{
+				// The schema instance already exists, stop and continue with the next schema.
 				new_schema = false;
 				break;
 			}
 		}	
 		if (new_schema)
 		{
+			// Increment the counter.
 			g_atomic_int_inc(&selector->join_schema_count);
-			selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) + selector->join_schema_count);
+			// Extending memory to add schema for sub_selector.
+			selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
+			// Add the schema of sub_selector to the selector.
 			selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->join_schema[i]);
 		}			
 	}
@@ -264,29 +284,31 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
 	g_return_val_if_fail(selector != sub_selector, FALSE);
-	//g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	j_db_selector_sync_schemas_for_join(selector, sub_selector);
-
-	if (G_UNLIKELY(!sub_selector->bson_count))
+	// The secondary selector (i.e. sub_selector) should have objects/instances added to its BSON object.
+	/*if (G_UNLIKELY(!sub_selector->bson_count))
 	{
 		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_EMPTY, "selector must not be emoty");
 		goto _error;
-	}
+	}*/
 
+	// Validate the count for BSON objects/instances that they should not exceed the given limit.
 	if (G_UNLIKELY(selector->bson_count + sub_selector->bson_count > 500))
 	{
 		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_TOO_COMPLEX, "selector too complex");
 		goto _error;
 	}
 
+	// Extract the current count of BSON objects. It would be used as a key to add BSON object of sub_selector as a document to primary selector's BSON object.
 	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
-
 	if (G_UNLIKELY(!j_bson_append_document(&selector->bson, buf, &sub_selector->bson, error)))
 	{
 		goto _error;
 	}
+
+	// Move schemas' information from secondary (sub_selector) to primary selector (i.e. selector)
+	j_db_selector_sync_schemas_for_join(selector, sub_selector);
 
 	selector->bson_count += sub_selector->bson_count;
 
@@ -308,28 +330,37 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	/*
+	 * In the following code snippet the table's information is added as a BSON array. 
+	 * BSON array has a key named "tables", and the tables' names are added to it as BSON array-items. 
+	 */
+	 
 	if (G_UNLIKELY(!j_bson_append_array_begin(&selector->bson, "tables", &bson, error)))
 	{
 		goto _error;
 	}
-	
+
+	// Add namespace for the primary selector.	
 	val.val_string = selector->schema->namespace;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "namespace0", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Add table name for the primary selector.	
 	val.val_string = selector->schema->name;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "name0", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// This code snippet iterates through the data structure that maintains information regarding the secondary schemas and pushes their info to BSON objects.
 	for(guint i=0; i<selector->join_schema_count; i++)
 	{
 		GString* key = g_string_new(NULL);
 		g_string_append_printf(key, "namespace%d", i+1);
 
+		// Add namespace for the i-th secondary selector.	
 		val.val_string = selector->join_schema[i]->namespace;
 		if (G_UNLIKELY(!j_bson_append_value(&bson, key, J_DB_TYPE_STRING, &val, error)))
 		{
@@ -339,6 +370,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		GString* keyex = g_string_new(NULL);
 		g_string_append_printf(keyex, "name%d", i+1);
 
+		// Add table name for the i-th secondary selector.	
 		val.val_string = selector->join_schema[i]->name;
 		if (G_UNLIKELY(!j_bson_append_value(&bson, keyex, J_DB_TYPE_STRING, &val, error)))
 		{
@@ -346,6 +378,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		}
 	}
 
+	// Finalize the BSON array.
 	if (G_UNLIKELY(!j_bson_append_array_end(&selector->bson, &bson, error)))
 	{
 		goto _error;
@@ -377,27 +410,33 @@ j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSe
 	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	/*
+	 * In the following code snippet the join information is added as a BSON document. 
+	 * BSON document has a key named "join", and the fields' names that are involved in join are added as BSON document-items. 
+	 */
+
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, "join", &bson, error)))
 	{
 		goto _error;
 	}
 	
+	// Prepare the field name (for selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
 	g_string_append_printf(selector_tablename, "%s_%s.%s", selector->schema->namespace, selector->schema->name, selector_field);
-
 	val.val_string = selector_tablename->str;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "0", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Prepare the field name (for sub_selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
 	g_string_append_printf(sub_selector_tablename, "%s_%s.%s", sub_selector->schema->namespace, sub_selector->schema->name, sub_selector_field);
-
 	val.val_string = sub_selector_tablename->str;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "1", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Finalize the BSON document.
 	if (G_UNLIKELY(!j_bson_append_document_end(&selector->bson, &bson, error)))
 	{
 		goto _error;

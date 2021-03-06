@@ -505,6 +505,8 @@ julea_test_srcs = files([
 	'test/object/distributed-object.c',
 	'test/object/object.c',
 	'test/test.c',
+	'test/db/join/two_tables_join.c',
+	'test/db/join/three_tables_join.c',
 ])
 
 executable('julea-test', julea_test_srcs,

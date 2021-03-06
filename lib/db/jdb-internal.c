@@ -512,7 +512,7 @@ j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (selector && selector->bson_count > 0)
+	if (selector /*&& selector->bson_count > 0*/)
 	{
 		return &selector->bson;
 	}
