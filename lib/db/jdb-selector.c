@@ -422,7 +422,6 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 	J_TRACE_FUNCTION(NULL);
 
 	bson_t bson;
-	JDBType type;
 	JDBTypeValue val;
 
 	GString* selector_tablename = g_string_new(NULL);
