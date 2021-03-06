@@ -58,7 +58,7 @@ j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 	if (selector)
 	{
 		j_db_selector_finalize(selector, error);
-		
+
 		iterator->selector = j_db_selector_ref(selector);
 
 		if (G_UNLIKELY(!iterator->selector))
@@ -289,8 +289,8 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	g_return_val_if_fail(length != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if ( g_strcmp0(iterator->schema->namespace, namespace) == 0
-		&& g_strcmp0( iterator->schema->name, table) == 0)
+	if (g_strcmp0(iterator->schema->namespace, namespace) == 0
+	    && g_strcmp0(iterator->schema->name, table) == 0)
 	{
 		if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 		{
@@ -299,10 +299,10 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	}
 	else
 	{
-		for(guint i=0; i<iterator->selector->join_schema_count; i++)
+		for (guint i = 0; i < iterator->selector->join_schema_count; i++)
 		{
-			if ( g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
-				&& g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
+			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
+			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
 				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{

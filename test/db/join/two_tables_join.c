@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /*
  * In this test case a JOIN operation is performed on the following two tables. It is taken from http://www.sql-join.com/
  *
@@ -50,7 +49,6 @@
  * ... 4 		9/03/1790 	$65.50		...
  *
  */
-
 
 #include <julea-config.h>
 
@@ -305,25 +303,24 @@ perform_join_on_table1_table2(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","orderdate", &type, &orderdate, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "orderdate", &type, &orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","amount", &type, &amount, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "amount", &type, &amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","customerid", &type, &customerid, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "customerid", &type, &customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","firstname", &type, &firstname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "firstname", &type, &firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","lastname", &type, &lastname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "lastname", &type, &lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-
 
 		g_assert_cmpstr(firstname, ==, "Thomas");
 		g_assert_cmpstr(lastname, ==, "Jefferson");
@@ -340,25 +337,24 @@ perform_join_on_table1_table2(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","orderdate", &type, &orderdate, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "orderdate", &type, &orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","amount", &type, &amount, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "amount", &type, &amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","customerid", &type, &customerid, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "customerid", &type, &customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","firstname", &type, &firstname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "firstname", &type, &firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","lastname", &type, &lastname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "lastname", &type, &lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-
 
 		g_assert_cmpstr(firstname, ==, "Thomas");
 		g_assert_cmpstr(lastname, ==, "Jefferson");
@@ -413,20 +409,20 @@ static void
 test_two_tables_join_query_1(void)
 {
 	schema_create_tableA();
-	entry_insert_tableA(1,"07/04/1776",234.56,1);
-	entry_insert_tableA(2,"03/14/1760",78.50,3);
-	entry_insert_tableA(3,"05/23/1784",124.00,2);
-	entry_insert_tableA(4,"09/03/1790",65.50,3);
-	entry_insert_tableA(5,"07/21/1795",25.50,10);
-	entry_insert_tableA(6,"11/27/1787",14.40,9);
+	entry_insert_tableA(1, "07/04/1776", 234.56, 1);
+	entry_insert_tableA(2, "03/14/1760", 78.50, 3);
+	entry_insert_tableA(3, "05/23/1784", 124.00, 2);
+	entry_insert_tableA(4, "09/03/1790", 65.50, 3);
+	entry_insert_tableA(5, "07/21/1795", 25.50, 10);
+	entry_insert_tableA(6, "11/27/1787", 14.40, 9);
 
 	schema_create_tableB();
-	entry_insert_tableB(1,"George","Washington","gwashington@usa.gov","3200 Mt Vernon Hwy","Mount Vernon","VA",22121);
-	entry_insert_tableB(2,"John","Adams","jadams@usa.gov","1250 Hancock St","Quincy","MA",12169);
-	entry_insert_tableB(3,"Thomas","Jefferson","tjefferson@usa.gov","931 Thomas Jefferson Pkwy","Charlottesville","VA",22902);
-	entry_insert_tableB(4,"James","Madison","jmadison@usa.gov","11350 Constitution Hwy","Orange","VA",22960);
-	entry_insert_tableB(5,"James","Monroe","jmonroe@usa.gov","2050 James Monroe Pkwy","Charlottesville","VA",22902);
-	
+	entry_insert_tableB(1, "George", "Washington", "gwashington@usa.gov", "3200 Mt Vernon Hwy", "Mount Vernon", "VA", 22121);
+	entry_insert_tableB(2, "John", "Adams", "jadams@usa.gov", "1250 Hancock St", "Quincy", "MA", 12169);
+	entry_insert_tableB(3, "Thomas", "Jefferson", "tjefferson@usa.gov", "931 Thomas Jefferson Pkwy", "Charlottesville", "VA", 22902);
+	entry_insert_tableB(4, "James", "Madison", "jmadison@usa.gov", "11350 Constitution Hwy", "Orange", "VA", 22960);
+	entry_insert_tableB(5, "James", "Monroe", "jmonroe@usa.gov", "2050 James Monroe Pkwy", "Charlottesville", "VA", 22902);
+
 	perform_join_on_table1_table2();
 	schema_delete_tableA();
 	schema_delete_tableB();

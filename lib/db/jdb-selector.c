@@ -92,10 +92,10 @@ j_db_selector_unref(JDBSelector* selector)
 
 	if (g_atomic_int_dec_and_test(&selector->ref_count))
 	{
-		for(guint i=0; i<selector->join_schema_count; i++)
+		for (guint i = 0; i < selector->join_schema_count; i++)
 		{
 			j_db_schema_unref(selector->join_schema[i]);
-		}	
+		}
 		g_free(selector->join_schema);
 
 		j_db_schema_unref(selector->schema);
@@ -212,7 +212,7 @@ _error:
 void
 j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_selector)
 {
-	if( selector == sub_selector)
+	if (selector == sub_selector)
 	{
 		// Ignore and return as same selector is passed as "selector" and "sub_selector" (mistakenly).
 		return;
@@ -223,10 +223,10 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 	 * of sub_selector (i.e. secondary schema) should be added to the selector (i.e. primary selector).
 	 */
 	gboolean new_schema = true;
-	for(guint i=0; i<selector->join_schema_count; i++)
+	for (guint i = 0; i < selector->join_schema_count; i++)
 	{
-		// Check if the schema of sub_selector has already been added to the selector. 
-		if( selector->join_schema[i] == sub_selector->schema)
+		// Check if the schema of sub_selector has already been added to the selector.
+		if (selector->join_schema[i] == sub_selector->schema)
 		{
 			new_schema = false;
 			break;
@@ -237,40 +237,39 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 		// Increment the counter.
 		g_atomic_int_inc(&selector->join_schema_count);
 		// Extending memory to add schema for sub_selector.
-		selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
+		selector->join_schema = g_realloc(selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
 		// Add the schema of sub_selector to the selector.
-		selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->schema);
-	}			
-	
-	
+		selector->join_schema[selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->schema);
+	}
+
 	/*
 	 * Move secondary schemas from sub_selector to the primary selector. 
 	 * The secondary selector (i.e. sub_selector) might contains schemas' information that would be added to it when it was passed as
 	 * a primary selector. Therefore, the case when the secondary selector further has secondary schemas, the following code snippet 
 	 * moves them to the current primary selector (i.e. selector).
 	 */
-	for(guint i=0; i<sub_selector->join_schema_count; i++)
+	for (guint i = 0; i < sub_selector->join_schema_count; i++)
 	{
-		guint j=0;
+		guint j = 0;
 		gboolean new_schema = true;
-		for(; j<selector->join_schema_count; j++)
+		for (; j < selector->join_schema_count; j++)
 		{
-			if( selector->join_schema[j] == sub_selector->join_schema[i])
+			if (selector->join_schema[j] == sub_selector->join_schema[i])
 			{
 				// The schema instance already exists, stop and continue with the next schema.
 				new_schema = false;
 				break;
 			}
-		}	
+		}
 		if (new_schema)
 		{
 			// Increment the counter.
 			g_atomic_int_inc(&selector->join_schema_count);
 			// Extending memory to add schema for sub_selector.
-			selector->join_schema = g_realloc( selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
+			selector->join_schema = g_realloc(selector->join_schema, sizeof(JDBSchema*) * selector->join_schema_count);
 			// Add the schema of sub_selector to the selector.
-			selector->join_schema[ selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->join_schema[i]);
-		}			
+			selector->join_schema[selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->join_schema[i]);
+		}
 	}
 }
 
@@ -334,20 +333,20 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	 * In the following code snippet the table's information is added as a BSON array. 
 	 * BSON array has a key named "tables", and the tables' names are added to it as BSON array-items. 
 	 */
-	 
+
 	if (G_UNLIKELY(!j_bson_append_array_begin(&selector->bson, "tables", &bson, error)))
 	{
 		goto _error;
 	}
 
-	// Add namespace for the primary selector.	
+	// Add namespace for the primary selector.
 	val.val_string = selector->schema->namespace;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "namespace0", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
-	// Add table name for the primary selector.	
+	// Add table name for the primary selector.
 	val.val_string = selector->schema->name;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "name0", J_DB_TYPE_STRING, &val, error)))
 	{
@@ -355,12 +354,12 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	}
 
 	// This code snippet iterates through the data structure that maintains information regarding the secondary schemas and pushes their info to BSON objects.
-	for(guint i=0; i<selector->join_schema_count; i++)
+	for (guint i = 0; i < selector->join_schema_count; i++)
 	{
 		GString* key = g_string_new(NULL);
-		g_string_append_printf(key, "namespace%d", i+1);
+		g_string_append_printf(key, "namespace%d", i + 1);
 
-		// Add namespace for the i-th secondary selector.	
+		// Add namespace for the i-th secondary selector.
 		val.val_string = selector->join_schema[i]->namespace;
 		if (G_UNLIKELY(!j_bson_append_value(&bson, key, J_DB_TYPE_STRING, &val, error)))
 		{
@@ -368,9 +367,9 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		}
 
 		GString* keyex = g_string_new(NULL);
-		g_string_append_printf(keyex, "name%d", i+1);
+		g_string_append_printf(keyex, "name%d", i + 1);
 
-		// Add table name for the i-th secondary selector.	
+		// Add table name for the i-th secondary selector.
 		val.val_string = selector->join_schema[i]->name;
 		if (G_UNLIKELY(!j_bson_append_value(&bson, keyex, J_DB_TYPE_STRING, &val, error)))
 		{
@@ -385,13 +384,12 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	}
 
 	return TRUE;
-
 _error:
 	return FALSE;
 }
 
 gboolean
-j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSelector* sub_selector, gchar const *sub_selector_field, GError** error)
+j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -419,7 +417,7 @@ j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSe
 	{
 		goto _error;
 	}
-	
+
 	// Prepare the field name (for selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
 	g_string_append_printf(selector_tablename, "%s_%s.%s", selector->schema->namespace, selector->schema->name, selector_field);
 	val.val_string = selector_tablename->str;
@@ -453,4 +451,3 @@ _error:
 
 	return FALSE;
 }
-

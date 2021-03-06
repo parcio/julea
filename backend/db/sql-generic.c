@@ -1677,6 +1677,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 	JDBTypeValue value;
 	bson_iter_t iterchild;
 	JDBType type;
+	JDBTypeValue table_name;
 
 	GString* sub_sql = g_string_new(NULL);
 
@@ -1765,7 +1766,6 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 				goto _error;
 			}
 
-
 			if (child_sql->len > 0)
 			{
 				if (sub_sql->len > 0)
@@ -1780,24 +1780,22 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 					{
 						case J_DB_SELECTOR_MODE_AND:
 							g_string_append(sub_sql, " AND ");
-							break;
 						case J_DB_SELECTOR_MODE_OR:
 							g_string_append(sub_sql, " OR ");
-							break;
 						default:
 							g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
 							goto _error;
 					}
 				}
-				
+
 				g_string_append_printf(sub_sql, " ( %s )", child_sql->str);
 			}
-			
+
 			g_string_free(child_sql, TRUE);
 		}
-		// The following code snippet iterates through the BSON document items, they are fields/columns and are appended to sql query string.
 		else
 		{
+			// The following code snippet iterates through the BSON document items, they are fields/columns and are appended to sql query string.
 			if (sub_sql->len > 0)
 			{
 				// Append operator to the query string before appending details for the next BSON document element.
@@ -1820,8 +1818,6 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 				goto _error;
 			}
 
-			JDBTypeValue table_name;
-			
 			// Fetch table name.
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_table", error)))
 			{
@@ -1832,7 +1828,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 			{
 				goto _error;
 			}
-			
+
 			// Fetch field or column name.
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_name", error)))
 			{
@@ -1845,7 +1841,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 			}
 
 			string_tmp = value.val_string;
-			
+
 			// Append table name to field name. E.g. "<string for table name>.<string for field name>"
 			g_string_append_printf(sub_sql, "%s." SQL_QUOTE "%s" SQL_QUOTE, table_name.val_string, string_tmp);
 
@@ -1962,7 +1958,7 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 	{
 		goto _error;
 	}
-	
+
 	// Try to intialize child element.
 	if (G_UNLIKELY(!j_bson_iter_recurse_array(&iter, &iterchild, error)))
 	{
@@ -1982,7 +1978,7 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 			// Return as no more elements left.
 			break;
 		}
-		
+
 		// Extract namespace for the table from BSON element.
 		if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error)))
 		{
@@ -2010,11 +2006,10 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 		{
 			goto _error;
 		}
-		
+
 		// Append name for the table.
 		g_string_append(table_name, "_");
 		g_string_append(table_name, value.val_string);
-
 
 		// Fetching table's schema to extract all the columns' names.
 		if (!(schema_cache = getCacheSchema(backend_data, batch, value.val_string, error)))
@@ -2025,21 +2020,21 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 		// Initializing iterator.
 		g_hash_table_iter_init(&schema_iter, schema_cache);
 
-		if ( sql->len > 0)
+		if (sql->len > 0)
 		{
 			g_string_append(sql, ", ");
-		}			
+		}
 
 		field_name = g_string_new(NULL);
 
 		// Prepare field name.
-		g_string_append_printf(field_name, "%s._id", table_name->str);  
+		g_string_append_printf(field_name, "%s._id", table_name->str);
 
-		// Append field name to query string.		
+		// Append field name to query string.
 		g_string_append_printf(sql, "%s._id", table_name->str);
 
 		type = J_DB_TYPE_UINT32;
-		g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(field_name->str));	// Maintains hash-table for column name and id (an auto-increment number).
+		g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(field_name->str)); // Maintains hash-table for column name and id (an auto-increment number).
 		g_hash_table_insert(variables_type, g_strdup(field_name->str), GINT_TO_POINTER(type)); // Maintains hash-table for column name and their respective data types.
 		g_array_append_val(arr_types_out, type);
 		(*variables_count)++;
@@ -2054,31 +2049,31 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 				// Proceed with the nect column as it has already been added.
 				continue;
 			}
-				
+
 			g_string_free(field_name, TRUE);
 			field_name = NULL;
 
 			field_name = g_string_new(NULL);
-			g_string_append_printf(field_name, "%s.%s", table_name->str, string_tmp);  
+			g_string_append_printf(field_name, "%s.%s", table_name->str, string_tmp);
 
-			g_string_append_printf(sql, ", %s." SQL_QUOTE "%s" SQL_QUOTE, table_name->str,string_tmp);
+			g_string_append_printf(sql, ", %s." SQL_QUOTE "%s" SQL_QUOTE, table_name->str, string_tmp);
 			g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(field_name->str));
 			g_hash_table_insert(variables_type, g_strdup(field_name->str), GINT_TO_POINTER(type_tmp));
 			g_array_append_val(arr_types_out, type);
 			(*variables_count)++;
 		}
 
-		if ( tables_sql->len > 0)
+		if (tables_sql->len > 0)
 		{
 			g_string_append(tables_sql, ", ");
 		}
-			
+
 		g_string_append_printf(tables_sql, SQL_QUOTE "%s" SQL_QUOTE, table_name->str);
-		
+
 		if (table_name)
 		{
 			g_string_free(table_name, TRUE);
-			table_name = NULL;			
+			table_name = NULL;
 		}
 	}
 
@@ -2094,13 +2089,13 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 	if (table_name)
 	{
 		g_string_free(table_name, TRUE);
-		table_name = NULL;		
+		table_name = NULL;
 	}
 
 	if (field_name)
 	{
 		g_string_free(field_name, TRUE);
-		field_name = NULL;	
+		field_name = NULL;
 	}
 
 	return TRUE;
@@ -2115,13 +2110,13 @@ _error:
 	if (table_name)
 	{
 		g_string_free(table_name, TRUE);
-		table_name = NULL;	
+		table_name = NULL;
 	}
 
 	if (field_name)
 	{
 		g_string_free(field_name, TRUE);
-		field_name = NULL;	
+		field_name = NULL;
 	}
 
 	return FALSE;
@@ -2150,7 +2145,6 @@ build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sq
 	// The following code iterates through the BSON elements and processes that are linked to join operation.
 	while (TRUE)
 	{
-	
 		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
 		{
 			goto _error;
@@ -2180,7 +2174,7 @@ build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sq
 		}
 
 		join_sql = g_string_new(NULL);
-		
+
 		// Iterate through the elements and append values to the query string.
 		while (TRUE)
 		{
@@ -2200,7 +2194,7 @@ build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sq
 				goto _error;
 			}
 
-			if ( join_sql->len > 0) 
+			if (join_sql->len > 0)
 			{
 				g_string_append(join_sql, "=");
 			}
@@ -2209,19 +2203,20 @@ build_query_join_part(bson_t const* selector, gpointer backend_data, GString* sq
 			g_string_append_printf(join_sql, "%s", value.val_string);
 		}
 
-		if ( sql->len > 0)
+		if (sql->len > 0)
 		{
 			g_string_append(sql, " AND ");
-		}			
+		}
+
 		g_string_append_printf(sql, "%s", join_sql->str);
-		
+
 		if (join_sql)
 		{
 			g_string_free(join_sql, TRUE);
 			join_sql = NULL;
 		}
 	}
-	
+
 	if (join_sql)
 	{
 		g_string_free(join_sql, TRUE);
@@ -2343,13 +2338,12 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 	}
 
 	return TRUE;
-
 _error:
 	return FALSE;
 }
 
 static gboolean
-bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* variables_index , GError** error)
+bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* variables_index, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -2446,7 +2440,7 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 			{
 				goto _error;
 			}
-						
+
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_name", error)))
 			{
 				goto _error;
@@ -2458,7 +2452,7 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 			}
 
 			fieldname = g_string_new(NULL);
-			g_string_append_printf(fieldname, "%s.%s" , table_name.val_string, value.val_string);
+			g_string_append_printf(fieldname, "%s.%s", table_name.val_string, value.val_string);
 
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
@@ -2471,7 +2465,7 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 			}
 
 			type = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, (gpointer)fieldname->str));
-			
+
 			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, type, &value, error)))
 			{
 				goto _error;
@@ -2481,7 +2475,7 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 			{
 				goto _error;
 			}
-	
+
 			if (fieldname)
 			{
 				g_string_free(fieldname, TRUE);
@@ -2491,7 +2485,6 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 	}
 
 	return TRUE;
-
 _error:
 	if (fieldname)
 	{
@@ -3015,13 +3008,12 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	JDBTypeValue value;
 	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
-	GHashTable* variables_index = NULL;			// Maintains indices for the fields (or columns) in the query so that their respective values-
-								// can be fetched from the resultant vector using the indices.
-	GHashTable* variables_type = NULL;			// Maintains data types of the fields (or columns) that are involved in the query.
-	GString* sql = g_string_new(NULL);			// Maintains query string.
-	GString* sql_selection_part = g_string_new(NULL);	// Maintains selection part of the query string. (e.g. SELECT A,B,C,... FROM X,Y,Z,...)
-	GString* sql_join_part = g_string_new(NULL);		// Maintains join part of the query string.
-	GString* sql_condition_part = g_string_new(NULL);	// Maintains condition part of the query string. (e.g. A = ? AND B < ? OR C > ? ,...)
+	GHashTable* variables_index = NULL; // Maintains indices for the fields (or columns) in the query so that their respective values can be fetched from the resultant vector using the indices.
+	GHashTable* variables_type = NULL; // Maintains data types of the fields (or columns) that are involved in the query.
+	GString* sql = g_string_new(NULL); // Maintains query string.
+	GString* sql_selection_part = g_string_new(NULL); // Maintains selection part of the query string. (e.g. SELECT A,B,C,... FROM X,Y,Z,...)
+	GString* sql_join_part = g_string_new(NULL); // Maintains join part of the query string.
+	GString* sql_condition_part = g_string_new(NULL); // Maintains condition part of the query string. (e.g. A = ? AND B < ? OR C > ? ,...)
 	JThreadVariables* thread_variables = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
 	g_autoptr(GArray) arr_types_out = NULL;
@@ -3037,10 +3029,10 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		goto _error;
 	}
 
-	// Initialize the hash table to maintain indices. 
+	// Initialize the hash table to maintain indices.
 	variables_index = g_hash_table_new_full(g_direct_hash, NULL, NULL, g_free);
 
-	// Initialize the hash table to maintain data types. 
+	// Initialize the hash table to maintain data types.
 	variables_type = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	variables_count = 0;
@@ -3056,7 +3048,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	build_query_join_part(selector, backend_data, sql_join_part, error);
 
 	// Extend the query string.
-	if (sql_join_part->len >0)
+	if (sql_join_part->len > 0)
 	{
 		g_string_append(sql, " WHERE ");
 		g_string_append(sql, sql_join_part->str);
@@ -3097,7 +3089,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	}
 
 	// Extend the query string.
-	if (sql_condition_part->len >0)
+	if (sql_condition_part->len > 0)
 	{
 		if (sql_join_part->len > 0)
 		{
@@ -3107,10 +3099,10 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		{
 			g_string_append(sql, " WHERE ");
 		}
-		
+
 		g_string_append(sql, sql_condition_part->str);
 	}
-	
+
 	prepared = getCachePrepared(backend_data, batch->namespace, name, sql->str, error);
 
 	if (G_UNLIKELY(!prepared))
@@ -3238,7 +3230,6 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 		goto _error;
 	}
 
-	
 	if (sql_found)
 	{
 		found = TRUE;
@@ -3248,7 +3239,7 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 			string_tmp = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
 
 			// The following code snippet extracts the type of the field (column). An extension is made for join operation that is given below.
-			if ( prepared->variables_type != NULL)
+			if (prepared->variables_type != NULL)
 			{
 				/*
 				 * This code snippet is added to address join operation. In the old implemntation the columns' data type is extracted using the

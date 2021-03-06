@@ -187,7 +187,7 @@ void j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub
  * \return TRUE on success, FALSE otherwise
  **/
 
-gboolean j_db_selector_add_join(JDBSelector* selector, gchar const *selector_field, JDBSelector* sub_selector, gchar const *sub_selector_field, GError** error);
+gboolean j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error);
 
 G_END_DECLS
 

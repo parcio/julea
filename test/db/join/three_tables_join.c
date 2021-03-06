@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /*
  * In this test case a JOIN operation is performed on the following three tables. 
  * It is taken from https://javarevisited.blogspot.com/2012/11/how-to-join-three-tables-in-sql-query-mysql-sqlserver.html#axzz6oIxnmRfc.
@@ -67,7 +66,6 @@
  *+----------+-----------+
  *
  */
-
 
 #include <julea-config.h>
 
@@ -353,10 +351,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -364,16 +362,15 @@ perform_join_on_table1_table2_table3(void)
 		g_assert_cmpstr(deptname, ==, "Sales");
 	}
 
-
 	j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -386,10 +383,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -402,10 +399,10 @@ perform_join_on_table1_table2_table3(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA","empname", &type, &empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableA", "empname", &type, &empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB","deptname", &type, &deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "tableB", "deptname", &type, &deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -481,16 +478,16 @@ static void
 test_three_tables_join_query_1(void)
 {
 	schema_create_tableA();
-	entry_insert_tableA(1,"James", 2000);
-	entry_insert_tableA(2,"Jack", 4000);
-	entry_insert_tableA(3,"Henry", 6000);
-	entry_insert_tableA(4,"Tom", 8000);
+	entry_insert_tableA(1, "James", 2000);
+	entry_insert_tableA(2, "Jack", 4000);
+	entry_insert_tableA(3, "Henry", 6000);
+	entry_insert_tableA(4, "Tom", 8000);
 
 	schema_create_tableB();
-	entry_insert_tableB(101,"Sales");
-	entry_insert_tableB(102,"Marketing");
-	entry_insert_tableB(103,"Finance");
-	
+	entry_insert_tableB(101, "Sales");
+	entry_insert_tableB(102, "Marketing");
+	entry_insert_tableB(103, "Finance");
+
 	schema_create_tableC();
 	entry_insert_tableC(1, 101);
 	entry_insert_tableC(2, 102);
