@@ -261,7 +261,6 @@ perform_join_on_table1_table2(void)
 	guint64 val = 3;
 	JDBType type;
 	guint64 len;
-	guint entries = 0;
 
 	schema_tableA = j_db_schema_new("namespace", "tableA", &error);
 	g_assert_nonnull(schema_tableA);
