@@ -47,17 +47,18 @@ test_object_create_delete(void)
 	guint const n = 100;
 
 	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JDistribution) distribution = NULL;
+	g_autoptr(JDistributedObject) object_noexist = NULL;
 	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 
 	for (guint i = 0; i < n; i++)
 	{
-		g_autoptr(JDistribution) distribution = NULL;
 		g_autoptr(JDistributedObject) object = NULL;
 		g_autofree gchar* name = NULL;
 
-		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 		name = g_strdup_printf("test-distributed-object-%u", i);
 		object = j_distributed_object_new("test", name, distribution);
 		g_assert_true(object != NULL);
@@ -68,6 +69,13 @@ test_object_create_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	object_noexist = j_distributed_object_new("test", "test-distributed-object-noexist", distribution);
+	g_assert_true(object_noexist != NULL);
+
+	j_distributed_object_delete(object_noexist, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
 }
 
 static void

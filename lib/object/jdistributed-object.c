@@ -49,6 +49,7 @@ struct JDistributedObjectBackgroundData
 	JMessage* message;
 	JList* operations;
 	JSemantics* semantics;
+	gboolean ret;
 
 	/**
 	 * The union for read and write parts.
@@ -287,19 +288,26 @@ j_distributed_object_delete_background_operation(gpointer data)
 	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
+		guint32 operation_count;
 
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, object_connection);
 
-		/* FIXME do something with reply */
+		operation_count = j_message_get_count(reply);
+
+		for (guint i = 0; i < operation_count; i++)
+		{
+			guint32 status;
+
+			status = j_message_get_4(reply);
+			background_data->ret = (status == 1) && background_data->ret;
+		}
 	}
 
 	j_message_unref(background_data->message);
 	j_connection_pool_push(J_BACKEND_TYPE_OBJECT, background_data->index, object_connection);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
-
-	return NULL;
+	return data;
 }
 
 /**
@@ -649,7 +657,6 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -731,11 +738,21 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 			data->message = messages[i];
 			data->operations = NULL;
 			data->semantics = semantics;
+			data->ret = TRUE;
 
 			background_data[i] = data;
 		}
 
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
+
+		for (guint i = 0; i < server_count; i++)
+		{
+			JDistributedObjectBackgroundData* data = background_data[i];
+
+			ret = data->ret && ret;
+
+			g_slice_free(JDistributedObjectBackgroundData, data);
+		}
 	}
 
 	return ret;

@@ -330,7 +330,6 @@ j_object_delete_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -399,11 +398,20 @@ j_object_delete_exec(JList* operations, JSemantics* semantics)
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
+			guint32 operation_count;
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			/* FIXME do something with reply */
+			operation_count = j_message_get_count(reply);
+
+			for (guint i = 0; i < operation_count; i++)
+			{
+				guint32 status;
+
+				status = j_message_get_4(reply);
+				ret = (status == 1) && ret;
+			}
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);

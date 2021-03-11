@@ -45,6 +45,7 @@ test_object_create_delete(void)
 	guint const n = 100;
 
 	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JObject) object_noexist = NULL;
 	gboolean ret;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -64,6 +65,13 @@ test_object_create_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	object_noexist = j_object_new("test", "test-object-noexist");
+	g_assert_true(object_noexist != NULL);
+
+	j_object_delete(object_noexist, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
 }
 
 static void

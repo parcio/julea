@@ -106,17 +106,21 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 			for (i = 0; i < operation_count; i++)
 			{
+				guint32 status = 0;
+
 				path = j_message_get_string(message);
 
 				if (j_backend_object_open(jd_object_backend, namespace, path, &object)
 				    && j_backend_object_delete(jd_object_backend, object))
 				{
+					status = 1;
 					j_statistics_add(statistics, J_STATISTICS_FILES_DELETED, 1);
 				}
 
 				if (reply != NULL)
 				{
-					j_message_add_operation(reply, 0);
+					j_message_add_operation(reply, sizeof(status));
+					j_message_append_4(reply, &status);
 				}
 			}
 
