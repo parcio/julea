@@ -139,8 +139,11 @@ end:
 static void
 backend_file_add(GHashTable* files, JBackendObject* object)
 {
-	g_hash_table_insert(jd_backend_file_cache, object->path, object);
-	g_hash_table_insert(files, object->path, object);
+	if (object != NULL)
+	{
+		g_hash_table_insert(jd_backend_file_cache, object->path, object);
+		g_hash_table_insert(files, object->path, object);
+	}
 
 	G_UNLOCK(jd_backend_file_cache);
 }
@@ -176,6 +179,12 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 	fd = open(full_path, O_RDWR | O_CREAT, 0600);
 
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
+
+	if (fd == -1)
+	{
+		backend_file_add(files, NULL);
+		goto end;
+	}
 
 	bo = g_slice_new(JBackendObject);
 	bo->path = full_path;
@@ -215,6 +224,12 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
 	fd = open(full_path, O_RDWR);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
+
+	if (fd == -1)
+	{
+		backend_file_add(files, NULL);
+		goto end;
+	}
 
 	bo = g_slice_new(JBackendObject);
 	bo->path = full_path;
