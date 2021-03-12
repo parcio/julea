@@ -42,6 +42,10 @@ jobs:
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
           ./scripts/install-dependencies.sh full
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: cpp
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
@@ -56,3 +60,5 @@ jobs:
         run: |
           . scripts/environment.sh
           ninja -C bld install
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v1
