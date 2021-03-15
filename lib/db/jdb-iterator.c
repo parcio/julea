@@ -307,10 +307,10 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
-				/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
+				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
-				}*/
+				}
 				break;
 			}
 		}
