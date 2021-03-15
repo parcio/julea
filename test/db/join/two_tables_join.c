@@ -263,8 +263,8 @@ perform_two_tables_join_with_predicates(void)
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	guint64 val = 3;
-	//JDBType type;
-	//guint64 len;
+	JDBType type;
+	guint64 len;
 
 	schema_ordersTable = j_db_schema_new("namespace", "ordersTable", &error);
 	g_assert_nonnull(schema_ordersTable);
@@ -297,7 +297,7 @@ perform_two_tables_join_with_predicates(void)
 	g_assert_nonnull(iterator);
 	g_assert_no_error(error);
 
-	/*j_db_iterator_next(iterator, NULL);
+	j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
@@ -327,11 +327,11 @@ perform_two_tables_join_with_predicates(void)
 
 		g_assert_cmpstr(firstname, ==, "Thomas");
 		g_assert_cmpstr(lastname, ==, "Jefferson");
-		g_assert_true(*orderid == (guint64)2);
-		g_assert_true(*customerid == (guint64)3);
+		//g_assert_true(*orderid == (guint64)2);
+		//g_assert_true(*customerid == (guint64)3);
 	}
 
-	j_db_iterator_next(iterator, NULL);
+	/*j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
@@ -393,8 +393,8 @@ perform_two_tables_join_without_predicates(void)
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	//JDBType type;
-	//guint64 len;
+	JDBType type;
+	guint64 len;
 
 	schema_ordersTable = j_db_schema_new("namespace", "ordersTable", &error);
 	g_assert_nonnull(schema_ordersTable);
@@ -424,7 +424,7 @@ perform_two_tables_join_without_predicates(void)
 	g_assert_nonnull(iterator);
 	g_assert_no_error(error);
 
-	/*j_db_iterator_next(iterator, NULL);
+	j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
@@ -454,11 +454,11 @@ perform_two_tables_join_without_predicates(void)
 
 		g_assert_cmpstr(firstname, ==, "George");
 		g_assert_cmpstr(lastname, ==, "Washington");
-		g_assert_true(*orderid == (guint64)1);
-		g_assert_true(*customerid == (guint64)1);
+		//g_assert_true(*orderid == (guint64)1);
+		//g_assert_true(*customerid == (guint64)1);
 	}
 
-	j_db_iterator_next(iterator, NULL);
+	/*j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
