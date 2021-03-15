@@ -317,14 +317,14 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 					goto _error;
 				}
 
-				if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
+				/*if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
 				{
 					goto _error;
 				}
 
 				*type = val.val_uint32;
 			
-				/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
+				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
 				}
