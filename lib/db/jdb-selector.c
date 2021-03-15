@@ -114,6 +114,9 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 	JDBType type;
 	JDBTypeValue val;
 
+	GString* table_name = g_string_new(NULL);
+	g_string_append_printf(table_name, "%s_%s", selector->schema->namespace, selector->schema->name);
+
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
@@ -134,9 +137,6 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 	{
 		goto _error;
 	}
-
-	GString* table_name = g_string_new(NULL);
-	g_string_append_printf(table_name, "%s_%s", selector->schema->namespace, selector->schema->name);
 
 	val.val_string = table_name->str;
 
@@ -203,15 +203,21 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 
 	selector->bson_count++;
 
+	g_string_free(table_name, TRUE);
+
 	return TRUE;
 
 _error:
+	g_string_free(table_name, TRUE);
+
 	return FALSE;
 }
 
 void
 j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_selector)
 {
+	gboolean new_schema = true;
+
 	if (selector == sub_selector)
 	{
 		// Ignore and return as same selector is passed as "selector" and "sub_selector" (mistakenly).
@@ -222,7 +228,6 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 	 * If sub_selector belongs to a different schema then it indicates the request contains join operations therefore the details 
 	 * of sub_selector (i.e. secondary schema) should be added to the selector (i.e. primary selector).
 	 */
-	gboolean new_schema = true;
 	for (guint i = 0; i < selector->join_schema_count; i++)
 	{
 		// Check if the schema of sub_selector has already been added to the selector.
@@ -251,7 +256,7 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 	for (guint i = 0; i < sub_selector->join_schema_count; i++)
 	{
 		guint j = 0;
-		gboolean new_schema = true;
+		new_schema = true;
 		for (; j < selector->join_schema_count; j++)
 		{
 			if (selector->join_schema[j] == sub_selector->join_schema[i])
