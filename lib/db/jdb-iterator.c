@@ -385,12 +385,17 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			g_assert_not_reached();
 	}
 	*/
-	g_string_free(key, TRUE);
+	if (key)
+	{
+		g_string_free(key, TRUE);
+	}
 
 	return TRUE;
-
 _error:
-	g_string_free(key, TRUE);
+	if (key)
+	{
+		g_string_free(key, TRUE);
+	}
 
 	return FALSE;
 }

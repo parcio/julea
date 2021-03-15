@@ -1765,7 +1765,6 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 				goto _error;
 			}
 
-
 			child_sql = g_string_new(NULL);
 			if (child_sql->len > 0)
 			{
