@@ -276,6 +276,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 {
 	J_TRACE_FUNCTION(NULL);
 
+	GString* key = g_string_new(NULL);
 	JDBTypeValue val;
 	bson_iter_t iter;
 
@@ -318,7 +319,6 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		goto _error;
 	}
 
-	GString* key = g_string_new(NULL);
 	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
 
 	if (G_UNLIKELY(!j_bson_iter_find(&iter, key->str, error)))
@@ -386,8 +386,12 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			g_assert_not_reached();
 	}
 
+	g_string_free(key, TRUE);
+
 	return TRUE;
 
 _error:
+	g_string_free(key, TRUE);
+
 	return FALSE;
 }
