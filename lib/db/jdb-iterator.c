@@ -292,13 +292,13 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 
 	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
 
-	/*if (g_strcmp0(iterator->schema->namespace, namespace) == 0
+	if (g_strcmp0(iterator->schema->namespace, namespace) == 0
 	    && g_strcmp0(iterator->schema->name, table) == 0)
 	{
-		if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
+		/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 		{
 			goto _error;
-		}
+		}*/
 	}
 	else
 	{
@@ -307,16 +307,16 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
-				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
+				/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
-				}
+				}*/
 				break;
 			}
 		}
 	}
 
-	if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
+	/*if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
 	{
 		goto _error;
 	}
@@ -391,4 +391,11 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	}
 
 	return TRUE;
+/*_error:
+	if (key)
+	{
+		g_string_free(key, TRUE);
+	}
+
+	return FALSE;*/
 }
