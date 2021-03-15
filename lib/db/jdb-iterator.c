@@ -397,5 +397,5 @@ _error:
 		g_string_free(key, TRUE);
 	}
 
-	return TRUE;
+	return FALSE;
 }
