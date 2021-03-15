@@ -73,7 +73,7 @@ main(int argc, char** argv)
 	*/
 	// JOIN queries
 	test_two_tables_join_queries();
-	//test_three_tables_join_queries();
+	test_three_tables_join_queries();
 
 	ret = g_test_run();
 

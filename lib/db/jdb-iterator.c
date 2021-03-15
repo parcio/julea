@@ -290,6 +290,8 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	g_return_val_if_fail(length != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
+
 	if (g_strcmp0(iterator->schema->namespace, namespace) == 0
 	    && g_strcmp0(iterator->schema->name, table) == 0)
 	{
@@ -319,8 +321,6 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		goto _error;
 	}
 
-	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
-
 	if (G_UNLIKELY(!j_bson_iter_find(&iter, key->str, error)))
 	{
 		goto _error;
@@ -331,7 +331,6 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		goto _error;
 	}
 
-	printf("2.....%s\n", key->str);
 	switch (*type)
 	{
 		case J_DB_TYPE_SINT32:
