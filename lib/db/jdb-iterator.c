@@ -317,7 +317,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
 				{
 					g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
-					goto _error;
+					//goto _error;
 				}
 
 				/*if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
