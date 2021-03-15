@@ -279,7 +279,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	GString* key = g_string_new(NULL);
 	//JDBTypeValue val;
 	bson_iter_t iter;
-
+	char* json = NULL;
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->bson_valid, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
@@ -308,11 +308,15 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
 				printf("%s..%s..\n",iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name);
-				g_string_append_printf(key, ".....%s_%s", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name);
+				g_string_append_printf(key, ".....%s_%s.%s", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name, name);
 				if (G_UNLIKELY(!j_bson_iter_init(&iter, &(iterator->selector->join_schema[i]->bson), error)))
 				{
 					goto _error;
 				}
+
+				json = bson_as_json (&(iterator->selector->join_schema[i]->bson), NULL);
+				printf("...%s....\n", json);
+				bson_free( (void*)json);
 
 				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
 				{
