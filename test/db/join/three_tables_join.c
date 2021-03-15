@@ -292,7 +292,7 @@ entry_insert_refTable(guint64 empid, guint64 deptid)
  *
  */
 static void
-perform_two_tables_join_without_predicates(void)
+perform_three_tables_join_without_predicates(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -430,7 +430,7 @@ perform_two_tables_join_without_predicates(void)
  *
  */
 static void
-perform_two_tables_join_with_predicates(void)
+perform_three_tables_join_with_predicates(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -590,7 +590,7 @@ test_three_tables_join_query_1(void)
 	entry_insert_refTable(3, 103);
 	entry_insert_refTable(4, 102);
 
-	perform_two_tables_join_without_predicates();
+	perform_three_tables_join_without_predicates();
 	schema_delete_empTable();
 	schema_delete_deptTable();
 	schema_delete_refTable();
@@ -616,7 +616,7 @@ test_three_tables_join_query_2(void)
 	entry_insert_refTable(3, 103);
 	entry_insert_refTable(4, 102);
 
-	perform_two_tables_join_with_predicates();
+	perform_three_tables_join_with_predicates();
 	schema_delete_empTable();
 	schema_delete_deptTable();
 	schema_delete_refTable();
