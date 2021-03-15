@@ -307,16 +307,13 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
-				printf("%s..%s..\n",iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name);
-				g_string_append_printf(key, ".....%s_%s.%s", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name, name);
 				if (G_UNLIKELY(!j_bson_iter_init(&iter, &(iterator->selector->join_schema[i]->bson), error)))
 				{
 					goto _error;
 				}
 
 				json = bson_as_json (&(iterator->selector->join_schema[i]->bson), NULL);
-				printf("...%s....\n", json);
-				bson_free( (void*)json);
+				g_string_append_printf(key, ".....%s_%s.%s", json);
 
 				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
 				{
@@ -324,6 +321,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 					//goto _error;
 				}
 
+				bson_free( (void*)json);
 				/*if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
 				{
 					goto _error;
