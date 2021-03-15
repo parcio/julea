@@ -51,20 +51,6 @@
  *|      4 |     102 |
  *+--------+---------+
  *
- * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
- * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
- * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
- *
- * Output: 
- *+----------+-----------+
- *| emp_name | dept_name |
- *+----------+-----------+
- *| James    | Sales     |
- *| Jack     | Marketing |
- *| Henry    | Finance   |
- *| Tom      | Marketing |
- *+----------+-----------+
- *
  */
 
 #include <julea-config.h>
@@ -289,8 +275,24 @@ entry_insert_refTable(guint64 empid, guint64 deptid)
 	g_assert_true(success);
 }
 
+/*
+ * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
+ * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
+ * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
+ *
+ * Output: 
+ *+----------+-----------+
+ *| emp_name | dept_name |
+ *+----------+-----------+
+ *| James    | Sales     |
+ *| Jack     | Marketing |
+ *| Henry    | Finance   |
+ *| Tom      | Marketing |
+ *+----------+-----------+
+ *
+ */
 static void
-perform_join_on_table1_table2_table3(void)
+perform_two_tables_join_without_predicates(void)
 {
 	g_autoptr(GError) error = NULL;
 
@@ -411,6 +413,100 @@ perform_join_on_table1_table2_table3(void)
 	}
 }
 
+/*
+ * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
+ * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
+ * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
+ *
+ * Output: 
+ *+----------+-----------+
+ *| emp_name | dept_name |
+ *+----------+-----------+
+ *| James    | Sales     |
+ *| Jack     | Marketing |
+ *| Henry    | Finance   |
+ *| Tom      | Marketing |
+ *+----------+-----------+
+ *
+ */
+static void
+perform_two_tables_join_with_predicates(void)
+{
+	g_autoptr(GError) error = NULL;
+
+	gboolean success = TRUE;
+	g_autoptr(JDBSchema) schema_empTable = NULL;
+	g_autoptr(JDBSchema) schema_deptTable = NULL;
+	g_autoptr(JDBSchema) schema_refTable = NULL;
+	g_autoptr(JDBSelector) selector_empTable = NULL;
+	g_autoptr(JDBSelector) selector_deptTable = NULL;
+	g_autoptr(JDBSelector) selector_refTable = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	guint64 val = 3;
+	JDBType type;
+	guint64 len;
+
+	schema_empTable = j_db_schema_new("namespace", "empTable", &error);
+	g_assert_nonnull(schema_empTable);
+	g_assert_no_error(error);
+	schema_deptTable = j_db_schema_new("namespace", "deptTable", &error);
+	g_assert_nonnull(schema_deptTable);
+	g_assert_no_error(error);
+	schema_refTable = j_db_schema_new("namespace", "refTable", &error);
+	g_assert_nonnull(schema_refTable);
+	g_assert_no_error(error);
+	success = j_db_schema_get(schema_empTable, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_schema_get(schema_deptTable, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_schema_get(schema_refTable, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_batch_execute(batch);
+	g_assert_true(success);
+
+	selector_empTable = j_db_selector_new(schema_empTable, J_DB_SELECTOR_MODE_OR, &error);
+	g_assert_nonnull(selector_empTable);
+	g_assert_no_error(error);
+	success = j_db_selector_add_field(selector_empTable, "empid", J_DB_SELECTOR_OPERATOR_EQ, &val, sizeof(val), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	selector_deptTable = j_db_selector_new(schema_deptTable, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector_deptTable);
+	g_assert_no_error(error);
+	selector_refTable = j_db_selector_new(schema_refTable, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector_refTable);
+	g_assert_no_error(error);
+	j_db_selector_add_selector(selector_refTable, selector_empTable, NULL);
+	j_db_selector_add_selector(selector_refTable, selector_deptTable, NULL);
+	j_db_selector_add_join(selector_refTable, "empid", selector_empTable, "empid", NULL);
+	j_db_selector_add_join(selector_refTable, "deptid", selector_deptTable, "deptid", NULL);
+
+	iterator = j_db_iterator_new(schema_refTable, selector_refTable, &error);
+	g_assert_nonnull(iterator);
+	g_assert_no_error(error);
+
+	j_db_iterator_next(iterator, NULL);
+	{
+		g_autofree gchar* empname = NULL;
+		g_autofree gchar* deptname = NULL;
+
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		g_assert_true(success);
+		g_assert_no_error(error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		g_assert_true(success);
+		g_assert_no_error(error);
+
+		g_assert_cmpstr(empname, ==, "Henry");
+		g_assert_cmpstr(deptname, ==, "Finance");
+	}
+}
+
 static void
 schema_delete_empTable(void)
 {
@@ -494,7 +590,33 @@ test_three_tables_join_query_1(void)
 	entry_insert_refTable(3, 103);
 	entry_insert_refTable(4, 102);
 
-	perform_join_on_table1_table2_table3();
+	perform_two_tables_join_without_predicates();
+	schema_delete_empTable();
+	schema_delete_deptTable();
+	schema_delete_refTable();
+}
+
+static void
+test_three_tables_join_query_2(void)
+{
+	schema_create_empTable();
+	entry_insert_empTable(1, "James", 2000);
+	entry_insert_empTable(2, "Jack", 4000);
+	entry_insert_empTable(3, "Henry", 6000);
+	entry_insert_empTable(4, "Tom", 8000);
+
+	schema_create_deptTable();
+	entry_insert_deptTable(101, "Sales");
+	entry_insert_deptTable(102, "Marketing");
+	entry_insert_deptTable(103, "Finance");
+
+	schema_create_refTable();
+	entry_insert_refTable(1, 101);
+	entry_insert_refTable(2, 102);
+	entry_insert_refTable(3, 103);
+	entry_insert_refTable(4, 102);
+
+	perform_two_tables_join_with_predicates();
 	schema_delete_empTable();
 	schema_delete_deptTable();
 	schema_delete_refTable();
@@ -503,6 +625,7 @@ test_three_tables_join_query_1(void)
 void
 test_three_tables_join_queries(void)
 {
-	// FIXME add more tests
-	g_test_add_func("/db/join/three_tables_join", test_three_tables_join_query_1);
+	// TODO: Both the test cases create and delete tables. More suitable is to add two methods to initialize and delete the shared data (setUp and tearDown).
+	g_test_add_func("/db/join/three_tables_join_1", test_three_tables_join_query_1);
+	g_test_add_func("/db/join/three_tables_join_2", test_three_tables_join_query_2);
 }
