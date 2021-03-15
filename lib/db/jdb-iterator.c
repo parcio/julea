@@ -312,7 +312,8 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 					goto _error;
 				}
 
-				if (G_UNLIKELY(!j_bson_iter_find(&iter, name, error)))
+				if (G_UNLIKELY(!(&iter)))
+				//if (G_UNLIKELY(!j_bson_iter_find(&iter, name, error)))
 				{
 					goto _error;
 				}
