@@ -621,7 +621,7 @@ test_two_tables_join_query_1(void)
 	entry_insert_customersTable(4, "James", "Madison", "jmadison@usa.gov", "11350 Constitution Hwy", "Orange", "VA", 22960);
 	entry_insert_customersTable(5, "James", "Monroe", "jmonroe@usa.gov", "2050 James Monroe Pkwy", "Charlottesville", "VA", 22902);
 
-	perform_two_tables_join_without_predicates();
+	//perform_two_tables_join_without_predicates();
 	schema_delete_ordersTable();
 	schema_delete_customersTable();
 }
@@ -644,7 +644,7 @@ test_two_tables_join_query_2(void)
 	entry_insert_customersTable(4, "James", "Madison", "jmadison@usa.gov", "11350 Constitution Hwy", "Orange", "VA", 22960);
 	entry_insert_customersTable(5, "James", "Monroe", "jmonroe@usa.gov", "2050 James Monroe Pkwy", "Charlottesville", "VA", 22902);
 
-	perform_two_tables_join_with_predicates();
+	//perform_two_tables_join_with_predicates();
 	schema_delete_ordersTable();
 	schema_delete_customersTable();
 }
