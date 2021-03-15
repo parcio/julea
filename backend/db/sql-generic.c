@@ -1679,6 +1679,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 	JDBTypeValue table_name;
 
 	GString* sub_sql = g_string_new(NULL);
+	GString* child_sql = NULL;
 
 	//g_string_append(sql, "( ");
 
@@ -1758,13 +1759,14 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 				goto _error;
 			}
 
-			GString* child_sql = g_string_new(NULL);
 			// Repeat the same routine for this child BSON document (or selector).
 			if (G_UNLIKELY(!build_selector_query_ex(&iterchild, child_sql, mode_child, variables_count, arr_types_in, variables_type, error)))
 			{
 				goto _error;
 			}
 
+
+			child_sql = g_string_new(NULL);
 			if (child_sql->len > 0)
 			{
 				if (sub_sql->len > 0)
@@ -1793,6 +1795,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 			}
 
 			g_string_free(child_sql, TRUE);
+			child_sql = NULL;
 		}
 		else
 		{
@@ -2356,6 +2359,7 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 	JThreadVariables* thread_variables = NULL;
 
 	GString* fieldname = NULL;
+	JDBTypeValue table_name;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -2430,7 +2434,6 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 				goto _error;
 			}
 
-			JDBTypeValue table_name;
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_table", error)))
 			{
 				goto _error;
