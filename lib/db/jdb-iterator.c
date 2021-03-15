@@ -288,7 +288,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	g_return_val_if_fail(type != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(length != NULL, FALSE);
-	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+	//g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
 
