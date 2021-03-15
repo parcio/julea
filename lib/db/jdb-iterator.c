@@ -295,10 +295,10 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	if (g_strcmp0(iterator->schema->namespace, namespace) == 0
 	    && g_strcmp0(iterator->schema->name, table) == 0)
 	{
-		/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
+		if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 		{
 			goto _error;
-		}*/
+		}
 	}
 	else
 	{
@@ -307,10 +307,10 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
-				/*if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
+				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
-				}*/
+				}
 				break;
 			}
 		}
@@ -391,11 +391,11 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	}
 
 	return TRUE;
-/*_error:
+_error:
 	if (key)
 	{
 		g_string_free(key, TRUE);
 	}
 
-	return FALSE;*/
+	return FALSE;
 }
