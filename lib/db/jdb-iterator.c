@@ -278,7 +278,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 
 	GString* key = g_string_new(NULL);
 	//JDBTypeValue val;
-	//bson_iter_t iter;
+	bson_iter_t iter;
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->bson_valid, FALSE);
@@ -307,11 +307,29 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
+				if (G_UNLIKELY(!j_bson_iter_init(&iter, &(iterator->selector->join_schema[i]->bson), error)))
+				{
+					goto _error;
+				}
+
+				/*if (G_UNLIKELY(!j_bson_iter_find(&iter, name, error)))
+				{
+					goto _error;
+				}
+
+				if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
+				{
+					goto _error;
+				}
+
+				*type = val.val_uint32;
+			
 				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
 				}
-				//break;
+				*/
+				break;
 			}
 		}
 	}
