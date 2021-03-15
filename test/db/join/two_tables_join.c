@@ -299,17 +299,17 @@ perform_two_tables_join_with_predicates(void)
 
 	j_db_iterator_next(iterator, NULL);
 	{
-		//g_autofree gchar* orderdate = NULL;
+		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
-		/*g_autofree gchar* firstname = NULL;
+		g_autofree gchar* firstname = NULL;
 		g_autofree gchar* lastname = NULL;
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
-*/
+
 		success = j_db_iterator_get_field_ex(iterator, "namespace", "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		/*success = j_db_iterator_get_field_ex(iterator, "namespace", "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "namespace", "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 		success = j_db_iterator_get_field_ex(iterator, "namespace", "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
@@ -324,14 +324,14 @@ perform_two_tables_join_with_predicates(void)
 		success = j_db_iterator_get_field_ex(iterator, "namespace", "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-*/
-		//g_assert_cmpstr(firstname, ==, "Thomas");
-		//g_assert_cmpstr(lastname, ==, "Jefferson");
-		//g_assert_true(*orderid == (guint64)2);
-		//g_assert_true(*customerid == (guint64)3);
+
+		g_assert_cmpstr(firstname, ==, "Thomas");
+		g_assert_cmpstr(lastname, ==, "Jefferson");
+		g_assert_true(*orderid == (guint64)2);
+		g_assert_true(*customerid == (guint64)3);
 	}
 
-	/*j_db_iterator_next(iterator, NULL);
+	j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
@@ -363,7 +363,7 @@ perform_two_tables_join_with_predicates(void)
 		g_assert_cmpstr(lastname, ==, "Jefferson");
 		g_assert_true(*orderid == (guint64)4);
 		g_assert_true(*customerid == (guint64)3);
-	}*/
+	}
 }
 
 /*
@@ -452,13 +452,13 @@ perform_two_tables_join_without_predicates(void)
 		g_assert_true(success);
 		g_assert_no_error(error);
 
-		//g_assert_cmpstr(firstname, ==, "George");
-		//g_assert_cmpstr(lastname, ==, "Washington");
-		//g_assert_true(*orderid == (guint64)1);
-		//g_assert_true(*customerid == (guint64)1);
+		g_assert_cmpstr(firstname, ==, "George");
+		g_assert_cmpstr(lastname, ==, "Washington");
+		g_assert_true(*orderid == (guint64)1);
+		g_assert_true(*customerid == (guint64)1);
 	}
 
-	/*j_db_iterator_next(iterator, NULL);
+	j_db_iterator_next(iterator, NULL);
 	{
 		g_autofree gchar* orderdate = NULL;
 		g_autofree guint64* orderid = NULL;
@@ -558,7 +558,7 @@ perform_two_tables_join_without_predicates(void)
 		g_assert_cmpstr(lastname, ==, "Jefferson");
 		g_assert_true(*orderid == (guint64)4);
 		g_assert_true(*customerid == (guint64)3);
-	}*/
+	}
 }
 
 static void
