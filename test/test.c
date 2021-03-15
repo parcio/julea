@@ -36,7 +36,8 @@ main(int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-/*	// Core
+	// Core
+	/*
 	test_core_background_operation();
 	test_core_batch();
 	test_core_cache();
@@ -69,7 +70,7 @@ main(int argc, char** argv)
 
 	// HDF5 client
 	test_hdf_hdf();
-*/
+	*/
 	// JOIN queries
 	test_two_tables_join_queries();
 	//test_three_tables_join_queries();

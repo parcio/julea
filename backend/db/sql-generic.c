@@ -3230,7 +3230,7 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 		for (i = 0; i < prepared->variables_count; i++)
 		{
 			string_tmp = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
-
+			printf("1.....%s\n", string_tmp);
 			// The following code snippet extracts the type of the field (column). An extension is made for join operation that is given below.
 			if (prepared->variables_type != NULL)
 			{

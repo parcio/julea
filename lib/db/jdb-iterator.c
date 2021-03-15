@@ -331,6 +331,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		goto _error;
 	}
 
+	printf("2.....%s\n", key->str);
 	switch (*type)
 	{
 		case J_DB_TYPE_SINT32:
