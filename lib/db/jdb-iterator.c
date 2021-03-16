@@ -313,7 +313,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 				}
 
 				json = bson_as_json (&(iterator->selector->join_schema[i]->bson), NULL);
-				g_string_append_printf(key, ".....%s...", json);
+				g_string_append_printf(key, "..%s, %s.-...%s...", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name, json);
 
 				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
 				{
