@@ -384,7 +384,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		default:
 			g_assert_not_reached();
 	}
-	
+
 	if (key)
 	{
 		g_string_free(key, TRUE);

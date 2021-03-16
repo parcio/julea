@@ -331,7 +331,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	JDBTypeValue val;
 	GString* key_name = NULL;
 	GString* key_namespace = NULL;
-	
+
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
@@ -362,7 +362,6 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	// This code snippet iterates through the data structure that maintains information regarding the secondary schemas and pushes their info to BSON objects.
 	for (guint i = 0; i < selector->join_schema_count; i++)
 	{
-
 		key_name = g_string_new(NULL);
 		key_namespace = g_string_new(NULL);
 
@@ -386,9 +385,9 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 
 		g_string_free(key_namespace, TRUE);
 		g_string_free(key_name, TRUE);
-		
+
 		key_namespace = NULL;
-		key_name= NULL;
+		key_name = NULL;
 	}
 
 	// Finalize the BSON array.
@@ -481,4 +480,3 @@ _error:
 
 	return FALSE;
 }
-
