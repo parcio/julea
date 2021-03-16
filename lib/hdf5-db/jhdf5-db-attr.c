@@ -112,6 +112,11 @@ H5VL_julea_db_attr_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
+				if (!j_db_schema_add_field(julea_db_schema_attr, "data", J_DB_TYPE_BLOB, &error))
+				{
+					j_goto_error();
+				}
+
 				{
 					const gchar* index[] = {
 						"file",
@@ -238,10 +243,10 @@ H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
-	g_autofree char* hex_buf = NULL;
 	JHDF5Object_t* object = NULL;
 	JHDF5Object_t* parent = obj;
 	JHDF5Object_t* file;
+	gchar dummy[1];
 
 	(void)loc_params;
 	(void)acpl_id;
@@ -324,6 +329,11 @@ H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 		j_goto_error();
 	}
 
+	if (!j_db_entry_set_field(entry, "data", dummy, 0, &error))
+	{
+		j_goto_error();
+	}
+
 	if (!j_db_entry_insert(entry, batch, &error))
 	{
 		j_goto_error();
@@ -335,28 +345,6 @@ H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 	}
 
 	if (!j_db_entry_get_id(entry, &object->backend_id, &object->backend_id_len, &error))
-	{
-		j_goto_error();
-	}
-
-	if (!(object->attr.distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN)))
-	{
-		j_goto_error();
-	}
-
-	if (!(hex_buf = H5VL_julea_db_buf_to_hex("attr", object->backend_id, object->backend_id_len)))
-	{
-		j_goto_error();
-	}
-
-	if (!(object->attr.object = j_distributed_object_new(JULEA_HDF5_DB_NAMESPACE, hex_buf, object->attr.distribution)))
-	{
-		j_goto_error();
-	}
-
-	j_distributed_object_create(object->attr.object, batch);
-
-	if (!j_batch_execute(batch))
 	{
 		j_goto_error();
 	}
@@ -384,7 +372,6 @@ H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
-	g_autofree char* hex_buf = NULL;
 	g_autofree void* space_id_buf = NULL;
 	g_autofree void* datatype_id_buf = NULL;
 	JHDF5Object_t* object = NULL;
@@ -491,21 +478,6 @@ H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
-	if (!(object->attr.distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN)))
-	{
-		j_goto_error();
-	}
-
-	if (!(hex_buf = H5VL_julea_db_buf_to_hex("attr", object->backend_id, object->backend_id_len)))
-	{
-		j_goto_error();
-	}
-
-	if (!(object->attr.object = j_distributed_object_new(JULEA_HDF5_DB_NAMESPACE, hex_buf, object->attr.distribution)))
-	{
-		j_goto_error();
-	}
-
 	return object;
 
 _error:
@@ -521,10 +493,14 @@ H5VL_julea_db_attr_read(void* obj, hid_t mem_type_id, void* buf, hid_t dxpl_id, 
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(GError) error = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
+	g_autoptr(JDBSelector) selector = NULL;
 	guint64 bytes_read;
 	gsize data_size;
+	g_autofree gpointer tmp = NULL;
 	JHDF5Object_t* object = obj;
+	JDBType type;
 
 	(void)mem_type_id;
 	(void)dxpl_id;
@@ -533,16 +509,39 @@ H5VL_julea_db_attr_read(void* obj, hid_t mem_type_id, void* buf, hid_t dxpl_id, 
 	g_return_val_if_fail(buf != NULL, 1);
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	bytes_read = 0;
 	data_size = object->dataset.datatype->datatype.type_total_size;
 	data_size *= object->attr.space->space.dim_total_count;
-	j_distributed_object_read(object->attr.object, buf, data_size, 0, &bytes_read, batch);
 
-	if (!j_batch_execute(batch))
+	if (!(selector = j_db_selector_new(julea_db_schema_attr, J_DB_SELECTOR_MODE_AND, &error)))
 	{
 		j_goto_error();
 	}
+
+	if (!j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!(iterator = j_db_iterator_new(julea_db_schema_attr, selector, &error)))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_iterator_next(iterator, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_iterator_get_field(iterator, "data", &type, &tmp, &bytes_read, &error))
+	{
+		j_goto_error();
+	}
+
+	g_assert(!j_db_iterator_next(iterator, NULL));
+	g_assert_cmpuint(data_size, ==, bytes_read);
+
+	memcpy(buf, tmp, bytes_read);
 
 	return 0;
 
@@ -555,8 +554,10 @@ H5VL_julea_db_attr_write(void* obj, hid_t mem_type_id, const void* buf, hid_t dx
 {
 	J_TRACE_FUNCTION(NULL);
 
+	g_autoptr(GError) error = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	guint64 bytes_written;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JDBSelector) selector = NULL;
 	gsize data_size;
 	JHDF5Object_t* object = obj;
 
@@ -568,10 +569,48 @@ H5VL_julea_db_attr_write(void* obj, hid_t mem_type_id, const void* buf, hid_t dx
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	bytes_written = 0;
 	data_size = object->dataset.datatype->datatype.type_total_size;
 	data_size *= object->attr.space->space.dim_total_count;
-	j_distributed_object_write(object->attr.object, buf, data_size, 0, &bytes_written, batch);
+
+	if (!(selector = j_db_selector_new(julea_db_schema_attr, J_DB_SELECTOR_MODE_AND, &error)))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!(entry = j_db_entry_new(julea_db_schema_attr, &error)))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_entry_set_field(entry, "file", object->attr.file->backend_id, object->attr.file->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_entry_set_field(entry, "datatype", object->attr.datatype->backend_id, object->attr.datatype->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_entry_set_field(entry, "space", object->attr.space->backend_id, object->attr.space->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_entry_set_field(entry, "data", buf, data_size, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_entry_update(entry, selector, batch, &error))
+	{
+		j_goto_error();
+	}
 
 	if (!j_batch_execute(batch))
 	{
