@@ -41,11 +41,11 @@ j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error)
 		goto _error;
 	}
 
-	/*if (G_UNLIKELY(!iter))
+	if (G_UNLIKELY(!iter))
 	{
 		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_NULL, "bson iter must not be NULL");
 		goto _error;
-	}*/
+	}
 
 	if (G_UNLIKELY(!bson_iter_init(iter, bson)))
 	{

@@ -386,6 +386,9 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 
 		g_string_free(key_namespace, TRUE);
 		g_string_free(key_name, TRUE);
+		
+		key_namespace = NULL;
+		key_name= NULL;
 	}
 
 	// Finalize the BSON array.
@@ -394,22 +397,22 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		goto _error;
 	}
 
-	if (!key_namespace)
+	if (key_namespace)
 	{
 		g_string_free(key_namespace, TRUE);
 	}
-	if (!key_name)
+	if (key_name)
 	{
 		g_string_free(key_name, TRUE);
 	}
 
 	return TRUE;
 _error:
-	if (!key_namespace)
+	if (key_namespace)
 	{
 		g_string_free(key_namespace, TRUE);
 	}
-	if (!key_name)
+	if (key_name)
 	{
 		g_string_free(key_name, TRUE);
 	}
@@ -478,3 +481,4 @@ _error:
 
 	return FALSE;
 }
+

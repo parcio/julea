@@ -277,9 +277,9 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	J_TRACE_FUNCTION(NULL);
 
 	GString* key = g_string_new(NULL);
-	//JDBTypeValue val;
+	JDBTypeValue val;
 	bson_iter_t iter;
-	char* json = NULL;
+
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->bson_valid, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
@@ -307,40 +307,16 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
 			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
-				if (G_UNLIKELY(!j_bson_iter_init(&iter, &(iterator->selector->join_schema[i]->bson), error)))
-				{
-					goto _error;
-				}
-
-				json = bson_as_json (&(iterator->selector->join_schema[i]->bson), NULL);
-				g_string_append_printf(key, "..%s, %s.-...%s...", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name, json);
-
-				//g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
-				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
-				{
-					g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
-					//goto _error;
-				}
-
-				bson_free( (void*)json);
-				/*if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &val, error)))
-				{
-					goto _error;
-				}
-
-				*type = val.val_uint32;
-			
 				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
 					goto _error;
 				}
-				*/
 				break;
 			}
 		}
 	}
 
-	/*if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
 	{
 		goto _error;
 	}
@@ -408,13 +384,14 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		default:
 			g_assert_not_reached();
 	}
-	*/
+	
 	if (key)
 	{
 		g_string_free(key, TRUE);
 	}
 
 	return TRUE;
+
 _error:
 	if (key)
 	{

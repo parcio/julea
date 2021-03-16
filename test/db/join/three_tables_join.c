@@ -629,3 +629,4 @@ test_three_tables_join_queries(void)
 	g_test_add_func("/db/join/three_tables_join_1", test_three_tables_join_query_1);
 	g_test_add_func("/db/join/three_tables_join_2", test_three_tables_join_query_2);
 }
+
