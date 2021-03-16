@@ -315,7 +315,7 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 				json = bson_as_json (&(iterator->selector->join_schema[i]->bson), NULL);
 				g_string_append_printf(key, "..%s, %s.-...%s...", iterator->selector->join_schema[i]->namespace, iterator->selector->join_schema[i]->name, json);
 
-				g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
+				//g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
 				if (G_UNLIKELY(!bson_iter_find(&iter, name)))
 				{
 					g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_KEY_NOT_FOUND, key->str);
