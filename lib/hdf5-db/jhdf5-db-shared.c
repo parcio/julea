@@ -125,6 +125,9 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 				H5VL_julea_db_object_unref(object->dataset.file);
 				g_free(object->dataset.name);
 
+				H5VL_julea_db_object_unref(object->dataset.space);
+				H5VL_julea_db_object_unref(object->dataset.datatype);
+
 				if (object->dataset.distribution)
 				{
 					j_distribution_unref(object->dataset.distribution);
@@ -139,6 +142,9 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 			case J_HDF5_OBJECT_TYPE_ATTR:
 				H5VL_julea_db_object_unref(object->attr.file);
 				g_free(object->attr.name);
+
+				H5VL_julea_db_object_unref(object->attr.space);
+				H5VL_julea_db_object_unref(object->attr.datatype);
 
 				if (object->attr.distribution)
 				{
