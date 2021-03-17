@@ -1859,7 +1859,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 
 			key = g_string_new(NULL);
 			g_string_append_printf(key, "%s.%s", table_name.val_string, string_tmp);
-			
+
 			type = GPOINTER_TO_UINT(g_hash_table_lookup(variables_type, key->str));
 			g_array_append_val(arr_types_in, type);
 
