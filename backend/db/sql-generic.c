@@ -1678,6 +1678,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 	JDBType type;
 	JDBTypeValue table_name;
 
+	GString* key = NULL;
 	GString* sub_sql = g_string_new(NULL);
 
 	//g_string_append(sql, "( ");
@@ -1856,8 +1857,13 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 				goto _error;
 			}
 
-			type = GPOINTER_TO_UINT(g_hash_table_lookup(variables_type, string_tmp));
+			key = g_string_new(NULL);
+			g_string_append_printf(key, "%s.%s", table_name.val_string, string_tmp);
+			
+			type = GPOINTER_TO_UINT(g_hash_table_lookup(variables_type, key->str));
 			g_array_append_val(arr_types_in, type);
+
+			g_string_free(key, TRUE);
 
 			// Fetch operator value that is used as a filter for the current field/column.
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
@@ -2357,6 +2363,8 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 
 	GString* fieldname = NULL;
 
+	JDBTypeValue table_name;
+
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
 		goto _error;
@@ -2430,7 +2438,6 @@ bind_selector_queryex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrep
 				goto _error;
 			}
 
-			JDBTypeValue table_name;
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "_table", error)))
 			{
 				goto _error;
