@@ -353,10 +353,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -369,10 +369,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -385,10 +385,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -401,10 +401,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -495,10 +495,10 @@ perform_three_tables_join_with_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "namespace", "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 

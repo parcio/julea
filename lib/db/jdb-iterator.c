@@ -272,17 +272,17 @@ _error:
 }
 
 gboolean
-j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
+j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	GString* key = g_string_new(NULL);
 	JDBTypeValue val;
 	bson_iter_t iter;
+	gboolean retCode = FALSE;
+	GString* key = g_string_new(NULL);
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->bson_valid, FALSE);
-	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(table != NULL, FALSE);
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(type != NULL, FALSE);
@@ -290,10 +290,11 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	g_return_val_if_fail(length != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	g_string_append_printf(key, "%s_%s.%s", namespace, table, name);
+	// Prepare field name by appending the namespace and table name to it.
+	g_string_append_printf(key, "%s_%s.%s", iterator->schema->namespace, table, name);
 
-	if (g_strcmp0(iterator->schema->namespace, namespace) == 0
-	    && g_strcmp0(iterator->schema->name, table) == 0)
+	// Check if the requested field belongs to primary schema?
+	if (g_strcmp0(iterator->schema->name, table) == 0)
 	{
 		if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 		{
@@ -302,10 +303,10 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 	}
 	else
 	{
+		// The field belongs to a secondary schema. Iterate through them to fetch its table and eventually the datatype.
 		for (guint i = 0; i < iterator->selector->join_schema_count; i++)
 		{
-			if (g_strcmp0(iterator->selector->join_schema[i]->namespace, namespace) == 0
-			    && g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
+			if (g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
 			{
 				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
 				{
@@ -321,11 +322,13 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 		goto _error;
 	}
 
+	// Find the respective BSON item.
 	if (G_UNLIKELY(!j_bson_iter_find(&iter, key->str, error)))
 	{
 		goto _error;
 	}
 
+	// Extrac the value.
 	if (G_UNLIKELY(!j_bson_iter_value(&iter, *type, &val, error)))
 	{
 		goto _error;
@@ -385,18 +388,15 @@ j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* namespace, gchar 
 			g_assert_not_reached();
 	}
 
-	if (key)
-	{
-		g_string_free(key, TRUE);
-	}
+	retCode = TRUE;
 
-	return TRUE;
+	goto _exit;
 
-_error:
-	if (key)
-	{
-		g_string_free(key, TRUE);
-	}
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
 
-	return FALSE;
+_exit: // exit the function by deallocating the memory.
+	g_string_free(key, TRUE);
+
+	return retCode;
 }

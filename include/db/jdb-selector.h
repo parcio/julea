@@ -156,7 +156,6 @@ gboolean j_db_selector_finalize(JDBSelector* selector, GError** error);
  * JDBSelector, along with the instance of JDBSchema that represents the primary schema, maintains a data structure that maintains information regarding
  * the other schemas that are required for a join operation. This method syncs the data structure and moves the missing details from the secondary 
  * selector (i.e. sub_selector) to the primary selector.
- * 
  *
  * \param[in] JDBSelector* selector - primary selector
  * \param[in] JDBSelector* sub_selector - secondary selector

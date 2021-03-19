@@ -224,8 +224,7 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 		return;
 	}
 
-	/*
-	 * If sub_selector belongs to a different schema then it indicates the request contains join operations therefore the details 
+	/* If sub_selector belongs to a different schema then it indicates the request contains join operations therefore the details 
 	 * of sub_selector (i.e. secondary schema) should be added to the selector (i.e. primary selector).
 	 */
 	for (guint i = 0; i < selector->join_schema_count; i++)
@@ -247,11 +246,10 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 		selector->join_schema[selector->join_schema_count - 1] = j_db_schema_ref(sub_selector->schema);
 	}
 
-	/*
-	 * Move secondary schemas from sub_selector to the primary selector. 
-	 * The secondary selector (i.e. sub_selector) might contains schemas' information that would be added to it when it was passed as
+	/* Move secondary schemas' information from sub_selector to the primary selector. 
+	 * The secondary selector (i.e. sub_selector) might contains schemas' information that would had been added to it when it was passed as
 	 * a primary selector. Therefore, the case when the secondary selector further has secondary schemas, the following code snippet 
-	 * moves them to the current primary selector (i.e. selector).
+	 * moves them to the current primary selector (i.e. selector) so that they can further be used in query exuection process.
 	 */
 	for (guint i = 0; i < sub_selector->join_schema_count; i++)
 	{
@@ -290,13 +288,6 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 	g_return_val_if_fail(selector != sub_selector, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	// The secondary selector (i.e. sub_selector) should have objects/instances added to its BSON object.
-	/*if (G_UNLIKELY(!sub_selector->bson_count))
-	{
-		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_EMPTY, "selector must not be emoty");
-		goto _error;
-	}*/
-
 	// Validate the count for BSON objects/instances that they should not exceed the given limit.
 	if (G_UNLIKELY(selector->bson_count + sub_selector->bson_count > 500))
 	{
@@ -332,11 +323,12 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	GString* key_name = NULL;
 	GString* key_namespace = NULL;
 
+	gboolean retCode = FALSE;
+
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	/*
-	 * In the following code snippet the table's information is added as a BSON array. 
+	/* In the following code snippet the tables names are added as BSON array. 
 	 * BSON array has a key named "tables", and the tables' names are added to it as BSON array-items. 
 	 */
 
@@ -383,11 +375,11 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 			goto _error;
 		}
 
-		g_string_free(key_namespace, TRUE);
 		g_string_free(key_name, TRUE);
+		g_string_free(key_namespace, TRUE);
 
-		key_namespace = NULL;
 		key_name = NULL;
+		key_namespace = NULL;
 	}
 
 	// Finalize the BSON array.
@@ -396,6 +388,14 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		goto _error;
 	}
 
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
 	if (key_namespace)
 	{
 		g_string_free(key_namespace, TRUE);
@@ -405,17 +405,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 		g_string_free(key_name, TRUE);
 	}
 
-	return TRUE;
-_error:
-	if (key_namespace)
-	{
-		g_string_free(key_namespace, TRUE);
-	}
-	if (key_name)
-	{
-		g_string_free(key_name, TRUE);
-	}
-	return FALSE;
+	return retCode;
 }
 
 gboolean
@@ -425,6 +415,8 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 
 	bson_t bson;
 	JDBTypeValue val;
+
+	gboolean retCode = FALSE;
 
 	GString* selector_tablename = g_string_new(NULL);
 	GString* sub_selector_tablename = g_string_new(NULL);
@@ -437,17 +429,15 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	/*
-	 * In the following code snippet the join information is added as a BSON document. 
-	 * BSON document has a key named "join", and the fields' names that are involved in join are added as BSON document-items. 
+	/* The following code adds JOIN related information as a BSON document. 
+	 * The BSON document has key named "join" and its items are the fields' names that are involved in the join operation. 
 	 */
-
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, "join", &bson, error)))
 	{
 		goto _error;
 	}
 
-	// Prepare the field name (for selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
+	// Prepare the field name (for selector) by appending namespace and table name to it and then push it to the BSON document.
 	g_string_append_printf(selector_tablename, "%s_%s.%s", selector->schema->namespace, selector->schema->name, selector_field);
 	val.val_string = selector_tablename->str;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "0", J_DB_TYPE_STRING, &val, error)))
@@ -455,7 +445,7 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 		goto _error;
 	}
 
-	// Prepare the field name (for sub_selector) by appending namespace and table name to it and then push it to the BSON document instantiated above.
+	// Prepare the field name (for sub_selector) by appending namespace and table name to it and then push it to the BSON document.
 	g_string_append_printf(sub_selector_tablename, "%s_%s.%s", sub_selector->schema->namespace, sub_selector->schema->name, sub_selector_field);
 	val.val_string = sub_selector_tablename->str;
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "1", J_DB_TYPE_STRING, &val, error)))
@@ -469,14 +459,16 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 		goto _error;
 	}
 
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
 	g_string_free(selector_tablename, TRUE);
 	g_string_free(sub_selector_tablename, TRUE);
 
-	return TRUE;
-
-_error:
-	g_string_free(selector_tablename, TRUE);
-	g_string_free(sub_selector_tablename, TRUE);
-
-	return FALSE;
+	return retCode;
 }
