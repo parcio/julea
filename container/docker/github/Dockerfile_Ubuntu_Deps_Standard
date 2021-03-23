@@ -1,0 +1,10 @@
+FROM ubuntu:20.04
+
+COPY container/docker/github/install-ubuntu-packages.sh .
+RUN ./install-ubuntu-packages.sh && rm install-ubuntu-packages.sh
+
+WORKDIR /julea
+COPY scripts/ ./scripts/ 
+
+SHELL ["/bin/bash", "-c"]
+RUN ./scripts/install-dependencies.sh
