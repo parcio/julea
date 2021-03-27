@@ -35,6 +35,8 @@
 
 #include <hdf5.h>
 
+static gchar const* vol_connector = NULL;
+
 static void
 set_semantics(void)
 {
@@ -42,6 +44,33 @@ set_semantics(void)
 
 	semantics = j_benchmark_get_semantics();
 	j_hdf5_set_semantics(semantics);
+}
+
+static void
+sync_file(gchar const* path)
+{
+	if (g_strcmp0(vol_connector, "native") == 0)
+	{
+		g_autoptr(JSemantics) semantics = NULL;
+
+		semantics = j_benchmark_get_semantics();
+
+		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+		{
+			return;
+		}
+
+		j_helper_file_sync(path);
+	}
+}
+
+static void
+discard_file(gchar const* path)
+{
+	if (g_strcmp0(vol_connector, "native") == 0)
+	{
+		j_helper_file_discard(path);
+	}
 }
 
 static guint
@@ -239,6 +268,8 @@ benchmark_hdf_attribute_write(BenchmarkRun* run)
 	H5Gclose(group);
 	H5Fclose(file);
 
+	sync_file("benchmark-attribute-write.h5");
+
 	j_benchmark_timer_stop(run);
 
 	run->operations = n;
@@ -268,6 +299,8 @@ benchmark_hdf_attribute_read(BenchmarkRun* run)
 			name = g_strdup_printf("benchmark-attribute-read-%u", i + (iter * n));
 			write_attribute(group, name);
 		}
+
+		discard_file("benchmark-attribute-read.h5");
 
 		j_benchmark_timer_start(run);
 
@@ -323,6 +356,8 @@ _benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 
 	H5Fclose(file);
 
+	sync_file("benchmark-dataset-create.h5");
+
 	j_benchmark_timer_stop(run);
 
 	run->operations = n;
@@ -364,6 +399,8 @@ _benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 			dataset = create_dataset(file, name, dimensions);
 			H5Dclose(dataset);
 		}
+
+		discard_file("benchmark-dataset-open.h5");
 
 		j_benchmark_timer_start(run);
 
@@ -433,6 +470,8 @@ _benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 
 	H5Fclose(file);
 
+	sync_file("benchmark-dataset-write.h5");
+
 	j_benchmark_timer_stop(run);
 
 	run->operations = n;
@@ -476,6 +515,8 @@ _benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 			write_dataset(dataset, dimensions);
 			H5Dclose(dataset);
 		}
+
+		discard_file("benchmark-dataset-read.h5");
 
 		j_benchmark_timer_start(run);
 
@@ -536,6 +577,8 @@ benchmark_hdf_file_create(BenchmarkRun* run)
 			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
 
 			H5Fclose(file);
+
+			sync_file(name);
 		}
 
 		iter++;
@@ -565,6 +608,8 @@ benchmark_hdf_file_open(BenchmarkRun* run)
 			name = g_strdup_printf("benchmark-file-open-%u.h5", i + (iter * n));
 			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
 			H5Fclose(file);
+
+			discard_file(name);
 		}
 
 		j_benchmark_timer_start(run);
@@ -619,6 +664,8 @@ benchmark_hdf_group_create(BenchmarkRun* run)
 
 	H5Fclose(file);
 
+	sync_file("benchmark-group-create.h5");
+
 	j_benchmark_timer_stop(run);
 
 	run->operations = n;
@@ -648,6 +695,8 @@ benchmark_hdf_group_open(BenchmarkRun* run)
 			group = create_group(file, name);
 			H5Gclose(group);
 		}
+
+		discard_file("benchmark-group-open.h5");
 
 		j_benchmark_timer_start(run);
 
@@ -679,7 +728,9 @@ benchmark_hdf(void)
 {
 	// FIXME repeated runs exhibit strange behavior, objects are distributed differently etc.
 #ifdef HAVE_HDF5
-	if (g_getenv("HDF5_VOL_CONNECTOR") == NULL)
+	vol_connector = g_getenv("HDF5_VOL_CONNECTOR");
+
+	if (vol_connector == NULL)
 	{
 		// Make sure we do not accidentally run benchmarks for native HDF5
 		// If comparisons with native HDF5 are necessary, set HDF5_VOL_CONNECTOR to "native"

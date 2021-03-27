@@ -36,6 +36,9 @@
 
 #include <hdf5.h>
 
+static gchar const* vol_connector = NULL;
+
+// FIXME redundant (see hdf.c)
 static void
 set_semantics(void)
 {
@@ -43,6 +46,16 @@ set_semantics(void)
 
 	semantics = j_benchmark_get_semantics();
 	j_hdf5_set_semantics(semantics);
+}
+
+// FIXME redundant (see hdf.c)
+static void
+discard_file(gchar const* path)
+{
+	if (g_strcmp0(vol_connector, "native") == 0)
+	{
+		j_helper_file_discard(path);
+	}
 }
 
 static gboolean
@@ -165,6 +178,8 @@ benchmark_hdf_dai_native(BenchmarkRun* run)
 
 			H5Gclose(group);
 			H5Fclose(file);
+
+			discard_file(name);
 		}
 
 		j_benchmark_timer_start(run);
@@ -422,9 +437,9 @@ void
 benchmark_hdf_dai(void)
 {
 #ifdef HAVE_HDF5
-	gchar const* vol_connector;
+	vol_connector = g_getenv("HDF5_VOL_CONNECTOR");
 
-	if ((vol_connector = g_getenv("HDF5_VOL_CONNECTOR")) == NULL)
+	if (vol_connector == NULL)
 	{
 		// Make sure we do not accidentally run benchmarks for native HDF5
 		// If comparisons with native HDF5 are necessary, set HDF5_VOL_CONNECTOR to "native"
