@@ -23,12 +23,15 @@
 #include <julea-config.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <gio/gio.h>
 
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <jhelper.h>
@@ -218,6 +221,47 @@ j_helper_alloc_aligned(gsize align, gsize len)
 	}
 
 	return buf;
+}
+
+gboolean
+j_helper_file_sync(gchar const* path)
+{
+	gint fd;
+
+	if ((fd = g_open(path, O_RDWR)) == -1)
+	{
+		return FALSE;
+	}
+
+	if (g_fsync(fd) == -1)
+	{
+		return FALSE;
+	}
+
+	return g_close(fd, NULL);
+}
+
+gboolean
+j_helper_file_discard(gchar const* path)
+{
+	gint fd;
+
+	if ((fd = g_open(path, O_RDWR)) == -1)
+	{
+		return FALSE;
+	}
+
+	if (g_fsync(fd) == -1)
+	{
+		return FALSE;
+	}
+
+	if (posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED) != 0)
+	{
+		return FALSE;
+	}
+
+	return g_close(fd, NULL);
 }
 
 /**

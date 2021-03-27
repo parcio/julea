@@ -42,6 +42,9 @@ void j_helper_set_nodelay(GSocketConnection*, gboolean);
 gchar* j_helper_str_replace(gchar const*, gchar const*, gchar const*);
 gpointer j_helper_alloc_aligned(gsize, gsize);
 
+gboolean j_helper_file_sync(gchar const*);
+gboolean j_helper_file_discard(gchar const*);
+
 G_END_DECLS
 
 #endif
