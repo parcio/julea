@@ -233,7 +233,8 @@ j_helper_file_sync(gchar const* path)
 		return FALSE;
 	}
 
-	if (g_fsync(fd) == -1)
+	// FIXME use g_fsync once we require GLib 2.64
+	if (fsync(fd) == -1)
 	{
 		return FALSE;
 	}
@@ -251,7 +252,8 @@ j_helper_file_discard(gchar const* path)
 		return FALSE;
 	}
 
-	if (g_fsync(fd) == -1)
+	// FIXME use g_fsync once we require GLib 2.64
+	if (fsync(fd) == -1)
 	{
 		return FALSE;
 	}
