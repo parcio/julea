@@ -127,7 +127,7 @@ j_db_schema_add_field(JDBSchema* schema, gchar const* name, JDBType type, GError
 
 	if (!schema->bson_initialized) // #CHANGE Check is not required.
 	{
-		if (G_UNLIKELY(!j_bson_init(&schema->bson, error)))	// #CHANGE Already has been initialized in the constructor method.
+		if (G_UNLIKELY(!j_bson_init(&schema->bson, error))) // #CHANGE Already has been initialized in the constructor method.
 		{
 			goto _error;
 		}
@@ -298,7 +298,7 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 
 	index.variables = NULL;
 
-	// Indices are maintained as child BSON documents. Instantiating the parent BSON object. 
+	// Indices are maintained as child BSON documents. Instantiating the parent BSON object.
 	if (!schema->bson_index_initialized)
 	{
 		if (G_UNLIKELY(!j_bson_init(&schema->bson_index, error)))
@@ -333,12 +333,13 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 _not_equal:
 	i++;
 
-	// Following code checks if there already exists an Index that covers the new (provided) Index.
-	// It iterates through the existing Index(s) - uses goto statement "_not_equal" followed by "i++" that acts as a loop. 
-	// #CHANGE# Cannot I use for/while loop?
+	/* Following code checks if there already exists an Index that covers the new (provided) Index.
+	 * It iterates through the existing Index(s) - uses goto statement "_not_equal" followed by "i++" that acts as a loop.
+	 * #CHANGE# Cannot I use for/while loop?
+	 */
 	if (i <= schema->index->len)
 	{
-		// Extract the last Index item in the array. 
+		// Extract the last Index item in the array.
 		index_tmp = &g_array_index(schema->index, JDBSchemaIndex, i - 1);
 
 		// If the columns are different then it reflects that both the Indices are different, no need to proceed.
@@ -412,8 +413,9 @@ _not_equal:
 	return TRUE;
 
 _error:
-	// #CHANGE# Potential memory leak is not addressed here. While creating and populating a child BSON document 
-	// for new provided Index if some error occurs then there is no code to release its memory (for variable 'bson').
+	/* #CHANGE# Potential memory leak is not addressed here. While creating and populating a child BSON document 
+	 * for new provided Index if some error occurs then there is no code to release its memory (for variable 'bson').
+	 */
 
 	if (index.variables)
 	{
@@ -522,13 +524,14 @@ j_db_schema_equals(JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GErr
 
 	*equal = TRUE;
 
-	// #CHANGE Shouldn't it return instantly where the values are different?
-	// BSON documents contain the same data as their respective data-structures. 
-	// E.g. schema->variables contains same details as schema->bson so why not just compare the data structures? 
+	/* #CHANGE Shouldn't it return instantly where the values are different?
+	 * BSON documents contain the same data as their respective data-structures.
+	 * E.g. schema->variables contains same details as schema->bson so why not just compare the data structures?
+	 */
 
 	if (schema1 != schema2)
 	{
-		*equal = *equal && !g_strcmp0(schema1->namespace, schema2->namespace); 
+		*equal = *equal && !g_strcmp0(schema1->namespace, schema2->namespace);
 		*equal = *equal && !g_strcmp0(schema1->name, schema2->name);
 		*equal = *equal && (schema1->bson_initialized == schema2->bson_initialized);
 

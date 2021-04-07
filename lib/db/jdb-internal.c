@@ -86,7 +86,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		}
 		else
 		{
-			// 'batch' being NULL reflects the start of the execution. Mark a checkpoint for safe rollback (from SQL perspective). 
+			// 'batch' being NULL reflects the start of the execution. Mark a checkpoint for safe rollback (from SQL perspective).
 			if (!batch)
 			{
 				ret = j_backend_db_batch_start(db_backend, data->in_param[0].ptr, semantics, &batch, &error) && ret;
@@ -200,7 +200,7 @@ j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_create_exec; // Function (pointer) to call to process the data (or request).
-	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory.
 
 	j_batch_add(batch, op); // Execute the request.
 
@@ -240,7 +240,7 @@ j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_get_exec; // Function (pointer) to call to process the data (or request).
-	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory.
 
 	j_batch_add(batch, op); // Execute the request.
 
@@ -279,7 +279,7 @@ j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	op->key = j_db_schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_schema_delete_exec; // Function (pointer) to call to process the data (or request).
-	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory.
 
 	j_batch_add(batch, op); // Execute the request.
 
@@ -320,7 +320,7 @@ j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 	op->key = j_db_entry->schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_insert_exec; // Function (pointer) to call to process the data (or request).
-	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory.
 
 	j_batch_add(batch, op);
 
@@ -363,7 +363,7 @@ j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 	op->key = j_db_entry->schema->namespace;
 	op->data = data;
 	op->exec_func = j_db_update_exec; // Function (pointer) to call to process the data (or request).
-	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory.
 
 	j_batch_add(batch, op);
 

@@ -93,7 +93,7 @@ j_db_entry_unref(JDBEntry* entry)
 	if (g_atomic_int_dec_and_test(&entry->ref_count))
 	{
 		j_db_schema_unref(entry->schema);
-		j_bson_destroy(&entry->bson); // Potential bug. #CHANGE# 'bson' is instantiated before incrementing ref_count. 
+		j_bson_destroy(&entry->bson); // Potential bug. #CHANGE# 'bson' is instantiated before incrementing ref_count.
 		j_bson_destroy(&entry->id);
 		g_free(entry);
 	}

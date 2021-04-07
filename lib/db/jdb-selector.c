@@ -181,7 +181,7 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 	 * The above BSON has two child BSON documents having keys "0" and "1".
 	 * And, the code in this method targets the formation of (child) BSON document for fields.
 	 */
-	bson_t bson; 
+	bson_t bson;
 
 	char buf[20];
 	JDBType type;
@@ -366,7 +366,7 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 {
 	J_TRACE_FUNCTION(NULL);
 
-	char buf[20];	// TODO: instead use sizeof(guint)
+	char buf[20]; // TODO: instead use sizeof(guint)
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
