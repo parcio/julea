@@ -51,8 +51,8 @@ j_db_schema_new(gchar const* namespace, gchar const* name, GError** error)
 	schema->name = g_strdup(name);
 	schema->variables = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	schema->index = g_array_new(FALSE, FALSE, sizeof(JDBSchemaIndex));
-	schema->bson_initialized = FALSE;
-	schema->bson_index_initialized = FALSE;
+	schema->bson_initialized = TRUE; // Should be TRUE as BSON is already initialized at the end of this function. #CHANGE# Also, do we really need this variable?
+	schema->bson_index_initialized = FALSE; // #CHANGE# cannot directly check the object to see if it's initialized or not?
 	schema->ref_count = 1;
 	schema->server_side = FALSE;
 	// FIXME since schema->bson is used as the out_param in j_db_internal_schema_get, the schema passed to the backend's schema_get is initialized if and only if the backend runs on the client
@@ -89,6 +89,7 @@ j_db_schema_unref(JDBSchema* schema)
 		g_free(schema->name);
 		g_hash_table_unref(schema->variables);
 
+		// Relase the memory instantiated for Indices.
 		for (i = 0; i < schema->index->len; i++)
 		{
 			index = &g_array_index(schema->index, JDBSchemaIndex, i);
@@ -97,7 +98,7 @@ j_db_schema_unref(JDBSchema* schema)
 
 		g_array_unref(schema->index);
 
-		if (schema->bson_initialized)
+		if (schema->bson_initialized) //#CHANGE Check is not required.
 		{
 			bson_destroy(&schema->bson);
 		}
@@ -124,32 +125,35 @@ j_db_schema_add_field(JDBSchema* schema, gchar const* name, JDBType type, GError
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (!schema->bson_initialized)
+	if (!schema->bson_initialized) // #CHANGE Check is not required.
 	{
-		if (G_UNLIKELY(!j_bson_init(&schema->bson, error)))
+		if (G_UNLIKELY(!j_bson_init(&schema->bson, error)))	// #CHANGE Already has been initialized in the constructor method.
 		{
 			goto _error;
 		}
-		schema->bson_initialized = TRUE;
+		schema->bson_initialized = TRUE; // #CHANGE Not required.
 	}
 
+	// Each field is an element in the BSON document. Getting the iterator to add the new field.
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema->bson, error)))
 	{
 		goto _error;
 	}
 
+	// Check if field already exists!
 	if (G_UNLIKELY(!j_bson_iter_not_find(&iter, name, error)))
 	{
 		goto _error;
 	}
 
+	// Add field to the BSON document.
 	val.val_uint32 = type;
-
 	if (G_UNLIKELY(!j_bson_append_value(&schema->bson, name, J_DB_TYPE_UINT32, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Add field to hash-map.
 	g_hash_table_insert(schema->variables, g_strdup(name), GINT_TO_POINTER(type));
 
 	return TRUE;
@@ -199,6 +203,7 @@ _error:
 guint32
 j_db_schema_get_all_fields(JDBSchema* schema, gchar*** names, JDBType** types, GError** error)
 {
+	// #CHANGE ghar*** - Why triple pointer?
 	J_TRACE_FUNCTION(NULL);
 
 	bson_iter_t iter;
@@ -293,6 +298,7 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 
 	index.variables = NULL;
 
+	// Indices are maintained as child BSON documents. Instantiating the parent BSON object. 
 	if (!schema->bson_index_initialized)
 	{
 		if (G_UNLIKELY(!j_bson_init(&schema->bson_index, error)))
@@ -302,6 +308,7 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 		schema->bson_index_initialized = TRUE;
 	}
 
+	// Instantiating a hash-map that would contain the provided Index details.
 	i = 0;
 	index.variable_count = 0;
 	name = names;
@@ -318,7 +325,7 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 		index.variable_count++;
 		g_hash_table_add(index.variables, g_strdup(*name));
 		name++;
-		i++;
+		i++; // #CHANGE# Could not find its purpose.
 	}
 
 	i = 0;
@@ -326,10 +333,15 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 _not_equal:
 	i++;
 
+	// Following code checks if there already exists an Index that convers the new (provided) Index.
+	// It iterates through the existing Index(s) - uses goto statement "_not_equal" followed by "i++" that acts as a loop. 
+	// #CHANGE# Cannot I use for/while loop?
 	if (i <= schema->index->len)
 	{
+		// Extract the last Index item in the array. 
 		index_tmp = &g_array_index(schema->index, JDBSchemaIndex, i - 1);
 
+		// If the columns are different then it reflects that both the Indices are different, no need to proceed.
 		if (index.variable_count != index_tmp->variable_count)
 		{
 			goto _not_equal;
@@ -337,6 +349,7 @@ _not_equal:
 
 		name = names;
 
+		// Iterate through the requested Index and look for it names in the ones that already is cached.
 		while (*name)
 		{
 			if (!g_hash_table_contains(index_tmp->variables, *name))
@@ -351,11 +364,16 @@ _not_equal:
 		goto _error;
 	}
 
+	// The provided Index does not exist in the cache.
+	// The following code pushes it to the cache.
+
+	// Generate a key for the new provided Index.
 	if (G_UNLIKELY(!j_bson_array_generate_key(schema->index->len, &key, buf, sizeof(buf), error)))
 	{
 		goto _error;
 	}
 
+	// The BSON document for Indices stores each index as a child BSON document. Initializing one for the new Index.
 	if (G_UNLIKELY(!j_bson_append_array_begin(&schema->bson_index, key, &bson, error)))
 	{
 		goto _error;
@@ -363,6 +381,7 @@ _not_equal:
 
 	name = names;
 
+	// Iterate through the Index values and push them to child BSON document (instantiated above).
 	while (*name)
 	{
 		if (G_UNLIKELY(!j_bson_array_generate_key(i, &key, buf, sizeof(buf), error)))
@@ -381,16 +400,21 @@ _not_equal:
 		i++;
 	}
 
+	// Finalize child BSON document.
 	if (G_UNLIKELY(!j_bson_append_array_end(&schema->bson_index, &bson, error)))
 	{
 		goto _error;
 	}
 
+	// Finally, along with BSON document, add Index details to the array that contains all the Indices details.
 	g_array_append_val(schema->index, index);
 
 	return TRUE;
 
 _error:
+	// #CHANGE# Potential memory leak is not addressed here. While creating and populating a child BSON document 
+	// for new provided Index if some error occurs then there is no code to release its memory (for variable 'bson').
+
 	if (index.variables)
 	{
 		g_hash_table_unref(index.variables);
@@ -410,6 +434,7 @@ j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error)
 	g_return_val_if_fail(schema->bson_initialized, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// #CHANGE# What if after appending the BSON document for "_index" the function fails to add the Schema to DB and returns FALSE?
 	if (schema->bson_index_initialized)
 	{
 		if (G_UNLIKELY(!j_bson_append_array(&schema->bson, "_index", &schema->bson_index, error)))
@@ -418,7 +443,7 @@ j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error)
 		}
 	}
 
-	schema->server_side = TRUE;
+	schema->server_side = TRUE; // #CHANGE# Should not it be set to TRUE when (and only) the DB call is successful?.
 
 	if (G_UNLIKELY(!j_db_internal_schema_create(schema, batch, error)))
 	{
@@ -439,7 +464,7 @@ j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error)
 	g_return_val_if_fail(schema != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
-	g_return_val_if_fail(!schema->bson_initialized, FALSE);
+	g_return_val_if_fail(schema->bson_initialized, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	schema->server_side = TRUE;
@@ -497,9 +522,13 @@ j_db_schema_equals(JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GErr
 
 	*equal = TRUE;
 
+	// #CHANGE Shouldn't it return instantly where the values are different?
+	// BSON documents contain the same data as their respective data-structures. 
+	// E.g. schema->variables contains same details as schema->bson so why not just compare the data structures? 
+
 	if (schema1 != schema2)
 	{
-		*equal = *equal && !g_strcmp0(schema1->namespace, schema2->namespace);
+		*equal = *equal && !g_strcmp0(schema1->namespace, schema2->namespace); 
 		*equal = *equal && !g_strcmp0(schema1->name, schema2->name);
 		*equal = *equal && (schema1->bson_initialized == schema2->bson_initialized);
 

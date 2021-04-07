@@ -78,30 +78,38 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 	{
 		data = j_list_iterator_get(iter_send);
 
+		// Check if database instance (for Client) is initialized.
 		if (db_backend == NULL)
 		{
+			// Prepare message for Server. #CHANGE return code is not addressed in the respective code section.
 			ret = j_backend_operation_to_message(message, data->in_param, data->in_param_count) && ret;
 		}
 		else
 		{
+			// 'batch' being NULL relects the start of the execution. Mark a checkpoint for safe rollback (from SQL perspective). 
 			if (!batch)
 			{
 				ret = j_backend_db_batch_start(db_backend, data->in_param[0].ptr, semantics, &batch, &error) && ret;
+				// #CHANGE# Should not the control return if the operation is unsuccessful?
+				// Also it is a buggy code, it would keep calling again and again unless batch is NULL and all the data items are exhausted.
 			}
 
-			if (data->out_param[data->out_param_count - 1].ptr && error)
+			if (data->out_param[data->out_param_count - 1].ptr && error) // ?
 			{
-				*((void**)data->out_param[data->out_param_count - 1].ptr) = g_error_copy(error);
+				*((void**)data->out_param[data->out_param_count - 1].ptr) = g_error_copy(error); // ?
 			}
 			else
 			{
+				// Call the function pointer that is set while initializing the request.
 				ret = data->backend_func(db_backend, batch, data) && ret;
+				// #CHANGE# Should not the control return if the operation is unsuccessful (assuming batch reflects a logical transaction)?
 			}
 		}
 	}
 
 	if (db_backend == NULL)
 	{
+		// #CHANGE I doubt if this code can handle long messages!. It would entertain the max size allowed by the API.
 		db_connection = j_connection_pool_pop(J_BACKEND_TYPE_DB, 0);
 		j_message_send(message, db_connection);
 		reply = j_message_new_reply(message);
@@ -122,6 +130,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		{
 			if (!error)
 			{
+				// Finalize transaction. (E.g. commit in SQL)
 				ret = j_backend_db_batch_execute(db_backend, batch, NULL) && ret;
 			}
 			else
@@ -130,6 +139,9 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 			}
 		}
 	}
+
+	// #CHANGE although j_backend_db_batch_execute frees 'batch', there are a few checks that may cause memory leak
+	// as control returns if they are unsuccessful.
 
 	return ret;
 }
@@ -175,22 +187,22 @@ j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_create, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = j_db_schema->namespace;
-	data->in_param[1].ptr_const = j_db_schema->name;
-	data->in_param[2].ptr_const = &j_db_schema->bson;
+	data->in_param[0].ptr_const = j_db_schema->namespace; // Namespace of the table.
+	data->in_param[1].ptr_const = j_db_schema->name; // Name of the table.
+	data->in_param[2].ptr_const = &j_db_schema->bson; // BSON object that has the schema details.
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
-	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref; // Function pointer that has to be called to free the memory.
+	data->unref_values[0] = j_db_schema_ref(j_db_schema); // Object or memory that has to be released.
 
 	op = j_operation_new();
 	op->key = j_db_schema->namespace;
 	op->data = data;
-	op->exec_func = j_db_schema_create_exec;
-	op->free_func = j_backend_db_func_free;
+	op->exec_func = j_db_schema_create_exec; // Function (pointer) to call to process the data (or request).
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
 
-	j_batch_add(batch, op);
+	j_batch_add(batch, op); // Execute the request.
 
 	return TRUE;
 }
@@ -215,22 +227,22 @@ j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = j_db_schema->namespace;
-	data->in_param[1].ptr_const = j_db_schema->name;
-	data->out_param[0].ptr_const = &j_db_schema->bson;
+	data->in_param[0].ptr_const = j_db_schema->namespace; // Namespace of the table.
+	data->in_param[1].ptr_const = j_db_schema->name; // Name of the table.
+	data->out_param[0].ptr_const = &j_db_schema->bson; // BSON object that would be filled with the schema details.
 	data->out_param[1].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
-	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref; // Function pointer that has to be called to free the memory.
+	data->unref_values[0] = j_db_schema_ref(j_db_schema); // Object or memory that has to be released.
 
 	op = j_operation_new();
 	op->key = j_db_schema->namespace;
 	op->data = data;
-	op->exec_func = j_db_schema_get_exec;
-	op->free_func = j_backend_db_func_free;
+	op->exec_func = j_db_schema_get_exec; // Function (pointer) to call to process the data (or request).
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
 
-	j_batch_add(batch, op);
+	j_batch_add(batch, op); // Execute the request.
 
 	return TRUE;
 }
@@ -255,21 +267,21 @@ j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_delete, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = j_db_schema->namespace;
-	data->in_param[1].ptr_const = j_db_schema->name;
+	data->in_param[0].ptr_const = j_db_schema->namespace; // Namespace of the table.
+	data->in_param[1].ptr_const = j_db_schema->name; // Name of the table.
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
-	data->unref_values[0] = j_db_schema_ref(j_db_schema);
+	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref; // Function pointer that has to be called to free the memory.
+	data->unref_values[0] = j_db_schema_ref(j_db_schema); // Object or memory that has to be released.
 
 	op = j_operation_new();
 	op->key = j_db_schema->namespace;
 	op->data = data;
-	op->exec_func = j_db_schema_delete_exec;
-	op->free_func = j_backend_db_func_free;
+	op->exec_func = j_db_schema_delete_exec; // Function (pointer) to call to process the data (or request).
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
 
-	j_batch_add(batch, op);
+	j_batch_add(batch, op); // Execute the request.
 
 	return TRUE;
 }
@@ -294,21 +306,21 @@ j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_insert, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = j_db_entry->schema->namespace;
-	data->in_param[1].ptr_const = j_db_entry->schema->name;
-	data->in_param[2].ptr_const = &j_db_entry->bson;
+	data->in_param[0].ptr_const = j_db_entry->schema->namespace; // Namespace of the table.
+	data->in_param[1].ptr_const = j_db_entry->schema->name; // Name of the table.
+	data->in_param[2].ptr_const = &j_db_entry->bson; // BSON object that contains the entry.
 	data->out_param[0].ptr_const = &j_db_entry->id;
 	data->out_param[1].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref;
-	data->unref_values[0] = j_db_entry_ref(j_db_entry);
+	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref; // Function pointer that has to be called to free the memory.
+	data->unref_values[0] = j_db_entry_ref(j_db_entry); // Object or memory that has to be released.
 
 	op = j_operation_new();
 	op->key = j_db_entry->schema->namespace;
 	op->data = data;
-	op->exec_func = j_db_insert_exec;
-	op->free_func = j_backend_db_func_free;
+	op->exec_func = j_db_insert_exec; // Function (pointer) to call to process the data (or request).
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
 
 	j_batch_add(batch, op);
 
@@ -335,23 +347,23 @@ j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_update, sizeof(JBackendOperation));
-	data->in_param[0].ptr_const = j_db_entry->schema->namespace;
-	data->in_param[1].ptr_const = j_db_entry->schema->name;
+	data->in_param[0].ptr_const = j_db_entry->schema->namespace; // Namespace of the table.
+	data->in_param[1].ptr_const = j_db_entry->schema->name; // Name of the table.
 	data->in_param[2].ptr_const = j_db_selector_get_bson(j_db_selector);
 	data->in_param[3].ptr_const = &j_db_entry->bson;
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 2;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref;
-	data->unref_funcs[1] = (GDestroyNotify)j_db_selector_unref;
-	data->unref_values[0] = j_db_entry_ref(j_db_entry);
-	data->unref_values[1] = j_db_selector_ref(j_db_selector);
+	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref; // Function pointer that has to be called to free the memory.
+	data->unref_funcs[1] = (GDestroyNotify)j_db_selector_unref; // Function pointer that has to be called to free the memory.
+	data->unref_values[0] = j_db_entry_ref(j_db_entry); // Object or memory that has to be released.
+	data->unref_values[1] = j_db_selector_ref(j_db_selector); // Object or memory that has to be released.
 
 	op = j_operation_new();
 	op->key = j_db_entry->schema->namespace;
 	op->data = data;
-	op->exec_func = j_db_update_exec;
-	op->free_func = j_backend_db_func_free;
+	op->exec_func = j_db_update_exec; // Function (pointer) to call to process the data (or request).
+	op->free_func = j_backend_db_func_free; // Function (pointer) to unallocate the memory. 
 
 	j_batch_add(batch, op);
 
@@ -462,6 +474,9 @@ j_db_internal_iterate(JDBIterator* j_db_iterator, GError** error)
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// #CHANGE# TODO: Could not absrob why 'helper' is first set to ZERO then initialized it with its own ZER0-mapped memory?
+	// Whereas it should directly point to the 'bson' of the provided iterator that is done at the end!
+
 	memset(&zerobson, 0, sizeof(bson_t));
 
 	if (!helper->initialized)
@@ -513,7 +528,7 @@ j_db_selector_get_bson(JDBSelector* selector)
 	J_TRACE_FUNCTION(NULL);
 
 	/*
-	 * Checks if the selector is not NULL. Relaxing the other condition as selector can have no BSON document (or condition attached to it).
+	 * Check if the selector is not NULL. Relaxing the other condition as selector can have no BSON document (or condition attached to it).
 	 * E.g. Select * from TableA - in this query there is no condition part. 
 	 */
 	if (selector /*&& selector->bson_count > 0*/)

@@ -200,6 +200,7 @@ backend_delete(gpointer backend_data, gpointer batch, gchar const* name, bson_t 
 static gboolean
 backend_query(gpointer backend_data, gpointer batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
+	printf("---------------------------------\n");
 	JMemoryData* bd = backend_data;
 	guint32* counter;
 

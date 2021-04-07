@@ -33,6 +33,56 @@
 #include <julea-db.h>
 #include "../../backend/db/jbson.c"
 
+/* This file focuses on the formation of BSON document that contains query details.
+ *
+ * E.g.: 
+ * SELECT nampespace_table1.field1, namespace_table1.field2, namespace_table2.field3, namespace_table2.field4
+ * FROM namespace_table1, namespace_table2
+ * WHERE nampespace_table1.field1 = namespace_table2.field3 AND namespace_table1.field2 = namespace_table2.field4
+ *		AND ( nampespace_table1.field1 > 1.0 AND nampespace_table1.field2 = 'sometext')
+ *		OR ( nampespace_table2.field3 < 1.0 AND nampespace_table2.field4 <> 'sometext');
+ *
+ * {	"_mode"	:	"AND",
+ *		"0"		:	{	"_table"	:	"nampespace_table1",
+ *						"_name"		:	"field1",
+ *						"_value"	:	"1.0",
+ *						"_operator"	:	">"
+ *					},
+ *		"1"		:	{	"_table"	:	"nampespace_table1",
+ *						"_name"		:	"field2",
+ *						"_value"	:	"=",
+ *						"_operator"	:	"sometext"
+ *					},
+ *		"2"		:	{	"_mode"	:	"OR",
+ *						"0"		:	{	"_table"	:	"nampespace_table2",
+ *										"_name"		:	"field3",
+ *										"_value"	:	"1.0",
+ *										"_operator"	:	"<"
+ *									},
+ *						"1"		:	{	"_table"	:	"nampespace_table2",
+ *										"_name"		:	"field4",
+ *										"_value"	:	"<>",
+ *										"_operator"	:	"sometext"
+ *									},
+ *					},
+ *		"join"	:	{	"0"			:	"namespace_table1.field1",
+ * 						"1"			:	"namespace_table2.field3",
+ *					},
+ *		"join"	:	{	"0"			:	"namespace_table1.field2",
+ * 						"1"			:	"namespace_table2.field4",
+ *					},
+ *		"tables":	{	"namespace0":	"namespace",
+ *						"name0		:	"table1",
+ *						"namespace1":	"namespace",
+ *						"name1"		:	"table2" 
+ *					},
+ * }
+ *
+ * (Note: Above representation follows JSON, however in actual it is BSON.)
+ * The formation of the BSON document is done in different fuctions and for convenience their BSON part is mentioned
+ * in their repsective functions below.
+ */
+
 JDBSelector*
 j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 {
@@ -42,6 +92,7 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	JDBSelector* selector = NULL;
 
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail(schema != NULL, NULL);
 
 	selector = j_helper_alloc_aligned(128, sizeof(JDBSelector));
 	selector->ref_count = 1;
@@ -49,16 +100,13 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	selector->bson_count = 0;
 	selector->join_schema = NULL;
 	selector->join_schema_count = 0;
-	bson_init(&selector->bson);
 	selector->schema = j_db_schema_ref(schema);
 
-	if (G_UNLIKELY(!selector->schema))
-	{
-		goto _error;
-	}
+	bson_init(&selector->bson);
 
 	val.val_uint32 = mode;
 
+	// First element of BSON document for selector.
 	if (G_UNLIKELY(!j_bson_append_value(&selector->bson, "_mode", J_DB_TYPE_UINT32, &val, error)))
 	{
 		goto _error;
@@ -92,14 +140,18 @@ j_db_selector_unref(JDBSelector* selector)
 
 	if (g_atomic_int_dec_and_test(&selector->ref_count))
 	{
+		// Free data structure that holds Schemas to perform JOIN operation.
 		for (guint i = 0; i < selector->join_schema_count; i++)
 		{
 			j_db_schema_unref(selector->join_schema[i]);
 		}
 		g_free(selector->join_schema);
 
+		// Free primary Schema.
 		j_db_schema_unref(selector->schema);
+		// BSON document.
 		bson_destroy(&selector->bson);
+		// Free Selector.
 		g_free(selector);
 	}
 }
@@ -109,51 +161,79 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 {
 	J_TRACE_FUNCTION(NULL);
 
+	/* The requested field in the signature is added as a (child) BSON document. 
+	 *
+	 * E.g.: There is a Selector with mode "AND" and it has two fields with predicates as "table1.field1 > 1.0" and "table1.field2 = 'text'"
+	 * (Note: Following representation follows JSON, however in actual it is BSON.)
+	 * {	"_mode"	:	"AND",
+	 *		"0"		:	{	"_table"	:	"table1",
+	 *						"_name"		:	"field1",
+	 *						"_value"	:	"1.0",
+	 *						"_operator"	:	">"
+	 *					},
+	 *		"1"		:	{	"_table"	:	"table1",
+	 *						"_name"		:	"field2",
+	 *						"_value"	:	"=",
+	 *						"_operator"	:	"text"
+	 *					},
+	 * }
+	 *
+	 * The above BSON has two child BSON documents having keys "0" and "1".
+	 * And, the code in this method targets the formation of (child) BSON document for fields.
+	 */
+	bson_t bson; 
+
 	char buf[20];
-	bson_t bson;
 	JDBType type;
 	JDBTypeValue val;
-
-	GString* table_name = g_string_new(NULL);
-	g_string_append_printf(table_name, "%s_%s", selector->schema->namespace, selector->schema->name);
+	gboolean retCode = FALSE;
+	GString* table_name = NULL;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// Current implemntation does not allow more than 500 BSON document elements.
 	if (G_UNLIKELY(selector->bson_count + 1 > 500))
 	{
 		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_TOO_COMPLEX, "selector too complex");
 		goto _error;
 	}
 
+	// Extract the type of the requested field.
 	if (G_UNLIKELY(!j_db_schema_get_field(selector->schema, name, &type, error)))
 	{
 		goto _error;
 	}
 
+	// Prepare tablename.
+	table_name = g_string_new(NULL);
+	g_string_append_printf(table_name, "%s_%s", selector->schema->namespace, selector->schema->name);
+
+	// Key for the next BSON document element.
 	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
 
+	// Initialize BSON document for the field.
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, buf, &bson, error)))
 	{
 		goto _error;
 	}
 
+	// Add tablename as an element.
 	val.val_string = table_name->str;
-
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_table", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Add fieldname as an element.
 	val.val_string = name;
-
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_name", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Add operator.
 	val.val_uint32 = operator_;
-
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_operator", J_DB_TYPE_UINT32, &val, error)))
 	{
 		goto _error;
@@ -191,11 +271,13 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 			g_assert_not_reached();
 	}
 
+	// Add value.
 	if (G_UNLIKELY(!j_bson_append_value(&bson, "_value", type, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Finalized the document.
 	if (G_UNLIKELY(!j_bson_append_document_end(&selector->bson, &bson, error)))
 	{
 		goto _error;
@@ -203,14 +285,20 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 
 	selector->bson_count++;
 
-	g_string_free(table_name, TRUE);
+	retCode = TRUE;
 
-	return TRUE;
+	goto _exit;
 
-_error:
-	g_string_free(table_name, TRUE);
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
 
-	return FALSE;
+_exit: // exit the function by deallocating the memory.
+	if (table_name)
+	{
+		g_string_free(table_name, TRUE);
+	}
+
+	return retCode;
 }
 
 void
@@ -218,11 +306,8 @@ j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_sele
 {
 	gboolean new_schema = true;
 
-	if (selector == sub_selector)
-	{
-		// Ignore and return as same selector is passed as "selector" and "sub_selector" (mistakenly).
-		return;
-	}
+	// Ignore and return as same selector is passed as "selector" and "sub_selector" (mistakenly!).
+	g_return_if_fail(selector != sub_selector);
 
 	/* If sub_selector belongs to a different schema then it indicates the request contains join operations therefore the details 
 	 * of sub_selector (i.e. secondary schema) should be added to the selector (i.e. primary selector).
@@ -281,7 +366,7 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 {
 	J_TRACE_FUNCTION(NULL);
 
-	char buf[20];
+	char buf[20];	// TODO: instead use sizeof(guint)
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
@@ -330,6 +415,17 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 
 	/* In the following code snippet the tables names are added as BSON array. 
 	 * BSON array has a key named "tables", and the tables' names are added to it as BSON array-items. 
+	 *
+	 *	... <BSON document entries> ...
+	 *		"tables":	{	"namespace0":	"namespace_for_table1",
+	 *						"name0		:	"table1",
+	 *						"namespace1":	"namespace_for_table2",
+	 *						"name1"		:	"table2"
+							... <more entries>
+	 *					},
+	 *	... <BSON document entries> ...
+	 *
+	 * The code in this method targets the formation of (child) BSON document that maintains table(s') name.
 	 */
 
 	if (G_UNLIKELY(!j_bson_append_array_begin(&selector->bson, "tables", &bson, error)))
@@ -431,6 +527,15 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 
 	/* The following code adds JOIN related information as a BSON document. 
 	 * The BSON document has key named "join" and its items are the fields' names that are involved in the join operation. 
+	 *
+	 *
+	 *	... <BSON document> ...
+	 *		"join"	:	{	"0"	:	"namespace_table1.fieldname",
+	 *						"1"	:	"namespace_table2.fieldname",
+	 *					},
+	 *	... <BSON document> ...
+	 *
+	 * The code in this method targets the formation of (child) BSON document that maintains join information.
 	 */
 	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, "join", &bson, error)))
 	{

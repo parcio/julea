@@ -47,7 +47,7 @@ j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 	g_return_val_if_fail((selector == NULL) || (selector->schema == schema), NULL);
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-	iterator = j_helper_alloc_aligned(128, sizeof(JDBIterator));
+	iterator = j_helper_alloc_aligned(128, sizeof(JDBIterator)); // #CHANGE# Let the process crash if the method fails to allocate memory?
 	iterator->schema = j_db_schema_ref(schema);
 
 	if (G_UNLIKELY(!iterator->schema))
@@ -191,26 +191,31 @@ j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type,
 	g_return_val_if_fail(length != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// Extract the datatype of the field.
 	if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
 	{
 		goto _error;
 	}
 
+	// Initialize the iterator for the resultant BSON document.
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
 	{
 		goto _error;
 	}
 
+	// Check if the name exsits.
 	if (G_UNLIKELY(!j_bson_iter_find(&iter, name, error)))
 	{
 		goto _error;
 	}
 
+	// Fetch the value.
 	if (G_UNLIKELY(!j_bson_iter_value(&iter, *type, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Typecast the raw data.
 	switch (*type)
 	{
 		case J_DB_TYPE_SINT32:
