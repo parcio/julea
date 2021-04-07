@@ -259,7 +259,7 @@ j_message_extend(JMessage* message, gsize length)
 
 	if (current_length + length <= message->size)
 	{
-		return;
+		return;	// #CHANGE# Some return code should be used here other	the caller would presume the method has successfully reallocated the memory.
 	}
 
 	count = j_message_get_count(message);
@@ -272,8 +272,8 @@ j_message_extend(JMessage* message, gsize length)
 	message->size += length * factor;
 
 	position = message->current - message->data;
-	message->data = g_realloc(message->data, message->size);
-	message->current = message->data + position;
+	message->data = g_realloc(message->data, message->size); // Re-allocate the memory.
+	message->current = message->data + position;	// Set the position from where the new message section has to be written.
 }
 
 static void

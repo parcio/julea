@@ -333,7 +333,7 @@ j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error)
 _not_equal:
 	i++;
 
-	// Following code checks if there already exists an Index that convers the new (provided) Index.
+	// Following code checks if there already exists an Index that covers the new (provided) Index.
 	// It iterates through the existing Index(s) - uses goto statement "_not_equal" followed by "i++" that acts as a loop. 
 	// #CHANGE# Cannot I use for/while loop?
 	if (i <= schema->index->len)

@@ -158,6 +158,7 @@ j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, 
 	guint tmp;
 	GError** error;
 
+	// The following for-loop deduces the size of the memory (or bytes) that are required to write the provided operation(s).
 	for (i = 0; i < arrlen; i++)
 	{
 		len += 4;
@@ -206,11 +207,11 @@ j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, 
 		}
 		len += element->len;
 	}
-	j_message_add_operation(message, len);
+	j_message_add_operation(message, len); // Extended the message's memory to write the new elements to it.
 	for (i = 0; i < arrlen; i++)
 	{
 		element = &data[i];
-		j_message_append_4(message, &element->len);
+		j_message_append_4(message, &element->len); // Writes (4 bytes) length of the element.
 		if (element->len)
 		{
 			switch (element->type)
@@ -219,13 +220,13 @@ j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, 
 				case J_BACKEND_OPERATION_PARAM_TYPE_BLOB:
 					if (element->ptr)
 					{
-						j_message_append_n(message, element->ptr, element->len);
+						j_message_append_n(message, element->ptr, element->len); // Writes stream of given length.
 					}
 					break;
 				case J_BACKEND_OPERATION_PARAM_TYPE_BSON:
 					if (element->bson_initialized && element->ptr)
 					{
-						j_message_append_n(message, bson_get_data(element->ptr), element->len);
+						j_message_append_n(message, bson_get_data(element->ptr), element->len); // Writes stream of given length.
 						element->bson_initialized = FALSE;
 					}
 					break;
@@ -281,7 +282,7 @@ j_backend_operation_from_message(JMessage* message, JBackendOperationParam* data
 
 	for (i = 0; i < arrlen; i++)
 	{
-		len = j_message_get_4(message);
+		len = j_message_get_4(message); // Extract the size of the bytes that the first element carries in this message.
 		element = &data[i];
 		element->len = len;
 		if (len)

@@ -86,7 +86,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 		}
 		else
 		{
-			// 'batch' being NULL relects the start of the execution. Mark a checkpoint for safe rollback (from SQL perspective). 
+			// 'batch' being NULL reflects the start of the execution. Mark a checkpoint for safe rollback (from SQL perspective). 
 			if (!batch)
 			{
 				ret = j_backend_db_batch_start(db_backend, data->in_param[0].ptr, semantics, &batch, &error) && ret;
