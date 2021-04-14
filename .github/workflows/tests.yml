@@ -19,7 +19,7 @@ jobs:
           - posix-rocksdb-sqlite
           - posix-sqlite-sqlite
           # DB backends
-          - posix-lmdb-memory
+          #- posix-lmdb-memory
           - posix-lmdb-mysql-mysql
           - posix-lmdb-mysql-mariadb
         include:
@@ -43,10 +43,10 @@ jobs:
             object: posix
             kv: sqlite
             db: sqlite
-          - name: posix-lmdb-memory
-            object: posix
-            kv: lmdb
-            db: memory
+          #- name: posix-lmdb-memory
+          #  object: posix
+          #  kv: lmdb
+          #  db: memory
           - name: posix-lmdb-mysql-mysql
             object: posix
             kv: lmdb
