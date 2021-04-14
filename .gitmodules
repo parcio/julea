@@ -1,0 +1,3 @@
+[submodule "julea-io"]
+	path = julea-io
+	url = https://github.com/julea-io/julea.git
