@@ -14,3 +14,19 @@ $ . scripts/environment.sh
 $ export HDF5_VOL_CONNECTOR=julea
 $ my-application
 ```
+
+## Example: Enzo
+
+The be able to test JULEA's HDF5 plugins using real applications, [Enzo](https://enzo-project.org/) can be used.
+The following steps install Enzo via Spack and run one of its examples using JULEA's `julea-db` VOL plugin.
+
+```console
+$ . scripts/environment.sh
+$ spack install enzo@master ^hdf5@1.12:
+$ spack load enzo
+$ export HDF5_VOL_CONNECTOR=julea-db
+$ ./scripts/setup.sh start
+# It might currently be necessary to start Enzo twice due to a bug
+$ enzo -d "$(spack location -i enzo)/run/Hydro/Hydro-3D/CollapseTestNonCosmological/CollapseTestNonCosmological.enzo"
+$ ./scripts/setup.sh stop
+```
