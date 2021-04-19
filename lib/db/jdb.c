@@ -58,10 +58,12 @@ j_db_init(void)
 		return;
 	}
 
+	// Fetch configuration details.
 	db_backend = j_configuration_get_backend(j_configuration(), J_BACKEND_TYPE_DB);
 	db_component = j_configuration_get_backend_component(j_configuration(), J_BACKEND_TYPE_DB);
 	db_path = j_configuration_get_backend_path(j_configuration(), J_BACKEND_TYPE_DB);
 
+	// Prepare connection object.
 	if (j_backend_load_client(db_backend, db_component, J_BACKEND_TYPE_DB, &j_db_module, &j_db_backend))
 	{
 		if (j_db_backend == NULL || !j_backend_db_init(j_db_backend, db_path))

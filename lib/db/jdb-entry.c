@@ -93,7 +93,7 @@ j_db_entry_unref(JDBEntry* entry)
 	if (g_atomic_int_dec_and_test(&entry->ref_count))
 	{
 		j_db_schema_unref(entry->schema);
-		j_bson_destroy(&entry->bson);
+		j_bson_destroy(&entry->bson); // Potential bug. #CHANGE# 'bson' is instantiated before incrementing ref_count.
 		j_bson_destroy(&entry->id);
 		g_free(entry);
 	}
@@ -112,11 +112,13 @@ j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer value, gu
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// Extract type of the field.
 	if (G_UNLIKELY(!j_db_schema_get_field(entry->schema, name, &type, error)))
 	{
 		goto _error;
 	}
 
+	// Check if field already exists in the entry.
 	if (G_UNLIKELY(!j_bson_has_field(&entry->bson, name, &ret, error)))
 	{
 		goto _error;
@@ -124,6 +126,7 @@ j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer value, gu
 
 	if (G_UNLIKELY(ret))
 	{
+		// Return as field already exists.
 		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_VARIABLE_ALREADY_SET, "variable value must not be set more than once");
 		goto _error;
 	}
@@ -160,6 +163,7 @@ j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer value, gu
 			g_assert_not_reached();
 	}
 
+	// Append field details to the BSON entry document.
 	if (G_UNLIKELY(!j_bson_append_value(&entry->bson, name, type, &val, error)))
 	{
 		goto _error;
@@ -180,6 +184,7 @@ j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error)
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// Prepare and execute the Entry request at backend.
 	if (G_UNLIKELY(!j_db_internal_insert(entry, batch, error)))
 	{
 		goto _error;
@@ -212,6 +217,7 @@ j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 		goto _error;
 	}
 
+	// Prepare and execute the Entry request at backend.
 	if (G_UNLIKELY(!j_db_internal_update(entry, selector, batch, error)))
 	{
 		goto _error;
@@ -233,6 +239,7 @@ j_db_entry_delete(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 	g_return_val_if_fail((selector == NULL) || (selector->schema == entry->schema), FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	// Prepare and execute the Entry request at backend.
 	if (G_UNLIKELY(!j_db_internal_delete(entry, selector, batch, error)))
 	{
 		goto _error;
