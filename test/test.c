@@ -82,6 +82,10 @@ main(int argc, char** argv)
 	test_hdf_group_link();
 	test_hdf_object();
 
+	// JOIN queries
+	test_two_tables_join_queries();
+	test_three_tables_join_queries();
+
 	ret = g_test_run();
 
 	return ret;

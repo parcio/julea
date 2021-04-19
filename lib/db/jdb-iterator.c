@@ -56,6 +56,8 @@ j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 
 	if (selector)
 	{
+		j_db_selector_finalize(selector, error);
+
 		iterator->selector = j_db_selector_ref(selector);
 
 		if (G_UNLIKELY(!iterator->selector))
@@ -266,4 +268,134 @@ j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type,
 
 _error:
 	return FALSE;
+}
+
+gboolean
+j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JDBTypeValue val;
+	bson_iter_t iter;
+	gboolean retCode = FALSE;
+	GString* key = g_string_new(NULL);
+
+	g_return_val_if_fail(iterator != NULL, FALSE);
+	g_return_val_if_fail(iterator->bson_valid, FALSE);
+	g_return_val_if_fail(table != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(type != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(length != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	// Prepare field name by appending the namespace and table name to it.
+	g_string_append_printf(key, "%s_%s.%s", iterator->schema->namespace, table, name);
+
+	// Check if the requested field belongs to primary schema?
+	if (g_strcmp0(iterator->schema->name, table) == 0)
+	{
+		if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
+		{
+			goto _error;
+		}
+	}
+	else
+	{
+		// The field belongs to a secondary schema. Iterate through them to fetch its table and eventually the datatype.
+		for (guint i = 0; i < iterator->selector->join_schema_count; i++)
+		{
+			if (g_strcmp0(iterator->selector->join_schema[i]->name, table) == 0)
+			{
+				if (G_UNLIKELY(!j_db_schema_get_field(iterator->selector->join_schema[i], name, type, error)))
+				{
+					goto _error;
+				}
+				break;
+			}
+		}
+	}
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, &iterator->bson, error)))
+	{
+		goto _error;
+	}
+
+	// Find the respective BSON item.
+	if (G_UNLIKELY(!j_bson_iter_find(&iter, key->str, error)))
+	{
+		goto _error;
+	}
+
+	// Extrac the value.
+	if (G_UNLIKELY(!j_bson_iter_value(&iter, *type, &val, error)))
+	{
+		goto _error;
+	}
+
+	switch (*type)
+	{
+		case J_DB_TYPE_SINT32:
+			*value = g_new(gint32, 1);
+			*((gint32*)*value) = val.val_sint32;
+			*length = sizeof(gint32);
+			break;
+		case J_DB_TYPE_UINT32:
+			*value = g_new(guint32, 1);
+			*((guint32*)*value) = val.val_uint32;
+			*length = sizeof(guint32);
+			break;
+		case J_DB_TYPE_FLOAT32:
+			*value = g_new(gfloat, 1);
+			*((gfloat*)*value) = val.val_float32;
+			*length = sizeof(gfloat);
+			break;
+		case J_DB_TYPE_SINT64:
+			*value = g_new(gint64, 1);
+			*((gint64*)*value) = val.val_sint64;
+			*length = sizeof(gint64);
+			break;
+		case J_DB_TYPE_UINT64:
+			*value = g_new(guint64, 1);
+			*((guint64*)*value) = val.val_uint64;
+			*length = sizeof(guint64);
+			break;
+		case J_DB_TYPE_FLOAT64:
+			*value = g_new(gdouble, 1);
+			*((gdouble*)*value) = val.val_float64;
+			*length = sizeof(gdouble);
+			break;
+		case J_DB_TYPE_STRING:
+			*value = g_strdup(val.val_string);
+			*length = strlen(val.val_string);
+			break;
+		case J_DB_TYPE_BLOB:
+			if (val.val_blob && val.val_blob_length)
+			{
+				*value = g_new(gchar, val.val_blob_length);
+				memcpy(*value, val.val_blob, val.val_blob_length);
+				*length = val.val_blob_length;
+			}
+			else
+			{
+				*value = NULL;
+				*length = 0;
+			}
+			break;
+		case J_DB_TYPE_ID:
+		default:
+			g_assert_not_reached();
+	}
+
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
+	g_string_free(key, TRUE);
+
+	return retCode;
 }
