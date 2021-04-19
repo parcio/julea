@@ -52,7 +52,21 @@ struct JSqlCacheSQLPrepared
 	GString* sql;
 	void* stmt;
 	guint variables_count;
+
+	/* It is a hash-table. It maintains column names against an ID that represents their order in the query string's selection part.
+	 *
+	 * E.g. 
+	 * Query: Select ColA, ColB, ColC, ....
+	 * For above query variables_index would store the following values. { {0->ColA}, {1->ColB}, {2->ColC}}.
+	 *
+	 * Purpose: This hash-map is populated during the query generation process and it is used to assist the process of fetching the resultant records 
+	 * in method backend_iterate. With the help of the index it fetches the names of the tables and then extracts the respective columns' or fields' datatype.
+	 */
 	GHashTable* variables_index;
+
+	// It is a hash-table. It maintains datatypes against field names. It along with variables_index helps in the extraction of resultant records.
+	GHashTable* variables_type;
+
 	gboolean initialized;
 	gchar* namespace;
 	gchar* name;
@@ -1663,6 +1677,595 @@ _error:
 }
 
 static gboolean
+build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, guint* variables_count, GArray* arr_types_in, GHashTable* variables_type, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean hasItems;
+	gboolean keyExists;
+	JDBType itemDataType;
+	JDBTypeValue itemValue;
+	JDBTypeValue tableName;
+	JDBSelectorMode modeChild;
+	JDBSelectorOperator op;
+	bson_iter_t iterChildDocument;
+
+	GString* key = NULL;
+	GString* sqlChildDocument = NULL;
+	GString* sqlCurrentDocument = g_string_new(NULL);
+
+	gboolean retCode = FALSE;
+
+	while (TRUE)
+	{
+		// Check for the next item in the document.
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &hasItems, error)))
+		{
+			goto _error;
+		}
+
+		if (!hasItems) // TODO: Above fucntion should return an ERROR CODE and this check should be done on that. Also this approach should be used at other places as well.
+		{
+			break;
+		}
+
+		/* Check for the name of the first item. Skip processing if it contains tables' names.
+		 * Here the code expects a document that contains data for an individual field that has to be included in the query.
+		 */
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "tables", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			// Skip and continue with the next iterator.
+			continue;
+		}
+
+		/* Check for the name of the first item. Skip processing if it contains join related data. 
+		 * Here the code expects a document that contains data for an individual field that has to be included in the query.
+		 */
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "join", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			// Skip and continue with the next iterator.
+			continue;
+		}
+
+		// Fetch the mode (or operator) that has to be appended in between the current and the next (child) BSON item/document.
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			continue;
+		}
+
+		/* As per the BSON formation followed in jdb-selector.c, the above key "_mode" is either followed by a set of 
+		 * fields/columns (that are appended as a BSON document to current document) or a child BSON document that contains 
+		 * information for a child Selector that again starts with "_mode". Therefore the following code tries to fetch 
+		 * the first iterator of the next available document.
+		 */
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+		{
+			// Terminate as code could not find BSON document.
+			goto _error;
+		}
+
+		// If the child iterator starts with "_mode" it indicates the commencement of a new BSON document (or a child Selector)
+		if (j_bson_iter_find(&iterChildDocument, "_mode", NULL))
+		{
+			/* Extract value for "_mode" that would be appended to the fileds of this child BSON document.
+			 * It also would be used to append the grand child BSON document attached to this child document (if any).
+			 */
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_UINT32, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			modeChild = itemValue.val_uint32;
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			sqlChildDocument = g_string_new(NULL);
+
+			// Repeat the same routine for this child BSON document (or selector).
+			if (G_UNLIKELY(!build_selector_query_ex(&iterChildDocument, sqlChildDocument, modeChild, variables_count, arr_types_in, variables_type, error)))
+			{
+				goto _error;
+			}
+
+			if (sqlChildDocument->len > 0)
+			{
+				if (sqlCurrentDocument->len > 0)
+				{
+					/* The operator in between the selectors (or BSON documents) is the one that is defined for the preceding selector (or BSON document).
+					 * If both the query strings, for current and child documents, are not empty then the operator defined for the precedded document
+					 * would be appended as a connector.
+					 * E.g. "<string for 1st selector/BSON doc>" <operator-linked-to-1st-BSON-doc> "<string for 2nd selector/BSON doc>" <operator-linked-to-2nd-BSON-doc> ...
+					 */
+					switch (mode)
+					{
+						case J_DB_SELECTOR_MODE_AND:
+							g_string_append(sqlCurrentDocument, " AND ");
+							break;
+						case J_DB_SELECTOR_MODE_OR:
+							g_string_append(sqlCurrentDocument, " OR ");
+							break;
+						default:
+							g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
+							goto _error;
+					}
+				}
+
+				g_string_append_printf(sqlCurrentDocument, " ( %s )", sqlChildDocument->str);
+			}
+
+			g_string_free(sqlChildDocument, TRUE);
+			sqlChildDocument = NULL;
+		}
+		else // The following code snippet (whole "else" block) iterates through the BSON document items and appended them to sql query string.
+		{
+			// Use the operator attached to the BSON document (or selector) to append the query string of the individual fields.
+			if (sqlCurrentDocument->len > 0)
+			{
+				switch (mode)
+				{
+					case J_DB_SELECTOR_MODE_AND:
+						g_string_append(sqlCurrentDocument, " AND ");
+						break;
+					case J_DB_SELECTOR_MODE_OR:
+						g_string_append(sqlCurrentDocument, " OR ");
+						break;
+					default:
+						g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_OPERATOR_INVALID, "operator invalid");
+						goto _error;
+				}
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			// Fetch table name.
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_table", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &tableName, error)))
+			{
+				goto _error;
+			}
+
+			// Fetch field or column name.
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_name", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			// Append table name to field name. E.g. "<string for table name>.<string for field name>"
+			g_string_append_printf(sqlCurrentDocument, "%s." SQL_QUOTE "%s" SQL_QUOTE, tableName.val_string, itemValue.val_string);
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_value", error)))
+			{
+				goto _error;
+			}
+
+			// Key is fully resolved field name. E.g. "<string for table name>.<string for field name>"
+			key = g_string_new(NULL);
+			g_string_append_printf(key, "%s.%s", tableName.val_string, itemValue.val_string);
+
+			// "variables_type" is a Hashmap. It maintains the data types against each field that is latered used in the process of fetching the records.
+			itemDataType = GPOINTER_TO_UINT(g_hash_table_lookup(variables_type, key->str));
+			// "arr_types_in" is an Array. It maintains structures to pass input params this is equired by MYSQL.
+			// https://mariadb.com/kb/en/mysql_stmt_bind_param/
+			g_array_append_val(arr_types_in, itemDataType);
+
+			g_string_free(key, TRUE);
+			key = NULL;
+
+			// Fetch operator value that is used as a filter for the current field/column.
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_operator", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_UINT32, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			op = itemValue.val_uint32;
+
+			switch (op)
+			{
+				case J_DB_SELECTOR_OPERATOR_LT:
+					g_string_append(sqlCurrentDocument, "<");
+					break;
+				case J_DB_SELECTOR_OPERATOR_LE:
+					g_string_append(sqlCurrentDocument, "<=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_GT:
+					g_string_append(sqlCurrentDocument, ">");
+					break;
+				case J_DB_SELECTOR_OPERATOR_GE:
+					g_string_append(sqlCurrentDocument, ">=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_EQ:
+					g_string_append(sqlCurrentDocument, "=");
+					break;
+				case J_DB_SELECTOR_OPERATOR_NE:
+					g_string_append(sqlCurrentDocument, "!=");
+					break;
+				default:
+					g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_COMPARATOR_INVALID, "comparator invalid");
+					goto _error;
+			}
+
+			(*variables_count)++;
+
+			g_string_append_printf(sqlCurrentDocument, " ?");
+		}
+	}
+
+	if (sqlCurrentDocument->len > 0)
+	{
+		g_string_append_printf(sql, " ( %s )", sqlCurrentDocument->str);
+	}
+
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
+	if (key)
+	{
+		g_string_free(key, TRUE);
+	}
+
+	if (sqlChildDocument)
+	{
+		g_string_free(sqlChildDocument, TRUE);
+	}
+
+	return retCode;
+}
+
+static gboolean
+build_query_selection_part(bson_t const* selector, gpointer backend_data, GString* sql, JSqlBatch* batch, GHashTable* variables_index, GHashTable* variables_type, guint* variables_count, GArray* arr_types_out, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean hasItems;
+	JDBType itemDataType;
+	JDBTypeValue itemValue;
+
+	char* szFieldname;
+	gpointer ptrFieldType;
+
+	bson_iter_t iterChildDocument;
+	bson_iter_t iterCurrentDocument;
+
+	GString* tableName = NULL;
+	GString* fieldName = NULL;
+	GString* sqlTablesName = g_string_new(NULL);
+
+	GHashTable* schemaCache = NULL;
+	GHashTableIter schemaCacheIter;
+
+	gboolean retCode = FALSE;
+
+	// Initialize iterator for BSON document.
+	if (G_UNLIKELY(!j_bson_iter_init(&iterCurrentDocument, selector, error)))
+	{
+		goto _error;
+	}
+
+	// Look for the key that is assigned to BSON array that contains tables' information.
+	if (G_UNLIKELY(!j_bson_iter_find(&iterCurrentDocument, "tables", error)))
+	{
+		goto _error;
+	}
+
+	// As per the format the respective values are added as a child document therefore initializing the iterator.
+	if (G_UNLIKELY(!j_bson_iter_recurse_array(&iterCurrentDocument, &iterChildDocument, error)))
+	{
+		goto _error;
+	}
+
+	// Iterate through all the child elements.
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(&iterChildDocument, &hasItems, error)))
+		{
+			goto _error;
+		}
+
+		if (!hasItems)
+		{
+			// Return as no more elements left.
+			break;
+		}
+
+		// Extract namespace for the table from BSON element.
+		if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &itemValue, error)))
+		{
+			goto _error;
+		}
+
+		tableName = g_string_new(NULL);
+		g_string_append(tableName, itemValue.val_string); // Append namespace for the table.
+
+		// The next element should contain the table name therefore the following snippet ensures that the next element should be present.
+		if (G_UNLIKELY(!j_bson_iter_next(&iterChildDocument, &hasItems, error)))
+		{
+			goto _error;
+		}
+
+		if (!hasItems)
+		{
+			break;
+		}
+
+		// Extract name for the table from BSON element.
+		if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &itemValue, error)))
+		{
+			goto _error;
+		}
+
+		// Append name of the table.
+		g_string_append(tableName, "_");
+		g_string_append(tableName, itemValue.val_string);
+
+		// Fetching table's schema to extract all the columns' names.
+		if (!(schemaCache = getCacheSchema(backend_data, batch, itemValue.val_string, error)))
+		{
+			goto _error;
+		}
+
+		if (sql->len > 0)
+		{
+			g_string_append(sql, ", ");
+		}
+
+		g_hash_table_iter_init(&schemaCacheIter, schemaCache); // Initializing the iterator.
+
+		/* The following code snippet prepares data for "_id" field or column.
+		 * It also appends to the required data structures for later usage.
+		 */
+		fieldName = g_string_new(NULL);
+		g_string_append_printf(fieldName, "%s._id", tableName->str); // Prepare field name.
+
+		g_string_append_printf(sql, "%s._id", tableName->str); // Append field name to query string.
+
+		itemDataType = J_DB_TYPE_UINT32;
+
+		// Maintains hash-table for column name and id (an auto-increment number).
+		g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(fieldName->str));
+
+		// "variables_type" is a Hashmap. It maintains the data types against each field that is latered used in the process of fetching the records.
+		g_hash_table_insert(variables_type, g_strdup(fieldName->str), GINT_TO_POINTER(itemDataType));
+
+		// "arr_types_in" is an Array. It maintains structures to pass input params this is equired by MYSQL.
+		// https://mariadb.com/kb/en/mysql_stmt_bind_param/
+		g_array_append_val(arr_types_out, itemDataType);
+
+		(*variables_count)++;
+
+		g_string_free(fieldName, TRUE);
+		fieldName = NULL;
+
+		/* The following code snippet prepares data for the remaining fields or columns.
+		 * It also appends to the required data structures for later usage.
+		 */
+		while (g_hash_table_iter_next(&schemaCacheIter, (gpointer*)&szFieldname, &ptrFieldType))
+		{
+			itemDataType = GPOINTER_TO_INT(ptrFieldType);
+
+			if (strcmp(szFieldname, "_id") == 0)
+			{
+				// Proceed with the next column as it has already been added.
+				continue;
+			}
+
+			fieldName = g_string_new(NULL);
+			g_string_append_printf(fieldName, "%s.%s", tableName->str, szFieldname);
+
+			g_string_append_printf(sql, ", %s." SQL_QUOTE "%s" SQL_QUOTE, tableName->str, szFieldname);
+			g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(fieldName->str));
+			g_hash_table_insert(variables_type, g_strdup(fieldName->str), GINT_TO_POINTER(itemDataType));
+			g_array_append_val(arr_types_out, itemDataType);
+			(*variables_count)++;
+
+			g_string_free(fieldName, TRUE);
+			fieldName = NULL;
+		}
+
+		if (sqlTablesName->len > 0)
+		{
+			g_string_append(sqlTablesName, ", ");
+		}
+
+		g_string_append_printf(sqlTablesName, SQL_QUOTE "%s" SQL_QUOTE, tableName->str);
+
+		g_string_free(tableName, TRUE);
+		tableName = NULL;
+	}
+
+	g_string_append(sql, " FROM ");
+	g_string_append(sql, sqlTablesName->str);
+
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
+	if (sqlTablesName)
+	{
+		g_string_free(sqlTablesName, TRUE);
+		sqlTablesName = NULL;
+	}
+
+	if (tableName)
+	{
+		g_string_free(tableName, TRUE);
+		tableName = NULL;
+	}
+
+	if (fieldName)
+	{
+		g_string_free(fieldName, TRUE);
+		fieldName = NULL;
+	}
+
+	return retCode;
+}
+
+static gboolean
+build_query_join_part(bson_t const* selector, GString* sql, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean hasItems;
+	gboolean keyExists;
+	JDBTypeValue itemValue;
+
+	bson_iter_t iterChildDocument;
+	bson_iter_t iterCurrentDocument;
+
+	GString* sqlJoin = NULL;
+
+	gboolean retCode = FALSE;
+
+	// Initialize the iterator.
+	if (G_UNLIKELY(!j_bson_iter_init(&iterCurrentDocument, selector, error)))
+	{
+		goto _error;
+	}
+
+	// The following code iterates through the BSON elements and prepares query part for the join operation.
+	while (TRUE)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(&iterCurrentDocument, &hasItems, error)))
+		{
+			goto _error;
+		}
+
+		if (!hasItems)
+		{
+			break;
+		}
+
+		// Look for the key that is assigned to BSON document that contains the join information.
+		if (G_UNLIKELY(!j_bson_iter_key_equals(&iterCurrentDocument, "join", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (!keyExists)
+		{
+			// Return as the reterived element has a different key.
+			continue;
+		}
+
+		// Try to intialize child element.
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(&iterCurrentDocument, &iterChildDocument, error)))
+		{
+			goto _error;
+		}
+
+		sqlJoin = g_string_new(NULL);
+
+		// Iterate through the elements and append values to the query string.
+		while (TRUE)
+		{
+			if (G_UNLIKELY(!j_bson_iter_next(&iterChildDocument, &hasItems, error)))
+			{
+				goto _error;
+			}
+
+			if (!hasItems)
+			{
+				break;
+			}
+
+			// Extract the value of the current BSON element.
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			if (sqlJoin->len > 0)
+			{
+				g_string_append(sqlJoin, "=");
+			}
+
+			// Append the name of the field to the query string.
+			g_string_append_printf(sqlJoin, "%s", itemValue.val_string);
+		}
+
+		if (sql->len > 0)
+		{
+			g_string_append(sql, " AND ");
+		}
+
+		g_string_append_printf(sql, "%s", sqlJoin->str);
+
+		g_string_free(sqlJoin, TRUE);
+		sqlJoin = NULL;
+	}
+
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
+	if (sqlJoin)
+	{
+		g_string_free(sqlJoin, TRUE);
+		sqlJoin = NULL;
+	}
+
+	return retCode;
+}
+
+static gboolean
 bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1765,10 +2368,181 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 	}
 
 	return TRUE;
-
 _error:
 	return FALSE;
 }
+
+static gboolean
+bind_selector_query_ex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* variables_index, GError** error)
+{
+	/* Note: This method is almost the replica of method named 'build_selector_query_ex'. There we iterate through the BSON data to prepare query string,
+	 * whereas in this document we re-iterate through the BSON to fetch merely the data types for the fields that are used in the query string.
+	 * More suitable is to merge both the methods.
+	 */
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean hasItems;
+	gboolean keyExists;
+	JDBType itemDatatype;
+	JDBTypeValue itemValue;
+
+	JDBTypeValue tableName;
+	GString* fieldName = NULL;
+
+	bson_iter_t iterChildDocument;
+	JThreadVariables* thread_variables = NULL;
+
+	gboolean retCode = FALSE;
+
+	// Fetch thread's local cache to get SQL's backend object.
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	{
+		goto _error;
+	}
+
+	while (TRUE)
+	{
+		// Check for the next item in the document.
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &hasItems, error)))
+		{
+			goto _error;
+		}
+
+		if (!hasItems)
+		{
+			break;
+		}
+
+		/* Check for the name of the first item. Skip processing if it contains tables' names. 
+		 * Here the code expects a document that contains data for an individual field that has to be included in the query.
+		 */
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "tables", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			break;
+		}
+
+		/* Check for the name of the first item. Skip processing if it contains join related data. 
+		 * Here the code expects a document that contains data for an individual field that has to be included in the query.
+		 */
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "join", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			continue;
+		}
+
+		// Fetch the mode (or operator) that has to be appended in between the current and the next (child) BSON item/document.
+		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &keyExists, error)))
+		{
+			goto _error;
+		}
+
+		if (keyExists)
+		{
+			continue;
+		}
+
+		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+		{
+			goto _error;
+		}
+
+		if (j_bson_iter_find(&iterChildDocument, "_mode", NULL))
+		{
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!bind_selector_query_ex(backend_data, &iterChildDocument, prepared, variables_count, variables_index, error)))
+			{
+				goto _error;
+			}
+		}
+		else
+		{
+			(*variables_count)++;
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_table", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &tableName, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_name", error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, J_DB_TYPE_STRING, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			fieldName = g_string_new(NULL);
+			g_string_append_printf(fieldName, "%s.%s", tableName.val_string, itemValue.val_string);
+
+			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_bson_iter_find(&iterChildDocument, "_value", error)))
+			{
+				goto _error;
+			}
+
+			itemDatatype = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, (gpointer)fieldName->str));
+
+			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, itemDatatype, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, *variables_count, itemDatatype, &itemValue, error)))
+			{
+				goto _error;
+			}
+
+			g_string_free(fieldName, TRUE);
+			fieldName = NULL;
+		}
+	}
+
+	retCode = TRUE;
+
+	goto _exit;
+
+_error: // handle unexpected behaviour.
+	retCode = FALSE;
+
+_exit: // exit the function by deallocating the memory.
+	if (fieldName)
+	{
+		g_string_free(fieldName, TRUE);
+		fieldName = NULL;
+	}
+
+	return retCode;
+}
+
 static gboolean
 _backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
@@ -2269,24 +3043,21 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	J_TRACE_FUNCTION(NULL);
 
 	JDBSelectorMode mode_child;
-	GHashTableIter schema_iter;
-
-	GHashTable* schema_cache = NULL;
-	JDBType type;
-	gpointer type_tmp;
-
 	JSqlBatch* batch = _batch;
 	bson_iter_t iter;
 	guint variables_count;
 	guint variables_count2;
 	JDBTypeValue value;
-	char* string_tmp;
 	JSqlCacheSQLPrepared* prepared = NULL;
-	GHashTable* variables_index = NULL;
-	GString* sql = g_string_new(NULL);
+	GHashTable* variables_index = NULL; // Maintains indices for the fields (or columns) in the query so that their respective values can be fetched from the resultant vector using the indices.
+	GHashTable* variables_type = NULL; // Maintains datatypes of the fields (or columns) that are involved in the query.
+	GString* sql = g_string_new(NULL); // Maintains query string.
+	GString* sql_selection_part = g_string_new(NULL); // Maintains selection part of the query string. (e.g. SELECT A,B,C,... FROM X,Y,Z,...)
+	GString* sql_join_part = g_string_new(NULL); // Maintains join part of the query string.
+	GString* sql_condition_part = g_string_new(NULL); // Maintains condition part of the query string. (e.g. A = ? AND B < ? OR C > ? ,...)
 	JThreadVariables* thread_variables = NULL;
-	g_autoptr(GArray) arr_types_in = NULL;
-	g_autoptr(GArray) arr_types_out = NULL;
+	g_autoptr(GArray) arr_types_in = NULL; // Maintains in-params for MYSQL.
+	g_autoptr(GArray) arr_types_out = NULL; // Maintains out-params for MYSQL.
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -2299,47 +3070,52 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		goto _error;
 	}
 
+	/* It is a hash-table. It maintains column names against an ID that represents its order in the query string's selection part.
+	 *
+	 * E.g. 
+	 * Query: Select ColA, ColB, ColC, ....
+	 * For above query variables_index would store the following values. { {0->ColA}, {1->ColB}, {2->ColC}}.
+	 *
+	 * Purpose: This hash-map is populated during the query generation process and it is used to assist the process of fetching the resultant records 
+	 * in method backend_iterate. With the help of the index it fetches the names and then extracts the respective column or field datatype.
+	 */
 	variables_index = g_hash_table_new_full(g_direct_hash, NULL, NULL, g_free);
-	g_string_append(sql, "SELECT ");
+
+	/* It is a hash-table. It maintains datatype against field names.
+	 * It along with variables_index, as mentioned in the above comment, helps in the extraction of resultant records.
+	 */
+	variables_type = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
+	// TODO: Instead of maintainig variables_index and variables_type, other data structures (e.g. 'arr_types_out') can be used to acheive the same goal.
+
 	variables_count = 0;
+	g_string_append(sql, "SELECT ");
 
-	if (!(schema_cache = getCacheSchema(backend_data, batch, name, error)))
-	{
-		goto _error;
-	}
+	// Formulate the selection part of the query.
+	build_query_selection_part(selector, backend_data, sql_selection_part, batch, variables_index, variables_type, &variables_count, arr_types_out, error);
 
-	g_hash_table_iter_init(&schema_iter, schema_cache);
+	// Extend the query string.
+	g_string_append(sql, sql_selection_part->str);
 
-	g_string_append(sql, "_id");
-	g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup("_id"));
-	type = J_DB_TYPE_UINT32;
-	g_array_append_val(arr_types_out, type);
-	variables_count++;
+	// Formulate the join part of the query.
+	build_query_join_part(selector, sql_join_part, error);
 
-	while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
-	{
-		type = GPOINTER_TO_INT(type_tmp);
-
-		if (strcmp(string_tmp, "_id") == 0)
-			continue;
-
-		g_string_append_printf(sql, ", " SQL_QUOTE "%s" SQL_QUOTE, string_tmp);
-		g_hash_table_insert(variables_index, GINT_TO_POINTER(variables_count), g_strdup(string_tmp));
-		g_array_append_val(arr_types_out, type);
-		variables_count++;
-	}
-
-	g_string_append_printf(sql, " FROM " SQL_QUOTE "%s_%s" SQL_QUOTE, batch->namespace, name);
-
-	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
+	// Extend the query string.
+	if (sql_join_part->len > 0)
 	{
 		g_string_append(sql, " WHERE ");
+		g_string_append(sql, sql_join_part->str);
+	}
 
+	// Formulate the condition part of the query.
+	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
+	{
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
 		{
 			goto _error;
 		}
 
+		// Fetch the operator that would be appended in between parent and child selector.
 		if (G_UNLIKELY(!j_bson_iter_find(&iter, "_mode", error)))
 		{
 			goto _error;
@@ -2359,10 +3135,25 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 
 		variables_count2 = 0;
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, &variables_count2, arr_types_in, schema_cache, error)))
+		if (G_UNLIKELY(!build_selector_query_ex(&iter, sql_condition_part, mode_child, &variables_count2, arr_types_in, variables_type, error)))
 		{
 			goto _error;
 		}
+	}
+
+	// Extend the query string.
+	if (sql_condition_part->len > 0)
+	{
+		if (sql_join_part->len > 0)
+		{
+			g_string_append(sql, " AND ");
+		}
+		else
+		{
+			g_string_append(sql, " WHERE ");
+		}
+
+		g_string_append(sql, sql_condition_part->str);
 	}
 
 	prepared = getCachePrepared(backend_data, batch->namespace, name, sql->str, error);
@@ -2372,11 +3163,16 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 		goto _error;
 	}
 
+	/* The following code snippet prepares the query string object. 
+	 * E.g. in the case of sqlite, after the initialzion of sqlite object and establishment of the connection, the SQL query string must be first 
+	 * compiled into byte codes. Refer to this link for details: https://www.sqlite.org/cintro.html. 
+	 */
 	if (!prepared->initialized)
 	{
 		prepared->sql = g_string_new(sql->str);
 		prepared->variables_index = variables_index;
 		prepared->variables_count = variables_count;
+		prepared->variables_type = variables_type;
 
 		if (G_UNLIKELY(!j_sql_prepare(thread_variables->sql_backend, prepared->sql->str, &prepared->stmt, arr_types_in, arr_types_out, error)))
 		{
@@ -2388,8 +3184,13 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 	{
 		g_hash_table_destroy(variables_index);
 		variables_index = NULL;
+		g_hash_table_destroy(variables_type);
+		variables_type = NULL;
+		// TODO: shouldn't the control return with a 'FALSE'?
 	}
 
+	/* In the case of sqlite, after the compilation of the query string into byte-code, the query parameters are required to be binded with the provided values.
+	 */
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
@@ -2399,7 +3200,7 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 
 		variables_count2 = 0;
 
-		if (G_UNLIKELY(!bind_selector_query(backend_data, &iter, prepared, &variables_count2, schema_cache, error)))
+		if (G_UNLIKELY(!bind_selector_query_ex(backend_data, &iter, prepared, &variables_count2, variables_type, error)))
 		{
 			goto _error;
 		}
@@ -2407,25 +3208,28 @@ backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t 
 
 	*iterator = prepared;
 
-	if (sql)
-	{
-		g_string_free(sql, TRUE);
-		sql = NULL;
-	}
+	g_string_free(sql, TRUE);
+	g_string_free(sql_join_part, TRUE);
+	g_string_free(sql_selection_part, TRUE);
+	g_string_free(sql_condition_part, TRUE);
 
 	return TRUE;
 
 _error:
-	if (sql)
-	{
-		g_string_free(sql, TRUE);
-		sql = NULL;
-	}
-
 	if (variables_index)
 	{
 		g_hash_table_destroy(variables_index);
 	}
+
+	if (variables_type)
+	{
+		g_hash_table_destroy(variables_type);
+	}
+
+	g_string_free(sql, TRUE);
+	g_string_free(sql_join_part, TRUE);
+	g_string_free(sql_selection_part, TRUE);
+	g_string_free(sql_condition_part, TRUE);
 
 	return FALSE;
 }
@@ -2461,6 +3265,7 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 		goto _error;
 	}
 
+	// Check if there still is any result row left?
 	if (G_UNLIKELY(!j_sql_step(thread_variables->sql_backend, prepared->stmt, &sql_found, error)))
 	{
 		goto _error;
@@ -2472,14 +3277,33 @@ backend_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GEr
 
 		for (i = 0; i < prepared->variables_count; i++)
 		{
+			// Extract column name to fetch its datatype.
 			string_tmp = g_hash_table_lookup(prepared->variables_index, GINT_TO_POINTER(i));
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
 
+			// The following code snippet extracts the type of the field (column).
+			if (prepared->variables_type != NULL)
+			{
+				/*
+				 * This code snippet is added to address join operation. In the old implemntation the columns' data type is extracted using the
+				 * table schema. When multiple tables are invovled (as it is in the case of join), instead of fetching tables' schema again and again,
+				 * it is more feasible to store the data types in a hash table and use it when required, as it is done in this case. 
+				 * This code would only hit when it is called for a SELECT query and the function "build_query_selection_part" populates the hash-table for data types.
+				 */
+				type = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, string_tmp));
+			}
+			else
+			{
+				// Entertains the old implementation.
+				type = GPOINTER_TO_INT(g_hash_table_lookup(schema_cache, string_tmp));
+			}
+
+			// Extract datatype.
 			if (G_UNLIKELY(!j_sql_column(thread_variables->sql_backend, prepared->stmt, i, type, &value, error)))
 			{
 				goto _error;
 			}
 
+			// Append the field value to the document. It will then return as the output document that has the resultant records.
 			if (G_UNLIKELY(!j_bson_append_value(metadata, string_tmp, type, &value, error)))
 			{
 				goto _error;

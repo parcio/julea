@@ -49,4 +49,7 @@ void test_item_uri(void);
 
 void test_hdf_hdf(void);
 
+void test_two_tables_join_queries(void);
+void test_three_tables_join_queries(void);
+
 #endif

@@ -111,6 +111,28 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
 
 gboolean j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
 
+/**
+ * Get a single value from the current entry of the iterator.
+ *
+ * \param[in] iterator to query
+ * \param[in] name the name of the value to retrieve
+ * \param[out] type the type of the retrieved value
+ * \param[out] value the retieved value
+ * \param[out] length the length of the retrieved value
+ * \pre iterator != NULL
+ * \pre name != NULL
+ * \pre type != NULL
+ * \pre value != NULL
+ * \pre *value should not be initialized
+ * \pre length != NULL
+ * \post *value points to a new allocated memory region. The caller must free this later using g_free.
+ * \post *length contains the length of the allocated memory region
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+gboolean j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
+
 G_END_DECLS
 
 #endif

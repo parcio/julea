@@ -72,6 +72,10 @@ main(int argc, char** argv)
 	// HDF5 client
 	test_hdf_hdf();
 
+	// JOIN queries
+	test_two_tables_join_queries();
+	test_three_tables_join_queries();
+
 	ret = g_test_run();
 
 	return ret;

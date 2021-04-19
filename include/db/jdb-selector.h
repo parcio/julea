@@ -138,6 +138,56 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
 
 gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
 
+/**
+ * This function concludes the selector. It adds the details that indicates the closure of the request and mandatory to process a request. 
+ * It must be called at the end when all the conditions and joins are added to the selector. 
+ *
+ * \param[in] JDBSelector* selector- primary selector
+ *
+ * \pre selector != NULL
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+gboolean j_db_selector_finalize(JDBSelector* selector, GError** error);
+
+/**
+ * This method syncs the data structures that maintains the information regarding the secondary schemas.
+ * JDBSelector, along with the instance of JDBSchema that represents the primary schema, maintains a data structure that maintains information regarding
+ * the other schemas that are required for a join operation. This method syncs the data structure and moves the missing details from the secondary 
+ * selector (i.e. sub_selector) to the primary selector.
+ *
+ * \param[in] JDBSelector* selector - primary selector
+ * \param[in] JDBSelector* sub_selector - secondary selector
+ *
+ * \pre selector != NULL
+ * \pre sub_selector != NULL
+ * \pre selector != sub_selector
+ * \pre selector including all previously added sub_selectors must not contain more than 500 search fields after applying this operation
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+void j_db_selector_sync_schemas_for_join(JDBSelector* selector, JDBSelector* sub_selector);
+
+/**
+ * This method adds join related information to the primary JDBSelector. This method expects column names along with the respective JDBSelectors.
+ *
+ * \param[in] JDBSelector* selector- primary selector
+ * \param[in] gchar const* selector_field- column name for the primary selector
+ * \param[in] JDBSelector* sub_selector- secondary selector
+ * \param[in] gchar const* sub_selector_field- colunm name for the secondary selector
+ *
+ * \pre selector != NULL
+ * \pre sub_selector != NULL
+ * \pre selector != sub_selector
+ * \pre selector including all previously added sub_selectors must not contain more than 500 search fields after applying this operation
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+gboolean j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error);
+
 G_END_DECLS
 
 #endif

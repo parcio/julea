@@ -96,7 +96,10 @@ struct JDBSelector
 	bson_t bson;
 
 	JDBSelectorMode mode;
-	JDBSchema* schema;
+	JDBSchema* schema; // Primary schema.
+
+	JDBSchema** join_schema; // Maintains information regarding the schemas (secondary) that are required to perform join operation.
+	guint join_schema_count; // Maintains count for the array (i.e. join_schema).
 
 	guint bson_count;
 	gint ref_count;
