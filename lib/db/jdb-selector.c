@@ -91,6 +91,7 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	JDBSelector* selector = NULL;
 
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail(schema != NULL, NULL);
 
 	selector = j_helper_alloc_aligned(128, sizeof(JDBSelector));
 	selector->ref_count = 1;
@@ -98,13 +99,9 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	selector->bson_count = 0;
 	selector->join_schema = NULL;
 	selector->join_schema_count = 0;
-	bson_init(&selector->bson);
 	selector->schema = j_db_schema_ref(schema);
 
-	if (G_UNLIKELY(!selector->schema))
-	{
-		goto _error;
-	}
+	bson_init(&selector->bson);
 
 	val.val_uint32 = mode;
 
@@ -184,6 +181,8 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 	 * And, the code in this method targets the formation of (child) BSON document for fields.
 	 */
 	bson_t bson;
+
+	char buf[20];
 	JDBType type;
 	JDBTypeValue val;
 	gboolean retCode = FALSE;
@@ -366,7 +365,7 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 {
 	J_TRACE_FUNCTION(NULL);
 
-	char buf[20];
+	char buf[20]; // TODO: instead use sizeof(guint)
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
