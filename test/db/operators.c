@@ -145,13 +145,18 @@ entry_insert_customersTable(guint64 customerid, gchar const* firstname, gchar co
 }
 
 /*
- * Query: SELECT _id, "city", "customerid", "state", "firstname", "lastname", "zip", "address", "email" FROM "namespace_customersTable" 
- * WHERE ( "customerid" = 3 AND "zip" = 22121 OR ( "customerid" = 1 AND "zip" = 22902 ));
+ * I want to run the following query;
+ * Query 1: SELECT _id, "city", "customerid", "state", "firstname", "lastname", "zip", "address", "email" FROM "namespace_customersTable" 
+ * WHERE ( ("customerid" = 3 AND "zip" = 22121) OR ( "customerid" = 1 AND "zip" = 22902 );
  *
- * Expected Output:  
+ * I could not find any way to achieve it and end up with the following query;
+ * Query 2: SELECT _id, "city", "customerid", "state", "firstname", "lastname", "zip", "address", "email" FROM "namespace_customersTable" 
+ * WHERE ( "customerid" = 3 OR "zip" = 22121 OR ( "customerid" = 1 AND "zip" = 22902 ));
+ *
+ * Expected Output (Query 1):  
  * No rows
  *
- * Actual Output:
+ * Actual Output (Query 2):
  * 1|Mount Vernon|1|VA|George|Washington|22121|3200 Mt Vernon Hwy|gwashington@usa.gov
  * 3|Charlottesville|3|VA|Thomas|Jefferson|22902|931 Thomas Jefferson Pkwy|tjefferson@usa.gov
  */
