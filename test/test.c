@@ -37,7 +37,7 @@ main(int argc, char** argv)
 	g_test_init(&argc, &argv, NULL);
 
 	// Core
-	test_core_background_operation();
+	/*test_core_background_operation();
 	test_core_batch();
 	test_core_cache();
 	test_core_configuration();
@@ -60,8 +60,9 @@ main(int argc, char** argv)
 	test_kv_kv_iterator();
 
 	// DB client
-	test_db_db();
-
+	test_db_db();*/
+	test_db_operators();
+/*
 	// Item client
 	test_item_collection();
 	test_item_collection_iterator();
@@ -71,7 +72,7 @@ main(int argc, char** argv)
 
 	// HDF5 client
 	test_hdf_hdf();
-
+*/
 	ret = g_test_run();
 
 	return ret;
