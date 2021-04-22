@@ -177,8 +177,6 @@ try_or_operator_between_two_conditionsWithANDOperator(void)
 	guint64 zip_1 = 22121;
 	guint64 custid_2 = 1;
 	guint64 zip_2 = 22902;
-	JDBType type;
-	guint64 len;
 
 	schema_customersTable = j_db_schema_new("namespace", "customersTable", &error);
 	g_assert_nonnull(schema_customersTable);
@@ -198,7 +196,7 @@ try_or_operator_between_two_conditionsWithANDOperator(void)
 	success = j_db_selector_add_field(selector_customersTable, "zip", J_DB_SELECTOR_OPERATOR_EQ, &zip_1, sizeof(zip_1), &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
-	
+
 	selector2_customersTable = j_db_selector_new(schema_customersTable, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector2_customersTable);
 	g_assert_no_error(error);
@@ -208,7 +206,7 @@ try_or_operator_between_two_conditionsWithANDOperator(void)
 	success = j_db_selector_add_field(selector2_customersTable, "zip", J_DB_SELECTOR_OPERATOR_EQ, &zip_2, sizeof(zip_2), &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
-	
+
 	j_db_selector_add_selector(selector_customersTable, selector2_customersTable, NULL);
 
 	iterator = j_db_iterator_new(schema_customersTable, selector_customersTable, &error);
@@ -218,7 +216,7 @@ try_or_operator_between_two_conditionsWithANDOperator(void)
 	j_db_iterator_next(iterator, NULL);
 	{
 		g_assert_null(iterator);
-		
+
 		/*g_autofree gchar* firstname = NULL;
 		g_autofree gchar* lastname = NULL;
 
@@ -268,7 +266,7 @@ test_or_operator_between_two_conditionsWithANDOperator(void)
 
 	try_or_operator_between_two_conditionsWithANDOperator();
 
-	//schema_delete_customersTable();
+	schema_delete_customersTable();
 }
 
 void
@@ -276,4 +274,3 @@ test_db_operators(void)
 {
 	g_test_add_func("/db/operators/or_operator_1", test_or_operator_between_two_conditionsWithANDOperator);
 }
-
