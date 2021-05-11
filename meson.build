@@ -614,6 +614,8 @@ foreach backend: julea_backends
 	elif backend == 'kv/rocksdb'
 		# rocksdb bug
 		extra_args += '-Wno-strict-prototypes'
+		# https://github.com/facebook/rocksdb/issues/8286
+		extra_args += '-Wno-error'
 		extra_deps += rocksdb_dep
 	elif backend == 'kv/sqlite' or backend == 'db/sqlite'
 		extra_deps += sqlite_dep
