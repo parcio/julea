@@ -33,6 +33,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <jhelper.h>
 #include <jhelper-internal.h>
@@ -233,8 +234,11 @@ j_helper_file_sync(gchar const* path)
 		return FALSE;
 	}
 
-	// FIXME use g_fsync once we require GLib 2.64
+#if GLIB_CHECK_VERSION(2, 64, 0)
+	if (g_fsync(fd) == -1)
+#else
 	if (fsync(fd) == -1)
+#endif
 	{
 		return FALSE;
 	}
@@ -252,8 +256,11 @@ j_helper_file_discard(gchar const* path)
 		return FALSE;
 	}
 
-	// FIXME use g_fsync once we require GLib 2.64
+#if GLIB_CHECK_VERSION(2, 64, 0)
+	if (g_fsync(fd) == -1)
+#else
 	if (fsync(fd) == -1)
+#endif
 	{
 		return FALSE;
 	}

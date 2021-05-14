@@ -499,12 +499,20 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 					gpointer value;
 
 					// data belongs to the message, create a copy for the callback
+#if GLIB_CHECK_VERSION(2, 68, 0)
+					value = g_memdup2(data, len);
+#else
 					value = g_memdup(data, len);
+#endif
 					kop->get.func(value, len, kop->get.data);
 				}
 				else
 				{
+#if GLIB_CHECK_VERSION(2, 68, 0)
+					*(kop->get.value) = g_memdup2(data, len);
+#else
 					*(kop->get.value) = g_memdup(data, len);
+#endif
 					*(kop->get.value_len) = len;
 				}
 			}

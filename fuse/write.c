@@ -59,9 +59,17 @@ jfs_write(char const* path, char const* buf, size_t size, off_t offset, struct f
 
 			if ((guint64)old_size < offset + size)
 			{
+				gpointer copy;
+
 				bson_iter_overwrite_int64(&iter, offset + size);
 
-				j_kv_put(kv, g_memdup(bson_get_data(file), file->len), file->len, g_free, batch);
+#if GLIB_CHECK_VERSION(2, 68, 0)
+				copy = g_memdup2(bson_get_data(file), file->len);
+#else
+				copy = g_memdup(bson_get_data(file), file->len);
+#endif
+
+				j_kv_put(kv, copy, file->len, g_free, batch);
 
 				if (!j_batch_execute(batch))
 				{

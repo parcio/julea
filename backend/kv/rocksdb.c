@@ -157,7 +157,11 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 
 	if (result != NULL)
 	{
+#if GLIB_CHECK_VERSION(2, 68, 0)
+		*value = g_memdup2(result, result_len);
+#else
 		*value = g_memdup(result, result_len);
+#endif
 		*len = result_len;
 	}
 
@@ -225,6 +229,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 	(void)backend_data;
 
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 

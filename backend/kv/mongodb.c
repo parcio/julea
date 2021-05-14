@@ -260,7 +260,11 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 			bson_value_t const* bv;
 
 			bv = bson_iter_value(&iter);
+#if GLIB_CHECK_VERSION(2, 68, 0)
+			*value = g_memdup2(bv->value.v_binary.data, bv->value.v_binary.data_len);
+#else
 			*value = g_memdup(bv->value.v_binary.data, bv->value.v_binary.data_len);
+#endif
 			*len = bv->value.v_binary.data_len;
 
 			ret = TRUE;

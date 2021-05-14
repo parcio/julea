@@ -157,7 +157,11 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 
 	if (result != NULL)
 	{
+#if GLIB_CHECK_VERSION(2, 68, 0)
+		*value = g_memdup2(result, result_len);
+#else
 		*value = g_memdup(result, result_len);
+#endif
 		*len = result_len;
 	}
 
