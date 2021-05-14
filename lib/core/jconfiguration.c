@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <jconfiguration.h>
+#include <jconfiguration-internal.h>
 
 #include <jbackend.h>
 #include <jtrace.h>
@@ -148,6 +149,38 @@ struct JConfiguration
 	gint ref_count;
 };
 
+static JConfiguration* j_config = NULL;
+
+/**
+ * Initializes the configuration.
+ */
+void
+j_configuration_init(void)
+{
+	JConfiguration* config;
+
+	g_return_if_fail(g_atomic_pointer_get(&j_config) == NULL);
+
+	config = j_configuration_new();
+	g_atomic_pointer_set(&j_config, config);
+}
+
+/**
+ * Shuts down the configuration.
+ */
+void
+j_configuration_fini(void)
+{
+	JConfiguration* config;
+
+	g_return_if_fail(g_atomic_pointer_get(&j_config) != NULL);
+
+	config = g_atomic_pointer_get(&j_config);
+	g_atomic_pointer_set(&j_config, NULL);
+
+	j_configuration_unref(config);
+}
+
 /**
  * Returns the configuration.
  *
@@ -156,15 +189,7 @@ struct JConfiguration
 JConfiguration*
 j_configuration(void)
 {
-	static JConfiguration* configuration = NULL;
-
-	if (g_atomic_pointer_get(&configuration) == NULL)
-	{
-		// FIXME never freed
-		g_atomic_pointer_compare_and_exchange(&configuration, (JConfiguration*)NULL, j_configuration_new());
-	}
-
-	return configuration;
+	return g_atomic_pointer_get(&j_config);
 }
 
 /**

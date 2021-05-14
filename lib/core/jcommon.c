@@ -27,6 +27,7 @@
 #include <jbackend.h>
 #include <jbackground-operation-internal.h>
 #include <jconfiguration.h>
+#include <jconfiguration-internal.h>
 #include <jconnection-pool-internal.h>
 #include <jdistribution-internal.h>
 #include <jlist.h>
@@ -103,6 +104,8 @@ j_init(void)
 	j_trace_init(basename);
 	trace = j_trace_enter(G_STRFUNC, NULL);
 
+	j_configuration_init();
+
 	if (j_configuration() == NULL)
 	{
 		goto error;
@@ -145,6 +148,7 @@ j_fini(void)
 	j_operation_cache_fini();
 	j_background_operation_fini();
 	j_connection_pool_fini();
+	j_configuration_fini();
 
 	j_inited = FALSE;
 
