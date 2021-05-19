@@ -21,6 +21,25 @@ $ ninja -C bld-release install
 
 Finally, you have to create a [configuration](configuration.md) if you do not have one already.
 
+## Using Specific Compilers
+
+JULEA and its dependencies can also be built using specific compilers instead of the default ones.
+The `install-dependencies.sh` script supports a `JULEA_SPACK_COMPILER` variable that can be used to set the compiler:
+
+```console
+$ export JULEA_SPACK_COMPILER=clang
+$ ./scripts/install-dependencies.sh
+```
+
+The compiler to use for JULEA can be configured using Meson by setting the `CC` variable:
+
+```console
+$ export CC=clang
+$ meson setup --prefix="${HOME}/julea-install" bld
+```
+
+It is important to note that the `JULEA_SPACK_COMPILER` variable refers to the compiler name used within Spack, while the `CC` variable refers to the compiler binary that should be used.
+
 ## Installation via Spack
 
 Alternatively, you can install JULEA using Spack, which will install JULEA and all of its dependencies:
