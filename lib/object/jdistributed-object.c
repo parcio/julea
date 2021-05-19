@@ -715,10 +715,16 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
+			gboolean lret = FALSE;
 			gpointer object_handle;
 
-			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
-			ret = j_backend_object_delete(object_backend, object_handle) && ret;
+			if (j_backend_object_open(object_backend, object->namespace, object->name, &object_handle)
+			    && j_backend_object_delete(object_backend, object_handle))
+			{
+				lret = TRUE;
+			}
+
+			ret = lret && ret;
 		}
 	}
 
