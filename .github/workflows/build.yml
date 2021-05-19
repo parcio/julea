@@ -40,6 +40,8 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        env:
+          JULEA_SPACK_COMPILER: ${{ matrix.compiler }}
         run: |
           ./scripts/install-dependencies.sh full
       - name: Configure

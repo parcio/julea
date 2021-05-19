@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='19c7188cbf90ac68252162099b249a5eea5688cc'
+	spack_commit='f9aa9290821ef835cc1d3fcf500d0607f2164848'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -164,6 +164,11 @@ spack_install_dependencies ()
 		if test -n "${CI}"
 		then
 			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
+		fi
+
+		if test -n "${JULEA_SPACK_COMPILER}"
+		then
+			spack_cmd config --scope site add "packages:all:compiler:[${JULEA_SPACK_COMPILER}]"
 		fi
 
 		spack_cmd mark --implicit --all

@@ -17,5 +17,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install dependencies
+        env:
+          JULEA_SPACK_COMPILER: ${{ matrix.compiler }}
         run: |
           ./scripts/install-dependencies.sh full
