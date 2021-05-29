@@ -313,7 +313,7 @@ H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const
 	{
 		j_goto_error();
 	}
-
+	j_hdf5_log(file->file.name, "a", 'C', NULL, object, parent);
 	return object;
 
 _error:
@@ -388,6 +388,7 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 		j_goto_error();
 	}
 
+	j_hdf5_log(file->file.name, "a", 'O', NULL, object, NULL);
 	return object;
 
 _error:
@@ -410,6 +411,7 @@ H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, voi
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
+	j_hdf5_log(object->group.file->file.name, "a", 'G', NULL, object, NULL);
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	g_assert_not_reached();
 }
@@ -462,6 +464,7 @@ H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req)
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
+	j_hdf5_log(object->group.file->file.name, "a", 'S', NULL, object, NULL); 
 	H5VL_julea_db_object_unref(object);
 
 	return 0;

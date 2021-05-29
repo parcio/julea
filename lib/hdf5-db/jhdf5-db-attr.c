@@ -354,6 +354,7 @@ H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 		j_goto_error();
 	}
 
+	j_hdf5_log(file->file.name, "a", 'C', NULL, object, parent);
 	return object;
 
 _error:
@@ -478,6 +479,7 @@ H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
+	j_hdf5_log(file->file.name, "a", 'O', NULL, object, parent);
 	return object;
 
 _error:
@@ -543,6 +545,7 @@ H5VL_julea_db_attr_read(void* obj, hid_t mem_type_id, void* buf, hid_t dxpl_id, 
 
 	memcpy(buf, tmp, bytes_read);
 
+	j_hdf5_log(object->attr.file->file.name, "a", 'R', NULL, object, NULL);
 	return 0;
 
 _error:
@@ -617,6 +620,7 @@ H5VL_julea_db_attr_write(void* obj, hid_t mem_type_id, const void* buf, hid_t dx
 		j_goto_error();
 	}
 
+	j_hdf5_log(object->attr.file->file.name, "a", 'W', NULL, object, NULL);
 	return 0;
 
 _error:
@@ -651,6 +655,7 @@ H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void*
 			g_assert_not_reached();
 	}
 
+	j_hdf5_log(object->attr.file->file.name, "a", 'G', NULL, object, NULL);
 	return 0;
 }
 
@@ -703,6 +708,7 @@ H5VL_julea_db_attr_close(void* obj, hid_t dxpl_id, void** req)
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 
+	j_hdf5_log(object->attr.file->file.name, "a", 'S', NULL, object, NULL);
 	H5VL_julea_db_object_unref(object);
 
 	return 0;

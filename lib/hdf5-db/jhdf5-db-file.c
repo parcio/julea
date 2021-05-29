@@ -281,6 +281,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		}
 	}
 
+	j_hdf5_log(object->file.name, "w", 'C', exist ? "truncated" : NULL, object, NULL);
 	return object;
 
 _error:
@@ -351,6 +352,7 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
+        j_hdf5_log(object->file.name, "a", 'O', NULL, object, NULL);
 	return object;
 
 _error:
@@ -374,6 +376,7 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
+	j_hdf5_log(object->file.name, "a", 'G', NULL, object, NULL);
 	g_critical("%s NOT implemented !!", G_STRLOC);
 	g_assert_not_reached();
 }
@@ -426,6 +429,7 @@ H5VL_julea_db_file_close(void* obj, hid_t dxpl_id, void** req)
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
+	j_hdf5_log(object->file.name, "a", 'S', "file closed", object, NULL);
 	H5VL_julea_db_object_unref(object);
 
 	return 0;

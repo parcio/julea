@@ -369,3 +369,166 @@ j_hdf5_set_semantics(JSemantics* semantics)
 
 	//FIXME implement this
 }
+
+
+#define JULEA_LOGFILE_ENDING "_JULEA_LOG.log"
+char* j_get_logname(const char *filename){
+	//filename = replacestring(replacestring(filename, "\\", "/"), "//", "/");
+	filename = j_helper_str_replace(j_helper_str_replace(filename, "\\", "/"), "//", "/");
+	char *name = malloc(strlen(filename)*sizeof(char));
+	if(strcmp(filename+strlen(filename)-1, "/") == 0){
+		sprintf(name, "%d%s", rand(), JULEA_LOGFILE_ENDING);
+		strcat(filename, name);
+	} else {
+		char *oldname = strrchr(filename, '/');
+		//printf("%s\n", oldname == NULL ? "filename" : "oldname");
+		char *last = strrchr(oldname == NULL ? filename : oldname+1, '.');
+		if(last){
+			//filename = replacestring(filename, last, JULEA_LOGFILE_ENDING);
+			filename = j_helper_str_replace(filename, last, JULEA_LOGFILE_ENDING);
+		} else {
+			strcat(filename, JULEA_LOGFILE_ENDING);
+		}
+	}
+	free(name);
+	return filename;
+}
+
+static void j_hdf5_log(char* _filename, char *mode, char operation, const char *message, JHDF5Object_t *object, JHDF5Object_t *parent){
+	const char *logtypes = getenv("JULEA_HDF5_LOG_TYPES");
+	const char *logoperations = getenv("JULEA_HDF5_LOG_OPERATIONS");
+	const char *logvariant = getenv("JULEA_HDF5_LOG_VARIANT");
+
+	//printf("logtypes: %s, logoperations: %s, logvariant: %s\n", logtypes, logoperations, logvariant);
+	if(logtypes == NULL || logoperations == NULL || logvariant == NULL){
+		//printf("environment variables not set\n");
+		return;
+	}
+
+	char *filename = strdup(_filename);
+
+	//printf("oldname: %s\n", filename);
+	filename = j_get_logname(filename);
+	//printf("newname: %s\n", filename);
+	if(!object)
+		return;
+
+	char objecttype = ' ';
+	char *name = NULL;
+	char *parentname = NULL;
+	if(parent != NULL){
+		switch(parent->type)
+		{
+			case J_HDF5_OBJECT_TYPE_FILE:
+				parentname = strdup(parent->file.name);
+				break;
+			case J_HDF5_OBJECT_TYPE_DATASET:
+				parentname = strdup(parent->dataset.name);
+				break;
+			case J_HDF5_OBJECT_TYPE_ATTR:
+				parentname = strdup(parent->attr.name);
+				break;
+			case J_HDF5_OBJECT_TYPE_GROUP:
+				parentname = strdup(parent->group.name);
+				break;
+		}
+	}
+
+	switch(object->type)
+	{
+		case J_HDF5_OBJECT_TYPE_FILE:
+			objecttype = 'F';
+			name = strdup(object->file.name);
+			break;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			objecttype = 'D';
+			name = strdup(object->dataset.name);
+			break;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			objecttype = 'A';
+			name = strdup(object->attr.name);
+			break;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			objecttype = 'G';
+			name = strdup(object->group.name);
+			break;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+			objecttype = 'T';
+			name = "A datatype has no name";
+			break;
+		case J_HDF5_OBJECT_TYPE_SPACE:
+			objecttype = 'S';
+			name = "A space has no name";
+			break;
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+			objecttype = 'C';
+			name = "A count has no name";
+			break;
+		default:
+			printf("J_HDF5_OBJECT_TYPE '%i' not definded\n", object->type);
+			g_assert_not_reached();
+			j_goto_error();
+	}
+
+	if(((strcmp(logtypes, "All") == 0 || strchr(logtypes, objecttype)) && (strcmp(logoperations, "All") == 0 || strchr(logoperations, operation))) || (strcmp(logvariant, "G") == 0 && objecttype == 'F' && operation == 'C' || operation == 'S')){
+		if(strcmp(logvariant, "F") == 0){
+			FILE *fp = fopen(filename, mode);
+			if(fp == NULL){
+				g_debug("JULEA logfile \"%s\" could not be opened\n", filename);
+			} else{
+				 if(operation == 'C' && objecttype != 'F')
+					fprintf(fp, "[%c]\t[%c - %s(%i) -> %s(%i)]\t%s\n", operation, objecttype, parentname, *(const gint32*) parent->backend_id, name, *(const gint32*) object->backend_id, message ? message : "");
+				else
+					fprintf(fp, "[%c]\t[%c - %s(%i)]\t%s\n", operation, objecttype, name,*(const gint32*) object->backend_id, message ? message : "");
+				fclose(fp);
+			}
+		}
+		if(strcmp(logvariant, "G") == 0){
+			FILE *fp = fopen(filename, mode);
+			if(fp == NULL){
+				g_debug("JULEA logfile \"%s\" could not be opened\n", filename);
+			} else {
+				switch(operation)
+				{
+					case 'C':
+						if(objecttype == 'F'){
+							fprintf(fp, "digraph g { \"%s%i\" [label=\"/\"];\n", name, *(const gint32*) object->backend_id);
+						} else{
+							const char *linkformat =  "\"%s%i\" -> \"%s%i\" [label=\"%s\"%s];\n";
+							const char *labelformat = "\"%s%i\" [label=\"%s\"%s];\n";
+							char *linkstyle = NULL;
+							char *labelstyle = NULL;
+							if(objecttype == 'A'){
+								linkstyle = ", style=dotted";
+							} else if(objecttype == 'D'){
+								labelstyle = ", shape=box";
+							}
+							fprintf(fp, labelformat, name, *(const gint32*) object->backend_id, "", labelstyle ? labelstyle : ""); 
+							fprintf(fp, linkformat, parentname,*(const gint32*) parent->backend_id, name, *(const gint32*) object->backend_id, name, linkstyle ? linkstyle : "");
+						}
+						break;
+					case 'W':
+						fprintf(fp, "\"%s%i\" [style=filled];\n", name, *(const gint32*) object->backend_id);
+						break;
+					case 'S':
+						if(objecttype == 'F')
+							fprintf(fp, "}");
+						break;
+				}
+				fclose(fp);
+			}
+		}
+		if(strcmp(logvariant, "D") == 0){
+			g_debug("[%c]\t[%c - %s]\t%s\n", operation, objecttype, name, message ? message : "");
+		}
+	}
+
+	free(name);
+	free(filename);
+	if(parentname)
+		free(parentname);
+	return;
+_error:
+	g_debug("j_hdf5_log HDF5_OBJECTTYPE '%i' not defined", object->type);
+	return;
+}
