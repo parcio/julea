@@ -1,7 +1,6 @@
 # JULEA
 
 [![Format](https://github.com/julea-io/julea/workflows/Format/badge.svg)](https://github.com/julea-io/julea/actions)
-[![Build](https://github.com/julea-io/julea/workflows/Build/badge.svg)](https://github.com/julea-io/julea/actions)
 [![Tests](https://github.com/julea-io/julea/workflows/Tests/badge.svg)](https://github.com/julea-io/julea/actions)
 [![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions)
 

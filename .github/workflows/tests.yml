@@ -1,14 +1,97 @@
 name: Tests
 on: [push, pull_request]
 jobs:
-  tests:
-    name: Tests
+  dependencies:
+    name: Dependencies
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+        compiler: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          JULEA_SPACK_COMPILER: ${{ matrix.compiler }}
+        run: |
+          ./scripts/install-dependencies.sh full
+  build:
+    name: Build
+    needs: dependencies
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
+        dependencies: [system, spack]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Install dependencies
+        if: matrix.dependencies == 'system'
+        # We need to remove glib-network, otherwise libproxy might cause crashes.
+        run: |
+          sudo apt --yes purge glib-networking
+          sudo apt --yes --purge autoremove
+          sudo aa-remove-unknown
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev
+          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          then
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+            sudo pip3 install meson
+          else
+            sudo apt --yes --no-install-recommends install meson ninja-build
+          fi
+      - name: Cache dependencies
+        id: cache
+        if: matrix.dependencies == 'spack'
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Check dependencies
+        if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        run: |
+          exit 1
+      - name: Configure
+        env:
+          CC: ${{ matrix.compiler }}
+        run: |
+          . scripts/environment.sh
+          meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
+      - name: Build
+        run: |
+          . scripts/environment.sh
+          ninja -C bld
+      - name: Install
+        run: |
+          . scripts/environment.sh
+          ninja -C bld install
+  tests:
+    name: Tests
+    needs: dependencies
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+        compiler: [gcc, clang]
+        dependencies: [system, spack]
         name:
           # Default
           - posix-lmdb-sqlite
@@ -63,6 +146,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install dependencies
+        if: matrix.dependencies == 'system'
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
           sudo apt --yes purge glib-networking
@@ -77,6 +161,17 @@ jobs:
           else
             sudo apt --yes --no-install-recommends install meson ninja-build
           fi
+      - name: Cache dependencies
+        id: cache
+        if: matrix.dependencies == 'spack'
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Check dependencies
+        if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        run: |
+          exit 1
       - name: Set up MySQL
         if: matrix.db == 'mysql' && matrix.db-server == 'mysql'
         run: |
@@ -108,6 +203,7 @@ jobs:
           CC: ${{ matrix.compiler }}
         # FIXME Ubuntu 18.04's GCC sanitizer seems to produce false positives regarding a stack overflow in the db client.
         run: |
+          . scripts/environment.sh
           if test "${{ matrix.compiler }}" = 'clang'
           then
             meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
@@ -119,6 +215,7 @@ jobs:
           fi
       - name: Build
         run: |
+          . scripts/environment.sh
           ninja -C bld
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
@@ -131,6 +228,7 @@ jobs:
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
+          . scripts/environment.sh
           ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
