@@ -6,6 +6,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 180
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
@@ -32,6 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
@@ -88,6 +90,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         compiler: [gcc, clang]
