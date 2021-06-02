@@ -418,6 +418,8 @@ j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error)
 		}
 	}
 
+	j_db_schema_add_field(schema, "_id", J_DB_TYPE_UINT32, error);
+
 	schema->server_side = TRUE;
 
 	if (G_UNLIKELY(!j_db_internal_schema_create(schema, batch, error)))

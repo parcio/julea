@@ -166,7 +166,7 @@ H5VL_julea_db_space_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				if (!j_db_schema_add_field(julea_db_schema_space, "dim_id", J_DB_TYPE_ID, &error))
+				if (!j_db_schema_add_field(julea_db_schema_space, "dim_id", J_DB_TYPE_UINT32, &error))
 				{
 					j_goto_error();
 				}

@@ -698,6 +698,16 @@ backend_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 			break;
 		}
 
+		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_id", &equals, error)))
+		{
+			goto _error;
+		}
+
+		if (equals)
+		{
+			continue;
+		}
+
 		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
 		{
 			goto _error;
