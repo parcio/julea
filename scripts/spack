@@ -119,11 +119,13 @@ spack_get_dependencies ()
 		dependencies="${dependencies} mariadb-c-client"
 		dependencies="${dependencies} rocksdb"
 
+		dependencies="${dependencies} libfuse@2.9.9"
+		dependencies="${dependencies} otf"
+
 		# FIXME move to minimal
 		dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 		#dependencies="${dependencies} mpi"
-		dependencies="${dependencies} otf"
 	fi
 
 	printf '%s' "${dependencies}"
