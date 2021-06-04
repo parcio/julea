@@ -123,7 +123,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 		#dependencies="${dependencies} mpi"
-		#dependencies="${dependencies} otf"
+		dependencies="${dependencies} otf"
 	fi
 
 	printf '%s' "${dependencies}"

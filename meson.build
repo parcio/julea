@@ -269,6 +269,26 @@ if not rocksdb_dep.found()
 	)
 endif
 
+otf_dep = dependency('',
+	required: false,
+)
+
+# FIXME This should use Meson's config-tool
+# FIXME Add some status output
+otf_config = find_program('otfconfig',
+	required: false,
+)
+
+if otf_config.found()
+	otf_cflags = run_command(otf_config, '--includes').stdout().strip().split()
+	otf_libs = run_command(otf_config, '--libs').stdout().strip().split()
+
+	otf_dep = declare_dependency(
+		compile_args: otf_cflags,
+		link_args: otf_libs,
+	)
+endif
+
 # Compiler checks
 
 stmtim_tvnsec_check = cc.has_member('struct stat', 'st_mtim.tv_nsec',
@@ -316,7 +336,9 @@ if hdf_dep.found()
 	julea_conf.set('HAVE_HDF5', 1)
 endif
 
-# FIXME HAVE_OTF
+if otf_dep.found()
+	julea_conf.set('HAVE_OTF', 1)
+endif
 
 if stmtim_tvnsec_check
 	julea_conf.set('HAVE_STMTIM_TVNSEC', 1)
@@ -333,7 +355,7 @@ configure_file(
 
 # Build
 
-common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep]
+common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, otf_dep]
 
 # FIXME Remove core directory
 julea_incs = include_directories([
