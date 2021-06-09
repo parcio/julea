@@ -26,6 +26,8 @@
 
 #include "test.h"
 
+#define EPS 0.000000001
+
 static void
 test_db_schema_new_free(void)
 {
@@ -416,6 +418,10 @@ entry_update(void)
 	g_autoptr(JDBSelector) selector = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	g_autoptr(JDBIterator) it = NULL;
+	gpointer val = NULL;
+	JDBType type;
+	guint64 val_length;
 
 	gchar const* file = "demo.bp";
 	gchar const* name = "temperature";
@@ -455,6 +461,32 @@ entry_update(void)
 	g_assert_no_error(error);
 	success = j_batch_execute(batch);
 	g_assert_true(success);
+
+	// test if values were actually updated
+
+	it = j_db_iterator_new(schema, selector, &error);
+	g_assert_nonnull(it);
+	g_assert_no_error(error);
+
+	while (j_db_iterator_next(it, &error))
+	{
+		g_assert_no_error(error);
+		success = j_db_iterator_get_field(it, "min", &type, &val, &val_length, &error);
+		g_assert_true(success);
+		g_assert_no_error(error);
+		g_assert_cmpfloat_with_epsilon(*(double*)val, 2.0, EPS);
+		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
+		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
+		g_free(val);
+		success = j_db_iterator_get_field(it, "max", &type, &val, &val_length, &error);
+		g_assert_true(success);
+		g_assert_no_error(error);
+		g_assert_cmpfloat_with_epsilon(*(double*)val, 22.0, EPS);
+		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
+		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
+		g_free(val);
+	}
+
 }
 
 static void
