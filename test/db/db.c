@@ -20,6 +20,7 @@
 #include <julea-config.h>
 
 #include <glib.h>
+#include <math.h>
 
 #include <julea.h>
 #include <julea-db.h>
@@ -474,14 +475,16 @@ entry_update(void)
 		success = j_db_iterator_get_field(it, "min", &type, &val, &val_length, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		g_assert_cmpfloat_with_epsilon(*(double*)val, 2.0, EPS);
+		//g_assert_cmpfloat_with_epsilon(*(double*)val, 2.0, EPS);
+		g_assert_cmpfloat(fabs(*(double*)val - 2.0), <, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
 		g_free(val);
 		success = j_db_iterator_get_field(it, "max", &type, &val, &val_length, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		g_assert_cmpfloat_with_epsilon(*(double*)val, 22.0, EPS);
+		g_assert_cmpfloat(fabs(*(double*)val - 22.0), <, EPS);
+		//g_assert_cmpfloat_with_epsilon(*(double*)val, 22.0, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
 		g_free(val);
