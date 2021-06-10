@@ -27,7 +27,7 @@
 
 #include "test.h"
 
-#define EPS 0.000000001
+#define EPS 1e-9
 
 static void
 test_db_schema_new_free(void)
@@ -136,8 +136,17 @@ test_db_entry_insert_update_delete(void)
 {
 	guint const n = 1000;
 
-	gchar const* file = "demo.bp";
-	guint64 dim = 4;
+	gchar const* str = "demo.bp";
+	gint32 si32 = -42;
+	guint32 ui32 = 42;
+	gint64 si64 = -84;
+	guint64 ui64 = 4;
+	gfloat fl32 = 1.337;
+	gdouble fl64 = 42.42;
+	guint8 blob[5] = { 1, 2, 3, 4, 5 };
+	gpointer val;
+	JDBType type;
+	guint64 length;
 
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -145,6 +154,7 @@ test_db_entry_insert_update_delete(void)
 	g_autoptr(JDBEntry) update_entry = NULL;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
 	gboolean ret;
 
 	schema = j_db_schema_new("test-ns", "test-schema", &error);
@@ -155,7 +165,31 @@ test_db_entry_insert_update_delete(void)
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
-	ret = j_db_schema_add_field(schema, "uint-0", J_DB_TYPE_UINT64, &error);
+	ret = j_db_schema_add_field(schema, "sint32-0", J_DB_TYPE_SINT32, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "uint32-0", J_DB_TYPE_UINT32, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "sint64-0", J_DB_TYPE_SINT64, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "uint64-0", J_DB_TYPE_UINT64, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "float32-0", J_DB_TYPE_FLOAT32, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "float64-0", J_DB_TYPE_FLOAT64, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+
+	ret = j_db_schema_add_field(schema, "blob-0", J_DB_TYPE_BLOB, &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
@@ -175,11 +209,35 @@ test_db_entry_insert_update_delete(void)
 		g_assert_nonnull(entry);
 		g_assert_no_error(error);
 
-		ret = j_db_entry_set_field(entry, "string-0", file, strlen(file), &error);
+		ret = j_db_entry_set_field(entry, "string-0", str, strlen(str), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		ret = j_db_entry_set_field(entry, "uint-0", &dim, sizeof(dim), &error);
+		ret = j_db_entry_set_field(entry, "sint32-0", &si32, sizeof(si32), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "uint32-0", &ui32, sizeof(ui32), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "sint64-0", &si64, sizeof(si64), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "uint64-0", &ui64, sizeof(ui64), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "float32-0", &fl32, sizeof(fl32), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "float64-0", &fl64, sizeof(fl64), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+
+		ret = j_db_entry_set_field(entry, "blob-0", blob, sizeof(blob), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
@@ -191,20 +249,91 @@ test_db_entry_insert_update_delete(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
+	// check all written values
+
 	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector);
 	g_assert_no_error(error);
 
-	ret = j_db_selector_add_field(selector, "string-0", J_DB_SELECTOR_OPERATOR_EQ, file, strlen(file), &error);
+	ret = j_db_selector_add_field(selector, "string-0", J_DB_SELECTOR_OPERATOR_EQ, str, strlen(str), &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
+
+	iterator = j_db_iterator_new(schema, selector, &error);
+	g_assert_nonnull(iterator);
+	g_assert_no_error(error);
+
+	while (j_db_iterator_next(iterator, &error))
+	{
+		g_assert_no_error(error);
+
+		ret = j_db_iterator_get_field(iterator, "string-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpstr((gchar*)val, ==, str);
+		g_assert_cmpint(type, ==, J_DB_TYPE_STRING);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "sint32-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpint(*(gint32*)val, ==, si32);
+		g_assert_cmpint(type, ==, J_DB_TYPE_SINT32);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "uint32-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpuint(*(guint32*)val, ==, ui32);
+		g_assert_cmpint(type, ==, J_DB_TYPE_UINT32);
+
+		ret = j_db_iterator_get_field(iterator, "sint64-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpint(*(gint64*)val, ==, si64);
+		g_assert_cmpint(type, ==, J_DB_TYPE_SINT64);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "uint64-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpuint(*(guint64*)val, ==, ui64);
+		g_assert_cmpint(type, ==, J_DB_TYPE_UINT64);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "float32-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpfloat(fabs(*(gfloat*)val - fl32), <, EPS);
+		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT32);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "float64-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpfloat(fabs(*(gdouble*)val - fl64), <, EPS);
+		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
+		g_free(val);
+
+		ret = j_db_iterator_get_field(iterator, "blob-0", &type, &val, &length, &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		g_assert_cmpmem((guint8*)val, length, blob, sizeof(blob));
+		g_assert_cmpint(type, ==, J_DB_TYPE_BLOB);
+		g_free(val);
+	}
+
+	g_error_free(error);
+	error = NULL;
+
+	// update values
 
 	update_entry = j_db_entry_new(schema, &error);
 	g_assert_nonnull(update_entry);
 	g_assert_no_error(error);
 
-	dim = 3;
-	ret = j_db_entry_set_field(update_entry, "uint-0", &dim, sizeof(dim), &error);
+	ui32 = 3;
+	ret = j_db_entry_set_field(update_entry, "uint32-0", &ui32, sizeof(ui32), &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
 
@@ -215,6 +344,8 @@ test_db_entry_insert_update_delete(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 	g_assert_no_error(error);
+
+	// delete new entry
 
 	delete_entry = j_db_entry_new(schema, &error);
 	g_assert_nonnull(delete_entry);
@@ -227,6 +358,8 @@ test_db_entry_insert_update_delete(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 	g_assert_no_error(error);
+
+	// delete schema
 
 	ret = j_db_schema_delete(schema, batch, &error);
 	g_assert_true(ret);
@@ -475,7 +608,7 @@ entry_update(void)
 		success = j_db_iterator_get_field(it, "min", &type, &val, &val_length, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		//g_assert_cmpfloat_with_epsilon(*(double*)val, 2.0, EPS);
+		// g_assert_cmpfloat_with_epsilon(*(double*)val, 2.0, EPS);
 		g_assert_cmpfloat(fabs(*(double*)val - 2.0), <, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
@@ -484,12 +617,11 @@ entry_update(void)
 		g_assert_true(success);
 		g_assert_no_error(error);
 		g_assert_cmpfloat(fabs(*(double*)val - 22.0), <, EPS);
-		//g_assert_cmpfloat_with_epsilon(*(double*)val, 22.0, EPS);
+		// g_assert_cmpfloat_with_epsilon(*(double*)val, 22.0, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_assert_cmpuint(val_length, ==, sizeof(gdouble));
 		g_free(val);
 	}
-
 }
 
 static void
