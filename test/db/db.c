@@ -132,6 +132,72 @@ test_db_entry_new_free(void)
 }
 
 static void
+test_db_invalid_schema_get(void)
+{
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	schema = j_db_schema_new("test-ns", "non-existant", NULL);
+	
+	res = j_db_schema_get(schema, batch, &error);
+	g_assert_true(res);
+
+	res = j_batch_execute(batch);
+	g_assert_false(res);
+	g_assert_nonnull(error);
+	g_error_free(error);
+}
+
+static void
+test_db_invalid_entry_set(void)
+{
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res;
+	gint64 val = 42;
+
+	schema = j_db_schema_new("test-ns", "test", NULL);
+	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	entry = j_db_entry_new(schema, NULL);
+
+	res = j_db_entry_set_field(entry, "not-existant", &val, sizeof(gint64), &error);
+	g_assert_false(res);
+	g_assert_nonnull(error);
+	g_error_free(error);
+}
+
+static void
+test_db_invalid_entry_insert(void)
+{
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res;
+	gint64 val = 42;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	schema = j_db_schema_new("test-ns", "test", NULL);
+	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	
+	entry = j_db_entry_new(schema, NULL);
+	j_db_entry_set_field(entry, "test-si64", &val, sizeof(gint64), NULL);
+
+	res = j_db_entry_insert(entry, batch, &error);
+	g_assert_true(res);
+
+	res = j_batch_execute(batch);
+	g_assert_false(res);
+	g_assert_nonnull(error);
+}
+
+static void
 test_db_entry_insert_update_delete(void)
 {
 	guint const n = 1000;
@@ -705,7 +771,10 @@ test_db_db(void)
 	// FIXME add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);
 	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
+	g_test_add_func("/db/schema/invalid_get", test_db_invalid_schema_get);
 	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);
 	g_test_add_func("/db/entry/insert_update_delete", test_db_entry_insert_update_delete);
+	g_test_add_func("/db/entry/invalid_insert", test_db_invalid_entry_insert);
+	g_test_add_func("/db/entry/invalid_set", test_db_invalid_entry_set);
 	g_test_add_func("/db/all", test_db_all);
 }
