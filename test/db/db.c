@@ -149,7 +149,6 @@ test_db_invalid_schema_get(void)
 	res = j_batch_execute(batch);
 	g_assert_false(res);
 	g_assert_nonnull(error);
-	g_error_free(error);
 }
 
 static void
@@ -168,7 +167,6 @@ test_db_invalid_entry_set(void)
 	res = j_db_entry_set_field(entry, "not-existant", &val, sizeof(gint64), &error);
 	g_assert_false(res);
 	g_assert_nonnull(error);
-	g_error_free(error);
 }
 
 static void
