@@ -142,7 +142,7 @@ test_db_invalid_schema_get(void)
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	schema = j_db_schema_new("test-ns", "non-existant", NULL);
-	
+
 	res = j_db_schema_get(schema, batch, &error);
 	g_assert_true(res);
 
@@ -183,7 +183,7 @@ test_db_invalid_entry_insert(void)
 
 	schema = j_db_schema_new("test-ns", "test", NULL);
 	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
-	
+
 	entry = j_db_entry_new(schema, NULL);
 	j_db_entry_set_field(entry, "test-si64", &val, sizeof(gint64), NULL);
 
