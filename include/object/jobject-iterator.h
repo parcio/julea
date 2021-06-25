@@ -31,18 +31,75 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JObjectIterator Object Iterator
+ *
+ * Data structures and functions for iterating over stores.
+ *
+ * @{
+ **/
+
 struct JObjectIterator;
 
 typedef struct JObjectIterator JObjectIterator;
 
-JObjectIterator* j_object_iterator_new(gchar const*, gchar const*);
-JObjectIterator* j_object_iterator_new_for_index(guint32, gchar const*, gchar const*);
-void j_object_iterator_free(JObjectIterator*);
+/**
+ * Creates a new JObjectIterator.
+ *
+ * \param namespace The namespace to iterate over.
+ * \param prefix Prefix of names to iterate over. Set to NULL to iterate over all objects in the namespace.
+ *
+ * \return A new JObjectIterator.
+ **/
+JObjectIterator* j_object_iterator_new(gchar const* namespace, gchar const* prefix);
+
+/**
+ * Creates a new JObjectIterator on a specific object server.
+ *
+ * \param index Server to query.
+ * \param namespace JKV namespace to iterate over.
+ * \param prefix Prefix of names to iterate over. Set to NULL to iterate over all objects in the namespace.
+ * 
+ * \return A new JObjectIterator.
+ **/
+JObjectIterator* j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* prefix);
+
+/**
+ * Frees the memory allocated by the JObjectIterator.
+ *
+ * \param iterator A JObjectIterator.
+ **/
+void j_object_iterator_free(JObjectIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObjectIterator, j_object_iterator_free)
 
-gboolean j_object_iterator_next(JObjectIterator*);
-gchar const* j_object_iterator_get(JObjectIterator*);
+/**
+ * Checks whether another collection is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the store is reached.
+ **/
+gboolean j_object_iterator_next(JObjectIterator* iterator);
+
+/**
+ * Returns the current collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return A new collection. Should be freed with j_object_unref().
+ **/
+gchar const* j_object_iterator_get(JObjectIterator* iterator);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

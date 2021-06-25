@@ -31,9 +31,7 @@
 #include <julea.h>
 
 /**
- * \defgroup JObjectIterator Object Iterator
- *
- * Data structures and functions for iterating over stores.
+ * \addtogroup JObjectIterator
  *
  * @{
  **/
@@ -101,13 +99,6 @@ fetch_reply(guint32 index, gchar const* namespace, gchar const* prefix)
 	return reply;
 }
 
-/**
- * Creates a new JObjectIterator.
- *
- * \param store A JStore.
- *
- * \return A new JObjectIterator.
- **/
 JObjectIterator*
 j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 {
@@ -194,11 +185,6 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by the JObjectIterator.
- *
- * \param iterator A JObjectIterator.
- **/
 void
 j_object_iterator_free(JObjectIterator* iterator)
 {
@@ -219,16 +205,6 @@ j_object_iterator_free(JObjectIterator* iterator)
 	g_slice_free(JObjectIterator, iterator);
 }
 
-/**
- * Checks whether another collection is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return TRUE on success, FALSE if the end of the store is reached.
- **/
 gboolean
 j_object_iterator_next(JObjectIterator* iterator)
 {
@@ -261,16 +237,6 @@ j_object_iterator_next(JObjectIterator* iterator)
 	return ret;
 }
 
-/**
- * Returns the current collection.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return A new collection. Should be freed with j_object_unref().
- **/
 gchar const*
 j_object_iterator_get(JObjectIterator* iterator)
 {

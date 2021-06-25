@@ -33,9 +33,7 @@
 #include <julea.h>
 
 /**
- * \defgroup JDistributedObject Distributed Object
- *
- * Data structures and functions for managing objects.
+ * \addtogroup JDistributedObject
  *
  * @{
  **/
@@ -1325,22 +1323,6 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-/**
- * Creates a new object.
- *
- * \code
- * JDistributedObject* i;
- * JDistribution d;
- *
- * i = j_distributed_object_new("JULEA", "JULEA", d);
- * \endcode
- *
- * \param namespace    A namespace.
- * \param name         An object name.
- * \param distribution A distribution.
- *
- * \return A new object. Should be freed with j_distributed_object_unref().
- **/
 JDistributedObject*
 j_distributed_object_new(gchar const* namespace, gchar const* name, JDistribution* distribution)
 {
@@ -1361,19 +1343,6 @@ j_distributed_object_new(gchar const* namespace, gchar const* name, JDistributio
 	return object;
 }
 
-/**
- * Increases an object's reference count.
- *
- * \code
- * JDistributedObject* i;
- *
- * j_distributed_object_ref(i);
- * \endcode
- *
- * \param object An object.
- *
- * \return #object.
- **/
 JDistributedObject*
 j_distributed_object_ref(JDistributedObject* object)
 {
@@ -1386,15 +1355,6 @@ j_distributed_object_ref(JDistributedObject* object)
 	return object;
 }
 
-/**
- * Decreases an object's reference count.
- * When the reference count reaches zero, frees the memory allocated for the object.
- *
- * \code
- * \endcode
- *
- * \param object An object.
- **/
 void
 j_distributed_object_unref(JDistributedObject* object)
 {
@@ -1413,18 +1373,6 @@ j_distributed_object_unref(JDistributedObject* object)
 	}
 }
 
-/**
- * Creates an object.
- *
- * \code
- * \endcode
- *
- * \param name         A name.
- * \param distribution A distribution.
- * \param batch        A batch.
- *
- * \return A new object. Should be freed with j_distributed_object_unref().
- **/
 void
 j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 {
@@ -1444,15 +1392,6 @@ j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Deletes an object.
- *
- * \code
- * \endcode
- *
- * \param object     An object.
- * \param batch      A batch.
- **/
 void
 j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 {
@@ -1471,19 +1410,6 @@ j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Reads an object.
- *
- * \code
- * \endcode
- *
- * \param object     An object.
- * \param data       A buffer to hold the read data.
- * \param length     Number of bytes to read.
- * \param offset     An offset within #object.
- * \param bytes_read Number of bytes read.
- * \param batch      A batch.
- **/
 void
 j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
@@ -1530,22 +1456,6 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 	*bytes_read = 0;
 }
 
-/**
- * Writes an object.
- *
- * \note
- * j_distributed_object_write() modifies bytes_written even if j_batch_execute() is not called.
- *
- * \code
- * \endcode
- *
- * \param object        An object.
- * \param data          A buffer holding the data to write.
- * \param length        Number of bytes to write.
- * \param offset        An offset within #object.
- * \param bytes_written Number of bytes written.
- * \param batch         A batch.
- **/
 void
 j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
@@ -1592,15 +1502,6 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 	*bytes_written = 0;
 }
 
-/**
- * Get the status of an object.
- *
- * \code
- * \endcode
- *
- * \param object    An object.
- * \param batch     A batch.
- **/
 void
 j_distributed_object_status(JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
@@ -1625,15 +1526,6 @@ j_distributed_object_status(JDistributedObject* object, gint64* modification_tim
 	j_batch_add(batch, operation);
 }
 
-/**
- * Sync an object.
- *
- * \code
- * \endcode
- *
- * \param object    An object.
- * \param batch     A batch.
- **/
 void
 j_distributed_object_sync(JDistributedObject* object, JBatch* batch)
 {

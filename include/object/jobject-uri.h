@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 /**
- * \addtogroup JObjectURI
+ * \defgroup JObjectURI Object URI
  *
  * @{
  **/
@@ -62,17 +62,123 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JObjectURI* j_object_uri_new(gchar const*, JObjectURIScheme);
-void j_object_uri_free(JObjectURI*);
+/**
+ * Creates a new URI.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * uri = j_object_uri_new("julea://foo/bar");
+ * \endcode
+ *
+ * \param uri_ A URI string.
+ * \param scheme A JObjectURIScheme.
+ *
+ * \return A new URI. Should be freed with j_object_uri_free().
+ **/
+JObjectURI* j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme);
+
+/**
+ * Frees the memory allocated by a URI.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * j_object_uri_free(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ **/
+void j_object_uri_free(JObjectURI* uri);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObjectURI, j_object_uri_free)
 
-guint32 j_object_uri_get_index(JObjectURI*);
-gchar const* j_object_uri_get_namespace(JObjectURI*);
-gchar const* j_object_uri_get_name(JObjectURI*);
+/**
+ * Returns the index.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_collection_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The index.
+ **/
+guint32 j_object_uri_get_index(JObjectURI* uri);
 
-JDistributedObject* j_object_uri_get_distributed_object(JObjectURI*);
-JObject* j_object_uri_get_object(JObjectURI*);
+/**
+ * Returns the namespace.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_collection_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The namespace.
+ **/
+gchar const* j_object_uri_get_namespace(JObjectURI* uri);
+
+/**
+ * Returns the name.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_item_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The name.
+ **/
+gchar const* j_object_uri_get_name(JObjectURI* uri);
+
+/**
+ * Returns the object.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_object(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The object.
+ **/
+JDistributedObject* j_object_uri_get_distributed_object(JObjectURI* uri);
+
+/**
+ * Returns the object.
+ *
+ * \code
+ * JObjectURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_object_uri_get_object(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The object.
+ **/
+JObject* j_object_uri_get_object(JObjectURI* uri);
 
 /**
  * @}
