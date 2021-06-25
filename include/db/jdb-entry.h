@@ -53,7 +53,6 @@ G_BEGIN_DECLS
  *
  * \return the new entry or NULL on failure
  **/
-
 JDBEntry* j_db_entry_new(JDBSchema* schema, GError** error);
 
 /**
@@ -64,7 +63,6 @@ JDBEntry* j_db_entry_new(JDBSchema* schema, GError** error);
  *
  * \return the entry or NULL on failure
  **/
-
 JDBEntry* j_db_entry_ref(JDBEntry* entry);
 
 /**
@@ -72,7 +70,6 @@ JDBEntry* j_db_entry_ref(JDBEntry* entry);
  *
  * \param[in] entry the entry to decrease the ref_count
  **/
-
 void j_db_entry_unref(JDBEntry* entry);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBEntry, j_db_entry_unref)
@@ -95,7 +92,6 @@ gboolean j_db_entry_get_id(JDBEntry* entry, gpointer* value, guint64* length, GE
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer value, guint64 length, GError** error);
 
 /**
@@ -112,7 +108,6 @@ gboolean j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer 
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error);
 
 /**
@@ -132,7 +127,6 @@ gboolean j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error);
 
 /**
@@ -149,7 +143,6 @@ gboolean j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_entry_delete(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError** error);
 
 G_END_DECLS

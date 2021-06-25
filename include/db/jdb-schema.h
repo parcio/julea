@@ -58,7 +58,6 @@ G_BEGIN_DECLS
  *
  * \return the new schema or NULL on failure
  **/
-
 JDBSchema* j_db_schema_new(gchar const* namespace_, gchar const* name, GError** error);
 
 /**
@@ -69,7 +68,6 @@ JDBSchema* j_db_schema_new(gchar const* namespace_, gchar const* name, GError** 
  *
  * \return the schema or NULL on failure
  **/
-
 JDBSchema* j_db_schema_ref(JDBSchema* schema);
 
 /**
@@ -77,7 +75,6 @@ JDBSchema* j_db_schema_ref(JDBSchema* schema);
  *
  * \param[in] schema the schema to decrease the ref_count
  **/
-
 void j_db_schema_unref(JDBSchema* schema);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSchema, j_db_schema_unref)
@@ -95,7 +92,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSchema, j_db_schema_unref)
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_add_field(JDBSchema* schema, gchar const* name, JDBType type, GError** error);
 
 /**
@@ -112,7 +108,6 @@ gboolean j_db_schema_add_field(JDBSchema* schema, gchar const* name, JDBType typ
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_get_field(JDBSchema* schema, gchar const* name, JDBType* type, GError** error);
 
 /**
@@ -132,7 +127,6 @@ gboolean j_db_schema_get_field(JDBSchema* schema, gchar const* name, JDBType* ty
  *
  * \return Number of variables on success, 0 otherwise
  **/
-
 guint32 j_db_schema_get_all_fields(JDBSchema* schema, gchar*** names, JDBType** types, GError** error);
 
 /**
@@ -149,7 +143,6 @@ guint32 j_db_schema_get_all_fields(JDBSchema* schema, gchar*** names, JDBType** 
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** error);
 
 /**
@@ -164,7 +157,6 @@ gboolean j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** 
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error);
 
 /**
@@ -179,7 +171,6 @@ gboolean j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error);
 
 /**
@@ -194,7 +185,6 @@ gboolean j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_delete(JDBSchema* schema, JBatch* batch, GError** error);
 
 /**
@@ -210,7 +200,6 @@ gboolean j_db_schema_delete(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_schema_equals(JDBSchema* schema1, JDBSchema* schema2, gboolean* equal, GError** error);
 
 G_END_DECLS
