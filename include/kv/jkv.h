@@ -33,6 +33,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JKV KV
+ *
+ * Data structures and functions for managing key-value pairs.
+ *
+ * @{
+ **/
+
 struct JKV;
 
 typedef struct JKV JKV;
@@ -44,18 +52,121 @@ typedef struct JKV JKV;
  */
 typedef void (*JKVGetFunc)(gpointer, guint32, gpointer);
 
-JKV* j_kv_new(gchar const*, gchar const*);
-JKV* j_kv_new_for_index(guint32, gchar const*, gchar const*);
-JKV* j_kv_ref(JKV*);
-void j_kv_unref(JKV*);
+/**
+ * Creates a new key-value pair.
+ *
+ * \code
+ * JKV* i;
+ *
+ * i = j_kv_new("JULEA", "KEY");
+ * \endcode
+ *
+ * \param namespace    Namespace to create the key-value pair in.
+ * \param key          A key-value pair key.
+ *
+ * \return A new key-value pair. Should be freed with j_kv_unref().
+ **/
+JKV* j_kv_new(gchar const* namespace, gchar const* key);
+
+/**
+ * Creates a new key-value pair on a specific KV-server.
+ *
+ * \code
+ * JKV* i;
+ *
+ * i = j_kv_new_for_index(0, "JULEA", "KEY");
+ * \endcode
+ *
+ * \param index        Index of the KV-server where the key-value pair should be stored.
+ * \param namespace    Namespace to create the key-value pair in.
+ * \param key          A key-value pair key.
+ *
+ * \return A new key-value pair. Should be freed with j_kv_unref().
+ **/
+JKV* j_kv_new_for_index(guint32 index, gchar const* namespace, gchar const* key);
+
+/**
+ * Increases a key-value pair's reference count.
+ *
+ * \code
+ * JKV* i;
+ *
+ * j_kv_ref(i);
+ * \endcode
+ *
+ * \param kv A key-value pair.
+ *
+ * \return key-value pair.
+ **/
+JKV* j_kv_ref(JKV* kv);
+
+/**
+ * Decreases a key-value pair's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the key-value pair.
+ *
+ * \code
+ * \endcode
+ *
+ * \param kv A key-value pair.
+ **/
+void j_kv_unref(JKV* kv);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKV, j_kv_unref)
 
-void j_kv_put(JKV*, gpointer, guint32, GDestroyNotify, JBatch*);
-void j_kv_delete(JKV*, JBatch*);
+/**
+ * Creates a key-value pair.
+ *
+ * \code
+ * \endcode
+ *
+ * \param kv    A KV.
+ * \param value A value.
+ * \param value_len Length of value buffer.
+ * \param value_destroy A function to correctly free the stored data.
+ * \param batch A batch.
+ **/
+void j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch);
 
-void j_kv_get(JKV*, gpointer*, guint32*, JBatch*);
-void j_kv_get_callback(JKV*, JKVGetFunc, gpointer, JBatch*);
+/**
+ * Deletes a key-value pair.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item       An item.
+ * \param batch      A batch.
+ **/
+void j_kv_delete(JKV* kv, JBatch* batch);
+
+/**
+ * Get a key-value pair.
+ *
+ * \code
+ * \endcode
+ *
+ * \param kv    A KV.
+ * \param value A pointer for the returned value buffer.
+ * \param value_len A pointer to the length of the returned value buffer.
+ * \param batch A batch.
+ **/
+void j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch);
+
+/**
+ * Get a key-value pair and execute a callback function once the pair is received.
+ *
+ * \code
+ * \endcode
+ *
+ * \param kv        A key-value pair.
+ * \param func      The callback function. Will be called once the KV is received.
+ * \param data      User defined data which will be passed to the callback function.
+ * \param batch     A batch.
+ **/
+void j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

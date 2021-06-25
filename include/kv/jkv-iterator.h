@@ -31,6 +31,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JKVIterator KV Iterator
+ *
+ * Data structures and functions for iterating over stores.
+ *
+ * @{
+ **/
+
 struct JKVIterator;
 
 typedef struct JKVIterator JKVIterator;
@@ -41,14 +49,65 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JKVIterator* j_kv_iterator_new(gchar const*, gchar const*);
-JKVIterator* j_kv_iterator_new_for_index(guint32, gchar const*, gchar const*);
-void j_kv_iterator_free(JKVIterator*);
+/**
+ * Creates a new JKVIterator.
+ *
+ * \param namespace JKV namespace to iterate over.
+ * \param prefix Prefix of keys to iterate over. Set to NULL to iterate over all KVs.
+ *
+ * \return A new JKVIterator.
+ **/
+JKVIterator* j_kv_iterator_new(gchar const* namespace, gchar const* prefix);
+
+/**
+ * Creates a new JKVIterator on a specific KV server.
+ *
+ * \param index Server to query.
+ * \param namespace JKV namespace to iterate over.
+ * \param prefix Prefix of keys to iterate over. Set to NULL to iterate over all KVs.
+ *
+ * \return A new JKVIterator.
+ **/
+JKVIterator* j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* prefix);
+
+/**
+ * Frees the memory allocated by the JKVIterator.
+ *
+ * \param iterator A JKVIterator.
+ **/
+void j_kv_iterator_free(JKVIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKVIterator, j_kv_iterator_free)
 
-gboolean j_kv_iterator_next(JKVIterator*);
-gchar const* j_kv_iterator_get(JKVIterator*, gconstpointer*, guint32*);
+/**
+ * Checks whether another collection is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the store is reached.
+ **/
+gboolean j_kv_iterator_next(JKVIterator* iterator);
+
+/**
+ * Returns the current collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ * \param value A pointer to be set to the current value.
+ * \param len Will be set to the length of the current value.
+ *
+ * \return The current key.
+ **/
+gchar const* j_kv_iterator_get(JKVIterator* iterator, gconstpointer* value, guint32* len);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

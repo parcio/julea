@@ -32,10 +32,7 @@
 #include <julea.h>
 
 /**
- * \defgroup JKV KV
- *
- * Data structures and functions for managing key-value pairs.
- *
+ * \addtogroup JKV
  * @{
  **/
 
@@ -528,20 +525,6 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-/**
- * Creates a new key-value pair.
- *
- * \code
- * JKV* i;
- *
- * i = j_kv_new("JULEA");
- * \endcode
- *
- * \param key          A key-value pair key.
- * \param distribution A distribution.
- *
- * \return A new key-value pair. Should be freed with j_kv_unref().
- **/
 JKV*
 j_kv_new(gchar const* namespace, gchar const* key)
 {
@@ -562,20 +545,6 @@ j_kv_new(gchar const* namespace, gchar const* key)
 	return kv;
 }
 
-/**
- * Creates a new key-value pair.
- *
- * \code
- * JKV* i;
- *
- * i = j_kv_new("JULEA");
- * \endcode
- *
- * \param key         An item key.
- * \param distribution A distribution.
- *
- * \return A new key-value pair. Should be freed with j_kv_unref().
- **/
 JKV*
 j_kv_new_for_index(guint32 index, gchar const* namespace, gchar const* key)
 {
@@ -597,19 +566,6 @@ j_kv_new_for_index(guint32 index, gchar const* namespace, gchar const* key)
 	return kv;
 }
 
-/**
- * Increases a key-value pair's reference count.
- *
- * \code
- * JKV* i;
- *
- * j_kv_ref(i);
- * \endcode
- *
- * \param kv A key-value pair.
- *
- * \return key-value pair.
- **/
 JKV*
 j_kv_ref(JKV* kv)
 {
@@ -622,15 +578,6 @@ j_kv_ref(JKV* kv)
 	return kv;
 }
 
-/**
- * Decreases a key-value pair's reference count.
- * When the reference count reaches zero, frees the memory allocated for the key-value pair.
- *
- * \code
- * \endcode
- *
- * \param kv A key-value pair.
- **/
 void
 j_kv_unref(JKV* kv)
 {
@@ -647,16 +594,6 @@ j_kv_unref(JKV* kv)
 	}
 }
 
-/**
- * Creates a key-value pair.
- *
- * \code
- * \endcode
- *
- * \param kv    A KV.
- * \param value A value.
- * \param batch A batch.
- **/
 void
 j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
 {
@@ -683,15 +620,6 @@ j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destro
 	j_batch_add(batch, operation);
 }
 
-/**
- * Deletes a key-value pair.
- *
- * \code
- * \endcode
- *
- * \param item       An item.
- * \param batch      A batch.
- **/
 void
 j_kv_delete(JKV* kv, JBatch* batch)
 {
@@ -710,15 +638,6 @@ j_kv_delete(JKV* kv, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Get a key-value pair.
- *
- * \code
- * \endcode
- *
- * \param kv        A key-value pair.
- * \param batch     A batch.
- **/
 void
 j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 {
@@ -745,15 +664,6 @@ j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Get a key-value pair.
- *
- * \code
- * \endcode
- *
- * \param kv        A key-value pair.
- * \param batch     A batch.
- **/
 void
 j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 {
