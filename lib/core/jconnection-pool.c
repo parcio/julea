@@ -36,9 +36,7 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JConnectionPool Connection Pool
- *
- * Data structures and functions for managing connection pools.
+ * \addtogroup JConnectionPool
  *
  * @{
  **/

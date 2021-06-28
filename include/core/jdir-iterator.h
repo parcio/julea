@@ -31,6 +31,11 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JDirIterator Directory Iterator
+ * @{
+ **/
+
 struct JDirIterator;
 
 typedef struct JDirIterator JDirIterator;
@@ -41,13 +46,57 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JDirIterator* j_dir_iterator_new(gchar const*);
-void j_dir_iterator_free(JDirIterator*);
+/**
+ * Creates a new directory iterator.
+ *
+ * \code
+ * \endcode
+ *
+ * \param path A directory path.
+ *
+ * \return A new directory iterator.
+ **/
+JDirIterator* j_dir_iterator_new(gchar const* path);
+
+/**
+ * Frees the memory allocated by a directory iterator.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A directory iterator.
+ **/
+void j_dir_iterator_free(JDirIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDirIterator, j_dir_iterator_free)
 
-gboolean j_dir_iterator_next(JDirIterator*);
-gchar const* j_dir_iterator_get(JDirIterator*);
+/**
+ * Checks whether another file is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A directory iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the iterator is reached.
+ **/
+gboolean j_dir_iterator_next(JDirIterator* iterator);
+
+/**
+ * Returns the current file.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A directory iterator.
+ *
+ * \return A list element.
+ **/
+gchar const* j_dir_iterator_get(JDirIterator* iterator);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

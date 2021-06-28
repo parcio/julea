@@ -31,15 +31,81 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JCache Cache
+ * @{
+ **/
+
 struct JCache;
 
 typedef struct JCache JCache;
 
-JCache* j_cache_new(guint64);
-void j_cache_free(JCache*);
+/**
+ * Creates a new cache.
+ *
+ * \code
+ * JCache* cache;
+ *
+ * cache = j_cache_new(1024);
+ * \endcode
+ *
+ * \param size A size.
+ *
+ * \return A new cache. Should be freed with j_cache_free().
+ **/
+JCache* j_cache_new(guint64 size);
 
-gpointer j_cache_get(JCache*, guint64);
-void j_cache_release(JCache*, gpointer);
+/**
+ * Frees the memory allocated for the cache.
+ *
+ * \code
+ * JCache* cache;
+ *
+ * ...
+ *
+ * j_cache_free(cache);
+ * \endcode
+ *
+ * \param cache A cache.
+ **/
+void j_cache_free(JCache* cache);
+
+/**
+ * Gets a new segment from the cache.
+ *
+ * \code
+ * JCache* cache;
+ *
+ * ...
+ *
+ * j_cache_get(cache, 1024);
+ * \endcode
+ *
+ * \param cache  A cache.
+ * \param length A length.
+ *
+ * \return A pointer to a segment of the cache, NULL if not enough space is available.
+ **/
+gpointer j_cache_get(JCache* cache, guint64 length);
+
+/**
+ * Frees cache memory
+ *
+ * \code
+ * JCache* cache;
+ *
+ * cache = j_cache_new(1024);
+ * \endcode
+ *
+ * \param cache A cache.
+ * \param data A pointer to cached data.
+ *
+ **/
+void j_cache_release(JCache* cache, gpointer data);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

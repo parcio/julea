@@ -33,11 +33,57 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JBatch* j_batch_new_from_batch(JBatch*);
+/**
+ * \addtogroup JBatch Batch
+ *
+ * @{
+ **/
 
-G_GNUC_INTERNAL JList* j_batch_get_operations(JBatch*);
+/**
+ * Copies a batch.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param old_batch A batch.
+ *
+ * \return A new batch.
+ */
+G_GNUC_INTERNAL JBatch* j_batch_new_from_batch(JBatch* batch);
 
-G_GNUC_INTERNAL gboolean j_batch_execute_internal(JBatch*);
+/**
+ * Returns a batch's parts.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch A batch.
+ *
+ * \return A list of parts.
+ **/
+G_GNUC_INTERNAL JList* j_batch_get_operations(JBatch* batch);
+
+/**
+ * Executes the batch.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch A batch.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+G_GNUC_INTERNAL gboolean j_batch_execute_internal(JBatch* batch);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

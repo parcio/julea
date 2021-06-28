@@ -31,9 +31,27 @@
 
 G_BEGIN_DECLS
 
+/**
+ * Initializes the background operation framework.
+ *
+ * \code
+ * j_background_operation_init();
+ * \endcode
+ **/
 G_GNUC_INTERNAL void j_background_operation_init(guint count);
+
+/**
+ * Shuts down the background operation framework.
+ *
+ * \code
+ * j_background_operation_fini();
+ * \endcode
+ **/
 G_GNUC_INTERNAL void j_background_operation_fini(void);
 
+/**
+ * Get the number of threads used.
+ **/
 G_GNUC_INTERNAL guint j_background_operation_get_num_threads(void);
 
 G_END_DECLS

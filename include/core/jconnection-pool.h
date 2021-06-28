@@ -34,8 +34,20 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JConnectionPool Connection Pool
+ *
+ * Data structures and functions for managing connection pools.
+ *
+ * @{
+ **/
+
 gpointer j_connection_pool_pop(JBackendType, guint);
 void j_connection_pool_push(JBackendType, guint, gpointer);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

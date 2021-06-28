@@ -38,6 +38,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JBackendOperation Backend Operation
+ *
+ * Backend operation data structures and functions.
+ *
+ * @{
+ **/
+
 enum JBackendOperationParamType
 {
 	J_BACKEND_OPERATION_PARAM_TYPE_STR,
@@ -121,8 +129,17 @@ gboolean j_backend_operation_unwrap_db_update(JBackend*, gpointer, JBackendOpera
 gboolean j_backend_operation_unwrap_db_delete(JBackend*, gpointer, JBackendOperation*);
 gboolean j_backend_operation_unwrap_db_query(JBackend*, gpointer, JBackendOperation*);
 
+/*
+*this function is called only on the client side of the backend
+ * the return value of this function is the same as the return value of the original function call
+*/
 gboolean j_backend_operation_to_message(JMessage* message, JBackendOperationParam* data, guint len);
 gboolean j_backend_operation_from_message(JMessage* message, JBackendOperationParam* data, guint len);
+
+/*
+ * this function is called server side. This assumes 'message' is valid as long as the returned array is used
+ * the return value of this function is the same as the return value of the original function call
+ */
 gboolean j_backend_operation_from_message_static(JMessage* message, JBackendOperationParam* data, guint len);
 
 static const JBackendOperation j_backend_operation_db_schema_create = {
@@ -253,6 +270,10 @@ static const JBackendOperation j_backend_operation_db_query = {
 	.in_param_count = 3,
 	.out_param_count = 2,
 };
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

@@ -33,17 +33,70 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JConfiguration Configuration
+ *
+ * @{
+ **/
+
 struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
 
+/**
+ * Returns the configuration.
+ *
+ * \return The configuration.
+ */
 JConfiguration* j_configuration(void);
 
+/**
+ * Creates a new configuration.
+ *
+ * \code
+ * \endcode
+ *
+ * \return A new configuration. Should be freed with j_configuration_unref().
+ **/
 JConfiguration* j_configuration_new(void);
-JConfiguration* j_configuration_new_for_data(GKeyFile*);
 
-JConfiguration* j_configuration_ref(JConfiguration*);
-void j_configuration_unref(JConfiguration*);
+/**
+ * Creates a new configuration for the given configuration data.
+ *
+ * \code
+ * \endcode
+ *
+ * \param key_file The configuration data.
+ *
+ * \return A new configuration. Should be freed with j_configuration_unref().
+ **/
+JConfiguration* j_configuration_new_for_data(GKeyFile* key_file);
+
+/**
+ * Increases a configuration's reference count.
+ *
+ * \code
+ * JConfiguration* c;
+ *
+ * j_configuration_ref(c);
+ * \endcode
+ *
+ * \param configuration A configuration.
+ *
+ * \return #configuration.
+ **/
+JConfiguration* j_configuration_ref(JConfiguration* configuration);
+
+/**
+ * Decreases a configuration's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the configuration.
+ *
+ * \code
+ * \endcode
+ *
+ * \param configuration A configuration.
+ **/
+void j_configuration_unref(JConfiguration* configuration);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JConfiguration, j_configuration_unref)
 
@@ -59,5 +112,9 @@ guint32 j_configuration_get_max_connections(JConfiguration*);
 guint64 j_configuration_get_stripe_size(JConfiguration*);
 
 G_END_DECLS
+
+/**
+ * @}
+ **/
 
 #endif

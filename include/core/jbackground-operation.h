@@ -31,19 +31,89 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JBackgroundOperation Background Operation
+ * @{
+ **/
+
 struct JBackgroundOperation;
 
 typedef struct JBackgroundOperation JBackgroundOperation;
 
 typedef gpointer (*JBackgroundOperationFunc)(gpointer);
 
-JBackgroundOperation* j_background_operation_new(JBackgroundOperationFunc, gpointer);
-JBackgroundOperation* j_background_operation_ref(JBackgroundOperation*);
-void j_background_operation_unref(JBackgroundOperation*);
+/**
+ * Creates a new background operation.
+ *
+ * \code
+ * static
+ * gpointer
+ * background_func (gpointer data)
+ * {
+ *   return NULL;
+ * }
+ *
+ * JBackgroundOperation* background_operation;
+ *
+ * background_operation = j_background_operation_new(background_func, NULL);
+ * \endcode
+ *
+ * \param func A function to execute in the background.
+ * \param data User data given to #func.
+ *
+ * \return A new background operation. Should be freed with j_background_operation_unref().
+ **/
+JBackgroundOperation* j_background_operation_new(JBackgroundOperationFunc func, gpointer data);
+
+/**
+ * Increases a background operation's reference count.
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_ref(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ *
+ * \return #background_operation.
+ **/
+JBackgroundOperation* j_background_operation_ref(JBackgroundOperation* background_operation);
+
+/**
+ * Decreases a background operation's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the background operation.
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_unref(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ **/
+void j_background_operation_unref(JBackgroundOperation* background_operation);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBackgroundOperation, j_background_operation_unref)
 
-gpointer j_background_operation_wait(JBackgroundOperation*);
+/**
+ * Waits for a background operation to finish.
+ *
+ * \code
+ * JBackgroundOperation* background_operation;
+ *
+ * j_background_operation_wait(background_operation);
+ * \endcode
+ *
+ * \param background_operation A background operation.
+ *
+ * \return The return value of the function given to j_background_operation_new().
+ **/
+gpointer j_background_operation_wait(JBackgroundOperation* background_operation);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

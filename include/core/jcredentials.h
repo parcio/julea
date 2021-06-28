@@ -33,21 +33,85 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JCredentials Credentials
+ * @{
+ **/
+
 struct JCredentials;
 
 typedef struct JCredentials JCredentials;
 
+/**
+ * Create new credential for the current user.
+ *
+ * \return A new JCredentials object. Should be freed with j_credentials_unref().
+ **/
 JCredentials* j_credentials_new(void);
-JCredentials* j_credentials_ref(JCredentials*);
-void j_credentials_unref(JCredentials*);
+
+/**
+ * Increases the credential's reference count.
+ *
+ * \param credentials A credentials object.
+ *
+ * \return The credentials object.
+ **/
+JCredentials* j_credentials_ref(JCredentials* credentials);
+
+/**
+ * Decreases the credential's reference count.
+ *
+ * \param credentials A credentials object.
+ *
+ **/
+void j_credentials_unref(JCredentials* credentials);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCredentials, j_credentials_unref)
 
-guint32 j_credentials_get_user(JCredentials*);
-guint32 j_credentials_get_group(JCredentials*);
+/**
+ * Get the user id associated with the credentials
+ *
+ * \param credentials A credentials object.
+ *
+ * \return The user id.
+ **/
+guint32 j_credentials_get_user(JCredentials* credentials);
 
-bson_t* j_credentials_serialize(JCredentials*);
-void j_credentials_deserialize(JCredentials*, bson_t const*);
+/**
+ * Get the group id associated with the credentials
+ *
+ * \param credentials A credentials object.
+ *
+ * \return The group id.
+ **/
+guint32 j_credentials_get_group(JCredentials* credentials);
+
+/**
+ * Serializes credentials.
+ *
+ * \code
+ * \endcode
+ *
+ * \param credentials Credentials.
+ *
+ * \return A new BSON object. Should be freed with bson_destroy().
+ **/
+bson_t* j_credentials_serialize(JCredentials* credentials);
+
+/**
+ * Deserializes credentials.
+ *
+ * \code
+ * \endcode
+ *
+ * \param credentials credentials.
+ * \param b           A BSON object.
+ **/
+void j_credentials_deserialize(JCredentials* credentials, bson_t const* b);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 
