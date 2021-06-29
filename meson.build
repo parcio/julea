@@ -732,6 +732,9 @@ endif
 #	)
 #endforeach
 
+executable('libfabric_basic', files('example/libfabric_basic.c'),
+  dependencies: [glib_dep, libfabric_dep])
+
 # Install
 
 julea_client_hdrs = {

@@ -29,6 +29,7 @@
 #define MSG_PARTS 2
 #define MAX_SEGMENTS 5
 #define ACK 42
+#define TIMEOUT 5
 
 const char* const usage = "call with: (server|client <server-ip>)";
 
@@ -67,6 +68,7 @@ struct jendpoint {
 	struct fid_cq* txcq;
 	struct fid_cq* rxcq;
 	int inject_size;
+	gboolean shutdown;
 };
 
 struct MyThreadData {
@@ -299,7 +301,7 @@ gboolean socket_write_addr(int fd, struct jfabric* fabric)
 	int res;
 	size_t addrlen = 0;
 	const char* location;
-	char* addr;
+	char* addr = NULL;
 	uint32_t len;
 
 	location = fabric->location;
@@ -326,8 +328,10 @@ gboolean socket_write_addr(int fd, struct jfabric* fabric)
 	res = send(fd, addr, addrlen, 0);
 	if(res == -1 || (size_t)res != addrlen) { g_error("failed to send addr!(%i)", res); goto end; }
 
+	free(addr);
 	return TRUE;
 end:
+	if(addr) { free(addr); }
 	return FALSE;
 }
 gboolean parse_address(char* addr, uint32_t port, struct addrinfo** infos)
@@ -443,6 +447,7 @@ gboolean endpoint_fini(struct jendpoint* endpoint)
 		fi_freeinfo(endpoint->info);
 	}
 	free(endpoint);
+	g_message("finisihed endpoint!");
 	return TRUE;
 end:
 	return FALSE;
@@ -637,7 +642,7 @@ end:
 
 gboolean endpoint_check_connection(struct jendpoint* endpoint)
 {
-	return endpoint->ep != NULL;
+	return endpoint->ep != NULL && !endpoint->shutdown;
 }
 
 gboolean endpoint_wait_for_completion(struct jendpoint* endpoint, enum ConnectionDirection con_dir, int len, gboolean* check, void** contexts)
@@ -660,8 +665,23 @@ gboolean endpoint_wait_for_completion(struct jendpoint* endpoint, enum Connectio
 		if(check[i] == TRUE) {++count; }
 	}
 	while(count != len) {
-		res = fi_cq_sread(cq, &entry, 1, NULL, -1);
-		if(res == -FI_EAGAIN) { continue; }
+		res = fi_cq_sread(cq, &entry, 1, NULL, TIMEOUT);
+		if (res == -FI_EAGAIN) {
+			uint32_t event;
+			struct fi_eq_cm_entry eq_entry;
+			res = fi_eq_read(endpoint->eq, &event, &eq_entry, sizeof(eq_entry), 0);
+			if(res != -FI_EAGAIN) {
+				CHECK("failed to read eq in cq test!");
+				if(event == FI_SHUTDOWN) {
+					g_message("shutdown");
+					endpoint->shutdown = TRUE;
+					return FALSE;
+				}
+				g_error("invalid event recived!");
+				goto end;
+			}
+			continue;
+		}
 		if(res < 0) {
 			int err = res;
 			res = fi_cq_readerr(cq, &err_entry, 0);
@@ -777,6 +797,8 @@ gboolean srecv_message(struct jendpoint* endpoint, struct message** msg_ptr)
 	int ack = ACK;
 	struct fid_mr* mrs[MAX_SEGMENTS];
 	struct message* msg = malloc(sizeof(struct message));
+
+	msg->data = NULL;
 	
 	res = fi_recv(endpoint->ep, endpoint->memory.buffer, sizeof(msg->len) + endpoint->memory.rx_prefix_size, fi_mr_desc(endpoint->memory.mr), 0, &msg->len);
 	CHECK("failed to recive msg len!");
@@ -784,10 +806,10 @@ gboolean srecv_message(struct jendpoint* endpoint, struct message** msg_ptr)
 	EXE(endpoint_wait_for_completion(endpoint, RX, 1, checks, contexts));
 	memcpy(&msg->len, (char*)endpoint->memory.buffer + endpoint->memory.rx_prefix_size, sizeof(msg->len));
 	
+	msg->data = malloc(msg->len * sizeof(*msg->data));
 	res = fi_recv(endpoint->ep, endpoint->memory.buffer, sizeof(*msg->data)*msg->len + endpoint->memory.rx_prefix_size, fi_mr_desc(endpoint->memory.mr), 0, msg->data);
 	CHECK("failed to recive body!");
 	checks[0] = FALSE; contexts[0] = msg->data;
-	msg->data = malloc(msg->len * sizeof(*msg->data));
 	EXE(endpoint_wait_for_completion(endpoint, RX, 1, checks, contexts));
 	memcpy(msg->data, (char*)endpoint->memory.buffer + endpoint->memory.rx_prefix_size, msg->len * sizeof(*msg->data));
 	
@@ -825,6 +847,7 @@ end:
 	*msg_ptr = NULL;
 	if(msg->data) { free(msg->data); }
 	free(msg);
+	g_message("cancle read!");
 	return FALSE;
 }
 
@@ -833,7 +856,7 @@ void client(char* addr, uint32_t port);
 struct message* construct_message(void);
 void free_message(struct message* msg, gboolean sender);
 void print_message(struct message* msg);
-gboolean start_new_thread(struct jfabric* fabric, struct fi_eq_cm_entry* con_req);
+gboolean start_new_thread(struct jfabric* fabric, struct fi_eq_cm_entry* con_req, GArray* threads);
 void* thread(void* thread_data);
 
 const char* const buffers[] = {"Hello", "World!"};
@@ -884,43 +907,42 @@ void* thread(void* thread_data) {
 		print_message(msg);
 		EXE(ssend_message(endpoint, msg));
 		free_message(msg, TRUE);
-		/*EXE(endpoint_read_eq(endpoint, &event)); // TODO: check for shutdown
-		switch(event) {
-			case ERROR: goto end;
-			case CONNECTED: run = TRUE; break;
-			case SHUTDOWN: run = FALSE; break;
-			case CONNECTION_REQUEST: g_error("ep can't recive an connection request?!"); goto end;
-		}*/
-		sleep(10);
 	}
 end:
-	g_thread_exit(NULL);
+	g_message("close thread!");
+	endpoint_fini(endpoint);
+	free(thread_data);
 	return NULL;
 }
 
-gboolean start_new_thread(struct jfabric* fabric, struct fi_eq_cm_entry* con_req) {
+gboolean start_new_thread(struct jfabric* fabric, struct fi_eq_cm_entry* con_req, GArray* threads) {
 	struct MyThreadData* thread_data = malloc(sizeof(struct MyThreadData));
+	GThread* new_thread;
 	thread_data->fabric = fabric;
 	thread_data->con_req = con_req;
-	g_thread_new(NULL, thread, (gpointer)thread_data);
+	new_thread = g_thread_new(NULL, thread, (gpointer)thread_data);
+	g_array_append_val(threads, new_thread);
 	return TRUE;
 }
 
 
 void server(void) {
 	struct jfabric* fabric;
-	gboolean run;
+	int run = 3;
+	guint i;
 	enum Event event;
 	struct fi_eq_cm_entry con_req;
 	int p_socket;
 	int socket;
 	struct Config* config;
+	GArray* threads;
 
 	config = config_init();
+	threads = g_array_new(FALSE, FALSE, sizeof(GThread*));
 
 	EXE(fabric_init_server(config, &fabric));
 	EXE(open_socket(&p_socket, PORT));
-	run = TRUE;
+	// run = TRUE;
 	do{
 		EXE(socket_wait_for_connection(p_socket, &socket));
 		g_message("write_addr");
@@ -931,13 +953,18 @@ void server(void) {
 			case ERROR: goto end;
 			case CONNECTED: g_error("pep can't connect!?"); goto end;
 			case CONNECTION_REQUEST: 
-							EXE(start_new_thread(fabric, &con_req));
+							EXE(start_new_thread(fabric, &con_req, threads));
+							--run;
 							break;
 			case SHUTDOWN: run = FALSE; break;
 			default: g_assert_not_reached(); goto end;
 		}
 	} while(run);
 end:
+	for(i = 0; i < threads->len; ++i) {
+		g_thread_join(g_array_index(threads, GThread*, i));
+	}
+	g_array_free(threads, TRUE);
 	fabric_fini(fabric);
 	config_fini(config);
 }
