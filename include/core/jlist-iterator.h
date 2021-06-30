@@ -31,6 +31,11 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JListIterator List Iterator
+ * @{
+ **/
+
 struct JListIterator;
 
 typedef struct JListIterator JListIterator;
@@ -41,13 +46,57 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JListIterator* j_list_iterator_new(JList*);
-void j_list_iterator_free(JListIterator*);
+/**
+ * Creates a new list iterator.
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ *
+ * \return A new list iterator.
+ **/
+JListIterator* j_list_iterator_new(JList* list);
+
+/**
+ * Frees the memory allocated by a list iterator.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ **/
+void j_list_iterator_free(JListIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
 
-gboolean j_list_iterator_next(JListIterator*);
-gpointer j_list_iterator_get(JListIterator*);
+/**
+ * Checks whether another list element is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the list is reached.
+ **/
+gboolean j_list_iterator_next(JListIterator* iterator);
+
+/**
+ * Returns the current list element.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A list iterator.
+ *
+ * \return A list element.
+ **/
+gpointer j_list_iterator_get(JListIterator* iterator);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

@@ -34,6 +34,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JHelper Helper
+ *
+ * Helper data structures and functions.
+ *
+ * @{
+ **/
+
 guint64 j_helper_atomic_add(guint64 volatile*, guint64);
 gboolean j_helper_execute_parallel(JBackgroundOperationFunc, gpointer*, guint);
 guint32 j_helper_hash(gchar const*);
@@ -44,6 +52,10 @@ gpointer j_helper_alloc_aligned(gsize, gsize);
 
 gboolean j_helper_file_sync(gchar const*);
 gboolean j_helper_file_discard(gchar const*);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

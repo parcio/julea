@@ -32,6 +32,11 @@
 G_BEGIN_DECLS
 
 /**
+ * \addtogroup JList List
+ * @{
+ **/
+
+/**
  * A JList element.
  **/
 struct JListElement
@@ -54,7 +59,23 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JListElement* j_list_head(JList*);
+/**
+ * Returns the list's first element.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A JList.
+ *
+ * \return A JListElement.
+ **/
+G_GNUC_INTERNAL JListElement* j_list_head(JList* list);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

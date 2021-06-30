@@ -31,15 +31,74 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JMemoryChunk chunk
+ * @{
+ **/
+
 struct JMemoryChunk;
 
 typedef struct JMemoryChunk JMemoryChunk;
 
-JMemoryChunk* j_memory_chunk_new(guint64);
-void j_memory_chunk_free(JMemoryChunk*);
+/**
+ * Creates a new chunk.
+ *
+ * \code
+ * JMemoryChunk* chunk;
+ *
+ * chunk = j_memory_chunk_new(1024);
+ * \endcode
+ *
+ * \param size A size.
+ *
+ * \return A new chunk. Should be freed with j_memory_chunk_free().
+ **/
+JMemoryChunk* j_memory_chunk_new(guint64 size);
 
-gpointer j_memory_chunk_get(JMemoryChunk*, guint64);
-void j_memory_chunk_reset(JMemoryChunk*);
+/**
+ * Frees the memory allocated for the chunk.
+ *
+ * \code
+ * JMemoryChunk* chunk;
+ *
+ * ...
+ *
+ * j_memory_chunk_free(chunk);
+ * \endcode
+ *
+ * \param chunk A chunk.
+ **/
+void j_memory_chunk_free(JMemoryChunk* chunk);
+
+/**
+ * Gets a new segment from the chunk.
+ *
+ * \code
+ * JMemoryChunk* chunk;
+ *
+ * ...
+ *
+ * j_memory_chunk_get(chunk, 1024);
+ * \endcode
+ *
+ * \param chunk  A chunk.
+ * \param length A length.
+ *
+ * \return A pointer to a segment of the chunk, NULL if not enough space is available.
+ **/
+gpointer j_memory_chunk_get(JMemoryChunk* chunk, guint64 length);
+
+/**
+ * Resets the given chunk. All data inside should be considered lost.
+ *
+ * \param chunk  A chunk.
+ *
+ **/
+void j_memory_chunk_reset(JMemoryChunk* chunk);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

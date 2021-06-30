@@ -43,7 +43,7 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JHelper Helper
+ * \addtogroup JHelper Helper
  *
  * Helper data structures and functions.
  *

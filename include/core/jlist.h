@@ -31,27 +31,113 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JList List
+ * @{
+ **/
+
 struct JList;
 
 typedef struct JList JList;
 
 typedef void (*JListFreeFunc)(gpointer);
 
-JList* j_list_new(JListFreeFunc);
-JList* j_list_ref(JList*);
-void j_list_unref(JList*);
+/**
+ * Creates a new list.
+ *
+ * \code
+ * \endcode
+ *
+ * \param free_func A function to free the element data, or NULL.
+ *
+ * \return A new list.
+ **/
+JList* j_list_new(JListFreeFunc free_func);
+
+/**
+ * Increases the list's reference count.
+ *
+ * \param list A list.
+ *
+ * \return The list.
+ **/
+JList* j_list_ref(JList* list);
+
+/**
+ * Decreases the list's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the list.
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ **/
+void j_list_unref(JList* list);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JList, j_list_unref)
 
-guint j_list_length(JList*);
+/**
+ * Returns the list's length.
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ *
+ * \return The list's length.
+ **/
+guint j_list_length(JList* list);
 
-void j_list_append(JList*, gpointer);
-void j_list_prepend(JList*, gpointer);
+/**
+ * Appends a new list element to a list.
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ * \param data A list element.
+ **/
+void j_list_append(JList* list, gpointer data);
 
-gpointer j_list_get_first(JList*);
-gpointer j_list_get_last(JList*);
+/**
+ * Prepends a new list element to a list.
+ *
+ * \code
+ * \endcode
+ *
+ * \param list A list.
+ * \param data A list element.
+ **/
+void j_list_prepend(JList* list, gpointer data);
 
-void j_list_delete_all(JList*);
+/**
+ * Returns the first list element.
+ *
+ * \param list  A list.
+ *
+ * \return A list element, or NULL.
+ **/
+gpointer j_list_get_first(JList* list);
+
+/**
+ * Returns the last list element.
+ *
+ * \param list  A list.
+ *
+ * \return A list element, or NULL.
+ **/
+gpointer j_list_get_last(JList* list);
+
+/**
+ * Deletes all list elements.
+ *
+ * \param list A list.
+ **/
+void j_list_delete_all(JList* list);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

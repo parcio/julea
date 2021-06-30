@@ -33,9 +33,7 @@
 #include "distribution.h"
 
 /**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
+ * \addtogroup JDistribution
  *
  * @{
  **/

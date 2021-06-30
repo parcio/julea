@@ -30,7 +30,7 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JList List
+ * \addtogroup JList List
  * @{
  **/
 
@@ -65,16 +65,6 @@ struct JList
 	gint ref_count;
 };
 
-/**
- * Creates a new list.
- *
- * \code
- * \endcode
- *
- * \param free_func A function to free the element data, or NULL.
- *
- * \return A new list.
- **/
 JList*
 j_list_new(JListFreeFunc free_func)
 {
@@ -92,13 +82,6 @@ j_list_new(JListFreeFunc free_func)
 	return list;
 }
 
-/**
- * Increases the list's reference count.
- *
- * \param list A list.
- *
- * \return The list.
- **/
 JList*
 j_list_ref(JList* list)
 {
@@ -111,15 +94,6 @@ j_list_ref(JList* list)
 	return list;
 }
 
-/**
- * Decreases the list's reference count.
- * When the reference count reaches zero, frees the memory allocated for the list.
- *
- * \code
- * \endcode
- *
- * \param list A list.
- **/
 void
 j_list_unref(JList* list)
 {
@@ -135,16 +109,6 @@ j_list_unref(JList* list)
 	}
 }
 
-/**
- * Returns the list's length.
- *
- * \code
- * \endcode
- *
- * \param list A list.
- *
- * \return The list's length.
- **/
 guint
 j_list_length(JList* list)
 {
@@ -155,15 +119,6 @@ j_list_length(JList* list)
 	return list->length;
 }
 
-/**
- * Appends a new list element to a list.
- *
- * \code
- * \endcode
- *
- * \param list A list.
- * \param data A list element.
- **/
 void
 j_list_append(JList* list, gpointer data)
 {
@@ -193,15 +148,6 @@ j_list_append(JList* list, gpointer data)
 	}
 }
 
-/**
- * Prepends a new list element to a list.
- *
- * \code
- * \endcode
- *
- * \param list A list.
- * \param data A list element.
- **/
 void
 j_list_prepend(JList* list, gpointer data)
 {
@@ -225,13 +171,6 @@ j_list_prepend(JList* list, gpointer data)
 	}
 }
 
-/**
- * Returns the first list element.
- *
- * \param list  A list.
- *
- * \return A list element, or NULL.
- **/
 gpointer
 j_list_get_first(JList* list)
 {
@@ -249,13 +188,6 @@ j_list_get_first(JList* list)
 	return data;
 }
 
-/**
- * Returns the last list element.
- *
- * \param list  A list.
- *
- * \return A list element, or NULL.
- **/
 gpointer
 j_list_get_last(JList* list)
 {
@@ -273,11 +205,6 @@ j_list_get_last(JList* list)
 	return data;
 }
 
-/**
- * Deletes all list elements.
- *
- * \param list A list.
- **/
 void
 j_list_delete_all(JList* list)
 {
@@ -310,18 +237,6 @@ j_list_delete_all(JList* list)
 
 /* Internal */
 
-/**
- * Returns the list's first element.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param list A JList.
- *
- * \return A JListElement.
- **/
 JListElement*
 j_list_head(JList* list)
 {
