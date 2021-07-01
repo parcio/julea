@@ -1,4 +1,4 @@
-#include "./jnetwork.h"
+#include <core/jnetwork.h>
 
 #include <gio/gio.h>
 

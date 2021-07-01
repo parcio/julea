@@ -19,6 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef JULEA_NETWORK_H
+#define JULEA_NETWORK_H
+
+#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
+#error "Only <julea.h> can be included directly."
+#endif
+
 #include <jbackend.h>
 
 #include <glib.h>
@@ -375,3 +382,5 @@ gboolean
 j_connection_rma_unregister(struct JConnection* instance,
 		JConnectionMemory* handle 	///< [in] for memory region to unregister
 );
+
+#endif
