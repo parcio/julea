@@ -59,7 +59,7 @@ typedef gpointer (*JBackgroundOperationFunc)(gpointer);
  * \endcode
  *
  * \param func A function to execute in the background.
- * \param data User data given to #func.
+ * \param data User data given to \p func.
  *
  * \return A new background operation. Should be freed with j_background_operation_unref().
  **/
@@ -76,7 +76,7 @@ JBackgroundOperation* j_background_operation_new(JBackgroundOperationFunc func, 
  *
  * \param background_operation A background operation.
  *
- * \return #background_operation.
+ * \return \p background_operation.
  **/
 JBackgroundOperation* j_background_operation_ref(JBackgroundOperation* background_operation);
 

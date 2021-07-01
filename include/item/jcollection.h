@@ -62,7 +62,7 @@ G_BEGIN_DECLS
  *
  * \param collection A collection.
  *
- * \return #collection.
+ * \return \p collection.
  **/
 JCollection* j_collection_ref(JCollection* collection);
 

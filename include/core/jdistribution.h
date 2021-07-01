@@ -71,7 +71,7 @@ G_BEGIN_DECLS
  *
  * \param type   A distribution type.
  *
- * \return A new distribution. Should be freed with j_distribution_unref().
+ * \return A new distribution. Should be freed with \ref j_distribution_unref().
  **/
 JDistribution* j_distribution_new(JDistributionType type);
 
@@ -84,10 +84,10 @@ JDistribution* j_distribution_new(JDistributionType type);
  * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
  * \endcode
  *
- * \param type   A distribution type.
- * \param 
+ * \param type          A distribution type.
+ * \param configuration A JConfiguration.
  *
- * \return A new distribution. Should be freed with j_distribution_unref().
+ * \return A new distribution. Should be freed with \ref j_distribution_unref().
  **/
 JDistribution* j_distribution_new_for_configuration(JDistributionType type, JConfiguration* configuration);
 

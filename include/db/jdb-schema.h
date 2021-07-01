@@ -50,8 +50,9 @@ G_BEGIN_DECLS
 /**
  * Allocates a new schema.
  *
- * \param[in] namespace the namespace of the schema
+ * \param[in] namespace_ the namespace of the schema
  * \param[in] name the name of the schema
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre namespace != NULL
  * \pre name != NULL
@@ -85,6 +86,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSchema, j_db_schema_unref)
  * \param[in] schema the schema to add a field to
  * \param[in] name the name of the variable to add
  * \param[in] type the type of the variable to add
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre name != NULL
@@ -99,7 +101,8 @@ gboolean j_db_schema_add_field(JDBSchema* schema, gchar const* name, JDBType typ
  *
  * \param[in] schema the schema to query
  * \param[in] name the name of the variable to query
- * \param[out] the type of the queried variable
+ * \param[out] type the type of the queried variable
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre name != NULL
@@ -114,8 +117,9 @@ gboolean j_db_schema_get_field(JDBSchema* schema, gchar const* name, JDBType* ty
  * query all variables from the schema.
  *
  * \param[in] schema the schema to query
- * \param[out] name the names of all variables in the schema
- * \param[out] the the types of all variables in the schema
+ * \param[out] names the names of all variables in the schema
+ * \param[out] types the types of all variables in the schema
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre names != NULL
@@ -134,6 +138,7 @@ guint32 j_db_schema_get_all_fields(JDBSchema* schema, gchar*** names, JDBType** 
  *
  * \param[in] schema the schema to add a index to
  * \param[in] names the names of the variables to put into an index group
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre names != NULL
@@ -150,6 +155,7 @@ gboolean j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** 
  *
  * \param[in] schema the schema to store
  * \param[in] batch the batch to add this operation to
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre schema contains at least 1 variable
@@ -164,6 +170,7 @@ gboolean j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \param[in] schema the schema to query
  * \param[in] batch the batch to add this operation to
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre schema exists in the backend
@@ -178,6 +185,7 @@ gboolean j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \param[in] schema the schema to delete
  * \param[in] batch the batch to add this operation to
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema != NULL
  * \pre schema exists in the backend
@@ -193,6 +201,7 @@ gboolean j_db_schema_delete(JDBSchema* schema, JBatch* batch, GError** error);
  * \param[in] schema1
  * \param[in] schema2 the schema to compare with each other
  * \param[out] equal TRUE if schema1 and schema2 equals
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre schema1 != NULL
  * \pre schema2 != NULL

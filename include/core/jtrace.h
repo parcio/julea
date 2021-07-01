@@ -90,6 +90,7 @@ void j_trace_fini(void);
  * \endcode
  *
  * \param name A function name.
+ * \param format A format string.
  **/
 JTrace* j_trace_enter(gchar const* name, gchar const* format, ...) G_GNUC_PRINTF(2, 3);
 

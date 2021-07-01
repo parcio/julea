@@ -56,7 +56,7 @@ G_BEGIN_DECLS
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
-G_GNUC_INTERNAL JCollection* j_collection_new(gchar const*);
+G_GNUC_INTERNAL JCollection* j_collection_new(gchar const* name);
 
 /**
  * Creates a new collection from a BSON object.
@@ -70,7 +70,7 @@ G_GNUC_INTERNAL JCollection* j_collection_new(gchar const*);
  *
  * \return A new collection. Should be freed with j_collection_unref().
  **/
-G_GNUC_INTERNAL JCollection* j_collection_new_from_bson(bson_t const*);
+G_GNUC_INTERNAL JCollection* j_collection_new_from_bson(bson_t const* b);
 
 /**
  * Serializes a collection.
@@ -84,7 +84,7 @@ G_GNUC_INTERNAL JCollection* j_collection_new_from_bson(bson_t const*);
  *
  * \return A new BSON object. Should be freed with g_slice_free().
  **/
-G_GNUC_INTERNAL bson_t* j_collection_serialize(JCollection*);
+G_GNUC_INTERNAL bson_t* j_collection_serialize(JCollection* collection);
 
 /**
  * Deserializes a collection.
@@ -97,7 +97,7 @@ G_GNUC_INTERNAL bson_t* j_collection_serialize(JCollection*);
  * \param collection A collection.
  * \param b          A BSON object.
  **/
-G_GNUC_INTERNAL void j_collection_deserialize(JCollection*, bson_t const*);
+G_GNUC_INTERNAL void j_collection_deserialize(JCollection* collection, bson_t const* b);
 
 /**
  * Returns a collection's ID.
@@ -111,7 +111,7 @@ G_GNUC_INTERNAL void j_collection_deserialize(JCollection*, bson_t const*);
  *
  * \return An ID.
  **/
-G_GNUC_INTERNAL bson_oid_t const* j_collection_get_id(JCollection*);
+G_GNUC_INTERNAL bson_oid_t const* j_collection_get_id(JCollection* collection);
 
 /**
  * @}

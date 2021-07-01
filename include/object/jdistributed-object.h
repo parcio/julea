@@ -74,7 +74,7 @@ JDistributedObject* j_distributed_object_new(gchar const* namespace, gchar const
  *
  * \param object An object.
  *
- * \return #object.
+ * \return \p object.
  **/
 JDistributedObject* j_distributed_object_ref(JDistributedObject* object);
 
@@ -124,7 +124,7 @@ void j_distributed_object_delete(JDistributedObject* object, JBatch* batch);
  * \param object     An object.
  * \param data       A buffer to hold the read data.
  * \param length     Number of bytes to read.
- * \param offset     An offset within #object.
+ * \param offset     An offset within \p object.
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
@@ -142,7 +142,7 @@ void j_distributed_object_read(JDistributedObject* object, gpointer data, guint6
  * \param object        An object.
  * \param data          A buffer holding the data to write.
  * \param length        Number of bytes to write.
- * \param offset        An offset within #object.
+ * \param offset        An offset within \p object.
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/

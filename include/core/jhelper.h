@@ -76,23 +76,23 @@ G_GNUC_INTERNAL void j_helper_set_cork(GSocketConnection* connection, gboolean e
 void j_helper_set_nodelay(GSocketConnection* connection, gboolean enable);
 
 /**
- * Atomically add #val to #*ptr and return the result.
+ * Atomically add \p val to \p *ptr and return the result.
  * 
  * \param ptr Address of a 64 bit unsigned integer.
- * \param val Value to add to #*ptr.
+ * \param val Value to add to \p *ptr.
  * 
  * \remark If no atomic operation is available locking will bew used.
  **/
 guint64 j_helper_atomic_add(guint64 volatile* ptr, guint64 val);
 
 /**
- * Execute #func in parallel.
+ * Execute \p func in parallel.
  * 
  * \param func   A JBackgroundOperationFunc.
- * \param data   An argument array for parallel execution of #func. 
- * \param length The length of #data.
+ * \param data   An argument array for parallel execution of \p func. 
+ * \param length The length of \p data.
  * 
- * \remark NULL is allowed to appear in #data but #func will not be executed with NULL as argument.
+ * \remark NULL is allowed to appear in \p data but \p func will not be executed with NULL as argument.
  **/
 gboolean j_helper_execute_parallel(JBackgroundOperationFunc func, gpointer* data, guint length);
 
@@ -104,7 +104,7 @@ gboolean j_helper_execute_parallel(JBackgroundOperationFunc func, gpointer* data
 guint32 j_helper_hash(gchar const* str);
 
 /**
- * Replaces all occurences of #old with #new in #str in a new string.
+ * Replaces all occurences of \p old with \p new in \p str in a new string.
  * 
  * \param str A string.
  * \param old A string.
@@ -125,7 +125,7 @@ gchar* j_helper_str_replace(gchar const* str, gchar const* old, gchar const* new
 gpointer j_helper_alloc_aligned(gsize align, gsize len);
 
 /**
- * Synchronizes the file described by #path with the storage device.
+ * Synchronizes the file described by \p path with the storage device.
  * 
  * \param path The file to sync.
  * 
@@ -134,7 +134,7 @@ gpointer j_helper_alloc_aligned(gsize align, gsize len);
 gboolean j_helper_file_sync(gchar const* path);
 
 /**
- * Synchronizes the file described by #path with the storage device.
+ * Synchronizes the file described by \p path with the storage device.
  * The file will be marked as not accessed in the near future to make optimization in kernel possible.
  * 
  * \param path The file to sync.
@@ -143,7 +143,7 @@ gboolean j_helper_file_sync(gchar const* path);
  *  
  * \return TRUE on success FALSE otherwise.
  **/
-gboolean j_helper_file_discard(gchar const*);
+gboolean j_helper_file_discard(gchar const* path);
 
 /**
  * @}

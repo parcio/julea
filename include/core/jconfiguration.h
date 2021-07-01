@@ -83,7 +83,7 @@ JConfiguration* j_configuration_new_for_data(GKeyFile* key_file);
  *
  * \param configuration A configuration.
  *
- * \return #configuration.
+ * \return \p configuration.
  **/
 JConfiguration* j_configuration_ref(JConfiguration* configuration);
 

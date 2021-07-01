@@ -48,12 +48,12 @@ struct JBackgroundOperation
 	JBackgroundOperationFunc func;
 
 	/**
-	 * User data to give to #func.
+	 * User data to give to \p func.
 	 **/
 	gpointer data;
 
 	/**
-	 * The return value of #func.
+	 * The return value of \p func.
 	 **/
 	gpointer result;
 

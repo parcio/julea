@@ -62,7 +62,7 @@ G_BEGIN_DECLS
  *
  * \param item An item.
  *
- * \return #item.
+ * \return \p item.
  **/
 JItem* j_item_ref(JItem* item);
 
@@ -153,7 +153,7 @@ void j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch
  * \param item       An item.
  * \param data       A buffer to hold the read data.
  * \param length     Number of bytes to read.
- * \param offset     An offset within #item.
+ * \param offset     An offset within \p item.
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
@@ -171,7 +171,7 @@ void j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, gui
  * \param item          An item.
  * \param data          A buffer holding the data to write.
  * \param length        Number of bytes to write.
- * \param offset        An offset within #item.
+ * \param offset        An offset within \p item.
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/

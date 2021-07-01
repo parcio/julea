@@ -113,7 +113,7 @@ JMessage* j_message_new_reply(JMessage* message);
  *
  * \param message A message.
  *
- * \return #message.
+ * \return \p message.
  **/
 JMessage* j_message_ref(JMessage* message);
 

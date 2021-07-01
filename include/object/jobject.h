@@ -89,7 +89,7 @@ JObject* j_object_new_for_index(guint32 index, gchar const* namespace, gchar con
  *
  * \param object An object.
  *
- * \return #object.
+ * \return \p object.
  **/
 JObject* j_object_ref(JObject* object);
 
@@ -138,7 +138,7 @@ void j_object_delete(JObject* object, JBatch* batch);
  * \param object     An object.
  * \param data       A buffer to hold the read data.
  * \param length     Number of bytes to read.
- * \param offset     An offset within #object.
+ * \param offset     An offset within \p object.
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
@@ -156,7 +156,7 @@ void j_object_read(JObject* object, gpointer data, guint64 length, guint64 offse
  * \param object        An object.
  * \param data          A buffer holding the data to write.
  * \param length        Number of bytes to write.
- * \param offset        An offset within #object.
+ * \param offset        An offset within \p object.
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/

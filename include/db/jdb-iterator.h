@@ -47,6 +47,7 @@ G_BEGIN_DECLS
  *
  * \param[in] schema The schema defines the structure of the iterator
  * \param[in] selector The selector defines which entrys to select
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre schema != NULL
  * \pre schema is initialized
  * \pre selector != NULL
@@ -79,6 +80,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBIterator, j_db_iterator_unref)
  * The iterator moves to the next element.
  *
  * \param[inout] iterator to update
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre iterator != NULL
  *
  * \return TRUE on success, FALSE otherwise
@@ -93,6 +95,7 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
  * \param[out] type the type of the retrieved value
  * \param[out] value the retieved value
  * \param[out] length the length of the retrieved value
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre iterator != NULL
  * \pre name != NULL
  * \pre type != NULL

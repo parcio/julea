@@ -48,6 +48,7 @@ G_BEGIN_DECLS
  * Allocates a new entry.
  *
  * \param[in] schema The schema defines the structure of the entity
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre schema != NULL
  * \pre schema is initialized
  *
@@ -77,8 +78,12 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBEntry, j_db_entry_unref)
 /**
  * returns the id of the entry, after j_db_entry_insert has been called
  * 
- * \param[out] error A GError pointer. Will point to a GError object in case of failure.
+ * \param[in] entry   A JDBEntry.
+ * \param[out] value  The id of \p entry. Should be freed using g_free().
+ * \param[out] length The length of the id in byte.
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * 
+ * \return TRUE on success, FALSE otherwise
  */
 gboolean j_db_entry_get_id(JDBEntry* entry, gpointer* value, guint64* length, GError** error);
 
@@ -89,6 +94,7 @@ gboolean j_db_entry_get_id(JDBEntry* entry, gpointer* value, guint64* length, GE
  * \param[in] name the name to set a value
  * \param[in] value the value to set
  * \param[in] length the length of the value. Only used if the value-type defined in the Schema is binary.
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
  * \pre name != NULL
  * \pre value != NULL
@@ -105,6 +111,7 @@ gboolean j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer 
  *
  * \param[in] entry the entry to save
  * \param[in] batch the batch to append this operation to
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
  * \pre entry has a least 1 value set to not NULL
  * \pre batch != NULL
@@ -122,6 +129,7 @@ gboolean j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error);
  * \param[in] entry the entry defining the final values of all matched entrys
  * \param[in] selector the selector defines which entrys should be modifies
  * \param[in] batch the batch to append this operation to
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
  * \pre entry has a least 1 value set to not NULL
  * \pre selector != NULL
@@ -141,6 +149,7 @@ gboolean j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch
  * \param[in] entry specifies the schema to use
  * \param[in] selector the selector defines what should be deleted
  * \param[in] batch the batch to append this operation to
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
  * \pre batch != NULL
  *
