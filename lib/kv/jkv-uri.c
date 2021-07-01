@@ -151,14 +151,14 @@ j_kv_uri_parse(JKVURI* uri, gchar const* uri_)
 	{
 		case J_KV_URI_SCHEME_NAMESPACE:
 		case J_KV_URI_SCHEME_KV:
-			// FIXME check for errors
+			/// \todo check for errors
 			uri->index = g_ascii_strtoull(parts[0], NULL, 10);
 			uri->namespace = g_strdup(parts[1]);
 
 			if (parts_len >= 3)
 			{
 				uri->name = g_strdup(parts[2]);
-				// FIXME index
+				/// \todo index
 				uri->kv = j_kv_new_for_index(uri->index, uri->namespace, uri->name);
 			}
 			break;

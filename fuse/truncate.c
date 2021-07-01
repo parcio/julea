@@ -48,7 +48,7 @@ jfs_truncate(char const* path, off_t size)
 
 		if (bson_iter_init_find(&iter, file, "file") && bson_iter_type(&iter) == BSON_TYPE_BOOL && bson_iter_bool(&iter))
 		{
-			// FIXME
+			/// \todo
 			ret = 0;
 		}
 

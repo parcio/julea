@@ -43,16 +43,91 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JCollection* j_collection_ref(JCollection*);
-void j_collection_unref(JCollection*);
+/**
+ * \defgroup JCollection Collection
+ *
+ * Data structures and functions for managing collections.
+ *
+ * @{
+ **/
+
+/**
+ * Increases a collection's reference count.
+ *
+ * \code
+ * JCollection* c;
+ *
+ * j_collection_ref(c);
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return #collection.
+ **/
+JCollection* j_collection_ref(JCollection* collection);
+
+/**
+ * Decreases a collection's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ **/
+void j_collection_unref(JCollection* collection);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCollection, j_collection_unref)
 
-gchar const* j_collection_get_name(JCollection*);
+/**
+ * Returns a collection's name.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ *
+ * \return A collection name.
+ **/
+gchar const* j_collection_get_name(JCollection* collection);
 
-JCollection* j_collection_create(gchar const*, JBatch*);
-void j_collection_get(JCollection**, gchar const*, JBatch*);
-void j_collection_delete(JCollection*, JBatch*);
+/**
+ * Creates a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param name       A name for the new collection.
+ * \param batch      A batch.
+ **/
+JCollection* j_collection_create(gchar const* name, JBatch* batch);
+
+/**
+ * Gets a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A pointer to a collection.
+ * \param name       A name.
+ * \param batch      A batch.
+ **/
+void j_collection_get(JCollection** collection, gchar const* name, JBatch* batch);
+
+/**
+ * Deletes a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param batch      A batch.
+ **/
+void j_collection_delete(JCollection* collection, JBatch* batch);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

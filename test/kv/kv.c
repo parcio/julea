@@ -93,7 +93,7 @@ test_kv_put_delete(void)
 
 	j_kv_delete(kv, batch);
 	ret = j_batch_execute(batch);
-	// FIXME this should return FALSE
+	/// \todo this should return FALSE
 	//g_assert_false(ret);
 }
 

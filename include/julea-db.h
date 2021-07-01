@@ -30,7 +30,7 @@
 #include <db/jdb-selector.h>
 #include <db/jdb-type.h>
 
-// FIXME
+/// \todo
 //#undef JULEA_DB_H
 
 #endif

@@ -87,13 +87,13 @@ struct JBackendOperationParam
 
 	JBackendOperationParamType type;
 
-	// FIXME this belongs to the bson member but is here for alignment purposes
+	/// \todo this belongs to the bson member but is here for alignment purposes
 	gboolean bson_initialized;
 };
 
 typedef struct JBackendOperationParam JBackendOperationParam;
 
-// FIXME this also needs to be allocated with alignment but appears to be large enough to the default allocator does the right thing
+/// \todo this also needs to be allocated with alignment but appears to be large enough to the default allocator does the right thing
 struct JBackendOperation
 {
 	// Input parameters

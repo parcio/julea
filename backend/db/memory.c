@@ -99,7 +99,7 @@ backend_schema_get(gpointer backend_data, gpointer batch, gchar const* name, bso
 
 	if (bd->schema_cache != NULL)
 	{
-		// FIXME schema is uninitialized if backend is running on the server but initialized if running on the client
+		/// \todo schema is uninitialized if backend is running on the server but initialized if running on the client
 		// bson_copy_to requires the destination to be uninitialized
 		//bson_destroy(schema);
 		bson_copy_to(bd->schema_cache, schema);

@@ -485,7 +485,7 @@ j_distributed_object_status_background_operation(gpointer data)
 
 		if (modification_time != NULL)
 		{
-			// FIXME max?
+			/// \todo max?
 			*modification_time = modification_time_;
 		}
 
@@ -534,7 +534,7 @@ j_distributed_object_sync_background_operation(gpointer data)
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, object_connection);
 
-		// FIXME do something with reply
+		/// \todo do something with reply
 	}
 
 	j_message_unref(background_data->message);
@@ -550,7 +550,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -581,7 +581,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			/**
@@ -608,7 +608,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 
 			name_len = strlen(object->name) + 1;
 
-			// FIXME use actual distribution
+			/// \todo use actual distribution
 			for (guint i = 0; i < server_count; i++)
 			{
 				j_message_add_operation(messages[i], name_len);
@@ -630,7 +630,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 
 		background_data = g_new(gpointer, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -685,7 +685,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_DELETE, namespace_len);
@@ -704,7 +704,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 
 			name_len = strlen(object->name) + 1;
 
-			// FIXME use actual distribution
+			/// \todo use actual distribution
 			for (guint i = 0; i < server_count; i++)
 			{
 				j_message_add_operation(messages[i], name_len);
@@ -732,7 +732,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 
 		background_data = g_new(gpointer, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -767,7 +767,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -780,7 +780,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 	gsize namespace_len = 0;
 	guint32 server_count = 0;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -926,7 +926,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -941,7 +941,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -954,7 +954,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 	gsize namespace_len = 0;
 	guint32 server_count = 0;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -1101,7 +1101,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -1116,7 +1116,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -1148,7 +1148,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_STATUS, namespace_len);
@@ -1180,7 +1180,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 
 			name_len = strlen(object->name) + 1;
 
-			// FIXME use actual distribution
+			/// \todo use actual distribution
 			for (guint i = 0; i < server_count; i++)
 			{
 				j_message_add_operation(messages[i], name_len);
@@ -1203,7 +1203,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 
 		background_data = g_new(gpointer, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -1228,7 +1228,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -1260,7 +1260,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 		server_count = j_configuration_get_server_count(j_configuration(), J_BACKEND_TYPE_OBJECT);
 		messages = g_new(JMessage*, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			messages[i] = j_message_new(J_MESSAGE_OBJECT_SYNC, namespace_len);
@@ -1280,7 +1280,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 
 			name_len = strlen(object->name) + 1;
 
-			// FIXME use actual distribution
+			/// \todo use actual distribution
 			for (guint i = 0; i < server_count; i++)
 			{
 				j_message_add_operation(messages[i], name_len);
@@ -1303,7 +1303,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 
 		background_data = g_new(gpointer, server_count);
 
-		// FIXME use actual distribution
+		/// \todo use actual distribution
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -1383,7 +1383,7 @@ j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 	g_return_if_fail(object != NULL);
 
 	operation = j_operation_new();
-	// FIXME key = index + namespace
+	/// \todo key = index + namespace
 	operation->key = object;
 	operation->data = j_distributed_object_ref(object);
 	operation->exec_func = j_distributed_object_create_exec;

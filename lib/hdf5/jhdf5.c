@@ -23,11 +23,11 @@
  * \file
  **/
 
-// FIXME check whether version is up to date: https://github.com/Olgasnezh/hdf5-vol-sqlite-plugin
-// FIXME clean up
-// FIXME fix memory leaks
+/// \todo check whether version is up to date: https://github.com/Olgasnezh/hdf5-vol-sqlite-plugin
+/// \todo clean up
+/// \todo fix memory leaks
 
-// FIXME
+/// \todo
 #define H5Sencode_vers 1
 
 #include <julea-config.h>
@@ -317,7 +317,7 @@ j_hdf5_deserialize_type(bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		// FIXME why do we need tsize? can be gotten from tdata below
+		/// \todo why do we need tsize? can be gotten from tdata below
 		if (g_strcmp0(key, "tsize") == 0)
 		{
 			type_size = bson_iter_int32(&iterator);
@@ -376,7 +376,7 @@ j_hdf5_deserialize_space(bson_t const* b)
 
 		key = bson_iter_key(&iterator);
 
-		// FIXME why do we need ssize? can be gotten from sdata below
+		/// \todo why do we need ssize? can be gotten from sdata below
 		if (g_strcmp0(key, "ssize") == 0)
 		{
 			space_size = bson_iter_int32(&iterator);
@@ -584,7 +584,7 @@ H5VL_julea_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const cha
 
 	if (!j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	g_free(type_buf);
@@ -735,7 +735,7 @@ H5VL_julea_attr_write(void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_id
 
 	if (!j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	return 1;
@@ -883,7 +883,7 @@ H5VL_julea_file_create(const char* fname, unsigned flags, hid_t fcpl_id, hid_t f
 
 	if (j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	return file;
@@ -919,7 +919,7 @@ H5VL_julea_file_open(const char* fname, unsigned flags, hid_t fapl_id, hid_t dxp
 
 	if (j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 		g_free(value);
 	}
 
@@ -1045,7 +1045,7 @@ H5VL_julea_group_create(void* obj, const H5VL_loc_params_t* loc_params, const ch
 
 	if (j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	return group;
@@ -1116,7 +1116,7 @@ H5VL_julea_group_open(void* obj, const H5VL_loc_params_t* loc_params, const char
 
 	if (j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 		g_free(value);
 	}
 
@@ -1251,7 +1251,7 @@ H5VL_julea_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 
 	if (!j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	g_free(type_buf);
@@ -1365,7 +1365,7 @@ H5VL_julea_dataset_read(void* dset, hid_t mem_type_id __attribute__((unused)), h
 
 	if (!j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	return 1;
@@ -1468,7 +1468,7 @@ H5VL_julea_dataset_write(void* dset, hid_t mem_type_id __attribute__((unused)), 
 
 	if (!j_batch_execute(batch))
 	{
-		// FIXME check return value properly
+		/// \todo check return value properly
 	}
 
 	return 1;
@@ -1655,11 +1655,11 @@ H5PLget_plugin_info(void)
 	return &H5VL_julea_g;
 }
 
-// FIXME separate JULEA-specific code from VOL code
+/// \todo separate JULEA-specific code from VOL code
 
 static JSemantics* j_hdf5_semantics = NULL;
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_hdf5_init(void);
 static void __attribute__((destructor)) j_hdf5_fini(void);
 

@@ -644,7 +644,7 @@ _error:
 	return FALSE;
 }
 
-// FIXME does more or less the same as j_helper_get_number_string
+/// \todo does more or less the same as j_helper_get_number_string
 G_GNUC_UNUSED
 static gboolean
 j_bson_array_generate_key(guint32 index, const char** key, char* buf, guint buf_length, GError** error)

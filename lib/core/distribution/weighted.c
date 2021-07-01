@@ -251,7 +251,7 @@ distribution_serialize(gpointer data, bson_t* b)
 
 	for (guint i = 0; i < distribution->server_count; i++)
 	{
-		// FIXME
+		/// \todo
 		j_helper_get_number_string(numstr, sizeof(numstr), i);
 		bson_append_int32(b_array, numstr, -1, distribution->weights[i]);
 	}

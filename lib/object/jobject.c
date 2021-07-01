@@ -104,7 +104,7 @@ struct JObject
 static JBackend* j_object_backend = NULL;
 static GModule* j_object_module = NULL;
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_object_init(void);
 static void __attribute__((destructor)) j_object_fini(void);
 
@@ -233,7 +233,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -429,7 +429,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -438,7 +438,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	JObject* object;
 	gpointer object_handle;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -575,7 +575,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -590,7 +590,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -599,7 +599,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	JObject* object;
 	gpointer object_handle;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -727,7 +727,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -742,7 +742,7 @@ j_object_status_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -853,7 +853,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -930,7 +930,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			// FIXME do something with reply
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
@@ -1018,7 +1018,7 @@ j_object_create(JObject* object, JBatch* batch)
 	g_return_if_fail(object != NULL);
 
 	operation = j_operation_new();
-	// FIXME key = index + namespace
+	/// \todo key = index + namespace
 	operation->key = object;
 	operation->data = j_object_ref(object);
 	operation->exec_func = j_object_create_exec;

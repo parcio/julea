@@ -90,7 +90,7 @@ struct JKV
 static JBackend* j_kv_backend = NULL;
 static GModule* j_kv_module = NULL;
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_kv_init(void);
 static void __attribute__((destructor)) j_kv_fini(void);
 
@@ -611,7 +611,7 @@ j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destro
 	kop->put.value_destroy = value_destroy;
 
 	operation = j_operation_new();
-	// FIXME key = index + namespace
+	/// \todo key = index + namespace
 	operation->key = kv;
 	operation->data = kop;
 	operation->exec_func = j_kv_put_exec;

@@ -176,14 +176,14 @@ j_object_uri_parse(JObjectURI* uri, gchar const* uri_)
 	{
 		case J_OBJECT_URI_SCHEME_NAMESPACE:
 		case J_OBJECT_URI_SCHEME_OBJECT:
-			// FIXME check for errors
+			/// \todo check for errors
 			uri->index = g_ascii_strtoull(parts[0], NULL, 10);
 			uri->namespace = g_strdup(parts[1]);
 
 			if (parts_len >= 3)
 			{
 				uri->name = g_strdup(parts[2]);
-				// FIXME index
+				/// \todo index
 				uri->object = j_object_new_for_index(uri->index, uri->namespace, uri->name);
 			}
 			break;
@@ -195,7 +195,7 @@ j_object_uri_parse(JObjectURI* uri, gchar const* uri_)
 			{
 				g_autoptr(JDistribution) distribution = NULL;
 
-				// FIXME
+				/// \todo
 				distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 				j_distribution_set(distribution, "start-index", 0);
 

@@ -36,9 +36,7 @@
 #include <julea-kv.h>
 
 /**
- * \defgroup JItemIterator Collection Iterator
- *
- * Data structures and functions for iterating over collections.
+ * \addtogroup JItemIterator
  *
  * @{
  **/
@@ -49,13 +47,6 @@ struct JItemIterator
 	JKVIterator* iterator;
 };
 
-/**
- * Creates a new JItemIterator.
- *
- * \param collection A JCollection.
- *
- * \return A new JItemIterator.
- **/
 JItemIterator*
 j_item_iterator_new(JCollection* collection)
 {
@@ -73,11 +64,6 @@ j_item_iterator_new(JCollection* collection)
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by the JItemIterator.
- *
- * \param iterator A JItemIterator.
- **/
 void
 j_item_iterator_free(JItemIterator* iterator)
 {
@@ -89,16 +75,6 @@ j_item_iterator_free(JItemIterator* iterator)
 	g_slice_free(JItemIterator, iterator);
 }
 
-/**
- * Checks whether another item is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A collection iterator.
- *
- * \return TRUE on success, FALSE if the end of the collection is reached.
- **/
 gboolean
 j_item_iterator_next(JItemIterator* iterator)
 {
@@ -107,16 +83,6 @@ j_item_iterator_next(JItemIterator* iterator)
 	return j_kv_iterator_next(iterator->iterator);
 }
 
-/**
- * Returns the current item.
- *
- * \code
- * \endcode
- *
- * \param iterator A collection iterator.
- *
- * \return A new item. Should be freed with j_item_unref().
- **/
 JItem*
 j_item_iterator_get(JItemIterator* iterator)
 {

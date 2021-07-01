@@ -31,6 +31,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JItemIterator Collection Iterator
+ *
+ * Data structures and functions for iterating over collections.
+ *
+ * @{
+ **/
+
 struct JItemIterator;
 
 typedef struct JItemIterator JItemIterator;
@@ -41,13 +49,51 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JItemIterator* j_item_iterator_new(JCollection*);
-void j_item_iterator_free(JItemIterator*);
+/**
+ * Creates a new JItemIterator.
+ *
+ * \param collection A JCollection.
+ *
+ * \return A new JItemIterator.
+ **/
+JItemIterator* j_item_iterator_new(JCollection* collection);
+
+/**
+ * Frees the memory allocated by the JItemIterator.
+ *
+ * \param iterator A JItemIterator.
+ **/
+void j_item_iterator_free(JItemIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JItemIterator, j_item_iterator_free)
 
-gboolean j_item_iterator_next(JItemIterator*);
-JItem* j_item_iterator_get(JItemIterator*);
+/**
+ * Checks whether another item is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A collection iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the collection is reached.
+ **/
+gboolean j_item_iterator_next(JItemIterator* iterator);
+
+/**
+ * Returns the current item.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A collection iterator.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
+JItem* j_item_iterator_get(JItemIterator* iterator);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

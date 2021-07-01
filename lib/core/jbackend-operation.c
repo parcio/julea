@@ -98,7 +98,7 @@ j_backend_operation_unwrap_db_delete(JBackend* backend, gpointer batch, JBackend
 	return j_backend_db_delete(backend, batch, data->in_param[1].ptr, data->in_param[2].ptr, data->out_param[0].ptr);
 }
 
-// FIXME clean up
+/// \todo clean up
 gboolean
 j_backend_operation_unwrap_db_query(JBackend* backend, gpointer batch, JBackendOperation* data)
 {

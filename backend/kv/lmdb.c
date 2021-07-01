@@ -87,14 +87,14 @@ backend_batch_execute(gpointer backend_data, gpointer data)
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	// FIXME do something with batch->semantics
+	/// \todo do something with batch->semantics
 
 	if (mdb_txn_commit(batch->txn) == 0)
 	{
 		ret = TRUE;
 	}
 
-	// FIXME free txn
+	/// \todo free txn
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
@@ -168,7 +168,7 @@ backend_get(gpointer backend_data, gpointer data, gchar const* key, gpointer* va
 
 	if (mdb_get(batch->txn, bd->dbi, &m_key, &m_value) == 0)
 	{
-		// FIXME check whether copies can be avoided
+		/// \todo check whether copies can be avoided
 #if GLIB_CHECK_VERSION(2, 68, 0)
 		*value = g_memdup2(m_value.mv_data, m_value.mv_size);
 #else
@@ -243,7 +243,7 @@ backend_iterate(gpointer backend_data, gpointer data, gchar const** key, gconstp
 
 	if (iterator->first)
 	{
-		// FIXME check +1
+		/// \todo check +1
 		m_key.mv_size = strlen(iterator->prefix) + 1;
 		m_key.mv_data = iterator->prefix;
 
@@ -256,7 +256,7 @@ backend_iterate(gpointer backend_data, gpointer data, gchar const** key, gconstp
 	{
 		if (!g_str_has_prefix(m_key.mv_data, iterator->prefix))
 		{
-			// FIXME check whether we can completely terminate
+			/// \todo check whether we can completely terminate
 			goto out;
 		}
 
@@ -290,7 +290,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 	if (mdb_env_create(&(bd->env)) == 0)
 	{
-		// FIXME grow mapsize dynamically (default is 10 MiB)
+		/// \todo grow mapsize dynamically (default is 10 MiB)
 		if (mdb_env_set_mapsize(bd->env, (gsize)4 * 1024 * 1024 * 1024) != 0)
 		{
 			goto error;

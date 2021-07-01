@@ -301,7 +301,7 @@ j_operation_cache_add(JBatch* batch)
 
 	j_list_iterator_free(iterator);
 
-	// FIXME never cleared
+	/// \todo never cleared
 	if ((buffer = j_cache_get(j_operation_cache->cache, required_size)) == NULL)
 	{
 		ret = FALSE;

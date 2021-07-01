@@ -36,9 +36,7 @@
 #include <julea-kv.h>
 
 /**
- * \defgroup JCollection Collection
- *
- * Data structures and functions for managing collections.
+ * \addtogroup JCollection
  *
  * @{
  **/
@@ -68,19 +66,6 @@ struct JCollection
 	gint ref_count;
 };
 
-/**
- * Increases a collection's reference count.
- *
- * \code
- * JCollection* c;
- *
- * j_collection_ref(c);
- * \endcode
- *
- * \param collection A collection.
- *
- * \return #collection.
- **/
 JCollection*
 j_collection_ref(JCollection* collection)
 {
@@ -93,15 +78,6 @@ j_collection_ref(JCollection* collection)
 	return collection;
 }
 
-/**
- * Decreases a collection's reference count.
- * When the reference count reaches zero, frees the memory allocated for the collection.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- **/
 void
 j_collection_unref(JCollection* collection)
 {
@@ -120,16 +96,6 @@ j_collection_unref(JCollection* collection)
 	}
 }
 
-/**
- * Returns a collection's name.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- *
- * \return A collection name.
- **/
 gchar const*
 j_collection_get_name(JCollection* collection)
 {
@@ -140,15 +106,6 @@ j_collection_get_name(JCollection* collection)
 	return collection->name;
 }
 
-/**
- * Creates a collection.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param batch      A batch.
- **/
 JCollection*
 j_collection_create(gchar const* name, JBatch* batch)
 {
@@ -185,16 +142,6 @@ j_collection_get_callback(gpointer value, guint32 len, gpointer data)
 	g_free(value);
 }
 
-/**
- * Gets a collection.
- *
- * \code
- * \endcode
- *
- * \param collection A pointer to a collection.
- * \param name       A name.
- * \param batch      A batch.
- **/
 void
 j_collection_get(JCollection** collection, gchar const* name, JBatch* batch)
 {
@@ -207,15 +154,6 @@ j_collection_get(JCollection** collection, gchar const* name, JBatch* batch)
 	j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
 }
 
-/**
- * Deletes a collection.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param batch      A batch.
- **/
 void
 j_collection_delete(JCollection* collection, JBatch* batch)
 {
@@ -227,19 +165,6 @@ j_collection_delete(JCollection* collection, JBatch* batch)
 
 /* Internal */
 
-/**
- * Creates a new collection.
- *
- * \code
- * JCollection* c;
- *
- * c = j_collection_new("JULEA");
- * \endcode
- *
- * \param name  A collection name.
- *
- * \return A new collection. Should be freed with j_collection_unref().
- **/
 JCollection*
 j_collection_new(gchar const* name)
 {
@@ -268,18 +193,6 @@ j_collection_new(gchar const* name)
 	return collection;
 }
 
-/**
- * Creates a new collection from a BSON object.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param b     A BSON object.
- *
- * \return A new collection. Should be freed with j_collection_unref().
- **/
 JCollection*
 j_collection_new_from_bson(bson_t const* b)
 {
@@ -304,18 +217,6 @@ j_collection_new_from_bson(bson_t const* b)
 	return collection;
 }
 
-/**
- * Serializes a collection.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- *
- * \return A new BSON object. Should be freed with g_slice_free().
- **/
 bson_t*
 j_collection_serialize(JCollection* collection)
 {
@@ -344,17 +245,6 @@ j_collection_serialize(JCollection* collection)
 	return b;
 }
 
-/**
- * Deserializes a collection.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param b          A BSON object.
- **/
 void
 j_collection_deserialize(JCollection* collection, bson_t const* b)
 {
@@ -403,18 +293,6 @@ j_collection_deserialize(JCollection* collection, bson_t const* b)
 	}
 }
 
-/**
- * Returns a collection's ID.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- *
- * \return An ID.
- **/
 bson_oid_t const*
 j_collection_get_id(JCollection* collection)
 {

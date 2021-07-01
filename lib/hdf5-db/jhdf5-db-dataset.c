@@ -603,7 +603,7 @@ H5VL_julea_db_space_hdf5_to_range(hid_t mem_space_id, hid_t stored_space_id)
 	stored_dims = g_new(hsize_t, stored_ndims);
 	H5Sget_simple_extent_dims(stored_space_id, stored_dims, NULL);
 	range_arr = g_array_new(FALSE, FALSE, sizeof(JHDF5IndexRange));
-	// FIXME G_DEBUG_HERE();
+	/// \todo G_DEBUG_HERE();
 
 	if (mem_space_id == H5S_ALL)
 	{

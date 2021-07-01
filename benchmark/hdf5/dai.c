@@ -38,7 +38,7 @@
 
 static gchar const* vol_connector = NULL;
 
-// FIXME redundant (see hdf.c)
+/// \todo redundant (see hdf.c)
 static void
 set_semantics(void)
 {
@@ -48,7 +48,7 @@ set_semantics(void)
 	j_hdf5_set_semantics(semantics);
 }
 
-// FIXME redundant (see hdf.c)
+/// \todo redundant (see hdf.c)
 static void
 discard_file(gchar const* path)
 {

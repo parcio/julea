@@ -76,7 +76,7 @@ j_get_program_name(gchar const* default_name)
 	return program_name;
 }
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_init(void);
 static void __attribute__((destructor)) j_fini(void);
 

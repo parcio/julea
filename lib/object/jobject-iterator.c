@@ -132,11 +132,11 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 	{
 		if (prefix == NULL)
 		{
-			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
 		}
 	}
 
@@ -174,11 +174,11 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	{
 		if (prefix == NULL)
 		{
-			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
 		}
 	}
 
@@ -231,7 +231,7 @@ j_object_iterator_next(JObjectIterator* iterator)
 	}
 	else
 	{
-		// FIXME ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
+		/// \todo ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
 	}
 
 	return ret;

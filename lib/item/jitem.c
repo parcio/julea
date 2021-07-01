@@ -39,9 +39,7 @@
 #include <julea-object.h>
 
 /**
- * \defgroup JItem Item
- *
- * Data structures and functions for managing items.
+ * \addtogroup JItem
  *
  * @{
  **/
@@ -106,19 +104,6 @@ struct JItem
 	gint ref_count;
 };
 
-/**
- * Increases an item's reference count.
- *
- * \code
- * JItem* i;
- *
- * j_item_ref(i);
- * \endcode
- *
- * \param item An item.
- *
- * \return #item.
- **/
 JItem*
 j_item_ref(JItem* item)
 {
@@ -131,15 +116,6 @@ j_item_ref(JItem* item)
 	return item;
 }
 
-/**
- * Decreases an item's reference count.
- * When the reference count reaches zero, frees the memory allocated for the item.
- *
- * \code
- * \endcode
- *
- * \param item An item.
- **/
 void
 j_item_unref(JItem* item)
 {
@@ -173,16 +149,6 @@ j_item_unref(JItem* item)
 	}
 }
 
-/**
- * Returns an item's name.
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return The name.
- **/
 gchar const*
 j_item_get_name(JItem* item)
 {
@@ -193,19 +159,6 @@ j_item_get_name(JItem* item)
 	return item->name;
 }
 
-/**
- * Creates an item in a collection.
- *
- * \code
- * \endcode
- *
- * \param collection   A collection.
- * \param name         A name.
- * \param distribution A distribution.
- * \param batch        A batch.
- *
- * \return A new item. Should be freed with j_item_unref().
- **/
 JItem*
 j_item_create(JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch)
 {
@@ -248,17 +201,6 @@ j_item_get_callback(gpointer value, guint32 len, gpointer data_)
 	g_free(value);
 }
 
-/**
- * Gets an item from a collection.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param item       A pointer to an item.
- * \param name       A name.
- * \param batch      A batch.
- **/
 void
 j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
@@ -281,16 +223,6 @@ j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* bat
 	j_kv_get_callback(kv, j_item_get_callback, data, batch);
 }
 
-/**
- * Deletes an item from a collection.
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param item       An item.
- * \param batch      A batch.
- **/
 void
 j_item_delete(JItem* item, JBatch* batch)
 {
@@ -303,19 +235,6 @@ j_item_delete(JItem* item, JBatch* batch)
 	j_distributed_object_delete(item->object, batch);
 }
 
-/**
- * Reads an item.
- *
- * \code
- * \endcode
- *
- * \param item       An item.
- * \param data       A buffer to hold the read data.
- * \param length     Number of bytes to read.
- * \param offset     An offset within #item.
- * \param bytes_read Number of bytes read.
- * \param batch      A batch.
- **/
 void
 j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
@@ -328,22 +247,6 @@ j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64*
 	j_distributed_object_read(item->object, data, length, offset, bytes_read, batch);
 }
 
-/**
- * Writes an item.
- *
- * \note
- * j_item_write() modifies bytes_written even if j_batch_execute() is not called.
- *
- * \code
- * \endcode
- *
- * \param item          An item.
- * \param data          A buffer holding the data to write.
- * \param length        Number of bytes to write.
- * \param offset        An offset within #item.
- * \param bytes_written Number of bytes written.
- * \param batch         A batch.
- **/
 void
 j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
@@ -353,19 +256,11 @@ j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, gu
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(bytes_written != NULL);
 
-	// FIXME see j_item_write_exec
+	/// \todo see j_item_write_exec
+
 	j_distributed_object_write(item->object, data, length, offset, bytes_written, batch);
 }
 
-/**
- * Get the status of an item.
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param batch     A batch.
- **/
 void
 j_item_get_status(JItem* item, JBatch* batch)
 {
@@ -373,20 +268,10 @@ j_item_get_status(JItem* item, JBatch* batch)
 
 	g_return_if_fail(item != NULL);
 
-	// FIXME check j_item_get_status_exec
+	/// \todo check j_item_get_status_exec
 	j_distributed_object_status(item->object, &(item->status.modification_time), &(item->status.size), batch);
 }
 
-/**
- * Returns an item's size.
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A size.
- **/
 guint64
 j_item_get_size(JItem* item)
 {
@@ -397,16 +282,6 @@ j_item_get_size(JItem* item)
 	return item->status.size;
 }
 
-/**
- * Returns an item's modification time.
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A modification time.
- **/
 gint64
 j_item_get_modification_time(JItem* item)
 {
@@ -417,23 +292,18 @@ j_item_get_modification_time(JItem* item)
 	return item->status.modification_time;
 }
 
+JCredentials*
+j_item_get_credentials(JItem* item)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(item != NULL, NULL);
+
+	return item->credentials;
+}
+
 /* Internal */
 
-/**
- * Creates a new item.
- *
- * \code
- * JItem* i;
- *
- * i = j_item_new("JULEA");
- * \endcode
- *
- * \param collection   A collection.
- * \param name         An item name.
- * \param distribution A distribution.
- *
- * \return A new item. Should be freed with j_item_unref().
- **/
 JItem*
 j_item_new(JCollection* collection, gchar const* name, JDistribution* distribution)
 {
@@ -473,19 +343,6 @@ j_item_new(JCollection* collection, gchar const* name, JDistribution* distributi
 	return item;
 }
 
-/**
- * Creates a new item from a BSON object.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param collection A collection.
- * \param b          A BSON object.
- *
- * \return A new item. Should be freed with j_item_unref().
- **/
 JItem*
 j_item_new_from_bson(JCollection* collection, bson_t const* b)
 {
@@ -516,18 +373,6 @@ j_item_new_from_bson(JCollection* collection, bson_t const* b)
 	return item;
 }
 
-/**
- * Returns an item's collection.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A collection.
- **/
 JCollection*
 j_item_get_collection(JItem* item)
 {
@@ -538,41 +383,6 @@ j_item_get_collection(JItem* item)
 	return item->collection;
 }
 
-/**
- * Returns an item's credentials.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return A collection.
- **/
-JCredentials*
-j_item_get_credentials(JItem* item)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(item != NULL, NULL);
-
-	return item->credentials;
-}
-
-/**
- * Serializes an item.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param item      An item.
- * \param semantics A semantics object.
- *
- * \return A new BSON object. Should be freed with g_slice_free().
- **/
 bson_t*
 j_item_serialize(JItem* item, JSemantics* semantics)
 {
@@ -648,17 +458,6 @@ j_item_deserialize_status(JItem* item, bson_t const* b)
 	}
 }
 
-/**
- * Deserializes an item.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param item An item.
- * \param b    A BSON object.
- **/
 void
 j_item_deserialize(JItem* item, bson_t const* b)
 {
@@ -727,18 +526,6 @@ j_item_deserialize(JItem* item, bson_t const* b)
 	}
 }
 
-/**
- * Returns an item's ID.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param item An item.
- *
- * \return An ID.
- **/
 bson_oid_t const*
 j_item_get_id(JItem* item)
 {
@@ -749,15 +536,6 @@ j_item_get_id(JItem* item)
 	return &(item->id);
 }
 
-/**
- * Sets an item's modification time.
- *
- * \code
- * \endcode
- *
- * \param item              An item.
- * \param modification_time A modification time.
- **/
 void
 j_item_set_modification_time(JItem* item, gint64 modification_time)
 {
@@ -769,15 +547,6 @@ j_item_set_modification_time(JItem* item, gint64 modification_time)
 	item->status.modification_time = MAX(item->status.modification_time, modification_time);
 }
 
-/**
- * Sets an item's size.
- *
- * \code
- * \endcode
- *
- * \param item An item.
- * \param size A size.
- **/
 void
 j_item_set_size(JItem* item, guint64 size)
 {
