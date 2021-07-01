@@ -30,7 +30,7 @@
 
 #include <jmessage.h>
 
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>

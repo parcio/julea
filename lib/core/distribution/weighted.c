@@ -27,7 +27,7 @@
 #include <bson.h>
 
 #include <jconfiguration.h>
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jtrace.h>
 
 #include "distribution.h"

@@ -36,7 +36,6 @@
 #include <unistd.h>
 
 #include <jhelper.h>
-#include <jhelper-internal.h>
 
 #include <jbackground-operation.h>
 #include <jsemantics.h>

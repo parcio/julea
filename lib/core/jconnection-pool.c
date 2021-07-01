@@ -31,7 +31,6 @@
 
 #include <jbackend.h>
 #include <jhelper.h>
-#include <jhelper-internal.h>
 #include <jmessage.h>
 #include <jtrace.h>
 

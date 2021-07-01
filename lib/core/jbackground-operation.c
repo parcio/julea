@@ -29,7 +29,7 @@
 #include <jbackground-operation.h>
 #include <jbackground-operation-internal.h>
 
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jtrace.h>
 
 /**
