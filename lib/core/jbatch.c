@@ -339,7 +339,7 @@ j_batch_execute_internal(JBatch* batch)
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
 	{
-		/* FIXME: perform some optimizations */
+		/// \todo perform some optimizations 
 		/**
 		 * It is important to consider dependencies:
 		 * - Operations have to be performed before their dependent ones.

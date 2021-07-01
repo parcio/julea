@@ -31,7 +31,7 @@
 #include <jtrace.h>
 
 /**
- * \addtogroup JMemoryChunk Cache
+ * \addtogroup JMemoryChunk
  * 
  * @{
  **/

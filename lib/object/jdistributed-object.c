@@ -247,7 +247,7 @@ j_distributed_object_create_background_operation(gpointer data)
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, object_connection);
 
-		/* FIXME do something with reply */
+		/// \todo do something with reply
 	}
 
 	j_message_unref(background_data->message);

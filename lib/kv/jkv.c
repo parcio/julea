@@ -273,7 +273,7 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, kv_connection);
 
-			/* FIXME do something with reply */
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);
@@ -364,7 +364,7 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, kv_connection);
 
-			/* FIXME do something with reply */
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_KV, index, kv_connection);

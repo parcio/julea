@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 /**
- * \defgroup JKVURI
+ * \defgroup JKVURI KV URI
  *
  * @{
  **/

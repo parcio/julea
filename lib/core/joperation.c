@@ -50,7 +50,7 @@ j_operation_new(void)
 	return operation;
 }
 
-/* FIXME */
+/// \todo
 void
 j_operation_free(JOperation* operation)
 {

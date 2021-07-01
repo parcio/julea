@@ -171,7 +171,7 @@ j_trace_thread_new(GThread* thread)
 	{
 		guint thread_id;
 
-		/* FIXME use name? */
+		/// \todo use name?
 		thread_id = g_atomic_int_add(&j_trace_thread_id, 1);
 		trace_thread->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
@@ -514,7 +514,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 
 	if (!j_trace_function_check(name))
 	{
-		/* FIXME also blacklist nested functions */
+		/// \todo also blacklist nested functions
 		return NULL;
 	}
 
@@ -622,7 +622,7 @@ j_trace_leave(JTrace* trace)
 		goto end;
 	}
 
-	/* FIXME */
+	/// \todo
 	if (trace_thread->function_depth == 0)
 	{
 		goto end;

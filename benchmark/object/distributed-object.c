@@ -449,7 +449,7 @@ benchmark_distributed_object(void)
 	j_benchmark_add("/object/distributed-object/delete-batch", benchmark_distributed_object_delete_batch);
 	j_benchmark_add("/object/distributed-object/status", benchmark_distributed_object_status);
 	j_benchmark_add("/object/distributed-object/status-batch", benchmark_distributed_object_status_batch);
-	/* FIXME get */
+	/// \todo get
 	j_benchmark_add("/object/distributed-object/read", benchmark_distributed_object_read);
 	j_benchmark_add("/object/distributed-object/read-batch", benchmark_distributed_object_read_batch);
 	j_benchmark_add("/object/distributed-object/write", benchmark_distributed_object_write);

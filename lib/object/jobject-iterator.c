@@ -110,7 +110,7 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 
-	/* FIXME still necessary? */
+	//// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JObjectIterator);
@@ -155,7 +155,7 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), NULL);
 
-	/* FIXME still necessary? */
+	/// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JObjectIterator);

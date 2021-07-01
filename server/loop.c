@@ -408,7 +408,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			if (get_all != 0)
 			{
 				g_mutex_lock(jd_statistics_mutex);
-				/* FIXME add statistics of all threads */
+				/// \todo add statistics of all threads
 			}
 
 			reply = j_message_new_reply(message);

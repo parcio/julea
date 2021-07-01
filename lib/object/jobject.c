@@ -314,7 +314,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			/* FIXME do something with reply */
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);

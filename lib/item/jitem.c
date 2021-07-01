@@ -483,7 +483,8 @@ j_item_deserialize(JItem* item, bson_t const* b)
 		else if (g_strcmp0(key, "name") == 0)
 		{
 			g_free(item->name);
-			item->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
+			/// \todo NULL
+			item->name = g_strdup(bson_iter_utf8(&iterator, NULL));
 		}
 		else if (g_strcmp0(key, "status") == 0)
 		{
@@ -558,6 +559,7 @@ j_item_set_size(JItem* item, guint64 size)
 	item->status.size = size;
 }
 
+/// \todo refactor or delete
 /*
 gboolean
 j_item_write_exec (JList* operations, JSemantics* semantics)

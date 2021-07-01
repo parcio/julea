@@ -277,7 +277,8 @@ j_collection_deserialize(JCollection* collection, bson_t const* b)
 		else if (g_strcmp0(key, "name") == 0)
 		{
 			g_free(collection->name);
-			collection->name = g_strdup(bson_iter_utf8(&iterator, NULL /*FIXME*/));
+			/// \todo NULL
+			collection->name = g_strdup(bson_iter_utf8(&iterator, NULL));
 		}
 		else if (g_strcmp0(key, "credentials") == 0)
 		{

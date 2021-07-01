@@ -265,5 +265,5 @@ benchmark_collection(void)
 	j_benchmark_add("/item/collection/delete-batch-without-get", benchmark_collection_delete_batch_without_get);
 	j_benchmark_add("/item/collection/unordered-create-delete", benchmark_collection_unordered_create_delete);
 	j_benchmark_add("/item/collection/unordered-create-delete-batch", benchmark_collection_unordered_create_delete_batch);
-	/* FIXME get */
+	/// \todo get
 }
