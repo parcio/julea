@@ -33,7 +33,27 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \addtogroup JOperation Operation
+ *
+ * @{
+ **/
+
+/**
+ * Frees the memory allocated by an operation.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param data An operation.
+ **/
 G_GNUC_INTERNAL void j_operation_free(JOperation*);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

@@ -28,7 +28,7 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JStatistics Statistics
+ * \addtogroup JStatistics Statistics
  *
  * @{
  **/
@@ -113,19 +113,6 @@ j_statistics_get_type_name(JStatisticsType type)
 	}
 }
 
-/**
- * Creates a new statistics.
- *
- * \private
- *
- * \code
- * JStatistics* s;
- *
- * s = j_statistics_new(FALSE);
- * \endcode
- *
- * \return A new statistics. Should be freed with j_statistics_free().
- **/
 JStatistics*
 j_statistics_new(gboolean trace)
 {
@@ -147,16 +134,6 @@ j_statistics_new(gboolean trace)
 	return statistics;
 }
 
-/**
- * Frees the memory allocated for the statistics.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param statistics A statistics.
- **/
 void
 j_statistics_free(JStatistics* statistics)
 {

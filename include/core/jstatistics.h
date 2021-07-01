@@ -31,6 +31,12 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JStatistics Statistics
+ *
+ * @{
+ **/
+
 enum JStatisticsType
 {
 	J_STATISTICS_FILES_CREATED,
@@ -49,11 +55,68 @@ struct JStatistics;
 
 typedef struct JStatistics JStatistics;
 
-JStatistics* j_statistics_new(gboolean);
-void j_statistics_free(JStatistics*);
+/**
+ * Creates a new statistics.
+ *
+ * \private
+ *
+ * \code
+ * JStatistics* s;
+ *
+ * s = j_statistics_new(FALSE);
+ * \endcode
+ * 
+ * \param trace Specify wether tracing was on or off while gathering data.
+ *
+ * \return A new statistics. Should be freed with j_statistics_free().
+ **/
+JStatistics* j_statistics_new(gboolean trace);
 
-guint64 j_statistics_get(JStatistics*, JStatisticsType);
-void j_statistics_add(JStatistics*, JStatisticsType, guint64);
+/**
+ * Frees the memory allocated for the statistics.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param statistics A statistics.
+ **/
+void j_statistics_free(JStatistics* statistics);
+
+/**
+ * Get a value from a statistic.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param statistics A statistics.
+ * \param type       A statistics type.
+ * 
+ * \return The requested value.
+ **/
+guint64 j_statistics_get(JStatistics* statistics, JStatisticsType type);
+
+/**
+ * Adds a value to a statistic.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param statistics A statistics.
+ * \param type       A statistics type.
+ * \param value		 A value to add to the statistics.
+ * 
+ **/
+void j_statistics_add(JStatistics* statistics, JStatisticsType type, guint64 value);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

@@ -31,6 +31,11 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JSemantics Semantics
+ * @{
+ **/
+
 enum JSemanticsTemplate
 {
 	J_SEMANTICS_TEMPLATE_DEFAULT,
@@ -119,16 +124,95 @@ struct JSemantics;
 
 typedef struct JSemantics JSemantics;
 
-JSemantics* j_semantics_new(JSemanticsTemplate);
-JSemantics* j_semantics_new_from_string(gchar const*, gchar const*);
+/**
+ * Creates a new semantics object.
+ * Semantics objects become immutable after the first call to @ref j_semantics_ref().
+ *
+ * \code
+ * \endcode
+ * \param template_ A semantics template.
+ *
+ * \return A new semantics object. Should be freed with @ref j_semantics_unref().
+ **/
+JSemantics* j_semantics_new(JSemanticsTemplate template_);
 
-JSemantics* j_semantics_ref(JSemantics*);
-void j_semantics_unref(JSemantics*);
+/**
+ * Creates a new semantics object from two strings.
+ * Semantics objects become immutable after the first call to @ref j_semantics_ref().
+ *
+ * \code
+ * JSemantics* semantics;
+ *
+ * semantics = j_semantics_new_from_string("default", "atomicity=operation");
+ * \endcode
+ *
+ * \param template_str  A string specifying the template.
+ * \param semantics_str A string specifying the semantics.
+ *
+ * \return A new semantics object. Should be freed with @ref j_semantics_unref().
+ **/
+JSemantics* j_semantics_new_from_string(gchar const* template_str, gchar const* semantics_str);
+
+/**
+ * Increases the semantics' reference count.
+ * The semantics object becomes immutable after the first call to this.
+ *
+ * \code
+ * \endcode
+ *
+ * \param semantics The semantics.
+ *
+ * \return The semantics.
+ **/
+JSemantics* j_semantics_ref(JSemantics* semantics);
+
+/**
+ * Decreases the semantics' reference count.
+ * When the reference count reaches zero, frees the memory allocated for the semantics.
+ *
+ * \code
+ * \endcode
+ *
+ * \param semantics The semantics.
+ **/
+void j_semantics_unref(JSemantics* semantics);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
 
-void j_semantics_set(JSemantics*, JSemanticsType, gint);
-gint j_semantics_get(JSemantics*, JSemanticsType);
+/**
+ * Sets a specific aspect of the semantics.
+ *
+ * \code
+ * JSemantics* semantics;
+ * ...
+ * j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+ * \endcode
+ *
+ * \param semantics The semantics.
+ * \param key       The aspect's key.
+ * \param value     The aspect's value.
+ **/
+void j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value);
+
+/**
+ * Gets a specific aspect of the semantics.
+ *
+ * \code
+ * JSemantics* semantics;
+ * ...
+ * j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
+ * \endcode
+ *
+ * \param semantics The semantics.
+ * \param key       The aspect's key.
+ *
+ * \return The aspect's value.
+ **/
+gint j_semantics_get(JSemantics* semantics, JSemanticsType key);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

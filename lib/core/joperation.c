@@ -29,19 +29,11 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JOperation Operation
+ * \addtogroup JOperation Operation
  *
  * @{
  **/
 
-/**
- * Creates a new operation.
- *
- * \code
- * \endcode
- *
- * \return A new operation. Should be freed with j_operation_free().
- **/
 JOperation*
 j_operation_new(void)
 {
@@ -58,16 +50,6 @@ j_operation_new(void)
 	return operation;
 }
 
-/**
- * Frees the memory allocated by an operation.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param data An operation.
- **/
 /* FIXME */
 void
 j_operation_free(JOperation* operation)
