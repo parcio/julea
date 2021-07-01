@@ -141,29 +141,30 @@ j_fabric_sread_event(struct JFabric* instance,
  * struct JConnection* connection;
  * int ack;
  * int data_size = 12, rdata_size = 16;
- * gboolean ret;
  * void* data_a = malloc(data_size), data_b = malloc(data_size), rdata = malloc(rdata_size);
  * // fill data !
  *
  * j_connection_init_client(config, J_BACKEND_TYPE_OBJECT, &connection);
  *
  * // message exchange
- * j_connection_srecv(connection, rdata, rdata_size); // sync receive operation
+ * j_connection_recv(connection, rdata, rdata_size);
+ * j_connection_wait_for_completion(connection);
  * // handle message and write result in data
  * j_connection_send(connection, data_a, data_size);
  * j_connection_send(connection, data_b, data_size);
- * j_connection_wait_for_completion(connection, ret, data_a, data_b);
+ * j_connection_wait_for_completion(connection);
  *
  * // provide memory for rma read action of other party.
  * JConnectionMemory rma_mem;
  * j_connection_rma_register(connection, data, data_size, &rma_mem);
  * // wait for other party to signal that they finished reading
- * j_connection_srecv(connection, &ack, sizeof(ack));
+ * j_connection_recv(connection, &ack, sizeof(ack));
+ * j_connection_wait_for_completion(connection);
  * j_connection_rma_unregister(connection, &rma_mem);
  *
  * // rma read 
  * j_connection_rma_read(connection, data, data_size);
- * j_connection_wait_for_completion(connection, ret, data);
+ * j_connection_wait_for_completion(connection);
  *
  * j_connection_fini(connection);
  * \endcode
@@ -185,13 +186,13 @@ j_fabric_sread_event(struct JFabric* instance,
  */
 struct JConnection;
 
-/// Handle to recognize async operations.
-/** \public \memberof JConnection
- * Used for async operations to check later if the completed or wait for completion.\n
- * The value is equal NULL means no waiting is necessary.
- * \sa j_connection_recv, j_connection_send, j_connection_rma_read, j_connection_wait_for_completion
- */
-typedef void* JConnectionOperationHandle;
+/// Highest number of j_connection_send() calls before a j_connection_wait_for_completion().
+/** \public \memberof JConnection */
+#define J_CONNECTION_MAX_SEND 2
+
+/// Highest number of j_connection_recv() calls before a j_connection_wait_for_completion().
+/** \public \memberof JConnection */
+#define J_CONNECTION_MAX_RECV 1
 
 /// Handle for memory regions available via rma.
 /** \public \memberof JConnection
@@ -298,30 +299,37 @@ j_connection_read_event(struct JConnection* instance,
  * 
  * Asynchronous sends a message, to recognize for completion use j_connection_wait_for_completion().\n
  * If the message is small enough it can "injected" to the network, in that case the actions finished 
- * immediate and the \p handle is NULL
- * \attention it is only allowed to have J_CONNECTION_MAX_SEND 
+ * immediate (j_connection_wait_for_completion() still works).
+ *
+ * \todo feedback if message was injected!
+ *
+ * \attention it is only allowed to have J_CONNECTION_MAX_SEND send
+ * operation pending at the same time. Each has a max size
+ * of j_configuration_max_operation_size() (the connection initialization may changes this value!).
+ *
  * \retval FALSE if an error occurred.
- * \sa j_connection_srecv, j_connection_wait_for_completion
+ * \sa j_connection_recv, j_connection_wait_for_completion
  */
 gboolean
 j_connection_send(struct JConnection* instance,
-		void* data,							///< [in] to send
-		size_t data_len,				 	///< [in] in bytes
-		JConnectionOperationHandle* handle	///< [out] to recognize completion
+		void* data,			///< [in] to send
+		size_t data_len	 	///< [in] in bytes
 );
 
-/// Blocking receive data via MSG connection.
+/// Asynchronous receive data via MSG connection.
 /** \public \memberof JConnection
  * 
- * Blocks until an error occures or the data were received.
- * If you want read multiple data via the same pair connection at the same time you will probably use
- * j_connection_rma_read().\n
- * To wait for completion use j_connection_wait_for_completion().
+ * Asynchronous receive a message, to wait for completion use j_connection_wait_for_completion().
+ *
+ * \attention it is only allowed to have J_CONNECTION_MAX_RECV recv
+ * operation pending at the same time.  Each has a max size
+ * of j_configuration_max_operation_size() (the connection initialization may has changed this value!).
+ * 
  * \retval FALSE if an error occurred
  * \sa j_connection_send, j_connection_wait_for_completion
  */
 gboolean
-j_connection_srecv(struct JConnection* instance,
+j_connection_recv(struct JConnection* instance,
 		size_t data_len,	///< [in] in bytes to receive
 		void* data			///< [out] received
 );
@@ -330,48 +338,21 @@ j_connection_srecv(struct JConnection* instance,
 /// Async direct memory read.
 /** \public \memberof JConnection
  *
- * Initiate an direct memory read, the completion can be recognized with \p handle.
- * \sa j_connection_wait_for_completion
+ * Initiate an direct memory read, to wait for completion use j_connection_wait_for_completion().
  * \retval FALSE if an error occurred -> handle will then also invalid
  */
 gboolean
 j_connection_rma_read(struct JConnection* instance,
 		size_t data_len, 					///< [in] in bytes to read
-		void* data,							///< [out] received
-		JConnectionOperationHandle* handle	///< [out] to recognize completion
+		void* data							///< [out] received
 );
 
-
-/// Wait until operation associated with handles are completed.
-/** \public \memberof JConnection
- * 
- * \p handle which equals NULL will not be waited for. Also \p check is even on error valid.
- * Use \ref j_connection_wait_for_completion for a simpler interface.
- * \attention memory for check must be provided by caller!
- * \sa j_connection_rma_read, j_connection_send, j_connection_wait_for_completion
+/// Wait until operations initiated at his connection finished.
+/** \public \memberof JConnection 
+ * \sa j_connection_rma_read, j_connection_send, j_connection_recv
  */
 gboolean
-j_connection_wait_for_completion_detail(struct JConnection* instance,
-		JConnectionOperationHandle handles[], 	///< [in] array of handle to wait for. 
-		int count,								///< [in] of handle 
-		gboolean check[] 						///< [out] logs which handle are completed now
-);
-
-#define NUMARGS(...)  (sizeof((int[]){__VA_ARGS__})/sizeof(int))
-
-/// Wait until operations associated with handles are completed
-/** \relates JConnection 
- * \param[in] instance of JConnection to work on
- * \param[in] ... JConnectionOperationHandle to wait for completion
- * \param[out] result of operation, is FALSE on failure
- * \sa j_connection_rma_read, j_connection_send, j_connection_wait_for_completion_detail
- */
-#define j_connection_wait_for_completion(instance, result, ...) 										  \
-	do {							 					   												  \
-		gboolean check[NUMARGS(__VA_ARGS__)] = {0}; 	   												  \
-		JConnectionOperationHandle handles = {__VA_ARGS__};												  \
-		result = j_connection_wait_for_completion_detail(instance, handles, NUMARGS(__VA_ARGS__), check); \
-	} while(FALSE)
+j_connection_wait_for_completion(struct JConnection* instance);
 
 /// Register memory to make it rma readable.
 /** \public \memberof JConnection
