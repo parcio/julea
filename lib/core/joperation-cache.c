@@ -32,7 +32,7 @@
 #include <jlist-iterator.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <joperation-internal.h>
+#include <joperation.h>
 #include <jtrace.h>
 
 #include <string.h>

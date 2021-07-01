@@ -24,7 +24,7 @@
 
 #include <glib.h>
 
-#include <joperation-internal.h>
+#include <joperation.h>
 
 #include <jtrace.h>
 

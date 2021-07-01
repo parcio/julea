@@ -32,7 +32,7 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <joperation-cache-internal.h>
-#include <joperation-internal.h>
+#include <joperation.h>
 #include <jsemantics.h>
 #include <jtrace.h>
 

@@ -68,6 +68,18 @@ typedef struct JOperation JOperation;
 JOperation* j_operation_new(void);
 
 /**
+ * Frees the memory allocated by an operation.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param data An operation.
+ **/
+G_GNUC_INTERNAL void j_operation_free(JOperation*);
+
+/**
  * @}
  **/
 
