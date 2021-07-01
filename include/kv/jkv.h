@@ -133,8 +133,8 @@ void j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_d
  * \code
  * \endcode
  *
- * \param item       An item.
- * \param batch      A batch.
+ * \param kv     A JKV.
+ * \param batch  A batch.
  **/
 void j_kv_delete(JKV* kv, JBatch* batch);
 

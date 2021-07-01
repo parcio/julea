@@ -99,7 +99,7 @@ JTrace* j_trace_enter(gchar const* name, gchar const* format, ...) G_GNUC_PRINTF
  * \code
  * \endcode
  *
- * \param name A function name.
+ * \param trace A JTrace.
  **/
 void j_trace_leave(JTrace* trace);
 

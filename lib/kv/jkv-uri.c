@@ -31,7 +31,7 @@
 #include <string.h>
 
 /**
- * \addtogroup JKVURI Object URI
+ * \addtogroup JKVURI
  *
  * @{
  **/

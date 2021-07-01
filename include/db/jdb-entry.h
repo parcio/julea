@@ -76,6 +76,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBEntry, j_db_entry_unref)
 
 /**
  * returns the id of the entry, after j_db_entry_insert has been called
+ * 
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
+ * 
  */
 gboolean j_db_entry_get_id(JDBEntry* entry, gpointer* value, guint64* length, GError** error);
 
