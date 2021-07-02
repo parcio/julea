@@ -32,7 +32,8 @@
 G_BEGIN_DECLS
 
 /**
- * \defgroup JMemoryChunk A chunk of memory intended for short time cashing of larger data chunks.
+ * \defgroup JMemoryChunk Memory Chunk
+ * A chunk of memory intended for short time cashing of larger data chunks.
  * @{
  **/
 
