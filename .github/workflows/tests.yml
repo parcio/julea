@@ -3,46 +3,62 @@ on: [push, pull_request]
 jobs:
   dependencies:
     name: Dependencies
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.dist }}
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-        compiler: [gcc, clang]
+        os:
+          - dist: ubuntu-20.04
+            compiler: gcc
+            compiler_version: 9.3.0
+          - dist: ubuntu-20.04
+            compiler: clang
+            compiler_version: 11.0.0
+          - dist: ubuntu-18.04
+            compiler: gcc
+            compiler_version: 7.5.0
+          - dist: ubuntu-18.04
+            compiler: clang
+            compiler_version: 9.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - name: Determine compiler version
-        run: |
-          ${{ matrix.compiler }} --version
-          COMPILER_HASH="$(${{ matrix.compiler }} --version | sha1sum)"
-          COMPILER_HASH="${COMPILER_HASH%% *}"
-          echo "COMPILER_HASH=${COMPILER_HASH}" >> "${GITHUB_ENV}"
       - name: Cache dependencies
         id: cache
         uses: actions/cache@v2
         with:
           path: dependencies
-          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ env.COMPILER_HASH }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         env:
-          JULEA_SPACK_COMPILER: ${{ matrix.compiler }}
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
           ./scripts/install-dependencies.sh full
   build:
     name: Build
     needs: dependencies
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.dist }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-        compiler: [gcc, clang]
+        os:
+          - dist: ubuntu-20.04
+            compiler: gcc
+            compiler_version: 9.3.0
+          - dist: ubuntu-20.04
+            compiler: clang
+            compiler_version: 11.0.0
+          - dist: ubuntu-18.04
+            compiler: gcc
+            compiler_version: 7.5.0
+          - dist: ubuntu-18.04
+            compiler: clang
+            compiler_version: 9.0.0
         dependencies: [system, spack]
     steps:
       - name: Checkout
@@ -58,33 +74,27 @@ jobs:
           sudo aa-remove-unknown
           sudo apt update || true
           sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
           then
             sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
             sudo pip3 install meson
           else
             sudo apt --yes --no-install-recommends install meson ninja-build
           fi
-      - name: Determine compiler version
-        run: |
-          ${{ matrix.compiler }} --version
-          COMPILER_HASH="$(${{ matrix.compiler }} --version | sha1sum)"
-          COMPILER_HASH="${COMPILER_HASH%% *}"
-          echo "COMPILER_HASH=${COMPILER_HASH}" >> "${GITHUB_ENV}"
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
         uses: actions/cache@v2
         with:
           path: dependencies
-          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ env.COMPILER_HASH }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
           exit 1
       - name: Configure
         env:
-          CC: ${{ matrix.compiler }}
+          CC: ${{ matrix.os.compiler }}
         run: |
           . scripts/environment.sh
           meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
@@ -99,13 +109,24 @@ jobs:
   tests:
     name: Tests
     needs: dependencies
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.dist }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-        compiler: [gcc, clang]
+        os:
+          - dist: ubuntu-20.04
+            compiler: gcc
+            compiler_version: 9.3.0
+          - dist: ubuntu-20.04
+            compiler: clang
+            compiler_version: 11.0.0
+          - dist: ubuntu-18.04
+            compiler: gcc
+            compiler_version: 7.5.0
+          - dist: ubuntu-18.04
+            compiler: clang
+            compiler_version: 9.0.0
         dependencies: [system, spack]
         name:
           # Default
@@ -169,26 +190,20 @@ jobs:
           sudo aa-remove-unknown
           sudo apt update || true
           sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
           then
             sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
             sudo pip3 install meson
           else
             sudo apt --yes --no-install-recommends install meson ninja-build
           fi
-      - name: Determine compiler version
-        run: |
-          ${{ matrix.compiler }} --version
-          COMPILER_HASH="$(${{ matrix.compiler }} --version | sha1sum)"
-          COMPILER_HASH="${COMPILER_HASH%% *}"
-          echo "COMPILER_HASH=${COMPILER_HASH}" >> "${GITHUB_ENV}"
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
         uses: actions/cache@v2
         with:
           path: dependencies
-          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ env.COMPILER_HASH }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
@@ -205,7 +220,7 @@ jobs:
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
         # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
-          if test "${{ matrix.os }}" = 'ubuntu-18.04'
+          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
           then
             sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
           else
@@ -221,14 +236,14 @@ jobs:
           sudo mariadb --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
       - name: Configure
         env:
-          CC: ${{ matrix.compiler }}
+          CC: ${{ matrix.os.compiler }}
         # FIXME Ubuntu 18.04's GCC sanitizer seems to produce false positives regarding a stack overflow in the db client.
         run: |
           . scripts/environment.sh
-          if test "${{ matrix.compiler }}" = 'clang'
+          if test "${{ matrix.os.compiler }}" = 'clang'
           then
             meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
-          elif test "${{ matrix.os }}" = 'ubuntu-18.04'
+          elif test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
           then
             meson setup bld
           else
