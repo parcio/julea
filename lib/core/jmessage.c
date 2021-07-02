@@ -30,11 +30,14 @@
 
 #include <jmessage.h>
 
+#include <jnetwork.h>
 #include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
 #include <jtrace.h>
+
+#define EXE(cmd, ...) do { if(cmd == FALSE) { g_warning(__VA_ARGS__); goto end; } } while(FALSE)
 
 /**
  * \addtogroup JMessage Message
@@ -595,65 +598,54 @@ j_message_get_string(JMessage* message)
 }
 
 gboolean
-j_message_receive(JMessage* message, gpointer connection)
+j_message_receive(JMessage* message, struct JConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	GInputStream* stream;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
-	stream = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-	return j_message_read(message, stream);
+	return j_message_read(message, connection);
 }
 
 gboolean
-j_message_send(JMessage* message, gpointer connection)
+j_message_send(JMessage* message, struct JConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret;
 
-	GOutputStream* stream;
-
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
-	j_helper_set_cork(connection, TRUE);
-
-	stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
-	ret = j_message_write(message, stream);
-
-	j_helper_set_cork(connection, FALSE);
+	ret = j_message_write(message, connection);
 
 	return ret;
 }
 
 gboolean
-j_message_read(JMessage* message, GInputStream* stream)
+j_message_read(JMessage* message, struct JConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret = FALSE;
 
 	GError* error = NULL;
-	gsize bytes_read;
 
 	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(stream != NULL, FALSE);
+	g_return_val_if_fail(connection != NULL, FALSE);
 
-	if (!g_input_stream_read_all(stream, &(message->header), sizeof(JMessageHeader), &bytes_read, NULL, &error) || bytes_read != sizeof(JMessageHeader))
-	{
-		goto end;
-	}
+	EXE(j_connection_recv(connection, sizeof(message->header), &(message->header)),
+			"Failed to initiated header receive!");
+	EXE(j_connection_wait_for_completion(connection),
+			"Failed to wait for header receive!");
 
 	j_message_ensure_size(message, j_message_length(message));
 
-	if (!g_input_stream_read_all(stream, message->data, j_message_length(message), &bytes_read, NULL, &error) || bytes_read != j_message_length(message))
-	{
-		goto end;
-	}
+	EXE(j_connection_recv(connection, j_message_length(message), message->data),
+			"Failed to initiated message body receive!");
+	EXE(j_connection_wait_for_completion(connection),
+			"Failed to wait for message body receive!");
 
 	message->current = message->data;
 
@@ -675,7 +667,7 @@ end:
 }
 
 gboolean
-j_message_write(JMessage* message, GOutputStream* stream)
+j_message_write(JMessage* message, struct JConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -683,20 +675,22 @@ j_message_write(JMessage* message, GOutputStream* stream)
 
 	g_autoptr(JListIterator) iterator = NULL;
 	GError* error = NULL;
-	gsize bytes_written;
+	JConnectionMemory* memory_regions = NULL;
+	JConnectionMemory* memory_itr;
+	int n_memory_regions = 0;
+	JConnectionAck ack;
 
 	g_return_val_if_fail(message != NULL, FALSE);
-	g_return_val_if_fail(stream != NULL, FALSE);
+	g_return_val_if_fail(connection != NULL, FALSE);
 
-	if (!g_output_stream_write_all(stream, &(message->header), sizeof(JMessageHeader), &bytes_written, NULL, &error) || bytes_written != sizeof(JMessageHeader))
-	{
-		goto end;
-	}
+	EXE(j_connection_send(connection, &(message->header), sizeof(message->header)),
+			"Failed to initiated sending message header.");
+	EXE(j_connection_send(connection, message->data, j_message_length(message)),
+			"Failed to initiated sending message body.");
 
-	if (!g_output_stream_write_all(stream, message->data, j_message_length(message), &bytes_written, NULL, &error) || bytes_written != j_message_length(message))
-	{
-		goto end;
-	}
+	n_memory_regions = j_list_length(message->send_list);
+	memory_regions = calloc(sizeof(JConnectionMemory), n_memory_regions);
+	memory_itr = memory_regions;
 
 	if (message->send_list != NULL)
 	{
@@ -706,14 +700,26 @@ j_message_write(JMessage* message, GOutputStream* stream)
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			if (!g_output_stream_write_all(stream, message_data->data, message_data->length, &bytes_written, NULL, &error))
-			{
-				goto end;
-			}
+			EXE(j_connection_rma_register(connection, message_data->data, message_data->length, memory_itr),
+					"Failed to register message data memory!");
+			++memory_itr;
 		}
 	}
+	EXE(j_connection_recv(connection, sizeof(ack), &ack),
+			"Failed to initiated ACK receive.");
+	EXE(j_connection_wait_for_completion(connection),
+			"Failed to wait for completion of message send!");
+	if(ack != J_CONNECTION_ACK) {
+		g_warning("Wrong ACK flag received! got: %i, instead of: %i", ack, J_CONNECTION_ACK);
+		goto end;
+	}
 
-	g_output_stream_flush(stream, NULL, NULL);
+	for(memory_itr = memory_regions; memory_itr - memory_regions < n_memory_regions; ++memory_itr)
+	{
+		EXE(j_connection_rma_unregister(connection, memory_itr),
+				"Failed to unregister message data memory!");
+	}
+	free(memory_regions);
 
 	ret = TRUE;
 
@@ -722,6 +728,14 @@ end:
 	{
 		g_critical("%s", error->message);
 		g_error_free(error);
+	}
+
+	if(memory_regions != NULL) {
+		JConnectionMemory* mrs = memory_regions;
+		while(memory_regions != memory_itr) {
+			j_connection_rma_unregister(connection, memory_regions);
+		}
+		free(mrs);
 	}
 
 	return ret;

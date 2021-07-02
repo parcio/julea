@@ -206,6 +206,19 @@ struct JConnection;
 /** \public \memberof JConnection */
 #define J_CONNECTION_MAX_RECV 1
 
+/// Acknowladgement value.
+/** \public \memberof JConnection 
+ * Value used to send an ack for any reason. Maybe to verify that the remote memory was successful readed.
+ * \sa j_connection_rma_unregister, j_connection_rma_read, j_connection_rma_register, JConnectionAck
+ */
+#define J_CONNECTION_ACK 42
+
+/// type of ack value.
+/** \public \memberof JConnection
+ * \sa J_CONNECTION_ACK
+ */
+typedef int JConnectionAck;
+
 /// Handle for memory regions available via rma.
 /** \public \memberof JConnection
  * \sa j_connection_rma_read, j_connection_rma_register, j_connection_rma_unregister
@@ -395,7 +408,7 @@ j_connection_wait_for_completion(struct JConnection* instance);
  */
 gboolean
 j_connection_rma_register(struct JConnection* intsance,
-		void* data,					///< [in] begin of memory region to share
+		const void* data,			///< [in] begin of memory region to share
 		size_t data_len,			///< [in] size of memory region in bytes
 		JConnectionMemory* handle	///< [out] for memory region to unregister with j_connection_rma_unregister
 );

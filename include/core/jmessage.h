@@ -68,6 +68,7 @@ enum JMessageType
 typedef enum JMessageType JMessageType;
 
 struct JMessage;
+struct JConnection;
 
 typedef struct JMessage JMessage;
 
@@ -292,58 +293,6 @@ gpointer j_message_get_n(JMessage* message, gsize length);
 gchar const* j_message_get_string(JMessage* message);
 
 /**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_send(JMessage* message, gpointer stream);
-
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_receive(JMessage* message, gpointer stream);
-
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_read(JMessage* message, GInputStream* stream);
-
-/**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_write(JMessage* message, GOutputStream* stream);
-
-/**
  * Adds new data to send to a message.
  *
  * \code
@@ -365,6 +314,58 @@ void j_message_add_send(JMessage* message, gconstpointer data, guint64 length);
  * \param length  A length.
  **/
 void j_message_add_operation(JMessage* message, gsize length);
+
+/**
+ * Writes a message to the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_send(JMessage*, struct JConnection*);
+
+/**
+ * Reads a message from the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_receive(JMessage*, struct JConnection*);
+
+/**
+ * Reads a message from the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_read(JMessage*, struct JConnection*);
+
+/**
+ * Writes a message to the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_write(JMessage*, struct JConnection*);
 
 /**
  * Set the semantics of a message.
