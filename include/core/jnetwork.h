@@ -29,9 +29,9 @@
 #include <jbackend.h>
 
 #include <glib.h>
+#include <gio/gio.h>
 
 struct JConfiguration;
-struct GSocketConnection;
 
 /** \defgroup network Network
  * 	Interface for communication over network
@@ -163,14 +163,19 @@ j_fabric_sread_event(struct JFabric* instance,
  *
  * // provide memory for rma read action of other party.
  * JConnectionMemory rma_mem;
+ * struct JConnectionMemoryID rma_mem_id;
  * j_connection_rma_register(connection, data, data_size, &rma_mem);
+ * j_connection_memory_get_id(rma_mem, &rma_mem_id);
+ * j_connection_send(connection, &rma_mem_id, sizeof(rma_mem_id));
  * // wait for other party to signal that they finished reading
  * j_connection_recv(connection, &ack, sizeof(ack));
  * j_connection_wait_for_completion(connection);
  * j_connection_rma_unregister(connection, &rma_mem);
  *
  * // rma read 
- * j_connection_rma_read(connection, data, data_size);
+ * j_connection_recv(connection, &rma_mem_id, sizeof(rma_mem_id));
+ * j_connection_wait_for_completion(connection);
+ * j_connection_rma_read(connection, &rma_mem_id, data);
  * j_connection_wait_for_completion(connection);
  *
  * j_connection_fini(connection);
@@ -206,6 +211,27 @@ struct JConnection;
  * \sa j_connection_rma_read, j_connection_rma_register, j_connection_rma_unregister
  */
 typedef void* JConnectionMemory;
+
+/// Identifier to read memory.
+/** \public \memberof JConnectionMemory
+ * \sa j_connection_rma_read, j_connection_rma_register, j_connection_memory_get_id
+ */
+struct JConnectionMemoryID {
+	uint64_t key;		///< access key for authentication
+	uint64_t offset; 	///< used to identifie memory region
+	uint64_t size;		///< size in bytes of memery region
+};
+
+/// Get identifier of memory region
+/** \public \memberof JConnectionMemory
+ * \retval FALSE on failure
+ * \sa j_connection_rma_read, j_connection_rma_register
+ */
+gboolean
+j_connection_memory_get_id(JConnectionMemory instance,
+		struct JConnectionMemoryID* id ///< [out] of registerd memory
+);
+
 
 /// Builds a connection to an active fabric (direct).
 /** \public \memberof JConnection
@@ -253,7 +279,7 @@ gboolean
 j_connection_init_server (
 		struct JConfiguration* configuration, 	     ///< [in] for the network configuration
 		struct JFabric* fabric,						 ///< [in] via which the connection should be established
-		struct GSocketConnection* gconnection, 		 ///< [in] valid GSocketConnection for address exchange
+		GSocketConnection* gconnection, 			 ///< [in] valid GSocketConnection for address exchange
 		struct JConnection** instance				 ///< [out] constructed instance
 );
 /// Closes a connection and free all related resources.
@@ -350,8 +376,8 @@ j_connection_recv(struct JConnection* instance,
  */
 gboolean
 j_connection_rma_read(struct JConnection* instance,
-		size_t data_len, 					///< [in] in bytes to read
-		void* data							///< [out] received
+		struct JConnectionMemoryID* memoryID,			///< [in] for segment which should be copied
+		void* data										///< [out] received
 );
 
 /// Wait until operations initiated at his connection finished.
