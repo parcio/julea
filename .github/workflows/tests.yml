@@ -128,51 +128,34 @@ jobs:
             compiler: clang
             compiler_version: 9.0.0
         dependencies: [system, spack]
-        name:
+        julea:
           # Default
-          - posix-lmdb-sqlite
+          - object: posix
+            kv: lmdb
+            db: sqlite
           # Object backends
-          - gio-lmdb-sqlite
+          - object: gio
+            kv: lmdb
+            db: sqlite
           # KV backends
-          - posix-leveldb-sqlite
-          - posix-rocksdb-sqlite
-          - posix-sqlite-sqlite
-          # DB backends
-          - posix-lmdb-memory
-          - posix-lmdb-mysql-mysql
-          - posix-lmdb-mysql-mariadb
-        include:
-          - name: posix-lmdb-sqlite
-            object: posix
-            kv: lmdb
-            db: sqlite
-          - name: gio-lmdb-sqlite
-            object: gio
-            kv: lmdb
-            db: sqlite
-          - name: posix-leveldb-sqlite
-            object: posix
+          - object: posix
             kv: leveldb
             db: sqlite
-          - name: posix-rocksdb-sqlite
-            object: posix
+          - object: posix
             kv: rocksdb
             db: sqlite
-          - name: posix-sqlite-sqlite
-            object: posix
+          - object: posix
             kv: sqlite
             db: sqlite
-          - name: posix-lmdb-memory
-            object: posix
+          # DB backends
+          - object: posix
             kv: lmdb
             db: memory
-          - name: posix-lmdb-mysql-mysql
-            object: posix
+          - object: posix
             kv: lmdb
             db: mysql
             db-server: mysql
-          - name: posix-lmdb-mysql-mariadb
-            object: posix
+          - object: posix
             kv: lmdb
             db: mysql
             db-server: mariadb
@@ -209,14 +192,14 @@ jobs:
         run: |
           exit 1
       - name: Set up MySQL
-        if: matrix.db == 'mysql' && matrix.db-server == 'mysql'
+        if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql'
         run: |
           sudo systemctl start mysql.service
           mysql --user=root --password=root --execute="CREATE DATABASE juleadb;"
           mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED WITH mysql_native_password BY 'aeluj';"
           mysql --user=root --password=root --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
       - name: Set up MariaDB
-        if: matrix.db == 'mysql' && matrix.db-server == 'mariadb'
+        if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb'
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
         # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
@@ -258,10 +241,10 @@ jobs:
         run: |
           . scripts/environment.sh
           JULEA_DB_COMPONENT='server'
-          if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
-          JULEA_DB_PATH="/tmp/julea/db/${{ matrix.db }}"
-          if test "${{ matrix.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.object }}" --kv-backend="${{ matrix.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.kv }}" --db-backend="${{ matrix.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+          if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
+          JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
+          if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.julea.kv }}" --db-backend="${{ matrix.julea.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
           . scripts/environment.sh
