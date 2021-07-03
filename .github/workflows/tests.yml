@@ -254,6 +254,7 @@ jobs:
           ./scripts/test.sh
           ./scripts/setup.sh stop
       - name: HDF5 Tests
+        if: matrix.julea.db != 'memory'
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
