@@ -448,7 +448,7 @@ benchmark_hdf_dai(void)
 
 	j_benchmark_add("/hdf5/dai/native", benchmark_hdf_dai_native);
 
-	if (g_strcmp0(vol_connector, "julea") == 0)
+	if (g_strcmp0(vol_connector, "julea-kv") == 0)
 	{
 		j_benchmark_add("/hdf5/dai/kv-get", benchmark_hdf_dai_kv_get);
 		j_benchmark_add("/hdf5/dai/kv-iterator", benchmark_hdf_dai_kv_iterator);
