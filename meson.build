@@ -443,15 +443,15 @@ julea_clients = ['object', 'kv', 'db', 'item']
 
 if hdf_dep.found()
 	julea_client_srcs += {
-		'hdf5': files([
-			'lib/hdf5/jhdf5.c',
+		'hdf5-kv': files([
+			'lib/hdf5-kv/jhdf5.c',
 		]),
 		'hdf5-db': files([
 			'lib/hdf5-db/jhdf5-db.c',
 		])
 	}
 
-	julea_clients += ['hdf5', 'hdf5-db']
+	julea_clients += ['hdf5-kv', 'hdf5-db']
 endif
 
 julea_client_deps = {}
@@ -463,7 +463,7 @@ foreach client: julea_clients
 	if client == 'item'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
-	elif client == 'hdf5'
+	elif client == 'hdf5-kv'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
 		extra_deps += hdf_dep
@@ -484,7 +484,7 @@ foreach client: julea_clients
 
 	julea_client_deps += {client: declare_dependency(link_with: julea_client_lib)}
 
-	if client != 'hdf5' and client != 'hdf5-db'
+	if client != 'hdf5-kv' and client != 'hdf5-db'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
 			extra_cflags: sanitize_cflags,
@@ -500,7 +500,7 @@ hdf_deps = []
 
 if hdf_dep.found()
 	# FIXME refactor, we do not really want to link to the HDF5 VOL plugins anymore
-	hdf_deps += julea_client_deps['hdf5']
+	hdf_deps += julea_client_deps['hdf5-kv']
 	hdf_deps += hdf_dep
 endif
 

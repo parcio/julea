@@ -1533,7 +1533,7 @@ H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, hb
 static const H5VL_class_t H5VL_julea_g = {
 	.version = 0,
 	.value = JULEA,
-	.name = "julea",
+	.name = "julea-kv",
 	.cap_flags = 0,
 	.initialize = H5VL_julea_init,
 	.terminate = H5VL_julea_term,
