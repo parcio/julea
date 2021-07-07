@@ -42,6 +42,8 @@ JBackend* jd_db_backend = NULL;
 
 static JConfiguration* jd_configuration = NULL;
 
+static struct JFabric* jd_fabric = NULL;
+
 static gboolean
 jd_signal(gpointer data)
 {
@@ -58,7 +60,7 @@ jd_signal(gpointer data)
 }
 
 static gboolean
-jd_on_run(GThreadedSocketService* service, GSocketConnection* connection, GObject* source_object, gpointer user_data)
+jd_on_run(GThreadedSocketService* service, GSocketConnection* gconnection, GObject* source_object, gpointer user_data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -66,12 +68,13 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* connection, GObjec
 	g_autoptr(JMessage) message = NULL;
 	JStatistics* statistics;
 	guint64 memory_chunk_size;
+	struct JConnection* jconnection;
 
 	(void)service;
 	(void)source_object;
 	(void)user_data;
 
-	j_helper_set_nodelay(connection, TRUE);
+	j_helper_set_nodelay(gconnection, TRUE);
 
 	statistics = j_statistics_new(TRUE);
 	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
@@ -79,9 +82,11 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* connection, GObjec
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
-	while (j_message_receive(message, connection))
+	j_connection_init_server(jd_configuration, jd_fabric, gconnection, &jconnection);
+
+	while (j_message_receive(message, jconnection))
 	{
-		jd_handle_message(message, connection, memory_chunk, memory_chunk_size, statistics);
+		jd_handle_message(message, jconnection, memory_chunk, memory_chunk_size, statistics);
 	}
 
 	{
@@ -372,6 +377,12 @@ main(int argc, char** argv)
 		}
 
 		g_debug("Initialized db backend %s.", db_backend);
+	}
+
+	if(!j_fabric_init_server(jd_configuration, &jd_fabric))
+	{
+		g_warning("Failed to initialize server fabric!");
+		return 1;
 	}
 
 	jd_statistics = j_statistics_new(FALSE);

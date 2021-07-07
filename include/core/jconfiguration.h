@@ -40,6 +40,7 @@ G_BEGIN_DECLS
  **/
 
 struct JConfiguration;
+struct fi_info;
 
 typedef struct JConfiguration JConfiguration;
 
@@ -115,6 +116,9 @@ guint64 j_configuration_get_stripe_size(JConfiguration*);
 
 /// network port to communicate
 guint16 j_configuration_get_port(JConfiguration*);
+
+gint64 j_configuration_get_libfabric_version(JConfiguration*);
+struct fi_info* j_configuration_get_libfabric_hints(JConfiguration*);
 
 G_END_DECLS
 

@@ -25,6 +25,7 @@
 #include <jbackend.h>
 #include <jmemory-chunk.h>
 #include <jmessage.h>
+#include <jnetwork.h>
 #include <jstatistics.h>
 
 G_GNUC_INTERNAL extern JStatistics* jd_statistics;
@@ -34,6 +35,6 @@ G_GNUC_INTERNAL extern JBackend* jd_object_backend;
 G_GNUC_INTERNAL extern JBackend* jd_kv_backend;
 G_GNUC_INTERNAL extern JBackend* jd_db_backend;
 
-G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
+G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, struct JConnection*, JMemoryChunk*, guint64, JStatistics*);
 
 #endif

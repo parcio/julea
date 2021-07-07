@@ -68,13 +68,13 @@ enum JMessageType
 typedef enum JMessageType JMessageType;
 
 struct JMessage;
-struct JConnection;
 
 typedef struct JMessage JMessage;
 
 G_END_DECLS
 
 #include <core/jsemantics.h>
+#include <core/jnetwork.h>
 
 G_BEGIN_DECLS
 
@@ -229,6 +229,9 @@ gboolean j_message_append_n(JMessage* message, gconstpointer data, gsize length)
  **/
 gboolean j_message_append_string(JMessage* message, gchar const* str);
 
+/// Appends a memory identifier to a message
+gboolean j_message_append_memory_id(JMessage*, const struct JConnectionMemoryID*);
+
 /**
  * Gets 1 byte from a message.
  *
@@ -292,17 +295,19 @@ gpointer j_message_get_n(JMessage* message, gsize length);
  **/
 gchar const* j_message_get_string(JMessage* message);
 
+/// Gets an memory identifier from a message.
+const struct JConnectionMemoryID* j_message_get_memory_id(JMessage*);
+
 /**
  * Adds new data to send to a message.
  *
  * \code
  * \endcode
  *
- * \param message A message.
- * \param data    Data.
- * \param length  A length.
+ * \param data,length Data segment to send.
+ * \param header,h_size header data (included in message)
  **/
-void j_message_add_send(JMessage* message, gconstpointer data, guint64 length);
+void j_message_add_send(JMessage* this, gconstpointer data, guint64 length, void* header, guint64 h_size);
 
 /**
  * Adds a new operation to a message.
@@ -326,6 +331,8 @@ void j_message_add_operation(JMessage* message, gsize length);
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
+
+/** Append sendend data memory ids to end of message!  */
 gboolean j_message_send(JMessage*, struct JConnection*);
 
 /**
@@ -340,6 +347,9 @@ gboolean j_message_send(JMessage*, struct JConnection*);
  * \return TRUE on success, FALSE if an error occurred.
  **/
 gboolean j_message_receive(JMessage*, struct JConnection*);
+/// signal when rma read actions are finished.
+/** Sends ACK flag, to signal that host can free data memory. Also wait for all network actions to coplete!*/
+gboolean j_message_send_ack(JMessage*, struct JConnection*);
 
 /**
  * Reads a message from the network.
@@ -354,9 +364,9 @@ gboolean j_message_receive(JMessage*, struct JConnection*);
  **/
 gboolean j_message_read(JMessage*, struct JConnection*);
 
-/**
- * Writes a message to the network.
+/** Writes a message to the network.
  *
+ * \attention send without data segment!
  * \code
  * \endcode
  *
@@ -367,8 +377,7 @@ gboolean j_message_read(JMessage*, struct JConnection*);
  **/
 gboolean j_message_write(JMessage*, struct JConnection*);
 
-/**
- * Set the semantics of a message.
+/** Set the semantics of a message.
  *
  * \code
  * \endcode

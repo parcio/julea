@@ -1056,10 +1056,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 					bw_lists[index] = j_list_new(NULL);
 				}
 
-				j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
-				j_message_append_8(messages[index], &new_length);
-				j_message_append_8(messages[index], &new_offset);
-				j_message_add_send(messages[index], new_data, new_length);
+				j_message_add_send(messages[index], new_data, new_length, &new_offset, sizeof(new_offset));
 
 				j_list_append(bw_lists[index], bytes_written);
 

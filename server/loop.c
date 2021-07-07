@@ -29,7 +29,7 @@
 static guint jd_thread_num = 0;
 
 gboolean
-jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
+jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -219,6 +219,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				if (length > memory_chunk_size)
 				{
 					/// \todo return proper error
+					g_warning("memory object don't fit in memory chunk!");
 					j_message_add_operation(reply, sizeof(guint64));
 					j_message_append_8(reply, &bytes_read);
 					continue;
@@ -241,12 +242,9 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				j_backend_object_read(jd_object_backend, object, buf, length, offset, &bytes_read);
 				j_statistics_add(statistics, J_STATISTICS_BYTES_READ, bytes_read);
 
-				j_message_add_operation(reply, sizeof(guint64));
-				j_message_append_8(reply, &bytes_read);
-
 				if (bytes_read > 0)
 				{
-					j_message_add_send(reply, buf, bytes_read);
+					j_message_add_send(reply, buf, bytes_read, NULL, 0);
 				}
 
 				j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
@@ -281,16 +279,15 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 			for (i = 0; i < operation_count; i++)
 			{
-				GInputStream* input;
 				gchar* buf;
-				guint64 length;
+				const struct JConnectionMemoryID* memoryID;
 				guint64 offset;
 				guint64 bytes_written = 0;
 
-				length = j_message_get_8(message);
+				memoryID = j_message_get_memory_id(message);
 				offset = j_message_get_8(message);
 
-				if (length > memory_chunk_size && reply != NULL && G_LIKELY(ret))
+				if (memoryID->size > memory_chunk_size && reply != NULL && G_LIKELY(ret))
 				{
 					/// \todo return proper error
 					j_message_add_operation(reply, sizeof(guint64));
@@ -299,12 +296,12 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				}
 
 				// Guaranteed to work because memory_chunk is reset below
-				buf = j_memory_chunk_get(memory_chunk, length);
+				buf = j_memory_chunk_get(memory_chunk, memoryID->size);
 				g_assert(buf != NULL);
 
-				input = g_io_stream_get_input_stream(G_IO_STREAM(connection));
-				g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
-				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
+				j_connection_rma_read(connection, memoryID, buf);
+				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, memoryID->size);
+				// CONTINUE
 
 				if (G_LIKELY(ret))
 				{

@@ -85,6 +85,9 @@ struct JMessageData
 	 * The data length.
 	 **/
 	guint64 length;
+
+	void* header;
+	guint64 header_size;
 };
 
 typedef struct JMessageData JMessageData;
@@ -609,17 +612,80 @@ j_message_receive(JMessage* message, struct JConnection* connection)
 }
 
 gboolean
+j_message_send_ack(JMessage* message, struct JConnection* connection)
+{
+	const JConnectionAck ack = J_CONNECTION_ACK;
+	
+	// No data where send -> no need to acknowledge
+	if(j_message_get_count(message) == 0) { return TRUE; }
+
+	EXE(j_connection_wait_for_completion(connection),
+			"Failed to wait to finishe all operations before sending ack!");
+	EXE(j_connection_send(connection, &ack, sizeof(ack)),
+			"Failed to initiated sending ACK!");
+	EXE(j_connection_wait_for_completion(connection),
+			"Failed to verify completion of sending ACK!");
+	return TRUE;
+end:
+	return FALSE;
+}
+
+gboolean
 j_message_send(JMessage* message, struct JConnection* connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean ret;
+	int n_memory_regions = 0;
+	JConnectionMemory* memory_itr = NULL;
+	JConnectionMemory* memory_regions = NULL;
+	struct JConnectionMemoryID mem_id;
+	g_autoptr(JListIterator) iterator = NULL;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
+	ret = FALSE;
+
+	n_memory_regions = j_list_length(message->send_list);
+	memory_regions = calloc(sizeof(JConnectionMemory), n_memory_regions);
+	memset(memory_regions, 0, sizeof(JConnectionMemory) * n_memory_regions);
+	memory_itr = memory_regions;
+
+	if (message->send_list != NULL)
+	{
+		iterator = j_list_iterator_new(message->send_list);
+
+		while (j_list_iterator_next(iterator))
+		{
+			JMessageData* message_data = j_list_iterator_get(iterator);
+
+			EXE(j_connection_rma_register(connection, message_data->data, message_data->length, memory_itr),
+					"Failed to register message data memory!");
+
+			j_message_add_operation(message, sizeof(struct JConnectionMemoryID) + message_data->header_size);
+
+			EXE(j_connection_memory_get_id(connection, &mem_id),
+					"Failed to get memory it!");
+			EXE(j_message_append_n(message, message_data->header, message_data->header_size),
+					"Failed to append header");
+			EXE(j_message_append_memory_id(message, &mem_id),
+					"Failed to append memory id to message!");
+			++memory_itr;
+		}
+	}
+
 	ret = j_message_write(message, connection);
 
+end:
+	if(memory_regions != NULL) {
+		JConnectionMemory* mrs = memory_regions;
+		while(memory_regions != memory_itr) {
+			j_connection_rma_unregister(connection, memory_regions);
+		}
+		if(*memory_itr) { j_connection_rma_unregister(connection, memory_itr); }
+		free(mrs);
+	}
 	return ret;
 }
 
@@ -673,11 +739,7 @@ j_message_write(JMessage* message, struct JConnection* connection)
 
 	gboolean ret = FALSE;
 
-	g_autoptr(JListIterator) iterator = NULL;
 	GError* error = NULL;
-	JConnectionMemory* memory_regions = NULL;
-	JConnectionMemory* memory_itr;
-	int n_memory_regions = 0;
 	JConnectionAck ack;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -688,38 +750,18 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	EXE(j_connection_send(connection, message->data, j_message_length(message)),
 			"Failed to initiated sending message body.");
 
-	n_memory_regions = j_list_length(message->send_list);
-	memory_regions = calloc(sizeof(JConnectionMemory), n_memory_regions);
-	memory_itr = memory_regions;
-
-	if (message->send_list != NULL)
-	{
-		iterator = j_list_iterator_new(message->send_list);
-
-		while (j_list_iterator_next(iterator))
-		{
-			JMessageData* message_data = j_list_iterator_get(iterator);
-
-			EXE(j_connection_rma_register(connection, message_data->data, message_data->length, memory_itr),
-					"Failed to register message data memory!");
-			++memory_itr;
-		}
+	if(message->send_list != NULL) {
+		EXE(j_connection_recv(connection, sizeof(ack), &ack),
+				"Failed to initiated ACK receive.");
 	}
-	EXE(j_connection_recv(connection, sizeof(ack), &ack),
-			"Failed to initiated ACK receive.");
+
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait for completion of message send!");
-	if(ack != J_CONNECTION_ACK) {
+
+	if(message->send_list != NULL && ack != J_CONNECTION_ACK) {
 		g_warning("Wrong ACK flag received! got: %i, instead of: %i", ack, J_CONNECTION_ACK);
 		goto end;
 	}
-
-	for(memory_itr = memory_regions; memory_itr - memory_regions < n_memory_regions; ++memory_itr)
-	{
-		EXE(j_connection_rma_unregister(connection, memory_itr),
-				"Failed to unregister message data memory!");
-	}
-	free(memory_regions);
 
 	ret = TRUE;
 
@@ -729,20 +771,11 @@ end:
 		g_critical("%s", error->message);
 		g_error_free(error);
 	}
-
-	if(memory_regions != NULL) {
-		JConnectionMemory* mrs = memory_regions;
-		while(memory_regions != memory_itr) {
-			j_connection_rma_unregister(connection, memory_regions);
-		}
-		free(mrs);
-	}
-
 	return ret;
 }
 
 void
-j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
+j_message_add_send(JMessage* message, gconstpointer data, guint64 length, void* header, guint64 h_size)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -755,6 +788,8 @@ j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
 	message_data = g_slice_new(JMessageData);
 	message_data->data = data;
 	message_data->length = length;
+	message_data->header = header;
+	message_data->header_size = h_size;
 
 	j_list_append(message->send_list, message_data);
 }

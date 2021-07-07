@@ -513,7 +513,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	if (object_backend == NULL)
 	{
 		g_autoptr(JMessage) reply = NULL;
-		gpointer object_connection;
+		struct JConnection* object_connection;
 		guint32 operations_done;
 		guint32 operation_count;
 
@@ -549,23 +549,20 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 			for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
 			{
 				JObjectOperation* operation = j_list_iterator_get(it);
+				const struct JConnectionMemoryID* mem_id;
 				gpointer data = operation->read.data;
 				guint64* bytes_read = operation->read.bytes_read;
 
-				guint64 nbytes;
+				mem_id = j_message_get_memory_id(reply);
+				j_helper_atomic_add(bytes_read, mem_id->size);
 
-				nbytes = j_message_get_8(reply);
-				j_helper_atomic_add(bytes_read, nbytes);
-
-				if (nbytes > 0)
+				if (mem_id->size > 0)
 				{
-					GInputStream* input;
-
-					input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
-					g_input_stream_read_all(input, data, nbytes, NULL, NULL, NULL);
+					j_connection_rma_read(object_connection, mem_id, data);
 				}
 			}
 
+			j_message_send_ack(reply, object_connection);
 			operations_done += reply_operation_count;
 		}
 
@@ -667,10 +664,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 
 		if (object_backend == NULL)
 		{
-			j_message_add_operation(message, sizeof(guint64) + sizeof(guint64));
-			j_message_append_8(message, &length);
-			j_message_append_8(message, &offset);
-			j_message_add_send(message, data, length);
+			j_message_add_send(message, data, length, &operation->write.offset, sizeof(operation->write.offset));
 
 			// Fake bytes_written here instead of doing another loop further down
 			if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)

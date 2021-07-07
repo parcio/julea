@@ -87,8 +87,8 @@ struct JFabric;
 /// Initelize a fabric for the server side.
 /** \public \memberof JFabric
  *
- * In differents to j_fabric_init_client, the resulting fabric is capable of reciving connection requests.
- * There fore events can be readed via j_fabric_sread_event
+ * In differents to j_fabric_init_client(), the resulting fabric is capable of reciving connection requests.
+ * There fore events can be readed via j_fabric_sread_event()
  * \retval FALSE on failure
  */
 gboolean
@@ -98,7 +98,7 @@ j_fabric_init_server(
 );
 
 /// Initelize a fabric for the client side.
-/** \pulbic \memberof JFabric
+/** \public \memberof JFabric
  *
  * Contains data to building a paired connection.
  * Addess of JULEA server is needed, to enforce that both communicate via the same network.
@@ -223,7 +223,7 @@ typedef int JConnectionAck;
 /** \public \memberof JConnection
  * \sa j_connection_rma_read, j_connection_rma_register, j_connection_rma_unregister
  */
-typedef void* JConnectionMemory;
+struct JConnectionMemory;
 
 /// Identifier to read memory.
 /** \public \memberof JConnectionMemory
@@ -238,10 +238,10 @@ struct JConnectionMemoryID {
 /// Get identifier of memory region
 /** \public \memberof JConnectionMemory
  * \retval FALSE on failure
- * \sa j_connection_rma_read, j_connection_rma_register
+ * \sa j_connection_rma_read, j_connection_rma_register, j_connection_rma_unregister
  */
 gboolean
-j_connection_memory_get_id(JConnectionMemory instance,
+j_connection_memory_get_id(struct JConnectionMemory* instance,
 		struct JConnectionMemoryID* id ///< [out] of registerd memory
 );
 
@@ -358,8 +358,8 @@ j_connection_read_event(struct JConnection* instance,
  */
 gboolean
 j_connection_send(struct JConnection* instance,
-		void* data,			///< [in] to send
-		size_t data_len	 	///< [in] in bytes
+		const void* data,		///< [in] to send
+		size_t data_len		 	///< [in] in bytes
 );
 
 /// Asynchronous receive data via MSG connection.
@@ -389,8 +389,8 @@ j_connection_recv(struct JConnection* instance,
  */
 gboolean
 j_connection_rma_read(struct JConnection* instance,
-		struct JConnectionMemoryID* memoryID,			///< [in] for segment which should be copied
-		void* data										///< [out] received
+		const struct JConnectionMemoryID* memoryID,			///< [in] for segment which should be copied
+		void* data											///< [out] received
 );
 
 /// Wait until operations initiated at his connection finished.
@@ -408,9 +408,9 @@ j_connection_wait_for_completion(struct JConnection* instance);
  */
 gboolean
 j_connection_rma_register(struct JConnection* intsance,
-		const void* data,			///< [in] begin of memory region to share
-		size_t data_len,			///< [in] size of memory region in bytes
-		JConnectionMemory* handle	///< [out] for memory region to unregister with j_connection_rma_unregister
+		const void* data,					///< [in] begin of memory region to share
+		size_t data_len,					///< [in] size of memory region in bytes
+		struct JConnectionMemory* handle	///< [out] for memory region to unregister with j_connection_rma_unregister
 );
 
 /// Unregister memory from rma availablity.
@@ -419,7 +419,7 @@ j_connection_rma_register(struct JConnection* intsance,
  */
 gboolean
 j_connection_rma_unregister(struct JConnection* instance,
-		JConnectionMemory* handle 	///< [in] for memory region to unregister
+		struct JConnectionMemory* handle 	///< [in] for memory region to unregister
 );
 
 #endif

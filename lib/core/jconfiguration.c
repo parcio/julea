@@ -23,6 +23,7 @@
 #include <julea-config.h>
 
 #include <glib.h>
+#include <rdma/fabric.h>
 
 #include <string.h>
 
@@ -139,6 +140,12 @@ struct JConfiguration
 		 */
 		gchar* path;
 	} db;
+
+	/// libfabric configuration
+	struct {
+		int32_t version;
+		struct fi_info* hints;
+	} libfabric;
 
 	guint64 max_operation_size;
 	guint16 port;
@@ -281,6 +288,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* db_backend;
 	gchar* db_component;
 	gchar* db_path;
+	gchar* libfabric_provider;
 	guint64 max_operation_size;
 	guint32 port;
 	guint32 max_connections;
@@ -304,6 +312,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
 	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
+	libfabric_provider = g_key_file_get_string(key_file, "libfabric", "provider", NULL);
 
 	/// \todo check value ranges (max_operation_size, port, max_connections, stripe_size)
 	// configuration->port < 0 || configuration->port > 65535
@@ -331,6 +340,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		g_free(object_backend);
 		g_free(object_component);
 		g_free(object_path);
+		g_free(libfabric_provider);
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
 		g_strfreev(servers_db);
@@ -359,6 +369,15 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
+	configuration->libfabric.version = FI_VERSION(1, 11);
+	configuration->libfabric.hints = fi_allocinfo();
+	configuration->libfabric.hints->caps = 
+		FI_MSG | FI_SEND | FI_RECV | FI_READ | FI_RMA | FI_REMOTE_READ;
+	configuration->libfabric.hints->mode = FI_MSG_PREFIX;
+	configuration->libfabric.hints->domain_attr->mr_mode = 
+		FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR;
+	configuration->libfabric.hints->ep_attr->type = FI_EP_MSG;
+	configuration->libfabric.hints->fabric_attr->prov_name = libfabric_provider;
 
 	if (configuration->max_operation_size == 0)
 	{
@@ -421,6 +440,9 @@ j_configuration_unref(JConfiguration* configuration)
 		g_strfreev(configuration->servers.object);
 		g_strfreev(configuration->servers.kv);
 		g_strfreev(configuration->servers.db);
+
+		g_free(configuration->libfabric.hints->fabric_attr->prov_name);
+		fi_freeinfo(configuration->libfabric.hints);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -577,6 +599,17 @@ j_configuration_get_port(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->port;
+}
+
+struct fi_info*
+j_configuration_get_libfabric_hints(JConfiguration* configuration)
+{
+}
+
+guint64
+j_configuration_get_libfabric_version(JConfiguration* configuration)
+{
+
 }
 
 /**
