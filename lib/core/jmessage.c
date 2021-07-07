@@ -630,6 +630,12 @@ end:
 	return FALSE;
 }
 
+struct JConnectionMemory {
+	struct fid_mr* memory_region;
+	void* addr;
+	guint64 size;
+};
+
 gboolean
 j_message_send(JMessage* message, struct JConnection* connection)
 {
@@ -637,8 +643,8 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 	gboolean ret;
 	int n_memory_regions = 0;
-	JConnectionMemory* memory_itr = NULL;
-	JConnectionMemory* memory_regions = NULL;
+	struct JConnectionMemory* memory_itr = NULL;
+	struct JConnectionMemory* memory_regions = NULL;
 	struct JConnectionMemoryID mem_id;
 	g_autoptr(JListIterator) iterator = NULL;
 
@@ -648,8 +654,8 @@ j_message_send(JMessage* message, struct JConnection* connection)
 	ret = FALSE;
 
 	n_memory_regions = j_list_length(message->send_list);
-	memory_regions = calloc(sizeof(JConnectionMemory), n_memory_regions);
-	memset(memory_regions, 0, sizeof(JConnectionMemory) * n_memory_regions);
+	memory_regions = calloc(sizeof(struct JConnectionMemory), n_memory_regions);
+	memset(memory_regions, 0, sizeof(struct JConnectionMemory) * n_memory_regions);
 	memory_itr = memory_regions;
 
 	if (message->send_list != NULL)
@@ -665,7 +671,7 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 			j_message_add_operation(message, sizeof(struct JConnectionMemoryID) + message_data->header_size);
 
-			EXE(j_connection_memory_get_id(connection, &mem_id),
+			EXE(j_connection_memory_get_id(memory_itr, &mem_id),
 					"Failed to get memory it!");
 			EXE(j_message_append_n(message, message_data->header, message_data->header_size),
 					"Failed to append header");
@@ -679,11 +685,11 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 end:
 	if(memory_regions != NULL) {
-		JConnectionMemory* mrs = memory_regions;
+		struct JConnectionMemory* mrs = memory_regions;
 		while(memory_regions != memory_itr) {
 			j_connection_rma_unregister(connection, memory_regions);
 		}
-		if(*memory_itr) { j_connection_rma_unregister(connection, memory_itr); }
+		if(memory_itr->memory_region) { j_connection_rma_unregister(connection, memory_itr); }
 		free(mrs);
 	}
 	return ret;

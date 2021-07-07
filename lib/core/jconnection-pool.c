@@ -167,12 +167,12 @@ j_connection_pool_fini(void)
 	g_slice_free(JConnectionPool, pool);
 }
 
-static GSocketConnection*
-j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* server)
+static struct JConnection*
+j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, enum JBackendType backend, guint64 index)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	GSocketConnection* connection;
+	struct JConnection* connection;
 
 	g_return_val_if_fail(queue != NULL, NULL);
 	g_return_val_if_fail(count != NULL, NULL);
@@ -188,29 +188,15 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 	{
 		if ((guint)g_atomic_int_add(count, 1) < j_connection_pool->max_count)
 		{
-			GError* error = NULL;
-			g_autoptr(GSocketClient) client = NULL;
-
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
 			guint op_count;
 
-			client = g_socket_client_new();
-			connection = g_socket_client_connect_to_host(client, server, j_configuration_get_port(j_configuration()), NULL, &error);
-
-			if (error != NULL)
+			if(!j_connection_init_client(j_connection_pool->configuration, backend, index, &connection))
 			{
-				g_critical("%s", error->message);
-				g_error_free(error);
+				g_critical("Can not connect to %s [%d].", "TODO(SERVER ADDR)", g_atomic_int_get(count));
 			}
-
-			if (connection == NULL)
-			{
-				g_critical("Can not connect to %s [%d].", server, g_atomic_int_get(count));
-			}
-
-			j_helper_set_nodelay(connection, TRUE);
 
 			message = j_message_new(J_MESSAGE_PING, 0);
 			j_message_send(message, connection);
@@ -222,21 +208,21 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 
 			for (guint i = 0; i < op_count; i++)
 			{
-				gchar const* backend;
+				gchar const* backend_str;
 
-				backend = j_message_get_string(reply);
+				backend_str = j_message_get_string(reply);
 
-				if (g_strcmp0(backend, "object") == 0)
+				if (g_strcmp0(backend_str, "object") == 0)
 				{
-					//g_print("Server has object backend.\n");
+					//g_print("Server has object backend_str.\n");
 				}
-				else if (g_strcmp0(backend, "kv") == 0)
+				else if (g_strcmp0(backend_str, "kv") == 0)
 				{
-					//g_print("Server has kv backend.\n");
+					//g_print("Server has kv backend_str.\n");
 				}
-				else if (g_strcmp0(backend, "db") == 0)
+				else if (g_strcmp0(backend_str, "db") == 0)
 				{
-					//g_print("Server has db backend.\n");
+					//g_print("Server has db backend_str.\n");
 				}
 			}
 		}
@@ -278,13 +264,13 @@ j_connection_pool_pop(JBackendType backend, guint index)
 	{
 		case J_BACKEND_TYPE_OBJECT:
 			g_return_val_if_fail(index < j_connection_pool->object_len, NULL);
-			return j_connection_pool_pop_internal(j_connection_pool->object_queues[index].queue, &(j_connection_pool->object_queues[index].count), j_configuration_get_server(j_connection_pool->configuration, J_BACKEND_TYPE_OBJECT, index));
+			return j_connection_pool_pop_internal(j_connection_pool->object_queues[index].queue, &(j_connection_pool->object_queues[index].count), backend, index);
 		case J_BACKEND_TYPE_KV:
 			g_return_val_if_fail(index < j_connection_pool->kv_len, NULL);
-			return j_connection_pool_pop_internal(j_connection_pool->kv_queues[index].queue, &(j_connection_pool->kv_queues[index].count), j_configuration_get_server(j_connection_pool->configuration, J_BACKEND_TYPE_KV, index));
+			return j_connection_pool_pop_internal(j_connection_pool->kv_queues[index].queue, &(j_connection_pool->kv_queues[index].count), backend, index);
 		case J_BACKEND_TYPE_DB:
 			g_return_val_if_fail(index < j_connection_pool->db_len, NULL);
-			return j_connection_pool_pop_internal(j_connection_pool->db_queues[index].queue, &(j_connection_pool->db_queues[index].count), j_configuration_get_server(j_connection_pool->configuration, J_BACKEND_TYPE_DB, index));
+			return j_connection_pool_pop_internal(j_connection_pool->db_queues[index].queue, &(j_connection_pool->db_queues[index].count), backend, index);
 		default:
 			g_assert_not_reached();
 	}

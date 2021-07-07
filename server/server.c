@@ -82,7 +82,7 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* gconnection, GObje
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
-	j_connection_init_server(jd_configuration, jd_fabric, gconnection, &jconnection);
+	j_connection_init_server(jd_fabric, gconnection, &jconnection);
 
 	while (j_message_receive(message, jconnection))
 	{

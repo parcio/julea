@@ -32,6 +32,7 @@
 #include <gio/gio.h>
 
 struct JConfiguration;
+struct fi_eq_cm_entry;
 
 /** \defgroup network Network
  * 	Interface for communication over network
@@ -44,9 +45,10 @@ struct JConfiguration;
  * \sa j_connection_init_server, j_fabric_sread_event
  * \ingroup network
  */
-struct JFabricConnectionRequest;
+typedef struct fi_eq_cm_entry JFabricConnectionRequest;
 
 /** \struct JFabricAddr jnetwork.h
+ *  \public \memberof
  *  \brief Fabrics address data needed to send an connection request.
  *  \ingroup network
  *  \sa j_fabric_init_client
@@ -130,7 +132,7 @@ gboolean
 j_fabric_sread_event(struct JFabric* instance,
 		int timeout,								///< [in] set to -1 for no timeout.
 		enum JFabricEvents* event, 					///< [out] reeded from event queue
-		struct JFabricConnectionRequest* con_req    ///< [out] contains connection request,
+		JFabricConnectionRequest* con_req    ///< [out] contains connection request,
 													/// if event == J_FABRIC_EVENT_CONNECTION_REQUEST
 );
 
@@ -267,11 +269,13 @@ j_connection_memory_get_id(struct JConnectionMemory* instance,
  * \endmsc
  * \retval FALSE if building a connection failed
  * \sa j_connection_init_server
+ * \todo document index parameter!
  */
 gboolean
 j_connection_init_client (
 		struct JConfiguration* configuration,       ///< [in] for server address, and network configuration
 		enum JBackendType backend,					///< [in] backend server to connect to
+		guint index,								///< [in] ??
 		struct JConnection** instance 				///< [out] constructed instance
 );
 
@@ -290,7 +294,6 @@ j_connection_init_client (
  */
 gboolean
 j_connection_init_server (
-		struct JConfiguration* configuration, 	     ///< [in] for the network configuration
 		struct JFabric* fabric,						 ///< [in] via which the connection should be established
 		GSocketConnection* gconnection, 			 ///< [in] valid GSocketConnection for address exchange
 		struct JConnection** instance				 ///< [out] constructed instance

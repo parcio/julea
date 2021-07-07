@@ -604,12 +604,13 @@ j_configuration_get_port(JConfiguration* configuration)
 struct fi_info*
 j_configuration_get_libfabric_hints(JConfiguration* configuration)
 {
+	return configuration->libfabric.hints;
 }
 
-guint64
+gint64
 j_configuration_get_libfabric_version(JConfiguration* configuration)
 {
-
+	return configuration->libfabric.version;
 }
 
 /**

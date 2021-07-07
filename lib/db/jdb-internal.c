@@ -58,7 +58,7 @@ j_backend_db_func_exec(JList* operations, JSemantics* semantics, JMessageType ty
 
 	JBackendOperation* data = NULL;
 	gboolean ret = TRUE;
-	GSocketConnection* db_connection;
+	struct JConnection* db_connection;
 	g_autoptr(JListIterator) iter_send = NULL;
 	g_autoptr(JListIterator) iter_recieve = NULL;
 	g_autoptr(JMessage) message = NULL;

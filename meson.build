@@ -354,7 +354,7 @@ configure_file(
 
 # Build
 
-common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, otf_dep]
+common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, otf_dep, libfabric_dep]
 
 # FIXME Remove core directory
 julea_incs = include_directories([
