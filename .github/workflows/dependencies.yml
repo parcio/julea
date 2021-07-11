@@ -5,13 +5,24 @@ on:
 jobs:
   dependencies:
     name: Dependencies
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.dist }}
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-        compiler: [gcc, clang]
+        os:
+          - dist: ubuntu-20.04
+            compiler: gcc
+            compiler_version: 9.3.0
+          - dist: ubuntu-20.04
+            compiler: clang
+            compiler_version: 11.0.0
+          - dist: ubuntu-18.04
+            compiler: gcc
+            compiler_version: 7.5.0
+          - dist: ubuntu-18.04
+            compiler: clang
+            compiler_version: 9.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -19,6 +30,6 @@ jobs:
           persist-credentials: false
       - name: Install dependencies
         env:
-          JULEA_SPACK_COMPILER: ${{ matrix.compiler }}
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
           ./scripts/install-dependencies.sh full

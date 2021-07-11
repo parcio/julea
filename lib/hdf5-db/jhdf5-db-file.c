@@ -123,6 +123,27 @@ H5VL_julea_db_file_init(hid_t vipl_id)
 				{
 					j_goto_error();
 				}
+
+				if (julea_db_schema_file)
+				{
+					j_db_schema_unref(julea_db_schema_file);
+				}
+
+				if (!(julea_db_schema_file = j_db_schema_new(JULEA_HDF5_DB_NAMESPACE, "file", NULL)))
+				{
+					j_goto_error();
+				}
+
+				// FIXME Use same key type for every db backend to remove get for every new schema.
+				if (!j_db_schema_get(julea_db_schema_file, batch, &error))
+				{
+					j_goto_error();
+				}
+
+				if (!j_batch_execute(batch))
+				{
+					j_goto_error();
+				}
 			}
 			else
 			{

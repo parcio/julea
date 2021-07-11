@@ -269,6 +269,26 @@ if not rocksdb_dep.found()
 	)
 endif
 
+otf_dep = dependency('',
+	required: false,
+)
+
+# FIXME This should use Meson's config-tool
+# FIXME Add some status output
+otf_config = find_program('otfconfig',
+	required: false,
+)
+
+if otf_config.found()
+	otf_cflags = run_command(otf_config, '--includes').stdout().strip().split()
+	otf_libs = run_command(otf_config, '--libs').stdout().strip().split()
+
+	otf_dep = declare_dependency(
+		compile_args: otf_cflags,
+		link_args: otf_libs,
+	)
+endif
+
 # Compiler checks
 
 stmtim_tvnsec_check = cc.has_member('struct stat', 'st_mtim.tv_nsec',
@@ -316,7 +336,9 @@ if hdf_dep.found()
 	julea_conf.set('HAVE_HDF5', 1)
 endif
 
-# FIXME HAVE_OTF
+if otf_dep.found()
+	julea_conf.set('HAVE_OTF', 1)
+endif
 
 if stmtim_tvnsec_check
 	julea_conf.set('HAVE_STMTIM_TVNSEC', 1)
@@ -333,7 +355,7 @@ configure_file(
 
 # Build
 
-common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep]
+common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, otf_dep]
 
 # FIXME Remove core directory
 julea_incs = include_directories([
@@ -421,15 +443,15 @@ julea_clients = ['object', 'kv', 'db', 'item']
 
 if hdf_dep.found()
 	julea_client_srcs += {
-		'hdf5': files([
-			'lib/hdf5/jhdf5.c',
+		'hdf5-kv': files([
+			'lib/hdf5-kv/jhdf5.c',
 		]),
 		'hdf5-db': files([
 			'lib/hdf5-db/jhdf5-db.c',
 		])
 	}
 
-	julea_clients += ['hdf5', 'hdf5-db']
+	julea_clients += ['hdf5-kv', 'hdf5-db']
 endif
 
 julea_client_deps = {}
@@ -441,7 +463,7 @@ foreach client: julea_clients
 	if client == 'item'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
-	elif client == 'hdf5'
+	elif client == 'hdf5-kv'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
 		extra_deps += hdf_dep
@@ -462,7 +484,7 @@ foreach client: julea_clients
 
 	julea_client_deps += {client: declare_dependency(link_with: julea_client_lib)}
 
-	if client != 'hdf5' and client != 'hdf5-db'
+	if client != 'hdf5-kv' and client != 'hdf5-db'
 		pkg_config.generate(julea_client_lib,
 			description: 'Flexible storage framework',
 			extra_cflags: sanitize_cflags,
@@ -478,7 +500,7 @@ hdf_deps = []
 
 if hdf_dep.found()
 	# FIXME refactor, we do not really want to link to the HDF5 VOL plugins anymore
-	hdf_deps += julea_client_deps['hdf5']
+	hdf_deps += julea_client_deps['hdf5-kv']
 	hdf_deps += hdf_dep
 endif
 

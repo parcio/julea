@@ -43,5 +43,5 @@ int jfs_rmdir(char const*);
 int jfs_statfs(char const*, struct statvfs*);
 int jfs_truncate(char const*, off_t);
 int jfs_unlink(char const*);
-int jfs_utimens(char const*, const struct timespec*);
+int jfs_utimens(char const*, const struct timespec[2]);
 int jfs_write(char const*, char const*, size_t, off_t, struct fuse_file_info*);

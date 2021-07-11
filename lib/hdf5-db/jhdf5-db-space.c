@@ -128,6 +128,27 @@ H5VL_julea_db_space_init(hid_t vipl_id)
 				{
 					j_goto_error();
 				}
+
+				if (julea_db_schema_space_header)
+				{
+					j_db_schema_unref(julea_db_schema_space_header);
+				}
+
+				if (!(julea_db_schema_space_header = j_db_schema_new(JULEA_HDF5_DB_NAMESPACE, "space_header", NULL)))
+				{
+					j_goto_error();
+				}
+
+				// FIXME Use same key type for every db backend to remove get for every new schema.
+				if (!j_db_schema_get(julea_db_schema_space_header, batch, &error))
+				{
+					j_goto_error();
+				}
+
+				if (!j_batch_execute(batch))
+				{
+					j_goto_error();
+				}
 			}
 			else
 			{
@@ -182,6 +203,27 @@ H5VL_julea_db_space_init(hid_t vipl_id)
 				}
 
 				if (!j_db_schema_create(julea_db_schema_space, batch, &error))
+				{
+					j_goto_error();
+				}
+
+				if (!j_batch_execute(batch))
+				{
+					j_goto_error();
+				}
+
+				if (julea_db_schema_space)
+				{
+					j_db_schema_unref(julea_db_schema_space);
+				}
+
+				if (!(julea_db_schema_space = j_db_schema_new(JULEA_HDF5_DB_NAMESPACE, "space", NULL)))
+				{
+					j_goto_error();
+				}
+
+				// FIXME Use same key type for every db backend to remove get for every new schema.
+				if (!j_db_schema_get(julea_db_schema_space, batch, &error))
 				{
 					j_goto_error();
 				}
