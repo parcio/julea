@@ -137,22 +137,106 @@ test_db_invalid_schema_delete(void)
 	bool ret;
 
 	schema = j_db_schema_new("test-ns", "test", NULL);
-	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	ret = j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	g_assert_true(ret);
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-	j_db_schema_create(schema, batch, &error);
+	ret = j_db_schema_create(schema, batch, &error);
+	g_assert_true(ret);
+
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	g_assert_null(error);
+	g_assert_no_error(error);
 
 	j_db_schema_delete(schema, batch, &error);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	g_assert_null(error);
+	g_assert_no_error(error);
 
 	j_db_schema_delete(schema, batch, &error);
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
 	g_assert_nonnull(error);
+}
+
+static void
+test_db_schema_equals_different_name(void)
+{
+	g_autoptr(JDBSchema) schema1 = NULL;
+	g_autoptr(JDBSchema) schema2 = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res, equal;
+
+	schema1 = j_db_schema_new("equal", "same1", NULL);
+	schema2 = j_db_schema_new("equal", "same2", NULL);
+
+	res = j_db_schema_equals(schema1, schema2, &equal, &error);
+	g_assert_true(res);
+	g_assert_false(equal);
+	g_assert_no_error(error);
+}
+
+static void
+test_db_schema_equals_same_name_different_fields(void)
+{
+	g_autoptr(JDBSchema) schema1 = NULL;
+	g_autoptr(JDBSchema) schema2 = NULL;
+	g_autoptr(GRand) rnd = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res, equal;
+	gchar field_name[] = "field_dd";
+
+	schema1 = j_db_schema_new("equal", "same", NULL);
+	schema2 = j_db_schema_new("equal", "same", NULL);
+
+	rnd = g_rand_new();
+
+	for (int i = 0; i <= g_rand_int_range(rnd, 1, 100); ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		// generate some random type fields (excluding id type)
+		res = j_db_schema_add_field(schema1, field_name, g_rand_int_range(rnd, 0, 8), NULL);
+		g_assert_true(res);
+		res = j_db_schema_add_field(schema2, field_name, g_rand_int_range(rnd, 0, 8), NULL);
+		g_assert_true(res);
+	}
+
+	res = j_db_schema_equals(schema1, schema2, &equal, &error);
+	g_assert_true(res);
+	g_assert_false(equal);
+	g_assert_no_error(error);
+}
+
+static void
+test_db_schema_equals_same_name_same_fields(void)
+{
+	g_autoptr(JDBSchema) schema1 = NULL;
+	g_autoptr(JDBSchema) schema2 = NULL;
+	g_autoptr(GRand) rnd = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res, equal;
+	gint field = 0;
+	gchar field_name[] = "field_dd";
+
+	schema1 = j_db_schema_new("equal", "same", NULL);
+	schema2 = j_db_schema_new("equal", "same", NULL);
+
+	rnd = g_rand_new();
+
+	for (int i = 0; i <= g_rand_int_range(rnd, 1, 100); ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		// generate some random type fields (excluding id type)
+		field = g_rand_int_range(rnd, 0, 8);
+		res = j_db_schema_add_field(schema1, field_name, field, NULL);
+		g_assert_true(res);
+		res = j_db_schema_add_field(schema2, field_name, field, NULL);
+		g_assert_true(res);
+	}
+
+	res = j_db_schema_equals(schema1, schema2, &equal, &error);
+	g_assert_true(res);
+	g_assert_true(equal);
+	g_assert_no_error(error);
 }
 
 void
@@ -162,4 +246,7 @@ test_db_schema(void)
 	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
 	g_test_add_func("/db/schema/invalid_get", test_db_invalid_schema_get);
 	g_test_add_func("/db/schema/invalid_delete", test_db_invalid_schema_delete);
+	g_test_add_func("/db/schema/equals_different_name", test_db_schema_equals_different_name);
+	g_test_add_func("/db/schema/equals_same_name_different_fields", test_db_schema_equals_same_name_different_fields);
+	g_test_add_func("/db/schema/equals_same_name_same_fields", test_db_schema_equals_same_name_same_fields);
 }

@@ -289,6 +289,53 @@ test_db_entry_insert_update_delete(void)
 }
 
 static void
+test_db_entry_empty_update(void)
+{
+	/// \todo
+}
+
+static void
+test_db_entry_id(void)
+{
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(GError) error = NULL;
+	gint64 val = 42;
+	gpointer id = NULL;
+	guint64 len = 0;
+	gboolean res;
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	schema = j_db_schema_new("test-ns", "test", NULL);
+	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	res = j_db_schema_create(schema, batch, &error);
+	g_assert_true(res);
+
+	entry = j_db_entry_new(schema, NULL);
+	j_db_entry_set_field(entry, "test-si64", &val, sizeof(gint64), NULL);
+
+	res = j_db_entry_insert(entry, batch, &error);
+	g_assert_true(res);
+
+	res = j_batch_execute(batch);
+	g_assert_true(res);
+	g_assert_no_error(error);
+
+	res = j_db_entry_get_id(entry, &id, &len, &error);
+	g_assert_true(res);
+	g_assert_no_error(error);
+
+	res = j_db_schema_delete(schema, batch, &error);
+	g_assert_true(res);
+
+	res = j_batch_execute(batch);
+	g_assert_true(res);
+	g_assert_no_error(error);
+}
+
+static void
 test_db_entry_invalid_insert(void)
 {
 	g_autoptr(JDBSchema) schema = NULL;
@@ -315,7 +362,7 @@ test_db_entry_invalid_insert(void)
 }
 
 static void
-test_db_entry_invalid_set(void)
+test_db_entry_set_nonexistant(void)
 {
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
@@ -333,8 +380,25 @@ test_db_entry_invalid_set(void)
 }
 
 static void
-test_db_entry_id(void)
+test_db_entry_set_twice(void)
 {
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res;
+	gint64 val = 42;
+
+	schema = j_db_schema_new("test-ns", "test", NULL);
+	j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
+	entry = j_db_entry_new(schema, NULL);
+
+	res = j_db_entry_set_field(entry, "test-si64", &val, sizeof(gint64), &error);
+	g_assert_true(res);
+	g_assert_no_error(error);
+
+	res = j_db_entry_set_field(entry, "test-si64", &val, sizeof(gint64), &error);
+	g_assert_false(res);
+	g_assert_nonnull(error);
 }
 
 void
@@ -342,6 +406,9 @@ test_db_entry(void)
 {
 	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);
 	g_test_add_func("/db/entry/insert_update_delete", test_db_entry_insert_update_delete);
-	g_test_add_func("/db/entry/invalid_insert", test_db_entry_invalid_set);
-	g_test_add_func("/db/entry/invalid_set", test_db_entry_invalid_insert);
+	g_test_add_func("/db/entry/empty_update", test_db_entry_empty_update);
+	g_test_add_func("/db/entry/get_id", test_db_entry_id);
+	g_test_add_func("/db/entry/insert_in_local_schema", test_db_entry_invalid_insert);
+	g_test_add_func("/db/entry/set_non_existing_field", test_db_entry_set_nonexistant);
+	g_test_add_func("/db/entry/set_field_twice", test_db_entry_set_twice);
 }
