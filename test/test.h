@@ -39,6 +39,9 @@ void test_object_object_iterator(void);
 void test_kv_kv(void);
 void test_kv_kv_iterator(void);
 
+void test_db_schema(void);
+void test_db_selector(void);
+void test_db_entry(void);
 void test_db_db(void);
 
 void test_item_collection(void);

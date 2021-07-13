@@ -496,6 +496,9 @@ julea_test_srcs = files([
 	'test/core/message.c',
 	'test/core/semantics.c',
 	'test/db/db.c',
+	'test/db/db-entry.c',
+	'test/db/db-selector.c',
+	'test/db/db-schema.c',
 	'test/hdf5/hdf.c',
 	'test/item/collection.c',
 	'test/item/collection-iterator.c',
@@ -510,10 +513,12 @@ julea_test_srcs = files([
 	'test/test.c',
 ])
 
-executable('julea-test', julea_test_srcs,
+test_exe = executable('julea-test', julea_test_srcs,
 	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('test')],
 )
+
+test('julea-test-all', test_exe, protocol: 'tap', timeout: 0)
 
 julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
