@@ -40,4 +40,4 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add --all .
           git commit --amend --reset-author --message='Doxygen ${{ github.sha }}'
-          git push
+          git push --force
