@@ -27,7 +27,115 @@
 
 #include "test.h"
 
+static JDBSchema*
+generate_test_schema(gchar const * name)
+{
+    g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean res;
+	gchar field_name[] = "field_dd";
+
+	schema = j_db_schema_new("test-ns", name, NULL);
+
+	for (int i = 0; i <= 99; ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		res = j_db_schema_add_field(schema, field_name, i%8, NULL);
+		g_assert_true(res);
+	}
+
+    return j_db_schema_ref(schema);
+}
+
+static void
+test_db_selector_add_field(void)
+{
+	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean ret;
+	gchar val[] = "some value";
+	gchar field_name[] = "field_dd";
+
+	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector);
+	g_assert_no_error(error);
+
+
+	for(int i = 0; i < 8; ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		ret = j_db_selector_add_field(selector, field_name, i%6, val, sizeof(val), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		if(g_test_failed()) return;
+	}
+}
+
+static void
+test_db_selector_add_non_existant_field(void)
+{
+	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean ret;
+	gchar val[] = "some value";
+
+	selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector);
+	g_assert_no_error(error);
+
+	ret = j_db_selector_add_field(selector, "field_100", J_DB_SELECTOR_OPERATOR_GT, val, sizeof(val), &error);
+	g_assert_false(ret);
+	g_assert_nonnull(error);
+}
+
+static void
+test_db_selector_add_selector(void)
+{
+	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
+	g_autoptr(JDBSelector) selector1 = NULL;
+	g_autoptr(JDBSelector) selector2 = NULL;
+	g_autoptr(GError) error = NULL;
+	gboolean ret;
+	gchar val[] = "some value";
+	gchar field_name[] = "field_dd";
+
+	selector1 = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, &error);
+	g_assert_nonnull(selector1);
+	g_assert_no_error(error);
+
+	selector2 = j_db_selector_new(schema, J_DB_SELECTOR_MODE_OR, &error);
+	g_assert_nonnull(selector2);
+	g_assert_no_error(error);
+
+	for(int i = 0; i < 8; ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		ret = j_db_selector_add_field(selector1, field_name, i%6, val, sizeof(val), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		if(g_test_failed()) return;
+	}
+
+	for(int i = 8; i < 25; ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		ret = j_db_selector_add_field(selector2, field_name, i%6, val, sizeof(val), &error);
+		g_assert_true(ret);
+		g_assert_no_error(error);
+		if(g_test_failed()) return;
+	}
+
+	ret = j_db_selector_add_selector(selector1, selector2, &error);
+	g_assert_true(ret);
+	g_assert_no_error(error);
+}
+
 void
 test_db_selector(void)
 {
+	g_test_add_func("/db/selector/add-field", test_db_selector_add_field);
+	g_test_add_func("/db/selector/add-non-existant-field", test_db_selector_add_non_existant_field);
+	g_test_add_func("/db/selector/add-selector", test_db_selector_add_selector);
 }

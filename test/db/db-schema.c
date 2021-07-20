@@ -239,6 +239,51 @@ test_db_schema_equals_same_name_same_fields(void)
 	g_assert_no_error(error);
 }
 
+static void
+test_db_schema_get_all_fields(void)
+{
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(GRand) rnd = NULL;
+	g_autoptr(GError) error = NULL;
+	g_autofree JDBType* res_types = NULL;
+	g_autofree gchar** res_names = NULL;
+	g_autofree JDBType* types = NULL;
+	g_autofree gchar** names = NULL;
+	gchar field_name[] = "field_dd";
+	gint field = 0;
+	guint32 field_count;
+	guint32 res_field_count;
+
+	schema = j_db_schema_new("equal", "same", NULL);
+	rnd = g_rand_new();
+
+	field_count = g_rand_int_range(rnd, 1, 100);
+	types = g_new(JDBType, field_count);
+	names = g_new0(gchar*, field_count);
+
+	for (int i = 0; i < field_count; ++i)
+	{
+		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
+		// generate some random type fields (excluding id type)
+		field = g_rand_int_range(rnd, 0, 8);
+		types[i] = field;
+		names[i] = g_strdup(field_name);
+		g_assert_true(j_db_schema_add_field(schema, field_name, field, NULL));
+	}
+
+	res_field_count = j_db_schema_get_all_fields(schema, &res_names, &res_types, &error);
+	g_assert_no_error(error);
+	g_assert_cmpint(res_field_count, ==, field_count);
+
+	for(int i = 0; i < field_count; ++i)
+	{
+		g_assert_cmpstr(names[i], ==, res_names[i]);
+		g_assert_cmpint(types[i], ==, res_types[i]);
+		g_free(names[i]);
+		g_free(res_names[i]);
+	}
+}
+
 void
 test_db_schema(void)
 {
@@ -249,4 +294,5 @@ test_db_schema(void)
 	g_test_add_func("/db/schema/equals_different_name", test_db_schema_equals_different_name);
 	g_test_add_func("/db/schema/equals_same_name_different_fields", test_db_schema_equals_same_name_different_fields);
 	g_test_add_func("/db/schema/equals_same_name_same_fields", test_db_schema_equals_same_name_same_fields);
+	g_test_add_func("/db/schema/get_all_fields", test_db_schema_get_all_fields);
 }
