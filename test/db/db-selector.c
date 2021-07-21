@@ -28,9 +28,9 @@
 #include "test.h"
 
 static JDBSchema*
-generate_test_schema(gchar const * name)
+generate_test_schema(gchar const* name)
 {
-    g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(GError) error = NULL;
 	gboolean res;
 	gchar field_name[] = "field_dd";
@@ -40,11 +40,11 @@ generate_test_schema(gchar const * name)
 	for (int i = 0; i <= 99; ++i)
 	{
 		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
-		res = j_db_schema_add_field(schema, field_name, i%8, NULL);
+		res = j_db_schema_add_field(schema, field_name, i % 8, NULL);
 		g_assert_true(res);
 	}
 
-    return j_db_schema_ref(schema);
+	return j_db_schema_ref(schema);
 }
 
 static void
@@ -61,14 +61,14 @@ test_db_selector_add_field(void)
 	g_assert_nonnull(selector);
 	g_assert_no_error(error);
 
-
-	for(int i = 0; i < 8; ++i)
+	for (int i = 0; i < 8; ++i)
 	{
 		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
-		ret = j_db_selector_add_field(selector, field_name, i%6, val, sizeof(val), &error);
+		ret = j_db_selector_add_field(selector, field_name, i % 6, val, sizeof(val), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		if(g_test_failed()) return;
+		if (g_test_failed())
+			return;
 	}
 }
 
@@ -109,22 +109,24 @@ test_db_selector_add_selector(void)
 	g_assert_nonnull(selector2);
 	g_assert_no_error(error);
 
-	for(int i = 0; i < 8; ++i)
+	for (int i = 0; i < 8; ++i)
 	{
 		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
-		ret = j_db_selector_add_field(selector1, field_name, i%6, val, sizeof(val), &error);
+		ret = j_db_selector_add_field(selector1, field_name, i % 6, val, sizeof(val), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		if(g_test_failed()) return;
+		if (g_test_failed())
+			return;
 	}
 
-	for(int i = 8; i < 25; ++i)
+	for (int i = 8; i < 25; ++i)
 	{
 		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
-		ret = j_db_selector_add_field(selector2, field_name, i%6, val, sizeof(val), &error);
+		ret = j_db_selector_add_field(selector2, field_name, i % 6, val, sizeof(val), &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
-		if(g_test_failed()) return;
+		if (g_test_failed())
+			return;
 	}
 
 	ret = j_db_selector_add_selector(selector1, selector2, &error);

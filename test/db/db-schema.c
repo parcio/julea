@@ -275,7 +275,7 @@ test_db_schema_get_all_fields(void)
 	g_assert_no_error(error);
 	g_assert_cmpint(res_field_count, ==, field_count);
 
-	for(int i = 0; i < field_count; ++i)
+	for (int i = 0; i < field_count; ++i)
 	{
 		g_assert_cmpstr(names[i], ==, res_names[i]);
 		g_assert_cmpint(types[i], ==, res_types[i]);

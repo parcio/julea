@@ -89,10 +89,11 @@ test_core_semantics_from_string(void)
 	g_autoptr(JSemantics) semantics = NULL;
 	gint ret;
 	gchar semantics_string[] = "atomicity=operation,concurrency=overlapping,consistency=eventual,ordering=strict,persistency=immediate,safety=network,security=strict";
-	
+
 	semantics = j_semantics_new_from_string(NULL, semantics_string);
 	g_assert_nonnull(semantics);
-	if(g_test_failed()) return;
+	if (g_test_failed())
+		return;
 
 	ret = j_semantics_get(semantics, J_SEMANTICS_ATOMICITY);
 	g_assert_cmpint(ret, ==, J_SEMANTICS_ATOMICITY_OPERATION);
