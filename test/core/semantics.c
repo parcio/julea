@@ -83,7 +83,7 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 	g_assert_cmpint(s, ==, J_SEMANTICS_SECURITY_STRICT);
 }
 
-void
+static void
 test_core_semantics_from_string(void)
 {
 	g_autoptr(JSemantics) semantics = NULL;

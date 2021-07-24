@@ -31,7 +31,6 @@ static JDBSchema*
 generate_test_schema(gchar const* name)
 {
 	g_autoptr(JDBSchema) schema = NULL;
-	g_autoptr(GError) error = NULL;
 	gboolean res;
 	gchar field_name[] = "field_dd";
 

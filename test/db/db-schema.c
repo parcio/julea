@@ -261,7 +261,7 @@ test_db_schema_get_all_fields(void)
 	types = g_new(JDBType, field_count);
 	names = g_new0(gchar*, field_count);
 
-	for (int i = 0; i < field_count; ++i)
+	for (guint32 i = 0; i < field_count; ++i)
 	{
 		g_snprintf(field_name, sizeof(field_name), "field_%i", i);
 		// generate some random type fields (excluding id type)
@@ -275,7 +275,7 @@ test_db_schema_get_all_fields(void)
 	g_assert_no_error(error);
 	g_assert_cmpint(res_field_count, ==, field_count);
 
-	for (int i = 0; i < field_count; ++i)
+	for (guint32 i = 0; i < field_count; ++i)
 	{
 		g_assert_cmpstr(names[i], ==, res_names[i]);
 		g_assert_cmpint(types[i], ==, res_types[i]);
