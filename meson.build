@@ -17,7 +17,7 @@
 project('julea', 'c',
 	version: '0.5',
 	license: 'LGPLv3+',
-	meson_version: '>= 0.53',
+	meson_version: '>= 0.57',
 	default_options: [
 		'optimization=g',
 		'warning_level=3',
@@ -539,8 +539,7 @@ test_exe = executable('julea-test', julea_test_srcs,
 	include_directories: [julea_incs] + [include_directories('test')],
 )
 
-test('julea-test-all', test_exe, protocol: 'tap', timeout: 0)
-
+test('julea-test-all', test_exe, protocol: 'tap', timeout: 0, args: '--tap')
 julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',

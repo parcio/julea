@@ -59,7 +59,11 @@ jobs:
           - dist: ubuntu-18.04
             compiler: clang
             compiler_version: 9.0.0
-        dependencies: [system, spack]
+        dependencies: [spack, system]
+        exclude:
+          - os: 
+              dist: ubuntu-18.04
+            dependencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -73,14 +77,9 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
-            sudo pip3 install meson
-          else
-            sudo apt --yes --no-install-recommends install meson ninja-build
-          fi
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev
+          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
+          sudo pip3 install meson ninja
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
@@ -127,7 +126,7 @@ jobs:
           - dist: ubuntu-18.04
             compiler: clang
             compiler_version: 9.0.0
-        dependencies: [system, spack]
+        dependencies: [spack, system]
         julea:
           # Default
           - object: posix
@@ -150,15 +149,17 @@ jobs:
           # DB backends
           - object: posix
             kv: lmdb
-            db: memory
-          - object: posix
-            kv: lmdb
             db: mysql
             db-server: mysql
           - object: posix
             kv: lmdb
             db: mysql
             db-server: mariadb
+        exclude:
+          - os: 
+              dist: ubuntu-18.04
+            dependencies: system
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -172,14 +173,9 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
-            sudo pip3 install meson
-          else
-            sudo apt --yes --no-install-recommends install meson ninja-build
-          fi
+          sudo apt --yes --no-install-recommends install libglib2.0-dev libbson-dev libleveldb-dev liblmdb-dev libmongoc-dev libsqlite3-dev librados-dev libfuse-dev libmariadb-dev librocksdb-dev
+          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+          sudo pip3 install meson ninja
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
@@ -212,6 +208,7 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo rm --recursive --force /var/lib/mysql
+          sudo apt update || true
           sudo apt --yes --no-install-recommends install mariadb-server
           sudo systemctl start mariadb.service
           sudo mariadb --execute="CREATE DATABASE juleadb;"
@@ -248,23 +245,29 @@ jobs:
       - name: Tests
         run: |
           . scripts/environment.sh
+          meson --version
           ./scripts/setup.sh start
-          ./scripts/test.sh
+          cd bld
+          meson test -v
           sleep 10
-          ./scripts/test.sh
-          ./scripts/setup.sh stop
+          meson test -v
+          ../scripts/setup.sh stop
+      - name: Detailed log
+        if: always()
+        run: echo "$(cat bld/meson-logs/testlog.txt)"
       - name: HDF5 Tests
         if: matrix.julea.db != 'memory'
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
+          cd bld
           export HDF5_VOL_CONNECTOR=julea-kv
-          ./scripts/test.sh -p /hdf5
+          meson test -v --test-args "-p /hdf5"
           sleep 10
-          ./scripts/test.sh -p /hdf5
+          meson test -v --test-args "-p /hdf5"
           sleep 10
           export HDF5_VOL_CONNECTOR=julea-db
-          ./scripts/test.sh -p /hdf5
+          meson test -v --test-args "-p /hdf5"
           sleep 10
-          ./scripts/test.sh -p /hdf5
-          ./scripts/setup.sh stop
+          meson test -v --test-args "-p /hdf5"
+          ../scripts/setup.sh stop

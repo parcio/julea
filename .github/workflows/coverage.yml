@@ -79,6 +79,7 @@ jobs:
           JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="posix" --object-component=server --object-path="/tmp/julea/object/posix" --kv-backend="lmdb" --kv-component=server --kv-path="/tmp/julea/kv/lmdb" --db-backend="mysql" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
+        id: tests
         env:
           HDF5_VOL_CONNECTOR: julea-db
         run: |
@@ -87,21 +88,22 @@ jobs:
           ./scripts/setup.sh start
           cd bld
           meson test -v 
+          echo "::set-output name=test-return-code::$($?)"
           ../scripts/setup.sh stop
       - name: Generate coverage
-        if: success() || failure()
+        if: success() || steps.tests.test-return-code == '1'
         run: |
           . scripts/environment.sh
           cd bld
           spack load py-gcovr
           ninja -C . coverage
       - name: Copy coverage
-        if: success() || failure()
+        if: success() || steps.tests.test-return-code == '1'
         run: |
           cd bld/meson-logs
           rsync --archive --human-readable --verbose --delete --exclude=.git ./coveragereport ../../pages/coverage
       - name: Commit coverage
-        if: success() || failure()
+        if: success() || steps.tests.test-return-code == '1'
         run: |
           cd pages
           git config user.name 'github-actions[bot]'
