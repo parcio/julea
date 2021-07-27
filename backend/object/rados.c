@@ -205,9 +205,9 @@ backend_write(gpointer backend_data, gpointer backend_object, gconstpointer buff
 	return TRUE;
 }
 
-// FIXME implement backend_get_all
-// FIXME implement backend_get_by_prefix
-// FIXME implement backend_iterate
+/// \todo implement backend_get_all
+/// \todo implement backend_get_by_prefix
+/// \todo implement backend_iterate
 
 static gboolean
 backend_init(gchar const* path, gpointer* backend_data)

@@ -72,7 +72,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	// FIXME do something with batch->semantics
+	/// \todo do something with batch->semantics
 
 	if (sqlite3_exec(bd->db, "COMMIT;", NULL, NULL, NULL) == SQLITE_OK)
 	{
@@ -105,7 +105,7 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
 
-	// FIXME
+	/// \todo
 	return TRUE;
 }
 
@@ -126,7 +126,7 @@ backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
 
-	// FIXME
+	/// \todo
 	return TRUE;
 }
 
@@ -156,7 +156,7 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 		result = sqlite3_column_blob(stmt, 0);
 		result_len = sqlite3_column_bytes(stmt, 0);
 
-		// FIXME check whether copies can be avoided
+		/// \todo check whether copies can be avoided
 #if GLIB_CHECK_VERSION(2, 68, 0)
 		*value = g_memdup2(result, result_len);
 #else

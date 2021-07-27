@@ -101,7 +101,8 @@ test_message_append(void)
 		g_assert_true(ret);
 	}
 
-	/* FIXME
+	/// \todo
+	/*
 	ret = j_message_append_1(message, &dummy);
 	g_assert_true(!ret);
 	*/

@@ -98,7 +98,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_UNACKNOWLEDGED);
 	}
 
-	/* FIXME cache */
+	/// \todo cache
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, namespace);
 	m_database = mongoc_client_get_database(bd->connection, bd->database);
 
@@ -181,7 +181,7 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 	bson_init(selector);
 	bson_append_utf8(selector, "key", -1, key, -1);
 
-	/* FIXME use insert when possible */
+	/// \todo use insert when possible
 	//mongoc_bulk_operation_insert(batch->bulk_op, document);
 	mongoc_bulk_operation_replace_one(batch->bulk_op, selector, document, TRUE);
 
@@ -366,7 +366,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
-	/* FIXME */
+	/// \todo
 	if (mongoc_cursor_next(cursor, &result))
 	{
 		bson_iter_init(&iter, result);

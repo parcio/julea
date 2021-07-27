@@ -61,7 +61,7 @@ _benchmark_db_schema_create(BenchmarkRun* run, gboolean use_batch)
 				//j_db_schema_add_index(schema, idx_file, &error);
 			}
 
-			// FIXME Do not pass error, will not exist anymore when batch is executed
+			/// \todo Do not pass error, will not exist anymore when batch is executed
 			j_db_schema_create(schema, batch, NULL);
 			j_db_schema_delete(schema, delete_batch, NULL);
 
@@ -130,7 +130,7 @@ _benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
 				//j_db_schema_add_index(schema, idx_file, &error);
 			}
 
-			// FIXME Do not pass error, will not exist anymore when batch is executed
+			/// \todo Do not pass error, will not exist anymore when batch is executed
 			j_db_schema_create(schema, batch, NULL);
 		}
 
@@ -147,7 +147,7 @@ _benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
 			name = g_strdup_printf("benchmark-schema-%d", i);
 			schema = j_db_schema_new("benchmark-ns", name, NULL);
 
-			// FIXME Do not pass error, will not exist anymore when batch is executed
+			/// \todo Do not pass error, will not exist anymore when batch is executed
 			j_db_schema_delete(schema, batch, NULL);
 
 			if (!use_batch)

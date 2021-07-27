@@ -521,7 +521,7 @@ benchmark_item(void)
 	j_benchmark_add("/item/item/delete-batch-without-get", benchmark_item_delete_batch_without_get);
 	j_benchmark_add("/item/item/get-status", benchmark_item_get_status);
 	j_benchmark_add("/item/item/get-status-batch", benchmark_item_get_status_batch);
-	/* FIXME get */
+	/// \todo get
 	j_benchmark_add("/item/item/read", benchmark_item_read);
 	j_benchmark_add("/item/item/read-batch", benchmark_item_read_batch);
 	j_benchmark_add("/item/item/write", benchmark_item_write);

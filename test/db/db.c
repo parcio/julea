@@ -94,11 +94,11 @@ test_db_schema_create_delete(void)
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		// FIXME Do not pass error, will not exist anymore when batch is executed
+		/// \todo Do not pass error, will not exist anymore when batch is executed
 		ret = j_db_schema_create(schema, batch, NULL);
 		g_assert_true(ret);
 
-		// FIXME Do not pass error, will not exist anymore when batch is executed
+		/// \todo Do not pass error, will not exist anymore when batch is executed
 		ret = j_db_schema_delete(schema, batch, NULL);
 		g_assert_true(ret);
 	}
@@ -180,7 +180,7 @@ test_db_entry_insert_update_delete(void)
 		g_assert_true(ret);
 		g_assert_no_error(error);
 
-		// FIXME Do not pass error, will not exist anymore when batch is executed
+		/// \todo Do not pass error, will not exist anymore when batch is executed
 		ret = j_db_entry_insert(entry, batch, NULL);
 		g_assert_true(ret);
 	}
@@ -535,7 +535,7 @@ test_db_all(void)
 void
 test_db_db(void)
 {
-	// FIXME add more tests
+	/// \todo add more tests
 	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);
 	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
 	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);

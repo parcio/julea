@@ -32,7 +32,7 @@
 struct JBackendData
 {
 	gchar* path;
-	// FIXME check whether hash tables can stay global
+	/// \todo check whether hash tables can stay global
 };
 
 typedef struct JBackendData JBackendData;
@@ -68,7 +68,7 @@ jd_backend_files_free(gpointer data)
 	g_hash_table_destroy(files);
 }
 
-// FIXME not deleted?
+/// \todo not deleted?
 static GPrivate jd_backend_files = G_PRIVATE_INIT(jd_backend_files_free);
 
 static void
@@ -165,7 +165,7 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 	{
 		g_free(full_path);
 
-		// FIXME
+		/// \todo
 		fd = bo->fd;
 
 		goto end;
@@ -215,7 +215,7 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 	{
 		g_free(full_path);
 
-		// FIXME
+		/// \todo
 		fd = bo->fd;
 
 		goto end;

@@ -198,7 +198,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 			reply = j_message_new_reply(message);
 
-			// FIXME return value
+			/// \todo return value
 			j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 			for (i = 0; i < operation_count; i++)
@@ -213,7 +213,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 				if (length > memory_chunk_size)
 				{
-					// FIXME return proper error
+					/// \todo return proper error
 					j_message_add_operation(reply, sizeof(guint64));
 					j_message_append_8(reply, &bytes_read);
 					continue;
@@ -223,7 +223,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 				if (buf == NULL)
 				{
-					// FIXME ugly
+					/// \todo ugly
 					j_message_send(reply, connection);
 					j_message_unref(reply);
 
@@ -268,7 +268,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			namespace = j_message_get_string(message);
 			path = j_message_get_string(message);
 
-			// FIXME return value
+			/// \todo return value
 			j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 			for (i = 0; i < operation_count; i++)
@@ -284,7 +284,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 				if (length > memory_chunk_size)
 				{
-					// FIXME return proper error
+					/// \todo return proper error
 					j_message_add_operation(reply, sizeof(guint64));
 					j_message_append_8(reply, &bytes_written);
 					continue;
@@ -342,7 +342,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 				path = j_message_get_string(message);
 
-				// FIXME return value
+				/// \todo return value
 				j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 				if (j_backend_object_status(jd_object_backend, object, &modification_time, &size))
@@ -408,7 +408,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			if (get_all != 0)
 			{
 				g_mutex_lock(jd_statistics_mutex);
-				/* FIXME add statistics of all threads */
+				/// \todo add statistics of all threads
 			}
 
 			reply = j_message_new_reply(message);
