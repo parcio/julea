@@ -69,7 +69,8 @@ case "${MODE}" in
 		get_files | ( ret=0
 		while read -r file
 		do
-			diff -u "${file}" <(clang-format --style=file "${file}") || ret=$?
+			diff --color --unified "${file}" <(clang-format --style=file "${file}") || ret=$?
+			diff --color --unified "${file}" <(sed -E 's/[[:blank:]]+$//' "${file}") || ret=$?
 		done
 		exit ${ret} ) || exit $?
 		;;
@@ -77,6 +78,7 @@ case "${MODE}" in
 		get_files | while read -r file
 		do
 			clang-format -i --style=file "${file}"
+			sed -E --in-place 's/[[:blank:]]+$//' "${file}"
 		done
 		;;
 	*)
