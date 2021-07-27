@@ -19,6 +19,13 @@
 #ifndef JULEA_TEST_T
 #define JULEA_TEST_T
 
+/**
+ * Returns if the test case has already failed.
+ */
+#define j_return_on_fail() \
+	if (g_test_failed()) \
+		return;
+
 void test_core_background_operation(void);
 void test_core_batch(void);
 void test_core_cache(void);

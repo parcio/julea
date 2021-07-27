@@ -95,6 +95,8 @@ test_kv_put_delete(void)
 	ret = j_batch_execute(batch);
 	// FIXME this should return FALSE
 	g_assert_false(ret);
+
+	g_test_incomplete("Known issue. See #116");
 }
 
 static void

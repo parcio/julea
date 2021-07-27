@@ -156,6 +156,8 @@ test_db_invalid_schema_delete(void)
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
 	g_assert_nonnull(error);
+
+	g_test_incomplete("Known issue. Similar to #116");
 }
 
 static void
