@@ -145,6 +145,79 @@ test_hdf_read_write(void)
 	H5Fclose(file);
 }
 
+static void
+test_hdf_dataset_create(void)
+{
+	hid_t dataset;
+	hid_t dataspace;
+	hid_t file;
+
+	hsize_t dims[2] = { 6, 7 };
+
+	file = H5Fcreate("test-dataset-create.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+	dataspace = H5Screate_simple(2, dims, NULL);
+
+	for (guint i = 0; i < 100; i++)
+	{
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("dataset-create-%u", i);
+
+		dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Dclose(dataset);
+	}
+
+	H5Sclose(dataspace);
+
+	H5Fclose(file);
+}
+
+static void
+test_hdf_dataset_write(void)
+{
+	hid_t dataset;
+	hid_t dataspace;
+	hid_t file;
+
+	hsize_t dims[2] = { 6, 7 };
+
+	int data_ds[6][7];
+
+	file = H5Fcreate("test-dataset-write.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+	dataspace = H5Screate_simple(2, dims, NULL);
+
+	for (guint i = 0; i < 6; i++)
+	{
+		for (guint j = 0; j < 7; j++)
+		{
+			data_ds[i][j] = i + j;
+		}
+	}
+
+	for (guint i = 0; i < 100; i++)
+	{
+		g_autofree gchar* name = NULL;
+
+		name = g_strdup_printf("dataset-write-%u", i);
+
+		dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_ds);
+		H5Dclose(dataset);
+	}
+
+	// FIXME julea-db has problems with this
+	//dataset = H5Dcreate2(file, "dataset-write-closed-dataspace", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	H5Sclose(dataspace);
+
+	//H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_ds);
+	//H5Dclose(dataset);
+
+	H5Fclose(file);
+}
+
 #endif
 
 void
@@ -158,5 +231,7 @@ test_hdf_hdf(void)
 	}
 
 	g_test_add_func("/hdf5/read_write", test_hdf_read_write);
+	g_test_add_func("/hdf5/dataset/create", test_hdf_dataset_create);
+	g_test_add_func("/hdf5/dataset/write", test_hdf_dataset_write);
 #endif
 }

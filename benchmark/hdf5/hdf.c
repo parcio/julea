@@ -165,7 +165,7 @@ read_attribute(hid_t group, gchar const* name)
 }
 
 static hid_t
-create_dataset(hid_t file, gchar const* name, guint dimensions)
+create_dataset(hid_t file, gchar const* name, guint dimensions, hid_t* dataspace_out)
 {
 	hid_t dataset;
 	hid_t dataspace;
@@ -180,7 +180,15 @@ create_dataset(hid_t file, gchar const* name, guint dimensions)
 	dataspace = H5Screate_simple(dimensions, dims, NULL);
 	dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	H5Sclose(dataspace);
+	// FIXME julea-db: if we try to write to a dataset with a closed dataspace, errors occur
+	if (dataspace_out != NULL)
+	{
+		*dataspace_out = dataspace;
+	}
+	else
+	{
+		H5Sclose(dataspace);
+	}
 
 	return dataset;
 }
@@ -347,7 +355,7 @@ _benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dataset-create-%u", i + (iter * n));
-			dataset = create_dataset(file, name, dimensions);
+			dataset = create_dataset(file, name, dimensions, NULL);
 			H5Dclose(dataset);
 		}
 
@@ -396,7 +404,7 @@ _benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dataset-open-%u", i + (iter * n));
-			dataset = create_dataset(file, name, dimensions);
+			dataset = create_dataset(file, name, dimensions, NULL);
 			H5Dclose(dataset);
 		}
 
@@ -456,13 +464,15 @@ _benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 		for (guint i = 0; i < n; i++)
 		{
 			hid_t dataset;
+			hid_t dataspace;
 
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dataset-write-%u", i + (iter * n));
-			dataset = create_dataset(file, name, dimensions);
+			dataset = create_dataset(file, name, dimensions, &dataspace);
 			write_dataset(dataset, dimensions);
 			H5Dclose(dataset);
+			H5Sclose(dataspace);
 		}
 
 		iter++;
@@ -507,13 +517,15 @@ _benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 		for (guint i = 0; i < n; i++)
 		{
 			hid_t dataset;
+			hid_t dataspace;
 
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dataset-read-%u", i + (iter * n));
-			dataset = create_dataset(file, name, dimensions);
+			dataset = create_dataset(file, name, dimensions, &dataspace);
 			write_dataset(dataset, dimensions);
 			H5Dclose(dataset);
+			H5Sclose(dataspace);
 		}
 
 		discard_file("benchmark-dataset-read.h5");
