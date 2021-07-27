@@ -31,7 +31,8 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JCache Cache
+ * \addtogroup JCache Cache
+ *
  * @{
  **/
 
@@ -52,19 +53,6 @@ struct JCache
 	GMutex mutex[1];
 };
 
-/**
- * Creates a new cache.
- *
- * \code
- * JCache* cache;
- *
- * cache = j_cache_new(1024);
- * \endcode
- *
- * \param size A size.
- *
- * \return A new cache. Should be freed with j_cache_free().
- **/
 JCache*
 j_cache_new(guint64 size)
 {
@@ -84,19 +72,6 @@ j_cache_new(guint64 size)
 	return cache;
 }
 
-/**
- * Frees the memory allocated for the cache.
- *
- * \code
- * JCache* cache;
- *
- * ...
- *
- * j_cache_free(cache);
- * \endcode
- *
- * \param cache A cache.
- **/
 void
 j_cache_free(JCache* cache)
 {
@@ -122,22 +97,6 @@ j_cache_free(JCache* cache)
 	g_slice_free(JCache, cache);
 }
 
-/**
- * Gets a new segment from the cache.
- *
- * \code
- * JCache* cache;
- *
- * ...
- *
- * j_cache_get(cache, 1024);
- * \endcode
- *
- * \param cache  A cache.
- * \param length A length.
- *
- * \return A pointer to a segment of the cache, NULL if not enough space is available.
- **/
 gpointer
 j_cache_get(JCache* cache, guint64 length)
 {

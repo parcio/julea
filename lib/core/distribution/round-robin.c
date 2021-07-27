@@ -32,9 +32,7 @@
 #include "distribution.h"
 
 /**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
+ * \addtogroup JDistribution
  *
  * @{
  **/
@@ -160,8 +158,9 @@ distribution_free(gpointer data)
  * \code
  * \endcode
  *
- * \param distribution A distribution.
- * \param start_index  An index.
+ * \param data  A distribution.
+ * \param key   The property to change (e.g. block-size or start-index).
+ * \param value The value to be set for the property.
  */
 static void
 distribution_set(gpointer data, gchar const* key, guint64 value)

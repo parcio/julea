@@ -31,7 +31,7 @@
 #include <string.h>
 
 /**
- * \defgroup JKVURI Object URI
+ * \addtogroup JKVURI
  *
  * @{
  **/
@@ -151,14 +151,14 @@ j_kv_uri_parse(JKVURI* uri, gchar const* uri_)
 	{
 		case J_KV_URI_SCHEME_NAMESPACE:
 		case J_KV_URI_SCHEME_KV:
-			// FIXME check for errors
+			/// \todo check for errors
 			uri->index = g_ascii_strtoull(parts[0], NULL, 10);
 			uri->namespace = g_strdup(parts[1]);
 
 			if (parts_len >= 3)
 			{
 				uri->name = g_strdup(parts[2]);
-				// FIXME index
+				/// \todo index
 				uri->kv = j_kv_new_for_index(uri->index, uri->namespace, uri->name);
 			}
 			break;
@@ -173,19 +173,6 @@ error:
 	return FALSE;
 }
 
-/**
- * Creates a new URI.
- *
- * \code
- * JKVURI* uri;
- *
- * uri = j_kv_uri_new("julea://foo/bar");
- * \endcode
- *
- * \param uri_ A URI string.
- *
- * \return A new URI. Should be freed with j_kv_uri_free().
- **/
 JKVURI*
 j_kv_uri_new(gchar const* uri_, JKVURIScheme scheme)
 {
@@ -211,19 +198,6 @@ j_kv_uri_new(gchar const* uri_, JKVURIScheme scheme)
 	return uri;
 }
 
-/**
- * Frees the memory allocated by a URI.
- *
- * \code
- * JKVURI* uri;
- *
- * ...
- *
- * j_kv_uri_free(uri);
- * \endcode
- *
- * \param uri A URI.
- **/
 void
 j_kv_uri_free(JKVURI* uri)
 {
@@ -242,21 +216,6 @@ j_kv_uri_free(JKVURI* uri)
 	g_slice_free(JKVURI, uri);
 }
 
-/**
- * Returns the index.
- *
- * \code
- * JKVURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_kv_uri_get_collection_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The index.
- **/
 guint32
 j_kv_uri_get_index(JKVURI* uri)
 {
@@ -267,21 +226,6 @@ j_kv_uri_get_index(JKVURI* uri)
 	return uri->index;
 }
 
-/**
- * Returns the namespace.
- *
- * \code
- * JKVURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_kv_uri_get_collection_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The namespace.
- **/
 gchar const*
 j_kv_uri_get_namespace(JKVURI* uri)
 {
@@ -292,21 +236,6 @@ j_kv_uri_get_namespace(JKVURI* uri)
 	return uri->namespace;
 }
 
-/**
- * Returns the name.
- *
- * \code
- * JKVURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_kv_uri_get_item_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The name.
- **/
 gchar const*
 j_kv_uri_get_name(JKVURI* uri)
 {
@@ -317,21 +246,6 @@ j_kv_uri_get_name(JKVURI* uri)
 	return uri->name;
 }
 
-/**
- * Returns the kv.
- *
- * \code
- * JKVURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_kv_uri_get_object(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The kv.
- **/
 JKV*
 j_kv_uri_get_kv(JKVURI* uri)
 {

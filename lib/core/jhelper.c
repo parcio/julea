@@ -36,14 +36,13 @@
 #include <unistd.h>
 
 #include <jhelper.h>
-#include <jhelper-internal.h>
 
 #include <jbackground-operation.h>
 #include <jsemantics.h>
 #include <jtrace.h>
 
 /**
- * \defgroup JHelper Helper
+ * \addtogroup JHelper Helper
  *
  * Helper data structures and functions.
  *
@@ -93,7 +92,7 @@ j_helper_get_number_string(gchar* string, guint32 length, guint32 number)
 
 	gint ret;
 
-	/* FIXME improve */
+	/// \todo improve
 	ret = g_snprintf(string, length, "%d", number);
 	g_return_if_fail((guint)ret <= length);
 }
@@ -176,7 +175,7 @@ j_helper_atomic_add(guint64 volatile* ptr, guint64 val)
 
 	guint64 ret;
 
-	// FIXME check C11 atomic_fetch_add
+	/// \todo check C11 atomic_fetch_add
 #ifdef HAVE_SYNC_FETCH_AND_ADD
 	ret = __sync_fetch_and_add(ptr, val);
 #else

@@ -27,15 +27,13 @@
 #include <bson.h>
 
 #include <jconfiguration.h>
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jtrace.h>
 
 #include "distribution.h"
 
 /**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
+ * \addtogroup JDistribution
  *
  * @{
  **/
@@ -253,7 +251,7 @@ distribution_serialize(gpointer data, bson_t* b)
 
 	for (guint i = 0; i < distribution->server_count; i++)
 	{
-		// FIXME
+		/// \todo
 		j_helper_get_number_string(numstr, sizeof(numstr), i);
 		bson_append_int32(b_array, numstr, -1, distribution->weights[i]);
 	}

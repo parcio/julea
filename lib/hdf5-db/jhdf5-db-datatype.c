@@ -55,7 +55,7 @@ H5VL_julea_db_datatype_convert_type_change(hid_t type_id_from, hid_t type_id_to,
 	g_assert(H5Tget_class(type_id_from) == H5Tget_class(type_id_to));
 	g_assert(H5Tget_size(type_id_from) == H5Tget_size(type_id_to));
 
-	// FIXME doesn't do anything?
+	/// \todo doesn't do anything?
 
 	switch (H5Tget_class(type_id_from))
 	{

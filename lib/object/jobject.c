@@ -32,9 +32,7 @@
 #include <julea.h>
 
 /**
- * \defgroup JObject Object
- *
- * Data structures and functions for managing objects.
+ * \addtogroup JObject
  *
  * @{
  **/
@@ -106,7 +104,7 @@ struct JObject
 static JBackend* j_object_backend = NULL;
 static GModule* j_object_module = NULL;
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_object_init(void);
 static void __attribute__((destructor)) j_object_fini(void);
 
@@ -235,7 +233,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -316,7 +314,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			/* FIXME do something with reply */
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
@@ -431,7 +429,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -440,7 +438,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	JObject* object;
 	gpointer object_handle;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -577,7 +575,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -592,7 +590,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -601,7 +599,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	JObject* object;
 	gpointer object_handle;
 
-	// FIXME
+	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
@@ -729,7 +727,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	/*
 	if (lock != NULL)
 	{
-		// FIXME busy wait
+		/// \todo busy wait
 		while (!j_lock_acquire(lock));
 
 		j_lock_free(lock);
@@ -744,7 +742,7 @@ j_object_status_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -855,7 +853,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	// FIXME check return value for messages
+	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
 	JBackend* object_backend;
@@ -932,7 +930,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			// FIXME do something with reply
+			/// \todo do something with reply
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, index, object_connection);
@@ -941,20 +939,6 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 	return ret;
 }
 
-/**
- * Creates a new object.
- *
- * \code
- * JObject* i;
- *
- * i = j_object_new("JULEA", "JULEA");
- * \endcode
- *
- * \param namespace    A namespace.
- * \param name         An object name.
- *
- * \return A new object. Should be freed with j_object_unref().
- **/
 JObject*
 j_object_new(gchar const* namespace, gchar const* name)
 {
@@ -975,21 +959,6 @@ j_object_new(gchar const* namespace, gchar const* name)
 	return object;
 }
 
-/**
- * Creates a new object.
- *
- * \code
- * JObject* i;
- *
- * i = j_object_new_for_index(index, "JULEA", "JULEA");
- * \endcode
- *
- * \param index        An object server index. Must be less than the return value of j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT).
- * \param namespace    A namespace.
- * \param name         An object name.
- *
- * \return A new object. Should be freed with j_object_unref().
- **/
 JObject*
 j_object_new_for_index(guint32 index, gchar const* namespace, gchar const* name)
 {
@@ -1011,19 +980,6 @@ j_object_new_for_index(guint32 index, gchar const* namespace, gchar const* name)
 	return object;
 }
 
-/**
- * Increases an object's reference count.
- *
- * \code
- * JObject* i;
- *
- * j_object_ref(i);
- * \endcode
- *
- * \param object An object.
- *
- * \return #object.
- **/
 JObject*
 j_object_ref(JObject* object)
 {
@@ -1036,15 +992,6 @@ j_object_ref(JObject* object)
 	return object;
 }
 
-/**
- * Decreases an object's reference count.
- * When the reference count reaches zero, frees the memory allocated for the object.
- *
- * \code
- * \endcode
- *
- * \param object An object.
- **/
 void
 j_object_unref(JObject* object)
 {
@@ -1061,18 +1008,6 @@ j_object_unref(JObject* object)
 	}
 }
 
-/**
- * Creates an object.
- *
- * \code
- * \endcode
- *
- * \param name         A name.
- * \param distribution A distribution.
- * \param batch        A batch.
- *
- * \return A new object. Should be freed with j_object_unref().
- **/
 void
 j_object_create(JObject* object, JBatch* batch)
 {
@@ -1083,7 +1018,7 @@ j_object_create(JObject* object, JBatch* batch)
 	g_return_if_fail(object != NULL);
 
 	operation = j_operation_new();
-	// FIXME key = index + namespace
+	/// \todo key = index + namespace
 	operation->key = object;
 	operation->data = j_object_ref(object);
 	operation->exec_func = j_object_create_exec;
@@ -1092,15 +1027,6 @@ j_object_create(JObject* object, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Deletes an object.
- *
- * \code
- * \endcode
- *
- * \param object     An object.
- * \param batch      A batch.
- **/
 void
 j_object_delete(JObject* object, JBatch* batch)
 {
@@ -1119,19 +1045,6 @@ j_object_delete(JObject* object, JBatch* batch)
 	j_batch_add(batch, operation);
 }
 
-/**
- * Reads an object.
- *
- * \code
- * \endcode
- *
- * \param object     An object.
- * \param data       A buffer to hold the read data.
- * \param length     Number of bytes to read.
- * \param offset     An offset within #object.
- * \param bytes_read Number of bytes read.
- * \param batch      A batch.
- **/
 void
 j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
@@ -1178,22 +1091,6 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 	*bytes_read = 0;
 }
 
-/**
- * Writes an object.
- *
- * \note
- * j_object_write() modifies bytes_written even if j_batch_execute() is not called.
- *
- * \code
- * \endcode
- *
- * \param object        An object.
- * \param data          A buffer holding the data to write.
- * \param length        Number of bytes to write.
- * \param offset        An offset within #object.
- * \param bytes_written Number of bytes written.
- * \param batch         A batch.
- **/
 void
 j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
@@ -1240,15 +1137,6 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 	*bytes_written = 0;
 }
 
-/**
- * Get the status of an object.
- *
- * \code
- * \endcode
- *
- * \param object    An object.
- * \param batch     A batch.
- **/
 void
 j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
@@ -1273,15 +1161,6 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	j_batch_add(batch, operation);
 }
 
-/**
- * Sync an object.
- *
- * \code
- * \endcode
- *
- * \param object    An object.
- * \param batch     A batch.
- **/
 void
 j_object_sync(JObject* object, JBatch* batch)
 {
@@ -1307,6 +1186,7 @@ j_object_sync(JObject* object, JBatch* batch)
 /**
  * Returns the object backend.
  *
+ * \private
  * \return The object backend.
  */
 JBackend*

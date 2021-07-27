@@ -34,8 +34,18 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \addtogroup JConnectionPool
+ *
+ * @{
+ **/
+
 G_GNUC_INTERNAL void j_connection_pool_init(JConfiguration*);
 G_GNUC_INTERNAL void j_connection_pool_fini(void);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

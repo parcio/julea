@@ -109,20 +109,6 @@ j_credentials_get_group(JCredentials* credentials)
 	return credentials->group;
 }
 
-/* Internal */
-
-/**
- * Serializes credentials.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param credentials Credentials.
- *
- * \return A new BSON object. Should be freed with bson_destroy().
- **/
 bson_t*
 j_credentials_serialize(JCredentials* credentials)
 {
@@ -141,17 +127,6 @@ j_credentials_serialize(JCredentials* credentials)
 	return b;
 }
 
-/**
- * Deserializes credentials.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param credentials credentials.
- * \param b           A BSON object.
- **/
 void
 j_credentials_deserialize(JCredentials* credentials, bson_t const* b)
 {

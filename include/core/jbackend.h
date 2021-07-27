@@ -42,7 +42,7 @@ G_BEGIN_DECLS
 #define J_BACKEND_DB_ERROR j_backend_db_error_quark()
 #define J_BACKEND_SQL_ERROR j_backend_sql_error_quark()
 
-// FIXME does it make sense to report these errors?
+/// \todo does it make sense to report these errors?
 enum JBackendBSONError
 {
 	J_BACKEND_BSON_ERROR_FAILED,

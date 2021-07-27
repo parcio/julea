@@ -33,7 +33,7 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JConfiguration Configuration
+ * \addtogroup JConfiguration Configuration
  *
  * @{
  **/
@@ -151,9 +151,6 @@ struct JConfiguration
 
 static JConfiguration* j_config = NULL;
 
-/**
- * Initializes the configuration.
- */
 void
 j_configuration_init(void)
 {
@@ -165,9 +162,6 @@ j_configuration_init(void)
 	g_atomic_pointer_set(&j_config, config);
 }
 
-/**
- * Shuts down the configuration.
- */
 void
 j_configuration_fini(void)
 {
@@ -181,25 +175,12 @@ j_configuration_fini(void)
 	j_configuration_unref(config);
 }
 
-/**
- * Returns the configuration.
- *
- * \return The configuration.
- */
 JConfiguration*
 j_configuration(void)
 {
 	return g_atomic_pointer_get(&j_config);
 }
 
-/**
- * Creates a new configuration.
- *
- * \code
- * \endcode
- *
- * \return A new configuration. Should be freed with j_configuration_unref().
- **/
 JConfiguration*
 j_configuration_new(void)
 {
@@ -279,16 +260,6 @@ out:
 	return configuration;
 }
 
-/**
- * Creates a new configuration for the given configuration data.
- *
- * \code
- * \endcode
- *
- * \param key_file The configuration data.
- *
- * \return A new configuration. Should be freed with j_configuration_unref().
- **/
 JConfiguration*
 j_configuration_new_for_data(GKeyFile* key_file)
 {
@@ -397,19 +368,6 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	return configuration;
 }
 
-/**
- * Increases a configuration's reference count.
- *
- * \code
- * JConfiguration* c;
- *
- * j_configuration_ref(c);
- * \endcode
- *
- * \param configuration A configuration.
- *
- * \return #configuration.
- **/
 JConfiguration*
 j_configuration_ref(JConfiguration* configuration)
 {
@@ -422,15 +380,6 @@ j_configuration_ref(JConfiguration* configuration)
 	return configuration;
 }
 
-/**
- * Decreases a configuration's reference count.
- * When the reference count reaches zero, frees the memory allocated for the configuration.
- *
- * \code
- * \endcode
- *
- * \param configuration A configuration.
- **/
 void
 j_configuration_unref(JConfiguration* configuration)
 {

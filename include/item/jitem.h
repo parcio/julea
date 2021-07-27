@@ -33,6 +33,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JItem Item
+ *
+ * Data structures and functions for managing items.
+ *
+ * @{
+ **/
+
 struct JItem;
 
 typedef struct JItem JItem;
@@ -43,25 +51,170 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JItem* j_item_ref(JItem*);
-void j_item_unref(JItem*);
+/**
+ * Increases an item's reference count.
+ *
+ * \code
+ * JItem* i;
+ *
+ * j_item_ref(i);
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return \p item.
+ **/
+JItem* j_item_ref(JItem* item);
+
+/**
+ * Decreases an item's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the item.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ **/
+void j_item_unref(JItem* item);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JItem, j_item_unref)
 
-gchar const* j_item_get_name(JItem*);
-JCredentials* j_item_get_credentials(JItem*);
+/**
+ * Returns an item's name.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return The name.
+ **/
+gchar const* j_item_get_name(JItem* item);
 
-JItem* j_item_create(JCollection*, gchar const*, JDistribution*, JBatch*);
-void j_item_delete(JItem*, JBatch*);
-void j_item_get(JCollection*, JItem**, gchar const*, JBatch*);
+/**
+ * Returns an item's credentials.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A collection.
+ **/
+JCredentials* j_item_get_credentials(JItem* item);
 
-void j_item_read(JItem*, gpointer, guint64, guint64, guint64*, JBatch*);
-void j_item_write(JItem*, gconstpointer, guint64, guint64, guint64*, JBatch*);
+/**
+ * Creates an item in a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection   A collection.
+ * \param name         A name.
+ * \param distribution A distribution.
+ * \param batch        A batch.
+ *
+ * \return A new item. Should be freed with \ref j_item_unref().
+ **/
+JItem* j_item_create(JCollection* collection, gchar const* name, JDistribution* distribution, JBatch* batch);
 
-void j_item_get_status(JItem*, JBatch*);
+/**
+ * Deletes an item from a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item       An item.
+ * \param batch      A batch.
+ **/
+void j_item_delete(JItem* item, JBatch* batch);
 
-guint64 j_item_get_size(JItem*);
-gint64 j_item_get_modification_time(JItem*);
+/**
+ * Gets an item from a collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param item       A pointer to an item.
+ * \param name       A name.
+ * \param batch      A batch.
+ **/
+void j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* batch);
+
+/**
+ * Reads an item.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item       An item.
+ * \param data       A buffer to hold the read data.
+ * \param length     Number of bytes to read.
+ * \param offset     An offset within \p item.
+ * \param bytes_read Number of bytes read.
+ * \param batch      A batch.
+ **/
+void j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
+
+/**
+ * Writes an item.
+ *
+ * \note
+ * j_item_write() modifies bytes_written even if j_batch_execute() is not called.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item          An item.
+ * \param data          A buffer holding the data to write.
+ * \param length        Number of bytes to write.
+ * \param offset        An offset within \p item.
+ * \param bytes_written Number of bytes written.
+ * \param batch         A batch.
+ **/
+void j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
+
+/**
+ * Get the status of an item.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param batch     A batch.
+ **/
+void j_item_get_status(JItem* item, JBatch* batch);
+
+/**
+ * Returns an item's size.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A size.
+ **/
+guint64 j_item_get_size(JItem* item);
+
+/**
+ * Returns an item's modification time.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A modification time.
+ **/
+gint64 j_item_get_modification_time(JItem* item);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

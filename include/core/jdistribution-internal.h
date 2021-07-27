@@ -38,8 +38,6 @@ G_BEGIN_DECLS
 
 G_GNUC_INTERNAL void j_distribution_init(void);
 
-G_GNUC_INTERNAL void j_distribution_deserialize(JDistribution*, bson_t const*);
-
 G_END_DECLS
 
 #endif

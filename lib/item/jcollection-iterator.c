@@ -34,9 +34,7 @@
 #include <julea-kv.h>
 
 /**
- * \defgroup JCollectionIterator Store Iterator
- *
- * Data structures and functions for iterating over stores.
+ * \addtogroup JCollectionIterator
  *
  * @{
  **/
@@ -46,13 +44,6 @@ struct JCollectionIterator
 	JKVIterator* iterator;
 };
 
-/**
- * Creates a new JCollectionIterator.
- *
- * \param store A JStore.
- *
- * \return A new JCollectionIterator.
- **/
 JCollectionIterator*
 j_collection_iterator_new(void)
 {
@@ -64,11 +55,6 @@ j_collection_iterator_new(void)
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by the JCollectionIterator.
- *
- * \param iterator A JCollectionIterator.
- **/
 void
 j_collection_iterator_free(JCollectionIterator* iterator)
 {
@@ -79,16 +65,6 @@ j_collection_iterator_free(JCollectionIterator* iterator)
 	g_slice_free(JCollectionIterator, iterator);
 }
 
-/**
- * Checks whether another collection is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return TRUE on success, FALSE if the end of the store is reached.
- **/
 gboolean
 j_collection_iterator_next(JCollectionIterator* iterator)
 {
@@ -97,16 +73,6 @@ j_collection_iterator_next(JCollectionIterator* iterator)
 	return j_kv_iterator_next(iterator->iterator);
 }
 
-/**
- * Returns the current collection.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return A new collection. Should be freed with j_collection_unref().
- **/
 JCollection*
 j_collection_iterator_get(JCollectionIterator* iterator)
 {

@@ -32,13 +32,8 @@
 #include <julea.h>
 
 /**
- * \defgroup JKVIterator KV Iterator
- *
- * Data structures and functions for iterating over stores.
- *
- * @{
+ * \ingroup JKVIterator
  **/
-
 struct JKVIterator
 {
 	JBackend* kv_backend;
@@ -108,13 +103,6 @@ fetch_reply(guint32 index, gchar const* namespace, gchar const* prefix)
 	return reply;
 }
 
-/**
- * Creates a new JKVIterator.
- *
- * \param store A JStore.
- *
- * \return A new JKVIterator.
- **/
 JKVIterator*
 j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 {
@@ -126,7 +114,7 @@ j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 
-	/* FIXME still necessary? */
+	/// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
@@ -173,7 +161,7 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV), NULL);
 
-	/* FIXME still necessary? */
+	/// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JKVIterator);
@@ -205,11 +193,6 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by the JKVIterator.
- *
- * \param iterator A JKVIterator.
- **/
 void
 j_kv_iterator_free(JKVIterator* iterator)
 {
@@ -230,16 +213,6 @@ j_kv_iterator_free(JKVIterator* iterator)
 	g_slice_free(JKVIterator, iterator);
 }
 
-/**
- * Checks whether another collection is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return TRUE on success, FALSE if the end of the store is reached.
- **/
 gboolean
 j_kv_iterator_next(JKVIterator* iterator)
 {
@@ -275,16 +248,6 @@ j_kv_iterator_next(JKVIterator* iterator)
 	return ret;
 }
 
-/**
- * Returns the current collection.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return A new collection. Should be freed with j_kv_unref().
- **/
 gchar const*
 j_kv_iterator_get(JKVIterator* iterator, gconstpointer* value, guint32* len)
 {
@@ -298,7 +261,3 @@ j_kv_iterator_get(JKVIterator* iterator, gconstpointer* value, guint32* len)
 
 	return iterator->key;
 }
-
-/**
- * @}
- **/

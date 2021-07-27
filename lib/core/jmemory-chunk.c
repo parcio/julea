@@ -31,7 +31,8 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JMemoryChunk Cache
+ * \addtogroup JMemoryChunk
+ *
  * @{
  **/
 
@@ -56,19 +57,6 @@ struct JMemoryChunk
 	gchar* current;
 };
 
-/**
- * Creates a new cache.
- *
- * \code
- * JMemoryChunk* cache;
- *
- * cache = j_memory_chunk_new(1024);
- * \endcode
- *
- * \param size A size.
- *
- * \return A new cache. Should be freed with j_memory_chunk_free().
- **/
 JMemoryChunk*
 j_memory_chunk_new(guint64 size)
 {
@@ -86,19 +74,6 @@ j_memory_chunk_new(guint64 size)
 	return cache;
 }
 
-/**
- * Frees the memory allocated for the cache.
- *
- * \code
- * JMemoryChunk* cache;
- *
- * ...
- *
- * j_memory_chunk_free(cache);
- * \endcode
- *
- * \param cache A cache.
- **/
 void
 j_memory_chunk_free(JMemoryChunk* cache)
 {
@@ -114,22 +89,6 @@ j_memory_chunk_free(JMemoryChunk* cache)
 	g_slice_free(JMemoryChunk, cache);
 }
 
-/**
- * Gets a new segment from the cache.
- *
- * \code
- * JMemoryChunk* cache;
- *
- * ...
- *
- * j_memory_chunk_get(cache, 1024);
- * \endcode
- *
- * \param cache  A cache.
- * \param length A length.
- *
- * \return A pointer to a segment of the cache, NULL if not enough space is available.
- **/
 gpointer
 j_memory_chunk_get(JMemoryChunk* cache, guint64 length)
 {

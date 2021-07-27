@@ -39,7 +39,7 @@
 static JBackend* j_db_backend = NULL;
 static GModule* j_db_module = NULL;
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_db_init(void);
 static void __attribute__((destructor)) j_db_fini(void);
 

@@ -31,6 +31,15 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JTrace Trace
+ *
+ * The JTrace framework offers abstracted trace capabilities.
+ * It can use normal terminal output and OTF.
+ *
+ * @{
+ **/
+
 enum JTraceFileOperation
 {
 	J_TRACE_FILE_CLOSE,
@@ -50,11 +59,50 @@ struct JTrace;
 
 typedef struct JTrace JTrace;
 
-void j_trace_init(gchar const*);
+/**
+ * Initializes the trace framework.
+ * Tracing is disabled by default.
+ * Set the \c J_TRACE environment variable to enable it.
+ * Valid values are \e echo and \e otf.
+ * Multiple values can be combined with commas.
+ *
+ * \code
+ * j_trace_init("JULEA");
+ * \endcode
+ *
+ * \param name A trace name.
+ **/
+void j_trace_init(gchar const* name);
+
+/**
+ * Shuts down the trace framework.
+ *
+ * \code
+ * j_trace_fini();
+ * \endcode
+ **/
 void j_trace_fini(void);
 
-JTrace* j_trace_enter(gchar const*, gchar const*, ...) G_GNUC_PRINTF(2, 3);
-void j_trace_leave(JTrace*);
+/**
+ * Traces the entering of a function.
+ *
+ * \code
+ * \endcode
+ *
+ * \param name A function name.
+ * \param format A format string.
+ **/
+JTrace* j_trace_enter(gchar const* name, gchar const* format, ...) G_GNUC_PRINTF(2, 3);
+
+/**
+ * Traces the leaving of a function.
+ *
+ * \code
+ * \endcode
+ *
+ * \param trace A JTrace.
+ **/
+void j_trace_leave(JTrace* trace);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 
@@ -76,10 +124,44 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JTrace, j_trace_leave)
 #endif
 #endif
 
-void j_trace_file_begin(gchar const*, JTraceFileOperation);
-void j_trace_file_end(gchar const*, JTraceFileOperation, guint64, guint64);
+/**
+ * Traces the beginning of a file operation.
+ *
+ * \code
+ * \endcode
+ *
+ * \param path A file path.
+ * \param op   A file operation.
+ **/
+void j_trace_file_begin(gchar const* path, JTraceFileOperation op);
 
-void j_trace_counter(gchar const*, guint64);
+/**
+ * Traces the ending of a file operation.
+ *
+ * \code
+ * \endcode
+ *
+ * \param path   A file path.
+ * \param op     A file operation.
+ * \param length A length.
+ * \param offset An offset.
+ **/
+void j_trace_file_end(gchar const* path, JTraceFileOperation op, guint64 length, guint64 offset);
+
+/**
+ * Traces a counter.
+ *
+ * \code
+ * \endcode
+ *
+ * \param name          A counter name.
+ * \param counter_value A counter value.
+ **/
+void j_trace_counter(gchar const* name, guint64 counter_value);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

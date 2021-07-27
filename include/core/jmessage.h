@@ -32,6 +32,12 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JMessage Message
+ *
+ * @{
+ **/
+
 enum JMessageType
 {
 	J_MESSAGE_NONE,
@@ -71,39 +77,321 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JMessage* j_message_new(JMessageType, gsize);
-JMessage* j_message_new_reply(JMessage*);
-JMessage* j_message_ref(JMessage*);
-void j_message_unref(JMessage*);
+/**
+ * Creates a new message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param op_type An operation type.
+ * \param length  A length.
+ *
+ * \return A new message. Should be freed with j_message_unref().
+ **/
+JMessage* j_message_new(JMessageType op_type, gsize length);
+
+/**
+ * Creates a new reply message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A new reply message. Should be freed with j_message_unref().
+ **/
+JMessage* j_message_new_reply(JMessage* message);
+
+/**
+ * Increases a message's reference count.
+ *
+ * \code
+ * JMessage* m;
+ *
+ * j_message_ref(m);
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return \p message.
+ **/
+JMessage* j_message_ref(JMessage* message);
+
+/**
+ * Decreases a message's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ **/
+void j_message_unref(JMessage* message);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JMessage, j_message_unref)
 
-JMessageType j_message_get_type(JMessage const*);
-guint32 j_message_get_count(JMessage const*);
+/**
+ * Returns a message's type.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's operation type.
+ **/
+JMessageType j_message_get_type(JMessage const* message);
 
-gboolean j_message_append_1(JMessage*, gconstpointer);
-gboolean j_message_append_4(JMessage*, gconstpointer);
-gboolean j_message_append_8(JMessage*, gconstpointer);
-gboolean j_message_append_n(JMessage*, gconstpointer, gsize);
-gboolean j_message_append_string(JMessage*, gchar const*);
+/**
+ * Returns a message's count.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return The message's operation count.
+ **/
+guint32 j_message_get_count(JMessage const* message);
 
-gchar j_message_get_1(JMessage*);
-gint32 j_message_get_4(JMessage*);
-gint64 j_message_get_8(JMessage*);
-gpointer j_message_get_n(JMessage*, gsize);
-gchar const* j_message_get_string(JMessage*);
+/**
+ * Appends 1 byte to a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data to append.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_append_1(JMessage* message, gconstpointer data);
 
-gboolean j_message_send(JMessage*, gpointer);
-gboolean j_message_receive(JMessage*, gpointer);
+/**
+ * Appends 4 bytes to a message.
+ * The bytes are converted to little endian automatically.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data to append.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_append_4(JMessage* message, gconstpointer data);
 
-gboolean j_message_read(JMessage*, GInputStream*);
-gboolean j_message_write(JMessage*, GOutputStream*);
+/**
+ * Appends 8 bytes to a message.
+ * The bytes are converted to little endian automatically.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data to append.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_append_8(JMessage* message, gconstpointer data);
 
-void j_message_add_send(JMessage*, gconstpointer, guint64);
-void j_message_add_operation(JMessage*, gsize);
+/**
+ * Appends a number of bytes to a message.
+ *
+ * \code
+ * gchar* str = "Hello world!";
+ * ...
+ * j_message_append_n(message, str, strlen(str) + 1);
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data to append.
+ * \param length  Length of data.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_append_n(JMessage* message, gconstpointer data, gsize length);
 
-void j_message_set_semantics(JMessage*, JSemantics*);
-JSemantics* j_message_get_semantics(JMessage*);
+/**
+ * Appends a string to a message.
+ *
+ * \code
+ * gchar* str = "Hello world!";
+ * ...
+ * j_message_append_string(message, str);
+ * \endcode
+ *
+ * \param message A message.
+ * \param str     String to append.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_append_string(JMessage* message, gchar const* str);
+
+/**
+ * Gets 1 byte from a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A character.
+ **/
+gchar j_message_get_1(JMessage* message);
+
+/**
+ * Gets 4 bytes from a message.
+ * The bytes are converted from little endian automatically.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A 4-bytes integer.
+ **/
+gint32 j_message_get_4(JMessage* message);
+
+/**
+ * Gets 8 bytes from a message.
+ * The bytes are converted from little endian automatically.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return An 8-bytes integer.
+ **/
+gint64 j_message_get_8(JMessage* message);
+
+/**
+ * Gets n bytes from a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param length  Number of bytes to get.
+ *
+ * \return A pointer to the data.
+ **/
+gpointer j_message_get_n(JMessage* message, gsize length);
+
+/**
+ * Gets a string from a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A string.
+ **/
+gchar const* j_message_get_string(JMessage* message);
+
+/**
+ * Writes a message to the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_send(JMessage* message, gpointer stream);
+
+/**
+ * Reads a message from the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_receive(JMessage* message, gpointer stream);
+
+/**
+ * Reads a message from the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_read(JMessage* message, GInputStream* stream);
+
+/**
+ * Writes a message to the network.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param stream  A network stream.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_message_write(JMessage* message, GOutputStream* stream);
+
+/**
+ * Adds new data to send to a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param data    Data.
+ * \param length  A length.
+ **/
+void j_message_add_send(JMessage* message, gconstpointer data, guint64 length);
+
+/**
+ * Adds a new operation to a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param length  A length.
+ **/
+void j_message_add_operation(JMessage* message, gsize length);
+
+/**
+ * Set the semantics of a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ * \param semantics  A semantics object.
+ **/
+void j_message_set_semantics(JMessage* message, JSemantics* semantics);
+
+/**
+ * get the semantics of a message.
+ *
+ * \code
+ * \endcode
+ *
+ * \param message A message.
+ *
+ * \return A semantics object.
+ **/
+JSemantics* j_message_get_semantics(JMessage* message);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

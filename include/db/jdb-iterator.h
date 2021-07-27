@@ -47,6 +47,7 @@ G_BEGIN_DECLS
  *
  * \param[in] schema The schema defines the structure of the iterator
  * \param[in] selector The selector defines which entrys to select
+ * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre schema != NULL
  * \pre schema is initialized
  * \pre selector != NULL
@@ -54,7 +55,6 @@ G_BEGIN_DECLS
  *
  * \return the new iterator or NULL on failure
  **/
-
 JDBIterator* j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error);
 
 /**
@@ -65,7 +65,6 @@ JDBIterator* j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError*
  *
  * \return the iterator or NULL on failure
  **/
-
 JDBIterator* j_db_iterator_ref(JDBIterator* iterator);
 
 /**
@@ -73,7 +72,6 @@ JDBIterator* j_db_iterator_ref(JDBIterator* iterator);
  *
  * \param[in] iterator the iterator to decrease the ref_count
  **/
-
 void j_db_iterator_unref(JDBIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBIterator, j_db_iterator_unref)
@@ -82,11 +80,11 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBIterator, j_db_iterator_unref)
  * The iterator moves to the next element.
  *
  * \param[inout] iterator to update
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre iterator != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
 
 /**
@@ -97,6 +95,7 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
  * \param[out] type the type of the retrieved value
  * \param[out] value the retieved value
  * \param[out] length the length of the retrieved value
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre iterator != NULL
  * \pre name != NULL
  * \pre type != NULL
@@ -108,7 +107,6 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
 
 G_END_DECLS

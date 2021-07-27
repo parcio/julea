@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 /**
- * \addtogroup JURI
+ * \defgroup JURI URI
  *
  * @{
  **/
@@ -69,22 +69,172 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
+/**
+ * Returns the URI error quark.
+ *
+ * \return The URI error quark.
+ **/
 GQuark j_uri_error_quark(void);
 
-JURI* j_uri_new(gchar const*);
-void j_uri_free(JURI*);
+/**
+ * Creates a new URI.
+ *
+ * \code
+ * JURI* uri;
+ *
+ * uri = j_uri_new("julea://foo/bar");
+ * \endcode
+ *
+ * \param uri_ A URI string.
+ *
+ * \return A new URI. Should be freed with j_uri_free().
+ **/
+JURI* j_uri_new(gchar const* uri_);
+
+/**
+ * Frees the memory allocated by a URI.
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * j_uri_free(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ **/
+void j_uri_free(JURI* uri);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JURI, j_uri_free)
 
-gchar const* j_uri_get_collection_name(JURI*);
-gchar const* j_uri_get_item_name(JURI*);
+/**
+ * Returns the collection name.
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_uri_get_collection_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The collection name.
+ **/
+gchar const* j_uri_get_collection_name(JURI* uri);
 
-gboolean j_uri_get(JURI*, GError**);
-gboolean j_uri_create(JURI*, gboolean, GError**);
-gboolean j_uri_delete(JURI*, GError**);
+/**
+ * Returns the item name.
+ *
+ * \code
+ * JURI* uri;
+ *
+ * ...
+ *
+ * g_print("%s\n", j_uri_get_item_name(uri));
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The item name.
+ **/
+gchar const* j_uri_get_item_name(JURI* uri);
 
-JCollection* j_uri_get_collection(JURI*);
-JItem* j_uri_get_item(JURI*);
+/**
+ * Gets the collection and item.
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_get(uri, &error);
+ * \endcode
+ *
+ * \param uri   A URI.
+ * \param error An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_uri_get(JURI* uri, GError** error);
+
+/**
+ * Creates the collection and item.
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_create(uri, FALSE, &error);
+ * \endcode
+ *
+ * \param uri          A URI.
+ * \param with_parents Whether to create the parent objects, too.
+ * \param error        An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_uri_create(JURI* uri, gboolean with_parents, GError** error);
+
+/**
+ * Deletes the collection and item.
+ *
+ * \code
+ * JURI* uri;
+ * GError* error = NULL;
+ *
+ * ...
+ *
+ * j_uri_delete(uri, FALSE, &error);
+ * \endcode
+ *
+ * \param uri          A URI.
+ * \param error        An error.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_uri_delete(JURI* uri, GError** error);
+
+/**
+ * Returns the collection.
+ *
+ * \code
+ * JCollection* collection;
+ * JURI* uri;
+ *
+ * ...
+ *
+ * collection = j_uri_get_collection(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The collection.
+ **/
+JCollection* j_uri_get_collection(JURI* uri);
+
+/**
+ * Returns the item.
+ *
+ * \code
+ * JItem* item;
+ * JURI* uri;
+ *
+ * ...
+ *
+ * item = j_uri_get_item(uri);
+ * \endcode
+ *
+ * \param uri A URI.
+ *
+ * \return The item.
+ **/
+JItem* j_uri_get_item(JURI* uri);
 
 /**
  * @}
