@@ -31,14 +31,11 @@
 
 #include <jbackend.h>
 #include <jhelper.h>
-#include <jhelper-internal.h>
 #include <jmessage.h>
 #include <jtrace.h>
 
 /**
- * \defgroup JConnectionPool Connection Pool
- *
- * Data structures and functions for managing connection pools.
+ * \addtogroup JConnectionPool
  *
  * @{
  **/

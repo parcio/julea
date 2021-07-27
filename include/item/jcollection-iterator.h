@@ -31,6 +31,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JCollectionIterator Collection Iterator
+ *
+ * Data structures and functions for iterating over collections.
+ *
+ * @{
+ **/
+
 struct JCollectionIterator;
 
 typedef struct JCollectionIterator JCollectionIterator;
@@ -41,13 +49,49 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
+/**
+ * Creates a new JCollectionIterator.
+ *
+ * \return A new JCollectionIterator.
+ **/
 JCollectionIterator* j_collection_iterator_new(void);
-void j_collection_iterator_free(JCollectionIterator*);
+
+/**
+ * Frees the memory allocated by the JCollectionIterator.
+ *
+ * \param iterator A JCollectionIterator.
+ **/
+void j_collection_iterator_free(JCollectionIterator* iterator);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JCollectionIterator, j_collection_iterator_free)
 
-gboolean j_collection_iterator_next(JCollectionIterator*);
-JCollection* j_collection_iterator_get(JCollectionIterator*);
+/**
+ * Checks whether another collection is available.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return TRUE on success, FALSE if the end of the store is reached.
+ **/
+gboolean j_collection_iterator_next(JCollectionIterator* iterator);
+
+/**
+ * Returns the current collection.
+ *
+ * \code
+ * \endcode
+ *
+ * \param iterator A store iterator.
+ *
+ * \return A new collection. Should be freed with j_collection_unref().
+ **/
+JCollection* j_collection_iterator_get(JCollectionIterator* iterator);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

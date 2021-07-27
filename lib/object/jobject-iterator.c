@@ -31,9 +31,7 @@
 #include <julea.h>
 
 /**
- * \defgroup JObjectIterator Object Iterator
- *
- * Data structures and functions for iterating over stores.
+ * \addtogroup JObjectIterator
  *
  * @{
  **/
@@ -101,13 +99,6 @@ fetch_reply(guint32 index, gchar const* namespace, gchar const* prefix)
 	return reply;
 }
 
-/**
- * Creates a new JObjectIterator.
- *
- * \param store A JStore.
- *
- * \return A new JObjectIterator.
- **/
 JObjectIterator*
 j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 {
@@ -119,7 +110,7 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 
 	g_return_val_if_fail(namespace != NULL, NULL);
 
-	/* FIXME still necessary? */
+	//// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JObjectIterator);
@@ -141,11 +132,11 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 	{
 		if (prefix == NULL)
 		{
-			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
 		}
 	}
 
@@ -164,7 +155,7 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), NULL);
 
-	/* FIXME still necessary? */
+	/// \todo still necessary?
 	//j_operation_cache_flush();
 
 	iterator = g_slice_new(JObjectIterator);
@@ -183,22 +174,17 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	{
 		if (prefix == NULL)
 		{
-			// FIXME j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			// FIXME j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
 		}
 	}
 
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by the JObjectIterator.
- *
- * \param iterator A JObjectIterator.
- **/
 void
 j_object_iterator_free(JObjectIterator* iterator)
 {
@@ -219,16 +205,6 @@ j_object_iterator_free(JObjectIterator* iterator)
 	g_slice_free(JObjectIterator, iterator);
 }
 
-/**
- * Checks whether another collection is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return TRUE on success, FALSE if the end of the store is reached.
- **/
 gboolean
 j_object_iterator_next(JObjectIterator* iterator)
 {
@@ -255,22 +231,12 @@ j_object_iterator_next(JObjectIterator* iterator)
 	}
 	else
 	{
-		// FIXME ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
+		/// \todo ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
 	}
 
 	return ret;
 }
 
-/**
- * Returns the current collection.
- *
- * \code
- * \endcode
- *
- * \param iterator A store iterator.
- *
- * \return A new collection. Should be freed with j_object_unref().
- **/
 gchar const*
 j_object_iterator_get(JObjectIterator* iterator)
 {

@@ -33,25 +33,162 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JObject Object
+ *
+ * Data structures and functions for managing objects.
+ *
+ * @{
+ **/
+
 struct JObject;
 
 typedef struct JObject JObject;
 
-JObject* j_object_new(gchar const*, gchar const*);
-JObject* j_object_new_for_index(guint32, gchar const*, gchar const*);
-JObject* j_object_ref(JObject*);
-void j_object_unref(JObject*);
+/**
+ * Creates a new object.
+ *
+ * \code
+ * JObject* i;
+ *
+ * i = j_object_new("JULEA", "JULEA");
+ * \endcode
+ *
+ * \param namespace    A namespace.
+ * \param name         An object name.
+ *
+ * \return A new object. Should be freed with j_object_unref().
+ **/
+JObject* j_object_new(gchar const* namespace, gchar const* name);
+
+/**
+ * Creates a new object.
+ *
+ * \code
+ * JObject* i;
+ *
+ * i = j_object_new_for_index(index, "JULEA", "JULEA");
+ * \endcode
+ *
+ * \param index        An object server index. Must be less than the return value of j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT).
+ * \param namespace    A namespace.
+ * \param name         An object name.
+ *
+ * \return A new object. Should be freed with j_object_unref().
+ **/
+JObject* j_object_new_for_index(guint32 index, gchar const* namespace, gchar const* name);
+
+/**
+ * Increases an object's reference count.
+ *
+ * \code
+ * JObject* i;
+ *
+ * j_object_ref(i);
+ * \endcode
+ *
+ * \param object An object.
+ *
+ * \return \p object.
+ **/
+JObject* j_object_ref(JObject* object);
+
+/**
+ * Decreases an object's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object An object.
+ **/
+void j_object_unref(JObject* object);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObject, j_object_unref)
 
-void j_object_create(JObject*, JBatch*);
-void j_object_delete(JObject*, JBatch*);
+/**
+ * Creates an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object       A JObject pointer to fill.
+ * \param batch        A batch.
+ *
+ **/
+void j_object_create(JObject* object, JBatch* batch);
 
-void j_object_read(JObject*, gpointer, guint64, guint64, guint64*, JBatch*);
-void j_object_write(JObject*, gconstpointer, guint64, guint64, guint64*, JBatch*);
+/**
+ * Deletes an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object     An object.
+ * \param batch      A batch.
+ **/
+void j_object_delete(JObject* object, JBatch* batch);
 
-void j_object_status(JObject*, gint64*, guint64*, JBatch*);
-void j_object_sync(JObject*, JBatch*);
+/**
+ * Reads an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object     An object.
+ * \param data       A buffer to hold the read data.
+ * \param length     Number of bytes to read.
+ * \param offset     An offset within \p object.
+ * \param bytes_read Number of bytes read.
+ * \param batch      A batch.
+ **/
+void j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
+
+/**
+ * Writes an object.
+ *
+ * \note
+ * j_object_write() modifies bytes_written even if j_batch_execute() is not called.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object        An object.
+ * \param data          A buffer holding the data to write.
+ * \param length        Number of bytes to write.
+ * \param offset        An offset within \p object.
+ * \param bytes_written Number of bytes written.
+ * \param batch         A batch.
+ **/
+void j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
+
+/**
+ * Get the status of an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object            An object.
+ * \param modification_time The modification time of object.
+ * \param size              The size of object.
+ * \param batch             A batch.
+ **/
+void j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatch* batch);
+
+/**
+ * Sync an object.
+ *
+ * \code
+ * \endcode
+ *
+ * \param object    An object.
+ * \param batch     A batch.
+ **/
+void j_object_sync(JObject* object, JBatch* batch);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

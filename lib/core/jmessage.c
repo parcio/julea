@@ -30,14 +30,14 @@
 
 #include <jmessage.h>
 
-#include <jhelper-internal.h>
+#include <jhelper.h>
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <jsemantics.h>
 #include <jtrace.h>
 
 /**
- * \defgroup JMessage Message
+ * \addtogroup JMessage Message
  *
  * @{
  **/
@@ -295,17 +295,6 @@ j_message_ensure_size(JMessage* message, gsize length)
 	message->current = message->data + position;
 }
 
-/**
- * Creates a new message.
- *
- * \code
- * \endcode
- *
- * \param op_type An operation type.
- * \param length  A length.
- *
- * \return A new message. Should be freed with j_message_unref().
- **/
 JMessage*
 j_message_new(JMessageType op_type, gsize length)
 {
@@ -336,16 +325,6 @@ j_message_new(JMessageType op_type, gsize length)
 	return message;
 }
 
-/**
- * Creates a new reply message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A new reply message. Should be freed with j_message_unref().
- **/
 JMessage*
 j_message_new_reply(JMessage* message)
 {
@@ -372,19 +351,6 @@ j_message_new_reply(JMessage* message)
 	return reply;
 }
 
-/**
- * Increases a message's reference count.
- *
- * \code
- * JMessage* m;
- *
- * j_message_ref(m);
- * \endcode
- *
- * \param message A message.
- *
- * \return #message.
- **/
 JMessage*
 j_message_ref(JMessage* message)
 {
@@ -397,15 +363,6 @@ j_message_ref(JMessage* message)
 	return message;
 }
 
-/**
- * Decreases a message's reference count.
- * When the reference count reaches zero, frees the memory allocated for the message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- **/
 void
 j_message_unref(JMessage* message)
 {
@@ -431,16 +388,6 @@ j_message_unref(JMessage* message)
 	}
 }
 
-/**
- * Returns a message's type.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation type.
- **/
 JMessageType
 j_message_get_type(JMessage const* message)
 {
@@ -456,16 +403,6 @@ j_message_get_type(JMessage const* message)
 	return op_type;
 }
 
-/**
- * Returns a message's count.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation count.
- **/
 guint32
 j_message_get_count(JMessage const* message)
 {
@@ -481,17 +418,6 @@ j_message_get_count(JMessage const* message)
 	return op_count;
 }
 
-/**
- * Appends 1 byte to a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_append_1(JMessage* message, gconstpointer data)
 {
@@ -512,18 +438,6 @@ j_message_append_1(JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
-/**
- * Appends 4 bytes to a message.
- * The bytes are converted to little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_append_4(JMessage* message, gconstpointer data)
 {
@@ -546,18 +460,6 @@ j_message_append_4(JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
-/**
- * Appends 8 bytes to a message.
- * The bytes are converted to little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_append_8(JMessage* message, gconstpointer data)
 {
@@ -580,21 +482,6 @@ j_message_append_8(JMessage* message, gconstpointer data)
 	return TRUE;
 }
 
-/**
- * Appends a number of bytes to a message.
- *
- * \code
- * gchar* str = "Hello world!";
- * ...
- * j_message_append_n(message, str, strlen(str) + 1);
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- * \param length  Length of data.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 {
@@ -615,20 +502,6 @@ j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 	return TRUE;
 }
 
-/**
- * Appends a string to a message.
- *
- * \code
- * gchar* str = "Hello world!";
- * ...
- * j_message_append_string(message, str);
- * \endcode
- *
- * \param message A message.
- * \param str     String to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_append_string(JMessage* message, gchar const* str)
 {
@@ -640,16 +513,6 @@ j_message_append_string(JMessage* message, gchar const* str)
 	return j_message_append_n(message, str, strlen(str) + 1);
 }
 
-/**
- * Gets 1 byte from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A character.
- **/
 gchar
 j_message_get_1(JMessage* message)
 {
@@ -666,17 +529,6 @@ j_message_get_1(JMessage* message)
 	return ret;
 }
 
-/**
- * Gets 4 bytes from a message.
- * The bytes are converted from little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A 4-bytes integer.
- **/
 gint32
 j_message_get_4(JMessage* message)
 {
@@ -694,17 +546,6 @@ j_message_get_4(JMessage* message)
 	return ret;
 }
 
-/**
- * Gets 8 bytes from a message.
- * The bytes are converted from little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return An 8-bytes integer.
- **/
 gint64
 j_message_get_8(JMessage* message)
 {
@@ -722,16 +563,6 @@ j_message_get_8(JMessage* message)
 	return ret;
 }
 
-/**
- * Gets n bytes from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A pointer to the data.
- **/
 gpointer
 j_message_get_n(JMessage* message, gsize length)
 {
@@ -748,16 +579,6 @@ j_message_get_n(JMessage* message, gsize length)
 	return ret;
 }
 
-/**
- * Gets a string from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A string.
- **/
 gchar const*
 j_message_get_string(JMessage* message)
 {
@@ -773,17 +594,6 @@ j_message_get_string(JMessage* message)
 	return ret;
 }
 
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_receive(JMessage* message, gpointer connection)
 {
@@ -798,17 +608,6 @@ j_message_receive(JMessage* message, gpointer connection)
 	return j_message_read(message, stream);
 }
 
-/**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_send(JMessage* message, gpointer connection)
 {
@@ -831,17 +630,6 @@ j_message_send(JMessage* message, gpointer connection)
 	return ret;
 }
 
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_read(JMessage* message, GInputStream* stream)
 {
@@ -886,17 +674,6 @@ end:
 	return ret;
 }
 
-/**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \parem stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_message_write(JMessage* message, GOutputStream* stream)
 {
@@ -950,16 +727,6 @@ end:
 	return ret;
 }
 
-/**
- * Adds new data to send to a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data.
- * \param length  A length.
- **/
 void
 j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
 {
@@ -978,15 +745,6 @@ j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
 	j_list_append(message->send_list, message_data);
 }
 
-/**
- * Adds a new operation to a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param length  A length.
- **/
 void
 j_message_add_operation(JMessage* message, gsize length)
 {

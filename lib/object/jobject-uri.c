@@ -31,7 +31,7 @@
 #include <string.h>
 
 /**
- * \defgroup JObjectURI Object URI
+ * \addtogroup JObjectURI
  *
  * @{
  **/
@@ -176,14 +176,14 @@ j_object_uri_parse(JObjectURI* uri, gchar const* uri_)
 	{
 		case J_OBJECT_URI_SCHEME_NAMESPACE:
 		case J_OBJECT_URI_SCHEME_OBJECT:
-			// FIXME check for errors
+			/// \todo check for errors
 			uri->index = g_ascii_strtoull(parts[0], NULL, 10);
 			uri->namespace = g_strdup(parts[1]);
 
 			if (parts_len >= 3)
 			{
 				uri->name = g_strdup(parts[2]);
-				// FIXME index
+				/// \todo index
 				uri->object = j_object_new_for_index(uri->index, uri->namespace, uri->name);
 			}
 			break;
@@ -195,7 +195,7 @@ j_object_uri_parse(JObjectURI* uri, gchar const* uri_)
 			{
 				g_autoptr(JDistribution) distribution = NULL;
 
-				// FIXME
+				/// \todo
 				distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 				j_distribution_set(distribution, "start-index", 0);
 
@@ -214,19 +214,6 @@ error:
 	return FALSE;
 }
 
-/**
- * Creates a new URI.
- *
- * \code
- * JObjectURI* uri;
- *
- * uri = j_object_uri_new("julea://foo/bar");
- * \endcode
- *
- * \param uri_ A URI string.
- *
- * \return A new URI. Should be freed with j_object_uri_free().
- **/
 JObjectURI*
 j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme)
 {
@@ -253,19 +240,6 @@ j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme)
 	return uri;
 }
 
-/**
- * Frees the memory allocated by a URI.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * j_object_uri_free(uri);
- * \endcode
- *
- * \param uri A URI.
- **/
 void
 j_object_uri_free(JObjectURI* uri)
 {
@@ -289,21 +263,6 @@ j_object_uri_free(JObjectURI* uri)
 	g_slice_free(JObjectURI, uri);
 }
 
-/**
- * Returns the index.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_object_uri_get_collection_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The index.
- **/
 guint32
 j_object_uri_get_index(JObjectURI* uri)
 {
@@ -314,21 +273,6 @@ j_object_uri_get_index(JObjectURI* uri)
 	return uri->index;
 }
 
-/**
- * Returns the namespace.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_object_uri_get_collection_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The namespace.
- **/
 gchar const*
 j_object_uri_get_namespace(JObjectURI* uri)
 {
@@ -339,21 +283,6 @@ j_object_uri_get_namespace(JObjectURI* uri)
 	return uri->namespace;
 }
 
-/**
- * Returns the name.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_object_uri_get_item_name(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The name.
- **/
 gchar const*
 j_object_uri_get_name(JObjectURI* uri)
 {
@@ -364,21 +293,6 @@ j_object_uri_get_name(JObjectURI* uri)
 	return uri->name;
 }
 
-/**
- * Returns the object.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_object_uri_get_object(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The object.
- **/
 JDistributedObject*
 j_object_uri_get_distributed_object(JObjectURI* uri)
 {
@@ -389,21 +303,6 @@ j_object_uri_get_distributed_object(JObjectURI* uri)
 	return uri->distributed_object;
 }
 
-/**
- * Returns the object.
- *
- * \code
- * JObjectURI* uri;
- *
- * ...
- *
- * g_print("%s\n", j_object_uri_get_object(uri));
- * \endcode
- *
- * \param uri A URI.
- *
- * \return The object.
- **/
 JObject*
 j_object_uri_get_object(JObjectURI* uri)
 {

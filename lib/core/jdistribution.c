@@ -36,9 +36,7 @@
 #include "distribution/distribution.h"
 
 /**
- * \defgroup JDistribution Distribution
- *
- * Data structures and functions for managing distributions.
+ * \addtogroup JDistribution
  *
  * @{
  **/
@@ -86,19 +84,6 @@ j_distribution_new_common(JDistributionType type, JConfiguration* configuration)
 	return distribution;
 }
 
-/**
- * Creates a new distribution.
- *
- * \code
- * JDistribution* d;
- *
- * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
- * \endcode
- *
- * \param type   A distribution type.
- *
- * \return A new distribution. Should be freed with j_distribution_unref().
- **/
 JDistribution*
 j_distribution_new(JDistributionType type)
 {
@@ -111,14 +96,6 @@ j_distribution_new(JDistributionType type)
 	return distribution;
 }
 
-/**
- * Increases a distribution's reference count.
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- **/
 JDistribution*
 j_distribution_ref(JDistribution* distribution)
 {
@@ -131,15 +108,6 @@ j_distribution_ref(JDistribution* distribution)
 	return distribution;
 }
 
-/**
- * Decreases a distribution's reference count.
- * When the reference count reaches zero, frees the memory allocated for the distribution.
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- **/
 void
 j_distribution_unref(JDistribution* distribution)
 {
@@ -155,15 +123,6 @@ j_distribution_unref(JDistribution* distribution)
 	}
 }
 
-/**
- * Sets the block size for the distribution.
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param block_size   A block size.
- */
 void
 j_distribution_set_block_size(JDistribution* distribution, guint64 block_size)
 {
@@ -178,15 +137,6 @@ j_distribution_set_block_size(JDistribution* distribution, guint64 block_size)
 	}
 }
 
-/**
- * Sets the start index for the round robin distribution.
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param start_index  An index.
- */
 void
 j_distribution_set(JDistribution* distribution, gchar const* key, guint64 value)
 {
@@ -213,6 +163,77 @@ j_distribution_set2(JDistribution* distribution, gchar const* key, guint64 value
 	{
 		j_distribution_vtables[distribution->type].distribution_set2(distribution->distribution, key, value1, value2);
 	}
+}
+
+void
+j_distribution_reset(JDistribution* distribution, guint64 length, guint64 offset)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_if_fail(distribution != NULL);
+
+	j_distribution_vtables[distribution->type].distribution_reset(distribution->distribution, length, offset);
+}
+
+gboolean
+j_distribution_distribute(JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(distribution != NULL, FALSE);
+	g_return_val_if_fail(index != NULL, FALSE);
+	g_return_val_if_fail(new_length != NULL, FALSE);
+	g_return_val_if_fail(new_offset != NULL, FALSE);
+
+	return j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
+}
+
+bson_t*
+j_distribution_serialize(JDistribution* distribution)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_t* b;
+
+	g_return_val_if_fail(distribution != NULL, NULL);
+
+	b = bson_new();
+
+	bson_append_int32(b, "type", -1, distribution->type);
+	//bson_append_int64(b, "BlockSize", -1, distribution->block_size);
+
+	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
+
+	//bson_finish(b);
+
+	return b;
+}
+
+void
+j_distribution_deserialize(JDistribution* distribution, bson_t const* b)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_iter_t iterator;
+
+	g_return_if_fail(distribution != NULL);
+	g_return_if_fail(b != NULL);
+
+	bson_iter_init(&iterator, b);
+
+	while (bson_iter_next(&iterator))
+	{
+		gchar const* key;
+
+		key = bson_iter_key(&iterator);
+
+		if (g_strcmp0(key, "type") == 0)
+		{
+			distribution->type = bson_iter_int32(&iterator);
+		}
+	}
+
+	j_distribution_vtables[distribution->type].distribution_deserialize(distribution->distribution, b);
 }
 
 /* Internal */
@@ -247,16 +268,6 @@ j_distribution_init(void)
 	j_distribution_check_vtables();
 }
 
-/**
- * Creates a new distribution from a BSON object.
- *
- * \code
- * \endcode
- *
- * \param b A BSON object.
- *
- * \return A new distribution. Should be freed with j_distribution_unref().
- **/
 JDistribution*
 j_distribution_new_from_bson(bson_t const* b)
 {
@@ -271,19 +282,6 @@ j_distribution_new_from_bson(bson_t const* b)
 	return distribution;
 }
 
-/**
- * Creates a new distribution for a given configuration.
- *
- * \code
- * JDistribution* d;
- *
- * d = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
- * \endcode
- *
- * \param type   A distribution type.
- *
- * \return A new distribution. Should be freed with j_distribution_unref().
- **/
 JDistribution*
 j_distribution_new_for_configuration(JDistributionType type, JConfiguration* configuration)
 {
@@ -294,127 +292,6 @@ j_distribution_new_for_configuration(JDistributionType type, JConfiguration* con
 	distribution = j_distribution_new_common(type, configuration);
 
 	return distribution;
-}
-
-/**
- * Serializes distribution.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param distribution Credentials.
- *
- * \return A new BSON object. Should be freed with g_slice_free().
- **/
-bson_t*
-j_distribution_serialize(JDistribution* distribution)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	bson_t* b;
-
-	g_return_val_if_fail(distribution != NULL, NULL);
-
-	b = bson_new();
-
-	bson_append_int32(b, "type", -1, distribution->type);
-	//bson_append_int64(b, "BlockSize", -1, distribution->block_size);
-
-	j_distribution_vtables[distribution->type].distribution_serialize(distribution->distribution, b);
-
-	//bson_finish(b);
-
-	return b;
-}
-
-/**
- * Deserializes distribution.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param distribution distribution.
- * \param b           A BSON object.
- **/
-void
-j_distribution_deserialize(JDistribution* distribution, bson_t const* b)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	bson_iter_t iterator;
-
-	g_return_if_fail(distribution != NULL);
-	g_return_if_fail(b != NULL);
-
-	bson_iter_init(&iterator, b);
-
-	while (bson_iter_next(&iterator))
-	{
-		gchar const* key;
-
-		key = bson_iter_key(&iterator);
-
-		if (g_strcmp0(key, "type") == 0)
-		{
-			distribution->type = bson_iter_int32(&iterator);
-		}
-	}
-
-	j_distribution_vtables[distribution->type].distribution_deserialize(distribution->distribution, b);
-}
-
-/**
- * Resets a distribution.
- *
- * \code
- * JDistribution* d;
- *
- * j_distribution_reset(d, 0, 0);
- * \endcode
- *
- * \param length A length.
- * \param offset An offset.
- *
- * \return A new distribution. Should be freed with j_distribution_unref().
- **/
-void
-j_distribution_reset(JDistribution* distribution, guint64 length, guint64 offset)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_if_fail(distribution != NULL);
-
-	j_distribution_vtables[distribution->type].distribution_reset(distribution->distribution, length, offset);
-}
-
-/**
- * Calculates a new length and a new offset based on a distribution.
- *
- * \code
- * \endcode
- *
- * \param distribution A distribution.
- * \param index        A server index.
- * \param new_length   A new length.
- * \param new_offset   A new offset.
- *
- * \return TRUE on success, FALSE if the distribution is finished.
- **/
-gboolean
-j_distribution_distribute(JDistribution* distribution, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(distribution != NULL, FALSE);
-	g_return_val_if_fail(index != NULL, FALSE);
-	g_return_val_if_fail(new_length != NULL, FALSE);
-	g_return_val_if_fail(new_offset != NULL, FALSE);
-
-	return j_distribution_vtables[distribution->type].distribution_distribute(distribution->distribution, index, new_length, new_offset, block_id);
 }
 
 /**

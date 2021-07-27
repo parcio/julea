@@ -73,12 +73,12 @@ G_BEGIN_DECLS
  *
  * \param[in] schema    The schema defines the structure of the selector
  * \param[in] mode the more of the selector
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  * \pre schema != NULL
  * \pre schema is initialized
  *
  * \return the new selector or NULL on failure
  **/
-
 JDBSelector* j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error);
 
 /**
@@ -89,7 +89,6 @@ JDBSelector* j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError**
  *
  * \return the selector or NULL on failure
  **/
-
 JDBSelector* j_db_selector_ref(JDBSelector* selector);
 
 /**
@@ -106,9 +105,10 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSelector, j_db_selector_unref)
  *
  * \param[in] selector to add a search field to
  * \param[in] name the name of the field to compare
- * \param[in] operator the operator to use to compare the stored value with the given value
+ * \param[in] operator_ the operator to use to compare the stored value with the given value
  * \param[in] value the value to compare with
  * \param[in] length the length of the value. Only used if value is binary
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre selector != NULL
  * \pre name != NULL
@@ -119,7 +119,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSelector, j_db_selector_unref)
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
 
 /**
@@ -127,6 +126,7 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
  *
  * \param[in] selector to add a sub_selector to
  * \param[in] sub_selector to add to the selector
+ * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre selector != NULL
  * \pre sub_selector != NULL
@@ -135,7 +135,6 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
  *
  * \return TRUE on success, FALSE otherwise
  **/
-
 gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
 
 G_END_DECLS

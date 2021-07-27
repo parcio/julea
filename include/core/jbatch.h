@@ -31,6 +31,12 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JBatch Batch
+ *
+ * @{
+ **/
+
 struct JBatch;
 
 typedef struct JBatch JBatch;
@@ -44,21 +50,120 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-JBatch* j_batch_new(JSemantics*);
-JBatch* j_batch_new_for_template(JSemanticsTemplate);
-JBatch* j_batch_ref(JBatch*);
-void j_batch_unref(JBatch*);
+/**
+ * Creates a new batch.
+ *
+ * \code
+ * \endcode
+ *
+ * \param semantics A semantics object.
+ *
+ * \return A new batch. Should be freed with j_batch_unref().
+ **/
+JBatch* j_batch_new(JSemantics* semantics);
+
+/**
+ * Creates a new batch for a semantics template.
+ *
+ * \code
+ * JBatch* batch;
+ *
+ * batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+ * \endcode
+ *
+ * \param template A semantics template.
+ *
+ * \return A new batch. Should be freed with j_batch_unref().
+ **/
+JBatch* j_batch_new_for_template(JSemanticsTemplate template);
+
+/**
+ * Increases the batch's reference count.
+ *
+ * \param batch A batch.
+ *
+ * \return The batch.
+ **/
+JBatch* j_batch_ref(JBatch* batch);
+
+/**
+ * Decreases the batch's reference count.
+ * When the reference count reaches zero, frees the memory allocated for the batch.
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch A batch.
+ **/
+void j_batch_unref(JBatch* batch);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
 
-JSemantics* j_batch_get_semantics(JBatch*);
+/**
+ * Returns a batch's semantics.
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch A batch.
+ *
+ * \return A semantics object.
+ **/
+JSemantics* j_batch_get_semantics(JBatch* batch);
 
-void j_batch_add(JBatch*, JOperation*);
+/**
+ * Adds a new operation to the batch.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch     A batch.
+ * \param operation An operation.
+ **/
+void j_batch_add(JBatch* batch, JOperation* operation);
 
-gboolean j_batch_execute(JBatch*) G_GNUC_WARN_UNUSED_RESULT;
+/**
+ * Executes the batch.
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch A batch.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_batch_execute(JBatch* batch) G_GNUC_WARN_UNUSED_RESULT;
 
-void j_batch_execute_async(JBatch*, JBatchAsyncCallback, gpointer);
-void j_batch_wait(JBatch*);
+/**
+ * Executes the batch asynchronously.
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch     A batch.
+ * \param callback  An async callback.
+ * \param user_data Arguments specified by the user for the callback.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+void j_batch_execute_async(JBatch* batch, JBatchAsyncCallback callback, gpointer user_data);
+
+/**
+ * Wait for an asynchronous batch to finish.
+ *
+ * \code
+ * \endcode
+ *
+ * \param batch     A batch.
+ *
+ **/
+void j_batch_wait(JBatch* batch);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

@@ -29,7 +29,8 @@
 #include <jtrace.h>
 
 /**
- * \defgroup JDirIterator Directory Iterator
+ * \addtogroup JDirIterator Directory Iterator
+ *
  * @{
  **/
 
@@ -64,16 +65,6 @@ struct JDirIterator
 	guint depth;
 };
 
-/**
- * Creates a new directory iterator.
- *
- * \code
- * \endcode
- *
- * \param list A directory path.
- *
- * \return A new directory iterator.
- **/
 JDirIterator*
 j_dir_iterator_new(gchar const* path)
 {
@@ -108,14 +99,6 @@ j_dir_iterator_new(gchar const* path)
 	return iterator;
 }
 
-/**
- * Frees the memory allocated by a directory iterator.
- *
- * \code
- * \endcode
- *
- * \param iterator A directory iterator.
- **/
 void
 j_dir_iterator_free(JDirIterator* iterator)
 {
@@ -147,16 +130,6 @@ j_dir_iterator_free(JDirIterator* iterator)
 	g_slice_free(JDirIterator, iterator);
 }
 
-/**
- * Checks whether another file is available.
- *
- * \code
- * \endcode
- *
- * \param iterator A directory iterator.
- *
- * \return TRUE on success, FALSE if the end of the iterator is reached.
- **/
 gboolean
 j_dir_iterator_next(JDirIterator* iterator)
 {
@@ -230,16 +203,6 @@ j_dir_iterator_next(JDirIterator* iterator)
 	return (iterator->current != NULL);
 }
 
-/**
- * Returns the current file.
- *
- * \code
- * \endcode
- *
- * \param iterator A directory iterator.
- *
- * \return A list element.
- **/
 gchar const*
 j_dir_iterator_get(JDirIterator* iterator)
 {

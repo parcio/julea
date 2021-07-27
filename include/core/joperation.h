@@ -34,6 +34,12 @@
 
 G_BEGIN_DECLS
 
+/**
+ * \defgroup JOperation Operation
+ *
+ * @{
+ **/
+
 typedef gboolean (*JOperationExecFunc)(JList*, JSemantics*);
 typedef void (*JOperationFreeFunc)(gpointer);
 
@@ -51,7 +57,31 @@ struct JOperation
 
 typedef struct JOperation JOperation;
 
+/**
+ * Creates a new operation.
+ *
+ * \code
+ * \endcode
+ *
+ * \return A new operation. Should be freed with j_operation_free().
+ **/
 JOperation* j_operation_new(void);
+
+/**
+ * Frees the memory allocated by an operation.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param data An operation.
+ **/
+void j_operation_free(JOperation*);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

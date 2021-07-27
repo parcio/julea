@@ -30,9 +30,29 @@
 #include <glib.h>
 
 G_BEGIN_DECLS
+/**
+ * \addtogroup JConfiguration Configuration
+ *
+ * @{
+ **/
 
+/**
+ * Initializes the configuration.
+ *
+ * \private
+ */
 G_GNUC_INTERNAL void j_configuration_init(void);
+
+/**
+ * Shuts down the configuration.
+ *
+ * \private
+ */
 G_GNUC_INTERNAL void j_configuration_fini(void);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

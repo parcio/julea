@@ -20,7 +20,7 @@
  * \file
  **/
 
-// FIXME
+/// \todo
 #define H5Sencode_vers 1
 
 #include <julea-config.h>
@@ -62,7 +62,7 @@ static herr_t H5VL_julea_db_link_term(void);
 
 #include "jhdf5-db.h"
 
-// FIXME order is important
+/// \todo order is important
 #include "jhdf5-db-shared.c"
 #include "jhdf5-db-link.c"
 #include "jhdf5-db-group.c"
@@ -348,7 +348,7 @@ H5PLget_plugin_info(void)
 	return &H5VL_julea_db_g;
 }
 
-// FIXME copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
+/// \todo copy and use GLib's G_DEFINE_CONSTRUCTOR/DESTRUCTOR
 static void __attribute__((constructor)) j_hdf5_init(void);
 static void __attribute__((destructor)) j_hdf5_fini(void);
 
@@ -367,5 +367,5 @@ j_hdf5_set_semantics(JSemantics* semantics)
 {
 	(void)semantics;
 
-	//FIXME implement this
+	/// \todo implement this
 }

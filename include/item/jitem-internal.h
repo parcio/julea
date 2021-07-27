@@ -38,20 +38,126 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JItem* j_item_new(JCollection*, gchar const*, JDistribution*);
-G_GNUC_INTERNAL JItem* j_item_new_from_bson(JCollection*, bson_t const*);
+/**
+ * \addtogroup JItem
+ *
+ * @{
+ **/
 
-G_GNUC_INTERNAL JCollection* j_item_get_collection(JItem*);
+/**
+ * Creates a new item.
+ *
+ * \private
+ * \code
+ * JItem* i;
+ *
+ * i = j_item_new("JULEA");
+ * \endcode
+ *
+ * \param collection   A collection.
+ * \param name         An item name.
+ * \param distribution A distribution.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
+G_GNUC_INTERNAL JItem* j_item_new(JCollection* collection, gchar const* name, JDistribution* distribution);
 
-G_GNUC_INTERNAL bson_t* j_item_serialize(JItem*, JSemantics*);
-G_GNUC_INTERNAL void j_item_deserialize(JItem*, bson_t const*);
+/**
+ * Creates a new item from a BSON object.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param collection A collection.
+ * \param b          A BSON object.
+ *
+ * \return A new item. Should be freed with j_item_unref().
+ **/
+G_GNUC_INTERNAL JItem* j_item_new_from_bson(JCollection* collection, bson_t const* b);
 
-G_GNUC_INTERNAL bson_oid_t const* j_item_get_id(JItem*);
+/**
+ * Returns an item's collection.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return A collection.
+ **/
+G_GNUC_INTERNAL JCollection* j_item_get_collection(JItem* item);
 
-G_GNUC_INTERNAL gboolean j_item_get_exec(JList*, JSemantics*);
+/**
+ * Serializes an item.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param item      An item.
+ * \param semantics A semantics object.
+ *
+ * \return A new BSON object. Should be freed with g_slice_free().
+ **/
+G_GNUC_INTERNAL bson_t* j_item_serialize(JItem* item, JSemantics* semantics);
 
-G_GNUC_INTERNAL void j_item_set_modification_time(JItem*, gint64);
-G_GNUC_INTERNAL void j_item_set_size(JItem*, guint64);
+/**
+ * Deserializes an item.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param b    A BSON object.
+ **/
+G_GNUC_INTERNAL void j_item_deserialize(JItem* item, bson_t const* b);
+
+/**
+ * Returns an item's ID.
+ *
+ * \private
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ *
+ * \return An ID.
+ **/
+G_GNUC_INTERNAL bson_oid_t const* j_item_get_id(JItem* item);
+
+/**
+ * Sets an item's modification time.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item              An item.
+ * \param modification_time A modification time.
+ **/
+G_GNUC_INTERNAL void j_item_set_modification_time(JItem* item, gint64 modification_time);
+
+/**
+ * Sets an item's size.
+ *
+ * \code
+ * \endcode
+ *
+ * \param item An item.
+ * \param size A size.
+ **/
+G_GNUC_INTERNAL void j_item_set_size(JItem* item, guint64 size);
+
+/**
+ * @}
+ **/
 
 G_END_DECLS
 

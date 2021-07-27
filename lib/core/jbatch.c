@@ -32,12 +32,12 @@
 #include <jlist.h>
 #include <jlist-iterator.h>
 #include <joperation-cache-internal.h>
-#include <joperation-internal.h>
+#include <joperation.h>
 #include <jsemantics.h>
 #include <jtrace.h>
 
 /**
- * \defgroup JBatch Batch
+ * \addtogroup JBatch Batch
  *
  * @{
  **/
@@ -99,16 +99,6 @@ j_batch_background_operation(gpointer data)
 	return NULL;
 }
 
-/**
- * Creates a new batch.
- *
- * \code
- * \endcode
- *
- * \param semantics A semantics object.
- *
- * \return A new batch. Should be freed with j_batch_unref().
- **/
 JBatch*
 j_batch_new(JSemantics* semantics)
 {
@@ -127,19 +117,6 @@ j_batch_new(JSemantics* semantics)
 	return batch;
 }
 
-/**
- * Creates a new batch for a semantics template.
- *
- * \code
- * JBatch* batch;
- *
- * batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
- * \endcode
- *
- * \param template A semantics template.
- *
- * \return A new batch. Should be freed with j_batch_unref().
- **/
 JBatch*
 	j_batch_new_for_template(JSemanticsTemplate template)
 {
@@ -154,13 +131,6 @@ JBatch*
 	return batch;
 }
 
-/**
- * Increases the batch's reference count.
- *
- * \param list A batch.
- *
- * \return The batch.
- **/
 JBatch*
 j_batch_ref(JBatch* batch)
 {
@@ -173,15 +143,6 @@ j_batch_ref(JBatch* batch)
 	return batch;
 }
 
-/**
- * Decreases the batch's reference count.
- * When the reference count reaches zero, frees the memory allocated for the batch.
- *
- * \code
- * \endcode
- *
- * \param batch A batch.
- **/
 void
 j_batch_unref(JBatch* batch)
 {
@@ -215,8 +176,11 @@ j_batch_unref(JBatch* batch)
  * \code
  * \endcode
  *
- * \param type An operation type.
+ * \param batch A batch.
+ * \param exec_func A function which executes the batch part.
  * \param list A list of batch parts.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  **/
 static gboolean
 j_batch_execute_same(JBatch* batch, JOperationExecFunc exec_func, JList* list)
@@ -243,16 +207,6 @@ j_batch_execute_same(JBatch* batch, JOperationExecFunc exec_func, JList* list)
 	return ret;
 }
 
-/**
- * Executes the batch.
- *
- * \code
- * \endcode
- *
- * \param batch A batch.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_batch_execute(JBatch* batch)
 {
@@ -281,17 +235,6 @@ j_batch_execute(JBatch* batch)
 	return ret;
 }
 
-/**
- * Executes the batch asynchronously.
- *
- * \code
- * \endcode
- *
- * \param batch     A batch.
- * \param callback  An async callback.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 void
 j_batch_execute_async(JBatch* batch, JBatchAsyncCallback callback, gpointer user_data)
 {
@@ -325,20 +268,29 @@ j_batch_wait(JBatch* batch)
 	}
 }
 
+JSemantics*
+j_batch_get_semantics(JBatch* batch)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(batch != NULL, NULL);
+
+	return batch->semantics;
+}
+
+void
+j_batch_add(JBatch* batch, JOperation* operation)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_if_fail(batch != NULL);
+	g_return_if_fail(operation != NULL);
+
+	j_list_append(batch->list, operation);
+}
+
 /* Internal */
 
-/**
- * Copies a batch.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param old_batch A batch.
- *
- * \return A new batch.
- */
 JBatch*
 j_batch_new_from_batch(JBatch* old_batch)
 {
@@ -359,18 +311,6 @@ j_batch_new_from_batch(JBatch* old_batch)
 	return batch;
 }
 
-/**
- * Returns a batch's parts.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param batch A batch.
- *
- * \return A list of parts.
- **/
 JList*
 j_batch_get_operations(JBatch* batch)
 {
@@ -381,62 +321,6 @@ j_batch_get_operations(JBatch* batch)
 	return batch->list;
 }
 
-/**
- * Returns a batch's semantics.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param batch A batch.
- *
- * \return A semantics object.
- **/
-JSemantics*
-j_batch_get_semantics(JBatch* batch)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(batch != NULL, NULL);
-
-	return batch->semantics;
-}
-
-/**
- * Adds a new operation to the batch.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param batch     A batch.
- * \param operation An operation.
- **/
-void
-j_batch_add(JBatch* batch, JOperation* operation)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_if_fail(batch != NULL);
-	g_return_if_fail(operation != NULL);
-
-	j_list_append(batch->list, operation);
-}
-
-/**
- * Executes the batch.
- *
- * \private
- *
- * \code
- * \endcode
- *
- * \param batch A batch.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
 gboolean
 j_batch_execute_internal(JBatch* batch)
 {
@@ -455,8 +339,7 @@ j_batch_execute_internal(JBatch* batch)
 
 	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
 	{
-		/* FIXME: perform some optimizations */
-		/**
+		/** \todo perform some optimizations
 		 * It is important to consider dependencies:
 		 * - Operations have to be performed before their dependent ones.
 		 *   For example, a collection has to be created before items in it can be created.

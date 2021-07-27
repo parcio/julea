@@ -32,7 +32,7 @@
 #include <jlist-iterator.h>
 #include <jbatch.h>
 #include <jbatch-internal.h>
-#include <joperation-internal.h>
+#include <joperation.h>
 #include <jtrace.h>
 
 #include <string.h>
@@ -137,7 +137,8 @@ j_operation_cache_test(JOperation* operation)
 
 	(void)operation;
 
-	/* FIXME
+	/// \todo
+	/*
 	switch (operation->type)
 	{
 		case J_OPERATION_COLLECTION_CREATE:
@@ -173,7 +174,8 @@ j_operation_cache_get_required_size(JOperation* operation)
 
 	(void)operation;
 
-	/* FIXME
+	/// \todo
+	/*
 	switch (operation->type)
 	{
 		case J_OPERATION_ITEM_WRITE:
@@ -301,7 +303,7 @@ j_operation_cache_add(JBatch* batch)
 
 	j_list_iterator_free(iterator);
 
-	// FIXME never cleared
+	/// \todo never cleared
 	if ((buffer = j_cache_get(j_operation_cache->cache, required_size)) == NULL)
 	{
 		ret = FALSE;
@@ -317,7 +319,8 @@ j_operation_cache_add(JBatch* batch)
 
 	while (j_list_iterator_next(iterator))
 	{
-		/* FIXME
+		/// \todo
+		/*
 		JOperation* operation = j_list_iterator_get(iterator);
 
 		if (operation->type == J_OPERATION_ITEM_WRITE)
@@ -353,3 +356,7 @@ j_operation_cache_add(JBatch* batch)
 
 	return ret;
 }
+
+/**
+ * @}
+ **/
