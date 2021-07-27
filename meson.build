@@ -159,13 +159,12 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
-# FIXME Spack's hdf5 package does not ship a pkg-config file and the config-tool variant does not work correctly at the moment (see https://github.com/mesonbuild/meson/pull/8423)
-#hdf_dep = dependency('hdf5',
-#	language: 'c',
-#	required: false,
-#)
-
-hdf_dep = disabler()
+# FIXME The config-tool variant does not work correctly at the moment (see https://github.com/mesonbuild/meson/pull/8423)
+hdf_dep = dependency('hdf5',
+	language: 'c',
+	required: false,
+	method: 'pkg-config',
+)
 
 if not hdf_dep.found()
 	hdf_config = find_program('h5cc',
