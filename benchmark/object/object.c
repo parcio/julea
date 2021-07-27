@@ -437,7 +437,7 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/delete-batch", benchmark_object_delete_batch);
 	j_benchmark_add("/object/object/status", benchmark_object_status);
 	j_benchmark_add("/object/object/status-batch", benchmark_object_status_batch);
-	/* FIXME get */
+	/// \todo get
 	j_benchmark_add("/object/object/read", benchmark_object_read);
 	j_benchmark_add("/object/object/read-batch", benchmark_object_read_batch);
 	j_benchmark_add("/object/object/write", benchmark_object_write);

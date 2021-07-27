@@ -738,7 +738,7 @@ benchmark_hdf_group_open(BenchmarkRun* run)
 void
 benchmark_hdf(void)
 {
-	// FIXME repeated runs exhibit strange behavior, objects are distributed differently etc.
+	/// \todo repeated runs exhibit strange behavior, objects are distributed differently etc.
 #ifdef HAVE_HDF5
 	vol_connector = g_getenv("HDF5_VOL_CONNECTOR");
 

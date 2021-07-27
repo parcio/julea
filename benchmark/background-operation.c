@@ -57,7 +57,7 @@ benchmark_background_operation_new_ref_unref(BenchmarkRun* run)
 			j_background_operation_unref(background_operation);
 		}
 
-		/* FIXME overhead? */
+		/// \todo overhead?
 		while ((guint64)g_atomic_int_get(&benchmark_background_operation_counter) != n)
 		{
 		}

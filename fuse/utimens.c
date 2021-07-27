@@ -41,7 +41,7 @@ jfs_utimens(char const* path, const struct timespec ts[2])
 
 	if (j_batch_execute(batch))
 	{
-		// FIXME
+		/// \todo
 		ret = 0;
 
 		g_free(value);
