@@ -111,6 +111,9 @@ guint64 j_configuration_get_max_operation_size(JConfiguration*);
 guint32 j_configuration_get_max_connections(JConfiguration*);
 guint64 j_configuration_get_stripe_size(JConfiguration*);
 
+/// network port to communicate
+guint16 j_configuration_get_port(JConfiguration*);
+
 G_END_DECLS
 
 /**

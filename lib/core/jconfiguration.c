@@ -142,6 +142,7 @@ struct JConfiguration
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
+	guint16 network_port;
 
 	/**
 	 * The reference count.
@@ -281,10 +282,12 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	guint64 max_operation_size;
 	guint32 max_connections;
 	guint64 stripe_size;
+	guint64 network_port;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
+	network_port = g_key_file_get_uint64(key_file, "core", "port", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
@@ -311,7 +314,8 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || kv_path == NULL
 	    || db_backend == NULL
 	    || db_component == NULL
-	    || db_path == NULL)
+	    || db_path == NULL
+		|| network_port == 0 || network_port >= 0xFFFF)
 	{
 		g_free(db_backend);
 		g_free(db_component);
@@ -349,6 +353,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
+	configuration->network_port = network_port;
 
 	if (configuration->max_operation_size == 0)
 	{
@@ -550,6 +555,15 @@ j_configuration_get_stripe_size(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->stripe_size;
+}
+guint16
+j_configuration_get_port(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->network_port;
 }
 
 /**
