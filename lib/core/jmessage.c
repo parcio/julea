@@ -739,12 +739,9 @@ j_message_read(JMessage* message, struct JConnection* connection)
 
 	GError* error = NULL;
 
-	gint32 buffer;
-
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 	g_message("read: msg hedaer: %lu", sizeof(message->header));
-	EXE(j_connection_recv(connection, 4, &buffer), "Failed to read stuff");
 	EXE(j_connection_recv(connection, sizeof(message->header), &(message->header)),
 			"Failed to initiated header receive!");
 	EXE(j_connection_wait_for_completion(connection),

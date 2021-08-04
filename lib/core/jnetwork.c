@@ -333,10 +333,6 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 		goto end;
 	}
 
-	*(gint32*)(this->memory.buffer) = 12;
-	do { res = fi_inject(this->ep, this->memory.buffer, 4, 0); } while(res == -FI_EAGAIN);
-	CHECK("failed to inject test message!");
-
 	ret = TRUE;
 end:
 	/// FIXME memory leak on error in addr.addr
