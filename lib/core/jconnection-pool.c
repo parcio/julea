@@ -196,6 +196,7 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, enum JBackendTy
 			if(!j_connection_init_client(j_connection_pool->configuration, backend, index, &connection))
 			{
 				g_critical("Can not connect to %s [%d].", "TODO(SERVER ADDR)", g_atomic_int_get(count));
+				exit(1);
 			}
 
 			message = j_message_new(J_MESSAGE_PING, 0);

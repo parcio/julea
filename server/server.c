@@ -74,14 +74,13 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* gconnection, GObje
 	(void)source_object;
 	(void)user_data;
 
-	j_helper_set_nodelay(gconnection, TRUE);
-
 	statistics = j_statistics_new(TRUE);
 	memory_chunk_size = j_configuration_get_max_operation_size(jd_configuration);
 	memory_chunk = j_memory_chunk_new(memory_chunk_size);
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
+	g_message("fabric: %p", (void*)jd_fabric);
 	j_connection_init_server(jd_fabric, gconnection, &jconnection);
 
 	while (j_message_receive(message, jconnection))
@@ -384,6 +383,7 @@ main(int argc, char** argv)
 		g_warning("Failed to initialize server fabric!");
 		return 1;
 	}
+	g_message("fabric: %p", (void*)jd_fabric);
 
 	jd_statistics = j_statistics_new(FALSE);
 	g_mutex_init(jd_statistics_mutex);

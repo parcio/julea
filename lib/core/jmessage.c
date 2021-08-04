@@ -509,6 +509,26 @@ j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 }
 
 gboolean
+j_message_append_memory_id(JMessage* message, const struct JConnectionMemoryID* id)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	guint32 new_length;
+
+	g_return_val_if_fail(message != NULL, FALSE);
+	g_return_val_if_fail(id != NULL, FALSE);
+	g_return_val_if_fail(j_message_can_append(message, sizeof(*id)), FALSE);
+
+	memcpy(message->current, id, sizeof(*id));
+	message->current += sizeof(*id);
+
+	new_length = j_message_length(message) + sizeof(*id);
+	message->header.length = GUINT32_TO_LE(new_length);
+
+	return TRUE;
+}
+
+gboolean
 j_message_append_string(JMessage* message, gchar const* str)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -600,6 +620,21 @@ j_message_get_string(JMessage* message)
 	return ret;
 }
 
+const struct JConnectionMemoryID*
+j_message_get_memory_id(JMessage* message)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	const struct JConnectionMemoryID* ret;
+
+	g_return_val_if_fail(message != NULL, NULL);
+
+	ret = (const void*)message->current;
+	message->current += sizeof(*ret);
+
+	return ret;
+}
+
 gboolean
 j_message_receive(JMessage* message, struct JConnection* connection)
 {
@@ -632,7 +667,7 @@ end:
 
 struct JConnectionMemory {
 	struct fid_mr* memory_region;
-	void* addr;
+	guint64 addr;
 	guint64 size;
 };
 
