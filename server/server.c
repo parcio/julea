@@ -183,7 +183,9 @@ jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type
 		guint16 addr_port;
 
 		server = j_configuration_get_server(jd_configuration, backend_type, i);
-		address = G_NETWORK_ADDRESS(g_network_address_parse(server, 4711, NULL));
+		address = G_NETWORK_ADDRESS(g_network_address_parse(
+					server, j_configuration_get_port(jd_configuration),
+					NULL));
 
 		addr_server = g_network_address_get_hostname(address);
 		addr_port = g_network_address_get_port(address);
@@ -204,7 +206,7 @@ main(int argc, char** argv)
 
 	gboolean opt_daemon = FALSE;
 	g_autofree gchar* opt_host = NULL;
-	gint opt_port = 4711;
+	gint opt_port = 0;
 
 	JTrace* trace;
 	GError* error = NULL;
@@ -229,7 +231,7 @@ main(int argc, char** argv)
 	GOptionEntry entries[] = {
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
 		{ "host", 0, 0, G_OPTION_ARG_STRING, &opt_host, "Override host name", "hostname" },
-		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "4711" },
+		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -266,6 +268,16 @@ main(int argc, char** argv)
 	socket_service = g_threaded_socket_service_new(-1);
 	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
 
+	jd_configuration = j_configuration_new();
+	if(!jd_configuration) {
+		g_warning("Failed to load configuration!");
+		return 1;
+	}
+
+	if(opt_port == 0) {
+		opt_port = j_configuration_get_port(jd_configuration);
+	}
+
 	while (TRUE)
 	{
 		if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
@@ -296,8 +308,6 @@ main(int argc, char** argv)
 	j_trace_init("julea-server");
 
 	trace = j_trace_enter(G_STRFUNC, NULL);
-
-	jd_configuration = j_configuration_new();
 
 	if (jd_configuration == NULL)
 	{

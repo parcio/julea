@@ -194,7 +194,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='4711'
+		test -n "${port}" || port='<TODO: correct port>'
 		backend_path="$(printf '%s' "${OBJECT_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
@@ -210,7 +210,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='4711'
+		test -n "${port}" || port='<TODO: correct port>'
 		backend_path="$(printf '%s' "${KV_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
@@ -226,7 +226,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='4711'
+		test -n "${port}" || port='<TODO: correct port>'
 		backend_path="$(printf '%s' "${DB_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
