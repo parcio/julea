@@ -279,6 +279,16 @@ main(int argc, char** argv)
 	socket_service = g_threaded_socket_service_new(-1);
 	g_socket_listener_set_backlog(G_SOCKET_LISTENER(socket_service), 128);
 
+	jd_configuration = j_configuration_new();
+	if(!jd_configuration) {
+		g_warning("Failed to load configuration!");
+		return 1;
+	}
+
+	if(opt_port == 0) {
+		opt_port = j_configuration_get_port(jd_configuration);
+	}
+
 	while (TRUE)
 	{
 		if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(socket_service), opt_port, NULL, &error))
