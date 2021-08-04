@@ -61,7 +61,10 @@ struct JConnection {
 	struct fid_domain* domain;
 	struct fid_ep* ep;
 	struct fid_eq* eq;
-	struct fid_cq* cq;
+	struct {
+		struct fid_cq* tx;
+		struct fid_cq* rx;
+	} cq;
 	size_t inject_size;
 	struct {
 		struct fid_mr* mr;
@@ -283,7 +286,7 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	g_client = g_socket_client_new();
 	server = j_configuration_get_server(configuration, backend, index);
 	g_connection = g_socket_client_connect_to_host(g_client,
-			server,
+			"10.0.10.1",
 			4711, NULL, &error);
 	G_CHECK("Failed to build gsocket connection to host");
 	if(g_connection == NULL) {
@@ -320,7 +323,7 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	res = fi_connect(this->ep, jf_addr.addr, NULL, 0);
 	CHECK("Failed to fire connection request!");
 
-	do {EXE(j_connection_sread_event(this, -1, &event),
+	do {EXE(j_connection_sread_event(this, 1, &event),
 			"Failed to read event queue, waiting for CONNECTED signal!");
 	} while(event == J_CONNECTION_EVENT_TIMEOUT);
 	g_message("Event FI: %u", event);
@@ -329,6 +332,10 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 		g_warning("Failed to connect to host!");
 		goto end;
 	}
+
+	*(gint32*)(this->memory.buffer) = 12;
+	do { res = fi_inject(this->ep, this->memory.buffer, 4, 0); } while(res == -FI_EAGAIN);
+	CHECK("failed to inject test message!");
 
 	ret = TRUE;
 end:
@@ -375,10 +382,11 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 	G_CHECK("Failed to close output stream!");
 
 	g_message("wait for conrequest!");
-	EXE(j_fabric_sread_event(fabric, -1, &event, &request),
+	do {EXE(j_fabric_sread_event(fabric, 2, &event, &request),
 			"Failed to wait for connection request");
+	} while(event == J_FABRIC_EVENT_TIMEOUT);
 	if(event != J_FABRIC_EVENT_CONNECTION_REQUEST) {
-		g_warning("expected an connection request and nothing else!");
+		g_warning("expected an connection request and nothing else! (%i)", event);
 		goto end;
 	}
 	g_message("inet connection!");
@@ -391,7 +399,7 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 	res = fi_accept(this->ep, NULL, 0);
 	CHECK("Failed to accept connection!");
 	g_message("wait for connection !");
-	EXE(j_connection_sread_event(this, -1, &con_event), "Failed to verify connection!");
+	EXE(j_connection_sread_event(this, 2, &con_event), "Failed to verify connection!");
 	if(con_event != J_CONNECTION_EVENT_CONNECTED) {
 		g_warning("expected and connection ack and nothing else!");
 		goto end;
@@ -426,16 +434,22 @@ j_connection_init(struct JConnection* this)
 				.format = FI_CQ_FORMAT_CONTEXT,
 				.size = this->info->tx_attr->size
 			},
-			&this->cq, &this->cq);
-	// tx completion size differs from rx completion size!
-	g_assert_true(this->info->tx_attr->size == this->info->rx_attr->size);
+			&this->cq.tx, &this->cq.tx);
+	res = fi_cq_open(this->domain, &(struct fi_cq_attr){
+				.wait_obj = FI_WAIT_UNSPEC,
+				.format = FI_CQ_FORMAT_CONTEXT,
+				.size = this->info->rx_attr->size
+			},
+			&this->cq.rx, &this->cq.rx);
 	CHECK("Failed to create completion queue!");
 	res = fi_endpoint(this->domain, this->info, &this->ep, NULL);
 	CHECK("Failed to open endpoint for connection!");
 	res = fi_ep_bind(this->ep, &this->eq->fid, 0);
 	CHECK("Failed to bind event queue to endpoint!");
-	res = fi_ep_bind(this->ep, &this->cq->fid, FI_TRANSMIT | FI_RECV);
-	CHECK("Failed to bind completion queue to endpoint!");
+	res = fi_ep_bind(this->ep, &this->cq.tx->fid, FI_TRANSMIT);
+	CHECK("Failed to bind tx completion queue to endpoint!");
+	res = fi_ep_bind(this->ep, &this->cq.rx->fid, FI_RECV);
+	CHECK("Failed to bind rx completion queue to endpoint!");
 	res = fi_enable(this->ep);
 	CHECK("Failed to enable connection!");
 
@@ -495,30 +509,8 @@ j_connection_sread_event(struct JConnection* this, int timeout, enum JConnection
 	gboolean ret = FALSE;
 	struct fi_eq_cm_entry entry;
 
-	g_message("Call sread event! %i", timeout);
 
-	{
-		struct fi_eq_err_entry err;
-		do {
-			res = fi_eq_readerr(this->eq, &err, 0);
-			g_message("err: %s", fi_eq_strerror(this->eq,
-						err.prov_errno, err.err_data, NULL, 0));
-		} while(res > 0);
-		
-	}
-	g_message("wait for read!");
 	res = fi_eq_sread(this->eq, &fi_event, &entry, sizeof(entry), timeout, 5);
-	g_message("evaluate read!");
-	{
-		struct fi_eq_err_entry err;
-		do {
-			res = fi_eq_readerr(this->eq, &err, 0);
-			g_message("err: %s", fi_eq_strerror(this->eq,
-						err.prov_errno, err.err_data, NULL, 0));
-		} while(res > 0);
-		
-	}
-	g_message("res = %i", res);
 	if(res == -FI_EAGAIN) {
 		*event = J_CONNECTION_EVENT_TIMEOUT;
 		ret = TRUE; goto end;
@@ -584,18 +576,21 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 
 	// we used paired endponits -> inject and send don't need destination addr (last parameter)
 
-	if(data_len < this->inject_size) {
+	g_message("send");
+	/*if(data_len < this->inject_size) {
 		do { res = fi_inject(this->ep, data, data_len, 0); } while(res == -FI_EAGAIN);
 		CHECK("Failed to inject data!");
 		ret = TRUE; goto end;
-	}
+	}*/
 
 	// normal send
 	memcpy((char*)this->memory.buffer + this->memory.used + this->memory.tx_prefix_size,
 			data, data_len);
 	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.tx_prefix_size;
-	res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
+	do{ 
+		res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
+	} while(res == -FI_EAGAIN);
 	CHECK("Failed to initelize sending!");
 	this->memory.used += size;
 	g_assert_true(this->memory.used <= this->memory.buffer_size);
@@ -618,21 +613,22 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	int res;
 	void* segment;
 	size_t size;
-
+	g_message("receive");
 	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.rx_prefix_size;
 	res = fi_recv(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
 	CHECK("Failed to initelized receiving!");
 	this->memory.used += size;
 	g_message("memory useag: %lu/%lu", this->memory.used, this->memory.buffer_size);
+	g_message("actions: %i", this->running_actions.len);
 	g_assert_true(this->memory.used <= this->memory.buffer_size);
-	g_assert_true(this->running_actions.len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+	g_assert_true(this->running_actions.len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
 	this->running_actions.entry[this->running_actions.len].context = segment;
 	this->running_actions.entry[this->running_actions.len].dest = data;
 	this->running_actions.entry[this->running_actions.len].len = data_len;
 	this->running_actions.entry[this->running_actions.len].mr = NULL;
 	++this->running_actions.len;
-
+	g_message("fin recive");
 	ret = TRUE;
 end:
 	return ret;
@@ -646,8 +642,14 @@ j_connection_wait_for_completion(struct JConnection* this)
 	struct fi_cq_entry entry;
 	int i;
 	
+	g_message("start waiting");
 	while(this->running_actions.len) {
-		res = fi_cq_sread(this->cq, &entry, 1, NULL, -1); /// \todo handle shutdown msgs!
+		do {
+			res = fi_cq_sread(this->cq.rx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
+			if(res == -FI_EAGAIN) {
+				res = fi_cq_sread(this->cq.tx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
+			}
+		} while (res == -FI_EAGAIN);
 		/// \todo error message fetch!
 		CHECK("Failed to read completion queue!");
 		for(i = 0; i <= this->running_actions.len; ++i) {
@@ -672,6 +674,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 			}
 		}
 	}
+	g_message("fin waiting");
 
 	this->running_actions.len = 0;
 	ret = TRUE;
