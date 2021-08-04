@@ -739,13 +739,19 @@ j_message_read(JMessage* message, struct JConnection* connection)
 
 	GError* error = NULL;
 
+	gint32 buffer;
+
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
-
+	g_message("read: msg hedaer: %lu", sizeof(message->header));
+	EXE(j_connection_recv(connection, 4, &buffer), "Failed to read stuff");
 	EXE(j_connection_recv(connection, sizeof(message->header), &(message->header)),
 			"Failed to initiated header receive!");
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait for header receive!");
+	g_print("Header:\n\t");
+	for(unsigned i = 0; i < sizeof(message->header); ++i) { g_print("%02x ", ((uint8_t*)&message->header)[i]); }
+	g_print("\n");
 
 	j_message_ensure_size(message, j_message_length(message));
 
@@ -786,6 +792,10 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
+	g_message("send: msg hedaer: %lu", sizeof(message->header));
+	g_print("Header:\n\t");
+	for(unsigned i = 0; i < sizeof(message->header); ++i) { g_print("%02x ", ((uint8_t*)&message->header)[i]); }
+	g_print("\n");
 	EXE(j_connection_send(connection, &(message->header), sizeof(message->header)),
 			"Failed to initiated sending message header.");
 	EXE(j_connection_send(connection, message->data, j_message_length(message)),

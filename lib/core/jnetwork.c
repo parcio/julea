@@ -571,7 +571,7 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 {
 	int res;
 	gboolean ret = FALSE;
-	void* segment;
+	uint8_t* segment;
 	size_t size;
 
 	// we used paired endponits -> inject and send don't need destination addr (last parameter)
@@ -584,11 +584,12 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 	}*/
 
 	// normal send
-	memcpy((char*)this->memory.buffer + this->memory.used + this->memory.tx_prefix_size,
+	segment = (uint8_t*)this->memory.buffer + this->memory.used;
+	memcpy(segment + this->memory.tx_prefix_size,
 			data, data_len);
-	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.tx_prefix_size;
 	do{ 
+		g_message("send: prefix: %lu, size: %lu", this->memory.tx_prefix_size, size);
 		res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
 	} while(res == -FI_EAGAIN);
 	CHECK("Failed to initelize sending!");
@@ -613,10 +614,10 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	int res;
 	void* segment;
 	size_t size;
-	g_message("receive");
 	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.rx_prefix_size;
 	res = fi_recv(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
+	g_message("receive: prefix: %lu, size: %lu", this->memory.rx_prefix_size, size);
 	CHECK("Failed to initelized receiving!");
 	this->memory.used += size;
 	g_message("memory useag: %lu/%lu", this->memory.used, this->memory.buffer_size);
@@ -628,7 +629,6 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	this->running_actions.entry[this->running_actions.len].len = data_len;
 	this->running_actions.entry[this->running_actions.len].mr = NULL;
 	++this->running_actions.len;
-	g_message("fin recive");
 	ret = TRUE;
 end:
 	return ret;
@@ -644,14 +644,26 @@ j_connection_wait_for_completion(struct JConnection* this)
 	
 	g_message("start waiting");
 	while(this->running_actions.len) {
+		bool rx;
 		do {
+			rx = true;
 			res = fi_cq_sread(this->cq.rx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
 			if(res == -FI_EAGAIN) {
+				rx = false;
 				res = fi_cq_sread(this->cq.tx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
 			}
 		} while (res == -FI_EAGAIN);
 		/// \todo error message fetch!
-		CHECK("Failed to read completion queue!");
+		if(res == -FI_EAVAIL) {
+			struct fi_cq_err_entry err_entry;
+			res = fi_cq_readerr(rx ? this->cq.rx : this->cq.tx,
+					&err_entry, 0);
+			CHECK("Failed to read error of cq!");
+			g_warning("Failed to read completion queue\nWidth:\t%s",
+					fi_cq_strerror(rx ? this->cq.rx : this->cq.tx,
+						err_entry.prov_errno, err_entry.err_data, NULL, 0));
+			goto end;
+		} else { CHECK("Failed to read completion queue!"); }
 		for(i = 0; i <= this->running_actions.len; ++i) {
 			if(i == this->running_actions.len) {
 				g_warning("unable to find completet context!");
