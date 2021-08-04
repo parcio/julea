@@ -33,6 +33,7 @@ test_distribution_fixture_setup(JConfiguration** configuration, gconstpointer da
 	(void)data;
 
 	key_file = g_key_file_new();
+	g_key_file_set_uint64(key_file, "core", "port", 4700);
 	g_key_file_set_string_list(key_file, "servers", "object", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "kv", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "db", servers, 2);

@@ -44,6 +44,8 @@ static gchar const* opt_db_path = NULL;
 static gint64 opt_max_operation_size = 0;
 static gint opt_max_connections = 0;
 static gint64 opt_stripe_size = 0;
+static gint64 opt_network_port = 0;
+static gint64 opt_user_id = 0;
 
 static gchar**
 string_split(gchar const* string)
@@ -105,6 +107,7 @@ write_config(gchar* path)
 
 	key_file = g_key_file_new();
 	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_stripe_size);
+	g_key_file_set_int64(key_file, "core", "port", opt_network_port);
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
 	g_key_file_set_int64(key_file, "clients", "stripe-size", opt_stripe_size);
 	g_key_file_set_string_list(key_file, "servers", "object", (gchar const* const*)servers_object, g_strv_length(servers_object));
@@ -152,6 +155,8 @@ main(gint argc, gchar** argv)
 		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
 		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
+		{ "port", 0, 0, G_OPTION_ARG_INT64, &opt_network_port, "Network communication port", "4000 + user_id%100"},
+		{ "user-id", 0, 0, G_OPTION_ARG_INT64, &opt_user_id, "User Id used to determined communication port", NULL},
 		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2:port" },
 		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "Key-value servers to use", "host1,host2:port" },
 		{ "db-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_db, "Database servers to use", "host1,host2:port" },
@@ -193,7 +198,8 @@ main(gint argc, gchar** argv)
 	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_servers_db == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL || opt_db_backend == NULL || opt_db_component == NULL || opt_db_path == NULL))
 	    || opt_max_operation_size < 0
 	    || opt_max_connections < 0
-	    || opt_stripe_size < 0)
+	    || opt_stripe_size < 0
+		|| ((opt_network_port <= 0 || opt_network_port >= 0xFFFF) && opt_user_id == 0))
 	{
 		g_autofree gchar* help = NULL;
 
@@ -202,6 +208,11 @@ main(gint argc, gchar** argv)
 		g_print("%s", help);
 
 		return 1;
+	}
+
+	if(opt_network_port == 0)
+	{
+		opt_network_port = 4000 + (opt_user_id % 1000);
 	}
 
 	if (opt_user)
