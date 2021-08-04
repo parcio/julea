@@ -49,6 +49,7 @@ test_configuration_new_for_data(void)
 
 	J_TEST_TRAP_START;
 	key_file = g_key_file_new();
+	g_key_file_set_uint64(key_file, "core", "port", 4700);
 	g_key_file_set_string_list(key_file, "servers", "object", servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "kv", servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "db", servers, 1);
@@ -81,6 +82,7 @@ test_configuration_get(void)
 
 	J_TEST_TRAP_START;
 	key_file = g_key_file_new();
+	g_key_file_set_uint64(key_file, "core", "port", 4700);
 	g_key_file_set_string_list(key_file, "servers", "object", object_servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "kv", kv_servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "db", db_servers, 2);
