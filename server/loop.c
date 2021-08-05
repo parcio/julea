@@ -286,7 +286,7 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 
 				offset = j_message_get_8(message);
 				memoryID = j_message_get_memory_id(message);
-				g_message("memory size: %lu", memoryID->size);
+				// g_message("memory size: %lu", memoryID->size);
 
 				if (memoryID->size > memory_chunk_size && reply != NULL && G_LIKELY(ret))
 				{
@@ -303,7 +303,7 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 				j_connection_rma_read(connection, memoryID, buf);
 				// TODO: pararlleize
 				j_connection_wait_for_completion(connection);
-				g_message("rma read message: %s", buf);
+				// g_message("rma read message: %s", buf);
 				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, memoryID->size);
 				// CONTINUE
 

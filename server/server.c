@@ -80,7 +80,6 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* gconnection, GObje
 
 	message = j_message_new(J_MESSAGE_NONE, 0);
 
-	g_message("fabric: %p", (void*)jd_fabric);
 	j_connection_init_server(jd_fabric, gconnection, &jconnection);
 
 	while (j_message_receive(message, jconnection))
@@ -383,7 +382,6 @@ main(int argc, char** argv)
 		g_warning("Failed to initialize server fabric!");
 		return 1;
 	}
-	g_message("fabric: %p", (void*)jd_fabric);
 
 	jd_statistics = j_statistics_new(FALSE);
 	g_mutex_init(jd_statistics_mutex);

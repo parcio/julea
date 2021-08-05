@@ -146,13 +146,13 @@ j_fabric_init_server(struct JConfiguration* configuration, struct JFabric** inst
 	res = fi_getname(&this->pep->fid, NULL, &addrlen);
 	if(res != -FI_ETOOSMALL) { CHECK("failed to fetch address len from libfabirc!"); }
 	this->fabric_addr_network.addr_len = addrlen;
-	g_message("test: %u", this->fabric_addr_network.addr_len);
+	// g_message("test: %u", this->fabric_addr_network.addr_len);
 	this->fabric_addr_network.addr = malloc(this->fabric_addr_network.addr_len);
 	res = fi_getname(&this->pep->fid, this->fabric_addr_network.addr,
 			&addrlen);
 	CHECK("failed to fetch address from libfabric!");
 
-	g_message("wait for pep request!");
+	// g_message("wait for pep request!");
 	res = fi_listen(this->pep);
 	CHECK("failed to start listening on pep!");
 
@@ -188,7 +188,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 		char* str = malloc(hints->dest_addrlen * 3 + 1);
 		size_t i;
 		for(i = 0; i < hints->dest_addrlen; ++i) { snprintf(str+i*3, 4, "%02x ", ((uint8_t*)hints->dest_addr)[i]); }
-		g_message("Addr: format: %u, len: %lu\n\t%s", hints->addr_format, hints->dest_addrlen, str);
+		// g_message("Addr: format: %u, len: %lu\n\t%s", hints->addr_format, hints->dest_addrlen, str);
 		free(str);
 	}	
 
@@ -203,7 +203,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	CHECK("failed to initelize client fabric!");
 
 	ret = TRUE;
-	g_message("initelize client!");
+	// g_message("initelize client!");
 end:
 	return ret;
 }
@@ -326,7 +326,7 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	do {EXE(j_connection_sread_event(this, 1, &event),
 			"Failed to read event queue, waiting for CONNECTED signal!");
 	} while(event == J_CONNECTION_EVENT_TIMEOUT);
-	g_message("Event FI: %u", event);
+	// g_message("Event FI: %u", event);
 	
 	if(event != J_CONNECTION_EVENT_CONNECTED) {
 		g_warning("Failed to connect to host!");
@@ -354,16 +354,16 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 
 	*instance_ptr = malloc(sizeof(*this));
 	this = *instance_ptr;
-	g_message("debug: size(*this) = %lu, this = %p", sizeof(*this), (void*)this);
+	// g_message("debug: size(*this) = %lu, this = %p", sizeof(*this), (void*)this);
 	memset(this, 0, sizeof(*this));
 	
 	// send addr
 	{ // DEBUG TODO
 		char* str = malloc(ntohl(addr->addr_len) * 3 + 1);
 		size_t i;
-		g_message("tada: addr_len: %u", ntohl(addr->addr_len));
+		// g_message("tada: addr_len: %u", ntohl(addr->addr_len));
 		for(i = 0; i < ntohl(addr->addr_len); ++i) { snprintf(str+i*3, 4, "%02x ", ((uint8_t*)addr->addr)[i]); }
-		g_message("Addr: format: %u, len: %u\n\t%s", ntohl(addr->addr_format), ntohl(addr->addr_len), str);
+		// g_message("Addr: format: %u, len: %u\n\t%s", ntohl(addr->addr_format), ntohl(addr->addr_len), str);
 		free(str);
 	}	
 	g_out = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
@@ -373,11 +373,11 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 	G_CHECK("Failed to write addr_len to stream!");
 	g_output_stream_write(g_out, addr->addr, ntohl(addr->addr_len), NULL, &error);
 	G_CHECK("Failed to write addr to stream!");
-	g_message("close g_stream");
+	// g_message("close g_stream");
 	g_output_stream_close(g_out, NULL, &error);
 	G_CHECK("Failed to close output stream!");
 
-	g_message("wait for conrequest!");
+	// g_message("wait for conrequest!");
 	do {EXE(j_fabric_sread_event(fabric, 2, &event, &request),
 			"Failed to wait for connection request");
 	} while(event == J_FABRIC_EVENT_TIMEOUT);
@@ -385,16 +385,16 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 		g_warning("expected an connection request and nothing else! (%i)", event);
 		goto end;
 	}
-	g_message("inet connection!");
+	// g_message("inet connection!");
 	this->fabric = fabric;
 	this->info = request.info;
 
 	EXE(j_connection_init(this), "Failed to initelize connection server side!");
 
-	g_message("Except!");
+	// g_message("Except!");
 	res = fi_accept(this->ep, NULL, 0);
 	CHECK("Failed to accept connection!");
-	g_message("wait for connection !");
+	// g_message("wait for connection !");
 	EXE(j_connection_sread_event(this, 2, &con_event), "Failed to verify connection!");
 	if(con_event != J_CONNECTION_EVENT_CONNECTED) {
 		g_warning("expected and connection ack and nothing else!");
@@ -450,7 +450,7 @@ j_connection_init(struct JConnection* this)
 	CHECK("Failed to enable connection!");
 
 	ret = TRUE;
-	g_message("enabled endpoint!");
+	// g_message("enabled endpoint!");
 end:
 	return ret;
 }
@@ -478,7 +478,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 	size = 0;
 
 	if(this->info->domain_attr->mr_mode & FI_MR_LOCAL) {
-		g_message("Localmemory!");
+		// g_message("Localmemory!");
 		size +=
 			  (rx_prefix * prefix_size) + J_CONNECTION_MAX_RECV * op_size
 			+ (tx_prefix * prefix_size) + J_CONNECTION_MAX_SEND * op_size;
@@ -522,7 +522,7 @@ j_connection_sread_event(struct JConnection* this, int timeout, enum JConnection
 		goto end; /// \todo consider return TRUE on event queue error
 	}
 	CHECK("Failed to read event of connection!");
-	g_message("Event: %u", fi_event);
+	// g_message("Event: %u", fi_event);
 
 	switch(fi_event) {
 		case FI_CONNECTED: *event = J_CONNECTION_EVENT_CONNECTED; break;
@@ -583,7 +583,7 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 			data, data_len);
 	size = data_len + this->memory.tx_prefix_size;
 	do{ 
-		g_message("send: prefix: %lu, size: %lu", this->memory.tx_prefix_size, size);
+		// g_message("send: prefix: %lu, size: %lu", this->memory.tx_prefix_size, size);
 		res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
 	} while(res == -FI_EAGAIN);
 	CHECK("Failed to initelize sending!");
@@ -611,10 +611,10 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.rx_prefix_size;
 	res = fi_recv(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
-	g_message("receive: prefix: %lu, size: %lu", this->memory.rx_prefix_size, size);
+	// g_message("receive: prefix: %lu, size: %lu", this->memory.rx_prefix_size, size);
 	CHECK("Failed to initelized receiving!");
 	this->memory.used += size;
-	g_message("memory useag: %lu/%lu", this->memory.used, this->memory.buffer_size);
+	// g_message("memory useag: %lu/%lu", this->memory.used, this->memory.buffer_size);
 	g_assert_true(this->memory.used <= this->memory.buffer_size);
 	g_assert_true(this->running_actions.len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
 	this->running_actions.entry[this->running_actions.len].context = segment;
@@ -635,7 +635,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 	struct fi_cq_entry entry;
 	int i;
 	
-	g_message("start waiting");
+	// g_message("start waiting");
 	while(this->running_actions.len) {
 		bool rx;
 		do {
@@ -678,7 +678,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 			}
 		}
 	}
-	g_message("fin waiting");
+	// g_message("fin waiting");
 
 	this->running_actions.len = 0;
 	ret = TRUE;
@@ -692,20 +692,13 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 	int res;
 	gboolean ret = FALSE;
 
-	{ // TODO: DEBUG
-		for(unsigned i = 0; i < data_len; ++i) {
-			g_print("%c ", ((const char*)data)[i]);
-		}
-		g_print("\n");
-	}
-	void* ptr = g_strdup(data); // TODO: change!
 	res = fi_mr_reg(this->domain,
-			ptr,
+			data,
 			data_len,
 			FI_REMOTE_READ,
 			0, 0, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
-	handle->addr = (guint64)ptr;
+	handle->addr = (guint64)data;
 	handle->size = data_len;
 
 	ret = TRUE;
@@ -717,9 +710,9 @@ gboolean
 j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* handle)
 {
 	int res;
-	g_message("close memory start");
+	// g_message("close memory start");
 	res = fi_close(&handle->memory_region->fid);
-	g_message("close memory fin");
+	// g_message("close memory fin");
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
 end:
@@ -745,7 +738,7 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 	res = fi_mr_reg(this->domain, data, memoryID->size,
 			FI_READ, 0, 0, 0, &mr, 0);
 	CHECK("Failed to register receiving memory!");
-	g_message("try to read: %lu, %lu", memoryID->offset, memoryID->key);
+	// g_message("try to read: %lu, %lu", memoryID->offset, memoryID->key);
 	res = fi_read(this->ep,
 			data,
 			memoryID->size,
