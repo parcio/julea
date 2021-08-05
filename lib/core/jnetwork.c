@@ -205,6 +205,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	ret = TRUE;
 	// g_message("initelize client!");
 end:
+	fi_freeinfo(hints);
 	return ret;
 }
 
@@ -762,4 +763,5 @@ end:
 gboolean
 j_connection_fini ( struct JConnection* instance) {
 	// TODO: implement!
+	return TRUE;
 }
