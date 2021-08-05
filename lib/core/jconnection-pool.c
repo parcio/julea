@@ -121,39 +121,30 @@ j_connection_pool_fini(void)
 
 	for (guint i = 0; i < pool->object_len; i++)
 	{
-		GSocketConnection* connection;
+		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
-		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
-		}
+		{ j_connection_fini(connection); }
 
 		g_async_queue_unref(pool->object_queues[i].queue);
 	}
 
 	for (guint i = 0; i < pool->kv_len; i++)
 	{
-		GSocketConnection* connection;
+		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
-		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
-		}
+		{ j_connection_fini(connection); }
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
 	}
 
 	for (guint i = 0; i < pool->db_len; i++)
 	{
-		GSocketConnection* connection;
+		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
-		{
-			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
-			g_object_unref(connection);
-		}
+		{ j_connection_fini(connection); }
 
 		g_async_queue_unref(pool->db_queues[i].queue);
 	}

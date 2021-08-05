@@ -511,18 +511,20 @@ j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 gboolean
 j_message_append_memory_id(JMessage* message, const struct JConnectionMemoryID* id)
 {
+	g_message("ID size: %lu", id->size);
 	J_TRACE_FUNCTION(NULL);
 
 	guint32 new_length;
+	guint64 padding = (guint64)message->current % 8;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(id != NULL, FALSE);
-	g_return_val_if_fail(j_message_can_append(message, sizeof(*id)), FALSE);
+	g_return_val_if_fail(j_message_can_append(message, sizeof(*id)+padding), FALSE);
 
-	memcpy(message->current, id, sizeof(*id));
-	message->current += sizeof(*id);
+	memcpy(message->current+padding, id, sizeof(*id));
+	message->current += sizeof(*id) + padding;
 
-	new_length = j_message_length(message) + sizeof(*id);
+	new_length = j_message_length(message) + sizeof(*id) + padding;
 	message->header.length = GUINT32_TO_LE(new_length);
 
 	return TRUE;
@@ -629,8 +631,11 @@ j_message_get_memory_id(JMessage* message)
 
 	g_return_val_if_fail(message != NULL, NULL);
 
-	ret = (const void*)message->current;
-	message->current += sizeof(*ret);
+	guint64 padding = (guint64)message->current % 8;
+
+	g_message("read mem id: %lu", (message->current + padding) - message->data);
+	ret = (const void*)(message->current + padding);
+	message->current += sizeof(*ret) + padding;
 
 	return ret;
 }
@@ -649,11 +654,12 @@ j_message_receive(JMessage* message, struct JConnection* connection)
 gboolean
 j_message_send_ack(JMessage* message, struct JConnection* connection)
 {
+	g_message("ACK call");
 	const JConnectionAck ack = J_CONNECTION_ACK;
 	
 	// No data where send -> no need to acknowledge
-	if(j_message_get_count(message) == 0) { return TRUE; }
-
+	if(message != NULL && j_message_get_count(message) == 0) { return TRUE; }
+	g_message("send ack");
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait to finishe all operations before sending ack!");
 	EXE(j_connection_send(connection, &ack, sizeof(ack)),
@@ -680,6 +686,7 @@ j_message_send(JMessage* message, struct JConnection* connection)
 	int n_memory_regions = 0;
 	struct JConnectionMemory* memory_itr = NULL;
 	struct JConnectionMemory* memory_regions = NULL;
+	struct JConnectionMemory* memory_regions_end = NULL;
 	struct JConnectionMemoryID mem_id;
 	g_autoptr(JListIterator) iterator = NULL;
 
@@ -689,8 +696,12 @@ j_message_send(JMessage* message, struct JConnection* connection)
 	ret = FALSE;
 
 	n_memory_regions = j_list_length(message->send_list);
-	memory_regions = calloc(sizeof(struct JConnectionMemory), n_memory_regions);
-	memset(memory_regions, 0, sizeof(struct JConnectionMemory) * n_memory_regions);
+	if(n_memory_regions) {
+		size_t size = sizeof(struct JConnectionMemory) * n_memory_regions;
+		memory_regions = malloc(size);
+		memset(memory_regions, 0, size);
+		memory_regions_end = memory_regions + n_memory_regions;
+	}
 	memory_itr = memory_regions;
 
 	if (message->send_list != NULL)
@@ -708,8 +719,10 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 			EXE(j_connection_memory_get_id(memory_itr, &mem_id),
 					"Failed to get memory it!");
-			EXE(j_message_append_n(message, message_data->header, message_data->header_size),
-					"Failed to append header");
+			if(message_data->header != NULL) {
+				EXE(j_message_append_n(message, message_data->header, message_data->header_size),
+						"Failed to append header");
+			}
 			EXE(j_message_append_memory_id(message, &mem_id),
 					"Failed to append memory id to message!");
 			++memory_itr;
@@ -722,9 +735,11 @@ end:
 	if(memory_regions != NULL) {
 		struct JConnectionMemory* mrs = memory_regions;
 		while(memory_regions != memory_itr) {
-			j_connection_rma_unregister(connection, memory_regions);
+			j_connection_rma_unregister(connection, memory_regions++);
 		}
-		if(memory_itr->memory_region) { j_connection_rma_unregister(connection, memory_itr); }
+		if(memory_itr != memory_regions_end && memory_itr->memory_region) {
+			j_connection_rma_unregister(connection, memory_itr);
+		}
 		free(mrs);
 	}
 	return ret;
@@ -746,16 +761,15 @@ j_message_read(JMessage* message, struct JConnection* connection)
 			"Failed to initiated header receive!");
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait for header receive!");
-	g_print("Header:\n\t");
-	for(unsigned i = 0; i < sizeof(message->header); ++i) { g_print("%02x ", ((uint8_t*)&message->header)[i]); }
-	g_print("\n");
 
 	j_message_ensure_size(message, j_message_length(message));
 
-	EXE(j_connection_recv(connection, j_message_length(message), message->data),
-			"Failed to initiated message body receive!");
-	EXE(j_connection_wait_for_completion(connection),
-			"Failed to wait for message body receive!");
+	if(j_message_length(message) > 0) {
+		EXE(j_connection_recv(connection, j_message_length(message), message->data),
+				"Failed to initiated message body receive!");
+		EXE(j_connection_wait_for_completion(connection),
+				"Failed to wait for message body receive!");
+	}
 
 	message->current = message->data;
 
@@ -790,15 +804,14 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	g_return_val_if_fail(connection != NULL, FALSE);
 
 	g_message("send: msg hedaer: %lu", sizeof(message->header));
-	g_print("Header:\n\t");
-	for(unsigned i = 0; i < sizeof(message->header); ++i) { g_print("%02x ", ((uint8_t*)&message->header)[i]); }
-	g_print("\n");
 	EXE(j_connection_send(connection, &(message->header), sizeof(message->header)),
 			"Failed to initiated sending message header.");
-	EXE(j_connection_send(connection, message->data, j_message_length(message)),
-			"Failed to initiated sending message body.");
+	if(j_message_length(message) > 0) {
+		EXE(j_connection_send(connection, message->data, j_message_length(message)),
+				"Failed to initiated sending message body.");
+	}
 
-	if(message->send_list != NULL) {
+	if(j_list_length(message->send_list)) {
 		EXE(j_connection_recv(connection, sizeof(ack), &ack),
 				"Failed to initiated ACK receive.");
 	}
@@ -806,7 +819,7 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait for completion of message send!");
 
-	if(message->send_list != NULL && ack != J_CONNECTION_ACK) {
+	if(j_list_length(message->send_list) && ack != J_CONNECTION_ACK) {
 		g_warning("Wrong ACK flag received! got: %i, instead of: %i", ack, J_CONNECTION_ACK);
 		goto end;
 	}

@@ -33,7 +33,7 @@ main(int argc, char** argv)
 	g_autoptr(JKV) kv = NULL;
 	g_autoptr(JObject) object = NULL;
 
-	gchar const* hello_world = "Hello World!";
+	gchar const* hello_world = g_strdup("Hello World!");
 	guint64 nbytes;
 
 	(void)argc;
@@ -58,9 +58,10 @@ main(int argc, char** argv)
 	j_kv_put(kv, g_strdup(hello_world), strlen(hello_world) + 1, g_free, batch);
 	j_db_schema_create(schema, batch, NULL);
 	j_db_entry_insert(entry, batch, NULL);
-
+	g_message("start execution!");
 	if (j_batch_execute(batch))
 	{
+		g_message("Execution finished");
 		g_autoptr(JDBIterator) iterator = NULL;
 		g_autoptr(JDBSelector) selector = NULL;
 
@@ -70,19 +71,23 @@ main(int argc, char** argv)
 		g_autofree gchar* db_field = NULL;
 		guint64 db_length = 0;
 
+		g_message("obj read start");
 		j_object_read(object, buffer, 128, 0, &nbytes, batch);
+		g_message("obj read fin");
 
 		if (j_batch_execute(batch))
 		{
-			printf("Object contains: %s (%" G_GUINT64_FORMAT " bytes)\n", buffer, nbytes);
+			g_message("Object contains: %s (%" G_GUINT64_FORMAT " bytes)\n", buffer, nbytes);
 		}
+		g_message("batch fin");
 
 		j_kv_get(kv, &value, &length, batch);
 
 		if (j_batch_execute(batch))
 		{
-			printf("KV contains: %s (%" G_GUINT32_FORMAT " bytes)\n", (gchar*)value, length);
+			g_message("KV contains: %s (%" G_GUINT32_FORMAT " bytes)\n", (gchar*)value, length);
 		}
+		g_message("kv fin");
 
 		selector = j_db_selector_new(schema, J_DB_SELECTOR_MODE_AND, NULL);
 		j_db_selector_add_field(selector, "hello", J_DB_SELECTOR_OPERATOR_EQ, hello_world, strlen(hello_world) + 1, NULL);
@@ -93,7 +98,7 @@ main(int argc, char** argv)
 			JDBType type;
 
 			j_db_iterator_get_field(iterator, "hello", &type, (gpointer*)&db_field, &db_length, NULL);
-			printf("DB contains: %s (%" G_GUINT64_FORMAT " bytes)\n", db_field, db_length);
+			g_message("DB contains: %s (%" G_GUINT64_FORMAT " bytes)\n", db_field, db_length);
 		}
 	}
 

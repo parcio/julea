@@ -348,8 +348,10 @@ gboolean j_message_send(JMessage*, struct JConnection*);
  **/
 gboolean j_message_receive(JMessage*, struct JConnection*);
 /// signal when rma read actions are finished.
-/** Sends ACK flag, to signal that host can free data memory. Also wait for all network actions to coplete!*/
-gboolean j_message_send_ack(JMessage*, struct JConnection*);
+/** Sends ACK flag, to signal that host can free data memory. Also wait for all network actions to coplete!
+ *	@param message checks if message has memory regions, only then sends ack. Can be NULL to force ack sending
+ */
+gboolean j_message_send_ack(JMessage* message, struct JConnection*);
 
 /**
  * Reads a message from the network.
