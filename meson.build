@@ -679,9 +679,15 @@ executable('julea-cli', julea_cli_srcs,
 	install: true,
 )
 
-executable('julea-config', 'tools/config.c',
+julea_config_srcs = files([
+  'lib/core/jcredentials.c',
+  'lib/core/jtrace.c',
+  'tools/config.c',
+])
+executable('julea-config', julea_config_srcs,
 	dependencies: common_deps,
 	include_directories: julea_incs,
+	c_args: ['-DJULEA_COMPILATION'],
 	install: true,
 )
 
