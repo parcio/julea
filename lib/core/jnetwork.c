@@ -483,6 +483,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 		size +=
 			  (rx_prefix * prefix_size) + J_CONNECTION_MAX_RECV * op_size
 			+ (tx_prefix * prefix_size) + J_CONNECTION_MAX_SEND * op_size;
+		this->memory.used = 0;
 		this->memory.buffer_size = size;
 		this->memory.buffer = malloc(size);
 		this->memory.rx_prefix_size = rx_prefix * prefix_size;
@@ -682,6 +683,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 	// g_message("fin waiting");
 
 	this->running_actions.len = 0;
+	this->memory.used = 0;
 	ret = TRUE;
 end:
 	return ret;
