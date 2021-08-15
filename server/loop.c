@@ -301,8 +301,7 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 				g_assert(buf != NULL);
 
 				j_connection_rma_read(connection, memoryID, buf);
-				// TODO: pararlleize
-				j_connection_wait_for_completion(connection);
+				j_connection_wait_for_completion(connection); ///< \todo pararlleize
 				// g_message("rma read message: %s", buf);
 				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, memoryID->size);
 				// CONTINUE

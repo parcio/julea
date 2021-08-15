@@ -365,21 +365,19 @@ j_distributed_object_read_background_operation(gpointer data)
 			gchar* read_data = buffer->data;
 			guint64* bytes_read = buffer->bytes_read;
 
-			guint64 nbytes;
+			const struct JConnectionMemoryID* memoryID;
 
-			nbytes = j_message_get_8(reply);
-			j_helper_atomic_add(bytes_read, nbytes);
+			memoryID = j_message_get_memory_id(reply);
+			j_helper_atomic_add(bytes_read, memoryID->size);
 
-			if (nbytes > 0)
+			if (memoryID->size > 0)
 			{
-				GInputStream* input;
-
-				input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
-				g_input_stream_read_all(input, read_data, nbytes, NULL, NULL, NULL);
+				j_connection_rma_read(object_connection, memoryID, read_data);
 			}
 
 			g_slice_free(JDistributedObjectReadBuffer, buffer);
 		}
+		j_message_send_ack(reply, object_connection);
 
 		operations_done += reply_operation_count;
 	}

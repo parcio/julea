@@ -288,7 +288,7 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	server = j_configuration_get_server(configuration, backend, index);
 	g_connection = g_socket_client_connect_to_host(g_client,
 			"10.0.10.1",
-			4711, NULL, &error);
+			4711, NULL, &error); ///< \todo: !!!! read from config
 	G_CHECK("Failed to build gsocket connection to host");
 	if(g_connection == NULL) {
 		g_warning("Can not connect to %s.", server);
@@ -610,6 +610,7 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	int res;
 	void* segment;
 	size_t size;
+
 	segment = (char*)this->memory.buffer + this->memory.used;
 	size = data_len + this->memory.rx_prefix_size;
 	res = fi_recv(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
@@ -741,7 +742,7 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 	res = fi_mr_reg(this->domain, data, memoryID->size,
 			FI_READ, 0, 0, 0, &mr, 0);
 	CHECK("Failed to register receiving memory!");
-	// g_message("try to read: %lu, %lu", memoryID->offset, memoryID->key);
+
 	res = fi_read(this->ep,
 			data,
 			memoryID->size,

@@ -389,6 +389,7 @@ j_connection_recv(struct JConnection* instance,
  *
  * Initiate an direct memory read, to wait for completion use j_connection_wait_for_completion().
  * \retval FALSE if an error occurred -> handle will then also invalid
+ * \todo evaluate if paralisation possible
  */
 gboolean
 j_connection_rma_read(struct JConnection* instance,

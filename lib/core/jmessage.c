@@ -628,10 +628,11 @@ j_message_get_memory_id(JMessage* message)
 	J_TRACE_FUNCTION(NULL);
 
 	const struct JConnectionMemoryID* ret;
+	guint64 padding;
 
 	g_return_val_if_fail(message != NULL, NULL);
 
-	guint64 padding = (guint64)message->current % 8;
+	padding = (guint64)message->current % 8;
 
 	// g_message("read mem id: %lu", (message->current + padding) - message->data);
 	ret = (const void*)(message->current + padding);
@@ -654,7 +655,6 @@ j_message_receive(JMessage* message, struct JConnection* connection)
 gboolean
 j_message_send_ack(JMessage* message, struct JConnection* connection)
 {
-	// g_message("ACK call");
 	const JConnectionAck ack = J_CONNECTION_ACK;
 	
 	// No data where send -> no need to acknowledge
@@ -719,9 +719,14 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 			EXE(j_connection_memory_get_id(memory_itr, &mem_id),
 					"Failed to get memory it!");
-			if(message_data->header != NULL) {
-				EXE(j_message_append_n(message, message_data->header, message_data->header_size),
-						"Failed to append header");
+			if(message_data->header_size > 0) {
+				if(message_data->header_size <= sizeof(message_data->header)) {
+					EXE(j_message_append_n(message, &message_data->header, message_data->header_size),
+							"Failed to append header");
+				} else {
+					EXE(j_message_append_n(message, message_data->header, message_data->header_size),
+							"Failed to append header");
+				}
 			}
 			EXE(j_message_append_memory_id(message, &mem_id),
 					"Failed to append memory id to message!");
@@ -797,7 +802,6 @@ j_message_write(JMessage* message, struct JConnection* connection)
 
 	gboolean ret = FALSE;
 
-	GError* error = NULL;
 	JConnectionAck ack;
 
 	g_return_val_if_fail(message != NULL, FALSE);
@@ -827,11 +831,6 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	ret = TRUE;
 
 end:
-	if (error != NULL)
-	{
-		g_critical("%s", error->message);
-		g_error_free(error);
-	}
 	return ret;
 }
 
@@ -849,8 +848,16 @@ j_message_add_send(JMessage* message, gconstpointer data, guint64 length, void* 
 	message_data = g_slice_new(JMessageData);
 	message_data->data = data;
 	message_data->length = length;
-	message_data->header = header;
-	message_data->header_size = h_size;
+	if(h_size == 0) {
+		message_data->header = NULL;
+		message_data->header_size = 0;
+	} else if(h_size <= sizeof(message_data->header)) {
+		memcpy(&message_data->header, header, h_size);
+		message_data->header_size = h_size;
+	} else {
+		message_data->header = header;
+		message_data->header_size = h_size;
+	}
 
 	j_list_append(message->send_list, message_data);
 }
