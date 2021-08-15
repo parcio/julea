@@ -573,11 +573,11 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 
 	// we used paired endponits -> inject and send don't need destination addr (last parameter)
 
-	/*if(data_len < this->inject_size) {
+	if(data_len < this->inject_size) {
 		do { res = fi_inject(this->ep, data, data_len, 0); } while(res == -FI_EAGAIN);
 		CHECK("Failed to inject data!");
 		ret = TRUE; goto end;
-	}*/
+	}
 
 	// normal send
 	segment = (uint8_t*)this->memory.buffer + this->memory.used;
