@@ -265,7 +265,6 @@ end:
 	return ret;
 }
 
-/** \todo Port is a magic number ! 4711 */
 gboolean
 j_connection_init_client(struct JConfiguration* configuration, enum JBackendType backend, guint index, struct JConnection** instance_ptr)
 {
@@ -287,8 +286,8 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	g_client = g_socket_client_new();
 	server = j_configuration_get_server(configuration, backend, index);
 	g_connection = g_socket_client_connect_to_host(g_client,
-			"10.0.10.1",
-			4711, NULL, &error); ///< \todo: !!!! read from config
+			server,
+			j_configuration_get_port(configuration), NULL, &error);
 	G_CHECK("Failed to build gsocket connection to host");
 	if(g_connection == NULL) {
 		g_warning("Can not connect to %s.", server);
