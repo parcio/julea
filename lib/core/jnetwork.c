@@ -181,12 +181,10 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	this->config = configuration;
 	this->con_side = JF_CLIENT;
 
-	hints = j_configuration_get_libfabric_hints(configuration);
-	/// \todo check if verbs works without this!
-	// Causes invalid state for tcp connection
-	// hints->addr_format = addr->addr_format;
-	// hints->dest_addr = addr->addr;
-	// hints->dest_addrlen = addr->addr_len;
+	hints = fi_dupinfo(j_configuration_get_libfabric_hints(configuration));
+	hints->addr_format = addr->addr_format;
+	hints->dest_addr = addr->addr;
+	hints->dest_addrlen = addr->addr_len;
 
 	res = fi_getinfo(
 			j_configuration_get_libfabric_version(configuration),
@@ -200,6 +198,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 
 	ret = TRUE;
 end:
+	// fi_freeinfo(hints);
 	return ret;
 }
 
@@ -711,8 +710,7 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 			FI_REMOTE_READ,
 			0, this->next_key, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
-	/// \todo tcp/verbs why?
-	handle->addr = 0; // (guint64)data;
+	handle->addr = (this->info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ) ? (guint64)data : 0;
 	handle->size = data_len;
 	this->next_key += 1;
 
@@ -725,7 +723,7 @@ gboolean
 j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* handle)
 {
 	int res;
-	this->next_key = 0; /// \todo ensure that this works! (breaks one incremental freeing and realloc)
+	this->next_key = 0; /// \todo may just count key to overflow? (max value is stored in domain_attr)
 	res = fi_close(&handle->memory_region->fid);
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
