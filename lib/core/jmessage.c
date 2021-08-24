@@ -511,7 +511,6 @@ j_message_append_n(JMessage* message, gconstpointer data, gsize length)
 gboolean
 j_message_append_memory_id(JMessage* message, const struct JConnectionMemoryID* id)
 {
-	// g_message("ID size: %lu", id->size);
 	J_TRACE_FUNCTION(NULL);
 
 	guint32 new_length;
@@ -634,7 +633,6 @@ j_message_get_memory_id(JMessage* message)
 
 	padding = (guint64)message->current % 8;
 
-	// g_message("read mem id: %lu", (message->current + padding) - message->data);
 	ret = (const void*)(message->current + padding);
 	message->current += sizeof(*ret) + padding;
 
@@ -656,11 +654,9 @@ gboolean
 j_message_send_ack(JMessage* message, struct JConnection* connection)
 {
 	const JConnectionAck ack = J_CONNECTION_ACK;
-	g_message("send ACK!");
 	
 	// No data where send -> no need to acknowledge
 	if(message != NULL && j_message_get_count(message) == 0) { return TRUE; }
-	// g_message("send ack");
 	EXE(j_connection_wait_for_completion(connection),
 			"Failed to wait to finishe all operations before sending ack!");
 	EXE(j_connection_send(connection, &ack, sizeof(ack)),
@@ -811,7 +807,6 @@ j_message_write(JMessage* message, struct JConnection* connection)
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
 
-	// g_message("send: msg hedaer: %lu", sizeof(message->header));
 	EXE(j_connection_send(connection, &(message->header), sizeof(message->header)),
 			"Failed to initiated sending message header.");
 	if(j_message_length(message) > 0) {
