@@ -399,10 +399,16 @@ j_connection_rma_read(struct JConnection* instance,
 
 /// Wait until operations initiated at his connection finished.
 /** \public \memberof JConnection 
+ * \retval FALSE if waiting finished. This may occures because the connection was closed: check this with: j_connection_active()
  * \sa j_connection_rma_read, j_connection_send, j_connection_recv
  */
 gboolean
 j_connection_wait_for_completion(struct JConnection* instance);
+
+/// Check if the connection was closed from the other party.
+/** \sa j_connection_wait_for_completion */
+gboolean
+j_connection_closed(struct JConnection* this);
 
 /// Register memory to make it rma readable.
 /** \public \memberof JConnection

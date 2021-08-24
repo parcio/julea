@@ -87,6 +87,8 @@ jd_on_run(GThreadedSocketService* service, GSocketConnection* gconnection, GObje
 		jd_handle_message(message, jconnection, memory_chunk, memory_chunk_size, statistics);
 	}
 
+	j_connection_fini(jconnection);
+
 	{
 		guint64 value;
 

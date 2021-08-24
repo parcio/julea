@@ -762,11 +762,14 @@ j_message_read(JMessage* message, struct JConnection* connection)
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
-	// g_message("read: msg hedaer: %lu", sizeof(message->header));
+
 	EXE(j_connection_recv(connection, sizeof(message->header), &(message->header)),
 			"Failed to initiated header receive!");
-	EXE(j_connection_wait_for_completion(connection),
+	if(!j_connection_wait_for_completion(connection)) {
+		EXE(j_connection_closed(connection),
 			"Failed to wait for header receive!");
+		goto end;
+	}
 
 	j_message_ensure_size(message, j_message_length(message));
 

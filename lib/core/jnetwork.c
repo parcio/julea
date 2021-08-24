@@ -84,6 +84,8 @@ struct JConnection {
 		} entry[J_CONNECTION_MAX_RECV + J_CONNECTION_MAX_SEND];
 		int len;
 	} running_actions;
+	guint addr_offset;
+	gboolean closed;
 };
 
 struct JConnectionMemory {
@@ -181,7 +183,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	this->config = configuration;
 	this->con_side = JF_CLIENT;
 
-	hints = fi_dupinfo(j_configuration_get_libfabric_hints(configuration));
+	hints = j_configuration_get_libfabric_hints(configuration);
 	/// \todo check if verbs works without this!
 	// Causes invalid state for tcp connection
 	// hints->addr_format = addr->addr_format;
@@ -199,9 +201,7 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	CHECK("failed to initelize client fabric!");
 
 	ret = TRUE;
-	// g_message("initelize client!");
 end:
-	fi_freeinfo(hints);
 	return ret;
 }
 
@@ -332,7 +332,8 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 
 	ret = TRUE;
 end:
-	/// FIXME memory leak on error in addr.addr
+	/// \todo memory leak on error in addr.addr
+	free(jf_addr.addr);
 	return ret;
 }
 
@@ -446,6 +447,8 @@ j_connection_init(struct JConnection* this)
 	res = fi_enable(this->ep);
 	CHECK("Failed to enable connection!");
 
+	this->closed = FALSE;
+
 	ret = TRUE;
 	// g_message("enabled endpoint!");
 end:
@@ -479,7 +482,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 		size +=
 			  (rx_prefix * prefix_size) + J_CONNECTION_MAX_RECV * op_size
 			+ (tx_prefix * prefix_size) + J_CONNECTION_MAX_SEND * op_size;
-		this->memory.active = true;
+		this->memory.active = TRUE;
 		this->memory.used = 0;
 		this->memory.buffer_size = size;
 		this->memory.buffer = malloc(size);
@@ -488,7 +491,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 		res = fi_mr_reg(this->domain, this->memory.buffer, this->memory.buffer_size,
 				FI_SEND | FI_RECV, 0, 0, 0, &this->memory.mr, NULL);
 		CHECK("Failed to register memory for msg communication!");
-	} else { this->memory.active = false; }
+	} else { this->memory.active = FALSE; }
 
 	ret = TRUE;
 end:
@@ -645,6 +648,12 @@ end:
 }
 
 gboolean
+j_connection_closed(struct JConnection* this)
+{
+	return this->closed;
+}
+
+gboolean
 j_connection_wait_for_completion(struct JConnection* this)
 {
 	gboolean ret = FALSE;
@@ -656,15 +665,18 @@ j_connection_wait_for_completion(struct JConnection* this)
 	while(this->running_actions.len) {
 		bool rx;
 		do {
-			rx = true;
+			rx = TRUE;
 			res = fi_cq_sread(this->cq.rx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
 			if(res == -FI_EAGAIN) {
-				rx = false;
+				rx = FALSE;
 				res = fi_cq_sread(this->cq.tx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
 			}
 		} while (res == -FI_EAGAIN);
 		/// \todo error message fetch!
 		if(res == -FI_EAVAIL) {
+			enum JConnectionEvents event;
+			j_connection_sread_event(this, 0, &event);
+			if(event == J_CONNECTION_EVENT_SHUTDOWN) { this->closed = TRUE; goto end; }
 			struct fi_cq_err_entry err_entry;
 			res = fi_cq_readerr(rx ? this->cq.rx : this->cq.tx,
 					&err_entry, 0);
@@ -703,7 +715,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 end:
 	return ret;
 }
-int offset = 0;
+
 gboolean
 j_connection_rma_register(struct JConnection* this, const void* data, size_t data_len, struct JConnectionMemory* handle)
 {
@@ -717,9 +729,9 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 			0, 0, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
 	/// \todo tcp/verbs why?
-	handle->addr = offset; // (guint64)data;
+	handle->addr = this->addr_offset; // (guint64)data;
 	handle->size = data_len;
-	offset += handle->size;
+	this->addr_offset += handle->size;
 
 	ret = TRUE;
 end:
@@ -730,9 +742,8 @@ gboolean
 j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* handle)
 {
 	int res;
-	// g_message("close memory start");
+	this->addr_offset = 0; /// \todo ensure that this works! (breaks one incremental freeing and realloc)
 	res = fi_close(&handle->memory_region->fid);
-	// g_message("close memory fin");
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
 end:
@@ -780,7 +791,36 @@ end:
 }
 
 gboolean
-j_connection_fini ( struct JConnection* instance) {
-	// TODO: implement!
-	return TRUE;
+j_connection_fini ( struct JConnection* this) {
+	int res;
+	gboolean ret = FALSE;
+
+	res = fi_shutdown(this->ep, 0);
+	CHECK("failed to send shutdown signal");
+
+	if(this->memory.active)	 {
+		res = fi_close(&this->memory.mr->fid);
+		CHECK("failed to free memory region!");
+		free(this->memory.buffer);
+	}
+
+	res = fi_close(&this->ep->fid);
+	CHECK("failed to close endpoint!");
+	res = fi_close(&this->cq.tx->fid);
+	CHECK("failed to close tx cq!");
+	res = fi_close(&this->cq.rx->fid);
+	CHECK("failed to close rx cq!");
+	res = fi_close(&this->eq->fid);
+	CHECK("failed to close event queue!");
+	res = fi_close(&this->domain->fid);
+	CHECK("failed to close domain!");
+
+	if(this->fabric->con_side == JF_CLIENT) {
+		j_fabric_fini(this->fabric);
+	}
+
+	free(this);
+	ret = TRUE;
+end:
+	return ret; 
 }
