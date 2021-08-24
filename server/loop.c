@@ -300,8 +300,16 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 				buf = j_memory_chunk_get(memory_chunk, memoryID->size);
 				g_assert(buf != NULL);
 
+				g_message("start rma read!");
 				j_connection_rma_read(connection, memoryID, buf);
+				g_message("start waiting!");
 				j_connection_wait_for_completion(connection); ///< \todo pararlleize
+				g_message("fin rma read!");
+				g_print("data: ");
+				for(guint64 j = 0; j < memoryID->size; ++j) {
+					g_print("%x ", buf[j]);
+				}
+				g_print("\n");
 				// g_message("rma read message: %s", buf);
 				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, memoryID->size);
 				// CONTINUE

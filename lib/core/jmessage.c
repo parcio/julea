@@ -656,6 +656,7 @@ gboolean
 j_message_send_ack(JMessage* message, struct JConnection* connection)
 {
 	const JConnectionAck ack = J_CONNECTION_ACK;
+	g_message("send ACK!");
 	
 	// No data where send -> no need to acknowledge
 	if(message != NULL && j_message_get_count(message) == 0) { return TRUE; }

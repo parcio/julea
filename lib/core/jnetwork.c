@@ -67,6 +67,7 @@ struct JConnection {
 	} cq;
 	size_t inject_size;
 	struct {
+		gboolean active;
 		struct fid_mr* mr;
 		void* buffer;
 		size_t used;
@@ -122,7 +123,7 @@ j_fabric_init_server(struct JConfiguration* configuration, struct JFabric** inst
 
 	res = fi_getinfo(
 			j_configuration_get_libfabric_version(this->config),
-			NULL, NULL, FI_SOURCE,
+			NULL, NULL, 0,
 			j_configuration_get_libfabric_hints(this->config),
 			&this->info);
 	CHECK("Failed to find fabric for server!");
@@ -181,9 +182,11 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	this->con_side = JF_CLIENT;
 
 	hints = fi_dupinfo(j_configuration_get_libfabric_hints(configuration));
-	hints->addr_format = addr->addr_format;
-	hints->dest_addr = addr->addr;
-	hints->dest_addrlen = addr->addr_len;
+	/// \todo check if verbs works without this!
+	// Causes invalid state for tcp connection
+	// hints->addr_format = addr->addr_format;
+	// hints->dest_addr = addr->addr;
+	// hints->dest_addrlen = addr->addr_len;
 
 	res = fi_getinfo(
 			j_configuration_get_libfabric_version(configuration),
@@ -476,6 +479,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 		size +=
 			  (rx_prefix * prefix_size) + J_CONNECTION_MAX_RECV * op_size
 			+ (tx_prefix * prefix_size) + J_CONNECTION_MAX_SEND * op_size;
+		this->memory.active = true;
 		this->memory.used = 0;
 		this->memory.buffer_size = size;
 		this->memory.buffer = malloc(size);
@@ -484,7 +488,7 @@ j_connection_create_memory_resources(struct JConnection* this)
 		res = fi_mr_reg(this->domain, this->memory.buffer, this->memory.buffer_size,
 				FI_SEND | FI_RECV, 0, 0, 0, &this->memory.mr, NULL);
 		CHECK("Failed to register memory for msg communication!");
-	} else { g_message("NO MEM!"); }
+	} else { this->memory.active = false; }
 
 	ret = TRUE;
 end:
@@ -529,6 +533,7 @@ end:
 	return ret;
 }
 
+/// \todo check usage and maybe merge with j_connection_read_event()
 gboolean
 j_connection_read_event(struct JConnection* this, enum JConnectionEvents* event)
 {
@@ -573,18 +578,26 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 	}
 
 	// normal send
-	segment = (uint8_t*)this->memory.buffer + this->memory.used;
-	memcpy(segment + this->memory.tx_prefix_size,
-			data, data_len);
-	size = data_len + this->memory.tx_prefix_size;
-	do{ 
-		// g_message("send: prefix: %lu, size: %lu", this->memory.tx_prefix_size, size);
-		res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
-	} while(res == -FI_EAGAIN);
-	CHECK("Failed to initelize sending!");
-	this->memory.used += size;
-	g_assert_true(this->memory.used <= this->memory.buffer_size);
-	g_assert_true(this->running_actions.len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+	if (this->memory.active) {
+		segment = (uint8_t*)this->memory.buffer + this->memory.used;
+		memcpy(segment + this->memory.tx_prefix_size,
+				data, data_len);
+		size = data_len + this->memory.tx_prefix_size;
+		do{ 
+			// g_message("send: prefix: %lu, size: %lu", this->memory.tx_prefix_size, size);
+			res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
+		} while(res == -FI_EAGAIN);
+		CHECK("Failed to initelize sending!");
+		this->memory.used += size;
+		g_assert_true(this->memory.used <= this->memory.buffer_size);
+		g_assert_true(this->running_actions.len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+	} else {
+		segment = (uint8_t*)data;
+		size = data_len;
+		do{
+			res = fi_send(this->ep, segment, size, NULL, 0, segment);
+		} while(res == -FI_EAGAIN);
+	}
 	this->running_actions.entry[this->running_actions.len].context = segment;
 	this->running_actions.entry[this->running_actions.len].dest = NULL;
 	this->running_actions.entry[this->running_actions.len].len = 0;
@@ -604,19 +617,27 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	void* segment;
 	size_t size;
 
-	segment = (char*)this->memory.buffer + this->memory.used;
+	segment = this->memory.active ? (char*)this->memory.buffer + this->memory.used : data;
 	size = data_len + this->memory.rx_prefix_size;
-	res = fi_recv(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
-	// g_message("receive: prefix: %lu, size: %lu", this->memory.rx_prefix_size, size);
+	res = fi_recv(this->ep, segment, size,
+			this->memory.active ? fi_mr_desc(this->memory.mr) : NULL,
+			0, segment);
 	CHECK("Failed to initelized receiving!");
-	this->memory.used += size;
-	// g_message("memory useag: %lu/%lu", this->memory.used, this->memory.buffer_size);
-	g_assert_true(this->memory.used <= this->memory.buffer_size);
-	g_assert_true(this->running_actions.len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
-	this->running_actions.entry[this->running_actions.len].context = segment;
-	this->running_actions.entry[this->running_actions.len].dest = data;
-	this->running_actions.entry[this->running_actions.len].len = data_len;
-	this->running_actions.entry[this->running_actions.len].mr = NULL;
+
+	if (this->memory.active) {
+		this->memory.used += size;
+		g_assert_true(this->memory.used <= this->memory.buffer_size);
+		g_assert_true(this->running_actions.len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+		this->running_actions.entry[this->running_actions.len].context = segment;
+		this->running_actions.entry[this->running_actions.len].dest = data;
+		this->running_actions.entry[this->running_actions.len].len = data_len;
+		this->running_actions.entry[this->running_actions.len].mr = NULL;
+	} else {
+		this->running_actions.entry[this->running_actions.len].context = segment;
+		this->running_actions.entry[this->running_actions.len].dest = NULL;
+		this->running_actions.entry[this->running_actions.len].len = 0;
+		this->running_actions.entry[this->running_actions.len].mr = NULL;
+	}
 	++this->running_actions.len;
 	ret = TRUE;
 end:
@@ -682,7 +703,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 end:
 	return ret;
 }
-
+int offset = 0;
 gboolean
 j_connection_rma_register(struct JConnection* this, const void* data, size_t data_len, struct JConnectionMemory* handle)
 {
@@ -695,8 +716,10 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 			FI_REMOTE_READ,
 			0, 0, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
-	handle->addr = (guint64)data;
+	/// \todo tcp/verbs why?
+	handle->addr = offset; // (guint64)data;
 	handle->size = data_len;
+	offset += handle->size;
 
 	ret = TRUE;
 end:
