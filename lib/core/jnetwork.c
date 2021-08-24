@@ -84,7 +84,7 @@ struct JConnection {
 		} entry[J_CONNECTION_MAX_RECV + J_CONNECTION_MAX_SEND];
 		int len;
 	} running_actions;
-	guint addr_offset;
+	guint next_key;
 	gboolean closed;
 };
 
@@ -709,12 +709,12 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 			data,
 			data_len,
 			FI_REMOTE_READ,
-			0, this->addr_offset, 0, &handle->memory_region, NULL);
+			0, this->next_key, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
 	/// \todo tcp/verbs why?
-	handle->addr = this->addr_offset; // (guint64)data;
+	handle->addr = 0; // (guint64)data;
 	handle->size = data_len;
-	this->addr_offset += handle->size;
+	this->next_key += 1;
 
 	ret = TRUE;
 end:
@@ -725,7 +725,7 @@ gboolean
 j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* handle)
 {
 	int res;
-	this->addr_offset = 0; /// \todo ensure that this works! (breaks one incremental freeing and realloc)
+	this->next_key = 0; /// \todo ensure that this works! (breaks one incremental freeing and realloc)
 	res = fi_close(&handle->memory_region->fid);
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
@@ -758,7 +758,7 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 			memoryID->size,
 			fi_mr_desc(mr),
 			0,
-			0, // memoryID->offset,
+			memoryID->offset,
 			memoryID->key,
 			data);
 	CHECK("Failed to initate reading");
