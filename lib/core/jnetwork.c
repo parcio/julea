@@ -726,7 +726,7 @@ j_connection_rma_register(struct JConnection* this, const void* data, size_t dat
 			data,
 			data_len,
 			FI_REMOTE_READ,
-			0, 0, 0, &handle->memory_region, NULL);
+			0, this->addr_offset, 0, &handle->memory_region, NULL);
 	CHECK("Failed to register memory region!");
 	/// \todo tcp/verbs why?
 	handle->addr = this->addr_offset; // (guint64)data;
@@ -775,7 +775,7 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 			memoryID->size,
 			fi_mr_desc(mr),
 			0,
-			memoryID->offset,
+			0, // memoryID->offset,
 			memoryID->key,
 			data);
 	CHECK("Failed to initate reading");
