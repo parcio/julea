@@ -184,13 +184,6 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	hints->addr_format = addr->addr_format;
 	hints->dest_addr = addr->addr;
 	hints->dest_addrlen = addr->addr_len;
-	{ // DEBUG TODO
-		char* str = malloc(hints->dest_addrlen * 3 + 1);
-		size_t i;
-		for(i = 0; i < hints->dest_addrlen; ++i) { snprintf(str+i*3, 4, "%02x ", ((uint8_t*)hints->dest_addr)[i]); }
-		// g_message("Addr: format: %u, len: %lu\n\t%s", hints->addr_format, hints->dest_addrlen, str);
-		free(str);
-	}	
 
 	res = fi_getinfo(
 			j_configuration_get_libfabric_version(configuration),
@@ -251,6 +244,7 @@ j_fabric_sread_event(struct JFabric* this, int timeout, enum JFabricEvents* even
 		ret = TRUE; goto end;
 	} else if (res == -FI_EAVAIL) {
 		*event = J_FABRIC_EVENT_ERROR;
+		g_warning("error");
 		// TODO: fetch error!
 		ret = TRUE; goto end;
 	}
