@@ -36,6 +36,9 @@ main(int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
+	// failing assertions will not abort all coming tests but call g_test_fail and continue
+	g_test_set_nonfatal_assertions();
+
 	// Core
 	test_core_background_operation();
 	test_core_batch();

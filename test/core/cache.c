@@ -29,17 +29,20 @@
 static void
 test_cache_new_free(void)
 {
+	J_TEST_TRAP_START
 	JCache* cache;
 
 	cache = j_cache_new(42);
 	g_assert_true(cache != NULL);
 
 	j_cache_free(cache);
+	J_TEST_TRAP_END
 }
 
 static void
 test_cache_get(void)
 {
+	J_TEST_TRAP_START
 	JCache* cache;
 	gpointer ret;
 
@@ -55,11 +58,13 @@ test_cache_get(void)
 	g_assert_true(ret == NULL);
 
 	j_cache_free(cache);
+	J_TEST_TRAP_END
 }
 
 static void
 test_cache_release(void)
 {
+	J_TEST_TRAP_START
 	JCache* cache;
 	gpointer ret1;
 	gpointer ret2;
@@ -79,6 +84,7 @@ test_cache_release(void)
 	g_assert_true(ret2 == NULL);
 
 	j_cache_free(cache);
+	J_TEST_TRAP_END
 }
 
 void
