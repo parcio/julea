@@ -29,6 +29,7 @@
 static void
 test_configuration_new_ref_unref(void)
 {
+	J_TEST_TRAP_START
 	JConfiguration* configuration;
 
 	configuration = j_configuration_new();
@@ -36,11 +37,13 @@ test_configuration_new_ref_unref(void)
 	j_configuration_ref(configuration);
 	j_configuration_unref(configuration);
 	j_configuration_unref(configuration);
+	J_TEST_TRAP_END
 }
 
 static void
 test_configuration_new_for_data(void)
 {
+	J_TEST_TRAP_START
 	JConfiguration* configuration;
 	GKeyFile* key_file;
 	gchar const* servers[] = { "localhost", NULL };
@@ -64,11 +67,13 @@ test_configuration_new_for_data(void)
 	j_configuration_unref(configuration);
 
 	g_key_file_free(key_file);
+	J_TEST_TRAP_END
 }
 
 static void
 test_configuration_get(void)
 {
+	J_TEST_TRAP_START
 	JConfiguration* configuration;
 	GKeyFile* key_file;
 	gchar const* object_servers[] = { "localhost", "local.host", NULL };
@@ -118,6 +123,7 @@ test_configuration_get(void)
 	j_configuration_unref(configuration);
 
 	g_key_file_free(key_file);
+	J_TEST_TRAP_END
 }
 
 void

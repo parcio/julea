@@ -49,6 +49,7 @@ generate_test_schema(gchar const* name)
 static void
 test_db_selector_add_field(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
 	g_autoptr(JDBSelector) selector = NULL;
 	g_autoptr(GError) error = NULL;
@@ -69,11 +70,13 @@ test_db_selector_add_field(void)
 		if (g_test_failed())
 			return;
 	}
+	J_TEST_TRAP_END
 }
 
 static void
 test_db_selector_add_non_existant_field(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
 	g_autoptr(JDBSelector) selector = NULL;
 	g_autoptr(GError) error = NULL;
@@ -87,11 +90,13 @@ test_db_selector_add_non_existant_field(void)
 	ret = j_db_selector_add_field(selector, "field_100", J_DB_SELECTOR_OPERATOR_GT, val, sizeof(val), &error);
 	g_assert_false(ret);
 	g_assert_nonnull(error);
+	J_TEST_TRAP_END
 }
 
 static void
 test_db_selector_add_selector(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JDBSchema) schema = generate_test_schema("selector-test");
 	g_autoptr(JDBSelector) selector1 = NULL;
 	g_autoptr(JDBSelector) selector2 = NULL;
@@ -131,6 +136,7 @@ test_db_selector_add_selector(void)
 	ret = j_db_selector_add_selector(selector1, selector2, &error);
 	g_assert_true(ret);
 	g_assert_no_error(error);
+	J_TEST_TRAP_END
 }
 
 void

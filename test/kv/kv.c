@@ -28,6 +28,7 @@
 static void
 test_kv_new_free(void)
 {
+	J_TEST_TRAP_START
 	guint const n = 1000;
 
 	guint32 server_count;
@@ -49,11 +50,13 @@ test_kv_new_free(void)
 		kv = j_kv_new_for_index(i, "test", "test-kv-new-free-index");
 		g_assert_nonnull(kv);
 	}
+	J_TEST_TRAP_END
 }
 
 static void
 test_kv_ref_unref(void)
 {
+	J_TEST_TRAP_START
 	guint const n = 1000;
 
 	g_autoptr(JKV) kv = NULL;
@@ -69,11 +72,13 @@ test_kv_ref_unref(void)
 		g_assert_true(kv == ref_kv);
 		j_kv_unref(kv);
 	}
+	J_TEST_TRAP_END
 }
 
 static void
 test_kv_put_delete(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* value = NULL;
@@ -96,12 +101,14 @@ test_kv_put_delete(void)
 	
 	/// \todo this should return FALSE
 	g_assert_false(ret);
+	J_TEST_TRAP_END
 	g_test_incomplete("Known issue. See #116");
 }
 
 static void
 test_kv_put_update(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* get_value;
@@ -127,11 +134,13 @@ test_kv_put_update(void)
 
 	g_assert_cmpstr(get_value, ==, value2);
 	g_assert_cmpuint(get_len, ==, strlen(value2) + 1);
+	J_TEST_TRAP_END
 }
 
 static void
 test_kv_get(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* get_value = NULL;
@@ -166,6 +175,7 @@ test_kv_get(void)
 	j_kv_delete(kv, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	J_TEST_TRAP_END
 }
 
 static guint num_callbacks = 0;
@@ -185,6 +195,7 @@ get_callback(gpointer value, guint32 length, gpointer data)
 static void
 test_kv_get_callback(void)
 {
+	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* value = NULL;
@@ -213,6 +224,7 @@ test_kv_get_callback(void)
 	g_assert_true(ret);
 
 	g_assert_cmpuint(num_callbacks, ==, 1);
+	J_TEST_TRAP_END
 }
 
 void

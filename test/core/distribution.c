@@ -198,19 +198,25 @@ test_distribution_distribute(JDistributionType type, JConfiguration** configurat
 static void
 test_distribution_round_robin(JConfiguration** configuration, gconstpointer data)
 {
+	J_TEST_TRAP_START
 	test_distribution_distribute(J_DISTRIBUTION_ROUND_ROBIN, configuration, data);
+	J_TEST_TRAP_END
 }
 
 static void
 test_distribution_single_server(JConfiguration** configuration, gconstpointer data)
 {
+	J_TEST_TRAP_START
 	test_distribution_distribute(J_DISTRIBUTION_SINGLE_SERVER, configuration, data);
+	J_TEST_TRAP_END
 }
 
 static void
 test_distribution_weighted(JConfiguration** configuration, gconstpointer data)
 {
+	J_TEST_TRAP_START
 	test_distribution_distribute(J_DISTRIBUTION_WEIGHTED, configuration, data);
+	J_TEST_TRAP_END
 }
 
 void
