@@ -29,25 +29,25 @@
 static void
 test_configuration_new_ref_unref(void)
 {
-	J_TEST_TRAP_START
 	JConfiguration* configuration;
 
+	J_TEST_TRAP_START;
 	configuration = j_configuration_new();
 	g_assert_true(configuration != NULL);
 	j_configuration_ref(configuration);
 	j_configuration_unref(configuration);
 	j_configuration_unref(configuration);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_configuration_new_for_data(void)
 {
-	J_TEST_TRAP_START
 	JConfiguration* configuration;
 	GKeyFile* key_file;
 	gchar const* servers[] = { "localhost", NULL };
 
+	J_TEST_TRAP_START;
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "object", servers, 1);
 	g_key_file_set_string_list(key_file, "servers", "kv", servers, 1);
@@ -67,19 +67,19 @@ test_configuration_new_for_data(void)
 	j_configuration_unref(configuration);
 
 	g_key_file_free(key_file);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_configuration_get(void)
 {
-	J_TEST_TRAP_START
 	JConfiguration* configuration;
 	GKeyFile* key_file;
 	gchar const* object_servers[] = { "localhost", "local.host", NULL };
 	gchar const* kv_servers[] = { "localhost", NULL };
 	gchar const* db_servers[] = { "localhost", "host.local", NULL };
 
+	J_TEST_TRAP_START;
 	key_file = g_key_file_new();
 	g_key_file_set_string_list(key_file, "servers", "object", object_servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "kv", kv_servers, 1);
@@ -123,7 +123,7 @@ test_configuration_get(void)
 	j_configuration_unref(configuration);
 
 	g_key_file_free(key_file);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

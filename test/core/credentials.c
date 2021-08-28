@@ -30,9 +30,9 @@
 static void
 test_credentials_new_ref_unref(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 1000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JCredentials) credentials = NULL;
@@ -43,36 +43,36 @@ test_credentials_new_ref_unref(void)
 		g_assert_nonnull(credentials);
 		j_credentials_unref(credentials);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_credentials_get(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JCredentials) credentials = NULL;
 
 	guint32 user;
 	guint32 group;
 
+	J_TEST_TRAP_START;
 	credentials = j_credentials_new();
 	user = j_credentials_get_user(credentials);
 	group = j_credentials_get_group(credentials);
 
 	g_assert_cmpuint(user, ==, getuid());
 	g_assert_cmpuint(group, ==, getgid());
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_credentials_serialize(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JCredentials) credentials = NULL;
 	g_autoptr(JCredentials) credentials2 = NULL;
 
 	bson_t* bson = NULL;
 
+	J_TEST_TRAP_START;
 	credentials = j_credentials_new();
 	credentials2 = j_credentials_new();
 
@@ -82,7 +82,7 @@ test_credentials_serialize(void)
 	j_credentials_deserialize(credentials2, bson);
 
 	bson_destroy(bson);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

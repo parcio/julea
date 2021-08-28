@@ -31,6 +31,7 @@ test_db_schema_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(GError) error = NULL;
@@ -40,6 +41,7 @@ test_db_schema_new_free(void)
 		g_assert_nonnull(schema);
 		g_assert_no_error(error);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -54,6 +56,7 @@ test_db_schema_create_delete(void)
 	gchar const* idx_uint[] = { "uint-0", NULL };
 	gchar const* idx_float[] = { "float-0", NULL };
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(GError) error = NULL;
@@ -105,6 +108,7 @@ test_db_schema_create_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -112,6 +116,7 @@ test_db_entry_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(GError) error = NULL;
@@ -126,6 +131,7 @@ test_db_entry_new_free(void)
 		g_assert_nonnull(entry);
 		g_assert_no_error(error);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -144,6 +150,7 @@ test_db_entry_insert_update_delete(void)
 	g_autoptr(JDBSelector) selector = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	schema = j_db_schema_new("test-ns", "test-schema", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
@@ -231,6 +238,8 @@ test_db_entry_insert_update_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -524,14 +533,14 @@ schema_delete(void)
 static void
 test_db_all(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	schema_create();
 	entry_insert();
 	iterator_get();
 	entry_update();
 	entry_delete();
 	schema_delete();
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

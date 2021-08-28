@@ -28,9 +28,9 @@
 static void
 test_object_new_free(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JDistribution) distribution = NULL;
@@ -40,13 +40,13 @@ test_object_new_free(void)
 		object = j_distributed_object_new("test", "test-distributed-object", distribution);
 		g_assert_true(object != NULL);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_object_create_delete(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100;
 
 	g_autoptr(JBatch) batch = NULL;
@@ -79,13 +79,12 @@ test_object_create_delete(void)
 	j_distributed_object_delete(object_noexist, batch);
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_object_read_write(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JDistributedObject) object = NULL;
@@ -95,6 +94,7 @@ test_object_read_write(void)
 	guint64 nbytes = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -171,13 +171,12 @@ test_object_read_write(void)
 	j_distributed_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_object_status(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JDistributedObject) object = NULL;
@@ -187,6 +186,7 @@ test_object_status(void)
 	guint64 size = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc0(42);
 
@@ -212,13 +212,12 @@ test_object_status(void)
 	j_distributed_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_object_sync(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JDistributedObject) object = NULL;
@@ -226,6 +225,7 @@ test_object_sync(void)
 	guint64 nbytes = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc0(42);
 
@@ -249,7 +249,7 @@ test_object_sync(void)
 	j_distributed_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

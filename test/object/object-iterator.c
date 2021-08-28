@@ -28,11 +28,11 @@
 static void
 test_object_iterator_new_free(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 10;
 
 	guint32 server_count;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JObjectIterator) iterator = NULL;
@@ -58,13 +58,12 @@ test_object_iterator_new_free(void)
 		iterator_prefix = j_object_iterator_new_for_index(i, "test-ns", "test-object-new-free-index");
 		g_assert_nonnull(iterator_prefix);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_object_iterator_next_get(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = NULL;
@@ -76,6 +75,7 @@ test_object_iterator_next_get(void)
 
 	guint objects = 0;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	delete_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -167,7 +167,7 @@ test_object_iterator_next_get(void)
 
 	ret = j_batch_execute(delete_batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

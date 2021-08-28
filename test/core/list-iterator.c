@@ -51,9 +51,9 @@ test_list_iterator_fixture_teardown(JListIterator** iterator, gconstpointer data
 static void
 test_list_iterator_new_free(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JList) list = NULL;
@@ -65,18 +65,18 @@ test_list_iterator_new_free(void)
 		iterator = j_list_iterator_new(list);
 		g_assert_true(iterator != NULL);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_list_iterator_next_get(JListIterator** iterator, gconstpointer data)
 {
-	J_TEST_TRAP_START
 	gchar const* s;
 	gboolean next;
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	next = j_list_iterator_next(*iterator);
 	g_assert_true(next);
 
@@ -97,7 +97,7 @@ test_list_iterator_next_get(JListIterator** iterator, gconstpointer data)
 
 	next = j_list_iterator_next(*iterator);
 	g_assert_true(!next);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

@@ -28,11 +28,11 @@
 static void
 test_kv_new_free(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 1000;
 
 	guint32 server_count;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JKV) kv = NULL;
@@ -50,17 +50,17 @@ test_kv_new_free(void)
 		kv = j_kv_new_for_index(i, "test", "test-kv-new-free-index");
 		g_assert_nonnull(kv);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_kv_ref_unref(void)
 {
-	J_TEST_TRAP_START
 	guint const n = 1000;
 
 	g_autoptr(JKV) kv = NULL;
 
+	J_TEST_TRAP_START;
 	kv = j_kv_new("test", "test-kv-ref-unref");
 	g_assert_nonnull(kv);
 
@@ -72,18 +72,18 @@ test_kv_ref_unref(void)
 		g_assert_true(kv == ref_kv);
 		j_kv_unref(kv);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_kv_put_delete(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* value = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
@@ -100,22 +100,22 @@ test_kv_put_delete(void)
 	ret = j_batch_execute(batch);
 	/// \todo this should return FALSE
 	g_assert_false(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 	g_test_incomplete("Known issue. See #116");
 }
 
 static void
 test_kv_put_update(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
-	g_autofree gchar* get_value;
+	g_autofree gchar* get_value = NULL;
 	g_autofree gchar* value1 = NULL;
 	g_autofree gchar* value2 = NULL;
 	guint32 get_len;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value1 = g_strdup("first-value");
 	value2 = g_strdup("second-value");
@@ -133,13 +133,12 @@ test_kv_put_update(void)
 
 	g_assert_cmpstr(get_value, ==, value2);
 	g_assert_cmpuint(get_len, ==, strlen(value2) + 1);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_kv_get(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* get_value = NULL;
@@ -147,6 +146,7 @@ test_kv_get(void)
 	guint32 get_len = 42;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
@@ -174,7 +174,7 @@ test_kv_get(void)
 	j_kv_delete(kv, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static guint num_callbacks = 0;
@@ -194,12 +194,12 @@ get_callback(gpointer value, guint32 length, gpointer data)
 static void
 test_kv_get_callback(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* value = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	value = g_strdup("kv-value");
 
@@ -223,7 +223,7 @@ test_kv_get_callback(void)
 	g_assert_true(ret);
 
 	g_assert_cmpuint(num_callbacks, ==, 1);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

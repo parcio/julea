@@ -32,37 +32,37 @@
 static void
 test_message_new_ref_unref(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JMessage) message = NULL;
 
+	J_TEST_TRAP_START;
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	g_assert_true(message != NULL);
 	j_message_ref(message);
 	j_message_unref(message);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_message_reply(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JMessage) message = NULL;
 	g_autoptr(JMessage) reply = NULL;
 
+	J_TEST_TRAP_START;
 	message = j_message_new(J_MESSAGE_NONE, 0);
 	g_assert_true(message != NULL);
 
 	reply = j_message_new_reply(message);
 	g_assert_true(reply != NULL);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_message_header(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JMessage) message = NULL;
 
+	J_TEST_TRAP_START;
 	message = j_message_new(J_MESSAGE_OBJECT_READ, 42);
 	g_assert_true(message != NULL);
 
@@ -72,17 +72,17 @@ test_message_header(void)
 
 	g_assert_true(j_message_get_type(message) == J_MESSAGE_OBJECT_READ);
 	g_assert_cmpuint(j_message_get_count(message), ==, 3);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_message_append(void)
 {
-	J_TEST_TRAP_START
 	JMessage* message;
 	gboolean ret;
 	guint64 dummy = 42;
 
+	J_TEST_TRAP_START;
 	message = j_message_new(J_MESSAGE_NONE, 20);
 	g_assert_true(message != NULL);
 
@@ -115,13 +115,12 @@ test_message_append(void)
 	*/
 
 	j_message_unref(message);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_message_write_read(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JMessage) message_recv = NULL;
 	g_autoptr(JMessage) message_send = NULL;
 	g_autoptr(GOutputStream) output = NULL;
@@ -132,6 +131,7 @@ test_message_write_read(void)
 	guint64 dummy_8 = 2342;
 	gchar const* dummy_str = "42";
 
+	J_TEST_TRAP_START;
 	output = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
 	input = g_memory_input_stream_new();
 
@@ -173,17 +173,17 @@ test_message_write_read(void)
 	g_assert_cmpstr(dummy_str, ==, "2");
 	dummy_str = j_message_get_string(message_recv);
 	g_assert_cmpstr(dummy_str, ==, "42");
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_message_semantics(void)
 {
-	J_TEST_TRAP_START
 	g_autoptr(JMessage) message = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
 	g_autoptr(JSemantics) msg_semantics = NULL;
 
+	J_TEST_TRAP_START;
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_POSIX);
 	g_assert_true(semantics != NULL);
 
@@ -200,7 +200,7 @@ test_message_semantics(void)
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_PERSISTENCY));
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SAFETY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SAFETY));
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SECURITY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SECURITY));
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

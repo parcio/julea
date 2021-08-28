@@ -29,23 +29,23 @@
 static void
 test_memory_chunk_new_free(void)
 {
-	J_TEST_TRAP_START
 	JMemoryChunk* memory_chunk;
 
+	J_TEST_TRAP_START;
 	memory_chunk = j_memory_chunk_new(42);
 	g_assert_true(memory_chunk != NULL);
 
 	j_memory_chunk_free(memory_chunk);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_memory_chunk_get(void)
 {
-	J_TEST_TRAP_START
 	JMemoryChunk* memory_chunk;
 	gpointer ret;
 
+	J_TEST_TRAP_START;
 	memory_chunk = j_memory_chunk_new(3);
 
 	ret = j_memory_chunk_get(memory_chunk, 1);
@@ -58,16 +58,16 @@ test_memory_chunk_get(void)
 	g_assert_true(ret == NULL);
 
 	j_memory_chunk_free(memory_chunk);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_memory_chunk_reset(void)
 {
-	J_TEST_TRAP_START
 	JMemoryChunk* memory_chunk;
 	gpointer ret;
 
+	J_TEST_TRAP_START;
 	memory_chunk = j_memory_chunk_new(1);
 
 	ret = j_memory_chunk_get(memory_chunk, 1);
@@ -83,7 +83,7 @@ test_memory_chunk_reset(void)
 	g_assert_true(ret == NULL);
 
 	j_memory_chunk_free(memory_chunk);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void
