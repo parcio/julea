@@ -28,7 +28,7 @@
 static void
 test_kv_iterator_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 1000;
 
 	guint32 server_count;
@@ -58,13 +58,13 @@ test_kv_iterator_new_free(void)
 		iterator_prefix = j_kv_iterator_new_for_index(i, "test-ns", "test-kv-new-free-index");
 		g_assert_nonnull(iterator_prefix);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_kv_iterator_next_get(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = NULL;
@@ -181,7 +181,7 @@ test_kv_iterator_next_get(void)
 
 	ret = j_batch_execute(delete_batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

@@ -30,7 +30,7 @@
 static void
 test_db_schema_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
@@ -42,13 +42,13 @@ test_db_schema_new_free(void)
 		g_assert_nonnull(schema);
 		g_assert_no_error(error);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_schema_create_delete(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -109,13 +109,13 @@ test_db_schema_create_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_invalid_schema_get(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(GError) error = NULL;
@@ -131,13 +131,13 @@ test_db_invalid_schema_get(void)
 	res = j_batch_execute(batch);
 	g_assert_false(res);
 	g_assert_nonnull(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_invalid_schema_delete(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(GError) error = NULL;
@@ -164,7 +164,7 @@ test_db_invalid_schema_delete(void)
 	g_assert_false(ret);
 	g_assert_nonnull(error);
 
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 
 	g_test_incomplete("Known issue. Similar to #116");
 }
@@ -172,7 +172,7 @@ test_db_invalid_schema_delete(void)
 static void
 test_db_schema_equals_different_name(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema1 = NULL;
 	g_autoptr(JDBSchema) schema2 = NULL;
 	g_autoptr(GError) error = NULL;
@@ -185,13 +185,13 @@ test_db_schema_equals_different_name(void)
 	g_assert_true(res);
 	g_assert_false(equal);
 	g_assert_no_error(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_schema_equals_same_name_different_fields(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema1 = NULL;
 	g_autoptr(JDBSchema) schema2 = NULL;
 	g_autoptr(GRand) rnd = NULL;
@@ -218,13 +218,13 @@ test_db_schema_equals_same_name_different_fields(void)
 	g_assert_true(res);
 	g_assert_false(equal);
 	g_assert_no_error(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_schema_equals_same_name_same_fields(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema1 = NULL;
 	g_autoptr(JDBSchema) schema2 = NULL;
 	g_autoptr(GRand) rnd = NULL;
@@ -253,13 +253,13 @@ test_db_schema_equals_same_name_same_fields(void)
 	g_assert_true(res);
 	g_assert_true(equal);
 	g_assert_no_error(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_schema_get_all_fields(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(GRand) rnd = NULL;
 	g_autoptr(GError) error = NULL;
@@ -300,7 +300,7 @@ test_db_schema_get_all_fields(void)
 		g_free(names[i]);
 		g_free(res_names[i]);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

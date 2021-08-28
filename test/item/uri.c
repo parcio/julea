@@ -28,17 +28,17 @@
 static void
 test_uri_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JURI) uri = NULL;
 
 	uri = j_uri_new("julea://JULEA");
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_uri_valid(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	JURI* uri;
 
 	uri = j_uri_new("julea://");
@@ -65,13 +65,13 @@ test_uri_valid(void)
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JULEA");
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "fo.o");
 	j_uri_free(uri);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_uri_invalid(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	JURI* uri;
 
 	uri = j_uri_new("file://JULEA");
@@ -97,13 +97,13 @@ test_uri_invalid(void)
 
 	uri = j_uri_new("julea://JULEA/foo/");
 	g_assert_true(uri == NULL);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_uri_create_delete(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	JURI* uri;
 	gboolean ret;
 
@@ -125,13 +125,13 @@ test_uri_create_delete(void)
 	ret = j_uri_delete(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_uri_get(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	JURI* uri;
 	gboolean ret;
 
@@ -143,7 +143,7 @@ test_uri_get(void)
 	ret = j_uri_get(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

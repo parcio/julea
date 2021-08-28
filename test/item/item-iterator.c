@@ -28,7 +28,7 @@
 static void
 test_item_iterator_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
@@ -43,13 +43,13 @@ test_item_iterator_new_free(void)
 
 		g_assert_true(item != NULL);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_item_iterator_next_get(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 1000;
 
 	g_autoptr(JBatch) batch = NULL;
@@ -93,7 +93,7 @@ test_item_iterator_next_get(void)
 	g_assert_true(ret);
 
 	g_assert_cmpuint(items, ==, n);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

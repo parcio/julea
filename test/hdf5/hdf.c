@@ -135,7 +135,7 @@ read_dataset(hid_t file)
 static void
 test_hdf_read_write(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	hid_t file;
 
 	file = H5Fcreate("JULEA.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -144,13 +144,13 @@ test_hdf_read_write(void)
 	read_dataset(file);
 
 	H5Fclose(file);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_hdf_dataset_create(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	hid_t dataset;
 	hid_t dataspace;
 	hid_t file;
@@ -174,13 +174,13 @@ test_hdf_dataset_create(void)
 	H5Sclose(dataspace);
 
 	H5Fclose(file);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_hdf_dataset_write(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	hid_t dataset;
 	hid_t dataspace;
 	hid_t file;
@@ -221,7 +221,7 @@ test_hdf_dataset_write(void)
 	//H5Dclose(dataset);
 
 	H5Fclose(file);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 #endif

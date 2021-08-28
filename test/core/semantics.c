@@ -39,7 +39,7 @@ test_semantics_fixture_teardown(JSemantics** semantics, G_GNUC_UNUSED gconstpoin
 static void
 test_semantics_new_ref_unref(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
@@ -52,13 +52,13 @@ test_semantics_new_ref_unref(void)
 		g_assert_true(semantics != NULL);
 		j_semantics_unref(semantics);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	gint s;
 
 	j_semantics_set(*semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
@@ -84,13 +84,13 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_SECURITY_STRICT);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_core_semantics_from_string(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JSemantics) semantics = NULL;
 	gint ret;
 	gchar semantics_string[] = "atomicity=operation,concurrency=overlapping,consistency=eventual,ordering=strict,persistency=immediate,safety=network,security=strict";
@@ -120,7 +120,7 @@ test_core_semantics_from_string(void)
 
 	ret = j_semantics_get(semantics, J_SEMANTICS_SECURITY);
 	g_assert_cmpint(ret, ==, J_SEMANTICS_SECURITY_STRICT);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

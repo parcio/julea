@@ -351,14 +351,14 @@ schema_delete(void)
 static void
 test_db_all(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	schema_create();
 	entry_insert();
 	iterator_get();
 	entry_update();
 	entry_delete();
 	schema_delete();
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

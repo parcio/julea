@@ -26,12 +26,14 @@
 	if (g_test_failed()) \
 		return;
 
-#define J_TEST_TRAP_START if(g_test_subprocess()) {
-
-#define J_TEST_TRAP_END	} \
+#define J_TEST_TRAP_START \
+	if (g_test_subprocess()) \
+	{
+#define J_TEST_TRAP_END \
+	} \
 	else \
 	{ \
-		g_test_trap_subprocess (NULL, 0, G_TEST_SUBPROCESS_INHERIT_STDIN | G_TEST_SUBPROCESS_INHERIT_STDOUT | G_TEST_SUBPROCESS_INHERIT_STDERR); \
+		g_test_trap_subprocess(NULL, 0, G_TEST_SUBPROCESS_INHERIT_STDIN | G_TEST_SUBPROCESS_INHERIT_STDOUT | G_TEST_SUBPROCESS_INHERIT_STDERR); \
 		g_test_trap_assert_passed(); \
 	}
 

@@ -47,7 +47,7 @@ test_collection_fixture_teardown(JCollection** collection, gconstpointer data)
 static void
 test_collection_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
@@ -60,17 +60,17 @@ test_collection_new_free(void)
 
 		g_assert_true(collection != NULL);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_collection_name(JCollection** collection, gconstpointer data)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	(void)data;
 
 	g_assert_cmpstr(j_collection_get_name(*collection), ==, "test-collection");
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void

@@ -32,7 +32,7 @@
 static void
 test_db_entry_new_free(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 100000;
 
 	for (guint i = 0; i < n; i++)
@@ -49,13 +49,13 @@ test_db_entry_new_free(void)
 		g_assert_nonnull(entry);
 		g_assert_no_error(error);
 	}
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_entry_insert_update_delete(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	guint const n = 1000;
 
 	gchar const* str = "demo.bp";
@@ -290,13 +290,13 @@ test_db_entry_insert_update_delete(void)
 
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_entry_id(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -333,13 +333,13 @@ test_db_entry_id(void)
 	res = j_batch_execute(batch);
 	g_assert_true(res);
 	g_assert_no_error(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_entry_invalid_insert(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -361,13 +361,13 @@ test_db_entry_invalid_insert(void)
 	res = j_batch_execute(batch);
 	g_assert_false(res);
 	g_assert_nonnull(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 static void
 test_db_entry_set_nonexistant(void)
 {
-	J_TEST_TRAP_START
+	J_TEST_TRAP_START;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(GError) error = NULL;
@@ -381,7 +381,7 @@ test_db_entry_set_nonexistant(void)
 	res = j_db_entry_set_field(entry, "not-existant", &val, sizeof(gint64), &error);
 	g_assert_false(res);
 	g_assert_nonnull(error);
-	J_TEST_TRAP_END
+	J_TEST_TRAP_END;
 }
 
 void
