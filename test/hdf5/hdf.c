@@ -237,7 +237,7 @@ test_hdf_hdf(void)
 	}
 
 	g_test_add_func("/hdf5/read_write", test_hdf_read_write);
-	g_test_add_func("/hdf5/dataset/create", test_hdf_dataset_create);
-	g_test_add_func("/hdf5/dataset/write", test_hdf_dataset_write);
+	g_test_add_func("/hdf5/dataset-create", test_hdf_dataset_create);
+	g_test_add_func("/hdf5/dataset-write", test_hdf_dataset_write);
 #endif
 }
