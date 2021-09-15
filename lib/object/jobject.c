@@ -559,6 +559,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 				if (mem_id->size > 0)
 				{
 					j_connection_rma_read(object_connection, mem_id, data);
+					j_connection_wait_for_completion(object_connection); ///\todo deserelize
 				}
 			}
 

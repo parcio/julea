@@ -80,9 +80,9 @@ struct JConnection {
 			void* 	context;
 			void* 	dest;
 			size_t  len;
-			struct fid_mr* mr;
-		} entry[J_CONNECTION_MAX_RECV + J_CONNECTION_MAX_SEND];
-		int len;
+		} msg_entry[J_CONNECTION_MAX_RECV + J_CONNECTION_MAX_SEND];
+		int msg_len;
+		int rma_len;
 	} running_actions;
 	guint next_key;
 	gboolean closed;
@@ -398,7 +398,8 @@ j_connection_init(struct JConnection* this)
 	gboolean ret = FALSE; 
 	int res;
 
-	this->running_actions.len = 0;
+	this->running_actions.msg_len = 0;
+	this->running_actions.rma_len = 0;
 
 	res = fi_eq_open(this->fabric->fabric, &(struct fi_eq_attr){.wait_obj = FI_WAIT_UNSPEC},
 			&this->eq, NULL);
@@ -577,7 +578,7 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 		CHECK("Failed to initelize sending!");
 		this->memory.used += size;
 		g_assert_true(this->memory.used <= this->memory.buffer_size);
-		g_assert_true(this->running_actions.len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+		g_assert_true(this->running_actions.msg_len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
 	} else {
 		segment = (uint8_t*)data;
 		size = data_len;
@@ -585,11 +586,10 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 			res = fi_send(this->ep, segment, size, NULL, 0, segment);
 		} while(res == -FI_EAGAIN);
 	}
-	this->running_actions.entry[this->running_actions.len].context = segment;
-	this->running_actions.entry[this->running_actions.len].dest = NULL;
-	this->running_actions.entry[this->running_actions.len].len = 0;
-	this->running_actions.entry[this->running_actions.len].mr = NULL;
-	++this->running_actions.len;
+	this->running_actions.msg_entry[this->running_actions.msg_len].context = segment;
+	this->running_actions.msg_entry[this->running_actions.msg_len].dest = NULL;
+	this->running_actions.msg_entry[this->running_actions.msg_len].len = 0;
+	++this->running_actions.msg_len;
 
 	ret = TRUE;
 end:
@@ -614,18 +614,16 @@ j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 	if (this->memory.active) {
 		this->memory.used += size;
 		g_assert_true(this->memory.used <= this->memory.buffer_size);
-		g_assert_true(this->running_actions.len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
-		this->running_actions.entry[this->running_actions.len].context = segment;
-		this->running_actions.entry[this->running_actions.len].dest = data;
-		this->running_actions.entry[this->running_actions.len].len = data_len;
-		this->running_actions.entry[this->running_actions.len].mr = NULL;
+		g_assert_true(this->running_actions.msg_len < J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
+		this->running_actions.msg_entry[this->running_actions.msg_len].context = segment;
+		this->running_actions.msg_entry[this->running_actions.msg_len].dest = data;
+		this->running_actions.msg_entry[this->running_actions.msg_len].len = data_len;
 	} else {
-		this->running_actions.entry[this->running_actions.len].context = segment;
-		this->running_actions.entry[this->running_actions.len].dest = NULL;
-		this->running_actions.entry[this->running_actions.len].len = 0;
-		this->running_actions.entry[this->running_actions.len].mr = NULL;
+		this->running_actions.msg_entry[this->running_actions.msg_len].context = segment;
+		this->running_actions.msg_entry[this->running_actions.msg_len].dest = NULL;
+		this->running_actions.msg_entry[this->running_actions.msg_len].len = 0;
 	}
-	++this->running_actions.len;
+	++this->running_actions.msg_len;
 	ret = TRUE;
 end:
 	return ret;
@@ -645,14 +643,14 @@ j_connection_wait_for_completion(struct JConnection* this)
 	struct fi_cq_entry entry;
 	int i;
 	
-	while(this->running_actions.len) {
+	while(this->running_actions.rma_len + this->running_actions.msg_len) {
 		bool rx;
 		do {
 			rx = TRUE;
-			res = fi_cq_sread(this->cq.rx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
+			res = fi_cq_read(this->cq.rx, &entry, 1); /// \todo handle shutdown msgs!
 			if(res == -FI_EAGAIN) {
 				rx = FALSE;
-				res = fi_cq_sread(this->cq.tx, &entry, 1, NULL, 2); /// \todo handle shutdown msgs!
+				res = fi_cq_read(this->cq.tx, &entry, 1); /// \todo handle shutdown msgs!
 			}
 		} while (res == -FI_EAGAIN);
 		/// \todo error message fetch!
@@ -669,29 +667,25 @@ j_connection_wait_for_completion(struct JConnection* this)
 						err_entry.prov_errno, err_entry.err_data, NULL, 0));
 			goto end;
 		} else { CHECK("Failed to read completion queue!"); }
-		for(i = 0; i <= this->running_actions.len; ++i) {
-			if(i == this->running_actions.len) {
-				g_warning("unable to find completet context!");
-				goto end;
+		for(i = 0; i <= this->running_actions.msg_len; ++i) {
+			if(i == this->running_actions.msg_len) {
+				// If there is no match -> it's an rma transafre -> context = memory region
+				res = fi_close(&((struct fid_mr*)entry.op_context)->fid);
+				CHECK("Failed to free receiving memory!");
+				--this->running_actions.rma_len;
 			}
-			if(this->running_actions.entry[i].context == entry.op_context) {
-				--this->running_actions.len;
-				if(this->running_actions.entry[i].dest) {
-					memcpy(this->running_actions.entry[i].dest,
-							this->running_actions.entry[i].context,
-							this->running_actions.entry[i].len);
+			if(this->running_actions.msg_entry[i].context == entry.op_context) {
+				--this->running_actions.msg_len;
+				if(this->running_actions.msg_entry[i].dest) {
+					memcpy(this->running_actions.msg_entry[i].dest,
+							this->running_actions.msg_entry[i].context,
+							this->running_actions.msg_entry[i].len);
 				}
-				if (this->running_actions.entry[i].mr) {
-					res = fi_close(&this->running_actions.entry[i].mr->fid);
-					CHECK("Failed to free receiving memory!");
-				}
-				this->running_actions.entry[i] = this->running_actions.entry[this->running_actions.len];
+				this->running_actions.msg_entry[i] = this->running_actions.msg_entry[this->running_actions.msg_len];
 				break;
 			}
 		}
 	}
-
-	this->running_actions.len = 0;
 	this->memory.used = 0;
 	ret = TRUE;
 end:
@@ -746,28 +740,34 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 	int res;
 	gboolean ret = FALSE;
 	struct fid_mr* mr;
+	static unsigned key = 0;
 
 	res = fi_mr_reg(this->domain, data, memoryID->size,
-			FI_READ, 0, 0, 0, &mr, 0);
+			FI_READ, 0, ++key, 0, &mr, 0);
 	CHECK("Failed to register receiving memory!");
-
-	res = fi_read(this->ep,
+	do { res = fi_read(this->ep,
 			data,
 			memoryID->size,
 			fi_mr_desc(mr),
 			0,
 			memoryID->offset,
 			memoryID->key,
-			data);
+			mr);
+		/// \todo fix the timing for minimal timeout. This is needed when device is too bussy
+		if(res == -FI_EAGAIN) {
+			struct timespec ts;
+			int tres;
+			ts.tv_nsec = 1000000;
+			do {
+				tres = nanosleep(&ts, &ts);
+			} while(tres && errno == EINTR);
+		}
+	} while ( res == -FI_EAGAIN);
 	CHECK("Failed to initate reading");
-	this->running_actions.entry[this->running_actions.len].context = data;
-	this->running_actions.entry[this->running_actions.len].dest = NULL;
-	this->running_actions.entry[this->running_actions.len].len = 0;
-	this->running_actions.entry[this->running_actions.len].mr = mr;
-	++this->running_actions.len;
-
+	++this->running_actions.rma_len;
 	ret = TRUE;
 end:
+	if(!ret) { fi_close(&mr->fid); }
 	return ret;
 }
 
