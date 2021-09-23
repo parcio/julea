@@ -36,7 +36,7 @@ main(int argc, char** argv)
 
 	g_test_init(&argc, &argv, NULL);
 
-	// failing asserts will not abort all coming tests but call g_test_fail and continue
+	// failing assertions will not abort all coming tests but call g_test_fail and continue
 	g_test_set_nonfatal_assertions();
 
 	// Core

@@ -142,7 +142,7 @@ test_db_selector_add_selector(void)
 void
 test_db_selector(void)
 {
-	g_test_add_func("/db/selector/add-field", test_db_selector_add_field);
-	g_test_add_func("/db/selector/add-non-existant-field", test_db_selector_add_non_existant_field);
-	g_test_add_func("/db/selector/add-selector", test_db_selector_add_selector);
+	g_test_add_func("/db/selector-add_field", test_db_selector_add_field);
+	g_test_add_func("/db/selector-add_non_existant_field", test_db_selector_add_non_existant_field);
+	g_test_add_func("/db/selector-add_selector", test_db_selector_add_selector);
 }

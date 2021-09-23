@@ -306,12 +306,12 @@ test_db_schema_get_all_fields(void)
 void
 test_db_schema(void)
 {
-	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);
-	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
-	g_test_add_func("/db/schema/invalid_get", test_db_invalid_schema_get);
-	g_test_add_func("/db/schema/invalid_delete", test_db_invalid_schema_delete);
-	g_test_add_func("/db/schema/equals_different_name", test_db_schema_equals_different_name);
-	g_test_add_func("/db/schema/equals_same_name_different_fields", test_db_schema_equals_same_name_different_fields);
-	g_test_add_func("/db/schema/equals_same_name_same_fields", test_db_schema_equals_same_name_same_fields);
-	g_test_add_func("/db/schema/get_all_fields", test_db_schema_get_all_fields);
+	g_test_add_func("/db/schema-new_free", test_db_schema_new_free);
+	g_test_add_func("/db/schema-create_delete", test_db_schema_create_delete);
+	g_test_add_func("/db/schema-invalid_get", test_db_invalid_schema_get);
+	g_test_add_func("/db/schema-invalid_delete", test_db_invalid_schema_delete);
+	g_test_add_func("/db/schema-equals_different_name", test_db_schema_equals_different_name);
+	g_test_add_func("/db/schema-equals_same_name_different_fields", test_db_schema_equals_same_name_different_fields);
+	g_test_add_func("/db/schema-equals_same_name_same_fields", test_db_schema_equals_same_name_same_fields);
+	g_test_add_func("/db/schema-get_all_fields", test_db_schema_get_all_fields);
 }

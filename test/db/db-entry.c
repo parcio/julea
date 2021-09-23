@@ -387,9 +387,9 @@ test_db_entry_set_nonexistant(void)
 void
 test_db_entry(void)
 {
-	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);
-	g_test_add_func("/db/entry/insert_update_delete", test_db_entry_insert_update_delete);
-	g_test_add_func("/db/entry/get_id", test_db_entry_id);
-	g_test_add_func("/db/entry/insert_in_local_schema", test_db_entry_invalid_insert);
-	g_test_add_func("/db/entry/set_non_existing_field", test_db_entry_set_nonexistant);
+	g_test_add_func("/db/entry-new_free", test_db_entry_new_free);
+	g_test_add_func("/db/entry-insert_update_delete", test_db_entry_insert_update_delete);
+	g_test_add_func("/db/entry-get_id", test_db_entry_id);
+	g_test_add_func("/db/entry-insert_in_local_schema", test_db_entry_invalid_insert);
+	g_test_add_func("/db/entry-set_non_existing_field", test_db_entry_set_nonexistant);
 }

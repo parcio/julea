@@ -206,10 +206,10 @@ test_message_semantics(void)
 void
 test_core_message(void)
 {
-	g_test_add_func("/core/message/new_ref_unref", test_message_new_ref_unref);
-	g_test_add_func("/core/message/reply", test_message_reply);
-	g_test_add_func("/core/message/header", test_message_header);
-	g_test_add_func("/core/message/append", test_message_append);
-	g_test_add_func("/core/message/write_read", test_message_write_read);
-	g_test_add_func("/core/message/semantics", test_message_semantics);
+	g_test_add_func("/core/message-new_ref_unref", test_message_new_ref_unref);
+	g_test_add_func("/core/message-reply", test_message_reply);
+	g_test_add_func("/core/message-header", test_message_header);
+	g_test_add_func("/core/message-append", test_message_append);
+	g_test_add_func("/core/message-write_read", test_message_write_read);
+	g_test_add_func("/core/message-semantics", test_message_semantics);
 }

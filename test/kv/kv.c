@@ -230,10 +230,10 @@ test_kv_get_callback(void)
 void
 test_kv_kv(void)
 {
-	g_test_add_func("/kv/kv/new_free", test_kv_new_free);
-	g_test_add_func("/kv/kv/ref_unref", test_kv_ref_unref);
-	g_test_add_func("/kv/kv/put_delete", test_kv_put_delete);
-	g_test_add_func("/kv/kv/put_update", test_kv_put_update);
-	g_test_add_func("/kv/kv/get", test_kv_get);
-	g_test_add_func("/kv/kv/get_callback", test_kv_get_callback);
+	g_test_add_func("/kv/new_free", test_kv_new_free);
+	g_test_add_func("/kv/ref_unref", test_kv_ref_unref);
+	g_test_add_func("/kv/put_delete", test_kv_put_delete);
+	g_test_add_func("/kv/put_update", test_kv_put_update);
+	g_test_add_func("/kv/get", test_kv_get);
+	g_test_add_func("/kv/get_callback", test_kv_get_callback);
 }

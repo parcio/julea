@@ -244,9 +244,9 @@ test_object_sync(void)
 void
 test_object_object(void)
 {
-	g_test_add_func("/object/object/new_free", test_object_new_free);
-	g_test_add_func("/object/object/create_delete", test_object_create_delete);
-	g_test_add_func("/object/object/read_write", test_object_read_write);
-	g_test_add_func("/object/object/status", test_object_status);
-	g_test_add_func("/object/object/sync", test_object_sync);
+	g_test_add_func("/object/object-new_free", test_object_new_free);
+	g_test_add_func("/object/object-create_delete", test_object_create_delete);
+	g_test_add_func("/object/object-read_write", test_object_read_write);
+	g_test_add_func("/object/object-status", test_object_status);
+	g_test_add_func("/object/object-sync", test_object_sync);
 }

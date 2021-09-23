@@ -149,9 +149,9 @@ test_uri_get(void)
 void
 test_item_uri(void)
 {
-	g_test_add_func("/item/uri/new_free", test_uri_new_free);
-	g_test_add_func("/item/uri/valid", test_uri_valid);
-	g_test_add_func("/item/uri/invalid", test_uri_invalid);
-	g_test_add_func("/item/uri/create_delete", test_uri_create_delete);
-	g_test_add_func("/item/uri/get", test_uri_get);
+	g_test_add_func("/item/uri-new_free", test_uri_new_free);
+	g_test_add_func("/item/uri-valid", test_uri_valid);
+	g_test_add_func("/item/uri-invalid", test_uri_invalid);
+	g_test_add_func("/item/uri-create_delete", test_uri_create_delete);
+	g_test_add_func("/item/uri-get", test_uri_get);
 }
