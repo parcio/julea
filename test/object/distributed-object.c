@@ -46,7 +46,6 @@ test_object_new_free(void)
 static void
 test_object_create_delete(void)
 {
-	J_TEST_TRAP_START;
 	guint const n = 100;
 
 	g_autoptr(JBatch) batch = NULL;
@@ -54,6 +53,7 @@ test_object_create_delete(void)
 	g_autoptr(JDistributedObject) object_noexist = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 
@@ -255,9 +255,9 @@ test_object_sync(void)
 void
 test_object_distributed_object(void)
 {
-	g_test_add_func("/object/distributed-object/new_free", test_object_new_free);
-	g_test_add_func("/object/distributed-object/create_delete", test_object_create_delete);
-	g_test_add_func("/object/distributed-object/read_write", test_object_read_write);
-	g_test_add_func("/object/distributed-object/status", test_object_status);
-	g_test_add_func("/object/distributed-object/sync", test_object_sync);
+	g_test_add_func("/object/distributed-object-new_free", test_object_new_free);
+	g_test_add_func("/object/distributed-object-create_delete", test_object_create_delete);
+	g_test_add_func("/object/distributed-object-read_write", test_object_read_write);
+	g_test_add_func("/object/distributed-object-status", test_object_status);
+	g_test_add_func("/object/distributed-object-sync", test_object_sync);
 }

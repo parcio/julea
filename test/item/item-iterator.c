@@ -99,6 +99,6 @@ test_item_iterator_next_get(void)
 void
 test_item_item_iterator(void)
 {
-	g_test_add_func("/item/item-iterator/new_free", test_item_iterator_new_free);
-	g_test_add_func("/item/item-iterator/next_get", test_item_iterator_next_get);
+	g_test_add_func("/item/item-iterator-new_free", test_item_iterator_new_free);
+	g_test_add_func("/item/item-iterator-next_get", test_item_iterator_next_get);
 }

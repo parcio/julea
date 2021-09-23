@@ -149,6 +149,6 @@ test_dir_iterator_next_get(gchar** path, gconstpointer data)
 void
 test_core_dir_iterator(void)
 {
-	g_test_add_func("/core/dir-iterator/new_free", test_dir_iterator_new_free);
-	g_test_add("/core/dir-iterator/next_get", gchar*, NULL, test_dir_iterator_fixture_setup, test_dir_iterator_next_get, test_dir_iterator_fixture_teardown);
+	g_test_add_func("/core/dir-iterator-new_free", test_dir_iterator_new_free);
+	g_test_add("/core/dir-iterator-next_get", gchar*, NULL, test_dir_iterator_fixture_setup, test_dir_iterator_next_get, test_dir_iterator_fixture_teardown);
 }

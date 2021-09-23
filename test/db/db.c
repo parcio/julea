@@ -547,9 +547,9 @@ void
 test_db_db(void)
 {
 	/// \todo add more tests
-	g_test_add_func("/db/schema/new_free", test_db_schema_new_free);
-	g_test_add_func("/db/schema/create_delete", test_db_schema_create_delete);
-	g_test_add_func("/db/entry/new_free", test_db_entry_new_free);
-	g_test_add_func("/db/entry/insert_update_delete", test_db_entry_insert_update_delete);
+	g_test_add_func("/db/schema-new_free", test_db_schema_new_free);
+	g_test_add_func("/db/schema-create_delete", test_db_schema_create_delete);
+	g_test_add_func("/db/entry-new_free", test_db_entry_new_free);
+	g_test_add_func("/db/entry-insert_update_delete", test_db_entry_insert_update_delete);
 	g_test_add_func("/db/all", test_db_all);
 }

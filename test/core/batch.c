@@ -141,9 +141,9 @@ test_batch_execute_async(void)
 void
 test_core_batch(void)
 {
-	g_test_add_func("/core/batch/new_free", test_batch_new_free);
-	g_test_add_func("/core/batch/semantics", test_batch_semantics);
-	g_test_add_func("/core/batch/execute_empty", test_batch_execute_empty);
-	g_test_add_func("/core/batch/execute", test_batch_execute);
-	g_test_add_func("/core/batch/execute_async", test_batch_execute_async);
+	g_test_add_func("/core/batch-new_free", test_batch_new_free);
+	g_test_add_func("/core/batch-semantics", test_batch_semantics);
+	g_test_add_func("/core/batch-execute_empty", test_batch_execute_empty);
+	g_test_add_func("/core/batch-execute", test_batch_execute);
+	g_test_add_func("/core/batch-execute_async", test_batch_execute_async);
 }

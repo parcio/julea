@@ -173,6 +173,6 @@ test_object_iterator_next_get(void)
 void
 test_object_object_iterator(void)
 {
-	g_test_add_func("/object/object-iterator/new_free", test_object_iterator_new_free);
-	g_test_add_func("/object/object-iterator/next_get", test_object_iterator_next_get);
+	g_test_add_func("/object/object-iterator-new_free", test_object_iterator_new_free);
+	g_test_add_func("/object/object-iterator-next_get", test_object_iterator_next_get);
 }
