@@ -256,7 +256,6 @@ jobs:
         if: always()
         run: echo "$(cat bld/meson-logs/testlog.txt)"
       - name: HDF5 Tests
-        continue-on-error: true
         env:
           G_DEBUG: resident-modules
         if: matrix.julea.db != 'memory'
