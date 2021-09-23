@@ -75,6 +75,7 @@ main(int argc, char** argv)
 
 	// HDF5 client
 	test_hdf_hdf();
+	test_hdf_datatype();
 
 	ret = g_test_run();
 

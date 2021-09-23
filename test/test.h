@@ -59,5 +59,6 @@ void test_item_item_iterator(void);
 void test_item_uri(void);
 
 void test_hdf_hdf(void);
+void test_hdf_datatype(void);
 
 #endif

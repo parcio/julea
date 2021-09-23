@@ -60,7 +60,6 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
         } some_struct;
     } example_compound;
 
-
     // create datatypes
     compound_type = H5Tcreate(H5T_COMPOUND, sizeof(example_compound));
     g_assert_cmpint(compound_type, >=, 0);
@@ -83,7 +82,7 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
     g_assert_cmpint(error, >=, 0);
     error = H5Tinsert(compound_type, "some_array", HOFFSET(example_compound, some_array), array_type);
     g_assert_cmpint(error, >=, 0);
-    error = H5Tinsert(compound_type, "some_int", HOFFSET(example_compound, some_struct), another_compound_type);
+    error = H5Tinsert(compound_type, "some_struct", HOFFSET(example_compound, some_struct), another_compound_type);
     g_assert_cmpint(error, >=, 0);
 
     // commit type (e.g. save it to file)
@@ -101,13 +100,13 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
 
     // check members
     t0 = H5Tget_member_type(compound_type, 0);
-    g_assert_cmpint(H5T_equal(t0, H5T_NATIVE_INT), >, 0);
+    g_assert_cmpint(H5Tequal(t0, H5T_NATIVE_INT), >, 0);
     t1 = H5Tget_member_type(compound_type, 1);
-    g_assert_cmpint(H5T_equal(t1, H5T_NATIVE_FLOAT), >, 0);
+    g_assert_cmpint(H5Tequal(t1, H5T_NATIVE_FLOAT), >, 0);
     t2 = H5Tget_member_type(compound_type, 2);
-    g_assert_cmpint(H5T_equal(t2, array_type), >, 0);
+    g_assert_cmpint(H5Tequal(t2, array_type), >, 0);
     t3 = H5Tget_member_type(compound_type, 3);
-    g_assert_cmpint(H5T_equal(t0, another_compound_type), >, 0);
+    g_assert_cmpint(H5Tequal(t0, another_compound_type), >, 0);
     
     // clean up
     error = H5Tclose(compound_type);
@@ -116,6 +115,9 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
     g_assert_cmpint(error, >=, 0);
     error = H5Tclose(array_type);
     g_assert_cmpint(error, >=, 0);
+
+    g_test_incomplete("datatype commit is not yet implemented!");
+    /// \todo This causes a critical error and test abortion. Isolation test cases in different processes resolves this.
 }
 
 #endif
