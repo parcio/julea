@@ -120,6 +120,38 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
     /// \todo This causes a critical error and test abortion. Isolation test cases in different processes resolves this.
 }
 
+static void
+test_hdf_datatype_create_array(hid_t* file_fixture, gconstpointer udata)
+{
+    hid_t array_type;
+    hid_t file = *file_fixture;
+    herr_t error;
+    hsize_t dim = 4;
+    (void) udata;
+
+    array_type = H5Tarray_create2(H5T_NATIVE_FLOAT, 1, &dim);
+    g_assert_cmpint(array_type, >=, 0);
+
+    // commit type (e.g. save it to file)
+    error = H5Tcommit2(file, "/test_dtype", array_type, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    g_assert_cmpint(error, >=, 0);
+
+    // refresh type (reopens and loads from file)
+    error = H5Trefresh(array_type);
+    g_assert_cmpint(error, >=, 0);
+
+    // check type
+    g_assert_cmpint(H5Tget_class(array_type), ==, H5T_ARRAY);
+    g_assert_cmpint(H5Tget_size(array_type), ==, dim*sizeof(int));
+    
+    // clean up
+    error = H5Tclose(array_type);
+    g_assert_cmpint(error, >=, 0);
+
+    g_test_incomplete("datatype commit is not yet implemented!");
+    /// \todo This causes a critical error and test abortion. Isolation test cases in different processes resolves this.
+}
+
 #endif
 
 void
@@ -131,6 +163,7 @@ test_hdf_datatype(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
+    g_test_add("/hdf/datatype-create_array", hid_t*, NULL,j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
     g_test_add("/hdf/datatype-create_compound", hid_t*, NULL, j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
 
 #endif
