@@ -258,7 +258,7 @@ jobs:
       - name: HDF5 Tests
         env:
           G_DEBUG: resident-modules
-        if: matrix.julea.db != 'memory'
+        if: matrix.julea.db != 'memory' && matrix.dependecies != 'system'
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
