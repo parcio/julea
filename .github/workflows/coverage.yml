@@ -1,0 +1,109 @@
+name: Coverage
+on:
+  push:
+    branches:
+      - coverage
+jobs:
+  coverage-dependencies:
+    name: Dependencies for coverage report
+    runs-on: ubuntu-20.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: coverage-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          JULEA_SPACK_COMPILER: gcc 
+        run: |
+          ./scripts/install-dependencies.sh full
+          . scripts/environment.sh
+          spack install py-gcovr
+  coverage:
+    name: Coverage
+    needs: coverage-dependencies
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: pages
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: coverage-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Check dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          exit 1
+      - name: Set up MySQL
+        run: |
+          sudo systemctl start mysql.service
+          mysql --user=root --password=root --execute="CREATE DATABASE juleadb;"
+          mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED WITH mysql_native_password BY 'aeluj';"
+          mysql --user=root --password=root --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
+      - name: Configure
+        env:
+          CC: gcc
+        run: |
+          . scripts/environment.sh
+          meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
+      - name: Build
+        run: |
+          . scripts/environment.sh
+          ninja -C bld
+      - name: Create configuration
+        # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
+        run: |
+          . scripts/environment.sh
+          JULEA_DB_COMPONENT='client'
+          JULEA_DB_PATH="/tmp/julea/db/mysql"
+          JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="posix" --object-component=server --object-path="/tmp/julea/object/posix" --kv-backend="lmdb" --kv-component=server --kv-path="/tmp/julea/kv/lmdb" --db-backend="mysql" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+      - name: Tests
+        id: tests
+        env:
+          HDF5_VOL_CONNECTOR: julea-db
+        run: |
+          . scripts/environment.sh
+          ./scripts/setup.sh start
+          ./scripts/test.sh
+          echo "::set-output name=test-return-code::$($?)"
+          ./scripts/setup.sh stop
+      - name: Generate coverage
+        if: success() || steps.tests.test-return-code == '1'
+        run: |
+          . scripts/environment.sh
+          cd bld
+          spack load py-gcovr
+          ninja -C . coverage
+      - name: Copy coverage
+        if: success() || steps.tests.test-return-code == '1'
+        run: |
+          cd bld/meson-logs
+          rsync --archive --human-readable --verbose --delete --exclude=.git ./coveragereport ../../pages/coverage
+      - name: Commit coverage
+        if: success() || steps.tests.test-return-code == '1'
+        run: |
+          cd pages
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add --all .
+          git commit --amend --reset-author --message='Coverage ${{ github.sha }}'
+          git push --force
