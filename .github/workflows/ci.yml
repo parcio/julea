@@ -320,6 +320,63 @@ jobs:
         with:
           name: doxygen
           path: html
+  coverage:
+    # FIXME Reduce redundancies
+    # FIXME Increase coverage (currently, only one configuration runs)
+    name: Coverage
+    needs: dependencies
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Install dependencies
+        run: |
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install gcovr
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: dependencies
+          key: ubuntu-20.04-gcc-9.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Check dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          exit 1
+      - name: Configure
+        env:
+          CC: gcc
+        run: |
+          . scripts/environment.sh
+          meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
+      - name: Build
+        run: |
+          . scripts/environment.sh
+          ninja -C bld
+      - name: Create configuration
+        run: |
+          . scripts/environment.sh
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-component=server --db-path=/tmp/julea/db/sqlite
+      - name: Tests
+        env:
+          HDF5_VOL_CONNECTOR: julea-db
+        run: |
+          . scripts/environment.sh
+          ./scripts/setup.sh start
+          ./scripts/test.sh
+          ./scripts/setup.sh stop
+      - name: Generate coverage
+        run: |
+          . scripts/environment.sh
+          ninja -C bld coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: bld/meson-logs/coveragereport
   publish:
     name: Publish
     needs: doxygen
@@ -339,9 +396,16 @@ jobs:
         with:
           name: doxygen
           path: doxygen
+      - name: Download coverage
+        uses: actions/download-artifact@v2
+        with:
+          name: coverage
+          path: coverage
       - name: Prepare
         run: |
           rsync --archive --human-readable --verbose --delete --exclude=.git doxygen/. pages
+          mkdir pages/coverage
+          rsync --archive --human-readable --verbose --delete --exclude=.git coverage/. pages/coverage
           touch pages/.nojekyll
       - name: Commit
         run: |
