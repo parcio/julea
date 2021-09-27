@@ -2,7 +2,7 @@ name: Coverage
 on:
   push:
     branches:
-      - coverage
+      - master
 jobs:
   coverage-dependencies:
     name: Dependencies for coverage report
@@ -97,7 +97,7 @@ jobs:
         if: success() || steps.tests.test-return-code == '1'
         run: |
           cd bld/meson-logs
-          rsync --archive --human-readable --verbose --delete --exclude=.git ./coveragereport ../../pages/coverage
+          rsync --archive --human-readable --verbose --delete --exclude=.git ./coveragereport ../../pages/
       - name: Commit coverage
         if: success() || steps.tests.test-return-code == '1'
         run: |
