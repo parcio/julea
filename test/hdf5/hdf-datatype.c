@@ -45,7 +45,6 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
     hid_t file = *file_fixture;
     herr_t error;
     hsize_t dim = 4;
-    (void) udata;
 
     // example to be build as hdf5 type
     typedef struct example_compound
@@ -59,6 +58,8 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
             int yet_another_int;
         } some_struct;
     } example_compound;
+    
+    (void) udata;
 
     // create datatypes
     compound_type = H5Tcreate(H5T_COMPOUND, sizeof(example_compound));
@@ -106,7 +107,7 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
     t2 = H5Tget_member_type(compound_type, 2);
     g_assert_cmpint(H5Tequal(t2, array_type), >, 0);
     t3 = H5Tget_member_type(compound_type, 3);
-    g_assert_cmpint(H5Tequal(t0, another_compound_type), >, 0);
+    g_assert_cmpint(H5Tequal(t3, another_compound_type), >, 0);
     
     // clean up
     error = H5Tclose(compound_type);
@@ -163,8 +164,8 @@ test_hdf_datatype(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-    g_test_add("/hdf/datatype-create_array", hid_t*, NULL,j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
-    g_test_add("/hdf/datatype-create_compound", hid_t*, NULL, j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
+    g_test_add("/hdf/datatype-create_array", hid_t, NULL,j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
+    g_test_add("/hdf/datatype-create_compound", hid_t, NULL, j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
 
 #endif
 }

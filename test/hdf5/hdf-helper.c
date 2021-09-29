@@ -29,6 +29,8 @@ void j_test_hdf_file_fixture_setup(hid_t* file, gconstpointer udata)
 {
     (void) udata;
 
+    //*file = g_malloc(sizeof(hid_t));
+
     *file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 }
 
@@ -37,6 +39,8 @@ void j_test_hdf_file_fixture_teardown(hid_t* file, gconstpointer udata)
     (void) udata;
     H5Fclose(*file);
     H5Fdelete("test_file.h5", H5P_DEFAULT);
+
+    //g_free(*file);
 }
 
 #endif
