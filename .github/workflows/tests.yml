@@ -245,30 +245,24 @@ jobs:
       - name: Tests
         run: |
           . scripts/environment.sh
-          meson --version
           ./scripts/setup.sh start
           cd bld
           meson test -v
           sleep 10
           meson test -v
           ../scripts/setup.sh stop
-      - name: Detailed log
-        if: always()
-        run: echo "$(cat bld/meson-logs/testlog.txt)"
       - name: HDF5 Tests
-        env:
-          G_DEBUG: resident-modules
         if: matrix.julea.db != 'memory' && matrix.dependecies != 'system'
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
           cd bld
-          export HDF5_VOL_CONNECTOR=julea-kv
-          meson test -v --test-args "-p /hdf5"
-          sleep 10
-          meson test -v --test-args "-p /hdf5"
-          sleep 10
           export HDF5_VOL_CONNECTOR=julea-db
+          meson test -v --test-args "-p /hdf5"
+          sleep 10
+          meson test -v --test-args "-p /hdf5"
+          sleep 10
+          export HDF5_VOL_CONNECTOR=julea-kv
           meson test -v --test-args "-p /hdf5"
           sleep 10
           meson test -v --test-args "-p /hdf5"
