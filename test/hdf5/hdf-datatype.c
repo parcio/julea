@@ -164,8 +164,8 @@ test_hdf_datatype(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-    g_test_add("/hdf/datatype-create_array", hid_t, NULL,j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
-    g_test_add("/hdf/datatype-create_compound", hid_t, NULL, j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
+    g_test_add("/hdf5/datatype-create_array", hid_t, NULL,j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
+    g_test_add("/hdf5/datatype-create_compound", hid_t, NULL, j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
 
 #endif
 }
