@@ -299,41 +299,55 @@ jobs:
           sleep 10
           ./scripts/test.sh -p /hdf5
           ./scripts/setup.sh stop
-  documentation:
-    name: Documentation
+  doxygen:
+    name: Doxygen
     runs-on: ubuntu-20.04
-    permissions:
-      contents: write
-    if: ${{ github.ref == 'refs/heads/master' }}
     timeout-minutes: 30
     steps:
-      - name: Checkout master
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-          path: master
-      - name: Checkout gh-pages
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
-          path: pages
       - name: Install dependencies
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install doxygen
       - name: Generate documentation
         run: |
-          cd master
           doxygen
-      - name: Copy documentation
+      - name: Upload doxygen
+        uses: actions/upload-artifact@v2
+        with:
+          name: doxygen
+          path: html
+  publish:
+    name: Publish
+    needs: doxygen
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    if: ${{ github.ref == 'refs/heads/master' }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: pages
+      - name: Download doxygen
+        uses: actions/download-artifact@v2
+        with:
+          name: doxygen
+          path: doxygen
+      - name: Prepare
         run: |
-          rsync --archive --human-readable --verbose --delete --exclude=.git master/html/. pages
+          rsync --archive --human-readable --verbose --delete --exclude=.git doxygen/. pages
           touch pages/.nojekyll
-      - name: Commit documentation
+      - name: Commit
         run: |
           cd pages
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add --all .
-          git commit --amend --reset-author --message='Doxygen documentation for ${{ github.sha }}'
+          git commit --amend --reset-author --message='Pages for ${{ github.sha }}'
           git push --force
