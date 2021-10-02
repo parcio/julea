@@ -1,6 +1,37 @@
-name: Tests
+# JULEA - Flexible storage framework
+# Copyright (C) 2019-2021 Michael Kuhn
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: CI
 on: [push, pull_request]
 jobs:
+  style:
+    name: Style
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Check format
+        run: |
+          ./scripts/format.sh
+      - name: Check shell scripts
+        run: |
+          ./scripts/check.sh
   dependencies:
     name: Dependencies
     runs-on: ${{ matrix.os.dist }}
@@ -268,3 +299,41 @@ jobs:
           sleep 10
           ./scripts/test.sh -p /hdf5
           ./scripts/setup.sh stop
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    if: ${{ github.ref == 'refs/heads/master' }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          path: master
+      - name: Checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: pages
+      - name: Install dependencies
+        run: |
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install doxygen
+      - name: Generate documentation
+        run: |
+          cd master
+          doxygen
+      - name: Copy documentation
+        run: |
+          rsync --archive --human-readable --verbose --delete --exclude=.git master/html/. pages
+          touch pages/.nojekyll
+      - name: Commit documentation
+        run: |
+          cd pages
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add --all .
+          git commit --amend --reset-author --message='Doxygen documentation for ${{ github.sha }}'
+          git push --force
