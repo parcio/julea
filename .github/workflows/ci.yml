@@ -379,7 +379,7 @@ jobs:
           path: bld/meson-logs/coveragereport
   publish:
     name: Publish
-    needs: doxygen
+    needs: [doxygen, coverage]
     runs-on: ubuntu-20.04
     permissions:
       contents: write
