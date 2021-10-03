@@ -87,46 +87,38 @@ spack_load ()
 spack_get_dependencies ()
 {
 	local dependencies
-	local mode
 
 	dependencies=''
-	mode="$1"
 
-	if test "${mode}" = 'full' -o "${mode}" = 'standard' -o "${mode}" = 'minimal'
+	# Required for building JULEA
+	dependencies="${dependencies} meson"
+	dependencies="${dependencies} pkgconf"
+
+	# Mandatory dependencies
+	dependencies="${dependencies} glib"
+	dependencies="${dependencies} libbson"
+	#dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
+
+	# Recommended dependencies
+	dependencies="${dependencies} hdf5~mpi@1.12:"
+	dependencies="${dependencies} libfuse@2.9.9"
+	dependencies="${dependencies} lmdb"
+	dependencies="${dependencies} sqlite"
+
+	# Optional dependencies
+	dependencies="${dependencies} leveldb"
+	dependencies="${dependencies} mariadb-c-client"
+	dependencies="${dependencies} mongo-c-driver"
+	dependencies="${dependencies} otf"
+	dependencies="${dependencies} rocksdb"
+
+	if test -n "${CI}"
 	then
-		# Required for building JULEA
-		dependencies="${dependencies} meson"
-		dependencies="${dependencies} pkgconfig"
-
-		# Mandatory dependencies
-		dependencies="${dependencies} glib"
-		dependencies="${dependencies} libbson"
+		dependencies="${dependencies} py-gcovr"
 	fi
 
-	if test "${mode}" = 'full' -o "${mode}" = 'standard'
-	then
-		# Optional dependencies
-		dependencies="${dependencies} lmdb"
-		dependencies="${dependencies} sqlite"
-	fi
-
-	if test "${mode}" = 'full'
-	then
-		# Optional dependencies
-		dependencies="${dependencies} leveldb"
-		dependencies="${dependencies} mongo-c-driver"
-		dependencies="${dependencies} hdf5#@1.12:#~mpi"
-		dependencies="${dependencies} mariadb-c-client"
-		dependencies="${dependencies} rocksdb"
-
-		dependencies="${dependencies} libfuse@2.9.9"
-		dependencies="${dependencies} otf"
-
-		# FIXME move to minimal
-		dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
-
-		#dependencies="${dependencies} mpi"
-	fi
+	#dependencies="${dependencies} enzo@master#^hdf5@1.12:"
+	#dependencies="${dependencies} mpi"
 
 	printf '%s' "${dependencies}"
 }
@@ -137,7 +129,7 @@ spack_load_dependencies ()
 	then
 		if spack_init
 		then
-			for dependency in $(spack_get_dependencies full)
+			for dependency in $(spack_get_dependencies)
 			do
 				dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
 				spack_load "${dependency}"
@@ -155,12 +147,6 @@ spack_load_dependencies ()
 
 spack_install_dependencies ()
 {
-	local mode
-
-	mode="$1"
-
-	test -n "${mode}" || return 1
-
 	if spack_clone
 	then
 		if test -n "${CI}"
@@ -175,7 +161,7 @@ spack_install_dependencies ()
 
 		spack_cmd mark --implicit --all
 
-		for dependency in $(spack_get_dependencies "${mode}")
+		for dependency in $(spack_get_dependencies)
 		do
 			dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
 			# FIXME ignore errors?

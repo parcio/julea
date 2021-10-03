@@ -48,4 +48,4 @@ jobs:
         env:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
-          ./scripts/install-dependencies.sh full
+          ./scripts/install-dependencies.sh

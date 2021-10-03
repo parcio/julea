@@ -10,13 +10,6 @@ The `install-dependencies.sh` script installs all dependencies into the `depende
 $ ./scripts/install-dependencies.sh
 ```
 
-By default, the script only installs a minimal set of packages that are necessary for JULEA's operation.
-If you want to install additional dependencies for optional backends or clients, specify a mode (`minimal`, `standard` or `full`):
-
-```console
-$ ./scripts/install-dependencies.sh full
-```
-
 ### Additional Dependencies
 
 After JULEA's environment has been loaded, the `spack` command can also be used to install and load additional dependencies:

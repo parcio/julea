@@ -29,21 +29,10 @@ SELF_BASE="${SELF_PATH##*/}"
 
 usage ()
 {
-	echo "Usage: ${SELF_BASE} minimal|standard|full"
+	echo "Usage: ${SELF_BASE}"
 	exit 1
 }
 
-MODE='standard'
-
-test -n "$1" && MODE="$1"
-
 SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 
-case "${MODE}" in
-	minimal|standard|full)
-		spack_install_dependencies "${MODE}"
-		;;
-	*)
-		usage
-		;;
-esac
+spack_install_dependencies
