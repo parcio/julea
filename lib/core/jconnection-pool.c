@@ -197,7 +197,7 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 			guint op_count;
 
 			client = g_socket_client_new();
-			connection = g_socket_client_connect_to_host(client, server, 4711, NULL, &error);
+			connection = g_socket_client_connect_to_host(client, server, j_configuration_get_port(j_configuration()), NULL, &error);
 
 			if (error != NULL)
 			{
