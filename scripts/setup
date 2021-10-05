@@ -84,6 +84,19 @@ get_port ()
 	printf '%s' "${port}"
 }
 
+get_default_port ()
+{
+	local port
+	local uid
+
+	port='4711'
+	uid="$(id --user)"
+	uid="$((${uid} % 1000))"
+	port="$((${port} + ${uid}))"
+
+	printf '%s' "${port}"
+}
+
 get_servers ()
 {
 	local server
@@ -194,7 +207,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='<TODO: correct port>'
+		test -n "${port}" || port="$(get_default_port)"
 		backend_path="$(printf '%s' "${OBJECT_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
@@ -210,7 +223,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='<TODO: correct port>'
+		test -n "${port}" || port="$(get_default_port)"
 		backend_path="$(printf '%s' "${KV_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
@@ -226,7 +239,7 @@ setup_clean ()
 	do
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
-		test -n "${port}" || port='<TODO: correct port>'
+		test -n "${port}" || port="$(get_default_port)"
 		backend_path="$(printf '%s' "${DB_PATH}" | sed "s/{PORT}/${port}/")"
 
 		if test "${host}" = "${HOSTNAME}"
