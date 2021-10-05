@@ -105,7 +105,7 @@ write_config(gchar* path)
 	servers_db = string_split(opt_servers_db);
 
 	key_file = g_key_file_new();
-	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_stripe_size);
+	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_max_operation_size);
 	g_key_file_set_integer(key_file, "core", "port", opt_port);
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
 	g_key_file_set_int64(key_file, "clients", "stripe-size", opt_stripe_size);
