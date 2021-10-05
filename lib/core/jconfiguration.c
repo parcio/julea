@@ -30,6 +30,7 @@
 #include <jconfiguration-internal.h>
 
 #include <jbackend.h>
+#include <jcredentials.h>
 #include <jtrace.h>
 
 /**
@@ -140,6 +141,8 @@ struct JConfiguration
 	} db;
 
 	guint64 max_operation_size;
+	guint16 port;
+
 	guint32 max_connections;
 	guint64 stripe_size;
 
@@ -279,12 +282,14 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* db_component;
 	gchar* db_path;
 	guint64 max_operation_size;
+	guint32 port;
 	guint32 max_connections;
 	guint64 stripe_size;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
+	port = g_key_file_get_integer(key_file, "core", "port", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
@@ -299,6 +304,9 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
 	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
+
+	/// \todo check value ranges (max_operation_size, port, max_connections, stripe_size)
+	// configuration->port < 0 || configuration->port > 65535
 
 	if (servers_object == NULL || servers_object[0] == NULL
 	    || servers_kv == NULL || servers_kv[0] == NULL
@@ -346,6 +354,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->db.component = db_component;
 	configuration->db.path = db_path;
 	configuration->max_operation_size = max_operation_size;
+	configuration->port = port;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
@@ -353,6 +362,13 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	if (configuration->max_operation_size == 0)
 	{
 		configuration->max_operation_size = 8 * 1024 * 1024;
+	}
+
+	if (configuration->port == 0)
+	{
+		g_autoptr(JCredentials) credentials = j_credentials_new();
+
+		configuration->port = 4711 + (j_credentials_get_user(credentials) % 1000);
 	}
 
 	if (configuration->max_connections == 0)
@@ -550,6 +566,16 @@ j_configuration_get_stripe_size(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->stripe_size;
+}
+
+guint16
+j_configuration_get_port(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->port;
 }
 
 /**

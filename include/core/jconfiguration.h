@@ -108,6 +108,8 @@ gchar const* j_configuration_get_backend_component(JConfiguration*, JBackendType
 gchar const* j_configuration_get_backend_path(JConfiguration*, JBackendType);
 
 guint64 j_configuration_get_max_operation_size(JConfiguration*);
+guint16 j_configuration_get_port(JConfiguration*);
+
 guint32 j_configuration_get_max_connections(JConfiguration*);
 guint64 j_configuration_get_stripe_size(JConfiguration*);
 
