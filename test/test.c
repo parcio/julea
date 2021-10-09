@@ -78,6 +78,7 @@ main(int argc, char** argv)
 	test_hdf_datatype();
 	test_hdf_file();
 	test_hdf_dataset();
+	test_hdf_group_link();
 
 	ret = g_test_run();
 
