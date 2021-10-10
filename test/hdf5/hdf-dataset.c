@@ -113,12 +113,12 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
 	hid_t space, set, dcpl, new_space;
-	hsize_t dims[] = {1,2,3};
+	hsize_t dims[] = {12,12,12};
 	hsize_t new_dims[] = {30,40,50};
 	hsize_t unlimitted_dim[] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
-	hsize_t chunk_size[] = {3,3,3};
-	hsize_t *loaded_dims = NULL;
-	hsize_t *loaded_maxdims = NULL;
+	hsize_t chunk_size[] = {2,2,2};
+	hsize_t loaded_dims[] = {0,0,0};
+	hsize_t loaded_maxdims[] = {0,0,0};
 	int new_rank;
 	herr_t error;
 
@@ -147,15 +147,15 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 
 	new_rank = H5Sget_simple_extent_dims(new_space, loaded_dims, loaded_maxdims);
 	g_assert_cmpint(new_rank, ==, 3);
-	// g_assert_cmpint(loaded_dims[0], ==, 30);
-	// g_assert_cmpint(loaded_dims[1], ==, 40);
-	// g_assert_cmpint(loaded_dims[2], ==, 50);
-	// g_assert_true(loaded_maxdims[0] == H5S_UNLIMITED && loaded_maxdims[1] == H5S_UNLIMITED && loaded_maxdims[2] == H5S_UNLIMITED);
-
-	free(loaded_maxdims);
-	free(loaded_dims);
+	g_assert_cmpint(loaded_dims[0], ==, 30);
+	g_assert_cmpint(loaded_dims[1], ==, 40);
+	g_assert_cmpint(loaded_dims[2], ==, 50);
+	g_assert_true(loaded_maxdims[0] == H5S_UNLIMITED && loaded_maxdims[1] == H5S_UNLIMITED && loaded_maxdims[2] == H5S_UNLIMITED);
 
 	error = H5Dclose(set);
+	g_assert_cmpint(error, >=, 0);
+
+	error = H5Pclose(dcpl);
 	g_assert_cmpint(error, >=, 0);
 
 	error = H5Ldelete(file, "chunked", H5P_DEFAULT);
