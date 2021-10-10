@@ -44,7 +44,7 @@ test_hdf_group_create_delete_open_close(hid_t* file_fixture, gconstpointer udata
 	hid_t group, error;
 	htri_t ret;
 
-	(void) udata;
+	(void)udata;
 
 	group = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group, !=, H5I_INVALID_HID);
@@ -75,7 +75,7 @@ test_hdf_link_nested_group(hid_t* file_fixture, gconstpointer udata)
 	hid_t group, nested_group, error;
 	htri_t ret;
 
-	(void) udata;
+	(void)udata;
 
 	group = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group, !=, H5I_INVALID_HID);
@@ -102,7 +102,7 @@ test_hdf_link_hard_delete(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t group1, group2, error;
 
-	(void) udata;
+	(void)udata;
 
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
@@ -135,7 +135,7 @@ test_hdf_link_soft(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t group1, group2, error;
 
-	(void) udata;
+	(void)udata;
 
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
@@ -165,7 +165,7 @@ test_hdf_link_invalid(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t error;
 
-	(void) udata;
+	(void)udata;
 
 	error = H5Glink(file, H5G_LINK_SOFT, "test_group", "test_group2");
 	g_assert_cmpint(error, >=, 0); // creating soft links to non existing objects is allowed
@@ -175,12 +175,12 @@ test_hdf_link_invalid(hid_t* file_fixture, gconstpointer udata)
 }
 
 static herr_t
-it_op(hid_t group, const char *name, const H5L_info2_t *info, void *op_data)
+it_op(hid_t group, const char* name, const H5L_info2_t* info, void* op_data)
 {
 	int* count = (int*)op_data;
-	(void) info;
-	(void) group;
-	(void) name;
+	(void)info;
+	(void)group;
+	(void)name;
 
 	++(*count);
 	return 0;
@@ -193,7 +193,7 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 	hid_t group1, group2, error;
 	int count = 0;
 
-	(void) udata;
+	(void)udata;
 
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);

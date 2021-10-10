@@ -37,9 +37,9 @@
 
 /**
  * Create a simple HDF5 file to test groups, datasets, ...
- * 
+ *
  * \internal
- * 
+ *
  * \param file File to be created.
  * \param udata User specified data. Will be ignored.
  **/
@@ -47,9 +47,9 @@ void j_test_hdf_file_fixture_setup(hid_t* file, gconstpointer udata);
 
 /**
  * Teardown function for \ref j_test_hdf_file_fixture_setup
- * 
+ *
  * \internal
- * 
+ *
  * \param file File to delete.
  * \param udata User specified data. Will be ignored.
  **/

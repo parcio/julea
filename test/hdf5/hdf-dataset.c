@@ -38,12 +38,12 @@
 #include "hdf-helper.h"
 
 static void
-create_open_close_delete(hid_t file, H5S_class_t space_type, gchar const *name, hid_t data_type, hsize_t rank, hsize_t* dims, hsize_t* maxdims, hsize_t* chunk_size)
+create_open_close_delete(hid_t file, H5S_class_t space_type, gchar const* name, hid_t data_type, hsize_t rank, hsize_t* dims, hsize_t* maxdims, hsize_t* chunk_size)
 {
 	hid_t space, set, dcpl;
 	herr_t error;
 
-	if(rank == 0)
+	if (rank == 0)
 	{
 		space = H5Screate(space_type);
 	}
@@ -56,7 +56,7 @@ create_open_close_delete(hid_t file, H5S_class_t space_type, gchar const *name, 
 	dcpl = H5Pcopy(H5P_DATASET_CREATE_DEFAULT);
 	g_assert_cmpint(dcpl, !=, H5I_INVALID_HID);
 
-	if(chunk_size != NULL)
+	if (chunk_size != NULL)
 	{
 		error = H5Pset_chunk(dcpl, rank, chunk_size);
 		g_assert_cmpint(error, >=, 0);
@@ -85,26 +85,26 @@ static void
 test_hdf_dataset_create_delete_open_close(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
-	hsize_t dims[] = {1,2,3};
-	hsize_t unlimitted_dim[] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
-	hsize_t chunk_size[] = {3,3,3};
-	hsize_t zero_dim[] = {1,0,0};
+	hsize_t dims[] = { 1, 2, 3 };
+	hsize_t unlimitted_dim[] = { H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED };
+	hsize_t chunk_size[] = { 3, 3, 3 };
+	hsize_t zero_dim[] = { 1, 0, 0 };
 
-	(void) udata;
+	(void)udata;
 
 	// null
 	create_open_close_delete(file, H5S_NULL, "null", H5T_NATIVE_INT, 0, NULL, NULL, NULL);
-	
+
 	// scalar
 	create_open_close_delete(file, H5S_SCALAR, "scalar", H5T_NATIVE_INT, 0, NULL, NULL, NULL);
-	
+
 	// simple
 	create_open_close_delete(file, H5S_SIMPLE, "simple", H5T_NATIVE_INT, 3, dims, dims, NULL);
-	
+
 	// simple zero_dim
 	create_open_close_delete(file, H5S_SIMPLE, "simple_zero", H5T_NATIVE_INT, 3, zero_dim, zero_dim, NULL);
-	
-	// chunked	
+
+	// chunked
 	create_open_close_delete(file, H5S_SIMPLE, "chunked", H5T_NATIVE_INT, 3, dims, unlimitted_dim, chunk_size);
 }
 
@@ -113,16 +113,16 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
 	hid_t space, set, dcpl, new_space;
-	hsize_t dims[] = {12,12,12};
-	hsize_t new_dims[] = {30,40,50};
-	hsize_t unlimitted_dim[] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
-	hsize_t chunk_size[] = {2,2,2};
-	hsize_t loaded_dims[] = {0,0,0};
-	hsize_t loaded_maxdims[] = {0,0,0};
+	hsize_t dims[] = { 12, 12, 12 };
+	hsize_t new_dims[] = { 30, 40, 50 };
+	hsize_t unlimitted_dim[] = { H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED };
+	hsize_t chunk_size[] = { 2, 2, 2 };
+	hsize_t loaded_dims[] = { 0, 0, 0 };
+	hsize_t loaded_maxdims[] = { 0, 0, 0 };
 	int new_rank;
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	space = H5Screate_simple(3, dims, unlimitted_dim);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
@@ -167,13 +167,13 @@ test_hdf_dataset_invalid_extend(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
 	hid_t space, set, dcpl;
-	hsize_t dims[] = {1,2,3};
-	hsize_t new_dims[] = {30,40,50};
-	hsize_t max_dims[] = {3, 4, 5};
-	hsize_t chunk_size[] = {3,3,3};
+	hsize_t dims[] = { 1, 2, 3 };
+	hsize_t new_dims[] = { 30, 40, 50 };
+	hsize_t max_dims[] = { 3, 4, 5 };
+	hsize_t chunk_size[] = { 3, 3, 3 };
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	space = H5Screate_simple(3, dims, max_dims);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
@@ -206,11 +206,11 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t space, set;
 	hsize_t rank = 2;
-	hsize_t dim[] = {1000,1000};
-	g_autofree int *data = NULL;
+	hsize_t dim[] = { 1000, 1000 };
+	g_autofree int* data = NULL;
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -221,7 +221,8 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
-	for(int i = 0; i < 999999; ++i) data[i] = i;
+	for (int i = 0; i < 999999; ++i)
+		data[i] = i;
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -232,7 +233,8 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 	g_assert_cmpint(error, >=, 0);
 
 	// check data
-	for(int i = 0; i < 999999; ++i) g_assert_cmpint(data[i], ==, i);
+	for (int i = 0; i < 999999; ++i)
+		g_assert_cmpint(data[i], ==, i);
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -247,16 +249,16 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t space, set, hyperslab, mem_space;
 	hsize_t rank = 2;
-	hsize_t dim[] = {1000, 1000};
-	hsize_t start[] = {0, 0};
-	hsize_t stride[] = {2, 2};
-	hsize_t count[] = {500, 500};
-	g_autofree int *data = NULL;
-	g_autofree int *write_data = NULL;
-	g_autofree int *read_data = NULL;
+	hsize_t dim[] = { 1000, 1000 };
+	hsize_t start[] = { 0, 0 };
+	hsize_t stride[] = { 2, 2 };
+	hsize_t count[] = { 500, 500 };
+	g_autofree int* data = NULL;
+	g_autofree int* write_data = NULL;
+	g_autofree int* read_data = NULL;
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -267,7 +269,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
-	for(int i = 0; i < 999999; ++i) data[i] = 9001;
+	for (int i = 0; i < 999999; ++i)
+		data[i] = 9001;
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -281,7 +284,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 	g_assert_cmpint(error, >=, 0);
 
 	write_data = g_malloc(250000 * sizeof(int));
-	for(int i = 0; i < 249999; ++i) write_data[i] = 42;
+	for (int i = 0; i < 249999; ++i)
+		write_data[i] = 42;
 
 	// space of mem data
 	mem_space = H5Screate_simple(rank, count, count);
@@ -296,7 +300,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 	error = H5Dread(set, H5T_NATIVE_INT, mem_space, hyperslab, H5P_DEFAULT, read_data);
 
 	// check data
-	for(int i = 0; i < 249999; ++i) g_assert_cmpint(read_data[i], ==, 42);
+	for (int i = 0; i < 249999; ++i)
+		g_assert_cmpint(read_data[i], ==, 42);
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -317,12 +322,12 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t space, set, dcpl;
 	hsize_t rank = 2;
-	hsize_t dim[] = {1000,1000};
-	hsize_t chunk_size[] = {100,100};
-	g_autofree int *data = NULL;
+	hsize_t dim[] = { 1000, 1000 };
+	hsize_t chunk_size[] = { 100, 100 };
+	g_autofree int* data = NULL;
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -339,7 +344,8 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
-	for(int i = 0; i < 999999; ++i) data[i] = i;
+	for (int i = 0; i < 999999; ++i)
+		data[i] = i;
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -350,7 +356,8 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 	g_assert_cmpint(error, >=, 0);
 
 	// check data
-	for(int i = 0; i < 999999; ++i) g_assert_cmpint(data[i], ==, i);
+	for (int i = 0; i < 999999; ++i)
+		g_assert_cmpint(data[i], ==, i);
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -365,15 +372,15 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 	hid_t file = *file_fixture;
 	hid_t space, set, elements, mem_space;
 	hsize_t rank = 2;
-	hsize_t dim[] = {1000, 1000};
+	hsize_t dim[] = { 1000, 1000 };
 	hsize_t n = 1;
-	hsize_t coord[2] = {3,3};
-	g_autofree int *data = NULL;
+	hsize_t coord[2] = { 3, 3 };
+	g_autofree int* data = NULL;
 	int write = 42;
 	int read = 0;
 	herr_t error;
 
-	(void) udata;
+	(void)udata;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -384,7 +391,8 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
-	for(int i = 0; i < 999999; ++i) data[i] = 9001;
+	for (int i = 0; i < 999999; ++i)
+		data[i] = 9001;
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);

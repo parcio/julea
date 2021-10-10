@@ -42,7 +42,7 @@ test_hdf_file_create_delete(void)
 {
 	hid_t file;
 	herr_t error;
-	
+
 	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
 
@@ -65,7 +65,7 @@ test_hdf_file_double_create(void)
 {
 	hid_t file;
 	herr_t error;
-	
+
 	file = H5Fcreate("excl_test_file.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
 
@@ -116,7 +116,7 @@ test_hdf_file_delete(void)
 {
 	hid_t file;
 	herr_t error;
-	
+
 	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
 
