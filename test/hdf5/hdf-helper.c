@@ -36,7 +36,7 @@ void j_test_hdf_file_fixture_teardown(hid_t* file, gconstpointer udata)
 {
     const gchar* name = udata;
     H5Fclose(*file);
-    //H5Fdelete(name, H5P_DEFAULT);
+    H5Fdelete(name, H5P_DEFAULT);
 }
 
 #endif

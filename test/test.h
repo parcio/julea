@@ -63,5 +63,6 @@ void test_hdf_datatype(void);
 void test_hdf_file(void);
 void test_hdf_dataset(void);
 void test_hdf_group_link(void);
+void test_hdf_attribute(void);
 
 #endif

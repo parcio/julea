@@ -523,6 +523,7 @@ julea_test_srcs = files([
 	'test/hdf5/hdf-dataset.c',
 	'test/hdf5/hdf-file.c',
 	'test/hdf5/hdf-group-link.c',
+	'test/hdf5/hdf-attribute.c',
 	'test/item/collection.c',
 	'test/item/collection-iterator.c',
 	'test/item/item.c',
