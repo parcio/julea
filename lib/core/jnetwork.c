@@ -10,6 +10,7 @@
 #include <rdma/fi_cm.h>
 
 #include <core/jconfiguration.h>
+#include <jtrace.h>
 
 /// Used to initialize common parts between different connection.
 /** This will create the following libfabric resources:
@@ -105,6 +106,8 @@ struct JConnectionMemory {
 void free_dangling_infos(struct fi_info*);
 
 void free_dangling_infos(struct fi_info* info) {
+	J_TRACE_FUNCTION(NULL);
+
 	fi_freeinfo(info->next);
 	info->next = NULL;
 }
@@ -112,6 +115,8 @@ void free_dangling_infos(struct fi_info* info) {
 gboolean
 j_fabric_init_server(struct JConfiguration* configuration, struct JFabric** instance_ptr)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	struct JFabric* this;
 	int res;
 	size_t addrlen;
@@ -169,6 +174,8 @@ end:
 gboolean
 j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* addr, struct JFabric** instance_ptr)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	struct JFabric* this;
 	struct fi_info* hints;
 	int res;
@@ -205,6 +212,8 @@ end:
 gboolean
 j_fabric_fini(struct JFabric* this)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 
 	fi_freeinfo(this->info);
@@ -232,6 +241,8 @@ end:
 gboolean
 j_fabric_sread_event(struct JFabric* this, int timeout, enum JFabricEvents* event, JFabricConnectionRequest* con_req)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	gboolean ret = FALSE;
 	uint32_t fi_event;
@@ -262,6 +273,8 @@ end:
 gboolean
 j_connection_init_client(struct JConfiguration* configuration, enum JBackendType backend, guint index, struct JConnection** instance_ptr)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	struct JConnection* this;
 	gboolean ret = FALSE;
 	int res;
@@ -336,6 +349,8 @@ end:
 gboolean
 j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection, struct JConnection** instance_ptr)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	struct JConnection* this;
 	gboolean ret = FALSE;
 	int res;
@@ -351,12 +366,6 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 	memset(this, 0, sizeof(*this));
 	
 	// send addr
-	{ // DEBUG TODO
-		char* str = malloc(ntohl(addr->addr_len) * 3 + 1);
-		size_t i;
-		for(i = 0; i < ntohl(addr->addr_len); ++i) { snprintf(str+i*3, 4, "%02x ", ((uint8_t*)addr->addr)[i]); }
-		free(str);
-	}	
 	g_out = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
 	g_output_stream_write(g_out, &addr->addr_format, sizeof(addr->addr_format), NULL, &error);
 	G_CHECK("Failed to write addr_format to stream!");
@@ -395,6 +404,8 @@ end:
 gboolean
 j_connection_init(struct JConnection* this)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE; 
 	int res;
 
@@ -446,6 +457,8 @@ end:
 gboolean
 j_connection_create_memory_resources(struct JConnection* this)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 	int res;
 	guint64 op_size, size;
@@ -488,6 +501,8 @@ end:
 gboolean
 j_connection_sread_event(struct JConnection* this, int timeout, enum JConnectionEvents* event)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	uint32_t fi_event;
 	gboolean ret = FALSE;
@@ -526,6 +541,8 @@ end:
 gboolean
 j_connection_read_event(struct JConnection* this, enum JConnectionEvents* event)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	uint32_t fi_event;
 	gboolean ret = FALSE;
@@ -553,6 +570,8 @@ end:
 gboolean
 j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	gboolean ret = FALSE;
 	uint8_t* segment;
@@ -599,6 +618,8 @@ end:
 gboolean
 j_connection_recv(struct JConnection* this, size_t data_len, void* data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 	int res;
 	void* segment;
@@ -632,12 +653,16 @@ end:
 gboolean
 j_connection_closed(struct JConnection* this)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	return this->closed;
 }
 
 gboolean
 j_connection_wait_for_completion(struct JConnection* this)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	gboolean ret = FALSE;
 	int res;
 	struct fi_cq_entry entry;
@@ -695,6 +720,8 @@ end:
 gboolean
 j_connection_rma_register(struct JConnection* this, const void* data, size_t data_len, struct JConnectionMemory* handle)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	gboolean ret = FALSE;
 
@@ -716,6 +743,8 @@ end:
 gboolean
 j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* handle)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	this->next_key = 0; /// \todo may just count key to overflow? (max value is stored in domain_attr)
 	res = fi_close(&handle->memory_region->fid);
@@ -728,6 +757,8 @@ end:
 gboolean
 j_connection_memory_get_id(struct JConnectionMemory* this, struct JConnectionMemoryID* id)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	id->size = this->size;
 	id->key = fi_mr_key(this->memory_region);
 	id->offset = this->addr;
@@ -737,6 +768,8 @@ j_connection_memory_get_id(struct JConnectionMemory* this, struct JConnectionMem
 gboolean
 j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID* memoryID, void* data)
 {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	gboolean ret = FALSE;
 	struct fid_mr* mr;
@@ -773,6 +806,8 @@ end:
 
 gboolean
 j_connection_fini ( struct JConnection* this) {
+	J_TRACE_FUNCTION(NULL);
+
 	int res;
 	gboolean ret = FALSE;
 
