@@ -686,7 +686,6 @@ j_message_send(JMessage* message, struct JConnection* connection)
 	struct JConnectionMemory* memory_regions_end = NULL;
 	struct JConnectionMemoryID mem_id;
 	g_autoptr(JListIterator) iterator = NULL;
-	clock_t stop, start = clock();
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
