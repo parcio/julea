@@ -28,6 +28,12 @@
 
 static guint jd_thread_num = 0;
 
+struct ObjectWriteEntry {
+	uint64_t size;
+	uint64_t offset;
+	void* data;
+};
+
 gboolean
 jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChunk* memory_chunk, guint64 memory_chunk_size, JStatistics* statistics)
 {
@@ -266,6 +272,8 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 			g_autoptr(JMessage) reply = NULL;
 			gpointer object;
 			gboolean ret;
+			struct ObjectWriteEntry* writeEntries;
+			guint64 entryItr;
 
 			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 			{
@@ -277,6 +285,8 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 
 			ret = j_backend_object_open(jd_object_backend, namespace, path, &object);
 
+			writeEntries = malloc(sizeof(struct ObjectWriteEntry) * operation_count);
+			entryItr = 0;
 			for (i = 0; i < operation_count; i++)
 			{
 				gchar* buf;
@@ -286,28 +296,53 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 
 				offset = j_message_get_8(message);
 				memoryID = j_message_get_memory_id(message);
-				// g_message("memory size: %lu", memoryID->size);
 
-				if (memoryID->size > memory_chunk_size && reply != NULL && G_LIKELY(ret))
+				if (memoryID->size <= memory_chunk_size && G_LIKELY(ret))
 				{
-					/// \todo return proper error
+					buf = j_memory_chunk_get(memory_chunk, memoryID->size);
+					if (buf == NULL)
+					{
+						j_connection_wait_for_completion(connection); ///< \todo parallelize more
+						for(; entryItr < i; ++entryItr) {
+							struct ObjectWriteEntry* entry = writeEntries + entryItr;
+							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, entry->size);
+							j_backend_object_write(jd_object_backend, object, entry->data, entry->size, entry->offset, &bytes_written);
+							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+							if(reply != NULL)
+							{
+								j_message_add_operation(reply, sizeof(guint64));
+								j_message_append_8(reply, &bytes_written);
+							}
+						}
+						j_memory_chunk_reset(memory_chunk);
+						buf = j_memory_chunk_get(memory_chunk, memoryID->size);
+						/// \todo check for oversized memory areas!
+					}
+
+					// Guaranteed to work because is reseted on demand
+					g_assert(buf != NULL);
+
+					j_connection_rma_read(connection, memoryID, buf);
+					writeEntries[i] = (struct ObjectWriteEntry){
+							.size = memoryID->size,
+							.offset = offset,
+							.data = buf};
+				} else if (reply != NULL) {
+					/// @todo return write error
+					bytes_written = 0;
 					j_message_add_operation(reply, sizeof(guint64));
 					j_message_append_8(reply, &bytes_written);
-					continue;
 				}
+			}
 
-				// Guaranteed to work because memory_chunk is reset below
-				buf = j_memory_chunk_get(memory_chunk, memoryID->size);
-				g_assert(buf != NULL);
-
-				j_connection_rma_read(connection, memoryID, buf);
-				j_connection_wait_for_completion(connection); ///< \todo pararlleize
-				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, memoryID->size);
-				// CONTINUE
-
-				if (G_LIKELY(ret))
-				{
-					j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
+			j_connection_wait_for_completion(connection);
+			if(G_LIKELY(ret))
+			{
+				for(; entryItr < operation_count; ++entryItr) {
+					guint64 bytes_written = 0;
+					struct ObjectWriteEntry* entry = writeEntries + entryItr;
+					j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, entry->size);
+					j_backend_object_write(jd_object_backend, object, entry->data, entry->size, entry->offset, &bytes_written);
 					j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
 
 					if (reply != NULL)
@@ -316,9 +351,9 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 						j_message_append_8(reply, &bytes_written);
 					}
 				}
-
-				j_memory_chunk_reset(memory_chunk);
 			}
+			j_memory_chunk_reset(memory_chunk);
+			free(writeEntries);
 
 			if (safety == J_SEMANTICS_SAFETY_STORAGE)
 			{

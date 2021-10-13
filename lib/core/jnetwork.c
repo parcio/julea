@@ -714,6 +714,7 @@ j_connection_wait_for_completion(struct JConnection* this)
 	this->memory.used = 0;
 	ret = TRUE;
 end:
+	// g_message("\t\toverhead: %f", (double)(sum)/CLOCKS_PER_SEC);
 	return ret;
 }
 
@@ -788,12 +789,7 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 			mr);
 		/// \todo fix the timing for minimal timeout. This is needed when device is too bussy
 		if(res == -FI_EAGAIN) {
-			struct timespec ts;
-			int tres;
-			ts.tv_nsec = 1000000;
-			do {
-				tres = nanosleep(&ts, &ts);
-			} while(tres && errno == EINTR);
+			j_connection_wait_for_completion(this);
 		}
 	} while ( res == -FI_EAGAIN);
 	CHECK("Failed to initate reading");

@@ -695,7 +695,6 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, object->index);
 		j_message_send(message, object_connection);
-
 		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
@@ -731,6 +730,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	{
 		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
+
 
 	/*
 	if (lock != NULL)
