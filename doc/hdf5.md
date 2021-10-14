@@ -26,7 +26,6 @@ $ spack install enzo@master ^hdf5@1.12:
 $ spack load enzo
 $ export HDF5_VOL_CONNECTOR=julea-db
 $ ./scripts/setup.sh start
-# It might currently be necessary to start Enzo twice due to a bug
 $ enzo -d "$(spack location -i enzo)/run/Hydro/Hydro-3D/CollapseTestNonCosmological/CollapseTestNonCosmological.enzo"
 $ ./scripts/setup.sh stop
 ```

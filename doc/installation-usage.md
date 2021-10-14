@@ -21,6 +21,24 @@ $ ninja -C bld-release install
 
 Finally, you have to create a [configuration](configuration.md) if you do not have one already.
 
+## Benchmarks
+
+JULEA provides a script that executes benchmarks to measure the performance of JULEA's different components.
+
+```console
+$ ./scripts/setup.sh start
+$ ./scripts/benchmark.sh
+$ ./scripts/setup.sh stop
+```
+
+By default, the individual benchmarks will run for approximately one second.
+This can be changed using the `-d` or `--duration` option.
+Additional options can be shown using `-h` or `--help`.
+
+```console
+$ ./scripts/benchmark.sh -d 60
+```
+
 ## Using Specific Compilers
 
 JULEA and its dependencies can also be built using specific compilers instead of the default ones.
