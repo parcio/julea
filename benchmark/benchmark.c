@@ -245,6 +245,11 @@ j_benchmark_run_all(void)
 		return;
 	}
 
+	if (opt_list)
+	{
+		goto skip_header;
+	}
+
 	if (!opt_machine_readable)
 	{
 		gchar const* left;
@@ -276,6 +281,7 @@ j_benchmark_run_all(void)
 		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
 	}
 
+skip_header:
 	j_benchmarks = g_list_reverse(j_benchmarks);
 
 	for (benchmark = j_benchmarks; benchmark != NULL; benchmark = benchmark->next)
