@@ -251,15 +251,15 @@ jobs:
       - name: Configure
         env:
           CC: ${{ matrix.os.compiler }}
-        # FIXME Ubuntu 18.04's GCC sanitizer seems to produce false positives regarding a stack overflow in the db client.
+        # FIXME Ubuntu 18.04's sanitizers produce many false positives.
         run: |
           . scripts/environment.sh
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
-          elif test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
+          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
           then
             meson setup bld
+          elif test "${{ matrix.os.compiler }}" = 'clang'
+          then
+            meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
           else
             meson setup -Db_sanitize=address,undefined bld
           fi
