@@ -17,7 +17,7 @@
 project('julea', 'c',
 	version: '0.5',
 	license: 'LGPLv3+',
-	meson_version: '>= 0.53',
+	meson_version: '>= 0.57',
 	default_options: [
 		'optimization=g',
 		'warning_level=3',
@@ -531,9 +531,14 @@ julea_test_srcs = files([
 	'test/test.c',
 ])
 
-executable('julea-test', julea_test_srcs,
+julea_test = executable('julea-test', julea_test_srcs,
 	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('test')],
+)
+
+test('julea-test', julea_test,
+	timeout: 0,
+	protocol: 'tap',
 )
 
 julea_benchmark_srcs = files([

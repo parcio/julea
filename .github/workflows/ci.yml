@@ -91,6 +91,11 @@ jobs:
             compiler: clang
             compiler_version: 9.0.0
         dependencies: [system, spack]
+        exclude:
+          # GLib is too old for TAP on Ubuntu 18.04
+          - os:
+              dist: ubuntu-18.04
+            dependencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -104,14 +109,9 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
             sudo pip3 install meson
-          else
-            sudo apt --yes --no-install-recommends install meson ninja-build
-          fi
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
@@ -190,6 +190,11 @@ jobs:
             kv: lmdb
             db: mysql
             db-server: mariadb
+        exclude:
+          # GLib is too old for TAP on Ubuntu 18.04
+          - os:
+              dist: ubuntu-18.04
+            dependencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -203,14 +208,9 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel ninja-build
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
             sudo pip3 install meson
-          else
-            sudo apt --yes --no-install-recommends install meson ninja-build
-          fi
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
