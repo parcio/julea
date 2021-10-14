@@ -43,13 +43,15 @@ set_hdf_path
 
 run_test ()
 {
+	local build_dir
 	local ret
 
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
 	ret=0
 
-	# FIXME gtester is deprecated, replace with tappy?
-	# shellcheck disable=SC2230
-	gtester --keep-going --verbose "$@" "$(which julea-test)" || ret=$?
+	test -d "${build_dir}" || error_build_directory_not_found
+
+	meson test -C "${build_dir}" --no-rebuild --print-errorlogs --verbose --test-args "$*" || ret=$?
 
 	return ${ret}
 }
