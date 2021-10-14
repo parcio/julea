@@ -30,6 +30,7 @@ test_collection_iterator_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JBatch) batch = NULL;
@@ -40,6 +41,7 @@ test_collection_iterator_new_free(void)
 
 		g_assert_true(collection != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -54,6 +56,7 @@ test_collection_iterator_next_get(void)
 
 	guint collections = 0;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	delete_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -91,6 +94,7 @@ test_collection_iterator_next_get(void)
 	g_assert_true(ret);
 
 	g_assert_cmpuint(collections, ==, n);
+	J_TEST_TRAP_END;
 }
 
 void

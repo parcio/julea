@@ -49,6 +49,7 @@ test_collection_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JBatch) batch = NULL;
@@ -59,6 +60,7 @@ test_collection_new_free(void)
 
 		g_assert_true(collection != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -66,7 +68,9 @@ test_collection_name(JCollection** collection, gconstpointer data)
 {
 	(void)data;
 
+	J_TEST_TRAP_START;
 	g_assert_cmpstr(j_collection_get_name(*collection), ==, "test-collection");
+	J_TEST_TRAP_END;
 }
 
 void

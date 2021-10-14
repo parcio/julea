@@ -41,6 +41,7 @@ test_semantics_new_ref_unref(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JSemantics) semantics = NULL;
@@ -51,6 +52,7 @@ test_semantics_new_ref_unref(void)
 		g_assert_true(semantics != NULL);
 		j_semantics_unref(semantics);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -58,6 +60,7 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 {
 	gint s;
 
+	J_TEST_TRAP_START;
 	j_semantics_set(*semantics, J_SEMANTICS_ATOMICITY, J_SEMANTICS_ATOMICITY_OPERATION);
 	s = j_semantics_get(*semantics, J_SEMANTICS_ATOMICITY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_ATOMICITY_OPERATION);
@@ -81,6 +84,7 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_SECURITY_STRICT);
+	J_TEST_TRAP_END;
 }
 
 void

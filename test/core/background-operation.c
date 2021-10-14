@@ -39,10 +39,12 @@ test_background_operation_new_ref_unref(void)
 {
 	JBackgroundOperation* background_operation;
 
+	J_TEST_TRAP_START;
 	background_operation = j_background_operation_new(on_background_operation_completed, NULL);
 	j_background_operation_ref(background_operation);
 	j_background_operation_unref(background_operation);
 	j_background_operation_unref(background_operation);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -50,10 +52,12 @@ test_background_operation_wait(void)
 {
 	JBackgroundOperation* background_operation;
 
+	J_TEST_TRAP_START;
 	background_operation = j_background_operation_new(on_background_operation_completed, NULL);
 
 	j_background_operation_wait(background_operation);
 	j_background_operation_unref(background_operation);
+	J_TEST_TRAP_END;
 }
 
 void

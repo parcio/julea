@@ -42,8 +42,10 @@ test_batch_new_free(void)
 {
 	g_autoptr(JBatch) batch = NULL;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_assert_true(batch != NULL);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -52,6 +54,7 @@ test_batch_semantics(void)
 	JBatch* batch;
 	g_autoptr(JSemantics) semantics = NULL;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	g_assert_true(j_batch_get_semantics(batch) != NULL);
@@ -64,6 +67,7 @@ test_batch_semantics(void)
 	g_assert_true(j_batch_get_semantics(batch) == semantics);
 
 	j_batch_unref(batch);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -72,11 +76,13 @@ test_batch_execute_empty(void)
 	g_autoptr(JBatch) batch = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_assert_true(batch != NULL);
 
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -119,13 +125,17 @@ _test_batch_execute(gboolean async)
 static void
 test_batch_execute(void)
 {
+	J_TEST_TRAP_START;
 	_test_batch_execute(FALSE);
+	J_TEST_TRAP_END;
 }
 
 static void
 test_batch_execute_async(void)
 {
+	J_TEST_TRAP_START;
 	_test_batch_execute(TRUE);
+	J_TEST_TRAP_END;
 }
 
 void

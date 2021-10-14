@@ -45,6 +45,7 @@ test_list_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JList) list = NULL;
@@ -52,6 +53,7 @@ test_list_new_free(void)
 		list = j_list_new(NULL);
 		g_assert_true(list != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -62,6 +64,7 @@ test_list_length(JList** list, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_append(*list, g_strdup("append"));
@@ -69,6 +72,7 @@ test_list_length(JList** list, gconstpointer data)
 
 	l = j_list_length(*list);
 	g_assert_cmpuint(l, ==, n);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -78,10 +82,12 @@ test_list_append(JList** list, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_append(*list, g_strdup("append"));
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -91,10 +97,12 @@ test_list_prepend(JList** list, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		j_list_prepend(*list, g_strdup("append"));
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -104,6 +112,7 @@ test_list_get(JList** list, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	j_list_append(*list, g_strdup("0"));
 	j_list_append(*list, g_strdup("1"));
 	j_list_append(*list, g_strdup("-2"));
@@ -113,6 +122,7 @@ test_list_get(JList** list, gconstpointer data)
 	g_assert_cmpstr(s, ==, "0");
 	s = j_list_get_last(*list);
 	g_assert_cmpstr(s, ==, "-1");
+	J_TEST_TRAP_END;
 }
 
 void

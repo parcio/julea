@@ -30,7 +30,9 @@ test_uri_new_free(void)
 {
 	g_autoptr(JURI) uri = NULL;
 
+	J_TEST_TRAP_START;
 	uri = j_uri_new("julea://JULEA");
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -38,6 +40,7 @@ test_uri_valid(void)
 {
 	JURI* uri;
 
+	J_TEST_TRAP_START;
 	uri = j_uri_new("julea://");
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, NULL);
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, NULL);
@@ -62,6 +65,7 @@ test_uri_valid(void)
 	g_assert_cmpstr(j_uri_get_collection_name(uri), ==, "JULEA");
 	g_assert_cmpstr(j_uri_get_item_name(uri), ==, "fo.o");
 	j_uri_free(uri);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -69,6 +73,7 @@ test_uri_invalid(void)
 {
 	JURI* uri;
 
+	J_TEST_TRAP_START;
 	uri = j_uri_new("file://JULEA");
 	g_assert_true(uri == NULL);
 
@@ -92,6 +97,7 @@ test_uri_invalid(void)
 
 	uri = j_uri_new("julea://JULEA/foo/");
 	g_assert_true(uri == NULL);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -100,6 +106,7 @@ test_uri_create_delete(void)
 	JURI* uri;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	uri = j_uri_new("julea://uri-create-0/uri-create-0");
 	ret = j_uri_create(uri, FALSE, NULL);
 	g_assert_false(ret);
@@ -118,6 +125,7 @@ test_uri_create_delete(void)
 	ret = j_uri_delete(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -126,6 +134,7 @@ test_uri_get(void)
 	JURI* uri;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	uri = j_uri_new("julea://uri-get-0/uri-get-0");
 	j_uri_create(uri, TRUE, NULL);
 	j_uri_free(uri);
@@ -134,6 +143,7 @@ test_uri_get(void)
 	ret = j_uri_get(uri, NULL);
 	g_assert_true(ret);
 	j_uri_free(uri);
+	J_TEST_TRAP_END;
 }
 
 void

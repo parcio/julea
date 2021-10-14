@@ -19,6 +19,17 @@
 #ifndef JULEA_TEST_T
 #define JULEA_TEST_T
 
+#define J_TEST_TRAP_START \
+	if (g_test_subprocess()) \
+	{
+#define J_TEST_TRAP_END \
+	} \
+	else \
+	{ \
+		g_test_trap_subprocess(NULL, 0, G_TEST_SUBPROCESS_INHERIT_STDIN | G_TEST_SUBPROCESS_INHERIT_STDOUT | G_TEST_SUBPROCESS_INHERIT_STDERR); \
+		g_test_trap_assert_passed(); \
+	}
+
 void test_core_background_operation(void);
 void test_core_batch(void);
 void test_core_cache(void);

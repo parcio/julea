@@ -51,6 +51,7 @@ test_item_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JBatch) batch = NULL;
@@ -63,6 +64,7 @@ test_item_new_free(void)
 
 		g_assert_true(item != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -72,9 +74,11 @@ test_item_ref_unref(JItem** item, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	ref_item = j_item_ref(*item);
 	g_assert_true(*item == ref_item);
 	j_item_unref(*item);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -82,7 +86,9 @@ test_item_name(JItem** item, gconstpointer data)
 {
 	(void)data;
 
+	J_TEST_TRAP_START;
 	g_assert_cmpstr(j_item_get_name(*item), ==, "test-item");
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -90,7 +96,9 @@ test_item_size(JItem** item, gconstpointer data)
 {
 	(void)data;
 
+	J_TEST_TRAP_START;
 	g_assert_cmpuint(j_item_get_size(*item), ==, 0);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -98,7 +106,9 @@ test_item_modification_time(JItem** item, gconstpointer data)
 {
 	(void)data;
 
+	J_TEST_TRAP_START;
 	g_assert_cmpuint(j_item_get_modification_time(*item), >, 0);
+	J_TEST_TRAP_END;
 }
 
 void

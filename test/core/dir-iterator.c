@@ -97,6 +97,7 @@ test_dir_iterator_new_free(void)
 {
 	guint const n = 1000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JDirIterator) iterator = NULL;
@@ -104,6 +105,7 @@ test_dir_iterator_new_free(void)
 		iterator = j_dir_iterator_new("/tmp");
 		g_assert_true(iterator != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -115,6 +117,7 @@ test_dir_iterator_next_get(gchar** path, gconstpointer data)
 
 	(void)data;
 
+	J_TEST_TRAP_START;
 	hash_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 	for (guint i = 0; i < G_N_ELEMENTS(test_dir_files); i++)
@@ -140,6 +143,7 @@ test_dir_iterator_next_get(gchar** path, gconstpointer data)
 	}
 
 	g_assert_cmpuint(g_hash_table_size(hash_table), ==, 0);
+	J_TEST_TRAP_END;
 }
 
 void

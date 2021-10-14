@@ -30,6 +30,7 @@ test_object_new_free(void)
 {
 	guint const n = 100000;
 
+	J_TEST_TRAP_START;
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(JObject) object = NULL;
@@ -37,6 +38,7 @@ test_object_new_free(void)
 		object = j_object_new("test", "test-object");
 		g_assert_true(object != NULL);
 	}
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -48,6 +50,7 @@ test_object_create_delete(void)
 	g_autoptr(JObject) object_noexist = NULL;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	for (guint i = 0; i < n; i++)
@@ -72,6 +75,7 @@ test_object_create_delete(void)
 	j_object_delete(object_noexist, batch);
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -85,6 +89,7 @@ test_object_read_write(void)
 	guint64 nbytes = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -159,6 +164,7 @@ test_object_read_write(void)
 	j_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -172,6 +178,7 @@ test_object_status(void)
 	guint64 size = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc0(42);
 
@@ -196,6 +203,7 @@ test_object_status(void)
 	j_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -207,6 +215,7 @@ test_object_sync(void)
 	guint64 nbytes = 0;
 	gboolean ret;
 
+	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	buffer = g_malloc0(42);
 
@@ -229,6 +238,7 @@ test_object_sync(void)
 	j_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+	J_TEST_TRAP_END;
 }
 
 void
