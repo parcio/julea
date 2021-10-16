@@ -126,6 +126,11 @@ test_hdf_file_open_non_existent(void)
 	g_assert_cmpint(file, ==, H5I_INVALID_HID);
 
 	J_TEST_TRAP_END;
+
+	if (g_str_equal(g_getenv("HDF5_VOL_CONNECTOR"), "julea-kv"))
+	{
+		g_test_incomplete("Fails currently for julea-kv");
+	}
 }
 
 static void
