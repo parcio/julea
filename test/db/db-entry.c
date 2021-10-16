@@ -50,7 +50,7 @@ test_db_entry_new_free(void)
 		g_assert_nonnull(entry);
 		g_assert_no_error(error);
 	}
-	
+
 	J_TEST_TRAP_END;
 }
 

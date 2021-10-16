@@ -60,7 +60,7 @@ test_db_schema_create_delete(void)
 	gchar const* idx_float[] = { "float-0", NULL };
 
 	J_TEST_TRAP_START;
-	
+
 	for (guint i = 0; i < n; i++)
 	{
 		g_autoptr(GError) error = NULL;
@@ -149,7 +149,7 @@ test_db_invalid_schema_delete(void)
 	bool ret;
 
 	J_TEST_TRAP_START;
-	
+
 	schema = j_db_schema_new("test-ns", "test", NULL);
 	ret = j_db_schema_add_field(schema, "test-si64", J_DB_TYPE_SINT64, NULL);
 	g_assert_true(ret);
