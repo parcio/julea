@@ -61,6 +61,8 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	// create datatypes
 	compound_type = H5Tcreate(H5T_COMPOUND, sizeof(example_compound));
 	g_assert_cmpint(compound_type, >=, 0);
@@ -117,8 +119,9 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
 	error = H5Tclose(array_type);
 	g_assert_cmpint(error, >=, 0);
 
+	J_TEST_TRAP_END;
+
 	g_test_incomplete("datatype commit is not yet implemented!");
-	/// \todo This causes a critical error and test abortion. Isolation test cases in different processes resolves this.
 }
 
 static void
@@ -129,6 +132,8 @@ test_hdf_datatype_create_array(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 	hsize_t dim = 4;
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	array_type = H5Tarray_create2(H5T_NATIVE_FLOAT, 1, &dim);
 	g_assert_cmpint(array_type, >=, 0);
@@ -149,8 +154,9 @@ test_hdf_datatype_create_array(hid_t* file_fixture, gconstpointer udata)
 	error = H5Tclose(array_type);
 	g_assert_cmpint(error, >=, 0);
 
+	J_TEST_TRAP_END;
+
 	g_test_incomplete("datatype commit is not yet implemented!");
-	/// \todo This causes a critical error and test abortion. Isolation test cases in different processes resolves this.
 }
 
 #endif
@@ -164,8 +170,8 @@ test_hdf_datatype(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-	g_test_add("/hdf5/datatype-create_array", hid_t, "array.h5", j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/datatype-create_compound", hid_t, "compound.h5", j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/datatype/create_array", hid_t, "array.h5", j_test_hdf_file_fixture_setup, test_hdf_datatype_create_array, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/datatype/create_compound", hid_t, "compound.h5", j_test_hdf_file_fixture_setup, test_hdf_datatype_create_compound, j_test_hdf_file_fixture_teardown);
 
 #endif
 }

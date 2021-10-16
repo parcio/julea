@@ -43,6 +43,8 @@ test_hdf_file_create_delete(void)
 	hid_t file;
 	herr_t error;
 
+	J_TEST_TRAP_START;
+
 	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
 
@@ -58,6 +60,10 @@ test_hdf_file_create_delete(void)
 
 	error = H5Fdelete("test_file.h5", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
+
+	g_test_incomplete("delete not implemented yet");
 }
 
 static void
@@ -65,6 +71,8 @@ test_hdf_file_double_create(void)
 {
 	hid_t file;
 	herr_t error;
+
+	J_TEST_TRAP_START;
 
 	file = H5Fcreate("excl_test_file.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
@@ -75,6 +83,8 @@ test_hdf_file_double_create(void)
 	error = H5Fdelete("excl_test_file.h5", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
 
+	J_TEST_TRAP_END;
+
 	g_test_incomplete("delete not implemented yet");
 }
 
@@ -84,6 +94,8 @@ test_hdf_file_open_close(void)
 	hid_t file;
 	herr_t error;
 
+	J_TEST_TRAP_START;
+
 	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
 
@@ -98,6 +110,8 @@ test_hdf_file_open_close(void)
 
 	error = H5Fdelete("test_file.h5", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 
 	g_test_incomplete("delete not implemented yet");
 }
@@ -107,8 +121,12 @@ test_hdf_file_open_non_existent(void)
 {
 	hid_t file;
 
+	J_TEST_TRAP_START;
+
 	file = H5Fopen("non-existent.h5", H5F_ACC_RDWR, H5P_DEFAULT);
 	g_assert_cmpint(file, ==, H5I_INVALID_HID);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -116,6 +134,8 @@ test_hdf_file_delete(void)
 {
 	hid_t file;
 	herr_t error;
+
+	J_TEST_TRAP_START;
 
 	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(file, !=, H5I_INVALID_HID);
@@ -129,6 +149,8 @@ test_hdf_file_delete(void)
 	file = H5Fopen("test_file.h5", H5F_ACC_RDWR, H5P_DEFAULT);
 	g_assert_cmpint(file, ==, H5I_INVALID_HID);
 
+	J_TEST_TRAP_END;
+
 	g_test_incomplete("delete not implemented yet");
 }
 
@@ -137,8 +159,12 @@ test_hdf_file_delete_non_existent(void)
 {
 	herr_t error;
 
+	J_TEST_TRAP_START;
+
 	error = H5Fdelete("non-existent.h5", H5P_DEFAULT);
 	g_assert_cmpint(error, <, 0);
+
+	J_TEST_TRAP_END;
 
 	g_test_incomplete("delete not implemented yet");
 }
@@ -154,12 +180,12 @@ test_hdf_file(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-	g_test_add_func("/hdf5/file-create_delete", test_hdf_file_create_delete);
-	g_test_add_func("/hdf5/file-double_create", test_hdf_file_double_create);
-	g_test_add_func("/hdf5/file-open_close", test_hdf_file_open_close);
-	g_test_add_func("/hdf5/file-open_non_existent", test_hdf_file_open_non_existent);
-	g_test_add_func("/hdf5/file-delete", test_hdf_file_delete);
-	g_test_add_func("/hdf5/file-double_delete", test_hdf_file_delete_non_existent);
+	g_test_add_func("/hdf5/file/create_delete", test_hdf_file_create_delete);
+	g_test_add_func("/hdf5/file/double_create", test_hdf_file_double_create);
+	g_test_add_func("/hdf5/file/open_close", test_hdf_file_open_close);
+	g_test_add_func("/hdf5/file/open_non_existent", test_hdf_file_open_non_existent);
+	g_test_add_func("/hdf5/file/delete", test_hdf_file_delete);
+	g_test_add_func("/hdf5/file/double_delete", test_hdf_file_delete_non_existent);
 
 #endif
 }

@@ -28,17 +28,25 @@
 void
 j_test_hdf_file_fixture_setup(hid_t* file, gconstpointer udata)
 {
-	const gchar* name = udata;
+	if (g_test_subprocess())
+	{
+		const gchar* name = udata;
 
-	*file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+		*file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	}
 }
 
 void
 j_test_hdf_file_fixture_teardown(hid_t* file, gconstpointer udata)
 {
-	const gchar* name = udata;
-	H5Fclose(*file);
-	H5Fdelete(name, H5P_DEFAULT);
+	if (g_test_subprocess())
+	{
+		(void)udata;
+		H5Fclose(*file);
+		/// \todo Delete is not yet implemented
+		// const gchar* name = udata;
+		// H5Fdelete(name, H5P_DEFAULT);
+	}
 }
 
 #endif

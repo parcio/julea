@@ -106,9 +106,13 @@ test_hdf_attribute_group(hid_t* file_fixture, gconstpointer udata)
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	// using file will attach to root group
 	create_write_read_delete(file, H5S_SCALAR, name1, sizeof(name1), H5T_NATIVE_INT, 0, NULL, sizeof(int), (void*)&sdata);
 	create_write_read_delete(file, H5S_SIMPLE, name2, sizeof(name2), H5T_NATIVE_INT, 2, dims, 4 * sizeof(int), (void*)data);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -126,6 +130,8 @@ test_hdf_attribute_set(hid_t* file_fixture, gconstpointer udata)
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	space = H5Screate_simple(3, set_dims, set_dims);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
 
@@ -140,6 +146,8 @@ test_hdf_attribute_set(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -156,6 +164,8 @@ test_hdf_attribute_type(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	array_type = H5Tarray_create2(H5T_NATIVE_FLOAT, 1, &dim);
 	g_assert_cmpint(array_type, >=, 0);
@@ -176,6 +186,8 @@ test_hdf_attribute_type(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Tclose(array_type);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -185,6 +197,8 @@ test_hdf_attribute_invalid_object(void)
 	hsize_t rank = 2;
 	hsize_t dims[] = { 2, 2 };
 
+	J_TEST_TRAP_START;
+
 	space = H5Screate_simple(rank, dims, dims);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
 
@@ -193,6 +207,8 @@ test_hdf_attribute_invalid_object(void)
 
 	error = H5Sclose(space);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static herr_t
@@ -216,6 +232,8 @@ test_hdf_attribute_iterate(hid_t* file_fixture, gconstpointer udata)
 	hsize_t count = 0;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	space = H5Screate_simple(2, dims, dims);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
@@ -244,6 +262,8 @@ test_hdf_attribute_iterate(hid_t* file_fixture, gconstpointer udata)
 	error = H5Aiterate(file, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, it_op, &count);
 	g_assert_cmpint(error, >=, 0);
 	g_assert_cmpint(count, ==, 3);
+
+	J_TEST_TRAP_END;
 }
 
 #endif
@@ -257,11 +277,11 @@ test_hdf_attribute(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-	g_test_add("/hdf5/attribute-group", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_group, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/attribute-set", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_set, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/attribute-type", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_type, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/attribute-iterate", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_iterate, j_test_hdf_file_fixture_teardown);
-	g_test_add_func("/hdf5/attribut-create_invalid", test_hdf_attribute_invalid_object);
+	g_test_add("/hdf5/attribute/group", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_group, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/attribute/set", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_set, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/attribute/type", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_type, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/attribute/iterate", hid_t, "attribute_file.h5", j_test_hdf_file_fixture_setup, test_hdf_attribute_iterate, j_test_hdf_file_fixture_teardown);
+	g_test_add_func("/hdf5/attribute/create_invalid", test_hdf_attribute_invalid_object);
 
 #endif
 }

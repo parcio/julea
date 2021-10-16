@@ -92,6 +92,8 @@ test_hdf_dataset_create_delete_open_close(hid_t* file_fixture, gconstpointer uda
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	// null
 	create_open_close_delete(file, H5S_NULL, "null", H5T_NATIVE_INT, 0, NULL, NULL, NULL);
 
@@ -106,6 +108,8 @@ test_hdf_dataset_create_delete_open_close(hid_t* file_fixture, gconstpointer uda
 
 	// chunked
 	create_open_close_delete(file, H5S_SIMPLE, "chunked", H5T_NATIVE_INT, 3, dims, unlimitted_dim, chunk_size);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -123,6 +127,8 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	space = H5Screate_simple(3, dims, unlimitted_dim);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
@@ -160,6 +166,8 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Ldelete(file, "chunked", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -174,6 +182,8 @@ test_hdf_dataset_invalid_extend(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	space = H5Screate_simple(3, dims, max_dims);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
@@ -198,6 +208,8 @@ test_hdf_dataset_invalid_extend(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Ldelete(file, "chunked", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -211,6 +223,8 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -241,6 +255,8 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Sclose(space);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -259,6 +275,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -314,6 +332,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Sclose(hyperslab);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -328,6 +348,8 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -364,6 +386,8 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Sclose(space);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -381,6 +405,8 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 	herr_t error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	// create dataspace and set
 	space = H5Screate_simple(rank, dim, dim);
@@ -430,6 +456,8 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Sclose(elements);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 #endif
@@ -443,13 +471,13 @@ test_hdf_dataset(void)
 		// Running tests only makes sense for our HDF5 clients
 		return;
 	}
-	g_test_add("/hdf5/dataset-create_delete_open_close", hid_t, "set_open_close.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_create_delete_open_close, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-extend", hid_t, "set_extend.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_extend, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-invalid_extend", hid_t, "set_invalid_extend.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_invalid_extend, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-write_read", hid_t, "set_write_read.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-write_read_selection", hid_t, "set_write_read_sel.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_selection, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-write_read_chunked", hid_t, "set_write_read_chunked.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_chunked, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/dataset-write_read_single", hid_t, "set_write_read_single.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_single, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/create_delete_open_close", hid_t, "set_open_close.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_create_delete_open_close, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/extend", hid_t, "set_extend.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_extend, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/invalid_extend", hid_t, "set_invalid_extend.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_invalid_extend, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/write_read", hid_t, "set_write_read.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/write_read_selection", hid_t, "set_write_read_sel.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_selection, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/write_read_chunked", hid_t, "set_write_read_chunked.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_chunked, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/dataset/write_read_single", hid_t, "set_write_read_single.h5", j_test_hdf_file_fixture_setup, test_hdf_dataset_write_read_single, j_test_hdf_file_fixture_teardown);
 
 #endif
 }

@@ -46,6 +46,8 @@ test_hdf_group_create_delete_open_close(hid_t* file_fixture, gconstpointer udata
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	group = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group, !=, H5I_INVALID_HID);
 
@@ -66,6 +68,8 @@ test_hdf_group_create_delete_open_close(hid_t* file_fixture, gconstpointer udata
 
 	ret = H5Lexists(file, "/test_group", H5P_DEFAULT);
 	g_assert_cmpint(ret, ==, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -76,6 +80,8 @@ test_hdf_link_nested_group(hid_t* file_fixture, gconstpointer udata)
 	htri_t ret;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	group = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group, !=, H5I_INVALID_HID);
@@ -94,6 +100,8 @@ test_hdf_link_nested_group(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Gclose(nested_group);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -103,6 +111,8 @@ test_hdf_link_hard_delete(hid_t* file_fixture, gconstpointer udata)
 	hid_t group1, group2, error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
@@ -127,6 +137,8 @@ test_hdf_link_hard_delete(hid_t* file_fixture, gconstpointer udata)
 
 	error = H5Gclose(group2);
 	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -136,6 +148,8 @@ test_hdf_link_soft(hid_t* file_fixture, gconstpointer udata)
 	hid_t group1, group2, error;
 
 	(void)udata;
+
+	J_TEST_TRAP_START;
 
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
@@ -157,6 +171,8 @@ test_hdf_link_soft(hid_t* file_fixture, gconstpointer udata)
 
 	group2 = H5Gopen(file, "/test_group2", H5P_DEFAULT);
 	g_assert_cmpint(group2, ==, H5I_INVALID_HID);
+
+	J_TEST_TRAP_END;
 }
 
 static void
@@ -167,11 +183,15 @@ test_hdf_link_invalid(hid_t* file_fixture, gconstpointer udata)
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	error = H5Glink(file, H5G_LINK_SOFT, "test_group", "test_group2");
 	g_assert_cmpint(error, >=, 0); // creating soft links to non existing objects is allowed
 
 	error = H5Glink(file, H5G_LINK_HARD, "test_group", "test_group2");
 	g_assert_cmpint(error, <, 0);
+
+	J_TEST_TRAP_END;
 }
 
 static herr_t
@@ -195,6 +215,8 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 
 	(void)udata;
 
+	J_TEST_TRAP_START;
+
 	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
 
@@ -213,6 +235,8 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 	error = H5Literate(file, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, it_op, &count);
 	g_assert_cmpint(error, >=, 0);
 	g_assert_cmpint(count, ==, 2);
+
+	J_TEST_TRAP_END;
 }
 
 #endif
@@ -227,12 +251,12 @@ test_hdf_group_link(void)
 		return;
 	}
 
-	g_test_add("/hdf5/group-create_delete_open_close", hid_t, "group_open_close.h5", j_test_hdf_file_fixture_setup, test_hdf_group_create_delete_open_close, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/link-nested_group", hid_t, "l_nested.h5", j_test_hdf_file_fixture_setup, test_hdf_link_nested_group, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/link-hard_delete", hid_t, "hardlink_delete.h5", j_test_hdf_file_fixture_setup, test_hdf_link_hard_delete, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/link-soft", hid_t, "softlink_delete.h5", j_test_hdf_file_fixture_setup, test_hdf_link_soft, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/link-invalid", hid_t, "invalid_link.h5", j_test_hdf_file_fixture_setup, test_hdf_link_invalid, j_test_hdf_file_fixture_teardown);
-	g_test_add("/hdf5/link-iterate", hid_t, "link_iterate.h5", j_test_hdf_file_fixture_setup, test_hdf_link_iterate, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/group/create_delete_open_close", hid_t, "group_open_close.h5", j_test_hdf_file_fixture_setup, test_hdf_group_create_delete_open_close, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/link/nested_group", hid_t, "l_nested.h5", j_test_hdf_file_fixture_setup, test_hdf_link_nested_group, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/link/hard_delete", hid_t, "hardlink_delete.h5", j_test_hdf_file_fixture_setup, test_hdf_link_hard_delete, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/link/soft", hid_t, "softlink_delete.h5", j_test_hdf_file_fixture_setup, test_hdf_link_soft, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/link/invalid", hid_t, "invalid_link.h5", j_test_hdf_file_fixture_setup, test_hdf_link_invalid, j_test_hdf_file_fixture_teardown);
+	g_test_add("/hdf5/link/iterate", hid_t, "link_iterate.h5", j_test_hdf_file_fixture_setup, test_hdf_link_iterate, j_test_hdf_file_fixture_teardown);
 
 #endif
 }
