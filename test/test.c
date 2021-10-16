@@ -66,6 +66,9 @@ main(int argc, char** argv)
 
 	// DB client
 	test_db_db();
+	test_db_schema();
+	test_db_entry();
+	test_db_selector();
 
 	// Item client
 	test_item_collection();
