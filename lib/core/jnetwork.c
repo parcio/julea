@@ -12,6 +12,8 @@
 #include <core/jconfiguration.h>
 #include <jtrace.h>
 
+#define KEY_MIN 1
+
 /// Used to initialize common parts between different connection.
 /** This will create the following libfabric resources:
  *  * the domain
@@ -411,6 +413,7 @@ j_connection_init(struct JConnection* this)
 
 	this->running_actions.msg_len = 0;
 	this->running_actions.rma_len = 0;
+	this->next_key = KEY_MIN;
 
 	res = fi_eq_open(this->fabric->fabric, &(struct fi_eq_attr){.wait_obj = FI_WAIT_UNSPEC},
 			&this->eq, NULL);
@@ -747,7 +750,7 @@ j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* 
 	J_TRACE_FUNCTION(NULL);
 
 	int res;
-	this->next_key = 0; /// \todo may just count key to overflow? (max value is stored in domain_attr)
+	this->next_key = KEY_MIN; /// \todo may just count key to overflow? (max value is stored in domain_attr)
 	res = fi_close(&handle->memory_region->fid);
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
@@ -835,4 +838,12 @@ j_connection_fini ( struct JConnection* this) {
 	ret = TRUE;
 end:
 	return ret; 
+}
+
+struct JConfiguration*
+j_connection_get_configuration(struct JConnection* this)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	return this->fabric->config;
 }

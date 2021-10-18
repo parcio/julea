@@ -558,7 +558,11 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 
 				if (mem_id->size > 0)
 				{
-					j_connection_rma_read(object_connection, mem_id, data);
+					if(mem_id->key == 0 && mem_id->offset == 0) {
+						memcpy(data, j_message_get_n(reply, mem_id->size), mem_id->size);
+					} else {
+						j_connection_rma_read(object_connection, mem_id, data);
+					}
 				}
 			}
 

@@ -297,36 +297,42 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 				offset = j_message_get_8(message);
 				memoryID = j_message_get_memory_id(message);
 
-				if (memoryID->size <= memory_chunk_size && G_LIKELY(ret))
+				if (G_LIKELY(memoryID->size <= memory_chunk_size) && G_LIKELY(ret))
 				{
-					buf = j_memory_chunk_get(memory_chunk, memoryID->size);
-					if (buf == NULL)
-					{
-						j_connection_wait_for_completion(connection); ///< \todo parallelize more
-						for(; entryItr < i; ++entryItr) {
-							struct ObjectWriteEntry* entry = writeEntries + entryItr;
-							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, entry->size);
-							j_backend_object_write(jd_object_backend, object, entry->data, entry->size, entry->offset, &bytes_written);
-							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
-							if(reply != NULL)
-							{
-								j_message_add_operation(reply, sizeof(guint64));
-								j_message_append_8(reply, &bytes_written);
-							}
-						}
-						j_memory_chunk_reset(memory_chunk);
+					if (memoryID->key == 0 && memoryID->offset == 0) {
+						writeEntries[i] = (struct ObjectWriteEntry){
+								.size = memoryID->size,
+								.offset = offset,
+								.data = j_message_get_n(message, memoryID->size)};
+					} else {
 						buf = j_memory_chunk_get(memory_chunk, memoryID->size);
-						/// \todo check for oversized memory areas!
+						if (buf == NULL)
+						{
+							j_connection_wait_for_completion(connection); ///< \todo paralleilize more
+							for(; entryItr < i; ++entryItr) {
+								struct ObjectWriteEntry* entry = writeEntries + entryItr;
+								j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, entry->size);
+								j_backend_object_write(jd_object_backend, object, entry->data, entry->size, entry->offset, &bytes_written);
+								j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+								if(reply != NULL)
+								{
+									j_message_add_operation(reply, sizeof(guint64));
+									j_message_append_8(reply, &bytes_written);
+								}
+							}
+							j_memory_chunk_reset(memory_chunk);
+							buf = j_memory_chunk_get(memory_chunk, memoryID->size);
+						}
+
+						// Guaranteed to work, because chunk get reseted if to full
+						g_assert(buf != NULL);
+
+						j_connection_rma_read(connection, memoryID, buf);
+						writeEntries[i] = (struct ObjectWriteEntry){
+								.size = memoryID->size,
+								.offset = offset,
+								.data = buf};
 					}
-
-					// Guaranteed to work because is reseted on demand
-					g_assert(buf != NULL);
-
-					j_connection_rma_read(connection, memoryID, buf);
-					writeEntries[i] = (struct ObjectWriteEntry){
-							.size = memoryID->size,
-							.offset = offset,
-							.data = buf};
 				} else if (reply != NULL) {
 					/// @todo return write error
 					bytes_written = 0;

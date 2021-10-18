@@ -36,6 +36,7 @@
 #include <jlist-iterator.h>
 #include <jsemantics.h>
 #include <jtrace.h>
+#include <jconfiguration.h>
 
 #define EXE(cmd, ...) do { if(cmd == FALSE) { g_warning(__VA_ARGS__); goto end; } } while(FALSE)
 
@@ -673,7 +674,6 @@ struct JConnectionMemory {
 	guint64 addr;
 	guint64 size;
 };
-
 gboolean
 j_message_send(JMessage* message, struct JConnection* connection)
 {
@@ -686,6 +686,7 @@ j_message_send(JMessage* message, struct JConnection* connection)
 	struct JConnectionMemory* memory_regions_end = NULL;
 	struct JConnectionMemoryID mem_id;
 	g_autoptr(JListIterator) iterator = NULL;
+	gboolean fits = false;
 
 	g_return_val_if_fail(message != NULL, FALSE);
 	g_return_val_if_fail(connection != NULL, FALSE);
@@ -703,19 +704,30 @@ j_message_send(JMessage* message, struct JConnection* connection)
 
 	if (message->send_list != NULL)
 	{
+		{
+			guint64 total_data_length =	
+				  sizeof(message->header)
+				+ j_message_length(message);
+			iterator = j_list_iterator_new(message->send_list);
+			while(j_list_iterator_next(iterator)) {
+				JMessageData* message_data = j_list_iterator_get(iterator);
+				total_data_length += message_data->header_size + message_data->length;
+			}
+			j_list_iterator_free(iterator);
+			fits = total_data_length < 10 * 1024; ///\todo fix magic number
+		}
 		iterator = j_list_iterator_new(message->send_list);
 
 		while (j_list_iterator_next(iterator))
 		{
 			JMessageData* message_data = j_list_iterator_get(iterator);
 
-			EXE(j_connection_rma_register(connection, message_data->data, message_data->length, memory_itr),
-					"Failed to register message data memory!");
 
-			j_message_add_operation(message, sizeof(struct JConnectionMemoryID) + message_data->header_size);
+			j_message_add_operation(message,
+					sizeof(struct JConnectionMemoryID)
+					+ message_data->header_size
+					+ fits ? message_data->length : 0);
 
-			EXE(j_connection_memory_get_id(memory_itr, &mem_id),
-					"Failed to get memory it!");
 			if(message_data->header_size > 0) {
 				if(message_data->header_size <= sizeof(message_data->header)) {
 					EXE(j_message_append_n(message, &message_data->header, message_data->header_size),
@@ -725,28 +737,41 @@ j_message_send(JMessage* message, struct JConnection* connection)
 							"Failed to append header");
 				}
 			}
-			EXE(j_message_append_memory_id(message, &mem_id),
-					"Failed to append memory id to message!");
+			if(!fits) {
+				EXE(j_connection_rma_register(connection, message_data->data, message_data->length, memory_itr),
+						"Failed to register message data memory!");
+				EXE(j_connection_memory_get_id(memory_itr, &mem_id),
+						"Failed to get memory it!");
+				EXE(j_message_append_memory_id(message, &mem_id),
+						"Failed to append memory id to message!");
+			} else {
+				mem_id.size = message_data->length;
+				mem_id.key = 0;
+				mem_id.offset = 0;
+				EXE(j_message_append_memory_id(message, &mem_id),
+						"Failed to append memory information!");
+				EXE(j_message_append_n(message, message_data->data, message_data->length),
+						"Failed to append message data!");
+			}
 			++memory_itr;
 		}
 	}
-	stop = clock();
-	start = stop;
 
 	ret = j_message_write(message, connection);
 
 end:
 	if(memory_regions != NULL) {
 		struct JConnectionMemory* mrs = memory_regions;
-		while(memory_regions != memory_itr) {
-			j_connection_rma_unregister(connection, memory_regions++);
-		}
-		if(memory_itr != memory_regions_end && memory_itr->memory_region) {
-			j_connection_rma_unregister(connection, memory_itr);
+		if(!fits) {
+			while(memory_regions != memory_itr) {
+				j_connection_rma_unregister(connection, memory_regions++);
+			}
+			if(memory_itr != memory_regions_end && memory_itr->memory_region) {
+				j_connection_rma_unregister(connection, memory_itr);
+			}
 		}
 		free(mrs);
 	}
-	stop = clock();
 	return ret;
 }
 

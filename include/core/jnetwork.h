@@ -432,4 +432,7 @@ j_connection_rma_unregister(struct JConnection* instance,
 		struct JConnectionMemory* handle 	///< [in] for memory region to unregister
 );
 
+struct JConfiguration*
+j_connection_get_configuration(struct JConnection* this);
+
 #endif
