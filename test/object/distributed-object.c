@@ -88,6 +88,7 @@ test_object_read_write(void)
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JDistributedObject) object = NULL;
+	g_autoptr(JDistributedObject) object_noexist = NULL;
 	g_autofree gchar* buffer = NULL;
 	g_autofree gchar* buffer2 = NULL;
 	guint64 max_operation_size;
@@ -171,6 +172,19 @@ test_object_read_write(void)
 	j_distributed_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	object_noexist = j_distributed_object_new("test", "test-distributed-object-rw-noexist", distribution);
+	g_assert_true(object_noexist != NULL);
+
+	j_distributed_object_write(object_noexist, buffer, 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+	g_assert_cmpuint(nbytes, ==, 0);
+
+	j_distributed_object_read(object_noexist, buffer, 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+	g_assert_cmpuint(nbytes, ==, 0);
 	J_TEST_TRAP_END;
 }
 

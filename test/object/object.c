@@ -83,6 +83,7 @@ test_object_read_write(void)
 {
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JObject) object = NULL;
+	g_autoptr(JObject) object_noexist = NULL;
 	g_autofree gchar* buffer = NULL;
 	g_autofree gchar* buffer2 = NULL;
 	guint64 max_operation_size;
@@ -164,6 +165,19 @@ test_object_read_write(void)
 	j_object_delete(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
+
+	object_noexist = j_object_new("test", "test-object-rw-noexist");
+	g_assert_true(object_noexist != NULL);
+
+	j_object_write(object_noexist, buffer, 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+	g_assert_cmpuint(nbytes, ==, 0);
+
+	j_object_read(object_noexist, buffer, 1, 0, &nbytes, batch);
+	ret = j_batch_execute(batch);
+	g_assert_false(ret);
+	g_assert_cmpuint(nbytes, ==, 0);
 	J_TEST_TRAP_END;
 }
 
