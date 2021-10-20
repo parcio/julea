@@ -27,6 +27,9 @@
 
 #include "benchmark.h"
 
+#define SMALL_OBJECT_SIZE 4 * 1024
+#define LARGE_OBJECT_SIZE 256 * 1024
+
 static void
 _benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 {
@@ -294,13 +297,25 @@ _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 static void
 benchmark_object_read(BenchmarkRun* run)
 {
-	_benchmark_object_read(run, FALSE, 4 * 1024);
+	_benchmark_object_read(run, FALSE, SMALL_OBJECT_SIZE);
+}
+
+static void
+benchmark_object_read_large(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, LARGE_OBJECT_SIZE);
 }
 
 static void
 benchmark_object_read_batch(BenchmarkRun* run)
 {
-	_benchmark_object_read(run, TRUE, 4 * 1024);
+	_benchmark_object_read(run, TRUE, SMALL_OBJECT_SIZE);
+}
+
+static void
+benchmark_object_read_large_batch(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, LARGE_OBJECT_SIZE);
 }
 
 static void
@@ -362,13 +377,24 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 static void
 benchmark_object_write(BenchmarkRun* run)
 {
-	_benchmark_object_write(run, FALSE, 4 * 1024);
+	_benchmark_object_write(run, FALSE, SMALL_OBJECT_SIZE);
+}
+
+static void
+benchmark_object_write_large(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, LARGE_OBJECT_SIZE);
 }
 
 static void
 benchmark_object_write_batch(BenchmarkRun* run)
 {
-	_benchmark_object_write(run, TRUE, 4 * 1024);
+	_benchmark_object_write(run, TRUE, SMALL_OBJECT_SIZE);
+}
+static void
+benchmark_object_write_large_batch(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, LARGE_OBJECT_SIZE);
 }
 
 static void
@@ -439,9 +465,13 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/status-batch", benchmark_object_status_batch);
 	/// \todo get
 	j_benchmark_add("/object/object/read", benchmark_object_read);
+	j_benchmark_add("/object/object/read-large", benchmark_object_read_large);
 	j_benchmark_add("/object/object/read-batch", benchmark_object_read_batch);
+	j_benchmark_add("/object/object/read-large-batch", benchmark_object_read_large_batch);
 	j_benchmark_add("/object/object/write", benchmark_object_write);
+	j_benchmark_add("/object/object/write-large", benchmark_object_write_large);
 	j_benchmark_add("/object/object/write-batch", benchmark_object_write_batch);
+	j_benchmark_add("/object/object/write-large-batch", benchmark_object_write_large_batch);
 	j_benchmark_add("/object/object/unordered-create-delete", benchmark_object_unordered_create_delete);
 	j_benchmark_add("/object/object/unordered-create-delete-batch", benchmark_object_unordered_create_delete_batch);
 }
