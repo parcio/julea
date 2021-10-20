@@ -842,7 +842,7 @@ j_message_write(JMessage* message, struct JConnection* connection)
 				"Failed to initiated sending message body.");
 	}
 
-	if(j_list_length(message->send_list)) {
+	if(message->send_list && j_list_length(message->send_list)) {
 		EXE(j_connection_recv(connection, sizeof(ack), &ack),
 				"Failed to initiated ACK receive.");
 	}
