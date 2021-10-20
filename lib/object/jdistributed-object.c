@@ -353,6 +353,12 @@ j_distributed_object_read_background_operation(gpointer data)
 
 		reply_operation_count = j_message_get_count(reply);
 
+		if (reply_operation_count == 0)
+		{
+			background_data->ret = FALSE;
+			break;
+		}
+
 		for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
 		{
 			JDistributedObjectReadBuffer* buffer = j_list_iterator_get(it);
@@ -384,9 +390,7 @@ j_distributed_object_read_background_operation(gpointer data)
 
 	j_list_unref(background_data->read.buffers);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
-
-	return NULL;
+	return data;
 }
 
 /**
@@ -422,14 +426,21 @@ j_distributed_object_write_background_operation(gpointer data)
 		reply = j_message_new_reply(background_data->message);
 		j_message_receive(reply, object_connection);
 
-		it = j_list_iterator_new(background_data->write.bytes_written);
-
-		while (j_list_iterator_next(it))
+		if (j_message_get_count(reply) > 0)
 		{
-			guint64* bytes_written = j_list_iterator_get(it);
+			it = j_list_iterator_new(background_data->write.bytes_written);
 
-			nbytes = j_message_get_8(reply);
-			j_helper_atomic_add(bytes_written, nbytes);
+			while (j_list_iterator_next(it))
+			{
+				guint64* bytes_written = j_list_iterator_get(it);
+
+				nbytes = j_message_get_8(reply);
+				j_helper_atomic_add(bytes_written, nbytes);
+			}
+		}
+		else
+		{
+			background_data->ret = FALSE;
 		}
 	}
 
@@ -439,9 +450,7 @@ j_distributed_object_write_background_operation(gpointer data)
 
 	j_list_unref(background_data->write.bytes_written);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
-
-	return NULL;
+	return data;
 }
 
 /**
@@ -912,11 +921,27 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 			data->operations = NULL;
 			data->semantics = semantics;
 			data->read.buffers = br_lists[i];
+			data->ret = TRUE;
 
 			background_data[i] = data;
 		}
 
 		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
+
+		for (guint i = 0; i < server_count; i++)
+		{
+			JDistributedObjectBackgroundData* data;
+
+			if (background_data[i] == NULL)
+			{
+				continue;
+			}
+
+			data = background_data[i];
+			ret = data->ret && ret;
+
+			g_slice_free(JDistributedObjectBackgroundData, data);
+		}
 	}
 	else
 	{
@@ -1087,11 +1112,27 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			data->operations = NULL;
 			data->semantics = semantics;
 			data->write.bytes_written = bw_lists[i];
+			data->ret = TRUE;
 
 			background_data[i] = data;
 		}
 
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
+
+		for (guint i = 0; i < server_count; i++)
+		{
+			JDistributedObjectBackgroundData* data;
+
+			if (background_data[i] == NULL)
+			{
+				continue;
+			}
+
+			data = background_data[i];
+			ret = data->ret && ret;
+
+			g_slice_free(JDistributedObjectBackgroundData, data);
+		}
 	}
 	else
 	{

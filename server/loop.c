@@ -192,14 +192,14 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 		{
 			JMessage* reply;
 			gpointer object;
+			gboolean ret;
 
 			namespace = j_message_get_string(message);
 			path = j_message_get_string(message);
 
 			reply = j_message_new_reply(message);
 
-			/// \todo return value
-			j_backend_object_open(jd_object_backend, namespace, path, &object);
+			ret = j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 			for (i = 0; i < operation_count; i++)
 			{
@@ -210,6 +210,11 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 				length = j_message_get_8(message);
 				offset = j_message_get_8(message);
+
+				if (G_UNLIKELY(!ret))
+				{
+					break;
+				}
 
 				if (length > memory_chunk_size)
 				{
@@ -247,7 +252,10 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				j_statistics_add(statistics, J_STATISTICS_BYTES_SENT, bytes_read);
 			}
 
-			j_backend_object_close(jd_object_backend, object);
+			if (ret)
+			{
+				j_backend_object_close(jd_object_backend, object);
+			}
 
 			j_message_send(reply, connection);
 			j_message_unref(reply);
@@ -259,6 +267,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 		{
 			g_autoptr(JMessage) reply = NULL;
 			gpointer object;
+			gboolean ret;
 
 			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
 			{
@@ -268,8 +277,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			namespace = j_message_get_string(message);
 			path = j_message_get_string(message);
 
-			/// \todo return value
-			j_backend_object_open(jd_object_backend, namespace, path, &object);
+			ret = j_backend_object_open(jd_object_backend, namespace, path, &object);
 
 			for (i = 0; i < operation_count; i++)
 			{
@@ -282,7 +290,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				length = j_message_get_8(message);
 				offset = j_message_get_8(message);
 
-				if (length > memory_chunk_size)
+				if (length > memory_chunk_size && reply != NULL && G_LIKELY(ret))
 				{
 					/// \todo return proper error
 					j_message_add_operation(reply, sizeof(guint64));
@@ -298,13 +306,16 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				g_input_stream_read_all(input, buf, length, NULL, NULL, NULL);
 				j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, length);
 
-				j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
-				j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
-
-				if (reply != NULL)
+				if (G_LIKELY(ret))
 				{
-					j_message_add_operation(reply, sizeof(guint64));
-					j_message_append_8(reply, &bytes_written);
+					j_backend_object_write(jd_object_backend, object, buf, length, offset, &bytes_written);
+					j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+
+					if (reply != NULL)
+					{
+						j_message_add_operation(reply, sizeof(guint64));
+						j_message_append_8(reply, &bytes_written);
+					}
 				}
 
 				j_memory_chunk_reset(memory_chunk);
@@ -316,7 +327,10 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
 			}
 
-			j_backend_object_close(jd_object_backend, object);
+			if (ret)
+			{
+				j_backend_object_close(jd_object_backend, object);
+			}
 
 			if (reply != NULL)
 			{

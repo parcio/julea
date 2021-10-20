@@ -540,6 +540,12 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 
 			reply_operation_count = j_message_get_count(reply);
 
+			if (reply_operation_count == 0)
+			{
+				ret = FALSE;
+				break;
+			}
+
 			for (guint i = 0; i < reply_operation_count && j_list_iterator_next(it); i++)
 			{
 				JObjectOperation* operation = j_list_iterator_get(it);
@@ -703,18 +709,25 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, object_connection);
 
-			it = j_list_iterator_new(operations);
-
-			while (j_list_iterator_next(it))
+			if (j_message_get_count(reply) > 0)
 			{
-				JObjectOperation* operation = j_list_iterator_get(it);
-				guint64* bytes_written = operation->write.bytes_written;
+				it = j_list_iterator_new(operations);
 
-				nbytes = j_message_get_8(reply);
-				j_helper_atomic_add(bytes_written, nbytes);
+				while (j_list_iterator_next(it))
+				{
+					JObjectOperation* operation = j_list_iterator_get(it);
+					guint64* bytes_written = operation->write.bytes_written;
+
+					nbytes = j_message_get_8(reply);
+					j_helper_atomic_add(bytes_written, nbytes);
+				}
+
+				j_list_iterator_free(it);
 			}
-
-			j_list_iterator_free(it);
+			else
+			{
+				ret = FALSE;
+			}
 		}
 
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, object->index, object_connection);
