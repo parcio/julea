@@ -372,7 +372,11 @@ j_distributed_object_read_background_operation(gpointer data)
 
 			if (memoryID->size > 0)
 			{
-				j_connection_rma_read(object_connection, memoryID, read_data);
+				if(memoryID->key == 0 && memoryID->offset == 0) {
+					memcpy(read_data, j_message_get_n(reply, memoryID->size), memoryID->size);
+				} else {
+					j_connection_rma_read(object_connection, memoryID, read_data);
+				}
 			}
 
 			g_slice_free(JDistributedObjectReadBuffer, buffer);

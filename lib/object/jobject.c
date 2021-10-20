@@ -446,10 +446,9 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
+		g_assert(operation != NULL);
 
 		object = operation->read.object;
-
-		g_assert(operation != NULL);
 		g_assert(object != NULL);
 	}
 
