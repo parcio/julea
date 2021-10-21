@@ -124,3 +124,5 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object);
 	} while (0)
 
 #endif
+
+static void j_hdf5_log(char *_filename, char *mode, char operation, const char *message, JHDF5Object_t *object, JHDF5Object_t *parent);
