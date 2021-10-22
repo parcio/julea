@@ -132,7 +132,7 @@ j_fabric_fini(struct JFabric* this);
 gboolean
 j_fabric_sread_event(struct JFabric* this,
 		int timeout,								///< [in] set to -1 for no timeout.
-		enum JFabricEvents* event, 					///< [out] reeded from event queue
+		JFabricEvents* event, 					///< [out] reeded from event queue
 		JFabricConnectionRequest* con_req    ///< [out] contains connection request,
 													/// if event == J_FABRIC_EVENT_CONNECTION_REQUEST
 );
@@ -330,7 +330,7 @@ j_connection_check_connection(struct JConnection* this);
 gboolean
 j_connection_sread_event(struct JConnection* this,
 		int timeout,                                ///< [in] set to -1 for no timeout
-		enum JConnectionEvents* event				///< [out] reeded from queue
+		JConnectionEvents* event					///< [out] reeded from queue
 );
 
 /// check for event on connection
@@ -341,7 +341,7 @@ j_connection_sread_event(struct JConnection* this,
  */
 gboolean
 j_connection_read_event(struct JConnection* this,
-		enum JConnectionEvents* event				///< [out] reeded from queue
+		JConnectionEvents* event				///< [out] reeded from queue
 );
 
 /// Async send data via MSG connection

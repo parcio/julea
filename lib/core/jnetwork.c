@@ -239,9 +239,8 @@ end:
 	return FALSE;
 }
 
-///! \todo read error!
 gboolean
-j_fabric_sread_event(struct JFabric* this, int timeout, enum JFabricEvents* event, JFabricConnectionRequest* con_req)
+j_fabric_sread_event(struct JFabric* this, int timeout, JFabricEvents* event, JFabricConnectionRequest* con_req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -256,9 +255,13 @@ j_fabric_sread_event(struct JFabric* this, int timeout, enum JFabricEvents* even
 		*event = J_FABRIC_EVENT_TIMEOUT;
 		ret = TRUE; goto end;
 	} else if (res == -FI_EAVAIL) {
+		struct fi_eq_err_entry error = {0};
 		*event = J_FABRIC_EVENT_ERROR;
-		g_warning("error");
-		// TODO: fetch error!
+		res = fi_eq_readerr(this->pep_eq, &error, 0);
+		CHECK("Failed to read error!");
+		g_warning("event queue contains following error (%s|c:%p):\n\t%s",
+				fi_strerror(FI_EAVAIL), error.context,
+				fi_eq_strerror(this->pep_eq, error.prov_errno, error.err_data, NULL, 0));
 		ret = TRUE; goto end;
 	}
 	CHECK("failed to read pep event queue!");
@@ -286,7 +289,7 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 	GError* error = NULL;
 	const gchar* server;
 	struct JFabricAddr jf_addr;
-	enum JConnectionEvents event;
+	JConnectionEvents event;
 
 	*instance_ptr = malloc(sizeof(*this));
 	this = *instance_ptr;
@@ -343,7 +346,6 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 
 	ret = TRUE;
 end:
-	/// \todo memory leak on error in addr.addr
 	free(jf_addr.addr);
 	return ret;
 }
@@ -359,8 +361,8 @@ j_connection_init_server(struct JFabric* fabric, GSocketConnection* gconnection,
 	GOutputStream* g_out;
 	GError* error = NULL;
 	struct JFabricAddr* addr = &fabric->fabric_addr_network;
-	enum JFabricEvents event;
-	enum JConnectionEvents con_event;
+	JFabricEvents event;
+	JConnectionEvents con_event;
 	JFabricConnectionRequest request;
 
 	*instance_ptr = malloc(sizeof(*this));
@@ -502,7 +504,7 @@ end:
 }
 
 gboolean
-j_connection_sread_event(struct JConnection* this, int timeout, enum JConnectionEvents* event)
+j_connection_sread_event(struct JConnection* this, int timeout, JConnectionEvents* event)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -526,7 +528,7 @@ j_connection_sread_event(struct JConnection* this, int timeout, enum JConnection
 				fi_strerror(FI_EAVAIL), error.context,
 				fi_eq_strerror(this->eq, error.prov_errno, error.err_data, NULL, 0));
 		} while(res > 0);
-		goto end; /// \todo consider return TRUE on event queue error
+		goto end;
 	}
 	CHECK("Failed to read event of connection!");
 
@@ -540,9 +542,8 @@ end:
 	return ret;
 }
 
-/// \todo check usage and maybe merge with j_connection_read_event()
 gboolean
-j_connection_read_event(struct JConnection* this, enum JConnectionEvents* event)
+j_connection_read_event(struct JConnection* this, JConnectionEvents* event)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -555,8 +556,13 @@ j_connection_read_event(struct JConnection* this, enum JConnectionEvents* event)
 		*event = J_CONNECTION_EVENT_TIMEOUT;
 		ret = TRUE; goto end;
 	} else if (res == -FI_EAVAIL) {
+		struct fi_eq_err_entry error = {0};
 		*event = J_CONNECTION_EVENT_ERROR;
-		// TODO: fetch error!
+		res = fi_eq_readerr(this->eq, &error, 0);
+		CHECK("Failed to read error!");
+		g_warning("event queue contains following error (%s|c:%p):\n\t%s",
+				fi_strerror(FI_EAVAIL), error.context,
+				fi_eq_strerror(this->eq, error.prov_errno, error.err_data, NULL, 0));
 		ret = TRUE; goto end;
 	}
 	CHECK("Failed to read event of connection!");
@@ -577,7 +583,7 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 
 	int res;
 	gboolean ret = FALSE;
-	uint8_t* segment;
+	void* context;
 	size_t size;
 
 	// we used paired endponits -> inject and send don't need destination addr (last parameter)
@@ -590,25 +596,26 @@ j_connection_send(struct JConnection* this, const void* data, size_t data_len)
 
 	// normal send
 	if (this->memory.active) {
-		segment = (uint8_t*)this->memory.buffer + this->memory.used;
+		uint8_t* segment = (uint8_t*)this->memory.buffer + this->memory.used;
+		context = segment;
 		memcpy(segment + this->memory.tx_prefix_size,
 				data, data_len);
 		size = data_len + this->memory.tx_prefix_size;
 		do{ 
-			res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, segment);
+			res = fi_send(this->ep, segment, size, fi_mr_desc(this->memory.mr), 0, context);
 		} while(res == -FI_EAGAIN);
 		CHECK("Failed to initelize sending!");
 		this->memory.used += size;
 		g_assert_true(this->memory.used <= this->memory.buffer_size);
 		g_assert_true(this->running_actions.msg_len + 1< J_CONNECTION_MAX_SEND + J_CONNECTION_MAX_RECV);
 	} else {
-		segment = (uint8_t*)data;
+		context = (void*)((const char*)data - (const char*)NULL);
 		size = data_len;
 		do{
-			res = fi_send(this->ep, segment, size, NULL, 0, segment);
+			res = fi_send(this->ep, data, size, NULL, 0, context);
 		} while(res == -FI_EAGAIN);
 	}
-	this->running_actions.msg_entry[this->running_actions.msg_len].context = segment;
+	this->running_actions.msg_entry[this->running_actions.msg_len].context = context;
 	this->running_actions.msg_entry[this->running_actions.msg_len].dest = NULL;
 	this->running_actions.msg_entry[this->running_actions.msg_len].len = 0;
 	++this->running_actions.msg_len;
@@ -675,15 +682,14 @@ j_connection_wait_for_completion(struct JConnection* this)
 		bool rx;
 		do {
 			rx = TRUE;
-			res = fi_cq_read(this->cq.rx, &entry, 1); /// \todo handle shutdown msgs!
+			res = fi_cq_read(this->cq.rx, &entry, 1);
 			if(res == -FI_EAGAIN) {
 				rx = FALSE;
-				res = fi_cq_read(this->cq.tx, &entry, 1); /// \todo handle shutdown msgs!
+				res = fi_cq_read(this->cq.tx, &entry, 1);
 			}
 		} while (res == -FI_EAGAIN);
-		/// \todo error message fetch!
 		if(res == -FI_EAVAIL) {
-			enum JConnectionEvents event;
+			JConnectionEvents event;
 			j_connection_sread_event(this, 0, &event);
 			if(event == J_CONNECTION_EVENT_SHUTDOWN) { this->closed = TRUE; goto end; }
 			struct fi_cq_err_entry err_entry;
@@ -750,7 +756,7 @@ j_connection_rma_unregister(struct JConnection* this, struct JConnectionMemory* 
 	J_TRACE_FUNCTION(NULL);
 
 	int res;
-	this->next_key = KEY_MIN; /// \todo may just count key to overflow? (max value is stored in domain_attr)
+	this->next_key = KEY_MIN;
 	res = fi_close(&handle->memory_region->fid);
 	CHECK("Failed to unregistrer rma memory!");
 	return TRUE;
@@ -790,8 +796,8 @@ j_connection_rma_read(struct JConnection* this, const struct JConnectionMemoryID
 			memoryID->offset,
 			memoryID->key,
 			mr);
-		/// \todo fix the timing for minimal timeout. This is needed when device is too bussy
 		if(res == -FI_EAGAIN) {
+			/// \todo evaluate: only wait for partcial finished jobs
 			j_connection_wait_for_completion(this);
 		}
 	} while ( res == -FI_EAGAIN);
