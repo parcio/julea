@@ -16,10 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * \file
- **/
-
 #ifndef JULEA_MESSAGE_H
 #define JULEA_MESSAGE_H
 
@@ -32,12 +28,12 @@
 
 G_BEGIN_DECLS
 
-/**
- * \defgroup JMessage Message
- *
- * @{
- **/
-
+/** \defgroup JMessage Message
+ * Sends message between server and client
+ */
+/** \public \memberof JMessage
+ *	\sa j_message_new, j_message_get_type
+ */
 enum JMessageType
 {
 	J_MESSAGE_NONE,
@@ -64,11 +60,12 @@ enum JMessageType
 	J_MESSAGE_DB_DELETE,
 	J_MESSAGE_DB_QUERY
 };
-
 typedef enum JMessageType JMessageType;
 
+/** \class JMessage lib/jmessage.h
+ * 	\ingroup network JMessage
+ */
 struct JMessage;
-
 typedef struct JMessage JMessage;
 
 G_END_DECLS
@@ -78,332 +75,201 @@ G_END_DECLS
 
 G_BEGIN_DECLS
 
-/**
- * Creates a new message.
- *
- * \code
- * \endcode
- *
- * \param op_type An operation type.
- * \param length  A length.
- *
- * \return A new message. Should be freed with j_message_unref().
+/// Creates a new Message
+/** \public \memberof JMessage
+ * 	\param op_type[in] message type 
+ *  \param length[in]  message body size.
+ *  \return A new message. Should be freed with j_message_unref().
  **/
 JMessage* j_message_new(JMessageType op_type, gsize length);
 
-/**
- * Creates a new reply message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A new reply message. Should be freed with j_message_unref().
+/// Creates a new reply message
+/** \public \memberof JMessage
+ *  \param message[in] message to reply to 
+ *  \return A new reply message. Should be freed with j_message_unref().
  **/
 JMessage* j_message_new_reply(JMessage* message);
 
-/**
- * Increases a message's reference count.
- *
- * \code
- * JMessage* m;
- *
- * j_message_ref(m);
- * \endcode
- *
- * \param message A message.
- *
- * \return \p message.
+/// Increases a message's reference count.
+/** \public \memberof JMessage
+ *  \return this
+ *  \sa j_message_unref
  **/
-JMessage* j_message_ref(JMessage* message);
+JMessage* j_message_ref(JMessage* this);
 
-/**
- * Decreases a message's reference count.
- * When the reference count reaches zero, frees the memory allocated for the message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- **/
-void j_message_unref(JMessage* message);
+/// Decreases a message's reference count.
+/** When the reference count reaches zero, frees the memory allocated for the message.
+ *  \public \memberof JMessage
+ *  \sa j_message_ref
+ */
+void j_message_unref(JMessage* this);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(JMessage, j_message_unref)
 
-/**
- * Returns a message's type.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation type.
- **/
-JMessageType j_message_get_type(JMessage const* message);
+/// Returns a message's type.
+/** \public \memberof JMessage
+ *  \return The message's operation type.
+ */
+JMessageType j_message_get_type(JMessage const* this);
 
-/**
- * Returns a message's count.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return The message's operation count.
- **/
-guint32 j_message_get_count(JMessage const* message);
+/// Returns a message's operation count.
+/** \public \memberof JMessage
+  */
+guint32 j_message_get_count(JMessage const* this);
 
-/**
- * Appends 1 byte to a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
+/// Appends 1 byte to a message.
+/** \public \memberof JMessage
+ *  \param data    Data to append.
+ *  \retval TRUE on success.
  **/
-gboolean j_message_append_1(JMessage* message, gconstpointer data);
+gboolean j_message_append_1(JMessage* this, gconstpointer data);
 
-/**
- * Appends 4 bytes to a message.
- * The bytes are converted to little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
+/// Appends 4 byte to a message.
+/** \public \memberof JMessage
+ *  \param data    Data to append.
+ *  \retval TRUE on success.
  **/
-gboolean j_message_append_4(JMessage* message, gconstpointer data);
+gboolean j_message_append_4(JMessage* this, gconstpointer data);
 
-/**
- * Appends 8 bytes to a message.
- * The bytes are converted to little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param data    Data to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
+/// Appends 8 byte to a message.
+/** \public \memberof JMessage
+ *  \param data    Data to append.
+ *  \retval TRUE on success.
  **/
-gboolean j_message_append_8(JMessage* message, gconstpointer data);
+gboolean j_message_append_8(JMessage* this, gconstpointer data);
 
-/**
- * Appends a number of bytes to a message.
- *
+///Appends a number of bytes to a message.
+/** \public \memberof JMessage
  * \code
- * gchar* str = "Hello world!";
+ * int data[32];
  * ...
- * j_message_append_n(message, str, strlen(str) + 1);
+ * j_message_append_n(message, data, 32);
  * \endcode
  *
- * \param message A message.
  * \param data    Data to append.
  * \param length  Length of data.
- *
- * \return TRUE on success, FALSE if an error occurred.
+ * \retval TRUE on success.
+ * \sa j_message_append_string, j_message_append_memory_id
  **/
 gboolean j_message_append_n(JMessage* message, gconstpointer data, gsize length);
 
-/**
- * Appends a string to a message.
- *
+/// Appends a string to a message.
+/** \public \memberof JMessage
  * \code
  * gchar* str = "Hello world!";
  * ...
  * j_message_append_string(message, str);
  * \endcode
  *
- * \param message A message.
  * \param str     String to append.
- *
- * \return TRUE on success, FALSE if an error occurred.
+ * \retval TRUE on success.
  **/
-gboolean j_message_append_string(JMessage* message, gchar const* str);
+gboolean j_message_append_string(JMessage* this, gchar const* str);
 
 /// Appends a memory identifier to a message
-gboolean j_message_append_memory_id(JMessage*, const struct JConnectionMemoryID*);
+/** \public \memberof JMessage
+ * \retval TRUE on success.
+ */
+gboolean j_message_append_memory_id(JMessage* this, const struct JConnectionMemoryID* memory_id);
 
-/**
- * Gets 1 byte from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A character.
+/// Gets 1 byte from a message.
+/** \public \memberof JMessage */
+gchar j_message_get_1(JMessage* this);
+
+/// Gets 4 bytes from a message.
+/** The bytes are converted from little endian automatically.
+ * \public \memberof JMessage
+ * \attention byte order depends on endian on system.
+ * \return 4 byte integer containing data
  **/
-gchar j_message_get_1(JMessage* message);
+gint32 j_message_get_4(JMessage* this);
 
-/**
- * Gets 4 bytes from a message.
- * The bytes are converted from little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A 4-bytes integer.
+/// Gets 8 bytes from a message.
+/** The bytes are converted from little endian automatically.
+ * \public \memberof JMessage
+ * \attention byte order depends on endian
+ * \return An 8-bytes integer containing data.
  **/
-gint32 j_message_get_4(JMessage* message);
+gint64 j_message_get_8(JMessage* this);
 
-/**
- * Gets 8 bytes from a message.
- * The bytes are converted from little endian automatically.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return An 8-bytes integer.
- **/
-gint64 j_message_get_8(JMessage* message);
-
-/**
- * Gets n bytes from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
+/// Gets n bytes from a message.
+/** \public \memberof JMessage
  * \param length  Number of bytes to get.
- *
+ * \attention the data are still owned and managed by the message!
  * \return A pointer to the data.
  **/
-gpointer j_message_get_n(JMessage* message, gsize length);
+gpointer j_message_get_n(JMessage* this, gsize length);
 
-/**
- * Gets a string from a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
+/// Gets a string from a message.
+/** \public \memberof JMessage
+ * \attention the string is still owned and managed by the message!
  * \return A string.
  **/
-gchar const* j_message_get_string(JMessage* message);
+gchar const* j_message_get_string(JMessage* this);
 
 /// Gets an memory identifier from a message.
+/** \public \memberof JMessage
+ * \attention The memory is still owned and managed by the message!
+ */
 const struct JConnectionMemoryID* j_message_get_memory_id(JMessage*);
 
-/**
- * Adds new data to send to a message.
- *
- * \code
- * \endcode
- *
+/// Add new data block to send with message.
+/** \public \memberof JMessage
  * \param data,length Data segment to send.
  * \param header,h_size header data (included in message)
  **/
 void j_message_add_send(JMessage* this, gconstpointer data, guint64 length, void* header, guint64 h_size);
 
-/**
- * Adds a new operation to a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param length  A length.
+/// Adds a new operation to a message.
+/** \public \memberof JMessage
+ *  \remark Operation data must appended with the j_message_append functions.
+ *  \param length length of operation.
+ *  \sa j_message_append_1, j_message_append_4, j_message_append_8, j_message_append_n, j_message_append_string, j_message_append_memory_id.
  **/
-void j_message_add_operation(JMessage* message, gsize length);
+void j_message_add_operation(JMessage* this, gsize length);
 
-/**
- * Writes a message to the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-
-/** Append sendend data memory ids to end of message!  */
-gboolean j_message_send(JMessage*, struct JConnection*);
-
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_receive(JMessage*, struct JConnection*);
-/// signal when rma read actions are finished.
-/** Sends ACK flag, to signal that host can free data memory. Also wait for all network actions to coplete!
- *	@param message checks if message has memory regions, only then sends ack. Can be NULL to force ack sending
+/// Sends message via connection
+/** \public \memberof JMessage
+ * \remark append one MemoryID for each data segment send with the message
+ * \retval TRUE on success.
  */
-gboolean j_message_send_ack(JMessage* message, struct JConnection*);
+gboolean j_message_send(JMessage* this, struct JConnection* connection);
 
-/**
- * Reads a message from the network.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
+/// Reads a message from connection.
+/* \private \memberof JMessage
+ * \retval TRUE on success.
+ * \public \memberof JMessage
+ **/
+gboolean j_message_receive(JMessage* this, struct JConnection* connection);
+
+/// signal when rma read actions are finished.
+/** Sends ACK flag, to signal that host can free data memory. Also wait for all network actions to complete!
+ *	\param message checks if message has memory regions, only then sends ack. Can be NULL to force ack sending
+ *	\retval TRUE on success
+ */
+gboolean j_message_send_ack(JMessage* this, struct JConnection* connection);
+
+///Reads a message from the network.
+/** \public \memberof
+ * \retval TRUE on success.
+ * \attention for internal usage only, please use: j_message_receive()
+ **/
+gboolean j_message_read(JMessage* this, struct JConnection* connection);
+
+/// Writes a message to the network.
+/**\private \memberof JMessage
  * \return TRUE on success, FALSE if an error occurred.
+ * \attention for internal usage only, please use: j_message_send()
  **/
-gboolean j_message_read(JMessage*, struct JConnection*);
+gboolean j_message_write(JMessage* this, struct JConnection* connection);
 
-/** Writes a message to the network.
- *
- * \attention send without data segment!
- * \code
- * \endcode
- *
- * \param message A message.
- * \param stream  A network stream.
- *
- * \return TRUE on success, FALSE if an error occurred.
- **/
-gboolean j_message_write(JMessage*, struct JConnection*);
+/// Set the semantics of a message.
+/** \public \memberof JMessage */
+void j_message_set_semantics(JMessage* this, JSemantics* semantics);
 
-/** Set the semantics of a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- * \param semantics  A semantics object.
- **/
-void j_message_set_semantics(JMessage* message, JSemantics* semantics);
-
-/**
- * get the semantics of a message.
- *
- * \code
- * \endcode
- *
- * \param message A message.
- *
- * \return A semantics object.
- **/
-JSemantics* j_message_get_semantics(JMessage* message);
-
-/**
- * @}
- **/
+/// get the semantics of a message.
+/** \public \memberof JMessage */
+JSemantics* j_message_get_semantics(JMessage* this);
 
 G_END_DECLS
 

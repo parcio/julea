@@ -43,39 +43,39 @@ struct fi_eq_cm_entry;
  *  
  * Connection request are mendetory to establish a connection from server side.
  * \sa j_connection_init_server, j_fabric_sread_event
- * \ingroup network
  */
 typedef struct fi_eq_cm_entry JFabricConnectionRequest;
 
-/** \struct JFabricAddr jnetwork.h
- *  \public \memberof
+/** \struct JFabricAddr lib/jnetwork.h
+ *  \public \memberof JFabric
  *  \brief Fabrics address data needed to send an connection request.
- *  \ingroup network
  *  \sa j_fabric_init_client
  */
 struct JFabricAddr;
+typedef struct JFabricAddr JFabricAddr;
 
 /// Possible events for paired connections
 /** \ingroup network
  *  \sa j_connection_sread_event, j_connection_read_event
  */
-enum JConnectionEvents {
+typedef enum {
 	J_CONNECTION_EVENT_ERROR = 0, ///< An error was reported, the connection is probably in an invalid state!
 	J_CONNECTION_EVENT_TIMEOUT,   ///< there was no event to read in the given time frame
 	J_CONNECTION_EVENT_CONNECTED, ///< First event after successful established connection.
 	J_CONNECTION_EVENT_SHUTDOWN   ///< connection was closed
-};
+} JConnectionEvents;
 
-/// Possible events for listening fabircs
-/** \ingroup network
+
+/// Possible events for listening fabrics
+/** \public \memberof JFabric
  *  \sa j_fabric_sread_event
  */
-enum JFabricEvents {
+typedef enum {
 	J_FABRIC_EVENT_ERROR = 0,			///< An error was reported, fabric is probably in a invalid state! 
 	J_FABRIC_EVENT_TIMEOUT,				///< No event received in the given time frame.
 	J_FABRIC_EVENT_CONNECTION_REQUEST,  ///< A connection request was received.
 	J_FABRIC_EVENT_SHUTDOWN				///< fabric socket was closed
-};
+} JFabricEvents;
 
 /** \class JFabric lib/jnetwork.h
  *  \brief Manage access to network.
@@ -85,6 +85,7 @@ enum JFabricEvents {
  * \ingroup network
  */
 struct JFabric;
+typedef struct JFabric JFabric;
 
 /// Initelize a fabric for the server side.
 /** \public \memberof JFabric
@@ -120,7 +121,7 @@ j_fabric_init_client(
  *  \pre Finish all connections created from this fabric! 
  */
 gboolean
-j_fabric_fini(struct JFabric* instance);
+j_fabric_fini(struct JFabric* this);
 
 /// Read a event of a listening fabric. 
 /** \public \memberof JFabric
@@ -129,7 +130,7 @@ j_fabric_fini(struct JFabric* instance);
  * \retval FALSE if fetching an event fails
  */
 gboolean
-j_fabric_sread_event(struct JFabric* instance,
+j_fabric_sread_event(struct JFabric* this,
 		int timeout,								///< [in] set to -1 for no timeout.
 		enum JFabricEvents* event, 					///< [out] reeded from event queue
 		JFabricConnectionRequest* con_req    ///< [out] contains connection request,
@@ -243,7 +244,7 @@ struct JConnectionMemoryID {
  * \sa j_connection_rma_read, j_connection_rma_register, j_connection_rma_unregister
  */
 gboolean
-j_connection_memory_get_id(struct JConnectionMemory* instance,
+j_connection_memory_get_id(struct JConnectionMemory* this,
 		struct JConnectionMemoryID* id ///< [out] of registerd memory
 );
 
@@ -305,7 +306,7 @@ j_connection_init_server (
  * \retval FALSE if closing the connection failed. The connection will still be unusable!
  */
 gboolean
-j_connection_fini ( struct JConnection* instance);
+j_connection_fini ( struct JConnection* this);
 
 /// Check if the connection is still valid.
 /** \public \memberof JConnection
@@ -317,7 +318,7 @@ j_connection_fini ( struct JConnection* instance);
  * \todo advance connection checking!
  */
 gboolean
-j_connection_check_connection(struct JConnection* instance);
+j_connection_check_connection(struct JConnection* this);
 
 /// blocking read one event from connection
 /** \public \memberof JConnection
@@ -327,7 +328,7 @@ j_connection_check_connection(struct JConnection* instance);
  * \retval FALSE if fetching event fails
  */
 gboolean
-j_connection_sread_event(struct JConnection* instance,
+j_connection_sread_event(struct JConnection* this,
 		int timeout,                                ///< [in] set to -1 for no timeout
 		enum JConnectionEvents* event				///< [out] reeded from queue
 );
@@ -339,7 +340,7 @@ j_connection_sread_event(struct JConnection* instance,
  * \retval FALSE if fetching failed
  */
 gboolean
-j_connection_read_event(struct JConnection* instance,
+j_connection_read_event(struct JConnection* this,
 		enum JConnectionEvents* event				///< [out] reeded from queue
 );
 
@@ -360,7 +361,7 @@ j_connection_read_event(struct JConnection* instance,
  * \sa j_connection_recv, j_connection_wait_for_completion
  */
 gboolean
-j_connection_send(struct JConnection* instance,
+j_connection_send(struct JConnection* this,
 		const void* data,		///< [in] to send
 		size_t data_len		 	///< [in] in bytes
 );
@@ -378,7 +379,7 @@ j_connection_send(struct JConnection* instance,
  * \sa j_connection_send, j_connection_wait_for_completion
  */
 gboolean
-j_connection_recv(struct JConnection* instance,
+j_connection_recv(struct JConnection* this,
 		size_t data_len,	///< [in] in bytes to receive
 		void* data			///< [out] received
 );
@@ -392,7 +393,7 @@ j_connection_recv(struct JConnection* instance,
  * \todo evaluate if paralisation possible
  */
 gboolean
-j_connection_rma_read(struct JConnection* instance,
+j_connection_rma_read(struct JConnection* this,
 		const struct JConnectionMemoryID* memoryID,			///< [in] for segment which should be copied
 		void* data											///< [out] received
 );
@@ -403,7 +404,7 @@ j_connection_rma_read(struct JConnection* instance,
  * \sa j_connection_rma_read, j_connection_send, j_connection_recv
  */
 gboolean
-j_connection_wait_for_completion(struct JConnection* instance);
+j_connection_wait_for_completion(struct JConnection* this);
 
 /// Check if the connection was closed from the other party.
 /** \sa j_connection_wait_for_completion */
@@ -417,7 +418,7 @@ j_connection_closed(struct JConnection* this);
  * register the memory first!
  */
 gboolean
-j_connection_rma_register(struct JConnection* intsance,
+j_connection_rma_register(struct JConnection* this,
 		const void* data,					///< [in] begin of memory region to share
 		size_t data_len,					///< [in] size of memory region in bytes
 		struct JConnectionMemory* handle	///< [out] for memory region to unregister with j_connection_rma_unregister
@@ -428,7 +429,7 @@ j_connection_rma_register(struct JConnection* intsance,
  * Counterpart to j_connection_rma_register().
  */
 gboolean
-j_connection_rma_unregister(struct JConnection* instance,
+j_connection_rma_unregister(struct JConnection* this,
 		struct JConnectionMemory* handle 	///< [in] for memory region to unregister
 );
 

@@ -40,11 +40,6 @@
 
 #define EXE(cmd, ...) do { if(cmd == FALSE) { g_warning(__VA_ARGS__); goto end; } } while(FALSE)
 
-/**
- * \addtogroup JMessage Message
- *
- * @{
- **/
 
 enum JMessageSemantics
 {
@@ -998,7 +993,3 @@ j_message_get_semantics(JMessage* message)
 
 	return semantics;
 }
-
-/**
- * @}
- **/
