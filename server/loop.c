@@ -28,7 +28,8 @@
 
 static guint jd_thread_num = 0;
 
-struct ObjectWriteEntry {
+struct ObjectWriteEntry
+{
 	uint64_t size;
 	uint64_t offset;
 	void* data;
@@ -372,7 +373,8 @@ jd_handle_message(JMessage* message, struct JConnection* connection, JMemoryChun
 				j_backend_object_close(jd_object_backend, object);
 			}
 
-			if(operation_count) {
+			if (operation_count)
+			{
 				j_message_send_ack(NULL, connection);
 			}
 			if (reply != NULL)

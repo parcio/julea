@@ -557,9 +557,12 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 
 				if (mem_id->size > 0)
 				{
-					if(mem_id->key == 0 && mem_id->offset == 0) {
+					if (mem_id->key == 0 && mem_id->offset == 0)
+					{
 						memcpy(data, j_message_get_n(reply, mem_id->size), mem_id->size);
-					} else {
+					}
+					else
+					{
 						j_connection_rma_read(object_connection, mem_id, data);
 					}
 				}
@@ -732,7 +735,6 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	{
 		ret = j_backend_object_close(object_backend, object_handle) && ret;
 	}
-
 
 	/*
 	if (lock != NULL)

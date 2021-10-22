@@ -1,4 +1,4 @@
-/** \file jnetwork.h 
+/** \file jnetwork.h
  *	\ingroup network
  *
  * \copyright
@@ -40,7 +40,7 @@ struct fi_eq_cm_entry;
 
 /** \struct JFabricConnectionRequest lib/jnetwork.h
  *  \brief A connection request read from an event queue.
- *  
+ *
  * Connection request are mendetory to establish a connection from server side.
  * \sa j_connection_init_server, j_fabric_sread_event
  */
@@ -58,23 +58,24 @@ typedef struct JFabricAddr JFabricAddr;
 /** \ingroup network
  *  \sa j_connection_sread_event, j_connection_read_event
  */
-typedef enum {
+typedef enum
+{
 	J_CONNECTION_EVENT_ERROR = 0, ///< An error was reported, the connection is probably in an invalid state!
-	J_CONNECTION_EVENT_TIMEOUT,   ///< there was no event to read in the given time frame
+	J_CONNECTION_EVENT_TIMEOUT, ///< there was no event to read in the given time frame
 	J_CONNECTION_EVENT_CONNECTED, ///< First event after successful established connection.
-	J_CONNECTION_EVENT_SHUTDOWN   ///< connection was closed
+	J_CONNECTION_EVENT_SHUTDOWN ///< connection was closed
 } JConnectionEvents;
-
 
 /// Possible events for listening fabrics
 /** \public \memberof JFabric
  *  \sa j_fabric_sread_event
  */
-typedef enum {
-	J_FABRIC_EVENT_ERROR = 0,			///< An error was reported, fabric is probably in a invalid state! 
-	J_FABRIC_EVENT_TIMEOUT,				///< No event received in the given time frame.
-	J_FABRIC_EVENT_CONNECTION_REQUEST,  ///< A connection request was received.
-	J_FABRIC_EVENT_SHUTDOWN				///< fabric socket was closed
+typedef enum
+{
+	J_FABRIC_EVENT_ERROR = 0, ///< An error was reported, fabric is probably in a invalid state!
+	J_FABRIC_EVENT_TIMEOUT, ///< No event received in the given time frame.
+	J_FABRIC_EVENT_CONNECTION_REQUEST, ///< A connection request was received.
+	J_FABRIC_EVENT_SHUTDOWN ///< fabric socket was closed
 } JFabricEvents;
 
 /** \class JFabric lib/jnetwork.h
@@ -96,8 +97,8 @@ typedef struct JFabric JFabric;
  */
 gboolean
 j_fabric_init_server(
-		struct JConfiguration* configuration, 	///< [in] of JULEA, to fetch details
-		struct JFabric** instance				///< [out] pointer to resulting fabric 
+	struct JConfiguration* configuration, ///< [in] of JULEA, to fetch details
+	struct JFabric** instance ///< [out] pointer to resulting fabric
 );
 
 /// Initelize a fabric for the client side.
@@ -105,36 +106,36 @@ j_fabric_init_server(
  *
  * Contains data to building a paired connection.
  * Addess of JULEA server is needed, to enforce that both communicate via the same network.
- * \warning will be called from j_connection_init_client(), so no need for explicit a call 
+ * \warning will be called from j_connection_init_client(), so no need for explicit a call
  * \retval FALSE on failure
  */
 gboolean
 j_fabric_init_client(
-		struct JConfiguration* configuration, 	///< [in] of JULEA to fetch details
-		struct JFabricAddr* addr,				///< [in] of JULEA server fabric
-		struct JFabric** instance				///< [out] pointer to resulting fabric
+	struct JConfiguration* configuration, ///< [in] of JULEA to fetch details
+	struct JFabricAddr* addr, ///< [in] of JULEA server fabric
+	struct JFabric** instance ///< [out] pointer to resulting fabric
 );
 
 /// Closes a fabirc and frees used memory.
 /** \public \memberof JFabric
  *  \retval FALSE on failure
- *  \pre Finish all connections created from this fabric! 
+ *  \pre Finish all connections created from this fabric!
  */
 gboolean
 j_fabric_fini(struct JFabric* this);
 
-/// Read a event of a listening fabric. 
+/// Read a event of a listening fabric.
 /** \public \memberof JFabric
  * \warning only usable for fabrics initelized with j_fabric_init_server()
- * \retval TRUE if fetching succeed or the request timeouted 
+ * \retval TRUE if fetching succeed or the request timeouted
  * \retval FALSE if fetching an event fails
  */
 gboolean
 j_fabric_sread_event(struct JFabric* this,
-		int timeout,								///< [in] set to -1 for no timeout.
-		JFabricEvents* event, 					///< [out] reeded from event queue
-		JFabricConnectionRequest* con_req    ///< [out] contains connection request,
-													/// if event == J_FABRIC_EVENT_CONNECTION_REQUEST
+		     int timeout, ///< [in] set to -1 for no timeout.
+		     JFabricEvents* event, ///< [out] reeded from event queue
+		     JFabricConnectionRequest* con_req ///< [out] contains connection request,
+		     /// if event == J_FABRIC_EVENT_CONNECTION_REQUEST
 );
 
 /** \class JConnection jnetwork.h
@@ -175,7 +176,7 @@ j_fabric_sread_event(struct JFabric* this,
  * j_connection_wait_for_completion(connection);
  * j_connection_rma_unregister(connection, &rma_mem);
  *
- * // rma read 
+ * // rma read
  * j_connection_recv(connection, &rma_mem_id, sizeof(rma_mem_id));
  * j_connection_wait_for_completion(connection);
  * j_connection_rma_read(connection, &rma_mem_id, data);
@@ -197,7 +198,7 @@ j_fabric_sread_event(struct JFabric* this,
  *
  * j_connection_fini(jconnection);
  * \endcode
- * \todo expose more connection posibilities (eg. connection with an JFabricAddr) 
+ * \todo expose more connection posibilities (eg. connection with an JFabricAddr)
  */
 struct JConnection;
 
@@ -210,7 +211,7 @@ struct JConnection;
 #define J_CONNECTION_MAX_RECV 1
 
 /// Acknowladgement value.
-/** \public \memberof JConnection 
+/** \public \memberof JConnection
  * Value used to send an ack for any reason. Maybe to verify that the remote memory was successful readed.
  * \sa j_connection_rma_unregister, j_connection_rma_read, j_connection_rma_register, JConnectionAck
  */
@@ -232,10 +233,11 @@ struct JConnectionMemory;
 /** \public \memberof JConnectionMemory
  * \sa j_connection_rma_read, j_connection_rma_register, j_connection_memory_get_id
  */
-struct JConnectionMemoryID {
-	uint64_t key;		///< access key for authentication
-	uint64_t offset; 	///< used to identifie memory region
-	uint64_t size;		///< size in bytes of memery region
+struct JConnectionMemoryID
+{
+	uint64_t key; ///< access key for authentication
+	uint64_t offset; ///< used to identifie memory region
+	uint64_t size; ///< size in bytes of memery region
 };
 
 /// Get identifier of memory region
@@ -245,16 +247,15 @@ struct JConnectionMemoryID {
  */
 gboolean
 j_connection_memory_get_id(struct JConnectionMemory* this,
-		struct JConnectionMemoryID* id ///< [out] of registerd memory
+			   struct JConnectionMemoryID* id ///< [out] of registerd memory
 );
-
 
 /// Builds a connection to an active fabric (direct).
 /** \public \memberof JConnection
  *
- * This constructor will fetch the fabric address via TCP and then building an paired 
+ * This constructor will fetch the fabric address via TCP and then building an paired
  * connection to this, which later allows for messaging and RMA data transfer.  \n
- * This will also construct a fabric for that connection, which is freed when the connection is finished. 
+ * This will also construct a fabric for that connection, which is freed when the connection is finished.
  *
  * \attention this function may reduces j_configuration_max_operation_size()
  * accordingly to network capabilities.
@@ -273,20 +274,19 @@ j_connection_memory_get_id(struct JConnectionMemory* this,
  * \todo document index parameter!
  */
 gboolean
-j_connection_init_client (
-		struct JConfiguration* configuration,       ///< [in] for server address, and network configuration
-		enum JBackendType backend,					///< [in] backend server to connect to
-		guint index,								///< [in] ??
-		struct JConnection** instance 				///< [out] constructed instance
+j_connection_init_client(
+	struct JConfiguration* configuration, ///< [in] for server address, and network configuration
+	enum JBackendType backend, ///< [in] backend server to connect to
+	guint index, ///< [in] ??
+	struct JConnection** instance ///< [out] constructed instance
 );
-
 
 /// Establish connection to client based on established GSocketConnection.
 /** \public \memberof JConnection
  *
  * The GSocketConnection will be used to send the server fabric data.
  * For the connection process see j_connection_init_client().
- * 
+ *
  * \attention this function may reduces j_configuration_max_operation_size()
  * accordingly to network capabilities.
  *
@@ -294,10 +294,10 @@ j_connection_init_client (
  * \sa j_connection_init_client
  */
 gboolean
-j_connection_init_server (
-		struct JFabric* fabric,						 ///< [in] via which the connection should be established
-		GSocketConnection* gconnection, 			 ///< [in] valid GSocketConnection for address exchange
-		struct JConnection** instance				 ///< [out] constructed instance
+j_connection_init_server(
+	struct JFabric* fabric, ///< [in] via which the connection should be established
+	GSocketConnection* gconnection, ///< [in] valid GSocketConnection for address exchange
+	struct JConnection** instance ///< [out] constructed instance
 );
 /// Closes a connection and free all related resources.
 /** \public \memberof JConnection
@@ -306,11 +306,11 @@ j_connection_init_server (
  * \retval FALSE if closing the connection failed. The connection will still be unusable!
  */
 gboolean
-j_connection_fini ( struct JConnection* this);
+j_connection_fini(struct JConnection* this);
 
 /// Check if the connection is still valid.
 /** \public \memberof JConnection
- *  
+ *
  * Check if the connection was established and if was no J_CONNECTION_EVENT_SHUTDOWN recognized.
  * \attention events will only be checked if j_connection_read_event() is called!.
  * \retval FALSE if connection is not longer valid
@@ -324,13 +324,13 @@ j_connection_check_connection(struct JConnection* this);
 /** \public \memberof JConnection
  * Used to check wait for connected state, and recognized errors and shutdown signals.
  * For a version which returns immediate when no event exists see j_connection_read_event()
- * \retval TRUE if fetching succeed or the request timeouted 
+ * \retval TRUE if fetching succeed or the request timeouted
  * \retval FALSE if fetching event fails
  */
 gboolean
 j_connection_sread_event(struct JConnection* this,
-		int timeout,                                ///< [in] set to -1 for no timeout
-		JConnectionEvents* event					///< [out] reeded from queue
+			 int timeout, ///< [in] set to -1 for no timeout
+			 JConnectionEvents* event ///< [out] reeded from queue
 );
 
 /// check for event on connection
@@ -341,14 +341,14 @@ j_connection_sread_event(struct JConnection* this,
  */
 gboolean
 j_connection_read_event(struct JConnection* this,
-		JConnectionEvents* event				///< [out] reeded from queue
+			JConnectionEvents* event ///< [out] reeded from queue
 );
 
 /// Async send data via MSG connection
 /** \public \memberof JConnection
- * 
+ *
  * Asynchronous sends a message, to recognize for completion use j_connection_wait_for_completion().\n
- * If the message is small enough it can "injected" to the network, in that case the actions finished 
+ * If the message is small enough it can "injected" to the network, in that case the actions finished
  * immediate (j_connection_wait_for_completion() still works).
  *
  * \todo feedback if message was injected!
@@ -362,28 +362,27 @@ j_connection_read_event(struct JConnection* this,
  */
 gboolean
 j_connection_send(struct JConnection* this,
-		const void* data,		///< [in] to send
-		size_t data_len		 	///< [in] in bytes
+		  const void* data, ///< [in] to send
+		  size_t data_len ///< [in] in bytes
 );
 
 /// Asynchronous receive data via MSG connection.
 /** \public \memberof JConnection
- * 
+ *
  * Asynchronous receive a message, to wait for completion use j_connection_wait_for_completion().
  *
  * \attention it is only allowed to have J_CONNECTION_MAX_RECV recv
  * operation pending at the same time.  Each has a max size
  * of j_configuration_max_operation_size() (the connection initialization may has changed this value!).
- * 
+ *
  * \retval FALSE if an error occurred
  * \sa j_connection_send, j_connection_wait_for_completion
  */
 gboolean
 j_connection_recv(struct JConnection* this,
-		size_t data_len,	///< [in] in bytes to receive
-		void* data			///< [out] received
+		  size_t data_len, ///< [in] in bytes to receive
+		  void* data ///< [out] received
 );
-
 
 /// Async direct memory read.
 /** \public \memberof JConnection
@@ -394,12 +393,12 @@ j_connection_recv(struct JConnection* this,
  */
 gboolean
 j_connection_rma_read(struct JConnection* this,
-		const struct JConnectionMemoryID* memoryID,			///< [in] for segment which should be copied
-		void* data											///< [out] received
+		      const struct JConnectionMemoryID* memoryID, ///< [in] for segment which should be copied
+		      void* data ///< [out] received
 );
 
 /// Wait until operations initiated at his connection finished.
-/** \public \memberof JConnection 
+/** \public \memberof JConnection
  * \retval FALSE if waiting finished. This may occures because the connection was closed: check this with: j_connection_active()
  * \sa j_connection_rma_read, j_connection_send, j_connection_recv
  */
@@ -419,9 +418,9 @@ j_connection_closed(struct JConnection* this);
  */
 gboolean
 j_connection_rma_register(struct JConnection* this,
-		const void* data,					///< [in] begin of memory region to share
-		size_t data_len,					///< [in] size of memory region in bytes
-		struct JConnectionMemory* handle	///< [out] for memory region to unregister with j_connection_rma_unregister
+			  const void* data, ///< [in] begin of memory region to share
+			  size_t data_len, ///< [in] size of memory region in bytes
+			  struct JConnectionMemory* handle ///< [out] for memory region to unregister with j_connection_rma_unregister
 );
 
 /// Unregister memory from rma availablity.
@@ -430,7 +429,7 @@ j_connection_rma_register(struct JConnection* this,
  */
 gboolean
 j_connection_rma_unregister(struct JConnection* this,
-		struct JConnectionMemory* handle 	///< [in] for memory region to unregister
+			    struct JConnectionMemory* handle ///< [in] for memory region to unregister
 );
 
 struct JConfiguration*

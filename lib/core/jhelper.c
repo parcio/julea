@@ -49,7 +49,6 @@
  * @{
  **/
 
-
 void
 j_helper_get_number_string(gchar* string, guint32 length, guint32 number)
 {

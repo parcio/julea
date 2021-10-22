@@ -124,7 +124,9 @@ j_connection_pool_fini(void)
 		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->object_queues[i].queue)) != NULL)
-		{ j_connection_fini(connection); }
+		{
+			j_connection_fini(connection);
+		}
 
 		g_async_queue_unref(pool->object_queues[i].queue);
 	}
@@ -134,7 +136,9 @@ j_connection_pool_fini(void)
 		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->kv_queues[i].queue)) != NULL)
-		{ j_connection_fini(connection); }
+		{
+			j_connection_fini(connection);
+		}
 
 		g_async_queue_unref(pool->kv_queues[i].queue);
 	}
@@ -144,7 +148,9 @@ j_connection_pool_fini(void)
 		struct JConnection* connection;
 
 		while ((connection = g_async_queue_try_pop(pool->db_queues[i].queue)) != NULL)
-		{ j_connection_fini(connection); }
+		{
+			j_connection_fini(connection);
+		}
 
 		g_async_queue_unref(pool->db_queues[i].queue);
 	}
@@ -184,7 +190,7 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, enum JBackendTy
 
 			guint op_count;
 
-			if(!j_connection_init_client(j_connection_pool->configuration, backend, index, &connection))
+			if (!j_connection_init_client(j_connection_pool->configuration, backend, index, &connection))
 			{
 				g_critical("Can not connect to %s [%d].", "TODO(SERVER ADDR)", g_atomic_int_get(count));
 				exit(1);

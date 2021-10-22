@@ -77,7 +77,7 @@ G_BEGIN_DECLS
 
 /// Creates a new Message
 /** \public \memberof JMessage
- * 	\param op_type[in] message type 
+ * 	\param op_type[in] message type
  *  \param length[in]  message body size.
  *  \return A new message. Should be freed with j_message_unref().
  **/
@@ -85,7 +85,7 @@ JMessage* j_message_new(JMessageType op_type, gsize length);
 
 /// Creates a new reply message
 /** \public \memberof JMessage
- *  \param message[in] message to reply to 
+ *  \param message[in] message to reply to
  *  \return A new reply message. Should be freed with j_message_unref().
  **/
 JMessage* j_message_new_reply(JMessage* message);

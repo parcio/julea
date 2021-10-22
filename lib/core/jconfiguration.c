@@ -142,7 +142,8 @@ struct JConfiguration
 	} db;
 
 	/// libfabric configuration
-	struct {
+	struct
+	{
 		int32_t version;
 		struct fi_info* hints;
 	} libfabric;
@@ -371,10 +372,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->ref_count = 1;
 	configuration->libfabric.version = FI_VERSION(1, 11);
 	configuration->libfabric.hints = fi_allocinfo();
-	configuration->libfabric.hints->caps = 
+	configuration->libfabric.hints->caps =
 		FI_MSG | FI_SEND | FI_RECV | FI_READ | FI_RMA | FI_REMOTE_READ;
 	configuration->libfabric.hints->mode = FI_MSG_PREFIX;
-	configuration->libfabric.hints->domain_attr->mr_mode = 
+	configuration->libfabric.hints->domain_attr->mr_mode =
 		FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR;
 	configuration->libfabric.hints->ep_attr->type = FI_EP_MSG;
 	configuration->libfabric.hints->fabric_attr->prov_name = libfabric_provider;

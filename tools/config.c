@@ -156,7 +156,7 @@ main(gint argc, gchar** argv)
 		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
 		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
-		{ "port", 0, 0, G_OPTION_ARG_INT64, &opt_network_port, "Network communication port", "4000 + user-id%1000"},
+		{ "port", 0, 0, G_OPTION_ARG_INT64, &opt_network_port, "Network communication port", "4000 + user-id%1000" },
 		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2:port" },
 		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "Key-value servers to use", "host1,host2:port" },
 		{ "db-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_db, "Database servers to use", "host1,host2:port" },
@@ -211,10 +211,10 @@ main(gint argc, gchar** argv)
 		return 1;
 	}
 
-	if(opt_network_port == 0)
+	if (opt_network_port == 0)
 	{
 		JCredentials* credentials = j_credentials_new();
-		opt_network_port = 4000 + ( j_credentials_get_user(credentials) % 1000 );
+		opt_network_port = 4000 + (j_credentials_get_user(credentials) % 1000);
 		j_credentials_unref(credentials);
 	}
 
