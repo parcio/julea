@@ -4,7 +4,6 @@
 
 #include <netinet/in.h>
 
-#include <rdma/fabric.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_cm.h>
@@ -783,13 +782,14 @@ j_connection_wait_for_completion(struct JConnection* this)
 		if (res == -FI_EAVAIL)
 		{
 			JConnectionEvents event;
+			struct fi_cq_err_entry err_entry;
+
 			j_connection_sread_event(this, 0, &event);
 			if (event == J_CONNECTION_EVENT_SHUTDOWN)
 			{
 				this->closed = TRUE;
 				goto end;
 			}
-			struct fi_cq_err_entry err_entry;
 			res = fi_cq_readerr(rx ? this->cq.rx : this->cq.tx,
 					    &err_entry, 0);
 			CHECK("Failed to read error of cq!");
