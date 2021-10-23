@@ -109,9 +109,9 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
-            sudo pip3 install meson
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev libfabric-dev
+          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
+          sudo pip3 install meson
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
