@@ -150,9 +150,9 @@ j_fabric_init_server(struct JConfiguration* configuration, struct JFabric** inst
 {
 	J_TRACE_FUNCTION(NULL);
 
-	struct JFabric* this;
-	int res;
-	size_t addrlen;
+	struct JFabric* this = NULL;
+	int res = 0;
+	size_t addrlen = 0;
 
 	*instance_ptr = malloc(sizeof(*this));
 	this = *instance_ptr;
