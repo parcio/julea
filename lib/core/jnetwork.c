@@ -52,6 +52,7 @@ struct JFabricAddr
 struct JFabric
 {
 	struct fi_info* info;
+	struct fi_info* hints;
 	struct fid_fabric* fabric;
 	struct fid_eq* pep_eq;
 	struct fid_pep* pep;
@@ -212,7 +213,6 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	J_TRACE_FUNCTION(NULL);
 
 	struct JFabric* this;
-	struct fi_info* hints;
 	int res;
 	gboolean ret = FALSE;
 
@@ -223,15 +223,15 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 	this->config = configuration;
 	this->con_side = JF_CLIENT;
 
-	hints = fi_dupinfo(j_configuration_get_libfabric_hints(configuration));
-	hints->addr_format = addr->addr_format;
-	hints->dest_addr = addr->addr;
-	hints->dest_addrlen = addr->addr_len;
+	this->hints = fi_dupinfo(j_configuration_get_libfabric_hints(configuration));
+	this->hints->addr_format = addr->addr_format;
+	this->hints->dest_addr = addr->addr;
+	this->hints->dest_addrlen = addr->addr_len;
 
 	res = fi_getinfo(
 		j_configuration_get_libfabric_version(configuration),
 		NULL, NULL, 0,
-		hints, &this->info);
+		this->hints, &this->info);
 	CHECK("Failed to find fabric!");
 	free_dangling_infos(this->info);
 
@@ -240,7 +240,6 @@ j_fabric_init_client(struct JConfiguration* configuration, struct JFabricAddr* a
 
 	ret = TRUE;
 end:
-	// fi_freeinfo(hints);
 	return ret;
 }
 
@@ -267,6 +266,11 @@ j_fabric_fini(struct JFabric* this)
 	res = fi_close(&this->fabric->fid);
 	CHECK("failed to close fabric!");
 	this->fabric = NULL;
+	if(this->hints) 
+	{
+		fi_freeinfo(this->hints);
+		this->hints = NULL;
+	}
 	free(this);
 	return TRUE;
 end:
@@ -396,7 +400,6 @@ j_connection_init_client(struct JConfiguration* configuration, enum JBackendType
 
 	ret = TRUE;
 end:
-	free(jf_addr.addr);
 	return ret;
 }
 
