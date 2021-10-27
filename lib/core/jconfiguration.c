@@ -151,6 +151,7 @@ struct JConfiguration
 	guint64 max_operation_size;
 	guint16 port;
 
+	guint64 max_message_injection_size;
 	guint32 max_connections;
 	guint64 stripe_size;
 
@@ -292,6 +293,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* libfabric_provider;
 	guint64 max_operation_size;
 	guint32 port;
+	guint64 max_message_injection_size;
 	guint32 max_connections;
 	guint64 stripe_size;
 
@@ -299,6 +301,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
 	port = g_key_file_get_integer(key_file, "core", "port", NULL);
+	max_message_injection_size = g_key_file_get_uint64(key_file, "core", "max-message-injection-size", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
@@ -367,6 +370,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->db.path = db_path;
 	configuration->max_operation_size = max_operation_size;
 	configuration->port = port;
+	configuration->max_message_injection_size = max_message_injection_size;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
@@ -390,6 +394,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		g_autoptr(JCredentials) credentials = j_credentials_new();
 
 		configuration->port = 4711 + (j_credentials_get_user(credentials) % 1000);
+	}
+	if (configuration->max_message_injection_size == 0)
+	{
+		configuration->max_message_injection_size = configuration->max_operation_size / 1024;
 	}
 
 	if (configuration->max_connections == 0)
@@ -570,6 +578,16 @@ j_configuration_get_max_operation_size(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->max_operation_size;
+}
+
+guint64
+j_configuration_get_message_inject_size(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->max_message_injection_size;
 }
 
 guint32
