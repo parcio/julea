@@ -280,9 +280,9 @@ jobs:
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
-          ./scripts/test.sh
+          ./scripts/test.sh || journalctl GLIB_DOMAIN=JULEA
           sleep 10
-          ./scripts/test.sh
+          ./scripts/test.sh || journalctl GLIB_DOMAIN=JULEA
           ./scripts/setup.sh stop
       - name: HDF5 Tests
         if: matrix.julea.db != 'memory'
