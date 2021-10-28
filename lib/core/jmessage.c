@@ -722,9 +722,9 @@ j_message_send(JMessage* message, struct JConnection* connection)
 				total_data_length += sizeof(struct JConnectionMemoryID) + message_data->header_size + message_data->length;
 			}
 			j_list_iterator_free(iterator);
-			fits = 
-					total_data_length
-				< 	j_configuration_get_message_inject_size(j_connection_get_configuration(connection));
+			fits =
+				total_data_length
+				< j_configuration_get_message_inject_size(j_connection_get_configuration(connection));
 		}
 		iterator = j_list_iterator_new(message->send_list);
 

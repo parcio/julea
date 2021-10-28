@@ -266,7 +266,7 @@ j_fabric_fini(struct JFabric* this)
 	res = fi_close(&this->fabric->fid);
 	CHECK("failed to close fabric!");
 	this->fabric = NULL;
-	if(this->hints) 
+	if (this->hints)
 	{
 		fi_freeinfo(this->hints);
 		this->hints = NULL;
