@@ -20,10 +20,10 @@
  * \file
  **/
 
+/// \todo add documentation
+
 #ifndef H5VL_JULEA_DB_H
 #define H5VL_JULEA_DB_H
-
-#define H5Sencode_vers 1
 
 #include <hdf5.h>
 #include <H5PLextern.h>
@@ -101,19 +101,115 @@ struct JHDF5Object_t
 	};
 };
 
-/*internal helper functions*/
+/* db schemas */
 
-static void
-H5VL_julea_db_error_handler(GError* error);
-static char*
-H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len);
+extern JDBSchema* julea_db_schema_attr;
+extern JDBSchema* julea_db_schema_dataset;
+extern JDBSchema* julea_db_schema_datatype_header;
+extern JDBSchema* julea_db_schema_file;
+extern JDBSchema* julea_db_schema_group;
+extern JDBSchema* julea_db_schema_link;
+extern JDBSchema* julea_db_schema_space_header;
+extern JDBSchema* julea_db_schema_space;
 
-static JHDF5Object_t*
-H5VL_julea_db_object_new(JHDF5ObjectType type);
-static JHDF5Object_t*
-H5VL_julea_db_object_ref(JHDF5Object_t* object);
-static void
-H5VL_julea_db_object_unref(JHDF5Object_t* object);
+/* init and term functions */
+
+herr_t H5VL_julea_db_attr_init(hid_t vipl_id);
+herr_t H5VL_julea_db_attr_term(void);
+herr_t H5VL_julea_db_dataset_init(hid_t vipl_id);
+herr_t H5VL_julea_db_dataset_term(void);
+herr_t H5VL_julea_db_datatype_init(hid_t vipl_id);
+herr_t H5VL_julea_db_datatype_term(void);
+herr_t H5VL_julea_db_file_init(hid_t vipl_id);
+herr_t H5VL_julea_db_file_term(void);
+herr_t H5VL_julea_db_group_init(hid_t vipl_id);
+herr_t H5VL_julea_db_group_term(void);
+herr_t H5VL_julea_db_link_init(hid_t vipl_id);
+herr_t H5VL_julea_db_link_term(void);
+herr_t H5VL_julea_db_space_init(hid_t vipl_id);
+herr_t H5VL_julea_db_space_term(void);
+
+/* VOL callbacks */
+
+// attribute
+void* H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void** req);
+void* H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t aapl_id, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_attr_read(void* obj, hid_t mem_type_id, void* buf, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_attr_write(void* obj, hid_t mem_type_id, const void* buf, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_attr_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_attr_optional(void* obj, H5VL_attr_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_attr_close(void* obj, hid_t dxpl_id, void** req);
+
+// dataset
+void* H5VL_julea_db_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id, void** req);
+void* H5VL_julea_db_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t dapl_id, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_dataset_write(void* obj, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t xfer_plist_id, const void* buf, void** req);
+herr_t H5VL_julea_db_dataset_read(void* obj, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t xfer_plist_id, void* buf, void** req);
+herr_t H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_dataset_optional(void* obj, H5VL_dataset_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_dataset_close(void* obj, hid_t dxpl_id, void** req);
+
+// datatype
+void* H5VL_julea_db_datatype_commit(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t type_id, hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id, void** req);
+void* H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t tapl_id, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_datatype_optional(void* obj, H5VL_datatype_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req);
+
+// file
+void* H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id, void** req);
+void* H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_file_close(void* obj, hid_t dxpl_id, void** req);
+
+// group
+void* H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req);
+void* H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gapl_id, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req);
+
+// link
+herr_t H5VL_julea_db_link_create(H5VL_link_create_type_t create_type, void* obj, const H5VL_loc_params_t* loc_params, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void** req, va_list argumenmts);
+herr_t H5VL_julea_db_link_copy(void* src_obj, const H5VL_loc_params_t* loc_params1, void* dst_obj, const H5VL_loc_params_t* loc_params2, hid_t lcpl, hid_t lapl, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_link_move(void* src_obj, const H5VL_loc_params_t* loc_params1, void* dst_obj, const H5VL_loc_params_t* loc_params2, hid_t lcpl, hid_t lapl, hid_t dxpl_id, void** req);
+herr_t H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_get_t get_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
+herr_t H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
+
+/* internal helper functions */
+
+void H5VL_julea_db_error_handler(GError* error);
+char* H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len);
+
+JHDF5Object_t* H5VL_julea_db_object_new(JHDF5ObjectType type);
+JHDF5Object_t* H5VL_julea_db_object_ref(JHDF5Object_t* object);
+void H5VL_julea_db_object_unref(JHDF5Object_t* object);
+
+// truncate
+herr_t H5VL_julea_db_link_truncate_file(void* obj);
+herr_t H5VL_julea_db_attr_truncate_file(void* obj);
+herr_t H5VL_julea_db_dataset_truncate_file(void* obj);
+herr_t H5VL_julea_db_group_truncate_file(void* obj);
+
+// datatype helper
+const void* H5VL_julea_db_datatype_convert_type(hid_t type_id_from, hid_t type_id_to, const char* from_buf, char* tmp_buf, guint count);
+JHDF5Object_t* H5VL_julea_db_datatype_decode(void* backend_id, guint64 backend_id_len);
+JHDF5Object_t* H5VL_julea_db_datatype_encode(hid_t* type_id);
+
+// space helper
+JHDF5Object_t* H5VL_julea_db_space_decode(void* backend_id, guint64 backend_id_len);
+JHDF5Object_t* H5VL_julea_db_space_encode(hid_t* type_id);
+
+// link helper
+gboolean H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name);
+gboolean H5VL_julea_db_link_create_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name);
 
 #define j_goto_error() \
 	do \

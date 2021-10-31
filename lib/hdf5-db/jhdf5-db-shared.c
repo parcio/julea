@@ -42,7 +42,7 @@
 
 #include "jhdf5-db.h"
 
-static char*
+char*
 H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -68,7 +68,7 @@ H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_len)
 	return str;
 }
 
-static void
+void
 H5VL_julea_db_error_handler(GError* error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -79,7 +79,7 @@ H5VL_julea_db_error_handler(GError* error)
 	}
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_object_ref(JHDF5Object_t* object)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -91,7 +91,7 @@ H5VL_julea_db_object_ref(JHDF5Object_t* object)
 	return object;
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_object_new(JHDF5ObjectType type)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -109,7 +109,7 @@ H5VL_julea_db_object_new(JHDF5ObjectType type)
 	return object;
 }
 
-static void
+void
 H5VL_julea_db_object_unref(JHDF5Object_t* object)
 {
 	J_TRACE_FUNCTION(NULL);

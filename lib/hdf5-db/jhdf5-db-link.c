@@ -42,9 +42,9 @@
 
 #include "jhdf5-db.h"
 
-static JDBSchema* julea_db_schema_link = NULL;
+JDBSchema* julea_db_schema_link = NULL;
 
-static herr_t
+herr_t
 H5VL_julea_db_link_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -58,7 +58,7 @@ H5VL_julea_db_link_term(void)
 	return 0;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -173,7 +173,7 @@ H5VL_julea_db_link_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_link, batch, &error))
 				{
 					j_goto_error();
@@ -205,7 +205,7 @@ _error:
 	return 1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_truncate_file(void* obj)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -260,7 +260,7 @@ _error:
 	return 1;
 }
 
-static gboolean
+gboolean
 H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -364,7 +364,7 @@ _error:
 	return FALSE;
 }
 
-static gboolean
+gboolean
 H5VL_julea_db_link_create_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -511,7 +511,7 @@ _error:
 	return FALSE;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_create(H5VL_link_create_type_t create_type, void* obj, const H5VL_loc_params_t* loc_params, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void** req, va_list argumenmts)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -525,11 +525,11 @@ H5VL_julea_db_link_create(H5VL_link_create_type_t create_type, void* obj, const 
 	(void)req;
 	(void)argumenmts;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_copy(void* src_obj, const H5VL_loc_params_t* loc_params1, void* dst_obj, const H5VL_loc_params_t* loc_params2, hid_t lcpl, hid_t lapl, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -543,11 +543,11 @@ H5VL_julea_db_link_copy(void* src_obj, const H5VL_loc_params_t* loc_params1, voi
 	(void)dxpl_id;
 	(void)req;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_move(void* src_obj, const H5VL_loc_params_t* loc_params1, void* dst_obj, const H5VL_loc_params_t* loc_params2, hid_t lcpl, hid_t lapl, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -561,11 +561,11 @@ H5VL_julea_db_link_move(void* src_obj, const H5VL_loc_params_t* loc_params1, voi
 	(void)dxpl_id;
 	(void)req;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_get_t get_type,
 		       hid_t dxpl_id, void** req, va_list arguments)
 {
@@ -578,10 +578,11 @@ H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }
-static herr_t
+
+herr_t
 H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -593,11 +594,11 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -608,6 +609,6 @@ H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", __func__);
+	return -1;
 }

@@ -180,7 +180,7 @@ create_dataset(hid_t file, gchar const* name, guint dimensions, hid_t* dataspace
 	dataspace = H5Screate_simple(dimensions, dims, NULL);
 	dataset = H5Dcreate2(file, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	// FIXME julea-db: if we try to write to a dataset with a closed dataspace, errors occur
+	/// \todo julea-db: if we try to write to a dataset with a closed dataspace, errors occur
 	if (dataspace_out != NULL)
 	{
 		*dataspace_out = dataspace;

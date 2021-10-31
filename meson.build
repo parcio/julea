@@ -447,6 +447,15 @@ if hdf_dep.found()
 		]),
 		'hdf5-db': files([
 			'lib/hdf5-db/jhdf5-db.c',
+			'lib/hdf5-db/jhdf5-db-attr.c',
+			'lib/hdf5-db/jhdf5-db-dataset.c',
+			'lib/hdf5-db/jhdf5-db-datatype.c',
+			'lib/hdf5-db/jhdf5-db-file.c',
+			'lib/hdf5-db/jhdf5-db-group.c',
+			'lib/hdf5-db/jhdf5-db-link.c',
+			'lib/hdf5-db/jhdf5-db-shared.c',
+			'lib/hdf5-db/jhdf5-db-space.c',
+
 		])
 	}
 
