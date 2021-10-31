@@ -353,7 +353,7 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 		j_goto_error();
 	}
 
-	//TODO g_assert (iteartor->'child_type' == child->type)
+	/// \todo g_assert (iteartor->'child_type' == child->type)
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
 	return TRUE;
@@ -586,21 +586,108 @@ static herr_t
 H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t idx_type, 
 					H5_iter_order_t order, hsize_t* idx_p, H5L_iterate_t op, void* op_data)
 {
-	/// \todo handle index and iter order
+	g_autoptr(JDBSelector) link_selector = NULL;
+	g_autoptr(JDBIterator) link_iterator = NULL;
+	gchar* child_name = NULL;
+	JHDF5Object_t* child_obj = NULL;
+	JDBType child_name_type;
+	guint64 child_name_length;
+	JHDF5ObjectType child_type;
+	JDBType child_type_type;
+	guint64 type_length;
+	hid_t group;
 
-	// check wether object is file or group
+	/// \todo handle index, iter order and interruption
 
-	// query backend id of object
+	// register object to obtain hid_t for user op
+	if (object->type == J_HDF5_OBJECT_TYPE_GROUP)
+	{
+		if ((group = H5Iregister(H5I_GROUP, object)) == H5I_INVALID_HID)
+		{
+			j_goto_error();
+		}
+	}
+	else if (object->type == J_HDF5_OBJECT_TYPE_FILE)
+	{
+		if ((group = H5Iregister(H5I_FILE, object)) == H5I_INVALID_HID)
+		{
+			j_goto_error();
+		}
+	}
+	else
+	{
+		j_goto_error();
+	}
 
 	// build selector (parent == backend_id && parent_type == object/file)
+	if ((link_selector = j_db_selector_new(julea_db_schema_link, J_DB_SELECTOR_MODE_AND, NULL)) ==NULL)
+	{
+		j_goto_error();
+	}
 
-	// iterate over selector -> for every entry get child backend id and child type
+	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, NULL))
+	{
+		j_goto_error();
+	}
+	
+	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &object->type, sizeof(JHDF5ObjectType), NULL))
+	{
+		j_goto_error();
+	}
 
-	// access child and call op on it
+	if ((link_iterator = j_db_iterator_new(julea_db_schema_link, link_selector, NULL)) == NULL)
+	{
+		j_goto_error();
+	}
 
-	// is child a group and recursive true? then call this function on it
+	while (j_db_iterator_next(link_iterator, NULL))
+	{
+		if (!j_db_iterator_get_field(link_iterator, "name", &child_name_type, (gpointer) &child_name, &child_name_length, NULL))
+		{
+			j_goto_error();
+		}
 
-	// done
+		if (!j_db_iterator_get_field(link_iterator, "child_type", &child_type_type, (gpointer) &child_type, &type_length, NULL))
+		{
+			g_free(child_name);
+			j_goto_error();
+		}
+
+		/// \todo add link info
+		// user defined operation
+		if (op(group, child_name, NULL, op_data) < 0)
+		{
+			g_free(child_name);
+			j_goto_error();
+		}
+
+		if (child_type == J_HDF5_OBJECT_TYPE_GROUP && recursive)
+		{
+			// get group object associated with child
+			if ((child_obj = H5VL_julea_db_group_open(object, NULL, child_name, 0, 0, NULL)) == NULL)
+			{
+				g_free(child_name);
+				j_goto_error();
+			}
+
+			// iterate through child group
+			if (H5VL_julea_db_link_iterate(child_obj, recursive, idx_type, order, idx_p, op, op_data) < 0)
+			{
+				g_free(child_name);
+				H5VL_julea_db_object_unref(child_obj);
+				j_goto_error();
+			}
+
+			H5VL_julea_db_object_unref(child_obj);
+		}
+
+		g_free(child_name);
+	}
+	
+	_error:
+
+	g_warning("%s: Failed to iterate through object!", G_STRLOC);
+	return -1;
 }
 
 herr_t
@@ -610,9 +697,6 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	// possible are delete, exists and iterate
 
 	JHDF5Object_t* object = (JHDF5Object_t*)obj;
-
-	// argument for H5VL_LINK_EXISTS
-	htri_t* exists = NULL;
 
 	// arguments for H5VL_LINK_ITER
 	hbool_t recursive; // recursivly follow links to subgroups
@@ -640,7 +724,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 
 		case H5VL_LINK_ITER:
 			// get all arguments
-			recursive = va_arg(arguments, hbool_t);
+			recursive = va_arg(arguments, int);
 			idx_type = va_arg(arguments, H5_index_t);
 			order = va_arg(arguments, H5_iter_order_t);
 			idx_p = va_arg(arguments, hsize_t*);
