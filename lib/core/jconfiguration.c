@@ -333,7 +333,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || db_backend == NULL
 	    || db_component == NULL
 	    || db_path == NULL
-		|| port >= 0xFFFF)
+	    || port >= 0xFFFF)
 	{
 		g_free(db_backend);
 		g_free(db_component);

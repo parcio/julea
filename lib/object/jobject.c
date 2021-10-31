@@ -730,7 +730,8 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 
 				j_list_iterator_free(it);
 
-				if(total_data_length != total_received_length) { 
+				if (total_data_length != total_received_length)
+				{
 					ret = FALSE;
 				}
 			}

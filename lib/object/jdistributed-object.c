@@ -1132,7 +1132,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
 
-		guint64 total_written= 0;
+		guint64 total_written = 0;
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -1148,9 +1148,9 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 
 			g_slice_free(JDistributedObjectBackgroundData, data);
 		}
-		if(safety == J_SEMANTICS_SAFETY_STORAGE || safety == J_SEMANTICS_SAFETY_NETWORK)
+		if (safety == J_SEMANTICS_SAFETY_STORAGE || safety == J_SEMANTICS_SAFETY_NETWORK)
 		{
-			if(total_written != total_data_length)
+			if (total_written != total_data_length)
 			{
 				ret = FALSE;
 			}
