@@ -112,7 +112,6 @@ extern JDBSchema* julea_db_schema_link;
 extern JDBSchema* julea_db_schema_space_header;
 extern JDBSchema* julea_db_schema_space;
 
-
 /* init and term functions */
 
 herr_t H5VL_julea_db_attr_init(hid_t vipl_id);
