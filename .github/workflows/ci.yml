@@ -198,7 +198,7 @@ jobs:
           # libfaibrc don't work on Ubuntu 20.04
           - os:
               dist: ubuntu-20.04
-            depednencies: system
+            dependencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v2
