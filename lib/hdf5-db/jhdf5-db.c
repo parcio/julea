@@ -45,33 +45,6 @@
 
 #include "jhdf5-db.h"
 
-static herr_t H5VL_julea_db_attr_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_attr_term(void);
-static herr_t H5VL_julea_db_dataset_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_dataset_term(void);
-static herr_t H5VL_julea_db_datatype_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_datatype_term(void);
-static herr_t H5VL_julea_db_file_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_file_term(void);
-static herr_t H5VL_julea_db_group_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_group_term(void);
-static herr_t H5VL_julea_db_space_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_space_term(void);
-static herr_t H5VL_julea_db_link_init(hid_t vipl_id);
-static herr_t H5VL_julea_db_link_term(void);
-
-#include "jhdf5-db.h"
-
-/// \todo order is important
-#include "jhdf5-db-shared.c"
-#include "jhdf5-db-link.c"
-#include "jhdf5-db-group.c"
-#include "jhdf5-db-datatype.c"
-#include "jhdf5-db-space.c"
-#include "jhdf5-db-attr.c"
-#include "jhdf5-db-dataset.c"
-#include "jhdf5-db-file.c"
-
 #define _GNU_SOURCE
 
 #define JULEA_DB 530

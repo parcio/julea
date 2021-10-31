@@ -42,10 +42,10 @@
 
 #include "jhdf5-db.h"
 
-static JDBSchema* julea_db_schema_space_header = NULL;
-static JDBSchema* julea_db_schema_space = NULL;
+JDBSchema* julea_db_schema_space_header = NULL;
+JDBSchema* julea_db_schema_space = NULL;
 
-static herr_t
+herr_t
 H5VL_julea_db_space_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -65,7 +65,7 @@ H5VL_julea_db_space_term(void)
 	return 0;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_space_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -139,7 +139,7 @@ H5VL_julea_db_space_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_space_header, batch, &error))
 				{
 					j_goto_error();
@@ -222,7 +222,7 @@ H5VL_julea_db_space_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_space, batch, &error))
 				{
 					j_goto_error();
@@ -255,7 +255,7 @@ _error:
 	return 1;
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_space_decode(void* backend_id, guint64 backend_id_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -323,7 +323,7 @@ _error:
 	return NULL;
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_space_encode(hid_t* type_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -377,7 +377,7 @@ H5VL_julea_db_space_encode(hid_t* type_id)
 
 	{
 		J_TRACE("H5SencodeNULL", 0);
-		H5Sencode(*type_id, NULL, &size);
+		H5Sencode1(*type_id, NULL, &size);
 	}
 
 	if (!(object->space.data = g_new(char, size)))
@@ -387,7 +387,7 @@ H5VL_julea_db_space_encode(hid_t* type_id)
 
 	{
 		J_TRACE("H5Sencode", 0);
-		H5Sencode(*type_id, object->space.data, &size);
+		H5Sencode1(*type_id, object->space.data, &size);
 	}
 
 	object->space.hdf5_id = *type_id;
