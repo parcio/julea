@@ -116,9 +116,6 @@ guint64 j_configuration_get_message_inject_size(JConfiguration*);
 guint32 j_configuration_get_max_connections(JConfiguration*);
 guint64 j_configuration_get_stripe_size(JConfiguration*);
 
-/// network port to communicate
-guint16 j_configuration_get_port(JConfiguration*);
-
 gint64 j_configuration_get_libfabric_version(JConfiguration*);
 struct fi_info* j_configuration_get_libfabric_hints(JConfiguration*);
 

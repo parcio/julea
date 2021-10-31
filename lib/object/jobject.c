@@ -607,6 +607,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	g_autoptr(JMessage) message = NULL;
 	JObject* object;
 	gpointer object_handle;
+	guint64 total_data_length = 0;
 
 	/// \todo
 	//JLock* lock = NULL;
@@ -677,6 +678,10 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 			{
 				j_helper_atomic_add(bytes_written, length);
 			}
+			else
+			{
+				total_data_length += length;
+			}
 		}
 		else
 		{
@@ -710,6 +715,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 
 			if (j_message_get_count(reply) > 0)
 			{
+				guint64 total_received_length = 0;
 				it = j_list_iterator_new(operations);
 
 				while (j_list_iterator_next(it))
@@ -718,10 +724,15 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 					guint64* bytes_written = operation->write.bytes_written;
 
 					nbytes = j_message_get_8(reply);
+					total_received_length += nbytes;
 					j_helper_atomic_add(bytes_written, nbytes);
 				}
 
 				j_list_iterator_free(it);
+
+				if(total_data_length != total_received_length) { 
+					ret = FALSE;
+				}
 			}
 			else
 			{

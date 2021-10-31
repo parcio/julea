@@ -72,6 +72,7 @@ struct JDistributedObjectBackgroundData
 		struct
 		{
 			JList* bytes_written;
+			guint64 total_bytes_written;
 		} write;
 	};
 };
@@ -440,6 +441,7 @@ j_distributed_object_write_background_operation(gpointer data)
 				guint64* bytes_written = j_list_iterator_get(it);
 
 				nbytes = j_message_get_8(reply);
+				background_data->write.total_bytes_written += nbytes;
 				j_helper_atomic_add(bytes_written, nbytes);
 			}
 		}
@@ -983,12 +985,16 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 	gsize name_len = 0;
 	gsize namespace_len = 0;
 	guint32 server_count = 0;
+	guint64 total_data_length = 0;
+	JSemanticsSafety safety;
 
 	/// \todo
 	//JLock* lock = NULL;
 
 	g_return_val_if_fail(operations != NULL, FALSE);
 	g_return_val_if_fail(semantics != NULL, FALSE);
+
+	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
 
 	{
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
@@ -1075,9 +1081,13 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 				new_data += new_length;
 
 				// Fake bytes_written here instead of doing another loop further down
-				if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+				if (safety == J_SEMANTICS_SAFETY_NONE)
 				{
 					j_helper_atomic_add(bytes_written, new_length);
+				}
+				else
+				{
+					total_data_length += new_length;
 				}
 			}
 		}
@@ -1114,6 +1124,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			data->operations = NULL;
 			data->semantics = semantics;
 			data->write.bytes_written = bw_lists[i];
+			data->write.total_bytes_written = 0;
 			data->ret = TRUE;
 
 			background_data[i] = data;
@@ -1121,6 +1132,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
 
+		guint64 total_written= 0;
 		for (guint i = 0; i < server_count; i++)
 		{
 			JDistributedObjectBackgroundData* data;
@@ -1132,8 +1144,16 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 
 			data = background_data[i];
 			ret = data->ret && ret;
+			total_written += data->write.total_bytes_written;
 
 			g_slice_free(JDistributedObjectBackgroundData, data);
+		}
+		if(safety == J_SEMANTICS_SAFETY_STORAGE || safety == J_SEMANTICS_SAFETY_NETWORK)
+		{
+			if(total_written != total_data_length)
+			{
+				ret = FALSE;
+			}
 		}
 	}
 	else

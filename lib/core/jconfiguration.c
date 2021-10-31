@@ -374,7 +374,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
-	configuration->libfabric.version = FI_VERSION(1, 11);
+	configuration->libfabric.version = FI_VERSION(1, 6);
 	configuration->libfabric.hints = fi_allocinfo();
 	configuration->libfabric.hints->caps =
 		FI_MSG | FI_SEND | FI_RECV | FI_READ | FI_RMA | FI_REMOTE_READ;

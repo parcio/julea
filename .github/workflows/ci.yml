@@ -193,8 +193,12 @@ jobs:
         exclude:
           # GLib is too old for TAP on Ubuntu 18.04
           - os:
-              dist: ubuntu-18.04
+            dist: ubuntu-18.04
             dependencies: system
+          # libfaibrc 1.11 is not available on Ubuntu 20.04
+          # - os:
+          #   dist: ubuntu-20.04
+          #   depednencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v2
