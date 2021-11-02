@@ -54,7 +54,6 @@ $ julea-config --user \
   --object-backend=posix --object-component=server --object-path="/tmp/julea-$(id -u)/posix" \
   --kv-backend=lmdb --kv-component=server --kv-path="/tmp/julea-$(id -u)/lmdb" \
   --db-backend=sqlite --db-component=server --db-path="/tmp/julea-$(id -u)/sqlite"
-  --user-id="$(id --user)"
 ```
 
 You can check whether JULEA works by executing the integrated test suite.
