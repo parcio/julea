@@ -595,21 +595,22 @@ H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t 
 	JHDF5ObjectType child_type;
 	JDBType child_type_type;
 	guint64 type_length;
-	hid_t group;
+	hid_t group = H5I_INVALID_HID;
+	herr_t ret = -1;
 
 	/// \todo handle index, iter order and interruption
 
 	// register object to obtain hid_t for user op
 	if (object->type == J_HDF5_OBJECT_TYPE_GROUP)
 	{
-		if ((group = H5Iregister(H5I_GROUP, object)) == H5I_INVALID_HID)
+		if ((group = H5VLwrap_register(object, H5I_GROUP)) == H5I_INVALID_HID)
 		{
 			j_goto_error();
 		}
 	}
 	else if (object->type == J_HDF5_OBJECT_TYPE_FILE)
 	{
-		if ((group = H5Iregister(H5I_FILE, object)) == H5I_INVALID_HID)
+		if ((group = H5VLwrap_register(object, H5I_FILE)) == H5I_INVALID_HID)
 		{
 			j_goto_error();
 		}
@@ -684,10 +685,10 @@ H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t 
 		g_free(child_name);
 	}
 	
-	_error:
+	ret = 0;
 
-	g_warning("%s: Failed to iterate through object!", G_STRLOC);
-	return -1;
+	_error:
+	return ret;
 }
 
 herr_t
@@ -696,7 +697,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	J_TRACE_FUNCTION(NULL);
 	// possible are delete, exists and iterate
 
-	JHDF5Object_t* object = (JHDF5Object_t*)obj;
+	JHDF5Object_t* object = H5VL_julea_db_object_ref((JHDF5Object_t*)obj);
 
 	// arguments for H5VL_LINK_ITER
 	hbool_t recursive; // recursivly follow links to subgroups
@@ -705,6 +706,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	hsize_t* idx_p; // where to start and return where stopped
 	H5L_iterate_t op; // operation on visited objects
 	void* op_data; // arg for operation
+	herr_t ret = -1;
 	
 	(void)loc_params;
 	(void)dxpl_id;
@@ -714,12 +716,12 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	{
 		case H5VL_LINK_DELETE:
 			/// \todo implement link delete
-			return -1;
+			ret = -1;
 			break;
 
 		case H5VL_LINK_EXISTS:
 			/// \todo implement link exists
-			return -1;
+			ret = -1;
 			break;
 
 		case H5VL_LINK_ITER:
@@ -733,18 +735,20 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 
 			if(object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)
 			{
-				return H5VL_julea_db_link_iterate(object, recursive, idx_type, order, idx_p, op, op_data);
+				ret = H5VL_julea_db_link_iterate(object, recursive, idx_type, order, idx_p, op, op_data);
 			}
 			else
 			{
-				return -1;
+				ret = -1;
 			}
 			break;
 
 		default:
-			return -1;
+			ret = -1;
 	}
-	
+
+	H5VL_julea_db_object_unref(object);
+	return ret;
 }
 
 herr_t
