@@ -1144,7 +1144,7 @@ H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type,
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_DATASET, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!\n", __func__);
 	return -1;
 }
 
@@ -1162,7 +1162,7 @@ H5VL_julea_db_dataset_optional(void* obj, H5VL_dataset_optional_t opt_type, hid_
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_DATASET, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!\n", __func__);
 	return -1;
 }
 
