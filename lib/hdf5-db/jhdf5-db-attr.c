@@ -661,17 +661,40 @@ H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
+	herr_t ret = -1;
 
 	(void)loc_params;
-	(void)specific_type;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
-	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
+	switch (specific_type)
+	{
+		case H5VL_ATTR_ITER:
+		{
+			H5_index_t idx_type;
+			H5_iter_order_t order;
+			hsize_t* idx_p;
+			JHDF5Iterate_Func_t op;
+			void* op_data;
 
-	g_warning("%s called but not implemented!", G_STRFUNC);
-	return -1;
+			idx_type = va_arg(arguments, H5_index_t);
+			order = va_arg(arguments, H5_iter_order_t);
+			idx_p = va_arg(arguments, hsize_t*);
+			op.attr_op = va_arg(arguments, H5A_operator_t);
+			op_data = va_arg(arguments, void*);
+
+			ret = H5VL_julea_db_link_iterate_helper(object, false, true, idx_type, order, idx_p, op, op_data);
+		}
+		break;
+
+		case H5VL_ATTR_DELETE:
+		case H5VL_ATTR_EXISTS:
+		case H5VL_ATTR_RENAME:
+		default:
+			g_warning("%s called but not implemented!", G_STRFUNC);
+	}
+
+	return ret;
 }
 
 herr_t
