@@ -200,6 +200,8 @@ JHDF5Object_t* H5VL_julea_db_space_encode(hid_t* type_id);
 gboolean H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name);
 gboolean H5VL_julea_db_link_create_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const char* name);
 herr_t H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_params_t* loc_params, H5L_info2_t* info_out);
+herr_t H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, H5_index_t idx_type, H5_iter_order_t order, hsize_t* idx_p, H5L_iterate_t op, void* op_data);
+herr_t H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_t* exists);
 
 // group helper
 JHDF5Object_t* H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file);

@@ -614,8 +614,8 @@ H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link
 	return ret;
 }
 
-static herr_t
-H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t idx_type,
+herr_t
+H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, H5_index_t idx_type,
 			   H5_iter_order_t order, hsize_t* idx_p, H5L_iterate_t op, void* op_data)
 {
 	g_autoptr(JDBSelector) link_selector = NULL;
@@ -708,7 +708,7 @@ H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t 
 			}
 
 			// iterate through child group
-			if (H5VL_julea_db_link_iterate(child_obj, recursive, idx_type, order, idx_p, op, op_data) < 0)
+			if (H5VL_julea_db_link_iterate_helper(child_obj, recursive, idx_type, order, idx_p, op, op_data) < 0)
 			{
 				g_free(child_name);
 				H5VL_julea_db_object_unref(child_obj);
@@ -723,8 +723,51 @@ H5VL_julea_db_link_iterate(JHDF5Object_t* object, hbool_t recursive, H5_index_t 
 
 	ret = 0;
 
-_error:
+	_error:
 	H5Idec_ref(group);
+	return ret;
+}
+
+herr_t
+H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_t* exists)
+{
+	g_autoptr(JDBSelector) link_selector = NULL;
+	g_autoptr(JDBIterator) link_iterator = NULL;
+	g_autoptr(GError) err = NULL;
+	herr_t ret = -1;
+
+	if ((link_selector = j_db_selector_new(julea_db_schema_link, J_DB_SELECTOR_MODE_AND, NULL)) == NULL)
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, NULL))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_selector_add_field(link_selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, strlen(name), NULL))
+	{
+		j_goto_error();
+	}
+
+	if ((link_iterator = j_db_iterator_new(julea_db_schema_link, link_selector, NULL)) == NULL)
+	{
+		j_goto_error();
+	}
+
+	*exists = j_db_iterator_next(link_iterator, &err);
+	
+	if(err != NULL)
+	{
+		j_goto_error();
+	}
+	else
+	{
+		ret = 0;
+	}
+
+	_error:
 	return ret;
 }
 
@@ -745,7 +788,9 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	void* op_data; // arg for operation
 	herr_t ret = -1;
 
-	(void)loc_params;
+	// argument for H5VL_LINK_EXISTS
+	htri_t* exists;
+
 	(void)dxpl_id;
 	(void)req;
 
@@ -757,8 +802,11 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 			break;
 
 		case H5VL_LINK_EXISTS:
-			/// \todo implement link exists
-			ret = -1;
+			// sanity check
+			g_return_val_if_fail(loc_params->type == H5VL_OBJECT_BY_NAME, -1);
+			exists = va_arg(arguments, htri_t*);
+
+			ret = H5VL_julea_db_link_exists_helper(object, loc_params->loc_data.loc_by_name.name, exists);
 			break;
 
 		case H5VL_LINK_ITER:
@@ -772,7 +820,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 
 			if (object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)
 			{
-				ret = H5VL_julea_db_link_iterate(object, recursive, idx_type, order, idx_p, op, op_data);
+				ret = H5VL_julea_db_link_iterate_helper(object, recursive, idx_type, order, idx_p, op, op_data);
 			}
 			else
 			{
