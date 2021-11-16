@@ -336,7 +336,11 @@ j_trace_function_check(gchar const* name)
 
 		for (i = 0; j_trace_function_patterns[i] != NULL; i++)
 		{
+#if GLIB_CHECK_VERSION(2, 70, 0)
+			if (g_pattern_spec_match_string(j_trace_function_patterns[i], name))
+#else
 			if (g_pattern_match_string(j_trace_function_patterns[i], name))
+#endif
 			{
 				return TRUE;
 			}
