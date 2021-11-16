@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='c0b383b3e1df88ee9fd52a1f7bf2c9babec4118a'
+	spack_commit='bb54e9a4beb87ff9064fb8241aa28524b59846e9'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -79,7 +79,7 @@ spack_load ()
 
 	test -n "${spack_pkg}" || return 1
 
-	spack load --dependencies "${spack_pkg}" || pkg_loaded='NO'
+	spack load "${spack_pkg}" || pkg_loaded='NO'
 
 	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
 }
@@ -109,7 +109,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} leveldb"
 	dependencies="${dependencies} mariadb-c-client"
 	dependencies="${dependencies} mongo-c-driver"
-	dependencies="${dependencies} otf"
+	#dependencies="${dependencies} otf"
 	dependencies="${dependencies} rocksdb"
 
 	if test -n "${CI}"
