@@ -544,7 +544,7 @@ H5VL_julea_db_datatype_commit(void* obj, const H5VL_loc_params_t* loc_params, co
 	(void)dxpl_id;
 	(void)req;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return NULL;
 }
 
@@ -560,7 +560,7 @@ H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, cons
 	(void)dxpl_id;
 	(void)req;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return NULL;
 }
 
@@ -575,7 +575,7 @@ H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_i
 	(void)req;
 	(void)arguments;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -590,7 +590,7 @@ H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_typ
 	(void)req;
 	(void)arguments;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -605,7 +605,7 @@ H5VL_julea_db_datatype_optional(void* obj, H5VL_datatype_optional_t opt_type, hi
 	(void)req;
 	(void)arguments;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -618,6 +618,6 @@ H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req)
 	(void)dxpl_id;
 	(void)req;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }

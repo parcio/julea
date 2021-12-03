@@ -395,7 +395,7 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -413,7 +413,7 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -431,7 +431,7 @@ H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 

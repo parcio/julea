@@ -525,7 +525,7 @@ H5VL_julea_db_link_create(H5VL_link_create_type_t create_type, void* obj, const 
 	(void)req;
 	(void)argumenmts;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -543,7 +543,7 @@ H5VL_julea_db_link_copy(void* src_obj, const H5VL_loc_params_t* loc_params1, voi
 	(void)dxpl_id;
 	(void)req;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -561,7 +561,7 @@ H5VL_julea_db_link_move(void* src_obj, const H5VL_loc_params_t* loc_params1, voi
 	(void)dxpl_id;
 	(void)req;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -608,7 +608,7 @@ H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link
 		case H5VL_LINK_GET_VAL:
 		default:
 			/// \todo implement link get name and get value
-			g_warning("%s called but not implemented!", __func__);
+			g_warning("%s called but not implemented!", G_STRFUNC);
 	}
 
 	return ret;
@@ -799,6 +799,6 @@ H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl
 	(void)req;
 	(void)arguments;
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }

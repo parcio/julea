@@ -427,7 +427,7 @@ H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, voi
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -445,7 +445,7 @@ H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
@@ -463,7 +463,7 @@ H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dx
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_warning("%s called but not implemented!", __func__);
+	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
