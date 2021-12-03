@@ -20,9 +20,6 @@
  * \file
  **/
 
-/// \todo
-#define H5Sencode_vers 1
-
 #include <julea-config.h>
 
 #include <glib.h>
