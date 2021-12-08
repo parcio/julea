@@ -107,6 +107,7 @@ struct JTrace
 };
 
 static JTraceFlags j_trace_flags = J_TRACE_OFF;
+static gboolean j_trace_summary_keep_stack = FALSE;
 
 static gchar* j_trace_name = NULL;
 static gint j_trace_thread_id = 1;
@@ -400,9 +401,22 @@ j_trace_init(gchar const* name)
 		p = g_strsplit(j_trace_function, ",", 0);
 		l = g_strv_length(p);
 
+		for (guint i = 0; i < l; ++i) {
+			if(g_strcmp0(p[i], "KEEP_STACK") == 0) {
+				gchar* buf = p[l-1];
+				p[l-1] = p[i];
+				p[i] = buf;
+
+				j_trace_summary_keep_stack = TRUE;
+
+				l -= 1;
+				i -= 1;
+			}
+		}
+
 		j_trace_function_patterns = g_new(GPatternSpec*, l + 1);
 
-		for (guint i = 0; i < l; i++)
+		for (guint i = 0; i < l; ++i)
 		{
 			j_trace_function_patterns[i] = g_pattern_spec_new(p[i]);
 		}
@@ -506,6 +520,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	JTrace* trace;
 	guint64 timestamp;
 	va_list args;
+	gboolean ignore;
 
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -516,11 +531,10 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 
 	trace_thread = j_trace_thread_get_default();
 
-	if (!j_trace_function_check(name))
-	{
-		/// \todo also blacklist nested functions
-		return NULL;
-	}
+	ignore = !j_trace_function_check(name);
+	if(ignore
+			&& (!j_trace_summary_keep_stack
+				|| !(j_trace_flags & J_TRACE_SUMMARY))) { return NULL; }
 
 	timestamp = g_get_real_time();
 
@@ -528,10 +542,32 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	trace->name = g_strdup(name);
 	trace->enter_time = timestamp;
 
-	va_start(args, format);
+	if (j_trace_flags & J_TRACE_SUMMARY)
+	{
+		JTraceStack current_stack;
+
+		if (trace_thread->stack->len == 0)
+		{
+			current_stack.name = g_strdup(name);
+		}
+		else
+		{
+			JTraceStack* top_stack;
+
+			top_stack = &g_array_index(trace_thread->stack, JTraceStack, trace_thread->stack->len - 1);
+			current_stack.name = g_strdup_printf("%s/%s", top_stack->name, name);
+		}
+
+		current_stack.enter_time = timestamp;
+		g_array_append_val(trace_thread->stack, current_stack);
+		if (ignore) { goto end; }
+	}
+
+
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
+		va_start(args, format);
 		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace_thread, timestamp);
 
@@ -548,6 +584,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		}
 
 		G_UNLOCK(j_trace_echo);
+		va_end(args);
 	}
 
 #ifdef HAVE_OTF
@@ -576,28 +613,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	}
 #endif
 
-	if (j_trace_flags & J_TRACE_SUMMARY)
-	{
-		JTraceStack current_stack;
-
-		if (trace_thread->stack->len == 0)
-		{
-			current_stack.name = g_strdup(name);
-		}
-		else
-		{
-			JTraceStack* top_stack;
-
-			top_stack = &g_array_index(trace_thread->stack, JTraceStack, trace_thread->stack->len - 1);
-			current_stack.name = g_strdup_printf("%s/%s", top_stack->name, name);
-		}
-
-		current_stack.enter_time = timestamp;
-		g_array_append_val(trace_thread->stack, current_stack);
-	}
-
-	va_end(args);
-
+end:
 	trace_thread->function_depth++;
 
 	return trace;
@@ -608,6 +624,7 @@ j_trace_leave(JTrace* trace)
 {
 	JTraceThread* trace_thread;
 	guint64 timestamp;
+	gboolean ignore;
 
 	if (trace == NULL)
 	{
@@ -621,10 +638,10 @@ j_trace_leave(JTrace* trace)
 
 	trace_thread = j_trace_thread_get_default();
 
-	if (!j_trace_function_check(trace->name))
-	{
-		goto end;
-	}
+	ignore = !j_trace_function_check(trace->name);
+	if(ignore
+			&& (!j_trace_summary_keep_stack
+				|| !(j_trace_flags & J_TRACE_SUMMARY))) { goto end; }
 
 	/// \todo
 	if (trace_thread->function_depth == 0)
@@ -634,6 +651,46 @@ j_trace_leave(JTrace* trace)
 
 	trace_thread->function_depth--;
 	timestamp = g_get_real_time();
+
+	if (j_trace_flags & J_TRACE_SUMMARY)
+	{
+		JTraceTime* combined_duration;
+		JTraceStack* top_stack;
+		guint64 duration;
+
+		g_assert(trace_thread->stack->len > 0);
+
+		top_stack = &g_array_index(trace_thread->stack, JTraceStack, trace_thread->stack->len - 1);
+		duration = timestamp - top_stack->enter_time;
+
+		if(!ignore)
+		{
+			G_LOCK(j_trace_summary);
+
+			combined_duration = g_hash_table_lookup(j_trace_summary_table, top_stack->name);
+
+			if (combined_duration == NULL)
+			{
+				combined_duration = g_new(JTraceTime, 1);
+				combined_duration->time = ((gdouble)duration) / ((gdouble)G_USEC_PER_SEC);
+				combined_duration->count = 1;
+
+				g_hash_table_insert(j_trace_summary_table, g_strdup(top_stack->name), combined_duration);
+			}
+			else
+			{
+				combined_duration->time += ((gdouble)duration) / ((gdouble)G_USEC_PER_SEC);
+				combined_duration->count++;
+			}
+
+			G_UNLOCK(j_trace_summary);
+		}
+
+		g_free(top_stack->name);
+		g_array_set_size(trace_thread->stack, trace_thread->stack->len - 1);
+
+		if (ignore) { goto end; }
+	}
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
@@ -666,40 +723,7 @@ j_trace_leave(JTrace* trace)
 	}
 #endif
 
-	if (j_trace_flags & J_TRACE_SUMMARY)
-	{
-		JTraceTime* combined_duration;
-		JTraceStack* top_stack;
-		guint64 duration;
-
-		g_assert(trace_thread->stack->len > 0);
-
-		top_stack = &g_array_index(trace_thread->stack, JTraceStack, trace_thread->stack->len - 1);
-		duration = timestamp - top_stack->enter_time;
-
-		G_LOCK(j_trace_summary);
-
-		combined_duration = g_hash_table_lookup(j_trace_summary_table, top_stack->name);
-
-		if (combined_duration == NULL)
-		{
-			combined_duration = g_new(JTraceTime, 1);
-			combined_duration->time = ((gdouble)duration) / ((gdouble)G_USEC_PER_SEC);
-			combined_duration->count = 1;
-
-			g_hash_table_insert(j_trace_summary_table, g_strdup(top_stack->name), combined_duration);
-		}
-		else
-		{
-			combined_duration->time += ((gdouble)duration) / ((gdouble)G_USEC_PER_SEC);
-			combined_duration->count++;
-		}
-
-		G_UNLOCK(j_trace_summary);
-
-		g_free(top_stack->name);
-		g_array_set_size(trace_thread->stack, trace_thread->stack->len - 1);
-	}
+	
 
 end:
 	g_free(trace->name);
