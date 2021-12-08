@@ -10,7 +10,7 @@ Its goal is to provide a solid foundation for storage research and teaching.
 
 ## Links
 
-* [Quick Start](../README.md#quick-start)
+* [Quick Start](../README.md)
 * [Dependencies](dependencies.md)
 * [Installation and Usage](installation-usage.md)
 * [Configuration](configuration.md)
