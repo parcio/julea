@@ -14,7 +14,7 @@ Its goal is to provide a solid foundation for storage research and teaching.
 For more information, please refer to the [documentation](doc/README.md).
 There is also a separate [API documentation](https://julea-io.github.io/julea/) available.
 
-## Quick Start
+## Quick Start {#QuickStart}
 
 To use JULEA, first clone the Git repository and enter the directory.
 
