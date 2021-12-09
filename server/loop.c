@@ -397,13 +397,13 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 					j_backend_object_close(jd_object_backend, object);
 				}
 
-				if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+				if (reply != NULL)
 				{
 					j_message_add_operation(reply, 0);
 				}
 			}
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (reply != NULL)
 			{
 				j_message_send(reply, connection);
 			}
