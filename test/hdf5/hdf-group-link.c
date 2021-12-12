@@ -219,35 +219,29 @@ static void
 test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
-	hid_t group1, group2, error;
+	hid_t group1, error;
+	gchar name[20];
 	int count = 0;
 
 	(void)udata;
 
 	J_TEST_TRAP_START;
 
-	group1 = H5Gcreate(file, "test_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	g_assert_cmpint(group1, !=, H5I_INVALID_HID);
+	for (int i = 0; i < 100; ++i)
+	{
+		g_snprintf(name, sizeof(name), "test_group%2i", i);
+		group1 = H5Gcreate(file, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		g_assert_cmpint(group1, !=, H5I_INVALID_HID);
 
-	error = H5Glink(file, H5G_LINK_SOFT, "test_group", "test_group2");
-	g_assert_cmpint(error, >=, 0);
-
-	group2 = H5Gcreate(group1, "test_nested", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	g_assert_cmpint(group2, !=, H5I_INVALID_HID);
-
-	error = H5Gclose(group1);
-	g_assert_cmpint(error, >=, 0);
-
-	error = H5Gclose(group2);
-	g_assert_cmpint(error, >=, 0);
+		error = H5Gclose(group1);
+		g_assert_cmpint(error, >=, 0);
+	}
 
 	error = H5Literate(file, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, it_op, &count);
 	g_assert_cmpint(error, >=, 0);
-	g_assert_cmpint(count, ==, 2);
+	g_assert_cmpint(count, ==, 100);
 
 	J_TEST_TRAP_END;
-
-	g_test_incomplete("Fails currently");
 }
 
 #endif
