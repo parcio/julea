@@ -220,7 +220,7 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
 	hid_t group1, error;
-	gchar name[20];
+	gchar* name = NULL;
 	int count = 0;
 
 	(void)udata;
@@ -229,7 +229,7 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 
 	for (int i = 0; i < 100; ++i)
 	{
-		g_snprintf(name, sizeof(name), "test_group%2i", i);
+		name = g_strdup_printf("test_group%2i", i);
 		group1 = H5Gcreate(file, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		g_assert_cmpint(group1, !=, H5I_INVALID_HID);
 
@@ -243,7 +243,7 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	//g_test_incomplete("Fails currently");
 }
 
 #endif
