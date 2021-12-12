@@ -616,12 +616,12 @@ H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link
 
 herr_t
 H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboolean attr, H5_index_t idx_type,
-			   H5_iter_order_t order, hsize_t* idx_p, H5L_iterate_t op, void* op_data)
+				  H5_iter_order_t order, hsize_t* idx_p, JHDF5Iterate_Func_t op, void* op_data)
 {
 	g_autoptr(JDBSelector) link_selector = NULL;
 	g_autoptr(JDBIterator) link_iterator = NULL;
 	JHDF5Object_t* child_obj = NULL;
-	JHDF5Object_t* group_obj = NULL;
+	JHDF5Object_t* curr_parent_obj = NULL;
 	g_autofree JHDF5ObjectType* child_type = NULL;
 	JDBType child_type_type;
 	guint64 type_length;
@@ -629,7 +629,8 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 	JDBType child_name_type;
 	guint64 child_name_length;
 	H5L_info2_t link_info;
-	hid_t group = H5I_INVALID_HID;
+	hid_t curr_parent = H5I_INVALID_HID;
+	H5I_type_t curr_parent_type;
 	herr_t ret = -1;
 
 	/// \todo handle index, iter order and interruption
@@ -637,16 +638,18 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 	if (object->type == J_HDF5_OBJECT_TYPE_FILE)
 	{
 		/// \todo root group needs to be faked here (maybe add it as real group?)
-		group_obj = H5VL_julea_db_group_root_fake_helper(object);
+		curr_parent_type = H5I_GROUP;
+		curr_parent_obj = H5VL_julea_db_group_root_fake_helper(object);
 	}
-	else if (object->type == J_HDF5_OBJECT_TYPE_GROUP)
+	else
 	{
-		// reference again since H5Idec_ref will free group_obj which then will be double freed
-		group_obj = H5VL_julea_db_object_ref(object);
+		curr_parent_type = H5VL_julea_db_type_intern_to_hdf(object->type);
+		// reference again since H5Idec_ref will free curr_parent_obj which then will be double freed
+		curr_parent_obj = H5VL_julea_db_object_ref(object);
 	}
 
 	// register object to obtain hid_t for user op
-	if ((group = H5VLwrap_register(group_obj, H5I_GROUP)) == H5I_INVALID_HID)
+	if ((curr_parent = H5VLwrap_register(curr_parent_obj, curr_parent_type)) == H5I_INVALID_HID)
 	{
 		j_goto_error();
 	}
@@ -693,19 +696,25 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 		}
 
 		// skip other types when iterating attributes and attributes when iterating other types
-		if ((attr && *child_type != J_HDF5_OBJECT_TYPE_ATTR) || (!attr && *child_type == J_HDF5_OBJECT_TYPE_ATTR))
+		if (attr && *child_type == J_HDF5_OBJECT_TYPE_ATTR)
 		{
-			g_free(child_name);
-			continue;
+			/// \todo generate attribute info struct
+			if (op.attr_op(curr_parent, child_name, NULL, op_data) < 0)
+			{
+				g_free(child_name);
+				j_goto_error();
+			}
+		}
+		else if (!attr && *child_type != J_HDF5_OBJECT_TYPE_ATTR)
+		{
+			if (op.iter_op(curr_parent, child_name, &link_info, op_data) < 0)
+			{
+				g_free(child_name);
+				j_goto_error();
+			}
 		}
 
-		// user defined operation
-		if (op(group, child_name, &link_info, op_data) < 0)
-		{
-			g_free(child_name);
-			j_goto_error();
-		}
-
+		// in case of `attr` this is no error since attributes can not be groups
 		if (*child_type == J_HDF5_OBJECT_TYPE_GROUP && recursive)
 		{
 			// get group object associated with child
@@ -731,8 +740,8 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 
 	ret = 0;
 
-	_error:
-	H5Idec_ref(group);
+_error:
+	H5Idec_ref(curr_parent);
 	return ret;
 }
 
@@ -765,8 +774,8 @@ H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_
 	}
 
 	*exists = j_db_iterator_next(link_iterator, &err);
-	
-	if(err != NULL)
+
+	if (err != NULL)
 	{
 		j_goto_error();
 	}
@@ -775,7 +784,7 @@ H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_
 		ret = 0;
 	}
 
-	_error:
+_error:
 	return ret;
 }
 
@@ -792,7 +801,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	H5_index_t idx_type; // index type
 	H5_iter_order_t order; // order to iterate over index
 	hsize_t* idx_p; // where to start and return where stopped
-	H5L_iterate_t op; // operation on visited objects
+	JHDF5Iterate_Func_t op; // operation on visited objects
 	void* op_data; // arg for operation
 	herr_t ret = -1;
 
@@ -823,7 +832,7 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 			idx_type = va_arg(arguments, H5_index_t);
 			order = va_arg(arguments, H5_iter_order_t);
 			idx_p = va_arg(arguments, hsize_t*);
-			op = va_arg(arguments, H5L_iterate2_t);
+			op.iter_op = va_arg(arguments, H5L_iterate2_t);
 			op_data = va_arg(arguments, void*);
 
 			if (object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)

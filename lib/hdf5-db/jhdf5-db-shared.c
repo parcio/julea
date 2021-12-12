@@ -166,3 +166,26 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 		g_free(object);
 	}
 }
+
+H5I_type_t
+H5VL_julea_db_type_intern_to_hdf(JHDF5ObjectType type)
+{
+	switch (type)
+	{
+		case J_HDF5_OBJECT_TYPE_FILE:
+			return H5I_FILE;
+		case J_HDF5_OBJECT_TYPE_DATASET:
+			return H5I_DATASET;
+		case J_HDF5_OBJECT_TYPE_ATTR:
+			return H5I_ATTR;
+		case J_HDF5_OBJECT_TYPE_DATATYPE:
+			return H5I_DATATYPE;
+		case J_HDF5_OBJECT_TYPE_SPACE:
+			return H5I_DATASPACE;
+		case J_HDF5_OBJECT_TYPE_GROUP:
+			return H5I_GROUP;
+		case _J_HDF5_OBJECT_TYPE_COUNT:
+		default:
+			return H5I_BADID;
+	}
+}
