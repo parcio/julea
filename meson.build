@@ -701,6 +701,14 @@ executable('julea-statistics', 'tools/statistics.c',
 	install: true,
 )
 
+if hdf_dep.found()
+	executable('julea-h5migrate', 'tools/h5migrate.c',
+		dependencies: common_deps + [julea_dep] + [hdf_dep],
+		include_directories: julea_incs,
+		install: true,
+	)
+endif
+
 if fuse_dep.found()
 	julea_fuse_srcs = files([
 		'fuse/access.c',
