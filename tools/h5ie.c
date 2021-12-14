@@ -33,13 +33,64 @@ struct JHDF5CopyParam_t
 	hid_t dxpl;
 };
 
-
 // local prototypes
 static herr_t copy_dataset(hid_t set, hid_t dst_loc, const gchar* dst_name, hid_t dxpl_id);
 static herr_t handle_copy(hid_t object, const gchar* name, JHDF5CopyParam_t* copy_data);
 static herr_t iterate_copy(hid_t group, const char* name, const H5L_info2_t* info, void* op_data);
 
-/// \todo add g_auto macros for hid_t
+
+static gchar**
+parse_vol_path(const gchar* path)
+{
+	gchar** split_name = NULL;
+
+	g_return_val_if_fail(path != NULL, NULL);
+	// string should not be empty (s.t. at least one token is produced)
+	g_return_val_if_fail(*path, NULL);
+
+	// assume name to be of the form [<plugin name>://]pathname
+	split_name = g_strsplit(path, "://", 2);
+
+	// if the optional part is empty assume native VOL
+	if (split_name[1] == NULL)
+	{
+		g_strfreev(split_name);
+		
+		split_name = g_malloc(3*sizeof(gchar*));
+		split_name[0] = g_strdup("native");
+		split_name[1] = g_strdup(path);
+		split_name[2] = NULL;
+		return split_name;
+	
+	}
+
+	return split_name;
+}
+
+static hid_t
+create_fapl_for_vol(const gchar* vol)
+{
+	hid_t connector_id, fapl;
+	if ((connector_id = H5VLregister_connector_by_name(vol, H5P_DEFAULT)) == H5I_INVALID_HID)
+	{
+		g_printerr("[ERROR] in %s: Error while openening connector with name \"%s\"!\n", G_STRLOC, vol);
+		return H5I_INVALID_HID;
+	}
+
+	if ((fapl = H5Pcopy(H5P_FILE_ACCESS_DEFAULT)) == H5I_INVALID_HID)
+	{
+		g_printerr("[ERROR] in %s: Error while creating file access property list!\n", G_STRLOC);
+		return H5I_INVALID_HID;
+	};
+
+	if (H5Pset_vol(fapl, connector_id, NULL) < 0)
+	{
+		g_printerr("[ERROR] in %s: Error while setting VOL connector on file access property list.\n", G_STRLOC);
+		return H5I_INVALID_HID;
+	}
+
+	return fapl;
+}
 
 static herr_t
 copy_attribute(hid_t location_id, const char *attr_name, const H5A_info_t *ainfo, void *op_data)
@@ -287,30 +338,47 @@ copy_file(hid_t src_file, hid_t dest_file)
 	return ret;
 }
 
+static void
+usage(void)
+{
+	printf("usage: h5ie [volname://]source [volname://]target\n");
+}
 
 int
 main(int argc, char** argv)
 {
-    hid_t src, dst, fapl_vol;
+    hid_t src, dst, fapl_vol_src, fapl_vol_dst;
     gchar* source = NULL;
     gchar* destination = NULL;
+	gchar** src_components = NULL;
+	gchar** dst_components = NULL;
     herr_t ret = -1;
 
-    /// \todo parse args
-    if(argc > 2)
+    if(argc <= 2)
     {
-        source = argv[1];
-        destination = argv[2];
-        printf("Copying %s to %s!\n", source, destination);
+		usage();
+		return -1;
     }
 
-    /// \todo get vol from path
+    /// \todo add options (e.g. chunked copy or copy only some objects like h5copy)
+	source = argv[1];
+	destination = argv[2];
+	printf("Copying %s to %s!\n", source, destination);
 
-    src = H5Fopen(source, H5F_ACC_RDONLY, H5P_DEFAULT);
+    src_components = parse_vol_path(source);
+    dst_components = parse_vol_path(destination);
 
-    dst = H5Fcreate(destination, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	fapl_vol_src = create_fapl_for_vol(src_components[0]);
+	fapl_vol_dst = create_fapl_for_vol(dst_components[0]);
+
+    src = H5Fopen(src_components[1], H5F_ACC_RDONLY, fapl_vol_src);
+
+    dst = H5Fcreate(dst_components[1], H5F_ACC_TRUNC, H5P_DEFAULT, fapl_vol_dst);
 
     ret = copy_file(src, dst);
+
+	g_strfreev(src_components);
+	g_strfreev(dst_components);
 
 	return ret;
 }
