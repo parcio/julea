@@ -219,21 +219,35 @@ static void
 test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 {
 	hid_t file = *file_fixture;
-	hid_t group1, error;
-	gchar* name = NULL;
+	hid_t group, space, attr, error;
 	int count = 0;
 
 	(void)udata;
 
 	J_TEST_TRAP_START;
 
+	space = H5Screate(H5S_SCALAR);
+
 	for (int i = 0; i < 100; ++i)
 	{
+		g_autofree gchar* name = NULL;
 		name = g_strdup_printf("test_group%2i", i);
-		group1 = H5Gcreate(file, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		g_assert_cmpint(group1, !=, H5I_INVALID_HID);
+		group = H5Gcreate(file, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		g_assert_cmpint(group, !=, H5I_INVALID_HID);
 
-		error = H5Gclose(group1);
+		error = H5Gclose(group);
+		g_assert_cmpint(error, >=, 0);
+	}
+
+	// create some attributes which should be ignored by iteration
+	for (int i = 0; i < 50; ++i)
+	{
+		g_autofree gchar* name = NULL;
+		name = g_strdup_printf("atrr%2i", i);
+		attr = H5Acreate(file, name, H5T_NATIVE_FLOAT, space, H5P_DEFAULT, H5P_DEFAULT);
+		g_assert_cmpint(attr, !=, H5I_INVALID_HID);
+
+		error = H5Aclose(attr);
 		g_assert_cmpint(error, >=, 0);
 	}
 
@@ -241,9 +255,11 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 	g_assert_cmpint(error, >=, 0);
 	g_assert_cmpint(count, ==, 100);
 
+	H5Sclose(space);
+
 	J_TEST_TRAP_END;
 
-	//g_test_incomplete("Fails currently");
+	g_test_incomplete("Fails currently");
 }
 
 #endif
