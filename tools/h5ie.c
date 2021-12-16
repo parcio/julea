@@ -30,10 +30,128 @@ struct JHDF5CopyParam_t
 	hid_t dxpl;
 };
 
-// local prototypes
+/**
+ * Copy a dataset to a new location.
+ * 
+ * \param set The dataset to copy.
+ * \param dst_loc The location identfier of the target group.
+ * \param dst_name The name of the new copy.
+ * \param dxpl_id The dataset transfer property list.
+ * 
+ * \return A negative value on error.
+ */
 static herr_t copy_dataset(hid_t set, hid_t dst_loc, const gchar* dst_name, hid_t dxpl_id);
+
+/**
+ * Handle the copy of an object of unknown type.
+ * 
+ * \param object The object to copy.
+ * \param dst_name The name of the new copy.
+ * \param copy_data Further parameters such as the destination parent 
+ * 					group and the data transfer property list. More
+ * 					parameters (like the block size for copying) might
+ * 					be added later.
+ * 
+ * \return A negative value on error.
+ */
 static herr_t handle_copy(hid_t object, const gchar* name, JHDF5CopyParam_t* copy_data);
+
+/**
+ * Function of type H5L_iterate2_t. Basically a thin wrapper of handle_copy().
+ * 
+ * This function gets called by H5Literate2().
+ * 
+ * \param group The group currently iterated.
+ * \param name The name of the encountered object.
+ * \param info Information of the current link.
+ * \param op_data Should be of type JHDF5CopyParam_t.
+ * 
+ * \return A negative value on error.
+ */
 static herr_t iterate_copy(hid_t group, const char* name, const H5L_info2_t* info, void* op_data);
+
+/**
+ * Cleanup function for hid_t.
+ * 
+ * Wraps H5Idec_ref() which can not handle H5I_INVALID_HID (or other unassigned HDF5 handles).
+ * 
+ * \param obj The object to free.
+ * 
+ */
+static void hid_cleanup(hid_t* obj);
+
+/**
+ * Parse the path of a HDF5 file.
+ * 
+ * The path may be prefixed by the name of the corresponding VOL plugin followed by "://".
+ * Returns a null terminated GStrv with 2 entries. The first one contains the VOL name and the second one the rest of the path.
+ * If no VOL name was given the first entry is set to "native".
+ * 
+ * \param path The Path to a HDF5 file (possibly managed by a VOL plugin).
+ * 
+ * \return A GStrv as described above or NULL in case of invalid input. Should be freed using g_strfreev().
+ */
+static gchar** parse_vol_path(const gchar* path);
+
+/**
+ * Creates a file access property list using the given VOL name.
+ * 
+ * \param vol The name of the VOL plugin.
+ * 
+ * \return The ID of the new file access property list or H5I_INVALID_HID in case of error.
+ */
+static hid_t create_fapl_for_vol(const gchar* vol);
+
+/**
+ * Copy an attribute to a new location. Function of type H5A_operator2_t.
+ * 
+ * Gets called by H5Aiterate().
+ * 
+ * \param location_id The object whose attributes are iterated.
+ * \param attr_name The name of the current attribute.
+ * \param ainfo Information about the current attribute.
+ * \param op_data A pointer to the hid_t of the destination.
+ * 
+ * \return A negative value on error.
+ */
+static herr_t copy_attribute(hid_t location_id, const char* attr_name, const H5A_info_t* ainfo, void* op_data);
+
+/**
+ * Copy all attributes of an object to another object.
+ * 
+ * \param src The source object.
+ * \param dst The destination object.
+ * 
+ * \return A negative value on error.
+ */
+static herr_t copy_attributes(hid_t src, hid_t dst);
+
+/**
+ * Copy a dataset to a new location.
+ * 
+ * \param set The dataset to copy.
+ * \param dst_loc The location identfier of the target group.
+ * \param dst_name The name of the new copy.
+ * \param dxpl_id The dataset transfer property list.
+ * 
+ * \return A negative value on error.
+ */
+static herr_t copy_dataset(hid_t set, hid_t dst_loc, const gchar* dst_name, hid_t dxpl_id);
+
+/**
+ * Copy the files content to a different file.
+ * 
+ * \param src_file The source file.
+ * \param dst_file The destination file.
+ * 
+ * \return A negative value on error.
+ */
+static herr_t copy_file(hid_t src_file, hid_t dest_file);
+
+/**
+ * Print the usage.
+ */
+static void usage(void);
 
 // needed to ignore invalid hid which is not done by H5Idec_ref (also to provide correct signature for macro)
 static void
