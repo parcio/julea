@@ -31,18 +31,6 @@ struct JHDF5CopyParam_t
 };
 
 /**
- * Copy a dataset to a new location.
- * 
- * \param set The dataset to copy.
- * \param dst_loc The location identfier of the target group.
- * \param dst_name The name of the new copy.
- * \param dxpl_id The dataset transfer property list.
- * 
- * \return A negative value on error.
- */
-static herr_t copy_dataset(hid_t set, hid_t dst_loc, const gchar* dst_name, hid_t dxpl_id);
-
-/**
  * Handle the copy of an object of unknown type.
  * 
  * \param object The object to copy.
@@ -204,7 +192,7 @@ create_fapl_for_vol(const gchar* vol)
 
 	if ((connector_id = H5VLregister_connector_by_name(vol, H5P_DEFAULT)) == H5I_INVALID_HID)
 	{
-		g_critical("%s: Error while openening connector with name \"%s\"!\n", G_STRLOC, vol);
+		g_critical("%s: Error while openening connector with name \"%s\"!", G_STRLOC, vol);
 		return H5I_INVALID_HID;
 	}
 
@@ -418,11 +406,6 @@ handle_copy(hid_t object, const gchar* name, JHDF5CopyParam_t* copy_data)
 	return retval;
 }
 
-/**
- * \brief Iteration operation. Encountered objects are recursively copied.
- *
- * \return A negative number on error.
- **/
 static herr_t
 iterate_copy(hid_t group, const char* name, const H5L_info2_t* info, void* op_data)
 {
@@ -473,6 +456,11 @@ main(int argc, char** argv)
 	gchar* destination = NULL;
 	herr_t retval = -1;
 
+	/**
+	 * \todo Needed because otherwise native VOL cannot be used.
+	 */
+	g_setenv("HDF5_VOL_CONNECTOR", "native", true);
+
 	if (argc <= 2)
 	{
 		usage();
@@ -488,46 +476,46 @@ main(int argc, char** argv)
 
 	if ((src_components = parse_vol_path(source)) == NULL)
 	{
-		g_critical("%s: Could not parse VOL connector for source file!\n", G_STRLOC);
+		g_critical("%s: Could not parse VOL connector for source file!", G_STRLOC);
 		return retval;
 	}
 
 	if ((dst_components = parse_vol_path(destination)) == NULL)
 	{
-		g_critical("%s: Could not parse VOL connector for destination file!\n", G_STRLOC);
+		g_critical("%s: Could not parse VOL connector for destination file!", G_STRLOC);
 		return retval;
 	}
 
 	if ((fapl_vol_src = create_fapl_for_vol(src_components[0])) == H5I_INVALID_HID)
 	{
-		g_critical("%s: Could not create file access property list with given VOL!\n", G_STRLOC);
+		g_critical("%s: Could not create file access property list with given VOL!", G_STRLOC);
 		return retval;
 	}
 
 	if ((fapl_vol_dst = create_fapl_for_vol(dst_components[0])) == H5I_INVALID_HID)
 	{
-		g_critical("%s: Could not create file access property list with given VOL!\n", G_STRLOC);
+		g_critical("%s: Could not create file access property list with given VOL!", G_STRLOC);
 		return retval;
 	}
 
 	if ((src = H5Fopen(src_components[1], H5F_ACC_RDONLY, fapl_vol_src)) == H5I_INVALID_HID)
 	{
-		g_critical("%s: Could not open source file!\n", G_STRLOC);
+		g_critical("%s: Could not open source file!", G_STRLOC);
 		return retval;
 	}
 
-	if ((dst = H5Fcreate(dst_components[1], H5F_ACC_TRUNC, H5P_DEFAULT, fapl_vol_dst)) == H5I_INVALID_HID)
+	if ((dst = H5Fcreate(dst_components[1], H5F_ACC_EXCL, H5P_DEFAULT, fapl_vol_dst)) == H5I_INVALID_HID)
 	{
-		g_critical("%s: Could not create target file!\n", G_STRLOC);
+		g_critical("%s: Could not create target file!", G_STRLOC);
 		return retval;
 	}
 
-	g_info("Copying %s to %s!\n", source, destination);
+	g_info("Copying %s to %s!", source, destination);
 	retval = copy_file(src, dst);
 
 	if (retval < 0)
 	{
-		g_critical("%s: Could not copy all of the data!\n", G_STRLOC);
+		g_critical("%s: Could not copy all of the data!", G_STRLOC);
 	}
 
 	return retval;
