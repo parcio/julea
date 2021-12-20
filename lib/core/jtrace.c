@@ -401,10 +401,12 @@ j_trace_init(gchar const* name)
 		p = g_strsplit(j_trace_function, ",", 0);
 		l = g_strv_length(p);
 
-		for (guint i = 0; i < l; ++i) {
-			if(g_strcmp0(p[i], "KEEP_STACK") == 0) {
-				gchar* buf = p[l-1];
-				p[l-1] = p[i];
+		for (guint i = 0; i < l; ++i)
+		{
+			if (g_strcmp0(p[i], "KEEP_STACK") == 0)
+			{
+				gchar* buf = p[l - 1];
+				p[l - 1] = p[i];
 				p[i] = buf;
 
 				j_trace_summary_keep_stack = TRUE;
@@ -532,9 +534,12 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	trace_thread = j_trace_thread_get_default();
 
 	ignore = !j_trace_function_check(name);
-	if(ignore
-			&& (!j_trace_summary_keep_stack
-				|| !(j_trace_flags & J_TRACE_SUMMARY))) { return NULL; }
+	if (ignore
+	    && (!j_trace_summary_keep_stack
+		|| !(j_trace_flags & J_TRACE_SUMMARY)))
+	{
+		return NULL;
+	}
 
 	timestamp = g_get_real_time();
 
@@ -560,10 +565,11 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 
 		current_stack.enter_time = timestamp;
 		g_array_append_val(trace_thread->stack, current_stack);
-		if (ignore) { goto end; }
+		if (ignore)
+		{
+			goto end;
+		}
 	}
-
-
 
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
@@ -639,9 +645,12 @@ j_trace_leave(JTrace* trace)
 	trace_thread = j_trace_thread_get_default();
 
 	ignore = !j_trace_function_check(trace->name);
-	if(ignore
-			&& (!j_trace_summary_keep_stack
-				|| !(j_trace_flags & J_TRACE_SUMMARY))) { goto end; }
+	if (ignore
+	    && (!j_trace_summary_keep_stack
+		|| !(j_trace_flags & J_TRACE_SUMMARY)))
+	{
+		goto end;
+	}
 
 	/// \todo
 	if (trace_thread->function_depth == 0)
@@ -663,7 +672,7 @@ j_trace_leave(JTrace* trace)
 		top_stack = &g_array_index(trace_thread->stack, JTraceStack, trace_thread->stack->len - 1);
 		duration = timestamp - top_stack->enter_time;
 
-		if(!ignore)
+		if (!ignore)
 		{
 			G_LOCK(j_trace_summary);
 
@@ -689,7 +698,10 @@ j_trace_leave(JTrace* trace)
 		g_free(top_stack->name);
 		g_array_set_size(trace_thread->stack, trace_thread->stack->len - 1);
 
-		if (ignore) { goto end; }
+		if (ignore)
+		{
+			goto end;
+		}
 	}
 
 	if (j_trace_flags & J_TRACE_ECHO)
@@ -722,8 +734,6 @@ j_trace_leave(JTrace* trace)
 		OTF_Writer_writeLeave(otf_writer, timestamp, function_id, trace_thread->otf.process_id, 0);
 	}
 #endif
-
-	
 
 end:
 	g_free(trace->name);
