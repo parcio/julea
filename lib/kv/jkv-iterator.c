@@ -207,7 +207,9 @@ j_kv_iterator_free(JKVIterator* iterator)
 	if (!iterator->done)
 	{
 		// There is currently no way to cancel an iterator, so drain it.
-		while (j_kv_iterator_next(iterator));
+		while (j_kv_iterator_next(iterator))
+		{
+		}
 	}
 
 	for (guint32 i = 0; i < iterator->replies_n; i++)
