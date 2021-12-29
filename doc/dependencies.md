@@ -82,3 +82,40 @@ Most of them should be available within the repositories of Linux distributions.
   - Debian: `apt install libsqlite3-dev`
   - Fedora: `dnf install sqlite-devel`
   - Arch Linux: `pacman -S sqlite`
+
+## Containers
+
+Several backends require corresponding servers to be usable.
+For instance, the MongoDB key-value backend requires a MongoDB server.
+An easy way to install and run these servers is to use containers.
+
+Podman can be used to run containers without `root` privileges.
+Alternatively, Docker can be used.
+
+### MongoDB
+
+```console
+$ podman run --publish 27017:27017 mongo
+```
+
+### MariaDB
+
+```console
+$ podman run --publish 3306:3306 \
+  --env MARIADB_RANDOM_ROOT_PASSWORD=yes \
+  --env MARIADB_DATABASE=julea_db \
+  --env MARIADB_USER=julea_user \
+  --env MARIADB_PASSWORD=julea_pw \
+  mariadb
+```
+
+### MySQL
+
+```console
+$ podman run --publish 3306:3306 \
+  --env MYSQL_RANDOM_ROOT_PASSWORD=yes \
+  --env MYSQL_DATABASE=julea_db \
+  --env MYSQL_USER=julea_user \
+  --env MYSQL_PASSWORD=julea_pw \
+  mysql
+```
