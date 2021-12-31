@@ -101,7 +101,7 @@ spack_get_dependencies ()
 
 	# Recommended dependencies
 	dependencies="${dependencies} hdf5~mpi@1.12:"
-	dependencies="${dependencies} libfuse@2.9.9"
+	dependencies="${dependencies} libfuse"
 	dependencies="${dependencies} lmdb"
 	dependencies="${dependencies} sqlite"
 
@@ -117,7 +117,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} py-gcovr"
 	fi
 
-	#dependencies="${dependencies} enzo@master#^hdf5@1.12:"
+	#dependencies="${dependencies} enzo@main#^hdf5@1.12:"
 	#dependencies="${dependencies} mpi"
 
 	printf '%s' "${dependencies}"

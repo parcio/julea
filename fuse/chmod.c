@@ -23,12 +23,13 @@
 #include <errno.h>
 
 int
-jfs_chmod(char const* path, mode_t mode)
+jfs_chmod(char const* path, mode_t mode, struct fuse_file_info* fi)
 {
 	gint ret = -ENOENT;
 
 	(void)path;
 	(void)mode;
+	(void)fi;
 
 	return ret;
 }

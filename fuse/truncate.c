@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_truncate(char const* path, off_t size)
+jfs_truncate(char const* path, off_t size, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 
@@ -33,6 +33,7 @@ jfs_truncate(char const* path, off_t size)
 	guint32 len;
 
 	(void)size;
+	(void)fi;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);

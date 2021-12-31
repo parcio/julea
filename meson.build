@@ -198,7 +198,7 @@ if not hdf_dep.found()
 	endif
 endif
 
-fuse_dep = dependency('fuse',
+fuse_dep = dependency('fuse3',
 	required: false,
 	#include_type: 'system'
 )

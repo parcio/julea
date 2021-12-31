@@ -21,9 +21,10 @@
 #include "julea-fuse.h"
 
 void*
-jfs_init(struct fuse_conn_info* conn)
+jfs_init(struct fuse_conn_info* conn, struct fuse_config* cfg)
 {
 	(void)conn;
+	(void)cfg;
 
 	return NULL;
 }

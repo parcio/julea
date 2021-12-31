@@ -23,13 +23,14 @@
 #include <errno.h>
 
 int
-jfs_chown(char const* path, uid_t uid, gid_t gid)
+jfs_chown(char const* path, uid_t uid, gid_t gid, struct fuse_file_info* fi)
 {
 	gint ret = -ENOENT;
 
 	(void)path;
 	(void)uid;
 	(void)gid;
+	(void)fi;
 
 	return ret;
 }
