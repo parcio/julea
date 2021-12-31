@@ -45,9 +45,9 @@ Most of them should be available within the repositories of Linux distributions.
 ### Optional Dependencies
 
 - FUSE
-  - Debian: `apt install libfuse-dev`
-  - Fedora: `dnf install fuse-devel`
-  - Arch Linux: `pacman -S fuse2`
+  - Debian: `apt install libfuse3-dev`
+  - Fedora: `dnf install fuse3-devel`
+  - Arch Linux: `pacman -S fuse3`
 
 - LevelDB
   - Debian: `apt install libleveldb-dev`
@@ -76,6 +76,7 @@ Most of them should be available within the repositories of Linux distributions.
 
 - RocksDB
   - Debian: `apt install librocksdb-dev`
+  - Fedora: `dnf install rocksdb-devel`
   - Arch Linux: `pacman -S rocksdb`
 
 - SQLite
