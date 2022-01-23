@@ -763,6 +763,11 @@ H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_
 		j_goto_error();
 	}
 
+	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &object->type, sizeof(JHDF5ObjectType), NULL))
+	{
+		j_goto_error();
+	}
+
 	if (!j_db_selector_add_field(link_selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, strlen(name), NULL))
 	{
 		j_goto_error();
