@@ -268,7 +268,7 @@ static const H5VL_class_t H5VL_julea_db_g = {
 		.optional = H5VL_julea_db_link_optional,
 	},
 	.object_cls = {
-		.open = NULL,
+		.open = H5VL_julea_db_object_open,
 		.copy = NULL,
 		.get = NULL,
 		.specific = NULL,

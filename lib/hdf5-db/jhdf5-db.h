@@ -172,6 +172,9 @@ herr_t H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5
 herr_t H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments);
 herr_t H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
 
+// object
+void* H5VL_julea_db_object_open(void* obj, H5VL_loc_params_t* loc_params, H5I_type_t* opened_type, hid_t dxpl, void **req);
+
 /* internal helper functions */
 
 void H5VL_julea_db_error_handler(GError* error);
@@ -180,6 +183,7 @@ char* H5VL_julea_db_buf_to_hex(const char* prefix, const char* buf, guint buf_le
 JHDF5Object_t* H5VL_julea_db_object_new(JHDF5ObjectType type);
 JHDF5Object_t* H5VL_julea_db_object_ref(JHDF5Object_t* object);
 void H5VL_julea_db_object_unref(JHDF5Object_t* object);
+gboolean H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error);
 
 // truncate
 herr_t H5VL_julea_db_link_truncate_file(void* obj);
@@ -203,6 +207,9 @@ herr_t H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_par
 
 // group helper
 JHDF5Object_t* H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file);
+
+// shared structs
+extern JDBSchema* julea_db_schema_link;
 
 #define j_goto_error() \
 	do \

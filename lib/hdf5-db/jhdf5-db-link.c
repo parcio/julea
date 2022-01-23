@@ -268,54 +268,13 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
-	JHDF5Object_t* file;
+	g_autofree gpointer child_type = NULL;
 	JDBType type;
+	size_t size;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(parent != NULL, FALSE);
 	g_return_val_if_fail(child != NULL, FALSE);
-
-	switch (parent->type)
-	{
-		case J_HDF5_OBJECT_TYPE_FILE:
-			file = parent;
-			break;
-		case J_HDF5_OBJECT_TYPE_DATASET:
-			file = parent->dataset.file;
-			break;
-		case J_HDF5_OBJECT_TYPE_ATTR:
-			file = parent->attr.file;
-			break;
-		case J_HDF5_OBJECT_TYPE_GROUP:
-			file = parent->group.file;
-			break;
-		case J_HDF5_OBJECT_TYPE_DATATYPE:
-		case J_HDF5_OBJECT_TYPE_SPACE:
-		case _J_HDF5_OBJECT_TYPE_COUNT:
-		default:
-			g_assert_not_reached();
-			j_goto_error();
-	}
-
-	switch (child->type)
-	{
-		case J_HDF5_OBJECT_TYPE_DATASET:
-			g_assert(file == child->dataset.file);
-			break;
-		case J_HDF5_OBJECT_TYPE_ATTR:
-			g_assert(file == child->attr.file);
-			break;
-		case J_HDF5_OBJECT_TYPE_GROUP:
-			g_assert(file == child->group.file);
-			break;
-		case J_HDF5_OBJECT_TYPE_FILE:
-		case J_HDF5_OBJECT_TYPE_DATATYPE:
-		case J_HDF5_OBJECT_TYPE_SPACE:
-		case _J_HDF5_OBJECT_TYPE_COUNT:
-		default:
-			g_assert_not_reached();
-			j_goto_error();
-	}
 
 	if (!(selector = j_db_selector_new(julea_db_schema_link, J_DB_SELECTOR_MODE_AND, &error)))
 	{
@@ -353,7 +312,13 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 		j_goto_error();
 	}
 
-	/// \todo g_assert (iteartor->'child_type' == child->type)
+	if (!j_db_iterator_get_field(iterator, "child_type", &type, &child_type, &size, &error))
+	{
+		j_goto_error();
+	}
+
+	child->type = *(JHDF5ObjectType*)child_type;
+
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
 	return TRUE;
