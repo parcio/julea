@@ -45,46 +45,46 @@ test_hdf_object_open_close(hid_t* file_fixture, gconstpointer udata)
 	(void)udata;
 
 	J_TEST_TRAP_START;
-    
-    space = H5Screate(H5S_SCALAR);
+
+	space = H5Screate(H5S_SCALAR);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
 
-    // check set
-    set = H5Dcreate(file, "some_set", H5T_NATIVE_FLOAT, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	// check set
+	set = H5Dcreate(file, "some_set", H5T_NATIVE_FLOAT, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(set, !=, H5I_INVALID_HID);
 
-    error = H5Dclose(set);
+	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
 
-    set = H5Oopen(file, "some_set", H5P_DEFAULT);
+	set = H5Oopen(file, "some_set", H5P_DEFAULT);
 	g_assert_cmpint(set, !=, H5I_INVALID_HID);
-    g_assert_cmpint(H5Iget_type(set), ==, H5I_DATASET);
+	g_assert_cmpint(H5Iget_type(set), ==, H5I_DATASET);
 
-    error = H5Oclose(set);
+	error = H5Oclose(set);
 	g_assert_cmpint(error, >=, 0);
 
-    // check group
-    group = H5Gcreate(file, "some_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    g_assert_cmpint(group, !=, H5I_INVALID_HID);
-
-    error = H5Gclose(group);
-	g_assert_cmpint(error, >=, 0);
-    
-    group = H5Oopen(file, "some_group", H5P_DEFAULT);
+	// check group
+	group = H5Gcreate(file, "some_group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(group, !=, H5I_INVALID_HID);
-    g_assert_cmpint(H5Iget_type(group), ==, H5I_GROUP);
 
-    error = H5Oclose(group);
+	error = H5Gclose(group);
 	g_assert_cmpint(error, >=, 0);
 
-    /// \todo check type when implemented
+	group = H5Oopen(file, "some_group", H5P_DEFAULT);
+	g_assert_cmpint(group, !=, H5I_INVALID_HID);
+	g_assert_cmpint(H5Iget_type(group), ==, H5I_GROUP);
 
-    error = H5Sclose(space);
+	error = H5Oclose(group);
+	g_assert_cmpint(error, >=, 0);
+
+	/// \todo check type when implemented
+
+	error = H5Sclose(space);
 	g_assert_cmpint(error, >=, 0);
 
 	J_TEST_TRAP_END;
 
-    g_test_incomplete("object open for kv not implemented!");
+	g_test_incomplete("object open for kv not implemented!");
 }
 
 static void
@@ -97,21 +97,21 @@ test_hdf_object_open_invalid(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_START;
 
-    space = H5Screate(H5S_SCALAR);
+	space = H5Screate(H5S_SCALAR);
 	g_assert_cmpint(space, !=, H5I_INVALID_HID);
 
 	attr = H5Acreate(file, "some_attr", H5T_NATIVE_FLOAT, space, H5P_DEFAULT, H5P_DEFAULT);
 	g_assert_cmpint(attr, !=, H5I_INVALID_HID);
 
-    error = H5Aclose(attr);
+	error = H5Aclose(attr);
 	g_assert_cmpint(error, >=, 0);
 
-    attr = H5Oopen(file, "some_attr", H5P_DEFAULT);
+	attr = H5Oopen(file, "some_attr", H5P_DEFAULT);
 	g_assert_cmpint(attr, ==, H5I_INVALID_HID);
 
 	error = H5Sclose(space);
 	g_assert_cmpint(error, >=, 0);
-	
+
 	J_TEST_TRAP_END;
 
 	g_test_incomplete("object open for kv not implemented!");
