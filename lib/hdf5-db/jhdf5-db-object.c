@@ -43,7 +43,7 @@
 #include "jhdf5-db.h"
 
 void*
-H5VL_julea_db_object_open(void* obj, H5VL_loc_params_t* loc_params, H5I_type_t* opened_type, hid_t dxpl, void** req)
+H5VL_julea_db_object_open(void* obj, const H5VL_loc_params_t* loc_params, H5I_type_t* opened_type, hid_t dxpl, void** req)
 {
 	JHDF5Object_t* parent = obj;
 	JHDF5Object_t* file;

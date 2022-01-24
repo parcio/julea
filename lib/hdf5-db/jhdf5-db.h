@@ -173,7 +173,7 @@ herr_t H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_param
 herr_t H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments);
 
 // object
-void* H5VL_julea_db_object_open(void* obj, H5VL_loc_params_t* loc_params, H5I_type_t* opened_type, hid_t dxpl, void** req);
+void* H5VL_julea_db_object_open(void* obj, const H5VL_loc_params_t* loc_params, H5I_type_t* opened_type, hid_t dxpl, void** req);
 
 /* internal helper functions */
 
