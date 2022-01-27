@@ -42,7 +42,7 @@
 
 #include "jhdf5-db.h"
 
-static JDBSchema* julea_db_schema_datatype_header = NULL;
+JDBSchema* julea_db_schema_datatype_header = NULL;
 
 static const void*
 H5VL_julea_db_datatype_convert_type_change(hid_t type_id_from, hid_t type_id_to, const char* from_buf, char* target_buf, guint count)
@@ -82,7 +82,7 @@ H5VL_julea_db_datatype_convert_type_change(hid_t type_id_from, hid_t type_id_to,
 	return target_buf;
 }
 
-static const void*
+const void*
 H5VL_julea_db_datatype_convert_type(hid_t type_id_from, hid_t type_id_to, const char* from_buf, char* tmp_buf, guint count)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -95,7 +95,7 @@ H5VL_julea_db_datatype_convert_type(hid_t type_id_from, hid_t type_id_to, const 
 	return H5VL_julea_db_datatype_convert_type_change(type_id_from, type_id_to, from_buf, tmp_buf, count);
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -109,7 +109,7 @@ H5VL_julea_db_datatype_term(void)
 	return 0;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -228,7 +228,7 @@ H5VL_julea_db_datatype_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_datatype_header, batch, &error))
 				{
 					j_goto_error();
@@ -261,7 +261,7 @@ _error:
 	return 1;
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_datatype_decode(void* backend_id, guint64 backend_id_len)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -333,7 +333,7 @@ _error:
 	return NULL;
 }
 
-static JHDF5Object_t*
+JHDF5Object_t*
 H5VL_julea_db_datatype_encode(hid_t* type_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -529,7 +529,7 @@ _error:
 	return NULL;
 }
 
-static void*
+void*
 H5VL_julea_db_datatype_commit(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t type_id, hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -544,11 +544,11 @@ H5VL_julea_db_datatype_commit(void* obj, const H5VL_loc_params_t* loc_params, co
 	(void)dxpl_id;
 	(void)req;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return NULL;
 }
 
-static void*
+void*
 H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t tapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -560,11 +560,11 @@ H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, cons
 	(void)dxpl_id;
 	(void)req;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return NULL;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -575,11 +575,11 @@ H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_t get_type, hid_t dxpl_i
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -590,11 +590,11 @@ H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_t specific_typ
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_optional(void* obj, H5VL_datatype_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -605,11 +605,11 @@ H5VL_julea_db_datatype_optional(void* obj, H5VL_datatype_optional_t opt_type, hi
 	(void)req;
 	(void)arguments;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -618,6 +618,6 @@ H5VL_julea_db_datatype_close(void* dt, hid_t dxpl_id, void** req)
 	(void)dxpl_id;
 	(void)req;
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }

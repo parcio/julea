@@ -42,9 +42,9 @@
 
 #include "jhdf5-db.h"
 
-static JDBSchema* julea_db_schema_group = NULL;
+JDBSchema* julea_db_schema_group = NULL;
 
-static herr_t
+herr_t
 H5VL_julea_db_group_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -58,7 +58,7 @@ H5VL_julea_db_group_term(void)
 	return 0;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -134,7 +134,7 @@ H5VL_julea_db_group_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_group, batch, &error))
 				{
 					j_goto_error();
@@ -166,7 +166,7 @@ _error:
 	return 1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_truncate_file(void* obj)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -221,7 +221,23 @@ _error:
 	return 1;
 }
 
-static void*
+/// \todo remove this (by adding an explicit root group)
+JHDF5Object_t*
+H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file)
+{
+	JHDF5Object_t* fake_root = NULL;
+
+	if (file->type == J_HDF5_OBJECT_TYPE_FILE)
+	{
+		fake_root = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_GROUP);
+		fake_root->group.file = H5VL_julea_db_object_ref(file);
+		fake_root->group.name = g_strdup("/");
+	}
+
+	return fake_root;
+}
+
+void*
 H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -324,7 +340,7 @@ _error:
 	return NULL;
 }
 
-static void*
+void*
 H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -397,7 +413,7 @@ _error:
 	return NULL;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -411,11 +427,11 @@ H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, voi
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -429,11 +445,11 @@ H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -447,11 +463,11 @@ H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dx
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_group_close(void* obj, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);

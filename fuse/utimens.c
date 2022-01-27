@@ -23,7 +23,7 @@
 #include <errno.h>
 
 int
-jfs_utimens(char const* path, const struct timespec ts[2])
+jfs_utimens(char const* path, const struct timespec ts[2], struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 
@@ -33,6 +33,7 @@ jfs_utimens(char const* path, const struct timespec ts[2])
 	guint32 len;
 
 	(void)ts;
+	(void)fi;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);

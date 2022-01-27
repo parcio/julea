@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2021 Michael Kuhn
+ * Copyright (C) 2021 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,20 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file
+ **/
+
 #include <julea-config.h>
 
-#include "julea-fuse.h"
+#include <glib.h>
 
-#include <errno.h>
+#include <julea.h>
 
-int
-jfs_chmod(char const* path, mode_t mode, struct fuse_file_info* fi)
-{
-	gint ret = -ENOENT;
+#include "test.h"
 
-	(void)path;
-	(void)mode;
-	(void)fi;
+#ifdef HAVE_HDF5
 
-	return ret;
-}
+#include <julea-hdf5.h>
+
+#include <hdf5.h>
+
+/**
+ * Create a simple HDF5 file to test groups, datasets, ...
+ *
+ * \internal
+ *
+ * \param file File to be created.
+ * \param udata User specified data. Will be ignored.
+ **/
+void j_test_hdf_file_fixture_setup(hid_t* file, gconstpointer udata);
+
+/**
+ * Teardown function for \ref j_test_hdf_file_fixture_setup
+ *
+ * \internal
+ *
+ * \param file File to delete.
+ * \param udata User specified data. Will be ignored.
+ **/
+void j_test_hdf_file_fixture_teardown(hid_t* file, gconstpointer udata);
+
+#endif

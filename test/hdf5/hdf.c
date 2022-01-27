@@ -212,7 +212,7 @@ test_hdf_dataset_write(void)
 		H5Dclose(dataset);
 	}
 
-	// FIXME julea-db has problems with this
+	/// \todo julea-db has problems with this
 	//dataset = H5Dcreate2(file, "dataset-write-closed-dataspace", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	H5Sclose(dataspace);

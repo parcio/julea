@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 35
 #define _XOPEN_SOURCE
 
 #include <fuse.h>
@@ -28,20 +28,20 @@
 #include <glib.h>
 
 int jfs_access(char const*, int);
-int jfs_chmod(char const*, mode_t);
-int jfs_chown(char const*, uid_t, gid_t);
+int jfs_chmod(char const*, mode_t, struct fuse_file_info*);
+int jfs_chown(char const*, uid_t, gid_t, struct fuse_file_info*);
 int jfs_create(char const*, mode_t, struct fuse_file_info*);
 void jfs_destroy(void*);
-int jfs_getattr(char const*, struct stat*);
-void* jfs_init(struct fuse_conn_info*);
+int jfs_getattr(char const*, struct stat*, struct fuse_file_info*);
+void* jfs_init(struct fuse_conn_info*, struct fuse_config*);
 int jfs_link(char const*, char const*);
 int jfs_mkdir(char const*, mode_t);
 int jfs_open(char const*, struct fuse_file_info*);
 int jfs_read(char const*, char*, size_t, off_t, struct fuse_file_info*);
-int jfs_readdir(char const*, void*, fuse_fill_dir_t, off_t, struct fuse_file_info*);
+int jfs_readdir(char const*, void*, fuse_fill_dir_t, off_t, struct fuse_file_info*, enum fuse_readdir_flags);
 int jfs_rmdir(char const*);
 int jfs_statfs(char const*, struct statvfs*);
-int jfs_truncate(char const*, off_t);
+int jfs_truncate(char const*, off_t, struct fuse_file_info*);
 int jfs_unlink(char const*);
-int jfs_utimens(char const*, const struct timespec[2]);
+int jfs_utimens(char const*, const struct timespec[2], struct fuse_file_info*);
 int jfs_write(char const*, char const*, size_t, off_t, struct fuse_file_info*);

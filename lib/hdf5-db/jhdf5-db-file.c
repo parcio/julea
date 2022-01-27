@@ -42,9 +42,9 @@
 
 #include "jhdf5-db.h"
 
-static JDBSchema* julea_db_schema_file = NULL;
+JDBSchema* julea_db_schema_file = NULL;
 
-static herr_t
+herr_t
 H5VL_julea_db_file_term(void)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -58,7 +58,7 @@ H5VL_julea_db_file_term(void)
 	return 0;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_file_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -134,7 +134,7 @@ H5VL_julea_db_file_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-				// FIXME Use same key type for every db backend to remove get for every new schema.
+				/// \todo Use same key type for every db backend to remove get for every new schema.
 				if (!j_db_schema_get(julea_db_schema_file, batch, &error))
 				{
 					j_goto_error();
@@ -169,7 +169,7 @@ _error:
 	return 1;
 }
 
-static void*
+void*
 H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -311,7 +311,7 @@ _error:
 	return NULL;
 }
 
-static void*
+void*
 H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -381,7 +381,7 @@ _error:
 	return NULL;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -395,11 +395,11 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -413,11 +413,11 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -431,11 +431,11 @@ H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
-	g_critical("%s NOT implemented !!", G_STRLOC);
-	g_assert_not_reached();
+	g_warning("%s called but not implemented!", G_STRFUNC);
+	return -1;
 }
 
-static herr_t
+herr_t
 H5VL_julea_db_file_close(void* obj, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);

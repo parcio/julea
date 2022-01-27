@@ -109,7 +109,7 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev libfabric-dev
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev libfabric-dev
           sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
           sudo pip3 install meson
       - name: Cache dependencies
@@ -170,6 +170,9 @@ jobs:
             db: sqlite
           # KV backends
           - object: posix
+            kv: mongodb
+            db: sqlite
+          - object: posix
             kv: leveldb
             db: sqlite
           - object: posix
@@ -212,7 +215,7 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse-dev libopen-trace-format-dev librados-dev libfabric-dev
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev libfabric-dev
           sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
           sudo pip3 install meson
       - name: Cache dependencies
@@ -226,6 +229,12 @@ jobs:
         if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
         run: |
           exit 1
+      - name: Set up MongoDB
+        if: matrix.julea.kv == 'mongodb'
+        run: |
+          sudo apt update || true
+          sudo apt --yes --no-install-recommends install mongodb-server
+          sudo systemctl start mongodb.service
       - name: Set up MySQL
         if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql'
         run: |
@@ -247,6 +256,7 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo rm --recursive --force /var/lib/mysql
+          sudo apt update || true
           sudo apt --yes --no-install-recommends install mariadb-server
           sudo systemctl start mariadb.service
           sudo mariadb --execute="CREATE DATABASE juleadb;"
@@ -275,11 +285,15 @@ jobs:
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
           . scripts/environment.sh
+          JULEA_KV_COMPONENT='server'
+          if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_COMPONENT='client'; fi
+          JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
+          if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
           JULEA_DB_COMPONENT='server'
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-component=server --kv-path="/tmp/julea/kv/${{ matrix.julea.kv }}" --db-backend="${{ matrix.julea.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-component="${JULEA_KV_COMPONENT}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
           . scripts/environment.sh
@@ -294,14 +308,14 @@ jobs:
           . scripts/environment.sh
           ./scripts/setup.sh start
           export HDF5_VOL_CONNECTOR=julea-kv
-          ./scripts/test.sh -p /hdf5
+          ./scripts/test.sh -r /hdf5
           sleep 10
-          ./scripts/test.sh -p /hdf5
+          ./scripts/test.sh -r /hdf5
           sleep 10
           export HDF5_VOL_CONNECTOR=julea-db
-          ./scripts/test.sh -p /hdf5
+          ./scripts/test.sh -r /hdf5
           sleep 10
-          ./scripts/test.sh -p /hdf5
+          ./scripts/test.sh -r /hdf5
           ./scripts/setup.sh stop
   doxygen:
     name: Doxygen

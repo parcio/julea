@@ -24,7 +24,7 @@
 #include <string.h>
 
 int
-jfs_readdir(char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
+jfs_readdir(char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi, enum fuse_readdir_flags flags)
 {
 	int ret = -ENOENT;
 
@@ -33,6 +33,7 @@ jfs_readdir(char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, s
 
 	(void)offset;
 	(void)fi;
+	(void)flags;
 
 	if (g_strcmp0(path, "/") == 0)
 	{
@@ -60,11 +61,11 @@ jfs_readdir(char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, s
 			gchar const* name;
 
 			name = bson_iter_utf8(&iter, NULL);
-			filler(buf, name, NULL, 0);
+			filler(buf, name, NULL, 0, 0);
 		}
 		else
 		{
-			filler(buf, "???", NULL, 0);
+			filler(buf, "???", NULL, 0, 0);
 		}
 	}
 

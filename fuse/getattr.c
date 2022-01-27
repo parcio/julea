@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 int
-jfs_getattr(char const* path, struct stat* stbuf)
+jfs_getattr(char const* path, struct stat* stbuf, struct fuse_file_info* fi)
 {
 	int ret = -ENOENT;
 
@@ -34,6 +34,8 @@ jfs_getattr(char const* path, struct stat* stbuf)
 	g_autoptr(JKV) kv = NULL;
 	gpointer value;
 	guint32 len;
+
+	(void)fi;
 
 	if (g_strcmp0(path, "/") == 0)
 	{

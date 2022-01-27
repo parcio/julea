@@ -29,6 +29,7 @@ struct JMongoDBBatch
 {
 	mongoc_bulk_operation_t* bulk_op;
 	gchar* namespace;
+	gboolean is_empty;
 };
 
 typedef struct JMongoDBBatch JMongoDBBatch;
@@ -109,7 +110,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 
 	bulk_op = mongoc_collection_create_bulk_operation_with_opts(m_collection, opts);
 
-	bson_free(opts);
+	bson_destroy(opts);
 
 	mongoc_collection_destroy(m_collection);
 	mongoc_database_destroy(m_database);
@@ -121,6 +122,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	batch = g_slice_new(JMongoDBBatch);
 	batch->bulk_op = bulk_op;
 	batch->namespace = g_strdup(namespace);
+	batch->is_empty = TRUE;
 
 	*backend_batch = batch;
 
@@ -130,17 +132,23 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 static gboolean
 backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	JMongoDBBatch* batch = backend_batch;
-
-	bson_t reply[1];
 
 	(void)backend_data;
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	ret = mongoc_bulk_operation_execute(batch->bulk_op, reply, NULL);
+	// Get operations do not get added to the bulk operation.
+	// That is, a bulk operation can end up empty, which will cause an error.
+	if (!batch->is_empty)
+	{
+		bson_t reply[1];
+
+		ret = mongoc_bulk_operation_execute(batch->bulk_op, reply, NULL);
+		bson_destroy(reply);
+	}
 
 	/*
 	if (!ret)
@@ -154,7 +162,6 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	*/
 
 	mongoc_bulk_operation_destroy(batch->bulk_op);
-	bson_destroy(reply);
 	g_free(batch->namespace);
 	g_slice_free(JMongoDBBatch, batch);
 
@@ -184,6 +191,7 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 	/// \todo use insert when possible
 	//mongoc_bulk_operation_insert(batch->bulk_op, document);
 	mongoc_bulk_operation_replace_one(batch->bulk_op, selector, document, TRUE);
+	batch->is_empty = FALSE;
 
 	/*
 	if (!ret)
@@ -217,6 +225,7 @@ backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 	bson_append_utf8(document, "key", -1, key, -1);
 
 	mongoc_bulk_operation_remove(batch->bulk_op, document);
+	batch->is_empty = FALSE;
 
 	bson_destroy(document);
 
@@ -251,6 +260,7 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, batch->namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, opts, NULL);
 
+	/// \todo Get operations are not actually executed as a batch, flush bulk operation?
 	while (mongoc_cursor_next(cursor, &result))
 	{
 		bson_iter_t iter;

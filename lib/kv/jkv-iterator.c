@@ -57,6 +57,8 @@ struct JKVIterator
 	JMessage** replies;
 	guint32 replies_n;
 	guint32 replies_cur;
+
+	gboolean done;
 };
 
 static JMessage*
@@ -126,6 +128,7 @@ j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 	iterator->replies_n = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV);
 	iterator->replies = g_new0(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
+	iterator->done = (iterator->kv_backend == NULL);
 
 	if (iterator->kv_backend == NULL)
 	{
@@ -173,6 +176,7 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 	iterator->replies_n = 1;
 	iterator->replies = g_new0(JMessage*, 1);
 	iterator->replies_cur = 0;
+	iterator->done = (iterator->kv_backend == NULL);
 
 	if (iterator->kv_backend == NULL)
 	{
@@ -199,6 +203,14 @@ j_kv_iterator_free(JKVIterator* iterator)
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_if_fail(iterator != NULL);
+
+	if (!iterator->done)
+	{
+		// There is currently no way to cancel an iterator, so drain it.
+		while (j_kv_iterator_next(iterator))
+		{
+		}
+	}
 
 	for (guint32 i = 0; i < iterator->replies_n; i++)
 	{
@@ -243,6 +255,7 @@ j_kv_iterator_next(JKVIterator* iterator)
 	else
 	{
 		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
+		iterator->done = !ret;
 	}
 
 	return ret;
