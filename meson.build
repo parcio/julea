@@ -90,8 +90,8 @@ endif
 # CentOS 7 has GLib 2.42, CentOS 7.6 has GLib 2.56
 # Ubuntu 18.04 has GLib 2.56
 glib_version = '2.56'
-# Ubuntu 18.04 has libfabric 1.5.3
-libfabric_version = '1.5.3'
+# Ubuntu 22.04 has libfabric 1.11.0
+libfabric_version = '1.11.0'
 # Ubuntu 18.04 has libbson 1.9.2
 libbson_version = '1.9.0'
 
@@ -354,7 +354,7 @@ configure_file(
 
 # Build
 
-common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, otf_dep]
+common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, libfabric_dep, otf_dep]
 
 # FIXME Remove core directory
 julea_incs = include_directories([

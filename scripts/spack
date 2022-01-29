@@ -97,7 +97,7 @@ spack_get_dependencies ()
 	# Mandatory dependencies
 	dependencies="${dependencies} glib"
 	dependencies="${dependencies} libbson"
-	#dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
+	dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 	# Recommended dependencies
 	dependencies="${dependencies} hdf5~mpi@1.12:"
