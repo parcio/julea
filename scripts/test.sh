@@ -53,6 +53,11 @@ run_test ()
 
 	meson test -C "${build_dir}" --no-rebuild --print-errorlogs --verbose --test-args "$*" || ret=$?
 
+	if test -n "${CI}" -a ${ret} -ne 0
+	then
+		journalctl --boot GLIB_DOMAIN=JULEA || true
+	fi
+
 	return ${ret}
 }
 
