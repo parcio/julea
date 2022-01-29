@@ -1109,6 +1109,11 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 	return TRUE;
 
 _error:
+	if (G_UNLIKELY(thread_variables == NULL || prepared == NULL))
+	{
+		goto _error2;
+	}
+
 	if (G_UNLIKELY(!j_sql_reset(thread_variables->sql_backend, prepared->stmt, NULL)))
 	{
 		goto _error2;
