@@ -141,6 +141,7 @@ struct JConfiguration
 	} db;
 
 	guint64 max_operation_size;
+	guint64 max_inject_size;
 	guint16 port;
 
 	guint32 max_connections;
@@ -282,6 +283,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* db_component;
 	gchar* db_path;
 	guint64 max_operation_size;
+	guint64 max_inject_size;
 	guint32 port;
 	guint32 max_connections;
 	guint64 stripe_size;
@@ -289,6 +291,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
+	max_inject_size = g_key_file_get_uint64(key_file, "core", "max-inject-size", NULL);
 	port = g_key_file_get_integer(key_file, "core", "port", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
@@ -355,6 +358,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->db.path = db_path;
 	configuration->max_operation_size = max_operation_size;
 	configuration->port = port;
+	configuration->max_inject_size = max_inject_size;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
@@ -362,6 +366,11 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	if (configuration->max_operation_size == 0)
 	{
 		configuration->max_operation_size = 8 * 1024 * 1024;
+	}
+
+	if (configuration->max_inject_size == 0)
+	{
+		configuration->max_inject_size = configuration->max_operation_size / 1024;
 	}
 
 	if (configuration->port == 0)
@@ -546,6 +555,16 @@ j_configuration_get_max_operation_size(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->max_operation_size;
+}
+
+guint64
+j_configuration_get_max_inject_size(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->max_inject_size;
 }
 
 guint32
