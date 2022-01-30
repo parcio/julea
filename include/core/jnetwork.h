@@ -175,25 +175,24 @@ G_BEGIN_DECLS
 gboolean
 j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** instance);
 
-/// Get identifier of memory region
-/** \public \memberof JNetworkConnectionMemory
- * \retval FALSE on failure
- * \sa j_network_connection_rma_read, j_network_connection_rma_register, j_network_connection_rma_unregister
- */
-gboolean
-j_network_connection_memory_get_id(JNetworkConnectionMemory* this,
-			   JNetworkConnectionMemoryID* id ///< [out] of registerd memory
-);
-
-/// Builds a connection to an active fabric (direct).
-/** \public \memberof JNetworkConnection
+/**
+ * Gets identifier of memory region.
  *
- * This constructor will fetch the fabric address via TCP and then building an paired
- * connection to this, which later allows for messaging and RMA data transfer.  \n
+ * \param this A memory region.
+ * \param[out] id ID of registered memory.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean
+j_network_connection_memory_get_id(JNetworkConnectionMemory* this, JNetworkConnectionMemoryID* id);
+
+/**
+ * Builds a direct connection to an active fabric.
+ *
+ * This constructor will fetch the fabric address via TCP and then build a paired connection to this, which later allows for messaging and RMA data transfer.
  * This will also construct a fabric for that connection, which is freed when the connection is finished.
  *
- * \attention this function may reduces j_configuration_max_operation_size()
- * accordingly to network capabilities.
+ * \attention This function may reduce j_configuration_max_operation_size according to network capabilities.
  *
  * \msc "Connection process"
  * Client, Server;
@@ -204,17 +203,16 @@ j_network_connection_memory_get_id(JNetworkConnectionMemory* this,
  * Server => Client [label="J_CONNECTION_EVENT_CONNECTED"];
  * Server => Server [label="J_CONNECTION_EVENT_CONNECTED"];
  * \endmsc
- * \retval FALSE if building a connection failed
- * \sa j_network_connection_init_server
- * \todo document index parameter!
- */
+ *
+ * \param[in] configuration A configuration.
+ * \param[in] backend A backend type.
+ * \param[in] index An index.
+ * \param[out] instance A network connection.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
 gboolean
-j_network_connection_init_client(
-	JConfiguration* configuration, ///< [in] for server address, and network configuration
-	JBackendType backend, ///< [in] backend server to connect to
-	guint index, ///< [in] ??
-	JNetworkConnection** instance ///< [out] constructed instance
-);
+j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index, JNetworkConnection** instance);
 
 /// Establish connection to client based on established GSocketConnection.
 /** \public \memberof JNetworkConnection
@@ -260,9 +258,10 @@ j_network_connection_fini(JNetworkConnection* this);
  * \sa j_network_connection_recv, j_network_connection_wait_for_completion
  */
 gboolean
-j_network_connection_send(JNetworkConnection* this,
-		  gconstpointer data, ///< [in] to send
-		  gsize data_len ///< [in] in bytes
+j_network_connection_send(
+	JNetworkConnection* this,
+	gconstpointer data, ///< [in] to send
+	gsize data_len ///< [in] in bytes
 );
 
 /// Asynchronous receive data via MSG connection.
@@ -278,9 +277,10 @@ j_network_connection_send(JNetworkConnection* this,
  * \sa j_network_connection_send, j_network_connection_wait_for_completion
  */
 gboolean
-j_network_connection_recv(JNetworkConnection* this,
-		  gsize data_len, ///< [in] in bytes to receive
-		  gpointer data ///< [out] received
+j_network_connection_recv(
+	JNetworkConnection* this,
+	gsize data_len, ///< [in] in bytes to receive
+	gpointer data ///< [out] received
 );
 
 /// Async direct memory read.
@@ -291,9 +291,10 @@ j_network_connection_recv(JNetworkConnection* this,
  * \todo evaluate if paralisation possible
  */
 gboolean
-j_network_connection_rma_read(JNetworkConnection* this,
-		      JNetworkConnectionMemoryID const* memoryID, ///< [in] for segment which should be copied
-		      gpointer data ///< [out] received
+j_network_connection_rma_read(
+	JNetworkConnection* this,
+	JNetworkConnectionMemoryID const* memoryID, ///< [in] for segment which should be copied
+	gpointer data ///< [out] received
 );
 
 /// Wait until operations initiated at his connection finished.
@@ -316,10 +317,11 @@ j_network_connection_closed(JNetworkConnection* this);
  * register the memory first!
  */
 gboolean
-j_network_connection_rma_register(JNetworkConnection* this,
-			  gconstpointer data, ///< [in] begin of memory region to share
-			  gsize data_len, ///< [in] size of memory region in bytes
-			  JNetworkConnectionMemory* handle ///< [out] for memory region to unregister with j_network_connection_rma_unregister
+j_network_connection_rma_register(
+	JNetworkConnection* this,
+	gconstpointer data, ///< [in] begin of memory region to share
+	gsize data_len, ///< [in] size of memory region in bytes
+	JNetworkConnectionMemory* handle ///< [out] for memory region to unregister with j_network_connection_rma_unregister
 );
 
 /// Unregister memory from rma availablity.
@@ -327,8 +329,9 @@ j_network_connection_rma_register(JNetworkConnection* this,
  * Counterpart to j_network_connection_rma_register().
  */
 gboolean
-j_network_connection_rma_unregister(JNetworkConnection* this,
-			    JNetworkConnectionMemory* handle ///< [in] for memory region to unregister
+j_network_connection_rma_unregister(
+	JNetworkConnection* this,
+	JNetworkConnectionMemory* handle ///< [in] for memory region to unregister
 );
 
 /**
