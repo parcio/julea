@@ -42,6 +42,11 @@ Most of them should be available within the repositories of Linux distributions.
   - Fedora: `dnf install libbson-devel`
   - Arch Linux: `pacman -S libbson`
 
+- libfabric
+  - Debian: `apt install libfabric-dev`
+  - Fedora: `dnf install libfabric-devel`
+  - Arch Linux: `pacman -S libfabric`
+
 ### Optional Dependencies
 
 - FUSE
