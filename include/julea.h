@@ -47,6 +47,7 @@
 #include <core/jlist-iterator.h>
 #include <core/jmemory-chunk.h>
 #include <core/jmessage.h>
+#include <core/jnetwork.h>
 #include <core/joperation.h>
 #include <core/jsemantics.h>
 #include <core/jstatistics.h>
