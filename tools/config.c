@@ -42,6 +42,7 @@ static gchar const* opt_db_backend = NULL;
 static gchar const* opt_db_component = NULL;
 static gchar const* opt_db_path = NULL;
 static gint64 opt_max_operation_size = 0;
+static gint64 opt_max_inject_size = 0;
 static gint opt_port = 0;
 static gint opt_max_connections = 0;
 static gint64 opt_stripe_size = 0;
@@ -106,6 +107,7 @@ write_config(gchar* path)
 
 	key_file = g_key_file_new();
 	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_max_operation_size);
+	g_key_file_set_int64(key_file, "core", "max-inject-size", opt_max_inject_size);
 	g_key_file_set_integer(key_file, "core", "port", opt_port);
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
 	g_key_file_set_int64(key_file, "clients", "stripe-size", opt_stripe_size);
@@ -167,6 +169,7 @@ main(gint argc, gchar** argv)
 		{ "db-component", 0, 0, G_OPTION_ARG_STRING, &opt_db_component, "Database component to use", "client|server" },
 		{ "db-path", 0, 0, G_OPTION_ARG_STRING, &opt_db_path, "Database path to use", "/path/to/storage" },
 		{ "max-operation-size", 0, 0, G_OPTION_ARG_INT64, &opt_max_operation_size, "Maximum size of an operation", "0" },
+		{ "max-inject-size", 0, 0, G_OPTION_ARG_INT64, &opt_max_inject_size, "Maximum inject size", "0" },
 		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Default network port", "0" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ "stripe-size", 0, 0, G_OPTION_ARG_INT64, &opt_stripe_size, "Default stripe size", "0" },
@@ -195,6 +198,7 @@ main(gint argc, gchar** argv)
 	    || (opt_read && !opt_user && !opt_system)
 	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_servers_db == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL || opt_db_backend == NULL || opt_db_component == NULL || opt_db_path == NULL))
 	    || opt_max_operation_size < 0
+	    || opt_max_inject_size < 0
 	    || opt_max_connections < 0
 	    || opt_stripe_size < 0
 	    || opt_port < 0 || opt_port > 65535)
