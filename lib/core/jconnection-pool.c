@@ -268,7 +268,7 @@ j_connection_pool_push_internal(GAsyncQueue* queue, GSocketConnection* connectio
 }
 
 gpointer
-j_connection_pool_pop(JBackendType backend, guint index)
+j_connection_pool_pop(JBackendType backend, guint32 index)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -293,7 +293,7 @@ j_connection_pool_pop(JBackendType backend, guint index)
 }
 
 void
-j_connection_pool_push(JBackendType backend, guint index, gpointer connection)
+j_connection_pool_push(JBackendType backend, guint32 index, gpointer connection)
 {
 	J_TRACE_FUNCTION(NULL);
 
