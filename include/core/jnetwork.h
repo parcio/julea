@@ -172,8 +172,7 @@ G_BEGIN_DECLS
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
-gboolean
-j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** instance);
+gboolean j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** instance);
 
 /**
  * Gets identifier of memory region.
@@ -183,8 +182,7 @@ j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** ins
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
-gboolean
-j_network_connection_memory_get_id(JNetworkConnectionMemory* this, JNetworkConnectionMemoryID* id);
+gboolean j_network_connection_memory_get_id(JNetworkConnectionMemory* this, JNetworkConnectionMemoryID* id);
 
 /**
  * Builds a direct connection to an active fabric.
@@ -211,128 +209,121 @@ j_network_connection_memory_get_id(JNetworkConnectionMemory* this, JNetworkConne
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
-gboolean
-j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index, JNetworkConnection** instance);
+gboolean j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index, JNetworkConnection** instance);
 
-/// Establish connection to client based on established GSocketConnection.
-/** \public \memberof JNetworkConnection
- *
+/**
+ * Establish connection to client based on established GSocketConnection.
  * The GSocketConnection will be used to send the server fabric data.
  * For the connection process see j_network_connection_init_client().
  *
- * \attention this function may reduces j_configuration_max_operation_size()
- * accordingly to network capabilities.
+ * \attention This function may reduces j_configuration_max_operation_size according to network capabilities.
  *
- * \retval FALSE if establishing the connection failed
- * \sa j_network_connection_init_client
- */
-gboolean
-j_network_connection_init_server(
-	JNetworkFabric* fabric, ///< [in] via which the connection should be established
-	GSocketConnection* gconnection, ///< [in] valid GSocketConnection for address exchange
-	JNetworkConnection** instance ///< [out] constructed instance
-);
-/// Closes a connection and free all related resources.
-/** \public \memberof JNetworkConnection
+ * \param[in] fabric Fabric via which the connection should be established.
+ * \param[in] connection GSocketConnection for address exchange.
+ * \param[out] connection A new connection.
  *
+ * \return TRUE on success, FALSE if an error occurred.
+ **/
+gboolean j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gconnection, JNetworkConnection** connection);
+
+/**
+ * Closes a connection and free all related resources. *
  * If this an client side connection with private fabric, it will also clear the fabric.
- * \retval FALSE if closing the connection failed. The connection will still be unusable!
+ *
+ * \todo params
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_fini(JNetworkConnection* this);
+gboolean j_network_connection_fini(JNetworkConnection* connection);
 
-/// Async send data via MSG connection
-/** \public \memberof JNetworkConnection
+/**
+ * Async send data via MSG connection.
+ * Asynchronously sends a message.
+ * To recognize completion, use j_network_connection_wait_for_completion().
+ * If the message is small enough it can be injected to the network, in that case the actions finishes immediately (j_network_connection_wait_for_completion() still works).
  *
- * Asynchronous sends a message, to recognize for completion use j_network_connection_wait_for_completion().\n
- * If the message is small enough it can "injected" to the network, in that case the actions finished
- * immediate (j_network_connection_wait_for_completion() still works).
+ * \todo feedback if message was injected
  *
- * \todo feedback if message was injected!
+ * \attention It is only allowed to have J_CONNECTION_MAX_SEND send operations pending at the same time. Each has a maximum size of j_configuration_max_operation_size() (the connection initialization may change this value).
  *
- * \attention it is only allowed to have J_CONNECTION_MAX_SEND send
- * operation pending at the same time. Each has a max size
- * of j_configuration_max_operation_size() (the connection initialization may changes this value!).
+ * \param[in] connection A connection.
+ * \param[in] data A data buffer to send.
+ * \param[in] length A length in bytes.
  *
- * \retval FALSE if an error occurred.
- * \sa j_network_connection_recv, j_network_connection_wait_for_completion
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_send(
-	JNetworkConnection* this,
-	gconstpointer data, ///< [in] to send
-	gsize data_len ///< [in] in bytes
-);
+gboolean j_network_connection_send(JNetworkConnection* connection, gconstpointer data, gsize length);
 
-/// Asynchronous receive data via MSG connection.
-/** \public \memberof JNetworkConnection
+/**
+ * Asynchronously receives data via MSG connection.
+ * Asynchronously receive a message.
+ * To wait for completion, use j_network_connection_wait_for_completion().
  *
- * Asynchronous receive a message, to wait for completion use j_network_connection_wait_for_completion().
+ * \attention It is only allowed to have J_CONNECTION_MAX_RECV receive operations pending at the same time. Each has a maximum size of j_configuration_max_operation_size() (the connection initialization may change this value).
  *
- * \attention it is only allowed to have J_CONNECTION_MAX_RECV recv
- * operation pending at the same time.  Each has a max size
- * of j_configuration_max_operation_size() (the connection initialization may has changed this value!).
+ * \param[in] connection A connection.
+ * \param[in] length A length in bytes.
+ * \param[out] data A data buffer to receive into.
  *
- * \retval FALSE if an error occurred
- * \sa j_network_connection_send, j_network_connection_wait_for_completion
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_recv(
-	JNetworkConnection* this,
-	gsize data_len, ///< [in] in bytes to receive
-	gpointer data ///< [out] received
-);
+gboolean j_network_connection_recv(JNetworkConnection* connection, gsize length, gpointer data);
 
-/// Async direct memory read.
-/** \public \memberof JNetworkConnection
+/**
+ * Asynchronous direct memory read.
+ * Initiate an direct memory read.
+ * To wait for completion, use j_network_connection_wait_for_completion().
  *
- * Initiate an direct memory read, to wait for completion use j_network_connection_wait_for_completion().
- * \retval FALSE if an error occurred -> handle will then also invalid
  * \todo evaluate if paralisation possible
+ *
+ * \param[in] connection A connection.
+ * \param[in] memory_id A memory ID for the segment that should be copied.
+ * \param[out] data A data buffer to receive into.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_rma_read(
-	JNetworkConnection* this,
-	JNetworkConnectionMemoryID const* memoryID, ///< [in] for segment which should be copied
-	gpointer data ///< [out] received
-);
+gboolean j_network_connection_rma_read(JNetworkConnection* connection, JNetworkConnectionMemoryID const* memory_id, gpointer data);
 
-/// Wait until operations initiated at his connection finished.
-/** \public \memberof JNetworkConnection
- * \retval FALSE if waiting finished. This may occures because the connection was closed: check this with: j_connection_active()
- * \sa j_network_connection_rma_read, j_network_connection_send, j_network_connection_recv
+/**
+ * Waits until operations initiated at his connection finished.
+ *
+ * \attention FALSE if waiting finished. This may occur if the connection was closed. Check this with j_connection_active().
+ *
+ * \todo params
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_wait_for_completion(JNetworkConnection* this);
+gboolean j_network_connection_wait_for_completion(JNetworkConnection* connection);
 
-/// Check if the connection was closed from the other party.
-/** \sa j_network_connection_wait_for_completion */
-gboolean
-j_network_connection_closed(JNetworkConnection* this);
+/**
+ * Check if the connection was closed by the other party.
+ **/
+gboolean j_network_connection_closed(JNetworkConnection* connection);
 
-/// Register memory to make it rma readable.
-/** \public \memberof JNetworkConnection
- * Memory access rights must changed to allow for an rma read of other party.
- * There for before an j_network_connection_rma_read() can succeed the provider of the data must
- * register the memory first!
+/**
+ * Registers memory to make it RMA-readable.
+ * Memory access rights must changed to allow for an RMA read by the other party.
+ * Therefore, before a j_network_connection_rma_read() can succeed, the provider of the data must register the memory first!
+ *
+ * \param[in] connection A connection.
+ * \param[in] data A data buffer to share.
+ * \param[in] length A length in bytes.
+ * \param[out] handle A handle for the memory region to unregister with j_network_connection_rma_unregister().
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_rma_register(
-	JNetworkConnection* this,
-	gconstpointer data, ///< [in] begin of memory region to share
-	gsize data_len, ///< [in] size of memory region in bytes
-	JNetworkConnectionMemory* handle ///< [out] for memory region to unregister with j_network_connection_rma_unregister
-);
+gboolean j_network_connection_rma_register(JNetworkConnection* connection, gconstpointer data, gsize length, JNetworkConnectionMemory* handle);
 
-/// Unregister memory from rma availablity.
-/** \public \memberof JNetworkConnection
+/**
+ * Unregisters memory from RMA availablity.
  * Counterpart to j_network_connection_rma_register().
+ *
+ * \param[in] connection A connection.
+ * \param[in] handle A handle for the memory region to unregister.
+ *
+ * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean
-j_network_connection_rma_unregister(
-	JNetworkConnection* this,
-	JNetworkConnectionMemory* handle ///< [in] for memory region to unregister
-);
+gboolean j_network_connection_rma_unregister(JNetworkConnection* connection, JNetworkConnectionMemory* handle);
 
 /**
  * @}

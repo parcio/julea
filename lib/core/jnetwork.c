@@ -47,12 +47,14 @@
 
 #define KEY_MIN 1
 
-/// Highest number of j_network_connection_send() calls before a j_network_connection_wait_for_completion().
-/** \public \memberof JNetworkConnection */
+/**
+ * Highest number of j_network_connection_send() calls before a j_network_connection_wait_for_completion().
+ **/
 #define J_NETWORK_CONNECTION_MAX_SEND 2
 
-/// Highest number of j_network_connection_recv() calls before a j_network_connection_wait_for_completion().
-/** \public \memberof JNetworkConnection */
+/**
+ * Highest number of j_network_connection_recv() calls before a j_network_connection_wait_for_completion().
+ **/
 #define J_NETWORK_CONNECTION_MAX_RECV 1
 
 /**
@@ -90,10 +92,9 @@ struct JNetworkFabric
 	JNetworkFabricSide con_side;
 };
 
-/// Possible events for listening fabrics
-/** \public \memberof JNetworkFabric
- *  \sa j_network_fabric_sread_event
- */
+/**
+ * Possible events for listening fabrics
+ **/
 enum JNetworkFabricEvents
 {
 	J_FABRIC_EVENT_ERROR = 0, ///< An error was reported, fabric is probably in a invalid state!
