@@ -105,13 +105,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - name: Install dependencies
-        if: matrix.dependencies == 'system'
+      - name: Clean up system packages
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
+      - name: Install dependencies
+        if: matrix.dependencies == 'system'
+        run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
           sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
@@ -212,13 +214,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Clean up system packages
-        # FIXME https://github.com/actions/virtual-environments/issues/4799
-        # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
-        # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
-          sudo apt --yes purge 'mysql*'
-          sudo rm --recursive --force /var/lib/mysql
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
@@ -249,15 +246,24 @@ jobs:
       - name: Set up MySQL
         if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql'
         run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install mysql-server
           sudo systemctl start mysql.service
           mysql --user=root --password=root --execute="CREATE DATABASE juleadb;"
           mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED WITH mysql_native_password BY 'aeluj';"
           mysql --user=root --password=root --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
       - name: Set up MariaDB
         if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb'
+        # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
+        # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
+          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
+          then
+            sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
+          else
+            sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
+          fi
+          sudo apt --yes --purge autoremove
+          sudo aa-remove-unknown
+          sudo rm --recursive --force /var/lib/mysql
           sudo apt update || true
           sudo apt --yes --no-install-recommends install mariadb-server
           sudo systemctl start mariadb.service
@@ -302,7 +308,12 @@ jobs:
           if test "${{ matrix.os.dist }}" = 'ubuntu-20.04'
           then
             export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+            export LSAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+          else
+            export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-9)"
+            export LSAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-9)"
           fi
+          export LSAN_OPTIONS=exitcode=0
           ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
@@ -315,7 +326,12 @@ jobs:
           if test "${{ matrix.os.dist }}" = 'ubuntu-20.04'
           then
             export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+            export LSAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+          else
+            export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-9)"
+            export LSAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-9)"
           fi
+          export LSAN_OPTIONS=exitcode=0
           ./scripts/setup.sh start
           export HDF5_VOL_CONNECTOR=julea-kv
           ./scripts/test.sh -r /hdf5
