@@ -301,6 +301,10 @@ jobs:
       - name: Tests
         run: |
           . scripts/environment.sh
+          if test "${{ matrix.os.dist }}" = 'ubuntu-20.04'
+          then
+            export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+          fi
           ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
@@ -310,6 +314,10 @@ jobs:
         if: matrix.julea.db != 'memory'
         run: |
           . scripts/environment.sh
+          if test "${{ matrix.os.dist }}" = 'ubuntu-20.04'
+          then
+            export ASAN_SYMBOLIZER_PATH="$(realpath /usr/bin/llvm-symbolizer-11)"
+          fi
           ./scripts/setup.sh start
           export HDF5_VOL_CONNECTOR=julea-kv
           ./scripts/test.sh -r /hdf5
