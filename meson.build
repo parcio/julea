@@ -139,7 +139,6 @@ gobject_dep = dependency('gobject-2.0',
 
 libfabric_dep = dependency('libfabric',
 	version: '>= @0@'.format(libfabric_version),
-	required: false,
 	#include_type: 'system'
 )
 
