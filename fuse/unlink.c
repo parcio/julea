@@ -29,11 +29,15 @@ jfs_unlink(char const* path)
 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JKV) kv = NULL;
+	g_autoptr(JObject) obj = NULL;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
 	kv = j_kv_new("posix", path);
+	obj = j_object_new("posix", path);
 
 	j_kv_delete(kv, batch);
+	// we do not support hard links so deleting here is safe
+	j_object_delete(obj, batch);
 
 	if (j_batch_execute(batch))
 	{
