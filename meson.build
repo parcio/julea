@@ -453,6 +453,7 @@ if hdf_dep.found()
 			'lib/hdf5-db/jhdf5-db-file.c',
 			'lib/hdf5-db/jhdf5-db-group.c',
 			'lib/hdf5-db/jhdf5-db-link.c',
+			'lib/hdf5-db/jhdf5-db-object.c',
 			'lib/hdf5-db/jhdf5-db-shared.c',
 			'lib/hdf5-db/jhdf5-db-space.c',
 
