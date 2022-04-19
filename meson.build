@@ -71,11 +71,6 @@ if get_option('debug')
 	add_project_arguments(args, language: 'c')
 endif
 
-# FIXME Some versions of libbson trigger this warning
-if meson.get_compiler('c').get_id() == 'clang'
-	add_project_arguments('-Wno-newline-eof', language: 'c')
-endif
-
 sanitize_cflags = ''
 
 if get_option('b_sanitize') != 'none'
@@ -114,43 +109,43 @@ m_dep = cc.find_library('m', required: false)
 
 glib_dep = dependency('glib-2.0',
 	version: '>= @0@'.format(glib_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 gio_dep = dependency('gio-2.0',
 	version: '>= @0@'.format(glib_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 gmodule_dep = dependency('gmodule-2.0',
 	version: '>= @0@'.format(glib_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 gthread_dep = dependency('gthread-2.0',
 	version: '>= @0@'.format(glib_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 gobject_dep = dependency('gobject-2.0',
 	version: '>= @0@'.format(glib_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 libfabric_dep = dependency('libfabric',
 	version: '>= @0@'.format(libfabric_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 libbson_dep = dependency('libbson-1.0',
 	version: '>= @0@'.format(libbson_version),
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 libmongoc_dep = dependency('libmongoc-1.0',
 	version: '>= @0@'.format(libmongoc_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 rados_dep = cc.find_library('rados',
@@ -163,6 +158,7 @@ hdf_dep = dependency('hdf5',
 	language: 'c',
 	required: false,
 	method: 'pkg-config',
+	include_type: 'system',
 )
 
 if not hdf_dep.found()
@@ -171,8 +167,8 @@ if not hdf_dep.found()
 	)
 
 	if hdf_config.found()
-		hdf_cflags_out = run_command(hdf_config, '-show', '-c').stdout().strip().split()
-		hdf_libs_out = run_command(hdf_config, '-show', '-shlib').stdout().strip().split()
+		hdf_cflags_out = run_command(hdf_config, '-show', '-c', check: true).stdout().strip().split()
+		hdf_libs_out = run_command(hdf_config, '-show', '-shlib', check: true).stdout().strip().split()
 
 		hdf_cflags = []
 
@@ -199,13 +195,13 @@ endif
 
 fuse_dep = dependency('fuse3',
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 leveldb_dep = dependency('leveldb',
 	version: '>= @0@'.format(leveldb_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 # Ubuntu's package does not ship a pkg-config file
@@ -219,19 +215,19 @@ endif
 lmdb_dep = dependency('lmdb',
 	version: '>= @0@'.format(lmdb_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 sqlite_dep = dependency('sqlite3',
 	version: '>= @0@'.format(sqlite_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 mariadb_dep = dependency('libmariadb',
 	version: '>= @0@'.format(mariadb_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 # Ubuntu's package does not ship a pkg-config file
@@ -243,8 +239,8 @@ if not mariadb_dep.found()
 	)
 
 	if mariadb_config.found()
-		mariadb_cflags = run_command(mariadb_config, '--cflags').stdout().strip().split()
-		mariadb_libs = run_command(mariadb_config, '--libs').stdout().strip().split()
+		mariadb_cflags = run_command(mariadb_config, '--cflags', check: true).stdout().strip().split()
+		mariadb_libs = run_command(mariadb_config, '--libs', check: true).stdout().strip().split()
 
 		mariadb_dep = declare_dependency(
 			compile_args: mariadb_cflags,
@@ -256,7 +252,7 @@ endif
 rocksdb_dep = dependency('rocksdb',
 	version: '>= @0@'.format(rocksdb_version),
 	required: false,
-	#include_type: 'system'
+	include_type: 'system',
 )
 
 # Ubuntu's package does not ship a pkg-config file
@@ -278,8 +274,8 @@ otf_config = find_program('otfconfig',
 )
 
 if otf_config.found()
-	otf_cflags = run_command(otf_config, '--includes').stdout().strip().split()
-	otf_libs = run_command(otf_config, '--libs').stdout().strip().split()
+	otf_cflags = run_command(otf_config, '--includes', check: true).stdout().strip().split()
+	otf_libs = run_command(otf_config, '--libs', check: true).stdout().strip().split()
 
 	otf_dep = declare_dependency(
 		compile_args: otf_cflags,
@@ -640,9 +636,6 @@ foreach backend: julea_backends
 	if backend == 'object/rados'
 		extra_deps += rados_dep
 	elif backend == 'kv/leveldb'
-		# leveldb bug (will be fixed in 1.23)
-		# https://github.com/google/leveldb/pull/365
-		extra_args += '-Wno-strict-prototypes'
 		extra_deps += leveldb_dep
 	elif backend == 'kv/lmdb'
 		# lmdb bug
@@ -655,17 +648,12 @@ foreach backend: julea_backends
 	elif backend == 'kv/mongodb'
 		extra_deps += libmongoc_dep
 	elif backend == 'kv/rocksdb'
-		# rocksdb bug
-		extra_args += '-Wno-strict-prototypes'
 		# https://github.com/facebook/rocksdb/issues/8286
 		extra_args += '-Wno-error'
 		extra_deps += rocksdb_dep
 	elif backend == 'kv/sqlite' or backend == 'db/sqlite'
 		extra_deps += sqlite_dep
 	elif backend == 'db/mysql'
-		# MariaDB bug
-		# https://jira.mariadb.org/browse/CONC-381
-		extra_args += '-Wno-strict-prototypes'
 		# MySQL bug
 		if meson.get_compiler('c').get_id() == 'clang'
 			extra_args += '-Wno-incompatible-pointer-types-discards-qualifiers'
