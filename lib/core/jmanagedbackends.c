@@ -1,5 +1,5 @@
 #include <bits/types/struct_timeval.h>
-#include <core/jbackendstack.h>
+#include <core/jmanagedbackends.h>
 #include <core/jbackend.h>
 #include <core/jlist.h>
 #include <core/jlist-iterator.h>
