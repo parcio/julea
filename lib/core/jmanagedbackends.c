@@ -274,16 +274,23 @@ write_unlock(RWSpinLock* this)
 	g_atomic_int_set(&this->write_access, 0);
 }
 
+/// proxy function
+gchar const*const* j_configuration_get_object_tiers(JConfiguration* config);
+gchar const*const* j_configuration_get_object_tiers(JConfiguration* config) {
+	(void) config;
+	return NULL;
+}
+
 gboolean
 j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedBackends** instance_ptr)
 {
 	JListIterator* itr;
-	JListIterator* tier_itr;
+	gchar const*const* tier_itr;
 	JManagedBackends* this;
 	struct JBackendWrapper** b_itr;
 	struct JStorageTier** t_itr;
 	const gchar* policy_name = j_configuration_get_object_policy(config);
-	const JList* policy_args = j_configuration_get_object_policy_args(config);
+	char const*const* policy_args = j_configuration_get_object_policy_args(config);
 	JObjectBackendPolicy* (*module_backend_policy_info)(void) = NULL;
 	JObjectBackendPolicy* tmp_policy;
 	*instance_ptr = malloc(sizeof(JManagedBackends));
@@ -298,7 +305,7 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 	this->object_backend = malloc(sizeof(struct JBackendWrapper*) * this->object_backend_length);
 	this->object_tier_data = malloc(sizeof(JStorageTier*) * this->object_backend_length);
 	itr = j_list_iterator_new(object_backends);
-	tier_itr = j_list_iterator_new(j_configuration_get_object_tiers(config));
+	tier_itr = j_configuration_get_object_tiers(config);
 	b_itr = this->object_backend;
 	t_itr = this->object_tier_data;
 	while (j_list_iterator_next(itr))
@@ -313,8 +320,8 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 		(*b_itr)->orig = j_list_iterator_get(itr);
 		(*b_itr)->scope = (struct JManagedBackendScope){ 0 };
 		(*b_itr)->tier_data = malloc(sizeof(JStorageTier));
-		if (j_list_iterator_next(tier_itr))
-			memcpy((*b_itr)->tier_data, j_list_iterator_get(tier_itr), sizeof(JStorageTier));
+		if (tier_itr && *tier_itr)
+			memcpy((*b_itr)->tier_data, tier_itr++, sizeof(JStorageTier));
 		else
 			memset((*b_itr)->tier_data, 0, sizeof(JStorageTier));
 
@@ -322,9 +329,8 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 		++t_itr;
 		++b_itr;
 	}
-	g_assert_true(j_list_iterator_next(tier_itr) == FALSE);
+	g_assert_true(tier_itr == FALSE || *tier_itr == FALSE);
 	j_list_iterator_free(itr);
-	j_list_iterator_free(tier_itr);
 
 	// load policy
 	this->module = NULL;
@@ -363,6 +369,7 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 	this->policy = malloc(sizeof(JObjectBackendPolicy));
 	memcpy(this->policy, tmp_policy, sizeof(JObjectBackendPolicy));
 
+	/// \todo use helper list
 	this->policy->init(&this->policy->data, policy_args, this);
 
 	// setup kv
@@ -377,7 +384,7 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 	    "failed to init kv for backend manager!");
 	this->kv_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	this->log.filename = j_configuration_get_object_policy_log_file(config);
+	// this->log.filename = j_configuration_get_object_policy_log_file(config);
 	this->log.length = 0;
 
 	return TRUE;

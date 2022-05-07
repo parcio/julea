@@ -143,9 +143,10 @@ typedef struct
 	 * \param[out] policy_data a pointer to store address of policy internal data
 	 * \param[in]  args a list of strings passed from the configuration file
 	 *                  which may used to parametrise the policy.
+	 *                  The list is like the strings NULL terminated
 	 * \param[in]  backends access to the object backend instances.
 	 **/
-	gboolean (*init)(gpointer* policy_data, const JList* args, JManagedBackends* backends);
+	gboolean (*init)(gpointer* policy_data, gchar const*const* args, JManagedBackends* backends);
 
 	/**
 	 * \param[in] policy_data data at address assigned in init

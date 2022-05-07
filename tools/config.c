@@ -46,6 +46,10 @@ static gint64 opt_max_inject_size = 0;
 static gint opt_port = 0;
 static gint opt_max_connections = 0;
 static gint64 opt_stripe_size = 0;
+static gchar const* opt_object_policy_kv_backend = NULL;
+static gchar const* opt_object_policy_kv_path = NULL;
+static gchar const* opt_object_policy = NULL;
+static gchar const* opt_object_policy_args = NULL;
 
 static gchar**
 string_split(gchar const* string)
@@ -100,10 +104,13 @@ write_config(gchar* path)
 	g_auto(GStrv) servers_object = NULL;
 	g_auto(GStrv) servers_kv = NULL;
 	g_auto(GStrv) servers_db = NULL;
+	g_auto(GStrv) object_policy_args = NULL;
 
 	servers_object = string_split(opt_servers_object);
 	servers_kv = string_split(opt_servers_kv);
 	servers_db = string_split(opt_servers_db);
+	object_policy_args = string_split(opt_object_policy_args);
+	
 
 	key_file = g_key_file_new();
 	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_max_operation_size);
@@ -123,6 +130,10 @@ write_config(gchar* path)
 	g_key_file_set_string(key_file, "db", "backend", opt_db_backend);
 	g_key_file_set_string(key_file, "db", "component", opt_db_component);
 	g_key_file_set_string(key_file, "db", "path", opt_db_path);
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", opt_object_policy_kv_backend);
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", opt_object_policy_kv_path);
+	g_key_file_set_string(key_file, "object.hsm-policy", "policy", opt_object_policy);
+	g_key_file_set_string_list(key_file, "object.hsm-policy", "args", (gchar const*const*)object_policy_args, g_strv_length(object_policy_args));
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
@@ -173,6 +184,10 @@ main(gint argc, gchar** argv)
 		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Default network port", "0" },
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
 		{ "stripe-size", 0, 0, G_OPTION_ARG_INT64, &opt_stripe_size, "Default stripe size", "0" },
+		{ "object-policy-kv-backend", 0, 0, G_OPTION_ARG_STRING, &opt_object_policy_kv_backend, "Key-value backend to use managed object backends.", "leveldb" },
+		{ "object-policy-kv_path", 0, 0, G_OPTION_ARG_STRING, &opt_object_policy_kv_path, "Key-value path to use", "/path/to/storage" },
+		{ "object-policy", 0, 0, G_OPTION_ARG_STRING, &opt_object_policy, "Policy for managed object backends", "dummy" },
+		{ "object-policy-args", 0, 0, G_OPTION_ARG_STRING, &opt_object_policy_args, "Arguments passed to policy for initialisation", "arg1;arg2;arg3;" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
