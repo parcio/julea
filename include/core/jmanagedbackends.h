@@ -391,7 +391,7 @@ gboolean j_backend_managed_get_by_prefix(JManagedBackends* this, gchar const* na
  *
  * \sa j_backend_managed_get_all(), j_backend_managed_get_by_prefix()
  **/
-gboolean j_backend_stack_iterate(JManagedBackends* this, gpointer iterator, gchar const** path);
+gboolean j_backend_managed_iterate(JManagedBackends* this, gpointer iterator, gchar const** path);
 
 /**
  * @}

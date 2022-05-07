@@ -15,12 +15,16 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
-#define EXE(X, ...) \
-	if (!(X)) \
+#define EXE(cmd, ...) \
+	do \
 	{ \
-		g_warning(__VA_ARGS__); \
-		goto end; \
-	}
+		if ((cmd) == FALSE) \
+		{ \
+			g_warning("EXE failed at %s:%d with:", __FILE__, __LINE__); \
+			g_warning(__VA_ARGS__); \
+			goto end; \
+		} \
+	} while (FALSE)
 
 /// an read write spin lock to avoid data access on migration
 typedef struct
@@ -54,7 +58,7 @@ guint write_lock(RWSpinLock* this);
 void write_unlock(RWSpinLock* this);
 
 #define MAX_LOG_LENGTH 8192
-struct JBackendStack
+struct JManagedBackends
 {
 	struct JBackendWrapper** object_backend;
 	JStorageTier** object_tier_data;
@@ -86,10 +90,10 @@ struct JBackendStack
 	} log;
 };
 
-struct JBackendStackScope
+struct JManagedBackendScope
 {
 	void* mem;
-	JBackendStack* stack;
+	JManagedBackends* stack;
 	guint lock_id;
 	guint tier; /// \TODO include in StorageTier -> less redundance
 	const gchar* namespace;
@@ -102,7 +106,7 @@ struct JBackendWrapper
 	struct JBackend backend;
 	struct JBackend* orig;
 	struct JStorageTier* tier_data;
-	struct JBackendStackScope scope;
+	struct JManagedBackendScope scope;
 };
 
 struct KVEntry
@@ -113,18 +117,18 @@ struct KVEntry
 };
 
 /// puts KVEntry in kv store.
-/** \private \memberof JBackendStack */
-gboolean kv_put(JBackendStack* this, const gchar* namespace, const gchar* key,
+/** \private \memberof JManagedBackends */
+gboolean kv_put(JManagedBackends* this, const gchar* namespace, const gchar* key,
 		struct KVEntry* entry);
 
 /// get KVEntry in kv store.
-/** \private \memberof JBackendStack */
-gboolean kv_get(JBackendStack* this, const gchar* namespace, const gchar* key,
+/** \private \memberof JManagedBackends */
+gboolean kv_get(JManagedBackends* this, const gchar* namespace, const gchar* key,
 		struct KVEntry** entry);
 
 /// rm KV entry in kv store.
-/** \private \memberof JBackendStack */
-gboolean kv_rm(JBackendStack* this, const gchar* namespace, const gchar* key);
+/** \private \memberof JManagedBackends */
+gboolean kv_rm(JManagedBackends* this, const gchar* namespace, const gchar* key);
 
 #define ACCESS(TYPE, DATA, LETTER) \
 	if (this->scope.stack->log.filename) \
@@ -271,18 +275,18 @@ write_unlock(RWSpinLock* this)
 }
 
 gboolean
-j_backend_stack_init(JConfiguration* config, JList* object_backends, JBackendStack** instance_ptr)
+j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedBackends** instance_ptr)
 {
 	JListIterator* itr;
 	JListIterator* tier_itr;
-	JBackendStack* this;
+	JManagedBackends* this;
 	struct JBackendWrapper** b_itr;
 	struct JStorageTier** t_itr;
 	const gchar* policy_name = j_configuration_get_object_policy(config);
 	const JList* policy_args = j_configuration_get_object_policy_args(config);
 	JObjectBackendPolicy* (*module_backend_policy_info)(void) = NULL;
 	JObjectBackendPolicy* tmp_policy;
-	*instance_ptr = malloc(sizeof(JBackendStack));
+	*instance_ptr = malloc(sizeof(JManagedBackends));
 	this = *instance_ptr;
 
 	// init spin lock array
@@ -307,7 +311,7 @@ j_backend_stack_init(JConfiguration* config, JList* object_backends, JBackendSta
 		(*b_itr)->backend.object.backend_sync = backend_sync;
 		(*b_itr)->backend.object.backend_delete = backend_delete;
 		(*b_itr)->orig = j_list_iterator_get(itr);
-		(*b_itr)->scope = (struct JBackendStackScope){ 0 };
+		(*b_itr)->scope = (struct JManagedBackendScope){ 0 };
 		(*b_itr)->tier_data = malloc(sizeof(JStorageTier));
 		if (j_list_iterator_next(tier_itr))
 			memcpy((*b_itr)->tier_data, j_list_iterator_get(tier_itr), sizeof(JStorageTier));
@@ -382,7 +386,7 @@ end:
 }
 
 gboolean
-j_backend_stack_fini(JBackendStack* this)
+j_backend_managed_fini(JManagedBackends* this)
 {
 	if (this->log.filename)
 	{
@@ -415,16 +419,16 @@ j_backend_stack_fini(JBackendStack* this)
 }
 
 /// \todo doku
-gboolean j_backend_stack_create(JBackendStack* this, const gchar* namespace, const gchar* path, JBackend** backend, JBackendStackScope** scope);
+gboolean j_backend_managed_object_create(JManagedBackends* this, const gchar* namespace, const gchar* path, JBackend** backend, JManagedBackendScope** scope);
 
 /// \TODO optimize for only one backend
 /// \TODO remove scope return <- just complete virtual
 gboolean
-j_backend_stack_begin(JBackendStack* this,
+j_backend_managed_object_open(JManagedBackends* this,
 		      const gchar* namespace,
 		      const gchar* path,
 		      JBackend** backend,
-		      JBackendStackScope** scope)
+		      JManagedBackendScope** scope)
 {
 	struct KVEntry* entry;
 	struct JBackendWrapper* wrapper;
@@ -442,7 +446,7 @@ j_backend_stack_begin(JBackendStack* this,
 
 		*backend = g_memdup2(this->object_backend[entry->backend_id], sizeof(struct JBackendWrapper));
 		wrapper = (void*)*backend;
-		wrapper->scope = (JBackendStackScope){
+		wrapper->scope = (JManagedBackendScope){
 			.mem = wrapper,
 			.lock_id = entry->lock_id,
 			.tier = entry->backend_id,
@@ -454,7 +458,7 @@ j_backend_stack_begin(JBackendStack* this,
 	}
 	else
 	{
-		EXE(j_backend_stack_create(this, namespace, path, backend, scope),
+		EXE(j_backend_managed_object_create(this, namespace, path, backend, scope),
 		    "failed to create new entry");
 	}
 	ret = TRUE;
@@ -463,11 +467,11 @@ end:
 }
 
 gboolean
-j_backend_stack_create(JBackendStack* this,
+j_backend_managed_object_create(JManagedBackends* this,
 		       const gchar* namespace,
 		       const gchar* path,
 		       JBackend** backend,
-		       JBackendStackScope** scope)
+		       JManagedBackendScope** scope)
 {
 	gboolean ret = FALSE;
 	struct JBackendWrapper* wrapper;
@@ -507,7 +511,7 @@ j_backend_stack_create(JBackendStack* this,
 	EXE(kv_put(this, namespace, path, &entry),
 	    "failed to store new object in kv");
 
-	wrapper->scope = (JBackendStackScope){
+	wrapper->scope = (JManagedBackendScope){
 		.mem = wrapper,
 		.lock_id = entry.lock_id,
 		.stack = this,
@@ -523,7 +527,7 @@ end:
 }
 
 gboolean
-j_backend_stack_end(JBackendStackScope* this)
+j_backend_managed_object_close(JManagedBackendScope* this)
 {
 	read_unlock(&g_array_index(this->stack->rw_spin_locks, RWSpinLock, this->lock_id));
 	free(this->mem);
@@ -531,7 +535,7 @@ j_backend_stack_end(JBackendStackScope* this)
 }
 
 gboolean
-j_backend_stack_policy_message(JBackendStack* this,
+j_backend_managed_policy_message(JManagedBackends* this,
 			       const gchar* type, gpointer data, guint length)
 {
 	if (this->policy->process_message)
@@ -542,7 +546,7 @@ j_backend_stack_policy_message(JBackendStack* this,
 }
 
 gboolean
-j_backend_stack_get_tiers(JBackendStack* this, JStorageTier const* const** tiers, guint* length)
+j_backend_managed_get_tiers(JManagedBackends* this, JStorageTier const* const** tiers, guint* length)
 {
 	if (tiers)
 	{
@@ -553,7 +557,7 @@ j_backend_stack_get_tiers(JBackendStack* this, JStorageTier const* const** tiers
 }
 
 guint
-j_backend_stack_get_tier(JBackendStack* this,
+j_backend_managed_get_tier(JManagedBackends* this,
 			 const gchar* namespace, const gchar* path)
 {
 	struct KVEntry* entry;
@@ -565,7 +569,7 @@ end:
 }
 
 gboolean
-kv_put(JBackendStack* this, const gchar* namespace, const gchar* key,
+kv_put(JManagedBackends* this, const gchar* namespace, const gchar* key,
        struct KVEntry* entry)
 {
 	gpointer batch;
@@ -581,7 +585,7 @@ end:
 }
 
 gboolean
-kv_get(JBackendStack* this, const gchar* namespace, const gchar* key,
+kv_get(JManagedBackends* this, const gchar* namespace, const gchar* key,
        struct KVEntry** entry)
 {
 	gpointer batch;
@@ -604,7 +608,7 @@ end:
 }
 
 gboolean
-kv_rm(JBackendStack* this, const gchar* namespace, const gchar* key)
+kv_rm(JManagedBackends* this, const gchar* namespace, const gchar* key)
 {
 	gpointer batch;
 	gboolean ret = FALSE;
@@ -619,7 +623,7 @@ end:
 }
 
 gboolean
-j_backend_stack_lock(JBackendStack* this,
+j_backend_managed_lock(JManagedBackends* this,
 		     JBackend*** backends,
 		     guint* length)
 {
@@ -634,7 +638,7 @@ j_backend_stack_lock(JBackendStack* this,
 
 /// returns management to stack
 gboolean
-j_backend_stack_unlock(JBackendStack* this)
+j_backend_managed_unlock(JManagedBackends* this)
 {
 	(void)this;
 	write_unlock(&this->global_lock);
@@ -642,7 +646,7 @@ j_backend_stack_unlock(JBackendStack* this)
 }
 
 gboolean
-j_backend_stack_get_all(JBackendStack* this, gchar const* namespace, gpointer* iterator)
+j_backend_managed_get_all(JManagedBackends* this, gchar const* namespace, gpointer* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -652,7 +656,7 @@ j_backend_stack_get_all(JBackendStack* this, gchar const* namespace, gpointer* i
 }
 
 gboolean
-j_backend_stack_get_by_prefix(JBackendStack* this, gchar const* namespace, gchar const* prefix, gpointer* iterator)
+j_backend_managed_get_by_prefix(JManagedBackends* this, gchar const* namespace, gchar const* prefix, gpointer* iterator)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -662,7 +666,7 @@ j_backend_stack_get_by_prefix(JBackendStack* this, gchar const* namespace, gchar
 }
 
 gboolean
-j_backend_stack_iterate(JBackendStack* this, gpointer iterator, gchar const** name)
+j_backend_managed_iterate(JManagedBackends* this, gpointer iterator, gchar const** name)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -693,7 +697,7 @@ j_backend_storage_tier_get_capacity(const JStorageTier* this)
 }
 
 gboolean
-j_backend_stack_migrate(JBackendStack* this,
+j_backend_managed_object_migrate(JManagedBackends* this,
 			const gchar* namespace,
 			const gchar* path,
 			guint dest)
@@ -785,7 +789,7 @@ end:
 }
 
 gboolean
-j_backend_stack_policy_process(JBackendStack* this, gboolean* keep_running)
+j_backend_managed_policy_process(JManagedBackends* this, gboolean* keep_running)
 {
 	gboolean ret = TRUE;
 	g_message("start process");
