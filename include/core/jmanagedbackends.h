@@ -1,4 +1,4 @@
-/** \file jbackendstack.h
+/** \file JManagedBackends.h
  * \ingroup backend
  *
  * \copyright
@@ -59,15 +59,15 @@ typedef struct JBackend JBackend;
  *
  * \todo evaluate characteristics
  
- * Collection of characteristics about a storage media, used for distributeion
+ * Collection of characteristics about a storage media, used for distribution
  * decisions by the policy. 
  *
  * \attention all values contained in this may only fixed values
- * and as this not messuared!
+ * and as this not measured!
  * 	
  * @{
  **/
- 	
+
 struct JStorageTier;
 typedef struct JStorageTier JStorageTier;
 
@@ -80,7 +80,6 @@ typedef struct JStorageTier JStorageTier;
  **/
 guint64 j_backend_storage_tier_get_bandwidth(const JStorageTier* this);
 
-/// 
 /** get estimated storage tier latency in us
  *
  * \param[in] this a storage tier
@@ -89,7 +88,6 @@ guint64 j_backend_storage_tier_get_bandwidth(const JStorageTier* this);
  **/
 guint64 j_backend_storage_tier_get_latency(const JStorageTier* this);
 
-/// 
 /** get estimated total capacity  of storage tier in bytes
  *
  * \param[in] this a storage tier
@@ -101,8 +99,6 @@ guint64 j_backend_storage_tier_get_capacity(const JStorageTier* this);
 /**
  * @}
  */
-
-
 
 struct JManagedBackends;
 typedef struct JManagedBackends JManagedBackends;
@@ -208,8 +204,7 @@ typedef struct
 	 **/
 	gboolean (*process)(gpointer policy_data);
 
-
-	gpointer data; ///< reference to data allocated in init 
+	gpointer data; ///< reference to data allocated in init
 } JObjectBackendPolicy;
 
 JObjectBackendPolicy* backend_policy_info(void);
@@ -227,135 +222,176 @@ JObjectBackendPolicy* backend_policy_info(void);
 /**
  * Additional data for a read and write access
  **/
-struct JObjectBackendRWAccess {
-	guint64 offset; ///< access offset 
-	guint64 length; ///< length of data to be written/read 
+struct JObjectBackendRWAccess
+{
+	guint64 offset; ///< access offset
+	guint64 length; ///< length of data to be written/read
 };
 
 /**
  * @}
  **/
 
-gboolean j_backend_stack_init(
-	JConfiguration* config,
-	JList* object_backends, ///< [in] list of all initialized object backends
-	JBackendStack** instance_ptr);
-gboolean j_backend_stack_fini(JBackendStack* this);
+/**
+ * \param[in] config with information as about backend performances and policy to use
+ * \param[in] object_backends a list instantiated object backends to use, in order as configured in config
+ * \param[out] instance_ptr address of initialized JManagedBackends
+ **/
+gboolean j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedBackends** instance_ptr);
 
-/// gives policy cpu time
-/// \todo how tell when this should be called?
-gboolean j_backend_stack_policy_process(JBackendStack* this, gboolean* keep_running);
+gboolean j_backend_managed_fini(JManagedBackends* this);
 
-/// fetch backend from backendstack for given name & path
-/** \public \memberof JBackendStack
- * if object not already exists use j_backend_stack_create()
- * \sa j_backend_stack_end */
-gboolean j_backend_stack_begin(JBackendStack* this,
-			       const gchar* namespace,
-			       const gchar* path,
-			       JBackend** backend,	  ///< [out] backend where object in initealy stored
-			       JBackendStackScope** scope ///< [out] backend stack scope to close connection when finished
-);
+/**
+ * Hands current thread to policy as processing resource
+ * \sa JObjectBackendPolicy 
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[out] keep_running signals if the policy processing function should be called again after return
+ *             \todo more useful if different calling pattern get defined
+ **/
+gboolean j_backend_managed_policy_process(JManagedBackends* this, gboolean* keep_running);
+
+/**
+ * Fetches backend where a given object is stored. Also blocks migration for that object.
+ * Use j_backend_managed_object_open() to allow migration again. If the object not already exists
+ * use j_backend_managed_object_create() to create it
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace of the object
+ * \param[in] path of the object
+ * \param[out] backend where the object is stored
+ * \param[out] scope object to track object access, e.g. needed to unlock the object later.
+ **/
+gboolean j_backend_managed_object_open(JManagedBackends* this, const gchar* namespace, const gchar* path, JBackend** backend, JManagedBackendScope** scope);
+
+/**
+ * Creates a object placed on a backend defined by the current policy.
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace  of the object
+ * \param[in] path of the object
+ * \param[out] backend where the object should be created
+ * \param[out] scope \ref j_backend_managed_object_open()
+ **/
+gboolean j_backend_managed_object_create(JManagedBackends* this, const gchar* namespace, const gchar* path, JBackend** backend, JManagedBackendScope** scope);
+
+/**
+ * Removes access flag from object. Needed to re-enable migration, after blocking with j_backend_managed_object_open() or j_backend_object_open().
+ **/
+gboolean j_backend_managed_object_close(JManagedBackendScope* scope);
+
+/**
+ * Sends a message to the policy.
+ * \todo add reply channel 
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] type message type encoded as 0-terminated string
+ * \param[inout] data optional message data
+ * \param[in] size of data in bytes
+ **/
+gboolean j_backend_managed_policy_message(JManagedBackends* this, const gchar* type, gpointer data, guint length);
+
+/**
+ * Get storage tier characteristics, the position in the array correspond to the tierID.
+ * \attention \ref JStorageTier
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[inout] tiers array of storage tiers, set to NULL if you only interested in the length.
+ * \param[out] length number of storages tiers and length of tiers, if not NULL
+ **/
+gboolean j_backend_managed_get_tiers(JManagedBackends* this, const JStorageTier* const** tiers, guint* length);
+
+/**
+ * Fetch tier the object is currently stored on.
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace  of the object
+ * \param[in] path of the object
+ *
+ * \return tier id of tier the object is stored on
+ * \retval -1 on error
+ **/
+guint j_backend_managed_get_tier(JManagedBackends* this, const gchar* namespace, const gchar* path);
+
+/**
+ * Migrates an object from one tier to another.
+ *
+ * If the destination tier is equal the current tier, nothing happens.
+ *
+ * The call blocks until all resources for the migration ar available and the migration is finished.
+ * For returning immediately if the resources are busy use j_backend_stack_migrate_object_if_free()
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace of the object to migrate
+ * \param[in] path of the object to migrate
+ * \param[in] dest tier id of migration destination
+ *
+ * \todo add migration command working with object ids?
+ * \todo add non blocking version + schedule queued accesses
+ **/
+gboolean j_backend_managed_object_migrate(JManagedBackends* this, const gchar* namespace, const gchar* path, guint dest);
+
+/**
+ * If resources a free migrates the specified object to the destination tier, if not return.
+ *
+ * \retval FALSE on error or if resources are busy
+ **/
+gboolean j_backend_managed_object_migrate_if_free(JManagedBackends* this, const gchar* namespace, const gchar* path, guint dest);
+
+/**
+ * Stops all migrations at all backends, used for maintenance.
+ * use j_backend_stack_unlock() to re-enable migration
+ *
+ * \attention changing object locations or editing them might crashes the policy!
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[inout] address to backends array of backends managed, set to NULL if not needed
+ * \param[out] length
+ * \todo remove for simpler code?
+ **/
+gboolean j_backend_managed_lock(JManagedBackends* this, JBackend*** backends, guint* length);
+
+/**
+ * returns backend management to JManagedBackends
+ **/
+gboolean j_backend_managed_unlock(JManagedBackends* this);
+
+/**
+ * Iterate through all existing object paths in a namespace.
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace of objects to iterate
+ * \param[out] iterator used with j_backend_stack_iterate() to access object paths
+ *
+ * \sa j_backend_stack_iterate(), j_backend_managed_get_by_prefix()
+ **/
+gboolean j_backend_managed_get_all(JManagedBackends* this, gchar const* namespace, gpointer* iterator);
 
 
-gboolean
-j_backend_stack_create(JBackendStack* this,
-		       const gchar* namespace,
-		       const gchar* path,
-		       JBackend** backend,
-		       JBackendStackScope** scope);
+/**
+ * Iterate all object paths in a namespace with a given prefix
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[in] namespace of objects to iterate
+ * \param[in] prefix of objects to iterate
+ * \param[out] iterator used with j_backend_stack_iterate() to access object paths
+ *
+ * \sa j_backend_managed_get_all(), _backend_managed_iterate()
+ **/
+gboolean j_backend_managed_get_by_prefix(JManagedBackends* this, gchar const* namespace, gchar const* prefix, gpointer* iterator);
 
-/// closes backend connection opend with j_backend_stack_begin \todo redefine message
-gboolean j_backend_stack_end(JBackendStackScope* scope);
-
-/// send a message to the policy
-/** \public \memberof JBackendStack
- * \retval FALSE on error
- * \sa JObjectBackendPolicy::process_message */
-gboolean j_backend_stack_policy_message(JBackendStack* this,
-					const gchar* type, ///< [in] message type encoded as 0-terminated string
-					gpointer data,	   ///< [in,out] optional message data
-					guint length	   ///< [in] size of message data
-);
-
-/// get storage tier characteristics (position = tierID)
-/** \public \memberof JBackendStack
- * \retval FALSE on error */
-gboolean j_backend_stack_get_tiers(JBackendStack* this,
-				   const JStorageTier* const** tiers, ///< [out] array of storage tiers, set NULL if only the length is of interest
-				   guint* length		      ///< [out] length of array
-);
-
-/// get current tier of object
-/** \public \memberof JBackendStack
- * \return tier id, to look up tier data in results of j_backend_stack_get_tiers()
- * \retval -1 on error */
-guint j_backend_stack_get_tier(JBackendStack* this,
-			       const gchar* namespace, const gchar* path);
-
-/// migrates an object from one tier to another
-/** \public \memberof JBackendStack
- * if destination tier == current tier dose nothing
- * call will block until resources are free for migration, if you want only migarte if resources are free
- * use j_backend_stack_migrate_if_free()
- * \retval FALSE on error
- * \sa j_backend_stack_get_tiers
- * \todo maybe introduce object-ids for internal communication */
-gboolean j_backend_stack_migrate(JBackendStack* this,
-				 const gchar* namespace, ///< [in] of object to migrate
-				 const gchar* path,	 ///< [in] of object to migrate
-				 guint dest		 ///< [in] tier id of tier to migrate object to
-);
-
-/// migartes an object from on tier to another
-/** \public \memberof JBackendStack
- * to wait until resources are free use j_backend_stack_migrate()
- * \retval FALSE if resource is bussy or on failure
- * \sa j_backend_stack_get_tiers
- */
-gboolean j_backend_stack_migrate_if_free(JBackendStack* this,
-					 const gchar* namespace, ///< [in] of object to migaret
-					 const gchar* path,	 ///< [in] of object to migrate
-					 guint dest		 ///< [in] tier id of tier to migrate object to
-);
-
-/// disable all migration actions and gives access to backends
-/** \public \memberof JBackendStack
- * \deprecated
- * \retval FALSE on error
- * \sa j_backends_stack_unlock
- */
-gboolean j_backend_stack_lock(JBackendStack* this,
-			      JBackend*** backends, ///< [out] array of backends managed by stack, set to NULL if not interested
-			      guint* length	    ///< [out] length of backends array, must differ from NULL if backends nq NULL
-);
-
-/// returns management to stack \deprecated
-gboolean j_backend_stack_unlock(JBackendStack* this);
-
-/// get iterator for all objects contained in namespace
-/** \public \memberof JBackendStack
- * \retval FALSE on error
- * \sa j_backend_stack_iterate
- */
-gboolean
-j_backend_stack_get_all(JBackendStack* this, gchar const* namespace, gpointer* iterator);
-
-/// get iterator for all objects contained in namespace with given prefix
-/** \public \memberof JBackendStack
- * \retval FALSE on error
- * \sa j_backend_stack_iterate
- */
-gboolean
-j_backend_stack_get_by_prefix(JBackendStack* this, gchar const* namespace, gchar const * prefix, gpointer* iterator);
-
-/// iterate through objects,
-/** \public \memberof JBackendStack
- * \retval FALSE if no elements remain or on error
- * \sa j_backend_stack_get_all j_backend_stack_get_by_prefix
- */
-gboolean
-j_backend_stack_iterate(JBackendStack* this, gpointer iterator, gchar const** name);
+/**
+ * Advance iterator to get the next path.
+ *
+ * \attention Objects added or removed while iterating may invalidates the iterator. This depends on the used kv-store-backend for the JManagedBackends
+ *
+ * \param[in] this JManagedBackends instance
+ * \param[inout] iterator 
+ * \param[out] path of next object
+ *
+ * \sa j_backend_managed_get_all(), j_backend_managed_get_by_prefix()
+ **/
+gboolean j_backend_stack_iterate(JManagedBackends* this, gpointer iterator, gchar const** path);
 
 /**
  * @}
