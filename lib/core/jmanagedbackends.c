@@ -30,13 +30,13 @@
 typedef struct
 {
 	gint read_access_count; ///< number of read access
-	guint generation;	///< generation count, incremented after each write_access
-	gint write_access;	///< true if a write operation is scheduled or running
+	guint generation; ///< generation count, incremented after each write_access
+	gint write_access; ///< true if a write operation is scheduled or running
 } RWSpinLock;
 
 /// acquired a read lock
 /** \public \memberof RWSpinLock
- * \return data gegenartion when clock is acquired 
+ * \return data gegenartion when clock is acquired
  * \sa read_unlock */
 guint read_lock(RWSpinLock* this);
 
@@ -47,7 +47,7 @@ void read_unlock(RWSpinLock* this);
 
 /// acquire a write lock
 /** \public \memberof RWSpinLock
- * this will increase the generation count 
+ * this will increase the generation count
  * \return generation before
  * \sa write_unlock*/
 guint write_lock(RWSpinLock* this);
@@ -275,9 +275,11 @@ write_unlock(RWSpinLock* this)
 }
 
 /// proxy function
-gchar const*const* j_configuration_get_object_tiers(JConfiguration* config);
-gchar const*const* j_configuration_get_object_tiers(JConfiguration* config) {
-	(void) config;
+gchar const* const* j_configuration_get_object_tiers(JConfiguration* config);
+gchar const* const*
+j_configuration_get_object_tiers(JConfiguration* config)
+{
+	(void)config;
 	return NULL;
 }
 
@@ -285,12 +287,12 @@ gboolean
 j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedBackends** instance_ptr)
 {
 	JListIterator* itr;
-	gchar const*const* tier_itr;
+	gchar const* const* tier_itr;
 	JManagedBackends* this;
 	struct JBackendWrapper** b_itr;
 	struct JStorageTier** t_itr;
 	const gchar* policy_name = j_configuration_get_object_policy(config);
-	char const*const* policy_args = j_configuration_get_object_policy_args(config);
+	char const* const* policy_args = j_configuration_get_object_policy_args(config);
 	JObjectBackendPolicy* (*module_backend_policy_info)(void) = NULL;
 	JObjectBackendPolicy* tmp_policy;
 	*instance_ptr = malloc(sizeof(JManagedBackends));
@@ -432,10 +434,10 @@ gboolean j_backend_managed_object_create(JManagedBackends* this, const gchar* na
 /// \TODO remove scope return <- just complete virtual
 gboolean
 j_backend_managed_object_open(JManagedBackends* this,
-		      const gchar* namespace,
-		      const gchar* path,
-		      JBackend** backend,
-		      JManagedBackendScope** scope)
+			      const gchar* namespace,
+			      const gchar* path,
+			      JBackend** backend,
+			      JManagedBackendScope** scope)
 {
 	struct KVEntry* entry;
 	struct JBackendWrapper* wrapper;
@@ -475,10 +477,10 @@ end:
 
 gboolean
 j_backend_managed_object_create(JManagedBackends* this,
-		       const gchar* namespace,
-		       const gchar* path,
-		       JBackend** backend,
-		       JManagedBackendScope** scope)
+				const gchar* namespace,
+				const gchar* path,
+				JBackend** backend,
+				JManagedBackendScope** scope)
 {
 	gboolean ret = FALSE;
 	struct JBackendWrapper* wrapper;
@@ -543,7 +545,7 @@ j_backend_managed_object_close(JManagedBackendScope* this)
 
 gboolean
 j_backend_managed_policy_message(JManagedBackends* this,
-			       const gchar* type, gpointer data, guint length)
+				 const gchar* type, gpointer data, guint length)
 {
 	if (this->policy->process_message)
 	{
@@ -565,7 +567,7 @@ j_backend_managed_get_tiers(JManagedBackends* this, JStorageTier const* const** 
 
 guint
 j_backend_managed_get_tier(JManagedBackends* this,
-			 const gchar* namespace, const gchar* path)
+			   const gchar* namespace, const gchar* path)
 {
 	struct KVEntry* entry;
 	EXE(kv_get(this, namespace, path, &entry),
@@ -631,8 +633,8 @@ end:
 
 gboolean
 j_backend_managed_lock(JManagedBackends* this,
-		     JBackend*** backends,
-		     guint* length)
+		       JBackend*** backends,
+		       guint* length)
 {
 	write_lock(&this->global_lock);
 	if (backends != NULL)
@@ -705,9 +707,9 @@ j_backend_storage_tier_get_capacity(const JStorageTier* this)
 
 gboolean
 j_backend_managed_object_migrate(JManagedBackends* this,
-			const gchar* namespace,
-			const gchar* path,
-			guint dest)
+				 const gchar* namespace,
+				 const gchar* path,
+				 guint dest)
 {
 	struct KVEntry* entry;
 	struct KVEntry new_entry;

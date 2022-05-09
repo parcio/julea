@@ -58,23 +58,23 @@ typedef struct JBackend JBackend;
  * \defgroup JStorageTier
  *
  * \todo evaluate characteristics
- 
+
  * Collection of characteristics about a storage media, used for distribution
- * decisions by the policy. 
+ * decisions by the policy.
  *
  * \attention all values contained in this may only fixed values
  * and as this not measured!
- * 	
+ *
  * @{
  **/
 
 struct JStorageTier;
 typedef struct JStorageTier JStorageTier;
 
-/** 
+/**
  * get estimated storage tier bandwidth in bytes per second
  *
- * \param[in] this a storage tier  
+ * \param[in] this a storage tier
  *
  * \return mean of bandwidth in bytes per second
  **/
@@ -104,7 +104,7 @@ struct JManagedBackends;
 typedef struct JManagedBackends JManagedBackends;
 
 /**
- * Contains data about an ongoing access to a object. 
+ * Contains data about an ongoing access to a object.
  **/
 struct JManagedBackendScope;
 typedef struct JManagedBackendScope JManagedBackendScope;
@@ -146,7 +146,7 @@ typedef struct
 	 *                  The list is like the strings NULL terminated
 	 * \param[in]  backends access to the object backend instances.
 	 **/
-	gboolean (*init)(gpointer* policy_data, gchar const*const* args, JManagedBackends* backends);
+	gboolean (*init)(gpointer* policy_data, gchar const* const* args, JManagedBackends* backends);
 
 	/**
 	 * \param[in] policy_data data at address assigned in init
@@ -169,7 +169,7 @@ typedef struct
 	 *            the object is currently stored on
      * \param[in] access type of access performed \sa JObjectBackendAccessType
 	 * \param[in] data corresponding to the access type.
-	 *            For more details see \ref JObjectBackendAccessDetails 
+	 *            For more details see \ref JObjectBackendAccessDetails
 	 **/
 	gboolean (*process_access)(gpointer policy_data, const gchar* namespace, const gchar* path, guint obj_id, guint tier, JObjectBackendAccessTypes access, gconstpointer data);
 
@@ -211,7 +211,7 @@ typedef struct
 JObjectBackendPolicy* backend_policy_info(void);
 
 /**
- * \defgroup JObjectBackendAccessDetails 
+ * \defgroup JObjectBackendAccessDetails
  *
  * Structs used to pass additional data on a
  * JObjectBackendPolicy.process_access  call
@@ -244,7 +244,7 @@ gboolean j_backend_managed_fini(JManagedBackends* this);
 
 /**
  * Hands current thread to policy as processing resource
- * \sa JObjectBackendPolicy 
+ * \sa JObjectBackendPolicy
  *
  * \param[in] this JManagedBackends instance
  * \param[out] keep_running signals if the policy processing function should be called again after return
@@ -283,7 +283,7 @@ gboolean j_backend_managed_object_close(JManagedBackendScope* scope);
 
 /**
  * Sends a message to the policy.
- * \todo add reply channel 
+ * \todo add reply channel
  *
  * \param[in] this JManagedBackends instance
  * \param[in] type message type encoded as 0-terminated string
@@ -368,7 +368,6 @@ gboolean j_backend_managed_unlock(JManagedBackends* this);
  **/
 gboolean j_backend_managed_get_all(JManagedBackends* this, gchar const* namespace, gpointer* iterator);
 
-
 /**
  * Iterate all object paths in a namespace with a given prefix
  *
@@ -387,7 +386,7 @@ gboolean j_backend_managed_get_by_prefix(JManagedBackends* this, gchar const* na
  * \attention Objects added or removed while iterating may invalidates the iterator. This depends on the used kv-store-backend for the JManagedBackends
  *
  * \param[in] this JManagedBackends instance
- * \param[inout] iterator 
+ * \param[inout] iterator
  * \param[out] path of next object
  *
  * \sa j_backend_managed_get_all(), j_backend_managed_get_by_prefix()

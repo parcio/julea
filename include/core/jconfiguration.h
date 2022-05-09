@@ -44,14 +44,13 @@ struct JConfiguration;
 
 typedef struct JConfiguration JConfiguration;
 
-struct JStorageTier {
+struct JStorageTier
+{
 	guint64 bandwidth; ///< bandwidth in byte ber second
 	guint64 latency; ///< latency in ns
 	guint64 capacity; ///< capacity in byte
 };
 typedef struct JStorageTier JStorageTier;
-
-
 
 /**
  * Returns the configuration.
@@ -129,7 +128,7 @@ gchar const* j_configuration_get_checksum(JConfiguration*);
 gchar const* j_configuration_get_object_policy_kv_backend(JConfiguration*);
 gchar const* j_configuration_get_object_policy_kv_path(JConfiguration*);
 gchar const* j_configuration_get_object_policy(JConfiguration*);
-gchar const*const* j_configuration_get_object_policy_args(JConfiguration*);
+gchar const* const* j_configuration_get_object_policy_args(JConfiguration*);
 G_END_DECLS
 
 /**
