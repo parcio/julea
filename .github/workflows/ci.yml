@@ -19,7 +19,7 @@ on: [push, pull_request]
 jobs:
   style:
     name: Style
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -331,7 +331,7 @@ jobs:
           ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -406,7 +406,7 @@ jobs:
   publish:
     name: Publish
     needs: [doxygen, coverage]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     if: ${{ github.ref == 'refs/heads/master' }}
