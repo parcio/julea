@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Check format
@@ -40,9 +40,15 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-22.04
+            compiler: gcc
+            compiler_version: 11.2.0
+          - dist: ubuntu-22.04
+            compiler: clang
+            compiler_version: 11.1.0
           - dist: ubuntu-20.04
             compiler: gcc
-            compiler_version: 9.3.0
+            compiler_version: 9.4.0
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
@@ -54,12 +60,12 @@ jobs:
             compiler_version: 9.0.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Cache dependencies
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -80,7 +86,7 @@ jobs:
         os:
           - dist: ubuntu-20.04
             compiler: gcc
-            compiler_version: 9.3.0
+            compiler_version: 9.4.0
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
@@ -102,7 +108,7 @@ jobs:
             dependencies: system
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Clean up system packages
@@ -121,7 +127,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -154,7 +160,7 @@ jobs:
         os:
           - dist: ubuntu-20.04
             compiler: gcc
-            compiler_version: 9.3.0
+            compiler_version: 9.4.0
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
@@ -210,7 +216,7 @@ jobs:
             dependencies: system
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Clean up system packages
@@ -229,7 +235,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: matrix.dependencies == 'spack'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -335,7 +341,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Install dependencies
@@ -346,7 +352,7 @@ jobs:
         run: |
           doxygen
       - name: Upload doxygen
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: doxygen
           path: html
@@ -359,15 +365,15 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Cache dependencies
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: dependencies
-          key: ubuntu-20.04-gcc-9.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ubuntu-20.04-gcc-9.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
@@ -399,7 +405,7 @@ jobs:
           . scripts/environment.sh
           ninja -C bld coverage
       - name: Upload coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: coverage
           path: bld/meson-logs/coveragereport
@@ -413,17 +419,17 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: gh-pages
           path: pages
       - name: Download doxygen
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: doxygen
           path: doxygen
       - name: Download coverage
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: coverage
           path: coverage
