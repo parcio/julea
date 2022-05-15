@@ -152,6 +152,13 @@ spack_install_dependencies ()
 		if test -n "${CI}"
 		then
 			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
+			spack_cmd compiler list
+
+			if test -n "${JULEA_SPACK_COMPILER}"
+			then
+				# This should fail if Spack does not recognize the compiler
+				spack_cmd compiler info "${JULEA_SPACK_COMPILER}"
+			fi
 		fi
 
 		if test -n "${JULEA_SPACK_COMPILER}"
