@@ -70,7 +70,7 @@ jobs:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: ${{ steps.cache.outputs.cache-hit }} != 'true'
         env:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
@@ -84,6 +84,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-22.04
+            compiler: gcc
+            compiler_version: 11.2.0
+          - dist: ubuntu-22.04
+            compiler: clang
+            compiler_version: 11.1.0
           - dist: ubuntu-20.04
             compiler: gcc
             compiler_version: 9.4.0
@@ -118,21 +124,26 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
       - name: Install dependencies
-        if: matrix.dependencies == 'system'
+        if: ${{ matrix.dependencies }} == 'system'
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
-          sudo pip3 install meson
+          if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
+          then
+            sudo apt --yes --no-install-recommends install meson
+          else
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
+            sudo pip3 install meson
+          fi
       - name: Cache dependencies
         id: cache
-        if: matrix.dependencies == 'spack'
+        if: ${{ matrix.dependencies }} == 'spack'
         uses: actions/cache@v3
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
-        if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        if: ${{ matrix.dependencies }} == 'spack' && ${{ steps.cache.outputs.cache-hit }} != 'true'
         run: |
           exit 1
       - name: Configure
@@ -226,7 +237,7 @@ jobs:
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
       - name: Install dependencies
-        if: matrix.dependencies == 'system'
+        if: ${{ matrix.dependencies }} == 'system'
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
@@ -234,30 +245,30 @@ jobs:
           sudo pip3 install meson
       - name: Cache dependencies
         id: cache
-        if: matrix.dependencies == 'spack'
+        if: ${{ matrix.dependencies }} == 'spack'
         uses: actions/cache@v3
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
-        if: matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true'
+        if: ${{ matrix.dependencies }} == 'spack' && ${{ steps.cache.outputs.cache-hit }} != 'true'
         run: |
           exit 1
       - name: Set up MongoDB
-        if: matrix.julea.kv == 'mongodb'
+        if: ${{ matrix.julea.kv }} == 'mongodb'
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install mongodb-server
           sudo systemctl start mongodb.service
       - name: Set up MySQL
-        if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql'
+        if: ${{ matrix.julea.db }} == 'mysql' && ${{ matrix.julea.db-server }} == 'mysql'
         run: |
           sudo systemctl start mysql.service
           mysql --user=root --password=root --execute="CREATE DATABASE juleadb;"
           mysql --user=root --password=root --execute="CREATE USER 'julea'@'localhost' IDENTIFIED WITH mysql_native_password BY 'aeluj';"
           mysql --user=root --password=root --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
       - name: Set up MariaDB
-        if: matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb'
+        if: ${{ matrix.julea.db }} == 'mysql' && ${{ matrix.julea.db-server }} == 'mariadb'
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
         # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
         run: |
@@ -319,7 +330,7 @@ jobs:
           ./scripts/test.sh
           ./scripts/setup.sh stop
       - name: HDF5 Tests
-        if: matrix.julea.db != 'memory'
+        if: ${{ matrix.julea.db }} != 'memory'
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
@@ -375,7 +386,7 @@ jobs:
           path: dependencies
           key: ubuntu-20.04-gcc-9.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: ${{ steps.cache.outputs.cache-hit }} != 'true'
         run: |
           exit 1
       - name: Configure
