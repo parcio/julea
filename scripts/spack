@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='f40f1b5c7cbac0b7b9cb2ffe07badf52066db1de'
+	spack_commit='b9e3ee6dd07710f2a377e1624d1665da65ca834b'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -100,8 +100,8 @@ spack_get_dependencies ()
 	dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 	# Recommended dependencies
-	dependencies="${dependencies} hdf5~mpi@1.12:"
-	dependencies="${dependencies} libfuse"
+	dependencies="${dependencies} hdf5~mpi"
+	dependencies="${dependencies} libfuse~utils"
 	dependencies="${dependencies} lmdb"
 	dependencies="${dependencies} sqlite"
 
@@ -117,7 +117,7 @@ spack_get_dependencies ()
 		dependencies="${dependencies} py-gcovr"
 	fi
 
-	#dependencies="${dependencies} enzo@main#^hdf5@1.12:"
+	#dependencies="${dependencies} enzo@main"
 	#dependencies="${dependencies} mpi"
 
 	printf '%s' "${dependencies}"

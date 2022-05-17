@@ -22,7 +22,7 @@ The following steps install Enzo via Spack and run one of its examples using JUL
 
 ```console
 $ . scripts/environment.sh
-$ spack install enzo@main ^hdf5@1.12:
+$ spack install enzo@main
 $ spack load enzo
 $ export HDF5_VOL_CONNECTOR=julea-db
 $ ./scripts/setup.sh start
