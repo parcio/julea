@@ -27,7 +27,13 @@
 
 #include "benchmark.h"
 
+#include "benchmark_statistics.h"
+
+static double quantile_of_interest[] = {0.9999, 0.99, 0.95, 0.90, 0.1, 0.05, 0.01, 0.0001};
+static guint num_quantile_of_interest = sizeof(quantile_of_interest) / sizeof(*quantile_of_interest);
+
 static gint opt_duration = 1;
+static gint opt_statistical_verbosity = 0;
 static gboolean opt_list = FALSE;
 static gchar* opt_machine_separator = NULL;
 static gboolean opt_machine_readable = FALSE;
@@ -39,6 +45,8 @@ static JSemantics* j_benchmark_semantics = NULL;
 
 static GList* j_benchmarks = NULL;
 static gsize j_benchmark_name_max = 0;
+
+void j_benchmark_timer_round_time_fill_statistics(BenchmarkRun*);
 
 JSemantics*
 j_benchmark_get_semantics(void)
@@ -60,6 +68,14 @@ j_benchmark_timer_start(BenchmarkRun* run)
 	{
 		g_timer_continue(run->timer);
 	}
+}
+
+void
+j_benchmark_timer_round_time(BenchmarkRun* run)
+{
+	g_return_if_fail(run != NULL);
+
+	j_benchmark_statistics_add(run->round_time_data, g_timer_elapsed(run->timer, NULL));
 }
 
 void
@@ -115,6 +131,8 @@ j_benchmark_add(gchar const* name, BenchmarkFunc benchmark_func)
 	run->iterations = 0;
 	run->operations = 0;
 	run->bytes = 0;
+	run->round_time_statistics.round_times_measured = 0;
+	run->round_time_data = j_benchmark_statistics_init(300);
 
 	j_benchmarks = g_list_prepend(j_benchmarks, run);
 }
@@ -126,6 +144,7 @@ j_benchmark_run_free(gpointer data)
 
 	g_return_if_fail(data != NULL);
 
+	j_benchmark_statistics_fini(run->round_time_data);
 	g_timer_destroy(run->timer);
 	g_free(run->name);
 	g_free(run);
@@ -179,6 +198,14 @@ j_benchmark_run_one(BenchmarkRun* run)
 
 	elapsed_time = g_timer_elapsed(run->timer, NULL);
 
+	j_benchmark_timer_round_time_fill_statistics(run);
+	double quantiles[num_quantile_of_interest];
+	if(run->round_time_statistics.round_times_measured) {
+		for(guint i = 0; i < num_quantile_of_interest; ++i) {
+			quantiles[i] = j_benchmark_statistics_quantiles(run->round_time_data, quantile_of_interest[i]);
+		}
+	}
+
 	if (run->iterations > 1)
 	{
 		run->operations *= run->iterations;
@@ -226,6 +253,21 @@ j_benchmark_run_one(BenchmarkRun* run)
 			g_print("%s-", opt_machine_separator);
 		}
 
+		if(run->round_time_statistics.round_times_measured != 0) {
+			double numbers[] = {
+				run->round_time_statistics.min,
+				run->round_time_statistics.max,
+				run->round_time_statistics.mean,
+				run->round_time_statistics.derivation
+			};
+			for(guint i = 0; i < sizeof(numbers)/sizeof(*numbers); ++i) {
+				g_print("%s%f", opt_machine_separator, numbers[i]);
+			}
+			for(guint i = 0; i < num_quantile_of_interest; ++i) {
+				g_print("%s%f", opt_machine_separator, quantiles[i]);
+			}
+		}
+
 		g_print("%s%f\n", opt_machine_separator, elapsed_total);
 	}
 
@@ -249,7 +291,7 @@ j_benchmark_run_all(void)
 	{
 		goto skip_header;
 	}
-
+	/// \todo add new statistical values to headers
 	if (!opt_machine_readable)
 	{
 		gchar const* left;
@@ -301,6 +343,7 @@ main(int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "duration", 'd', 0, G_OPTION_ARG_INT, &opt_duration, "Approximate duration in seconds per benchmark", "1" },
+		{ "statistical verbosity", 's', 0, G_OPTION_ARG_INT, &opt_statistical_verbosity, "Detail of statistics which should be shown in human readable output, possible values 0-None,1-Some,2-All", "0" },
 		{ "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available benchmarks", NULL },
 		{ "machine-readable", 'm', 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
 		{ "machine-separator", 0, 0, G_OPTION_ARG_STRING, &opt_machine_separator, "Separator for machine-readable output", "\\t" },

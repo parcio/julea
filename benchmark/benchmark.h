@@ -18,6 +18,7 @@
 
 #ifndef JULEA_BENCHMARK_H
 #define JULEA_BENCHMARK_H
+#define JULEA_H
 
 #include <glib.h>
 
@@ -30,6 +31,14 @@ struct BenchmarkRun
 	guint iterations;
 	guint64 operations;
 	guint64 bytes;
+	void* round_time_data;
+	struct {
+		guint round_times_measured;
+		double min;
+		double max;
+		double mean;
+		double derivation;
+	} round_time_statistics;
 };
 
 typedef struct BenchmarkRun BenchmarkRun;
@@ -41,6 +50,7 @@ typedef void (*BenchmarkFunc)(BenchmarkRun*);
 JSemantics* j_benchmark_get_semantics(void);
 
 void j_benchmark_timer_start(BenchmarkRun*);
+void j_benchmark_timer_round_time(BenchmarkRun*);
 void j_benchmark_timer_stop(BenchmarkRun*);
 
 gboolean j_benchmark_iterate(BenchmarkRun*);
