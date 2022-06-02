@@ -102,6 +102,12 @@ H5VL_julea_db_file_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
+				if (!j_db_schema_add_field(julea_db_schema_file, "root_group", J_DB_TYPE_ID, &error))
+				{
+					j_goto_error();
+				}
+
+
 				{
 					const gchar* index[] = {
 						"name",
@@ -169,6 +175,46 @@ _error:
 	return 1;
 }
 
+/**
+ * @brief Construct the root group for a file object.
+ * 
+ * @param file A file object.
+ * @param root_group_id The ID of the respective root group. This function takes the ownership of root_group_id. It should not be freed by the caller.
+ * @param root_group_id_len The length of the ID.
+ * @attention This function takes the ownership of root_group_id. It should not be freed by the caller.
+ * @return gboolean - True for success 
+ */
+static gboolean
+file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group_id_len)
+{
+	JHDF5Object_t* root_group;
+
+	g_return_val_if_fail(file != NULL, false);
+	g_return_val_if_fail(file->type == J_HDF5_OBJECT_TYPE_FILE, false);
+
+	if (!(root_group = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_GROUP)))
+	{
+		return false;
+	}
+
+	if (!(root_group->group.name = g_strdup("/")))
+	{
+		return false;
+	}
+
+	if (!(root_group->group.file = H5VL_julea_db_object_ref(file)))
+	{
+		return false;
+	}
+
+	root_group->backend_id = root_group_id;
+	root_group->backend_id_len = root_group_id_len;
+
+	file->file.root_group = root_group;
+
+	return true;
+}
+
 void*
 H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id, void** req)
 {
@@ -179,9 +225,12 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JDBSelector) selector_file = NULL;
+	void* root_group_id = NULL;
 	JHDF5Object_t* object = NULL;
 	JDBType type;
 	gboolean exist;
+	guint64 root_group_id_len;
 
 	(void)fcpl_id;
 	(void)fapl_id;
@@ -254,6 +303,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 			j_goto_error();
 		}
 
+
 		if (!j_db_entry_insert(entry, batch, &error))
 		{
 			j_goto_error();
@@ -268,10 +318,77 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		{
 			j_goto_error();
 		}
+
+		// create root group for the file
+		// do not use predefined method which would create a link
+		j_db_entry_unref(entry);
+
+		if (!(entry = j_db_entry_new(julea_db_schema_group, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_set_field(entry, "file", object->backend_id, object->backend_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_insert(entry, batch, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_batch_execute(batch))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_get_id(entry, &root_group_id, &root_group_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		// update file record with now known root group id
+		j_db_entry_unref(entry);
+
+		if (!(entry = j_db_entry_new(julea_db_schema_file, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_set_field(entry, "root_group", root_group_id, root_group_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!(selector_file = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_selector_add_field(selector_file, "_id", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_update(entry, selector_file, batch, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_batch_execute(batch))
+		{
+			j_goto_error();
+		}
 	}
 	else
 	{
 		if (!j_db_iterator_get_field(iterator, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_iterator_get_field(iterator, "root_group", &type, &root_group_id, &root_group_id_len, &error))
 		{
 			j_goto_error();
 		}
@@ -302,6 +419,10 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		}
 	}
 
+	// construct and store root group object to file struct
+	//CURRTODO error check
+	file_add_root_group(object, root_group_id, root_group_id_len);
+
 	return object;
 
 _error:
@@ -320,7 +441,9 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(JDBSelector) selector = NULL;
+	void* root_group_id = NULL;
 	JHDF5Object_t* object = NULL;
+	guint64 root_group_id_len;
 	JDBType type;
 
 	(void)flags;
@@ -369,6 +492,13 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 	{
 		j_goto_error();
 	}
+
+	if (!j_db_iterator_get_field(iterator, "root_group", &type, &root_group_id, &root_group_id_len, &error))
+	{
+		j_goto_error();
+	}
+
+	file_add_root_group(object, root_group_id, root_group_id_len);
 
 	g_assert(!j_db_iterator_next(iterator, NULL));
 

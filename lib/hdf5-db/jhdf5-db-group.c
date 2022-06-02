@@ -221,22 +221,6 @@ _error:
 	return 1;
 }
 
-/// \todo remove this (by adding an explicit root group)
-JHDF5Object_t*
-H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file)
-{
-	JHDF5Object_t* fake_root = NULL;
-
-	if (file->type == J_HDF5_OBJECT_TYPE_FILE)
-	{
-		fake_root = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_GROUP);
-		fake_root->group.file = H5VL_julea_db_object_ref(file);
-		fake_root->group.name = g_strdup("/");
-	}
-
-	return fake_root;
-}
-
 void*
 H5VL_julea_db_group_create(void* obj, const H5VL_loc_params_t* loc_params, const char* name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void** req)
 {
@@ -379,6 +363,7 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 			g_assert_not_reached();
 			j_goto_error();
 	}
+
 
 	if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
 	{

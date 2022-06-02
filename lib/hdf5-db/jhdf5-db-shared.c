@@ -120,6 +120,7 @@ H5VL_julea_db_object_unref(JHDF5Object_t* object)
 		{
 			case J_HDF5_OBJECT_TYPE_FILE:
 				g_free(object->file.name);
+				H5VL_julea_db_object_unref(object->file.root_group);
 				break;
 			case J_HDF5_OBJECT_TYPE_DATASET:
 				H5VL_julea_db_object_unref(object->dataset.file);
