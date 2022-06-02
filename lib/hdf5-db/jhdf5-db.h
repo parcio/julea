@@ -55,6 +55,7 @@ struct JHDF5Object_t
 		struct
 		{
 			char* name;
+			JHDF5Object_t* root_group;
 		} file;
 		struct
 		{
@@ -217,11 +218,9 @@ herr_t H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_par
 herr_t H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboolean attr, H5_index_t idx_type, H5_iter_order_t order, hsize_t* idx_p, JHDF5Iterate_Func_t op, void* op_data);
 herr_t H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_t* exists);
 
-// group helper
-JHDF5Object_t* H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file);
-
 // shared structs
 extern JDBSchema* julea_db_schema_link;
+extern JDBSchema* julea_db_schema_group;
 
 #define j_goto_error() \
 	do \

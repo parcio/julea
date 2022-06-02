@@ -276,6 +276,12 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 	g_return_val_if_fail(parent != NULL, FALSE);
 	g_return_val_if_fail(child != NULL, FALSE);
 
+	// special case: file -> root group
+	if (parent->type == J_HDF5_OBJECT_TYPE_FILE)
+	{
+		parent = parent->file.root_group;
+	}
+
 	if (!(selector = j_db_selector_new(julea_db_schema_link, J_DB_SELECTOR_MODE_AND, &error)))
 	{
 		j_goto_error();
@@ -349,6 +355,8 @@ H5VL_julea_db_link_create_helper(JHDF5Object_t* parent, JHDF5Object_t* child, co
 	{
 		case J_HDF5_OBJECT_TYPE_FILE:
 			file = parent;
+			// use root group as parent
+			parent = parent->file.root_group;
 			break;
 		case J_HDF5_OBJECT_TYPE_DATASET:
 			file = parent->dataset.file;
@@ -602,9 +610,8 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 
 	if (object->type == J_HDF5_OBJECT_TYPE_FILE)
 	{
-		/// \todo root group needs to be faked here (maybe add it as real group?)
 		curr_parent_type = H5I_GROUP;
-		curr_parent_obj = H5VL_julea_db_group_root_fake_helper(object);
+		curr_parent_obj = H5VL_julea_db_object_ref(object->file.root_group);
 	}
 	else
 	{
@@ -625,12 +632,12 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 		j_goto_error();
 	}
 
-	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, NULL))
+	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, curr_parent_obj->backend_id, curr_parent_obj->backend_id_len, NULL))
 	{
 		j_goto_error();
 	}
 
-	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &object->type, sizeof(JHDF5ObjectType), NULL))
+	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &(curr_parent_obj->type), sizeof(JHDF5ObjectType), NULL))
 	{
 		j_goto_error();
 	}

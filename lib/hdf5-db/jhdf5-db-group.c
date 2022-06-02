@@ -195,6 +195,12 @@ H5VL_julea_db_group_truncate_file(void* obj)
 		j_goto_error();
 	}
 
+	// do not delete the file's root group
+	if (!j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_NE, file->file.root_group->backend_id, file->file.root_group->backend_id_len, &error))
+	{
+		j_goto_error();
+	}
+
 	if (!(entry = j_db_entry_new(julea_db_schema_group, &error)))
 	{
 		j_goto_error();
@@ -219,22 +225,6 @@ _error:
 	H5VL_julea_db_error_handler(error);
 
 	return 1;
-}
-
-/// \todo remove this (by adding an explicit root group)
-JHDF5Object_t*
-H5VL_julea_db_group_root_fake_helper(JHDF5Object_t* file)
-{
-	JHDF5Object_t* fake_root = NULL;
-
-	if (file->type == J_HDF5_OBJECT_TYPE_FILE)
-	{
-		fake_root = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_GROUP);
-		fake_root->group.file = H5VL_julea_db_object_ref(file);
-		fake_root->group.name = g_strdup("/");
-	}
-
-	return fake_root;
 }
 
 void*
@@ -361,8 +351,12 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 	switch (parent->type)
 	{
 		case J_HDF5_OBJECT_TYPE_FILE:
-			file = parent;
-			break;
+			/*
+			Only the root group has the file as parent.
+			This is enforced in H5VL_julea_db_link_get_helper and H5VL_julea_db_link_create_helper
+			by transparent use of the file's root group instead of the file itself.
+			*/
+			return H5VL_julea_db_object_ref(parent->file.root_group);
 		case J_HDF5_OBJECT_TYPE_DATASET:
 			file = parent->dataset.file;
 			break;
