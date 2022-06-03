@@ -380,6 +380,11 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		{
 			j_goto_error();
 		}
+		
+		// construct and store root group object to file struct
+		//CURRTODO error check
+		file_add_root_group(object, root_group_id, root_group_id_len);
+	
 	}
 	else
 	{
@@ -392,6 +397,10 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		{
 			j_goto_error();
 		}
+
+		// construct and store root group object to file struct
+		//CURRTODO error check
+		file_add_root_group(object, root_group_id, root_group_id_len);
 
 		g_assert(!j_db_iterator_next(iterator, NULL));
 
@@ -419,9 +428,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		}
 	}
 
-	// construct and store root group object to file struct
-	//CURRTODO error check
-	file_add_root_group(object, root_group_id, root_group_id_len);
+
 
 	return object;
 
