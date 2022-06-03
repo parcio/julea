@@ -243,6 +243,7 @@ gboolean j_network_connection_fini(JNetworkConnection* connection);
  * If the message is small enough it can be injected to the network, in that case the actions finishes immediately (j_network_connection_wait_for_completion() still works).
  *
  * \todo feedback if message was injected
+ * \todo make data a gconstpointer if possible
  *
  * \attention It is only allowed to have J_CONNECTION_MAX_SEND send operations pending at the same time. Each has a maximum size of j_configuration_max_operation_size() (the connection initialization may change this value).
  *
@@ -252,7 +253,7 @@ gboolean j_network_connection_fini(JNetworkConnection* connection);
  *
  * \return TRUE on success, FALSE if an error occurred.
  */
-gboolean j_network_connection_send(JNetworkConnection* connection, gconstpointer data, gsize length);
+gboolean j_network_connection_send(JNetworkConnection* connection, gpointer data, gsize length);
 
 /**
  * Asynchronously receives data via MSG connection.

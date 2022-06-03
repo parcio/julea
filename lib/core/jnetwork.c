@@ -875,7 +875,7 @@ end:
 }
 
 gboolean
-j_network_connection_send(JNetworkConnection* connection, gconstpointer data, gsize data_len)
+j_network_connection_send(JNetworkConnection* connection, gpointer data, gsize data_len)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -923,7 +923,7 @@ j_network_connection_send(JNetworkConnection* connection, gconstpointer data, gs
 	}
 	else
 	{
-		context = (gpointer)((const char*)data - (const char*)NULL);
+		context = data;
 		size = data_len;
 
 		do
