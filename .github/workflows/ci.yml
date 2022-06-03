@@ -45,7 +45,7 @@ jobs:
             compiler_version: 11.2.0
           - dist: ubuntu-22.04
             compiler: clang
-            compiler_version: 11.1.0
+            compiler_version: 14.0.0
           - dist: ubuntu-20.04
             compiler: gcc
             compiler_version: 9.4.0
@@ -89,7 +89,7 @@ jobs:
             compiler_version: 11.2.0
           - dist: ubuntu-22.04
             compiler: clang
-            compiler_version: 11.1.0
+            compiler_version: 14.0.0
           - dist: ubuntu-20.04
             compiler: gcc
             compiler_version: 9.4.0
