@@ -633,12 +633,12 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 		j_goto_error();
 	}
 
-	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, object->backend_id, object->backend_id_len, NULL))
+	if (!j_db_selector_add_field(link_selector, "parent", J_DB_SELECTOR_OPERATOR_EQ, curr_parent_obj->backend_id, curr_parent_obj->backend_id_len, NULL))
 	{
 		j_goto_error();
 	}
 
-	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &object->type, sizeof(JHDF5ObjectType), NULL))
+	if (!j_db_selector_add_field(link_selector, "parent_type", J_DB_SELECTOR_OPERATOR_EQ, &(curr_parent_obj->type), sizeof(JHDF5ObjectType), NULL))
 	{
 		j_goto_error();
 	}
