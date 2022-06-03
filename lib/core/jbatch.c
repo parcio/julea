@@ -118,7 +118,7 @@ j_batch_new(JSemantics* semantics)
 }
 
 JBatch*
-	j_batch_new_for_template(JSemanticsTemplate template)
+j_batch_new_for_template(JSemanticsTemplate template)
 {
 	J_TRACE_FUNCTION(NULL);
 
