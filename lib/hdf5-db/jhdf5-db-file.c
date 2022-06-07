@@ -198,6 +198,7 @@ file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group
 
 	if (!(root_group->group.name = g_strdup("/")))
 	{
+		g_free(root_group);
 		return false;
 	}
 
@@ -382,8 +383,10 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		}
 
 		// construct and store root group object to file struct
-		//CURRTODO error check
-		file_add_root_group(object, root_group_id, root_group_id_len);
+		if (!file_add_root_group(object, root_group_id, root_group_id_len))
+		{
+			j_goto_error();
+		}
 	}
 	else
 	{
@@ -398,8 +401,10 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		}
 
 		// construct and store root group object to file struct
-		//CURRTODO error check
-		file_add_root_group(object, root_group_id, root_group_id_len);
+		if (!file_add_root_group(object, root_group_id, root_group_id_len))
+		{
+			j_goto_error();
+		}
 
 		g_assert(!j_db_iterator_next(iterator, NULL));
 
@@ -502,7 +507,10 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 		j_goto_error();
 	}
 
-	file_add_root_group(object, root_group_id, root_group_id_len);
+	if (!file_add_root_group(object, root_group_id, root_group_id_len))
+	{
+		j_goto_error();
+	}
 
 	g_assert(!j_db_iterator_next(iterator, NULL));
 
