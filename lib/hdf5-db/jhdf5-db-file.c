@@ -280,6 +280,8 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 	//create new file
 	if (!exist)
 	{
+		// this snippet seems unnecessary???
+		/*
 		H5VL_julea_db_object_unref(object);
 
 		if (!(object = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_FILE)))
@@ -291,6 +293,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		{
 			j_goto_error();
 		}
+		*/
 
 		if (!(entry = j_db_entry_new(julea_db_schema_file, &error)))
 		{
