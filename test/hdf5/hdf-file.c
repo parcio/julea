@@ -62,7 +62,6 @@ test_hdf_file_create_delete(void)
 
 	J_TEST_TRAP_END;
 
-	j_expect_vol_db_fail();
 	j_expect_vol_kv_fail();
 }
 
@@ -85,7 +84,35 @@ test_hdf_file_double_create(void)
 
 	J_TEST_TRAP_END;
 
-	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
+}
+
+static void
+test_hdf_file_accessible(void)
+{
+	hid_t file;
+	herr_t error;
+	htri_t access;
+
+	J_TEST_TRAP_START;
+
+	file = H5Fcreate("test_file.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	g_assert_cmpint(file, !=, H5I_INVALID_HID);
+
+	error = H5Fclose(file);
+	g_assert_cmpint(error, >=, 0);
+
+	access = H5Fis_accessible("test_file.h5", H5P_DEFAULT);
+	g_assert_cmpint(access, >, 0);
+
+	access = H5Fis_accessible("i_am_not_there.h5", H5P_DEFAULT);
+	g_assert_cmpint(access, ==, 0);
+
+	error = H5Fdelete("test_file.h5", H5P_DEFAULT);
+	g_assert_cmpint(error, >=, 0);
+
+	J_TEST_TRAP_END;
+
 	j_expect_vol_kv_fail();
 }
 
@@ -114,7 +141,6 @@ test_hdf_file_open_close(void)
 
 	J_TEST_TRAP_END;
 
-	j_expect_vol_db_fail();
 	j_expect_vol_kv_fail();
 }
 
@@ -155,7 +181,6 @@ test_hdf_file_delete(void)
 
 	J_TEST_TRAP_END;
 
-	j_expect_vol_db_fail();
 	j_expect_vol_kv_fail();
 }
 
@@ -171,7 +196,6 @@ test_hdf_file_delete_non_existent(void)
 
 	J_TEST_TRAP_END;
 
-	j_expect_vol_db_fail();
 	j_expect_vol_kv_fail();
 }
 
@@ -189,6 +213,7 @@ test_hdf_file(void)
 	g_test_add_func("/hdf5/file/create_delete", test_hdf_file_create_delete);
 	g_test_add_func("/hdf5/file/double_create", test_hdf_file_double_create);
 	g_test_add_func("/hdf5/file/open_close", test_hdf_file_open_close);
+	g_test_add_func("/hdf5/file/accessible", test_hdf_file_accessible);
 	g_test_add_func("/hdf5/file/open_non_existent", test_hdf_file_open_non_existent);
 	g_test_add_func("/hdf5/file/delete", test_hdf_file_delete);
 	g_test_add_func("/hdf5/file/double_delete", test_hdf_file_delete_non_existent);
