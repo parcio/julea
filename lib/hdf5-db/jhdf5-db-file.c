@@ -107,7 +107,6 @@ H5VL_julea_db_file_init(hid_t vipl_id)
 					j_goto_error();
 				}
 
-
 				{
 					const gchar* index[] = {
 						"name",
@@ -177,12 +176,12 @@ _error:
 
 /**
  * @brief Construct the root group for a file object.
- * 
+ *
  * @param file A file object.
  * @param root_group_id The ID of the respective root group. This function takes the ownership of root_group_id. It should not be freed by the caller.
  * @param root_group_id_len The length of the ID.
  * @attention This function takes the ownership of root_group_id. It should not be freed by the caller.
- * @return gboolean - True for success 
+ * @return gboolean - True for success
  */
 static gboolean
 file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group_id_len)
@@ -305,7 +304,6 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 			j_goto_error();
 		}
 
-
 		if (!j_db_entry_insert(entry, batch, &error))
 		{
 			j_goto_error();
@@ -382,11 +380,10 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 		{
 			j_goto_error();
 		}
-		
+
 		// construct and store root group object to file struct
 		//CURRTODO error check
 		file_add_root_group(object, root_group_id, root_group_id_len);
-	
 	}
 	else
 	{
@@ -429,8 +426,6 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 			}
 		}
 	}
-
-
 
 	return object;
 

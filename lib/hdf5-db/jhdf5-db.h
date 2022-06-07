@@ -222,7 +222,6 @@ herr_t H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name
 extern JDBSchema* julea_db_schema_link;
 extern JDBSchema* julea_db_schema_group;
 
-
 #define j_goto_error() \
 	do \
 	{ \
