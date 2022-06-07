@@ -645,6 +645,8 @@ H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void*
 			*(va_arg(arguments, hid_t*)) = object->attr.datatype->datatype.hdf5_id;
 			break;
 		case H5VL_ATTR_GET_ACPL:
+			*(va_arg(arguments, hid_t*)) = H5P_DEFAULT;
+			break;
 		case H5VL_ATTR_GET_INFO:
 		case H5VL_ATTR_GET_NAME:
 		case H5VL_ATTR_GET_STORAGE_SIZE:
