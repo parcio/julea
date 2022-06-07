@@ -202,10 +202,9 @@ file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group
 		return false;
 	}
 
-	if (!(root_group->group.file = H5VL_julea_db_object_ref(file)))
-	{
-		return false;
-	}
+	// do not change ref count!
+	// otherwise the file will never be freed because the user's reference will never be the last one
+	root_group->group.file = file;
 
 	root_group->backend_id = root_group_id;
 	root_group->backend_id_len = root_group_id_len;
