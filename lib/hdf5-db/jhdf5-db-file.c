@@ -528,14 +528,11 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JHDF5Object_t* object = obj;
-
+	(void)obj;
 	(void)get_type;
 	(void)dxpl_id;
 	(void)req;
 	(void)arguments;
-
-	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
@@ -553,9 +550,77 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 	(void)req;
 	(void)arguments;
 
-	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
+	// CURRTODO check which parts should be extra functions
 
-	g_warning("%s called but not implemented!", G_STRFUNC);
+	switch (specific_type) 
+	{
+		case H5VL_FILE_FLUSH:
+    	case H5VL_FILE_REOPEN:
+		case H5VL_FILE_MOUNT:
+		case H5VL_FILE_UNMOUNT:
+			g_warning("Not all features of %s are implemented!", G_STRFUNC);
+			break;
+		case H5VL_FILE_IS_ACCESSIBLE:
+			// needed for file delete; see code snippet
+			
+			// the va_list should contain a fapl, a filename and a herr_t* as return value
+			// basically only a lookup in the file table is needed
+			break;
+		case H5VL_FILE_DELETE:
+		
+			/* From H5F.c and H5Fdelete:
+			// Make sure this is HDF5 storage for this VOL connector 
+			if (H5VL_file_specific(NULL, H5VL_FILE_IS_ACCESSIBLE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id,
+								filename, &is_hdf5) < 0)
+				HGOTO_ERROR(H5E_FILE, H5E_NOTHDF5, FAIL, "unable to determine if file is accessible as HDF5")
+			if (!is_hdf5)
+				HGOTO_ERROR(H5E_FILE, H5E_NOTHDF5, FAIL, "not an HDF5 file")
+
+			//Delete the file 
+			if (H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id,
+								filename, &ret_value) < 0)
+				HGOTO_ERROR(H5E_FILE, H5E_CANTDELETEFILE, FAIL, "unable to delete the file");*/
+
+
+			// the va_list should contain a fapl, a filename and a herr_t* as return value, see code snippet above
+
+			/*if (H5VL_julea_db_group_truncate_file(object))
+			{
+				j_goto_error();
+			}
+
+			if (H5VL_julea_db_attr_truncate_file(object))
+			{
+				j_goto_error();
+			}
+
+			if (H5VL_julea_db_dataset_truncate_file(object))
+			{
+				j_goto_error();
+			}
+
+			if (H5VL_julea_db_link_truncate_file(object))
+			{
+				j_goto_error();
+			}*/
+
+			// delete file entry itself and the root group (which is not truncated with the other groups as a file without root group would be broken!!)
+
+			break;
+		case H5VL_FILE_IS_EQUAL:
+			// this should be very easy and fast
+			        //if (H5VL_file_specific(vol_obj1, H5VL_FILE_IS_EQUAL, H5P_DATASET_XFER_DEFAULT, NULL, obj2, same_file) < 0)
+			// from snippet above va_list consists of the other object and a return hbool_t pointer
+			// to files are the same iff their backend IDs are equal
+			break;
+		default:
+			g_assert_not_reached();
+
+	}
+
+	return 0;
+
+_error:
 	return -1;
 }
 
@@ -564,14 +629,11 @@ H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JHDF5Object_t* object = obj;
-
+	(void)obj;
 	(void)opt_type;
 	(void)dxpl_id;
 	(void)req;
 	(void)arguments;
-
-	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_FILE, 1);
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
