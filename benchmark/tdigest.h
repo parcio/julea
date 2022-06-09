@@ -7,7 +7,7 @@ typedef struct TDigest TDigest;
  *
  * \param[in] compression number of cells to use for approximation, 100 is a good start value. 
  */
-TDigest* julea_t_digest_init(double compression);
+TDigest* julea_t_digest_init(int compression);
 
 void julea_t_digest_fini(TDigest*);
 

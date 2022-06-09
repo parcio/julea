@@ -30,10 +30,13 @@
 void inverse_array(void*,int,int);
 
 void inverse_array(void* data, int size, int length) {
+	char* f_itr;
+	char* b_itr;
+	char buf[8];
 	if(length == 0) { return; }
-	char* f_itr = data;
-	char* b_itr = (char*)data + size * (length - 1);
-	char buf[size];
+	f_itr = data;
+	b_itr = (char*)data + size * (length - 1);
+	assert(size <= 8);
 	while(f_itr < b_itr) {
 		memcpy(buf, f_itr, size);
 		memcpy(f_itr, b_itr, size);
@@ -57,7 +60,7 @@ struct TDigest {
 	Cells cells;
 	Cells temp_cells;
 	int* temp_order;
-	double compression;
+	int compression;
 	double min;
 	double max;
 #ifdef T_DIGEST_VALIDATION
@@ -125,8 +128,9 @@ double scale_normalizer(double compression, double totalWeight) {
 	return compression / (4 * log(totalWeight / compression) + 21);
 }
 double scale_next_q(double x, double normalizer) {
+	double k1;
 	if(x > 0.5) { x = 1. - x; }
-	double k1 = log(2*x) * normalizer + 1.;
+	k1 = log(2*x) * normalizer + 1.;
 	if(k1 <= 0) {
 		return exp(k1/normalizer) / 2;
 	} else {
@@ -139,6 +143,7 @@ double scale_max(double q, double normalizer) {
 }
 
 double weighted_mean(double x1, double w1, double x2, double w2) {
+	double z;
 	// element 1 is smaller then element 2
 	if (x1 > x2) {
 		double t = x1;
@@ -148,7 +153,7 @@ double weighted_mean(double x1, double w1, double x2, double w2) {
 		w1 = w2;
 		w2 = t;
 	}
-	double z = (x1 * w1 + x2 * w2) / (w1 + w2);
+	z = (x1 * w1 + x2 * w2) / (w1 + w2);
 	// needed to make the julea_t_digest_quantiles works
 	// special case only on elements in two adjacent cells
 	if (z > x1) { return x1; }
@@ -184,10 +189,12 @@ void cells_sort_stable(Cells* this, int* order) {
 	qsort_r(order, this->size, sizeof(int), cmp_cells_indirect, this);
 }
 
-TDigest* julea_t_digest_init(double compression) {
+TDigest* julea_t_digest_init(int compression) {
 	TDigest* this = malloc(sizeof(TDigest));
-	if(compression < 10) { compression = 10; }
 	int sizeFugde = 0;
+	int capacity;
+	int bufferSize;
+	if(compression < 10) { compression = 10; }
 	if(USE_WEIGHT_LIMIT) { sizeFugde = compression < 30 ? 30 : 10; }
 	if (USE_TOW_LEVEL_COMPRESSION) {
 		/// \todo check if needed
@@ -195,9 +202,9 @@ TDigest* julea_t_digest_init(double compression) {
 	} else {
 		this->compression = compression;
 	}
-	int capacity = ceil(2 * this->compression) + sizeFugde;
+	capacity = ceil(2 * this->compression) + sizeFugde;
 	/// \todo check runtime if smaller (smallest 2)
-	int bufferSize = 5 * capacity;
+	bufferSize = 5 * capacity;
 	cells_init(&this->cells, capacity);
 	cells_init(&this->temp_cells, bufferSize);
 	this->temp_order = malloc(sizeof(*this->temp_order) * bufferSize);
@@ -216,10 +223,10 @@ void julea_t_digest_fini(TDigest* this) {
 	cells_fini(&this->cells);
 	cells_fini(&this->temp_cells);
 	free(this->temp_order);
-	free(this);
 #ifdef T_DIGEST_VALIDATION
 	g_array_free(this->values, FALSE);
 #endif
+	free(this);
 }
 
 double julea_t_digest_min(TDigest* this){
@@ -245,11 +252,14 @@ int cmp_double(const void* x, const void* y) {
 double julea_t_digest_quantiles(TDigest* this,double q) {
 	double res = julea_t_digest_impl(this, q);
 #ifdef T_DIGEST_VALIDATION
+	double idd;
+	int lb, ub;
+	double ref;
 	g_array_sort(this->values, cmp_double);
-	double idd = q * this->values->len;
-	int lb = floor(idd);
-	int ub = ceil(idd);
-	double ref = lb != ub ? g_array_index(this->values, double, lb) * (idd - lb)
+	idd = q * this->values->len;
+	lb = floor(idd);
+	ub = ceil(idd);
+	ref = lb != ub ? g_array_index(this->values, double, lb) * (idd - lb)
 					+ g_array_index(this->values, double, ub) * (ub - idd)
 			      : g_array_index(this->values, double, ub);
 	g_debug("precision: precise: %f, t-digest: %f => %f%%", ref, res, round((res-ref)/ref * 100.));
@@ -258,6 +268,16 @@ double julea_t_digest_quantiles(TDigest* this,double q) {
 	return res;
 }
 double julea_t_digest_impl(TDigest* this, double q) {
+	double z1;
+	double z2;
+	double index;
+	int size;
+	double totalWeight;
+	double* weight;
+	double* mean;
+	double max;
+	double min;
+	double weights_so_far;
 	g_return_val_if_fail(q >= 0 && q <= 1, NAN);
 
 	t_digest_merge(this);
@@ -269,24 +289,27 @@ double julea_t_digest_impl(TDigest* this, double q) {
 	}
 
 	// create short codes
-	int size = this->cells.size;
-	double totalWeight = this->cells.total_weight;
-	double* weight = this->cells.weight;
-	double* mean = this->cells.mean;
-	double max = this->max;
-	double min = this->min;
+	size = this->cells.size;
+	totalWeight = this->cells.total_weight;
+	weight = this->cells.weight;
+	mean = this->cells.mean;
+	max = this->max;
+	min = this->min;
 
 	// calculate index of element to check
-	double index = q * totalWeight;
+	index = q * totalWeight;
 	if(index < 1) { return min; }
 	if(index > totalWeight - 1) { return max; }
 
-	double weights_so_far = weight[0] / 2;
+	weights_so_far = weight[0] / 2;
 	for(int i = 0; i < size - 1; ++i) {
 		// elements until center of next cell
 		double d_next_center = (weight[i] + weight[i+1]) / 2;
 		if(weights_so_far + d_next_center > index) {
 			double leftUnit = 0;
+			double rightUnit = 0;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 			if(weight[i] == 1.) {
 				// if index equal to center of cell, return cells mean
 				if(index - weights_so_far < 0.5) {
@@ -294,7 +317,6 @@ double julea_t_digest_impl(TDigest* this, double q) {
 				}
 				leftUnit = 0.5;
 			}
-			double rightUnit = 0;
 			if(weight[i+1] == 1.) {
 				// if index equal to center of cell, return cells mean
 				if(weights_so_far + d_next_center - index <= 0.5) {
@@ -302,9 +324,10 @@ double julea_t_digest_impl(TDigest* this, double q) {
 				}
 				rightUnit = 0.5;
 			}
+#pragma GCC diagnostic pop
 			// interpolate value between cells
-			double z1 = index - weights_so_far - leftUnit;
-			double z2 = weights_so_far + d_next_center - index - rightUnit;
+			z1 = index - weights_so_far - leftUnit;
+			z2 = weights_so_far + d_next_center - index - rightUnit;
 			return weighted_mean(mean[i], z1, mean[i+1], z2);
 		}
 		weights_so_far += d_next_center;
@@ -318,20 +341,22 @@ double julea_t_digest_impl(TDigest* this, double q) {
 	g_return_val_if_fail(index <= totalWeight, NAN);
 	g_return_val_if_fail(index >= totalWeight - weight[size-1]/2, NAN);
 
-	double z1 = index - totalWeight - weight[size-1]/2;
-	double z2 = weight[size-1] / 2 - z1;
+	z1 = index - totalWeight - weight[size-1]/2;
+	z2 = weight[size-1] / 2 - z1;
 	return weighted_mean(mean[size-1], z1, max, z2);
 }
 
 void julea_t_digest_add(TDigest* this,double value) {
+	Cells* c;
+	int id;
 	// merge if temp cells are full
 	// temp cells need place to contain all existing cells to, for merging
 	if(this->temp_cells.size >= this->temp_cells.capacity - this->cells.size) {
 		t_digest_merge(this);
 	}
 
-	Cells* c = &this->temp_cells;
-	int id = c->size++;
+	c = &this->temp_cells;
+	id = c->size++;
 	c->weight[id] = 1;
 	c->mean[id] = value;
 	c->total_weight += 1;
@@ -344,6 +369,16 @@ void julea_t_digest_add(TDigest* this,double value) {
 }
 
 void t_digest_merge(TDigest* this) {
+	int backwards;
+	double total_weight;
+	int* size_ptr;
+	double* mean;
+	double* weight;
+	double weights_so_far;
+	double normalizer;
+	double w_limit;
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 	// no elements exist
 	if(this->cells.size == 0 && this->temp_cells.size == 0.) {
 		return;
@@ -353,9 +388,11 @@ void t_digest_merge(TDigest* this) {
 		return;
 	}
 
-	int backwards = USE_TOW_LEVEL_COMPRESSION & (this->merge_count % 2 == 1);
+	backwards = USE_TOW_LEVEL_COMPRESSION & (this->merge_count % 2 == 1);
+
 	assert(this->cells.size <= 0 || this->cells.weight[0] == 1.);
 	assert(this->cells.size <= 0 || this->cells.weight[this->cells.size - 1] == 1.);
+#pragma GCC diagnostic pop
 
 	// copy cells to temp cells
 	memcpy(this->temp_cells.mean + this->temp_cells.size,
@@ -384,19 +421,19 @@ void t_digest_merge(TDigest* this) {
 	this->cells.total_weight += this->temp_cells.total_weight;
 
 	// create short codes
-	double total_weight = this->cells.total_weight;
-	int* size_ptr = &this->cells.size;
-	double* mean = this->cells.mean;
-	double* weight = this->cells.weight;
+	total_weight = this->cells.total_weight;
+	size_ptr = &this->cells.size;
+	mean = this->cells.mean;
+	weight = this->cells.weight;
 
 	*size_ptr = 0;
 	mean[*size_ptr] = this->temp_cells.mean[this->temp_order[0]];
 	weight[*size_ptr] = this->temp_cells.weight[this->temp_order[0]];
 	this->temp_cells.weight[this->temp_order[0]] = 0;
-	double weights_so_far = 0;
+	weights_so_far = 0;
 
-	double normalizer = scale_normalizer(this->compression, total_weight);
-	double w_limit = total_weight * scale_next_q(0, normalizer);
+	normalizer = scale_normalizer(this->compression, total_weight);
+	w_limit = total_weight * scale_next_q(0, normalizer);
 	for(int i = 1; i < this->temp_cells.size; ++i) {
 		int ix = this->temp_order[i];
 		double proposed_weight = weight[*size_ptr] + this->temp_cells.weight[ix];
