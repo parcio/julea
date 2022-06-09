@@ -1,1 +1,0 @@
-option('validate_t_digest', type: 'boolean', value: false, description: 'Calculates precise percentiles to compare on access with percentiles from t-digest (printed in G_LOG_DEBUG)')

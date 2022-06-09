@@ -32,7 +32,7 @@ struct BenchmarkRun
 	guint64 operations;
 	guint64 bytes;
 	void* round_time_data;
-	struct {
+	struct Dummy {
 		guint round_times_measured;
 		double min;
 		double max;

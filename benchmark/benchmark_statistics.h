@@ -21,6 +21,7 @@ void j_benchmark_statistics_add(void*,double current_time);
 double j_benchmark_statistics_min(void*);
 double j_benchmark_statistics_mean(void*);
 double j_benchmark_statistics_max(void*);
+guint j_benchmark_statistics_num_entries(void *);
 double j_benchmark_statistics_derivation(void*);
 double j_benchmark_statistics_quantiles(void*,double q);
 

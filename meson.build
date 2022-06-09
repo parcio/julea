@@ -553,7 +553,6 @@ test('julea-test', julea_test,
 	timeout: 0,
 	protocol: 'tap',
 )
-
 julea_benchmark_srcs = files([
 	'benchmark/background-operation.c',
 	'benchmark/benchmark.c',
@@ -570,6 +569,8 @@ julea_benchmark_srcs = files([
 	'benchmark/message.c',
 	'benchmark/object/distributed-object.c',
 	'benchmark/object/object.c',
+    'benchmark/tdigest.c',
+    'benchmark/benchmark_statistics.c'
 ])
 
 executable('julea-benchmark', julea_benchmark_srcs,

@@ -29,11 +29,13 @@
 
 #include "benchmark_statistics.h"
 
-static double quantile_of_interest[] = {0.9999, 0.99, 0.95, 0.90, 0.1, 0.05, 0.01, 0.0001};
-static guint num_quantile_of_interest = sizeof(quantile_of_interest) / sizeof(*quantile_of_interest);
+static double default_quantiles_of_interest[] = {0.99, 0.9, 0.1, 0.01};
+static double* quantile_of_interest = default_quantiles_of_interest;
+static guint num_quantile_of_interest = 4;
 
 static gint opt_duration = 1;
 static gint opt_statistical_verbosity = 0;
+static gchar** opt_custom_quantiles = NULL;
 static gboolean opt_list = FALSE;
 static gchar* opt_machine_separator = NULL;
 static gboolean opt_machine_readable = FALSE;
@@ -47,6 +49,14 @@ static GList* j_benchmarks = NULL;
 static gsize j_benchmark_name_max = 0;
 
 void j_benchmark_timer_round_time_fill_statistics(BenchmarkRun*);
+void j_benchmark_timer_round_time_fill_statistics(BenchmarkRun* this) {
+	struct Dummy* stat = &this->round_time_statistics;
+	stat->derivation = j_benchmark_statistics_derivation(this->round_time_data);
+	stat->min = j_benchmark_statistics_min(this->round_time_data);
+	stat->max = j_benchmark_statistics_max(this->round_time_data);
+	stat->mean = j_benchmark_statistics_mean(this->round_time_data);
+	stat->round_times_measured = j_benchmark_statistics_num_entries(this->round_time_data);
+}
 
 JSemantics*
 j_benchmark_get_semantics(void)
@@ -74,7 +84,6 @@ void
 j_benchmark_timer_round_time(BenchmarkRun* run)
 {
 	g_return_if_fail(run != NULL);
-
 	j_benchmark_statistics_add(run->round_time_data, g_timer_elapsed(run->timer, NULL));
 }
 
@@ -199,12 +208,6 @@ j_benchmark_run_one(BenchmarkRun* run)
 	elapsed_time = g_timer_elapsed(run->timer, NULL);
 
 	j_benchmark_timer_round_time_fill_statistics(run);
-	double quantiles[num_quantile_of_interest];
-	if(run->round_time_statistics.round_times_measured) {
-		for(guint i = 0; i < num_quantile_of_interest; ++i) {
-			quantiles[i] = j_benchmark_statistics_quantiles(run->round_time_data, quantile_of_interest[i]);
-		}
-	}
 
 	if (run->iterations > 1)
 	{
@@ -229,7 +232,31 @@ j_benchmark_run_one(BenchmarkRun* run)
 			g_print(" (%s/s)", size);
 		}
 
-		g_print(" [%.3f seconds]\n", elapsed_total);
+		g_print(" [%.3f seconds]", elapsed_total);
+		
+		if(opt_statistical_verbosity > 0) {
+			if(run->round_time_statistics.round_times_measured == 0) {
+				g_print(" {?/?/?/?}");
+			} else {
+				g_print(" {%f/%f/%f/%f}",
+						run->round_time_statistics.min,
+						run->round_time_statistics.mean,
+						run->round_time_statistics.max,
+						run->round_time_statistics.derivation);
+			}
+		}
+		if(opt_statistical_verbosity > 1) {
+			if(run->round_time_statistics.round_times_measured == 0) {
+				g_print(" --");
+			} else {
+				g_print(" ");
+				for(guint i = 0; i < num_quantile_of_interest; ++i) {
+					g_print("%f;", j_benchmark_statistics_quantiles(run->round_time_data, quantile_of_interest[i]));
+				}
+			}
+		}
+
+		g_print("\n");
 	}
 	else
 	{
@@ -253,6 +280,8 @@ j_benchmark_run_one(BenchmarkRun* run)
 			g_print("%s-", opt_machine_separator);
 		}
 
+		g_print("%s%f", opt_machine_separator, elapsed_total);
+
 		if(run->round_time_statistics.round_times_measured != 0) {
 			double numbers[] = {
 				run->round_time_statistics.min,
@@ -264,11 +293,10 @@ j_benchmark_run_one(BenchmarkRun* run)
 				g_print("%s%f", opt_machine_separator, numbers[i]);
 			}
 			for(guint i = 0; i < num_quantile_of_interest; ++i) {
-				g_print("%s%f", opt_machine_separator, quantiles[i]);
+				g_print("%s%f", opt_machine_separator, j_benchmark_statistics_quantiles(run->round_time_data, quantile_of_interest[i]));
 			}
 		}
-
-		g_print("%s%f\n", opt_machine_separator, elapsed_total);
+		g_print("\n");
 	}
 
 	if (run->iterations > 1000 * (guint)opt_duration)
@@ -291,7 +319,6 @@ j_benchmark_run_all(void)
 	{
 		goto skip_header;
 	}
-	/// \todo add new statistical values to headers
 	if (!opt_machine_readable)
 	{
 		gchar const* left;
@@ -299,7 +326,24 @@ j_benchmark_run_all(void)
 		gsize pad;
 
 		left = "Name";
-		right = "Duration (Operations/s) (Throughput/s) [Total Duration]";
+		switch(opt_statistical_verbosity) {
+			case 0:
+				right = "Duration (Operations/s) (Throughput/s) [Total Duration]";
+				break;
+			case 1:
+				right = "Duration (Operations/s) (Throughput/s) [Total Duration] {min/mea/max/var}";
+				break;
+			case 2: {
+					char* v = malloc(255);
+					sprintf(v, "Duration (Operations/s) (Throughput/s) [Total Duration] {min/mean/max/var} quantiles;");
+					for(guint i = 0; i < num_quantile_of_interest; ++i) {
+						sprintf(v + strlen(v), "%f;", quantile_of_interest[i]);
+					}
+					right = v;
+				} break;
+			default:
+				g_error("Unsupported values for statistical verbosity ('%d', allowed are 0,1 and 2)", opt_statistical_verbosity);
+		}
 		pad = j_benchmark_name_max + 2 - strlen(left);
 
 		g_print("Name");
@@ -320,7 +364,13 @@ j_benchmark_run_all(void)
 	}
 	else
 	{
-		g_print("name%selapsed%soperations%sbytes%stotal_elapsed\n", opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
+		g_print("name%selapsed%soperations%sbytes%stotal_elapsed%smin%smax%smean%svariation",
+				opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator,
+				opt_machine_separator, opt_machine_separator, opt_machine_separator, opt_machine_separator);
+		for(guint i = 0; i < num_quantile_of_interest; ++i) {
+			g_print("%s%f", opt_machine_separator, quantile_of_interest[i]);
+		}
+		g_print("\n");
 	}
 
 skip_header:
@@ -343,7 +393,8 @@ main(int argc, char** argv)
 
 	GOptionEntry entries[] = {
 		{ "duration", 'd', 0, G_OPTION_ARG_INT, &opt_duration, "Approximate duration in seconds per benchmark", "1" },
-		{ "statistical verbosity", 's', 0, G_OPTION_ARG_INT, &opt_statistical_verbosity, "Detail of statistics which should be shown in human readable output, possible values 0-None,1-Some,2-All", "0" },
+		{ "statistical verbosity", 'v', 0, G_OPTION_ARG_INT, &opt_statistical_verbosity, "Detail of statistics which should be shown in human readable output, possible values 0-None,1-Some,2-All", "0" },
+		{ "custom quantiles", 'q', 0, G_OPTION_ARG_STRING_ARRAY, &opt_custom_quantiles, "Use a custom quantiles for output, specifiy multiple times for multiple quantiles", "0.1" },
 		{ "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available benchmarks", NULL },
 		{ "machine-readable", 'm', 0, G_OPTION_ARG_NONE, &opt_machine_readable, "Produce machine-readable output", NULL },
 		{ "machine-separator", 0, 0, G_OPTION_ARG_STRING, &opt_machine_separator, "Separator for machine-readable output", "\\t" },
@@ -384,6 +435,19 @@ main(int argc, char** argv)
 	if (opt_machine_separator == NULL)
 	{
 		opt_machine_separator = g_strdup("\t");
+	}
+
+	if (opt_custom_quantiles != NULL) {
+		int len = 0;
+		while(opt_custom_quantiles[len] != NULL) { ++len; }
+
+		quantile_of_interest = malloc(sizeof(double) * len);
+		num_quantile_of_interest = len;
+
+		for(int i = 0; i < len; ++i) {
+			quantile_of_interest[i] = atof(opt_custom_quantiles[i]);
+		}
+		/// \todo free stuff
 	}
 
 	j_benchmark_semantics = j_semantics_new_from_string(opt_template, opt_semantics);
