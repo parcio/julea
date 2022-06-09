@@ -3,7 +3,7 @@
 #include "benchmark.h"
 
 void* j_benchmark_statistics_init(guint compression);
-void  j_benchmark_statistics_fini(void*);
+void j_benchmark_statistics_fini(void*);
 
 /**
  * Adds a new round time for to statistics.
@@ -16,12 +16,11 @@ void  j_benchmark_statistics_fini(void*);
  * \param[inout] this
  * \param[in] current_time elapsed time spending toing benchmark.
  */
-void j_benchmark_statistics_add(void*,double current_time);
+void j_benchmark_statistics_add(void*, double current_time);
 
 double j_benchmark_statistics_min(void*);
 double j_benchmark_statistics_mean(void*);
 double j_benchmark_statistics_max(void*);
-guint j_benchmark_statistics_num_entries(void *);
+guint j_benchmark_statistics_num_entries(void*);
 double j_benchmark_statistics_derivation(void*);
-double j_benchmark_statistics_quantiles(void*,double q);
-
+double j_benchmark_statistics_quantiles(void*, double q);

@@ -4,12 +4,13 @@
 #include <string.h>
 #include <math.h>
 
-typedef struct {
+typedef struct
+{
 	TDigest* t_digest;
 	double sum;
 	double sq_sum;
 	guint cnt;
-	double last_time;	
+	double last_time;
 } StatisticalData;
 
 void*
@@ -45,7 +46,7 @@ j_benchmark_statistics_add(void* raw, double current_time)
 
 	double round_time = current_time - this->last_time;
 	this->sum += round_time;
-	this->sq_sum += round_time*round_time;
+	this->sq_sum += round_time * round_time;
 	++this->cnt;
 	julea_t_digest_add(this->t_digest, round_time);
 	this->last_time = current_time;
@@ -89,7 +90,7 @@ j_benchmark_statistics_mean(void* raw)
 }
 
 guint
-j_benchmark_statistics_num_entries(void * raw)
+j_benchmark_statistics_num_entries(void* raw)
 {
 	StatisticalData* this = raw;
 	g_return_val_if_fail(raw != NULL, 0);
@@ -103,6 +104,5 @@ j_benchmark_statistics_derivation(void* raw)
 	StatisticalData* this = raw;
 	g_return_val_if_fail(raw != NULL, NAN);
 
-	return sqrt(this->cnt*this->sq_sum - this->sum*this->sum) / this->cnt;
+	return sqrt(this->cnt * this->sq_sum - this->sum * this->sum) / this->cnt;
 }
-
