@@ -85,7 +85,7 @@ test_hdf_file_accessible(void)
 
 	access = H5Fis_accessible("i_am_not_there.h5", H5P_DEFAULT);
 	g_assert_cmpint(access, ==, 0);
-	
+
 	error = H5Fdelete("test_file.h5", H5P_DEFAULT);
 	g_assert_cmpint(error, >=, 0);
 

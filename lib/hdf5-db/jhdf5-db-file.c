@@ -571,9 +571,9 @@ file_accessible(va_list arguments)
 	}
 
 	*accessible = j_db_iterator_next(iterator, &error);
-	
+
 	// if j_db_iterator_next() gives an error
-	if(error)
+	if (error)
 	{
 		/// \todo error will be set even for the valid behavior that there are no elements left. maybe drop this behavior?
 		if (g_strcmp0(error->message, "no more elements") != 0)
@@ -699,10 +699,9 @@ _error:
 	{
 		g_debug("Error: %s\n", error->message);
 	}
-	
+
 	return false;
 }
-
 
 static void
 files_equal(JHDF5Object_t* object, va_list arguments)
@@ -734,10 +733,10 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 	(void)dxpl_id;
 	(void)req;
 
-	switch (specific_type) 
+	switch (specific_type)
 	{
 		case H5VL_FILE_FLUSH:
-    	case H5VL_FILE_REOPEN:
+		case H5VL_FILE_REOPEN:
 		case H5VL_FILE_MOUNT:
 		case H5VL_FILE_UNMOUNT:
 			g_warning("%s: Feature number %i is not implemented!", G_STRFUNC, specific_type);
