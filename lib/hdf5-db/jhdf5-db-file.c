@@ -539,6 +539,60 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 }
 
 static gboolean
+file_accessible(va_list arguments)
+{
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
+	g_autoptr(GError) error = NULL;
+	const char* name = NULL;
+	hbool_t* accessible = NULL;
+
+	/*
+	From H5Fdelete():
+	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
+	*/
+	va_arg(arguments, hid_t*); // skip the fapl
+	name = va_arg(arguments, const char*);
+	accessible = va_arg(arguments, hbool_t*);
+
+	if (!(selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error)))
+	{
+		j_goto_error();
+	}
+
+	if (!j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, 0, &error))
+	{
+		j_goto_error();
+	}
+
+	if (!(iterator = j_db_iterator_new(julea_db_schema_file, selector, &error)))
+	{
+		j_goto_error();
+	}
+
+	*accessible = j_db_iterator_next(iterator, &error);
+	
+	// if j_db_iterator_next() gives an error
+	if(error)
+	{
+		j_goto_error();
+	}
+
+	return true;
+
+_error:
+	if (error)
+	{
+		g_debug("DEBUG: %s\n", error->message);
+		g_error_free(error);
+	}
+
+	*accessible = false;
+
+	return false;
+}
+
+static gboolean
 file_delete(va_list arguments)
 {
 	g_autoptr(JDBSelector) selector = NULL;
@@ -553,7 +607,6 @@ file_delete(va_list arguments)
 	From H5Fdelete():
 	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
 	*/
-
 	va_arg(arguments, hid_t*); // skip the fapl
 	name = va_arg(arguments, const char*);
 	ret = va_arg(arguments, herr_t*);
@@ -564,23 +617,66 @@ file_delete(va_list arguments)
 	if (file)
 	{
 		// delete file entry
-		selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
-		j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->backend_id, file->backend_id_len, &error);
-		entry = j_db_entry_new(julea_db_schema_file, &error);
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_db_entry_delete(entry, selector, batch, &error);
-		j_batch_execute(batch);
+		if (!(selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->backend_id, file->backend_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!(entry = j_db_entry_new(julea_db_schema_file, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!(batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_delete(entry, selector, batch, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_batch_execute(batch))
+		{
+			j_goto_error();
+		}
 
 		j_db_selector_unref(selector);
 		j_db_entry_unref(entry);
+		selector = NULL;
+		entry = NULL;
 
 		// delete root group entry
-		selector = j_db_selector_new(julea_db_schema_group, J_DB_SELECTOR_MODE_AND, &error);
-		j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->file.root_group->backend_id, file->file.root_group->backend_id_len, &error);
-		entry = j_db_entry_new(julea_db_schema_group, &error);
-		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-		j_db_entry_delete(entry, selector, batch, &error);
-		j_batch_execute(batch);
+		if (!(selector = j_db_selector_new(julea_db_schema_group, J_DB_SELECTOR_MODE_AND, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->file.root_group->backend_id, file->file.root_group->backend_id_len, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!(entry = j_db_entry_new(julea_db_schema_group, &error)))
+		{
+			j_goto_error();
+		}
+
+		if (!j_db_entry_delete(entry, selector, batch, &error))
+		{
+			j_goto_error();
+		}
+
+		if (!j_batch_execute(batch))
+		{
+			j_goto_error();
+		}
 
 		H5VL_julea_db_object_unref(file);
 
@@ -595,48 +691,20 @@ file_delete(va_list arguments)
 
 	return true;
 
-//_error:
-//	return false;
+_error:
+	if (error)
+	{
+		g_debug("Error: %s\n", error->message);
+		g_error_free(error);
+	}
+	
+	return false;
 }
 
-static gboolean
-file_accessible(va_list arguments)
-{
-	g_autoptr(JDBSelector) selector = NULL;
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JDBEntry) entry = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(GError) error = NULL;
-	const char* name = NULL;
-	hbool_t* accessible = NULL;
-
-	/*
-	From H5Fdelete():
-	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
-	*/
-	va_arg(arguments, hid_t*); // skip the fapl
-	name = va_arg(arguments, const char*);
-	accessible = va_arg(arguments, hbool_t*);
-
-	selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
-	j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, 0, &error);
-	iterator = j_db_iterator_new(julea_db_schema_file, selector, &error);
-	*accessible = j_db_iterator_next(iterator, &error);
-
-	return true;
-
-//_error:
-//	return false;
-}
 
 static void
 files_equal(JHDF5Object_t* object, va_list arguments)
 {
-	g_autoptr(JDBSelector) selector = NULL;
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JDBEntry) entry = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(GError) error = NULL;
 	JHDF5Object_t* file2 = NULL;
 	hbool_t* ret = NULL;
 	hbool_t type_check, id_check;
