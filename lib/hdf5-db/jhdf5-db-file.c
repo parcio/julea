@@ -538,25 +538,131 @@ H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void*
 	return -1;
 }
 
+static gboolean
+file_delete(va_list arguments)
+{
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(GError) error = NULL;
+	const char* name = NULL;
+	herr_t* ret = NULL;
+	JHDF5Object_t* file = NULL;
+
+	/*
+	From H5Fdelete():
+	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
+	*/
+
+	va_arg(arguments, hid_t*); // skip the fapl
+	name = va_arg(arguments, const char*);
+	ret = va_arg(arguments, herr_t*);
+
+	// this will truncate the file if it exists
+	file = H5VL_julea_db_file_open(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, NULL);
+
+	if (file)
+	{
+		// delete file entry
+		selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
+		j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->backend_id, file->backend_id_len, &error);
+		entry = j_db_entry_new(julea_db_schema_file, &error);
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		j_db_entry_delete(entry, selector, batch, &error);
+		j_batch_execute(batch);
+
+		j_db_selector_unref(selector);
+		j_db_entry_unref(entry);
+
+		// delete root group entry
+		selector = j_db_selector_new(julea_db_schema_group, J_DB_SELECTOR_MODE_AND, &error);
+		j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->file.root_group->backend_id, file->file.root_group->backend_id_len, &error);
+		entry = j_db_entry_new(julea_db_schema_group, &error);
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		j_db_entry_delete(entry, selector, batch, &error);
+		j_batch_execute(batch);
+
+		H5VL_julea_db_object_unref(file);
+
+		*ret = 0;
+	}
+	else
+	{
+		// deleting a non-existant file should fail
+		g_debug("%s: File to be deleted does not exist!", G_STRFUNC);
+		*ret = -1;
+	}
+
+	return true;
+
+//_error:
+//	return false;
+}
+
+static gboolean
+file_accessible(va_list arguments)
+{
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
+	g_autoptr(GError) error = NULL;
+	const char* name = NULL;
+	hbool_t* accessible = NULL;
+
+	/*
+	From H5Fdelete():
+	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
+	*/
+	va_arg(arguments, hid_t*); // skip the fapl
+	name = va_arg(arguments, const char*);
+	accessible = va_arg(arguments, hbool_t*);
+
+	selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
+	j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, 0, &error);
+	iterator = j_db_iterator_new(julea_db_schema_file, selector, &error);
+	*accessible = j_db_iterator_next(iterator, &error);
+
+	return true;
+
+//_error:
+//	return false;
+}
+
+static void
+files_equal(JHDF5Object_t* object, va_list arguments)
+{
+	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
+	g_autoptr(GError) error = NULL;
+	JHDF5Object_t* file2 = NULL;
+	hbool_t* ret = NULL;
+	hbool_t type_check, id_check;
+
+	/*
+	From H5Fdelete():
+	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
+	*/
+	file2 = va_arg(arguments, void*); // skip the fapl
+	ret = va_arg(arguments, hbool_t*);
+
+	type_check = (file2->type == object->type) && (object->type == J_HDF5_OBJECT_TYPE_FILE);
+	id_check = memcmp(file2->backend_id, object->backend_id, object->backend_id_len) == 0;
+
+	*ret = type_check && id_check;
+}
+
 herr_t
 H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
-	g_autoptr(JDBSelector) selector = NULL;
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JDBEntry) entry = NULL;
-	g_autoptr(JDBIterator) iterator = NULL;
-	g_autoptr(GError) error = NULL;
 
-
-	(void)specific_type;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
-
-	// CURRTODO check which parts should be extra functions
 
 	switch (specific_type) 
 	{
@@ -564,93 +670,28 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
     	case H5VL_FILE_REOPEN:
 		case H5VL_FILE_MOUNT:
 		case H5VL_FILE_UNMOUNT:
-			g_warning("Not all features of %s are implemented!", G_STRFUNC);
+			g_warning("%s: Feature number %i is not implemented!", G_STRFUNC, specific_type);
 			break;
 		case H5VL_FILE_IS_ACCESSIBLE:
-			// needed so that HDF5 can determine wether a file is stored in a certain VOL plugin (e.g. for file delete)
+			// needed so that HDF5 can determine wether a file is stored in a certain VOL plugin
+			// this is, for example, needed for H5Fdelete()
+			if (!file_accessible(arguments))
 			{
-				/// \todo use the fapl when we implement some of its features
-				va_arg(arguments, hid_t*); // skip the fapl
-				const char* name = va_arg(arguments, const char*);
-				hbool_t* accessible = va_arg(arguments, hbool_t*);
-
-				selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
-				j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, name, 0, &error);
-				iterator = j_db_iterator_new(julea_db_schema_file, selector, &error);
-				*accessible = j_db_iterator_next(iterator, &error);
+				j_goto_error();
 			}
 			break;
 		case H5VL_FILE_DELETE:
-		
-			/* From H5F.c and H5Fdelete:
-			// Make sure this is HDF5 storage for this VOL connector 
-			if (H5VL_file_specific(NULL, H5VL_FILE_IS_ACCESSIBLE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id,
-								filename, &is_hdf5) < 0)
-				HGOTO_ERROR(H5E_FILE, H5E_NOTHDF5, FAIL, "unable to determine if file is accessible as HDF5")
-			if (!is_hdf5)
-				HGOTO_ERROR(H5E_FILE, H5E_NOTHDF5, FAIL, "not an HDF5 file")
-
-			//Delete the file 
-			if (H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id,
-								filename, &ret_value) < 0)
-				HGOTO_ERROR(H5E_FILE, H5E_CANTDELETEFILE, FAIL, "unable to delete the file");*/
-
-
-			// the va_list should contain a fapl, a filename and a herr_t* as return value, see code snippet above
+			if (!file_delete(arguments))
 			{
-				va_arg(arguments, hid_t*); // skip the fapl
-				const char* name = va_arg(arguments, const char*);
-				herr_t* ret = va_arg(arguments, herr_t*);
-
-				// this will truncate the file if it exists
-				JHDF5Object_t* file = H5VL_julea_db_file_open(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, NULL);
-
-				if (file)
-				{
-					// delete file
-					selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error);
-					j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->backend_id, file->backend_id_len, &error);
-					entry = j_db_entry_new(julea_db_schema_file, &error);
-					batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-					j_db_entry_delete(entry, selector, batch, &error);
-					j_batch_execute(batch);
-
-					j_db_selector_unref(selector);
-					j_db_entry_unref(entry);
-
-					// delete root group
-					selector = j_db_selector_new(julea_db_schema_group, J_DB_SELECTOR_MODE_AND, &error);
-					j_db_selector_add_field(selector, "_id", J_DB_SELECTOR_OPERATOR_EQ, file->file.root_group->backend_id, file->file.root_group->backend_id_len, &error);
-					entry = j_db_entry_new(julea_db_schema_group, &error);
-					batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-					j_db_entry_delete(entry, selector, batch, &error);
-					j_batch_execute(batch);
-
-					H5VL_julea_db_object_unref(file);
-				}
-
-				*ret = 0;
+				j_goto_error();
 			}
 			break;
 		case H5VL_FILE_IS_EQUAL:
-			//H5VL_file_specific(vol_obj1, H5VL_FILE_IS_EQUAL, H5P_DATASET_XFER_DEFAULT, NULL, obj2, same_file)
-			// from snippet above va_list consists of the other object and a return hbool_t pointer
-			{
-				JHDF5Object_t* file2 = va_arg(arguments, void*); // skip the fapl
-				hbool_t* ret = va_arg(arguments, hbool_t*);
-
-				hbool_t type_check = (file2->type == object->type) && (object->type == J_HDF5_OBJECT_TYPE_FILE);
-				hbool_t id_check = memcmp(file2->backend_id, object->backend_id, object->backend_id_len) == 0;
-
-				*ret = type_check && id_check;
-			}
-
+			files_equal(object, arguments);
 			break;
 		default:
 			g_assert_not_reached();
-
 	}
-
 	return 0;
 
 _error:
