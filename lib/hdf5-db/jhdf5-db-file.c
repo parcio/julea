@@ -584,7 +584,6 @@ _error:
 	if (error)
 	{
 		g_debug("DEBUG: %s\n", error->message);
-		g_error_free(error);
 	}
 
 	*accessible = false;
@@ -695,7 +694,6 @@ _error:
 	if (error)
 	{
 		g_debug("Error: %s\n", error->message);
-		g_error_free(error);
 	}
 	
 	return false;
