@@ -575,7 +575,11 @@ file_accessible(va_list arguments)
 	// if j_db_iterator_next() gives an error
 	if(error)
 	{
-		j_goto_error();
+		/// \todo error will be set even for the valid behavior that there are no elements left. maybe drop this behavior?
+		if (g_strcmp0(error->message, "no more elements") != 0)
+		{
+			j_goto_error();
+		}
 	}
 
 	return true;
