@@ -283,6 +283,11 @@ if otf_config.found()
 	)
 endif
 
+otf2_dep = dependency('otf2',
+	required: false,
+	include_type: 'system',
+)
+
 # Compiler checks
 
 stmtim_tvnsec_check = cc.has_member('struct stat', 'st_mtim.tv_nsec',
@@ -334,6 +339,10 @@ if otf_dep.found()
 	julea_conf.set('HAVE_OTF', 1)
 endif
 
+if otf2_dep.found()
+	julea_conf.set('HAVE_OTF2', 1)
+endif
+
 if stmtim_tvnsec_check
 	julea_conf.set('HAVE_STMTIM_TVNSEC', 1)
 endif
@@ -349,7 +358,7 @@ configure_file(
 
 # Build
 
-common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, libfabric_dep, otf_dep]
+common_deps = [m_dep, glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, libfabric_dep, otf_dep, otf2_dep]
 
 # FIXME Remove core directory
 julea_incs = include_directories([

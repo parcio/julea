@@ -29,6 +29,10 @@
 #include <otf.h>
 #endif
 
+#ifdef HAVE_OTF2
+#include <otf2/otf2.h>
+#endif
+
 #include <jtrace.h>
 
 /**
@@ -45,7 +49,8 @@ enum JTraceFlags
 	J_TRACE_OFF = 0,
 	J_TRACE_ECHO = 1 << 0,
 	J_TRACE_OTF = 1 << 1,
-	J_TRACE_SUMMARY = 1 << 2
+	J_TRACE_SUMMARY = 1 << 2,
+	J_TRACE_OTF2 = 1 << 3
 };
 
 typedef enum JTraceFlags JTraceFlags;
@@ -186,6 +191,12 @@ j_trace_thread_new(GThread* thread)
 	}
 #endif
 
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+	}
+#endif
+
 	return trace_thread;
 }
 
@@ -214,6 +225,12 @@ j_trace_thread_free(JTraceThread* trace_thread)
 	if (j_trace_flags & J_TRACE_OTF)
 	{
 		OTF_Writer_writeEndProcess(otf_writer, g_get_real_time(), trace_thread->otf.process_id);
+	}
+#endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
 	}
 #endif
 
@@ -385,6 +402,10 @@ j_trace_init(gchar const* name)
 		{
 			j_trace_flags |= J_TRACE_SUMMARY;
 		}
+		else if (g_strcmp0(trace_parts[i], "otf2") == 0)
+		{
+			j_trace_flags |= J_TRACE_OTF2;
+		}
 	}
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -428,6 +449,12 @@ j_trace_init(gchar const* name)
 	}
 #endif
 
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+	}
+#endif
+
 	if (j_trace_flags & J_TRACE_SUMMARY)
 	{
 		j_trace_summary_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -462,6 +489,12 @@ j_trace_fini(void)
 
 		OTF_FileManager_close(otf_manager);
 		otf_manager = NULL;
+	}
+#endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
 	}
 #endif
 
