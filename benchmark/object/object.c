@@ -59,7 +59,6 @@ _benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 			if (!use_batch)
 			{
 				ret = j_batch_execute(batch);
-				j_benchmark_timer_round_time(run);
 				g_assert_true(ret);
 			}
 		}
@@ -67,7 +66,6 @@ _benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 		if (use_batch)
 		{
 			ret = j_batch_execute(batch);
-			j_benchmark_timer_round_time(run);
 			g_assert_true(ret);
 		}
 
