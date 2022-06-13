@@ -257,17 +257,9 @@ julea_t_digest_init(int compression)
 	{
 		sizeFugde = compression < 30 ? 30 : 10;
 	}
-	if (USE_TOW_LEVEL_COMPRESSION)
-	{
-		/// \todo check if needed
-		this->compression = compression * 2;
-	}
-	else
-	{
-		this->compression = compression;
-	}
+	this->compression = compression;
 	capacity = ceil(2 * this->compression) + sizeFugde;
-	/// \todo check runtime if smaller (smallest 2)
+	/// \todo check needed size, smaller -> more frequent merges (smallest 2)
 	bufferSize = 5 * capacity;
 	cells_init(&this->cells, capacity);
 	cells_init(&this->temp_cells, bufferSize);
@@ -427,7 +419,6 @@ julea_t_digest_impl(TDigest* this, double q)
 		}
 		weights_so_far += d_next_center;
 	}
-	/// \todo should only happen if exactly one cluster exists?
 	// if t-digest contains more then one element but only one cell,
 	// then this cells must contain more then one element
 	// also if the index is not reached between the n-2 and n-1 cell,
