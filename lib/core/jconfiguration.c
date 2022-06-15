@@ -143,7 +143,7 @@ struct JConfiguration
 	struct
 	{
 		gchar* policy;
-		gchar** args;
+		gchar const* const* args;
 		gchar* kv_backend;
 		gchar* kv_path;
 		gchar const* log_file;
@@ -386,7 +386,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->object_hsm_policy.kv_backend = object_policy_kv_backend;
 	configuration->object_hsm_policy.kv_path = object_policy_kv_path;
 	configuration->object_hsm_policy.policy = object_policy;
-	configuration->object_hsm_policy.args = object_policy_args;
+	configuration->object_hsm_policy.args = (const char* const*)object_policy_args;
 
 	configuration->max_operation_size = max_operation_size;
 	configuration->port = port;
@@ -471,7 +471,7 @@ j_configuration_unref(JConfiguration* configuration)
 		g_free(configuration->object_hsm_policy.kv_backend);
 		g_free(configuration->object_hsm_policy.kv_path);
 		g_free(configuration->object_hsm_policy.policy);
-		g_strfreev(configuration->object_hsm_policy.args);
+		g_strfreev((gchar**)configuration->object_hsm_policy.args);
 		g_slice_free(JConfiguration, configuration);
 	}
 }
@@ -678,7 +678,7 @@ j_configuration_get_object_policy(JConfiguration* configuration)
 	return configuration->object_hsm_policy.policy;
 }
 
-JList const*
+gchar const* const*
 j_configuration_get_object_policy_args(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
