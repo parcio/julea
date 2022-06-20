@@ -24,6 +24,30 @@
 
 #ifdef HAVE_HDF5
 
+void 
+j_expect_vol_db_fail(void)
+{
+    const gchar* conn_name = NULL;
+    conn_name = g_getenv("HDF5_VOL_CONNECTOR");
+
+    if(!g_strcmp0(conn_name, "julea-db"))
+    {
+	    g_test_incomplete("This test is currently expected to fail for the DB VOL plugin.");
+    }
+}
+
+void 
+j_expect_vol_kv_fail(void)
+{
+    const gchar* conn_name = NULL;
+    conn_name = g_getenv("HDF5_VOL_CONNECTOR");
+
+    if(!g_strcmp0(conn_name, "julea-kv"))
+    {
+	    g_test_incomplete("This test is currently expected to fail for the KV VOL plugin.");
+    }
+}
+
 void
 j_test_hdf_file_fixture_setup(hid_t* file, gconstpointer udata)
 {

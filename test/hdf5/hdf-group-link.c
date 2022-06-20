@@ -70,7 +70,8 @@ test_hdf_group_create_delete_open_close(hid_t* file_fixture, gconstpointer udata
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -104,7 +105,8 @@ test_hdf_link_nested_group(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -143,7 +145,8 @@ test_hdf_link_hard_delete(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -179,7 +182,8 @@ test_hdf_link_soft(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -200,7 +204,8 @@ test_hdf_link_invalid(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static herr_t
@@ -260,8 +265,7 @@ test_hdf_link_iterate(hid_t* file_fixture, gconstpointer udata)
 	H5Sclose(space);
 
 	J_TEST_TRAP_END;
-
-	g_test_incomplete("Fails currently");
+	j_expect_vol_kv_fail();
 }
 
 #endif

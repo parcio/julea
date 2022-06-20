@@ -120,7 +120,8 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("datatype commit is not yet implemented!");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -155,7 +156,8 @@ test_hdf_datatype_create_array(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("datatype commit is not yet implemented!");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 #endif

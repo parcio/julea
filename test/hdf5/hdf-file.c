@@ -62,7 +62,8 @@ test_hdf_file_create_delete(void)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("delete not implemented yet");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -84,7 +85,8 @@ test_hdf_file_double_create(void)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("delete not implemented yet");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -112,7 +114,8 @@ test_hdf_file_open_close(void)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("delete not implemented yet");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -127,10 +130,7 @@ test_hdf_file_open_non_existent(void)
 
 	J_TEST_TRAP_END;
 
-	if (g_str_equal(g_getenv("HDF5_VOL_CONNECTOR"), "julea-kv"))
-	{
-		g_test_incomplete("Fails currently for julea-kv");
-	}
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -155,7 +155,8 @@ test_hdf_file_delete(void)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("delete not implemented yet");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -170,7 +171,8 @@ test_hdf_file_delete_non_existent(void)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("delete not implemented yet");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 #endif

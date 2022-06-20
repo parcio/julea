@@ -34,6 +34,9 @@
 
 #include <hdf5.h>
 
+void j_expect_vol_db_fail(void);
+void j_expect_vol_kv_fail(void);
+
 /**
  * Create a simple HDF5 file to test groups, datasets, ...
  *
