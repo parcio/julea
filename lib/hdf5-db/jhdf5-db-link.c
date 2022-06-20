@@ -585,13 +585,13 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 {
 	g_autoptr(JDBSelector) link_selector = NULL;
 	g_autoptr(JDBIterator) link_iterator = NULL;
+	JHDF5ObjectType* child_type = NULL;
 	gchar* child_name = NULL;
 	JHDF5Object_t* child_obj = NULL;
 	JHDF5Object_t* curr_parent_obj = NULL;
 	H5L_info2_t link_info;
 	JDBType child_name_type;
 	guint64 child_name_length;
-	g_autofree JHDF5ObjectType* child_type = NULL;
 	JDBType child_type_type;
 	guint64 type_length;
 	hid_t curr_parent = H5I_INVALID_HID;
@@ -642,21 +642,19 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 
 	while (j_db_iterator_next(link_iterator, NULL))
 	{
-		if (!j_db_iterator_get_field(link_iterator, "name", &child_name_type, (gpointer)&child_name, &child_name_length, NULL))
+		if (!j_db_iterator_get_field(link_iterator, "name", &child_name_type, (gpointer*)&child_name, &child_name_length, NULL))
 		{
 			j_goto_error();
 		}
 
 		if (!j_db_iterator_get_field(link_iterator, "child_type", &child_type_type, (gpointer*)&child_type, &type_length, NULL))
 		{
-			g_free(child_name);
 			j_goto_error();
 		}
 
 		/// \todo needs to be touched when other link types are implemented
 		if (H5VL_julea_db_link_get_info_helper(NULL, NULL, &link_info) < 0)
 		{
-			g_free(child_name);
 			j_goto_error();
 		}
 
@@ -666,7 +664,6 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 			/// \todo generate attribute info struct
 			if (op.attr_op(curr_parent, child_name, NULL, op_data) < 0)
 			{
-				g_free(child_name);
 				j_goto_error();
 			}
 		}
@@ -674,7 +671,6 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 		{
 			if (op.iter_op(curr_parent, child_name, &link_info, op_data) < 0)
 			{
-				g_free(child_name);
 				j_goto_error();
 			}
 		}
@@ -685,14 +681,12 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 			// get group object associated with child
 			if ((child_obj = H5VL_julea_db_group_open(object, NULL, child_name, 0, 0, NULL)) == NULL)
 			{
-				g_free(child_name);
 				j_goto_error();
 			}
 
 			// iterate through child group
 			if (H5VL_julea_db_link_iterate_helper(child_obj, recursive, attr, idx_type, order, idx_p, op, op_data) < 0)
 			{
-				g_free(child_name);
 				H5VL_julea_db_object_unref(child_obj);
 				j_goto_error();
 			}
@@ -701,12 +695,23 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 		}
 
 		g_free(child_name);
+		g_free(child_type);
+
+		child_name = NULL;
+		child_type = NULL;
 	}
 
 	ret = 0;
 
 _error:
-	H5Idec_ref(curr_parent);
+	g_free(child_type);
+	g_free(child_name);
+
+	if (curr_parent != H5I_INVALID_HID)
+	{
+		H5Idec_ref(curr_parent);
+	}
+
 	return ret;
 }
 
@@ -716,7 +721,6 @@ H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_
 	g_autoptr(JDBSelector) link_selector = NULL;
 	g_autoptr(JDBIterator) link_iterator = NULL;
 	g_autoptr(GError) err = NULL;
-	herr_t ret = -1;
 
 	if ((link_selector = j_db_selector_new(julea_db_schema_link, J_DB_SELECTOR_MODE_AND, NULL)) == NULL)
 	{
@@ -747,15 +751,14 @@ H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_
 
 	if (err != NULL)
 	{
+		g_error_free(err);
 		j_goto_error();
 	}
-	else
-	{
-		ret = 0;
-	}
+
+	return 0;
 
 _error:
-	return ret;
+	return -1;
 }
 
 herr_t
