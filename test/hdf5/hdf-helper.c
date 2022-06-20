@@ -21,31 +21,32 @@
  **/
 
 #include "hdf-helper.h"
+#include "../test.h"
 
 #ifdef HAVE_HDF5
 
-void 
+void
 j_expect_vol_db_fail(void)
 {
-    const gchar* conn_name = NULL;
-    conn_name = g_getenv("HDF5_VOL_CONNECTOR");
+	const gchar* conn_name = NULL;
+	conn_name = g_getenv("HDF5_VOL_CONNECTOR");
 
-    if(!g_strcmp0(conn_name, "julea-db"))
-    {
-	    g_test_incomplete("This test is currently expected to fail for the DB VOL plugin.");
-    }
+	if (!g_strcmp0(conn_name, "julea-db"))
+	{
+		j_expect_fail("This test is currently expected to fail for the DB VOL plugin.");
+	}
 }
 
-void 
+void
 j_expect_vol_kv_fail(void)
 {
-    const gchar* conn_name = NULL;
-    conn_name = g_getenv("HDF5_VOL_CONNECTOR");
+	const gchar* conn_name = NULL;
+	conn_name = g_getenv("HDF5_VOL_CONNECTOR");
 
-    if(!g_strcmp0(conn_name, "julea-kv"))
-    {
-	    g_test_incomplete("This test is currently expected to fail for the KV VOL plugin.");
-    }
+	if (!g_strcmp0(conn_name, "julea-kv"))
+	{
+		j_expect_fail("This test is currently expected to fail for the KV VOL plugin.");
+	}
 }
 
 void
