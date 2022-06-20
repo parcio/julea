@@ -84,7 +84,7 @@ test_hdf_object_open_close(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("object open for kv not implemented!");
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -114,7 +114,7 @@ test_hdf_object_open_invalid(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("object open for kv not implemented!");
+	j_expect_vol_kv_fail();
 }
 
 #endif

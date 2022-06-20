@@ -110,7 +110,8 @@ test_hdf_dataset_create_delete_open_close(hid_t* file_fixture, gconstpointer uda
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -170,7 +171,8 @@ test_hdf_dataset_extend(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -214,7 +216,8 @@ test_hdf_dataset_invalid_extend(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -340,7 +343,8 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -466,7 +470,8 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 #endif

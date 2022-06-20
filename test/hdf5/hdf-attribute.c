@@ -113,7 +113,8 @@ test_hdf_attribute_group(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -150,7 +151,8 @@ test_hdf_attribute_set(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -191,7 +193,8 @@ test_hdf_attribute_type(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_db_fail();
+	j_expect_vol_kv_fail();
 }
 
 static void
@@ -269,7 +272,7 @@ test_hdf_attribute_iterate(hid_t* file_fixture, gconstpointer udata)
 
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Fails currently");
+	j_expect_vol_kv_fail();
 }
 
 #endif

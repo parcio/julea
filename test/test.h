@@ -30,6 +30,12 @@
 		g_test_trap_assert_passed(); \
 	}
 
+#define J_TEST_EXPECT_FAIL(msg) \
+	if (!g_getenv("JULEA_TEST_FATAL_EXPECTED_FAIL")) \
+	{ \
+		g_test_incomplete(msg); \
+	}
+
 void test_core_background_operation(void);
 void test_core_batch(void);
 void test_core_cache(void);

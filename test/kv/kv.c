@@ -102,7 +102,7 @@ test_kv_put_delete(void)
 	g_assert_false(ret);
 	J_TEST_TRAP_END;
 
-	g_test_incomplete("Known issue. See #116");
+	J_TEST_EXPECT_FAIL("Known issue. See #116");
 }
 
 static void
