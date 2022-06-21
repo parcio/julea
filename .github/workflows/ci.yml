@@ -372,7 +372,7 @@ jobs:
     # FIXME Increase coverage (currently, only one configuration runs)
     name: Coverage
     needs: dependencies
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - name: Checkout
@@ -384,7 +384,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: dependencies
-          key: ubuntu-20.04-gcc-9.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ubuntu-22.04-gcc-11.2.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
