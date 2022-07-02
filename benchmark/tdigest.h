@@ -1,3 +1,42 @@
+/*
+ * JULEA - Flexible storage framework
+ * Copyright (C) 2021 Julian Benda
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
+ * \file
+ **/
+
+#ifndef TDIGEST_H
+#define TDIGEST_H
+
+#include <glib.h>
+
+G_BEGIN_DECLS
+
+/**
+ * \defgroup JTDigest TDigest
+ *
+ * T-Digest implementation based on https://github.com/tdunning/t-digest
+ * approximates quantiles with buckest to handle abetrarie sizes.
+ * Buckets are filled uequaly, therefore quantiles at the extreme
+ * are more precise then in the center.
+ *
+ * @{
+ **/
+
 struct TDigest;
 typedef struct TDigest TDigest;
 
@@ -25,3 +64,11 @@ double julea_t_digest_min(TDigest*);
 
 /** query the min value (precise) */
 double julea_t_digest_max(TDigest*);
+
+/**
+ * @}
+ **/
+
+G_END_DECLS
+
+#endif

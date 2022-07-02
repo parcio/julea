@@ -1,8 +1,28 @@
+/*
+ * Licensed to Ted Dunning under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * The code for the t-digest was originally authored by Ted Dunning
+ * Adrien Grand contributed the heart of the AVLTreeDigest (https://github.com/jpountz)
+ *
+ * Modifications copyright (C) 2022 Julian Benda
+ * Adopted the code from Java to C and reducing to a minimum to function for JULEA
+ */
+
 /**
- * T-Digest implementation based on https://github.com/tdunning/t-digest
- * appoximates quantiles with buckest to handle abetrarie sizes.
- * Buckets are filled uequaly, therefore quantiles at the extreme
- * are more precise then in the center.
+ * \file
  **/
 
 #define _GNU_SOURCE
@@ -52,6 +72,11 @@ inverse_array(void* data, int size, int length)
 	}
 }
 
+/**
+ * \addtogroup TDigest
+ *
+ * @{
+ **/
 typedef struct
 {
 	int size;
@@ -620,3 +645,7 @@ t_digest_merge(TDigest* this)
 	this->temp_cells.size = 0;
 	this->temp_cells.total_weight = 0;
 }
+
+/**
+ * @}
+ **/

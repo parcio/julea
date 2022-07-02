@@ -499,7 +499,7 @@ end:
 /**
  * Initializes a fabric for the client side.
  * Contains data to building a paired connection.
- * Addess of JULEA server is needed, to enforce that both communicate via the same network.
+ * Adress of JULEA server is needed, to enforce that both communicate via the same network.
  *
  * \warning Will be called from j_network_connection_init_client, so no need for explicit calls.
  *
