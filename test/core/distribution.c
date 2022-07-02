@@ -45,6 +45,9 @@ test_distribution_fixture_setup(JConfiguration** configuration, gconstpointer da
 	g_key_file_set_string(key_file, "db", "backend", "null");
 	g_key_file_set_string(key_file, "db", "component", "server");
 	g_key_file_set_string(key_file, "db", "path", "");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", "lmdb");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", "");
+	g_key_file_set_string(key_file, "object.hsm-policy", "policy", "dummy");
 
 	*configuration = j_configuration_new_for_data(key_file);
 
