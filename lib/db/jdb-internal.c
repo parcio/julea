@@ -30,9 +30,9 @@
 
 #include <db/jdb-error.h>
 #include <db/jdb-internal.h>
+#include <julea-db.h>
 
 #include <julea.h>
-#include "../../backend/db/jbson.c"
 
 struct JDBIteratorHelper
 {

@@ -31,7 +31,6 @@
 #include <julea.h>
 #include <db/jdb-internal.h>
 #include <julea-db.h>
-#include "../../backend/db/jbson.c"
 
 JDBIterator*
 j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)

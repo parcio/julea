@@ -102,23 +102,6 @@ struct JDBSelector
 	gint ref_count;
 };
 
-union JDBTypeValue
-{
-	guint32 val_uint32;
-	gint32 val_sint32;
-	guint64 val_uint64;
-	gint64 val_sint64;
-	gdouble val_float64;
-	gfloat val_float32;
-	gchar const* val_string;
-
-	struct
-	{
-		gchar const* val_blob;
-		guint32 val_blob_length;
-	};
-};
-
 // Client-side wrappers for backend functions
 gboolean j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** error);
 gboolean j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error);

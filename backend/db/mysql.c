@@ -26,8 +26,6 @@
 #include <julea.h>
 #include <julea-db.h>
 
-#include "jbson.c"
-
 #define MAX_BUF_SIZE 4096
 
 #define SQL_MODE_SINGLE_THREAD 0
