@@ -404,6 +404,19 @@ pkg_config.generate(julea_lib,
 	url: 'https://github.com/julea-io/julea',
 )
 
+julea_db_util_srcs = [
+	'lib/db-util/jbson.c',
+	# sql-generic could be here as well!
+]
+
+julea_db_util_lib = shared_library('julea-db-util', julea_db_util_srcs,
+	dependencies: [julea_dep, libbson_dep, glib_dep],
+	include_directories: julea_incs,
+	install: true,
+	)
+
+julea_db_util_dep = declare_dependency(link_with: julea_db_util_lib)
+
 julea_client_srcs = {
 	'object': files([
 		'lib/object/jdistributed-object.c',
@@ -423,7 +436,6 @@ julea_client_srcs = {
 		'lib/db/jdb-iterator.c',
 		'lib/db/jdb-schema.c',
 		'lib/db/jdb-selector.c',
-		'lib/db/jbson.c',
 	]),
 	'item': files([
 		'lib/item/jcollection.c',
@@ -469,6 +481,8 @@ foreach client: julea_clients
 	if client == 'item'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
+	elif client == 'db'
+		extra_deps += julea_db_util_dep
 	elif client == 'hdf5-kv'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
@@ -665,7 +679,7 @@ foreach backend: julea_backends
 	endif
 
 	if backend_type == 'db'
-		extra_deps += julea_client_deps['db']
+		extra_deps += julea_db_util_dep
 	endif
 
 	lib = shared_library('@0@-@1@'.format(backend_type, backend_name), files('backend/@0@.c'.format(backend)),
