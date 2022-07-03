@@ -92,7 +92,7 @@ main(int argc, char** argv)
 		{
 			JDBType type;
 
-			j_db_iterator_get_field(iterator, "hello", &type, (gpointer*)&db_field, &db_length, NULL);
+			j_db_iterator_get_field(iterator, NULL, "hello", &type, (gpointer*)&db_field, &db_length, NULL);
 			printf("DB contains: %s (%" G_GUINT64_FORMAT " bytes)\n", db_field, db_length);
 		}
 	}

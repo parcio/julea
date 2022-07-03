@@ -75,7 +75,7 @@ _benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use
 			g_assert_true(ret);
 			g_assert_null(b_s_error);
 
-			ret = j_db_iterator_get_field(iterator, "string", &field_type, &field_value, &field_length, &b_s_error);
+			ret = j_db_iterator_get_field(iterator, NULL, "string", &field_type, &field_value, &field_length, &b_s_error);
 			g_assert_true(ret);
 			g_assert_null(b_s_error);
 		}
@@ -142,7 +142,7 @@ _benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_
 			g_assert_true(ret);
 			g_assert_null(b_s_error);
 
-			ret = j_db_iterator_get_field(iterator, "string", &field_type, &field_value, &field_length, &b_s_error);
+			ret = j_db_iterator_get_field(iterator, NULL, "string", &field_type, &field_value, &field_length, &b_s_error);
 			g_assert_true(ret);
 			g_assert_null(b_s_error);
 		}

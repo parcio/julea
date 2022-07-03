@@ -31,7 +31,6 @@
 #include <julea.h>
 #include <db/jdb-internal.h>
 #include <julea-db.h>
-#include "../../backend/db/jbson.c"
 
 JDBIterator*
 j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
@@ -57,6 +56,8 @@ j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 
 	if (selector)
 	{
+		j_db_selector_finalize(selector, error);
+
 		iterator->selector = j_db_selector_ref(selector);
 
 		if (G_UNLIKELY(!iterator->selector))
@@ -174,12 +175,13 @@ _error:
 }
 
 gboolean
-j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
+j_db_iterator_get_field(JDBIterator* iterator, JDBSchema* schema, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JDBTypeValue val;
 	bson_iter_t iter;
+	g_autoptr(GString) field_name = NULL;
 
 	g_return_val_if_fail(iterator != NULL, FALSE);
 	g_return_val_if_fail(iterator->bson_valid, FALSE);
@@ -189,7 +191,18 @@ j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type,
 	g_return_val_if_fail(length != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!j_db_schema_get_field(iterator->schema, name, type, error)))
+	if (!schema)
+	{
+		schema = iterator->schema;
+	}
+
+	field_name = g_string_new(schema->namespace);
+	g_string_append(field_name, "_");
+	g_string_append(field_name, schema->name);
+	g_string_append(field_name, ".");
+	g_string_append(field_name, name);
+
+	if (G_UNLIKELY(!j_db_schema_get_field(schema, name, type, error)))
 	{
 		goto _error;
 	}
@@ -199,7 +212,7 @@ j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type,
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!j_bson_iter_find(&iter, name, error)))
+	if (G_UNLIKELY(!j_bson_iter_find(&iter, field_name->str, error)))
 	{
 		goto _error;
 	}

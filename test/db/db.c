@@ -396,16 +396,16 @@ iterator_get(void)
 
 	while (j_db_iterator_next(iterator, NULL))
 	{
-		success = j_db_iterator_get_field(iterator, "name", &type, (gpointer*)&name, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema, "name", &type, (gpointer*)&name, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field(iterator, "dimensions", &type, (gpointer*)&dim, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema, "dimensions", &type, (gpointer*)&dim, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field(iterator, "min", &type, (gpointer*)&min, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema, "min", &type, (gpointer*)&min, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field(iterator, "max", &type, (gpointer*)&max, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema, "max", &type, (gpointer*)&max, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 

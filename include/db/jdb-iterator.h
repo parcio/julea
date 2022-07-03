@@ -45,13 +45,11 @@ G_BEGIN_DECLS
 /**
  * Allocates a new iterator.
  *
- * \param[in] schema The schema defines the structure of the iterator
- * \param[in] selector The selector defines which entrys to select
+ * \param[in] schema The primary schema of the iterator.
+ * \param[in] selector The selector to use.
  * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre schema != NULL
- * \pre schema is initialized
  * \pre selector != NULL
- * \pre selector fetches at least 1 element in the backend
  *
  * \return the new iterator or NULL on failure
  **/
@@ -90,13 +88,15 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
 /**
  * Get a single value from the current entry of the iterator.
  *
- * \param[in] iterator to query
- * \param[in] name the name of the value to retrieve
- * \param[out] type the type of the retrieved value
- * \param[out] value the retieved value
- * \param[out] length the length of the retrieved value
+ * \param[in] iterator The iterator to query.
+ * \param[in] schema The schema the field belongs to. If the field is in the primary schema (especially if no joins are used) NULL may be passed.
+ * \param[in] name The name of the value to retrieve.
+ * \param[out] type The type of the retrieved value.
+ * \param[out] value The retieved value.
+ * \param[out] length The length of the retrieved value.
  * \param[out] error A GError pointer. Will point to a GError object in case of failure.
- * \pre iterator != NULL
+ *
+ *  \pre iterator != NULL
  * \pre name != NULL
  * \pre type != NULL
  * \pre value != NULL
@@ -107,7 +107,7 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-gboolean j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
+gboolean j_db_iterator_get_field(JDBIterator* iterator, JDBSchema* schema, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
 
 G_END_DECLS
 

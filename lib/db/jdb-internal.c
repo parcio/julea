@@ -32,7 +32,7 @@
 #include <db/jdb-internal.h>
 
 #include <julea.h>
-#include "../../backend/db/jbson.c"
+#include <julea-db.h>
 
 struct JDBIteratorHelper
 {
@@ -507,14 +507,111 @@ error2:
 	return FALSE;
 }
 
+gboolean
+j_db_selector_finalize(JDBSelector* selector, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JDBTypeValue val;
+
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(!selector->final_valid, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_bson_init(&selector->final, error);
+
+	// contains joins?
+	if (g_hash_table_size(selector->join_schema) > 1)
+	{
+		GHashTableIter iter;
+		g_autoptr(GString) value_str = g_string_new(NULL);
+		g_autoptr(GString) key_str = g_string_new(NULL);
+		bson_t tables;
+		guint table_count = 0;
+		gpointer key;
+
+		if (G_UNLIKELY(!j_bson_append_array_begin(&selector->final, "t", &tables, error)))
+		{
+			goto _error;
+		}
+
+		// joind schemas
+		g_hash_table_iter_init(&iter, selector->join_schema);
+		while (g_hash_table_iter_next(&iter, &key, NULL))
+		{
+			g_string_printf(key_str, "%i", table_count);
+			g_string_assign(value_str, (gchar*)key);
+			val.val_string = value_str->str;
+
+			if (G_UNLIKELY(!j_bson_append_value(&tables, key_str->str, J_DB_TYPE_STRING, &val, error)))
+			{
+				goto _error;
+			}
+
+			++table_count;
+		}
+
+		if (G_UNLIKELY(!j_bson_append_array_end(&selector->final, &tables, error)))
+		{
+			goto _error;
+		}
+
+		if (G_UNLIKELY(!j_bson_append_document(&selector->final, "j", &selector->joins, error)))
+		{
+			goto _error;
+		}
+	}
+
+	if (G_UNLIKELY(!j_bson_append_document(&selector->final, "s", &selector->selection, error)))
+	{
+		goto _error;
+	}
+
+	selector->final_valid = TRUE;
+
+	return TRUE;
+
+_error:
+
+	return FALSE;
+}
+
 bson_t*
 j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (selector && selector->bson_count > 0)
+	g_autoptr(GError) err = NULL;
+
+	g_return_val_if_fail(selector != NULL, NULL);
+
+	if (!selector->final_valid)
 	{
-		return &selector->bson;
+		if (bson_has_field(&selector->final, "s"))
+		{
+			// final bson has already been build, rebuild it
+			// this case handles selector modifications after selector usage
+			j_bson_destroy(&selector->final);
+
+			if (!j_bson_init(&selector->final, &err))
+			{
+				goto _error;
+			}
+		}
+
+		if (!j_db_selector_finalize(selector, &err))
+		{
+			goto _error;
+		}
+	}
+
+	return &selector->final;
+
+_error:
+
+	if (err)
+	{
+		g_debug("Error in %s. Error code is '%s'\n", G_STRLOC, err->message);
 	}
 
 	return NULL;

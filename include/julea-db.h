@@ -30,7 +30,6 @@
 #include <db/jdb-selector.h>
 #include <db/jdb-type.h>
 
-/// \todo
-//#undef JULEA_DB_H
+#undef JULEA_DB_H
 
 #endif

@@ -447,7 +447,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "min_value_i", &type, (gpointer*)&tmp_ptr_i, &len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "min_value_i", &type, (gpointer*)&tmp_ptr_i, &len, error))
 	{
 		j_goto_error();
 	}
@@ -455,7 +455,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 	object->dataset.statistics.min_value_i = *tmp_ptr_i;
 	g_free(tmp_ptr_i);
 
-	if (!j_db_iterator_get_field(iterator, "max_value_i", &type, (gpointer*)&tmp_ptr_i, &len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "max_value_i", &type, (gpointer*)&tmp_ptr_i, &len, error))
 	{
 		j_goto_error();
 	}
@@ -463,7 +463,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 	object->dataset.statistics.max_value_i = *tmp_ptr_i;
 	g_free(tmp_ptr_i);
 
-	if (!j_db_iterator_get_field(iterator, "min_value_f", &type, (gpointer*)&tmp_ptr_f, &len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "min_value_f", &type, (gpointer*)&tmp_ptr_f, &len, error))
 	{
 		j_goto_error();
 	}
@@ -471,7 +471,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 	object->dataset.statistics.min_value_f = *tmp_ptr_f;
 	g_free(tmp_ptr_f);
 
-	if (!j_db_iterator_get_field(iterator, "max_value_f", &type, (gpointer*)&tmp_ptr_f, &len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "max_value_f", &type, (gpointer*)&tmp_ptr_f, &len, error))
 	{
 		j_goto_error();
 	}
@@ -479,7 +479,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 	object->dataset.statistics.max_value_f = *tmp_ptr_f;
 	g_free(tmp_ptr_f);
 
-	if (!j_db_iterator_get_field(iterator, "space", &type, &space_id_buf, &space_id_buf_len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "space", &type, &space_id_buf, &space_id_buf_len, error))
 	{
 		j_goto_error();
 	}
@@ -489,7 +489,7 @@ H5VL_julea_db_dataset_set_info(JHDF5Object_t* object, GError** error)
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "datatype", &type, &datatype_id_buf, &datatype_id_buf_len, error))
+	if (!j_db_iterator_get_field(iterator, NULL, "datatype", &type, &datatype_id_buf, &datatype_id_buf_len, error))
 	{
 		j_goto_error();
 	}

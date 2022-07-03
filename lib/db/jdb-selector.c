@@ -31,7 +31,6 @@
 #include <julea.h>
 #include <db/jdb-internal.h>
 #include <julea-db.h>
-#include "../../backend/db/jbson.c"
 
 JDBSelector*
 j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
@@ -42,22 +41,25 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	JDBSelector* selector = NULL;
 
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail(schema != NULL, NULL);
 
 	selector = j_helper_alloc_aligned(128, sizeof(JDBSelector));
 	selector->ref_count = 1;
 	selector->mode = mode;
-	selector->bson_count = 0;
-	bson_init(&selector->bson);
+	selector->selection_count = 0;
+	selector->join_schema = NULL;
 	selector->schema = j_db_schema_ref(schema);
+	selector->final_valid = FALSE;
 
-	if (G_UNLIKELY(!selector->schema))
-	{
-		goto _error;
-	}
+	bson_init(&selector->selection);
+	bson_init(&selector->joins);
+	bson_init(&selector->final);
+
+	selector->join_schema = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+	g_hash_table_add(selector->join_schema, g_strdup(schema->name));
 
 	val.val_uint32 = mode;
-
-	if (G_UNLIKELY(!j_bson_append_value(&selector->bson, "_mode", J_DB_TYPE_UINT32, &val, error)))
+	if (G_UNLIKELY(!j_bson_append_value(&selector->selection, "m", J_DB_TYPE_UINT32, &val, error)))
 	{
 		goto _error;
 	}
@@ -90,8 +92,14 @@ j_db_selector_unref(JDBSelector* selector)
 
 	if (g_atomic_int_dec_and_test(&selector->ref_count))
 	{
+		// Free schemas.
 		j_db_schema_unref(selector->schema);
-		bson_destroy(&selector->bson);
+		g_hash_table_unref(selector->join_schema);
+		// BSON document.
+		bson_destroy(&selector->selection);
+		bson_destroy(&selector->joins);
+		bson_destroy(&selector->final);
+		// Free Selector.
 		g_free(selector);
 	}
 }
@@ -101,42 +109,43 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 {
 	J_TRACE_FUNCTION(NULL);
 
-	char buf[20];
-	bson_t bson;
+	bson_t child;
+
 	JDBType type;
 	JDBTypeValue val;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(selector->bson_count + 1 > 500))
+	// Current implemntation does not allow more than 500 BSON document elements.
+	if (G_UNLIKELY(selector->selection_count + 1 > 500))
 	{
 		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_TOO_COMPLEX, "selector too complex");
 		goto _error;
 	}
 
+	// Extract the type of the requested field.
 	if (G_UNLIKELY(!j_db_schema_get_field(selector->schema, name, &type, error)))
 	{
 		goto _error;
 	}
 
-	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
-
-	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->bson, buf, &bson, error)))
+	// append field as `"name" : {"t" : <table_name>, "o" : <operator>, "v" : <value>}`
+	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->selection, name, &child, error)))
 	{
 		goto _error;
 	}
 
-	val.val_string = name;
-
-	if (G_UNLIKELY(!j_bson_append_value(&bson, "_name", J_DB_TYPE_STRING, &val, error)))
+	// Add table
+	val.val_string = selector->schema->name;
+	if (G_UNLIKELY(!j_bson_append_value(&child, "t", J_DB_TYPE_STRING, &val, error)))
 	{
 		goto _error;
 	}
 
+	// Add operator.
 	val.val_uint32 = operator_;
-
-	if (G_UNLIKELY(!j_bson_append_value(&bson, "_operator", J_DB_TYPE_UINT32, &val, error)))
+	if (G_UNLIKELY(!j_bson_append_value(&child, "o", J_DB_TYPE_UINT32, &val, error)))
 	{
 		goto _error;
 	}
@@ -173,17 +182,89 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 			g_assert_not_reached();
 	}
 
-	if (G_UNLIKELY(!j_bson_append_value(&bson, "_value", type, &val, error)))
+	// Add value.
+	if (G_UNLIKELY(!j_bson_append_value(&child, "v", type, &val, error)))
 	{
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!j_bson_append_document_end(&selector->bson, &bson, error)))
+	if (G_UNLIKELY(!j_bson_append_document_end(&selector->selection, &child, error)))
 	{
 		goto _error;
 	}
 
-	selector->bson_count++;
+	selector->selection_count++;
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+/**
+ * \brief Copy join data from a sub selector to a primary selector.
+ *
+ * \param selector The primary selector.
+ * \param sub_selector The sub selector.
+ * \return gboolean TRUE on success, FALSE otherwise.
+ */
+static gboolean
+j_db_selector_add_sub_joins(JDBSelector* selector, JDBSelector* sub_selector)
+{
+	GHashTableIter iter;
+	gpointer key;
+
+	g_hash_table_iter_init(&iter, sub_selector->join_schema);
+
+	while (g_hash_table_iter_next(&iter, &key, NULL))
+	{
+		// no error check on hash_table_add because FALSE could also mean that the key did already exist
+		g_hash_table_add(selector->join_schema, g_strdup(key));
+	}
+
+	// append to the join list
+	if (!bson_concat(&selector->joins, &sub_selector->joins))
+	{
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+/**
+ * \brief Copy the selector data from a sub selector to a primary selector.
+ *
+ * \param selector The primary selector.
+ * \param sub_selector The sub selector.
+ * \param error A GError.
+ * \return TRUE on success, FALSE otherwise.
+ */
+static gboolean
+j_db_selector_add_sub_selection(JDBSelector* selector, JDBSelector* sub_selector, GError** error)
+{
+	if (G_UNLIKELY(selector->selection_count + sub_selector->selection_count > 500))
+	{
+		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_TOO_COMPLEX, "selector too complex");
+		goto _error;
+	}
+
+	if (sub_selector->selection_count == 0)
+	{
+		// no need to add an empty selection
+		// for example, that is the case for simple join queries of the form 'SELECT * FROM t1, t2 WHERE t1.field1 = t2.field2'
+		return TRUE;
+	}
+
+	// append the sub selector's selection logic
+	if (G_UNLIKELY(!j_bson_append_document(&selector->selection, "_s", &sub_selector->selection, error)))
+	{
+		goto _error;
+	}
+
+	selector->selection_count += sub_selector->selection_count;
 
 	return TRUE;
 
@@ -196,34 +277,89 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 {
 	J_TRACE_FUNCTION(NULL);
 
-	char buf[20];
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(sub_selector != NULL, FALSE);
+	g_return_val_if_fail(selector != sub_selector, FALSE);
+	// if the schemas are different the semantic is not clear anymore (what would be the joining field?)
+	g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	selector->final_valid = FALSE;
+
+	// fetch selections from the sub_selector
+	if (!j_db_selector_add_sub_selection(selector, sub_selector, error))
+	{
+		goto _error;
+	}
+
+	// fetch tables and join information from the sub selector
+	if (!j_db_selector_add_sub_joins(selector, sub_selector))
+	{
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+gboolean
+j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	bson_t join_entry;
+	JDBTypeValue val;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(sub_selector != NULL, FALSE);
 	g_return_val_if_fail(selector != sub_selector, FALSE);
-	g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
+	g_return_val_if_fail(selector->schema != sub_selector->schema, TRUE);
+	g_return_val_if_fail(selector_field != NULL, FALSE);
+	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (G_UNLIKELY(!sub_selector->bson_count))
-	{
-		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_EMPTY, "selector must not be emoty");
-		goto _error;
-	}
+	selector->final_valid = FALSE;
 
-	if (G_UNLIKELY(selector->bson_count + sub_selector->bson_count > 500))
-	{
-		g_set_error_literal(error, J_DB_ERROR, J_DB_ERROR_SELECTOR_TOO_COMPLEX, "selector too complex");
-		goto _error;
-	}
-
-	snprintf(buf, sizeof(buf), "%d", selector->bson_count);
-
-	if (G_UNLIKELY(!j_bson_append_document(&selector->bson, buf, &sub_selector->bson, error)))
+	if (!j_bson_init(&join_entry, error))
 	{
 		goto _error;
 	}
 
-	selector->bson_count += sub_selector->bson_count;
+	val.val_string = selector_field;
+	if (!j_bson_append_value(&join_entry, selector->schema->name, J_DB_TYPE_STRING, &val, error))
+	{
+		goto _error;
+	}
+
+	val.val_string = sub_selector_field;
+	if (!j_bson_append_value(&join_entry, sub_selector->schema->name, J_DB_TYPE_STRING, &val, error))
+	{
+		goto _error;
+	}
+
+	// In favor of simplicity the "keys" in the array do not follow the bson standard (i.e., increasing numbers).
+	// If we would adhere to the standard we would need a counter and adding the joins from the sub_selector would not be as easy as concatenating the bsons.
+	if (!j_bson_append_document(&selector->joins, "0", &join_entry, error))
+	{
+		goto _error;
+	}
+
+	if (!g_hash_table_add(selector->join_schema, g_strdup(sub_selector->schema->name)))
+	{
+		goto _error;
+	}
+
+	if (!j_db_selector_add_sub_joins(selector, sub_selector))
+	{
+		goto _error;
+	}
+
+	if (!j_db_selector_add_sub_selection(selector, sub_selector, error))
+	{
+		goto _error;
+	}
 
 	return TRUE;
 

@@ -313,12 +313,12 @@ H5VL_julea_db_link_get_helper(JHDF5Object_t* parent, JHDF5Object_t* child, const
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "child", &type, &child->backend_id, &child->backend_id_len, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "child", &type, &child->backend_id, &child->backend_id_len, &error))
 	{
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "child_type", &type, &child_type, &size, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "child_type", &type, &child_type, &size, &error))
 	{
 		j_goto_error();
 	}
@@ -649,12 +649,12 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 
 	while (j_db_iterator_next(link_iterator, NULL))
 	{
-		if (!j_db_iterator_get_field(link_iterator, "name", &child_name_type, (gpointer*)&child_name, &child_name_length, NULL))
+		if (!j_db_iterator_get_field(link_iterator, NULL, "name", &child_name_type, (gpointer*)&child_name, &child_name_length, NULL))
 		{
 			j_goto_error();
 		}
 
-		if (!j_db_iterator_get_field(link_iterator, "child_type", &child_type_type, (gpointer*)&child_type, &type_length, NULL))
+		if (!j_db_iterator_get_field(link_iterator, NULL, "child_type", &child_type_type, (gpointer*)&child_type, &type_length, NULL))
 		{
 			j_goto_error();
 		}
