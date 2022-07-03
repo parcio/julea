@@ -31,7 +31,6 @@
 #include <julea.h>
 #include <db/jdb-internal.h>
 #include <julea-db.h>
-#include "../../backend/db/jbson.c"
 
 JDBSelector*
 j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)

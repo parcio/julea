@@ -29,8 +29,8 @@
 #include <db/jdb-schema.h>
 #include <db/jdb-selector.h>
 #include <db/jdb-type.h>
+#include <db/jbson.h>
 
-/// \todo
-//#undef JULEA_DB_H
+#undef JULEA_DB_H
 
 #endif

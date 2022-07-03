@@ -26,8 +26,6 @@
 #include <julea.h>
 #include <julea-db.h>
 
-#include "jbson.c"
-
 /*
  * sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
  * to remove errors due to concurrent access.
