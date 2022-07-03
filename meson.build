@@ -423,6 +423,7 @@ julea_client_srcs = {
 		'lib/db/jdb-iterator.c',
 		'lib/db/jdb-schema.c',
 		'lib/db/jdb-selector.c',
+		'lib/db/jbson.c',
 	]),
 	'item': files([
 		'lib/item/jcollection.c',
@@ -661,6 +662,10 @@ foreach backend: julea_backends
 			extra_args += '-Wno-discarded-qualifiers'
 		endif
 		extra_deps += mariadb_dep
+	endif
+
+	if backend_type == 'db'
+		extra_deps += julea_client_deps['db']
 	endif
 
 	lib = shared_library('@0@-@1@'.format(backend_type, backend_name), files('backend/@0@.c'.format(backend)),

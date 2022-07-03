@@ -31,7 +31,6 @@
 #include <julea.h>
 #include <db/jdb-internal.h>
 #include <julea-db.h>
-#include "../../backend/db/jbson.c"
 
 JDBEntry*
 j_db_entry_new(JDBSchema* schema, GError** error)
