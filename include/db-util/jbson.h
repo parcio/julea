@@ -22,10 +22,6 @@
 #ifndef JULEA_BSON_H
 #define JULEA_BSON_H
 
-#if !defined(JULEA_DB_H) && !defined(JULEA_DB_COMPILATION)
-#error "Only <julea.h> can be included directly."
-#endif
-
 #include <glib.h>
 
 #include <db/jdb-type.h>
