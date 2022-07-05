@@ -28,6 +28,7 @@
 
 #include <julea.h>
 #include <julea-db.h>
+#include <db-util/jbson.h>
 
 gboolean
 j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error)

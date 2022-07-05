@@ -37,6 +37,7 @@
 #include <db/jdb-iterator.h>
 #include <db/jdb-schema.h>
 #include <db/jdb-selector.h>
+#include <db-util/jbson.h>
 
 G_BEGIN_DECLS
 
