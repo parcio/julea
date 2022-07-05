@@ -25,6 +25,7 @@
 
 #include <julea.h>
 #include <julea-db.h>
+#include <db-util/jbson.h>
 
 #define MAX_BUF_SIZE 4096
 

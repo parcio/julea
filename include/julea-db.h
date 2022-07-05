@@ -29,7 +29,6 @@
 #include <db/jdb-schema.h>
 #include <db/jdb-selector.h>
 #include <db/jdb-type.h>
-#include <db/jbson.h>
 
 #undef JULEA_DB_H
 
