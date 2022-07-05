@@ -610,7 +610,6 @@ H5VL_julea_db_link_iterate_helper(JHDF5Object_t* object, hbool_t recursive, gboo
 
 	if (object->type == J_HDF5_OBJECT_TYPE_FILE)
 	{
-		/// \todo root group needs to be faked here (maybe add it as real group?)
 		curr_parent_type = H5I_GROUP;
 		curr_parent_obj = H5VL_julea_db_object_ref(object->file.root_group);
 	}

@@ -351,7 +351,11 @@ H5VL_julea_db_group_open(void* obj, const H5VL_loc_params_t* loc_params, const c
 	switch (parent->type)
 	{
 		case J_HDF5_OBJECT_TYPE_FILE:
-			// only the root group has the file as parent
+			/*
+			Only the root group has the file as parent.
+			This is enforced in H5VL_julea_db_link_get_helper and H5VL_julea_db_link_create_helper
+			by transparent use of the file's root group instead of the file itself.
+			*/
 			return H5VL_julea_db_object_ref(parent->file.root_group);
 		case J_HDF5_OBJECT_TYPE_DATASET:
 			file = parent->dataset.file;

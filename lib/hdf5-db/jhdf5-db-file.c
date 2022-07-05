@@ -175,31 +175,31 @@ _error:
 }
 
 /**
- * @brief Construct the root group for a file object.
+ * \brief Construct the root group for a file object.
  *
- * @param file A file object.
- * @param root_group_id The ID of the respective root group. This function takes the ownership of root_group_id. It should not be freed by the caller.
- * @param root_group_id_len The length of the ID.
- * @attention This function takes the ownership of root_group_id. It should not be freed by the caller.
- * @return gboolean - True for success
+ * \param file A file object.
+ * \param root_group_id The ID of the respective root group. This function takes the ownership of root_group_id. It should not be freed by the caller.
+ * \param root_group_id_len The length of the ID.
+ * \attention This function takes the ownership of root_group_id. It should not be freed by the caller.
+ * \return gboolean - TRUE for success
  */
 static gboolean
 file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group_id_len)
 {
 	JHDF5Object_t* root_group;
 
-	g_return_val_if_fail(file != NULL, false);
-	g_return_val_if_fail(file->type == J_HDF5_OBJECT_TYPE_FILE, false);
+	g_return_val_if_fail(file != NULL, FALSE);
+	g_return_val_if_fail(file->type == J_HDF5_OBJECT_TYPE_FILE, FALSE);
 
 	if (!(root_group = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_GROUP)))
 	{
-		return false;
+		return FALSE;
 	}
 
 	if (!(root_group->group.name = g_strdup("/")))
 	{
 		g_free(root_group);
-		return false;
+		return FALSE;
 	}
 
 	// do not change ref count!
@@ -211,7 +211,7 @@ file_add_root_group(JHDF5Object_t* file, void* root_group_id, guint64 root_group
 
 	file->file.root_group = root_group;
 
-	return true;
+	return TRUE;
 }
 
 void*
@@ -280,21 +280,6 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 	//create new file
 	if (!exist)
 	{
-		// this snippet seems unnecessary???
-		/*
-		H5VL_julea_db_object_unref(object);
-
-		if (!(object = H5VL_julea_db_object_new(J_HDF5_OBJECT_TYPE_FILE)))
-		{
-			j_goto_error();
-		}
-
-		if (!(object->file.name = g_strdup(name)))
-		{
-			j_goto_error();
-		}
-		*/
-
 		if (!(entry = j_db_entry_new(julea_db_schema_file, &error)))
 		{
 			j_goto_error();
