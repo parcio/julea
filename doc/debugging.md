@@ -35,3 +35,8 @@ $ ./scripts/test.sh
 $ ./scripts/setup.sh stop
 $ ninja -C bld coverage
 ```
+
+## Tests
+
+By default, tests that are marked as expected fail will not cause the test suite to fail as a whole.
+While debugging, it sometimes makes sense to disable this behavior, which can be achieved by setting the `JULEA_TEST_FATAL_EXPECTED_FAIL` environment variable.
