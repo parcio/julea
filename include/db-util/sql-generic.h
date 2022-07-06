@@ -49,7 +49,7 @@ struct JSQLSpecifics
 		gboolean (*sql_exec)(gpointer db_connection, const char* sql, GError** error);
 	} func;
 
-	struct 
+	struct
 	{
 		const gchar* autoincrement;
 		const gchar* uint64_type;

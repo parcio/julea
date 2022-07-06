@@ -426,7 +426,7 @@ static JSQLSpecifics specifics = {
 	* otherwise there is no lock
 	*/
 	.single_threaded = TRUE,
-	
+
 	.func = {
 		.connection_open = j_sql_open,
 		.connection_close = j_sql_close,
@@ -441,15 +441,9 @@ static JSQLSpecifics specifics = {
 		.statement_step_and_reset_check_done = j_sql_step_and_reset_check_done,
 		.statement_reset = j_sql_reset,
 		.statement_column = j_sql_column,
-		.sql_exec = j_sql_exec
-	},
+		.sql_exec = j_sql_exec },
 
-	.sql = {
-		.autoincrement = " ",
-		.uint64_type = " UNSIGNED BIGINT ",
-		.select_last = " SELECT last_insert_rowid() ",
-		.quote = "\""
-	}
+	.sql = { .autoincrement = " ", .uint64_type = " UNSIGNED BIGINT ", .select_last = " SELECT last_insert_rowid() ", .quote = "\"" }
 
 };
 
