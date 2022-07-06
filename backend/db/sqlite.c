@@ -61,7 +61,7 @@ j_sql_prepare(gpointer backend_db, const char* sql, void* _stmt, GArray* types_i
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt** stmt = _stmt;
-	sqlite3* db = (sqlite3*) backend_db;
+	sqlite3* db = (sqlite3*)backend_db;
 
 	(void)types_in;
 	(void)types_out;
@@ -443,9 +443,15 @@ static JSQLSpecifics specifics = {
 		.statement_step_and_reset_check_done = j_sql_step_and_reset_check_done,
 		.statement_reset = j_sql_reset,
 		.statement_column = j_sql_column,
-		.sql_exec = j_sql_exec },
+		.sql_exec = j_sql_exec,
+	},
 
-	.sql = { .autoincrement = " ", .uint64_type = " UNSIGNED BIGINT ", .select_last = " SELECT last_insert_rowid() ", .quote = "\"" }
+	.sql = {
+		.autoincrement = " ",
+		.uint64_type = " UNSIGNED BIGINT ",
+		.select_last = " SELECT last_insert_rowid() ",
+		.quote = "\"",
+	},
 
 };
 
