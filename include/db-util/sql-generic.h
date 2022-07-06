@@ -29,26 +29,33 @@
 
 struct JSQLSpecifics
 {
-	// DB connection or something likewise
-	void* db_connection;
+	/** 
+	 * \todo Move connection handling to the backend lib as this can be done in its init func.
+	 * This field could then point to the DB connection handle and the thread variable mechanism could be removed.
+	 * 
+	 */
+	// some info struct which enables connection_open to connect to the DB
+	gpointer db_connection_info;
 
 	guint64 max_buf_size;
 	gboolean single_threaded;
 
 	struct
 	{
-		gboolean (*transaction_start)(gpointer db_connection, GError** error)
-		gboolean (*transaction_commit)(gpointer db_connection, GError** error)
-		gboolean (*transaction_abort)(gpointer db_connection, GError** error)
-		gboolean (*j_sql_prepare)(gpointer db_connection, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
-		gboolean (*j_sql_finalize)(gpointer db_connection, void* _stmt, GError** error)
-		gboolean (*j_sql_bind_null)(gpointer db_connection, void* _stmt, guint idx, GError** error)
-		gboolean (*j_sql_bind_value)(gpointer db_connection, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
-		gboolean (*j_sql_column)(gpointer db_connection, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
-		gboolean (*j_sql_reset)(gpointer db_connection, void* _stmt, GError** error)
-		gboolean (*j_sql_step)(gpointer db_connection, void* _stmt, gboolean* found, GError** error)
-		gboolean (*j_sql_exec)(gpointer db_connection, const char* sql, GError** error)
-		gboolean (*j_sql_step_and_reset_check_done)(gpointer db_connection, void* _stmt, GError** error)
+		gpointer (*connection_open)(gpointer db_connection_info);
+		gpointer (*connection_close)(gpointer db_connection);
+		gboolean (*transaction_start)(gpointer db_connection, GError** error);
+		gboolean (*transaction_commit)(gpointer db_connection, GError** error);
+		gboolean (*transaction_abort)(gpointer db_connection, GError** error);
+		gboolean (*statement_prepare)(gpointer db_connection, const char* sql, gpointer _stmt, GArray* types_in, GArray* types_out, GError** error);
+		gboolean (*statement_finalize)(gpointer db_connection, gpointer _stmt, GError** error);
+		gboolean (*statement_bind_null)(gpointer db_connection, gpointer _stmt, guint idx, GError** error);
+		gboolean (*statement_bind_value)(gpointer db_connection, gpointer _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error);
+		gboolean (*statement_step)(gpointer db_connection, gpointer _stmt, gboolean* found, GError** error);
+		gboolean (*statement_step_and_reset_check_done)(gpointer db_connection, gpointer _stmt, GError** error);
+		gboolean (*statement_reset)(gpointer db_connection, gpointer _stmt, GError** error);
+		gboolean (*statement_column)(gpointer db_connection, gpointer _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error);
+		gboolean (*sql_exec)(gpointer db_connection, const char* sql, GError** error);
 	} sql_func;
 
 	struct 
@@ -60,19 +67,22 @@ struct JSQLSpecifics
 	} sql_string_constants;
 };
 
-typedef JSQLSpecifics struct JSQLSpecifics;
+typedef struct JSQLSpecifics JSQLSpecifics;
 
-gboolean generic_batch_start(JSQLSpecifics* backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error);
-gboolean generic_batch_execute(JSQLSpecifics* backend_data, gpointer _batch, GError** error):
+// check:
+gboolean generic_batch_start(JSQLSpecifics* specifics, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error);
+gboolean generic_batch_execute(JSQLSpecifics* specifics, gpointer _batch, GError** error):
 
-gboolean generic_schema_create(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t const* schema, GError** error);
-gboolean generic_schema_get(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
-gboolean generic_schema_delete(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, GError** error);
+// open:
 
-gboolean generic_insert(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error);
-gboolean generic_update(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
-gboolean generic_delete(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GError** error);
-gboolean generic_query(JSQLSpecifics* backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
-gboolean generic_iterate(JSQLSpecifics* backend_data, gpointer _iterator, bson_t* metadata, GError** error);
+gboolean generic_schema_create(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t const* schema, GError** error);
+gboolean generic_schema_get(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
+gboolean generic_schema_delete(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, GError** error);
+
+gboolean generic_insert(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error);
+gboolean generic_update(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
+gboolean generic_delete(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t const* selector, GError** error);
+gboolean generic_query(JSQLSpecifics* specifics, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
+gboolean generic_iterate(JSQLSpecifics* specifics, gpointer _iterator, bson_t* metadata, GError** error);
 
 #endif
