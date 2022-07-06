@@ -1,10 +1,30 @@
+/*
+ * JULEA - Flexible storage framework
+ * Copyright (C) 2022 Timm Leon Erxleben
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef SQL_GENERIC_BACKEND_INTERNAL_H
 #define SQL_GENERIC_BACKEND_INTERNAL_H
+
+#include <db-util/sql-generic.h>
 
 struct JThreadVariables
 {
 	gboolean initialized;
-	void* sql_backend;
+	void* db_connection;
 	GHashTable* namespaces;
 };
 
@@ -28,7 +48,7 @@ typedef struct JSqlCacheSQLQueries JSqlCacheSQLQueries;
 struct JSqlCacheSQLPrepared
 {
 	GString* sql;
-	void* stmt;
+	gpointer stmt;
 	guint variables_count;
 	GHashTable* variables_index;
 	gboolean initialized;
@@ -58,5 +78,7 @@ struct JSqlIterator
 };
 
 typedef struct JSqlIterator JSqlIterator;
+
+static void thread_variables_fini(void* ptr);
 
 #endif

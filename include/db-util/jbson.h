@@ -24,7 +24,7 @@
 
 #include <glib.h>
 
-#include <db/jdb-type.h>
+#include <julea-db.h>
 
 gboolean j_bson_init(bson_t* bson, GError** error);
 void j_bson_destroy(bson_t* bson);
