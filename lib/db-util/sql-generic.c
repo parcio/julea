@@ -20,6 +20,11 @@
  * this file does not care which sql-database is actually in use, and uses only defines sql-syntax to allow fast and easy implementations for any new sql-database backend
 */
 
+#include <db-util/jbson.h>
+#include <db-util/sql-generic.h>
+
+#include <sql-generic-internal.h>
+
 static void thread_variables_fini(void* ptr);
 static GPrivate thread_variables_global = G_PRIVATE_INIT(thread_variables_fini);
 
@@ -402,7 +407,7 @@ _error:
 }
 
 static gboolean
-_backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error)
+_backend_batch_start(JSQLSpecifics* specifics, JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -410,12 +415,12 @@ _backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error)
 
 	g_return_val_if_fail(!batch->open, FALSE);
 
-	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(specifics->db_connection_info, error))))
 	{
 		goto _error;
 	}
 
-	if (!j_sql_start_transaction(thread_variables->sql_backend, error))
+	if (!specifics->sql_func.transaction_start(thread_variables->sql_backend, error))
 	{
 		goto _error;
 	}
@@ -430,7 +435,7 @@ _error:
 }
 
 static gboolean
-_backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error)
+_backend_batch_execute(JSQLSpecifics* specifics, JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -438,12 +443,12 @@ _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error)
 
 	g_return_val_if_fail(batch->open || (!batch->open && batch->aborted), FALSE);
 
-	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
+	if (G_UNLIKELY(!(thread_variables = thread_variables_get(specifics->db_connection_info, error))))
 	{
 		goto _error;
 	}
 
-	if (!j_sql_commit_transaction(thread_variables->sql_backend, error))
+	if (!specifics->sql_func.transaction_commit(thread_variables->sql_backend, error))
 	{
 		goto _error;
 	}
@@ -486,8 +491,8 @@ _error:
 
 G_LOCK_DEFINE_STATIC(sql_backend_lock);
 
-static gboolean
-backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error)
+gboolean
+generic_batch_start(const JSQLSpecifics* specifics, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -497,15 +502,17 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	g_return_val_if_fail(semantics != NULL, FALSE);
 	g_return_val_if_fail(_batch != NULL, FALSE);
 
-	if (SQL_MODE == SQL_MODE_SINGLE_THREAD)
+	if (specifics->single_threaded)
+	{
 		G_LOCK(sql_backend_lock);
+	}
 
 	batch = *_batch = g_new(JSqlBatch, 1);
 	batch->namespace = namespace;
 	batch->semantics = j_semantics_ref(semantics);
 	batch->open = FALSE;
 
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
+	if (G_UNLIKELY(!_backend_batch_start(specifics, batch, error)))
 	{
 		goto _error;
 	}
@@ -516,14 +523,14 @@ _error:
 	j_semantics_unref(batch->semantics);
 	g_free(batch);
 
-	if (SQL_MODE == SQL_MODE_SINGLE_THREAD)
+	if (specifics->single_threaded)
 		G_UNLOCK(sql_backend_lock);
 
 	return FALSE;
 }
 
-static gboolean
-backend_batch_execute(gpointer backend_data, gpointer _batch, GError** error)
+gboolean
+generic_batch_execute(JSQLSpecifics* specifics, gpointer _batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -531,7 +538,7 @@ backend_batch_execute(gpointer backend_data, gpointer _batch, GError** error)
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))
+	if (G_UNLIKELY(!_backend_batch_execute(specifics, batch, error)))
 	{
 		goto _error;
 	}
@@ -539,7 +546,7 @@ backend_batch_execute(gpointer backend_data, gpointer _batch, GError** error)
 	j_semantics_unref(batch->semantics);
 	g_free(batch);
 
-	if (SQL_MODE == SQL_MODE_SINGLE_THREAD)
+	if (specifics->single_threaded)
 		G_UNLOCK(sql_backend_lock);
 
 	return TRUE;
@@ -548,7 +555,7 @@ _error:
 	j_semantics_unref(batch->semantics);
 	g_free(batch);
 
-	if (SQL_MODE == SQL_MODE_SINGLE_THREAD)
+	if (specifics->single_threaded)
 		G_UNLOCK(sql_backend_lock);
 
 	return FALSE;
