@@ -34,7 +34,7 @@ struct JSQLSpecifics
 	struct
 	{
 		gpointer (*connection_open)(gpointer db_connection_info);
-		gpointer (*connection_close)(gpointer db_connection);
+		void (*connection_close)(gpointer db_connection);
 		gboolean (*transaction_start)(gpointer db_connection, GError** error);
 		gboolean (*transaction_commit)(gpointer db_connection, GError** error);
 		gboolean (*transaction_abort)(gpointer db_connection, GError** error);
