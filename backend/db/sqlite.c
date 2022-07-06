@@ -26,21 +26,7 @@
 #include <julea.h>
 #include <julea-db.h>
 #include <db-util/jbson.h>
-
-/*
- * sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
- * to remove errors due to concurrent access.
- * if SQL_MODE is defined as SQL_MODE_SINGLE_THREAD, the sqlite-generic code uses a global lock to prevent concurrency errors.
- * otherwise there is no lock
- */
-#define SQL_MODE_SINGLE_THREAD 0
-#define SQL_MODE_MULTI_THREAD 1
-#define SQL_MODE SQL_MODE_SINGLE_THREAD
-
-#define SQL_AUTOINCREMENT_STRING " "
-#define SQL_UINT64_TYPE " UNSIGNED BIGINT "
-#define SQL_LAST_INSERT_ID_STRING " SELECT last_insert_rowid() "
-#define SQL_QUOTE "\""
+#include <db-util/sql-generic.h>
 
 struct JSQLiteData
 {
@@ -432,7 +418,40 @@ j_sql_abort_transaction(sqlite3* backend_db, GError** error)
 	return j_sql_exec(backend_db, "ROLLBACK", error);
 }
 
-#include "sql-generic.c"
+static JSQLSpecifics specifics = {
+	/*
+	* sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
+	* to remove errors due to concurrent access.
+	* if SQL_MODE is defined as SQL_MODE_SINGLE_THREAD, the sqlite-generic code uses a global lock to prevent concurrency errors.
+	* otherwise there is no lock
+	*/
+	.single_threaded = TRUE,
+	
+	.func = {
+		.connection_open = j_sql_open,
+		.connection_close = j_sql_close,
+		.transaction_start = j_sql_start_transaction,
+		.transaction_commit = j_sql_commit_transaction,
+		.transaction_abort = j_sql_abort_transaction,
+		.statement_prepare = j_sql_prepare,
+		.statement_finalize = j_sql_finalize,
+		.statement_bind_null = j_sql_bind_null,
+		.statement_bind_value = j_sql_bind_value,
+		.statement_step = j_sql_step,
+		.statement_step_and_reset_check_done = j_sql_step_and_reset_check_done,
+		.statement_reset = j_sql_reset,
+		.statement_column = j_sql_column,
+		.sql_exec = j_sql_exec
+	},
+
+	.sql = {
+		.autoincrement = " ",
+		.uint64_type = " UNSIGNED BIGINT ",
+		.select_last = " SELECT last_insert_rowid() ",
+		.quote = "\""
+	}
+
+};
 
 static gboolean
 backend_init(gchar const* _path, gpointer* backend_data)
@@ -453,7 +472,7 @@ backend_init(gchar const* _path, gpointer* backend_data)
 
 	*backend_data = bd;
 
-	sql_generic_init();
+	sql_generic_init(&specifics);
 
 	return TRUE;
 }
@@ -482,16 +501,16 @@ static JBackend sqlite_backend = {
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
-		.backend_schema_create = backend_schema_create,
-		.backend_schema_get = backend_schema_get,
-		.backend_schema_delete = backend_schema_delete,
-		.backend_insert = backend_insert,
-		.backend_update = backend_update,
-		.backend_delete = backend_delete,
-		.backend_query = backend_query,
-		.backend_iterate = backend_iterate,
-		.backend_batch_start = backend_batch_start,
-		.backend_batch_execute = backend_batch_execute,
+		.backend_schema_create = generic_schema_create,
+		.backend_schema_get = generic_schema_get,
+		.backend_schema_delete = generic_schema_delete,
+		.backend_insert = generic_insert,
+		.backend_update = generic_update,
+		.backend_delete = generic_delete,
+		.backend_query = generic_query,
+		.backend_iterate = generic_iterate,
+		.backend_batch_start = generic_batch_start,
+		.backend_batch_execute = generic_batch_execute,
 	},
 };
 
