@@ -79,6 +79,8 @@ struct JSqlIterator
 
 typedef struct JSqlIterator JSqlIterator;
 
+static void freeJSqlCacheNames(void* ptr);
 static void thread_variables_fini(void* ptr);
+static gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
 
 #endif

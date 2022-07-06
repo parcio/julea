@@ -28,6 +28,7 @@
 
 static GPrivate thread_variables_global = G_PRIVATE_INIT(thread_variables_fini);
 static JSQLSpecifics* specs;
+G_LOCK_DEFINE_STATIC(sql_backend_lock);
 
 void
 sql_generic_init(JSQLSpecifics* specifics)
@@ -61,8 +62,6 @@ thread_variables_fini(void* ptr)
 		g_free(thread_variables);
 	}
 }
-
-static void freeJSqlCacheNames(void* ptr);
 
 static JThreadVariables*
 thread_variables_get(gpointer backend_data, GError** error)
@@ -246,8 +245,6 @@ _getCachePrepared(gpointer backend_data, gchar const* namespace, gchar const* na
 _error:
 	return NULL;
 }
-
-static gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
 
 static GHashTable*
 getCacheSchema(gpointer backend_data, gpointer _batch, gchar const* name, GError** error)
@@ -491,8 +488,6 @@ _backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error)
 _error:
 	return FALSE;
 }
-
-G_LOCK_DEFINE_STATIC(sql_backend_lock);
 
 gboolean
 generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error)
