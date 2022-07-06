@@ -84,15 +84,15 @@ thread_variables_get(gpointer backend_data, GError** error)
 		thread_variables->db_connection = specs->func.connection_open(backend_data);
 
 		if (G_UNLIKELY(!specs->func.sql_exec(thread_variables->db_connection,
-					   "CREATE TABLE IF NOT EXISTS schema_structure ("
-					   "namespace VARCHAR(255),"
-					   "name VARCHAR(255),"
-					   "varname VARCHAR(255),"
-					   "vartype INTEGER"
-					   /// \todo figure out whether we should add an index instead
-					   //"PRIMARY KEY (namespace, name, varname)"
-					   ")",
-					   error)))
+						     "CREATE TABLE IF NOT EXISTS schema_structure ("
+						     "namespace VARCHAR(255),"
+						     "name VARCHAR(255),"
+						     "varname VARCHAR(255),"
+						     "vartype INTEGER"
+						     /// \todo figure out whether we should add an index instead
+						     //"PRIMARY KEY (namespace, name, varname)"
+						     ")",
+						     error)))
 		{
 			goto _error;
 		}
@@ -628,8 +628,8 @@ generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 		goto _error;
 	}
 
-	g_string_append_printf(sql, "CREATE TABLE %s%s_%s%s ( _id INTEGER %s PRIMARY KEY", 
-		specs->sql.quote, batch->namespace, name, specs->sql.quote, specs->sql.autoincrement);
+	g_string_append_printf(sql, "CREATE TABLE %s%s_%s%s ( _id INTEGER %s PRIMARY KEY",
+			       specs->sql.quote, batch->namespace, name, specs->sql.quote, specs->sql.autoincrement);
 
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
 	{
@@ -660,8 +660,8 @@ generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 		else
 		{
 			counter++;
-			g_string_append_printf(sql, ", %s%s%s", specs->sql.quote, 
-				j_bson_iter_key(&iter, error), specs->sql.quote);
+			g_string_append_printf(sql, ", %s%s%s", specs->sql.quote,
+					       j_bson_iter_key(&iter, error), specs->sql.quote);
 
 			if (G_UNLIKELY(!j_bson_iter_value(&iter, J_DB_TYPE_UINT32, &value, error)))
 			{
@@ -757,9 +757,9 @@ generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name,
 			sql = g_string_new(NULL);
 			first = TRUE;
 
-			g_string_append_printf(sql, "CREATE INDEX %s%s_%s_%d%s ON %s%s_%s%s ( ", 
-				specs->sql.quote, batch->namespace, name, i, specs->sql.quote, 
-				specs->sql.quote, batch->namespace, name, specs->sql.quote);
+			g_string_append_printf(sql, "CREATE INDEX %s%s_%s_%d%s ON %s%s_%s%s ( ",
+					       specs->sql.quote, batch->namespace, name, i, specs->sql.quote,
+					       specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
 			if (G_UNLIKELY(!j_bson_iter_recurse_array(&iter_child, &iter_child2, error)))
 			{
