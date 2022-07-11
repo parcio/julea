@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -726,16 +727,16 @@ static JBackend mysql_backend = {
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
-		.backend_schema_create = generic_schema_create,
-		.backend_schema_get = generic_schema_get,
-		.backend_schema_delete = generic_schema_delete,
-		.backend_insert = generic_insert,
-		.backend_update = generic_update,
-		.backend_delete = generic_delete,
-		.backend_query = generic_query,
-		.backend_iterate = generic_iterate,
-		.backend_batch_start = generic_batch_start,
-		.backend_batch_execute = generic_batch_execute,
+		.backend_schema_create = sql_generic_schema_create,
+		.backend_schema_get = sql_generic_schema_get,
+		.backend_schema_delete = sql_generic_schema_delete,
+		.backend_insert = sql_generic_insert,
+		.backend_update = sql_generic_update,
+		.backend_delete = sql_generic_delete,
+		.backend_query = sql_generic_query,
+		.backend_iterate = sql_generic_iterate,
+		.backend_batch_start = sql_generic_batch_start,
+		.backend_batch_execute = sql_generic_batch_execute,
 	},
 };
 
