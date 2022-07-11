@@ -254,7 +254,6 @@ getCacheSchema(gpointer backend_data, gpointer _batch, gchar const* name, GError
 	JSqlBatch* batch = _batch;
 	gboolean schema_initialized = FALSE;
 	gboolean has_next;
-	gboolean equals;
 	bson_t schema;
 	JSqlCacheSQLQueries* cacheQueries = NULL;
 	bson_iter_t iter;
@@ -292,14 +291,17 @@ getCacheSchema(gpointer backend_data, gpointer _batch, gchar const* name, GError
 				break;
 			}
 
-			if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
+			if (G_UNLIKELY(!j_bson_iter_skip_key(&iter, "_index", error)))
 			{
-				goto _error;
-			}
-
-			if (equals)
-			{
-				continue;
+				// there was either an error or no key is left now
+				if (*error)
+				{
+					goto _error;
+				} 
+				else
+				{
+					break;
+				}
 			}
 
 			string_tmp = j_bson_iter_key(&iter, error);
@@ -490,7 +492,7 @@ _error:
 }
 
 gboolean
-generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error)
+sql_generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -528,7 +530,7 @@ _error:
 }
 
 gboolean
-generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error)
+sql_generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -560,7 +562,7 @@ _error:
 }
 
 gboolean
-generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* schema, GError** error)
+sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1080,7 +1082,7 @@ _error2:
 }
 
 gboolean
-generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error)
+sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1097,7 +1099,7 @@ generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bs
 }
 
 gboolean
-generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error)
+sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1202,7 +1204,7 @@ _error2:
 }
 
 gboolean
-generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
+sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1440,7 +1442,6 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 	J_TRACE_FUNCTION(NULL);
 
 	JDBSelectorMode mode_child;
-	gboolean equals;
 	gboolean has_next;
 	JDBSelectorOperator op;
 	gboolean first = TRUE;
@@ -1469,15 +1470,19 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 			break;
 		}
 
-		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &equals, error)))
+		if (G_UNLIKELY(!j_bson_iter_skip_key(iter, "_mode", error)))
 		{
-			goto _error;
+			// there was either an error or no key is left now
+			if (*error)
+			{
+				goto _error;
+			} 
+			else
+			{
+				break;
+			}
 		}
 
-		if (equals)
-		{
-			continue;
-		}
 
 		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 		{
@@ -1625,7 +1630,6 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 	JDBTypeValue value;
 	JDBType type;
 	gboolean has_next;
-	gboolean equals;
 	JThreadVariables* thread_variables = NULL;
 	char const* string_tmp;
 
@@ -1646,14 +1650,17 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 			break;
 		}
 
-		if (G_UNLIKELY(!j_bson_iter_key_equals(iter, "_mode", &equals, error)))
+		if (G_UNLIKELY(!j_bson_iter_skip_key(iter, "_mode", error)))
 		{
-			goto _error;
-		}
-
-		if (equals)
-		{
-			continue;
+			// there was either an error or no key is left now
+			if (*error)
+			{
+				goto _error;
+			} 
+			else
+			{
+				break;
+			}
 		}
 
 		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
@@ -1724,7 +1731,7 @@ _error:
 	return FALSE;
 }
 static gboolean
-_backend_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+_backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1891,13 +1898,12 @@ _error:
 }
 
 gboolean
-generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
+sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JSqlBatch* batch = _batch;
 	guint count;
-	gboolean equals;
 	JDBType type;
 	JDBTypeValue value;
 	JSqlIterator* iterator = NULL;
@@ -1957,14 +1963,17 @@ generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t
 			break;
 		}
 
-		if (G_UNLIKELY(!j_bson_iter_key_equals(&iter, "_index", &equals, error)))
+		if (G_UNLIKELY(!j_bson_iter_skip_key(&iter, "_index", error)))
 		{
-			goto _error;
-		}
-
-		if (equals)
-		{
-			continue;
+			// there was either an error or no key is left now
+			if (*error)
+			{
+				goto _error;
+			} 
+			else
+			{
+				break;
+			}
 		}
 
 		if (variables_count)
@@ -2014,7 +2023,7 @@ generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t
 		prepared->initialized = TRUE;
 	}
 
-	if (G_UNLIKELY(!_backend_query(backend_data, batch, name, selector, (gpointer*)&iterator, error)))
+	if (G_UNLIKELY(!_backend_query_ids(backend_data, batch, name, selector, (gpointer*)&iterator, error)))
 	{
 		goto _error;
 	}
@@ -2133,7 +2142,7 @@ _error2:
 }
 
 gboolean
-generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GError** error)
+sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -2158,7 +2167,7 @@ generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bson_t
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!_backend_query(backend_data, batch, name, selector, (gpointer*)&iterator, error)))
+	if (G_UNLIKELY(!_backend_query_ids(backend_data, batch, name, selector, (gpointer*)&iterator, error)))
 	{
 		goto _error;
 	}
@@ -2219,7 +2228,7 @@ _error2:
 }
 
 gboolean
-generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
+sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -2386,7 +2395,7 @@ _error:
 }
 
 gboolean
-generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GError** error)
+sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 

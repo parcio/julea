@@ -1,7 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
- * Copyright (C) 2022 Timm Erxleben
+ * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -84,6 +84,7 @@ _error:
 	return FALSE;
 }
 
+
 gboolean
 j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GError** error)
 {
@@ -104,6 +105,33 @@ j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GEr
 	*equals = !g_strcmp0(bson_iter_key(iter), key);
 
 	return TRUE;
+
+_error:
+	return FALSE;
+}
+
+gboolean
+j_bson_iter_skip_key(bson_iter_t* iter, const char* key, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean equals;
+	gboolean next = TRUE;
+
+	if (G_UNLIKELY(!j_bson_iter_key_equals(iter, key, &equals, error)))
+	{
+		goto _error;
+	}
+
+	if(equals)
+	{
+		if(G_UNLIKELY(!j_bson_iter_next(iter, &next, error)))
+		{
+			goto _error;
+		}
+	}
+
+	return next;
 
 _error:
 	return FALSE;
