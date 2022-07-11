@@ -44,6 +44,7 @@ gboolean j_bson_append_value(bson_t* bson, const char* name, JDBType type, JDBTy
 gboolean j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error);
 gboolean j_bson_iter_next(bson_iter_t* iter, gboolean* has_next, GError** error);
 gboolean j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GError** error);
+gboolean j_bson_iter_skip_key(bson_iter_t* iter, const char* key, GError** error);
 const char* j_bson_iter_key(bson_iter_t* iter, GError** error);
 gboolean j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError** error);
 gboolean j_bson_iter_find(bson_iter_t* iter, const char* key, GError** error);
