@@ -297,7 +297,7 @@ getCacheSchema(gpointer backend_data, gpointer _batch, gchar const* name, GError
 				if (*error)
 				{
 					goto _error;
-				} 
+				}
 				else
 				{
 					break;
@@ -1476,13 +1476,12 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 			if (*error)
 			{
 				goto _error;
-			} 
+			}
 			else
 			{
 				break;
 			}
 		}
-
 
 		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 		{
@@ -1656,7 +1655,7 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepar
 			if (*error)
 			{
 				goto _error;
-			} 
+			}
 			else
 			{
 				break;
@@ -1969,7 +1968,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			if (*error)
 			{
 				goto _error;
-			} 
+			}
 			else
 			{
 				break;

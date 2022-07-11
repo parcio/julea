@@ -84,7 +84,6 @@ _error:
 	return FALSE;
 }
 
-
 gboolean
 j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GError** error)
 {
@@ -123,9 +122,9 @@ j_bson_iter_skip_key(bson_iter_t* iter, const char* key, GError** error)
 		goto _error;
 	}
 
-	if(equals)
+	if (equals)
 	{
-		if(G_UNLIKELY(!j_bson_iter_next(iter, &next, error)))
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &next, error)))
 		{
 			goto _error;
 		}

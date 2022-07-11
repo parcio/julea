@@ -23,10 +23,6 @@
 #include <julea.h>
 #include <julea-db.h>
 
-/*
- * this file does not care which sql-database is actually in use, and uses only defines sql-syntax to allow fast and easy implementations for any new sql-database backend
-*/
-
 struct JSQLSpecifics
 {
 	gboolean single_threaded;
@@ -63,17 +59,17 @@ typedef struct JSQLSpecifics JSQLSpecifics;
 void sql_generic_init(JSQLSpecifics* specifics);
 void sql_generic_fini(void);
 
-gboolean generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error);
-gboolean generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error);
+gboolean sql_generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error);
+gboolean sql_generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error);
 
-gboolean generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* schema, GError** error);
-gboolean generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
-gboolean generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error);
+gboolean sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* schema, GError** error);
+gboolean sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
+gboolean sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error);
 
-gboolean generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error);
-gboolean generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
-gboolean generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GError** error);
-gboolean generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
-gboolean generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GError** error);
+gboolean sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* metadata, bson_t* id, GError** error);
+gboolean sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* metadata, GError** error);
+gboolean sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GError** error);
+gboolean sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error);
+gboolean sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* metadata, GError** error);
 
 #endif
