@@ -29,6 +29,8 @@
 #include <db-util/jbson.h>
 #include <db-util/sql-generic.h>
 
+#include <execinfo.h>
+
 struct JSQLiteData
 {
 	gchar* path;
@@ -225,6 +227,18 @@ j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBT
 	return TRUE;
 
 _error:
+	/*printf("\n-------!!!!!!!!------\nDEBUG INFO: pos %i type %i | stmnt ptr %p | valptr %p\nERR MSG: '%s'\nQUERY: '%s'\nBUSY? %i\nBACKTARCE\n", idx, type, stmt, value, sqlite3_errmsg(db), sqlite3_sql(stmt), sqlite3_stmt_busy(stmt));
+	void ** bt = malloc(50*sizeof(void*));
+	int buf_len = backtrace(bt, 50);
+	char** bt_str = backtrace_symbols(bt, buf_len);
+	for (int i = 0; i < buf_len; ++i)
+	{
+		printf("%s\n", bt_str[i]);
+	}
+
+	printf("EOB\n------!!!!!!!!!!!---\n\n");*/
+
+
 	return FALSE;
 }
 
@@ -429,6 +443,7 @@ static JSQLSpecifics specifics = {
 	* otherwise there is no lock
 	*/
 	.single_threaded = TRUE,
+	.backend_data = NULL,
 
 	.func = {
 		.connection_open = j_sql_open,
@@ -474,6 +489,8 @@ backend_init(gchar const* _path, gpointer* backend_data)
 	}
 
 	*backend_data = bd;
+
+	specifics.backend_data = bd;
 
 	sql_generic_init(&specifics);
 

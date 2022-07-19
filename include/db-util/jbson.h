@@ -53,4 +53,7 @@ gboolean j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, G
 gboolean j_bson_iter_recurse_document(bson_iter_t* iter, bson_iter_t* iter_child, GError** error);
 gboolean j_bson_iter_copy_document(bson_iter_t* iter, bson_t* bson, GError** error);
 
+// enables the use of g_autoptr(bson_t)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(bson_t, j_bson_destroy)
+
 #endif

@@ -409,7 +409,11 @@ pkg_config.generate(julea_lib,
 
 julea_db_util_srcs = [
 	'lib/db-util/jbson.c',
-	'lib/db-util/sql-generic.c'
+	'lib/db-util/sql-generic-common.c',
+	'lib/db-util/sql-generic-tcl.c',
+	'lib/db-util/sql-generic-ddl.c',
+	'lib/db-util/sql-generic-dml.c',
+	'lib/db-util/sql-generic-dql.c'
 ]
 
 julea_db_util_lib = shared_library('julea-db-util', julea_db_util_srcs,
