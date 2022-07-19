@@ -643,6 +643,7 @@ j_sql_abort_transaction(gpointer backend_db, GError** error)
 
 static JSQLSpecifics specifics = {
 	.single_threaded = FALSE,
+	.backend_data = NULL,
 
 	.func = {
 		.connection_open = j_sql_open,
@@ -699,6 +700,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	g_return_val_if_fail(bd->db_password != NULL, FALSE);
 
 	*backend_data = bd;
+	specifics.backend_data = bd;
 
 	sql_generic_init(&specifics);
 

@@ -26,6 +26,7 @@
 struct JSQLSpecifics
 {
 	gboolean single_threaded;
+	gpointer backend_data; // though the backend_data is usually passed to every function it is usefull to have another global reference (e.g. in j_sql_statement_free)
 
 	struct
 	{
@@ -56,7 +57,7 @@ struct JSQLSpecifics
 
 typedef struct JSQLSpecifics JSQLSpecifics;
 
-void sql_generic_init(JSQLSpecifics* specifics);
+gboolean sql_generic_init(JSQLSpecifics* specifics);
 void sql_generic_fini(void);
 
 gboolean sql_generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* semantics, gpointer* _batch, GError** error);
