@@ -19,7 +19,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='b4b2585d6701b2548696c31c2c74acbd7acca728'
+	spack_commit='5cf7bf37701a18d73730f05894d0f81dff16493e'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -149,6 +149,8 @@ spack_install_dependencies ()
 {
 	if spack_clone
 	then
+		spack_cmd config --scope site add 'concretizer:reuse:false'
+
 		if test -n "${CI}"
 		then
 			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
