@@ -547,6 +547,7 @@ julea_test_srcs = files([
 julea_test = executable('julea-test', julea_test_srcs,
 	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('test')],
+	install: true,
 )
 
 test('julea-test', julea_test,
@@ -575,6 +576,7 @@ julea_benchmark_srcs = files([
 executable('julea-benchmark', julea_benchmark_srcs,
 	dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], julea_client_deps['db'], julea_client_deps['item']] + hdf_deps,
 	include_directories: [julea_incs] + [include_directories('benchmark')],
+	install: true,
 )
 
 julea_server_srcs = files([
