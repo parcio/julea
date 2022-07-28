@@ -165,7 +165,7 @@ benchmark_hdf_dai_native(BenchmarkRun* run)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dai-native-%u.h5", i + (iter * n));
-			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+			file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 			group = H5Gcreate2(file, "benchmark-dai-native", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 			for (guint j = 0; j < n * 10; j++)
@@ -237,7 +237,7 @@ benchmark_hdf_dai_kv_get(BenchmarkRun* run)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dai-get-%u.h5", i + (iter * n));
-			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+			file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 			group = H5Gcreate2(file, "benchmark-dai-get", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 			for (guint j = 0; j < n * 10; j++)
@@ -311,7 +311,7 @@ benchmark_hdf_dai_kv_iterator(BenchmarkRun* run)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-dai-iterator-%u.h5", i + (iter * n));
-			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+			file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 			group = H5Gcreate2(file, "benchmark-dai-iterator", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 			for (guint j = 0; j < n * 10; j++)
@@ -436,6 +436,7 @@ benchmark_hdf_dai_db_iterator(BenchmarkRun* run)
 void
 benchmark_hdf_dai(void)
 {
+	/// \todo Files should be deleted afterwards instead of being on truncated create
 #ifdef HAVE_HDF5
 	vol_connector = g_getenv("HDF5_VOL_CONNECTOR");
 

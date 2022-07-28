@@ -255,7 +255,7 @@ benchmark_hdf_attribute_write(BenchmarkRun* run)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-attribute-write.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	group = create_group(file, "benchmark-attribute-write");
 
 	j_benchmark_timer_start(run);
@@ -295,7 +295,7 @@ benchmark_hdf_attribute_read(BenchmarkRun* run)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-attribute-read.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	group = create_group(file, "benchmark-attribute-read");
 
 	while (j_benchmark_iterate(run))
@@ -342,7 +342,7 @@ _benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-dataset-create.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	j_benchmark_timer_start(run);
 
@@ -393,7 +393,7 @@ _benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-dataset-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-dataset-open.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	while (j_benchmark_iterate(run))
 	{
@@ -455,7 +455,7 @@ _benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-dataset-write.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-dataset-write.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	j_benchmark_timer_start(run);
 
@@ -510,7 +510,7 @@ _benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-dataset-read.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-dataset-read.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	while (j_benchmark_iterate(run))
 	{
@@ -586,7 +586,7 @@ benchmark_hdf_file_create(BenchmarkRun* run)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-file-create-%u.h5", i + (iter * n));
-			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+			file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 			H5Fclose(file);
 
@@ -618,7 +618,7 @@ benchmark_hdf_file_open(BenchmarkRun* run)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-file-open-%u.h5", i + (iter * n));
-			file = H5Fcreate(name, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+			file = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 			H5Fclose(file);
 
 			discard_file(name);
@@ -654,7 +654,7 @@ benchmark_hdf_group_create(BenchmarkRun* run)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-group-create.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-group-create.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	j_benchmark_timer_start(run);
 
@@ -693,7 +693,7 @@ benchmark_hdf_group_open(BenchmarkRun* run)
 
 	set_semantics();
 
-	file = H5Fcreate("benchmark-group-open.h5", H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+	file = H5Fcreate("benchmark-group-open.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 	while (j_benchmark_iterate(run))
 	{
@@ -738,7 +738,8 @@ benchmark_hdf_group_open(BenchmarkRun* run)
 void
 benchmark_hdf(void)
 {
-	/// \todo repeated runs exhibit strange behavior, objects are distributed differently etc.
+	/// \todo repeated runs exhibit strange behavior, objects are distributed differently etc. (see #162)
+	/// \todo Files should be deleted afterwards instead of being on truncated create
 #ifdef HAVE_HDF5
 	vol_connector = g_getenv("HDF5_VOL_CONNECTOR");
 
