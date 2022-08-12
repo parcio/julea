@@ -665,6 +665,7 @@ static JSQLSpecifics specifics = {
 	.sql = {
 		.autoincrement = " NOT NULL AUTO_INCREMENT ",
 		.uint64_type = " BIGINT UNSIGNED ",
+		.id_type = " BIGINT UNSIGNED ",
 		.select_last = " SELECT LAST_INSERT_ID() ",
 		.quote = "`",
 	},

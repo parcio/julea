@@ -53,10 +53,13 @@ struct JSqlStatement
 {
 	gpointer stmt; // the prepared statement of a DBMS
 
-	// variable index of the input
+	// variable index of the input (only used for insert and update)
+	// the where part can contain the same variable mutiple times
+	// determining the position for inputs into where parts is simply done by coounting up during bson iteration
+	// this is correct because the statement was generated using the same bson
 	GHashTable* in_variables_index; // variable(char*) -> position as integer (directly stored to the pointer field)
 	
-	// column index of the output
+	// column index of the output (only used for select)
 	GHashTable* out_variables_index; // same structure as above and only used in generic_query so that the output columns can be iterated
 	// the hash table may be null if the statement corresponds to a hard coded query (e.g., DELETE FROM %s%s_%s%s WHERE _id = ?)
 	// this reduces overhead and the following code assumes the _id position for binds anyway
@@ -102,7 +105,7 @@ void j_sql_iterator_free(JSqlIterator* iter);
 gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
 // use a transparent cache to provide schema info as hash table for internal usage
 GHashTable* get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** error);
-gboolean build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GHashTable* in_variables_index, GArray* arr_types_in, GHashTable* schema_cache, GError** error);
+gboolean build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GArray* arr_types_in, GHashTable* schema_cache, GError** error);
 gboolean bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error);
 // queries the IDs of entries that match the given selector
 gboolean _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error);

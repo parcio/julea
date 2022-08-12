@@ -227,18 +227,6 @@ j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBT
 	return TRUE;
 
 _error:
-	/*printf("\n-------!!!!!!!!------\nDEBUG INFO: pos %i type %i | stmnt ptr %p | valptr %p\nERR MSG: '%s'\nQUERY: '%s'\nBUSY? %i\nBACKTARCE\n", idx, type, stmt, value, sqlite3_errmsg(db), sqlite3_sql(stmt), sqlite3_stmt_busy(stmt));
-	void ** bt = malloc(50*sizeof(void*));
-	int buf_len = backtrace(bt, 50);
-	char** bt_str = backtrace_symbols(bt, buf_len);
-	for (int i = 0; i < buf_len; ++i)
-	{
-		printf("%s\n", bt_str[i]);
-	}
-
-	printf("EOB\n------!!!!!!!!!!!---\n\n");*/
-
-
 	return FALSE;
 }
 
@@ -268,6 +256,7 @@ j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 
 	sqlite3_stmt* stmt = _stmt;
 	guint ret;
+	printf("STEPPING QUERY '%s'\n\n", sqlite3_expanded_sql(stmt));
 	ret = sqlite3_step(stmt);
 	*found = ret == SQLITE_ROW;
 
@@ -465,6 +454,7 @@ static JSQLSpecifics specifics = {
 	.sql = {
 		.autoincrement = " ",
 		.uint64_type = " UNSIGNED BIGINT ",
+		.id_type = " INTEGER ",
 		.select_last = " SELECT last_insert_rowid() ",
 		.quote = "\"",
 	},
