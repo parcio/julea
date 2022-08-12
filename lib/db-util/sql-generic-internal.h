@@ -34,35 +34,66 @@
  *    - Transaction Control Language (TCL)
  */
 
+/**
+ * \brief The ID type that will be sent back to the client.
+ * 
+ * \attention Not all DB backends support this type as autoincremented primary key (e.g., SQLite). In this case a type conversion will happen.
+ */
 #define BACKEND_ID_TYPE J_DB_TYPE_UINT64
 
 // each thread will keep its own DB connection
 struct JThreadVariables
 {
-	void* db_connection; // the backend-specific database connection handle
+	/// The backend-specific database connection handle.
+	void* db_connection; 
 
-	// caching prepared statements enables different server-side optimizations
-	// each thread maintains its own cache because the statmenets might depend on the (thread-private) connection object
-	GHashTable* query_cache; // sql(char*) -> (JSqlStatement*)
-	GHashTable* schema_cache; // namespace_name -> GHashTable* (varname -> JDBType)
+	/**
+	 * \brief
+	 * 
+	 * sql or keyword(char*) -> (JSqlStatement*)
+	 * Caching prepared statements enables different DB backend server-side optimizations.
+	 * Each thread maintains its own cache because the statments likely depend on the (thread-private) DB connection object.
+	 */
+	GHashTable* query_cache;
+
+	/**
+	 * \brief 
+	 * 
+	 * namespace_name(char*) -> GHashTable* (varname(char*) -> JDBType(directly as int))
+	 */
+	GHashTable* schema_cache;
 };
 
 typedef struct JThreadVariables JThreadVariables;
 
+/**
+ * \brief The JSqlStatement wraps a DB backend-specific prepared statement.
+ * 
+ */
 struct JSqlStatement
 {
-	gpointer stmt; // the prepared statement of a DBMS
+	/// The prepared statement of a DB backend.
+	gpointer stmt;
 
-	// variable index of the input (only used for insert and update)
-	// the where part can contain the same variable mutiple times
-	// determining the position for inputs into where parts is simply done by coounting up during bson iteration
-	// this is correct because the statement was generated using the same bson
-	GHashTable* in_variables_index; // variable(char*) -> position as integer (directly stored to the pointer field)
+	/** 
+	 * \brief Indices of the input variables.
+	 * 
+	 * variable(char*) -> position (int directly stored to the pointer field)
+	 * This field is not NULL iff the statement is an UPDATE or DELETE.
+	 * Even though the WHERE part of a SELECT query does of course contain inputs, the same input variable can occur several times (e.g., "x > 3 and x < 6").
+	 * Consequently the key-value pairs would be overridden for SELECT statements.
+	 * However, determining the position for those inputs can be simply done by counting while iterating the selector bson.
+	 * This method is correct because the statement was generated using the same bson.
+	**/
+	GHashTable* in_variables_index;
 
-	// column index of the output (only used for select)
-	GHashTable* out_variables_index; // same structure as above and only used in generic_query so that the output columns can be iterated
-	// the hash table may be null if the statement corresponds to a hard coded query (e.g., DELETE FROM %s%s_%s%s WHERE _id = ?)
-	// this reduces overhead and the following code assumes the _id position for binds anyway
+	/**
+	 * \brief Indices of the output variables (i.e., columns).
+	 * 
+	 * variable(char*) -> position (int directly stored to the pointer field)
+	 * This field is not NULL iff the statement is a SELECT.
+	 */
+	GHashTable* out_variables_index;
 };
 
 typedef struct JSqlStatement JSqlStatement;
