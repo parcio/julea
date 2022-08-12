@@ -238,6 +238,8 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 
 			g_hash_table_insert(schema_map, g_strdup(string_tmp), GINT_TO_POINTER(value.val_uint32));
 		}
+
+		g_hash_table_insert(thread_variables->schema_cache, g_strdup(cache_key->str), schema_map);
 	}
 
 	return schema_map;
@@ -445,7 +447,7 @@ _error:
 	return FALSE;
 }
 
-gboolean
+static gboolean
 _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, guint64* position, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -554,7 +556,6 @@ _error:
 	return FALSE;
 }
 
-// TODO make this a macro??
 gboolean
 bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error)
 {
