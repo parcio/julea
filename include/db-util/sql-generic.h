@@ -51,7 +51,7 @@ struct JSQLSpecifics
 		const gchar* autoincrement;
 		const gchar* uint64_type;
 		// SQLite does not support autoincrement with other types than INTEGER which is 64-bit signed. Therefore ID types should differ between backends instead of simply using unsigned bigint.
-		const gchar* id_type; 
+		const gchar* id_type;
 		const gchar* select_last;
 		const gchar* quote;
 	} sql;

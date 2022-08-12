@@ -24,9 +24,9 @@
 #include <db-util/jbson.h>
 
 /**
- * This library contains bson utility functions and a generic SQL DB backend 
+ * This library contains bson utility functions and a generic SQL DB backend
  * implementation that must be specialized by providing a JSQLSpecifics struct at init.
- * 
+ *
  * The implementation of the SQL functions is split into:
  *    - Data Definition Language (DDL)
  *    - Data Manipulation Language (DML)
@@ -58,7 +58,7 @@ struct JSqlStatement
 	// determining the position for inputs into where parts is simply done by coounting up during bson iteration
 	// this is correct because the statement was generated using the same bson
 	GHashTable* in_variables_index; // variable(char*) -> position as integer (directly stored to the pointer field)
-	
+
 	// column index of the output (only used for select)
 	GHashTable* out_variables_index; // same structure as above and only used in generic_query so that the output columns can be iterated
 	// the hash table may be null if the statement corresponds to a hard coded query (e.g., DELETE FROM %s%s_%s%s WHERE _id = ?)

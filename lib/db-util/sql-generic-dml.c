@@ -72,7 +72,6 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL);
 
 		g_hash_table_insert(thread_variables->query_cache, g_strdup(specs->sql.select_last), id_query);
-
 	}
 
 	if (!(schema = get_schema(backend_data, batch, name, error)))
@@ -245,7 +244,6 @@ _error2:
 	return FALSE;
 }
 
-
 gboolean
 sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, bson_t const* entry_updates, GError** error)
 {
@@ -347,7 +345,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	g_string_append_printf(sql, " WHERE _id = ?");
 
 	g_hash_table_insert(in_variables_index, g_strdup("_id"), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
-	
+
 	update_statement = g_hash_table_lookup(thread_variables->query_cache, sql->str);
 
 	if (G_UNLIKELY(!update_statement))
@@ -482,7 +480,6 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
 		goto _error;
@@ -538,4 +535,3 @@ _error2:
 	/*something failed very hard*/
 	return FALSE;
 }
-
