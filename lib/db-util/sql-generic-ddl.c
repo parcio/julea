@@ -76,9 +76,9 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	/// \todo IDs will allways be unsigned 64-bit integer, so it's safe to change this in the client as well
+	/// \todo IDs will allways be casted to an unsigned 64-bit integer, so it's safe to change this in the client as well
 	g_string_append_printf(create_sql, "CREATE TABLE %s%s_%s%s ( _id %s %s PRIMARY KEY",
-			       specs->sql.quote, batch->namespace, name, specs->sql.quote, specs->sql.uint64_type, specs->sql.autoincrement);
+			       specs->sql.quote, batch->namespace, name, specs->sql.quote, specs->sql.id_type, specs->sql.autoincrement);
 
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
 	{
@@ -391,8 +391,6 @@ gboolean
 sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	printf("deleting '%s'\n", name);
 
 	JSqlStatement* metadata_delete_query = NULL;
 	const gchar* metadata_delete_sql = "DELETE FROM schema_structure WHERE namespace=? AND name=?";

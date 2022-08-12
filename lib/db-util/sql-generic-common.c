@@ -108,7 +108,6 @@ thread_variables_get(gpointer backend_data, GError** error)
 	if (!thread_variables)
 	{
 		thread_variables = g_new0(JThreadVariables, 1);
-		printf("ini!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
 		thread_variables->db_connection = specs->func.connection_open(backend_data);
 		thread_variables->query_cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (void (*)(void*))j_sql_statement_free);

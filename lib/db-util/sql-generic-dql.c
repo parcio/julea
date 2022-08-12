@@ -272,7 +272,7 @@ sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name
 }
 
 gboolean
-build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GHashTable* in_variables_index, GArray* arr_types_in, GHashTable* schema_cache, GError** error)
+build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GArray* arr_types_in, GHashTable* schema_cache, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -349,7 +349,7 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 				goto _error;
 			}
 
-			if (G_UNLIKELY(!build_selector_query(backend_data, &iterchild, sql, mode_child, in_variables_index, arr_types_in, schema_cache, error)))
+			if (G_UNLIKELY(!build_selector_query(backend_data, &iterchild, sql, mode_child, arr_types_in, schema_cache, error)))
 			{
 				goto _error;
 			}
@@ -373,8 +373,6 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 
 			string_tmp = value.val_string;
 			g_string_append_printf(sql, "%s%s%s ", specs->sql.quote, string_tmp, specs->sql.quote);
-
-			g_hash_table_insert(in_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
 
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
@@ -449,14 +447,8 @@ _error:
 	return FALSE;
 }
 
-/*void foreach_func(gpointer k, gpointer v, gpointer udata)
-{
-	char* string = (char*) k;
-	int pos = GPOINTER_TO_INT(v);
-}*/
-
 gboolean
-bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error)
+_bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, guint64* position, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -509,15 +501,13 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* sta
 				goto _error;
 			}
 
-			if (G_UNLIKELY(!bind_selector_query(backend_data, &iterchild, statement, schema, error)))
+			if (G_UNLIKELY(!_bind_selector_query(backend_data, &iterchild, statement, schema, position, error)))
 			{
 				goto _error;
 			}
 		}
 		else
 		{
-			guint index = 0;
-
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -535,8 +525,6 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* sta
 
 			string_tmp = value.val_string;
 
-			index = GPOINTER_TO_INT(g_hash_table_lookup(statement->in_variables_index, string_tmp));
-
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -553,7 +541,9 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* sta
 			{
 				goto _error;
 			}
-			if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, statement->stmt, index, type, &value, error)))
+			(*position)++;
+
+			if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, statement->stmt, *position, type, &value, error)))
 			{
 				goto _error;
 			}
@@ -564,6 +554,16 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* sta
 
 _error:
 	return FALSE;
+}
+
+
+// TODO make this a macro??
+gboolean
+bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error)
+{
+	guint64 pos = 0;
+
+	return _bind_selector_query(backend_data, iter, statement, schema, &pos, error);
 }
 
 // this function is used for update and delete and returns the IDs of entries that match the selector
@@ -578,7 +578,6 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	JDBTypeValue value;
 	guint count = 0;
 	bson_iter_t iter;
-	g_autoptr(GHashTable) in_variables_index = NULL;
 	JSqlStatement* id_query = NULL;
 	GString* id_sql = g_string_new(NULL);
 	GArray* ids_out = NULL;
@@ -607,8 +606,6 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	g_string_append_printf(id_sql, "SELECT DISTINCT _id FROM %s%s_%s%s", specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
-	in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
 		g_string_append(id_sql, " WHERE ");
@@ -635,7 +632,7 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, id_sql, mode_child, in_variables_index, arr_types_in, schema_cache, error)))
+		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, id_sql, mode_child, arr_types_in, schema_cache, error)))
 		{
 			goto _error;
 		}
@@ -647,11 +644,10 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (!id_query)
 	{
-		// only out_variable _id is hard coded
-		id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, in_variables_index, NULL);
+		// the only out_variable _id is hard coded
+		id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL);
 
 		g_hash_table_insert(thread_variables->query_cache, g_strdup(id_sql->str), id_query);
-		in_variables_index = NULL;
 	}
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
@@ -738,7 +734,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 	JDBTypeValue value;
 	char* string_tmp;
 	JSqlStatement* query_statement = NULL;
-	g_autoptr(GHashTable) in_variables_index = NULL;
 	g_autoptr(GHashTable) out_variables_index = NULL;
 	g_autoptr(GString) sql = g_string_new(NULL);
 	JThreadVariables* thread_variables = NULL;
@@ -757,7 +752,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		goto _error;
 	}
 
-	in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	out_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	g_string_append(sql, "SELECT ");
 	variables_count = 0;
@@ -819,7 +813,7 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		}
 
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, in_variables_index, arr_types_in, schema, error)))
+		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, arr_types_in, schema, error)))
 		{
 			goto _error;
 		}
@@ -831,11 +825,10 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 	if (G_UNLIKELY(!query_statement))
 	{
-		query_statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, in_variables_index, out_variables_index);
+		query_statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, out_variables_index);
 
 		g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), query_statement);
 		out_variables_index = NULL;
-		in_variables_index = NULL;
 	}
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
@@ -877,7 +870,6 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 		goto _error;
 	}
 
-// TODO
 	if (!(schema = get_schema(backend_data, iter->batch, iter->name, error)))
 	{
 		goto _error;
@@ -912,7 +904,7 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 	}
 	else
 	{
-		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
+		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements while iterating");
 		goto _error;
 	}
 
