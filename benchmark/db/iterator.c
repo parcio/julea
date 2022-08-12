@@ -139,8 +139,6 @@ _benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_
 			g_assert_null(b_s_error);
 
 			ret = j_db_iterator_next(iterator, &b_s_error);
-			if (b_s_error)
-				printf("ERR: '%s'", b_s_error->message);
 			g_assert_true(ret);
 			g_assert_null(b_s_error);
 

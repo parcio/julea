@@ -41,15 +41,15 @@ sql_generic_init(JSQLSpecifics* specifics)
 	}
 
 	if (G_UNLIKELY(!specs->func.sql_exec(connection,
-						"CREATE TABLE IF NOT EXISTS schema_structure ("
-						"namespace VARCHAR(255),"
-						"name VARCHAR(255),"
-						"varname VARCHAR(255),"
-						"vartype INTEGER"
-						/// \todo figure out whether we should add an index instead
-						//"PRIMARY KEY (namespace, name, varname)"
-						")",
-						NULL)))
+					     "CREATE TABLE IF NOT EXISTS schema_structure ("
+					     "namespace VARCHAR(255),"
+					     "name VARCHAR(255),"
+					     "varname VARCHAR(255),"
+					     "vartype INTEGER"
+					     /// \todo figure out whether we should add an index instead
+					     //"PRIMARY KEY (namespace, name, varname)"
+					     ")",
+					     NULL)))
 	{
 		goto _error;
 	}
@@ -77,7 +77,7 @@ thread_variables_fini(void* ptr)
 	if (thread_variables)
 	{
 		specs->func.connection_close(thread_variables->db_connection);
-		
+
 		if (thread_variables->query_cache)
 		{
 			// keys and values will be freed by the at create time supplied free functions
@@ -88,7 +88,6 @@ thread_variables_fini(void* ptr)
 		{
 			// keys and values will be freed by the at create time supplied free functions
 			g_hash_table_destroy(thread_variables->schema_cache);
-
 		}
 
 		g_free(thread_variables);
@@ -101,7 +100,7 @@ thread_variables_get(gpointer backend_data, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	JThreadVariables* thread_variables = NULL;
-	(void) error;
+	(void)error;
 
 	thread_variables = g_private_get(&thread_variables_global);
 
@@ -179,12 +178,11 @@ j_sql_statement_free(JSqlStatement* ptr)
 	J_TRACE_FUNCTION(NULL);
 	JThreadVariables* thread_variables = NULL;
 
-
 	if (ptr)
 	{
 		if (G_UNLIKELY(!(thread_variables = thread_variables_get(specs->backend_data, NULL))))
 			g_assert_not_reached();
-		
+
 		if (ptr->out_variables_index)
 		{
 			g_hash_table_destroy(ptr->out_variables_index);
@@ -199,7 +197,6 @@ j_sql_statement_free(JSqlStatement* ptr)
 		g_free(ptr);
 	}
 }
-
 
 JSqlIterator*
 j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name)

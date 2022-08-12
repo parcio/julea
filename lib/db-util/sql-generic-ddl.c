@@ -46,7 +46,6 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(schema != NULL, FALSE);
 
-
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
 		goto _error;
@@ -386,7 +385,6 @@ _error2:
 	return FALSE;
 }
 
-
 gboolean
 sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* name, GError** error)
 {
@@ -402,7 +400,6 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
-
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{

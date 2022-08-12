@@ -38,7 +38,6 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
 		goto _error;
@@ -59,7 +58,7 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 		g_array_append_val(arr_types_out, type);
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_out, type);
-		
+
 		metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL);
 
 		g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_query_sql), metadata_query);
@@ -169,7 +168,6 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 	JThreadVariables* thread_variables = NULL;
 	GHashTable* schema_map = NULL;
 	g_autoptr(GString) cache_key = g_string_new(NULL);
-
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -556,7 +554,6 @@ _error:
 	return FALSE;
 }
 
-
 // TODO make this a macro??
 gboolean
 bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error)
@@ -746,7 +743,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
 
-
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
 		goto _error;
@@ -811,7 +807,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		{
 			goto _error;
 		}
-
 
 		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, arr_types_in, schema, error)))
 		{
@@ -882,12 +877,11 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 
 	if (sql_found)
 	{
-
 		GHashTableIter map_iter;
 		gpointer var_name, position;
 
-		g_hash_table_iter_init (&map_iter, bound_statement->out_variables_index);
-		while (g_hash_table_iter_next (&map_iter, &var_name, &position))
+		g_hash_table_iter_init(&map_iter, bound_statement->out_variables_index);
+		while (g_hash_table_iter_next(&map_iter, &var_name, &position))
 		{
 			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, (gchar*)var_name));
 
