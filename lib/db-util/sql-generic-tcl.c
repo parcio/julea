@@ -122,6 +122,7 @@ sql_generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantic
 	batch->namespace = namespace;
 	batch->semantics = j_semantics_ref(semantics);
 	batch->open = FALSE;
+	batch->aborted = FALSE;
 
 	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
 	{
