@@ -24,16 +24,14 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSqlStatement* metadata_query = NULL;
-	const gchar* metadata_query_sql = "SELECT varname, vartype FROM schema_structure WHERE namespace=? AND name=?";
 	JDBTypeValue value1;
 	JDBTypeValue value2;
-	JSqlBatch* batch = _batch;
-	guint found = FALSE;
-	gboolean sql_found;
+	gboolean found = FALSE;
 	gboolean bson_initialized = FALSE;
+	JSqlBatch* batch = _batch;
 	JThreadVariables* thread_variables = NULL;
-	JDBType type;
+	JSqlStatement* metadata_query = NULL;
+	const gchar* metadata_query_sql = "SELECT varname, vartype FROM schema_structure WHERE namespace=? AND name=?";
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -47,6 +45,8 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 
 	if (G_UNLIKELY(!metadata_query))
 	{
+		JDBType type;
+
 		g_autoptr(GArray) arr_types_in = NULL;
 		g_autoptr(GArray) arr_types_out = NULL;
 		arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
@@ -98,6 +98,8 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 
 	while (TRUE)
 	{
+		gboolean sql_found;
+
 		if (G_UNLIKELY(!specs->func.statement_step(thread_variables->db_connection, metadata_query->stmt, &sql_found, error)))
 		{
 			goto _error;
@@ -175,7 +177,6 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 	JSqlBatch* batch = _batch;
 	JThreadVariables* thread_variables = NULL;
 	GHashTable* schema_map = NULL;
-	bson_t schema;
 	g_autoptr(GString) cache_key = g_string_new(NULL);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
@@ -188,11 +189,12 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 
 	if (!schema_map)
 	{
-		char const* string_tmp;
+		bson_t schema;
+		bson_iter_t iter;
 		gboolean has_next;
 		JDBTypeValue value;
-		bson_iter_t iter;
 		gboolean schema_initialized = FALSE;
+		char const* string_tmp;
 
 		schema_map = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
@@ -283,19 +285,16 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JDBSelectorMode mode_child;
-	gboolean has_next;
-	JDBSelectorOperator op;
 	gboolean first = TRUE;
-	const char* string_tmp;
-	JDBTypeValue value;
-	bson_iter_t iterchild;
-	JDBType type;
 
 	g_string_append(sql, "( ");
 
 	while (TRUE)
 	{
+		JDBTypeValue value;
+		gboolean has_next;
+		bson_iter_t iterchild;
+
 		if (G_UNLIKELY(!j_bson_iter_next(iter, &has_next, error)))
 		{
 			goto _error;
@@ -344,6 +343,8 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 
 		if (j_bson_iter_find(&iterchild, "_mode", NULL))
 		{
+			JDBSelectorMode mode_child;
+
 			if (G_UNLIKELY(!j_bson_iter_value(&iterchild, J_DB_TYPE_UINT32, &value, error)))
 			{
 				goto _error;
@@ -363,6 +364,10 @@ build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDB
 		}
 		else
 		{
+			JDBType type;
+			JDBSelectorOperator op;
+			const char* string_tmp;
+
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -459,12 +464,7 @@ _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* st
 {
 	J_TRACE_FUNCTION(NULL);
 
-	bson_iter_t iterchild;
-	JDBTypeValue value;
-	JDBType type;
-	gboolean has_next;
 	JThreadVariables* thread_variables = NULL;
-	const gchar* string_tmp;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -473,6 +473,10 @@ _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* st
 
 	while (TRUE)
 	{
+		bson_iter_t iterchild;
+		JDBTypeValue value;
+		gboolean has_next;
+
 		if (G_UNLIKELY(!j_bson_iter_next(iter, &has_next, error)))
 		{
 			goto _error;
@@ -515,6 +519,9 @@ _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* st
 		}
 		else
 		{
+			JDBType type;
+			const gchar* string_tmp;
+
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
 				goto _error;
@@ -578,30 +585,23 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JDBSelectorMode mode_child;
-	JSqlBatch* batch = _batch;
-	gboolean sql_found;
 	JDBTypeValue value;
 	guint count = 0;
 	bson_iter_t iter;
+	JSqlBatch* batch = _batch;
+	GHashTable* schema = NULL;
 	JSqlStatement* id_query = NULL;
-	GString* id_sql = g_string_new(NULL);
-	GArray* ids_out = NULL;
 	JThreadVariables* thread_variables = NULL;
+	g_autoptr(GString) id_sql = g_string_new(NULL);
 	g_autoptr(GArray) arr_types_in = NULL;
-	g_autoptr(GArray) arr_types_out = NULL;
-	JDBType type;
-	GHashTable* schema_cache = NULL;
+	GArray* ids_out = NULL;
 
-	if (!(schema_cache = get_schema(backend_data, batch, name, error)))
+	if (!(schema = get_schema(backend_data, batch, name, error)))
 	{
 		goto _error;
 	}
 
 	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
-	arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
-	type = BACKEND_ID_TYPE;
-	g_array_append_val(arr_types_out, type);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -614,6 +614,8 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
+		JDBSelectorMode mode_child;
+
 		g_string_append(id_sql, " WHERE ");
 
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
@@ -638,7 +640,7 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, id_sql, mode_child, arr_types_in, schema_cache, error)))
+		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, id_sql, mode_child, arr_types_in, schema, error)))
 		{
 			goto _error;
 		}
@@ -650,6 +652,12 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (!id_query)
 	{
+		g_autoptr(GArray) arr_types_out = NULL;
+		JDBType type = BACKEND_ID_TYPE;
+
+		arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
+		g_array_append_val(arr_types_out, type);
+
 		// the only out_variable _id is hard coded
 		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL)))
 		{
@@ -671,7 +679,7 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!bind_selector_query(backend_data, &iter, id_query, schema_cache, error)))
+		if (G_UNLIKELY(!bind_selector_query(backend_data, &iter, id_query, schema, error)))
 		{
 			goto _error;
 		}
@@ -679,6 +687,8 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	while (TRUE)
 	{
+		gboolean sql_found;
+
 		if (G_UNLIKELY(!specs->func.statement_step(thread_variables->db_connection, id_query->stmt, &sql_found, error)))
 		{
 			goto _error;
@@ -706,21 +716,11 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		goto _error;
 	}
 
-	if (id_sql)
-	{
-		g_string_free(id_sql, TRUE);
-		id_sql = NULL;
-	}
-
 	*matches = ids_out;
 
 	return TRUE;
 
 _error:
-	if (id_sql)
-	{
-		g_string_free(id_sql, TRUE);
-	}
 
 	if (ids_out)
 	{
@@ -735,23 +735,17 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JDBSelectorMode mode_child;
+	bson_iter_t iter;
 	GHashTableIter schema_iter;
-
-	// the schema is owned by the schema cache
-	GHashTable* schema = NULL;
 	JDBType type;
 	gpointer type_tmp;
-
-	JSqlBatch* batch = _batch;
-	bson_iter_t iter;
-	guint variables_count;
-	JDBTypeValue value;
 	char* string_tmp;
-	JSqlStatement* query_statement = NULL;
-	g_autoptr(GHashTable) out_variables_index = NULL;
-	g_autoptr(GString) sql = g_string_new(NULL);
+	JSqlBatch* batch = _batch;
+	GHashTable* schema = NULL;
 	JThreadVariables* thread_variables = NULL;
+	JSqlStatement* query_statement = NULL;
+	g_autoptr(GString) query_sql = g_string_new(NULL);
+	g_autoptr(GHashTable) out_variables_index = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
 	g_autoptr(GArray) arr_types_out = NULL;
 
@@ -767,8 +761,7 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 	}
 
 	out_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-	g_string_append(sql, "SELECT ");
-	variables_count = 0;
+	g_string_append(query_sql, "SELECT ");
 
 	if (!(schema = get_schema(backend_data, batch, name, error)))
 	{
@@ -777,12 +770,11 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 	g_hash_table_iter_init(&schema_iter, schema);
 
-	g_string_append(sql, "_id");
+	g_string_append(query_sql, "_id");
 
-	g_hash_table_insert(out_variables_index, g_strdup("_id"), GINT_TO_POINTER(variables_count));
+	g_hash_table_insert(out_variables_index, g_strdup("_id"), GINT_TO_POINTER(g_hash_table_size(out_variables_index)));
 	type = BACKEND_ID_TYPE;
 	g_array_append_val(arr_types_out, type);
-	variables_count++;
 
 	while (g_hash_table_iter_next(&schema_iter, (gpointer*)&string_tmp, &type_tmp))
 	{
@@ -791,18 +783,20 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		if (strcmp(string_tmp, "_id") == 0)
 			continue;
 
-		g_string_append_printf(sql, ", %s%s%s", specs->sql.quote, string_tmp, specs->sql.quote);
+		g_string_append_printf(query_sql, ", %s%s%s", specs->sql.quote, string_tmp, specs->sql.quote);
 
-		g_hash_table_insert(out_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(variables_count));
+		g_hash_table_insert(out_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(g_hash_table_size(out_variables_index)));
 		g_array_append_val(arr_types_out, type);
-		variables_count++;
 	}
 
-	g_string_append_printf(sql, " FROM %s%s_%s%s", specs->sql.quote, batch->namespace, name, specs->sql.quote);
+	g_string_append_printf(query_sql, " FROM %s%s_%s%s", specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
 	{
-		g_string_append(sql, " WHERE ");
+		JDBTypeValue value;
+		JDBSelectorMode mode_child;
+
+		g_string_append(query_sql, " WHERE ");
 
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
 		{
@@ -826,23 +820,23 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, sql, mode_child, arr_types_in, schema, error)))
+		if (G_UNLIKELY(!build_selector_query(backend_data, &iter, query_sql, mode_child, arr_types_in, schema, error)))
 		{
 			goto _error;
 		}
 	}
 
 	/// \todo check if caching this statement makes any difference with different databases
-	query_statement = g_hash_table_lookup(thread_variables->query_cache, sql->str);
+	query_statement = g_hash_table_lookup(thread_variables->query_cache, query_sql->str);
 
 	if (G_UNLIKELY(!query_statement))
 	{
-		if (!(query_statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, &out_variables_index)))
+		if (!(query_statement = j_sql_statement_new(query_sql->str, arr_types_in, arr_types_out, NULL, &out_variables_index)))
 		{
 			goto _error;
 		}
 
-		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), query_statement))
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(query_sql->str), query_statement))
 		{
 			// in all other error cases query_statement is already owned by the hash table
 			j_sql_statement_free(query_statement);
@@ -877,8 +871,6 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 	J_TRACE_FUNCTION(NULL);
 
 	GHashTable* schema = NULL;
-	JDBTypeValue value;
-	JDBType type;
 	gboolean sql_found;
 	JSqlIterator* iter = _iterator;
 	JSqlStatement* bound_statement = iter->statement;
@@ -907,7 +899,8 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 		g_hash_table_iter_init(&map_iter, bound_statement->out_variables_index);
 		while (g_hash_table_iter_next(&map_iter, &var_name, &position))
 		{
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, (gchar*)var_name));
+			JDBTypeValue value;
+			JDBType type = GPOINTER_TO_INT(g_hash_table_lookup(schema, (gchar*)var_name));
 
 			if (G_UNLIKELY(!specs->func.statement_column(thread_variables->db_connection, bound_statement->stmt, GPOINTER_TO_INT(position), type, &value, error)))
 			{
