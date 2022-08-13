@@ -59,9 +59,17 @@ _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, b
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_out, type);
 
-		metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL);
+		if (!(metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL)))
+		{
+			goto _error;
+		}
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_query_sql), metadata_query);
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_query_sql), metadata_query))
+		{
+			// in all other error cases metadata_query is already owned by the hash table
+			j_sql_statement_free(metadata_query);
+			goto _error;
+		}
 	}
 
 	value1.val_string = batch->namespace;
@@ -643,9 +651,17 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	if (!id_query)
 	{
 		// the only out_variable _id is hard coded
-		id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL);
+		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL)))
+		{
+			goto _error;
+		}
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(id_sql->str), id_query);
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(id_sql->str), id_query))
+		{
+			// in all other error cases id_query is already owned by the hash table
+			j_sql_statement_free(id_query);
+			goto _error;
+		}
 	}
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))
@@ -821,10 +837,17 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 	if (G_UNLIKELY(!query_statement))
 	{
-		query_statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, out_variables_index);
+		if (!(query_statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, &out_variables_index)))
+		{
+			goto _error;
+		}
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), query_statement);
-		out_variables_index = NULL;
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), query_statement))
+		{
+			// in all other error cases query_statement is already owned by the hash table
+			j_sql_statement_free(query_statement);
+			goto _error;
+		}
 	}
 
 	if (selector && j_bson_has_enough_keys(selector, 2, NULL))

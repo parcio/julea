@@ -76,7 +76,10 @@ thread_variables_fini(void* ptr)
 
 	if (thread_variables)
 	{
-		specs->func.connection_close(thread_variables->db_connection);
+		if (thread_variables->db_connection)
+		{
+			specs->func.connection_close(thread_variables->db_connection);
+		}
 
 		if (thread_variables->query_cache)
 		{
@@ -123,14 +126,16 @@ thread_variables_get(gpointer backend_data, GError** error)
 	return thread_variables;
 
 _error:
-	/// TODO mem management and error msg
+	g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FAILED, "could not initiliaze thread lokal variables");
+	// thread_variables_fini is NULL safe
+	thread_variables_fini(thread_variables);
 
 	return NULL;
 }
 
 // takes ownership of *_variables_index which is destroyed on error avoiding an unnecessary copy
 JSqlStatement*
-j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index)
+j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable** in_variables_index, GHashTable** out_variables_index)
 {
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* statement = NULL;
@@ -147,27 +152,23 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 		goto _error;
 	}
 
-	statement->in_variables_index = in_variables_index;
-	statement->out_variables_index = out_variables_index;
+	if (in_variables_index)
+	{
+		statement->in_variables_index = *in_variables_index;
+		*in_variables_index = NULL;
+	}
+
+	if (out_variables_index)
+	{
+		statement->out_variables_index = *out_variables_index;
+		*out_variables_index = NULL;
+	}
 
 	/// \todo fetching the output types for joins is easy here using out_variables_index and out_types
 	return statement;
 
 _error:
-	if (in_variables_index)
-	{
-		g_hash_table_destroy(in_variables_index);
-	}
-
-	if (out_variables_index)
-	{
-		g_hash_table_destroy(out_variables_index);
-	}
-
-	if (statement)
-	{
-		g_free(statement);
-	}
+	g_free(statement);
 
 	return NULL;
 }

@@ -127,7 +127,7 @@ G_LOCK_EXTERN(sql_backend_lock);
 
 void thread_variables_fini(void* ptr);
 JThreadVariables* thread_variables_get(gpointer backend_data, GError** error);
-JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index);
+JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable** in_variables_index, GHashTable** out_variables_index);
 void j_sql_statement_free(JSqlStatement* ptr);
 JSqlIterator* j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name);
 void j_sql_iterator_free(JSqlIterator* iter);
