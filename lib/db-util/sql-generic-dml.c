@@ -89,9 +89,8 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	{
 		gchar* key;
 		gpointer type_tmp;
-		GHashTable* in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-		g_autoptr(GString) insert_sql = NULL;
-		insert_sql = g_string_new(NULL);
+		g_autoptr(GHashTable) in_variables_index = NULL;
+		g_autoptr(GString) insert_sql = g_string_new(NULL);
 
 		in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		g_string_append_printf(insert_sql, "INSERT INTO %s%s_%s%s (", specs->sql.quote, batch->namespace, name, specs->sql.quote);
@@ -127,6 +126,9 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		g_string_append(insert_sql, " )");
 
 		insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL);
+
+		// now owned by the statement
+		in_variables_index = NULL;
 
 		g_hash_table_insert(thread_variables->query_cache, g_strdup(insert_cache_key->str), insert_query);
 	}
@@ -249,18 +251,18 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSqlBatch* batch = _batch;
-	guint count;
 	JDBType type;
 	JDBTypeValue value;
-	GArray* matches = NULL;
 	bson_iter_t iter;
 	guint index;
+	guint count;
 	guint j;
+	gboolean has_next;
+	JSqlBatch* batch = _batch;
+	g_autoptr(GArray) matches = NULL;
 	GHashTable* schema = NULL;
 	const char* string_tmp;
-	gboolean has_next;
-	GString* sql = g_string_new(NULL);
+	g_autoptr(GString) sql = g_string_new(NULL);
 	JSqlStatement* update_statement = NULL;
 	g_autoptr(GHashTable) in_variables_index = NULL;
 	JThreadVariables* thread_variables = NULL;
@@ -351,6 +353,8 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	if (G_UNLIKELY(!update_statement))
 	{
 		update_statement = j_sql_statement_new(sql->str, arr_types_in, NULL, in_variables_index, NULL);
+
+		g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), update_statement);
 		// the statement took ownership of variables_index
 		in_variables_index = NULL;
 	}
@@ -436,20 +440,9 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		}
 	}
 
-	if (sql)
-	{
-		g_string_free(sql, TRUE);
-		sql = NULL;
-	}
-
 	return TRUE;
 
 _error:
-	if (sql)
-	{
-		g_string_free(sql, TRUE);
-		sql = NULL;
-	}
 
 	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
 	{

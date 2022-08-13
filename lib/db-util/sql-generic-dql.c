@@ -167,6 +167,7 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 	JSqlBatch* batch = _batch;
 	JThreadVariables* thread_variables = NULL;
 	GHashTable* schema_map = NULL;
+	bson_t schema;
 	g_autoptr(GString) cache_key = g_string_new(NULL);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
@@ -182,19 +183,17 @@ get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** e
 		char const* string_tmp;
 		gboolean has_next;
 		JDBTypeValue value;
-		g_autoptr(bson_t) schema = NULL;
 		bson_iter_t iter;
 		gboolean schema_initialized = FALSE;
 
-		schema = bson_new();
 		schema_map = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-		if (!(schema_initialized = _backend_schema_get(backend_data, batch, name, schema, error)))
+		if (!(schema_initialized = _backend_schema_get(backend_data, batch, name, &schema, error)))
 		{
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
+		if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema, error)))
 		{
 			goto _error;
 		}
@@ -457,7 +456,7 @@ _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* st
 	JDBType type;
 	gboolean has_next;
 	JThreadVariables* thread_variables = NULL;
-	char const* string_tmp;
+	const gchar* string_tmp;
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -541,6 +540,7 @@ _bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* st
 			{
 				goto _error;
 			}
+
 			(*position)++;
 
 			if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, statement->stmt, *position, type, &value, error)))
@@ -722,6 +722,7 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 	JDBSelectorMode mode_child;
 	GHashTableIter schema_iter;
 
+	// the schema is owned by the schema cache
 	GHashTable* schema = NULL;
 	JDBType type;
 	gpointer type_tmp;
@@ -815,7 +816,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		}
 	}
 
-	// even though the string and variables_index need to be built anyway this statement is cached because the DB server might cache some ressources as consequence (e.g., the execution plan)
 	/// \todo check if caching this statement makes any difference with different databases
 	query_statement = g_hash_table_lookup(thread_variables->query_cache, sql->str);
 
@@ -906,6 +906,8 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 	return TRUE;
 
 _error:
+	j_sql_iterator_free(iter);
+
 	if (G_UNLIKELY(!specs->func.statement_reset(thread_variables->db_connection, bound_statement->stmt, NULL)))
 	{
 		goto _error2;

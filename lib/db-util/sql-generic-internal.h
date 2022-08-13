@@ -45,7 +45,7 @@
 struct JThreadVariables
 {
 	/// The backend-specific database connection handle.
-	void* db_connection; 
+	gpointer db_connection; 
 
 	/**
 	 * \brief

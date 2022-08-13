@@ -392,7 +392,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 
 	JSqlStatement* metadata_delete_query = NULL;
 	const gchar* metadata_delete_sql = "DELETE FROM schema_structure WHERE namespace=? AND name=?";
-	GString* table_drop_sql = g_string_new(NULL);
+	g_autoptr(GString) table_drop_sql = NULL;
 	JDBType type;
 	JDBTypeValue value;
 	JSqlBatch* batch = _batch;
@@ -400,6 +400,9 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
+
+	table_drop_sql = g_string_new("DROP TABLE IF EXISTS ");
+	g_string_append_printf(table_drop_sql, "%s%s_%s%s", specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -417,6 +420,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		g_array_append_val(arr_types_in, type);
 
 		metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL);
+		g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_delete_sql), metadata_delete_query);
 		// TODO err managemant
 	}
 
@@ -445,16 +449,10 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	g_string_append_printf(table_drop_sql, "DROP TABLE IF EXISTS %s%s_%s%s", specs->sql.quote, batch->namespace, name, specs->sql.quote);
+	
 	if (G_UNLIKELY(!specs->func.sql_exec(thread_variables->db_connection, table_drop_sql->str, error)))
 	{
 		goto _error;
-	}
-
-	if (table_drop_sql)
-	{
-		g_string_free(table_drop_sql, TRUE);
-		table_drop_sql = NULL;
 	}
 
 	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
@@ -462,7 +460,6 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	// TODO delete the fields from the type cache
 
 	return TRUE;
 
