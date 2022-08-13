@@ -145,7 +145,7 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 		goto _error;
 	}
 
-	statement = g_new(JSqlStatement, 1);
+	statement = g_new0(JSqlStatement, 1);
 
 	if (!specs->func.statement_prepare(thread_variables->db_connection, query, &statement->stmt, types_in, types_out, NULL))
 	{
