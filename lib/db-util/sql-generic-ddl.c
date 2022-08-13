@@ -24,23 +24,18 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JThreadVariables* thread_variables = NULL;
-	const gchar* metadata_insert_sql = "INSERT INTO schema_structure(namespace, name, varname, vartype) VALUES (?, ?, ?, ?)";
-	JSqlStatement* metadata_insert_query = NULL;
-	GString* create_sql = g_string_new(NULL);
-	JSqlBatch* batch = _batch;
-	bson_iter_t iter;
-	bson_iter_t iter_child;
-	bson_iter_t iter_child2;
 	JDBType type;
-	gboolean first;
-	guint i;
 	gboolean has_next;
 	gboolean equals;
 	guint counter = 0;
 	gboolean found_index = FALSE;
 	JDBTypeValue value;
-	const char* string_tmp;
+	bson_iter_t iter;
+	JSqlBatch* batch = _batch;
+	JThreadVariables* thread_variables = NULL;
+	JSqlStatement* metadata_insert_query = NULL;
+	const gchar* metadata_insert_sql = "INSERT INTO schema_structure(namespace, name, varname, vartype) VALUES (?, ?, ?, ?)";
+	GString* create_sql = g_string_new(NULL);
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -181,7 +176,9 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 
 	if (found_index)
 	{
-		i = 0;
+		guint i = 0;
+		bson_iter_t iter_child;
+		gboolean first;
 
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, schema, error)))
 		{
@@ -200,6 +197,8 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 
 		while (TRUE)
 		{
+			bson_iter_t iter_child2;
+
 			if (G_UNLIKELY(!j_bson_iter_next(&iter_child, &has_next, error)))
 			{
 				goto _error;
@@ -224,6 +223,8 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 
 			while (TRUE)
 			{
+				const char* string_tmp;
+
 				if (G_UNLIKELY(!j_bson_iter_next(&iter_child2, &has_next, error)))
 				{
 					goto _error;
@@ -398,13 +399,12 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 {
 	J_TRACE_FUNCTION(NULL);
 
+	JDBTypeValue value;
+	JThreadVariables* thread_variables = NULL;
+	JSqlBatch* batch = _batch;
+	g_autoptr(GString) table_drop_sql = NULL;
 	JSqlStatement* metadata_delete_query = NULL;
 	const gchar* metadata_delete_sql = "DELETE FROM schema_structure WHERE namespace=? AND name=?";
-	g_autoptr(GString) table_drop_sql = NULL;
-	JDBType type;
-	JDBTypeValue value;
-	JSqlBatch* batch = _batch;
-	JThreadVariables* thread_variables = NULL;
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -421,6 +421,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 
 	if (!metadata_delete_query)
 	{
+		JDBType type;
 		g_autoptr(GArray) arr_types_in = NULL;
 		arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 		type = J_DB_TYPE_STRING;
@@ -465,7 +466,6 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	
 	if (G_UNLIKELY(!specs->func.sql_exec(thread_variables->db_connection, table_drop_sql->str, error)))
 	{
 		goto _error;
@@ -475,7 +475,6 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 	{
 		goto _error;
 	}
-
 
 	return TRUE;
 

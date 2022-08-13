@@ -36,7 +36,7 @@
 
 /**
  * \brief The ID type that will be sent back to the client.
- * 
+ *
  * \attention Not all DB backends support this type as autoincremented primary key (e.g., SQLite). In this case a type conversion will happen.
  */
 #define BACKEND_ID_TYPE J_DB_TYPE_UINT64
@@ -45,11 +45,11 @@
 struct JThreadVariables
 {
 	/// The backend-specific database connection handle.
-	gpointer db_connection; 
+	gpointer db_connection;
 
 	/**
 	 * \brief
-	 * 
+	 *
 	 * sql or keyword(char*) -> (JSqlStatement*)
 	 * Caching prepared statements enables different DB backend server-side optimizations.
 	 * Each thread maintains its own cache because the statments likely depend on the (thread-private) DB connection object.
@@ -57,8 +57,8 @@ struct JThreadVariables
 	GHashTable* query_cache;
 
 	/**
-	 * \brief 
-	 * 
+	 * \brief
+	 *
 	 * namespace_name(char*) -> GHashTable* (varname(char*) -> JDBType(directly as int))
 	 */
 	GHashTable* schema_cache;
@@ -68,16 +68,16 @@ typedef struct JThreadVariables JThreadVariables;
 
 /**
  * \brief The JSqlStatement wraps a DB backend-specific prepared statement.
- * 
+ *
  */
 struct JSqlStatement
 {
 	/// The prepared statement of a DB backend.
 	gpointer stmt;
 
-	/** 
+	/**
 	 * \brief Indices of the input variables.
-	 * 
+	 *
 	 * variable(char*) -> position (int directly stored to the pointer field)
 	 * This field is not NULL iff the statement is an UPDATE or DELETE.
 	 * Even though the WHERE part of a SELECT query does of course contain inputs, the same input variable can occur several times (e.g., "x > 3 and x < 6").
@@ -89,7 +89,7 @@ struct JSqlStatement
 
 	/**
 	 * \brief Indices of the output variables (i.e., columns).
-	 * 
+	 *
 	 * variable(char*) -> position (int directly stored to the pointer field)
 	 * This field is not NULL iff the statement is a SELECT.
 	 */
@@ -131,6 +131,7 @@ JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray*
 void j_sql_statement_free(JSqlStatement* ptr);
 JSqlIterator* j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name);
 void j_sql_iterator_free(JSqlIterator* iter);
+
 // DQL
 // retrieve schema as bson (suitable for clients)
 gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
