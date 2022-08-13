@@ -64,9 +64,17 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_in, type);
 
-		metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL);
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_insert_sql), metadata_insert_query);
-		// TODO error management
+		if (!(metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL)))
+		{
+			goto _error;
+		}
+
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_insert_sql), metadata_insert_query))
+		{
+			// in all other error cases metadata_insert_query is already owned by the hash table
+			j_sql_statement_free(metadata_insert_query);
+			goto _error;
+		}
 	}
 
 	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))
@@ -419,9 +427,17 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		g_array_append_val(arr_types_in, type);
 		g_array_append_val(arr_types_in, type);
 
-		metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL);
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_delete_sql), metadata_delete_query);
-		// TODO err managemant
+		if (!(metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL)))
+		{
+			goto _error;
+		}
+
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(metadata_delete_sql), metadata_delete_query))
+		{
+			// in all other error cases metadata_delete_query is already owned by the hash table
+			j_sql_statement_free(metadata_delete_query);
+			goto _error;
+		}
 	}
 
 	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))

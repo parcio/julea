@@ -69,9 +69,17 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		type = BACKEND_ID_TYPE;
 		g_array_append_val(id_arr_types_out, type);
 
-		id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL);
+		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL)))
+		{
+			goto _error;
+		}
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(specs->sql.select_last), id_query);
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(specs->sql.select_last), id_query))
+		{
+			// in all other error cases id_query is already owned by the hash table
+			j_sql_statement_free(id_query);
+			goto _error;
+		}
 	}
 
 	if (!(schema = get_schema(backend_data, batch, name, error)))
@@ -125,12 +133,18 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 		g_string_append(insert_sql, " )");
 
-		insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL);
+		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, &in_variables_index, NULL)))
+		{
+			goto _error;
+		}
 
-		// now owned by the statement
-		in_variables_index = NULL;
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(insert_cache_key->str), insert_query))
+		{
+			// in all other error cases insert_query is already owned by the hash table
+			j_sql_statement_free(insert_query);
+			goto _error;
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(insert_cache_key->str), insert_query);
+		}
 	}
 
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, metadata, error)))
@@ -352,11 +366,17 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (G_UNLIKELY(!update_statement))
 	{
-		update_statement = j_sql_statement_new(sql->str, arr_types_in, NULL, in_variables_index, NULL);
+		if (!(update_statement = j_sql_statement_new(sql->str, arr_types_in, NULL, &in_variables_index, NULL)))
+		{
+			goto _error;
+		}
 
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), update_statement);
-		// the statement took ownership of variables_index
-		in_variables_index = NULL;
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), update_statement))
+		{
+			// in all other error cases update_statement is already owned by the hash table
+			j_sql_statement_free(update_statement);
+			goto _error;
+		}
 	}
 
 	if (G_UNLIKELY(!_backend_query_ids(backend_data, batch, name, selector, &matches, error)))
@@ -494,9 +514,17 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		type = BACKEND_ID_TYPE;
 		g_array_append_val(arr_types_in, type);
 
-		delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL);
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(delete_sql->str), delete_statement);
-		// TODO ERR management
+		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL)))
+		{
+			goto _error;
+		}
+
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(delete_sql->str), delete_statement))
+			{
+			// in all other error cases delete_statement is already owned by the hash table
+			j_sql_statement_free(delete_statement);
+			goto _error;
+		}
 	}
 
 	for (j = 0; j < matches->len; j++)
