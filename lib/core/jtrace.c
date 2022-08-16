@@ -101,6 +101,19 @@ struct JTraceThread
 		guint32 process_id;
 	} otf;
 #endif
+
+#ifdef HAVE_OTF2
+	/**
+	 * OTF2-specific structure.
+	 **/
+	struct
+	{
+		/**
+		 * Thread's process ID.
+		 **/
+		guint32 process_id;
+	} otf2;
+#endif
 };
 
 typedef struct JTraceThread JTraceThread;
@@ -132,6 +145,69 @@ static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_counter_table = NULL;
 
 G_LOCK_DEFINE_STATIC(j_trace_otf);
+#endif
+
+#ifdef HAVE_OTF2
+// Déclaration des fonctions pour créer une archive
+get_time( void )
+{
+    static uint64_t sequence;
+    return sequence++;
+}
+
+static OTF2_FlushType
+pre_flush( void*            userData,
+           OTF2_FileType    fileType,
+           OTF2_LocationRef location,
+           void*            callerData,
+           bool             final )
+{
+    return OTF2_FLUSH;
+}
+
+static OTF2_TimeStamp
+post_flush( void*            userData,
+            OTF2_FileType    fileType,
+            OTF2_LocationRef location )
+{
+    return get_time();
+}
+
+static OTF2_FlushCallbacks flush_callbacks =
+{
+    .otf2_pre_flush  = pre_flush,
+    .otf2_post_flush = post_flush
+};
+static OTF2_Archive* otf2_archive = NULL;
+static OTF2_EvtWriter* otf2_evtwriter = NULL; 
+static OTF2_DefWriter* otf2_defwriter = NULL;
+static OTF2_GlobalDefWriter* otf2_globaldefwriter = NULL ;
+static guint32 otf2_comm = 0;
+
+/*static guint32 otf2_process_id = 1;
+static guint32 otf2_function_id = 1;
+static guint32 otf2_counter_id = 1;*/
+
+static guint32 otf2_file_id = 0;
+static guint32 otf2_region_id = 1;
+static guint32 otf2_location_id = 1;
+static guint32 otf2_string_id = 0;
+static guint32 otf2_treenode_id = 1;
+static guint32 otf2_locationgroup_id = 0;
+static guint32 otf2_attribute_id = 0;
+static guint32 otf2_comm_id = 0;
+static guint otf2_ioparadigm_id = 0;
+static guint otf2_iohandle_id = 1;
+static guint otf2_group_id = 0;
+
+
+
+static GHashTable* otf2_region_table = NULL;
+static GHashTable* otf2_location_table = NULL ;
+static GHashTable* otf2_string_table = NULL ;
+static GHashTable* otf2_handle_table = NULL;
+
+G_LOCK_DEFINE_STATIC(j_trace_otf2);
 #endif
 
 static void j_trace_thread_default_free(gpointer);
@@ -194,6 +270,29 @@ j_trace_thread_new(GThread* thread)
 #ifdef HAVE_OTF2
 	if (j_trace_flags & J_TRACE_OTF2)
 	{
+		trace_thread->otf2.process_id= otf2_location_id;
+		OTF2_GlobalDefWriter_WriteString(otf2_globaldefwriter,
+										otf2_string_id,
+										trace_thread->thread_name);
+		
+		OTF2_GlobalDefWriter_WriteLocation(otf2_globaldefwriter,
+											otf2_location_id, //Location ref
+											otf2_string_id, // son nom
+											OTF2_LOCATION_GROUP_TYPE_PROCESS, //à voir
+											100, //nbre d'events
+											0 //Location Group auqeul il appartient
+											);
+		g_atomic_int_add(&otf2_string_id, 1);
+		OTF2_Archive_OpenDefFiles(otf2_archive);
+		otf2_defwriter=OTF2_Archive_GetDefWriter(otf2_archive, trace_thread->otf2.process_id);
+		OTF2_DefWriter_WriteString(otf2_defwriter, otf2_string_id, "First string of this process");
+		OTF2_Archive_CloseDefWriter(otf2_archive, otf2_defwriter);
+		OTF2_Archive_CloseDefFiles(otf2_archive);
+		OTF2_Archive_OpenEvtFiles(otf2_archive);
+		otf2_evtwriter=OTF2_Archive_GetEvtWriter(otf2_archive, trace_thread->otf2.process_id);
+		OTF2_Archive_CloseEvtFiles(otf2_archive);
+		g_atomic_int_add(&otf2_string_id, 1);
+		g_atomic_int_add(&otf2_location_id,1);
 	}
 #endif
 
@@ -231,6 +330,7 @@ j_trace_thread_free(JTraceThread* trace_thread)
 #ifdef HAVE_OTF2
 	if (j_trace_flags & J_TRACE_OTF2)
 	{
+		//TODO rajouter une libération de processus
 	}
 #endif
 
@@ -434,6 +534,7 @@ j_trace_init(gchar const* name)
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
+		
 		otf_manager = OTF_FileManager_open(8);
 		g_assert(otf_manager != NULL);
 
@@ -448,10 +549,30 @@ j_trace_init(gchar const* name)
 		otf_counter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	}
 #endif
-
 #ifdef HAVE_OTF2
 	if (j_trace_flags & J_TRACE_OTF2)
 	{
+		g_assert(otf2_archive==NULL);
+		otf2_archive = OTF2_Archive_Open("/home/urz/perrin/julea/example", name, OTF2_FILEMODE_WRITE, 1024 * 1024, 4*  1024 * 1024, OTF2_SUBSTRATE_POSIX, OTF2_COMPRESSION_NONE);
+		OTF2_Archive_SetFlushCallbacks(otf2_archive, &flush_callbacks, NULL);
+		OTF2_Archive_SetSerialCollectiveCallbacks(otf2_archive);
+		g_assert(otf2_archive!=NULL);
+		otf2_globaldefwriter = OTF2_Archive_GetGlobalDefWriter(otf2_archive);
+		g_assert(otf2_globaldefwriter!=NULL);
+		OTF2_GlobalDefWriter_WriteClockProperties(otf2_globaldefwriter, 1, 0, 2, OTF2_UNDEFINED_TIMESTAMP);
+		OTF2_GlobalDefWriter_WriteString(otf2_globaldefwriter, otf2_string_id, "void string by default");
+		g_atomic_int_add(&otf2_string_id,1);
+		OTF2_GlobalDefWriter_WriteRegion(otf2_globaldefwriter, 0, 0, 0, 0, OTF2_REGION_ROLE_FUNCTION, OTF2_PARADIGM_USER, OTF2_REGION_FLAG_NONE, 0, 0, 0);
+		otf2_handle_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		otf2_region_table=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		//otf2_location_table=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		otf2_string_table=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+		//test de Location -> peut-être pas besoin d'en créer un pour tlm
+		OTF2_GlobalDefWriter_WriteSystemTreeNode(otf2_globaldefwriter, 0, 0, 0, OTF2_UNDEFINED_SYSTEM_TREE_NODE);
+		g_atomic_int_add(&otf2_treenode_id,1);
+		OTF2_GlobalDefWriter_WriteLocationGroup(otf2_globaldefwriter, 0, 0, OTF2_LOCATION_GROUP_TYPE_PROCESS, 0, OTF2_UNDEFINED_LOCATION_GROUP);
+		g_atomic_int_add(&otf2_locationgroup_id,1);
+		printf("--------------------------début du traçage---------------------------------------\n");
 	}
 #endif
 
@@ -495,6 +616,22 @@ j_trace_fini(void)
 #ifdef HAVE_OTF2
 	if (j_trace_flags & J_TRACE_OTF2)
 	{
+		/*OTF2_Archive_CloseDefWriter(otf2_archive, otf2_defwriter);
+		OTF2_Archive_CloseEvtWriter(otf2_archive, otf2_evtwriter);*/
+		OTF2_Archive_CloseGlobalDefWriter(otf2_archive, otf2_globaldefwriter);
+		OTF2_Archive_Close(otf2_archive);
+
+		otf2_archive = NULL;
+		otf2_globaldefwriter = NULL;
+
+		g_hash_table_unref(otf2_handle_table);
+		otf2_handle_table = NULL;
+
+		g_hash_table_unref(otf2_region_table);	
+		otf2_region_table = NULL;
+
+		g_hash_table_unref(otf2_location_table);	
+		otf2_location_table = NULL;
 	}
 #endif
 
@@ -564,7 +701,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	va_start(args, format);
 
 	if (j_trace_flags & J_TRACE_ECHO)
-	{
+	{/*
 		G_LOCK(j_trace_echo);
 		j_trace_echo_printerr(trace_thread, timestamp);
 
@@ -580,7 +717,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 			g_printerr("ENTER %s\n", name);
 		}
 
-		G_UNLOCK(j_trace_echo);
+		G_UNLOCK(j_trace_echo);*/
 	}
 
 #ifdef HAVE_OTF
@@ -606,6 +743,42 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		G_UNLOCK(j_trace_otf);
 
 		OTF_Writer_writeEnter(otf_writer, timestamp, function_id, trace_thread->otf.process_id, 0);
+	}
+#endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{		
+		gpointer value;
+		guint32 region_id;
+
+		G_LOCK(j_trace_otf2);
+
+		if ((value = g_hash_table_lookup(otf2_region_table, name)) == NULL)
+		{
+			OTF2_Archive_OpenDefFiles(otf2_archive);
+			OTF2_GlobalDefWriter_WriteString(otf2_globaldefwriter, otf2_string_id, name); 
+			g_hash_table_insert(otf2_string_table, g_strdup(name), GUINT_TO_POINTER(otf2_string_id));
+			OTF2_GlobalDefWriter_WriteRegion(otf2_globaldefwriter, otf2_region_id, otf2_string_id, otf2_string_id, 0, OTF2_REGION_ROLE_FUNCTION, OTF2_PARADIGM_USER, OTF2_REGION_FLAG_NONE, 0, 0, 0);
+			g_hash_table_insert(otf2_region_table, g_strdup(name), GUINT_TO_POINTER(otf2_region_id));
+			OTF2_Archive_CloseDefFiles(otf2_archive);
+			region_id=otf2_region_id;
+			g_atomic_int_add(&otf2_region_id,1);
+			g_atomic_int_add(&otf2_string_id, 1);
+		}
+		else
+		{
+			region_id = GPOINTER_TO_UINT(value);
+		}
+
+		G_UNLOCK(j_trace_otf2);
+
+		OTF2_Archive_OpenEvtFiles( otf2_archive );
+		otf2_evtwriter=OTF2_Archive_GetEvtWriter(otf2_archive, trace_thread->otf2.process_id);
+		g_assert(otf2_evtwriter!=NULL);
+		OTF2_EvtWriter_Enter(otf2_evtwriter, NULL, timestamp, region_id);
+		OTF2_Archive_CloseEvtFiles(otf2_archive);
+		OTF2_Archive_CloseEvtWriter(otf2_archive, otf2_evtwriter);
 	}
 #endif
 
@@ -669,7 +842,7 @@ j_trace_leave(JTrace* trace)
 	timestamp = g_get_real_time();
 
 	if (j_trace_flags & J_TRACE_ECHO)
-	{
+	{/*
 		guint64 duration;
 
 		duration = timestamp - trace->enter_time;
@@ -678,7 +851,7 @@ j_trace_leave(JTrace* trace)
 		j_trace_echo_printerr(trace_thread, timestamp);
 		g_printerr("LEAVE %s", trace->name);
 		g_printerr(" [%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT "s]\n", duration / G_USEC_PER_SEC, duration % G_USEC_PER_SEC);
-		G_UNLOCK(j_trace_echo);
+		G_UNLOCK(j_trace_echo);*/
 	}
 
 #ifdef HAVE_OTF
@@ -696,6 +869,25 @@ j_trace_leave(JTrace* trace)
 		G_UNLOCK(j_trace_otf);
 
 		OTF_Writer_writeLeave(otf_writer, timestamp, function_id, trace_thread->otf.process_id, 0);
+	}
+#endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+		gpointer value;
+		guint32 ref_id;
+		G_LOCK(j_trace_otf2);
+		value=g_hash_table_lookup(otf2_region_table, trace->name);
+		g_assert(value!=NULL);
+		ref_id=GPOINTER_TO_UINT(value);
+		G_UNLOCK(j_trace_otf2);
+		OTF2_Archive_OpenEvtFiles(otf2_archive);
+		otf2_evtwriter=OTF2_Archive_GetEvtWriter(otf2_archive, trace_thread->otf2.process_id);
+		g_assert(otf2_evtwriter!=NULL);
+		OTF2_EvtWriter_Leave(otf2_evtwriter,NULL, timestamp, ref_id);
+		OTF2_Archive_CloseEvtFiles(otf2_archive);
+		OTF2_Archive_CloseEvtWriter(otf2_archive, otf2_evtwriter);
 	}
 #endif
 
@@ -789,6 +981,89 @@ j_trace_file_begin(gchar const* path, JTraceFileOperation op)
 	}
 #endif
 
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+		gpointer value;
+		guint32 handle_id;
+
+		G_LOCK(j_trace_otf2);
+
+		if ((value = g_hash_table_lookup(otf2_handle_table, path)) == NULL)
+		{
+			if (otf2_comm==0)
+			{
+				OTF2_GlobalDefWriter_WriteString(otf2_globaldefwriter, otf2_string_id, "Unique Communicator");
+				guint32 comm_name=otf2_string_id;
+				g_atomic_int_add(&otf2_string_id, 1);
+				OTF2_GlobalDefWriter_WriteGroup(otf2_globaldefwriter, otf2_group_id, 0, OTF2_GROUP_TYPE_UNKNOWN, OTF2_PARADIGM_USER, OTF2_GROUP_FLAG_NONE, OTF2_PARADIGM_UNKNOWN, 1);
+				OTF2_GlobalDefWriter_WriteComm(otf2_globaldefwriter, otf2_comm_id, comm_name, otf2_group_id, OTF2_UNDEFINED_COMM, OTF2_COMM_FLAG_NONE);
+				g_atomic_int_add(&otf2_group_id, 1);
+				g_atomic_int_add(&otf2_comm_id, 1);
+				g_atomic_int_add(&otf2_comm, 1);
+			}
+			OTF2_GlobalDefWriter_WriteString(otf2_globaldefwriter, otf2_string_id, path);
+			OTF2_GlobalDefWriter_WriteIoRegularFile(otf2_globaldefwriter, otf2_file_id, otf2_string_id, 0);
+			OTF2_GlobalDefWriter_WriteAttribute(otf2_globaldefwriter, otf2_attribute_id, otf2_string_id, 0, OTF2_TYPE_NONE);
+			OTF2_AttributeValue attributeValue = { .attributeRef = otf2_attribute_id};
+			OTF2_GlobalDefWriter_WriteIoParadigm(otf2_globaldefwriter, otf2_ioparadigm_id, otf2_string_id, otf2_string_id, OTF2_IO_PARADIGM_CLASS_SERIAL, OTF2_IO_PARADIGM_FLAG_NONE, 0, NULL, OTF2_TYPE_NONE, otf2_attribute_id);
+			OTF2_GlobalDefWriter_WriteIoHandle(otf2_globaldefwriter, otf2_iohandle_id, otf2_string_id, otf2_file_id, otf2_ioparadigm_id, OTF2_IO_HANDLE_FLAG_NONE, 0, 0);
+			handle_id=otf2_iohandle_id;
+			g_hash_table_insert(otf2_handle_table, g_strdup(path), GUINT_TO_POINTER(otf2_iohandle_id));
+			g_atomic_int_add(&otf2_string_id, 1);
+			g_atomic_int_add(&otf2_file_id, 1);
+			g_atomic_int_add(&otf2_attribute_id, 1);
+			g_atomic_int_add(&otf2_ioparadigm_id, 1);
+			g_atomic_int_add(&otf2_iohandle_id, 1);
+		}
+		else
+		{
+			handle_id = GPOINTER_TO_UINT(value);
+		}
+
+		G_UNLOCK(j_trace_otf2);
+
+		OTF2_Archive_OpenEvtFiles(otf2_archive);
+		otf2_evtwriter=OTF2_Archive_GetEvtWriter(otf2_archive, trace_thread->otf2.process_id);
+		g_assert(otf2_evtwriter!=NULL);
+
+		switch (op)
+		{
+			case J_TRACE_FILE_CLOSE:
+				OTF2_EvtWriter_IoDestroyHandle(otf2_evtwriter, NULL, timestamp, handle_id);
+				break;
+			case J_TRACE_FILE_CREATE:
+				OTF2_EvtWriter_IoCreateHandle(otf2_evtwriter, NULL, timestamp, handle_id, OTF2_IO_ACCESS_MODE_READ_WRITE, OTF2_IO_CREATION_FLAG_CREATE, OTF2_IO_STATUS_FLAG_NONE );
+				break;
+			case J_TRACE_FILE_DELETE:
+				//TODO
+				break;
+			case J_TRACE_FILE_OPEN:
+				OTF2_EvtWriter_IoCreateHandle(otf2_evtwriter, NULL, timestamp, handle_id, OTF2_IO_ACCESS_MODE_READ_WRITE, OTF2_IO_CREATION_FLAG_NONE, OTF2_IO_STATUS_FLAG_NONE);		
+				break;
+			case J_TRACE_FILE_READ:
+				OTF2_EvtWriter_IoOperationBegin( otf2_evtwriter, NULL, timestamp, handle_id, OTF2_IO_OPERATION_MODE_READ, OTF2_IO_OPERATION_FLAG_NONE, 0, 0);
+				break;
+			case J_TRACE_FILE_SEEK:
+				OTF2_EvtWriter_IoSeek(otf2_evtwriter, NULL, timestamp, handle_id, 0, OTF2_IO_SEEK_FROM_START, 0);
+				break;
+			case J_TRACE_FILE_STATUS:
+				//TODO
+				break;
+			case J_TRACE_FILE_SYNC:
+				OTF2_EvtWriter_IoOperationBegin(otf2_evtwriter, NULL, timestamp, handle_id, OTF2_IO_OPERATION_MODE_FLUSH, OTF2_IO_OPERATION_FLAG_NONE, 0, 0);
+				break;
+			case J_TRACE_FILE_WRITE:
+				OTF2_EvtWriter_IoOperationBegin(otf2_evtwriter, NULL, timestamp, handle_id, OTF2_IO_OPERATION_MODE_WRITE, OTF2_IO_OPERATION_FLAG_NONE, 0, 0);
+				break;
+			default:
+				g_warn_if_reached();
+				break;
+		}
+	OTF2_Archive_CloseEvtFiles(otf2_archive);
+	OTF2_Archive_CloseEvtWriter(otf2_archive, otf2_evtwriter);
+	}
+#endif
 	return;
 }
 
@@ -874,6 +1149,28 @@ j_trace_file_end(gchar const* path, JTraceFileOperation op, guint64 length, guin
 		OTF_Writer_writeEndFileOperation(otf_writer, timestamp, trace_thread->otf.process_id, file_id, 1, 0, otf_op, length, 0);
 	}
 #endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+		gpointer value;
+		guint32 iohandle_id;
+
+		G_LOCK(j_trace_otf2);
+
+		value = g_hash_table_lookup(otf2_handle_table, path);
+		g_assert(value != NULL);
+		iohandle_id = GPOINTER_TO_UINT(value);
+
+		G_UNLOCK(j_trace_otf2);
+
+		OTF2_Archive_OpenEvtFiles(otf2_archive);
+		otf2_evtwriter = OTF2_Archive_GetEvtWriter(otf2_archive, trace_thread->otf2.process_id);
+		OTF2_EvtWriter_IoOperationComplete(otf2_evtwriter, NULL, timestamp, iohandle_id, length, 0);
+		OTF2_Archive_CloseEvtFiles(otf2_archive);
+		OTF2_Archive_CloseEvtWriter(otf2_archive, otf2_evtwriter);
+	}
+#endif
 }
 
 void
@@ -923,6 +1220,13 @@ j_trace_counter(gchar const* name, guint64 counter_value)
 		G_UNLOCK(j_trace_otf);
 
 		OTF_Writer_writeCounter(otf_writer, timestamp, trace_thread->otf.process_id, counter_id, counter_value);
+	}
+#endif
+
+#ifdef HAVE_OTF2
+	if (j_trace_flags & J_TRACE_OTF2)
+	{
+		//TODO compteur ?
 	}
 #endif
 }
