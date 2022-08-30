@@ -30,6 +30,7 @@ pkg_config = import('pkgconfig')
 
 if get_option('debug')
 	args = cc.get_supported_arguments([
+		'-fstack-protector-strong',
 		'-Waggregate-return',
 		'-Wcast-align=strict',
 		'-Wcast-qual',
@@ -316,11 +317,13 @@ sync_fetch_and_add_check = cc.links('''
 
 julea_conf = configuration_data()
 julea_conf.set('_POSIX_C_SOURCE', '200809L')
+julea_conf.set('_FILE_OFFSET_BITS', 64)
 julea_conf.set('G_LOG_USE_STRUCTURED', 1)
 julea_conf.set_quoted('G_LOG_DOMAIN', 'JULEA')
 julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('libdir') / 'julea' / 'backend')
 
 if get_option('debug')
+	julea_conf.set('_FORTIFY_SOURCE', 2)
 	julea_conf.set('JULEA_DEBUG', 1)
 else
 	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
