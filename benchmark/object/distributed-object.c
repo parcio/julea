@@ -243,11 +243,11 @@ _benchmark_distributed_object_read(BenchmarkRun* run, gboolean use_batch, guint 
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
-	gchar dummy[block_size];
+	g_autofree gchar* dummy = NULL;
 	guint64 nb = 0;
 	gboolean ret;
 
-	memset(dummy, 0, block_size);
+	dummy = g_malloc0(block_size);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	semantics = j_benchmark_get_semantics();
@@ -320,11 +320,11 @@ _benchmark_distributed_object_write(BenchmarkRun* run, gboolean use_batch, guint
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDistribution) distribution = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
-	gchar dummy[block_size];
+	g_autofree gchar* dummy = NULL;
 	guint64 nb = 0;
 	gboolean ret;
 
-	memset(dummy, 0, block_size);
+	dummy = g_malloc0(block_size);
 
 	distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	semantics = j_benchmark_get_semantics();

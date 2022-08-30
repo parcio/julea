@@ -236,11 +236,11 @@ _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
-	gchar dummy[block_size];
+	g_autofree gchar* dummy = NULL;
 	guint64 nb = 0;
 	gboolean ret;
 
-	memset(dummy, 0, block_size);
+	dummy = g_malloc0(block_size);
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
@@ -311,11 +311,11 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
-	gchar dummy[block_size];
+	g_autofree gchar* dummy = NULL;
 	guint64 nb = 0;
 	gboolean ret;
 
-	memset(dummy, 0, block_size);
+	dummy = g_malloc0(block_size);
 
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);

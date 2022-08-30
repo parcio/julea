@@ -170,7 +170,9 @@ create_dataset(hid_t file, gchar const* name, guint dimensions, hid_t* dataspace
 	hid_t dataset;
 	hid_t dataspace;
 
-	hsize_t dims[dimensions];
+	g_autofree hsize_t* dims = NULL;
+
+	dims = g_new0(hsize_t, dimensions);
 
 	for (guint i = 0; i < dimensions; i++)
 	{
