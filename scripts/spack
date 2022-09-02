@@ -179,5 +179,10 @@ spack_install_dependencies ()
 		done
 
 		spack_cmd gc --yes-to-all
+
+		if test -n "${CI}"
+		then
+			spack_cmd clean --downloads
+		fi
 	fi
 }
