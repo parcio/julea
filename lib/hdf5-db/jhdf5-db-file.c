@@ -532,10 +532,6 @@ file_accessible(va_list arguments)
 	const char* name = NULL;
 	hbool_t* accessible = NULL;
 
-	/*
-	From H5Fdelete():
-	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
-	*/
 	va_arg(arguments, hid_t*); // skip the fapl
 	name = va_arg(arguments, const char*);
 	accessible = va_arg(arguments, hbool_t*);
@@ -560,7 +556,6 @@ file_accessible(va_list arguments)
 	// if j_db_iterator_next() gives an error
 	if (error)
 	{
-		/// \todo error will be set even for the valid behavior that there are no elements left. maybe drop this behavior?
 		if (g_strcmp0(error->message, "no more elements") != 0)
 		{
 			j_goto_error();
@@ -695,10 +690,6 @@ files_equal(JHDF5Object_t* object, va_list arguments)
 	hbool_t* ret = NULL;
 	hbool_t type_check, id_check;
 
-	/*
-	From H5Fdelete():
-	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
-	*/
 	file2 = va_arg(arguments, void*); // skip the fapl
 	ret = va_arg(arguments, hbool_t*);
 
@@ -728,7 +719,7 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 			break;
 		case H5VL_FILE_IS_ACCESSIBLE:
 			// needed so that HDF5 can determine wether a file is stored in a certain VOL plugin
-			// this is, for example, needed for H5Fdelete()
+			// for example, needed in H5Fdelete()
 			if (!file_accessible(arguments))
 			{
 				j_goto_error();

@@ -66,7 +66,7 @@ j_test_hdf_file_fixture_teardown(hid_t* file, gconstpointer udata)
 	{
 		(void)udata;
 		H5Fclose(*file);
-		/// \todo Delete is not yet implemented
+		/// \todo Delete is not yet implemented for KV version
 		// const gchar* name = udata;
 		// H5Fdelete(name, H5P_DEFAULT);
 	}
