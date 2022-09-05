@@ -133,7 +133,6 @@ _error:
 	return NULL;
 }
 
-// takes ownership of *_variables_index which is destroyed on error avoiding an unnecessary copy
 JSqlStatement*
 j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable** in_variables_index, GHashTable** out_variables_index)
 {
@@ -204,6 +203,7 @@ j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name)
 {
 	JSqlIterator* sql_iterator = g_new(JSqlIterator, 1);
 
+	// no copies here; the objects still belong to the caller
 	sql_iterator->batch = batch;
 	sql_iterator->statement = stmt;
 	sql_iterator->name = name;
@@ -211,10 +211,9 @@ j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name)
 	return sql_iterator;
 }
 
-// the iterator is just a convenient wrapper arround multiple arguments
-// the contained objects are managed in other places
 void
 j_sql_iterator_free(JSqlIterator* iter)
 {
+	// the contained objects are owned by the caller of j_sql_iterator_new
 	g_free(iter);
 }

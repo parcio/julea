@@ -272,6 +272,8 @@ gboolean bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlState
 
 /**
  * \brief Query the IDs of rows that match a selector.
+ * 
+ * It is is used in the update and delete functions.
  *
  * \param backend_data The backend-specific information to open a connection.
  * \param _batch A JSqlBatch object.
