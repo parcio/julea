@@ -580,7 +580,7 @@ bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* sta
 }
 
 static gboolean
-bind_selector_query_ex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPrepared* prepared, guint* variables_count, GHashTable* variables_index, GError** error)
+bind_selector_query_ex(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, guint* variables_count, GHashTable* schema, GError** error)
 {
 	/* Note: This method is almost the replica of method named 'build_selector_query_ex'. There we iterate through the BSON data to prepare query string,
 	 * whereas in this document we re-iterate through the BSON to fetch merely the data types for the fields that are used in the query string.
@@ -669,7 +669,7 @@ bind_selector_query_ex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPre
 				goto _error;
 			}
 
-			if (G_UNLIKELY(!bind_selector_query_ex(backend_data, &iterChildDocument, prepared, variables_count, variables_index, error)))
+			if (G_UNLIKELY(!bind_selector_query_ex(backend_data, &iterChildDocument, statement, variables_count, schema, error)))
 			{
 				goto _error;
 			}
@@ -716,14 +716,15 @@ bind_selector_query_ex(gpointer backend_data, bson_iter_t* iter, JSqlCacheSQLPre
 				goto _error;
 			}
 
-			itemDatatype = GPOINTER_TO_UINT(g_hash_table_lookup(prepared->variables_type, (gpointer)fieldName->str));
+			// TODO
+			itemDatatype = GPOINTER_TO_UINT(g_hash_table_lookup(schema, (gpointer)fieldName->str));
 
 			if (G_UNLIKELY(!j_bson_iter_value(&iterChildDocument, itemDatatype, &itemValue, error)))
 			{
 				goto _error;
 			}
 
-			if (G_UNLIKELY(!j_sql_bind_value(thread_variables->sql_backend, prepared->stmt, *variables_count, itemDatatype, &itemValue, error)))
+			if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, statement->stmt, *variables_count, itemDatatype, &itemValue, error)))
 			{
 				goto _error;
 			}
@@ -935,7 +936,7 @@ build_selector_query_ex(bson_iter_t* iter, GString* sql, JDBSelectorMode mode, g
 			}
 
 			// Append table name to field name. E.g. "<string for table name>.<string for field name>"
-			g_string_append_printf(sqlCurrentDocument, "%s." SQL_QUOTE "%s" SQL_QUOTE, tableName.val_string, itemValue.val_string);
+			g_string_append_printf(sqlCurrentDocument, "%s%s.%s%s", specs->sql.quote, tableName.val_string, itemValue.val_string, specs->sql.quote);
 
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterChildDocument, error)))
 			{
@@ -1122,7 +1123,7 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 		g_string_append(tableName, itemValue.val_string);
 
 		// Fetching table's schema to extract all the columns' names.
-		if (!(schemaCache = getCacheSchema(backend_data, batch, itemValue.val_string, error)))
+		if (!(schemaCache = get_schema(backend_data, batch, itemValue.val_string, error)))
 		{
 			goto _error;
 		}
@@ -1175,7 +1176,7 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 			fieldName = g_string_new(NULL);
 			g_string_append_printf(fieldName, "%s.%s", tableName->str, szFieldname);
 
-			g_string_append_printf(sql, ", %s." SQL_QUOTE "%s" SQL_QUOTE, tableName->str, szFieldname);
+			g_string_append_printf(sql, ", %s%s%s", specs->sql.quote, fieldName->str, specs->sql.quote);
 			g_hash_table_insert(variables_index, GINT_TO_POINTER(*variables_count), g_strdup(fieldName->str));
 			g_hash_table_insert(variables_type, g_strdup(fieldName->str), GINT_TO_POINTER(itemDataType));
 			g_array_append_val(arr_types_out, itemDataType);
@@ -1190,7 +1191,7 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 			g_string_append(sqlTablesName, ", ");
 		}
 
-		g_string_append_printf(sqlTablesName, SQL_QUOTE "%s" SQL_QUOTE, tableName->str);
+		g_string_append_printf(sqlTablesName, "%s%s%s", specs->sql.quote, tableName->str, specs->sql.quote);
 
 		g_string_free(tableName, TRUE);
 		tableName = NULL;
