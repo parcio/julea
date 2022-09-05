@@ -202,6 +202,7 @@ j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(selector->schema == entry->schema, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail(g_hash_table_size(selector->join_schema) < 2, FALSE); // no cross-table updates
 
 	bson = j_db_selector_get_bson(selector);
 
@@ -231,6 +232,7 @@ j_db_entry_delete(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail((selector == NULL) || (selector->schema == entry->schema), FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail(g_hash_table_size(selector->join_schema) < 2, FALSE); // no cross-table deletes
 
 	if (G_UNLIKELY(!j_db_internal_delete(entry, selector, batch, error)))
 	{

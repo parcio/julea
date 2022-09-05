@@ -67,6 +67,29 @@ struct JThreadVariables
 typedef struct JThreadVariables JThreadVariables;
 
 /**
+ * \brief Manages the status of a batch.
+ *
+ * Batches are implemented using transactions.
+ * An of an operation inside a batch will cause a rollback.
+ */
+struct JSqlBatch
+{
+	/// The namespace of the operations inside the batch.
+	const gchar* namespace;
+
+	/// The semantics of the batched operations.
+	JSemantics* semantics;
+
+	/// TRUE if the batch is open.
+	gboolean open;
+
+	/// TRUE if there was an error and the batch was aborted.
+	gboolean aborted;
+};
+
+typedef struct JSqlBatch JSqlBatch;
+
+/**
  * \brief The JSqlStatement wraps a DB backend-specific prepared statement.
  *
  */
@@ -94,54 +117,13 @@ struct JSqlStatement
 	 * This field is not NULL iff the statement is a SELECT.
 	 */
 	GHashTable* out_variables_index;
+
+	// varname -> type
+	// all contained vars in and out
+	GHashTable* variable_types;
 };
 
 typedef struct JSqlStatement JSqlStatement;
-
-/**
- * \brief Manages the status of a batch.
- *
- * Batches are implemented using transactions.
- * An of an operation inside a batch will cause a rollback.
- */
-struct JSqlBatch
-{
-	/// The namespace of the operations inside the batch.
-	const gchar* namespace;
-
-	/// The semantics of the batched operations.
-	JSemantics* semantics;
-
-	/// TRUE if the batch is open.
-	gboolean open;
-
-	/// TRUE if there was an error and the batch was aborted.
-	gboolean aborted;
-};
-
-typedef struct JSqlBatch JSqlBatch;
-
-// an iterator associates a prepared and bound statement with a batch and certain schema information
-// using this object the statement can be stepped through and results can be extracted
-/**
- * \brief The JSqlIterator groups all neccessary information to retrieve the results of a SELECT query.
- *
- * This struct is the result of sql_generic_query().
- *
- */
-struct JSqlIterator
-{
-	/// The statement to step through. All values are bound.
-	JSqlStatement* statement;
-
-	/// The batch which this query is part of.
-	JSqlBatch* batch;
-
-	/// \todo change to schema for now and to "extended" schema for joins later on.
-	const gchar* name;
-};
-
-typedef struct JSqlIterator JSqlIterator;
 
 // common
 
@@ -184,7 +166,7 @@ JThreadVariables* thread_variables_get(gpointer backend_data, GError** error);
  *
  * \attention If the function returns a valid pointer in_variables_index and out_variables_index are now owned by the new struct and the original pointers are set to NULL.
  */
-JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable** in_variables_index, GHashTable** out_variables_index);
+JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types);
 
 /**
  * \brief Destructor for a JSqlStatement.
@@ -192,28 +174,6 @@ JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray*
  * \param ptr Pointer to the Statement.
  */
 void j_sql_statement_free(JSqlStatement* ptr);
-
-/**
- * \brief Constructor of JSqlIterator.
- *
- * \param stmt An already bound statement that can be stepped through.
- * \param batch The batch which the query is part of.
- * \param name The name of the schema.
- * \return JSqlIterator* A JSqlIterator object.
- *
- * \attention
- * No input parameters are copied here as it is not necessary for the current usage.
- * The statement is owned by the statement cache and batch and name by the calling server code.
- *
- */
-JSqlIterator* j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name);
-
-/**
- * \brief Destructor of JSqlIterator.
- *
- * \param iter A pointer to JSqlIterator.
- */
-void j_sql_iterator_free(JSqlIterator* iter);
 
 // DQL
 
@@ -229,7 +189,7 @@ void j_sql_iterator_free(JSqlIterator* iter);
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const* name, bson_t* schema, GError** error);
+gboolean _backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* name, bson_t* schema, GError** error);
 
 /**
  * \brief Get the schema as a HashTable for internal usage.
@@ -242,7 +202,7 @@ gboolean _backend_schema_get(gpointer backend_data, gpointer _batch, gchar const
  * \param[out] error An uninitialized GError* for error code passing.
  * \return GHashTable* A valid GHashTable pointer on success or NULL otherwise. The hash table is owned by the cache and schould NOT be freed.
  */
-GHashTable* get_schema(gpointer backend_data, gpointer _batch, gchar const* name, GError** error);
+GHashTable* get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GError** error);
 
 /**
  * \brief Build the WHERE part of a SELECT statement from a selector.
@@ -256,7 +216,7 @@ GHashTable* get_schema(gpointer backend_data, gpointer _batch, gchar const* name
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean build_selector_query(gpointer backend_data, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GArray* arr_types_in, GHashTable* schema, GError** error);
+gboolean build_query_condition_part(gpointer backend_data, JSqlBatch* batch, bson_iter_t* iter, GString* sql, JDBSelectorMode mode, GArray* arr_types_in, GHashTable* schema, GError** error);
 
 /**
  * \brief Bind the variables in the WHERE part of a SELECT statement.
@@ -268,11 +228,11 @@ gboolean build_selector_query(gpointer backend_data, bson_iter_t* iter, GString*
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean bind_selector_query(gpointer backend_data, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error);
+gboolean bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t* iter, JSqlStatement* statement, GHashTable* schema, GError** error);
 
 /**
  * \brief Query the IDs of rows that match a selector.
- * 
+ *
  * It is is used in the update and delete functions.
  *
  * \param backend_data The backend-specific information to open a connection.
@@ -316,5 +276,7 @@ gboolean _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError*
  * \return gboolean TRUE on success, FALSE otherwise.
  */
 gboolean _backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error);
+
+GString* get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field);
 
 #endif

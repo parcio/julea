@@ -307,12 +307,12 @@ H5VL_julea_db_datatype_decode(void* backend_id, guint64 backend_id_len)
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "type_cache", &type, &object->datatype.data, &object->datatype.data_size, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "type_cache", &type, &object->datatype.data, &object->datatype.data_size, &error))
 	{
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "type_size", &type, (gpointer*)&tmp_uint32, &length, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "type_size", &type, (gpointer*)&tmp_uint32, &length, &error))
 	{
 		j_goto_error();
 	}
@@ -392,7 +392,7 @@ H5VL_julea_db_datatype_encode(hid_t* type_id)
 
 	if (j_db_iterator_next(iterator, NULL))
 	{
-		if (!j_db_iterator_get_field(iterator, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
+		if (!j_db_iterator_get_field(iterator, NULL, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
 		{
 			j_goto_error();
 		}

@@ -417,7 +417,7 @@ benchmark_hdf_dai_db_iterator(BenchmarkRun* run)
 			g_autofree gpointer data = NULL;
 			guint64 data_len;
 
-			if (j_db_iterator_get_field(iterator, "data", &type, &data, &data_len, &error))
+			if (j_db_iterator_get_field(iterator, NULL, "data", &type, &data, &data_len, &error))
 			{
 				attrs++;
 			}

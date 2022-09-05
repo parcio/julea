@@ -30,7 +30,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	JDBType type;
 	gboolean found;
 	JThreadVariables* thread_variables = NULL;
-	GHashTable* schema = NULL;
+	g_autoptr(GHashTable) schema = NULL;
 	JSqlBatch* batch = _batch;
 	JSqlStatement* id_query = NULL;
 	JSqlStatement* insert_query = NULL;
@@ -64,7 +64,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		type = BACKEND_ID_TYPE;
 		g_array_append_val(id_arr_types_out, type);
 
-		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL)))
+		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL, NULL)))
 		{
 			goto _error;
 		}
@@ -77,7 +77,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		}
 	}
 
-	if (!(schema = get_schema(backend_data, batch, name, error)))
+	if (!(schema = get_schema(backend_data, batch->namespace, name, error)))
 	{
 		goto _error;
 	}
@@ -90,29 +90,49 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (G_UNLIKELY(!insert_query))
 	{
-		gchar* key;
-		gpointer type_tmp;
-		GHashTableIter schema_iter;
 		g_autoptr(GHashTable) in_variables_index = NULL;
 		g_autoptr(GString) insert_sql = g_string_new(NULL);
 
 		in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 		g_string_append_printf(insert_sql, "INSERT INTO %s%s_%s%s (", specs->sql.quote, batch->namespace, name, specs->sql.quote);
-		g_hash_table_iter_init(&schema_iter, schema);
 
-		while (g_hash_table_iter_next(&schema_iter, (gpointer*)&key, &type_tmp))
+		if (!j_bson_iter_init(&iter, metadata, error))
 		{
-			type = GPOINTER_TO_INT(type_tmp);
+			goto _error;
+		}
+
+		while (TRUE)
+		{
+			gboolean next;
+			const gchar* field = NULL;
+			g_autoptr(GString) full_name = NULL;
+
+			if (!j_bson_iter_next(&iter, &next, error))
+			{
+				goto _error;
+			}
+
+			if (!next)
+			{
+				break;
+			}
+
+			field = j_bson_iter_key(&iter, error);
+
+			full_name = get_full_field_name(batch->namespace, name, field);
+			// TODO store to replace second lookup and string construction in bind loop
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 
 			if (g_hash_table_size(in_variables_index))
 			{
 				g_string_append(insert_sql, ", ");
 			}
 
-			g_string_append_printf(insert_sql, "%s%s%s", specs->sql.quote, key, specs->sql.quote);
+			// TODO append quoted
+			g_string_append_printf(insert_sql, "%s%s%s", specs->sql.quote, field, specs->sql.quote);
 			g_array_append_val(arr_types_in, type);
 
-			g_hash_table_insert(in_variables_index, g_strdup(key), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
+			g_hash_table_insert(in_variables_index, g_strdup(field), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
 		}
 
 		g_string_append(insert_sql, ") VALUES (");
@@ -129,7 +149,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 		g_string_append(insert_sql, " )");
 
-		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, &in_variables_index, NULL)))
+		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL)))
 		{
 			goto _error;
 		}
@@ -159,6 +179,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	{
 		guint index;
 		gboolean has_next;
+		g_autoptr(GString) full_name = NULL;
 		const char* string_tmp;
 
 		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
@@ -178,7 +199,9 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, string_tmp));
+		full_name = get_full_field_name(batch->namespace, name, string_tmp);
+
+		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 		index = GPOINTER_TO_INT(g_hash_table_lookup(insert_query->in_variables_index, string_tmp));
 
 		if (G_UNLIKELY(!index))
@@ -268,7 +291,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	bson_iter_t iter;
 	gboolean has_next;
 	JSqlBatch* batch = _batch;
-	GHashTable* schema = NULL;
+	g_autoptr(GHashTable) schema = NULL;
 	const char* string_tmp;
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* update_statement = NULL;
@@ -282,7 +305,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	g_return_val_if_fail(entry_updates != NULL, FALSE);
 	g_return_val_if_fail(selector != NULL, FALSE);
 
-	if (!(schema = get_schema(backend_data, batch, name, error)))
+	if (!(schema = get_schema(backend_data, batch->namespace, name, error)))
 	{
 		goto _error;
 	}
@@ -290,11 +313,6 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
-	{
-		goto _error;
-	}
-
-	if (G_UNLIKELY(!j_bson_has_enough_keys(selector, 2, error)))
 	{
 		goto _error;
 	}
@@ -309,6 +327,8 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	while (TRUE)
 	{
+		g_autoptr(GString) full_name = NULL;
+
 		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
 		{
 			goto _error;
@@ -344,7 +364,9 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, string_tmp));
+		full_name = get_full_field_name(batch->namespace, name, string_tmp);
+
+		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 		g_array_append_val(arr_types_in, type);
 		g_string_append_printf(update_sql, "%s%s%s = ?", specs->sql.quote, string_tmp, specs->sql.quote);
 
@@ -361,7 +383,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (G_UNLIKELY(!update_statement))
 	{
-		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, &in_variables_index, NULL)))
+		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL)))
 		{
 			goto _error;
 		}
@@ -405,6 +427,8 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 		while (TRUE)
 		{
+			g_autoptr(GString) full_name = NULL;
+
 			if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
 			{
 				goto _error;
@@ -422,7 +446,9 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 				goto _error;
 			}
 
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, string_tmp));
+			full_name = get_full_field_name(batch->namespace, name, string_tmp);
+
+			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 			index = GPOINTER_TO_INT(g_hash_table_lookup(update_statement->in_variables_index, string_tmp));
 
 			if (G_UNLIKELY(!index))
@@ -459,7 +485,6 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	return TRUE;
 
 _error:
-
 	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
 	{
 		goto _error2;
@@ -508,7 +533,7 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 		g_array_append_val(arr_types_in, type);
 
-		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL)))
+		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL, NULL)))
 		{
 			goto _error;
 		}

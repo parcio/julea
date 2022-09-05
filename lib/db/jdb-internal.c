@@ -507,19 +507,84 @@ error2:
 	return FALSE;
 }
 
+gboolean
+j_db_selector_finalize(JDBSelector* selector, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	JDBTypeValue val;
+
+	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_bson_init(&selector->final, error);
+
+	// contains joins?
+	if (g_hash_table_size(selector->join_schema) > 1)
+	{
+		GHashTableIter iter;
+		g_autoptr(GString) value_str = g_string_new(NULL);
+		g_autoptr(GString) key_str = g_string_new(NULL);
+		bson_t tables;
+		guint table_count = 0;
+		gpointer key;
+
+		if (G_UNLIKELY(!j_bson_append_array_begin(&selector->final, "t", &tables, error)))
+		{
+			goto _error;
+		}
+
+		// joind schemas
+		g_hash_table_iter_init(&iter, selector->join_schema);
+		while (g_hash_table_iter_next(&iter, &key, NULL))
+		{
+			g_string_printf(key_str, "%i", table_count);
+			g_string_assign(value_str, (gchar*)key);
+			val.val_string = value_str->str;
+			if (G_UNLIKELY(!j_bson_append_value(&tables, key_str->str, J_DB_TYPE_STRING, &val, error)))
+			{
+				goto _error;
+			}
+			++table_count;
+		}
+
+		if (G_UNLIKELY(!j_bson_append_array_end(&selector->final, &tables, error)))
+		{
+			goto _error;
+		}
+
+		if (G_UNLIKELY(!j_bson_append_document(&selector->final, "j", &selector->joins, error)))
+		{
+			goto _error;
+		}
+	}
+
+	if (G_UNLIKELY(!j_bson_append_document(&selector->final, "s", &selector->selection, error)))
+	{
+		goto _error;
+	}
+
+	return TRUE;
+
+_error:
+
+	return FALSE;
+}
+
 bson_t*
 j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	/*
-	 * Checks if the selector is not NULL. Relaxing the other condition as selector can have no BSON document (or condition attached to it).
-	 * E.g. Select * from TableA - in this query there is no condition part. 
-	 */
-	if (selector /*&& selector->bson_count > 0*/)
+	g_return_val_if_fail(selector != NULL, NULL);
+
+	if (!bson_has_field(&selector->final, "s"))
 	{
-		return &selector->bson;
+		if (!j_db_selector_finalize(selector, NULL))
+		{
+			return NULL;
+		}
 	}
 
-	return NULL;
+	return &selector->final;
 }

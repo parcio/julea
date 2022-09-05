@@ -375,7 +375,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 	}
 	else
 	{
-		if (!j_db_iterator_get_field(iterator, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
+		if (!j_db_iterator_get_field(iterator, NULL, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
 		{
 			j_goto_error();
 		}
@@ -482,7 +482,7 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
 	{
 		j_goto_error();
 	}

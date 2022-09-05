@@ -237,13 +237,13 @@ entry_insert_customersTable(guint64 customerid, gchar const* firstname, gchar co
 }
 
 /*
- * Query: SELECT namespace_customersTable._id, namespace_customersTable."city", namespace_customersTable."customerid", namespace_customersTable."state", 
- * namespace_customersTable."firstname", namespace_customersTable."lastname", namespace_customersTable."zip", namespace_customersTable."address", 
- * namespace_customersTable."email", namespace_ordersTable._id, namespace_ordersTable."orderid", namespace_ordersTable."amount", namespace_ordersTable."orderdate", 
- * namespace_ordersTable."customerid" FROM "namespace_customersTable", "namespace_ordersTable" WHERE namespace_customersTable.customerid = namespace_ordersTable.customerid 
+ * Query: SELECT namespace_customersTable._id, namespace_customersTable."city", namespace_customersTable."customerid", namespace_customersTable."state",
+ * namespace_customersTable."firstname", namespace_customersTable."lastname", namespace_customersTable."zip", namespace_customersTable."address",
+ * namespace_customersTable."email", namespace_ordersTable._id, namespace_ordersTable."orderid", namespace_ordersTable."amount", namespace_ordersTable."orderdate",
+ * namespace_ordersTable."customerid" FROM "namespace_customersTable", "namespace_ordersTable" WHERE namespace_customersTable.customerid = namespace_ordersTable.customerid
  * AND  ( namespace_customersTable."customerid"= 3 );
  *
- * Output: 
+ * Output:
  * ... order_id 	order_date 	order_amount	...
  * ... 2 		3/14/1760 	$78.50		...
  * ... 4 		9/03/1790 	$65.50		...
@@ -290,7 +290,6 @@ perform_two_tables_join_with_predicates(void)
 	success = j_db_selector_add_field(selector_customersTable, "customerid", J_DB_SELECTOR_OPERATOR_EQ, &val, sizeof(val), &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
-	j_db_selector_add_selector(selector_customersTable, selector_ordersTable, NULL);
 	j_db_selector_add_join(selector_customersTable, "customerid", selector_ordersTable, "customerid", NULL);
 
 	iterator = j_db_iterator_new(schema_customersTable, selector_customersTable, &error);
@@ -306,22 +305,22 @@ perform_two_tables_join_with_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -340,22 +339,22 @@ perform_two_tables_join_with_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -367,12 +366,12 @@ perform_two_tables_join_with_predicates(void)
 }
 
 /*
- * Query: SELECT namespace_customersTable._id, namespace_customersTable."city", namespace_customersTable."customerid", namespace_customersTable."state", 
- * namespace_customersTable."firstname", namespace_customersTable."lastname", namespace_customersTable."zip", namespace_customersTable."address", 
- * namespace_customersTable."email", namespace_ordersTable._id, namespace_ordersTable."orderid", namespace_ordersTable."amount", namespace_ordersTable."orderdate", 
- * namespace_ordersTable."customerid" FROM "namespace_customersTable", "namespace_ordersTable" WHERE namespace_customersTable.customerid = namespace_ordersTable.customerid; 
+ * Query: SELECT namespace_customersTable._id, namespace_customersTable."city", namespace_customersTable."customerid", namespace_customersTable."state",
+ * namespace_customersTable."firstname", namespace_customersTable."lastname", namespace_customersTable."zip", namespace_customersTable."address",
+ * namespace_customersTable."email", namespace_ordersTable._id, namespace_ordersTable."orderid", namespace_ordersTable."amount", namespace_ordersTable."orderdate",
+ * namespace_ordersTable."customerid" FROM "namespace_customersTable", "namespace_ordersTable" WHERE namespace_customersTable.customerid = namespace_ordersTable.customerid;
  *
- * Output: 
+ * Output:
  * ... order_id 	order_date 	order_amount	...
  * ... 1 		7/04/1776 	$234.56	...
  * ... 3 		3/14/1760 	$780.50	...
@@ -417,7 +416,6 @@ perform_two_tables_join_without_predicates(void)
 	selector_customersTable = j_db_selector_new(schema_customersTable, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector_customersTable);
 	g_assert_no_error(error);
-	j_db_selector_add_selector(selector_customersTable, selector_ordersTable, NULL);
 	j_db_selector_add_join(selector_customersTable, "customerid", selector_ordersTable, "customerid", NULL);
 
 	iterator = j_db_iterator_new(schema_customersTable, selector_customersTable, &error);
@@ -433,22 +431,22 @@ perform_two_tables_join_without_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -467,22 +465,22 @@ perform_two_tables_join_without_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -503,22 +501,22 @@ perform_two_tables_join_without_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -539,22 +537,22 @@ perform_two_tables_join_without_predicates(void)
 		g_autofree gdouble* amount = NULL;
 		g_autofree guint64* customerid = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderid", &type, (gpointer*)&orderid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderid", &type, (gpointer*)&orderid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "orderdate", &type, (gpointer*)&orderdate, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "orderdate", &type, (gpointer*)&orderdate, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "amount", &type, (gpointer*)&amount, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "amount", &type, (gpointer*)&amount, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "ordersTable", "customerid", &type, (gpointer*)&customerid, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_ordersTable, "customerid", &type, (gpointer*)&customerid, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "firstname", &type, (gpointer*)&firstname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "firstname", &type, (gpointer*)&firstname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "customersTable", "lastname", &type, (gpointer*)&lastname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_customersTable, "lastname", &type, (gpointer*)&lastname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 

@@ -457,7 +457,7 @@ H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "space", &type, &space_id_buf, &space_id_buf_len, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "space", &type, &space_id_buf, &space_id_buf_len, &error))
 	{
 		j_goto_error();
 	}
@@ -467,7 +467,7 @@ H5VL_julea_db_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "datatype", &type, &datatype_id_buf, &datatype_id_buf_len, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "datatype", &type, &datatype_id_buf, &datatype_id_buf_len, &error))
 	{
 		j_goto_error();
 	}
@@ -534,7 +534,7 @@ H5VL_julea_db_attr_read(void* obj, hid_t mem_type_id, void* buf, hid_t dxpl_id, 
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "data", &type, &tmp, &bytes_read, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "data", &type, &tmp, &bytes_read, &error))
 	{
 		j_goto_error();
 	}

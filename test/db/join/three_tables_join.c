@@ -18,7 +18,7 @@
  */
 
 /*
- * In this test case a JOIN operation is performed on the following three tables. 
+ * In this test case a JOIN operation is performed on the following three tables.
  * It is taken from https://javarevisited.blogspot.com/2012/11/how-to-join-three-tables-in-sql-query-mysql-sqlserver.html#axzz6oIxnmRfc.
  *
  * Table (reffered as empTable in this test case):
@@ -276,11 +276,11 @@ entry_insert_refTable(guint64 empid, guint64 deptid)
 }
 
 /*
- * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
- * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
+ * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary",
+ * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable"
  * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
  *
- * Output: 
+ * Output:
  *+----------+-----------+
  *| emp_name | dept_name |
  *+----------+-----------+
@@ -339,8 +339,6 @@ perform_three_tables_join_without_predicates(void)
 	selector_refTable = j_db_selector_new(schema_refTable, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector_refTable);
 	g_assert_no_error(error);
-	j_db_selector_add_selector(selector_refTable, selector_empTable, NULL);
-	j_db_selector_add_selector(selector_refTable, selector_deptTable, NULL);
 	j_db_selector_add_join(selector_refTable, "empid", selector_empTable, "empid", NULL);
 	j_db_selector_add_join(selector_refTable, "deptid", selector_deptTable, "deptid", NULL);
 
@@ -353,10 +351,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_empTable, "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_deptTable, "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -369,10 +367,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_empTable, "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_deptTable, "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -385,10 +383,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_empTable, "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_deptTable, "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -401,10 +399,10 @@ perform_three_tables_join_without_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_empTable, "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_deptTable, "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 
@@ -414,11 +412,11 @@ perform_three_tables_join_without_predicates(void)
 }
 
 /*
- * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary", 
- * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable" 
+ * Query: SELECT namespace_refTable._id, namespace_refTable."deptid", namespace_refTable."empid", namespace_empTable._id, namespace_empTable."empname", namespace_empTable."salary",
+ * namespace_empTable."empid", namespace_deptTable._id, namespace_deptTable."deptid", namespace_deptTable."deptname" FROM "namespace_refTable", "namespace_empTable", "namespace_deptTable"
  * WHERE namespace_refTable.empid=namespace_empTable.empid AND namespace_refTable.deptid=namespace_deptTable.deptid
  *
- * Output: 
+ * Output:
  *+----------+-----------+
  *| emp_name | dept_name |
  *+----------+-----------+
@@ -481,8 +479,6 @@ perform_three_tables_join_with_predicates(void)
 	selector_refTable = j_db_selector_new(schema_refTable, J_DB_SELECTOR_MODE_AND, &error);
 	g_assert_nonnull(selector_refTable);
 	g_assert_no_error(error);
-	j_db_selector_add_selector(selector_refTable, selector_empTable, NULL);
-	j_db_selector_add_selector(selector_refTable, selector_deptTable, NULL);
 	j_db_selector_add_join(selector_refTable, "empid", selector_empTable, "empid", NULL);
 	j_db_selector_add_join(selector_refTable, "deptid", selector_deptTable, "deptid", NULL);
 
@@ -495,10 +491,10 @@ perform_three_tables_join_with_predicates(void)
 		g_autofree gchar* empname = NULL;
 		g_autofree gchar* deptname = NULL;
 
-		success = j_db_iterator_get_field_ex(iterator, "empTable", "empname", &type, (gpointer*)&empname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_empTable, "empname", &type, (gpointer*)&empname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
-		success = j_db_iterator_get_field_ex(iterator, "deptTable", "deptname", &type, (gpointer*)&deptname, &len, &error);
+		success = j_db_iterator_get_field(iterator, schema_deptTable, "deptname", &type, (gpointer*)&deptname, &len, &error);
 		g_assert_true(success);
 		g_assert_no_error(error);
 

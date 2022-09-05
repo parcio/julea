@@ -476,13 +476,13 @@ j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, GError** e
 
 	if (G_UNLIKELY(!BSON_ITER_HOLDS_ARRAY(iter)))
 	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
+		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type for recurse");
 		goto _error;
 	}
 
 	if (G_UNLIKELY(!bson_iter_recurse(iter, iter_child)))
 	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_RECOURSE, "bson iter recourse failed");
+		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_RECOURSE, "bson iter recurse failed");
 		goto _error;
 	}
 

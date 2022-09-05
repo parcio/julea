@@ -87,6 +87,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBIterator, j_db_iterator_unref)
  **/
 gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
 
+// TODO doku
 /**
  * Get a single value from the current entry of the iterator.
  *
@@ -107,31 +108,7 @@ gboolean j_db_iterator_next(JDBIterator* iterator, GError** error);
  *
  * \return TRUE on success, FALSE otherwise
  **/
-gboolean j_db_iterator_get_field(JDBIterator* iterator, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
-
-/**
- * Fetches the next available instance from the iterator.
- *
- * \param[in] iterator a pointer of type JDBIterator that holds the results returned by query executor.
- * \param[in] table a constant character pointer to hold the name of the table.
- * \param[in] table a constant character pointer to hold the name of the field.
- * \param[out] type a pointer of type JDBType to hold the type of the field.
- * \param[out] value a void pointer to hold the value of the field.
- * \param[out] length a 64-bit unsigned interger pointer that holds lenght of the value.
- * \pre iterator != NULL
- * \pre table != NULL
- * \pre name != NULL
- * \pre type != NULL
- * \pre value != NULL
- * \pre *value should not be initialized
- * \pre length != NULL
- * \post *value points to a new allocated memory region. The caller must free this later using g_free.
- * \post *length contains the length of the allocated memory region
- *
- * \return TRUE on success, FALSE otherwise
- **/
-
-gboolean j_db_iterator_get_field_ex(JDBIterator* iterator, gchar const* table, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
+gboolean j_db_iterator_get_field(JDBIterator* iterator, JDBSchema* schema, gchar const* name, JDBType* type, gpointer* value, guint64* length, GError** error);
 
 G_END_DECLS
 

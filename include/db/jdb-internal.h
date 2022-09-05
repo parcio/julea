@@ -94,15 +94,16 @@ struct JDBSchema
 
 struct JDBSelector
 {
-	bson_t bson;
+	bson_t selection; // the selection part of the query
+	bson_t joins; // the join part of the query
+	bson_t final; // the complete query as bson; build at first usage of a selector. the selector can be reused but not modified after final was built.
 
 	JDBSelectorMode mode;
-	JDBSchema* schema; // Primary schema.
+	JDBSchema* schema; // Primary schema. This is used for joins.
 
-	JDBSchema** join_schema; // Maintains information regarding the schemas (secondary) that are required to perform join operation.
-	guint join_schema_count; // Maintains count for the array (i.e. join_schema).
+	GHashTable* join_schema; // store the names of joined schemas. This hash table is used as a set and all values are NULL.
 
-	guint bson_count;
+	guint selection_count;
 	gint ref_count;
 };
 

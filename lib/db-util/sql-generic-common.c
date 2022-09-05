@@ -113,7 +113,7 @@ thread_variables_get(gpointer backend_data, GError** error)
 
 		thread_variables->db_connection = specs->func.connection_open(backend_data);
 		thread_variables->query_cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (void (*)(void*))j_sql_statement_free);
-		thread_variables->schema_cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (void (*)(void*))g_hash_table_destroy);
+		thread_variables->schema_cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (void (*)(void*))g_hash_table_unref);
 
 		if (!(thread_variables->db_connection && thread_variables->query_cache && thread_variables->schema_cache))
 		{
@@ -134,7 +134,7 @@ _error:
 }
 
 JSqlStatement*
-j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable** in_variables_index, GHashTable** out_variables_index)
+j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types)
 {
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* statement = NULL;
@@ -146,6 +146,7 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 
 	statement = g_new0(JSqlStatement, 1);
 
+	// TODO use the error parameter
 	if (!specs->func.statement_prepare(thread_variables->db_connection, query, &statement->stmt, types_in, types_out, NULL))
 	{
 		goto _error;
@@ -153,17 +154,19 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 
 	if (in_variables_index)
 	{
-		statement->in_variables_index = *in_variables_index;
-		*in_variables_index = NULL;
+		statement->in_variables_index = g_hash_table_ref(in_variables_index);
 	}
 
 	if (out_variables_index)
 	{
-		statement->out_variables_index = *out_variables_index;
-		*out_variables_index = NULL;
+		statement->out_variables_index = g_hash_table_ref(out_variables_index);
 	}
 
-	/// \todo fetching the output types for joins is easy here using out_variables_index and out_types
+	if (variable_types)
+	{
+		statement->variable_types = g_hash_table_ref(variable_types);
+	}
+
 	return statement;
 
 _error:
@@ -193,27 +196,12 @@ j_sql_statement_free(JSqlStatement* ptr)
 			g_hash_table_destroy(ptr->in_variables_index);
 		}
 
+		if (ptr->variable_types)
+		{
+			g_hash_table_destroy(ptr->variable_types);
+		}
+
 		specs->func.statement_finalize(thread_variables->db_connection, ptr->stmt, NULL);
 		g_free(ptr);
 	}
-}
-
-JSqlIterator*
-j_sql_iterator_new(JSqlStatement* stmt, JSqlBatch* batch, const gchar* name)
-{
-	JSqlIterator* sql_iterator = g_new(JSqlIterator, 1);
-
-	// no copies here; the objects still belong to the caller
-	sql_iterator->batch = batch;
-	sql_iterator->statement = stmt;
-	sql_iterator->name = name;
-
-	return sql_iterator;
-}
-
-void
-j_sql_iterator_free(JSqlIterator* iter)
-{
-	// the contained objects are owned by the caller of j_sql_iterator_new
-	g_free(iter);
 }

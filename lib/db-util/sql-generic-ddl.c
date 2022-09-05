@@ -59,7 +59,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_in, type);
 
-		if (!(metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL)))
+		if (!(metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL, NULL)))
 		{
 			goto _error;
 		}
@@ -428,7 +428,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		g_array_append_val(arr_types_in, type);
 		g_array_append_val(arr_types_in, type);
 
-		if (!(metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL)))
+		if (!(metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL, NULL)))
 		{
 			goto _error;
 		}
