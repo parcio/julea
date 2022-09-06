@@ -599,7 +599,6 @@ julea_backends = [
 	'object/posix',
 	'kv/null',
 	'db/null',
-	'db/memory',
 ]
 
 if rados_dep.found()

@@ -207,9 +207,6 @@ jobs:
           # DB backends
           - object: posix
             kv: lmdb
-            db: memory
-          - object: posix
-            kv: lmdb
             db: mysql
             db-server: mysql
           - object: posix
@@ -330,7 +327,6 @@ jobs:
           ./scripts/test.sh
           ./scripts/setup.sh stop
       - name: HDF5 Tests
-        if: ${{ matrix.julea.db != 'memory' }}
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
