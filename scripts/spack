@@ -14,6 +14,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+spack_set_env ()
+{
+	test -n "${SPACK_DIR}" || return 1
+
+	export SPACK_DISABLE_LOCAL_CONFIG=true
+	# FIXME maybe put into /tmp in CI
+	export SPACK_USER_CACHE_PATH="${SPACK_DIR}/cache"
+}
+
 spack_clone ()
 {
 	local spack_commit
@@ -25,10 +34,12 @@ spack_clone ()
 
 	if test ! -d "${SPACK_DIR}"
 	then
-		git clone https://github.com/spack/spack.git "${SPACK_DIR}"
+		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${SPACK_DIR}"
 	fi
 
 	test -d "${SPACK_DIR}" || return 1
+
+	spack_set_env
 
 	(
 		cd "${SPACK_DIR}" || return 1
@@ -46,6 +57,8 @@ spack_init ()
 
 	test -n "${SPACK_DIR}" || return 1
 	test -d "${SPACK_DIR}" || return 1
+
+	spack_set_env
 
 	spack_env="${SPACK_DIR}/share/spack/setup-env.sh"
 
