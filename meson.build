@@ -541,6 +541,7 @@ julea_test_srcs = files([
 	'test/item/uri.c',
 	'test/kv/kv.c',
 	'test/kv/kv-iterator.c',
+	'test/kv/parallel.c',
 	'test/object/distributed-object.c',
 	'test/object/object.c',
 	'test/object/object-iterator.c',

@@ -62,6 +62,7 @@ main(int argc, char** argv)
 	// KV client
 	test_kv_kv();
 	test_kv_kv_iterator();
+	test_kv_parallel();
 
 	// DB client
 	test_db_db();
