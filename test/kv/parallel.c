@@ -25,7 +25,11 @@
 
 #include "test.h"
 
-#define TEST_THREAD_ASSERT(x) if (!(x)) { return; }
+#define TEST_THREAD_ASSERT(x) \
+	if (!(x)) \
+	{ \
+		return; \
+	}
 
 static gint num_put_gets = 0;
 
