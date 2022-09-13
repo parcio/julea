@@ -456,14 +456,24 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 		case J_MESSAGE_PING:
 		{
 			g_autoptr(JMessage) reply = NULL;
+			gchar const* client_checksum;
+			gchar const* server_checksum;
 			guint num;
 
 			num = g_atomic_int_add(&jd_thread_num, 1);
 
-			(void)num;
 			//g_message("HELLO %d", num);
 
+			client_checksum = j_message_get_string(message);
+			server_checksum = j_configuration_get_checksum(jd_configuration);
+
+			if (g_strcmp0(client_checksum, server_checksum) != 0)
+			{
+				g_warning("Client %d uses different configuration than server.", num);
+			}
+
 			reply = j_message_new_reply(message);
+			j_message_append_string(reply, server_checksum);
 
 			if (jd_object_backend != NULL)
 			{

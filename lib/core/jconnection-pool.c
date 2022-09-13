@@ -194,6 +194,8 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 			g_autoptr(JMessage) message = NULL;
 			g_autoptr(JMessage) reply = NULL;
 
+			gchar const* client_checksum;
+			gchar const* server_checksum;
 			guint op_count;
 
 			client = g_socket_client_new();
@@ -212,11 +214,21 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 
 			j_helper_set_nodelay(connection, TRUE);
 
-			message = j_message_new(J_MESSAGE_PING, 0);
+			client_checksum = j_configuration_get_checksum(j_configuration());
+
+			message = j_message_new(J_MESSAGE_PING, strlen(client_checksum) + 1);
+			j_message_append_string(message, client_checksum);
 			j_message_send(message, connection);
 
 			reply = j_message_new_reply(message);
 			j_message_receive(reply, connection);
+
+			server_checksum = j_message_get_string(reply);
+
+			if (g_strcmp0(client_checksum, server_checksum) != 0)
+			{
+				g_warning("Server %s uses different configuration than client.", server);
+			}
 
 			op_count = j_message_get_count(reply);
 

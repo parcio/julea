@@ -147,6 +147,8 @@ struct JConfiguration
 	guint32 max_connections;
 	guint64 stripe_size;
 
+	gchar* checksum;
+
 	/**
 	 * The reference count.
 	 */
@@ -282,6 +284,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* db_backend;
 	gchar* db_component;
 	gchar* db_path;
+	g_autofree gchar* key_file_str = NULL;
 	guint64 max_operation_size;
 	guint64 max_inject_size;
 	guint32 port;
@@ -361,6 +364,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->max_inject_size = max_inject_size;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
+	configuration->checksum = NULL;
 	configuration->ref_count = 1;
 
 	if (configuration->max_operation_size == 0)
@@ -389,6 +393,9 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	{
 		configuration->stripe_size = 4 * 1024 * 1024;
 	}
+
+	key_file_str = g_key_file_to_data(key_file, NULL, NULL);
+	configuration->checksum = g_compute_checksum_for_string(G_CHECKSUM_SHA512, key_file_str, -1);
 
 	return configuration;
 }
@@ -429,6 +436,8 @@ j_configuration_unref(JConfiguration* configuration)
 		g_strfreev(configuration->servers.object);
 		g_strfreev(configuration->servers.kv);
 		g_strfreev(configuration->servers.db);
+
+		g_free(configuration->checksum);
 
 		g_slice_free(JConfiguration, configuration);
 	}
@@ -595,6 +604,16 @@ j_configuration_get_port(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->port;
+}
+
+gchar const*
+j_configuration_get_checksum(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->checksum;
 }
 
 /**

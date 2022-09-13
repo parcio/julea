@@ -23,6 +23,7 @@
 #include <gio/gio.h>
 
 #include <jbackend.h>
+#include <jconfiguration.h>
 #include <jmemory-chunk.h>
 #include <jmessage.h>
 #include <jstatistics.h>
@@ -33,6 +34,8 @@ G_GNUC_INTERNAL extern GMutex jd_statistics_mutex[1];
 G_GNUC_INTERNAL extern JBackend* jd_object_backend;
 G_GNUC_INTERNAL extern JBackend* jd_kv_backend;
 G_GNUC_INTERNAL extern JBackend* jd_db_backend;
+
+G_GNUC_INTERNAL extern JConfiguration* jd_configuration;
 
 G_GNUC_INTERNAL gboolean jd_handle_message(JMessage*, GSocketConnection*, JMemoryChunk*, guint64, JStatistics*);
 
