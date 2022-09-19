@@ -64,7 +64,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		type = BACKEND_ID_TYPE;
 		g_array_append_val(id_arr_types_out, type);
 
-		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL, NULL)))
+		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -120,7 +120,6 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			field = j_bson_iter_key(&iter, error);
 
 			full_name = get_full_field_name(batch->namespace, name, field);
-			// TODO store to replace second lookup and string construction in bind loop
 			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 
 			if (g_hash_table_size(in_variables_index))
@@ -128,7 +127,6 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 				g_string_append(insert_sql, ", ");
 			}
 
-			// TODO append quoted
 			g_string_append_printf(insert_sql, "%s%s%s", specs->sql.quote, field, specs->sql.quote);
 			g_array_append_val(arr_types_in, type);
 
@@ -149,7 +147,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 		g_string_append(insert_sql, " )");
 
-		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL)))
+		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -383,7 +381,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (G_UNLIKELY(!update_statement))
 	{
-		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL)))
+		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -533,7 +531,7 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 		g_array_append_val(arr_types_in, type);
 
-		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL, NULL)))
+		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}

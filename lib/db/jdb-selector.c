@@ -85,17 +85,19 @@ j_db_selector_ref(JDBSelector* selector)
 void
 j_db_selector_unref(JDBSelector* selector)
 {
-	// TODO
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_if_fail(selector != NULL);
 
 	if (g_atomic_int_dec_and_test(&selector->ref_count))
 	{
-		// Free primary Schema.
+		// Free schemas.
 		j_db_schema_unref(selector->schema);
+		g_hash_table_unref(selector->join_schema);
 		// BSON document.
 		bson_destroy(&selector->selection);
+		bson_destroy(&selector->joins);
+		bson_destroy(&selector->final);
 		// Free Selector.
 		g_free(selector);
 	}
@@ -203,20 +205,17 @@ _error:
 	return FALSE;
 }
 
-// TODO err management for two following functions
 static gboolean
-j_db_selector_add_sub_joins(JDBSelector* selector, JDBSelector* sub_selector, GError** error)
+j_db_selector_add_sub_joins(JDBSelector* selector, JDBSelector* sub_selector)
 {
 	GHashTableIter iter;
 	gpointer key;
-
-	// TODO
-	(void)error;
 
 	g_hash_table_iter_init(&iter, sub_selector->join_schema);
 
 	while (g_hash_table_iter_next(&iter, &key, NULL))
 	{
+		// no check here because FALSE could also mean that the key did already exist
 		g_hash_table_add(selector->join_schema, g_strdup(key));
 	}
 
@@ -280,7 +279,7 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 	}
 
 	// fetch tables and join information from the sub selector
-	if (!j_db_selector_add_sub_joins(selector, sub_selector, error))
+	if (!j_db_selector_add_sub_joins(selector, sub_selector))
 	{
 		goto _error;
 	}
@@ -307,26 +306,44 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	// TODO err management
 	if (!j_bson_init(&join_entry, error))
 	{
 		goto _error;
 	}
 
 	val.val_string = selector_field;
-	j_bson_append_value(&join_entry, selector->schema->name, J_DB_TYPE_STRING, &val, error);
+	if (!j_bson_append_value(&join_entry, selector->schema->name, J_DB_TYPE_STRING, &val, error))
+	{
+		goto _error;
+	}
 
 	val.val_string = sub_selector_field;
-	j_bson_append_value(&join_entry, sub_selector->schema->name, J_DB_TYPE_STRING, &val, error);
+	if (!j_bson_append_value(&join_entry, sub_selector->schema->name, J_DB_TYPE_STRING, &val, error))
+	{
+		goto _error;
+	}
 
 	// In favor of simplicity the "keys" in the array do not follow the bson standard (i.e., increasing numbers).
 	// If we would adhere to the standard we would need a counter and adding the joins from the sub_selector would not be as easy as concatenating the bsons.
-	j_bson_append_document(&selector->joins, "0", &join_entry, error);
+	if (!j_bson_append_document(&selector->joins, "0", &join_entry, error))
+	{
+		goto _error;
+	}
 
-	g_hash_table_add(selector->join_schema, g_strdup(sub_selector->schema->name));
+	if (!g_hash_table_add(selector->join_schema, g_strdup(sub_selector->schema->name)))
+	{
+		goto _error;
+	}
 
-	j_db_selector_add_sub_joins(selector, sub_selector, error);
-	j_db_selector_add_sub_selection(selector, sub_selector, error);
+	if (!j_db_selector_add_sub_joins(selector, sub_selector))
+	{
+		goto _error;
+	}
+
+	if (!j_db_selector_add_sub_selection(selector, sub_selector, error))
+	{
+		goto _error;
+	}
 
 	return TRUE;
 

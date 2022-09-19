@@ -166,7 +166,7 @@ JThreadVariables* thread_variables_get(gpointer backend_data, GError** error);
  *
  * \attention If the function returns a valid pointer in_variables_index and out_variables_index are now owned by the new struct and the original pointers are set to NULL.
  */
-JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types);
+JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types, GError** error);
 
 /**
  * \brief Destructor for a JSqlStatement.

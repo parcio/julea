@@ -134,7 +134,7 @@ _error:
 }
 
 JSqlStatement*
-j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types)
+j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types, GError** error)
 {
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* statement = NULL;
@@ -146,8 +146,7 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 
 	statement = g_new0(JSqlStatement, 1);
 
-	// TODO use the error parameter
-	if (!specs->func.statement_prepare(thread_variables->db_connection, query, &statement->stmt, types_in, types_out, NULL))
+	if (!specs->func.statement_prepare(thread_variables->db_connection, query, &statement->stmt, types_in, types_out, error))
 	{
 		goto _error;
 	}
@@ -188,17 +187,17 @@ j_sql_statement_free(JSqlStatement* ptr)
 
 		if (ptr->out_variables_index)
 		{
-			g_hash_table_destroy(ptr->out_variables_index);
+			g_hash_table_unref(ptr->out_variables_index);
 		}
 
 		if (ptr->in_variables_index)
 		{
-			g_hash_table_destroy(ptr->in_variables_index);
+			g_hash_table_unref(ptr->in_variables_index);
 		}
 
 		if (ptr->variable_types)
 		{
-			g_hash_table_destroy(ptr->variable_types);
+			g_hash_table_unref(ptr->variable_types);
 		}
 
 		specs->func.statement_finalize(thread_variables->db_connection, ptr->stmt, NULL);

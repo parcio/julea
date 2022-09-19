@@ -58,7 +58,7 @@ _backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* 
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_out, type);
 
-		if (!(metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL, NULL)))
+		if (!(metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -285,21 +285,6 @@ sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name
 	return ret;
 }
 
-// TODO doc
-/**
- * @brief Construct the field name necessary for type lookups.
- *
- * If the bson document contains "_table" the full name will be "table_name.field_name", otherwise only "field_name".
- * Using this function makes build_selector_query and bind_selector_query compatible to join queries from sql_generic_query and normal queries from _backend_query_ids.
- * After this function returns without error the child iterator points to the "_name" field.
- *
- * @param parent A bson iterator pointing at the selector array.
- * @param child A bson iterator pointing at an entry in the selector array.
- * @return GString containing the name on success or NULL on failure.
- *
- * \attention If NULL is returned the given iterators should be considered invalid.
- * \note The parent iterator is needed if there is no "_table" key. Than the original child iterator will be exhausted.
- */
 static guint
 get_full_field_name_length(const gchar* namespace, const gchar* table, const gchar* field)
 {
@@ -626,7 +611,6 @@ bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t* 
 	return _bind_selector_query(backend_data, namespace, iter, statement, schema, &pos, error);
 }
 
-// TODO error checking and mem management
 static gboolean
 build_query_selection_part(bson_t const* selector, gpointer backend_data, GString* sql, JSqlBatch* batch, GHashTable* out_variables_index, GHashTable* variables_type, GArray* arr_types_out, GError** error)
 {
@@ -711,8 +695,17 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 			first = FALSE;
 
 			g_string_append(sql, field);
-			g_hash_table_insert(out_variables_index, g_strdup(field), GINT_TO_POINTER(g_hash_table_size(out_variables_index)));
-			g_hash_table_insert(variables_type, g_strdup(field), GINT_TO_POINTER(itemDataType));
+
+			if (!g_hash_table_insert(out_variables_index, g_strdup(field), GINT_TO_POINTER(g_hash_table_size(out_variables_index))))
+			{
+				goto _error;
+			}
+
+			if (!g_hash_table_insert(variables_type, g_strdup(field), GINT_TO_POINTER(itemDataType)))
+			{
+				goto _error;
+			}
+
 			g_array_append_val(arr_types_out, itemDataType);
 		}
 
@@ -751,9 +744,15 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 		goto _error;
 	}
 
-	j_bson_iter_find(&iter_selector, "j", error);
+	if (!j_bson_iter_find(&iter_selector, "j", error))
+	{
+		goto _error;
+	}
 
-	j_bson_iter_recurse_document(&iter_selector, &iter_joins, error);
+	if (!j_bson_iter_recurse_document(&iter_selector, &iter_joins, error))
+	{
+		goto _error;
+	}
 
 	// The following code iterates through the BSON elements and prepares query part for the join operation.
 	while (TRUE)
@@ -783,16 +782,38 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 
 		// First field
 		j_bson_iter_next(&iter_join_entry, &next, error);
+
+		if (!next)
+		{
+			goto _error;
+		}
+
 		table = j_bson_iter_key(&iter_join_entry, error);
-		j_bson_iter_value(&iter_join_entry, J_DB_TYPE_STRING, &itemValue, error);
+
+		if (!j_bson_iter_value(&iter_join_entry, J_DB_TYPE_STRING, &itemValue, error))
+		{
+			goto _error;
+		}
+
 		field = itemValue.val_string;
 
 		first = get_full_field_name(batch->namespace, table, field);
 
 		// Second field
 		j_bson_iter_next(&iter_join_entry, &next, error);
+
+		if (!next)
+		{
+			goto _error;
+		}
+
 		table = j_bson_iter_key(&iter_join_entry, error);
-		j_bson_iter_value(&iter_join_entry, J_DB_TYPE_STRING, &itemValue, error);
+
+		if (!j_bson_iter_value(&iter_join_entry, J_DB_TYPE_STRING, &itemValue, error))
+		{
+			goto _error;
+		}
+
 		field = itemValue.val_string;
 
 		second = get_full_field_name(batch->namespace, table, field);
@@ -816,7 +837,6 @@ _error:
 	return FALSE;
 }
 
-// this function is used for update and delete and returns the IDs of entries that match the selector
 gboolean
 _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error)
 {
@@ -901,7 +921,7 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		g_array_append_val(arr_types_out, type);
 
 		// the only out_variable _id is hard coded
-		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL, schema)))
+		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL, schema, error)))
 		{
 			goto _error;
 		}
@@ -982,7 +1002,6 @@ _error:
 	return FALSE;
 }
 
-// TODO mem management
 gboolean
 sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, gpointer* iterator, GError** error)
 {
@@ -1024,13 +1043,19 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		variables_type = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 		// Formulate the selection part of the query.
-		build_query_selection_part(selector, backend_data, sql_selection_part, batch, out_variables_index, variables_type, arr_types_out, error);
+		if (!build_query_selection_part(selector, backend_data, sql_selection_part, batch, out_variables_index, variables_type, arr_types_out, error))
+		{
+			goto _error;
+		}
 
 		// Extend the query string.
 		g_string_append(sql, sql_selection_part->str);
 
 		// Formulate the join part of the query.
-		build_query_join_part(selector, batch, sql_join_part, error);
+		if(!build_query_join_part(selector, batch, sql_join_part, error))
+		{
+			goto _error;
+		}
 
 		// Extend the query string.
 		if (sql_join_part->len > 0)
@@ -1054,8 +1079,6 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 			goto _error;
 		}
 
-		// TODO add bool for need to free
-		// TODO rework error management for all hashtables (the following line also produces a leak)
 		variables_type = g_hash_table_ref(schema);
 
 		g_hash_table_iter_init(&schema_iter, schema);
@@ -1074,7 +1097,11 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 			first_field = FALSE;
 
-			g_hash_table_insert(out_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(g_hash_table_size(out_variables_index)));
+			if (!g_hash_table_insert(out_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(g_hash_table_size(out_variables_index))))
+			{
+				goto _error;
+			}
+
 			g_array_append_val(arr_types_out, type);
 		}
 
@@ -1087,9 +1114,15 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		goto _error;
 	}
 
-	j_bson_iter_find(&iter, "s", error);
+	if (!j_bson_iter_find(&iter, "s", error))
+	{
+		goto _error;
+	}
 
-	j_bson_iter_recurse_document(&iter, &iter_selection, error);
+	if (!j_bson_iter_recurse_document(&iter, &iter_selection, error))
+	{
+		goto _error;
+	}
 
 	// Fetch the operator that would be appended in between parent and child selector.
 	if (G_UNLIKELY(!j_bson_iter_find(&iter_selection, "m", error)))
@@ -1133,22 +1166,34 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 	if (G_UNLIKELY(!statement))
 	{
-		// TODO err
-		statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, out_variables_index, variables_type);
-
-		g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), statement);
-	}
-
-	if (sql_condition_part->len > 0)
-	{
-		if (G_UNLIKELY(!j_bson_iter_init(&iter, selector, error)))
+		if (!(statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, out_variables_index, variables_type, error)))
 		{
 			goto _error;
 		}
 
-		j_bson_iter_find(&iter, "s", error);
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(sql->str), statement))
+		{
+			j_sql_statement_free(statement);
+			goto _error;
+		}
+	}
 
-		j_bson_iter_recurse_document(&iter, &iter_selection, error);
+	if (sql_condition_part->len > 0)
+	{
+		if (!j_bson_iter_init(&iter, selector, error))
+		{
+			goto _error;
+		}
+
+		if (!j_bson_iter_find(&iter, "s", error))
+		{
+			goto _error;
+		}
+
+		if (!j_bson_iter_recurse_document(&iter, &iter_selection, error))
+		{
+			goto _error;
+		}
 
 		if (G_UNLIKELY(!bind_selector_query(backend_data, batch->namespace, &iter_selection, statement, statement->variable_types, error)))
 		{
