@@ -20,7 +20,7 @@
 #define JULEA_TEST_T
 
 #define J_TEST_TRAP_START \
-	if (TRUE) \
+	if (g_test_subprocess()) \
 	{
 #define J_TEST_TRAP_END \
 	} \
