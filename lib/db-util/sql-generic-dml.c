@@ -266,6 +266,8 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	JDBType type;
 	bson_iter_t iter;
+	guint value_count = 0;
+	guint id_pos = 0;
 	gboolean has_next;
 	JSqlBatch* batch = _batch;
 	g_autoptr(GHashTable) schema = NULL;
@@ -273,7 +275,6 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* update_statement = NULL;
 	g_autoptr(GString) update_sql = g_string_new(NULL);
-	g_autoptr(GHashTable) in_variables_index = NULL;
 	g_autoptr(GArray) matches = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
 
@@ -294,7 +295,6 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		goto _error;
 	}
 
-	in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	g_string_append_printf(update_sql, "UPDATE %s%s_%s%s SET ", specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, entry_updates, error)))
@@ -329,7 +329,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			}
 		}
 
-		if (g_hash_table_size(in_variables_index))
+		if (value_count)
 		{
 			g_string_append(update_sql, ", ");
 		}
@@ -347,20 +347,20 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		g_array_append_val(arr_types_in, type);
 		g_string_append_printf(update_sql, "%s%s%s = ?", specs->sql.quote, string_tmp, specs->sql.quote);
 
-		g_hash_table_insert(in_variables_index, g_strdup(string_tmp), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
+		value_count++;
 	}
 
 	type = BACKEND_ID_TYPE;
 	g_array_append_val(arr_types_in, type);
 	g_string_append_printf(update_sql, " WHERE _id = ?");
 
-	g_hash_table_insert(in_variables_index, g_strdup("_id"), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
+	id_pos = value_count + 1;
 
 	update_statement = g_hash_table_lookup(thread_variables->query_cache, update_sql->str);
 
 	if (G_UNLIKELY(!update_statement))
 	{
-		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL, error)))
+		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -378,83 +378,58 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		goto _error;
 	}
 
+	// bind all values except _id
+	// bound values remain in SQLite and MySQL even if the statement gets resetted
+	value_count = 0;
+
+	if (G_UNLIKELY(!j_bson_iter_init(&iter, entry_updates, error)))
+	{
+		goto _error;
+	}
+
+	while (TRUE)
+	{
+		JDBTypeValue value;
+
+		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
+		{
+			goto _error;
+		}
+
+		if (!has_next)
+		{
+			break;
+		}
+
+		type = g_array_index(arr_types_in, JDBType, value_count);
+
+		if (G_UNLIKELY(!j_bson_iter_value(&iter, type, &value, error)))
+		{
+			goto _error;
+		}
+
+		value_count++;
+
+		if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, update_statement->stmt, value_count, type, &value, error)))
+		{
+			goto _error;
+		}
+	}
+
+	// bind id for each match
 	for (guint j = 0; j < matches->len; j++)
 	{
 		JDBTypeValue value;
-		guint count = 0;
-		guint index = GPOINTER_TO_INT(g_hash_table_lookup(update_statement->in_variables_index, "_id"));
-
-		if (G_UNLIKELY(!index))
-		{
-			g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND, "variable not found");
-			goto _error;
-		}
 
 		value.val_uint64 = g_array_index(matches, guint64, j);
 
-		if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, update_statement->stmt, index, BACKEND_ID_TYPE, &value, error)))
+		if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, update_statement->stmt, id_pos, BACKEND_ID_TYPE, &value, error)))
 		{
 			goto _error;
-		}
-
-		if (G_UNLIKELY(!j_bson_iter_init(&iter, entry_updates, error)))
-		{
-			goto _error;
-		}
-
-		while (TRUE)
-		{
-			g_autoptr(GString) full_name = NULL;
-
-			if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
-			{
-				goto _error;
-			}
-
-			if (!has_next)
-			{
-				break;
-			}
-
-			string_tmp = j_bson_iter_key(&iter, error);
-
-			if (G_UNLIKELY(!string_tmp))
-			{
-				goto _error;
-			}
-
-			full_name = get_full_field_name(batch->namespace, name, string_tmp);
-
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
-			index = GPOINTER_TO_INT(g_hash_table_lookup(update_statement->in_variables_index, string_tmp));
-
-			if (G_UNLIKELY(!index))
-			{
-				g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND, "variable not found");
-				goto _error;
-			}
-
-			count++;
-
-			if (G_UNLIKELY(!j_bson_iter_value(&iter, type, &value, error)))
-			{
-				goto _error;
-			}
-
-			if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, update_statement->stmt, index, type, &value, error)))
-			{
-				goto _error;
-			}
 		}
 
 		if (G_UNLIKELY(!specs->func.statement_step_and_reset_check_done(thread_variables->db_connection, update_statement->stmt, error)))
 		{
-			goto _error;
-		}
-
-		if (!count)
-		{
-			g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_ITERATOR_NO_MORE_ELEMENTS, "no more elements");
 			goto _error;
 		}
 	}

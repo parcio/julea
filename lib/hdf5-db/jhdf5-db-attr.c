@@ -360,7 +360,7 @@ H5VL_julea_db_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 _error:
 	H5VL_julea_db_error_handler(error);
 	H5VL_julea_db_object_unref(object);
-	
+
 	return NULL;
 }
 
