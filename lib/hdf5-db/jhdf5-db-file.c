@@ -380,7 +380,7 @@ H5VL_julea_db_file_create(const char* name, unsigned flags, hid_t fcpl_id, hid_t
 			j_goto_error();
 		}
 
-		if (!j_db_iterator_get_field(iterator, "root_group", &type, &root_group_id, &root_group_id_len, &error))
+		if (!j_db_iterator_get_field(iterator, NULL, "root_group", &type, &root_group_id, &root_group_id_len, &error))
 		{
 			j_goto_error();
 		}
@@ -487,7 +487,7 @@ H5VL_julea_db_file_open(const char* name, unsigned flags, hid_t fapl_id, hid_t d
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "root_group", &type, &root_group_id, &root_group_id_len, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "root_group", &type, &root_group_id, &root_group_id_len, &error))
 	{
 		j_goto_error();
 	}

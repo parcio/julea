@@ -1052,7 +1052,7 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 		g_string_append(sql, sql_selection_part->str);
 
 		// Formulate the join part of the query.
-		if(!build_query_join_part(selector, batch, sql_join_part, error))
+		if (!build_query_join_part(selector, batch, sql_join_part, error))
 		{
 			goto _error;
 		}

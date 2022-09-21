@@ -24,19 +24,19 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 {
 	J_TRACE_FUNCTION(NULL);
 
-	guint count = 0;
 	JDBTypeValue value;
 	bson_iter_t iter;
 	JDBType type;
 	gboolean found;
+	guint value_count = 0;
 	JThreadVariables* thread_variables = NULL;
 	g_autoptr(GHashTable) schema = NULL;
 	JSqlBatch* batch = _batch;
 	JSqlStatement* id_query = NULL;
 	JSqlStatement* insert_query = NULL;
-	g_autoptr(GString) insert_cache_key = NULL;
 	g_autoptr(GArray) arr_types_in = NULL;
 	g_autoptr(GArray) id_arr_types_out = NULL;
+	g_autoptr(GString) insert_sql = g_string_new(NULL);
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -44,7 +44,6 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 	id_arr_types_out = g_array_new(FALSE, FALSE, sizeof(JDBType));
-	insert_cache_key = g_string_new(NULL);
 
 	if (G_UNLIKELY(!(thread_variables = thread_variables_get(backend_data, error))))
 	{
@@ -82,77 +81,69 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		goto _error;
 	}
 
-	// note that a keyword is used as cache key instead of a sql string
-	// so the string does not need to be constructed if the statement is already cached
-	g_string_append_printf(insert_cache_key, "_insert_%s_%s", batch->namespace, name);
+	g_string_append_printf(insert_sql, "INSERT INTO %s%s_%s%s (", specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
-	insert_query = g_hash_table_lookup(thread_variables->query_cache, insert_cache_key->str);
-
-	if (G_UNLIKELY(!insert_query))
+	if (!j_bson_iter_init(&iter, metadata, error))
 	{
-		g_autoptr(GHashTable) in_variables_index = NULL;
-		g_autoptr(GString) insert_sql = g_string_new(NULL);
+		goto _error;
+	}
 
-		in_variables_index = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-		g_string_append_printf(insert_sql, "INSERT INTO %s%s_%s%s (", specs->sql.quote, batch->namespace, name, specs->sql.quote);
+	while (TRUE)
+	{
+		gboolean next;
+		const gchar* field = NULL;
+		g_autoptr(GString) full_name = NULL;
 
-		if (!j_bson_iter_init(&iter, metadata, error))
+		if (!j_bson_iter_next(&iter, &next, error))
 		{
 			goto _error;
 		}
 
-		while (TRUE)
+		if (!next)
 		{
-			gboolean next;
-			const gchar* field = NULL;
-			g_autoptr(GString) full_name = NULL;
-
-			if (!j_bson_iter_next(&iter, &next, error))
-			{
-				goto _error;
-			}
-
-			if (!next)
-			{
-				break;
-			}
-
-			field = j_bson_iter_key(&iter, error);
-
-			full_name = get_full_field_name(batch->namespace, name, field);
-			type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
-
-			if (g_hash_table_size(in_variables_index))
-			{
-				g_string_append(insert_sql, ", ");
-			}
-
-			g_string_append_printf(insert_sql, "%s%s%s", specs->sql.quote, field, specs->sql.quote);
-			g_array_append_val(arr_types_in, type);
-
-			g_hash_table_insert(in_variables_index, g_strdup(field), GINT_TO_POINTER(g_hash_table_size(in_variables_index) + 1));
+			break;
 		}
 
-		g_string_append(insert_sql, ") VALUES (");
+		field = j_bson_iter_key(&iter, error);
 
-		if (g_hash_table_size(in_variables_index))
+		full_name = get_full_field_name(batch->namespace, name, field);
+		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
+
+		if (value_count)
 		{
-			g_string_append_printf(insert_sql, " ?");
+			g_string_append(insert_sql, ", ");
 		}
 
-		for (guint i = 1; i < g_hash_table_size(in_variables_index); i++)
-		{
-			g_string_append_printf(insert_sql, ", ?");
-		}
+		g_string_append_printf(insert_sql, "%s%s%s", specs->sql.quote, field, specs->sql.quote);
+		g_array_append_val(arr_types_in, type);
 
-		g_string_append(insert_sql, " )");
+		value_count++;
+	}
 
-		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, in_variables_index, NULL, NULL, error)))
+	g_string_append(insert_sql, ") VALUES (");
+
+	if (value_count)
+	{
+		g_string_append_printf(insert_sql, " ?");
+	}
+
+	for (guint i = 1; i < value_count; i++)
+	{
+		g_string_append_printf(insert_sql, ", ?");
+	}
+
+	g_string_append(insert_sql, " )");
+
+	insert_query = g_hash_table_lookup(thread_variables->query_cache, insert_sql->str);
+
+	if (!insert_query)
+	{
+		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
 
-		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(insert_cache_key->str), insert_query))
+		if (!g_hash_table_insert(thread_variables->query_cache, g_strdup(insert_sql->str), insert_query))
 		{
 			// in all other error cases insert_query is already owned by the hash table
 			j_sql_statement_free(insert_query);
@@ -160,12 +151,14 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		}
 	}
 
+	// bind values to the query
+
 	if (G_UNLIKELY(!j_bson_iter_init(&iter, metadata, error)))
 	{
 		goto _error;
 	}
 
-	for (guint i = 0; i < g_hash_table_size(insert_query->in_variables_index); i++)
+	for (guint i = 0; i < value_count; i++)
 	{
 		if (G_UNLIKELY(!specs->func.statement_bind_null(thread_variables->db_connection, insert_query->stmt, i + 1, error)))
 		{
@@ -173,12 +166,11 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		}
 	}
 
+	value_count = 0;
+
 	while (TRUE)
 	{
-		guint index;
 		gboolean has_next;
-		g_autoptr(GString) full_name = NULL;
-		const char* string_tmp;
 
 		if (G_UNLIKELY(!j_bson_iter_next(&iter, &has_next, error)))
 		{
@@ -190,40 +182,26 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			break;
 		}
 
-		string_tmp = j_bson_iter_key(&iter, error);
+		type = g_array_index(arr_types_in, JDBType, value_count);
 
-		if (G_UNLIKELY(!string_tmp))
-		{
-			goto _error;
-		}
-
-		full_name = get_full_field_name(batch->namespace, name, string_tmp);
-
-		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
-		index = GPOINTER_TO_INT(g_hash_table_lookup(insert_query->in_variables_index, string_tmp));
-
-		if (G_UNLIKELY(!index))
-		{
-			g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_VARIABLE_NOT_FOUND, "variable not found");
-			goto _error;
-		}
-
-		count++;
+		// increment first s.t. value_count is the position (starting at 1 for in-variables)
+		value_count++;
 
 		if (G_UNLIKELY(!j_bson_iter_value(&iter, type, &value, error)))
 		{
 			goto _error;
 		}
 
-		if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, insert_query->stmt, index, type, &value, error)))
+		if (G_UNLIKELY(!specs->func.statement_bind_value(thread_variables->db_connection, insert_query->stmt, value_count, type, &value, error)))
 		{
 			goto _error;
 		}
 	}
 
-	if (G_UNLIKELY(!count))
+	if (G_UNLIKELY(!value_count))
 	{
 		g_set_error_literal(error, J_BACKEND_DB_ERROR, J_BACKEND_DB_ERROR_NO_VARIABLE_SET, "no variable set");
+
 		goto _error;
 	}
 
@@ -268,6 +246,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	return TRUE;
 
 _error:
+
 	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
 	{
 		goto _error2;
