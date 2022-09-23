@@ -258,7 +258,6 @@ j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 	sqlite3_stmt* stmt = _stmt;
 	guint ret;
 
-	//printf("----\nstepping through \n'%s'\n---\n", sqlite3_expanded_sql(stmt));
 	ret = sqlite3_step(stmt);
 	*found = ret == SQLITE_ROW;
 

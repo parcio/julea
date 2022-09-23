@@ -58,7 +58,7 @@ _backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* 
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_out, type);
 
-		if (!(metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL, NULL, error)))
+		if (!(metadata_query = j_sql_statement_new(metadata_query_sql, arr_types_in, arr_types_out, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -87,6 +87,7 @@ _backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* 
 
 	if (schema)
 	{
+		// assume that the passed pointer is an uninitialized bson (e.g., in a JBackendOperationParam struct)
 		if (!j_bson_init(schema, error))
 		{
 			goto _error;
@@ -175,6 +176,8 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 
 	JThreadVariables* thread_variables = NULL;
 	GHashTable* schema_map = NULL;
+	bson_t schema;
+	gboolean bson_initialized = FALSE;
 	g_autoptr(GString) cache_key = g_string_new(namespace);
 
 	g_string_append(cache_key, "_");
@@ -189,7 +192,6 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 
 	if (!schema_map)
 	{
-		bson_t schema;
 		bson_iter_t iter;
 		gboolean has_next;
 		JDBTypeValue value;
@@ -202,6 +204,8 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 		{
 			goto _error;
 		}
+
+		bson_initialized = TRUE;
 
 		if (G_UNLIKELY(!j_bson_iter_init(&iter, &schema, error)))
 		{
@@ -252,7 +256,12 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 			g_hash_table_insert(schema_map, g_strdup(full_name->str), GINT_TO_POINTER(value.val_uint32));
 		}
 
-		g_hash_table_insert(thread_variables->schema_cache, g_strdup(cache_key->str), schema_map);
+		if (!g_hash_table_insert(thread_variables->schema_cache, g_strdup(cache_key->str), schema_map))
+		{
+			goto _error;
+		}
+
+		j_bson_destroy(&schema);
 	}
 
 	return g_hash_table_ref(schema_map);
@@ -262,6 +271,11 @@ _error:
 	if (schema_map)
 	{
 		g_hash_table_unref(schema_map);
+	}
+
+	if (bson_initialized)
+	{
+		bson_destroy(&schema);
 	}
 
 	return NULL;
@@ -921,7 +935,7 @@ _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		g_array_append_val(arr_types_out, type);
 
 		// the only out_variable _id is hard coded
-		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, NULL, schema, error)))
+		if (!(id_query = j_sql_statement_new(id_sql->str, arr_types_in, arr_types_out, NULL, schema, error)))
 		{
 			goto _error;
 		}
@@ -1166,7 +1180,7 @@ sql_generic_query(gpointer backend_data, gpointer _batch, gchar const* name, bso
 
 	if (G_UNLIKELY(!statement))
 	{
-		if (!(statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, NULL, out_variables_index, variables_type, error)))
+		if (!(statement = j_sql_statement_new(sql->str, arr_types_in, arr_types_out, out_variables_index, variables_type, error)))
 		{
 			goto _error;
 		}

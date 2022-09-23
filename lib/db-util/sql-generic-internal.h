@@ -27,6 +27,8 @@
  * This library contains bson utility functions and a generic SQL DB backend
  * implementation that must be specialized by providing a JSQLSpecifics struct at init.
  *
+ * Further information can be found in `doc/db-code.md`.
+ *
  * The implementation of the SQL functions is split into:
  *    - Data Definition Language (DDL)
  *    - Data Manipulation Language (DML)
@@ -48,7 +50,7 @@ struct JThreadVariables
 	gpointer db_connection;
 
 	/**
-	 * \brief
+	 * \brief Cache for prepared statements.
 	 *
 	 * sql or keyword(char*) -> (JSqlStatement*)
 	 * Caching prepared statements enables different DB backend server-side optimizations.
@@ -57,7 +59,7 @@ struct JThreadVariables
 	GHashTable* query_cache;
 
 	/**
-	 * \brief
+	 * \brief Cache for schemas.
 	 *
 	 * namespace_name(char*) -> GHashTable* (varname(char*) -> JDBType(directly as int))
 	 */
@@ -92,6 +94,7 @@ typedef struct JSqlBatch JSqlBatch;
 /**
  * \brief The JSqlStatement wraps a DB backend-specific prepared statement.
  *
+ * The hash tables may be NULL and are only set when needed.
  */
 struct JSqlStatement
 {
@@ -99,27 +102,19 @@ struct JSqlStatement
 	gpointer stmt;
 
 	/**
-	 * \brief Indices of the input variables.
-	 *
-	 * variable(char*) -> position (int directly stored to the pointer field)
-	 * This field is not NULL iff the statement is an UPDATE or DELETE.
-	 * Even though the WHERE part of a SELECT query does of course contain inputs, the same input variable can occur several times (e.g., "x > 3 and x < 6").
-	 * Consequently the key-value pairs would be overridden for SELECT statements.
-	 * However, determining the position for those inputs can be simply done by counting while iterating the selector bson.
-	 * This method is correct because the statement was generated using the same bson.
-	**/
-	GHashTable* in_variables_index;
-
-	/**
 	 * \brief Indices of the output variables (i.e., columns).
 	 *
-	 * variable(char*) -> position (int directly stored to the pointer field)
+	 * full name of the variable (gchar*) -> position (int directly stored to the pointer field)
 	 * This field is not NULL iff the statement is a SELECT.
 	 */
 	GHashTable* out_variables_index;
 
-	// varname -> type
-	// all contained vars in and out
+	/**
+	 * @brief Types of the variables contained in the query.
+	 *
+	 * full name of the variable (gchar*) -> type (JDBType)
+	 * This field may either be a schema from the cache or a new hash table conatining fields from all schemas in a join.
+	 */
 	GHashTable* variable_types;
 };
 
@@ -160,13 +155,14 @@ JThreadVariables* thread_variables_get(gpointer backend_data, GError** error);
  * \param query A SQL query string.
  * \param types_in The types of input variables in correct order. Needed by some DB backends for statement compilation.
  * \param types_out The types of output variables in correct order. Needed by some DB backends for statement compilation.
- * \param[in] in_variables_index A map from input variable names to their position. See JSqlStatement for details.
- * \param[in] out_variables_index A map from output variable names to their position. See JSqlStatement for details.
+ * \param out_variables_index A map from output variable names to their position. See JSqlStatement for details.
+ * \param variable_types Type information for the query. See JSqlStatement for details.
+ * \param[out] error An uninitialized GError* for error code passing.
  * \return JSqlStatement* The constructed statement or NULL on error.
  *
  * \attention If the function returns a valid pointer in_variables_index and out_variables_index are now owned by the new struct and the original pointers are set to NULL.
  */
-JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types, GError** error);
+JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* out_variables_index, GHashTable* variable_types, GError** error);
 
 /**
  * \brief Destructor for a JSqlStatement.
@@ -183,7 +179,7 @@ void j_sql_statement_free(JSqlStatement* ptr);
  * This format is suitable for answering schema requests by clients.
  *
  * \param backend_data The backend-specific information to open a connection.
- * \param _batch A JSqlBatch object.
+ * \param namespace The namespace of the schema.
  * \param name The schema name.
  * \param[in,out] schema A bson document to be filled with schema information as a list of variable name and type pairs.
  * \param[out] error An uninitialized GError* for error code passing.
@@ -196,11 +192,14 @@ gboolean _backend_schema_get(gpointer backend_data, gchar const* namespace, gcha
  *
  * Uses a transparent cache for schemas.
  *
- * \param backend_data The backend-specific information to open a connection.
- * \param _batch A JSqlBatch object.
+ * \todo Currently _backend_schema_get is called and the returned bson is converted to a GHashTable.
+ * A better way would be to use one common function for both so no conversion is neccessary.
+ *
+ * \param backend_data The backend-specific information to open a connection if needed.
+ * \param namespace The namespace of the schema.
  * \param name The schema name.
  * \param[out] error An uninitialized GError* for error code passing.
- * \return GHashTable* A valid GHashTable pointer on success or NULL otherwise. The hash table is owned by the cache and schould NOT be freed.
+ * \return GHashTable* A valid GHashTable pointer on success or NULL otherwise. The hash table should by freed using g_hash_table_unref (or by using g_autoptr).
  */
 GHashTable* get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GError** error);
 
@@ -209,6 +208,7 @@ GHashTable* get_schema(gpointer backend_data, gchar const* namespace, gchar cons
  *
  * \param backend_data The backend-specific information to open a connection.
  * \param iter An initialized iterator over the relevant part of the selector bson document.
+ * \param batch The batch of the operation.
  * \param[in,out] sql A GString to which the WHERE part of the query should be appended.
  * \param mode The mode of the selector (i.e., AND or OR).
  * \param arr_types_in An allocated GArray to which the found types will be appended.
@@ -234,6 +234,8 @@ gboolean bind_selector_query(gpointer backend_data, const gchar* namespace, bson
  * \brief Query the IDs of rows that match a selector.
  *
  * It is is used in the update and delete functions.
+ *
+ * \todo Update and delete should be done by adding the selection part to the respective query, making this function unnecessary.
  *
  * \param backend_data The backend-specific information to open a connection.
  * \param _batch A JSqlBatch object.
@@ -277,6 +279,16 @@ gboolean _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError*
  */
 gboolean _backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error);
 
+/**
+ * @brief Get the full field name from the different parts.
+ *
+ * The name is correctly quoted and intended as key in hash tables and as name in queries.
+ *
+ * @param namespace The namespace of the operation.
+ * @param table The name of the table.
+ * @param field The name of a column in the table.
+ * @return GString*
+ */
 GString* get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field);
 
 #endif

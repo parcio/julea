@@ -35,7 +35,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* metadata_insert_query = NULL;
 	const gchar* metadata_insert_sql = "INSERT INTO schema_structure(namespace, name, varname, vartype) VALUES (?, ?, ?, ?)";
-	GString* create_sql = g_string_new(NULL);
+	g_autoptr(GString) create_sql = g_string_new(NULL);
 
 	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(batch != NULL, FALSE);
@@ -59,7 +59,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		type = J_DB_TYPE_UINT32;
 		g_array_append_val(arr_types_in, type);
 
-		if (!(metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL, NULL, error)))
+		if (!(metadata_insert_query = j_sql_statement_new(metadata_insert_sql, arr_types_in, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -168,12 +168,6 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	if (create_sql)
-	{
-		g_string_free(create_sql, TRUE);
-		create_sql = NULL;
-	}
-
 	if (found_index)
 	{
 		guint i = 0;
@@ -198,6 +192,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		while (TRUE)
 		{
 			bson_iter_t iter_child2;
+			g_autoptr(GString) index_create = g_string_new(NULL);
 
 			if (G_UNLIKELY(!j_bson_iter_next(&iter_child, &has_next, error)))
 			{
@@ -209,10 +204,9 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 				break;
 			}
 
-			create_sql = g_string_new(NULL);
 			first = TRUE;
 
-			g_string_append_printf(create_sql, "CREATE INDEX %s%s_%s_%d%s ON %s%s_%s%s ( ",
+			g_string_append_printf(index_create, "CREATE INDEX %s%s_%s_%d%s ON %s%s_%s%s ( ",
 					       specs->sql.quote, batch->namespace, name, i, specs->sql.quote,
 					       specs->sql.quote, batch->namespace, name, specs->sql.quote);
 
@@ -241,7 +235,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 				}
 				else
 				{
-					g_string_append(create_sql, ", ");
+					g_string_append(index_create, ", ");
 				}
 
 				if (G_UNLIKELY(!j_bson_iter_value(&iter_child2, J_DB_TYPE_STRING, &value, error)))
@@ -250,20 +244,14 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 				}
 
 				string_tmp = value.val_string;
-				g_string_append_printf(create_sql, "%s%s%s", specs->sql.quote, string_tmp, specs->sql.quote);
+				g_string_append_printf(index_create, "%s%s%s", specs->sql.quote, string_tmp, specs->sql.quote);
 			}
 
-			g_string_append(create_sql, " )");
+			g_string_append(index_create, " )");
 
-			if (G_UNLIKELY(!specs->func.sql_exec(thread_variables->db_connection, create_sql->str, error)))
+			if (G_UNLIKELY(!specs->func.sql_exec(thread_variables->db_connection, index_create->str, error)))
 			{
 				goto _error;
-			}
-
-			if (create_sql)
-			{
-				g_string_free(create_sql, TRUE);
-				create_sql = NULL;
 			}
 
 			i++;
@@ -383,11 +371,6 @@ _error:
 		goto _error2;
 	}
 
-	if (create_sql)
-	{
-		g_string_free(create_sql, TRUE);
-	}
-
 	return FALSE;
 
 _error2:
@@ -428,7 +411,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		g_array_append_val(arr_types_in, type);
 		g_array_append_val(arr_types_in, type);
 
-		if (!(metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL, NULL, error)))
+		if (!(metadata_delete_query = j_sql_statement_new(metadata_delete_sql, arr_types_in, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}

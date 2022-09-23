@@ -76,11 +76,6 @@ thread_variables_fini(void* ptr)
 
 	if (thread_variables)
 	{
-		if (thread_variables->db_connection)
-		{
-			specs->func.connection_close(thread_variables->db_connection);
-		}
-
 		if (thread_variables->query_cache)
 		{
 			// keys and values will be freed by the at create time supplied free functions
@@ -91,6 +86,11 @@ thread_variables_fini(void* ptr)
 		{
 			// keys and values will be freed by the at create time supplied free functions
 			g_hash_table_destroy(thread_variables->schema_cache);
+		}
+
+		if (thread_variables->db_connection)
+		{
+			specs->func.connection_close(thread_variables->db_connection);
 		}
 
 		g_free(thread_variables);
@@ -134,7 +134,7 @@ _error:
 }
 
 JSqlStatement*
-j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* in_variables_index, GHashTable* out_variables_index, GHashTable* variable_types, GError** error)
+j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHashTable* out_variables_index, GHashTable* variable_types, GError** error)
 {
 	JThreadVariables* thread_variables = NULL;
 	JSqlStatement* statement = NULL;
@@ -149,11 +149,6 @@ j_sql_statement_new(gchar const* query, GArray* types_in, GArray* types_out, GHa
 	if (!specs->func.statement_prepare(thread_variables->db_connection, query, &statement->stmt, types_in, types_out, error))
 	{
 		goto _error;
-	}
-
-	if (in_variables_index)
-	{
-		statement->in_variables_index = g_hash_table_ref(in_variables_index);
 	}
 
 	if (out_variables_index)
@@ -188,11 +183,6 @@ j_sql_statement_free(JSqlStatement* ptr)
 		if (ptr->out_variables_index)
 		{
 			g_hash_table_unref(ptr->out_variables_index);
-		}
-
-		if (ptr->in_variables_index)
-		{
-			g_hash_table_unref(ptr->in_variables_index);
 		}
 
 		if (ptr->variable_types)

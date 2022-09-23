@@ -63,7 +63,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		type = BACKEND_ID_TYPE;
 		g_array_append_val(id_arr_types_out, type);
 
-		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL, NULL, error)))
+		if (!(id_query = j_sql_statement_new(specs->sql.select_last, NULL, id_arr_types_out, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -138,7 +138,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (!insert_query)
 	{
-		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
+		if (!(insert_query = j_sql_statement_new(insert_sql->str, arr_types_in, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -360,7 +360,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 	if (G_UNLIKELY(!update_statement))
 	{
-		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
+		if (!(update_statement = j_sql_statement_new(update_sql->str, arr_types_in, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
@@ -485,7 +485,7 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		arr_types_in = g_array_new(FALSE, FALSE, sizeof(JDBType));
 		g_array_append_val(arr_types_in, type);
 
-		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL, NULL, error)))
+		if (!(delete_statement = j_sql_statement_new(delete_sql->str, arr_types_in, NULL, NULL, NULL, error)))
 		{
 			goto _error;
 		}
