@@ -576,15 +576,41 @@ j_db_selector_get_bson(JDBSelector* selector)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	g_autoptr(GError) err = NULL;
+
 	g_return_val_if_fail(selector != NULL, NULL);
 
-	if (!bson_has_field(&selector->final, "s"))
+	if (!selector->final_valid)
 	{
-		if (!j_db_selector_finalize(selector, NULL))
+		if(bson_has_field(&selector->final, "s"))
 		{
-			return NULL;
+			// final bson has already been build, rebuild it
+			// this case handles selector modifications after selector usage
+			j_bson_destroy(&selector->final);
+
+			if (!j_bson_init(&selector->final, &err))
+			{
+				goto _error;
+			}
 		}
+
+		if (!j_db_selector_finalize(selector, &err))
+		{
+			goto _error;
+		}
+
+		selector->final_valid = TRUE;
 	}
 
+
 	return &selector->final;
+
+_error:
+
+	if(err)
+	{
+		g_debug("Error in %s. Error code is '%s'\n", G_STRLOC, err->message);
+	}
+
+	return NULL;
 }

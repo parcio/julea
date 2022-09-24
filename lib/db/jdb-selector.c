@@ -49,6 +49,7 @@ j_db_selector_new(JDBSchema* schema, JDBSelectorMode mode, GError** error)
 	selector->selection_count = 0;
 	selector->join_schema = NULL;
 	selector->schema = j_db_schema_ref(schema);
+	selector->final_valid = FALSE;
 
 	bson_init(&selector->selection);
 	bson_init(&selector->joins);
@@ -272,6 +273,8 @@ j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GEr
 	g_return_val_if_fail(selector->schema == sub_selector->schema, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	selector->final_valid = FALSE;
+
 	// fetch selections from the sub_selector
 	if (!j_db_selector_add_sub_selection(selector, sub_selector, error))
 	{
@@ -305,6 +308,8 @@ j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSe
 	g_return_val_if_fail(selector_field != NULL, FALSE);
 	g_return_val_if_fail(sub_selector_field != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	selector->final_valid = FALSE;
 
 	if (!j_bson_init(&join_entry, error))
 	{

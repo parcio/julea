@@ -97,6 +97,7 @@ struct JDBSelector
 	bson_t selection; // the selection part of the query
 	bson_t joins; // the join part of the query
 	bson_t final; // the complete query as bson; build at first usage of a selector. the selector can be reused but not modified after final was built.
+	gboolean final_valid; // TRUE iff final got built and the selector was not modified
 
 	JDBSelectorMode mode;
 	JDBSchema* schema; // Primary schema. This is used for joins.
