@@ -71,7 +71,6 @@ j_sql_prepare(gpointer backend_db, const char* sql, void* _stmt, GArray* types_i
 
 	if (G_UNLIKELY(sqlite3_prepare_v3(db, sql, -1, SQLITE_PREPARE_PERSISTENT, stmt, NULL) != SQLITE_OK))
 	{
-		printf("sql prepare failed error was <%s> '%s'", sql, sqlite3_errmsg(db));
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> '%s'", sql, sqlite3_errmsg(db));
 		goto _error;
 	}
