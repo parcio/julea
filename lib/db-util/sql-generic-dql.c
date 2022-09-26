@@ -251,7 +251,7 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 				goto _error;
 			}
 
-			full_name = get_full_field_name(namespace, name, string_tmp);
+			full_name = j_sql_get_full_field_name(namespace, name, string_tmp);
 
 			g_hash_table_insert(schema_map, g_strdup(full_name->str), GINT_TO_POINTER(value.val_uint32));
 		}
@@ -297,39 +297,6 @@ sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name
 	}
 
 	return ret;
-}
-
-static guint
-get_full_field_name_length(const gchar* namespace, const gchar* table, const gchar* field)
-{
-	guint ns, t, f;
-	// the full and correctly quoted field name is <quote><namespace>_<table><quote>.<quote><field><quote>
-
-	ns = strlen(namespace);
-	t = strlen(table);
-	f = strlen(field);
-
-	// one more than 6 additional characters for \0
-	return ns + t + f + 7;
-}
-
-GString*
-get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field)
-{
-	GString* res = g_string_sized_new(get_full_field_name_length(namespace, table, field));
-	// the full and correctly quoted field name is <quote><namespace>_<table><quote>.<quote><field><quote>
-
-	g_string_append(res, specs->sql.quote);
-	g_string_append(res, namespace);
-	g_string_append(res, "_");
-	g_string_append(res, table);
-	g_string_append(res, specs->sql.quote);
-	g_string_append(res, ".");
-	g_string_append(res, specs->sql.quote);
-	g_string_append(res, field);
-	g_string_append(res, specs->sql.quote);
-
-	return res;
 }
 
 gboolean
@@ -430,13 +397,19 @@ build_query_condition_part(gpointer backend_data, JSqlBatch* batch, bson_iter_t*
 
 			field = j_bson_iter_key(iter, error);
 
-			j_bson_iter_find(&iterchild, "t", error);
+			if(!j_bson_iter_find(&iterchild, "t", error))
+			{
+				goto _error;
+			}
 
-			j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error);
+			if(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error))
+			{
+				goto _error;
+			}
 
 			table = value.val_string;
 
-			full_name = get_full_field_name(batch->namespace, table, field);
+			full_name = j_sql_get_full_field_name(batch->namespace, table, field);
 
 			schema = get_schema(backend_data, batch->namespace, table, error);
 
@@ -520,6 +493,7 @@ _bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t*
 		bson_iter_t iterchild;
 		JDBTypeValue value;
 		gboolean has_next;
+		gboolean is_sub_selector = FALSE;
 
 		if (G_UNLIKELY(!j_bson_iter_next(iter, &has_next, error)))
 		{
@@ -544,13 +518,12 @@ _bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t*
 			}
 		}
 
-		// ?
-		if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
+		if(!j_bson_iter_key_equals(iter, "_s", &is_sub_selector, error))
 		{
 			goto _error;
 		}
 
-		if (j_bson_iter_find(&iterchild, "m", NULL))
+		if (is_sub_selector)
 		{
 			if (G_UNLIKELY(!j_bson_iter_recurse_document(iter, &iterchild, error)))
 			{
@@ -588,7 +561,7 @@ _bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t*
 
 			table = value.val_string;
 
-			full_name = get_full_field_name(namespace, table, field);
+			full_name = j_sql_get_full_field_name(namespace, table, field);
 
 			if (G_UNLIKELY(!j_bson_iter_find(&iterchild, "v", error)))
 			{
@@ -636,7 +609,6 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 
 	g_autoptr(GString) sqlTablesName = g_string_new(NULL);
 
-	// Initialize iterator for BSON document.
 	if (G_UNLIKELY(!j_bson_iter_init(&iterCurrentDocument, selector, error)))
 	{
 		goto _error;
@@ -649,13 +621,13 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 		goto _error;
 	}
 
-	// As per the format the respective values are added as a child document therefore initializing the iterator.
+	// recurse into table array
 	if (G_UNLIKELY(!j_bson_iter_recurse_array(&iterCurrentDocument, &iterChildDocument, error)))
 	{
 		goto _error;
 	}
 
-	// Iterate through all the child elements.
+	// Iterate through all table names
 	while (TRUE)
 	{
 		gboolean hasItems;
@@ -686,13 +658,13 @@ build_query_selection_part(bson_t const* selector, gpointer backend_data, GStrin
 		g_string_append(tableName, "_");
 		g_string_append(tableName, itemValue.val_string);
 
-		// Fetching table's schema to extract all the columns' names.
 		if (!(schema = get_schema(backend_data, batch->namespace, itemValue.val_string, error)))
 		{
 			goto _error;
 		}
 
-		g_hash_table_iter_init(&schemaIter, schema); // Initializing the iterator.
+		// Fetch all fields in this schema and store their type and position in respective maps.
+		g_hash_table_iter_init(&schemaIter, schema);
 
 		while (g_hash_table_iter_next(&schemaIter, &key, &field_type))
 		{
@@ -752,7 +724,6 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 	bson_iter_t iter_joins;
 	bson_iter_t iter_join_entry;
 
-	// Initialize the iterator.
 	if (G_UNLIKELY(!j_bson_iter_init(&iter_selector, selector, error)))
 	{
 		goto _error;
@@ -768,10 +739,8 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 		goto _error;
 	}
 
-	// The following code iterates through the BSON elements and prepares query part for the join operation.
 	while (TRUE)
 	{
-		g_autoptr(GString) sqlJoin = NULL;
 		g_autoptr(GString) first = NULL;
 		g_autoptr(GString) second = NULL;
 		gboolean next = FALSE;
@@ -811,7 +780,7 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 
 		field = itemValue.val_string;
 
-		first = get_full_field_name(batch->namespace, table, field);
+		first = j_sql_get_full_field_name(batch->namespace, table, field);
 
 		// Second field
 		j_bson_iter_next(&iter_join_entry, &next, error);
@@ -830,19 +799,18 @@ build_query_join_part(bson_t const* selector, JSqlBatch* batch, GString* sql, GE
 
 		field = itemValue.val_string;
 
-		second = get_full_field_name(batch->namespace, table, field);
+		second = j_sql_get_full_field_name(batch->namespace, table, field);
 
 		// add parts together
-		sqlJoin = g_string_new(first->str);
-		g_string_append(sqlJoin, " = ");
-		g_string_append(sqlJoin, second->str);
+		g_string_append(first, " = ");
+		g_string_append(first, second->str);
 
 		if (sql->len > 0)
 		{
 			g_string_append(sql, " AND ");
 		}
 
-		g_string_append(sql, sqlJoin->str);
+		g_string_append(sql, first->str);
 	}
 
 	return TRUE;

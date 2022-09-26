@@ -113,7 +113,6 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 
 	JDBType type;
 	JDBTypeValue val;
-	g_autoptr(GString) key = NULL;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -131,11 +130,8 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 		goto _error;
 	}
 
-	// Prepare key.
-	key = g_string_new(name);
-
-	// Initialize BSON document for the field.
-	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->selection, key->str, &child, error)))
+	// append field as `"name" : {"t" : <table_name>, "o" : <operator>, "v" : <value>}`
+	if (G_UNLIKELY(!j_bson_append_document_begin(&selector->selection, name, &child, error)))
 	{
 		goto _error;
 	}
@@ -192,7 +188,6 @@ j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOpe
 		goto _error;
 	}
 
-	// Finalized the document.
 	if (G_UNLIKELY(!j_bson_append_document_end(&selector->selection, &child, error)))
 	{
 		goto _error;
@@ -206,6 +201,13 @@ _error:
 	return FALSE;
 }
 
+/**
+ * \brief Copy join data from a sub selector to a primary selector.
+ * 
+ * \param selector The primary selector.
+ * \param sub_selector The sub selector.
+ * \return gboolean TRUE on success, FALSE otherwise.
+ */
 static gboolean
 j_db_selector_add_sub_joins(JDBSelector* selector, JDBSelector* sub_selector)
 {
@@ -216,10 +218,11 @@ j_db_selector_add_sub_joins(JDBSelector* selector, JDBSelector* sub_selector)
 
 	while (g_hash_table_iter_next(&iter, &key, NULL))
 	{
-		// no check here because FALSE could also mean that the key did already exist
+		// no error check on hash_table_add because FALSE could also mean that the key did already exist
 		g_hash_table_add(selector->join_schema, g_strdup(key));
 	}
 
+	// append to the join list
 	if (!bson_concat(&selector->joins, &sub_selector->joins))
 	{
 		goto _error;
@@ -231,6 +234,14 @@ _error:
 	return FALSE;
 }
 
+/**
+ * \brief Copy the selector data from a sub selector to a primary selector.
+ * 
+ * \param selector The primary selector.
+ * \param sub_selector The sub selector.
+ * \param error A GError.
+ * \return TRUE on success, FALSE otherwise.
+ */
 static gboolean
 j_db_selector_add_sub_selection(JDBSelector* selector, JDBSelector* sub_selector, GError** error)
 {

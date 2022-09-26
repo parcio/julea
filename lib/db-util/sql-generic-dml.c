@@ -106,7 +106,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 		field = j_bson_iter_key(&iter, error);
 
-		full_name = get_full_field_name(batch->namespace, name, field);
+		full_name = j_sql_get_full_field_name(batch->namespace, name, field);
 		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 
 		if (value_count)
@@ -341,7 +341,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 			goto _error;
 		}
 
-		full_name = get_full_field_name(batch->namespace, name, string_tmp);
+		full_name = j_sql_get_full_field_name(batch->namespace, name, string_tmp);
 
 		type = GPOINTER_TO_INT(g_hash_table_lookup(schema, full_name->str));
 		g_array_append_val(arr_types_in, type);

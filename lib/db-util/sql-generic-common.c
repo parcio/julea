@@ -194,3 +194,36 @@ j_sql_statement_free(JSqlStatement* ptr)
 		g_free(ptr);
 	}
 }
+
+static guint
+get_full_field_name_length(const gchar* namespace, const gchar* table, const gchar* field)
+{
+	guint ns, t, f;
+	// the full and correctly quoted field name is <quote><namespace>_<table><quote>.<quote><field><quote>
+
+	ns = strlen(namespace);
+	t = strlen(table);
+	f = strlen(field);
+
+	// one more than 6 additional characters for \0
+	return ns + t + f + 7;
+}
+
+GString*
+j_sql_get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field)
+{
+	GString* res = g_string_sized_new(get_full_field_name_length(namespace, table, field));
+	// the full and correctly quoted field name is <quote><namespace>_<table><quote>.<quote><field><quote>
+
+	g_string_append(res, specs->sql.quote);
+	g_string_append(res, namespace);
+	g_string_append(res, "_");
+	g_string_append(res, table);
+	g_string_append(res, specs->sql.quote);
+	g_string_append(res, ".");
+	g_string_append(res, specs->sql.quote);
+	g_string_append(res, field);
+	g_string_append(res, specs->sql.quote);
+
+	return res;
+}

@@ -119,7 +119,33 @@ gboolean j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector,
 gboolean j_db_internal_iterate(JDBIterator* j_db_iterator, GError** error);
 
 // Client-side additional internal functions
+
+/**
+ * \brief Get the selector data represented as a single bson document.
+ * 
+ * The returned bson is suitable for requests to the DB backend.
+ * For more details see `doc/db-code.md`.
+ * 
+ * \param selector 
+ * \return bson_t* 
+ */
 bson_t* j_db_selector_get_bson(JDBSelector* selector);
+
+/**
+ * \brief Build the final field of the selector.
+ * 
+ * Appends the "t" and "j" section if joins are present.
+ * In any case the "s" section will be created.
+ *
+ * \param selector a pointer of type JDBSelector.
+ *
+ * \pre selector != NULL
+ * \pre selector->final_valid == FALSE
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+gboolean j_db_selector_finalize(JDBSelector* selector, GError** error);
 
 G_GNUC_INTERNAL JBackend* j_db_get_backend(void);
 

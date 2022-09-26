@@ -122,10 +122,12 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSelector, j_db_selector_unref)
 gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
 
 /**
- * add a search field to the selector.
- *
- * \param[in] selector to add a sub_selector to
- * \param[in] sub_selector to add to the selector
+ * \brief Add a second selector as sub selector.
+ * 
+ * Using this function it is possible to build nested expressions (e.g. "A and B and (C or D)" where "C or D" is given by a sub selector).
+ * 
+ * \param[in] selector primary selector
+ * \param[in] sub_selector sub selector
  * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre selector != NULL
@@ -138,27 +140,15 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
 gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
 
 /**
- * This function concludes the selector. It adds the details that indicates the closure of the request and mandatory to process a request.
- * It must be called at the end when all the conditions and joins are added to the selector.
- *
- * \param[in] selector a pointer of type JDBSelector.
- *
- * \pre selector != NULL
- * \pre sub_selector != NULL
- *
- * \return TRUE on success, FALSE otherwise
- **/
-
-gboolean j_db_selector_finalize(JDBSelector* selector, GError** error);
-
-/**
- * This method adds join related information to the primary JDBSelector. This method expects columns' names along with their respective JDBSelectors.
- *
- * \param[in] selector a pointer of type JDBSelector and it holds reference for the selector of primary table.
- * \param[in] selector_field a constant character pointer that holds the column name for the primary selector.
- * \param[in] sub_selector a pointer of type JDBSelector and it holds reference for the selector of secondary table.
- * \param[in] sub_selector_field a constant character pointer that holds the column name for the secondary selector.
- *
+ * Add a JOIN to the primary selector using the schema from the sub selector.
+ * 
+ * This function will join both schemas using the given fields and also copy previous add_join and add_selector data from the secondary selector to the primary selector.
+ * 
+ * \param[in] selector Primary selector.
+ * \param[in] selector_field Name of a field in the primary schema of the selector.
+ * \param[in] sub_selector The second selector to be used in the join.
+ * \param[in] sub_selector_field Name of a field in the primary schema of the sub_selector.
+ * 
  * \pre selector != NULL
  * \pre sub_selector != NULL
  * \pre selector != sub_selector

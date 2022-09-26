@@ -43,7 +43,9 @@
  */
 #define BACKEND_ID_TYPE J_DB_TYPE_UINT64
 
-// each thread will keep its own DB connection
+/**
+ * \brief The JThreadVariables struct bundles the thread-local DB connection, the query cache and the schema cache.
+ */
 struct JThreadVariables
 {
 	/// The backend-specific database connection handle.
@@ -61,7 +63,10 @@ struct JThreadVariables
 	/**
 	 * \brief Cache for schemas.
 	 *
-	 * namespace_name(char*) -> GHashTable* (varname(char*) -> JDBType(directly as int))
+	 * namespace_name(char*) -> (GHashTable* (full variable name(char*) -> JDBType(directly as int)))
+	 * A thread local schema cache.
+	 * The schema information is stored in a hash table that maps the full field name to the respectove JDBType.
+	 * The keys are correctly quoted and can be used as part of SQL strings.
 	 */
 	GHashTable* schema_cache;
 };
@@ -72,7 +77,7 @@ typedef struct JThreadVariables JThreadVariables;
  * \brief Manages the status of a batch.
  *
  * Batches are implemented using transactions.
- * An of an operation inside a batch will cause a rollback.
+ * An error of an operation inside a batch will cause a rollback.
  */
 struct JSqlBatch
 {
@@ -110,7 +115,7 @@ struct JSqlStatement
 	GHashTable* out_variables_index;
 
 	/**
-	 * @brief Types of the variables contained in the query.
+	 * \brief Types of the variables contained in the query.
 	 *
 	 * full name of the variable (gchar*) -> type (JDBType)
 	 * This field may either be a schema from the cache or a new hash table conatining fields from all schemas in a join.
@@ -170,6 +175,18 @@ JSqlStatement* j_sql_statement_new(gchar const* query, GArray* types_in, GArray*
  * \param ptr Pointer to the Statement.
  */
 void j_sql_statement_free(JSqlStatement* ptr);
+
+/**
+ * \brief Get the full field name from the different parts.
+ *
+ * The name is correctly quoted and suitable as key in schema hash tables and as name in queries.
+ *
+ * \param namespace The namespace of the operation.
+ * \param table The name of the table.
+ * \param field The name of a column in the table.
+ * \return GString*
+ */
+GString* j_sql_get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field);
 
 // DQL
 
@@ -235,7 +252,7 @@ gboolean bind_selector_query(gpointer backend_data, const gchar* namespace, bson
  *
  * It is is used in the update and delete functions.
  *
- * \todo Update and delete should be done by adding the selection part to the respective query, making this function unnecessary.
+ * \todo Update and delete could be done by adding the selection part to the respective query, making this function unnecessary.
  *
  * \param backend_data The backend-specific information to open a connection.
  * \param _batch A JSqlBatch object.
@@ -278,17 +295,5 @@ gboolean _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError*
  * \return gboolean TRUE on success, FALSE otherwise.
  */
 gboolean _backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error);
-
-/**
- * @brief Get the full field name from the different parts.
- *
- * The name is correctly quoted and intended as key in hash tables and as name in queries.
- *
- * @param namespace The namespace of the operation.
- * @param table The name of the table.
- * @param field The name of a column in the table.
- * @return GString*
- */
-GString* get_full_field_name(const gchar* namespace, const gchar* table, const gchar* field);
 
 #endif

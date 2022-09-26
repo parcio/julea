@@ -515,6 +515,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	JDBTypeValue val;
 
 	g_return_val_if_fail(selector != NULL, FALSE);
+	g_return_val_if_fail(!selector->final_valid, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	j_bson_init(&selector->final, error);
@@ -541,10 +542,12 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 			g_string_printf(key_str, "%i", table_count);
 			g_string_assign(value_str, (gchar*)key);
 			val.val_string = value_str->str;
+			
 			if (G_UNLIKELY(!j_bson_append_value(&tables, key_str->str, J_DB_TYPE_STRING, &val, error)))
 			{
 				goto _error;
 			}
+
 			++table_count;
 		}
 
@@ -563,6 +566,8 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 	{
 		goto _error;
 	}
+
+	selector->final_valid = TRUE;
 
 	return TRUE;
 
@@ -598,8 +603,6 @@ j_db_selector_get_bson(JDBSelector* selector)
 		{
 			goto _error;
 		}
-
-		selector->final_valid = TRUE;
 	}
 
 
