@@ -397,12 +397,12 @@ build_query_condition_part(gpointer backend_data, JSqlBatch* batch, bson_iter_t*
 
 			field = j_bson_iter_key(iter, error);
 
-			if(!j_bson_iter_find(&iterchild, "t", error))
+			if (!j_bson_iter_find(&iterchild, "t", error))
 			{
 				goto _error;
 			}
 
-			if(!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error))
+			if (!j_bson_iter_value(&iterchild, J_DB_TYPE_STRING, &value, error))
 			{
 				goto _error;
 			}
@@ -518,7 +518,7 @@ _bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t*
 			}
 		}
 
-		if(!j_bson_iter_key_equals(iter, "_s", &is_sub_selector, error))
+		if (!j_bson_iter_key_equals(iter, "_s", &is_sub_selector, error))
 		{
 			goto _error;
 		}

@@ -542,7 +542,7 @@ j_db_selector_finalize(JDBSelector* selector, GError** error)
 			g_string_printf(key_str, "%i", table_count);
 			g_string_assign(value_str, (gchar*)key);
 			val.val_string = value_str->str;
-			
+
 			if (G_UNLIKELY(!j_bson_append_value(&tables, key_str->str, J_DB_TYPE_STRING, &val, error)))
 			{
 				goto _error;
@@ -587,7 +587,7 @@ j_db_selector_get_bson(JDBSelector* selector)
 
 	if (!selector->final_valid)
 	{
-		if(bson_has_field(&selector->final, "s"))
+		if (bson_has_field(&selector->final, "s"))
 		{
 			// final bson has already been build, rebuild it
 			// this case handles selector modifications after selector usage
@@ -605,12 +605,11 @@ j_db_selector_get_bson(JDBSelector* selector)
 		}
 	}
 
-
 	return &selector->final;
 
 _error:
 
-	if(err)
+	if (err)
 	{
 		g_debug("Error in %s. Error code is '%s'\n", G_STRLOC, err->message);
 	}

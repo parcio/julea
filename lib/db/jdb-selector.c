@@ -203,7 +203,7 @@ _error:
 
 /**
  * \brief Copy join data from a sub selector to a primary selector.
- * 
+ *
  * \param selector The primary selector.
  * \param sub_selector The sub selector.
  * \return gboolean TRUE on success, FALSE otherwise.
@@ -236,7 +236,7 @@ _error:
 
 /**
  * \brief Copy the selector data from a sub selector to a primary selector.
- * 
+ *
  * \param selector The primary selector.
  * \param sub_selector The sub selector.
  * \param error A GError.

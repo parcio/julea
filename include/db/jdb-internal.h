@@ -92,19 +92,31 @@ struct JDBSchema
 	gboolean server_side;
 };
 
+/**
+ * Represents selections in, possibly joined, schemas.
+ *
+ * For details on the BSON documents see `doc/db-code.md`.
+ */
 struct JDBSelector
 {
-	bson_t selection; // the selection part of the query
-	bson_t joins; // the join part of the query
-	bson_t final; // the complete query as bson; build at first usage of a selector. the selector can be reused but not modified after final was built.
-	gboolean final_valid; // TRUE iff final got built and the selector was not modified
+	bson_t selection; /// The selector encoded as BSON. Joins and tables are managed separately.
+	bson_t joins; /// The joins encoded as BSON.
+
+	/**
+	 * The complete query as BSON.
+	 *
+	 * Gets build (and rebuild if necessary) when the selector is used.
+	 */
+	bson_t final;
+
+	gboolean final_valid; /// TRUE iff final got built and the selector was not modified.
 
 	JDBSelectorMode mode;
-	JDBSchema* schema; // Primary schema. This is used for joins.
+	JDBSchema* schema; /// Primary schema. This one must be used for joins.
 
-	GHashTable* join_schema; // store the names of joined schemas. This hash table is used as a set and all values are NULL.
+	GHashTable* join_schema; /// Stores the names of joined schemas. It is used as a set and all values are NULL.
 
-	guint selection_count;
+	guint selection_count; /// The number of selecotr entries must not exceed 500.
 	gint ref_count;
 };
 
@@ -122,18 +134,18 @@ gboolean j_db_internal_iterate(JDBIterator* j_db_iterator, GError** error);
 
 /**
  * \brief Get the selector data represented as a single bson document.
- * 
+ *
  * The returned bson is suitable for requests to the DB backend.
  * For more details see `doc/db-code.md`.
- * 
- * \param selector 
- * \return bson_t* 
+ *
+ * \param selector
+ * \return bson_t*
  */
 bson_t* j_db_selector_get_bson(JDBSelector* selector);
 
 /**
  * \brief Build the final field of the selector.
- * 
+ *
  * Appends the "t" and "j" section if joins are present.
  * In any case the "s" section will be created.
  *
