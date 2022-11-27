@@ -530,11 +530,11 @@ file_accessible(va_list arguments)
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(GError) error = NULL;
 	const char* name = NULL;
-	hbool_t* accessible = NULL;
+	htri_t* accessible = NULL;
 
 	va_arg(arguments, hid_t*); // skip the fapl
 	name = va_arg(arguments, const char*);
-	accessible = va_arg(arguments, hbool_t*);
+	accessible = va_arg(arguments, htri_t*);
 
 	if (!(selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error)))
 	{
@@ -570,7 +570,7 @@ _error:
 		g_debug("DEBUG: %s\n", error->message);
 	}
 
-	*accessible = false;
+	*accessible = FALSE;
 
 	return false;
 }
