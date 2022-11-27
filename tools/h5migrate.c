@@ -33,6 +33,7 @@ struct JHDF5CopyParam_t
 typedef struct JHDF5CopyParam_t JHDF5CopyParam_t;
 
 static herr_t iterate_copy(hid_t group, const char* name, const H5L_info2_t* info, void* op_data);
+static herr_t copy_attributes(hid_t src, hid_t dst);
 
 /**
  * Cleanup function for hid_t.
@@ -141,6 +142,12 @@ copy_file(hid_t src_file, hid_t dest_file)
 {
 	JHDF5CopyParam_t copy_data;
 	herr_t retval = -1;
+
+	// iterate file attributes
+	if (copy_attributes(src_file, dest_file) < 0)
+	{
+		return retval;
+	}
 
 	copy_data.dest_curr_group = dest_file;
 	copy_data.dxpl = H5P_DEFAULT;
