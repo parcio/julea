@@ -28,7 +28,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='5cf7bf37701a18d73730f05894d0f81dff16493e'
+	spack_commit='675afd884d65631492ab5647dc95692676e5a195'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -163,6 +163,9 @@ spack_install_dependencies ()
 	if spack_clone
 	then
 		spack_cmd config --scope site add 'concretizer:reuse:false'
+		# FIXME We currently need this for JULEA to find all dependencies
+		spack_cmd config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
+		spack_cmd config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
 
 		if test -n "${CI}"
 		then
