@@ -92,9 +92,32 @@ spack_load ()
 
 	test -n "${spack_pkg}" || return 1
 
+	spack_pkg="$(printf '%s' "${spack_pkg}" | sed 's/#/ /g')"
+
 	spack load "${spack_pkg}" || pkg_loaded='NO'
 
 	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
+}
+
+spack_install ()
+{
+	local spack_pkg
+
+	spack_pkg="$1"
+
+	test -n "${spack_pkg}" || return 1
+
+	spack_pkg="$(printf '%s' "${spack_pkg}" | sed 's/#/ /g')"
+
+	# FIXME We need to specify the compiler explicitly (https://github.com/spack/spack/issues/34438)
+	if test -n "${JULEA_SPACK_COMPILER}"
+	then
+		spack_pkg="${spack_pkg} %${JULEA_SPACK_COMPILER}"
+	fi
+
+	printf 'Installing "%s"\n' "${spack_pkg}"
+	# FIXME ignore errors?
+	spack_cmd install "${spack_pkg}"
 }
 
 spack_get_dependencies ()
@@ -144,7 +167,6 @@ spack_load_dependencies ()
 		then
 			for dependency in $(spack_get_dependencies)
 			do
-				dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
 				spack_load "${dependency}"
 			done
 
@@ -189,9 +211,7 @@ spack_install_dependencies ()
 
 		for dependency in $(spack_get_dependencies)
 		do
-			dependency="$(printf '%s' "${dependency}" | sed 's/#/ /g')"
-			# FIXME ignore errors?
-			spack_cmd install "${dependency}"
+			spack_install "${dependency}"
 		done
 
 		spack_cmd gc --yes-to-all
