@@ -555,8 +555,10 @@ julea_test = executable('julea-test', julea_test_srcs,
 )
 
 test('julea-test', julea_test,
-	timeout: 0,
+	# --tap is the default starting with GLib 2.62
+	args: ['--tap'],
 	protocol: 'tap',
+	timeout: 0,
 )
 
 julea_benchmark_srcs = files([
