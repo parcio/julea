@@ -94,6 +94,12 @@ spack_load ()
 
 	spack_pkg="$(printf '%s' "${spack_pkg}" | sed 's/#/ /g')"
 
+	# FIXME We need to specify the compiler explicitly (https://github.com/spack/spack/issues/34438)
+	if test -n "${JULEA_SPACK_COMPILER}"
+	then
+		spack_pkg="${spack_pkg} %${JULEA_SPACK_COMPILER}"
+	fi
+
 	spack load "${spack_pkg}" || pkg_loaded='NO'
 
 	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
@@ -219,6 +225,7 @@ spack_install_dependencies ()
 		if test -n "${CI}"
 		then
 			spack_cmd clean --downloads
+			spack_cmd find
 		fi
 	fi
 }
