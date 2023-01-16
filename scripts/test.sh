@@ -61,7 +61,9 @@ run_test ()
 	return ${ret}
 }
 
-SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+if [ -z "$SPACK_DIR" ]; then
+	SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+fi
 
 spack_load_dependencies
 

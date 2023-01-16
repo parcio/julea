@@ -19,8 +19,8 @@
 set -e
 
 SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
-SELF_DIR="${SELF_PATH%/*}"
 SELF_BASE="${SELF_PATH##*/}"
+SELF_DIR="${SELF_PATH%/*}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
@@ -33,6 +33,8 @@ usage ()
 	exit 1
 }
 
-SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+if [ -z "$SPACK_DIR" ]; then
+	SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+fi
 
 spack_install_dependencies
