@@ -19,8 +19,8 @@
 set -e
 
 SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
-SELF_BASE="${SELF_PATH##*/}"
 SELF_DIR="${SELF_PATH%/*}"
+SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
