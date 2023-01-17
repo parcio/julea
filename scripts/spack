@@ -152,7 +152,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} mariadb-c-client"
 	dependencies="${dependencies} mongo-c-driver"
 	dependencies="${dependencies} otf"
-	dependencies="${dependencies} rocksdb"
+	dependencies="${dependencies} rocksdb~static"
 
 	if test -n "${CI}"
 	then
