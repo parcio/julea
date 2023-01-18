@@ -164,23 +164,24 @@ typedef struct
 	 * \param[in] obj_id continuous index which is for  the live time of a object unique
 	 * \param[in] tier identifier for the storage tier
 	 *            the object is currently stored on
-     * \param[in] access type of access performed \sa JObjectBackendAccessType
+	 * \param[in] access type of access performed \sa JObjectBackendAccessType
 	 * \param[in] data corresponding to the access type.
 	 *            For more details see \ref JObjectBackendAccessDetails
 	 **/
 	gboolean (*process_access)(gpointer policy_data, const gchar* namespace, const gchar* path, guint obj_id, guint tier, JObjectBackendAccessTypes access, gconstpointer data);
 
-	/// short processing period to match new object to a storage tier
-	/** \retval FALSE on error
-	 * \sa j_backend_stack_get_tiers */
 	/**
 	 * Signals a new object creation to the policy, sets instal storage tier.
+	 *
+	 * \attention Ensure a short processing period because it blocks the write process
 	 *
 	 * \param[inout] policy_data pointer usage depends on policy
 	 * \param[in] namespace of the object which will be created
 	 * \param[in] path of the object which will be created
 	 * \param[in] obj_id \ref process_access
 	 * \param[out] storage_tier ID of storage tier to create object on
+	 *
+	 * \sa j_backend_stack_get_tiers
 	 **/
 	gboolean (*process_create)(gpointer policy_data, const gchar* namespace, const gchar* path, guint obj_id, guint* storage_tier);
 
@@ -251,8 +252,8 @@ gboolean j_backend_managed_policy_process(JManagedBackends* this, gboolean* keep
 
 /**
  * Fetches backend where a given object is stored. Also blocks migration for that object.
- * Use j_backend_managed_object_open() to allow migration again. If the object not already exists
- * use j_backend_managed_object_create() to create it
+ * Use j_backend_managed_object_close() to allow migration again.
+ * If the object not already exists use j_backend_managed_object_create() to create it
  *
  * \param[in] this JManagedBackends instance
  * \param[in] namespace of the object
@@ -330,7 +331,7 @@ guint j_backend_managed_get_tier(JManagedBackends* this, const gchar* namespace,
 gboolean j_backend_managed_object_migrate(JManagedBackends* this, const gchar* namespace, const gchar* path, guint dest);
 
 /**
- * If resources a free migrates the specified object to the destination tier, if not return.
+ * If resources are free migrates the specified object to the destination tier, if not return.
  *
  * \retval FALSE on error or if resources are busy
  **/
@@ -338,9 +339,9 @@ gboolean j_backend_managed_object_migrate_if_free(JManagedBackends* this, const 
 
 /**
  * Stops all migrations at all backends, used for maintenance.
- * use j_backend_stack_unlock() to re-enable migration
+ * use j_backend_managed_unlock() to re-enable migration
  *
- * \attention changing object locations or editing them might crashes the policy!
+ * \attention changing object locations or editing them might crash the policy!
  *
  * \param[in] this JManagedBackends instance
  * \param[inout] address to backends array of backends managed, set to NULL if not needed
