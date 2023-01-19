@@ -341,10 +341,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || kv_path == NULL
 	    || db_backend == NULL
 	    || db_component == NULL
-	    || db_path == NULL
-	    || object_policy_kv_backend == NULL
-	    || object_policy_kv_path == NULL
-	    || object_policy == NULL)
+	    || db_path == NULL)
 	{
 		g_free(db_backend);
 		g_free(db_component);
@@ -471,10 +468,10 @@ j_configuration_unref(JConfiguration* configuration)
 		g_free(configuration->object_hsm_policy.kv_backend);
 		g_free(configuration->object_hsm_policy.kv_path);
 		g_free(configuration->object_hsm_policy.policy);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-qual"
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wcast-qual"
 		g_strfreev((gchar**)configuration->object_hsm_policy.args);
-#pragma GCC diagnostic pop
+		#pragma GCC diagnostic pop
 		g_slice_free(JConfiguration, configuration);
 	}
 }
