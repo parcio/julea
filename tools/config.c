@@ -109,7 +109,10 @@ write_config(gchar* path)
 	servers_object = string_split(opt_servers_object);
 	servers_kv = string_split(opt_servers_kv);
 	servers_db = string_split(opt_servers_db);
-	object_policy_args = string_split(opt_object_policy_args);
+	if (opt_object_policy_args)
+	{
+		object_policy_args = string_split(opt_object_policy_args);
+	}
 
 	key_file = g_key_file_new();
 	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_max_operation_size);
@@ -129,10 +132,22 @@ write_config(gchar* path)
 	g_key_file_set_string(key_file, "db", "backend", opt_db_backend);
 	g_key_file_set_string(key_file, "db", "component", opt_db_component);
 	g_key_file_set_string(key_file, "db", "path", opt_db_path);
-	g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", opt_object_policy_kv_backend);
-	g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", opt_object_policy_kv_path);
-	g_key_file_set_string(key_file, "object.hsm-policy", "policy", opt_object_policy);
-	g_key_file_set_string_list(key_file, "object.hsm-policy", "args", (gchar const* const*)object_policy_args, g_strv_length(object_policy_args));
+	if (opt_object_policy_kv_backend)
+	{
+		g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", opt_object_policy_kv_backend);
+	}
+	if (opt_object_policy_kv_path)
+	{
+		g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", opt_object_policy_kv_path);
+	}
+	if (opt_object_policy)
+	{
+		g_key_file_set_string(key_file, "object.hsm-policy", "policy", opt_object_policy);
+	}
+	if (opt_object_policy_args)
+	{
+		g_key_file_set_string_list(key_file, "object.hsm-policy", "args", (gchar const* const*)object_policy_args, g_strv_length(object_policy_args));
+	}
 	key_file_data = g_key_file_to_data(key_file, &key_file_data_len, NULL);
 
 	if (path != NULL)
