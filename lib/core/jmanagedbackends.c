@@ -19,6 +19,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
+#include <julea-config.h>
 
 #include <bits/types/struct_timeval.h>
 #include <core/jmanagedbackends.h>
@@ -29,8 +30,6 @@
 #include <core/jtrace.h>
 #include <core/jconfiguration.h>
 #include <core/jhelper.h>
-
-#include <julea-config.h>
 
 #include <glib.h>
 
@@ -164,7 +163,7 @@ gboolean kv_rm(JManagedBackends* this, const gchar* namespace, const gchar* key)
 		DATA)
 
 static gboolean
-backend_status(JBackend* this_raw, gpointer object, gint64* modification_time, guint64* size)
+backend_status(gpointer this_raw, gpointer object, gint64* modification_time, guint64* size)
 {
 	J_TRACE_FUNCTION(NULL);
 	struct JBackendWrapper* this = (struct JBackendWrapper*)this_raw;
@@ -180,7 +179,7 @@ backend_status(JBackend* this_raw, gpointer object, gint64* modification_time, g
 	return ret;
 }
 static gboolean
-backend_sync(JBackend* this_raw, gpointer object)
+backend_sync(gpointer this_raw, gpointer object)
 {
 	J_TRACE_FUNCTION(NULL);
 	struct JBackendWrapper* this = (struct JBackendWrapper*)this_raw;
@@ -194,7 +193,7 @@ backend_sync(JBackend* this_raw, gpointer object)
 }
 
 static gboolean
-backend_read(JBackend* this_raw, gpointer object, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
+backend_read(gpointer this_raw, gpointer object, gpointer buffer, guint64 length, guint64 offset, guint64* bytes_read)
 {
 	J_TRACE_FUNCTION(NULL);
 	struct JBackendWrapper* this = (struct JBackendWrapper*)this_raw;
@@ -212,7 +211,7 @@ backend_read(JBackend* this_raw, gpointer object, gpointer buffer, guint64 lengt
 }
 
 static gboolean
-backend_write(JBackend* this_raw, gpointer object, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
+backend_write(gpointer this_raw, gpointer object, gconstpointer buffer, guint64 length, guint64 offset, guint64* bytes_written)
 {
 	J_TRACE_FUNCTION(NULL);
 	struct JBackendWrapper* this = (struct JBackendWrapper*)this_raw;
@@ -230,7 +229,7 @@ backend_write(JBackend* this_raw, gpointer object, gconstpointer buffer, guint64
 }
 
 static gboolean
-backend_delete(JBackend* this_raw, gpointer object)
+backend_delete(gpointer this_raw, gpointer object)
 {
 	J_TRACE_FUNCTION(NULL);
 	struct JBackendWrapper* this = (struct JBackendWrapper*)this_raw;
@@ -411,13 +410,14 @@ end:
 gboolean
 j_backend_managed_fini(JManagedBackends* this)
 {
+	FILE* fp;
 	if (this->log.filename)
 	{
 		if (this->log.length > MAX_LOG_LENGTH)
 		{
 			g_warning("more memory access registred then log size: %d access, but only %d spaces", this->log.length, MAX_LOG_LENGTH);
 		}
-		FILE* fp = fopen(this->log.filename, "w");
+		fp = fopen(this->log.filename, "w");
 		fprintf(fp, "time,obj,type,tier\n");
 		for (int i = 0; i < this->log.length; ++i)
 		{
@@ -436,13 +436,11 @@ j_backend_managed_fini(JManagedBackends* this)
 	free(this->object_backend);
 	g_array_unref(this->rw_spin_locks);
 	g_module_close(this->module);
+	j_backend_kv_fini(this->kv_store);
 	free(this);
 
 	return TRUE;
 }
-
-/// \todo doku
-gboolean j_backend_managed_object_create(JManagedBackends* this, const gchar* namespace, const gchar* path, JBackend** backend, JManagedBackendScope** scope);
 
 /// \TODO optimize for only one backend
 /// \TODO remove scope return <- just complete virtual
@@ -697,12 +695,12 @@ j_backend_managed_get_by_prefix(JManagedBackends* this, gchar const* namespace, 
 gboolean
 j_backend_managed_iterate(JManagedBackends* this, gpointer iterator, gchar const** name)
 {
+	guint32 length;
+	gconstpointer data;
+
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(this != NULL, FALSE);
-
-	guint32 length;
-	gconstpointer data;
 
 	return j_backend_kv_iterate(this->kv_store, iterator, name, &data, &length);
 }
@@ -739,6 +737,7 @@ j_backend_managed_object_migrate(JManagedBackends* this,
 	JBackend* from;
 	JBackend* to = this->object_backend[dest]->orig;
 	gpointer data = NULL;
+	guint generation;
 
 	read_lock(&this->global_lock);
 	EXE(kv_get(this, namespace, path, &entry), end, "Unable to migrate, because entry not found!");
@@ -747,7 +746,7 @@ j_backend_managed_object_migrate(JManagedBackends* this,
 		ret = TRUE;
 		goto end;
 	}
-	guint generation = write_lock(&g_array_index(this->rw_spin_locks, RWSpinLock, entry->lock_id));
+	generation = write_lock(&g_array_index(this->rw_spin_locks, RWSpinLock, entry->lock_id));
 	lock = TRUE;
 	if (generation != entry->generation)
 	{
