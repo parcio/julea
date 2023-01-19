@@ -60,7 +60,7 @@ G_BEGIN_DECLS
  * and print a warning in the form:
  * CHECK failed at <File>:<Line> with (<res>):
  * "<format string>", args
- * 
+ *
  * \param res result value
  * \param err_label label to jump to at error
  * \param ... warning message in form: <format string>, args

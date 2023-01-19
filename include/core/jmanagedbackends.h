@@ -1,4 +1,4 @@
-/** 
+/**
  * \file JManagedBackends.h
  * \ingroup backend
  *

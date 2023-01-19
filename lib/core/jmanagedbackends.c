@@ -392,11 +392,11 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 				  J_BACKEND_TYPE_KV,
 				  &this->kv_module,
 				  &this->kv_store),
-			end,
+	    end,
 	    "failed to create kv for backend manager!");
 	EXE(this->kv_store->kv.backend_init(j_configuration_get_object_policy_kv_path(config),
 					    &this->kv_store->data),
-			end,
+	    end,
 	    "failed to init kv for backend manager!");
 	this->kv_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 
@@ -506,7 +506,7 @@ j_backend_managed_object_create(JManagedBackends* this,
 
 	// ask policy for tier
 	EXE(this->policy->process_create(this->policy->data, namespace, path, lock_id, &tier),
-			end,
+	    end,
 	    "failed to match storage tier for new object!");
 	*backend = g_memdup2(this->object_backend[tier], sizeof(struct JBackendWrapper));
 	wrapper = (void*)*backend;
@@ -529,7 +529,7 @@ j_backend_managed_object_create(JManagedBackends* this,
 	};
 
 	EXE(kv_put(this, namespace, path, &entry),
-			end,
+	    end,
 	    "failed to store new object in kv");
 
 	wrapper->scope = (JManagedBackendScope){
@@ -583,7 +583,7 @@ j_backend_managed_get_tier(JManagedBackends* this,
 {
 	struct KVEntry* entry;
 	EXE(kv_get(this, namespace, path, &entry),
-			end,
+	    end,
 	    "failed to fetch kventry");
 	return entry->backend_id;
 end:
@@ -596,13 +596,13 @@ kv_put(JManagedBackends* this, const gchar* namespace, const gchar* key,
 {
 	gpointer batch;
 	EXE(j_backend_kv_batch_start(this->kv_store, namespace, this->kv_semantics, &batch),
-			end,
+	    end,
 	    "failed do start kv batch");
 	EXE(j_backend_kv_put(this->kv_store, batch, key, entry, sizeof(struct KVEntry)),
-			end,
+	    end,
 	    "failed batch put value command");
 	EXE(j_backend_kv_batch_execute(this->kv_store, batch),
-			end,
+	    end,
 	    "failed to execute put value batch");
 	return TRUE;
 end:
@@ -617,11 +617,11 @@ kv_get(JManagedBackends* this, const gchar* namespace, const gchar* key,
 	guint32 len;
 	gboolean ret;
 	EXE(j_backend_kv_batch_start(this->kv_store, namespace, this->kv_semantics, &batch),
-			end,
+	    end,
 	    "failed do start kv batch");
 	ret = j_backend_kv_get(this->kv_store, batch, key, (gpointer*)entry, &len);
 	EXE(j_backend_kv_batch_execute(this->kv_store, batch),
-			end,
+	    end,
 	    "failed to execute get value batch");
 #ifndef NDEBUG
 	if (len != sizeof(struct KVEntry))
@@ -641,11 +641,11 @@ kv_rm(JManagedBackends* this, const gchar* namespace, const gchar* key)
 	gboolean ret = FALSE;
 
 	EXE(j_backend_kv_batch_start(this->kv_store, namespace, this->kv_semantics, &batch),
-			end,
+	    end,
 	    "failed to start kv backend");
 	ret = j_backend_kv_delete(this->kv_store, batch, key);
 	EXE(j_backend_kv_batch_execute(this->kv_store, batch),
-			end,
+	    end,
 	    "failed to execute delete kv value");
 end:
 	return ret;
@@ -778,31 +778,31 @@ j_backend_managed_object_migrate(JManagedBackends* this,
 			goto end;
 		}
 		EXE(j_backend_object_status(from, object_from, &mod_time, &size),
-				end,
+		    end,
 		    "Failed to get object size");
 		data = malloc(MIN(size, max_chunk_size));
 
 		EXE(j_backend_object_create(to, namespace, path, &object_to),
-				end,
+		    end,
 		    "Failed to create new object");
 		while (size > 0)
 		{
 			guint64 written, transfer = MIN(size, max_chunk_size);
 			EXE(j_backend_object_read(from, object_from, data, transfer, offset, &written) && transfer == written,
-					end,
+			    end,
 			    "Failed to read object for transmission");
 			EXE(j_backend_object_write(to, object_to, data, transfer, offset, &written) && written == transfer,
-					end,
+			    end,
 			    "Failed to write migrated object");
 			size -= written;
 			offset += written;
 		}
 
 		EXE(j_backend_object_delete(from, object_from),
-				end,
+		    end,
 		    "Failed to delete original object");
 		EXE(j_backend_object_close(to, object_to),
-				end,
+		    end,
 		    "Failed to close new object");
 	}
 

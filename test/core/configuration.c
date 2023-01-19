@@ -126,8 +126,6 @@ test_configuration_get(void)
 	g_assert_cmpstr(j_configuration_get_backend_component(configuration, J_BACKEND_TYPE_DB), ==, "client");
 	g_assert_cmpstr(j_configuration_get_backend_path(configuration, J_BACKEND_TYPE_DB), ==, "NULL3");
 
-
-
 	g_assert_cmpstr(j_configuration_get_object_policy_kv_backend(configuration), ==, "NULL4");
 	g_assert_cmpstr(j_configuration_get_object_policy_kv_path(configuration), ==, "NULL5");
 	g_assert_cmpstr(j_configuration_get_object_policy(configuration), ==, "NULL6");
