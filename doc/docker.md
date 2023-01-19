@@ -71,6 +71,6 @@ Example:
 ```sh
 git clone https://github.com/julea_io/julea.git
 cd julea
-docker biuld . --file Docker/JuleaDev -t JULEA-DEV
+docker build . --file Docker/JuleaDev -t JULEA-DEV
 ```
 
