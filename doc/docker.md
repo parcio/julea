@@ -74,3 +74,10 @@ cd julea
 docker build . --file Docker/JuleaDev -t JULEA-DEV
 ```
 
+
+### Building image as part of CI
+
+The workflow `.github/workflows/docker.yml` builds the JULEA-DEV container if a file listed in `Docker/JuleaDev-depenedcies.txt` changed, compared to the last commit if pushed to `master`.
+Or if a pull-request is merged into `master` and one of the files listed was changed.
+
+
