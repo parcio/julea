@@ -12,6 +12,7 @@ Its goal is to provide a solid foundation for storage research and teaching.
 
 * [Quick Start](../README.md)
 * [Dependencies](dependencies.md)
+* [Docker](docker.md)
 * [Installation and Usage](installation-usage.md)
 * [Configuration](configuration.md)
 * [Debugging](debugging.md)
