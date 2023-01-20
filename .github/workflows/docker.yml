@@ -3,15 +3,15 @@ on: [push]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: JBenda/JULEA-DEV
 
 jobs:
   build-and-push-image:
-  runs-on: ubuntu-latest
-  permissions:
-    contents: read
-    packages: write
-  steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -32,6 +32,7 @@ jobs:
       uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
       with:
         context: .
+        file: ./Docker/JuleaDev
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
