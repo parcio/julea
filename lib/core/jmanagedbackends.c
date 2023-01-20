@@ -86,19 +86,6 @@ struct JManagedBackends
 	guint array_length; /// used as atomic to ensure unique ids for each object
 
 	RWSpinLock global_lock;
-
-	struct
-	{
-		const gchar* filename;
-		int length;
-		struct
-		{
-			guint64 time;
-			char access;
-			guint obj_id;
-			guint tier;
-		} entries[MAX_LOG_LENGTH];
-	} log;
 };
 
 struct JManagedBackendScope
@@ -141,18 +128,11 @@ gboolean kv_get(JManagedBackends* this, const gchar* namespace, const gchar* key
 /** \private \memberof JManagedBackends */
 gboolean kv_rm(JManagedBackends* this, const gchar* namespace, const gchar* key);
 
+#define OPERATION_DEBUG(obj_id, tier, LETTER) \
+	g_debug("ACCESS time(%lu) type(%c) obj_id(%u) tier(%u)", g_get_monotonic_time(), LETTER, obj_id, tier)
+
 #define ACCESS(TYPE, DATA, LETTER) \
-	if (this->scope.stack->log.filename) \
-	{ \
-		int i = g_atomic_int_add(&this->scope.stack->log.length, 1); \
-		if (i < MAX_LOG_LENGTH) \
-		{ \
-			this->scope.stack->log.entries[i].time = g_get_monotonic_time(); \
-			this->scope.stack->log.entries[i].access = LETTER; \
-			this->scope.stack->log.entries[i].obj_id = this->scope.lock_id; \
-			this->scope.stack->log.entries[i].tier = this->scope.tier; \
-		} \
-	} \
+	OPERATION_DEBUG(this->scope.lock_id, this->scope.tier, LETTER); \
 	this->scope.stack->policy->process_access( \
 		this->scope.stack->policy->data, \
 		this->scope.namespace, \
@@ -399,9 +379,6 @@ j_backend_managed_init(JConfiguration* config, JList* object_backends, JManagedB
 	    "failed to init kv for backend manager!");
 	this->kv_semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	// this->log.filename = j_configuration_get_object_policy_log_file(config);
-	this->log.length = 0;
-
 	return TRUE;
 end:
 	return FALSE;
@@ -410,27 +387,6 @@ end:
 gboolean
 j_backend_managed_fini(JManagedBackends* this)
 {
-	FILE* fp;
-	if (this->log.filename)
-	{
-		if (this->log.length > MAX_LOG_LENGTH)
-		{
-			g_warning("more memory access registred then log size: %d access, but only %d spaces", this->log.length, MAX_LOG_LENGTH);
-		}
-		fp = fopen(this->log.filename, "w");
-		fprintf(fp, "time,obj,type,tier\n");
-		for (int i = 0; i < this->log.length; ++i)
-		{
-			fprintf(fp, "%lu,%u,%c,%u\n",
-				this->log.entries[i].time,
-				this->log.entries[i].obj_id,
-				this->log.entries[i].access,
-				this->log.entries[i].tier);
-		}
-		fclose(fp);
-		g_message("object stack access log stored in %s", this->log.filename);
-	}
-
 	this->policy->fini(this->policy->data);
 	free(this->policy);
 	free(this->object_backend);
@@ -508,17 +464,6 @@ j_backend_managed_object_create(JManagedBackends* this,
 	    "failed to match storage tier for new object!");
 	*backend = g_memdup2(this->object_backend[tier], sizeof(struct JBackendWrapper));
 	wrapper = (void*)*backend;
-	if (this->log.filename)
-	{
-		guint64 i = g_atomic_int_add(&this->log.length, 1);
-		if (i < MAX_LOG_LENGTH)
-		{
-			this->log.entries[i].access = 'c';
-			this->log.entries[i].obj_id = lock_id;
-			this->log.entries[i].time = g_get_monotonic_time();
-			this->log.entries[i].tier = tier;
-		}
-	}
 
 	entry = (struct KVEntry){
 		.lock_id = lock_id,
@@ -539,6 +484,8 @@ j_backend_managed_object_create(JManagedBackends* this,
 		.path = path
 	};
 	*scope = &wrapper->scope;
+
+	OPERATION_DEBUG(wrapper->scope.lock_id, wrapper->scope.tier, 'c');
 
 	ret = TRUE;
 end:
@@ -753,17 +700,7 @@ j_backend_managed_object_migrate(JManagedBackends* this,
 		EXE(kv_get(this, namespace, path, &entry), end, "failed open kvEntry again for migration");
 	}
 	from = this->object_backend[entry->backend_id]->orig;
-	if (this->log.filename)
-	{
-		int i = g_atomic_int_add(&this->log.length, 1);
-		if (i < MAX_LOG_LENGTH)
-		{
-			this->log.entries[i].access = 'm';
-			this->log.entries[i].time = g_get_monotonic_time();
-			this->log.entries[i].obj_id = entry->lock_id;
-			this->log.entries[i].tier = dest;
-		}
-	}
+	OPERATION_DEBUG(entry->lock_id, dest, 'm');
 
 	{
 		const guint64 max_chunk_size = 1024 * 1024 * 64; ///< 64MB max chunk size for transfer \todo make configurable

@@ -468,10 +468,10 @@ j_configuration_unref(JConfiguration* configuration)
 		g_free(configuration->object_hsm_policy.kv_backend);
 		g_free(configuration->object_hsm_policy.kv_path);
 		g_free(configuration->object_hsm_policy.policy);
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
 		g_strfreev((gchar**)configuration->object_hsm_policy.args);
-		#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 		g_slice_free(JConfiguration, configuration);
 	}
 }
