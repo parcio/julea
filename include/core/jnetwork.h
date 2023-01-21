@@ -59,7 +59,7 @@ G_BEGIN_DECLS
  * void* data_a = malloc(data_size), data_b = malloc(data_size), rdata = malloc(rdata_size);
  * // fill data !
  *
- * j_network_connection_init_client(config, J_BACKEND_TYPE_OBJECT, &connection);
+ * connection = j_network_connection_init_client(config, J_BACKEND_TYPE_OBJECT);
  *
  * // message exchange
  * j_network_connection_recv(connection, rdata, rdata_size);
@@ -168,11 +168,10 @@ G_BEGIN_DECLS
  * Therefore, events can be read via j_fabric_sread_event.
  *
  * \param[in] configuration A configuration.
- * \param[out] instance A pointer to the resulting fabric.
  *
- * \return TRUE on success, FALSE if an error occurred.
+ * \return A new fabric on success, NULL if an error occurred.
  **/
-gboolean j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** instance);
+JNetworkFabric* j_network_fabric_init_server(JConfiguration* configuration);
 
 /**
  * Gets identifier of memory region.
@@ -205,11 +204,10 @@ gboolean j_network_connection_memory_get_id(JNetworkConnectionMemory* this, JNet
  * \param[in] configuration A configuration.
  * \param[in] backend A backend type.
  * \param[in] index An index.
- * \param[out] instance A network connection.
  *
- * \return TRUE on success, FALSE if an error occurred.
+ * \return A network connection on success, NULL if an error occurred.
  **/
-gboolean j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index, JNetworkConnection** instance);
+JNetworkConnection* j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index);
 
 /**
  * Establish connection to client based on established GSocketConnection.
@@ -220,11 +218,10 @@ gboolean j_network_connection_init_client(JConfiguration* configuration, JBacken
  *
  * \param[in] fabric Fabric via which the connection should be established.
  * \param[in] connection GSocketConnection for address exchange.
- * \param[out] connection A new connection.
  *
- * \return TRUE on success, FALSE if an error occurred.
+ * \return A new connection on success, NULL if an error occurred.
  **/
-gboolean j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gconnection, JNetworkConnection** connection);
+JNetworkConnection* j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gconnection);
 
 /**
  * Closes a connection and free all related resources. *

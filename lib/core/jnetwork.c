@@ -424,8 +424,8 @@ end:
 	return ret;
 }
 
-gboolean
-j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** instance_ptr)
+JNetworkFabric*
+j_network_fabric_init_server(JConfiguration* configuration)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -436,9 +436,7 @@ j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** ins
 	gint res = 0;
 	gsize addrlen = 0;
 
-	*instance_ptr = g_new0(JNetworkFabric, 1);
-
-	fabric = *instance_ptr;
+	fabric = g_new0(JNetworkFabric, 1);
 	fabric->config = configuration;
 	fabric->con_side = JF_SERVER;
 
@@ -490,10 +488,11 @@ j_network_fabric_init_server(JConfiguration* configuration, JNetworkFabric** ins
 	fabric->fabric_addr_network.addr_len = htonl(fabric->fabric_addr_network.addr_len);
 	fabric->fabric_addr_network.addr_format = htonl(fabric->info->addr_format);
 
-	return TRUE;
+	return fabric;
 
 end:
-	return FALSE;
+	/// \todo clean up fabric
+	return NULL;
 }
 
 /**
@@ -509,8 +508,8 @@ end:
  *
  * \return TRUE on success, FALSE if an error occurred.
  **/
-static gboolean
-j_network_fabric_init_client(JConfiguration* configuration, JNetworkFabricAddr* addr, JNetworkFabric** instance_ptr)
+static JNetworkFabric*
+j_network_fabric_init_client(JConfiguration* configuration, JNetworkFabricAddr* addr)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -519,11 +518,8 @@ j_network_fabric_init_client(JConfiguration* configuration, JNetworkFabricAddr* 
 	struct fi_info* hints;
 
 	gint res;
-	gboolean ret = FALSE;
 
-	*instance_ptr = g_new0(JNetworkFabric, 1);
-
-	fabric = *instance_ptr;
+	fabric = g_new0(JNetworkFabric, 1);
 	fabric->config = configuration;
 	fabric->con_side = JF_CLIENT;
 
@@ -549,10 +545,11 @@ j_network_fabric_init_client(JConfiguration* configuration, JNetworkFabricAddr* 
 	res = fi_fabric(fabric->info->fabric_attr, &fabric->fabric, NULL);
 	CHECK("failed to initelize client fabric!");
 
-	ret = TRUE;
+	return fabric;
 
 end:
-	return ret;
+	/// \todo clean up fabric
+	return NULL;
 }
 
 /**
@@ -726,62 +723,66 @@ end:
 	return ret;
 }
 
-gboolean
-j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index, JNetworkConnection** instance_ptr)
+JNetworkConnection*
+j_network_connection_init_client(JConfiguration* configuration, JBackendType backend, guint index)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	gboolean ret = FALSE;
 
 	JNetworkFabricAddr jf_addr;
 	JNetworkConnection* connection;
 	JNetworkConnectionEvents event;
 
 	GError* error = NULL;
-	GInputStream* g_input;
-	GSocketConnection* g_connection;
-	g_autoptr(GSocketClient) g_client = NULL;
+	GInputStream* input_stream;
+	GSocketConnection* socket_connection;
+	g_autoptr(GSocketClient) socket_client = NULL;
 
 	gint res;
 	gchar const* server;
 
-	*instance_ptr = g_new0(JNetworkConnection, 1);
-	connection = *instance_ptr;
+	connection = g_new0(JNetworkConnection, 1);
 
-	g_client = g_socket_client_new();
+	socket_client = g_socket_client_new();
 	server = j_configuration_get_server(configuration, backend, index);
-	g_connection = g_socket_client_connect_to_host(g_client, server, j_configuration_get_port(configuration), NULL, &error);
+	socket_connection = g_socket_client_connect_to_host(socket_client, server, j_configuration_get_port(configuration), NULL, &error);
 	G_CHECK("Failed to build gsocket connection to host");
 
-	if (g_connection == NULL)
+	if (socket_connection == NULL)
 	{
 		g_warning("Can not connect to %s.", server);
 		goto end;
 	}
 
-	j_helper_set_nodelay(g_connection, TRUE);
+	j_helper_set_nodelay(socket_connection, TRUE);
 
-	g_input = g_io_stream_get_input_stream(G_IO_STREAM(g_connection));
+	input_stream = g_io_stream_get_input_stream(G_IO_STREAM(socket_connection));
 
-	g_input_stream_read(g_input, &jf_addr.addr_format, sizeof(jf_addr.addr_format), NULL, &error);
-	G_CHECK("Failed to read addr format from g_connection!");
+	g_input_stream_read(input_stream, &jf_addr.addr_format, sizeof(jf_addr.addr_format), NULL, &error);
+	G_CHECK("Failed to read addr format from socket_connection!");
 	jf_addr.addr_format = ntohl(jf_addr.addr_format);
 
-	g_input_stream_read(g_input, &jf_addr.addr_len, sizeof(jf_addr.addr_len), NULL, &error);
-	G_CHECK("Failed to read addr len from g_connection!");
+	g_input_stream_read(input_stream, &jf_addr.addr_len, sizeof(jf_addr.addr_len), NULL, &error);
+	G_CHECK("Failed to read addr len from socket_connection!");
 	jf_addr.addr_len = ntohl(jf_addr.addr_len);
 
 	jf_addr.addr = g_malloc(jf_addr.addr_len);
-	g_input_stream_read(g_input, jf_addr.addr, jf_addr.addr_len, NULL, &error);
-	G_CHECK("Failed to read addr from g_connection!");
+	g_input_stream_read(input_stream, jf_addr.addr, jf_addr.addr_len, NULL, &error);
+	G_CHECK("Failed to read addr from socket_connection!");
 
-	g_input_stream_close(g_input, NULL, &error);
+	g_input_stream_close(input_stream, NULL, &error);
 	G_CHECK("Failed to close input stream!");
 
-	g_io_stream_close(G_IO_STREAM(g_connection), NULL, &error);
+	g_io_stream_close(G_IO_STREAM(socket_connection), NULL, &error);
 	G_CHECK("Failed to close gsocket!");
 
-	EXE(j_network_fabric_init_client(configuration, &jf_addr, &connection->fabric), "Failed to initialize fabric for client!");
+	connection->fabric = j_network_fabric_init_client(configuration, &jf_addr);
+
+	if (connection->fabric == NULL)
+	{
+		g_warning("Failed to initialize fabric for client!");
+		goto end;
+	}
+
 	connection->info = connection->fabric->info;
 
 	EXE(j_network_connection_init(connection), "Failed to initelze connection!");
@@ -800,18 +801,17 @@ j_network_connection_init_client(JConfiguration* configuration, JBackendType bac
 		goto end;
 	}
 
-	ret = TRUE;
+	return connection;
 
 end:
-	return ret;
+	/// \todo clean up connection
+	return NULL;
 }
 
-gboolean
-j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gconnection, JNetworkConnection** instance_ptr)
+JNetworkConnection*
+j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gconnection)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	gboolean ret = FALSE;
 
 	JNetworkConnection* connection;
 	JNetworkConnectionEvents con_event;
@@ -819,26 +819,25 @@ j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gcon
 	JNetworkFabricEvents event;
 
 	GError* error = NULL;
-	GOutputStream* g_out;
+	GOutputStream* output_stream;
 
 	gint res;
 	struct fi_eq_cm_entry request;
 
-	*instance_ptr = g_new0(JNetworkConnection, 1);
-	connection = *instance_ptr;
+	connection = g_new0(JNetworkConnection, 1);
 
 	// send addr
-	g_out = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
-	g_output_stream_write(g_out, &addr->addr_format, sizeof(addr->addr_format), NULL, &error);
+	output_stream = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
+	g_output_stream_write(output_stream, &addr->addr_format, sizeof(addr->addr_format), NULL, &error);
 	G_CHECK("Failed to write addr_format to stream!");
 
-	g_output_stream_write(g_out, &addr->addr_len, sizeof(addr->addr_len), NULL, &error);
+	g_output_stream_write(output_stream, &addr->addr_len, sizeof(addr->addr_len), NULL, &error);
 	G_CHECK("Failed to write addr_len to stream!");
 
-	g_output_stream_write(g_out, addr->addr, ntohl(addr->addr_len), NULL, &error);
+	g_output_stream_write(output_stream, addr->addr, ntohl(addr->addr_len), NULL, &error);
 	G_CHECK("Failed to write addr to stream!");
 
-	g_output_stream_close(g_out, NULL, &error);
+	g_output_stream_close(output_stream, NULL, &error);
 	G_CHECK("Failed to close output stream!");
 
 	do
@@ -868,10 +867,11 @@ j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gcon
 		goto end;
 	}
 
-	ret = TRUE;
+	return connection;
 
 end:
-	return ret;
+	/// \todo clean up connection
+	return NULL;
 }
 
 gboolean
