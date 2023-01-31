@@ -194,11 +194,8 @@ test_message_semantics(void)
 	msg_semantics = j_message_get_semantics(message);
 
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_ATOMICITY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_ATOMICITY));
-	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_CONCURRENCY));
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_CONSISTENCY));
-	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_ORDERING), ==, j_semantics_get(msg_semantics, J_SEMANTICS_ORDERING));
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_PERSISTENCY));
-	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SAFETY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SAFETY));
 	g_assert_cmpint(j_semantics_get(semantics, J_SEMANTICS_SECURITY), ==, j_semantics_get(msg_semantics, J_SEMANTICS_SECURITY));
 	J_TEST_TRAP_END;
 }

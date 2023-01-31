@@ -162,6 +162,12 @@ j_operation_cache_test(JOperation* operation)
 	}
 	*/
 
+	// Enforce operation order even if some operations can not be cached
+	if (!ret)
+	{
+		j_operation_cache_flush();
+	}
+
 	return ret;
 }
 

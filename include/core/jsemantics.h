@@ -46,73 +46,128 @@ enum JSemanticsTemplate
 
 typedef enum JSemanticsTemplate JSemanticsTemplate;
 
+/**
+ * Semantics accepted by JULEA.
+ */
 enum JSemanticsType
 {
+	/**
+	 * Atomicity of batched operations.
+	 *
+	 * \attention Currently only database functions are affected by this setting.
+	 */
 	J_SEMANTICS_ATOMICITY,
-	J_SEMANTICS_CONCURRENCY,
+
+	/**
+	 * Defines when data will be consistent for other clients, that is, when batches are executed.
+	 */
 	J_SEMANTICS_CONSISTENCY,
-	J_SEMANTICS_ORDERING,
+
+	/**
+	 * Defines which guarantees are given on the persistency of finished operations.
+	 */
 	J_SEMANTICS_PERSISTENCY,
-	J_SEMANTICS_SAFETY,
+
+	/**
+	 * Defines the used security model.
+	 *
+	 * \attention Currently unused.
+	 */
 	J_SEMANTICS_SECURITY
 };
 
 typedef enum JSemanticsType JSemanticsType;
 
+/**
+ * Atomicity of batched operations.
+ *
+ * \attention Currently only database functions are affected by this setting.
+ */
 enum JSemanticsAtomicity
 {
+	/**
+	 * Consecutive operations of the same type are part of the same DB transaction.
+	 *
+	 * \todo Generalize to complete batch instead of same lists.
+	 */
 	J_SEMANTICS_ATOMICITY_BATCH,
+
+	/**
+	 * Each operation is a transaction.
+	 */
 	J_SEMANTICS_ATOMICITY_OPERATION,
+
+	/**
+	 * No transactions are used.
+	 *
+	 * \todo Currently unused. Interesting when other backends support transactions.
+	 */
 	J_SEMANTICS_ATOMICITY_NONE
 };
 
 typedef enum JSemanticsAtomicity JSemanticsAtomicity;
 
-enum JSemanticsConcurrency
-{
-	J_SEMANTICS_CONCURRENCY_OVERLAPPING,
-	J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING,
-	J_SEMANTICS_CONCURRENCY_NONE
-};
-
-typedef enum JSemanticsConcurrency JSemanticsConcurrency;
-
+/**
+ * Consistency levels describe when other clients are able to read written data.
+ *
+ * The implemented levels are loosely based on the levels described in:
+ *
+ * Chen Wang, Kathryn Mohror, and Marc Snir. 2021. File System Semantics Requirements of HPC Applications.
+ * In Proceedings of the 30th International Symposium on High-Performance Parallel and Distributed Computing (HPDC '21).
+ * Association for Computing Machinery, New York, NY, USA, 19–30. https://doi.org/10.1145/3431379.3460637
+ *
+ * \attention Mixing immediate/eventual consistencies with session-based consistency for concurrently executed batches gives no guarantees on local consistency.
+ */
 enum JSemanticsConsistency
 {
+	/**
+	 * Data is consistent immediately after the batch is executed.
+	 */
 	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
-	J_SEMANTICS_CONSISTENCY_EVENTUAL,
-	J_SEMANTICS_CONSISTENCY_NONE
+
+	/**
+	 * Data is consistent immediately after no reference to the batch object is held anymore.
+	 */
+	J_SEMANTICS_CONSISTENCY_SESSION,
+
+	/**
+	 * The data of a corresponding batch will be eventually consistent after calling j_batch_execute().
+	 * Current implicit synchronization points are manual execution of any immediate batch, reading operations or program termination.
+	 * If more control of asynchronous execution is wanted, consider using j_batch_execute_async() instead of consistency levels.
+	 */
+	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
 
 typedef enum JSemanticsConsistency JSemanticsConsistency;
 
-enum JSemanticsOrdering
-{
-	J_SEMANTICS_ORDERING_STRICT,
-	J_SEMANTICS_ORDERING_SEMI_RELAXED,
-	J_SEMANTICS_ORDERING_RELAXED
-};
-
-typedef enum JSemanticsOrdering JSemanticsOrdering;
-
+/**
+ * Defines which guarantees are given on the persistency of finished operations.
+ */
 enum JSemanticsPersistency
 {
-	J_SEMANTICS_PERSISTENCY_IMMEDIATE,
-	J_SEMANTICS_PERSISTENCY_EVENTUAL,
+	/**
+	 * Data of finished operations is stored on persistent storage.
+	 */
+	J_SEMANTICS_PERSISTENCY_STORAGE,
+
+	/**
+	 * Data of finished operations arrived at a JULEA server.
+	 */
+	J_SEMANTICS_PERSISTENCY_NETWORK,
+
+	/**
+	 * No guarantees on persistency.
+	 */
 	J_SEMANTICS_PERSISTENCY_NONE
 };
 
 typedef enum JSemanticsPersistency JSemanticsPersistency;
 
-enum JSemanticsSafety
-{
-	J_SEMANTICS_SAFETY_STORAGE,
-	J_SEMANTICS_SAFETY_NETWORK,
-	J_SEMANTICS_SAFETY_NONE
-};
-
-typedef enum JSemanticsSafety JSemanticsSafety;
-
+/**
+ * Defines the used security model.
+ *
+ * \attention Currently unused.
+ */
 enum JSemanticsSecurity
 {
 	J_SEMANTICS_SECURITY_STRICT,
@@ -186,7 +241,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
  * \code
  * JSemantics* semantics;
  * ...
- * j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+ * j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_SESSION);
  * \endcode
  *
  * \param semantics The semantics.
@@ -201,7 +256,7 @@ void j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value);
  * \code
  * JSemantics* semantics;
  * ...
- * j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
+ * j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
  * \endcode
  *
  * \param semantics The semantics.
