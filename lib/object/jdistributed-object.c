@@ -231,16 +231,16 @@ j_distributed_object_create_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -274,16 +274,16 @@ j_distributed_object_delete_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 		guint32 operation_count;
@@ -409,15 +409,15 @@ j_distributed_object_write_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JListIterator) it = NULL;
 		g_autoptr(JMessage) reply = NULL;
@@ -529,14 +529,14 @@ j_distributed_object_sync_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -1073,7 +1073,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 				new_data += new_length;
 
 				// Fake bytes_written here instead of doing another loop further down
-				if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+				if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_NONE)
 				{
 					j_helper_atomic_add(bytes_written, new_length);
 				}

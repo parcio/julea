@@ -39,13 +39,13 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 	guint32 operation_count;
 	JBackendOperation backend_operation;
 	g_autoptr(JSemantics) semantics = NULL;
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 	gboolean message_matched = FALSE;
 	guint i;
 
 	operation_count = j_message_get_count(message);
 	semantics = j_message_get_semantics(message);
-	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 
 	switch (j_message_get_type(message))
 	{
@@ -56,7 +56,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gpointer object;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}
@@ -71,7 +71,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				{
 					j_statistics_add(statistics, J_STATISTICS_FILES_CREATED, 1);
 
-					if (safety == J_SEMANTICS_SAFETY_STORAGE)
+					if (persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 					{
 						j_backend_object_sync(jd_object_backend, object);
 						j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -97,7 +97,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gpointer object;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}
@@ -269,7 +269,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			gpointer object;
 			gboolean ret;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}
@@ -321,7 +321,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 				j_memory_chunk_reset(memory_chunk);
 			}
 
-			if (safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				j_backend_object_sync(jd_object_backend, object);
 				j_statistics_add(statistics, J_STATISTICS_SYNC, 1);
@@ -379,7 +379,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gpointer object;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}
@@ -501,7 +501,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gpointer batch;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}
@@ -544,7 +544,7 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gpointer batch;
 
-			if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+			if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 			{
 				reply = j_message_new_reply(message);
 			}

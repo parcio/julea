@@ -392,6 +392,8 @@ j_item_serialize(JItem* item, JSemantics* semantics)
 	bson_t* b_cred;
 	bson_t* b_distribution;
 
+	(void)semantics;
+
 	g_return_val_if_fail(item != NULL, NULL);
 
 	b = bson_new();
@@ -402,6 +404,8 @@ j_item_serialize(JItem* item, JSemantics* semantics)
 	bson_append_oid(b, "collection", -1, j_collection_get_id(item->collection));
 	bson_append_utf8(b, "name", -1, item->name, -1);
 
+	/// \todo refactor or delete
+	/*
 	if (j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY) == J_SEMANTICS_CONCURRENCY_NONE)
 	{
 		bson_t b_document[1];
@@ -415,6 +419,7 @@ j_item_serialize(JItem* item, JSemantics* semantics)
 
 		bson_destroy(b_document);
 	}
+	*/
 
 	bson_append_document(b, "credentials", -1, b_cred);
 	bson_append_document(b, "distribution", -1, b_distribution);

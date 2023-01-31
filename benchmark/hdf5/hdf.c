@@ -55,7 +55,7 @@ sync_file(gchar const* path)
 
 		semantics = j_benchmark_get_semantics();
 
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_NONE)
 		{
 			return;
 		}

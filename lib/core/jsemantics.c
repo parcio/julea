@@ -53,24 +53,9 @@ struct JSemantics
 	JSemanticsPersistency persistency;
 
 	/**
-	 * The concurrency semantics.
-	 **/
-	JSemanticsConcurrency concurrency;
-
-	/**
-	 * The safety semantics.
-	 **/
-	JSemanticsSafety safety;
-
-	/**
 	 * The security semantics.
 	 **/
 	JSemanticsSecurity security;
-
-	/**
-	 * The ordering semantics.
-	 */
-	JSemanticsOrdering ordering;
 
 	/**
 	 * Whether the semantics object is immutable.
@@ -92,11 +77,8 @@ j_semantics_new(JSemanticsTemplate template_)
 
 	semantics = g_slice_new(JSemantics);
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
-	semantics->concurrency = J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
-	semantics->ordering = J_SEMANTICS_ORDERING_SEMI_RELAXED;
-	semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
-	semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
+	semantics->persistency = J_SEMANTICS_PERSISTENCY_NETWORK;
 	semantics->security = J_SEMANTICS_SECURITY_NONE;
 	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
@@ -107,20 +89,14 @@ j_semantics_new(JSemanticsTemplate template_)
 			break;
 		case J_SEMANTICS_TEMPLATE_POSIX:
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_OPERATION;
-			semantics->concurrency = J_SEMANTICS_CONCURRENCY_OVERLAPPING;
 			semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
-			semantics->ordering = J_SEMANTICS_ORDERING_STRICT;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_IMMEDIATE;
-			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_STRICT;
 			break;
 		case J_SEMANTICS_TEMPLATE_TEMPORARY_LOCAL:
 			semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
-			semantics->concurrency = J_SEMANTICS_CONCURRENCY_NONE;
-			semantics->consistency = J_SEMANTICS_CONSISTENCY_NONE;
-			semantics->ordering = J_SEMANTICS_ORDERING_SEMI_RELAXED;
-			semantics->persistency = J_SEMANTICS_PERSISTENCY_NONE;
-			semantics->safety = J_SEMANTICS_SAFETY_NETWORK;
+			semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+			semantics->persistency = J_SEMANTICS_PERSISTENCY_NETWORK;
 			semantics->security = J_SEMANTICS_SECURITY_NONE;
 			break;
 		default:
@@ -194,53 +170,19 @@ j_semantics_new_from_string(gchar const* template_str, gchar const* semantics_st
 				g_assert_not_reached();
 			}
 		}
-		else if (g_str_has_prefix(parts[i], "concurrency="))
-		{
-			if (g_strcmp0(value, "overlapping") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
-			}
-			else if (g_strcmp0(value, "non-overlapping") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_NONE);
-			}
-			else
-			{
-				g_assert_not_reached();
-			}
-		}
 		else if (g_str_has_prefix(parts[i], "consistency="))
 		{
 			if (g_strcmp0(value, "immediate") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 			}
+			else if (g_strcmp0(value, "session") == 0)
+			{
+				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_SESSION);
+			}
 			else if (g_strcmp0(value, "eventual") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_EVENTUAL);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_NONE);
-			}
-			else
-			{
-				g_assert_not_reached();
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "ordering="))
-		{
-			if (g_strcmp0(value, "strict") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ORDERING, J_SEMANTICS_ORDERING_STRICT);
-			}
-			else if (g_strcmp0(value, "relaxed") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_ORDERING, J_SEMANTICS_ORDERING_RELAXED);
 			}
 			else
 			{
@@ -249,36 +191,17 @@ j_semantics_new_from_string(gchar const* template_str, gchar const* semantics_st
 		}
 		else if (g_str_has_prefix(parts[i], "persistency="))
 		{
-			if (g_strcmp0(value, "immediate") == 0)
+			if (g_strcmp0(value, "storage") == 0)
 			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_STORAGE);
 			}
-			else if (g_strcmp0(value, "eventual") == 0)
+			else if (g_strcmp0(value, "network") == 0)
 			{
-				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NETWORK);
 			}
 			else if (g_strcmp0(value, "none") == 0)
 			{
 				j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_NONE);
-			}
-			else
-			{
-				g_assert_not_reached();
-			}
-		}
-		else if (g_str_has_prefix(parts[i], "safety="))
-		{
-			if (g_strcmp0(value, "storage") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_STORAGE);
-			}
-			else if (g_strcmp0(value, "network") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NETWORK);
-			}
-			else if (g_strcmp0(value, "none") == 0)
-			{
-				j_semantics_set(semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_NONE);
 			}
 			else
 			{
@@ -352,20 +275,11 @@ j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value)
 		case J_SEMANTICS_ATOMICITY:
 			semantics->atomicity = value;
 			break;
-		case J_SEMANTICS_CONCURRENCY:
-			semantics->concurrency = value;
-			break;
 		case J_SEMANTICS_CONSISTENCY:
 			semantics->consistency = value;
 			break;
-		case J_SEMANTICS_ORDERING:
-			semantics->ordering = value;
-			break;
 		case J_SEMANTICS_PERSISTENCY:
 			semantics->persistency = value;
-			break;
-		case J_SEMANTICS_SAFETY:
-			semantics->safety = value;
 			break;
 		case J_SEMANTICS_SECURITY:
 			semantics->security = value;
@@ -386,16 +300,10 @@ j_semantics_get(JSemantics* semantics, JSemanticsType key)
 	{
 		case J_SEMANTICS_ATOMICITY:
 			return semantics->atomicity;
-		case J_SEMANTICS_CONCURRENCY:
-			return semantics->concurrency;
 		case J_SEMANTICS_CONSISTENCY:
 			return semantics->consistency;
-		case J_SEMANTICS_ORDERING:
-			return semantics->ordering;
 		case J_SEMANTICS_PERSISTENCY:
 			return semantics->persistency;
-		case J_SEMANTICS_SAFETY:
-			return semantics->safety;
 		case J_SEMANTICS_SECURITY:
 			return semantics->security;
 		default:

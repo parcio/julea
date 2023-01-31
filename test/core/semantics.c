@@ -65,21 +65,13 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 	s = j_semantics_get(*semantics, J_SEMANTICS_ATOMICITY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_ATOMICITY_OPERATION);
 
-	j_semantics_set(*semantics, J_SEMANTICS_CONCURRENCY, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
-	s = j_semantics_get(*semantics, J_SEMANTICS_CONCURRENCY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
-
 	j_semantics_set(*semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 	s = j_semantics_get(*semantics, J_SEMANTICS_CONSISTENCY);
 	g_assert_cmpint(s, ==, J_SEMANTICS_CONSISTENCY_IMMEDIATE);
 
-	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_EVENTUAL);
+	j_semantics_set(*semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_STORAGE);
 	s = j_semantics_get(*semantics, J_SEMANTICS_PERSISTENCY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_EVENTUAL);
-
-	j_semantics_set(*semantics, J_SEMANTICS_SAFETY, J_SEMANTICS_SAFETY_STORAGE);
-	s = j_semantics_get(*semantics, J_SEMANTICS_SAFETY);
-	g_assert_cmpint(s, ==, J_SEMANTICS_SAFETY_STORAGE);
+	g_assert_cmpint(s, ==, J_SEMANTICS_PERSISTENCY_STORAGE);
 
 	j_semantics_set(*semantics, J_SEMANTICS_SECURITY, J_SEMANTICS_SECURITY_STRICT);
 	s = j_semantics_get(*semantics, J_SEMANTICS_SECURITY);

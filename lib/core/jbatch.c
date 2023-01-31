@@ -221,7 +221,7 @@ j_batch_execute(JBatch* batch)
 		return FALSE;
 	}
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
 	    && j_operation_cache_add(batch))
 	{
 		return TRUE;
@@ -337,14 +337,11 @@ j_batch_execute_internal(JBatch* batch)
 	last_key = NULL;
 	last_exec_func = NULL;
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
-	{
-		/** \todo perform some optimizations
-		 * It is important to consider dependencies:
-		 * - Operations have to be performed before their dependent ones.
-		 *   For example, a collection has to be created before items in it can be created.
-		 */
-	}
+	/** \todo perform some (reordering) optimizations
+		* It is important to consider dependencies:
+		* - Operations have to be performed before their dependent ones.
+		*   For example, a collection has to be created before items in it can be created.
+		*/
 
 	/**
 	 * Try to combine as many operations of the same type as possible.

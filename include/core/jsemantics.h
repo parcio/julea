@@ -48,14 +48,19 @@ typedef enum JSemanticsTemplate JSemanticsTemplate;
 
 enum JSemanticsType
 {
-	J_SEMANTICS_ATOMICITY,
-	J_SEMANTICS_CONCURRENCY,
-	J_SEMANTICS_CONSISTENCY,
-	J_SEMANTICS_ORDERING,
-	J_SEMANTICS_PERSISTENCY,
-	J_SEMANTICS_SAFETY,
-	J_SEMANTICS_SECURITY
+	J_SEMANTICS_ATOMICITY, // only used in DB (out-commented in object code), makes batch a transaction
+	J_SEMANTICS_CONSISTENCY, // zsm mit persistency, implementiert 3 lvl siehe unten
+	J_SEMANTICS_PERSISTENCY, // umbenannt in persistency
+	J_SEMANTICS_SECURITY // unused
 };
+
+/*
+- 4 levels in wang2021 are:
+  - strong // fuse below
+  - commit // batch executes immediately in batch_execute
+  - session // session defined as "having a reference" -> destructor syncs
+  - eventually // timeout/memory size
+*/
 
 typedef enum JSemanticsType JSemanticsType;
 
@@ -68,50 +73,23 @@ enum JSemanticsAtomicity
 
 typedef enum JSemanticsAtomicity JSemanticsAtomicity;
 
-enum JSemanticsConcurrency
-{
-	J_SEMANTICS_CONCURRENCY_OVERLAPPING,
-	J_SEMANTICS_CONCURRENCY_NON_OVERLAPPING,
-	J_SEMANTICS_CONCURRENCY_NONE
-};
-
-typedef enum JSemanticsConcurrency JSemanticsConcurrency;
-
 enum JSemanticsConsistency
 {
 	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
-	J_SEMANTICS_CONSISTENCY_EVENTUAL,
-	J_SEMANTICS_CONSISTENCY_NONE
+	J_SEMANTICS_CONSISTENCY_SESSION,
+	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
 
 typedef enum JSemanticsConsistency JSemanticsConsistency;
 
-enum JSemanticsOrdering
-{
-	J_SEMANTICS_ORDERING_STRICT,
-	J_SEMANTICS_ORDERING_SEMI_RELAXED,
-	J_SEMANTICS_ORDERING_RELAXED
-};
-
-typedef enum JSemanticsOrdering JSemanticsOrdering;
-
 enum JSemanticsPersistency
 {
-	J_SEMANTICS_PERSISTENCY_IMMEDIATE,
-	J_SEMANTICS_PERSISTENCY_EVENTUAL,
+	J_SEMANTICS_PERSISTENCY_STORAGE,
+	J_SEMANTICS_PERSISTENCY_NETWORK,
 	J_SEMANTICS_PERSISTENCY_NONE
 };
 
 typedef enum JSemanticsPersistency JSemanticsPersistency;
-
-enum JSemanticsSafety
-{
-	J_SEMANTICS_SAFETY_STORAGE,
-	J_SEMANTICS_SAFETY_NETWORK,
-	J_SEMANTICS_SAFETY_NONE
-};
-
-typedef enum JSemanticsSafety JSemanticsSafety;
 
 enum JSemanticsSecurity
 {
@@ -186,7 +164,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JSemantics, j_semantics_unref)
  * \code
  * JSemantics* semantics;
  * ...
- * j_semantics_set(semantics, J_SEMANTICS_PERSISTENCY, J_SEMANTICS_PERSISTENCY_LAX);
+ * j_semantics_set(semantics, J_SEMANTICS_CONSISTENCY, J_SEMANTICS_CONSISTENCY_SESSION);
  * \endcode
  *
  * \param semantics The semantics.
@@ -201,7 +179,7 @@ void j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value);
  * \code
  * JSemantics* semantics;
  * ...
- * j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
+ * j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
  * \endcode
  *
  * \param semantics The semantics.
