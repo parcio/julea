@@ -77,7 +77,7 @@ j_semantics_new(JSemanticsTemplate template_)
 
 	semantics = g_slice_new(JSemantics);
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
-	semantics->consistency = J_SEMANTICS_CONSISTENCY_EVENTUAL;
+	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_NETWORK;
 	semantics->security = J_SEMANTICS_SECURITY_NONE;
 	semantics->immutable = FALSE;
