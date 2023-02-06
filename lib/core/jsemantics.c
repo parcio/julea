@@ -69,7 +69,7 @@ struct JSemantics
 };
 
 JSemantics*
-j_semantics_new(JSemanticsTemplate template_)
+j_semantics_new(JSemanticsTemplate template)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -83,7 +83,7 @@ j_semantics_new(JSemanticsTemplate template_)
 	semantics->immutable = FALSE;
 	semantics->ref_count = 1;
 
-	switch (template_)
+	switch (template)
 	{
 		case J_SEMANTICS_TEMPLATE_DEFAULT:
 			break;
