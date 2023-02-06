@@ -73,10 +73,35 @@ enum JSemanticsAtomicity
 
 typedef enum JSemanticsAtomicity JSemanticsAtomicity;
 
+/**
+ * Consistency levels describe when other clients are able to read written data.
+ *
+ * The implemented levels are loosely based on the levels described in:
+ *
+ * Chen Wang, Kathryn Mohror, and Marc Snir. 2021. File System Semantics Requirements of HPC Applications.
+ * In Proceedings of the 30th International Symposium on High-Performance Parallel and Distributed Computing (HPDC '21).
+ * Association for Computing Machinery, New York, NY, USA, 19–30. https://doi.org/10.1145/3431379.3460637
+ *
+ * \todo process local reads should always behave like immediate
+ */
 enum JSemanticsConsistency
 {
+	/**
+	 * Data is consistent immediately after the batch is executed.
+	 */
 	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
+
+	/**
+	 * Data is consistent immediately after no reference to the batch object is hold anymore.
+	 * \todo currently on a per batch basis. should this one use the operation cache as well? this would add a synchronization point for eventual consistency
+	 */
 	J_SEMANTICS_CONSISTENCY_SESSION,
+
+	/**
+	 * The data of a corresponding batch will be eventually consistent.
+	 * Unlike when using j_batch_execute_async there is no explicit control on completion of the batch.
+	 * Current synchronization points are manual execution of any immediate batch or program termination.
+	 */
 	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
 

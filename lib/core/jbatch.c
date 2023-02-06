@@ -152,6 +152,14 @@ j_batch_unref(JBatch* batch)
 
 	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{
+		gboolean session = j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_SESSION;
+
+		if (session)
+		{
+			// freeing the batch ends the current session
+			j_batch_execute_internal(batch);
+		}
+
 		if (batch->background_operation != NULL)
 		{
 			j_background_operation_unref(batch->background_operation);
@@ -212,25 +220,42 @@ j_batch_execute(JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret;
+	gboolean ret = FALSE;
+	JSemanticsConsistency consistency;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	consistency = j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY);
+
 	if (j_list_length(batch->list) == 0)
 	{
-		return FALSE;
+		return ret;
 	}
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_EVENTUAL
-	    && j_operation_cache_add(batch))
+	switch (consistency)
 	{
-		return TRUE;
+		case J_SEMANTICS_CONSISTENCY_EVENTUAL:
+			// execute on operation cache flushes
+			return j_operation_cache_add(batch);
+			break;
+
+		case J_SEMANTICS_CONSISTENCY_SESSION:
+			// execute when batch gets freed
+			ret = TRUE;
+			break;
+
+		case J_SEMANTICS_CONSISTENCY_IMMEDIATE:
+			// wait for all operations currently cached
+			j_operation_cache_flush();
+
+			ret = j_batch_execute_internal(batch);
+			j_list_delete_all(batch->list);
+
+			break;
+
+		default:
+			g_warn_if_reached();
 	}
-
-	j_operation_cache_flush();
-
-	ret = j_batch_execute_internal(batch);
-	j_list_delete_all(batch->list);
 
 	return ret;
 }
