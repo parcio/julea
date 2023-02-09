@@ -67,6 +67,8 @@ typedef struct JConnectionPool JConnectionPool;
 
 static JConnectionPool* j_connection_pool = NULL;
 
+extern GPrivate j_trace_thread_default;
+
 void
 j_connection_pool_init(JConfiguration* configuration)
 {
@@ -196,6 +198,8 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 
 			gchar const* client_checksum;
 			gchar const* server_checksum;
+			gchar const* client_program_name;
+			guint32 client_process_uid;
 			guint op_count;
 
 			client = g_socket_client_new();
@@ -215,9 +219,13 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 			j_helper_set_nodelay(connection, TRUE);
 
 			client_checksum = j_configuration_get_checksum(j_configuration());
+			client_program_name = g_get_prgname();
+			client_process_uid = j_configuration_get_uid(j_configuration());
 
 			message = j_message_new(J_MESSAGE_PING, strlen(client_checksum) + 1);
 			j_message_append_string(message, client_checksum);
+			j_message_append_string(message, client_program_name);
+			j_message_append_n(message, &client_process_uid, sizeof(guint32)); 
 			j_message_send(message, connection);
 
 			reply = j_message_new_reply(message);

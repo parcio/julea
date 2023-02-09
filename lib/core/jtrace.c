@@ -45,7 +45,8 @@ enum JTraceFlags
 	J_TRACE_OFF = 0,
 	J_TRACE_ECHO = 1 << 0,
 	J_TRACE_OTF = 1 << 1,
-	J_TRACE_SUMMARY = 1 << 2
+	J_TRACE_SUMMARY = 1 << 2,
+	J_TRACE_ACCESS = 1 << 3
 };
 
 typedef enum JTraceFlags JTraceFlags;
@@ -82,6 +83,7 @@ struct JTraceThread
 	 **/
 	guint function_depth;
 
+
 	GArray* stack;
 
 #ifdef HAVE_OTF
@@ -96,6 +98,21 @@ struct JTraceThread
 		guint32 process_id;
 	} otf;
 #endif
+
+	struct {
+		char* program_name;
+		guint32 uid;
+	} client;
+
+	struct {
+		struct {
+			char* namespace;
+		} kv;
+		struct {
+			char* namespace;
+			char* path;
+		} object;
+	} access;
 };
 
 typedef struct JTraceThread JTraceThread;
@@ -162,6 +179,8 @@ j_trace_thread_new(GThread* thread)
 	trace_thread = g_slice_new(JTraceThread);
 	trace_thread->function_depth = 0;
 	trace_thread->stack = g_array_new(FALSE, FALSE, sizeof(JTraceStack));
+	trace_thread->client.program_name = NULL;
+	trace_thread->client.uid = 0;
 
 	if (thread == NULL)
 	{
@@ -385,6 +404,10 @@ j_trace_init(gchar const* name)
 		{
 			j_trace_flags |= J_TRACE_SUMMARY;
 		}
+		else if (g_strcmp0(trace_parts[i], "access") == 0)
+		{
+			j_trace_flags |= J_TRACE_ACCESS;
+		}
 	}
 
 	if (j_trace_flags == J_TRACE_OFF)
@@ -432,6 +455,7 @@ j_trace_init(gchar const* name)
 	{
 		j_trace_summary_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	}
+
 
 	g_free(j_trace_name);
 	j_trace_name = g_strdup(name);
@@ -499,13 +523,57 @@ j_trace_fini(void)
 	g_free(j_trace_name);
 }
 
+struct Access {
+	guint64 timestamp;
+	guint32 uid;
+	const char* program_name;
+	const char* backend;
+	const char* namespace;
+	const char* name;
+	const char* operation;
+	guint64 size;
+	guint32 complexity;
+};
+typedef struct Access Access;
+
+static void
+j_trace_access_print(const Access* row) {
+	g_printerr("%"G_GUINT64_FORMAT", %u, %s, %s, %s, %s, %s, %"G_GUINT64_FORMAT", %u\n",
+		row->timestamp,
+		row->uid,
+		row->program_name,
+		row->backend,
+		row->namespace,
+		row->name,
+		row->operation,
+		row->size,
+		row->complexity
+	);
+}
+
+static void
+store_object_path(JTraceThread* trace_thread, const char* namespace, const char* path)
+{
+	if (trace_thread->access.object.namespace != namespace) {
+		g_free(trace_thread->access.object.namespace);
+		trace_thread->access.object.namespace = NULL;
+		if(namespace) { trace_thread->access.object.namespace = strdup(namespace); }
+	}
+
+	if(trace_thread->access.object.path != path) {
+		g_free(trace_thread->access.object.path);
+		trace_thread->access.object.path = NULL;
+		if (path) { trace_thread->access.object.path = strdup(path); }
+	}
+}
+
+
 JTrace*
 j_trace_enter(gchar const* name, gchar const* format, ...)
 {
 	JTraceThread* trace_thread;
 	JTrace* trace;
 	guint64 timestamp;
-	va_list args;
 
 	if (j_trace_flags == J_TRACE_OFF)
 	{
@@ -528,8 +596,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	trace->name = g_strdup(name);
 	trace->enter_time = timestamp;
 
-	va_start(args, format);
-
+	
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		G_LOCK(j_trace_echo);
@@ -537,10 +604,13 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 
 		if (format != NULL)
 		{
+			va_list args;
 			g_autofree gchar* arguments = NULL;
+			va_start(args, format);
 
 			arguments = g_strdup_vprintf(format, args);
 			g_printerr("ENTER %s (%s)\n", name, arguments);
+			va_end(args);
 		}
 		else
 		{
@@ -548,6 +618,98 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		}
 
 		G_UNLOCK(j_trace_echo);
+	}
+
+	if (j_trace_flags & J_TRACE_ACCESS)
+	{
+		if (strcmp(name, "ping") == 0)
+		{
+			va_list args;
+			va_start(args, format);
+			g_free(trace_thread->client.program_name);
+			trace_thread->client.program_name = strdup(va_arg(args, const char*));
+			trace_thread->client.uid = va_arg(args, guint32);
+			va_end(args);
+		}
+		else if (strncmp(name, "backend_", 8) == 0)
+		{
+			Access row;
+			va_list args;
+			memset(&row, 0, sizeof(Access));
+			name += 8;
+			row.uid = trace_thread->client.uid;
+			row.program_name = trace_thread->client.program_name;
+			row.timestamp = timestamp;
+			if (strncmp(name, "kv_", 3) == 0)
+			{
+				name += 3;
+				row.backend = "kv";
+				row.operation = name;
+			}
+			else if (strncmp(name, "db_", 3) == 0)
+			{
+				name += 3;
+				row.backend = "db";
+				row.operation = name;
+			}
+			else if (strncmp(name, "object_", 7) == 0)
+			{
+				name += 7;
+				row.backend = "object";
+				row.operation = name;
+				row.namespace = trace_thread->access.object.namespace;
+				row.name = trace_thread->access.object.path;
+				if (strcmp(name, "create") == 0) {
+					va_start(args, format);
+					row.namespace = va_arg(args, const char*);
+					row.name = va_arg(args, const char*);
+					va_end(args);
+				} else if (strcmp(name, "open") == 0) {
+					va_start(args, format);
+					row.namespace = va_arg(args, const char*);
+					row.name = va_arg(args, const char*);
+					va_end(args);
+				} else if (strcmp(name, "get_all") == 0) {
+					va_start(args, format);
+					row.namespace = va_arg(args, const char*);
+					row.name = NULL;
+					va_end(args);
+				} else if (strcmp(name, "get_by_prefix") == 0) {
+					va_start(args, format);
+					row.namespace = va_arg(args, const char*);
+					row.name = va_arg(args, const char*);
+					va_end(args);
+				} else if (strcmp(name, "read") == 0) {
+					va_start(args, format);
+					va_arg(args, void*);
+					va_arg(args, void*);
+					row.size = va_arg(args, guint64);
+					va_end(args);
+				} else if (strcmp(name, "write") == 0) {
+					va_start(args, format);
+					va_arg(args, void*);
+					va_arg(args, void*);
+					row.size = va_arg(args, guint64);
+					va_end(args);
+				}
+				// status, sync, iterate, fini, init <- no further data
+
+				G_LOCK(j_trace_echo);
+				j_trace_access_print(&row);
+				G_UNLOCK(j_trace_echo);
+
+				{
+					if (strcmp(name, "close") == 0 || strcmp(name, "delete") == 0) {
+						row.namespace = NULL;
+						row.name = NULL;
+					}
+					store_object_path(trace_thread, row.namespace, row.name);
+				}
+			}
+			else
+			{
+			}
+		}
 	}
 
 #ifdef HAVE_OTF
@@ -596,7 +758,6 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		g_array_append_val(trace_thread->stack, current_stack);
 	}
 
-	va_end(args);
 
 	trace_thread->function_depth++;
 

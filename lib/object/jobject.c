@@ -595,7 +595,7 @@ static gboolean
 j_object_write_exec(JList* operations, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
-
+	
 	/// \todo check return value for messages
 	gboolean ret = TRUE;
 

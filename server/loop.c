@@ -458,6 +458,8 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			g_autoptr(JMessage) reply = NULL;
 			gchar const* client_checksum;
 			gchar const* server_checksum;
+			gchar const* client_program_name;
+			guint32 client_process_uid;
 			guint num;
 
 			num = g_atomic_int_add(&jd_thread_num, 1);
@@ -465,11 +467,17 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 			//g_message("HELLO %d", num);
 
 			client_checksum = j_message_get_string(message);
+			client_program_name = j_message_get_string(message);
+			client_process_uid = *(guint32*)j_message_get_n(message, sizeof(guint32));
 			server_checksum = j_configuration_get_checksum(jd_configuration);
 
 			if (g_strcmp0(client_checksum, server_checksum) != 0)
 			{
 				g_warning("Client %d uses different configuration than server.", num);
+			}
+
+			{
+				J_TRACE("ping", "%s Thread: %u", client_program_name, client_process_uid);
 			}
 
 			reply = j_message_new_reply(message);
