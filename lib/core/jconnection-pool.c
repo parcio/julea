@@ -169,6 +169,7 @@ j_connection_pool_fini(void)
 	g_slice_free(JConnectionPool, pool);
 }
 
+extern const char *__progname;
 static GSocketConnection*
 j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* server)
 {
@@ -220,6 +221,8 @@ j_connection_pool_pop_internal(GAsyncQueue* queue, guint* count, gchar const* se
 
 			client_checksum = j_configuration_get_checksum(j_configuration());
 			client_program_name = g_get_prgname();
+			if (client_program_name == NULL) { client_program_name = __progname; }
+			if (client_program_name == NULL) { client_program_name = "<unkown>"; }
 			client_process_uid = j_configuration_get_uid(j_configuration());
 
 			message = j_message_new(J_MESSAGE_PING, strlen(client_checksum) + 1);
