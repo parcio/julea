@@ -820,7 +820,7 @@ j_backend_db_schema_create(JBackend* backend, gpointer batch, gchar const* name,
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	{
-		J_TRACE("backend_schema_create", "%p, %s, %u, %p, %p", batch, name, schema->len, (gconstpointer)schema, (gpointer)error);
+		J_TRACE("backend_db_schema_create", "%p, %s, %u, %p, %p", batch, name, schema->len, (gconstpointer)schema, (gpointer)error);
 		ret = backend->db.backend_schema_create(backend->data, batch, name, schema, error);
 	}
 
@@ -841,7 +841,7 @@ j_backend_db_schema_get(JBackend* backend, gpointer batch, gchar const* name, bs
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	{
-		J_TRACE("backend_kv_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
+		J_TRACE("backend_db_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
 		ret = backend->db.backend_schema_get(backend->data, batch, name, schema, error);
 	}
 
