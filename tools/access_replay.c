@@ -401,7 +401,7 @@ end:
   }
   if(object_backend != NULL)
   {
-    j_backend_db_fini(db_backend);
+    j_backend_object_fini(object_backend);
   }
   if(db_module != NULL) { g_module_close(db_module); }
   if(kv_module != NULL) { g_module_close(kv_module); }
