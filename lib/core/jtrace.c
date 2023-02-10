@@ -558,7 +558,7 @@ j_trace_fini(void)
 
 static void
 j_trace_access_print(const Access* row, guint64 duration) {
-	g_printerr("%"G_GUINT64_FORMAT".06%"G_GUINT64_FORMAT", %u, %s, %s, %s, %s, %s, %"G_GUINT64_FORMAT", %u, %"G_GUINT64_FORMAT".06%"G_GUINT64_FORMAT"\n",
+	g_printerr("%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT", %u, %s, %s, %s, %s, %s, %"G_GUINT64_FORMAT", %u, %"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT"\n",
 		row->timestamp / G_USEC_PER_SEC,
 		row->timestamp % G_USEC_PER_SEC,
 		row->uid,
