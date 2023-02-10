@@ -341,7 +341,7 @@ j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError**
 
 			break;
 		case J_DB_TYPE_SINT64:
-			if (G_UNLIKELY(!BSON_ITER_HOLDS_INT64(iter)))
+			if (G_UNLIKELY(!BSON_ITER_HOLDS_INT64(iter) && !BSON_ITER_HOLDS_INT32(iter)))
 			{
 				g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
 				goto _error;
@@ -349,7 +349,11 @@ j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError**
 
 			if (value)
 			{
-				value->val_sint64 = bson_iter_int64(iter);
+				if(BSON_ITER_HOLDS_INT64(iter)) {
+					value->val_sint64 = bson_iter_int64(iter);
+				} else {
+					value->val_sint64 = bson_iter_int32(iter);
+				}
 			}
 
 			break;

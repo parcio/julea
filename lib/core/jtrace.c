@@ -31,6 +31,8 @@
 
 #include <jtrace.h>
 
+#include <bson.h>
+
 /**
  * \addtogroup JTrace
  *
@@ -77,6 +79,7 @@ struct Access {
 	const char* operation;
 	guint64 size;
 	guint32 complexity;
+	const bson_t* bson;
 };
 typedef struct Access Access;
 
@@ -177,7 +180,7 @@ G_LOCK_DEFINE_STATIC(j_trace_summary);
 
 static void
 j_trace_access_print_header(void) {
-	g_printerr("time, process_uid, program_name, backend, namespace, name, operation, size, complexity, duration\n");
+	g_printerr("time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson\n");
 }
 /**
  * Creates a new trace thread.
@@ -202,6 +205,7 @@ j_trace_thread_new(GThread* thread)
 	}
 
 	trace_thread = g_slice_new(JTraceThread);
+	memset(trace_thread, 0, sizeof(JTraceThread));
 	trace_thread->function_depth = 0;
 	trace_thread->stack = g_array_new(FALSE, FALSE, sizeof(JTraceStack));
 	trace_thread->client.program_name = NULL;
@@ -558,7 +562,7 @@ j_trace_fini(void)
 
 static void
 j_trace_access_print(const Access* row, guint64 duration) {
-	g_printerr("%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT", %u, %s, %s, %s, %s, %s, %"G_GUINT64_FORMAT", %u, %"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT"\n",
+	g_printerr("%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT",%u,%s,%s,%s,%s,%s,%"G_GUINT64_FORMAT",%u,%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT",\"%s\"\n",
 		row->timestamp / G_USEC_PER_SEC,
 		row->timestamp % G_USEC_PER_SEC,
 		row->uid,
@@ -570,7 +574,8 @@ j_trace_access_print(const Access* row, guint64 duration) {
 		row->size,
 		row->complexity,
 		duration / G_USEC_PER_SEC,
-		duration % G_USEC_PER_SEC
+		duration % G_USEC_PER_SEC,
+		row->bson == NULL ? "{}" : bson_as_json(row->bson, NULL)
 	);
 }
 
@@ -758,6 +763,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 						row->size = va_arg(args, guint32);
+						row->bson = va_arg(args, const bson_t*);
 						va_end(args);
 				} else if (strcmp(name, "schema_get") == 0) {
 					va_start(args, format);
@@ -774,25 +780,35 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					va_arg(args, void*);
 					row->name = va_arg(args, const char*);
 					row->size = va_arg(args, guint32);
+					row->bson = va_arg(args, const bson_t*);
 					/// \TODO complexity from selector
 					va_end(args);
 				} else if (strcmp(name, "update") == 0) {
+					static bson_t bson;
+					bson_init(&bson);
 					va_start(args, format);
 					va_arg(args, void*);
 					row->name = va_arg(args, const char*);
 					row->size = va_arg(args, guint32);
+					bson_append_document(&bson, "selector", -1, va_arg(args, const bson_t*));
+					bson_append_document(&bson, "entry", -1, va_arg(args, const bson_t*));
+					row->bson = &bson;
 					/// \TODO complexity from selector
 					va_end(args);
 				} else if (strcmp(name, "delete") == 0) {
 					va_start(args, format);
 					va_arg(args, void*);
 					row->name = va_arg(args, const char*);
+					va_arg(args, guint32);
+					row->bson = va_arg(args, const bson_t*);
 					/// \TODO complexity from selector
 					va_end(args);
 				} else if (strcmp(name, "query") == 0) {
 					va_start(args, format);
 					va_arg(args, void*);
 					row->name = va_arg(args, const char*);
+					va_arg(args, guint32);
+					row->bson = va_arg(args, const bson_t*);
 					/// \TODO complexvity from selector
 					va_end(args);
 				}
@@ -835,12 +851,14 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					va_arg(args, void*);
 					va_arg(args, void*);
 					row->size = va_arg(args, guint64);
+					row->complexity = va_arg(args, guint64);
 					va_end(args);
 				} else if (strcmp(name, "write") == 0) {
 					va_start(args, format);
 					va_arg(args, void*);
 					va_arg(args, void*);
 					row->size = va_arg(args, guint64);
+					row->complexity = va_arg(args, guint64);
 					va_end(args);
 				}
 				// status, sync, iterate, fini, init <- no further data
@@ -973,16 +991,16 @@ j_trace_leave(JTrace* trace)
 				trace_thread->access.inside = FALSE;
 				if(strcmp(trace->name, "backend_kv_batch_execute") == 0) {
 					store_kv_namespace(trace_thread, NULL, NULL);
-				}
-				if (strcmp(trace->name, "backend_db_batch_execute") == 0) {
+				} else if (strcmp(trace->name, "backend_dbupdate") == 0){
+					bson_destroy((bson_t*)row->bson);
+				} else if (strcmp(trace->name, "backend_db_batch_execute") == 0) {
 					store_db_namespace(trace_thread, NULL);
-				}
-				else if (strcmp(trace->name, "backend_object_delete") == 0 || strcmp(trace->name, "backend_object_close") == 0 )
+				} else if (strcmp(trace->name, "backend_object_delete") == 0 || strcmp(trace->name, "backend_object_close") == 0 )
 				{
 					store_object_path(trace_thread, NULL, NULL);
 				}
-			}
 				}
+			}
 		}
 	}
 

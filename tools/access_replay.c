@@ -61,34 +61,47 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
   return FALSE;
 }
 
-static gboolean
-split(char* line, const char* parts[9]) {
-  int cnt = 0;
-  const char* section;
-  section = strtok(line, ",");
-  while(section != NULL) {
-    if (cnt == 9) {
-      g_warning("to many parts in line");
-      return FALSE;
-    }
-    parts[cnt++] = section;
-    section = strtok(NULL, ",");
-  }
-  if (cnt != 9) {
-    g_warning("to few parts in line");
-    return FALSE;
-  }
-  return TRUE;
-}
 #define BACKEND 3
 #define NAMESPACE 4
 #define NAME 5
 #define OPERATION 6
 #define SIZE 7
-
+#define COMPLEXITY 8
+#define DURATION 9
+#define JSON 10
 
 static gboolean
-replay_object(JMemoryChunk* memory_chunk, guint64 memory_chunk_size, char* parts[9]){
+split(char* line, const char* parts[11]) {
+  int cnt = 0;
+  const char* section;
+  section = strtok(line, ",");
+  while(section != NULL) {
+    parts[cnt++] = section;
+    if (cnt == 10) { break; }
+    section = strtok(NULL, ",");
+  }
+  while(*++section);
+  parts[cnt] = section+1; 
+  if (cnt != 10) {
+    g_warning("to few parts in line");
+    return FALSE;
+  }
+  parts[JSON] += 1;
+  {
+    char* itr = parts[JSON];
+    while(*++itr);
+    itr[-1] = 0;
+  }
+  return TRUE;
+}
+
+static guint64
+parse_ul(const char* str) {
+  return strtoul(str, NULL, 10);
+}
+
+static gboolean
+replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
   static gpointer data = NULL;
   const char* op = parts[OPERATION];
   gboolean ret = FALSE;
@@ -107,20 +120,20 @@ replay_object(JMemoryChunk* memory_chunk, guint64 memory_chunk_size, char* parts
     ret = j_backend_kv_get_by_prefix(object_backend, parts[NAMESPACE], parts[NAME], &data);
   } else if (strcmp(op, "read") == 0) {
     static guint64 bytes_read = 0;
-    guint64 size = strtoul(parts[SIZE], NULL, 10);
+    guint64 size = parse_ul(parts[SIZE]);
     if (size > memory_chunk_size) {
       g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
     } else {
-      ret = j_backend_object_read(object_backend, data, memory_chunk, size, 0, &bytes_read);
+      ret = j_backend_object_read(object_backend, data, memory_chunk, size, parse_ul(parts[COMPLEXITY]), &bytes_read);
     }
   } else if (strcmp(op, "write") == 0) {
     static guint64 bytes_written = 0;
-    guint64 size = strtoul(parts[SIZE], NULL, 10);
+    guint64 size = parse_ul(parts[SIZE]);
     if (size > memory_chunk_size) {
       g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
     } else {
-    ret = j_backend_object_write(object_backend, data, memory_chunk, size, 0, &bytes_written);
-      }
+      ret = j_backend_object_write(object_backend, data, memory_chunk, size, parse_ul(parts[COMPLEXITY]), &bytes_written);
+    }
   } else if (strcmp(op, "status") == 0) {
     static gint64 modification_time;
     static guint64 size;
@@ -147,74 +160,159 @@ replay_object(JMemoryChunk* memory_chunk, guint64 memory_chunk_size, char* parts
   return ret;
 }
 static gboolean
-replay_kv(JMemoryChunk* memory_chunk, guint64 memory_chunk_size, char* parts[9]){
+replay_kv(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
   gboolean ret = FALSE;
   const char* op = parts[OPERATION];
+  gpointer batch = NULL;
+  static JSemantics* semantics = NULL; 
+  if (semantics == NULL) { semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT); }
 
   if (strcmp(op, "batch_start") == 0) {
+    if (batch != NULL) { g_warning("starting a new batch, but old one is not finished"); }
+    ret = j_backend_kv_batch_start(kv_backend, parts[NAMESPACE], semantics, &batch);
   } else if (strcmp(op, "put") == 0) {
+    ret = j_backend_kv_put(kv_backend, batch, parts[NAME], memory_chunk, parse_ul(parts[SIZE]));
   } else if (strcmp(op, "delete") == 0) {
+    ret = j_backend_kv_delete(kv_backend, batch, parts[NAME]);
   } else if (strcmp(op, "get") == 0) {
+    guint32 size;
+    gpointer value;
+    ret = j_backend_kv_get(kv_backend, batch, parts[NAME], &value, &size);
   } else if (strcmp(op, "get_all") == 0) {
+    if (batch != NULL) { g_warning("start iterating with remaining batch or iteration"); }
+    ret = j_backend_kv_get_all(kv_backend, parts[NAMESPACE], &batch); 
   } else if (strcmp(op, "get_by_prefix") == 0) {
+    if (batch != NULL) { g_warning("start iterating with remaining batch or iteration"); }
+    ret = j_backend_kv_get_by_prefix(kv_backend, parts[NAMESPACE], parts[NAME], &batch); 
   } else if (strcmp(op, "iterate") == 0) {
+    const char* name;
+    gconstpointer value;
+    guint32 len;
+    ret = j_backend_kv_iterate(kv_backend, batch, &name, &value, &len);
+    if (!ret) { batch = NULL;  ret = TRUE;}
   } else if (strcmp(op, "init") == 0) {
+    ret = TRUE;
   } else if (strcmp(op, "fini") == 0) {
+    ret = TRUE;
   } else if (strcmp(op, "batch_execute") == 0) {
+    ret = j_backend_kv_batch_execute(kv_backend, batch);
   } else {
     g_warning("unkown operation: '%s'", op);
   }
   return ret;
 }
+struct JSqlBatch
+{
+	const gchar* namespace;
+	JSemantics* semantics;
+	gboolean open;
+	gboolean aborted;
+};
 static gboolean
-replay_db(JMemoryChunk* memory_chunk, guint64 memory_chunk_size, char* parts[9]){
+replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
   gboolean ret = FALSE;
-  static gpointer batch;
+  static gpointer batch = NULL;
+  static gpointer itr = NULL;
+  static gchar* namespace = NULL;
   /// \TODO how to determine semantics used?
   static JSemantics* semantics = NULL; 
-  GError* error;
+  GError* error = NULL;
   const char* op = parts[OPERATION];
+  static GArray* bsons = NULL;
+  if (bsons == NULL) { bsons = g_array_sized_new(FALSE, TRUE, sizeof(bson_t*), 0); }
   if (semantics == NULL) { semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT); }
 
   if (strcmp(op, "batch_start") == 0) {
     if (batch != NULL) { g_warning("starting a new batch, but old one is not finished"); }
-    ret = j_backend_db_batch_start(db_backend, parts[NAMESPACE], semantics, &batch, &error);
+    namespace = strdup(parts[NAMESPACE]);
+    ret = j_backend_db_batch_start(db_backend, namespace, semantics, &batch, &error);
   } else if (strcmp(op, "schema_create") == 0) {
-    bson_t* schema;
+    bson_t* schema = bson_new_from_json(parts[JSON], -1, NULL);
     ret = j_backend_db_schema_create(db_backend, batch, parts[NAME], schema, &error);
+    g_array_append_val(bsons, schema);
   } else if (strcmp(op, "schema_get") == 0) {
+    bson_t* schema = bson_new();
+    ret = j_backend_db_schema_get(db_backend, batch, parts[NAME], schema, &error);
+    g_array_append_val(bsons, schema);
+    // schema do not exists
+    if (error && error->code == 8) {
+      g_error_free(error);
+      error = NULL;
+      ret = TRUE;
+    }
   } else if (strcmp(op, "schema_delete") == 0) {
+    ret = j_backend_db_schema_delete(db_backend, batch, parts[NAME], &error);
   } else if (strcmp(op, "insert") == 0) {
+    bson_t* entry = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* res = bson_new();
+    ret = j_backend_db_insert(db_backend, batch, parts[NAME], entry, res, &error);
+    g_array_append_val(bsons, entry);
+    g_array_append_val(bsons, res);
   } else if (strcmp(op, "delete") == 0) {
+    bson_t* entry = bson_new_from_json(parts[JSON], -1, NULL);
+    ret = j_backend_db_delete(db_backend, batch, parts[NAME], entry, &error);
+    g_array_append_val(bsons, entry);
   } else if (strcmp(op, "update") == 0) {
-  } else if (strcmp(op, "delete") == 0) {
+    bson_iter_t bson_iter;
+    bson_t* selector;
+    bson_t* entry;
+    const uint8_t* doc;
+    uint32_t len;
+    bson_t* bson = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_iter_init_find(&bson_iter, bson, "entry");
+    bson_iter_document(&bson_iter, &len, &doc);
+    entry = bson_new_from_data(doc, len);
+    bson_iter_init_find(&bson_iter, bson, "selector");
+    bson_iter_document(&bson_iter, &len, &doc);
+    selector = bson_new_from_data(doc, len);
+    ret = j_backend_db_update(db_backend, batch, parts[NAME], selector, entry, &error);
+    g_array_append_val(bsons, entry);
+    g_array_append_val(bsons, selector);
+    g_array_append_val(bsons, bson);
   } else if (strcmp(op, "query") == 0) {
+    bson_t* selector = bson_new_from_json(parts[JSON], -1, NULL);
+    if(itr != NULL) { g_warning("start new db iteration without finishing old one!"); }
+    ret = j_backend_db_query(db_backend, batch, parts[NAME], selector, &itr, &error);
+    g_array_append_val(bsons, selector);
   } else if (strcmp(op, "iterate") == 0) {
-    static bson_t* entry;
-    ret = j_backend_db_iterate(db_backend, batch, entry, &error);
-    if(!ret) { batch = NULL; ret = TRUE; }
+    bson_t* entry = bson_new();
+    ret = j_backend_db_iterate(db_backend, itr, entry, &error);
+    g_array_append_val(bsons, entry);
+    if(!ret) { itr = NULL; ret = TRUE; g_error_free(error); error = NULL; }
   } else if (strcmp(op, "init") == 0) {
     ret = TRUE;
   } else if (strcmp(op, "fini") == 0) {
     ret = TRUE;
   } else if (strcmp(op, "batch_execute") == 0) {
-    j_backend_db_batch_execute(db_backend, batch, &error);
+    ret = j_backend_db_batch_execute(db_backend, batch, &error);
     batch = NULL;
+    for(guint i = 0; i < bsons->len; ++i) {
+      bson_destroy(g_array_index(bsons, bson_t*, i));
+    }
+    g_array_remove_range(bsons, 0, bsons->len);
+    // no operation to do
+    if (error && error->code == 7) {
+      g_error_free(error);
+      error = NULL;
+      ret = TRUE;
+    }
   } else {
     g_warning("unknown operation: '%s'", op);
+  }
+  if (error) {
+    g_warning("db error(%d): %s", error->code, error->message);
   }
   return ret && error == NULL;
 }
 
 static gboolean
-replay(JMemoryChunk* memory_chunk, guint64 memory_chunck_size, char* line)
+replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 {
-  const char* parts[9];
+  const char* parts[11];
   if (!split(line, parts)) { return FALSE; }
-
-  if(strcmp(parts[3], " object") == 0) { if(!replay_object(memory_chunk, memory_chunck_size, parts)) return FALSE; }
-  if(strcmp(parts[3], " kv") == 0) { if(!replay_kv(memory_chunk, memory_chunck_size, parts)) return FALSE; }
-  if(strcmp(parts[3], " db") == 0) { if(!replay_db(memory_chunk, memory_chunck_size, parts)) return FALSE; }
+  if(strcmp(parts[BACKEND], "object") == 0) {  if(!replay_object(memory_chunk, memory_chunck_size, parts)) return FALSE; }
+  if(strcmp(parts[BACKEND], "kv") == 0) { if(!replay_kv(memory_chunk, memory_chunck_size, parts)) return FALSE; }
+  if(strcmp(parts[BACKEND], "db") == 0) { if(!replay_db(memory_chunk, memory_chunck_size, parts)) return FALSE; }
   
   return TRUE;
 }
@@ -234,7 +332,7 @@ main(int argc, char** argv)
   JMemoryChunk* memory_chunk = NULL;
   guint64 memory_chunck_size = 0;
 
-  setlocal(LC_ALL, "C.UTF-8");
+  setlocale(LC_ALL, "C.UTF-8");
 
   configuration = j_configuration();
   if (configuration == NULL) {
@@ -256,8 +354,8 @@ main(int argc, char** argv)
     goto end;
   }
 
-  j_trace_init("julea-replay");
-  trace = j_trace_enter(G_STRFUNC, NULL);
+  // j_trace_init("julea-replay");
+  // trace = j_trace_enter(G_STRFUNC, NULL);
 
   port_str = g_strdup_printf("%d", j_configuration_get_port(configuration));
   if(!setup_backend(configuration, J_BACKEND_TYPE_OBJECT, port_str, &object_module, &object_backend)) { goto end; }
@@ -268,16 +366,21 @@ main(int argc, char** argv)
   memory_chunk = j_memory_chunk_new(memory_chunck_size);
 
   {
+    const char* header = "time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson";
     char* line = NULL;
     size_t len = 0;
     ssize_t read = 0;
+    void* chunk_data = *((void**)((char*)memory_chunk+8));
+    memset(chunk_data, 0, memory_chunck_size);
     read = getline(&line, &len, record_file);
-    if (read == -1 || strcmp(line, "time, process_uid, program_name, backend, namespace, name, operation, size, complexity, duration") != 0) {
-      g_warning("Invalid header in dump!");
+    line[read-1] = 0;
+    if (read == -1 || strcmp(line, header) != 0) {
+      g_warning("Invalid header in dump!\n'%s'\n'%s'\n", header, line);
       goto end;
     }
     while ((read = getline(&line, &len, record_file)) != -1) {
-      if (!replay(memory_chunk, memory_chunck_size, line)) {
+      line[read-1] = 0;
+      if (!replay(chunk_data, memory_chunck_size, line)) {
         g_warning("failed to replay dump!");
         goto end;
       }
@@ -304,7 +407,7 @@ end:
   if(kv_module != NULL) { g_module_close(kv_module); }
   if(object_module != NULL) { g_module_close(object_module); }
   j_configuration_unref(configuration);
-  j_tarce_leave(trace);
-  j_trace_fini();
+  // j_trace_leave(trace);
+  // j_trace_fini();
   return res;
 }
