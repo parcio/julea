@@ -213,6 +213,8 @@ j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	j_operation_cache_flush(); // flush in-flight batches
+
 	data = g_slice_new(JBackendOperation);
 	memcpy(data, &j_backend_operation_db_schema_get, sizeof(JBackendOperation));
 	data->in_param[0].ptr_const = j_db_schema->namespace;
@@ -418,6 +420,8 @@ j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBItera
 	JBackendOperation* data;
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	j_operation_cache_flush(); // flush in-flight batches
 
 	helper = j_helper_alloc_aligned(128, sizeof(JDBIteratorHelper));
 	helper->initialized = FALSE;
