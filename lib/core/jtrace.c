@@ -620,6 +620,29 @@ store_db_namespace(JTraceThread* trace_thread, const char* namespace)
 	}
 }
 
+static guint32
+_count_keys_recursive(bson_iter_t* itr)
+{
+	guint32 cnt = 0;
+	do{
+		cnt +=1;
+		if (bson_iter_type(itr) == BSON_TYPE_ARRAY || bson_iter_type(itr) == BSON_TYPE_DOCUMENT) {
+			bson_iter_t child;
+			bson_iter_recurse(itr, &child);
+			cnt += _count_keys_recursive(&child);
+		}
+	} while(bson_iter_next(itr));
+	return cnt;
+}
+
+static guint32
+count_keys_recursive(const bson_t* bson)
+{
+	bson_iter_t itr;
+	g_return_val_if_fail(bson_iter_init(&itr, bson), 0);
+	return _count_keys_recursive(&itr);
+}
+
 JTrace*
 j_trace_enter(gchar const* name, gchar const* format, ...)
 {
@@ -781,19 +804,21 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->name = va_arg(args, const char*);
 					row->size = va_arg(args, guint32);
 					row->bson = va_arg(args, const bson_t*);
-					/// \TODO complexity from selector
+					/// \TODO complexity needed?
 					va_end(args);
 				} else if (strcmp(name, "update") == 0) {
 					static bson_t bson;
+					const bson_t* selector = NULL;
 					bson_init(&bson);
 					va_start(args, format);
 					va_arg(args, void*);
 					row->name = va_arg(args, const char*);
 					row->size = va_arg(args, guint32);
-					bson_append_document(&bson, "selector", -1, va_arg(args, const bson_t*));
+					selector = va_arg(args, const bson_t*);
+					bson_append_document(&bson, "selector", -1, selector);
 					bson_append_document(&bson, "entry", -1, va_arg(args, const bson_t*));
 					row->bson = &bson;
-					/// \TODO complexity from selector
+					row->complexity = count_keys_recursive(selector) - 2; // because the added two top level keys
 					va_end(args);
 				} else if (strcmp(name, "delete") == 0) {
 					va_start(args, format);
@@ -801,7 +826,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->name = va_arg(args, const char*);
 					va_arg(args, guint32);
 					row->bson = va_arg(args, const bson_t*);
-					/// \TODO complexity from selector
+					row->complexity = count_keys_recursive(row->bson);
 					va_end(args);
 				} else if (strcmp(name, "query") == 0) {
 					va_start(args, format);
@@ -809,7 +834,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->name = va_arg(args, const char*);
 					va_arg(args, guint32);
 					row->bson = va_arg(args, const bson_t*);
-					/// \TODO complexvity from selector
+					row->complexity = count_keys_recursive(row->bson);
 					va_end(args);
 				}
 				// iterate, init, fini <- no further details

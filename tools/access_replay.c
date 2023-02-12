@@ -51,6 +51,9 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
       case J_BACKEND_TYPE_OBJECT:  res = j_backend_object_init(*j_backend, path); break;
       case J_BACKEND_TYPE_KV: res = j_backend_kv_init(*j_backend, path); break;
       case J_BACKEND_TYPE_DB: res = j_backend_db_init(*j_backend, path); break;
+      default:
+        g_warning("unknown backend type: (%d), unable to setup backend!", type);
+        res = FALSE;
     }
     if (!res) {
       g_warning("Failed to initelize backend: %s", backend);
@@ -171,7 +174,12 @@ replay_kv(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
     if (batch != NULL) { g_warning("starting a new batch, but old one is not finished"); }
     ret = j_backend_kv_batch_start(kv_backend, parts[NAMESPACE], semantics, &batch);
   } else if (strcmp(op, "put") == 0) {
-    ret = j_backend_kv_put(kv_backend, batch, parts[NAME], memory_chunk, parse_ul(parts[SIZE]));
+    guint64 size = parse_ul(parts[SIZE]);
+    if(size > memory_chunk_size){
+      g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
+    } else {
+      ret = j_backend_kv_put(kv_backend, batch, parts[NAME], memory_chunk, size);
+    }
   } else if (strcmp(op, "delete") == 0) {
     ret = j_backend_kv_delete(kv_backend, batch, parts[NAME]);
   } else if (strcmp(op, "get") == 0) {
@@ -209,7 +217,7 @@ struct JSqlBatch
 	gboolean aborted;
 };
 static gboolean
-replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
+replay_db(const char* parts[11]){
   gboolean ret = FALSE;
   static gpointer batch = NULL;
   static gpointer itr = NULL;
@@ -227,7 +235,7 @@ replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
     namespace = strdup(parts[NAMESPACE]);
     ret = j_backend_db_batch_start(db_backend, namespace, semantics, &batch, &error);
   } else if (strcmp(op, "schema_create") == 0) {
-    bson_t* schema = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* schema = bson_new_from_json((const uint8_t*)parts[JSON], -1, NULL);
     ret = j_backend_db_schema_create(db_backend, batch, parts[NAME], schema, &error);
     g_array_append_val(bsons, schema);
   } else if (strcmp(op, "schema_get") == 0) {
@@ -243,13 +251,13 @@ replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
   } else if (strcmp(op, "schema_delete") == 0) {
     ret = j_backend_db_schema_delete(db_backend, batch, parts[NAME], &error);
   } else if (strcmp(op, "insert") == 0) {
-    bson_t* entry = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* entry = bson_new_from_json((const uint8_t*)parts[JSON], -1, NULL);
     bson_t* res = bson_new();
     ret = j_backend_db_insert(db_backend, batch, parts[NAME], entry, res, &error);
     g_array_append_val(bsons, entry);
     g_array_append_val(bsons, res);
   } else if (strcmp(op, "delete") == 0) {
-    bson_t* entry = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* entry = bson_new_from_json((const uint8_t*)parts[JSON], -1, NULL);
     ret = j_backend_db_delete(db_backend, batch, parts[NAME], entry, &error);
     g_array_append_val(bsons, entry);
   } else if (strcmp(op, "update") == 0) {
@@ -258,7 +266,7 @@ replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
     bson_t* entry;
     const uint8_t* doc;
     uint32_t len;
-    bson_t* bson = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* bson = bson_new_from_json((const uint8_t*)parts[JSON], -1, NULL);
     bson_iter_init_find(&bson_iter, bson, "entry");
     bson_iter_document(&bson_iter, &len, &doc);
     entry = bson_new_from_data(doc, len);
@@ -270,7 +278,7 @@ replay_db(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11]){
     g_array_append_val(bsons, selector);
     g_array_append_val(bsons, bson);
   } else if (strcmp(op, "query") == 0) {
-    bson_t* selector = bson_new_from_json(parts[JSON], -1, NULL);
+    bson_t* selector = bson_new_from_json((const uint8_t*)parts[JSON], -1, NULL);
     if(itr != NULL) { g_warning("start new db iteration without finishing old one!"); }
     ret = j_backend_db_query(db_backend, batch, parts[NAME], selector, &itr, &error);
     g_array_append_val(bsons, selector);
@@ -312,7 +320,7 @@ replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
   if (!split(line, parts)) { return FALSE; }
   if(strcmp(parts[BACKEND], "object") == 0) {  if(!replay_object(memory_chunk, memory_chunck_size, parts)) return FALSE; }
   if(strcmp(parts[BACKEND], "kv") == 0) { if(!replay_kv(memory_chunk, memory_chunck_size, parts)) return FALSE; }
-  if(strcmp(parts[BACKEND], "db") == 0) { if(!replay_db(memory_chunk, memory_chunck_size, parts)) return FALSE; }
+  if(strcmp(parts[BACKEND], "db") == 0) { if(!replay_db(parts)) return FALSE; }
   
   return TRUE;
 }
@@ -323,13 +331,12 @@ main(int argc, char** argv)
   JConfiguration* configuration = NULL;
   const char* record_file_name = NULL;
   FILE* record_file = NULL;
-  JTrace* trace = NULL;
   GModule* db_module = NULL;
   GModule* kv_module = NULL;
   GModule* object_module = NULL;
   g_autofree gchar* port_str = NULL;
   gboolean res = FALSE;
-  JMemoryChunk* memory_chunk = NULL;
+  gchar* memory_chunk;
   guint64 memory_chunck_size = 0;
 
   setlocale(LC_ALL, "C.UTF-8");
@@ -363,15 +370,14 @@ main(int argc, char** argv)
   if(!setup_backend(configuration, J_BACKEND_TYPE_DB, port_str, &db_module, &db_backend)) { goto end; }
 
   memory_chunck_size = j_configuration_get_max_operation_size(configuration);
-  memory_chunk = j_memory_chunk_new(memory_chunck_size);
+  memory_chunk = malloc(memory_chunck_size);
 
   {
     const char* header = "time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson";
     char* line = NULL;
     size_t len = 0;
     ssize_t read = 0;
-    void* chunk_data = *((void**)((char*)memory_chunk+8));
-    memset(chunk_data, 0, memory_chunck_size);
+    memset(memory_chunk, 0, memory_chunck_size);
     read = getline(&line, &len, record_file);
     line[read-1] = 0;
     if (read == -1 || strcmp(line, header) != 0) {
@@ -380,7 +386,7 @@ main(int argc, char** argv)
     }
     while ((read = getline(&line, &len, record_file)) != -1) {
       line[read-1] = 0;
-      if (!replay(chunk_data, memory_chunck_size, line)) {
+      if (!replay(memory_chunk, memory_chunck_size, line)) {
         g_warning("failed to replay dump!");
         goto end;
       }
