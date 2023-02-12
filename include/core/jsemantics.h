@@ -46,21 +46,38 @@ enum JSemanticsTemplate
 
 typedef enum JSemanticsTemplate JSemanticsTemplate;
 
+/**
+ * Types of semantic settings accepted by JULEA.
+ *
+ */
 enum JSemanticsType
 {
-	J_SEMANTICS_ATOMICITY, // only used in DB (out-commented in object code), makes batch a transaction
-	J_SEMANTICS_CONSISTENCY, // zsm mit persistency, implementiert 3 lvl siehe unten
-	J_SEMANTICS_PERSISTENCY, // umbenannt in persistency
-	J_SEMANTICS_SECURITY // unused
-};
+	/**
+	 * Atomicity of batched operations.
+	 *
+	 * \attention Currently only database functions are affected by this setting.
+	 */
+	J_SEMANTICS_ATOMICITY,
 
-/*
-- 4 levels in wang2021 are:
-  - strong // fuse below
-  - commit // batch executes immediately in batch_execute
-  - session // session defined as "having a reference" -> destructor syncs
-  - eventually // timeout/memory size
-*/
+	/**
+	 * Defines when data will be consistent for other clients, i.e., when batches are executed.
+	 *
+	 */
+	J_SEMANTICS_CONSISTENCY,
+
+	/**
+	 * Defines which guarantees are given on the persistency of finished operations.
+	 *
+	 */
+	J_SEMANTICS_PERSISTENCY,
+
+	/**
+	 * Defines the used security model.
+	 *
+	 * \attention Currently unused.
+	 */
+	J_SEMANTICS_SECURITY
+};
 
 typedef enum JSemanticsType JSemanticsType;
 
@@ -82,7 +99,7 @@ typedef enum JSemanticsAtomicity JSemanticsAtomicity;
  * In Proceedings of the 30th International Symposium on High-Performance Parallel and Distributed Computing (HPDC '21).
  * Association for Computing Machinery, New York, NY, USA, 19–30. https://doi.org/10.1145/3431379.3460637
  *
- * \todo process local reads should always behave like immediate
+ * \attention Mixing immediate/eventual consistencies with session-based consistency for concurrently executed batches gives no guarantees on local consistency.
  */
 enum JSemanticsConsistency
 {
@@ -93,14 +110,13 @@ enum JSemanticsConsistency
 
 	/**
 	 * Data is consistent immediately after no reference to the batch object is hold anymore.
-	 * \todo currently on a per batch basis. should this one use the operation cache as well? this would add a synchronization point for eventual consistency
 	 */
 	J_SEMANTICS_CONSISTENCY_SESSION,
 
 	/**
-	 * The data of a corresponding batch will be eventually consistent.
-	 * Unlike when using j_batch_execute_async there is no explicit control on completion of the batch.
-	 * Current synchronization points are manual execution of any immediate batch or program termination.
+	 * The data of a corresponding batch will be eventually consistent without any notification of status or completion.
+	 * If more control of asynchronous execution is wanted consider using j_batch_execute_async.
+	 * Current synchronization points are manual execution of any immediate batch, reading operations or program termination.
 	 */
 	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
