@@ -168,6 +168,7 @@ j_item_create(JCollection* collection, gchar const* name, JDistribution* distrib
 	bson_t* tmp;
 	gpointer value;
 	guint32 len;
+	g_autoptr(JSemantics) semantics = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -177,7 +178,9 @@ j_item_create(JCollection* collection, gchar const* name, JDistribution* distrib
 		return NULL;
 	}
 
-	tmp = j_item_serialize(item, j_batch_get_semantics(batch));
+	semantics = j_batch_get_semantics(batch);
+
+	tmp = j_item_serialize(item, semantics);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 
 	if (!j_distributed_object_create(item->object, batch))
@@ -242,7 +245,6 @@ j_item_delete(JItem* item, JBatch* batch)
 	gboolean ret = TRUE;
 
 	g_return_if_fail(item != NULL);
-	g_return_if_fail(batch != NULL);
 
 	ret &= j_kv_delete(item->kv, batch);
 	ret &= j_distributed_object_delete(item->object, batch);

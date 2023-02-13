@@ -112,6 +112,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
 /**
  * Returns a batch's semantics.
  *
+ * The returned object must be freed using j_semantic_unref.
+ *
  * \code
  * \endcode
  *

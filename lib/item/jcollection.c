@@ -158,7 +158,6 @@ gboolean
 j_collection_delete(JCollection* collection, JBatch* batch)
 {
 	g_return_if_fail(collection != NULL);
-	g_return_if_fail(batch != NULL);
 
 	return j_kv_delete(collection->kv, batch);
 }

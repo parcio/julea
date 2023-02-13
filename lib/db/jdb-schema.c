@@ -405,7 +405,6 @@ j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(schema != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(schema->bson_initialized, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -437,7 +436,6 @@ j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(schema != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(!schema->server_side, FALSE);
 	g_return_val_if_fail(!schema->bson_initialized, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -462,7 +460,6 @@ j_db_schema_delete(JDBSchema* schema, JBatch* batch, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(schema != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_internal_schema_delete(schema, batch, error)))

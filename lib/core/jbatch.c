@@ -273,9 +273,12 @@ j_batch_get_semantics(JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_val_if_fail(batch != NULL, NULL);
+	if (batch == J_SINGLE_OP)
+	{
+		return j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
 
-	return batch->semantics;
+	return j_semantics_ref(batch->semantics);
 }
 
 gboolean
@@ -283,7 +286,6 @@ j_batch_add(JBatch* batch, JOperation* operation)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(batch != NULL);
 	g_return_if_fail(operation != NULL);
 
 	// pseudo batch-less ops by passing J_SINGLE_OP
