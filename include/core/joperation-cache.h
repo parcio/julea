@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 /**
  * Flush the current cache of in-flight eventually consistency batches.
- * 
+ *
  */
 gboolean j_operation_cache_flush(void);
 

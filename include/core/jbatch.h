@@ -143,7 +143,7 @@ gboolean j_batch_execute(JBatch* batch) G_GNUC_WARN_UNUSED_RESULT;
  * \param batch     A batch.
  * \param callback  An async callback.
  * \param user_data Arguments specified by the user for the callback.
- * 
+ *
  * \attention Consistency as defined by the batch's semantic is ignored by choosing explicit asynchronous execution.
  *
  * \return TRUE on success, FALSE if an error occurred.

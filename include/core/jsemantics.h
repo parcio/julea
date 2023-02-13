@@ -90,21 +90,21 @@ enum JSemanticsAtomicity
 {
 	/**
 	 * Consecutive operations of the same type are part of the same DB transaction.
-	 * 
+	 *
 	 * \todo Generalize to complete batch instead of same lists.
 	 */
 	J_SEMANTICS_ATOMICITY_BATCH,
 
 	/**
 	 * Each operation is a transaction.
-	 * 
+	 *
 	 */
 	J_SEMANTICS_ATOMICITY_OPERATION,
 
 	/**
 	 * No transactions are used.
-	 * 
-	 * \todo Currently unused. Interesting when other backends support transactions. 
+	 *
+	 * \todo Currently unused. Interesting when other backends support transactions.
 	 */
 	J_SEMANTICS_ATOMICITY_NONE
 };
@@ -153,19 +153,19 @@ enum JSemanticsPersistency
 {
 	/**
 	 * Data of finished operations is stored on persistent storage.
-	 * 
+	 *
 	 */
 	J_SEMANTICS_PERSISTENCY_STORAGE,
 
 	/**
 	 * Data of finished operations arrived at a JULEA server.
-	 * 
+	 *
 	 */
 	J_SEMANTICS_PERSISTENCY_NETWORK,
 
 	/**
 	 * No guarantees on persistency.
-	 * 
+	 *
 	 */
 	J_SEMANTICS_PERSISTENCY_NONE
 };
