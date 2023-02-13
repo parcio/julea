@@ -278,7 +278,7 @@ j_batch_get_semantics(JBatch* batch)
 	return batch->semantics;
 }
 
-void
+gboolean
 j_batch_add(JBatch* batch, JOperation* operation)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -286,7 +286,17 @@ j_batch_add(JBatch* batch, JOperation* operation)
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(operation != NULL);
 
+	// pseudo batch-less ops by passing J_SINGLE_OP
+	if (batch == J_SINGLE_OP)
+	{
+		g_autoptr(JBatch) tmp_batch = NULL;
+		tmp_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+		j_list_append(tmp_batch->list, operation);
+		return j_batch_execute(tmp_batch);
+	}
+
 	j_list_append(batch->list, operation);
+	return TRUE;
 }
 
 /* Internal */

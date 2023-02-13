@@ -1414,7 +1414,7 @@ j_distributed_object_unref(JDistributedObject* object)
 	}
 }
 
-void
+gboolean
 j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1430,10 +1430,10 @@ j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 	operation->exec_func = j_distributed_object_create_exec;
 	operation->free_func = j_distributed_object_create_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1448,10 +1448,10 @@ j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 	operation->exec_func = j_distributed_object_delete_exec;
 	operation->free_func = j_distributed_object_delete_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1459,6 +1459,7 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
+	gboolean ret = TRUE;
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
@@ -1487,7 +1488,7 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 		operation->exec_func = j_distributed_object_read_exec;
 		operation->free_func = j_distributed_object_read_free;
 
-		j_batch_add(batch, operation);
+		ret &= j_batch_add(batch, operation);
 
 		data = (gchar*)data + chunk_size;
 		length -= chunk_size;
@@ -1495,9 +1496,11 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 	}
 
 	*bytes_read = 0;
+
+	return ret;
 }
 
-void
+gboolean
 j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1505,6 +1508,7 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
+	gboolean ret = TRUE;
 
 	g_return_if_fail(object != NULL);
 	g_return_if_fail(data != NULL);
@@ -1533,7 +1537,7 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 		operation->exec_func = j_distributed_object_write_exec;
 		operation->free_func = j_distributed_object_write_free;
 
-		j_batch_add(batch, operation);
+		ret &= j_batch_add(batch, operation);
 
 		data = (gchar const*)data + chunk_size;
 		length -= chunk_size;
@@ -1541,9 +1545,11 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 	}
 
 	*bytes_written = 0;
+
+	return ret;
 }
 
-void
+gboolean
 j_distributed_object_status(JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1564,10 +1570,10 @@ j_distributed_object_status(JDistributedObject* object, gint64* modification_tim
 	operation->exec_func = j_distributed_object_status_exec;
 	operation->free_func = j_distributed_object_status_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_distributed_object_sync(JDistributedObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1586,7 +1592,7 @@ j_distributed_object_sync(JDistributedObject* object, JBatch* batch)
 	operation->exec_func = j_distributed_object_sync_exec;
 	operation->free_func = j_distributed_object_sync_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
 /**

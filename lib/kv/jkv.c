@@ -595,7 +595,7 @@ j_kv_unref(JKV* kv)
 	}
 }
 
-void
+gboolean
 j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -618,10 +618,10 @@ j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destro
 	operation->exec_func = j_kv_put_exec;
 	operation->free_func = j_kv_put_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_kv_delete(JKV* kv, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -636,10 +636,10 @@ j_kv_delete(JKV* kv, JBatch* batch)
 	operation->exec_func = j_kv_delete_exec;
 	operation->free_func = j_kv_delete_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -662,10 +662,10 @@ j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 	operation->exec_func = j_kv_get_exec;
 	operation->free_func = j_kv_get_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -689,7 +689,7 @@ j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	operation->exec_func = j_kv_get_exec;
 	operation->free_func = j_kv_get_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
 /**
