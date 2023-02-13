@@ -147,8 +147,8 @@ j_collection_get(JCollection** collection, gchar const* name, JBatch* batch)
 {
 	g_autoptr(JKV) kv = NULL;
 
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
 
 	kv = j_kv_new("collections", name);
 	return j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
@@ -157,7 +157,7 @@ j_collection_get(JCollection** collection, gchar const* name, JBatch* batch)
 gboolean
 j_collection_delete(JCollection* collection, JBatch* batch)
 {
-	g_return_if_fail(collection != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
 
 	return j_kv_delete(collection->kv, batch);
 }

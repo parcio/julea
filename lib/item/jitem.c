@@ -224,9 +224,9 @@ j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* bat
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* path = NULL;
 
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
 
 	data = g_slice_new(JItemGetData);
 	data->collection = j_collection_ref(collection);
@@ -244,7 +244,7 @@ j_item_delete(JItem* item, JBatch* batch)
 
 	gboolean ret = TRUE;
 
-	g_return_if_fail(item != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
 
 	ret &= j_kv_delete(item->kv, batch);
 	ret &= j_distributed_object_delete(item->object, batch);
@@ -257,9 +257,9 @@ j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64*
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(bytes_read != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
 	return j_distributed_object_read(item->object, data, length, offset, bytes_read, batch);
 }
@@ -269,9 +269,9 @@ j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, gu
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(bytes_written != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
 	/// \todo see j_item_write_exec
 
@@ -283,7 +283,7 @@ j_item_get_status(JItem* item, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
 
 	/// \todo check j_item_get_status_exec
 	return j_distributed_object_status(item->object, &(item->status.modification_time), &(item->status.size), batch);

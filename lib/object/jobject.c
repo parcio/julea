@@ -1028,7 +1028,7 @@ j_object_create(JObject* object, JBatch* batch)
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	/// \todo key = index + namespace
@@ -1047,7 +1047,7 @@ j_object_delete(JObject* object, JBatch* batch)
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -1068,10 +1068,10 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 	guint64 max_operation_size;
 	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_read != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1117,10 +1117,10 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 	guint64 max_operation_size;
 	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_written != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1164,7 +1164,7 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_slice_new(JObjectOperation);
 	iop->status.object = j_object_ref(object);
@@ -1188,7 +1188,7 @@ j_object_sync(JObject* object, JBatch* batch)
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_slice_new(JObjectOperation);
 	iop->sync.object = j_object_ref(object);

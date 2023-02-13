@@ -603,7 +603,7 @@ j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destro
 	JKVOperation* kop;
 	JOperation* operation;
 
-	g_return_if_fail(kv != NULL);
+	g_return_val_if_fail(kv != NULL, FALSE);
 
 	kop = g_slice_new(JKVOperation);
 	kop->put.kv = j_kv_ref(kv);
@@ -628,7 +628,7 @@ j_kv_delete(JKV* kv, JBatch* batch)
 
 	JOperation* operation;
 
-	g_return_if_fail(kv != NULL);
+	g_return_val_if_fail(kv != NULL, FALSE);
 
 	operation = j_operation_new();
 	operation->key = kv;
@@ -647,7 +647,7 @@ j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 	JKVOperation* kop;
 	JOperation* operation;
 
-	g_return_if_fail(kv != NULL);
+	g_return_val_if_fail(kv != NULL, FALSE);
 
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
@@ -673,8 +673,8 @@ j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	JKVOperation* kop;
 	JOperation* operation;
 
-	g_return_if_fail(kv != NULL);
-	g_return_if_fail(func != NULL);
+	g_return_val_if_fail(kv != NULL, FALSE);
+	g_return_val_if_fail(func != NULL, FALSE);
 
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);

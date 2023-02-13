@@ -286,7 +286,7 @@ j_batch_add(JBatch* batch, JOperation* operation)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(operation != NULL);
+	g_return_val_if_fail(operation != NULL, FALSE);
 
 	// pseudo batch-less ops by passing J_SINGLE_OP
 	if (batch == J_SINGLE_OP)

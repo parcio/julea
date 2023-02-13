@@ -1421,7 +1421,7 @@ j_distributed_object_create(JDistributedObject* object, JBatch* batch)
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	/// \todo key = index + namespace
@@ -1440,7 +1440,7 @@ j_distributed_object_delete(JDistributedObject* object, JBatch* batch)
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -1461,10 +1461,10 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 	guint64 max_operation_size;
 	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_read != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1510,10 +1510,10 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 	guint64 max_operation_size;
 	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_written != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1557,7 +1557,7 @@ j_distributed_object_status(JDistributedObject* object, gint64* modification_tim
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_slice_new(JDistributedObjectOperation);
 	iop->status.object = j_distributed_object_ref(object);
@@ -1581,7 +1581,7 @@ j_distributed_object_sync(JDistributedObject* object, JBatch* batch)
 	JDistributedObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_slice_new(JDistributedObjectOperation);
 	iop->sync.object = j_distributed_object_ref(object);
