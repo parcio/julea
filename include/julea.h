@@ -47,6 +47,7 @@
 #include <core/jmessage.h>
 #include <core/jnetwork.h>
 #include <core/joperation.h>
+#include <core/joperation-cache.h>
 #include <core/jsemantics.h>
 #include <core/jstatistics.h>
 #include <core/jtrace.h>
