@@ -81,10 +81,31 @@ enum JSemanticsType
 
 typedef enum JSemanticsType JSemanticsType;
 
+/**
+ * Atomicity of batched operations.
+ *
+ * \attention Currently only database functions are affected by this setting.
+ */
 enum JSemanticsAtomicity
 {
+	/**
+	 * Consecutive operations of the same type are part of the same DB transaction.
+	 * 
+	 * \todo Generalize to complete batch instead of same lists.
+	 */
 	J_SEMANTICS_ATOMICITY_BATCH,
+
+	/**
+	 * Each operation is a transaction.
+	 * 
+	 */
 	J_SEMANTICS_ATOMICITY_OPERATION,
+
+	/**
+	 * No transactions are used.
+	 * 
+	 * \todo Currently unused. Interesting when other backends support transactions. 
+	 */
 	J_SEMANTICS_ATOMICITY_NONE
 };
 
@@ -114,24 +135,48 @@ enum JSemanticsConsistency
 	J_SEMANTICS_CONSISTENCY_SESSION,
 
 	/**
-	 * The data of a corresponding batch will be eventually consistent without any notification of status or completion.
-	 * If more control of asynchronous execution is wanted consider using j_batch_execute_async.
-	 * Current synchronization points are manual execution of any immediate batch, reading operations or program termination.
+	 * The data of a corresponding batch will be eventually consistent after calling j_batch_execute.
+	 * Explicit synchronization is possible by calling j_operation_cache_flush which flushes all in-flight batches.
+	 * Current implicit synchronization points are manual execution of any immediate batch, reading operations or program termination.
+	 * If more control of asynchronous execution is wanted consider using j_batch_execute_async instead of consistency levels.
 	 */
 	J_SEMANTICS_CONSISTENCY_EVENTUAL
 };
 
 typedef enum JSemanticsConsistency JSemanticsConsistency;
 
+/**
+ * Defines which guarantees are given on the persistency of finished operations.
+ *
+ */
 enum JSemanticsPersistency
 {
+	/**
+	 * Data of finished operations is stored on persistent storage.
+	 * 
+	 */
 	J_SEMANTICS_PERSISTENCY_STORAGE,
+
+	/**
+	 * Data of finished operations arrived at a JULEA server.
+	 * 
+	 */
 	J_SEMANTICS_PERSISTENCY_NETWORK,
+
+	/**
+	 * No guarantees on persistency.
+	 * 
+	 */
 	J_SEMANTICS_PERSISTENCY_NONE
 };
 
 typedef enum JSemanticsPersistency JSemanticsPersistency;
 
+/**
+ * Defines the used security model.
+ *
+ * \attention Currently unused.
+ */
 enum JSemanticsSecurity
 {
 	J_SEMANTICS_SECURITY_STRICT,
