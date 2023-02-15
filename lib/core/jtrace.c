@@ -69,7 +69,8 @@ struct JTraceTime
 
 typedef struct JTraceTime JTraceTime;
 
-struct Access {
+struct Access
+{
 	guint64 timestamp;
 	guint32 uid;
 	const char* program_name;
@@ -99,7 +100,6 @@ struct JTraceThread
 	 **/
 	guint function_depth;
 
-
 	GArray* stack;
 
 #ifdef HAVE_OTF
@@ -115,29 +115,33 @@ struct JTraceThread
 	} otf;
 #endif
 
-	struct {
+	struct
+	{
 		char* program_name;
 		guint32 uid;
 	} client;
 
-	struct {
+	struct
+	{
 		gboolean inside;
 		Access row;
 		const void* utility_ptr;
-		struct {
+		struct
+		{
 			char* namespace;
 		} db;
-		struct {
+		struct
+		{
 			char* namespace;
 			char* name;
 		} kv;
-		struct {
+		struct
+		{
 			char* namespace;
 			char* path;
 		} object;
 	} access;
 };
-
 
 typedef struct JTraceThread JTraceThread;
 
@@ -179,7 +183,8 @@ G_LOCK_DEFINE_STATIC(j_trace_echo);
 G_LOCK_DEFINE_STATIC(j_trace_summary);
 
 static void
-j_trace_access_print_header(void) {
+j_trace_access_print_header(void)
+{
 	g_printerr("time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson\n");
 }
 /**
@@ -492,7 +497,6 @@ j_trace_init(gchar const* name)
 		G_UNLOCK(j_trace_echo);
 	}
 
-
 	g_free(j_trace_name);
 	j_trace_name = g_strdup(name);
 }
@@ -559,64 +563,83 @@ j_trace_fini(void)
 	g_free(j_trace_name);
 }
 
-
 static void
-j_trace_access_print(const Access* row, guint64 duration) {
-	g_printerr("%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT",%u,%s,%s,%s,%s,%s,%"G_GUINT64_FORMAT",%u,%"G_GUINT64_FORMAT".%06"G_GUINT64_FORMAT",\"%s\"\n",
-		row->timestamp / G_USEC_PER_SEC,
-		row->timestamp % G_USEC_PER_SEC,
-		row->uid,
-		row->program_name,
-		row->backend,
-		row->namespace,
-		row->name,
-		row->operation,
-		row->size,
-		row->complexity,
-		duration / G_USEC_PER_SEC,
-		duration % G_USEC_PER_SEC,
-		row->bson == NULL ? "{}" : bson_as_json(row->bson, NULL)
-	);
+j_trace_access_print(const Access* row, guint64 duration)
+{
+	g_printerr("%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",%u,%s,%s,%s,%s,%s,%" G_GUINT64_FORMAT ",%u,%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",\"%s\"\n",
+		   row->timestamp / G_USEC_PER_SEC,
+		   row->timestamp % G_USEC_PER_SEC,
+		   row->uid,
+		   row->program_name,
+		   row->backend,
+		   row->namespace,
+		   row->name,
+		   row->operation,
+		   row->size,
+		   row->complexity,
+		   duration / G_USEC_PER_SEC,
+		   duration % G_USEC_PER_SEC,
+		   row->bson == NULL ? "{}" : bson_as_json(row->bson, NULL));
 }
 
 static void
 store_object_path(JTraceThread* trace_thread, const char* namespace, const char* path)
 {
-	if (trace_thread->access.object.namespace != namespace) {
+	if (trace_thread->access.object.namespace != namespace)
+	{
 		g_free(trace_thread->access.object.namespace);
 		trace_thread->access.object.namespace = NULL;
-		if(namespace) { trace_thread->access.object.namespace = strdup(namespace); }
+		if (namespace)
+		{
+			trace_thread->access.object.namespace = strdup(namespace);
+		}
 	}
 
-	if(trace_thread->access.object.path != path) {
+	if (trace_thread->access.object.path != path)
+	{
 		g_free(trace_thread->access.object.path);
 		trace_thread->access.object.path = NULL;
-		if (path) { trace_thread->access.object.path = strdup(path); }
+		if (path)
+		{
+			trace_thread->access.object.path = strdup(path);
+		}
 	}
 }
 
 static void
 store_kv_namespace(JTraceThread* trace_thread, const char* namespace, const char* name)
 {
-	if (trace_thread->access.kv.namespace != namespace) {
+	if (trace_thread->access.kv.namespace != namespace)
+	{
 		g_free(trace_thread->access.kv.namespace);
 		trace_thread->access.kv.namespace = NULL;
-		if(namespace) { trace_thread->access.kv.namespace = strdup(namespace); }
+		if (namespace)
+		{
+			trace_thread->access.kv.namespace = strdup(namespace);
+		}
 	}
-	if (trace_thread->access.kv.name != name) {
+	if (trace_thread->access.kv.name != name)
+	{
 		g_free(trace_thread->access.kv.name);
 		trace_thread->access.kv.name = NULL;
-		if(name) { trace_thread->access.kv.name = strdup(name); }
+		if (name)
+		{
+			trace_thread->access.kv.name = strdup(name);
+		}
 	}
 }
 
 static void
 store_db_namespace(JTraceThread* trace_thread, const char* namespace)
 {
-	if (trace_thread->access.db.namespace != namespace) {
+	if (trace_thread->access.db.namespace != namespace)
+	{
 		g_free(trace_thread->access.db.namespace);
 		trace_thread->access.db.namespace = NULL;
-		if (namespace) { trace_thread->access.db.namespace = strdup(namespace); }
+		if (namespace)
+		{
+			trace_thread->access.db.namespace = strdup(namespace);
+		}
 	}
 }
 
@@ -624,14 +647,16 @@ static guint32
 _count_keys_recursive(bson_iter_t* itr)
 {
 	guint32 cnt = 0;
-	do{
-		cnt +=1;
-		if (bson_iter_type(itr) == BSON_TYPE_ARRAY || bson_iter_type(itr) == BSON_TYPE_DOCUMENT) {
+	do
+	{
+		cnt += 1;
+		if (bson_iter_type(itr) == BSON_TYPE_ARRAY || bson_iter_type(itr) == BSON_TYPE_DOCUMENT)
+		{
 			bson_iter_t child;
 			bson_iter_recurse(itr, &child);
 			cnt += _count_keys_recursive(&child);
 		}
-	} while(bson_iter_next(itr));
+	} while (bson_iter_next(itr));
 	return cnt;
 }
 
@@ -671,7 +696,6 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 	trace->name = g_strdup(name);
 	trace->enter_time = timestamp;
 
-	
 	if (j_trace_flags & J_TRACE_ECHO)
 	{
 		G_LOCK(j_trace_echo);
@@ -710,190 +734,236 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		{
 			int type = 0;
 			name += 8;
-			if (strncmp(name, "kv_", 3) == 0) { type = 1; }
-			else if (strncmp(name, "db_", 3) == 0) { type = 2; }
-			else if (strncmp(name, "object_", 7) == 0) { type = 3; }
-			if (type != 0) {
-			Access* row = &trace_thread->access.row;
-			va_list args;
-			memset(row, 0, sizeof(Access));
-			row->uid = trace_thread->client.uid;
-			row->program_name = trace_thread->client.program_name;
-			row->timestamp = timestamp;
-			trace_thread->access.inside = TRUE;
-			
-			if (type == 1)
+			if (strncmp(name, "kv_", 3) == 0)
 			{
-				name += 3;
-				row->backend = "kv";
-				row->operation = name;
-				row->namespace = trace_thread->access.kv.namespace;
-				row->name = trace_thread->access.kv.name;
-				if (strcmp(name, "batch_start") == 0)
-				{
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					va_end(args);
-					store_kv_namespace(trace_thread, row->namespace, NULL);
-				} else if (strcmp(name, "put") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_arg(args, void*);
-					row->size = va_arg(args, guint32);
-					va_end(args);
-				} else if (strcmp(name, "delete") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-				} else if (strcmp(name, "get") == 0){
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_arg(args, void*);
-					trace_thread->access.utility_ptr = va_arg(args, void*);
-					va_end(args);
-				} else if (strcmp(name, "get_all") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					va_end(args);
-					store_kv_namespace(trace_thread, row->namespace, NULL);
-				} else if (strcmp(name, "get_by_prefix") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-					store_kv_namespace(trace_thread, row->namespace, row->name);
-				}
-				
-				// iterate, init, fini <- no further deatils
-				// batch_execute <- handlen in leave
+				type = 1;
 			}
-			else if (type == 2)
+			else if (strncmp(name, "db_", 3) == 0)
 			{
-				name += 3;
-				row->backend = "db";
-				row->operation = name;
-				row->namespace = trace_thread->access.db.namespace;
-				if (strcmp(name, "batch_start") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					va_end(args);
-					store_db_namespace(trace_thread, row->namespace);
-				} else if (strcmp(name, "schema_create") == 0) {
+				type = 2;
+			}
+			else if (strncmp(name, "object_", 7) == 0)
+			{
+				type = 3;
+			}
+			if (type != 0)
+			{
+				Access* row = &trace_thread->access.row;
+				va_list args;
+				memset(row, 0, sizeof(Access));
+				row->uid = trace_thread->client.uid;
+				row->program_name = trace_thread->client.program_name;
+				row->timestamp = timestamp;
+				trace_thread->access.inside = TRUE;
+
+				if (type == 1)
+				{
+					name += 3;
+					row->backend = "kv";
+					row->operation = name;
+					row->namespace = trace_thread->access.kv.namespace;
+					row->name = trace_thread->access.kv.name;
+					if (strcmp(name, "batch_start") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						va_end(args);
+						store_kv_namespace(trace_thread, row->namespace, NULL);
+					}
+					else if (strcmp(name, "put") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_arg(args, void*);
+						row->size = va_arg(args, guint32);
+						va_end(args);
+					}
+					else if (strcmp(name, "delete") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+					}
+					else if (strcmp(name, "get") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_arg(args, void*);
+						trace_thread->access.utility_ptr = va_arg(args, void*);
+						va_end(args);
+					}
+					else if (strcmp(name, "get_all") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						va_end(args);
+						store_kv_namespace(trace_thread, row->namespace, NULL);
+					}
+					else if (strcmp(name, "get_by_prefix") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+						store_kv_namespace(trace_thread, row->namespace, row->name);
+					}
+
+					// iterate, init, fini <- no further deatils
+					// batch_execute <- handlen in leave
+				}
+				else if (type == 2)
+				{
+					name += 3;
+					row->backend = "db";
+					row->operation = name;
+					row->namespace = trace_thread->access.db.namespace;
+					if (strcmp(name, "batch_start") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						va_end(args);
+						store_db_namespace(trace_thread, row->namespace);
+					}
+					else if (strcmp(name, "schema_create") == 0)
+					{
 						va_start(args, format);
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 						row->size = va_arg(args, guint32);
 						row->bson = va_arg(args, const bson_t*);
 						va_end(args);
-				} else if (strcmp(name, "schema_get") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-				} else if (strcmp(name, "schema_delete") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-				} else if (strcmp(name, "insert") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					row->size = va_arg(args, guint32);
-					row->bson = va_arg(args, const bson_t*);
-					/// \TODO complexity needed?
-					va_end(args);
-				} else if (strcmp(name, "update") == 0) {
-					static bson_t bson;
-					const bson_t* selector = NULL;
-					bson_init(&bson);
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					row->size = va_arg(args, guint32);
-					selector = va_arg(args, const bson_t*);
-					bson_append_document(&bson, "selector", -1, selector);
-					bson_append_document(&bson, "entry", -1, va_arg(args, const bson_t*));
-					row->bson = &bson;
-					row->complexity = count_keys_recursive(selector) - 2; // because the added two top level keys
-					va_end(args);
-				} else if (strcmp(name, "delete") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_arg(args, guint32);
-					row->bson = va_arg(args, const bson_t*);
-					row->complexity = count_keys_recursive(row->bson);
-					va_end(args);
-				} else if (strcmp(name, "query") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					row->name = va_arg(args, const char*);
-					va_arg(args, guint32);
-					row->bson = va_arg(args, const bson_t*);
-					row->complexity = count_keys_recursive(row->bson);
-					va_end(args);
+					}
+					else if (strcmp(name, "schema_get") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+					}
+					else if (strcmp(name, "schema_delete") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+					}
+					else if (strcmp(name, "insert") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						row->size = va_arg(args, guint32);
+						row->bson = va_arg(args, const bson_t*);
+						/// \TODO complexity needed?
+						va_end(args);
+					}
+					else if (strcmp(name, "update") == 0)
+					{
+						static bson_t bson;
+						const bson_t* selector = NULL;
+						bson_init(&bson);
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						row->size = va_arg(args, guint32);
+						selector = va_arg(args, const bson_t*);
+						bson_append_document(&bson, "selector", -1, selector);
+						bson_append_document(&bson, "entry", -1, va_arg(args, const bson_t*));
+						row->bson = &bson;
+						row->complexity = count_keys_recursive(selector) - 2; // because the added two top level keys
+						va_end(args);
+					}
+					else if (strcmp(name, "delete") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_arg(args, guint32);
+						row->bson = va_arg(args, const bson_t*);
+						row->complexity = count_keys_recursive(row->bson);
+						va_end(args);
+					}
+					else if (strcmp(name, "query") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						row->name = va_arg(args, const char*);
+						va_arg(args, guint32);
+						row->bson = va_arg(args, const bson_t*);
+						row->complexity = count_keys_recursive(row->bson);
+						va_end(args);
+					}
+					// iterate, init, fini <- no further details
+					// batch_execute <- handled in leave
 				}
-				// iterate, init, fini <- no further details
-				// batch_execute <- handled in leave
-			}
-			else if (type == 3)
-			{
-				name += 7;
-				row->backend = "object";
-				row->operation = name;
-				row->namespace = trace_thread->access.object.namespace;
-				row->name = trace_thread->access.object.path;
-				if (strcmp(name, "create") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-					store_object_path(trace_thread, row->namespace, row->name);
-				} else if (strcmp(name, "open") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-					store_object_path(trace_thread, row->namespace, row->name);
-				} else if (strcmp(name, "get_all") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					row->name = NULL;
-					va_end(args);
-					store_object_path(trace_thread, row->namespace, row->name);
-				} else if (strcmp(name, "get_by_prefix") == 0) {
-					va_start(args, format);
-					row->namespace = va_arg(args, const char*);
-					row->name = va_arg(args, const char*);
-					va_end(args);
-					store_object_path(trace_thread, row->namespace, row->name);
-				} else if (strcmp(name, "read") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					va_arg(args, void*);
-					row->size = va_arg(args, guint64);
-					row->complexity = va_arg(args, guint64);
-					va_end(args);
-				} else if (strcmp(name, "write") == 0) {
-					va_start(args, format);
-					va_arg(args, void*);
-					va_arg(args, void*);
-					row->size = va_arg(args, guint64);
-					row->complexity = va_arg(args, guint64);
-					va_end(args);
+				else if (type == 3)
+				{
+					name += 7;
+					row->backend = "object";
+					row->operation = name;
+					row->namespace = trace_thread->access.object.namespace;
+					row->name = trace_thread->access.object.path;
+					if (strcmp(name, "create") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+						store_object_path(trace_thread, row->namespace, row->name);
+					}
+					else if (strcmp(name, "open") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+						store_object_path(trace_thread, row->namespace, row->name);
+					}
+					else if (strcmp(name, "get_all") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						row->name = NULL;
+						va_end(args);
+						store_object_path(trace_thread, row->namespace, row->name);
+					}
+					else if (strcmp(name, "get_by_prefix") == 0)
+					{
+						va_start(args, format);
+						row->namespace = va_arg(args, const char*);
+						row->name = va_arg(args, const char*);
+						va_end(args);
+						store_object_path(trace_thread, row->namespace, row->name);
+					}
+					else if (strcmp(name, "read") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						va_arg(args, void*);
+						row->size = va_arg(args, guint64);
+						row->complexity = va_arg(args, guint64);
+						va_end(args);
+					}
+					else if (strcmp(name, "write") == 0)
+					{
+						va_start(args, format);
+						va_arg(args, void*);
+						va_arg(args, void*);
+						row->size = va_arg(args, guint64);
+						row->complexity = va_arg(args, guint64);
+						va_end(args);
+					}
+					// status, sync, iterate, fini, init <- no further data
+					// close/delte handle at leave
 				}
-				// status, sync, iterate, fini, init <- no further data
-				// close/delte handle at leave
-
+				else
+				{
+					/// \TODO handle unknown backends
+				}
 			}
-			else {
-				/// \TODO handle unknown backends
-			}
-						}
 		}
 	}
 
@@ -942,7 +1012,6 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		current_stack.enter_time = timestamp;
 		g_array_append_val(trace_thread->stack, current_stack);
 	}
-
 
 	trace_thread->function_depth++;
 
@@ -996,34 +1065,43 @@ j_trace_leave(JTrace* trace)
 
 	if (j_trace_flags & J_TRACE_ACCESS)
 	{
-		if (trace_thread->access.inside) {
-			if (strncmp(trace->name, "backend_", 8) == 0) {
-				if(strncmp(trace->name + 8, "db_", 3) == 0 || strncmp(trace->name+8, "kv_", 3) == 0 || strncmp(trace->name+8, "object_", 7)== 0) {
-				guint64 duration;
-				Access* row = &trace_thread->access.row;
-	
-				duration = timestamp - trace->enter_time;
-
-				if (strcmp(trace->name, "backend_kv_get") == 0)
+		if (trace_thread->access.inside)
+		{
+			if (strncmp(trace->name, "backend_", 8) == 0)
+			{
+				if (strncmp(trace->name + 8, "db_", 3) == 0 || strncmp(trace->name + 8, "kv_", 3) == 0 || strncmp(trace->name + 8, "object_", 7) == 0)
 				{
-					row->size = *(const guint64*)trace_thread->access.utility_ptr;
-				}
+					guint64 duration;
+					Access* row = &trace_thread->access.row;
 
-				G_LOCK(j_trace_echo);
-				j_trace_access_print(row, duration);
-				G_UNLOCK(j_trace_echo);
+					duration = timestamp - trace->enter_time;
 
-				trace_thread->access.inside = FALSE;
-				if(strcmp(trace->name, "backend_kv_batch_execute") == 0) {
-					store_kv_namespace(trace_thread, NULL, NULL);
-				} else if (strcmp(trace->name, "backend_dbupdate") == 0){
-					bson_destroy((bson_t*)row->bson);
-				} else if (strcmp(trace->name, "backend_db_batch_execute") == 0) {
-					store_db_namespace(trace_thread, NULL);
-				} else if (strcmp(trace->name, "backend_object_delete") == 0 || strcmp(trace->name, "backend_object_close") == 0 )
-				{
-					store_object_path(trace_thread, NULL, NULL);
-				}
+					if (strcmp(trace->name, "backend_kv_get") == 0)
+					{
+						row->size = *(const guint64*)trace_thread->access.utility_ptr;
+					}
+
+					G_LOCK(j_trace_echo);
+					j_trace_access_print(row, duration);
+					G_UNLOCK(j_trace_echo);
+
+					trace_thread->access.inside = FALSE;
+					if (strcmp(trace->name, "backend_kv_batch_execute") == 0)
+					{
+						store_kv_namespace(trace_thread, NULL, NULL);
+					}
+					else if (strcmp(trace->name, "backend_dbupdate") == 0)
+					{
+						bson_destroy((bson_t*)row->bson);
+					}
+					else if (strcmp(trace->name, "backend_db_batch_execute") == 0)
+					{
+						store_db_namespace(trace_thread, NULL);
+					}
+					else if (strcmp(trace->name, "backend_object_delete") == 0 || strcmp(trace->name, "backend_object_close") == 0)
+					{
+						store_object_path(trace_thread, NULL, NULL);
+					}
 				}
 			}
 		}

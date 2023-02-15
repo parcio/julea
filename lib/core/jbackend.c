@@ -263,7 +263,6 @@ j_backend_load_server(gchar const* name, gchar const* component, JBackendType ty
 	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
 	g_return_val_if_fail(module != NULL, FALSE);
 	g_return_val_if_fail(backend != NULL, FALSE);
-		
 
 	*module = NULL;
 	*backend = NULL;

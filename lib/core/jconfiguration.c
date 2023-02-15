@@ -291,14 +291,12 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	guint32 port;
 	guint32 max_connections;
 	guint64 stripe_size;
-	guint32 uid = 0;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
 	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
 	max_inject_size = g_key_file_get_uint64(key_file, "core", "max-inject-size", NULL);
 	port = g_key_file_get_integer(key_file, "core", "port", NULL);
-	uid = g_key_file_get_uint64(key_file, "core", "uid", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
 	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
@@ -367,7 +365,6 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->max_inject_size = max_inject_size;
 	configuration->max_connections = max_connections;
 	configuration->stripe_size = stripe_size;
-	configuration->uid = uid;
 	configuration->checksum = NULL;
 	configuration->ref_count = 1;
 
@@ -398,15 +395,14 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		configuration->stripe_size = 4 * 1024 * 1024;
 	}
 
-	if (configuration->uid == 0)
-	{
+	{ // uid should be unique per process in one application
 		GRand* rand = g_rand_new();
 		configuration->uid = g_rand_int(rand);
 		g_rand_free(rand);
 	}
 
 	key_file_str = g_key_file_to_data(key_file, NULL, NULL);
-	configuration->checksum = g_compute_checksum_for_string(G_CHECKSUM_SHA512, key_file_str, -1);	
+	configuration->checksum = g_compute_checksum_for_string(G_CHECKSUM_SHA512, key_file_str, -1);
 
 	return configuration;
 }

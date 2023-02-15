@@ -349,9 +349,12 @@ j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError**
 
 			if (value)
 			{
-				if(BSON_ITER_HOLDS_INT64(iter)) {
+				if (BSON_ITER_HOLDS_INT64(iter))
+				{
 					value->val_sint64 = bson_iter_int64(iter);
-				} else {
+				}
+				else
+				{
 					value->val_sint64 = bson_iter_int32(iter);
 				}
 			}
