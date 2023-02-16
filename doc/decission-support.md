@@ -44,20 +44,19 @@ combination for server.
 It will test different backend configurations and creates a directory `evaluation`.
 
 The script will replay each access to a backend type, and test every servre
-backend available for this type. And will produce multiple
-`access-<backend_type>_<backend>.csv` files.
+backend available for this type. And will produce a `summary.csv`
 
-This directory can then be evaluated for example with `./scripts/decision-support.R`.
+This summary can then be evaluated for example with `./scripts/decision-support.R`.
 A example flow is shown below.
 
-For scripts assumes that the backends are empty at the begging !!
+For script assumes that the backends are empty at the begining !!
 
 ```sh
 JULEA_TRACE=access julea-server 2> access-record.csv
 # run application
 # stop julea-server (Ctrl+C)
-./scripts/decission-support.sh acces-record.csv evaluation
-Rscript ./scripts/decission-support.R evaluation
+./scripts/decission-support.sh acces-record.csv summary.csv
+Rscript ./scripts/decission-support.R summary.csv
 ```
 
 

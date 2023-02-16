@@ -41,6 +41,7 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	component = j_configuration_get_backend_component(configuration, type);
 	path = j_helper_str_replace(j_configuration_get_backend_path(configuration, type), "{PORT}", port_str);
 
+	if (strcmp(component, "server") != 0) { return TRUE; }
 	if (j_backend_load_server(backend, component, type, module, j_backend))
 	{
 		gboolean res = TRUE;
@@ -508,7 +509,7 @@ main(int argc, char** argv)
 	GModule* kv_module = NULL;
 	GModule* object_module = NULL;
 	g_autofree gchar* port_str = NULL;
-	gboolean res = FALSE;
+	gint res = 1;
 	gchar* memory_chunk;
 	guint64 memory_chunck_size = 0;
 
@@ -544,14 +545,17 @@ main(int argc, char** argv)
 	port_str = g_strdup_printf("%d", j_configuration_get_port(configuration));
 	if (!setup_backend(configuration, J_BACKEND_TYPE_OBJECT, port_str, &object_module, &object_backend))
 	{
+		g_warning("failed to initealize object backend");
 		goto end;
 	}
 	if (!setup_backend(configuration, J_BACKEND_TYPE_KV, port_str, &kv_module, &kv_backend))
 	{
+		g_warning("failed to initealize kv backend");
 		goto end;
 	}
 	if (!setup_backend(configuration, J_BACKEND_TYPE_DB, port_str, &db_module, &db_backend))
 	{
+		g_warning("failed to initealize db backend");
 		goto end;
 	}
 
@@ -581,7 +585,7 @@ main(int argc, char** argv)
 			}
 		}
 	}
-	res = TRUE;
+	res = 0;
 end:
 	if (record_file)
 	{
