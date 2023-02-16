@@ -114,7 +114,7 @@ for db in ${arr[@]}; do
   create_config "db" "${db}" "${tmp_config}"
   JULEA_CONFIG="${tmp_config}" JULEA_TRACE=access julea-access-replay "${db_record}" 2> "${tmp_record}"
   type="$(tr ';' ',' <<< "${db}")"
-  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { if(NR>1) { $4 = $4",'"${type}"'"} print }' >> "${output_file}"
+  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print }' >> "${output_file}"
 done
 
 echo "start object"
@@ -127,7 +127,7 @@ for object in ${arr[@]}; do
   create_config "object" "${object}" "${tmp_config}"
   JULEA_CONFIG="${tmp_config}" JULEA_TRACE=access julea-access-replay "${object_record}" 2> "${tmp_record}"
   type="$(tr ';' ',' <<< "${object}")"
-  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { if(NR>1) { $4 = $4",'"${type}"'"} print }' >> "${output_file}"
+  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print}' >> "${output_file}"
 done
 
 echo "start kv"
@@ -149,7 +149,7 @@ for kv in ${arr[@]}; do
     continue
   fi
   type="$(tr ';' ',' <<< "${kv}")"
-  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { if(NR>1) { $4 = $4",'"${type}"'"} print }' >> "${output_file}"
+  tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print }' >> "${output_file}"
 done
 
 if [ $fail -ne 0 ]; then
