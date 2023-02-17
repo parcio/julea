@@ -113,7 +113,7 @@ for db in ${arr[@]}; do
   echo -e "\t round ${db}"
   create_config "db" "${db}" "${tmp_config}"
   JULEA_CONFIG="${tmp_config}" JULEA_TRACE=access julea-access-replay "${db_record}" 2> "${tmp_record}"
-  type="$(tr ';' ',' <<< "${db}")"
+  type="$(tr ';' ',' <<< "${db}" | sed 's/'$(basename ${tmp_dir})'\///')"
   tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print }' >> "${output_file}"
 done
 
@@ -126,7 +126,7 @@ for object in ${arr[@]}; do
   echo -e "\t round ${object}"
   create_config "object" "${object}" "${tmp_config}"
   JULEA_CONFIG="${tmp_config}" JULEA_TRACE=access julea-access-replay "${object_record}" 2> "${tmp_record}"
-  type="$(tr ';' ',' <<< "${object}")"
+  type="$(tr ';' ',' <<< "${object}" | sed 's/'$(basename ${tmp_dir})'\///')"
   tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print}' >> "${output_file}"
 done
 
@@ -135,7 +135,7 @@ arr=(
   "leveldb;${tmp_dir}/leveldb"
   "lmdb;${tmp_dir}/lmdb"
   "sqlite;${tmp_dir}/kv_sqlite"
-  "sqlite;${tmp_dir}/:memory:"
+  "sqlite;:memory:"
   "rocksdb;${tmp_dir}/rocksdb"
 ) 
 for kv in ${arr[@]}; do
@@ -148,7 +148,7 @@ for kv in ${arr[@]}; do
     fail=$(($fail + 1))
     continue
   fi
-  type="$(tr ';' ',' <<< "${kv}")"
+  type="$(tr ';' ',' <<< "${kv}" | sed 's/'$(basename ${tmp_dir})'\///')"
   tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print }' >> "${output_file}"
 done
 

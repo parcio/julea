@@ -2,6 +2,8 @@
 
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
+suppressMessages(library(scales))
+suppressMessages(library(ggpubr))
 
 
 first_round <- TRUE
@@ -23,8 +25,10 @@ test_validity <- function(data) {
       frame <- frame %>% subset(select = -c(backend)) # nolint: object_usage_linter, line_length_linter.
       if (first_round != TRUE) {
         if (nrow(frame) != nrow(last_frame)) {
+          print("number error, the number of accesses differ between runs")
           res <<- FALSE
          } else if (!Reduce(f = "&", x = frame == last_frame)) {
+          print("value error, the access type between runs differ")
           res <<- FALSE
         }
       }
@@ -57,4 +61,38 @@ if (res == FALSE) {
     call. = FALSE)
 }
 
+plot_durations <- function(data, key) {
+  confs <-  unique(data %>% select("type", "path"))
+  map <- apply(
+    confs, 1,
+    function(x) paste(x[1], if (sum(confs == x[1]) > 1) x[2] else ""))
+  names(map) <- paste0(confs$type, confs$path)
+  data$label <- map[paste0(data$type, data$path)]
 
+  label <- labs(y = "time in s", fill = "backend", x = "")
+  seperate <-
+    ggplot(
+      data %>%
+        group_by(label, operation) %>%
+        summarise(total_time = sum(duration), cnt = n(), .groups = "drop"),
+      aes(y = total_time, x = paste(operation, "\n#", cnt), fill = label)) +
+    geom_col(position = "dodge") +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_text(angle = 45)) +
+    label
+  total <-
+    ggplot(
+      data %>%
+        group_by(label) %>%
+        summarise(total_time = sum(duration), .groups = "drop"),
+      aes(y = total_time, x = " all operations", fill = label)) +
+    geom_col(position = "dodge") +
+    label
+  plot <- ggarrange(seperate, total,
+    widths = c(4, 1), ncol = 2, nrow = 1,
+    common.legend = TRUE, legend = "bottom")
+  ggsave(paste(key[1], "time.svg", sep = "_"), plot,
+    unit = "in", width = 11, height = 6, bg = "white")
+}
+
+data %>% group_by(backend) %>% group_walk(plot_durations)
