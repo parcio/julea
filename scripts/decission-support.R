@@ -62,32 +62,44 @@ if (res == FALSE) {
 }
 
 plot_durations <- function(data, key) {
+  # generate shorted backend label
   confs <-  unique(data %>% select("type", "path"))
   map <- apply(
     confs, 1,
     function(x) paste(x[1], if (sum(confs == x[1]) > 1) x[2] else ""))
   names(map) <- paste0(confs$type, confs$path)
-  data$label <- map[paste0(data$type, data$path)]
+  data$backend <- map[paste0(data$type, data$path)]
 
   label <- labs(y = "time in s", fill = "backend", x = "")
-  seperate <-
-    ggplot(
-      data %>%
-        group_by(label, operation) %>%
-        summarise(total_time = sum(duration), cnt = n(), .groups = "drop"),
-      aes(y = total_time, x = paste(operation, "\n#", cnt), fill = label)) +
+  writeLines(paste("Backend: ", key[1]))
+  # analyse for runtime per operation type
+  sepperate_data <- data %>%
+    group_by(backend, operation) %>%
+    summarise(duration = sum(duration), cnt = n(), .groups = "drop")
+  # plotting
+  seperate <- ggplot(sepperate_data,
+      aes(y = duration, x = paste(operation, "\n#", cnt), fill = backend)) +
     geom_col(position = "dodge") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 45)) +
     label
-  total <-
-    ggplot(
-      data %>%
-        group_by(label) %>%
-        summarise(total_time = sum(duration), .groups = "drop"),
-      aes(y = total_time, x = " all operations", fill = label)) +
+  # table
+  # print(knitr::kable(head(sepperate_data)))
+
+  # analyse for total runtime
+  total_data <- data %>%
+    group_by(backend) %>%
+    summarise(duration = sum(duration), .groups = "drop")
+  # plotting
+  total <- ggplot(total_data,
+      aes(y = duration, x = "all operations", fill = backend)) +
     geom_col(position = "dodge") +
     label
+  # table
+  print(knitr::kable(head(total_data)))
+  writeLines("\n\n")
+
+  # combining plots and store them
   plot <- ggarrange(seperate, total,
     widths = c(4, 1), ncol = 2, nrow = 1,
     common.legend = TRUE, legend = "bottom")
