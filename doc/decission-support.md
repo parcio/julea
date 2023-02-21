@@ -58,7 +58,19 @@ Important notice:
 JULEA_TRACE=access julea-server 2> access-record.csv
 # run application
 # stop julea-server (Ctrl+C)
-./scripts/decission-support.sh acces-record.csv summary.csv
+./scripts/decission-support.py acces-record.csv summary.csv config.json
+{
+  "object": [
+    {"backend": "posix", "path": "/tmp/<random>/"},
+    {"backend": "posix", "path": "/mnt/abc"}
+  ],
+  "kv": [
+    {""}
+  ],
+  "object": [
+    {""}
+  ]
+}
 Rscript ./scripts/decission-support.R summary.csv html > summary.html
 # or only ci output
 Rscript ./scripts/decission-support.R summary.csv

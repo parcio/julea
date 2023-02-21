@@ -95,12 +95,13 @@ plot_durations <- function(data, key,...,format="simple") {
   sepperate_data <- sepperate_data %>%
     group_by(operation) %>%
     group_modify(function(df, keys) {
-      df$speed_up_rel <- max(df$duration) / df$duration
-      df$speed_up_abs <- max(df$duration) - df$duration
+      df$speed_up <- max(df$duration) / df$duration
+      df$time_diff <- max(df$duration) - df$duration
       df <- df %>% arrange(duration) %>% add_row(.before=0)
       return(df)}) %>%
     ungroup()
-  sepperate_data$operation <- reorder(factor(sepperate_data$operation), sepperate_data$speed_up_abs, FUN=max, decreasing=TRUE, na.rm = TRUE)
+  sepperate_data$operation <- reorder(factor(sepperate_data$operation), sepperate_data$time_diff, FUN=max, decreasing=TRUE, na.rm = TRUE)
+
   sepperate_data <- arrange(sepperate_data, operation)
   sepperate_data[! is.na(sepperate_data$duration),]$operation = NA
 
@@ -114,16 +115,19 @@ plot_durations <- function(data, key,...,format="simple") {
     geom_col(position = "dodge") +
     label
   # table
-  total_data$speed_up_rec <- max(total_data$duration) / total_data$duration
-  total_data$speed_up_abs <- max(total_data$duration) - total_data$duration
+  total_data$speed_up <- max(total_data$duration) / total_data$duration
+  total_data$time_diff <- max(total_data$duration) - total_data$duration
+  total_data <- arrange(total_data, duration)
 
+  colnames(total_data)[which(names(total_data) == "duration")] <- "duration (ms)"
+  colnames(sepperate_data)[which(names(sepperate_data) == "duration")] <- "duration (ms)"
   # output table
   plot_file_name <- paste(key[1], "time.svg", sep = "_")
-  table_sepperate_str <- knitr::kable(sepperate_data, format, digits=2)
-  table_total_str <- knitr::kable(total_data, format, digits=2)
+  table_sepperate_str <- knitr::kable(sepperate_data, format, digits=2, table.attr = "class=\"fancy\"")
+  table_total_str <- knitr::kable(total_data, format, digits=2, table.attr = "class=\"fancy\"")
   if (format == "html") {
-    cat("<h3 id=\"",as.character(key[1]),"\">",as.character(key[1]),"</h3>", sep = "")
-    cat("<table><tbody><tr><td rowspan=\"2\">",table_sepperate_str,"</td><td>", table_total_str,"</td></tr><tr><td><img src=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\"></td></tr></tbody></table>", sep = "")
+    cat("<h2 id=\"",as.character(key[1]),"\">",as.character(key[1]),"</h2>", sep = "")
+    cat("<table><tbody><tr><td rowspan=\"2\">",table_sepperate_str,"</td><td style=\"height:10px\">", table_total_str,"</td></tr><tr><td style=\"vertical-align:top\"><object data=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\"></object></td></tr></tbody></table>", sep = "")
   } else {
     cat(as.character(key[1]), paste0("plot: ", plot_file_name), "", table_total_str, "", table_sepperate_str, "", "", sep="\n")
   }
@@ -138,11 +142,13 @@ plot_durations <- function(data, key,...,format="simple") {
 
 # print html header
 if (as_html) {
-  cat("<!DOCTYPE html><html lang=\"en\"><body><ul>")
+  cat("<!DOCTYPE html><html lang=\"en\">")
+  cat("<head><style>",paste(readLines("style.css"), collapse = "\n"),"</style></head><body><header>", sep="")
+  cat("<nav><ul>")
   for ( backend in unique(data$backend)) {
     cat("<li><a href=\"#",backend,"\">", backend,"</a></li>", sep="")
   }
-  cat("</ul>")
+  cat("</ul></nav></header>")
 }
 
 data %>% group_by(backend) %>% group_walk(plot_durations, format=if(as_html) "html" else "simple")

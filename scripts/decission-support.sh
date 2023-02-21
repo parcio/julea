@@ -111,8 +111,11 @@ arr=(
 )
 for db in ${arr[@]}; do
   echo -e "\t round ${db}"
+
   create_config "db" "${db}" "${tmp_config}"
+
   JULEA_CONFIG="${tmp_config}" JULEA_TRACE=access julea-access-replay "${db_record}" 2> "${tmp_record}"
+
   type="$(tr ';' ',' <<< "${db}" | sed 's/'$(basename ${tmp_dir})'\///')"
   tail -n +2 "${tmp_record}" | awk -F ',' 'BEGIN {OFS=","} { $4 = $4",'"${type}"'"; print }' >> "${output_file}"
 done
