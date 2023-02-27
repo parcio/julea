@@ -1,0 +1,56 @@
+{
+  "object": [
+    {
+      "backend": "posix",
+      "path": "/tmp/<tmp>/"
+    },
+    {
+      "backend": "posix",
+      "path": "/mnt/stick/<tmp>/"
+    },
+    {
+      "backend": "gio",
+      "path": "/tmp/<tmp>/"
+    }
+  ],
+  "db": [
+    {
+      "backend": "sqlite",
+      "path": "/tmp/<tmp>/sqlite"
+    },
+    {
+      "backend": "sqlite",
+      "path": ":memory:"
+    },
+    {
+      "backend": "sqlite",
+      "path": "/mnt/stick/<tmp>/sqlite"
+    },
+    {
+      "backend": "mysql",
+      "path": "127.0.0.1:julea_db:julea_user:julea_pw"
+    }
+  ],
+  "kv": [
+    {
+      "backend": "leveldb",
+      "path": "/tmp/<tmp>/"
+    },
+    {
+      "backend": "lmdb",
+      "path": "/tmp/<tmp>/"
+    },
+    {
+      "backend": "sqlite",
+      "path": "/tmp/<tmp>/sqlite"
+    },
+    {
+      "backend": "sqlite",
+      "path": ":memory:"
+    },
+    {
+      "backend": "rocksdb",
+      "path": "/tmp/<tmp>/"
+    }
+  ]
+}

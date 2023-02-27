@@ -74,18 +74,25 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	}
 	return FALSE;
 }
-
-#define BACKEND 3
-#define NAMESPACE 4
-#define NAME 5
-#define OPERATION 6
-#define SIZE 7
-#define COMPLEXITY 8
-#define DURATION 9
-#define JSON 10
+enum row_fields {
+	TIME,
+	PROCESS_UID,
+	PROGRAM_NAME,
+	BACKEND,
+	TYPE,
+	PATH,
+	NAMESPACE,
+	NAME,
+	OPERATION,
+	SIZE,
+	COMPLEXITY,
+	DURATION,
+	JSON,
+	ROW_LEN
+};
 
 static gboolean
-split(char* line, const char* parts[11])
+split(char* line, const char* parts[ROW_LEN])
 {
 	int cnt = 0;
 	const char* section;
@@ -93,7 +100,7 @@ split(char* line, const char* parts[11])
 	while (section != NULL)
 	{
 		parts[cnt++] = section;
-		if (cnt == 10)
+		if (cnt == ROW_LEN - 1)
 		{
 			break;
 		}
@@ -102,7 +109,7 @@ split(char* line, const char* parts[11])
 	while (*++section)
 		;
 	parts[cnt] = section + 1;
-	if (cnt != 10)
+	if (cnt != ROW_LEN - 1)
 	{
 		g_warning("to few parts in line");
 		return FALSE;
@@ -124,7 +131,7 @@ parse_ul(const char* str)
 }
 
 static gboolean
-replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11])
+replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[ROW_LEN])
 {
 	static gpointer data = NULL;
 	const char* op = parts[OPERATION];
@@ -233,7 +240,7 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[1
 	return ret;
 }
 static gboolean
-replay_kv(void* memory_chunk, guint64 memory_chunk_size, const char* parts[11])
+replay_kv(void* memory_chunk, guint64 memory_chunk_size, const char* parts[ROW_LEN])
 {
 	gboolean ret = FALSE;
 	const char* op = parts[OPERATION];
@@ -328,7 +335,7 @@ struct JSqlBatch
 	gboolean aborted;
 };
 static gboolean
-replay_db(const char* parts[11])
+replay_db(const char* parts[ROW_LEN])
 {
 	gboolean ret = FALSE;
 	static gpointer batch = NULL;
@@ -475,7 +482,7 @@ replay_db(const char* parts[11])
 static gboolean
 replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 {
-	const char* parts[11];
+	const char* parts[ROW_LEN];
 	if (!split(line, parts))
 	{
 		return FALSE;
@@ -563,7 +570,7 @@ main(int argc, char** argv)
 	memory_chunk = malloc(memory_chunck_size);
 
 	{
-		const char* header = "time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson";
+		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,size,complexity,duration,bson";
 		char* line = NULL;
 		size_t len = 0;
 		ssize_t read = 0;

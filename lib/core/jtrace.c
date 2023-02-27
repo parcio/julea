@@ -21,6 +21,7 @@
  **/
 
 #include <julea-config.h>
+#include <jconfiguration.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -75,6 +76,8 @@ struct Access
 	guint32 uid;
 	const char* program_name;
 	const char* backend;
+	const char* type;
+	const char* path;
 	const char* namespace;
 	const char* name;
 	const char* operation;
@@ -128,18 +131,25 @@ struct JTraceThread
 		const void* utility_ptr;
 		struct
 		{
+			char* type;
+			char* config_path;
 			char* namespace;
 		} db;
 		struct
 		{
+			char* type;
+			char* config_path;
 			char* namespace;
 			char* name;
 		} kv;
 		struct
 		{
+			char* type;
+			char* config_path;
 			char* namespace;
 			char* path;
 		} object;
+
 	} access;
 };
 
@@ -185,7 +195,7 @@ G_LOCK_DEFINE_STATIC(j_trace_summary);
 static void
 j_trace_access_print_header(void)
 {
-	g_printerr("time,process_uid,program_name,backend,namespace,name,operation,size,complexity,duration,bson\n");
+	g_printerr("time,process_uid,program_name,backend,type,path,namespace,name,operation,size,complexity,duration,bson\n");
 }
 /**
  * Creates a new trace thread.
@@ -229,6 +239,7 @@ j_trace_thread_new(GThread* thread)
 		trace_thread->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
+
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
@@ -262,6 +273,16 @@ j_trace_thread_free(JTraceThread* trace_thread)
 	}
 
 	g_return_if_fail(trace_thread != NULL);
+
+	if (j_trace_flags & J_TRACE_ACCESS)
+	{
+		g_free(trace_thread->access.db.type);
+		g_free(trace_thread->access.db.config_path);
+		g_free(trace_thread->access.kv.type);
+		g_free(trace_thread->access.kv.config_path);
+		g_free(trace_thread->access.object.path);
+		g_free(trace_thread->access.object.config_path);
+	}
 
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
@@ -566,12 +587,14 @@ j_trace_fini(void)
 static void
 j_trace_access_print(const Access* row, guint64 duration)
 {
-	g_printerr("%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",%u,%s,%s,%s,%s,%s,%" G_GUINT64_FORMAT ",%u,%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",\"%s\"\n",
+	g_printerr("%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",%u,%s,%s,%s,%s,%s,%s,%s,%" G_GUINT64_FORMAT ",%u,%" G_GUINT64_FORMAT ".%06" G_GUINT64_FORMAT ",\"%s\"\n",
 		   row->timestamp / G_USEC_PER_SEC,
 		   row->timestamp % G_USEC_PER_SEC,
 		   row->uid,
 		   row->program_name,
 		   row->backend,
+		   row->type,
+		   row->path,
 		   row->namespace,
 		   row->name,
 		   row->operation,
@@ -733,6 +756,21 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		else if (strncmp(name, "backend_", 8) == 0)
 		{
 			int type = 0;
+			if (trace_thread->access.db.type == NULL) /// \TODO more precise checking?
+			{
+				JConfiguration* config = j_configuration_new();
+
+				trace_thread->access.db.type = strdup(j_configuration_get_backend(config, J_BACKEND_TYPE_DB));
+				trace_thread->access.db.config_path = strdup(j_configuration_get_backend_path(config, J_BACKEND_TYPE_DB));
+
+				trace_thread->access.kv.type = strdup(j_configuration_get_backend(config, J_BACKEND_TYPE_KV));
+				trace_thread->access.kv.config_path = strdup(j_configuration_get_backend_path(config, J_BACKEND_TYPE_KV));
+
+				trace_thread->access.object.type = strdup(j_configuration_get_backend(config, J_BACKEND_TYPE_OBJECT));
+				trace_thread->access.object.config_path = strdup(j_configuration_get_backend_path(config, J_BACKEND_TYPE_OBJECT));
+
+				j_configuration_unref(config);
+			}
 			name += 8;
 			if (strncmp(name, "kv_", 3) == 0)
 			{
@@ -762,6 +800,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->backend = "kv";
 					row->operation = name;
 					row->namespace = trace_thread->access.kv.namespace;
+					row->type = trace_thread->access.kv.type;
+					row->path = trace_thread->access.kv.config_path;
 					row->name = trace_thread->access.kv.name;
 					if (strcmp(name, "batch_start") == 0)
 					{
@@ -819,6 +859,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					name += 3;
 					row->backend = "db";
 					row->operation = name;
+					row->type = trace_thread->access.db.type;
+					row->path = trace_thread->access.db.config_path;
 					row->namespace = trace_thread->access.db.namespace;
 					if (strcmp(name, "batch_start") == 0)
 					{
@@ -905,6 +947,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->backend = "object";
 					row->operation = name;
 					row->namespace = trace_thread->access.object.namespace;
+					row->type = trace_thread->access.object.type;
+					row->path = trace_thread->access.object.config_path;
 					row->name = trace_thread->access.object.path;
 					if (strcmp(name, "create") == 0)
 					{

@@ -53,6 +53,7 @@ Important notice:
 * the script assums a empty backend start state
 * the script places backends and temporary files in `/tmp/` support for differnce devices is pending
 * a mysql/mariadb instance must be provided, with the user julea_user, pw: julea_pw which needs access to the database julea_db
+  * this instance must be manual resseted as forhe time, later a internal `julea-sevrer --clean` will be used to autonamtically do this
 
 ```sh
 JULEA_TRACE=access julea-server 2> access-record.csv

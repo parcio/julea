@@ -1,6 +1,7 @@
-#!/usr/bin/env /Rscript
+#!/usr/bin/env Rscript
 
 suppressMessages(library(ggplot2))
+suppressMessages(library(plotly))
 suppressMessages(library(dplyr))
 suppressMessages(library(scales))
 suppressMessages(library(ggpubr))
@@ -41,7 +42,8 @@ test_validity <- function(data) {
   return(res)
 }
 
-
+args <- commandArgs(trailingOnly = FALSE)
+script_dir <- dirname(sub("--file=", "", args[grep("--file=", args)]))
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) {
   stop(
@@ -86,7 +88,8 @@ plot_durations <- function(data, key,...,format="simple") {
     summarise(duration = sum(duration), cnt = n(), .groups = "drop")
   # plotting
   seperate <- ggplot(sepperate_data,
-      aes(y = duration, x = paste(operation, "\n#", cnt), fill = backend)) +
+      aes(y = duration, x = paste(operation, "\n#", cnt), fill = backend,
+      text=sprintf("<b>%s</b><br><br>#%s<br>duration: %s%s", backend, cnt, duration, unit))) +
     geom_col(position = "dodge") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 45)) +
@@ -111,7 +114,8 @@ plot_durations <- function(data, key,...,format="simple") {
     summarise(duration = sum(duration), .groups = "drop")
   # plotting
   total <- ggplot(total_data,
-      aes(y = duration, x = "all operations", fill = backend)) +
+      aes(y = duration, x = "all operations", fill = backend,
+      text=sprintf("<b>%s</b><br><br>duration: %s%s", backend, duration, unit))) +
     geom_col(position = "dodge") +
     label
   # table
@@ -123,11 +127,15 @@ plot_durations <- function(data, key,...,format="simple") {
   colnames(sepperate_data)[which(names(sepperate_data) == "duration")] <- "duration (ms)"
   # output table
   plot_file_name <- paste(key[1], "time.svg", sep = "_")
+  plot_html_file_name <- paste(key[1], "time.html", sep = "_")
   table_sepperate_str <- knitr::kable(sepperate_data, format, digits=2, table.attr = "class=\"fancy\"")
   table_total_str <- knitr::kable(total_data, format, digits=2, table.attr = "class=\"fancy\"")
   if (format == "html") {
     cat("<h2 id=\"",as.character(key[1]),"\">",as.character(key[1]),"</h2>", sep = "")
-    cat("<table><tbody><tr><td rowspan=\"2\">",table_sepperate_str,"</td><td style=\"height:10px\">", table_total_str,"</td></tr><tr><td style=\"vertical-align:top\"><object data=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\"></object></td></tr></tbody></table>", sep = "")
+    cat("<table><tbody><tr><td rowspan=\"2\">",table_sepperate_str,"</td><td style=\"height:10px\">", table_total_str,"</td></tr><tr><td style=\"vertical-align:top\">",
+      #"<object data=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\"></object>",
+      "<iframe width=\"1080px\" height=\"720px\" src=\"./",plot_html_file_name,"\" title=\"inteactive barplot for result listed in tables\"></iframe>",
+      "</td></tr></tbody></table>", sep = "")
   } else {
     cat(as.character(key[1]), paste0("plot: ", plot_file_name), "", table_total_str, "", table_sepperate_str, "", "", sep="\n")
   }
@@ -138,12 +146,23 @@ plot_durations <- function(data, key,...,format="simple") {
     common.legend = TRUE, legend = "bottom")
   ggsave(plot_file_name, plot,
     unit = "in", width = 11, height = 6, bg = "white")
+  tmp <- ggplotly(seperate, dynamicTicks="y", tooltip="text")
+  # disables dupliclated legend
+  tmp[[1]][[1]] <- lapply(tmp[[1]][[1]], function(x) {x$showlegend <- FALSE; x})
+  htmlwidgets::saveWidget(
+    subplot(
+      tmp,
+      ggplotly(total, dynamicTicks="y", tooltip="text"),
+      widths = c(0.8, 0.2)
+    ) %>% layout(hoverlabel = list(bgcolor="white"), yaxis = list(autorange=TRUE, title=label$y)), plot_html_file_name,
+    selfcontained = FALSE,
+    libdir = "lib")
 }
 
 # print html header
 if (as_html) {
   cat("<!DOCTYPE html><html lang=\"en\">")
-  cat("<head><style>",paste(readLines("style.css"), collapse = "\n"),"</style></head><body><header>", sep="")
+  cat("<head><style>",paste(readLines(paste(script_dir, "style.css", sep="/")), collapse = "\n"),"</style></head><body><header>", sep="")
   cat("<nav><ul>")
   for ( backend in unique(data$backend)) {
     cat("<li><a href=\"#",backend,"\">", backend,"</a></li>", sep="")
