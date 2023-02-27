@@ -5,6 +5,7 @@ suppressMessages(library(plotly))
 suppressMessages(library(dplyr))
 suppressMessages(library(scales))
 suppressMessages(library(ggpubr))
+library(reshape2)
 
 options(knitr.kable.NA = "")
 
@@ -65,6 +66,23 @@ if (res == FALSE) {
     call. = FALSE)
 }
 
+plotly_plot <- function(label, unit, data){
+  print(data)
+  data$operation <- paste0(data$operation, "\n# ",data$cnt)
+  data_wide <- dcast(subset(data, select=-c(cnt)), operation ~ backend, value.var="duration")
+  hovertemplate <- "%{text}<extra></extra>"
+  names <- colnames(data_wide)
+  for (name in names)
+  fig <-  plot_ly(data_wide, x=~operation, y=data_wide[,2], type='bar', name=names[2], legendgroup=names[2], showlegend=FALSE,
+    text="dummy", textposition='none',hovertemplate=hovertemplate)
+  for (i in 3:length(names)) {
+    fig <- fig %>% add_trace(y=data_wide[,i], name=names[i], legendgroup=names[i],showlegend=FALSE,text="dummy")
+  }
+  fig <- fig %>% layout(
+    barmode='group', colorway=hue_pal()(length(names)-1))
+  return(fig)
+ }
+
 plot_durations <- function(data, key,...,format="simple") {
   # check and convert duration unit as sensible
   unit <- "s"
@@ -89,11 +107,13 @@ plot_durations <- function(data, key,...,format="simple") {
   # plotting
   seperate <- ggplot(sepperate_data,
       aes(y = duration, x = paste(operation, "\n#", cnt), fill = backend,
-      text=sprintf("<b>%s</b><br><br>#%s<br>duration: %s%s", backend, cnt, duration, unit))) +
+      text=sprintf("<b>%s</b><br><br>number: %s<br>duration: %.2f%s<br>avg: %.2f%s", backend, cnt, duration, unit, duration / cnt, unit))) +
     geom_col(position = "dodge") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 45)) +
     label
+  # inteacrtive plotting
+  sepperate_ly <- plotly_plot(label, unit, sepperate_data)
   # table
   sepperate_data <- sepperate_data %>%
     group_by(operation) %>%
@@ -112,12 +132,20 @@ plot_durations <- function(data, key,...,format="simple") {
   total_data <- data %>%
     group_by(backend) %>%
     summarise(duration = sum(duration), .groups = "drop")
+  total_data <- total_data[order(total_data$backend), ]
   # plotting
   total <- ggplot(total_data,
       aes(y = duration, x = "all operations", fill = backend,
-      text=sprintf("<b>%s</b><br><br>duration: %s%s", backend, duration, unit))) +
+      text=sprintf("<b>%s</b><br><br>duration: %.0f%s", backend, round(duration), unit))) +
     geom_col(position = "dodge") +
     label
+  # intearctive plotting
+  total_ly <- plot_ly(data=total_data, x=total_data$backend[1], y=total_data$duration[1], name=total_data$backend[1], type="bar", legendgroup=total_data$backend[1])
+  for (i in 2:nrow(total_data)) {
+    total_ly <- total_ly %>% add_bars(x=total_data$backend[i], y=total_data$duration[i], name=total_data$backend[i], legendgroup=total_data$backend[i])
+  }
+  total_ly <- total_ly %>% layout(
+    barmode='group', colorway=hue_pal()(nrow(total_data)))
   # table
   total_data$speed_up <- max(total_data$duration) / total_data$duration
   total_data$time_diff <- max(total_data$duration) - total_data$duration
@@ -133,8 +161,8 @@ plot_durations <- function(data, key,...,format="simple") {
   if (format == "html") {
     cat("<h2 id=\"",as.character(key[1]),"\">",as.character(key[1]),"</h2>", sep = "")
     cat("<table><tbody><tr><td rowspan=\"2\">",table_sepperate_str,"</td><td style=\"height:10px\">", table_total_str,"</td></tr><tr><td style=\"vertical-align:top\">",
-      #"<object data=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\"></object>",
-      "<iframe width=\"1080px\" height=\"720px\" src=\"./",plot_html_file_name,"\" title=\"inteactive barplot for result listed in tables\"></iframe>",
+      "<a href=\"./",plot_html_file_name,"\" style=\"display: inline-block\"><object data=\"./", plot_file_name,"\" alt=\"barplot of results listed in table\" style=\"pointer-events: none\"></object></a>",
+      # "<iframe width=\"1080px\" height=\"720px\" src=\"./",plot_html_file_name,"\" title=\"inteactive barplot for result listed in tables\"></iframe>",
       "</td></tr></tbody></table>", sep = "")
   } else {
     cat(as.character(key[1]), paste0("plot: ", plot_file_name), "", table_total_str, "", table_sepperate_str, "", "", sep="\n")
@@ -146,15 +174,20 @@ plot_durations <- function(data, key,...,format="simple") {
     common.legend = TRUE, legend = "bottom")
   ggsave(plot_file_name, plot,
     unit = "in", width = 11, height = 6, bg = "white")
-  tmp <- ggplotly(seperate, dynamicTicks="y", tooltip="text")
+  
   # disables dupliclated legend
-  tmp[[1]][[1]] <- lapply(tmp[[1]][[1]], function(x) {x$showlegend <- FALSE; x})
   htmlwidgets::saveWidget(
+    # subplot(
+    #   tmp,
+    #   ggplotly(total, dynamicTicks="y", tooltip="text"),
+    #   widths = c(0.8, 0.2)
+    # ) %>% layout(barmode='group', hoverlabel = list(bgcolor="white"), yaxis = list(autorange=TRUE, title=label$y)),
     subplot(
-      tmp,
-      ggplotly(total, dynamicTicks="y", tooltip="text"),
-      widths = c(0.8, 0.2)
-    ) %>% layout(hoverlabel = list(bgcolor="white"), yaxis = list(autorange=TRUE, title=label$y)), plot_html_file_name,
+      sepperate_ly,
+      total_ly,
+      # subplot_titles=c("A", "B")),
+      widths = c(0.8, 0.2)) %>% layout(yaxis=list(title=label$y)),
+    plot_html_file_name,
     selfcontained = FALSE,
     libdir = "lib")
 }
@@ -176,3 +209,4 @@ data %>% group_by(backend) %>% group_walk(plot_durations, format=if(as_html) "ht
 if (as_html) {
   cat("</body></html>")
 }
+warnings()
