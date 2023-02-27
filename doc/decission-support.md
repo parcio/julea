@@ -49,6 +49,23 @@ backend available for this type. And will produce a `summary.csv`
 This summary can then be evaluated for example with `./scripts/decision-support.R`.
 A example flow is shown below.
 
+Configurations which should be tested are defined are define in a `config.json` file.
+The principle scheme is the following
+```json
+{
+  "object": [{"backend": "posix", "path": "/tmp/<tmp>/posix"}],
+  "kv": [{"backend": "sqlite", "path": "/tmp/<tmp>/sqlite"}, {"backend": "sqlite", "path": "/mnt/slow/<tmp>/sqlite"}],
+  "db": [{"backend": "sqlite", "path": ":memory:"}],
+}
+```
+
+For each backend type a list of backend path pairs can be defined which will then be tested.
+notice the `<tmp>` inside of the paths, this will be replaced with a temporary directory placed at the given position
+and automaticlly cleared after execution.
+
+A exapmle config can be found at `example/decission-support-config.json`
+
+
 Important notice:
 * the script assums a empty backend start state
 * the script places backends and temporary files in `/tmp/` support for differnce devices is pending
@@ -59,19 +76,7 @@ Important notice:
 JULEA_TRACE=access julea-server 2> access-record.csv
 # run application
 # stop julea-server (Ctrl+C)
-./scripts/decission-support.py acces-record.csv summary.csv config.json
-{
-  "object": [
-    {"backend": "posix", "path": "/tmp/<random>/"},
-    {"backend": "posix", "path": "/mnt/abc"}
-  ],
-  "kv": [
-    {""}
-  ],
-  "object": [
-    {""}
-  ]
-}
+./scripts/decission-support.py config.json acces-record.csv summary.csv
 Rscript ./scripts/decission-support.R summary.csv html > summary.html
 # or only ci output
 Rscript ./scripts/decission-support.R summary.csv
