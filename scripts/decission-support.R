@@ -67,16 +67,21 @@ if (res == FALSE) {
 }
 
 plotly_plot <- function(label, unit, data){
-  print(data)
   data$operation <- paste0(data$operation, "\n# ",data$cnt)
   data_wide <- dcast(subset(data, select=-c(cnt)), operation ~ backend, value.var="duration")
   hovertemplate <- "%{text}<extra></extra>"
   names <- colnames(data_wide)
+  extract <- function(name) {
+    data <- data %>% filter(backend == name)
+    return(sprintf(
+      "<b>%s</b><br><br>number: %s<br>duration: %.2f%s<br>avg: %.2f%s",
+      data$backend, data$cnt, data$duration, unit, data$duration / data$cnt, unit))
+  }
   for (name in names)
   fig <-  plot_ly(data_wide, x=~operation, y=data_wide[,2], type='bar', name=names[2], legendgroup=names[2], showlegend=FALSE,
-    text="dummy", textposition='none',hovertemplate=hovertemplate)
+    text=extract(names[2]), textposition='none',hovertemplate=hovertemplate)
   for (i in 3:length(names)) {
-    fig <- fig %>% add_trace(y=data_wide[,i], name=names[i], legendgroup=names[i],showlegend=FALSE,text="dummy")
+    fig <- fig %>% add_trace(y=data_wide[,i], name=names[i], legendgroup=names[i],showlegend=FALSE,text=extract(names[i]))
   }
   fig <- fig %>% layout(
     barmode='group', colorway=hue_pal()(length(names)-1))
@@ -107,7 +112,7 @@ plot_durations <- function(data, key,...,format="simple") {
   # plotting
   seperate <- ggplot(sepperate_data,
       aes(y = duration, x = paste(operation, "\n#", cnt), fill = backend,
-      text=sprintf("<b>%s</b><br><br>number: %s<br>duration: %.2f%s<br>avg: %.2f%s", backend, cnt, duration, unit, duration / cnt, unit))) +
+      text=)) +
     geom_col(position = "dodge") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 45)) +
@@ -118,9 +123,11 @@ plot_durations <- function(data, key,...,format="simple") {
   sepperate_data <- sepperate_data %>%
     group_by(operation) %>%
     group_modify(function(df, keys) {
+      cnt <- sprintf("#%s", df$cnt[1])
+      df$cnt <- sprintf("%.2f", df$duration / df$cnt)
       df$speed_up <- max(df$duration) / df$duration
       df$time_diff <- max(df$duration) - df$duration
-      df <- df %>% arrange(duration) %>% add_row(.before=0)
+      df <- df %>% arrange(duration) %>% add_row(cnt=cnt, .before=0)
       return(df)}) %>%
     ungroup()
   sepperate_data$operation <- reorder(factor(sepperate_data$operation), sepperate_data$time_diff, FUN=max, decreasing=TRUE, na.rm = TRUE)
@@ -140,7 +147,8 @@ plot_durations <- function(data, key,...,format="simple") {
     geom_col(position = "dodge") +
     label
   # intearctive plotting
-  total_ly <- plot_ly(data=total_data, x=total_data$backend[1], y=total_data$duration[1], name=total_data$backend[1], type="bar", legendgroup=total_data$backend[1])
+  total_ly <- plot_ly(data=total_data, x=total_data$backend[1], y=total_data$duration[1], name=total_data$backend[1], type="bar", legendgroup=total_data$backend[1],
+                      hovertemplate=paste0("%{y}",unit,"<extra></extra>"))
   for (i in 2:nrow(total_data)) {
     total_ly <- total_ly %>% add_bars(x=total_data$backend[i], y=total_data$duration[i], name=total_data$backend[i], legendgroup=total_data$backend[i])
   }
@@ -151,8 +159,11 @@ plot_durations <- function(data, key,...,format="simple") {
   total_data$time_diff <- max(total_data$duration) - total_data$duration
   total_data <- arrange(total_data, duration)
 
-  colnames(total_data)[which(names(total_data) == "duration")] <- "duration (ms)"
-  colnames(sepperate_data)[which(names(sepperate_data) == "duration")] <- "duration (ms)"
+  colnames(total_data)[which(names(total_data) == "duration")] <- sprintf("duration (%s)", unit)
+  colnames(sepperate_data)[which(names(sepperate_data) == "duration")] <- sprintf("duration (%s)", unit)
+  colnames(total_data)[which(names(total_data) == "speed_up")] <- sprintf("speed up (%s)", unit)
+  colnames(sepperate_data)[which(names(sepperate_data) == "speed_up")] <- sprintf("speed up (%s)", unit)
+  colnames(sepperate_data)[which(names(sepperate_data) == "cnt")] <- sprintf("cnt/avg duration (%s)", unit)
   # output table
   plot_file_name <- paste(key[1], "time.svg", sep = "_")
   plot_html_file_name <- paste(key[1], "time.html", sep = "_")
@@ -177,16 +188,10 @@ plot_durations <- function(data, key,...,format="simple") {
   
   # disables dupliclated legend
   htmlwidgets::saveWidget(
-    # subplot(
-    #   tmp,
-    #   ggplotly(total, dynamicTicks="y", tooltip="text"),
-    #   widths = c(0.8, 0.2)
-    # ) %>% layout(barmode='group', hoverlabel = list(bgcolor="white"), yaxis = list(autorange=TRUE, title=label$y)),
     subplot(
       sepperate_ly,
       total_ly,
-      # subplot_titles=c("A", "B")),
-      widths = c(0.8, 0.2)) %>% layout(yaxis=list(title=label$y)),
+      widths = c(0.8, 0.2)) %>% layout(yaxis=list(title=label$y), hoverlabel=list(bgcolor="white")),
     plot_html_file_name,
     selfcontained = FALSE,
     libdir = "lib")
