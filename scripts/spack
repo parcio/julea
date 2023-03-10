@@ -28,7 +28,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='675afd884d65631492ab5647dc95692676e5a195'
+	spack_commit='eb5909757628d6ff9daccc7ca5a4ea1adc89b8c6'
 
 	test -n "${SPACK_DIR}" || return 1
 
@@ -142,7 +142,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 	# Recommended dependencies
-	dependencies="${dependencies} hdf5~mpi"
+	dependencies="${dependencies} hdf5~mpi@:1.12"
 	dependencies="${dependencies} libfuse~utils"
 	dependencies="${dependencies} lmdb"
 	dependencies="${dependencies} sqlite"
