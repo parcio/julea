@@ -1,5 +1,21 @@
 #!/usr/bin/env Rscript
 
+# JULEA - Flexible storage framework
+# Copyright (C) 2023-2023 Julian Benda
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 suppressMessages(library(ggplot2))
 suppressMessages(library(plotly))
 suppressMessages(library(dplyr))
@@ -66,11 +82,11 @@ if (res == FALSE) {
     call. = FALSE)
 }
 
+hovertemplate <- "%{text}<extra></extra>"
 plotly_plot <- function(label, unit, data){
   data$operation <- paste0(data$operation, "\n# ",data$cnt)
   data$operation <- factor(data$operation, levels=unique(data$operation))
   data_wide <- dcast(subset(data, select=-c(cnt)), operation ~ backend, value.var="duration")
-  hovertemplate <- "%{text}<extra></extra>"
   names <- colnames(data_wide)
   extract <- function(name) {
     data <- data %>% filter(backend == name)
@@ -85,19 +101,14 @@ plotly_plot <- function(label, unit, data){
     fig <- fig %>% add_trace(y=data_wide[,i], name=names[i], legendgroup=names[i],text=extract(names[i]))
   }
   fig <- fig %>% layout(
-    barmode='group', colorway=hue_pal()(length(names)-1),
+    # barmode='group',
+    colorway=hue_pal()(length(names)-1),
+    font=list(size=18),
     xaxis=list(categoryorder="array", categoryarray=levels(data$operation)))
   return(fig)
  }
 
 plot_durations <- function(data, key,...,format="simple") {
-  # check and convert duration unit as sensible
-  unit <- "s"
-  if (max(data$duration) < 10.) {
-    data$duration <- data$duration * 1000.
-    unit <- "ms"
-  }
-  label <- labs(y = paste0("time in ", unit), fill = "backend", x = "")
 
   # generate shorted backend label
   confs <-  unique(data %>% select("type", "path"))
@@ -116,8 +127,23 @@ plot_durations <- function(data, key,...,format="simple") {
       df$time_diff <- max(df$duration) - df$duration
       return(df)
     })
+
+  # check and convert duration unit as sensible
+  unit <- "s"
+  if (max(sepperate_data$duration) < 10.) {
+    sepperate_data$duration <- sepperate_data$duration * 1000.
+    unit <- "ms"
+  }
+  label <- labs(y = paste0("time in ", unit), fill = "backend", x = "")
   # plotting
   sepperate_data$operation <- reorder(factor(sepperate_data$operation), sepperate_data$time_diff, FUN=max, decreasing=TRUE, na.rm = TRUE)
+  off <- 0
+  sepperate_data <- sepperate_data %>%
+    group_modify(function(df, keys){
+      df$base <- off
+      off <<- df$duration + off
+      return(df)
+    })
   sepperate_data <- arrange(sepperate_data, operation)
   seperate <- ggplot(sepperate_data,
       aes(y = duration, x = factor(operation,level=levels(operation),labels=paste(unique(operation), "\n#", unique(cnt))), fill = backend)) +
@@ -127,6 +153,12 @@ plot_durations <- function(data, key,...,format="simple") {
     label
   # inteacrtive plotting
   sepperate_ly <- plotly_plot(label, unit, sepperate_data)
+  total_ly <- plot_ly(
+    data=sepperate_data,
+    x=~backend, y=~duration, base=~base, color=~operation,
+    colors=dichromat_pal("DarkRedtoBlue.12")(length(unique(sepperate_data$operation))),
+    type="bar", showlegend=TRUE, offsetgroup=0, orientation='v', hovertemplate=hovertemplate,
+    text=~sprintf("<b>%s</b><br><br>number: %s<br>duration: %.2f%s", operation, cnt, duration, unit), textposition="none")
   # table
   sepperate_data <- sepperate_data %>%
     group_modify(function(df, keys) {
@@ -139,6 +171,7 @@ plot_durations <- function(data, key,...,format="simple") {
 
   sepperate_data <- arrange(sepperate_data, operation)
   sepperate_data[! is.na(sepperate_data$duration),]$operation = NA
+  sepperate_data <- subset(sepperate_data, select=-c(base))
 
   # analyse for total runtime
   total_data <- data %>%
@@ -151,13 +184,13 @@ plot_durations <- function(data, key,...,format="simple") {
     geom_col(position = "dodge") +
     label
   # intearctive plotting
-  total_ly <- plot_ly(data=total_data, x=total_data$backend[1], y=total_data$duration[1], name=total_data$backend[1], type="bar", showlegend=FALSE, # legendgroup=total_data$backend[1],
-                      hovertemplate=paste0("%{y}",unit,"<extra></extra>"))
-  for (i in 2:nrow(total_data)) {
-    total_ly <- total_ly %>% add_bars(x=total_data$backend[i], y=total_data$duration[i], name=total_data$backend[i], showlegend=FALSE) # , legendgroup=total_data$backend[i])
-  }
-  total_ly <- total_ly %>% layout(
-    barmode='group', colorway=hue_pal()(nrow(total_data)))
+  # total_ly <- plot_ly(data=total_data, x=total_data$backend[1], y=total_data$duration[1], name=total_data$backend[1], type="bar", showlegend=FALSE, # legendgroup=total_data$backend[1],
+  #                     hovertemplate=paste0("%{y}",unit,"<extra></extra>"))
+  # for (i in 2:nrow(total_data)) {
+  #   total_ly <- total_ly %>% add_bars(x=total_data$backend[i], y=total_data$duration[i], name=total_data$backend[i], showlegend=FALSE) # , legendgroup=total_data$backend[i])
+  # }
+  # total_ly <- total_ly %>% layout(
+  #   barmode='group', colorway=hue_pal()(nrow(total_data)))
   # table
   total_data$speed_up <- max(total_data$duration) / total_data$duration
   total_data$time_diff <- max(total_data$duration) - total_data$duration
@@ -165,8 +198,8 @@ plot_durations <- function(data, key,...,format="simple") {
 
   colnames(total_data)[which(names(total_data) == "duration")] <- sprintf("duration (%s)", unit)
   colnames(sepperate_data)[which(names(sepperate_data) == "duration")] <- sprintf("duration (%s)", unit)
-  colnames(total_data)[which(names(total_data) == "speed_up")] <- sprintf("speed up (%s)", unit)
-  colnames(sepperate_data)[which(names(sepperate_data) == "speed_up")] <- sprintf("speed up (%s)", unit)
+  colnames(total_data)[which(names(total_data) == "time_diff")] <- sprintf("time diff (%s)", unit)
+  colnames(sepperate_data)[which(names(sepperate_data) == "time_diff")] <- sprintf("time diff (%s)", unit)
   colnames(sepperate_data)[which(names(sepperate_data) == "cnt")] <- sprintf("cnt/avg duration (%s)", unit)
   # output table
   plot_file_name <- paste(key[1], "time.svg", sep = "_")
@@ -195,7 +228,117 @@ plot_durations <- function(data, key,...,format="simple") {
     subplot(
       sepperate_ly,
       total_ly,
-      widths = c(0.8, 0.2)) %>% layout(yaxis=list(title=label$y), hoverlabel=list(bgcolor="white")),
+      widths = c(0.8, 0.2)) %>% layout(yaxis=list(title=label$y), hoverlabel=list(bgcolor="white"), barmode="group", legend=list(traceorder="normal")) %>%
+        htmlwidgets::onRender(paste0("
+          function(el) {
+            N=", length(unique(sepperate_data$backend))-1,"
+            el.on('plotly_legendclick', function(d) { 
+              if(!el.mystore) {
+                el.mystore = {}
+                el.mystore.autorange = true
+                el.mystore.labels = JSON.parse(JSON.stringify(d.layout.xaxis2.categoryarray))
+                el.mystore.labels0 = JSON.parse(JSON.stringify(d.layout.xaxis.categoryarray))
+              }
+              node = d.node;
+              while(!node.id.startsWith('htmlwidget-')) {
+                node = node.parentElement;
+              }
+              dir = d.node.style.opacity > 0.5 ? -1 : 1
+              layout = {}
+              console.log('click', d,layout)
+              if (d.curveNumber < N) { 
+                range = d.layout.xaxis2.range
+                range[1] += dir
+                label = el.mystore.labels[d.curveNumber]
+                categoryarray = d.layout.xaxis2.categoryarray
+                if (dir < 1) {
+                  categoryarray.splice(categoryarray.indexOf(label), 1)
+                } else {
+                  i = 0
+                  while(i < categoryarray.length && el.mystore.labels.indexOf(categoryarray[i]) < d.curveNumber) { i += 1}
+                  categoryarray.splice(i, 0, label)
+                }
+                layout[\"xaxis2.range\"] = range,
+                layout[\"xaxis2.categoryarray\"] = categoryarray
+                if (el.mystore.autorange) {
+                  max = 0
+                  for(i = 0; i < categoryarray.length; i += 1) {
+                    for (j = N; j < d.data.length; j += 1) {
+                      idx = d.data[j].x.indexOf(categoryarray[i])
+                      y = d.data[j].y[idx] + d.data[j].base[idx]
+                      max = Math.max(max, y)
+                    }
+                  }
+                  layout[\"yaxis2.range\"] = [-max*0.01, max*1.01]
+                  max = 0
+                  for(i = 0; i < d.layout.xaxis.categoryarray.length; i += 1) {
+                    for (j = 0; j < N; j += 1) {
+                      if (categoryarray.indexOf(d.data[j].name) == -1) { continue; }
+                      idx = d.data[j].x.indexOf(d.layout.xaxis.categoryarray[i])
+                      y = d.data[j].y[idx]
+                      max = Math.max(max, y)
+                    }
+                  }
+                  layout[\"yaxis.range\"] = [-max*0.01, max*1.01]
+                }
+
+                Plotly.update(node, {\"visible\": dir > 0 ? true : \"legendonly\"}, layout, [d.curveNumber])
+                return false;
+              }
+              basis = []
+              mod = []
+              max = 0
+              for(i = d.curveNumber; i < d.data.length; i += 1) {
+                mod.push(i)
+                base = []
+                for(j = 0; j < d.data[d.curveNumber].base.length; j += 1) {
+                  base.push(d.data[i].base[j] + dir * d.data[d.curveNumber].y[j])
+                }
+                basis.push(base)
+              }
+
+              for(i = 0; i < d.data.length; i += 1) {
+                visible = d.fullData[i].visible != \"legendonly\" && i != d.curveNumber
+                for(j = 0; j < d.layout.xaxis2.categoryarray.length; j += 1) {
+                  if(visible && d.layout.xaxis2.categoryarray.indexOf(d.data[i].x[j]) != -1) {
+                    max = Math.max(max, d.data[i].base[j] + (i >= d.curveNumber ? dir : 0) * d.data[d.curveNumber].y[j]+ d.data[i].y[j])
+                  }
+                }
+              }
+
+
+              range = d.layout.xaxis.range
+              range[1] += dir
+              label = el.mystore.labels0[d.curveNumber - N]
+              categoryarray = d.layout.xaxis.categoryarray
+              if (dir < 1) {
+                categoryarray.splice(categoryarray.indexOf(label), 1)
+              } else {
+                i = 0 
+                while(i < categoryarray.length && el.mystore.labels0.indexOf(categoryarray[i]) < d.curveNumber - N) { i+= 1}
+                categoryarray.splice(i, 0, label)
+              }
+              layout[\"xaxis.range\"] =  range,
+              layout[\"xaxis.categoryarray\"] =  categoryarray
+              if (el.mystore.autorange) {
+                layout[\"yaxis2.range\"] = [-max*0.01, max*1.01]
+                max = 0
+                for(i = 0; i < categoryarray.length; i += 1) {
+                  for (j = 0; j < N; j += 1) {
+                    if (d.layout.xaxis2.categoryarray.indexOf(d.data[j].name) == -1) { continue; }
+                    idx = d.data[j].x.indexOf(categoryarray[i])
+                    y = d.data[j].y[idx]
+                    max = Math.max(max, y)
+                  }
+                }
+                layout[\"yaxis.range\"] = [-max*0.01, max*1.01]
+              }
+              Plotly.update(node, {base: basis}, layout, mod)
+              Plotly.restyle(node, {visible: dir > 0 ? true : \"legendonly\"}, [d.curveNumber])
+              return false;
+            });
+          }
+        ")),
     plot_html_file_name,
     selfcontained = FALSE,
     libdir = "lib")
