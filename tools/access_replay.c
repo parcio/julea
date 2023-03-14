@@ -41,7 +41,10 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	component = j_configuration_get_backend_component(configuration, type);
 	path = j_helper_str_replace(j_configuration_get_backend_path(configuration, type), "{PORT}", port_str);
 
-	if (strcmp(component, "server") != 0) { return TRUE; }
+	if (strcmp(component, "server") != 0)
+	{
+		return TRUE;
+	}
 	if (j_backend_load_server(backend, component, type, module, j_backend))
 	{
 		gboolean res = TRUE;
@@ -74,7 +77,8 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	}
 	return FALSE;
 }
-enum row_fields {
+enum row_fields
+{
 	TIME,
 	PROCESS_UID,
 	PROGRAM_NAME,

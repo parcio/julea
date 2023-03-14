@@ -239,7 +239,6 @@ j_trace_thread_new(GThread* thread)
 		trace_thread->thread_name = g_strdup_printf("Thread %d", thread_id);
 	}
 
-
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{

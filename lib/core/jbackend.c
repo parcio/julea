@@ -290,7 +290,7 @@ j_backend_object_init(JBackend* backend, gchar const* path)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_init", "%s", path);
 		ret = backend->object.backend_init(path, &(backend->data));
@@ -309,7 +309,7 @@ j_backend_object_fini(JBackend* backend)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_fini", NULL);
 		backend->object.backend_fini(backend->data);
@@ -331,7 +331,7 @@ j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_create", "%s, %s, %p", namespace, path, (gpointer)data);
 		ret = backend->object.backend_create(backend->data, namespace, path, data);
@@ -355,7 +355,7 @@ j_backend_object_open(JBackend* backend, gchar const* namespace, gchar const* pa
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_open", "%s, %s, %p", namespace, path, (gpointer)data);
 		ret = backend->object.backend_open(backend->data, namespace, path, data);
@@ -377,7 +377,7 @@ j_backend_object_delete(JBackend* backend, gpointer data)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_delete", "%p", data);
 		ret = backend->object.backend_delete(backend->data, data);
@@ -400,7 +400,7 @@ j_backend_object_get_all(JBackend* backend, gchar const* namespace, gpointer* it
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_get_all", "%s, %p", namespace, (gpointer)iterator);
 		ret = backend->object.backend_get_all(backend->data, namespace, iterator);
@@ -424,7 +424,7 @@ j_backend_object_get_by_prefix(JBackend* backend, gchar const* namespace, gchar 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
 		ret = backend->object.backend_get_by_prefix(backend->data, namespace, prefix, iterator);
@@ -446,7 +446,7 @@ j_backend_object_iterate(JBackend* backend, gpointer iterator, gchar const** nam
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_iterate", "%p, %p", iterator, (gpointer)name);
 		ret = backend->object.backend_iterate(backend->data, iterator, name);
@@ -468,7 +468,7 @@ j_backend_object_close(JBackend* backend, gpointer data)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_close", "%p", data);
 		ret = backend->object.backend_close(backend->data, data);
@@ -492,7 +492,7 @@ j_backend_object_status(JBackend* backend, gpointer data, gint64* modification_t
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_status", "%p, %p, %p", data, (gpointer)modification_time, (gpointer)size);
 		ret = backend->object.backend_status(backend->data, data, modification_time, size);
@@ -514,7 +514,7 @@ j_backend_object_sync(JBackend* backend, gpointer data)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_sync", "%p", data);
 		ret = backend->object.backend_sync(backend->data, data);
@@ -538,7 +538,7 @@ j_backend_object_read(JBackend* backend, gpointer data, gpointer buffer, guint64
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_read", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_read);
 		ret = backend->object.backend_read(backend->data, data, buffer, length, offset, bytes_read);
@@ -562,7 +562,7 @@ j_backend_object_write(JBackend* backend, gpointer data, gconstpointer buffer, g
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_object_write", "%p, %p, %" G_GUINT64_FORMAT ", %" G_GUINT64_FORMAT ", %p", data, buffer, length, offset, (gpointer)bytes_written);
 		ret = backend->object.backend_write(backend->data, data, buffer, length, offset, bytes_written);
@@ -584,7 +584,7 @@ j_backend_kv_init(JBackend* backend, gchar const* path)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_init", "%s", path);
 		ret = backend->kv.backend_init(path, &(backend->data));
@@ -603,7 +603,7 @@ j_backend_kv_fini(JBackend* backend)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_fini", NULL);
 		backend->kv.backend_fini(backend->data);
@@ -625,7 +625,7 @@ j_backend_kv_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_batch_start", "%s, %p, %p", namespace, (gpointer)semantics, (gpointer)batch);
 		ret = backend->kv.backend_batch_start(backend->data, namespace, semantics, batch);
@@ -647,7 +647,7 @@ j_backend_kv_batch_execute(JBackend* backend, gpointer batch)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_batch_execute", "%p", batch);
 		ret = backend->kv.backend_batch_execute(backend->data, batch);
@@ -671,7 +671,7 @@ j_backend_kv_put(JBackend* backend, gpointer batch, gchar const* key, gconstpoin
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_put", "%p, %s, %p, %u", batch, key, (gconstpointer)value, value_len);
 		ret = backend->kv.backend_put(backend->data, batch, key, value, value_len);
@@ -694,7 +694,7 @@ j_backend_kv_delete(JBackend* backend, gpointer batch, gchar const* key)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_delete", "%p, %s", batch, key);
 		ret = backend->kv.backend_delete(backend->data, batch, key);
@@ -719,7 +719,7 @@ j_backend_kv_get(JBackend* backend, gpointer batch, gchar const* key, gpointer* 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_get", "%p, %s, %p, %p", batch, key, (gpointer)value, (gpointer)value_len);
 		ret = backend->kv.backend_get(backend->data, batch, key, value, value_len);
@@ -742,7 +742,7 @@ j_backend_kv_get_all(JBackend* backend, gchar const* namespace, gpointer* iterat
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_get_all", "%s, %p", namespace, (gpointer)iterator);
 		ret = backend->kv.backend_get_all(backend->data, namespace, iterator);
@@ -766,7 +766,7 @@ j_backend_kv_get_by_prefix(JBackend* backend, gchar const* namespace, gchar cons
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_get_by_prefix", "%s, %s, %p", namespace, prefix, (gpointer)iterator);
 		ret = backend->kv.backend_get_by_prefix(backend->data, namespace, prefix, iterator);
@@ -790,7 +790,7 @@ j_backend_kv_iterate(JBackend* backend, gpointer iterator, gchar const** key, gc
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_kv_iterate", "%p, %p, %p, %p", iterator, (gpointer)key, (gpointer)value, (gpointer)value_len);
 		ret = backend->kv.backend_iterate(backend->data, iterator, key, value, value_len);
@@ -812,7 +812,7 @@ j_backend_db_init(JBackend* backend, gchar const* path)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_init", "%s", path);
 		ret = backend->db.backend_init(path, &(backend->data));
@@ -831,7 +831,7 @@ j_backend_db_fini(JBackend* backend)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_fini", NULL);
 		backend->db.backend_fini(backend->data);
@@ -854,7 +854,7 @@ j_backend_db_batch_start(JBackend* backend, gchar const* namespace, JSemantics* 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_batch_start", "%s, %p, %p, %p", namespace, (gpointer)semantics, (gpointer)batch, (gpointer)error);
 		ret = backend->db.backend_batch_start(backend->data, namespace, semantics, batch, error);
@@ -877,7 +877,7 @@ j_backend_db_batch_execute(JBackend* backend, gpointer batch, GError** error)
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_batch_execute", "%p, %p", batch, (gpointer)error);
 		ret = backend->db.backend_batch_execute(backend->data, batch, error);
@@ -902,7 +902,7 @@ j_backend_db_schema_create(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_schema_create", "%p, %s, %u, %p, %p", batch, name, schema->len, (gconstpointer)schema, (gpointer)error);
 		ret = backend->db.backend_schema_create(backend->data, batch, name, schema, error);
@@ -926,7 +926,7 @@ j_backend_db_schema_get(JBackend* backend, gpointer batch, gchar const* name, bs
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_schema_get", "%p, %s, %p, %p", batch, name, (gpointer)schema, (gpointer)error);
 		ret = backend->db.backend_schema_get(backend->data, batch, name, schema, error);
@@ -950,7 +950,7 @@ j_backend_db_schema_delete(JBackend* backend, gpointer batch, gchar const* name,
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_schema_delete", "%p, %s, %p", batch, name, (gpointer)error);
 		ret = backend->db.backend_schema_delete(backend->data, batch, name, error);
@@ -976,7 +976,7 @@ j_backend_db_insert(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_insert", "%p, %s, %u, %p, %p, %p", batch, name, metadata->len, (gconstpointer)metadata, (gpointer)id, (gpointer)error);
 		ret = backend->db.backend_insert(backend->data, batch, name, metadata, id, error);
@@ -1002,7 +1002,7 @@ j_backend_db_update(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_update", "%p, %s, %u, %p, %p, %p", batch, name, metadata->len, (gconstpointer)selector, (gconstpointer)metadata, (gpointer)error);
 		ret = backend->db.backend_update(backend->data, batch, name, selector, metadata, error);
@@ -1026,7 +1026,7 @@ j_backend_db_delete(JBackend* backend, gpointer batch, gchar const* name, bson_t
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_delete", "%p, %s, %u, %p, %p", batch, name, selector->len, (gconstpointer)selector, (gpointer)error);
 		ret = backend->db.backend_delete(backend->data, batch, name, selector, error);
@@ -1051,7 +1051,7 @@ j_backend_db_query(JBackend* backend, gpointer batch, gchar const* name, bson_t 
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_query", "%p, %s, %u, %p, %p, %p", batch, name, selector->len, (gconstpointer)selector, (gpointer)iterator, (gpointer)error);
 		ret = backend->db.backend_query(backend->data, batch, name, selector, iterator, error);
@@ -1075,7 +1075,7 @@ j_backend_db_iterate(JBackend* backend, gpointer iterator, bson_t* metadata, GEr
 
 	{
 		/** This macro call is used for access recording
-		 * The name and argument order is therfore important! 
+		 * The name and argument order is therfore important!
 		 * \sa j_trace_enter() */
 		J_TRACE("backend_db_iterate", "%p, %p, %p", iterator, (gpointer)metadata, (gpointer)error);
 		ret = backend->db.backend_iterate(backend->data, iterator, metadata, error);
