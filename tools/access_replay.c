@@ -96,10 +96,10 @@ enum row_fields
 };
 
 static gboolean
-split(char* line, const char* parts[ROW_LEN])
+split(char* line, char* parts[ROW_LEN])
 {
 	int cnt = 0;
-	const char* section;
+	char* section;
 	section = strtok(line, ",");
 	while (section != NULL)
 	{
@@ -135,7 +135,7 @@ parse_ul(const char* str)
 }
 
 static gboolean
-replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[ROW_LEN])
+replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 {
 	static gpointer data = NULL;
 	const char* op = parts[OPERATION];
@@ -244,7 +244,7 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, const char* parts[R
 	return ret;
 }
 static gboolean
-replay_kv(void* memory_chunk, guint64 memory_chunk_size, const char* parts[ROW_LEN])
+replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 {
 	gboolean ret = FALSE;
 	const char* op = parts[OPERATION];
@@ -339,7 +339,7 @@ struct JSqlBatch
 	gboolean aborted;
 };
 static gboolean
-replay_db(const char* parts[ROW_LEN])
+replay_db(char** parts)
 {
 	gboolean ret = FALSE;
 	static gpointer batch = NULL;
@@ -486,7 +486,7 @@ replay_db(const char* parts[ROW_LEN])
 static gboolean
 replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 {
-	const char* parts[ROW_LEN];
+	char* parts[ROW_LEN];
 	if (!split(line, parts))
 	{
 		return FALSE;

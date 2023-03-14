@@ -1135,7 +1135,10 @@ j_trace_leave(JTrace* trace)
 					}
 					else if (strcmp(trace->name, "backend_dbupdate") == 0)
 					{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
 						bson_destroy((bson_t*)row->bson);
+#pragma GCC diagnostic pop
 					}
 					else if (strcmp(trace->name, "backend_db_batch_execute") == 0)
 					{
