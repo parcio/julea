@@ -20,7 +20,6 @@
  * \file
  **/
 
-#include "joperation-cache.h"
 #include <julea-config.h>
 
 #include <glib.h>
