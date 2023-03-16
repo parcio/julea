@@ -215,7 +215,6 @@ j_batch_execute_same(JBatch* batch, JOperationExecFunc exec_func, JList* list)
 	return ret;
 }
 
-
 /**
  * Flush the operation cache and directly execute the given batch.
  */
