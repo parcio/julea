@@ -20,6 +20,7 @@
  * \file
  **/
 
+#include "joperation-cache.h"
 #include <julea-config.h>
 
 #include <glib.h>
@@ -161,6 +162,12 @@ j_operation_cache_test(JOperation* operation)
 			g_warn_if_reached();
 	}
 	*/
+
+	// enforce operation order even if some operations can not be cached
+	if (!ret)
+	{
+		j_operation_cache_flush();
+	}
 
 	return ret;
 }

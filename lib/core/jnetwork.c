@@ -1145,7 +1145,7 @@ j_network_connection_rma_read(JNetworkConnection* connection, const JNetworkConn
 	struct fid_mr* mr;
 
 	gint res;
-	/// \todo static? thread-persistency
+	/// \todo static? thread-safety
 	static unsigned key = 0;
 
 	res = fi_mr_reg(connection->domain, data, memoryID->size, FI_READ, 0, ++key, 0, &mr, 0);

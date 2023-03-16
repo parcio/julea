@@ -130,7 +130,7 @@ enum JSemanticsConsistency
 	J_SEMANTICS_CONSISTENCY_IMMEDIATE,
 
 	/**
-	 * Data is consistent immediately after no reference to the batch object is hold anymore.
+	 * Data is consistent immediately after no reference to the batch object is held anymore.
 	 */
 	J_SEMANTICS_CONSISTENCY_SESSION,
 

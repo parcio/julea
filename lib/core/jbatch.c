@@ -215,6 +215,21 @@ j_batch_execute_same(JBatch* batch, JOperationExecFunc exec_func, JList* list)
 	return ret;
 }
 
+
+/**
+ * Flush the operation cache and directly execute the given batch.
+ */
+static gboolean
+batch_direct_execute(JBatch* batch)
+{
+	gboolean ret = FALSE;
+
+	ret = j_batch_execute_internal(batch);
+	j_list_delete_all(batch->list);
+
+	return ret;
+}
+
 gboolean
 j_batch_execute(JBatch* batch)
 {
@@ -235,8 +250,17 @@ j_batch_execute(JBatch* batch)
 	switch (consistency)
 	{
 		case J_SEMANTICS_CONSISTENCY_EVENTUAL:
-			// execute on operation cache flushes
-			return j_operation_cache_add(batch);
+			// try to cache the operation
+			if (!j_operation_cache_add(batch))
+			{
+				// fallback for operations that cannot be cached
+				// necessary flushes were handled in j_operation_cache_test
+				ret = batch_direct_execute(batch);
+			}
+			else
+			{
+				ret = TRUE;
+			}
 			break;
 
 		case J_SEMANTICS_CONSISTENCY_SESSION:
@@ -245,11 +269,10 @@ j_batch_execute(JBatch* batch)
 			break;
 
 		case J_SEMANTICS_CONSISTENCY_IMMEDIATE:
-			// wait for all operations currently cached
+			// sync point for eventual batches
 			j_operation_cache_flush();
 
-			ret = j_batch_execute_internal(batch);
-			j_list_delete_all(batch->list);
+			ret = batch_direct_execute(batch);
 
 			break;
 
