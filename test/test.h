@@ -72,7 +72,4 @@ void test_hdf_file(void);
 void test_hdf_group_link(void);
 void test_hdf_object(void);
 
-void test_two_tables_join_queries(void);
-void test_three_tables_join_queries(void);
-
 #endif
