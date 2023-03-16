@@ -42,12 +42,12 @@ struct JBatch;
 /**
  * Simulate batch-less operations.
  *
- * J_SINGLE_OP can be passed to operations instead of an actual batch.
+ * J_BATCH_SINGLE can be passed to operations instead of an actual batch.
  * The operation will then be executed immediately and is finished after the call returns.
  * Default semantic settings will be used for execution.
  *
  */
-#define J_SINGLE_OP NULL
+#define J_BATCH_SINGLE NULL
 
 typedef struct JBatch JBatch;
 
@@ -126,7 +126,7 @@ JSemantics* j_batch_get_semantics(JBatch* batch);
 /**
  * Adds a new operation to the batch.
  *
- * Passing J_SINGLE_OP creates a temporary batch and calls j_batch_execute.
+ * Passing J_BATCH_SINGLE creates a temporary batch and calls j_batch_execute.
  *
  * \private
  *

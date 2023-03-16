@@ -273,7 +273,7 @@ j_batch_get_semantics(JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	if (batch == J_SINGLE_OP)
+	if (batch == J_BATCH_SINGLE)
 	{
 		return j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
 	}
@@ -288,8 +288,8 @@ j_batch_add(JBatch* batch, JOperation* operation)
 
 	g_return_val_if_fail(operation != NULL, FALSE);
 
-	// pseudo batch-less ops by passing J_SINGLE_OP
-	if (batch == J_SINGLE_OP)
+	// pseudo batch-less ops by passing J_BATCH_SINGLE
+	if (batch == J_BATCH_SINGLE)
 	{
 		g_autoptr(JBatch) tmp_batch = NULL;
 		tmp_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);

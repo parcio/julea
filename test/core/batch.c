@@ -103,7 +103,7 @@ _test_batch_execute(gboolean async, gboolean batch_less)
 
 	if (batch_less)
 	{
-		batch = J_SINGLE_OP;
+		batch = J_BATCH_SINGLE;
 	}
 	else
 	{
