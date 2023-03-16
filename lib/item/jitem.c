@@ -246,8 +246,8 @@ j_item_delete(JItem* item, JBatch* batch)
 
 	g_return_val_if_fail(item != NULL, FALSE);
 
-	ret &= j_kv_delete(item->kv, batch);
-	ret &= j_distributed_object_delete(item->object, batch);
+	ret = ret && j_kv_delete(item->kv, batch);
+	ret = ret && j_distributed_object_delete(item->object, batch);
 
 	return ret;
 }

@@ -1488,7 +1488,7 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 		operation->exec_func = j_distributed_object_read_exec;
 		operation->free_func = j_distributed_object_read_free;
 
-		ret &= j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar*)data + chunk_size;
 		length -= chunk_size;
@@ -1537,7 +1537,7 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 		operation->exec_func = j_distributed_object_write_exec;
 		operation->free_func = j_distributed_object_write_free;
 
-		ret &= j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar const*)data + chunk_size;
 		length -= chunk_size;

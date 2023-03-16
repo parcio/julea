@@ -1095,7 +1095,7 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 		operation->exec_func = j_object_read_exec;
 		operation->free_func = j_object_read_free;
 
-		ret &= j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar*)data + chunk_size;
 		length -= chunk_size;
@@ -1144,7 +1144,7 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 		operation->exec_func = j_object_write_exec;
 		operation->free_func = j_object_write_free;
 
-		ret &= j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar const*)data + chunk_size;
 		length -= chunk_size;
