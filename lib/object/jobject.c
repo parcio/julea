@@ -1072,8 +1072,6 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
 
-	j_operation_cache_flush(); // flush in-flight batches
-
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	// Chunk operation if necessary
@@ -1161,8 +1159,6 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_operation_cache_flush(); // flush in-flight batches
 
 	iop = g_slice_new(JObjectOperation);
 	iop->status.object = j_object_ref(object);

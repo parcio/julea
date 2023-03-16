@@ -1465,8 +1465,6 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 	g_return_if_fail(length > 0);
 	g_return_if_fail(bytes_read != NULL);
 
-	j_operation_cache_flush(); // flush in-flight batches
-
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
 	// Chunk operation if necessary
@@ -1554,8 +1552,6 @@ j_distributed_object_status(JDistributedObject* object, gint64* modification_tim
 	JOperation* operation;
 
 	g_return_if_fail(object != NULL);
-
-	j_operation_cache_flush(); // flush in-flight batches
 
 	iop = g_slice_new(JDistributedObjectOperation);
 	iop->status.object = j_distributed_object_ref(object);

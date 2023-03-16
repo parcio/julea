@@ -649,8 +649,6 @@ j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 
 	g_return_if_fail(kv != NULL);
 
-	j_operation_cache_flush(); // flush in-flight batches
-
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
 	kop->get.value = value;
@@ -677,8 +675,6 @@ j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 
 	g_return_if_fail(kv != NULL);
 	g_return_if_fail(func != NULL);
-
-	j_operation_cache_flush(); // flush in-flight batches
 
 	kop = g_slice_new(JKVOperation);
 	kop->get.kv = j_kv_ref(kv);
