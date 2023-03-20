@@ -158,8 +158,7 @@ spack_get_dependencies ()
 	then
 		dependencies="${dependencies} python"
 		dependencies="${dependencies} py-gcovr"
-		dependencies="${dependencies} py-numpy"
-		dependencies="${dependencies} py-h5py"
+		dependencies="${dependencies} py-pip"
 	fi
 
 	#dependencies="${dependencies} enzo@main"
