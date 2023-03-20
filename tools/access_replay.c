@@ -26,9 +26,11 @@
 
 #include <julea.h>
 
+
 JBackend* object_backend = NULL;
 JBackend* kv_backend = NULL;
 JBackend* db_backend = NULL;
+
 
 static gboolean
 setup_backend(JConfiguration* configuration, JBackendType type, gchar const* port_str, GModule** module, JBackend** j_backend)
@@ -77,6 +79,8 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	}
 	return FALSE;
 }
+
+
 enum row_fields
 {
 	TIME,
@@ -128,11 +132,13 @@ split(char* line, char* parts[ROW_LEN])
 	return TRUE;
 }
 
+
 static guint64
 parse_ul(const char* str)
 {
 	return strtoul(str, NULL, 10);
 }
+
 
 static gboolean
 replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
@@ -179,7 +185,7 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 		guint64 size = parse_ul(parts[SIZE]);
 		if (size > memory_chunk_size)
 		{
-			g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
+			g_warning("unable to replay: chunk size to small! %lu vs %lu", size, memory_chunk_size);
 		}
 		else
 		{
@@ -192,7 +198,7 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 		guint64 size = parse_ul(parts[SIZE]);
 		if (size > memory_chunk_size)
 		{
-			g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
+			g_warning("unable to replay: chunk size to small! %lu vs %lu", size, memory_chunk_size);
 		}
 		else
 		{
@@ -243,6 +249,8 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 	}
 	return ret;
 }
+
+
 static gboolean
 replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 {
@@ -268,7 +276,7 @@ replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 		guint64 size = parse_ul(parts[SIZE]);
 		if (size > memory_chunk_size)
 		{
-			g_warning("unable to replay: chunk size to samll!%lu vs %lu", size, memory_chunk_size);
+			g_warning("unable to replay: chunk size to small! %lu vs %lu", size, memory_chunk_size);
 		}
 		else
 		{
@@ -331,6 +339,8 @@ replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 	}
 	return ret;
 }
+
+
 struct JSqlBatch
 {
 	const gchar* namespace;
@@ -338,6 +348,7 @@ struct JSqlBatch
 	gboolean open;
 	gboolean aborted;
 };
+
 static gboolean
 replay_db(char** parts)
 {
@@ -483,6 +494,7 @@ replay_db(char** parts)
 	return ret && error == NULL;
 }
 
+
 static gboolean
 replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 {
@@ -509,6 +521,7 @@ replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 
 	return TRUE;
 }
+
 
 int
 main(int argc, char** argv)
@@ -550,9 +563,6 @@ main(int argc, char** argv)
 		goto end;
 	}
 
-	// j_trace_init("julea-replay");
-	// trace = j_trace_enter(G_STRFUNC, NULL);
-
 	port_str = g_strdup_printf("%d", j_configuration_get_port(configuration));
 	if (!setup_backend(configuration, J_BACKEND_TYPE_OBJECT, port_str, &object_module, &object_backend))
 	{
@@ -578,7 +588,24 @@ main(int argc, char** argv)
 		char* line = NULL;
 		size_t len = 0;
 		ssize_t read = 0;
-		memset(memory_chunk, 0, memory_chunck_size);
+		{
+			// initialize memory_chunk with random values
+			GRand* rng = g_rand_new();
+			guint64 i = 0, j = 0;
+			gchar x[sizeof(guint32)];
+
+			for(; i + sizeof(guint32) <= memory_chunck_size; i += sizeof(guint32)) {
+				*(guint32*)(memory_chunk+i) = g_rand_int(rng);
+			}
+
+			*(guint32*)(x) = g_rand_int(rng);
+
+			for(; i < memory_chunck_size; i += 1) {
+				memory_chunk[i] = x[j++];
+			}
+
+			g_rand_free(rng);
+		}
 		read = getline(&line, &len, record_file);
 		line[read - 1] = 0;
 		if (read == -1 || strcmp(line, header) != 0)
@@ -627,7 +654,6 @@ end:
 		g_module_close(object_module);
 	}
 	j_configuration_unref(configuration);
-	// j_trace_leave(trace);
-	// j_trace_fini();
+
 	return res;
 }
