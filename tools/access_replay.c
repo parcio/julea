@@ -26,11 +26,9 @@
 
 #include <julea.h>
 
-
 JBackend* object_backend = NULL;
 JBackend* kv_backend = NULL;
 JBackend* db_backend = NULL;
-
 
 static gboolean
 setup_backend(JConfiguration* configuration, JBackendType type, gchar const* port_str, GModule** module, JBackend** j_backend)
@@ -79,7 +77,6 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	}
 	return FALSE;
 }
-
 
 enum row_fields
 {
@@ -132,13 +129,11 @@ split(char* line, char* parts[ROW_LEN])
 	return TRUE;
 }
 
-
 static guint64
 parse_ul(const char* str)
 {
 	return strtoul(str, NULL, 10);
 }
-
 
 static gboolean
 replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
@@ -250,7 +245,6 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 	return ret;
 }
 
-
 static gboolean
 replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 {
@@ -339,7 +333,6 @@ replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 	}
 	return ret;
 }
-
 
 struct JSqlBatch
 {
@@ -494,7 +487,6 @@ replay_db(char** parts)
 	return ret && error == NULL;
 }
 
-
 static gboolean
 replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 {
@@ -521,7 +513,6 @@ replay(void* memory_chunk, guint64 memory_chunck_size, char* line)
 
 	return TRUE;
 }
-
 
 int
 main(int argc, char** argv)
@@ -594,13 +585,15 @@ main(int argc, char** argv)
 			guint64 i = 0, j = 0;
 			gchar x[sizeof(guint32)];
 
-			for(; i + sizeof(guint32) <= memory_chunck_size; i += sizeof(guint32)) {
-				*(guint32*)(memory_chunk+i) = g_rand_int(rng);
+			for (; i + sizeof(guint32) <= memory_chunck_size; i += sizeof(guint32))
+			{
+				*(guint32*)(memory_chunk + i) = g_rand_int(rng);
 			}
 
 			*(guint32*)(x) = g_rand_int(rng);
 
-			for(; i < memory_chunck_size; i += 1) {
+			for (; i < memory_chunck_size; i += 1)
+			{
 				memory_chunk[i] = x[j++];
 			}
 
