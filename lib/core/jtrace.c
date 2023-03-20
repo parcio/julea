@@ -183,7 +183,6 @@ static GHashTable* otf_function_table = NULL;
 static GHashTable* otf_file_table = NULL;
 static GHashTable* otf_counter_table = NULL;
 
-
 G_LOCK_DEFINE_STATIC(j_trace_otf);
 #endif
 
@@ -637,8 +636,14 @@ count_keys_recursive(const bson_t* bson)
 	return _count_keys_recursive(&itr);
 }
 
-typedef struct{ JBackendType type; const gchar* operation; } BackendTypeOperation;
-static BackendTypeOperation parse_backend_operation(const gchar* backend_operation) {
+typedef struct
+{
+	JBackendType type;
+	const gchar* operation;
+} BackendTypeOperation;
+static BackendTypeOperation
+parse_backend_operation(const gchar* backend_operation)
+{
 	BackendTypeOperation res;
 	res.type = 0;
 	res.operation = NULL;
@@ -723,7 +728,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 			va_end(args);
 		}
 		// for all traces strating with j_trace_access_prefix create an access row
-		else if (strncmp(name, J_TRACE_ACCESS_PREFIX, sizeof(J_TRACE_ACCESS_PREFIX)-1) == 0)
+		else if (strncmp(name, J_TRACE_ACCESS_PREFIX, sizeof(J_TRACE_ACCESS_PREFIX) - 1) == 0)
 		{
 			gchar const* backend_operation = name + sizeof(J_TRACE_ACCESS_PREFIX) - 1;
 			BackendTypeOperation type;
@@ -746,7 +751,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 			}
 
 			type = parse_backend_operation(backend_operation);
-			if (type.operation == NULL) {
+			if (type.operation == NULL)
+			{
 				g_warning("unknown backend in backend_operation for access trace '%s'", backend_operation);
 			}
 			else
@@ -811,10 +817,10 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					// iterate, init, fini <- no further deatils
 					// batch_execute <- handled in leave
 					else if (!(
-							 strcmp(type.operation, "iterate")       == 0
-						|| strcmp(type.operation, "init")          == 0
-						|| strcmp(type.operation, "fini")          == 0
-						|| strcmp(type.operation, "batch_execute") == 0))
+							 strcmp(type.operation, "iterate") == 0
+							 || strcmp(type.operation, "init") == 0
+							 || strcmp(type.operation, "fini") == 0
+							 || strcmp(type.operation, "batch_execute") == 0))
 					{
 						g_warning("Unknown type.operation '%s' for backend 'kv'", type.operation);
 					}
@@ -888,10 +894,10 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					// iterate, init, fini <- no further details
 					// batch_execute <- handled in leave
 					else if (!(
-							 strcmp(type.operation, "iterate")       == 0
-						|| strcmp(type.operation, "init")          == 0
-						|| strcmp(type.operation, "fini")          == 0
-						|| strcmp(type.operation, "batch_execute") == 0))
+							 strcmp(type.operation, "iterate") == 0
+							 || strcmp(type.operation, "init") == 0
+							 || strcmp(type.operation, "fini") == 0
+							 || strcmp(type.operation, "batch_execute") == 0))
 					{
 						g_warning("unknown type.operation '%s' for backend 'db'", type.operation);
 					}
@@ -946,14 +952,14 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					}
 					// status, sync, iterate, fini, init <- no further data
 					// close/delte handled at leave
-					else if(!(
-							 strcmp(type.operation, "status")  == 0
-						|| strcmp(type.operation, "sync")    == 0
-						|| strcmp(type.operation, "iterate") == 0
-						|| strcmp(type.operation,"fini")     == 0
-						|| strcmp(type.operation, "init")    == 0
-						|| strcmp(type.operation, "close")   == 0
-						|| strcmp(type.operation, "delete")  == 0))
+					else if (!(
+							 strcmp(type.operation, "status") == 0
+							 || strcmp(type.operation, "sync") == 0
+							 || strcmp(type.operation, "iterate") == 0
+							 || strcmp(type.operation, "fini") == 0
+							 || strcmp(type.operation, "init") == 0
+							 || strcmp(type.operation, "close") == 0
+							 || strcmp(type.operation, "delete") == 0))
 					{
 						g_warning("unknown type.operation '%s' for backend 'object'", type.operation);
 					}
@@ -1067,7 +1073,8 @@ j_trace_leave(JTrace* trace)
 			{
 				gchar const* backend_operation = trace->name + sizeof(J_TRACE_ACCESS_PREFIX) - 1;
 				BackendTypeOperation type = parse_backend_operation(backend_operation);
-				if (type.operation != NULL) {
+				if (type.operation != NULL)
+				{
 					guint64 duration;
 					Access* row = &trace_thread->access.row;
 
@@ -1099,8 +1106,8 @@ j_trace_leave(JTrace* trace)
 					{
 						g_string_assign(trace_thread->access.db.namespace, NULL);
 					}
-					else if (   strcmp(backend_operation, "object_delete") == 0
-									 || strcmp(trace->name, "object_close") == 0)
+					else if (strcmp(backend_operation, "object_delete") == 0
+						 || strcmp(trace->name, "object_close") == 0)
 					{
 						g_string_assign(trace_thread->access.object.namespace, NULL);
 						g_string_assign(trace_thread->access.object.path, NULL);
