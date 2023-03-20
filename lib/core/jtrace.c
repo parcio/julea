@@ -133,21 +133,21 @@ struct JTraceThread
 		{
 			char* type;
 			char* config_path;
-			char* namespace;
+			GString* namespace;
 		} db;
 		struct
 		{
 			char* type;
 			char* config_path;
-			char* namespace;
-			char* name;
+			GString* namespace;
+			GString* name;
 		} kv;
 		struct
 		{
 			char* type;
 			char* config_path;
-			char* namespace;
-			char* path;
+			GString* namespace;
+			GString* path;
 		} object;
 
 	} access;
@@ -277,10 +277,15 @@ j_trace_thread_free(JTraceThread* trace_thread)
 	{
 		g_free(trace_thread->access.db.type);
 		g_free(trace_thread->access.db.config_path);
+		g_string_free(trace_thread->access.db.namespace, TRUE);
 		g_free(trace_thread->access.kv.type);
 		g_free(trace_thread->access.kv.config_path);
+		g_string_free(trace_thread->access.kv.namespace, TRUE);
+		g_string_free(trace_thread->access.kv.name, TRUE);
 		g_free(trace_thread->access.object.path);
 		g_free(trace_thread->access.object.config_path);
+		g_string_free(trace_thread->access.object.namespace, TRUE);
+		g_string_free(trace_thread->access.object.path, TRUE);
 	}
 
 #ifdef HAVE_OTF
@@ -604,67 +609,6 @@ j_trace_access_print(const Access* row, guint64 duration)
 		   row->bson == NULL ? "{}" : bson_as_json(row->bson, NULL));
 }
 
-static void
-store_object_path(JTraceThread* trace_thread, const char* namespace, const char* path)
-{
-	if (trace_thread->access.object.namespace != namespace)
-	{
-		g_free(trace_thread->access.object.namespace);
-		trace_thread->access.object.namespace = NULL;
-		if (namespace)
-		{
-			trace_thread->access.object.namespace = strdup(namespace);
-		}
-	}
-
-	if (trace_thread->access.object.path != path)
-	{
-		g_free(trace_thread->access.object.path);
-		trace_thread->access.object.path = NULL;
-		if (path)
-		{
-			trace_thread->access.object.path = strdup(path);
-		}
-	}
-}
-
-static void
-store_kv_namespace(JTraceThread* trace_thread, const char* namespace, const char* name)
-{
-	if (trace_thread->access.kv.namespace != namespace)
-	{
-		g_free(trace_thread->access.kv.namespace);
-		trace_thread->access.kv.namespace = NULL;
-		if (namespace)
-		{
-			trace_thread->access.kv.namespace = strdup(namespace);
-		}
-	}
-	if (trace_thread->access.kv.name != name)
-	{
-		g_free(trace_thread->access.kv.name);
-		trace_thread->access.kv.name = NULL;
-		if (name)
-		{
-			trace_thread->access.kv.name = strdup(name);
-		}
-	}
-}
-
-static void
-store_db_namespace(JTraceThread* trace_thread, const char* namespace)
-{
-	if (trace_thread->access.db.namespace != namespace)
-	{
-		g_free(trace_thread->access.db.namespace);
-		trace_thread->access.db.namespace = NULL;
-		if (namespace)
-		{
-			trace_thread->access.db.namespace = strdup(namespace);
-		}
-	}
-}
-
 static guint32
 _count_keys_recursive(bson_iter_t* itr)
 {
@@ -798,16 +742,17 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					name += 3;
 					row->backend = "kv";
 					row->operation = name;
-					row->namespace = trace_thread->access.kv.namespace;
+					row->namespace = trace_thread->access.kv.namespace->str;
 					row->type = trace_thread->access.kv.type;
 					row->path = trace_thread->access.kv.config_path;
-					row->name = trace_thread->access.kv.name;
+					row->name = trace_thread->access.kv.name->str;
 					if (strcmp(name, "batch_start") == 0)
 					{
 						va_start(args, format);
 						row->namespace = va_arg(args, const char*);
 						va_end(args);
-						store_kv_namespace(trace_thread, row->namespace, NULL);
+						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
+						g_string_assign(trace_thread->access.kv.name, NULL);
 					}
 					else if (strcmp(name, "put") == 0)
 					{
@@ -839,7 +784,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						va_start(args, format);
 						row->namespace = va_arg(args, const char*);
 						va_end(args);
-						store_kv_namespace(trace_thread, row->namespace, NULL);
+						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
+						g_string_assign(trace_thread->access.kv.name, NULL);
 					}
 					else if (strcmp(name, "get_by_prefix") == 0)
 					{
@@ -847,7 +793,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						va_end(args);
-						store_kv_namespace(trace_thread, row->namespace, row->name);
+						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
+						g_string_assign(trace_thread->access.kv.name, row->name);
 					}
 
 					// iterate, init, fini <- no further deatils
@@ -860,13 +807,13 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->operation = name;
 					row->type = trace_thread->access.db.type;
 					row->path = trace_thread->access.db.config_path;
-					row->namespace = trace_thread->access.db.namespace;
+					row->namespace = trace_thread->access.db.namespace->str;
 					if (strcmp(name, "batch_start") == 0)
 					{
 						va_start(args, format);
 						row->namespace = va_arg(args, const char*);
 						va_end(args);
-						store_db_namespace(trace_thread, row->namespace);
+						g_string_assign(trace_thread->access.db.namespace, row->namespace);
 					}
 					else if (strcmp(name, "schema_create") == 0)
 					{
@@ -945,17 +892,18 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					name += 7;
 					row->backend = "object";
 					row->operation = name;
-					row->namespace = trace_thread->access.object.namespace;
+					row->namespace = trace_thread->access.object.namespace->str;
 					row->type = trace_thread->access.object.type;
 					row->path = trace_thread->access.object.config_path;
-					row->name = trace_thread->access.object.path;
+					row->name = trace_thread->access.object.path->str;
 					if (strcmp(name, "create") == 0)
 					{
 						va_start(args, format);
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						va_end(args);
-						store_object_path(trace_thread, row->namespace, row->name);
+						g_string_assign(trace_thread->access.object.namespace, row->namespace);
+						g_string_assign(trace_thread->access.object.path, row->name);
 					}
 					else if (strcmp(name, "open") == 0)
 					{
@@ -963,15 +911,16 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						va_end(args);
-						store_object_path(trace_thread, row->namespace, row->name);
+						g_string_assign(trace_thread->access.object.namespace, row->namespace);
+						g_string_assign(trace_thread->access.object.path, row->name);
 					}
 					else if (strcmp(name, "get_all") == 0)
 					{
 						va_start(args, format);
 						row->namespace = va_arg(args, const char*);
-						row->name = NULL;
 						va_end(args);
-						store_object_path(trace_thread, row->namespace, row->name);
+						g_string_assign(trace_thread->access.object.namespace, row->namespace);
+						g_string_assign(trace_thread->access.object.path, NULL);
 					}
 					else if (strcmp(name, "get_by_prefix") == 0)
 					{
@@ -979,7 +928,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						va_end(args);
-						store_object_path(trace_thread, row->namespace, row->name);
+						g_string_assign(trace_thread->access.object.namespace, row->namespace);
+						g_string_assign(trace_thread->access.object.path, row->name);
 					}
 					else if (strcmp(name, "read") == 0)
 					{
@@ -1131,7 +1081,8 @@ j_trace_leave(JTrace* trace)
 					trace_thread->access.inside = FALSE;
 					if (strcmp(trace->name, "backend_kv_batch_execute") == 0)
 					{
-						store_kv_namespace(trace_thread, NULL, NULL);
+						g_string_assign(trace_thread->access.kv.namespace, NULL);
+						g_string_assign(trace_thread->access.kv.name, NULL);
 					}
 					else if (strcmp(trace->name, "backend_dbupdate") == 0)
 					{
@@ -1142,11 +1093,12 @@ j_trace_leave(JTrace* trace)
 					}
 					else if (strcmp(trace->name, "backend_db_batch_execute") == 0)
 					{
-						store_db_namespace(trace_thread, NULL);
+						g_string_assign(trace_thread->access.db.namespace, NULL);
 					}
 					else if (strcmp(trace->name, "backend_object_delete") == 0 || strcmp(trace->name, "backend_object_close") == 0)
 					{
-						store_object_path(trace_thread, NULL, NULL);
+						g_string_assign(trace_thread->access.object.namespace, NULL);
+						g_string_assign(trace_thread->access.object.path, NULL);
 					}
 				}
 			}
