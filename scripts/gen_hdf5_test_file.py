@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/env python3
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2023 Timm Leon Erxleben
