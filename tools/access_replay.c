@@ -101,24 +101,27 @@ split(char* line, char* parts[ROW_LEN])
 {
 	int cnt = 0;
 	char* section;
-	section = strtok(line, ",");
+	char* save;
+	section = strtok_r(line, ",", &save);
 	while (section != NULL)
 	{
 		parts[cnt++] = section;
-		if (cnt == ROW_LEN - 1)
+		if (cnt == ROW_LEN-1)
 		{
 			break;
 		}
-		section = strtok(NULL, ",");
+		while(*save == ',') {
+			*save = '\0';
+			parts[cnt++] = save++;
+		}
+		section = strtok_r(NULL, ",", &save);
 	}
-	while (*++section)
-		;
-	parts[cnt] = section + 1;
-	if (cnt != ROW_LEN - 1)
-	{
+	if(section == NULL) {
 		g_warning("to few parts in line");
 		return FALSE;
 	}
+	while (*++section);
+	parts[cnt] = section + 1;
 	parts[JSON] += 1;
 	{
 		char* itr = parts[JSON];
@@ -572,33 +575,24 @@ main(int argc, char** argv)
 	}
 
 	memory_chunck_size = j_configuration_get_max_operation_size(configuration);
-	memory_chunk = malloc(memory_chunck_size);
+	{
+		// initialize memory_chunk with random values
+		guint32* memory = malloc(memory_chunck_size + memory_chunck_size % 4);
+		GRand* rng = g_rand_new();
+		for(guint64 i = 0; i < (memory_chunck_size + 3)/4; i += 1)
+		{
+			memory[i] = g_rand_int(rng);
+		}
+
+		g_rand_free(rng);
+		memory_chunk = (char*)memory;
+	}
 
 	{
 		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,size,complexity,duration,bson";
 		char* line = NULL;
 		size_t len = 0;
 		ssize_t read = 0;
-		{
-			// initialize memory_chunk with random values
-			GRand* rng = g_rand_new();
-			guint64 i = 0, j = 0;
-			gchar x[sizeof(guint32)];
-
-			for (; i + sizeof(guint32) <= memory_chunck_size; i += sizeof(guint32))
-			{
-				*(guint32*)(memory_chunk + i) = g_rand_int(rng);
-			}
-
-			*(guint32*)(x) = g_rand_int(rng);
-
-			for (; i < memory_chunck_size; i += 1)
-			{
-				memory_chunk[i] = x[j++];
-			}
-
-			g_rand_free(rng);
-		}
 		read = getline(&line, &len, record_file);
 		line[read - 1] = 0;
 		if (read == -1 || strcmp(line, header) != 0)

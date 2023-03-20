@@ -205,4 +205,4 @@ if __name__ == '__main__':
 
         print(
             f"{fail} configurations failed! Other configurations"
-            + f" results are stored in '{sys.argv[2]}'")
+            + f" results are stored in '{sys.argv[3]}'")

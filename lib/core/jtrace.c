@@ -251,6 +251,15 @@ j_trace_thread_new(GThread* thread)
 	}
 #endif
 
+	if(j_trace_flags & J_TRACE_ACCESS)
+	{
+		trace_thread->access.db.namespace = g_string_new(NULL);
+		trace_thread->access.kv.namespace = g_string_new(NULL);
+		trace_thread->access.kv.name = g_string_new(NULL);
+		trace_thread->access.object.namespace = g_string_new(NULL);
+		trace_thread->access.object.path = g_string_new(NULL);
+	}
+
 	return trace_thread;
 }
 
@@ -284,7 +293,7 @@ j_trace_thread_free(JTraceThread* trace_thread)
 		g_free(trace_thread->access.kv.config_path);
 		g_string_free(trace_thread->access.kv.namespace, TRUE);
 		g_string_free(trace_thread->access.kv.name, TRUE);
-		g_free(trace_thread->access.object.path);
+		g_free(trace_thread->access.object.type);
 		g_free(trace_thread->access.object.config_path);
 		g_string_free(trace_thread->access.object.namespace, TRUE);
 		g_string_free(trace_thread->access.object.path, TRUE);
@@ -636,33 +645,28 @@ count_keys_recursive(const bson_t* bson)
 	return _count_keys_recursive(&itr);
 }
 
-typedef struct
+static gboolean
+parse_backend_operation(const gchar* backend_operation, JBackendType* type, const gchar** operation)
 {
-	JBackendType type;
-	const gchar* operation;
-} BackendTypeOperation;
-static BackendTypeOperation
-parse_backend_operation(const gchar* backend_operation)
-{
-	BackendTypeOperation res;
-	res.type = 0;
-	res.operation = NULL;
 	if (strncmp(backend_operation, "kv_", 3) == 0)
 	{
-		res.type = J_BACKEND_TYPE_KV;
-		res.operation = backend_operation + 3;
+		if(type) *type = J_BACKEND_TYPE_KV;
+		if(operation) *operation = backend_operation + 3;
+		return TRUE;
 	}
 	else if (strncmp(backend_operation, "db_", 3) == 0)
 	{
-		res.type = J_BACKEND_TYPE_DB;
-		res.operation = backend_operation + 3;
+		if(type) *type = J_BACKEND_TYPE_DB;
+		if(operation) *operation = backend_operation + 3;
+		return TRUE;
 	}
 	else if (strncmp(backend_operation, "object_", 7) == 0)
 	{
-		res.type = J_BACKEND_TYPE_OBJECT;
-		res.operation = backend_operation + 7;
+		if(type) *type = J_BACKEND_TYPE_OBJECT;
+		if(operation) *operation = backend_operation + 7;
+		return TRUE;
 	}
-	return res;
+	return FALSE;
 }
 
 JTrace*
@@ -731,7 +735,8 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 		else if (strncmp(name, J_TRACE_ACCESS_PREFIX, sizeof(J_TRACE_ACCESS_PREFIX) - 1) == 0)
 		{
 			gchar const* backend_operation = name + sizeof(J_TRACE_ACCESS_PREFIX) - 1;
-			BackendTypeOperation type;
+			JBackendType type = 0;
+			gchar const* operation = NULL;
 
 			// read config to set type and paths of backends if not already done
 			if (trace_thread->access.db.type == NULL)
@@ -750,10 +755,9 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 				j_configuration_unref(config);
 			}
 
-			type = parse_backend_operation(backend_operation);
-			if (type.operation == NULL)
+			if (!parse_backend_operation(backend_operation, &type, &operation))
 			{
-				g_warning("unknown backend in backend_operation for access trace '%s'", backend_operation);
+				/// \TODO with current prefix it is not posible to easly detect unknown backends!
 			}
 			else
 			{
@@ -764,50 +768,50 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 				row->uid = trace_thread->client.uid;
 				row->program_name = trace_thread->client.program_name;
 				row->timestamp = timestamp;
-				row->operation = type.operation;
+				row->operation = operation;
 				trace_thread->access.inside = TRUE;
 
 				va_start(args, format);
 
-				if (type.type == J_BACKEND_TYPE_KV)
+				if (type == J_BACKEND_TYPE_KV)
 				{
 					row->backend = "kv";
 					row->namespace = trace_thread->access.kv.namespace->str;
 					row->type = trace_thread->access.kv.type;
 					row->path = trace_thread->access.kv.config_path;
 					row->name = trace_thread->access.kv.name->str;
-					if (strcmp(type.operation, "batch_start") == 0)
+					if (strcmp(operation, "batch_start") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
-						g_string_assign(trace_thread->access.kv.name, NULL);
+						g_string_assign(trace_thread->access.kv.name, "");
 					}
-					else if (strcmp(type.operation, "put") == 0)
+					else if (strcmp(operation, "put") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 						va_arg(args, void*);
 						row->size = va_arg(args, guint32);
 					}
-					else if (strcmp(type.operation, "delete") == 0)
+					else if (strcmp(operation, "delete") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 					}
-					else if (strcmp(type.operation, "get") == 0)
+					else if (strcmp(operation, "get") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 						va_arg(args, void*);
 						trace_thread->access.utility_ptr = va_arg(args, void*);
 					}
-					else if (strcmp(type.operation, "get_all") == 0)
+					else if (strcmp(operation, "get_all") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
-						g_string_assign(trace_thread->access.kv.name, NULL);
+						g_string_assign(trace_thread->access.kv.name, "");
 					}
-					else if (strcmp(type.operation, "get_by_prefix") == 0)
+					else if (strcmp(operation, "get_by_prefix") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
@@ -817,43 +821,44 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					// iterate, init, fini <- no further deatils
 					// batch_execute <- handled in leave
 					else if (!(
-							 strcmp(type.operation, "iterate") == 0
-							 || strcmp(type.operation, "init") == 0
-							 || strcmp(type.operation, "fini") == 0
-							 || strcmp(type.operation, "batch_execute") == 0))
+							 strcmp(operation, "iterate") == 0
+							 || strcmp(operation, "init") == 0
+							 || strcmp(operation, "fini") == 0
+							 || strcmp(operation, "batch_execute") == 0))
 					{
-						g_warning("Unknown type.operation '%s' for backend 'kv'", type.operation);
+						g_warning("Unknown operation '%s' for backend 'kv'", operation);
 					}
 				}
-				else if (type.type == J_BACKEND_TYPE_DB)
+				else if (type == J_BACKEND_TYPE_DB)
 				{
 					row->backend = "db";
 					row->type = trace_thread->access.db.type;
 					row->path = trace_thread->access.db.config_path;
 					row->namespace = trace_thread->access.db.namespace->str;
-					if (strcmp(type.operation, "batch_start") == 0)
+					row->name = "";
+					if (strcmp(operation, "batch_start") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.db.namespace, row->namespace);
 					}
-					else if (strcmp(type.operation, "schema_create") == 0)
+					else if (strcmp(operation, "schema_create") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 						row->size = va_arg(args, guint32);
 						row->bson = va_arg(args, const bson_t*);
 					}
-					else if (strcmp(type.operation, "schema_get") == 0)
+					else if (strcmp(operation, "schema_get") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 					}
-					else if (strcmp(type.operation, "schema_delete") == 0)
+					else if (strcmp(operation, "schema_delete") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
 					}
-					else if (strcmp(type.operation, "insert") == 0)
+					else if (strcmp(operation, "insert") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
@@ -861,7 +866,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->bson = va_arg(args, const bson_t*);
 						row->complexity = count_keys_recursive(row->bson);
 					}
-					else if (strcmp(type.operation, "update") == 0)
+					else if (strcmp(operation, "update") == 0)
 					{
 						static bson_t bson;
 						const bson_t* selector = NULL;
@@ -875,7 +880,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->bson = &bson;
 						row->complexity = count_keys_recursive(selector); // because the added two top level keys
 					}
-					else if (strcmp(type.operation, "delete") == 0)
+					else if (strcmp(operation, "delete") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
@@ -883,7 +888,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 						row->bson = va_arg(args, const bson_t*);
 						row->complexity = count_keys_recursive(row->bson);
 					}
-					else if (strcmp(type.operation, "query") == 0)
+					else if (strcmp(operation, "query") == 0)
 					{
 						va_arg(args, void*);
 						row->name = va_arg(args, const char*);
@@ -894,56 +899,56 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					// iterate, init, fini <- no further details
 					// batch_execute <- handled in leave
 					else if (!(
-							 strcmp(type.operation, "iterate") == 0
-							 || strcmp(type.operation, "init") == 0
-							 || strcmp(type.operation, "fini") == 0
-							 || strcmp(type.operation, "batch_execute") == 0))
+							 strcmp(operation, "iterate") == 0
+							 || strcmp(operation, "init") == 0
+							 || strcmp(operation, "fini") == 0
+							 || strcmp(operation, "batch_execute") == 0))
 					{
-						g_warning("unknown type.operation '%s' for backend 'db'", type.operation);
+						g_warning("unknown operation '%s' for backend 'db'", operation);
 					}
 				}
-				else if (type.type == J_BACKEND_TYPE_OBJECT)
+				else if (type == J_BACKEND_TYPE_OBJECT)
 				{
 					row->backend = "object";
 					row->namespace = trace_thread->access.object.namespace->str;
 					row->type = trace_thread->access.object.type;
 					row->path = trace_thread->access.object.config_path;
 					row->name = trace_thread->access.object.path->str;
-					if (strcmp(type.operation, "create") == 0)
+					if (strcmp(operation, "create") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.object.namespace, row->namespace);
 						g_string_assign(trace_thread->access.object.path, row->name);
 					}
-					else if (strcmp(type.operation, "open") == 0)
+					else if (strcmp(operation, "open") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.object.namespace, row->namespace);
 						g_string_assign(trace_thread->access.object.path, row->name);
 					}
-					else if (strcmp(type.operation, "get_all") == 0)
+					else if (strcmp(operation, "get_all") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.object.namespace, row->namespace);
-						g_string_assign(trace_thread->access.object.path, NULL);
+						g_string_assign(trace_thread->access.object.path, "");
 					}
-					else if (strcmp(type.operation, "get_by_prefix") == 0)
+					else if (strcmp(operation, "get_by_prefix") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
 						row->name = va_arg(args, const char*);
 						g_string_assign(trace_thread->access.object.namespace, row->namespace);
 						g_string_assign(trace_thread->access.object.path, row->name);
 					}
-					else if (strcmp(type.operation, "read") == 0)
+					else if (strcmp(operation, "read") == 0)
 					{
 						va_arg(args, void*);
 						va_arg(args, void*);
 						row->size = va_arg(args, guint64);
 						row->complexity = va_arg(args, guint64);
 					}
-					else if (strcmp(type.operation, "write") == 0)
+					else if (strcmp(operation, "write") == 0)
 					{
 						va_arg(args, void*);
 						va_arg(args, void*);
@@ -953,15 +958,15 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					// status, sync, iterate, fini, init <- no further data
 					// close/delte handled at leave
 					else if (!(
-							 strcmp(type.operation, "status") == 0
-							 || strcmp(type.operation, "sync") == 0
-							 || strcmp(type.operation, "iterate") == 0
-							 || strcmp(type.operation, "fini") == 0
-							 || strcmp(type.operation, "init") == 0
-							 || strcmp(type.operation, "close") == 0
-							 || strcmp(type.operation, "delete") == 0))
+							 strcmp(operation, "status") == 0
+							 || strcmp(operation, "sync") == 0
+							 || strcmp(operation, "iterate") == 0
+							 || strcmp(operation, "fini") == 0
+							 || strcmp(operation, "init") == 0
+							 || strcmp(operation, "close") == 0
+							 || strcmp(operation, "delete") == 0))
 					{
-						g_warning("unknown type.operation '%s' for backend 'object'", type.operation);
+						g_warning("unknown operation '%s' for backend 'object'", operation);
 					}
 				}
 				va_end(args);
@@ -1072,8 +1077,7 @@ j_trace_leave(JTrace* trace)
 			if (strncmp(trace->name, J_TRACE_ACCESS_PREFIX, sizeof(J_TRACE_ACCESS_PREFIX) - 1) == 0)
 			{
 				gchar const* backend_operation = trace->name + sizeof(J_TRACE_ACCESS_PREFIX) - 1;
-				BackendTypeOperation type = parse_backend_operation(backend_operation);
-				if (type.operation != NULL)
+				if (parse_backend_operation(backend_operation, NULL, NULL))
 				{
 					guint64 duration;
 					Access* row = &trace_thread->access.row;
@@ -1092,8 +1096,8 @@ j_trace_leave(JTrace* trace)
 					trace_thread->access.inside = FALSE;
 					if (strcmp(backend_operation, "kv_batch_execute") == 0)
 					{
-						g_string_assign(trace_thread->access.kv.namespace, NULL);
-						g_string_assign(trace_thread->access.kv.name, NULL);
+						g_string_assign(trace_thread->access.kv.namespace, "");
+						g_string_assign(trace_thread->access.kv.name, "");
 					}
 					else if (strcmp(backend_operation, "db_update") == 0)
 					{
@@ -1104,13 +1108,13 @@ j_trace_leave(JTrace* trace)
 					}
 					else if (strcmp(backend_operation, "db_batch_execute") == 0)
 					{
-						g_string_assign(trace_thread->access.db.namespace, NULL);
+						g_string_assign(trace_thread->access.db.namespace, "");
 					}
 					else if (strcmp(backend_operation, "object_delete") == 0
 						 || strcmp(trace->name, "object_close") == 0)
 					{
-						g_string_assign(trace_thread->access.object.namespace, NULL);
-						g_string_assign(trace_thread->access.object.path, NULL);
+						g_string_assign(trace_thread->access.object.namespace, "");
+						g_string_assign(trace_thread->access.object.path, "");
 					}
 				}
 			}
