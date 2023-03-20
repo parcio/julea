@@ -156,9 +156,10 @@ spack_get_dependencies ()
 
 	if test -n "${CI}"
 	then
-		dependencies="${dependencies} py-gcovr"
-		dependencies="${dependencies} py-pip"
 		dependencies="${dependencies} python"
+		dependencies="${dependencies} py-gcovr"
+		dependencies="${dependencies} py-numpy"
+		dependencies="${dependencies} py-h5py"
 	fi
 
 	#dependencies="${dependencies} enzo@main"

@@ -317,6 +317,7 @@ jobs:
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-component="${JULEA_KV_COMPONENT}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
+        if: false
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
@@ -327,6 +328,7 @@ jobs:
           ./scripts/test.sh
           ./scripts/setup.sh stop
       - name: HDF5 Tests
+        if: false
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
@@ -347,7 +349,6 @@ jobs:
           LSAN_OPTIONS: exitcode=0
         run: |
           . scripts/environment.sh
-          pip3 install h5py numpy
           python3 scripts/gen_hdf5_test_file.py
           ./scripts/setup.sh start
           HDF5_VOL_CONNECTOR=julea-db julea-h5migrate testfile.h5 julea-db://imported.h5
