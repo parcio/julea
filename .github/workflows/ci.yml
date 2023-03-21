@@ -349,7 +349,7 @@ jobs:
           LSAN_OPTIONS: exitcode=0
         run: |
           . scripts/environment.sh
-          pip3 install h5py numpy
+          pip3 -qqq install h5py numpy
           python3 scripts/gen_hdf5_test_file.py
           ./scripts/setup.sh start
           HDF5_VOL_CONNECTOR=julea-db julea-h5migrate testfile.h5 julea-db://imported.h5
