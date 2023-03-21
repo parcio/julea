@@ -134,6 +134,7 @@ struct JBackend
 		{
 			gboolean (*backend_init)(gchar const*, gpointer*);
 			void (*backend_fini)(gpointer);
+			gboolean (*backend_clean)(gpointer);
 
 			gboolean (*backend_create)(gpointer, gchar const*, gchar const*, gpointer*);
 			gboolean (*backend_open)(gpointer, gchar const*, gchar const*, gpointer*);
@@ -156,6 +157,7 @@ struct JBackend
 		{
 			gboolean (*backend_init)(gchar const*, gpointer*);
 			void (*backend_fini)(gpointer);
+			gboolean (*backend_clean)(gpointer);
 
 			gboolean (*backend_batch_start)(gpointer, gchar const*, JSemantics*, gpointer*);
 			gboolean (*backend_batch_execute)(gpointer, gpointer);
@@ -173,6 +175,7 @@ struct JBackend
 		{
 			gboolean (*backend_init)(gchar const*, gpointer*);
 			void (*backend_fini)(gpointer);
+			gboolean (*backend_clean)(gpointer);
 
 			gboolean (*backend_batch_start)(gpointer, gchar const*, JSemantics*, gpointer*, GError**);
 			gboolean (*backend_batch_execute)(gpointer, gpointer, GError**);
@@ -390,6 +393,7 @@ gboolean j_backend_load_server(gchar const*, gchar const*, JBackendType, GModule
 
 gboolean j_backend_object_init(JBackend*, gchar const*);
 void j_backend_object_fini(JBackend*);
+gboolean j_backend_object_clean(JBackend*);
 
 gboolean j_backend_object_create(JBackend*, gchar const*, gchar const*, gpointer*);
 gboolean j_backend_object_open(JBackend*, gchar const*, gchar const*, gpointer*);
@@ -409,6 +413,7 @@ gboolean j_backend_object_iterate(JBackend*, gpointer, gchar const**);
 
 gboolean j_backend_kv_init(JBackend*, gchar const*);
 void j_backend_kv_fini(JBackend*);
+gboolean j_backend_kv_clean(JBackend*);
 
 gboolean j_backend_kv_batch_start(JBackend*, gchar const*, JSemantics*, gpointer*);
 gboolean j_backend_kv_batch_execute(JBackend*, gpointer);
@@ -423,6 +428,7 @@ gboolean j_backend_kv_iterate(JBackend*, gpointer, gchar const**, gconstpointer*
 
 gboolean j_backend_db_init(JBackend*, gchar const*);
 void j_backend_db_fini(JBackend*);
+gboolean j_backend_db_clean(JBackend*);
 
 gboolean j_backend_db_batch_start(JBackend*, gchar const*, JSemantics*, gpointer*, GError**);
 gboolean j_backend_db_batch_execute(JBackend*, gpointer, GError**);

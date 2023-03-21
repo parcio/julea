@@ -343,7 +343,11 @@ main(int argc, char** argv)
 
 		if(opt_clean)
 		{
-			printf("Would clean\n");
+			if (!j_backend_object_clean(jd_object_backend))
+			{
+				g_warning("Could not clean object backend %s.", object_backend);
+				return 1;
+			}
 		}
 	}
 
@@ -360,7 +364,11 @@ main(int argc, char** argv)
 		
 		if(opt_clean)
 		{
-			printf("Would clean\n");
+			if (!j_backend_kv_clean(jd_kv_backend))
+			{
+				g_warning("Could not clean kv backend %s.", kv_backend);
+				return 1;
+			}
 		}
 	}
 
@@ -377,7 +385,11 @@ main(int argc, char** argv)
 
 		if(opt_clean)
 		{
-			printf("Would clean\n");
+			if (!j_backend_db_clean(jd_db_backend))
+			{
+				g_warning("Could not clean db backend %s.", db_backend);
+				return 1;
+			}
 		}
 	}
 
