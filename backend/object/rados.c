@@ -275,12 +275,22 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	(void) backend_data;
+	g_warning("Backend clean is currently not supported for this backend.");
+
+	return TRUE;
+}
+
 static JBackend rados_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_CLIENT,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_create = backend_create,
 		.backend_delete = backend_delete,
 		.backend_open = backend_open,

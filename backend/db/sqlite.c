@@ -504,6 +504,15 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JSQLiteData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	(void) backend_data;
+	g_warning("Backend clean is currently not supported for this backend.");
+
+	return TRUE;
+}
+
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_SERVER,

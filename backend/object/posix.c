@@ -18,6 +18,9 @@
 
 #include <julea-config.h>
 
+// for nftw usage
+#define _XOPEN_SOURCE 500 
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
@@ -26,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <ftw.h>
 
 #include <julea.h>
 
@@ -524,12 +528,22 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	(void) backend_data;
+	g_warning("Backend clean is currently not supported for this backend.");
+
+	return TRUE;
+}
+
 static JBackend posix_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_create = backend_create,
 		.backend_delete = backend_delete,
 		.backend_open = backend_open,

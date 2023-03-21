@@ -161,12 +161,21 @@ backend_fini(gpointer backend_data)
 	(void)backend_data;
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	(void) backend_data;
+
+	return TRUE;
+}
+
 static JBackend null_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_schema_create = backend_schema_create,
 		.backend_schema_get = backend_schema_get,
 		.backend_schema_delete = backend_schema_delete,

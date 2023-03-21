@@ -287,12 +287,22 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JSQLiteData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	(void) backend_data;
+	g_warning("Backend clean is currently not supported for this backend.");
+
+	return TRUE;
+}
+
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.kv = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_batch_start = backend_batch_start,
 		.backend_batch_execute = backend_batch_execute,
 		.backend_put = backend_put,
