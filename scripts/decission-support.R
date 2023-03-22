@@ -16,6 +16,24 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+packages <- c(
+  "ggplot2",
+  "plotly",
+  "dplyr",
+  "scales",
+  "ggpubr",
+  "knitr")
+missing <- packages[!(packages %in% installed.packages()[,"Package"])]
+if(length(missing)) {
+  msg <- paste0( "Not all requirued packages are installed, you can install them with",
+    "\n$ R",
+    "\n> install.packages(c(\"",
+    paste(missing, collapse="\", \""),
+    "\"))",
+    "\n> q()")
+  stop(msg)
+}
+
 suppressMessages(library(ggplot2))
 suppressMessages(library(plotly))
 suppressMessages(library(dplyr))
