@@ -464,8 +464,6 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 			num = g_atomic_int_add(&jd_thread_num, 1);
 
-			//g_message("HELLO %d", num);
-
 			client_checksum = j_message_get_string(message);
 			client_program_name = j_message_get_string(message);
 			client_process_uid = *(guint32*)j_message_get_n(message, sizeof(guint32));
@@ -478,6 +476,8 @@ jd_handle_message(JMessage* message, GSocketConnection* connection, JMemoryChunk
 
 			{
 				J_TRACE("ping", "%s Thread: %u", client_program_name, client_process_uid);
+				(void)client_program_name; // avoid warning, iff in non trace mode compiled
+				(void)client_process_uid;
 			}
 
 			reply = j_message_new_reply(message);

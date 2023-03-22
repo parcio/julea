@@ -15,6 +15,13 @@ Then run your applications and stop the server when finished.
 JULEA_TRACE=access julea-server 2> access-record.csv
 ```
 
+Tracing is per default only in debug builds enabled. To build a realease build
+with trace funtcionality you need to set `julea_trace` to true
+
+```sh
+meson configure -Djulea_trace=ture --buildtype=release bld
+```
+
 ## Replay
 
 An `access-record` can be replayed with `julea-access-replay`, which takes only the `access-record` as input.

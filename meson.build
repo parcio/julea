@@ -326,8 +326,13 @@ julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('l
 if get_option('debug')
 	julea_conf.set('_FORTIFY_SOURCE', 2)
 	julea_conf.set('JULEA_DEBUG', 1)
+	julea_conf.set('JULEA_TRACE', 1)
 	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 	#julea_conf.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
+else
+	if get_option('julea_trace')
+		julea_conf.set('JULEA_TRACE', 1)
+	endif
 endif
 
 if hdf_dep.found()
@@ -420,14 +425,6 @@ julea_client_srcs = {
 		'lib/kv/jkv-iterator.c',
 		'lib/kv/jkv-uri.c',
 	]),
-	'db-util': files([
-		'lib/db-util/jbson.c',
-		'lib/db-util/sql-generic-common.c',
-		'lib/db-util/sql-generic-tcl.c',
-		'lib/db-util/sql-generic-ddl.c',
-		'lib/db-util/sql-generic-dml.c',
-		'lib/db-util/sql-generic-dql.c'
-	]),
 	'db': files([
 		'lib/db/jdb.c',
 		'lib/db/jdb-entry.c',
@@ -446,7 +443,7 @@ julea_client_srcs = {
 }
 
 # We need an extra array so that foreach preserves the client order
-julea_clients = ['object', 'kv', 'db-util', 'db', 'item']
+julea_clients = ['object', 'kv', 'db', 'item']
 
 if hdf_dep.found()
 	julea_client_srcs += {
@@ -480,8 +477,6 @@ foreach client: julea_clients
 	if client == 'item'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
-	elif client == 'db'
-		extra_deps += julea_client_deps['db-util']
 	elif client == 'hdf5-kv'
 		extra_deps += julea_client_deps['object']
 		extra_deps += julea_client_deps['kv']
@@ -679,10 +674,6 @@ foreach backend: julea_backends
 			extra_args += '-Wno-discarded-qualifiers'
 		endif
 		extra_deps += mariadb_dep
-	endif
-
-	if backend_type == 'db'
-		extra_deps += julea_client_deps['db-util']
 	endif
 
 	lib = shared_library('@0@-@1@'.format(backend_type, backend_name), files('backend/@0@.c'.format(backend)),
