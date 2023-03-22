@@ -1,56 +1,41 @@
 # Decission Support
 
-JULEA is able to trace backend accesses granulare. This allows further
-allplication analysies, and also analiesing object access across applictions.
+JULEA can trace backend accesses granularly,
+allowing further application analysis and object access pattern comparison across applications.
 
-Further can this be used to provide a first rough estimate which backend combination
-is prefarable for the application setup.
+Furthermore, this can be used to provide a first rough estimate of which backend combination
+is preferable for the application setup.
 
-## access record
+## Access Record
 
-To create a `access-record` execute `julea-server` with `JULEA_TRACE=access` and
-store the output in a file.
-Then run your applications and stop the server iff finished.
+To create an `access-record`, which is simply a CSV file, execute `julea-server` with `JULEA_TRACE=access` and store the output (`stderr`) in a file.
+Then run your applications and stop the server when finished.
 
 ```sh
 JULEA_TRACE=access julea-server 2> access-record.csv
 ```
 
-The created file then can be used to executes replays.
-A replay will execute the same backend operations in the same order as listed
-in a `access-record`. This allows compare backend performance, without
-executing the whole application.
+## Replay
 
-Important is that the backends are in the same state before the replay, then they
-were before the processes where executed, the eseiast would be an empty state.
+An `access-record` can be replayed with `julea-access-replay`, which takes only the `access-record` as input.
+Replays will execute the same backend operations in the same order as listed in `access-record`.
+This allows comparison of backend performance without running the complete application over and over.
 
-## replay
-
-A `access-record` can be replayed with `julea-access-replay`. This program
-need as argument a `access-record` file, to log the result you need to set
-`JULEA_TRACE=access` to create them.
-
-It should be notice that the performnce of a replay can be vary to the original
-data, depending on the load of the device.
+Note that the backends must be in the same state, preferably empty, before every replay.
+Also note that the performance of a replay can vary compared to the original run, depending on the device's load.
 
 ```sh
 JULEA_TRACE=access julea-access-replay access-record.csv 2> replay-record.csv
 ```
 
-## setup testing
+## Setup Testing
 
-The script `./scripts/decission-support.sh`  can help to select a optimal backend
-combination for server. 
-It will test different backend configurations and creates a directory `evaluation`.
+The script `./scripts/decission-support.py` can help to select a good backend combination for a given workload. 
+It will test different backend configurations and creates a directory `evaluation` with the results.
 
-The script will replay each access to a backend type, and test every servre
-backend available for this type. And will produce a `summary.csv`
+Configurations that should be tested must be defined in a `config.json` file.
+The expected structure is as follows (an example config can also be found at `example/decission-support-config.json`):
 
-This summary can then be evaluated for example with `./scripts/decision-support.R`.
-A example flow is shown below.
-
-Configurations which should be tested are defined are define in a `config.json` file.
-The principle scheme is the following
 ```json
 {
   "object": [{"backend": "posix", "path": "/tmp/<tmp>/posix"}],
@@ -59,18 +44,13 @@ The principle scheme is the following
 }
 ```
 
-For each backend type a list of backend path pairs can be defined which will then be tested.
-notice the `<tmp>` inside of the paths, this will be replaced with a temporary directory placed at the given position
-and automaticlly cleared after execution.
+Note that `<tmp>` inside of paths will be replaced with a temporary directory removed after execution.
 
-A exapmle config can be found at `example/decission-support-config.json`
+The script will replay each access type with all corresponding backends (e.g., all KV accesses are tested on all specified KV configurations). 
+This will produce `summary.csv`.
 
-
-Important notice:
-* the script assums a empty backend start state
-* the script places backends and temporary files in `/tmp/` support for differnce devices is pending
-* a mysql/mariadb instance must be provided, with the user julea_user, pw: julea_pw which needs access to the database julea_db
-  * this instance must be manual resseted as forhe time, later a internal `julea-sevrer --clean` will be used to autonamtically do this
+The summary can be evaluated using `./scripts/decision-support.R`.
+An example workflow is shown below.
 
 ```sh
 JULEA_TRACE=access julea-server 2> access-record.csv
@@ -81,5 +61,13 @@ Rscript ./scripts/decission-support.R summary.csv html > summary.html
 # or only ci output
 Rscript ./scripts/decission-support.R summary.csv
 ```
+
+Important remarks:
+* The script assumes an empty backend state on start.
+* A MySQL/MariaDB instance must be provided if specified as backend.
+  *  User: `julea_user` 
+  *  PW: `julea_pw` 
+  *  Access to the existing (and empty) database `julea_db`
+  * These DB servers must be reset by hand for now. Resets on server startup will be available in the future and the resets will be automated by the script.
 
 
