@@ -106,21 +106,24 @@ split(char* line, char* parts[ROW_LEN])
 	while (section != NULL)
 	{
 		parts[cnt++] = section;
-		if (cnt == ROW_LEN-1)
+		if (cnt == ROW_LEN - 1)
 		{
 			break;
 		}
-		while(*save == ',') {
+		while (*save == ',')
+		{
 			*save = '\0';
 			parts[cnt++] = save++;
 		}
 		section = strtok_r(NULL, ",", &save);
 	}
-	if(section == NULL) {
+	if (section == NULL)
+	{
 		g_warning("to few parts in line");
 		return FALSE;
 	}
-	while (*++section);
+	while (*++section)
+		;
 	parts[cnt] = section + 1;
 	parts[JSON] += 1;
 	{
@@ -579,7 +582,7 @@ main(int argc, char** argv)
 		// initialize memory_chunk with random values
 		guint32* memory = malloc(memory_chunck_size + memory_chunck_size % 4);
 		GRand* rng = g_rand_new();
-		for(guint64 i = 0; i < (memory_chunck_size + 3)/4; i += 1)
+		for (guint64 i = 0; i < (memory_chunck_size + 3) / 4; i += 1)
 		{
 			memory[i] = g_rand_int(rng);
 		}

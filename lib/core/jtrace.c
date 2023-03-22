@@ -251,7 +251,7 @@ j_trace_thread_new(GThread* thread)
 	}
 #endif
 
-	if(j_trace_flags & J_TRACE_ACCESS)
+	if (j_trace_flags & J_TRACE_ACCESS)
 	{
 		trace_thread->access.db.namespace = g_string_new(NULL);
 		trace_thread->access.kv.namespace = g_string_new(NULL);
@@ -650,20 +650,26 @@ parse_backend_operation(const gchar* backend_operation, JBackendType* type, cons
 {
 	if (strncmp(backend_operation, "kv_", 3) == 0)
 	{
-		if(type) *type = J_BACKEND_TYPE_KV;
-		if(operation) *operation = backend_operation + 3;
+		if (type)
+			*type = J_BACKEND_TYPE_KV;
+		if (operation)
+			*operation = backend_operation + 3;
 		return TRUE;
 	}
 	else if (strncmp(backend_operation, "db_", 3) == 0)
 	{
-		if(type) *type = J_BACKEND_TYPE_DB;
-		if(operation) *operation = backend_operation + 3;
+		if (type)
+			*type = J_BACKEND_TYPE_DB;
+		if (operation)
+			*operation = backend_operation + 3;
 		return TRUE;
 	}
 	else if (strncmp(backend_operation, "object_", 7) == 0)
 	{
-		if(type) *type = J_BACKEND_TYPE_OBJECT;
-		if(operation) *operation = backend_operation + 7;
+		if (type)
+			*type = J_BACKEND_TYPE_OBJECT;
+		if (operation)
+			*operation = backend_operation + 7;
 		return TRUE;
 	}
 	return FALSE;
