@@ -23,12 +23,13 @@ packages <- c(
   "scales",
   "ggpubr",
   "knitr")
-missing <- packages[!(packages %in% installed.packages()[,"Package"])]
-if(length(missing)) {
-  msg <- paste0( "Not all requirued packages are installed, you can install them with",
+missing <- packages[!(packages %in% installed.packages()[, "Package"])]
+if (length(missing)) {
+  msg <- paste0(
+    "Not all requirued packages are installed, you can install them with",
     "\n$ R",
     "\n> install.packages(c(\"",
-    paste(missing, collapse="\", \""),
+    paste(missing, collapse = "\", \""),
     "\"))",
     "\n> q()")
   stop(msg)

@@ -605,7 +605,7 @@ main(int argc, char** argv)
 	}
 
 	{
-		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,semantic,size,complexity,duration,bson";
+		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,semantics,size,complexity,duration,bson";
 		char* line = NULL;
 		size_t len = 0;
 		ssize_t read = 0;
