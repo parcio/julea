@@ -89,6 +89,7 @@ enum row_fields
 	NAMESPACE,
 	NAME,
 	OPERATION,
+	SEMANTIC,
 	SIZE,
 	COMPLEXITY,
 	DURATION,
@@ -251,17 +252,27 @@ replay_object(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 	return ret;
 }
 
+static void
+update_semantics(JSemantics** semantics, guint32* serial_semantics, const char* parts_semantics_str)
+{
+	guint32 parts_semantics = parse_ul(parts_semantics_str);
+	if(*semantics == NULL || *serial_semantics != parts_semantics) {
+		*serial_semantics = parts_semantics;
+		if(*semantics) {
+			j_semantics_unref(*semantics);
+		}
+		*semantics = j_semantics_deserialize(*serial_semantics);
+	}
+}
+
 static gboolean
 replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 {
 	gboolean ret = FALSE;
 	const char* op = parts[OPERATION];
-	gpointer batch = NULL;
+	static gpointer batch = NULL;
 	static JSemantics* semantics = NULL;
-	if (semantics == NULL)
-	{
-		semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-	}
+	static guint32 serial_semantics;
 
 	if (strcmp(op, "batch_start") == 0)
 	{
@@ -269,6 +280,7 @@ replay_kv(void* memory_chunk, guint64 memory_chunk_size, char** parts)
 		{
 			g_warning("starting a new batch, but old one is not finished");
 		}
+		update_semantics(&semantics, &serial_semantics, parts[SEMANTIC]);
 		ret = j_backend_kv_batch_start(kv_backend, parts[NAMESPACE], semantics, &batch);
 	}
 	else if (strcmp(op, "put") == 0)
@@ -355,8 +367,8 @@ replay_db(char** parts)
 	static gpointer batch = NULL;
 	static gpointer itr = NULL;
 	static gchar* namespace = NULL;
-	/// \TODO how to determine semantics used?
 	static JSemantics* semantics = NULL;
+	static guint32 serial_semantics;
 	GError* error = NULL;
 	const char* op = parts[OPERATION];
 	static GArray* bsons = NULL;
@@ -375,6 +387,7 @@ replay_db(char** parts)
 		{
 			g_warning("starting a new batch, but old one is not finished");
 		}
+		update_semantics(&semantics, &serial_semantics, parts[SEMANTIC]);
 		namespace = strdup(parts[NAMESPACE]);
 		ret = j_backend_db_batch_start(db_backend, namespace, semantics, &batch, &error);
 	}
@@ -592,7 +605,7 @@ main(int argc, char** argv)
 	}
 
 	{
-		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,size,complexity,duration,bson";
+		const char* header = "time,process_uid,program_name,backend,type,path,namespace,name,operation,semantic,size,complexity,duration,bson";
 		char* line = NULL;
 		size_t len = 0;
 		ssize_t read = 0;

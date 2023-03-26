@@ -81,6 +81,7 @@ struct Access
 	const char* namespace;
 	const char* name;
 	const char* operation;
+	guint32 semantics;
 	guint64 size;
 	guint32 complexity;
 	const bson_t* bson;
@@ -134,6 +135,7 @@ struct JTraceThread
 			char* type;
 			char* config_path;
 			GString* namespace;
+			guint32 semantic;
 		} db;
 		struct
 		{
@@ -141,6 +143,7 @@ struct JTraceThread
 			char* config_path;
 			GString* namespace;
 			GString* name;
+			guint32 semantic;
 		} kv;
 		struct
 		{
@@ -197,7 +200,7 @@ G_LOCK_DEFINE_STATIC(j_trace_summary);
 static void
 j_trace_access_print_header(void)
 {
-	g_printerr("time,process_uid,program_name,backend,type,path,namespace,name,operation,size,complexity,duration,bson\n");
+	g_printerr("time,process_uid,program_name,backend,type,path,namespace,name,operation,semantics,size,complexity,duration,bson\n");
 }
 /**
  * Creates a new trace thread.
@@ -786,11 +789,14 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->type = trace_thread->access.kv.type;
 					row->path = trace_thread->access.kv.config_path;
 					row->name = trace_thread->access.kv.name->str;
+					row->semantics = trace_thread->access.kv.semantic;
 					if (strcmp(operation, "batch_start") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
+						row->semantics = j_semantics_serialize(va_arg(args, JSemantics*));
 						g_string_assign(trace_thread->access.kv.namespace, row->namespace);
 						g_string_assign(trace_thread->access.kv.name, "");
+						trace_thread->access.kv.semantic = row->semantics;
 					}
 					else if (strcmp(operation, "put") == 0)
 					{
@@ -841,11 +847,14 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 					row->type = trace_thread->access.db.type;
 					row->path = trace_thread->access.db.config_path;
 					row->namespace = trace_thread->access.db.namespace->str;
+					row->semantics = trace_thread->access.db.semantic;
 					row->name = "";
 					if (strcmp(operation, "batch_start") == 0)
 					{
 						row->namespace = va_arg(args, const char*);
+						row->semantics = j_semantics_serialize(va_arg(args, const JSemantics*));
 						g_string_assign(trace_thread->access.db.namespace, row->namespace);
+						trace_thread->access.db.semantic = row->semantics;
 					}
 					else if (strcmp(operation, "schema_create") == 0)
 					{
