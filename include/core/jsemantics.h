@@ -287,7 +287,7 @@ guint32 j_semantics_serialize(const JSemantics* semantics);
  * Decode serialized semantics, and create new Semantics
  *
  * For a example see j_semantics_serialize()
- * 
+ *
  * \param serial_semantics serialized semantics, created with j_semantics_serialize()
  *
  * \return new created JSemantics

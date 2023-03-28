@@ -336,7 +336,7 @@ j_semantics_serialize(const JSemantics* semantics)
 	guint32 serialized_semantics = 0;
 
 	g_return_val_if_fail(semantics != NULL, 0);
-	
+
 #define SERIALIZE_SEMANTICS(type, key) \
 	{ \
 		gint tmp; \

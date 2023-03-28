@@ -256,9 +256,11 @@ static void
 update_semantics(JSemantics** semantics, guint32* serial_semantics, const char* parts_semantics_str)
 {
 	guint32 parts_semantics = parse_ul(parts_semantics_str);
-	if(*semantics == NULL || *serial_semantics != parts_semantics) {
+	if (*semantics == NULL || *serial_semantics != parts_semantics)
+	{
 		*serial_semantics = parts_semantics;
-		if(*semantics) {
+		if (*semantics)
+		{
 			j_semantics_unref(*semantics);
 		}
 		*semantics = j_semantics_deserialize(*serial_semantics);
