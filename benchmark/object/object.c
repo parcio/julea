@@ -331,7 +331,7 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	{
 		for (guint i = 0; i < n; i++)
 		{
-			j_object_write(object, &dummy, block_size, i * block_size, &nb, batch);
+			j_object_write(object, dummy, block_size, i * block_size, &nb, batch);
 
 			if (!use_batch)
 			{
