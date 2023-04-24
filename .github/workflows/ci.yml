@@ -52,12 +52,6 @@ jobs:
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
-          - dist: ubuntu-18.04
-            compiler: gcc
-            compiler_version: 7.5.0
-          - dist: ubuntu-18.04
-            compiler: clang
-            compiler_version: 9.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -96,18 +90,8 @@ jobs:
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
-          - dist: ubuntu-18.04
-            compiler: gcc
-            compiler_version: 7.5.0
-          - dist: ubuntu-18.04
-            compiler: clang
-            compiler_version: 9.0.0
         dependencies: [system, spack]
         exclude:
-          # GLib is too old for TAP on Ubuntu 18.04
-          - os:
-              dist: ubuntu-18.04
-            dependencies: system
           # libfabric is too old on Ubuntu 20.04
           - os:
               dist: ubuntu-20.04
@@ -169,18 +153,18 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-22.04
+            compiler: gcc
+            compiler_version: 11.3.0
+          - dist: ubuntu-22.04
+            compiler: clang
+            compiler_version: 14.0.0
           - dist: ubuntu-20.04
             compiler: gcc
             compiler_version: 9.4.0
           - dist: ubuntu-20.04
             compiler: clang
             compiler_version: 11.0.0
-          - dist: ubuntu-18.04
-            compiler: gcc
-            compiler_version: 7.5.0
-          - dist: ubuntu-18.04
-            compiler: clang
-            compiler_version: 9.0.0
         dependencies: [system, spack]
         julea:
           # Default
@@ -214,10 +198,6 @@ jobs:
             db: mysql
             db-server: mariadb
         exclude:
-          # GLib is too old for TAP on Ubuntu 18.04
-          - os:
-              dist: ubuntu-18.04
-            dependencies: system
           # libfabric is too old on Ubuntu 20.04
           - os:
               dist: ubuntu-20.04
@@ -238,8 +218,13 @@ jobs:
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
-          sudo pip3 install meson
+          if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
+          then
+            sudo apt --yes --no-install-recommends install meson
+          else
+            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
+            sudo pip3 install meson
+          fi
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
@@ -267,14 +252,9 @@ jobs:
       - name: Set up MariaDB
         if: ${{ matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb' }}
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
-        # Ubuntu 18.04 has MySQL 5.7, Ubuntu 20.04 has MySQL 8.0
+        # Ubuntu 20.04 and 22.04 have MySQL 8.0
         run: |
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            sudo apt --yes purge mysql-client mysql-client-5.7 mysql-server mysql-server-5.7
-          else
-            sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
-          fi
+          sudo apt --yes purge mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
           sudo apt --yes --purge autoremove
           sudo aa-remove-unknown
           sudo rm --recursive --force /var/lib/mysql
@@ -287,13 +267,9 @@ jobs:
       - name: Configure
         env:
           CC: ${{ matrix.os.compiler }}
-        # FIXME Ubuntu 18.04's sanitizers produce many false positives.
         run: |
           . scripts/environment.sh
-          if test "${{ matrix.os.dist }}" = 'ubuntu-18.04'
-          then
-            meson setup bld
-          elif test "${{ matrix.os.compiler }}" = 'clang'
+          if test "${{ matrix.os.compiler }}" = 'clang'
           then
             meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
           else
