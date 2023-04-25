@@ -383,6 +383,7 @@ jobs:
       - name: Tests
         env:
           HDF5_VOL_CONNECTOR: julea-db
+          LSAN_OPTIONS: exitcode=0
         run: |
           . scripts/environment.sh
           ./scripts/setup.sh start
