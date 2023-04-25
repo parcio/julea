@@ -198,6 +198,11 @@ jobs:
             db: mysql
             db-server: mariadb
         exclude:
+          # MongoDB is not available on Ubuntu 22.04
+          - os:
+              dist: ubuntu-22.04
+            julea:
+              kv: mongodb
           # libfabric is too old on Ubuntu 20.04
           - os:
               dist: ubuntu-20.04
