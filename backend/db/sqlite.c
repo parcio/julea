@@ -476,7 +476,7 @@ backend_init(gchar const* _path, gpointer* backend_data)
 	if (g_strcmp0(bd->path, ":memory:") == 0)
 	{
 		int success = sqlite3_open_v2("file:julea-db", &(bd->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL);
-		if ( success != SQLITE_OK)
+		if (success != SQLITE_OK)
 		{
 			g_error("%s", sqlite3_errmsg(bd->db));
 			ret = FALSE;

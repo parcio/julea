@@ -728,7 +728,7 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	MYSQL_RES * schemas = NULL;
+	MYSQL_RES* schemas = NULL;
 	MYSQL* conn = j_sql_open(backend_data);
 	MYSQL_ROW schema = NULL;
 	gboolean res = FALSE;
@@ -768,7 +768,7 @@ backend_clean(gpointer backend_data)
 
 	while ((schema = mysql_fetch_row(schemas)))
 	{
-		unsigned long *lengths = mysql_fetch_lengths(schemas);
+		unsigned long* lengths = mysql_fetch_lengths(schemas);
 		g_autoptr(GString) table = g_string_sized_new(lengths[0] + lengths[1] + 5);
 		hit = TRUE;
 
@@ -776,7 +776,7 @@ backend_clean(gpointer backend_data)
 		// g_string_append_printf would be more convinient but also much slower
 		g_string_append_len(table, "`", 1);
 		g_string_append_len(table, schema[0], lengths[0]);
-		g_string_append_len(table, "_" , 1);
+		g_string_append_len(table, "_", 1);
 		g_string_append_len(table, schema[1], lengths[1]);
 		g_string_append_len(table, "`", 1);
 		g_string_append_len(table, ", ", 2);
@@ -786,7 +786,7 @@ backend_clean(gpointer backend_data)
 	}
 
 	// check whether loop terminated due to no more elements or error
-	if(*mysql_error(conn))
+	if (*mysql_error(conn))
 	{
 		g_error("mysql_fetch_row for backend_clean failed.\nError: %s", mysql_error(conn));
 		goto _error;
@@ -795,9 +795,8 @@ backend_clean(gpointer backend_data)
 	if (hit)
 	{
 		// remove last colon
-		g_string_set_size(schema_delete, schema_delete->len-2);
+		g_string_set_size(schema_delete, schema_delete->len - 2);
 		printf("%s\n", schema_delete->str);
-
 
 		if (mysql_query(conn, schema_delete->str) != 0)
 		{
@@ -815,12 +814,12 @@ backend_clean(gpointer backend_data)
 	res = TRUE;
 
 _error:
-	if(schemas)
+	if (schemas)
 	{
 		mysql_free_result(schemas);
 	}
 
-	if(conn)
+	if (conn)
 	{
 		j_sql_close(conn);
 	}

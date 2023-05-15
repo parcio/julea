@@ -244,7 +244,7 @@ setup_db(sqlite3* conn)
 	const char* table = "CREATE TABLE IF NOT EXISTS julea (namespace TEXT NOT NULL, key TEXT NOT NULL, value BLOB NOT NULL);";
 	const char* index = "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);";
 
-	if (sqlite3_exec(conn, table , NULL, NULL, NULL) != SQLITE_OK)
+	if (sqlite3_exec(conn, table, NULL, NULL, NULL) != SQLITE_OK)
 	{
 		g_error("Could not create KV schema.\nError: %s", sqlite3_errmsg(conn));
 		goto error;
@@ -331,7 +331,7 @@ backend_clean(gpointer backend_data)
 	}
 
 	sqlite3_db_config(bd->db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
-	
+
 	if (!setup_db(bd->db))
 	{
 		ret = FALSE;

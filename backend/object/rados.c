@@ -279,7 +279,7 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
+	(void)backend_data;
 	g_warning("Backend clean is currently not supported for this backend.");
 
 	return TRUE;

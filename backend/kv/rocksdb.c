@@ -314,7 +314,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd->write_options = rocksdb_writeoptions_create();
 	bd->write_options_sync = rocksdb_writeoptions_create();
 	rocksdb_writeoptions_set_sync(bd->write_options_sync, 1);
-	
+
 	bd->path = g_strdup(path);
 	bd->db = create_db(path);
 

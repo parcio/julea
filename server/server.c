@@ -341,7 +341,7 @@ main(int argc, char** argv)
 
 		g_debug("Initialized object backend %s.", object_backend);
 
-		if(opt_clean)
+		if (opt_clean)
 		{
 			if (!j_backend_object_clean(jd_object_backend))
 			{
@@ -361,8 +361,8 @@ main(int argc, char** argv)
 		}
 
 		g_debug("Initialized kv backend %s.", kv_backend);
-		
-		if(opt_clean)
+
+		if (opt_clean)
 		{
 			if (!j_backend_kv_clean(jd_kv_backend))
 			{
@@ -383,7 +383,7 @@ main(int argc, char** argv)
 
 		g_debug("Initialized db backend %s.", db_backend);
 
-		if(opt_clean)
+		if (opt_clean)
 		{
 			if (!j_backend_db_clean(jd_db_backend))
 			{

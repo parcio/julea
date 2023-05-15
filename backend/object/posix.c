@@ -19,7 +19,7 @@
 #include <julea-config.h>
 
 // for nftw usage
-#define _XOPEN_SOURCE 500 
+#define _XOPEN_SOURCE 500
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -531,11 +531,11 @@ backend_fini(gpointer backend_data)
 }
 
 static int
-remove_entry(const char* path, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+remove_entry(const char* path, const struct stat* sb, int typeflag, struct FTW* ftwbuf)
 {
-	(void) sb;
-	(void) typeflag;
-	(void) ftwbuf;
+	(void)sb;
+	(void)typeflag;
+	(void)ftwbuf;
 
 	return remove(path);
 }
@@ -552,16 +552,15 @@ backend_clean(gpointer backend_data)
 		g_error("Could not clean POSIX backend: %s\n", strerror(errno));
 		ret = FALSE;
 	}
-	
+
 	if (g_mkdir_with_parents(bd->path, 0700))
 	{
 		g_error("Could not create POSIX backend directory: %s\n", strerror(errno));
 		ret = FALSE;
 	}
-	
+
 	return ret;
 }
-
 
 static JBackend posix_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,

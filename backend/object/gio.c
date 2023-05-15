@@ -408,32 +408,37 @@ backend_fini(gpointer backend_data)
 }
 
 static gboolean
-delete_directory_tree(const char* directory) {
-    g_autoptr(GFileInfo) info;
-    g_autoptr(GFile) file = g_file_new_for_path(directory);
-    g_autoptr(GFileEnumerator) enumerator = g_file_enumerate_children(file, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+delete_directory_tree(const char* directory)
+{
+	g_autoptr(GFileInfo) info;
+	g_autoptr(GFile) file = g_file_new_for_path(directory);
+	g_autoptr(GFileEnumerator) enumerator = g_file_enumerate_children(file, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
-    while ((info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL) {
-        const char* file_name = g_file_info_get_name(info);
-        GFileType file_type = g_file_info_get_file_type(info);
+	while ((info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL)
+	{
+		const char* file_name = g_file_info_get_name(info);
+		GFileType file_type = g_file_info_get_file_type(info);
 		g_autofree char* child_path = g_build_filename(directory, file_name, NULL);
 
-        if (file_type == G_FILE_TYPE_DIRECTORY) {
-            if (!delete_directory_tree(child_path))
+		if (file_type == G_FILE_TYPE_DIRECTORY)
+		{
+			if (!delete_directory_tree(child_path))
 			{
 				return FALSE;
 			}
-        } else {
+		}
+		else
+		{
 			g_autoptr(GFile) child = g_file_new_for_path(child_path);
-            g_debug("Deleting file: %s\n", child_path);
+			g_debug("Deleting file: %s\n", child_path);
 
 			if (!g_file_delete(child, NULL, NULL))
 			{
 				g_error("Could not delete file: %s", child_path);
 				return FALSE;
 			}
-        }
-    }
+		}
+	}
 
 	if (!g_file_delete(file, NULL, NULL))
 	{

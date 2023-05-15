@@ -331,7 +331,6 @@ j_backend_object_clean(JBackend* backend)
 	return ret;
 }
 
-
 gboolean
 j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
 {

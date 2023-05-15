@@ -164,7 +164,7 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
+	(void)backend_data;
 
 	return TRUE;
 }

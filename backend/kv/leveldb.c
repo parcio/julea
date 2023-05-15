@@ -303,7 +303,6 @@ backend_init(gchar const* path, gpointer* backend_data)
 {
 	JLevelDBData* bd;
 	g_autofree gchar* dirname = NULL;
-	
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
@@ -338,7 +337,7 @@ backend_fini(gpointer backend_data)
 		leveldb_close(bd->db);
 	}
 
-	g_free((void*) bd->path);
+	g_free((void*)bd->path);
 
 	g_slice_free(JLevelDBData, bd);
 }

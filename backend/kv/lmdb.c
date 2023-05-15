@@ -361,7 +361,7 @@ backend_clean(gpointer backend_data)
 			goto _error;
 		}
 
-		ret = TRUE; 	
+		ret = TRUE;
 	}
 
 _error:
