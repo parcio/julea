@@ -20,6 +20,7 @@
 
 #include <glib.h>
 #include <gmodule.h>
+#include <unistd.h>
 
 #include <sqlite3.h>
 
@@ -35,6 +36,7 @@ typedef struct JSQLiteBatch JSQLiteBatch;
 
 struct JSQLiteData
 {
+	char* path;
 	sqlite3* db;
 };
 
@@ -236,6 +238,32 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 }
 
 static gboolean
+setup_db(sqlite3* conn)
+{
+	gboolean ret = FALSE;
+	const char* table = "CREATE TABLE IF NOT EXISTS julea (namespace TEXT NOT NULL, key TEXT NOT NULL, value BLOB NOT NULL);";
+	const char* index = "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);";
+
+	if (sqlite3_exec(conn, table , NULL, NULL, NULL) != SQLITE_OK)
+	{
+		g_error("Could not create KV schema.\nError: %s", sqlite3_errmsg(conn));
+		goto error;
+	}
+
+	if (sqlite3_exec(conn, index, NULL, NULL, NULL) != SQLITE_OK)
+	{
+		// "here2 no such table: main.julea"
+		g_error("Could not create KV index.\nError: %s", sqlite3_errmsg(conn));
+		goto error;
+	}
+
+	ret = TRUE;
+
+error:
+	return ret;
+}
+
+static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
 	JSQLiteData* bd;
@@ -247,18 +275,14 @@ backend_init(gchar const* path, gpointer* backend_data)
 	g_mkdir_with_parents(dirname, 0700);
 
 	bd = g_slice_new(JSQLiteData);
+	bd->path = g_strdup(path);
 
 	if (sqlite3_open(path, &(bd->db)) != SQLITE_OK)
 	{
 		goto error;
 	}
 
-	if (sqlite3_exec(bd->db, "CREATE TABLE IF NOT EXISTS julea (namespace TEXT NOT NULL, key TEXT NOT NULL, value BLOB NOT NULL);", NULL, NULL, NULL) != SQLITE_OK)
-	{
-		goto error;
-	}
-
-	if (sqlite3_exec(bd->db, "CREATE UNIQUE INDEX IF NOT EXISTS julea_namespace_key ON julea (namespace, key);", NULL, NULL, NULL) != SQLITE_OK)
+	if (!setup_db(bd->db))
 	{
 		goto error;
 	}
@@ -269,6 +293,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 error:
 	sqlite3_close(bd->db);
+	g_free(bd->path);
 	g_slice_free(JSQLiteData, bd);
 
 	return FALSE;
@@ -284,6 +309,8 @@ backend_fini(gpointer backend_data)
 		sqlite3_close(bd->db);
 	}
 
+	g_free(bd->path);
+
 	g_slice_free(JSQLiteData, bd);
 }
 
@@ -291,20 +318,24 @@ static gboolean
 backend_clean(gpointer backend_data)
 {
 	JSQLiteData* bd = backend_data;
-	gboolean ret = FALSE;
+	gboolean ret = G_TYPE_RESOURCE_ERROR;
 
 	// https://www.sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfigresetdatabase
 	sqlite3_db_config(bd->db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
 
 	if (sqlite3_exec(bd->db, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
 	{
-		goto _error;
+		g_error("Could not VACUUM KV backend.\nError: %s", sqlite3_errmsg(bd->db));
+
+		ret = FALSE;
 	}
 
-	ret = TRUE;
-
-_error:
 	sqlite3_db_config(bd->db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+	
+	if (!setup_db(bd->db))
+	{
+		ret = FALSE;
+	}
 
 	return ret;
 }

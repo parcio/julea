@@ -752,9 +752,12 @@ backend_clean(gpointer backend_data)
 	if (mysql_query(conn, schema_query) != 0)
 	{
 		// table might not exist on first startup (nothing to do in this case)
-		// check this again when rebased onto sql_generic PR
-		g_error("Querying schema info for backend_clean failed.\nError: %s", mysql_error(conn));
-		goto _error;
+		g_warning("Could not get table information for DB clean. This could be normal on first usage.");
+		return TRUE;
+
+		/// \todo check this again when rebased onto sql_generic PR
+		//g_error("Querying schema info for backend_clean failed.\nError: %s", mysql_error(conn));
+		//goto _error;
 	}
 
 	if (!(schemas = mysql_use_result(conn)))

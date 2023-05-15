@@ -524,6 +524,8 @@ backend_clean(gpointer backend_data)
 		goto _error;
 	}
 
+	/// \todo check after rebase onto sql generic PR that metadata table does not need to be recreated here
+
 	ret = TRUE;
 
 _error:

@@ -435,6 +435,12 @@ delete_directory_tree(const char* directory) {
         }
     }
 
+	if (!g_file_delete(file, NULL, NULL))
+	{
+		g_error("Could not delete directory: %s", directory);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 

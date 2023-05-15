@@ -275,6 +275,7 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
+/// \todo untested because rados is client side only
 static gboolean
 backend_clean(gpointer backend_data)
 {
