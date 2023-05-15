@@ -95,7 +95,11 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	if ((backend_path = g_getenv("JULEA_BACKEND_PATH")) != NULL)
 	{
 		module_name = g_strdup_printf("%s-%s", type_str, name);
+#if GLIB_CHECK_VERSION(2, 76, 0)
+		path = g_build_filename(backend_path, module_name, NULL);
+#else
 		path = g_module_build_path(backend_path, module_name);
+#endif
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
 
 		if (module == NULL)
@@ -111,7 +115,11 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	if (module == NULL)
 	{
 		module_name = g_strdup_printf("%s-%s", type_str, name);
+#if GLIB_CHECK_VERSION(2, 76, 0)
+		path = g_build_filename(JULEA_BACKEND_PATH, module_name, NULL);
+#else
 		path = g_module_build_path(JULEA_BACKEND_PATH, module_name);
+#endif
 		module = g_module_open(path, G_MODULE_BIND_LOCAL);
 
 		if (module == NULL)
