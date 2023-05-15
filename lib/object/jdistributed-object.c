@@ -377,8 +377,6 @@ j_distributed_object_read_background_operation(gpointer data)
 				input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
 				g_input_stream_read_all(input, read_data, nbytes, NULL, NULL, NULL);
 			}
-
-			g_slice_free(JDistributedObjectReadBuffer, buffer);
 		}
 
 		operations_done += reply_operation_count;
@@ -865,14 +863,14 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 					j_message_append_n(messages[index], object->namespace, namespace_len);
 					j_message_append_n(messages[index], object->name, name_len);
 
-					br_lists[index] = j_list_new(NULL);
+					br_lists[index] = j_list_new(g_free);
 				}
 
 				j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
 				j_message_append_8(messages[index], &new_length);
 				j_message_append_8(messages[index], &new_offset);
 
-				buffer = g_slice_new(JDistributedObjectReadBuffer);
+				buffer = g_new(JDistributedObjectReadBuffer, 1);
 				buffer->data = new_data;
 				buffer->bytes_read = bytes_read;
 
