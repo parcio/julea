@@ -344,10 +344,28 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	MDB_txn* txn;
+	JLMDBData* bd = backend_data;
+	gboolean ret = FALSE;
 
-	return TRUE;
+	if (mdb_txn_begin(bd->env, NULL, 0, &txn) == 0)
+	{
+		// 0 empties the DB which is still open afterwards
+		if (mdb_drop(txn, bd->dbi, 0) != 0)
+		{
+			goto _error;
+		}
+
+		if (mdb_txn_commit(txn) != 0)
+		{
+			goto _error;
+		}
+
+		ret = TRUE; 	
+	}
+
+_error:
+	return ret;
 }
 
 static JBackend lmdb_backend = {

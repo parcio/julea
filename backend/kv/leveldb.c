@@ -36,6 +36,7 @@ typedef struct JLevelDBBatch JLevelDBBatch;
 
 struct JLevelDBData
 {
+	gchar* path;
 	leveldb_t* db;
 
 	leveldb_readoptions_t* read_options;
@@ -269,13 +270,40 @@ out:
 	return FALSE;
 }
 
+static leveldb_t*
+create_db(gchar const* path)
+{
+	leveldb_t* res = NULL;
+	leveldb_options_t* options;
+	gint const compressions[] = { leveldb_snappy_compression, leveldb_no_compression };
+
+	options = leveldb_options_create();
+	leveldb_options_set_create_if_missing(options, 1);
+
+	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
+	{
+		g_autofree gchar* error = NULL;
+
+		leveldb_options_set_compression(options, compressions[i]);
+		res = leveldb_open(options, path, &error);
+
+		if (res != NULL)
+		{
+			break;
+		}
+	}
+
+	leveldb_options_destroy(options);
+
+	return res;
+}
+
 static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
 	JLevelDBData* bd;
-	leveldb_options_t* options;
 	g_autofree gchar* dirname = NULL;
-	gint const compressions[] = { leveldb_snappy_compression, leveldb_no_compression };
+	
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
@@ -288,23 +316,8 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd->write_options_sync = leveldb_writeoptions_create();
 	leveldb_writeoptions_set_sync(bd->write_options_sync, 1);
 
-	options = leveldb_options_create();
-	leveldb_options_set_create_if_missing(options, 1);
-
-	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
-	{
-		g_autofree gchar* error = NULL;
-
-		leveldb_options_set_compression(options, compressions[i]);
-		bd->db = leveldb_open(options, path, &error);
-
-		if (bd->db != NULL)
-		{
-			break;
-		}
-	}
-
-	leveldb_options_destroy(options);
+	bd->db = create_db(path);
+	bd->path = g_strdup(path);
 
 	*backend_data = bd;
 
@@ -325,16 +338,46 @@ backend_fini(gpointer backend_data)
 		leveldb_close(bd->db);
 	}
 
+	g_free((void*) bd->path);
+
 	g_slice_free(JLevelDBData, bd);
 }
 
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	JLevelDBData* bd = backend_data;
+	char* err = NULL;
+	leveldb_options_t* options;
+	gboolean ret = FALSE;
 
-	return TRUE;
+	options = leveldb_options_create();
+
+	if (bd->db != NULL)
+	{
+		leveldb_close(bd->db);
+	}
+
+	leveldb_destroy_db(options, bd->path, &err);
+
+	if (err)
+	{
+		free(err);
+		goto _error;
+	}
+
+	bd->db = create_db(bd->path);
+
+	if (!bd->db)
+	{
+		goto _error;
+	}
+
+	ret = TRUE;
+
+_error:
+	leveldb_options_destroy(options);
+	return ret;
 }
 
 static JBackend leveldb_backend = {

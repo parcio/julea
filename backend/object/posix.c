@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ftw.h>
+#include <errno.h>
+#include <string.h>
 
 #include <julea.h>
 
@@ -528,14 +530,38 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
+static int
+remove_entry(const char* path, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+{
+	(void) sb;
+	(void) typeflag;
+	(void) ftwbuf;
+
+	return remove(path);
+}
+
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	JBackendData* bd = backend_data;
 
-	return TRUE;
+	gboolean ret = TRUE;
+
+	if (nftw(bd->path, remove_entry, 30, FTW_DEPTH | FTW_PHYS))
+	{
+		g_error("Could not clean POSIX backend: %s\n", strerror(errno));
+		ret = FALSE;
+	}
+	
+	if (g_mkdir_with_parents(bd->path, 0700))
+	{
+		g_error("Could not create POSIX backend directory: %s\n", strerror(errno));
+		ret = FALSE;
+	}
+	
+	return ret;
 }
+
 
 static JBackend posix_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,

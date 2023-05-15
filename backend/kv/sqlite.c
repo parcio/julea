@@ -290,10 +290,23 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	JSQLiteData* bd = backend_data;
+	gboolean ret = FALSE;
 
-	return TRUE;
+	// https://www.sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfigresetdatabase
+	sqlite3_db_config(bd->db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
+
+	if (sqlite3_exec(bd->db, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
+	{
+		goto _error;
+	}
+
+	ret = TRUE;
+
+_error:
+	sqlite3_db_config(bd->db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+
+	return ret;
 }
 
 static JBackend sqlite_backend = {

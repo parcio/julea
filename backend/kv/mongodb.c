@@ -479,10 +479,14 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	JMongoDBData* bd = backend_data;
+	mongoc_database_t* m_database;
+	gboolean ret;
 
-	return TRUE;
+	m_database = mongoc_client_get_database(bd->connection, bd->database);
+	// the database will be recreated on next insert
+	ret = mongoc_database_drop(m_database, NULL);
+	return ret;
 }
 
 static JBackend mongodb_backend = {

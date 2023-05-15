@@ -728,10 +728,79 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	MYSQL_RES * schemas = NULL;
+	MYSQL* conn = j_sql_open(backend_data);
+	MYSQL_ROW schema = NULL;
+	gboolean res = FALSE;
 
-	return TRUE;
+	// The metadata table structure:
+	// "CREATE TABLE IF NOT EXISTS schema_structure ("
+	// "namespace VARCHAR(255),"
+	// "name VARCHAR(255),"
+	// "varname VARCHAR(255),"
+	// "vartype INTEGER )"
+	gchar* schema_query = "SELECT namespace, name FROM schema_structure";
+
+	// collect all table names and issue drop table on all at once
+	// relevant restriction is the maximum query length
+	// however, its default is 16MB which should be enough
+	// https://dev.mysql.com/doc/refman/8.0/en/packet-too-large.html
+	GString* schema_delete = g_string_new("DROP TABLE ");
+
+	if (!mysql_query(conn, schema_query))
+	{
+		goto _error;
+	}
+
+	if (!(schemas = mysql_use_result(conn)))
+	{
+		g_error("Querying schema info for backend_clean failed./nError: %s", mysql_error(conn));
+		goto _error;
+	}
+
+	while ((schema = mysql_fetch_row(schemas)))
+	{
+		unsigned long *lengths;
+   		lengths = mysql_fetch_lengths(schemas);
+
+		// pre-allocate new string size
+		g_string_set_size (schema_delete, schema_delete->len + lengths[0] + lengths[1] + 5);
+
+		// set up namespace_name as table name
+		// g_string_append_printf would be more convinient but also much slower
+		g_string_append_len(schema_delete, "\"", 1);
+		g_string_append_len(schema_delete, schema[0], lengths[0]);
+		g_string_append_len(schema_delete, "_" , 1);
+		g_string_append_len(schema_delete, schema[1], lengths[1]);
+		g_string_append_len(schema_delete, "\"", 1);
+		g_string_append_len(schema_delete, ", ", 2);
+	}
+
+	// check whether loop terminated due to no more elements or error
+	if(*mysql_error(conn))
+	{
+		g_error("mysql_fetch_row for backend_clean failed./nError: %s", mysql_error(conn));
+		goto _error;
+	}
+
+	// remove last colon
+	g_string_set_size(schema_delete, schema_delete->len-2);
+
+	if (!mysql_query(conn, schema_delete->str))
+	{
+		g_error("Could not clean MySQL backend. Failed to execute DROP TABLE");
+		goto _error;
+	}
+
+	res = TRUE;
+
+_error:
+	if(schemas)
+	{
+		mysql_free_result(schemas);
+	}
+
+	return res;
 }
 
 static JBackend mysql_backend = {

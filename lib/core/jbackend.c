@@ -318,10 +318,10 @@ j_backend_object_clean(JBackend* backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret;
+	gboolean ret = FALSE;
 
-	g_return_if_fail(backend != NULL);
-	g_return_if_fail(backend->type == J_BACKEND_TYPE_OBJECT);
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
 
 	{
 		J_TRACE("backend_clean", NULL);
@@ -594,8 +594,8 @@ j_backend_kv_clean(JBackend* backend)
 
 	gboolean ret;
 
-	g_return_if_fail(backend != NULL);
-	g_return_if_fail(backend->type == J_BACKEND_TYPE_KV);
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
 
 	{
 		J_TRACE("backend_clean", NULL);
@@ -810,8 +810,8 @@ j_backend_db_clean(JBackend* backend)
 
 	gboolean ret;
 
-	g_return_if_fail(backend != NULL);
-	g_return_if_fail(backend->type == J_BACKEND_TYPE_DB);
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
 
 	{
 		J_TRACE("backend_clean", NULL);

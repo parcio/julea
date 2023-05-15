@@ -36,6 +36,7 @@ typedef struct JRocksDBBatch JRocksDBBatch;
 
 struct JRocksDBData
 {
+	char* path;
 	rocksdb_t* db;
 
 	rocksdb_readoptions_t* read_options;
@@ -270,13 +271,38 @@ out:
 	return FALSE;
 }
 
+static rocksdb_t*
+create_db(gchar const* path)
+{
+	rocksdb_t* res = NULL;
+	gint const compressions[] = { rocksdb_lz4_compression, rocksdb_snappy_compression, rocksdb_no_compression };
+	rocksdb_options_t* options = rocksdb_options_create();
+
+	rocksdb_options_set_create_if_missing(options, 1);
+
+	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
+	{
+		g_autofree gchar* error = NULL;
+
+		rocksdb_options_set_compression(options, compressions[i]);
+		res = rocksdb_open(options, path, &error);
+
+		if (res != NULL)
+		{
+			break;
+		}
+	}
+
+	rocksdb_options_destroy(options);
+
+	return res;
+}
+
 static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
 {
 	JRocksDBData* bd;
-	rocksdb_options_t* options;
 	g_autofree gchar* dirname = NULL;
-	gint const compressions[] = { rocksdb_lz4_compression, rocksdb_snappy_compression, rocksdb_no_compression };
 
 	g_return_val_if_fail(path != NULL, FALSE);
 
@@ -288,24 +314,9 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd->write_options = rocksdb_writeoptions_create();
 	bd->write_options_sync = rocksdb_writeoptions_create();
 	rocksdb_writeoptions_set_sync(bd->write_options_sync, 1);
-
-	options = rocksdb_options_create();
-	rocksdb_options_set_create_if_missing(options, 1);
-
-	for (guint i = 0; i < G_N_ELEMENTS(compressions); i++)
-	{
-		g_autofree gchar* error = NULL;
-
-		rocksdb_options_set_compression(options, compressions[i]);
-		bd->db = rocksdb_open(options, path, &error);
-
-		if (bd->db != NULL)
-		{
-			break;
-		}
-	}
-
-	rocksdb_options_destroy(options);
+	
+	bd->path = g_strdup(path);
+	bd->db = create_db(path);
 
 	*backend_data = bd;
 
@@ -321,6 +332,8 @@ backend_fini(gpointer backend_data)
 	rocksdb_writeoptions_destroy(bd->write_options);
 	rocksdb_writeoptions_destroy(bd->write_options_sync);
 
+	g_free(bd->path);
+
 	if (bd->db != NULL)
 	{
 		rocksdb_close(bd->db);
@@ -332,10 +345,38 @@ backend_fini(gpointer backend_data)
 static gboolean
 backend_clean(gpointer backend_data)
 {
-	(void) backend_data;
-	g_warning("Backend clean is currently not supported for this backend.");
+	JRocksDBData* bd = backend_data;
+	char* err = NULL;
+	rocksdb_options_t* options;
+	gboolean ret = FALSE;
 
-	return TRUE;
+	options = rocksdb_options_create();
+
+	if (bd->db != NULL)
+	{
+		rocksdb_close(bd->db);
+	}
+
+	rocksdb_destroy_db(options, bd->path, &err);
+
+	if (err)
+	{
+		free(err);
+		goto _error;
+	}
+
+	bd->db = create_db(bd->path);
+
+	if (!bd->db)
+	{
+		goto _error;
+	}
+
+	ret = TRUE;
+
+_error:
+	rocksdb_options_destroy(options);
+	return ret;
 }
 
 static JBackend rocksdb_backend = {
