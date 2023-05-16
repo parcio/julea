@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2021 Sajad Karim
  * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <julea-config.h>
 
 #include "sql-generic-internal.h"
 
@@ -1221,7 +1224,7 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 		{
 			JDBTypeValue value;
 			JDBType type = GPOINTER_TO_INT(g_hash_table_lookup(bound_statement->variable_types, (gchar*)var_name));
-			g_autoptr(GString) var_name_no_quotes = g_string_new((gchar*)var_name);
+			g_autofree gchar* var_name_no_quotes = NULL;
 
 			if (G_UNLIKELY(!specs->func.statement_column(thread_variables->db_connection, bound_statement->stmt, GPOINTER_TO_INT(position), type, &value, error)))
 			{
@@ -1229,9 +1232,9 @@ sql_generic_iterate(gpointer backend_data, gpointer _iterator, bson_t* query_res
 			}
 
 			/// \todo Backend specific quotes need to be removed. There should be a better solution.
-			g_string_replace(var_name_no_quotes, specs->sql.quote, "", 0);
+			var_name_no_quotes = j_helper_str_replace(var_name, specs->sql.quote, "");
 
-			if (G_UNLIKELY(!j_bson_append_value(query_result, var_name_no_quotes->str, type, &value, error)))
+			if (G_UNLIKELY(!j_bson_append_value(query_result, var_name_no_quotes, type, &value, error)))
 			{
 				goto _error;
 			}

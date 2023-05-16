@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <julea-config.h>
+
 #include "sql-generic-internal.h"
 
 gboolean

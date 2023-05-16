@@ -110,6 +110,8 @@ j_helper_str_replace(gchar const* str, gchar const* old, gchar const* new)
 	g_return_val_if_fail(old != NULL, NULL);
 	g_return_val_if_fail(new != NULL, NULL);
 
+	/// \todo consider using g_string_replace for GLib >= 2.68
+
 	old_escaped = g_regex_escape_string(old, -1);
 	regex = g_regex_new(old_escaped, 0, 0, NULL);
 	replace = g_regex_replace_literal(regex, str, -1, 0, new, 0, NULL);

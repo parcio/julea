@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <julea-config.h>
+
 #include "sql-generic-internal.h"
 
 GPrivate thread_variables_global = G_PRIVATE_INIT(thread_variables_fini);
