@@ -264,7 +264,7 @@ void j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value);
  *
  * \return The aspect's value.
  **/
-gint j_semantics_get(JSemantics* semantics, JSemanticsType key);
+gint j_semantics_get(const JSemantics* semantics, JSemanticsType key);
 
 /**
  * Encodes semantics in a guint32

@@ -307,7 +307,7 @@ j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value)
 }
 
 gint
-j_semantics_get(JSemantics* semantics, JSemanticsType key)
+j_semantics_get(const JSemantics* semantics, JSemanticsType key)
 {
 	J_TRACE_FUNCTION(NULL);
 
