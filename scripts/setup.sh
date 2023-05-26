@@ -71,7 +71,10 @@ set_path
 set_library_path
 set_backend_path
 
-SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+if test -z "${SPACK_DIR}"
+then
+	SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+fi
 
 spack_load_dependencies
 
