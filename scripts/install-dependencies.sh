@@ -33,9 +33,9 @@ usage ()
 	exit 1
 }
 
-if test -z "${SPACK_DIR}"
+if test -z "${JULEA_SPACK_DIR}"
 then
-	SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
 spack_install_dependencies

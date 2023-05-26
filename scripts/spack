@@ -16,11 +16,11 @@
 
 spack_set_env ()
 {
-	test -n "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	export SPACK_DISABLE_LOCAL_CONFIG=true
 	# FIXME maybe put into /tmp in CI
-	export SPACK_USER_CACHE_PATH="${SPACK_DIR}/cache"
+	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
 }
 
 spack_clone ()
@@ -30,19 +30,19 @@ spack_clone ()
 	# FIXME maybe use release branch instead
 	spack_commit='0d991de50af99c9938b3c376cea44cd4656f336e'
 
-	test -n "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
 
-	if test ! -d "${SPACK_DIR}"
+	if test ! -d "${JULEA_SPACK_DIR}"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${SPACK_DIR}"
+		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
 	fi
 
-	test -d "${SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	spack_set_env
 
 	(
-		cd "${SPACK_DIR}" || return 1
+		cd "${JULEA_SPACK_DIR}" || return 1
 
 		git fetch
 		git reset --hard "${spack_commit}"
@@ -55,12 +55,12 @@ spack_init ()
 {
 	local spack_env
 
-	test -n "${SPACK_DIR}" || return 1
-	test -d "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	spack_set_env
 
-	spack_env="${SPACK_DIR}/share/spack/setup-env.sh"
+	spack_env="${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
 
 	test -f "${spack_env}" || return 1
 
@@ -72,11 +72,11 @@ spack_init ()
 
 spack_cmd ()
 {
-	test -n "${SPACK_DIR}" || return 1
-	test -d "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	(
-		cd "${SPACK_DIR}" || return 1
+		cd "${JULEA_SPACK_DIR}" || return 1
 
 		./bin/spack "$@"
 	)

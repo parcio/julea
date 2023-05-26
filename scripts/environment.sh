@@ -58,9 +58,9 @@ set_pkg_config_path
 set_backend_path
 set_hdf_path
 
-if test -z "${SPACK_DIR}"
+if test -z "${JULEA_SPACK_DIR}"
 then
-	SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
 spack_load_dependencies
