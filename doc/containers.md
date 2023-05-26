@@ -9,8 +9,8 @@ Setting up and using the container looks like the following:
 ```console
 $ git clone https://github.com/julea-io/julea.git
 
-$ docker pull ghcr.io/julea-io/ubuntu-dev
-$ docker run -v $PWD/julea:/julea -it ghcr.io/julea-io/ubuntu-dev
+$ docker pull ghcr.io/julea-io/ubuntu-dev:22.04
+$ docker run -v $PWD/julea:/julea -it ghcr.io/julea-io/ubuntu-dev:22.04
 ```
 
 Continue with the following commands inside the container:
