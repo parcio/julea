@@ -1,7 +1,8 @@
 # JULEA
 
-[![CI](https://github.com/julea-io/julea/workflows/CI/badge.svg)](https://github.com/julea-io/julea/actions)
-[![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions)
+[![CI](https://github.com/julea-io/julea/workflows/CI/badge.svg)](https://github.com/julea-io/julea/actions/workflows/ci.yaml)
+[![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions/workflows/dependencies.yaml)
+[![Containers](https://github.com/julea-io/julea/workflows/Containers/badge.svg)](https://github.com/julea-io/julea/actions/workflows/containers.yaml)
 
 JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
