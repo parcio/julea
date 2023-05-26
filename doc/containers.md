@@ -7,11 +7,10 @@ For easier setup or testing JULEA, you can use the development container, which 
 Setting up and using the container looks like the following:
 
 ```console
-$ docker pull ghcr.io/julea/ubuntu-dev
-
 $ git clone https://github.com/julea-io/julea.git
 
-$ docker run -v $PWD/julea:/julea -it ghcr.io/julea/ubuntu-dev
+$ docker pull ghcr.io/julea-io/ubuntu-dev
+$ docker run -v $PWD/julea:/julea -it ghcr.io/julea-io/ubuntu-dev
 ```
 
 Continue with the following commands inside the container:
@@ -40,5 +39,5 @@ To build the container, use the following commands:
 
 ```console
 $ cd julea/containers
-$ docker build -f ubuntu-22.04-dev -t julea/ubuntu-dev:22.04 .
+$ docker build -f ubuntu-22.04-dev -t julea-io/ubuntu-dev:22.04 .
 ```
