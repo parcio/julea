@@ -69,6 +69,50 @@ jobs:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
           ./scripts/install-dependencies.sh
+  dependencies-containers:
+    name: Dependencies (Containers)
+    runs-on: ubuntu-22.04
+    container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - image: ubuntu:22.04
+            registry: docker.io/library
+            compiler: gcc
+            compiler_version: 11.3.0
+          - image: ubuntu:22.04
+            registry: docker.io/library
+            compiler: clang
+            compiler_version: 14.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Install packages
+        if: ${{ matrix.os.image == 'ubuntu:22.04' }}
+        run: |
+          sudo apt update
+          sudo apt --yes --no-install-recommends install build-essential
+          if test "${{ matrix.os.compiler }}" = 'clang'
+          then
+            sudo apt --yes --no-install-recommends install clang
+          fi
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /dependencies
+          key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+      - name: Install dependencies
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
+          JULEA_SPACK_DIR: /dependencies
+        run: |
+          ./scripts/install-dependencies.sh
   build:
     name: Build
     needs: dependencies
