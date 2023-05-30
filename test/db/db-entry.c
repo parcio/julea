@@ -240,7 +240,7 @@ test_db_entry_insert_update_delete(void)
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator,  schema, "blob-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "blob-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpmem((guint8*)val, length, blob, sizeof(blob));
