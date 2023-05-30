@@ -84,7 +84,7 @@ test_core_semantics_from_string(void)
 {
 	g_autoptr(JSemantics) semantics = NULL;
 	gint ret;
-	gchar semantics_string[] = "atomicity=operation,concurrency=overlapping,consistency=eventual,ordering=strict,persistency=immediate,safety=network,security=strict";
+	gchar semantics_string[] = "atomicity=operation,consistency=eventual,persistency=network,security=strict";
 
 	J_TEST_TRAP_START;
 
@@ -96,20 +96,11 @@ test_core_semantics_from_string(void)
 	ret = j_semantics_get(semantics, J_SEMANTICS_ATOMICITY);
 	g_assert_cmpint(ret, ==, J_SEMANTICS_ATOMICITY_OPERATION);
 
-	ret = j_semantics_get(semantics, J_SEMANTICS_CONCURRENCY);
-	g_assert_cmpint(ret, ==, J_SEMANTICS_CONCURRENCY_OVERLAPPING);
-
 	ret = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
 	g_assert_cmpint(ret, ==, J_SEMANTICS_CONSISTENCY_EVENTUAL);
 
-	ret = j_semantics_get(semantics, J_SEMANTICS_ORDERING);
-	g_assert_cmpint(ret, ==, J_SEMANTICS_ORDERING_STRICT);
-
 	ret = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
-	g_assert_cmpint(ret, ==, J_SEMANTICS_PERSISTENCY_IMMEDIATE);
-
-	ret = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
-	g_assert_cmpint(ret, ==, J_SEMANTICS_SAFETY_NETWORK);
+	g_assert_cmpint(ret, ==, J_SEMANTICS_PERSISTENCY_NETWORK);
 
 	ret = j_semantics_get(semantics, J_SEMANTICS_SECURITY);
 	g_assert_cmpint(ret, ==, J_SEMANTICS_SECURITY_STRICT);

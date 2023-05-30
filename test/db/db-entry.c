@@ -191,56 +191,56 @@ test_db_entry_insert_update_delete(void)
 	{
 		g_assert_no_error(error);
 
-		ret = j_db_iterator_get_field(iterator, "string-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "string-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpstr((gchar*)val, ==, str);
 		g_assert_cmpint(type, ==, J_DB_TYPE_STRING);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "sint32-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "sint32-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpint(*(gint32*)val, ==, si32);
 		g_assert_cmpint(type, ==, J_DB_TYPE_SINT32);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "uint32-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "uint32-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpuint(*(guint32*)val, ==, ui32);
 		g_assert_cmpint(type, ==, J_DB_TYPE_UINT32);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "sint64-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "sint64-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpint(*(gint64*)val, ==, si64);
 		g_assert_cmpint(type, ==, J_DB_TYPE_SINT64);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "uint64-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "uint64-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpuint(*(guint64*)val, ==, ui64);
 		g_assert_cmpint(type, ==, J_DB_TYPE_UINT64);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "float32-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "float32-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpfloat(fabs(*(gfloat*)val - fl32), <, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT32);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "float64-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator, schema, "float64-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpfloat(fabs(*(gdouble*)val - fl64), <, EPS);
 		g_assert_cmpint(type, ==, J_DB_TYPE_FLOAT64);
 		g_free(val);
 
-		ret = j_db_iterator_get_field(iterator, "blob-0", &type, &val, &length, &error);
+		ret = j_db_iterator_get_field(iterator,  schema, "blob-0", &type, &val, &length, &error);
 		g_assert_true(ret);
 		g_assert_no_error(error);
 		g_assert_cmpmem((guint8*)val, length, blob, sizeof(blob));
