@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # JULEA - Flexible storage framework
-# Copyright (C) 2017-2022 Michael Kuhn
+# Copyright (C) 2017-2023 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -62,7 +62,10 @@ run_test ()
 	return ${ret}
 }
 
-SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+if test -z "${JULEA_SPACK_DIR}"
+then
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+fi
 
 spack_load_dependencies
 

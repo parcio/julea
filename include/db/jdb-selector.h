@@ -122,10 +122,13 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDBSelector, j_db_selector_unref)
 gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSelectorOperator operator_, gconstpointer value, guint64 length, GError** error);
 
 /**
- * add a search field to the selector.
+ * \brief Add a second selector as sub selector.
  *
- * \param[in] selector to add a sub_selector to
- * \param[in] sub_selector to add to the selector
+ * Using this function it is possible to build nested expressions (e.g. "A and B and (C or D)" where "C or D" is given by a sub selector).
+ * The namespace and schema of both selectors must be the same.
+ *
+ * \param[in] selector primary selector
+ * \param[in] sub_selector sub selector
  * \param[out] error A GError pointer. Will point to a GError object in case of failure.
  *
  * \pre selector != NULL
@@ -136,6 +139,27 @@ gboolean j_db_selector_add_field(JDBSelector* selector, gchar const* name, JDBSe
  * \return TRUE on success, FALSE otherwise
  **/
 gboolean j_db_selector_add_selector(JDBSelector* selector, JDBSelector* sub_selector, GError** error);
+
+/**
+ * Add a JOIN to the primary selector using the schema from the sub selector.
+ *
+ * This function will join both schemas using the given fields and also copy previous add_join and add_selector data from the secondary selector to the primary selector.
+ * The given selectors must represent different primary schemas in the same namepsace.
+ *
+ * \param[in] selector Primary selector.
+ * \param[in] selector_field Name of a field in the primary schema of the selector.
+ * \param[in] sub_selector The second selector to be used in the join.
+ * \param[in] sub_selector_field Name of a field in the primary schema of the sub_selector.
+ *
+ * \pre selector != NULL
+ * \pre sub_selector != NULL
+ * \pre selector != sub_selector
+ * \pre selector including all previously added sub_selectors must not contain more than 500 search fields after applying this operation
+ *
+ * \return TRUE on success, FALSE otherwise
+ **/
+
+gboolean j_db_selector_add_join(JDBSelector* selector, gchar const* selector_field, JDBSelector* sub_selector, gchar const* sub_selector_field, GError** error);
 
 G_END_DECLS
 

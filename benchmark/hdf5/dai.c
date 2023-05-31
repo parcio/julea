@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2020-2022 Michael Kuhn
+ * Copyright (C) 2020-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -417,7 +417,7 @@ benchmark_hdf_dai_db_iterator(BenchmarkRun* run)
 			g_autofree gpointer data = NULL;
 			guint64 data_len;
 
-			if (j_db_iterator_get_field(iterator, "data", &type, &data, &data_len, &error))
+			if (j_db_iterator_get_field(iterator, NULL, "data", &type, &data, &data_len, &error))
 			{
 				attrs++;
 			}

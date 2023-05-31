@@ -301,12 +301,12 @@ H5VL_julea_db_space_decode(void* backend_id, guint64 backend_id_len)
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "dim_cache", &type, &object->space.data, &object->space.data_size, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "dim_cache", &type, &object->space.data, &object->space.data_size, &error))
 	{
 		j_goto_error();
 	}
 
-	if (!j_db_iterator_get_field(iterator, "dim_total_count", &type, (gpointer*)&tmp_uint32, &length, &error))
+	if (!j_db_iterator_get_field(iterator, NULL, "dim_total_count", &type, (gpointer*)&tmp_uint32, &length, &error))
 	{
 		j_goto_error();
 	}
@@ -411,7 +411,7 @@ H5VL_julea_db_space_encode(hid_t* type_id)
 
 	if (j_db_iterator_next(iterator, NULL))
 	{
-		if (!j_db_iterator_get_field(iterator, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
+		if (!j_db_iterator_get_field(iterator, NULL, "_id", &type, &object->backend_id, &object->backend_id_len, &error))
 		{
 			j_goto_error();
 		}

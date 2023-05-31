@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,14 +24,15 @@
 #include <julea-config.h>
 
 #include <glib.h>
-#include <gmodule.h>
 
-#include <jtrace.h>
+#include <bson.h>
 
-#include <db/jdb-internal.h>
+#include <julea.h>
+#include <julea-db.h>
 
-G_GNUC_UNUSED
-static gboolean
+#include <db-util/jbson.h>
+
+gboolean
 j_bson_iter_init(bson_iter_t* iter, const bson_t* bson, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -59,8 +61,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_next(bson_iter_t* iter, gboolean* has_next, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -85,8 +86,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_key_equals(bson_iter_t* iter, const char* key, gboolean* equals, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -111,8 +111,34 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static const char*
+gboolean
+j_bson_iter_skip_key(bson_iter_t* iter, const char* key, GError** error)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean equals;
+	gboolean next = TRUE;
+
+	if (G_UNLIKELY(!j_bson_iter_key_equals(iter, key, &equals, error)))
+	{
+		goto _error;
+	}
+
+	if (equals)
+	{
+		if (G_UNLIKELY(!j_bson_iter_next(iter, &next, error)))
+		{
+			goto _error;
+		}
+	}
+
+	return next;
+
+_error:
+	return FALSE;
+}
+
+const char*
 j_bson_iter_key(bson_iter_t* iter, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -129,8 +155,7 @@ _error:
 	return NULL;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_value(bson_t* bson, const char* name, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -242,8 +267,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_value(bson_iter_t* iter, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -383,8 +407,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_find(bson_iter_t* iter, const char* key, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -413,8 +436,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_not_find(bson_iter_t* iter, const char* key, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -443,8 +465,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -457,13 +478,13 @@ j_bson_iter_recurse_array(bson_iter_t* iter, bson_iter_t* iter_child, GError** e
 
 	if (G_UNLIKELY(!BSON_ITER_HOLDS_ARRAY(iter)))
 	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type");
+		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_INVALID_TYPE, "bson iter invalid type for recurse");
 		goto _error;
 	}
 
 	if (G_UNLIKELY(!bson_iter_recurse(iter, iter_child)))
 	{
-		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_RECOURSE, "bson iter recourse failed");
+		g_set_error_literal(error, J_BACKEND_BSON_ERROR, J_BACKEND_BSON_ERROR_ITER_RECOURSE, "bson iter recurse failed");
 		goto _error;
 	}
 
@@ -473,8 +494,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_recurse_document(bson_iter_t* iter, bson_iter_t* iter_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -503,8 +523,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_iter_copy_document(bson_iter_t* iter, bson_t* bson, GError** error)
 {
 	const uint8_t* data;
@@ -536,8 +555,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_has_enough_keys(const bson_t* bson, guint32 min_keys, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -560,8 +578,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static void
+void
 j_bson_destroy(bson_t* bson)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -572,8 +589,7 @@ j_bson_destroy(bson_t* bson)
 	}
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_init(bson_t* bson, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -592,8 +608,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_has_field(bson_t* bson, gchar const* name, gboolean* has_field, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -618,8 +633,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_count_keys(bson_t* bson, guint32* count, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -645,8 +659,7 @@ _error:
 }
 
 /// \todo does more or less the same as j_helper_get_number_string
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_array_generate_key(guint32 index, const char** key, char* buf, guint buf_length, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -671,8 +684,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_array(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -701,8 +713,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_array_begin(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -731,8 +742,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_array_end(bson_t* bson, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -755,8 +765,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_document(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -785,8 +794,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_document_begin(bson_t* bson, const char* key, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -815,8 +823,7 @@ _error:
 	return FALSE;
 }
 
-G_GNUC_UNUSED
-static gboolean
+gboolean
 j_bson_append_document_end(bson_t* bson, bson_t* bson_child, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);

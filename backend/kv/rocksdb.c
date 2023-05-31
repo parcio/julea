@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2020-2022 Michael Kuhn
+ * Copyright (C) 2020-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -88,7 +88,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		write_options = bd->write_options_sync;
 	}

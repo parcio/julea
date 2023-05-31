@@ -1,0 +1,58 @@
+# JULEA - Flexible storage framework
+# Copyright (C) 2023 Michael Kuhn
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: Containers
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/containers.yml'
+      - 'containers/*'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/containers.yml'
+      - 'containers/*'
+  schedule:
+    - cron: '0 0 * * 0'
+jobs:
+  ubuntu-dev:
+    name: Ubuntu Development Container
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push to GitHub Container Registry
+        uses: docker/build-push-action@v4
+        with:
+          context: containers
+          file: containers/ubuntu-22.04-dev
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/julea-io/ubuntu-dev:22.04

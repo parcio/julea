@@ -1,5 +1,5 @@
 # JULEA - Flexible storage framework
-# Copyright (C) 2017-2022 Michael Kuhn
+# Copyright (C) 2017-2023 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -16,11 +16,11 @@
 
 spack_set_env ()
 {
-	test -n "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	export SPACK_DISABLE_LOCAL_CONFIG=true
 	# FIXME maybe put into /tmp in CI
-	export SPACK_USER_CACHE_PATH="${SPACK_DIR}/cache"
+	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
 }
 
 spack_clone ()
@@ -28,21 +28,21 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='675afd884d65631492ab5647dc95692676e5a195'
+	spack_commit='0d991de50af99c9938b3c376cea44cd4656f336e'
 
-	test -n "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
 
-	if test ! -d "${SPACK_DIR}"
+	if test ! -d "${JULEA_SPACK_DIR}"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${SPACK_DIR}"
+		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
 	fi
 
-	test -d "${SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	spack_set_env
 
 	(
-		cd "${SPACK_DIR}" || return 1
+		cd "${JULEA_SPACK_DIR}" || return 1
 
 		git fetch
 		git reset --hard "${spack_commit}"
@@ -55,12 +55,12 @@ spack_init ()
 {
 	local spack_env
 
-	test -n "${SPACK_DIR}" || return 1
-	test -d "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	spack_set_env
 
-	spack_env="${SPACK_DIR}/share/spack/setup-env.sh"
+	spack_env="${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
 
 	test -f "${spack_env}" || return 1
 
@@ -72,11 +72,11 @@ spack_init ()
 
 spack_cmd ()
 {
-	test -n "${SPACK_DIR}" || return 1
-	test -d "${SPACK_DIR}" || return 1
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	(
-		cd "${SPACK_DIR}" || return 1
+		cd "${JULEA_SPACK_DIR}" || return 1
 
 		./bin/spack "$@"
 	)
@@ -94,12 +94,6 @@ spack_load ()
 
 	spack_pkg="$(printf '%s' "${spack_pkg}" | sed 's/#/ /g')"
 
-	# FIXME We need to specify the compiler explicitly (https://github.com/spack/spack/issues/34438)
-	if test -n "${JULEA_SPACK_COMPILER}"
-	then
-		spack_pkg="${spack_pkg} %${JULEA_SPACK_COMPILER}"
-	fi
-
 	spack load "${spack_pkg}" || pkg_loaded='NO'
 
 	printf 'Dependency "%s" loaded: %s\n' "${spack_pkg}" "${pkg_loaded}"
@@ -114,12 +108,6 @@ spack_install ()
 	test -n "${spack_pkg}" || return 1
 
 	spack_pkg="$(printf '%s' "${spack_pkg}" | sed 's/#/ /g')"
-
-	# FIXME We need to specify the compiler explicitly (https://github.com/spack/spack/issues/34438)
-	if test -n "${JULEA_SPACK_COMPILER}"
-	then
-		spack_pkg="${spack_pkg} %${JULEA_SPACK_COMPILER}"
-	fi
 
 	printf 'Installing "%s"\n' "${spack_pkg}"
 	# FIXME ignore errors?
@@ -142,7 +130,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 	# Recommended dependencies
-	dependencies="${dependencies} hdf5~mpi"
+	dependencies="${dependencies} hdf5~mpi@:1.12"
 	dependencies="${dependencies} libfuse~utils"
 	dependencies="${dependencies} lmdb"
 	dependencies="${dependencies} sqlite"
@@ -210,7 +198,7 @@ spack_install_dependencies ()
 
 		if test -n "${JULEA_SPACK_COMPILER}"
 		then
-			spack_cmd config --scope site add "packages:all:compiler:[${JULEA_SPACK_COMPILER}]"
+			spack_cmd config --scope site add "packages:all:require: \"%${JULEA_SPACK_COMPILER}\""
 		fi
 
 		spack_cmd mark --implicit --all

@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,18 +27,10 @@
 #include <julea.h>
 #include <julea-db.h>
 
-#include "jbson.c"
+#include <db-util/jbson.h>
+#include <db-util/sql-generic.h>
 
 #define MAX_BUF_SIZE 4096
-
-#define SQL_MODE_SINGLE_THREAD 0
-#define SQL_MODE_MULTI_THREAD 1
-#define SQL_MODE SQL_MODE_MULTI_THREAD
-
-#define SQL_AUTOINCREMENT_STRING " NOT NULL AUTO_INCREMENT "
-#define SQL_UINT64_TYPE " BIGINT UNSIGNED "
-#define SQL_LAST_INSERT_ID_STRING " SELECT LAST_INSERT_ID() "
-#define SQL_QUOTE "`"
 
 struct JMySQLData
 {
@@ -67,7 +60,7 @@ struct mysql_stmt_wrapper
 typedef struct mysql_stmt_wrapper mysql_stmt_wrapper;
 
 static gboolean
-j_sql_finalize(MYSQL* backend_db, void* _stmt, GError** error)
+j_sql_finalize(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -115,7 +108,7 @@ _error:
 }
 
 static gboolean
-j_sql_prepare(MYSQL* backend_db, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
+j_sql_prepare(gpointer backend_db, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -270,7 +263,7 @@ _error:
 }
 
 static gboolean
-j_sql_bind_null(MYSQL* backend_db, void* _stmt, guint idx, GError** error)
+j_sql_bind_null(gpointer backend_db, void* _stmt, guint idx, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -289,7 +282,7 @@ j_sql_bind_null(MYSQL* backend_db, void* _stmt, guint idx, GError** error)
 }
 
 static gboolean
-j_sql_column(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_column(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -343,7 +336,7 @@ _error:
 }
 
 static gboolean
-j_sql_bind_value(MYSQL* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -403,7 +396,7 @@ _error:
 }
 
 static gboolean
-j_sql_reset(MYSQL* backend_db, void* _stmt, GError** error)
+j_sql_reset(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -421,7 +414,7 @@ j_sql_reset(MYSQL* backend_db, void* _stmt, GError** error)
 }
 
 static gboolean
-j_sql_exec(MYSQL* backend_db, const char* sql, GError** error)
+j_sql_exec(gpointer backend_db, const char* sql, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -466,7 +459,7 @@ _error2:
 }
 
 static gboolean
-j_sql_step(MYSQL* backend_db, void* _stmt, gboolean* found, GError** error)
+j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -533,7 +526,7 @@ _error:
 }
 
 static gboolean
-j_sql_step_and_reset_check_done(MYSQL* backend_db, void* _stmt, GError** error)
+j_sql_step_and_reset_check_done(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -603,7 +596,7 @@ _error:
 }
 
 static void
-j_sql_close(MYSQL* backend_db)
+j_sql_close(gpointer backend_db)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -614,7 +607,7 @@ j_sql_close(MYSQL* backend_db)
 }
 
 static gboolean
-j_sql_start_transaction(MYSQL* backend_db, GError** error)
+j_sql_start_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -626,7 +619,7 @@ j_sql_start_transaction(MYSQL* backend_db, GError** error)
 }
 
 static gboolean
-j_sql_commit_transaction(MYSQL* backend_db, GError** error)
+j_sql_commit_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -638,7 +631,7 @@ j_sql_commit_transaction(MYSQL* backend_db, GError** error)
 }
 
 static gboolean
-j_sql_abort_transaction(MYSQL* backend_db, GError** error)
+j_sql_abort_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -649,7 +642,36 @@ j_sql_abort_transaction(MYSQL* backend_db, GError** error)
 	return TRUE;
 }
 
-#include "sql-generic.c"
+static JSQLSpecifics specifics = {
+	.single_threaded = FALSE,
+	.backend_data = NULL,
+
+	.func = {
+		.connection_open = j_sql_open,
+		.connection_close = j_sql_close,
+		.transaction_start = j_sql_start_transaction,
+		.transaction_commit = j_sql_commit_transaction,
+		.transaction_abort = j_sql_abort_transaction,
+		.statement_prepare = j_sql_prepare,
+		.statement_finalize = j_sql_finalize,
+		.statement_bind_null = j_sql_bind_null,
+		.statement_bind_value = j_sql_bind_value,
+		.statement_step = j_sql_step,
+		.statement_step_and_reset_check_done = j_sql_step_and_reset_check_done,
+		.statement_reset = j_sql_reset,
+		.statement_column = j_sql_column,
+		.sql_exec = j_sql_exec,
+	},
+
+	.sql = {
+		.autoincrement = " NOT NULL AUTO_INCREMENT ",
+		.uint64_type = " BIGINT UNSIGNED ",
+		.id_type = " BIGINT UNSIGNED ",
+		.select_last = " SELECT LAST_INSERT_ID() ",
+		.quote = "`",
+	},
+
+};
 
 static gboolean
 backend_init(gchar const* path, gpointer* backend_data)
@@ -680,8 +702,9 @@ backend_init(gchar const* path, gpointer* backend_data)
 	g_return_val_if_fail(bd->db_password != NULL, FALSE);
 
 	*backend_data = bd;
+	specifics.backend_data = bd;
 
-	sql_generic_init();
+	sql_generic_init(&specifics);
 
 	return TRUE;
 }
@@ -708,16 +731,16 @@ static JBackend mysql_backend = {
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
-		.backend_schema_create = backend_schema_create,
-		.backend_schema_get = backend_schema_get,
-		.backend_schema_delete = backend_schema_delete,
-		.backend_insert = backend_insert,
-		.backend_update = backend_update,
-		.backend_delete = backend_delete,
-		.backend_query = backend_query,
-		.backend_iterate = backend_iterate,
-		.backend_batch_start = backend_batch_start,
-		.backend_batch_execute = backend_batch_execute,
+		.backend_schema_create = sql_generic_schema_create,
+		.backend_schema_get = sql_generic_schema_get,
+		.backend_schema_delete = sql_generic_schema_delete,
+		.backend_insert = sql_generic_insert,
+		.backend_update = sql_generic_update,
+		.backend_delete = sql_generic_delete,
+		.backend_query = sql_generic_query,
+		.backend_iterate = sql_generic_iterate,
+		.backend_batch_start = sql_generic_batch_start,
+		.backend_batch_execute = sql_generic_batch_execute,
 	},
 };
 

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2022 Michael Kuhn
+ * Copyright (C) 2017-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -299,15 +299,15 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		JSemanticsSafety safety;
+		JSemanticsPersistency persistency;
 
 		gpointer object_connection;
 
-		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -391,15 +391,15 @@ j_object_delete_exec(JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		JSemanticsSafety safety;
+		JSemanticsPersistency persistency;
 
 		gpointer object_connection;
 
-		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 			guint32 operation_count;
@@ -673,7 +673,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 			j_message_add_send(message, data, length);
 
 			// Fake bytes_written here instead of doing another loop further down
-			if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+			if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_NONE)
 			{
 				j_helper_atomic_add(bytes_written, length);
 			}
@@ -693,15 +693,15 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		JSemanticsSafety safety;
+		JSemanticsPersistency persistency;
 
 		gpointer object_connection;
 
-		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, object->index);
 		j_message_send(message, object_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 			guint64 nbytes;
@@ -929,14 +929,14 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 
 	if (object_backend == NULL)
 	{
-		JSemanticsSafety safety;
+		JSemanticsPersistency persistency;
 		gpointer object_connection;
 
-		safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+		persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 		object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, index);
 		j_message_send(message, object_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 

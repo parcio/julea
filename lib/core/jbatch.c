@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2022 Michael Kuhn
+ * Copyright (C) 2010-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -152,6 +152,16 @@ j_batch_unref(JBatch* batch)
 
 	if (g_atomic_int_dec_and_test(&(batch->ref_count)))
 	{
+		gboolean is_session;
+
+		is_session = j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY) == J_SEMANTICS_CONSISTENCY_SESSION;
+
+		if (is_session)
+		{
+			// Freeing the batch ends the current session
+			j_batch_execute_internal(batch);
+		}
+
 		if (batch->background_operation != NULL)
 		{
 			j_background_operation_unref(batch->background_operation);
@@ -212,25 +222,52 @@ j_batch_execute(JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	gboolean ret;
+	gboolean ret = FALSE;
+	JSemanticsConsistency consistency;
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
+	consistency = j_semantics_get(batch->semantics, J_SEMANTICS_CONSISTENCY);
+
 	if (j_list_length(batch->list) == 0)
 	{
-		return FALSE;
+		return ret;
 	}
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_EVENTUAL
-	    && j_operation_cache_add(batch))
+	switch (consistency)
 	{
-		return TRUE;
+		case J_SEMANTICS_CONSISTENCY_EVENTUAL:
+			// Try to cache the operation
+			if (!j_operation_cache_add(batch))
+			{
+				// Fallback for operations that cannot be cached
+				// Necessary flushes were handled in j_operation_cache_test
+				ret = j_batch_execute_internal(batch);
+				j_list_delete_all(batch->list);
+			}
+			else
+			{
+				ret = TRUE;
+			}
+			break;
+
+		case J_SEMANTICS_CONSISTENCY_SESSION:
+			// Execute when batch gets freed
+			ret = TRUE;
+			break;
+
+		case J_SEMANTICS_CONSISTENCY_IMMEDIATE:
+			// Sync point for eventual batches
+			j_operation_cache_flush();
+
+			ret = j_batch_execute_internal(batch);
+			j_list_delete_all(batch->list);
+
+			break;
+
+		default:
+			g_warn_if_reached();
 	}
-
-	j_operation_cache_flush();
-
-	ret = j_batch_execute_internal(batch);
-	j_list_delete_all(batch->list);
 
 	return ret;
 }
@@ -337,14 +374,11 @@ j_batch_execute_internal(JBatch* batch)
 	last_key = NULL;
 	last_exec_func = NULL;
 
-	if (j_semantics_get(batch->semantics, J_SEMANTICS_ORDERING) == J_SEMANTICS_ORDERING_RELAXED)
-	{
-		/** \todo perform some optimizations
-		 * It is important to consider dependencies:
-		 * - Operations have to be performed before their dependent ones.
-		 *   For example, a collection has to be created before items in it can be created.
-		 */
-	}
+	/** \todo Perform some (reordering) optimizations
+		* It is important to consider dependencies:
+		* - Operations have to be performed before their dependent ones.
+		*   For example, a collection has to be created before items in it can be created.
+		*/
 
 	/**
 	 * Try to combine as many operations of the same type as possible.

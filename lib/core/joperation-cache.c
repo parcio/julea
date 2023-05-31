@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2022 Michael Kuhn
+ * Copyright (C) 2010-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -161,6 +161,12 @@ j_operation_cache_test(JOperation* operation)
 			g_warn_if_reached();
 	}
 	*/
+
+	// Enforce operation order even if some operations can not be cached
+	if (!ret)
+	{
+		j_operation_cache_flush();
+	}
 
 	return ret;
 }

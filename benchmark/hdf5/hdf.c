@@ -1,7 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2018-2019 Johannes Coym
- * Copyright (C) 2019-2022 Michael Kuhn
+ * Copyright (C) 2019-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -55,7 +55,7 @@ sync_file(gchar const* path)
 
 		semantics = j_benchmark_get_semantics();
 
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_NONE)
 		{
 			return;
 		}

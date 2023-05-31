@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2022 Michael Kuhn
+ * Copyright (C) 2017-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -231,16 +231,16 @@ j_distributed_object_create_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -274,16 +274,16 @@ j_distributed_object_delete_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 		guint32 operation_count;
@@ -377,8 +377,6 @@ j_distributed_object_read_background_operation(gpointer data)
 				input = g_io_stream_get_input_stream(G_IO_STREAM(object_connection));
 				g_input_stream_read_all(input, read_data, nbytes, NULL, NULL, NULL);
 			}
-
-			g_slice_free(JDistributedObjectReadBuffer, buffer);
 		}
 
 		operations_done += reply_operation_count;
@@ -409,15 +407,15 @@ j_distributed_object_write_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JListIterator) it = NULL;
 		g_autoptr(JMessage) reply = NULL;
@@ -529,14 +527,14 @@ j_distributed_object_sync_background_operation(gpointer data)
 
 	JDistributedObjectBackgroundData* background_data = data;
 
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 	gpointer object_connection;
 
-	safety = j_semantics_get(background_data->semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(background_data->semantics, J_SEMANTICS_PERSISTENCY);
 	object_connection = j_connection_pool_pop(J_BACKEND_TYPE_OBJECT, background_data->index);
 	j_message_send(background_data->message, object_connection);
 
-	if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+	if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 	{
 		g_autoptr(JMessage) reply = NULL;
 
@@ -865,14 +863,14 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 					j_message_append_n(messages[index], object->namespace, namespace_len);
 					j_message_append_n(messages[index], object->name, name_len);
 
-					br_lists[index] = j_list_new(NULL);
+					br_lists[index] = j_list_new(g_free);
 				}
 
 				j_message_add_operation(messages[index], sizeof(guint64) + sizeof(guint64));
 				j_message_append_8(messages[index], &new_length);
 				j_message_append_8(messages[index], &new_offset);
 
-				buffer = g_slice_new(JDistributedObjectReadBuffer);
+				buffer = g_new(JDistributedObjectReadBuffer, 1);
 				buffer->data = new_data;
 				buffer->bytes_read = bytes_read;
 
@@ -1073,7 +1071,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 				new_data += new_length;
 
 				// Fake bytes_written here instead of doing another loop further down
-				if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_NONE)
+				if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_NONE)
 				{
 					j_helper_atomic_add(bytes_written, new_length);
 				}

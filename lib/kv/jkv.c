@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2022 Michael Kuhn
+ * Copyright (C) 2017-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -196,7 +196,7 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 	gchar const* namespace;
 	gpointer kv_batch = NULL;
 	gsize namespace_len;
@@ -216,7 +216,7 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 		index = kop->put.kv->index;
 	}
 
-	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_get_backend();
 
@@ -267,7 +267,7 @@ j_kv_put_exec(JList* operations, JSemantics* semantics)
 		kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 		j_message_send(message, kv_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 
@@ -297,7 +297,7 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 	JBackend* kv_backend;
 	g_autoptr(JListIterator) it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JSemanticsSafety safety;
+	JSemanticsPersistency persistency;
 	gchar const* namespace;
 	gpointer kv_batch = NULL;
 	gsize namespace_len;
@@ -317,7 +317,7 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 		index = object->index;
 	}
 
-	safety = j_semantics_get(semantics, J_SEMANTICS_SAFETY);
+	persistency = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
 	it = j_list_iterator_new(operations);
 	kv_backend = j_kv_get_backend();
 
@@ -358,7 +358,7 @@ j_kv_delete_exec(JList* operations, JSemantics* semantics)
 		kv_connection = j_connection_pool_pop(J_BACKEND_TYPE_KV, index);
 		j_message_send(message, kv_connection);
 
-		if (safety == J_SEMANTICS_SAFETY_NETWORK || safety == J_SEMANTICS_SAFETY_STORAGE)
+		if (persistency == J_SEMANTICS_PERSISTENCY_NETWORK || persistency == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			g_autoptr(JMessage) reply = NULL;
 

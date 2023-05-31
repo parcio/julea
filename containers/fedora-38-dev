@@ -1,0 +1,7 @@
+FROM fedora:38
+
+# FIXME hostname is required for hostname (julea-config)
+# FIXME psmisc is required for killall (setup.sh)
+RUN dnf --refresh --assumeyes install gcc libasan libubsan hostname psmisc meson ninja-build pkgconf glib2-devel libbson-devel libfabric-devel lmdb-devel sqlite-devel leveldb-devel mongo-c-driver-devel mariadb-connector-c-devel rocksdb-devel fuse3-devel librados-devel
+
+WORKDIR /julea

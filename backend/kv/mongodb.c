@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2022 Michael Kuhn
+ * Copyright (C) 2017-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -85,11 +85,11 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 
 	write_concern = mongoc_write_concern_new();
 
-	if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) != J_SEMANTICS_SAFETY_NONE)
+	if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) != J_SEMANTICS_PERSISTENCY_NONE)
 	{
 		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_DEFAULT);
 
-		if (j_semantics_get(semantics, J_SEMANTICS_SAFETY) == J_SEMANTICS_SAFETY_STORAGE)
+		if (j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY) == J_SEMANTICS_PERSISTENCY_STORAGE)
 		{
 			mongoc_write_concern_set_journal(write_concern, TRUE);
 		}

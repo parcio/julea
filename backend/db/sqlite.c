@@ -1,6 +1,7 @@
 /*
  * JULEA - Flexible storage framework
  * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2022 Timm Leon Erxleben
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,22 +27,8 @@
 #include <julea.h>
 #include <julea-db.h>
 
-#include "jbson.c"
-
-/*
- * sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
- * to remove errors due to concurrent access.
- * if SQL_MODE is defined as SQL_MODE_SINGLE_THREAD, the sqlite-generic code uses a global lock to prevent concurrency errors.
- * otherwise there is no lock
- */
-#define SQL_MODE_SINGLE_THREAD 0
-#define SQL_MODE_MULTI_THREAD 1
-#define SQL_MODE SQL_MODE_SINGLE_THREAD
-
-#define SQL_AUTOINCREMENT_STRING " "
-#define SQL_UINT64_TYPE " UNSIGNED BIGINT "
-#define SQL_LAST_INSERT_ID_STRING " SELECT last_insert_rowid() "
-#define SQL_QUOTE "\""
+#include <db-util/jbson.h>
+#include <db-util/sql-generic.h>
 
 struct JSQLiteData
 {
@@ -52,7 +39,7 @@ struct JSQLiteData
 typedef struct JSQLiteData JSQLiteData;
 
 static gboolean
-j_sql_finalize(sqlite3* backend_db, void* _stmt, GError** error)
+j_sql_finalize(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -60,7 +47,7 @@ j_sql_finalize(sqlite3* backend_db, void* _stmt, GError** error)
 
 	if (G_UNLIKELY(sqlite3_finalize(stmt) != SQLITE_OK))
 	{
-		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FINALIZE, "sql finalize failed error was '%s'", sqlite3_errmsg(backend_db));
+		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FINALIZE, "sql finalize failed error was '%s'", sqlite3_errmsg((sqlite3*)backend_db));
 		goto _error;
 	}
 
@@ -71,18 +58,19 @@ _error:
 }
 
 static gboolean
-j_sql_prepare(sqlite3* backend_db, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
+j_sql_prepare(gpointer backend_db, const char* sql, void* _stmt, GArray* types_in, GArray* types_out, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt** stmt = _stmt;
+	sqlite3* db = (sqlite3*)backend_db;
 
 	(void)types_in;
 	(void)types_out;
 
-	if (G_UNLIKELY(sqlite3_prepare_v3(backend_db, sql, -1, SQLITE_PREPARE_PERSISTENT, stmt, NULL) != SQLITE_OK))
+	if (G_UNLIKELY(sqlite3_prepare_v3(db, sql, -1, SQLITE_PREPARE_PERSISTENT, stmt, NULL) != SQLITE_OK))
 	{
-		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> '%s'", sql, sqlite3_errmsg(backend_db));
+		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_PREPARE, "sql prepare failed error was <%s> '%s'", sql, sqlite3_errmsg(db));
 		goto _error;
 	}
 
@@ -95,7 +83,7 @@ _error:
 }
 
 static gboolean
-j_sql_bind_null(sqlite3* backend_db, void* _stmt, guint idx, GError** error)
+j_sql_bind_null(gpointer backend_db, void* _stmt, guint idx, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -103,7 +91,7 @@ j_sql_bind_null(sqlite3* backend_db, void* _stmt, guint idx, GError** error)
 
 	if (G_UNLIKELY(sqlite3_bind_null(stmt, idx) != SQLITE_OK))
 	{
-		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg((sqlite3*)backend_db));
 		goto _error;
 	}
 
@@ -114,7 +102,7 @@ _error:
 }
 
 static gboolean
-j_sql_column(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_column(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -164,67 +152,68 @@ _error:
 }
 
 static gboolean
-j_sql_bind_value(sqlite3* backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
+j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBTypeValue* value, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
+	sqlite3* db = (sqlite3*)backend_db;
 
 	switch (type)
 	{
 		case J_DB_TYPE_SINT32:
 			if (G_UNLIKELY(sqlite3_bind_int64(stmt, idx, value->val_sint32) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_UINT32:
 			if (G_UNLIKELY(sqlite3_bind_int64(stmt, idx, value->val_uint32) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_SINT64:
 			if (G_UNLIKELY(sqlite3_bind_int64(stmt, idx, value->val_sint64) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_UINT64:
 			if (G_UNLIKELY(sqlite3_bind_int64(stmt, idx, value->val_uint64) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_FLOAT32:
 			if (G_UNLIKELY(sqlite3_bind_double(stmt, idx, (gdouble)value->val_float32) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_FLOAT64:
 			if (G_UNLIKELY(sqlite3_bind_double(stmt, idx, value->val_float64) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_STRING:
 			if (G_UNLIKELY(sqlite3_bind_text(stmt, idx, value->val_string, -1, NULL) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
 		case J_DB_TYPE_BLOB:
 			if (G_UNLIKELY(sqlite3_bind_blob(stmt, idx, value->val_blob, value->val_blob_length, NULL) != SQLITE_OK))
 			{
-				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(backend_db));
+				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_BIND, "sql bind failed error was '%s'", sqlite3_errmsg(db));
 				goto _error;
 			}
 			break;
@@ -241,7 +230,7 @@ _error:
 }
 
 static gboolean
-j_sql_reset(sqlite3* backend_db, void* _stmt, GError** error)
+j_sql_reset(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -249,7 +238,7 @@ j_sql_reset(sqlite3* backend_db, void* _stmt, GError** error)
 
 	if (G_UNLIKELY(sqlite3_reset(stmt) != SQLITE_OK))
 	{
-		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_RESET, "sql reset failed error was '%s'", sqlite3_errmsg(backend_db));
+		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_RESET, "sql reset failed error was '%s'", sqlite3_errmsg((sqlite3*)backend_db));
 		goto _error;
 	}
 
@@ -260,12 +249,13 @@ _error:
 }
 
 static gboolean
-j_sql_step(sqlite3* backend_db, void* _stmt, gboolean* found, GError** error)
+j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	sqlite3_stmt* stmt = _stmt;
 	guint ret;
+
 	ret = sqlite3_step(stmt);
 	*found = ret == SQLITE_ROW;
 
@@ -273,12 +263,12 @@ j_sql_step(sqlite3* backend_db, void* _stmt, gboolean* found, GError** error)
 	{
 		if (G_UNLIKELY(ret == SQLITE_CONSTRAINT))
 		{
-			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_CONSTRAINT, "sql constraint failed error was '%s'", sqlite3_errmsg(backend_db));
+			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_CONSTRAINT, "sql constraint failed error was '%s'", sqlite3_errmsg((sqlite3*)backend_db));
 			goto _error;
 		}
 		else if (G_UNLIKELY(ret != SQLITE_DONE))
 		{
-			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was '%s'", sqlite3_errmsg(backend_db));
+			g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was '%s'", sqlite3_errmsg((sqlite3*)backend_db));
 			goto _error;
 		}
 	}
@@ -290,7 +280,7 @@ _error:
 }
 
 static gboolean
-j_sql_exec(sqlite3* backend_db, const char* sql, GError** error)
+j_sql_exec(gpointer backend_db, const char* sql, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -328,7 +318,7 @@ _error2:
 }
 
 static gboolean
-j_sql_step_and_reset_check_done(sqlite3* backend_db, void* _stmt, GError** error)
+j_sql_step_and_reset_check_done(gpointer backend_db, void* _stmt, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 	gboolean sql_found;
@@ -402,15 +392,15 @@ _error:
 }
 
 static void
-j_sql_close(sqlite3* backend_db)
+j_sql_close(gpointer backend_db)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	sqlite3_close(backend_db);
+	sqlite3_close((sqlite3*)backend_db);
 }
 
 static gboolean
-j_sql_start_transaction(sqlite3* backend_db, GError** error)
+j_sql_start_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -418,7 +408,7 @@ j_sql_start_transaction(sqlite3* backend_db, GError** error)
 }
 
 static gboolean
-j_sql_commit_transaction(sqlite3* backend_db, GError** error)
+j_sql_commit_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -426,14 +416,49 @@ j_sql_commit_transaction(sqlite3* backend_db, GError** error)
 }
 
 static gboolean
-j_sql_abort_transaction(sqlite3* backend_db, GError** error)
+j_sql_abort_transaction(gpointer backend_db, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	return j_sql_exec(backend_db, "ROLLBACK", error);
 }
 
-#include "sql-generic.c"
+static JSQLSpecifics specifics = {
+	/*
+	* sqlite supports multithread, but only for concurrent read. concurrent write requires manual retrys
+	* to remove errors due to concurrent access.
+	* if SQL_MODE is defined as SQL_MODE_SINGLE_THREAD, the sqlite-generic code uses a global lock to prevent concurrency errors.
+	* otherwise there is no lock
+	*/
+	.single_threaded = TRUE,
+	.backend_data = NULL,
+
+	.func = {
+		.connection_open = j_sql_open,
+		.connection_close = j_sql_close,
+		.transaction_start = j_sql_start_transaction,
+		.transaction_commit = j_sql_commit_transaction,
+		.transaction_abort = j_sql_abort_transaction,
+		.statement_prepare = j_sql_prepare,
+		.statement_finalize = j_sql_finalize,
+		.statement_bind_null = j_sql_bind_null,
+		.statement_bind_value = j_sql_bind_value,
+		.statement_step = j_sql_step,
+		.statement_step_and_reset_check_done = j_sql_step_and_reset_check_done,
+		.statement_reset = j_sql_reset,
+		.statement_column = j_sql_column,
+		.sql_exec = j_sql_exec,
+	},
+
+	.sql = {
+		.autoincrement = " ",
+		.uint64_type = " UNSIGNED BIGINT ",
+		.id_type = " INTEGER ",
+		.select_last = " SELECT last_insert_rowid() ",
+		.quote = "\"",
+	},
+
+};
 
 static gboolean
 backend_init(gchar const* _path, gpointer* backend_data)
@@ -454,7 +479,9 @@ backend_init(gchar const* _path, gpointer* backend_data)
 
 	*backend_data = bd;
 
-	sql_generic_init();
+	specifics.backend_data = bd;
+
+	sql_generic_init(&specifics);
 
 	return TRUE;
 }
@@ -483,16 +510,16 @@ static JBackend sqlite_backend = {
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
-		.backend_schema_create = backend_schema_create,
-		.backend_schema_get = backend_schema_get,
-		.backend_schema_delete = backend_schema_delete,
-		.backend_insert = backend_insert,
-		.backend_update = backend_update,
-		.backend_delete = backend_delete,
-		.backend_query = backend_query,
-		.backend_iterate = backend_iterate,
-		.backend_batch_start = backend_batch_start,
-		.backend_batch_execute = backend_batch_execute,
+		.backend_schema_create = sql_generic_schema_create,
+		.backend_schema_get = sql_generic_schema_get,
+		.backend_schema_delete = sql_generic_schema_delete,
+		.backend_insert = sql_generic_insert,
+		.backend_update = sql_generic_update,
+		.backend_delete = sql_generic_delete,
+		.backend_query = sql_generic_query,
+		.backend_iterate = sql_generic_iterate,
+		.backend_batch_start = sql_generic_batch_start,
+		.backend_batch_execute = sql_generic_batch_execute,
 	},
 };
 

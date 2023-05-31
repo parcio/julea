@@ -5,6 +5,10 @@ Moreover, developers should be aware of the fact that debug builds of JULEA can 
 1. The `JULEA_BACKEND_PATH` environment variable can be used to override JULEA's internal backend path only in debug builds.
 2. Tracing via `JULEA_TRACE` is only available in debug builds.
 
+## Debug Output
+
+Debug prints from `g_debug()` can be enabled by setting the environment variable `G_MESSAGES_DEBUG` to `JULEA`.
+
 ## Tracing
 
 JULEA contains a tracing component that can be used to record information about various aspects of JULEA's behavior.

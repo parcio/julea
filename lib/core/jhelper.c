@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2022 Michael Kuhn
+ * Copyright (C) 2010-2023 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -109,6 +109,8 @@ j_helper_str_replace(gchar const* str, gchar const* old, gchar const* new)
 	g_return_val_if_fail(str != NULL, NULL);
 	g_return_val_if_fail(old != NULL, NULL);
 	g_return_val_if_fail(new != NULL, NULL);
+
+	/// \todo consider using g_string_replace for GLib >= 2.68
 
 	old_escaped = g_regex_escape_string(old, -1);
 	regex = g_regex_new(old_escaped, 0, 0, NULL);
