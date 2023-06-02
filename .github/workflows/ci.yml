@@ -94,11 +94,11 @@ jobs:
       - name: Install packages
         if: ${{ matrix.os.image == 'ubuntu:22.04' }}
         run: |
-          sudo apt update
-          sudo apt --yes --no-install-recommends install build-essential
+          apt update
+          apt --yes --no-install-recommends install build-essential
           if test "${{ matrix.os.compiler }}" = 'clang'
           then
-            sudo apt --yes --no-install-recommends install clang
+            apt --yes --no-install-recommends install clang
           fi
       - name: Cache dependencies
         id: cache
