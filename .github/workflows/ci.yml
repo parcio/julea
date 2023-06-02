@@ -96,6 +96,7 @@ jobs:
         run: |
           apt update
           apt --yes --no-install-recommends install build-essential
+          apt --yes --no-install-recommends install ca-certificates python3 git gnupg unzip
           if test "${{ matrix.os.compiler }}" = 'clang'
           then
             apt --yes --no-install-recommends install clang
