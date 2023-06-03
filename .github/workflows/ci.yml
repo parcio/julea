@@ -95,8 +95,8 @@ jobs:
         if: ${{ matrix.os.image == 'ubuntu:22.04' }}
         run: |
           apt update
-          apt --yes --no-install-recommends install build-essential
-          apt --yes --no-install-recommends install ca-certificates python3 git gnupg unzip
+          apt --yes --no-install-recommends install build-essential zstd
+          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
           if test "${{ matrix.os.compiler }}" = 'clang'
           then
             apt --yes --no-install-recommends install clang
