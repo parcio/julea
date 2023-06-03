@@ -28,7 +28,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='0d991de50af99c9938b3c376cea44cd4656f336e'
+	spack_commit='ed76966a3aa2de9a3462b61b6af49dba99d61c6b'
 
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
