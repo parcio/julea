@@ -723,6 +723,13 @@ executable('julea-statistics', 'tools/statistics.c',
 	install: true,
 )
 
+
+executable('julea-backend-cleanup', 'tools/backend_cleanup.c',
+	dependencies: common_deps + [julea_dep],
+	include_directories: julea_incs,
+	install: true,
+)
+
 if hdf_dep.found()
 	executable('julea-h5migrate', 'tools/h5migrate.c',
 		dependencies: common_deps + [julea_dep] + [hdf_dep],
