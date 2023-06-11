@@ -275,7 +275,7 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
-/// \todo untested because rados is client side only
+/// \todo implement when rados test setup becomes easier
 static gboolean
 backend_clean(gpointer backend_data)
 {

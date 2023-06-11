@@ -476,7 +476,6 @@ backend_fini(gpointer backend_data)
 	mongoc_cleanup();
 }
 
-/// \todo untested because mongodb is client side only
 static gboolean
 backend_clean(gpointer backend_data)
 {
