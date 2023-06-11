@@ -25,7 +25,7 @@ perf record --call-graph dwarf -F 200 julea-server
 A few points to note:
 - `-F` sets the sampling frequency in Hertz.
 You may want to specify a higher value depending on the needed precision.
-- Because traces can grow quite fast in size it might be usefull to get an overview first and use a higher resolution to examine specific performance issues or functions only.
+- Because traces can grow quite fast in size it might be usefull to get an overview first and use a higher resolution to examine only specific performance issues if possible.
 - JULEA's tests are not suited for profiling because of too few operations performed.
 If no specific application is given JULEA's benchmarks are suitable as profiling workload.
 - Adding `-a` to the perf record call will take samples from all running applications.
@@ -34,7 +34,7 @@ This might be useful to also profile the JULEA client application if running on 
 ### Fold stack traces
 
 If you want to use Brandan Gregg's FlameGraph script you need to fold the generated stack traces.
-Though Speedscope, theoretically, does  not require this step it is benefical for the performance the tool.
+Though Speedscope, theoretically, does  not require this step it is benefical for the performance of the tool.
 Since Linux 4.5, perf can generate folded stack traces.
 However the script from Brendan Gregg produces better color mappings in Speedscope.
 
