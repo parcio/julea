@@ -46,8 +46,8 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 	if (strcmp(component, "server") == 0)
 	{
 		load_module = j_backend_load_server(backend, component, type, module, j_backend);
-	} 
-	else 
+	}
+	else
 	{
 		load_module = j_backend_load_client(backend, component, type, module, j_backend);
 	}
@@ -83,7 +83,7 @@ setup_backend(JConfiguration* configuration, JBackendType type, gchar const* por
 			g_warning("Failed to initalize backend: %s", backend);
 			return FALSE;
 		}
-		
+
 		return TRUE;
 	}
 
@@ -99,8 +99,8 @@ main(int argc, char** argv)
 	GModule* object_module = NULL;
 	g_autofree gchar* port_str = NULL;
 	gint res = 1;
-	(void) argc;
-	(void) argv;
+	(void)argc;
+	(void)argv;
 
 	setlocale(LC_ALL, "C.UTF-8");
 
@@ -146,7 +146,6 @@ main(int argc, char** argv)
 		g_warning("Could not clean object backend");
 		goto end;
 	}
-
 
 	res = 0;
 end:
