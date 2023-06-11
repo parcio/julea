@@ -541,6 +541,7 @@ static JBackend sqlite_backend = {
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_schema_create = sql_generic_schema_create,
 		.backend_schema_get = sql_generic_schema_get,
 		.backend_schema_delete = sql_generic_schema_delete,
