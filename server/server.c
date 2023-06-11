@@ -203,7 +203,6 @@ main(int argc, char** argv)
 	J_TRACE_FUNCTION(NULL);
 
 	gboolean opt_daemon = FALSE;
-	gboolean opt_clean = FALSE;
 	g_autofree gchar* opt_host = NULL;
 	gint opt_port = 0;
 
@@ -231,7 +230,6 @@ main(int argc, char** argv)
 		{ "daemon", 0, 0, G_OPTION_ARG_NONE, &opt_daemon, "Run as daemon", NULL },
 		{ "host", 0, 0, G_OPTION_ARG_STRING, &opt_host, "Override host name", "hostname" },
 		{ "port", 0, 0, G_OPTION_ARG_INT, &opt_port, "Port to use", "0" },
-		{ "clean", 0, 0, G_OPTION_ARG_NONE, &opt_clean, "Clean all data on configured backends.", NULL },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -340,15 +338,6 @@ main(int argc, char** argv)
 		}
 
 		g_debug("Initialized object backend %s.", object_backend);
-
-		if (opt_clean)
-		{
-			if (!j_backend_object_clean(jd_object_backend))
-			{
-				g_warning("Could not clean object backend %s.", object_backend);
-				return 1;
-			}
-		}
 	}
 
 	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_KV)
@@ -361,15 +350,6 @@ main(int argc, char** argv)
 		}
 
 		g_debug("Initialized kv backend %s.", kv_backend);
-
-		if (opt_clean)
-		{
-			if (!j_backend_kv_clean(jd_kv_backend))
-			{
-				g_warning("Could not clean kv backend %s.", kv_backend);
-				return 1;
-			}
-		}
 	}
 
 	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_DB)
@@ -382,15 +362,6 @@ main(int argc, char** argv)
 		}
 
 		g_debug("Initialized db backend %s.", db_backend);
-
-		if (opt_clean)
-		{
-			if (!j_backend_db_clean(jd_db_backend))
-			{
-				g_warning("Could not clean db backend %s.", db_backend);
-				return 1;
-			}
-		}
 	}
 
 	jd_statistics = j_statistics_new(FALSE);
