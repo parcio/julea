@@ -30,7 +30,7 @@ if __name__ == "__main__":
             with JBatch(result) as batch:
                 lib.j_object_read(_object, buffer, 128, 0, nbytes_ptr, batch)
             if result.IsSuccess:
-                print(f"Object contains: '{read_from_buffer(buffer)}' ({nbytes_ptr[0]} bytes)")
+                print(f"Object contains: '{read_string(buffer)}' ({nbytes_ptr[0]} bytes)")
             with JBatch(result) as batch:
                 lib.j_object_delete(_object, batch)
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 lib.j_kv_get(kv, buffer_ptr, length, batch)
             if result.IsSuccess:
                 char_buff_ptr = ffi.cast("char**", buffer_ptr)
-                print(f"KV contains: '{read_from_buffer(char_buff_ptr[0])}' ({length[0]} bytes)")
+                print(f"KV contains: '{read_string(char_buff_ptr[0])}' ({length[0]} bytes)")
             with JBatch(result) as batch:
                 lib.j_kv_delete(kv, batch)
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
                     db_field_ptr = ffi.new("void**")
                     db_length_ptr = ffi.new("unsigned long*")
                     lib.j_db_iterator_get_field(iterator, schema, hello, _type, db_field_ptr, db_length_ptr, ffi.NULL)
-                    print(f"DB contains: '{read_from_buffer(db_field_ptr[0])}' ({db_length_ptr[0]} bytes)")
+                    print(f"DB contains: '{read_string(db_field_ptr[0])}' ({db_length_ptr[0]} bytes)")
             finally:
                 with JBatch(result) as batch:
                     lib.j_db_entry_delete(entry, selector, batch, ffi.NULL)

@@ -6,7 +6,7 @@ def encode(string):
     result = ffi.new('char[]', string.encode(encoding)) 
     return result
 
-def read_from_buffer(buffer):
+def read_string(buffer):
     char = ffi.cast('char*', buffer)
     bytearr = b''
     i = 0

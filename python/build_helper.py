@@ -19,7 +19,7 @@ def create_header(filename, libraries, typedefs):
 def get_additional_compiler_flags(libraries, build_dir):
     flags = list(set(itertools.chain.from_iterable(map(
         lambda x: x["target_sources"][0]["parameters"],
-        [x for x in json.load(os.popen(f"meson introspect --targets ${build_dir}")) if x["name"] in libraries]))))
+        [x for x in json.load(os.popen(f"meson introspect --targets {build_dir}")) if x["name"] in libraries]))))
     clean = []
     for s in flags:
         if "-W" in s:
@@ -33,7 +33,7 @@ def get_additional_compiler_flags(libraries, build_dir):
 def get_include_dirs(flags):
     return [ str.strip("-I") for str in flags if "-I" in str ]
 
-def collect_julea(filename, libraries, typedefs, macros, debug = False):
+def collect_julea(filename, libraries, build_dir, typedefs, macros, debug = False):
     temp_filename = "temp.h"
     create_header(temp_filename, libraries, typedefs)
     includes = get_additional_compiler_flags(libraries, build_dir)
@@ -59,7 +59,7 @@ def process(build_dir, libs, tempheader, debug=False):
     libraryname = "julea_wrapper"
     with open(tempheader, "r") as file:
         header_content = file.read()
-    includes = get_additional_compiler_flags(libs+["glib-2.0"])
+    includes = get_additional_compiler_flags(libs+["glib-2.0"], build_dir)
     include_dirs = get_include_dirs(includes)
     try:
         ffi.cdef(header_content, override=True)
@@ -88,5 +88,5 @@ def copy_main_module(build_dir):
 
 def build(build_dir, include_libs, typedefs, macros, debug=False):
     header_name = "header_julea.h"
-    collect_julea(header_name, include_libs, typedefs, macros, debug)
+    collect_julea(header_name, include_libs, build_dir, typedefs, macros, debug)
     process(build_dir, include_libs, header_name, debug)
