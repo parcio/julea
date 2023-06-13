@@ -1,0 +1,12 @@
+FROM ghcr.io/julea-io/julea-centos-deps-standard:1.0.1
+
+WORKDIR /julea
+COPY . .
+
+RUN yum install -y libubsan \
+	libasan
+
+SHELL ["/bin/bash", "-c"]
+RUN . scripts/environment.sh && \
+	meson setup --prefix="${HOME}/julea-install" bld && \
+	ninja -C bld

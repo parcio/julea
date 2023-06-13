@@ -1,0 +1,8 @@
+Bootstrap: docker
+From: ghcr.io/julea-io/julea-ubuntu-config:latest
+
+%files
+	singularity-entrypoint.sh /singularity-entrypoint.sh
+
+%startscript
+	/bin/bash /singularity-entrypoint.sh
