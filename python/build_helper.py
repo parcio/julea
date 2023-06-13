@@ -1,6 +1,9 @@
 from os import popen, system
 from os.path import dirname
 import cffi
+import json
+import os
+import itertools
 
 def create_header(filename, libraries):
     content = """typedef int gint;
@@ -59,16 +62,20 @@ extern "Python" void cffi_j_batch_async_callback(JBatch*, gboolean, gpointer);
     with open(filename, "w") as file:
         file.write(content)
 
-def get_additional_compiler_flags(libraries, remove_sanitize=True):
-    flags_buffer = popen(f"pkg-config --cflags {' '.join(libraries)}")
-    flags = flags_buffer.read().strip().split(' ')
-    # remove duplicate parameters
-    flags = [*set(flags)]
-    if remove_sanitize:
-        for s in flags:
-            if "-fsanitize" in s:
-                flags.remove(s)
-    return flags
+def get_additional_compiler_flags(libraries):
+    print("HEH")
+    flags = list(set(itertools.chain.from_iterable(map(
+        lambda x: x["target_sources"][0]["parameters"],
+        [x for x in json.load(os.popen(f"meson introspect --targets bld")) if x["name"] in libraries]))))
+    clean = []
+    for s in flags:
+        if "-W" in s:
+            pass
+        elif "-fsanitize" in s:
+            pass
+        else:
+            clean.append(s)
+    return clean
 
 def get_include_dirs(flags):
     return [ str.strip("-I") for str in flags if "-I" in str ]
@@ -101,15 +108,15 @@ def collect_julea(filename, libraries, debug = False):
     # remove temporary files needed to please the preprocessor
     system(f"rm -rf glib.h gmodule.h bson.h gio {temp_filename}")
 
-def process(libs, tempheader, debug=False):
+def process(build_dir, libs, tempheader, debug=False):
     ffi = cffi.FFI()
     libraryname = "julea_wrapper"
     with open(tempheader, "r") as file:
         header_content = file.read()
-    includes = get_additional_compiler_flags(libs+["glib-2.0"], remove_sanitize=True)
+    includes = get_additional_compiler_flags(libs+["glib-2.0"])
     include_dirs = get_include_dirs(includes)
     ffi.cdef(header_content, override=True)
-    outdir = f"{dirname(__file__)}/../bld/"
+    outdir = build_dir
     headerincludes = ""
     for lib in libs:
         headerincludes += f'#include "{lib}.h"\n'
@@ -126,10 +133,10 @@ def process(libs, tempheader, debug=False):
     if not debug:
         system(f"rm -f {tempheader} {outdir+libraryname}.o {outdir+libraryname}.c")
 
-def copy_main_module():
-    system(f"cp {dirname(__file__)}/julea.py {dirname(__file__)}/../bld/julea.py")
+def copy_main_module(build_dir):
+    system(f"cp {dirname(__file__)}/julea.py {build_dir}/julea.py")
 
-def build(include_libs, debug=False):
+def build(build_dir, include_libs, debug=False):
     header_name = "header_julea.h"
     collect_julea(header_name, include_libs, debug)
-    process(include_libs, header_name, debug)
+    process(build_dir, include_libs, header_name, debug)
