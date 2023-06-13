@@ -27,12 +27,7 @@ typedef unsigned long gsize;
 typedef guint32 GQuark;
 
 typedef struct _GError GError;
-struct _GError
-{
-    GQuark  domain;
-    gint    code;
-    gchar  *message;
-};
+struct _GError { ...; };
 
 typedef    struct _GModule GModule;
 
@@ -45,17 +40,9 @@ typedef struct _GSocketConnection GSocketConnection;
 
 typedef void (*GDestroyNotify) (gpointer data);
 
-typedef struct _bson_t
-{
-    uint32_t    flags;
-    uint32_t    len;
-    uint8_t     padding[120];
-} bson_t;
+typedef struct _bson_t { ...; } bson_t;
 
 typedef struct JBatch JBatch;
-extern "Python" void cffi_j_kv_get_function(gpointer, guint32, gpointer);
-extern "Python" void cffi_j_batch_async_callback(JBatch*, gboolean, gpointer);
-
 """
     for library in libraries:
         content+=f"#include <{library}.h>\n"
@@ -63,7 +50,6 @@ extern "Python" void cffi_j_batch_async_callback(JBatch*, gboolean, gpointer);
         file.write(content)
 
 def get_additional_compiler_flags(libraries):
-    print("HEH")
     flags = list(set(itertools.chain.from_iterable(map(
         lambda x: x["target_sources"][0]["parameters"],
         [x for x in json.load(os.popen(f"meson introspect --targets bld")) if x["name"] in libraries]))))
