@@ -24,7 +24,6 @@ if __name__ == "__main__":
             lib.j_kv_put(kv, value_kv, len(value_kv), ffi.NULL, batch)
             lib.j_db_schema_create(schema, batch, ffi.NULL)
             lib.j_db_entry_insert(entry, batch, ffi.NULL)
-
         if result.IsSuccess:
             result = JBatchResult()
             buffer = ffi.new("gchar[]", 128)
@@ -55,16 +54,14 @@ if __name__ == "__main__":
                     _type = ffi.new("JDBType *")
                     db_field_ptr = ffi.new("void**")
                     db_length_ptr = ffi.new("unsigned long*")
-                    lib.j_db_iterator_get_field(iterator, hello, _type, db_field_ptr, db_length_ptr, ffi.NULL)
+                    lib.j_db_iterator_get_field(iterator, schema, hello, _type, db_field_ptr, db_length_ptr, ffi.NULL)
                     print(f"DB contains: '{read_from_buffer(db_field_ptr[0])}' ({db_length_ptr[0]} bytes)")
-
             finally:
                 with JBatch(result) as batch:
                     lib.j_db_entry_delete(entry, selector, batch, ffi.NULL)
                     lib.j_db_schema_delete(schema, batch, ffi.NULL)
                 lib.j_db_selector_unref(selector)
                 lib.j_db_iterator_unref(iterator)
-
     finally:
         lib.j_kv_unref(kv)
         lib.j_object_unref(_object)

@@ -7,6 +7,8 @@ def create_header(filename, libraries):
 typedef unsigned int guint;
 typedef gint gboolean;
 typedef char gchar;
+typedef double gdouble;
+typedef float gfloat;
 
 typedef unsigned short guint16;
 typedef signed int gint32;
@@ -95,7 +97,7 @@ def collect_julea(filename, libraries, debug = False):
             "-D'G_GNUC_PRINTF(x, y)='"
             ]
     # let preprocessor collect all declarations
-    system(f"gcc -E -P {' '.join(macros)} {temp_filename} -I. {' '.join(flags)} -o {filename}")
+    system(f"cc -E -P {' '.join(macros)} {temp_filename} -I. {' '.join(flags)} -o {filename}")
     # remove temporary files needed to please the preprocessor
     system(f"rm -rf glib.h gmodule.h bson.h gio {temp_filename}")
 
