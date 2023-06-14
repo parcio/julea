@@ -25,8 +25,10 @@ def benchmark_object_create_batch(run):
 def _benchmark_object_create(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     deletebatch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    run.batch_clean = lambda: lib.j_batch_execute(deletebatch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         obj = lib.j_object_new(namespace, name)
@@ -35,10 +37,7 @@ def _benchmark_object_create(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_object_unref(obj)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
-    assert lib.j_batch_execute(deletebatch)
+
     lib.j_batch_unref(batch)
     lib.j_batch_unref(deletebatch)
 
@@ -51,25 +50,25 @@ def benchmark_object_delete_batch(run):
 
 def _benchmark_object_delete(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
+    createbatch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     for i in range(run.iterations):
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         obj = lib.j_object_new(namespace, name)
-        lib.j_object_create(obj, batch)
+        lib.j_object_create(obj, createbatch)
         lib.j_object_unref(obj)
-    assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    run.batch_setup = lambda: lib.j_batch_execute(createbatch)
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         obj = lib.j_object_new(namespace, name)
         lib.j_object_delete(obj, batch)
+        lib.j_object_create(obj, createbatch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_object_unref(obj)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
     lib.j_batch_unref(batch)
 
 def benchmark_object_status(run):
@@ -90,14 +89,13 @@ def _benchmark_object_status(run, use_batch):
     character = encode("A")
     lib.j_object_write(obj, character, 1, 0, size_ptr, batch)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         lib.j_object_status(obj, modification_time_ptr, size_ptr, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     lib.j_object_delete(obj, batch)
     assert lib.j_batch_execute(batch)
     lib.j_object_unref(obj)
@@ -123,16 +121,14 @@ def _benchmark_object_read(run, use_batch, block_size):
                            batch)
     assert lib.j_batch_execute(batch)
     assert nb_ptr[0] == run.iterations * block_size
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch) & (nb_ptr[0] == run.iterations * block_size)
+    for i in run:
         lib.j_object_read(obj, dummy, block_size, i * block_size, nb_ptr, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
             assert nb_ptr[0] == block_size
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-        assert nb_ptr[0] == run.iterations * block_size
-    run.stop_timer()
+
     lib.j_object_delete(obj, batch)
     assert lib.j_batch_execute(batch)
     lib.j_object_unref(obj)
@@ -153,17 +149,15 @@ def _benchmark_object_write(run, use_batch, block_size):
     name = encode("benchmark")
     obj = lib.j_object_new(name, name)
     lib.j_object_create(obj, batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch) & (nb_ptr[0] == run.iterations * block_size)
+    for i in run:
         lib.j_object_write(obj, dummy, block_size, i * block_size, nb_ptr,
                            batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
             assert nb_ptr[0] == block_size
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-        assert nb_ptr[0] == run.iterations * block_size
-    run.stop_timer()
+
     lib.j_object_delete(obj, batch)
     assert lib.j_batch_execute(batch)
     lib.j_object_unref(obj)
@@ -177,8 +171,9 @@ def benchmark_object_unordered_create_delete_batch(run):
 
 def _benchmark_object_unordered_create_delete(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         obj = lib.j_object_new(namespace, name)
@@ -187,8 +182,6 @@ def _benchmark_object_unordered_create_delete(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_object_unref(obj)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     lib.j_batch_unref(batch)
     run.operations = run.iterations * 2
