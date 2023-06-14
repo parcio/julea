@@ -55,6 +55,12 @@ libraries = [
     "julea-item"
 ]
 
+# callbacks to python functions to use julea callback functions
+callback_functions = [
+    "void cffi_j_kv_get_function(gpointer, guint32, gpointer)",
+    "void cffi_j_batch_async_callback(JBatch*, gboolean, gpointer)",
+]
+
 def usage():
     print("Build python bindings for JULEA with cffi.")
     print()
@@ -76,5 +82,5 @@ if __name__ == "__main__":
     if not os.path.isfile(os.path.abspath('.') + "/meson.build"):
         err("The execution directory is apperntly not the JULEA-repo root directory")
     print(build_dir)
-    build(build_dir, libraries, typedefs, macros, debug=True)
+    build(build_dir, libraries, typedefs, macros, callback_functions, debug=True)
     copy_main_module(build_dir)

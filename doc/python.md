@@ -12,7 +12,7 @@ python python/build.py bld # bld your building directory
 ```
 
 This will create a python library with c bindings resident in the build directory.
-After this you can import the library with `import julea` as long as the environment is loaded.
+After this you can import the library with `import julea` as long as the environment and `py-cffi` is loaded.
 A usage example can be found in `python/example/hello-world.py`
 
 The JULEA module contains the following parts:

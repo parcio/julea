@@ -7,8 +7,44 @@ class BenchmarkRun:
         self.timer_started = False
         self.start = None
         self.stop = None
+        self.break_start = None
+        self.total_break = 0
         self.operations = iterations
         self.machine_readable = machine_readable
+        self.iteration_count = 0
+        self.i = 0
+        self.op_duration = 1000 ** 3
+        self.batch_send = None
+        self.batch_clean = None
+
+    def __iter__(self):
+        self.start_timer()
+        return self
+
+    def __next__(self):
+        self.i += 1
+        if self.i >= self.operations:
+            self.i = 0
+            self.iteration_count += 1
+            if self.batch_send is not None:
+                if not self.batch_send():
+                    raise RuntimeError("Failed to execute batch!")
+            if self.batch_clean is not None:
+                self.pause_timer()
+                if not self.batch_clean():
+                    raise RuntimeError("Failed to clean batch!")
+                self.continue_timer()
+            if perf_counter_ns() - self.start > self.op_duration:
+                self.stop_timer()
+                raise StopIteration
+        return self.i
+
+    def pause_timer(self):
+        self.break_start = perf_counter_ns()
+
+    def continue_timer(self):
+        self.total_break += perf_counter_ns() - self.break_start
+        self.break_start = None
 
     def start_timer(self):
         self.timer_started = True
@@ -30,7 +66,7 @@ class BenchmarkRun:
         if self.timer_started or self.stop == None:
             return None
         else:
-            return self.stop - self.start
+            return self.stop - self.start - self.total_break
 
     def print_result(self):
         if self.machine_readable:
@@ -38,7 +74,7 @@ class BenchmarkRun:
         else:
             name_col = self.name.ljust(60," ")
             runtime_col = f"{self.get_runtime_s():.3f}".rjust(8," ") + " seconds"
-            operations_col = f"{int(self.operations/self.get_runtime_s())}/s".rjust(12," ")
+            operations_col = f"{int(float(self.operations)*self.iteration_count/self.get_runtime_s())}/s".rjust(12," ")
             print(f"{name_col} | {runtime_col} | {operations_col}")
 
     def print_empty(self):
@@ -52,11 +88,11 @@ class BenchmarkRun:
 
 def append_to_benchmark_list_and_run(_list, run, func):
     _list.append(run)
-    try:
-        func(run)
-        run.print_result()
-    except:
-        run.print_empty()
+    # try:
+    func(run)
+    run.print_result()
+    # except:
+        # run.print_empty()
 
 def print_result_table_header():
     name_col = "Name".ljust(60," ")

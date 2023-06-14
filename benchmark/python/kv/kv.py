@@ -20,8 +20,10 @@ def benchmark_kv_put_batch(run):
 def _benchmark_kv_put(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     deletebatch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    run.start_timer()
-    for i in range(run.iterations):
+    if use_batch:
+        run.batch_send = lambda: lib.j_batch_execute(batch)
+    run.batch_clean = lambda: lib.j_batch_execute(deletebatch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         kv = lib.j_kv_new(namespace, name)
@@ -31,10 +33,6 @@ def _benchmark_kv_put(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_kv_unref(kv)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
-    assert lib.j_batch_execute(deletebatch)
     lib.j_batch_unref(batch)
     lib.j_batch_unref(deletebatch)
 
