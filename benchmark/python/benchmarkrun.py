@@ -76,6 +76,7 @@ class BenchmarkRun:
             return self.stop - self.start - self.total_break
 
     def print_result(self):
+        if self.iteration_count == 0: self.iteration_count = 1
         if self.machine_readable:
             print(f"{self.name},{self.get_runtime_s()},{self.operations}")
         else:

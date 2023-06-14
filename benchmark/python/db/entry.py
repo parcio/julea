@@ -181,7 +181,7 @@ def _benchmark_db_update(run, namespace, use_batch, use_index_all,
         string_name = encode("string")
         string = encode(_benchmark_db_get_identifier(i))
         assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_set_field(encode, sint_name, i_signed_ptr, 0,
+        assert lib.j_db_entry_set_field(entry, sint_name, i_signed_ptr, 0,
                                         b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
         assert lib.j_db_selector_add_field(selector, string_name,

@@ -56,12 +56,13 @@ def _benchmark_db_get_simple(run, namespace, use_index_all, use_index_single):
         assert b_s_error_ptr == ffi.NULL
         assert lib.j_db_iterator_next(iterator, b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_iterator_get_field(iterator, string_name, field_type_ptr,
+        assert lib.j_db_iterator_get_field(iterator, ffi.NULL, string_name, field_type_ptr,
                                        field_value_ptr, field_length_ptr,
                                        b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
         lib.j_db_selector_unref(selector)
         lib.j_db_iterator_unref(iterator)
+    run.stop_timer()
     run.operations = iterations
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
@@ -118,7 +119,7 @@ def _benchmark_db_get_range(run, namespace, use_index_all, use_index_single):
         assert b_s_error_ptr == ffi.NULL
         assert lib.j_db_iterator_next(iterator, b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_iterator_get_field(iterator, string_name, field_type_ptr,
+        assert lib.j_db_iterator_get_field(iterator, ffi.NULL, string_name, field_type_ptr,
                                        field_value_ptr, field_length_ptr,
                                        b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
