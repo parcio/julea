@@ -16,12 +16,18 @@ class BenchmarkRun:
         self.op_duration = 1000 ** 3
         self.batch_send = None
         self.batch_clean = None
+        self.batch_setup = None
 
     def __iter__(self):
         self.start_timer()
         return self
 
     def __next__(self):
+        if self.i == 0 and self.batch_setup is not None:
+            self.pause_timer()
+            if not self.batch_setup():
+                raise RuntimeError("Failed to setup batch!");
+            self.continue_timer()
         self.i += 1
         if self.i >= self.operations:
             self.i = 0
@@ -34,7 +40,7 @@ class BenchmarkRun:
                 if not self.batch_clean():
                     raise RuntimeError("Failed to clean batch!")
                 self.continue_timer()
-            if perf_counter_ns() - self.start > self.op_duration:
+            if perf_counter_ns() - self.start - self.total_break > self.op_duration:
                 self.stop_timer()
                 raise StopIteration
         return self.i

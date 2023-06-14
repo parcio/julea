@@ -20,9 +20,10 @@ def benchmark_kv_put_batch(run):
 def _benchmark_kv_put(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     deletebatch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    if use_batch:
-        run.batch_send = lambda: lib.j_batch_execute(batch)
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
     run.batch_clean = lambda: lib.j_batch_execute(deletebatch)
+
     for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
@@ -57,8 +58,10 @@ def _benchmark_kv_get(run, use_batch):
         lib.j_kv_delete(kv, deletebatch)
         lib.j_kv_unref(kv)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         kv = lib.j_kv_new(namespace, name)
@@ -66,9 +69,7 @@ def _benchmark_kv_get(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_kv_unref(kv)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     assert lib.j_batch_execute(deletebatch)
     lib.j_batch_unref(batch)
     lib.j_batch_unref(deletebatch)
@@ -81,27 +82,29 @@ def benchmark_kv_delete_batch(run):
 
 def _benchmark_kv_delete(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
+    createbatch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
+    empty = encode("empty")
+
     for i in range(run.iterations):
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         kv = lib.j_kv_new(namespace, name)
-        empty = encode("empty")
-        lib.j_kv_put(kv, empty, 6, ffi.NULL, batch)
+        lib.j_kv_put(kv, empty, 6, ffi.NULL, createbatch)
         lib.j_kv_unref(kv)
-    assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    run.batch_setup = lambda: lib.j_batch_execute(createbatch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         kv = lib.j_kv_new(namespace, name)
         lib.j_kv_delete(kv, batch)
+        lib.j_kv_put(kv, empty, 6, ffi.NULL, createbatch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_kv_unref(kv)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
     lib.j_batch_unref(batch)
+    lib.j_batch_unref(createbatch)
 
 def benchmark_kv_unordered_put_delete(run):
     _benchmark_kv_unordered_put_delete(run, False)
@@ -111,8 +114,8 @@ def benchmark_kv_unordered_put_delete_batch(run):
 
 def _benchmark_kv_unordered_put_delete(run, use_batch):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    run.start_timer()
-    for i in range(run.iterations):
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         namespace = encode("benchmark")
         kv = lib.j_kv_new(namespace, name)
@@ -122,8 +125,5 @@ def _benchmark_kv_unordered_put_delete(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_kv_unref(kv)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
     lib.j_batch_unref(batch)
     run.operations = run.iterations * 2
