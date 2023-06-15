@@ -20,14 +20,13 @@ def _benchmark_db_schema_create(run, use_batch):
     delete_batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     run.start_timer()
     for i in range(run.iterations):
-        error_ptr = ffi.new("GError*")
         error_ptr_ptr = ffi.new("GError**")
-        error_ptr_ptr[0] = error_ptr
+        error_ptr_ptr[0] = ffi.NULL
         name = encode(f"benchmark-schema-{i}")
         namespace = encode("benchmark-ns")
         schema = lib.j_db_schema_new(namespace, name, error_ptr_ptr)
         for j in range(10):
-            fname = encode("field{j}")
+            fname = encode(f"field{j}")
             lib.j_db_schema_add_field(schema, fname, lib.J_DB_TYPE_STRING,
                                       error_ptr_ptr)
         lib.j_db_schema_create(schema, batch, ffi.NULL)
