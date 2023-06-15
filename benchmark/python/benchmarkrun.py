@@ -35,7 +35,7 @@ class BenchmarkRun:
                 if not self.batch_clean():
                     raise RuntimeError("Failed to clean batch!")
                 self.continue_timer()
-            if perf_counter_ns() - self.start - self.total_break > self.op_duration:
+            if self.get_runtime_ns() > self.op_duration:
                 self.stop_timer()
                 raise StopIteration
         if self.i == 0 and self.batch_setup is not None:
@@ -71,7 +71,7 @@ class BenchmarkRun:
 
     def get_runtime_ns(self):
         if self.timer_started or self.stop == None:
-            return None
+            return perf_counter_ns() - self.start - self.total_break
         else:
             return self.stop - self.start - self.total_break
 

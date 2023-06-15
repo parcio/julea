@@ -37,9 +37,10 @@ def _benchmark_db_get_simple(run, namespace, use_index_all, use_index_single):
     assert b_scheme != ffi.NULL
     assert run != None
     _benchmark_db_insert(None, b_scheme, "\0", True, False, False, False)
-    run.start_timer()
-    iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
-    for i in range(iterations):
+    run.iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
+    run.operations = run.iterations
+
+    for i in run:
         field_type_ptr = ffi.new("JDBType*")
         field_value_ptr = ffi.new("void**")
         field_length_ptr = ffi.new("unsigned long*")
@@ -62,8 +63,7 @@ def _benchmark_db_get_simple(run, namespace, use_index_all, use_index_single):
         assert b_s_error_ptr == ffi.NULL
         lib.j_db_selector_unref(selector)
         lib.j_db_iterator_unref(iterator)
-    run.stop_timer()
-    run.operations = iterations
+
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
     lib.j_db_schema_unref(b_scheme)
@@ -93,8 +93,10 @@ def _benchmark_db_get_range(run, namespace, use_index_all, use_index_single):
     assert b_scheme != ffi.NULL
     assert run != None
     _benchmark_db_insert(None, b_scheme, "\0", True, False, False, False)
-    run.start_timer()
-    for i in range(N_GET_DIVIDER):
+    run.iterations = N_GET_DIVIDER
+    run.operations = run.iterations
+
+    for i in run:
         field_type_ptr = ffi.new("JDBType*")
         field_value_ptr = ffi.new("void**")
         field_length_ptr = ffi.new("unsigned long*")
@@ -123,9 +125,8 @@ def _benchmark_db_get_range(run, namespace, use_index_all, use_index_single):
                                        field_value_ptr, field_length_ptr,
                                        b_s_error_ptr)
         assert b_s_error_ptr == ffi.NULL
-    run.stop_timer()
+
     assert lib.j_batch_execute(delete_batch)
-    run.operations = N_GET_DIVIDER
     lib.j_db_schema_unref(b_scheme)
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)

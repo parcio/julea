@@ -81,6 +81,7 @@ def _benchmark_db_insert(run, scheme, namespace, use_batch, use_index_all,
     namespace_encoded = encode(namespace)
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     delete_batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
+
     if use_timer:
         assert scheme == None
         assert run != None
@@ -88,48 +89,61 @@ def _benchmark_db_insert(run, scheme, namespace, use_batch, use_index_all,
                                                 use_index_all, use_index_single,
                                                 batch, delete_batch)
         assert b_scheme != None
+        run.operations = 0
         run.start_timer()
     else:
         assert use_batch
         assert run == None
         lib.j_db_schema_ref(scheme)
         b_scheme = scheme
-    for i in range(N):
-        i_signed_ptr = ffi.new("long*")
-        i_signed_ptr[0] = ((i * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT
-        i_usigned_ptr = ffi.new("unsigned long*")
-        i_usigned_ptr[0] = ((i * USIGNED_FACTOR) % CLASS_MODULUS)
-        i_float_ptr = ffi.new("double*")
-        i_float_ptr[0] = i_signed_ptr[0] * FLOAT_FACTOR
-        string = encode(_benchmark_db_get_identifier(i))
-        string_name = encode("string")
-        float_name = encode("float")
-        sint_name = encode("sint")
-        uint_name = encode("uint")
-        entry = lib.j_db_entry_new(b_scheme, b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_set_field(entry, string_name, string, 0,
-                                        b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_set_field(entry, float_name, i_float_ptr, 0,
-                                        b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_set_field(entry, sint_name, i_signed_ptr, 0,
-                                        b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_set_field(entry, uint_name, i_usigned_ptr, 0,
-                                        b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        assert lib.j_db_entry_insert(entry, batch, b_s_error_ptr)
-        assert b_s_error_ptr == ffi.NULL
-        if not use_batch:
-            assert lib.j_batch_execute(batch)
-    if use_batch or not use_timer:
-        lib.j_batch_execute(batch)
-    if use_timer:
-        run.stop_timer()
-        assert lib.j_batch_execute(delete_batch)
-        run.operations = N
+    while True:
+        for i in range(N):
+            i_signed_ptr = ffi.new("long*")
+            i_signed_ptr[0] = ((i * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT
+            i_usigned_ptr = ffi.new("unsigned long*")
+            i_usigned_ptr[0] = ((i * USIGNED_FACTOR) % CLASS_MODULUS)
+            i_float_ptr = ffi.new("double*")
+            i_float_ptr[0] = i_signed_ptr[0] * FLOAT_FACTOR
+            string = encode(_benchmark_db_get_identifier(i))
+            string_name = encode("string")
+            float_name = encode("float")
+            sint_name = encode("sint")
+            uint_name = encode("uint")
+            entry = lib.j_db_entry_new(b_scheme, b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            assert lib.j_db_entry_set_field(entry, string_name, string, 0,
+                                            b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            assert lib.j_db_entry_set_field(entry, float_name, i_float_ptr, 0,
+                                            b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            assert lib.j_db_entry_set_field(entry, sint_name, i_signed_ptr, 0,
+                                            b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            assert lib.j_db_entry_set_field(entry, uint_name, i_usigned_ptr, 0,
+                                            b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            assert lib.j_db_entry_insert(entry, batch, b_s_error_ptr)
+            assert b_s_error_ptr == ffi.NULL
+            if not use_batch:
+                assert lib.j_batch_execute(batch)
+        if use_batch or not use_timer:
+            lib.j_batch_execute(batch)
+        if use_timer:
+            run.pause_timer()
+            assert lib.j_batch_execute(delete_batch)
+            run.operations += N
+            if run.get_runtime_ns() >= run.op_duration:
+                run.stop_timer()
+                break;
+            else:
+                b_scheme = _benchmark_db_prepare_scheme(namespace_encoded, use_batch,
+                                                        use_index_all, use_index_single,
+                                                        batch, delete_batch)
+                run.continue_timer()
+        else:
+            break;
+
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
     lib.j_db_entry_unref(entry)

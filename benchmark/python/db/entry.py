@@ -101,9 +101,12 @@ def _benchmark_db_delete(run, namespace, use_batch, use_index_all,
     assert b_scheme != ffi.NULL
     assert run != None
     _benchmark_db_insert(None, b_scheme, "\0", True, False, False, False)
-    run.start_timer()
-    iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
-    for i in range(iterations):
+    run.iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
+    run.oerations = run.iterations
+    
+    run.batch_setup = lambda: _benchmark_db_insert(None, b_scheme, "\0", True, False, False, False) or True
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         entry = lib.j_db_entry_new(b_scheme, b_s_error_ptr)
         string = encode(_benchmark_db_get_identifier(i))
         string_name = encode("string")
@@ -119,11 +122,8 @@ def _benchmark_db_delete(run, namespace, use_batch, use_index_all,
             assert lib.j_batch_execute(batch)
         lib.j_db_entry_unref(entry)
         lib.j_db_selector_unref(selector)
-    if use_batch:
-            assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     assert lib.j_batch_execute(delete_batch)
-    run.operations = iterations
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
     lib.j_db_schema_unref(b_scheme)
@@ -169,12 +169,16 @@ def _benchmark_db_update(run, namespace, use_batch, use_index_all,
     assert b_scheme != ffi.NULL
     assert run != None
     _benchmark_db_insert(None, b_scheme, "\0", True, False, False, False)
-    run.start_timer()
-    iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
-    for i in range(iterations):
+    run.iterations = N if use_index_all or use_index_single else int(N / N_GET_DIVIDER)
+    run.operations = run.iterations
+    
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    cnt = 0
+    for i in run:
+        cnt += 1
         sint_name = encode("sint")
         i_signed_ptr = ffi.new("long*")
-        i_signed_ptr[0] = (((i + N_PRIME) * SIGNED_FACTOR) & CLASS_MODULUS) - CLASS_LIMIT
+        i_signed_ptr[0] = (((i + N_PRIME) * SIGNED_FACTOR * cnt) & CLASS_MODULUS) - CLASS_LIMIT
         selector = lib.j_db_selector_new(b_scheme, lib.J_DB_SELECTOR_MODE_AND,
                                          b_s_error_ptr)
         entry = lib.j_db_entry_new(b_scheme, b_s_error_ptr)
@@ -194,11 +198,8 @@ def _benchmark_db_update(run, namespace, use_batch, use_index_all,
             assert lib.j_batch_execute(batch)
         lib.j_db_selector_unref(selector)
         lib.j_db_entry_unref(entry)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     assert lib.j_batch_execute(delete_batch)
-    run.operations = iterations
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
     lib.j_db_schema_unref(b_scheme)
