@@ -18,8 +18,11 @@ def _benchmark_db_schema_create(run, use_batch):
     run.operations = run.iterations
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     delete_batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    run.batch_clean = lambda: lib.j_batch_execute(delete_batch)
+
+    for i in run:
         error_ptr_ptr = ffi.new("GError**")
         error_ptr_ptr[0] = ffi.NULL
         name = encode(f"benchmark-schema-{i}")
@@ -34,10 +37,7 @@ def _benchmark_db_schema_create(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_db_schema_unref(schema)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
-    assert lib.j_batch_execute(delete_batch)
+
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
 
@@ -51,19 +51,23 @@ def _benchmark_db_schema_delete(run, use_batch):
     run.iterations = int(run.iterations / 10)
     run.operations = run.iterations
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
-    for i in range(run.iterations):
-        name = encode(f"benchmark-schema-{i}")
-        namespace = encode("benchmark-ns")
-        schema = lib.j_db_schema_new(namespace, name, ffi.NULL)
-        for j in range(10):
-            fname = encode(f"field{j}")
-            lib.j_db_schema_add_field(schema, fname, lib.J_DB_TYPE_STRING,
-                                      ffi.NULL)
-        lib.j_db_schema_create(schema, batch, ffi.NULL)
-        lib.j_db_schema_unref(schema)
-    assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    def setup():
+        for i in range(run.iterations):
+            name = encode(f"benchmark-schema-{i}")
+            namespace = encode("benchmark-ns")
+            schema = lib.j_db_schema_new(namespace, name, ffi.NULL)
+            for j in range(10):
+                fname = encode(f"field{j}")
+                lib.j_db_schema_add_field(schema, fname, lib.J_DB_TYPE_STRING,
+                                          ffi.NULL)
+            lib.j_db_schema_create(schema, batch, ffi.NULL)
+            lib.j_db_schema_unref(schema)
+        return lib.j_batch_execute(batch)
+
+    run.batch_setup = setup
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         name = encode(f"benchmark-schema-{i}")
         namespace = encode("benchmark-ns")
         schema = lib.j_db_schema_new(namespace, name, ffi.NULL)
@@ -71,7 +75,4 @@ def _benchmark_db_schema_delete(run, use_batch):
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_db_schema_unref(schema)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
     lib.j_batch_unref(batch)
