@@ -29,18 +29,17 @@ def _benchmark_item_create(run, use_batch):
     collection_name = encode("benchmark")
     collection = lib.j_collection_create(collection_name, batch)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    run.batch_clean: lambda: lib.j_batch_execute(delete_batch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         item = lib.j_item_create(collection, name, ffi.NULL, batch)
         lib.j_item_delete(item, delete_batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_item_unref(item)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
-    assert lib.j_batch_execute(delete_batch)
+
     lib.j_collection_unref(collection)
     lib.j_batch_unref(batch)
     lib.j_batch_unref(delete_batch)
@@ -57,13 +56,17 @@ def _benchmark_item_delete(run, use_batch):
     collection_name = encode("benchmark")
     collection = lib.j_collection_create(collection_name, batch)
     assert lib.j_batch_execute(batch)
-    for i in range(run.iterations):
-        name = encode(f"benchmark-{i}")
-        item = lib.j_item_create(collection, name, ffi.NULL, batch)
-        lib.j_item_unref(item)
-    assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    def setup():
+        for i in range(run.iterations):
+            name = encode(f"benchmark-{i}")
+            item = lib.j_item_create(collection, name, ffi.NULL, batch)
+            lib.j_item_unref(item)
+        return lib.j_batch_execute(batch)
+
+    run.batch_setup = setup
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         ptr = ffi.new("int**")
         item_ptr = ffi.cast("JItem**", ptr)
         name = encode(f"benchmark-{i}")
@@ -72,9 +75,7 @@ def _benchmark_item_delete(run, use_batch):
         lib.j_item_delete(item_ptr[0], batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     lib.j_collection_delete(collection, batch)
     assert lib.j_batch_execute(batch)
     lib.j_collection_unref(collection)
@@ -84,18 +85,23 @@ def _benchmark_item_delete(run, use_batch):
 def benchmark_item_delete_batch_without_get(run):
     batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
     delete_batch = lib.j_batch_new_for_template(lib.J_SEMANTICS_TEMPLATE_DEFAULT)
+
     collection_name = encode("benchmark")
     collection = lib.j_collection_create(collection_name, batch)
     assert lib.j_batch_execute(batch)
-    for i in range(run.iterations):
-        name = encode("benchmark-{i}")
-        item = lib.j_item_create(collection, name, ffi.NULL, batch)
-        lib.j_item_delete(item, delete_batch)
-        lib.j_item_unref(item)
-    assert lib.j_batch_execute(batch)
-    run.start_timer()
-    assert lib.j_batch_execute(delete_batch)
-    run.stop_timer()
+    def setup(): 
+        for i in range(run.operations):
+            name = encode(f"benchmark-{i}")
+            item = lib.j_item_create(collection, name, ffi.NULL, batch)
+            lib.j_item_delete(item, delete_batch)
+            lib.j_item_unref(item)
+        return lib.j_batch_execute(batch)
+
+    run.batch_setup = setup
+    run.batch_send = lambda: lib.j_batch_execute(delete_batch)
+    for _ in run:
+        pass
+
     lib.j_collection_delete(collection, batch)
     lib.j_collection_unref(collection)
     lib.j_batch_unref(batch)
@@ -118,14 +124,13 @@ def _benchmark_item_get_status(run, use_batch):
     item = lib.j_item_create(collection, collection_name, ffi.NULL, batch)
     lib.j_item_write(item, dummy, 1, 0, nb_ptr, batch)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         lib.j_item_get_status(item, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     lib.j_item_delete(item, batch)
     lib.j_collection_delete(collection, batch)
     assert lib.j_batch_execute(batch)
@@ -152,16 +157,14 @@ def _benchmark_item_read(run, use_batch, block_size):
         lib.j_item_write(item, dummy, block_size, i * block_size, nb_ptr, batch)
     assert lib.j_batch_execute(batch)
     assert nb_ptr[0] == run.iterations * block_size
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch) & (nb_ptr[0] == run.iterations * block_size)
+    for i in run:
         lib.j_item_read(item, dummy, block_size, i * block_size, nb_ptr, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
             assert nb_ptr[0] == block_size
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-        assert nb_ptr[0] == run.iterations * block_size
-    run.stop_timer()
+
     lib.j_item_delete(item, batch)
     lib.j_collection_delete(collection, batch)
     assert lib.j_batch_execute(batch)
@@ -185,16 +188,14 @@ def _benchmark_item_write(run, use_batch, block_size):
     collection = lib.j_collection_create(collection_name, batch)
     item = lib.j_item_create(collection, collection_name, ffi.NULL, batch)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch) & (nb_ptr[0] == run.iterations * block_size)
+    for i in run:
         lib.j_item_write(item, dummy, block_size, i * block_size, nb_ptr, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
             assert nb_ptr[0] == block_size
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-        assert nb_ptr[0] == run.iterations * block_size
-    run.stop_timer()
+
     lib.j_item_delete(item, batch)
     lib.j_collection_delete(collection, batch)
     assert lib.j_batch_execute(batch)
@@ -213,17 +214,16 @@ def _benchmark_item_unordered_create_delete(run, use_batch):
     collection_name = encode("benchmark")
     collection = lib.j_collection_create(collection_name, batch)
     assert lib.j_batch_execute(batch)
-    run.start_timer()
-    for i in range(run.iterations):
+
+    if use_batch: run.batch_send = lambda: lib.j_batch_execute(batch)
+    for i in run:
         name = encode(f"benchmark-{i}")
         item = lib.j_item_create(collection, name, ffi.NULL, batch)
         lib.j_item_delete(item, batch)
         if not use_batch:
             assert lib.j_batch_execute(batch)
         lib.j_item_unref(item)
-    if use_batch:
-        assert lib.j_batch_execute(batch)
-    run.stop_timer()
+
     lib.j_collection_delete(collection, batch)
     assert lib.j_batch_execute(batch)
     lib.j_collection_unref(collection)

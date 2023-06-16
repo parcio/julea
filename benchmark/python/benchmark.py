@@ -29,5 +29,5 @@ if __name__ == "__main__":
     benchmark_db_schema(runs, iterations, machine_readable)
 
     # Item Client
-    # benchmark_collection(runs, iterations, machine_readable)
-    # benchmark_item(runs, iterations, machine_readable)
+    benchmark_collection(runs, iterations, machine_readable)
+    benchmark_item(runs, iterations, machine_readable)
