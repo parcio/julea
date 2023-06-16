@@ -1,10 +1,9 @@
 cff-version: 1.2.0
-message: "If you want to reference JULEA, please cite the paper below."
+message: "If you use JULEA, please cite the paper below."
 authors:
 - family-names: "Kuhn"
   given-names: "Michael"
   orcid: "https://orcid.org/0000-0001-8167-8574"
-- name: "The JULEA team"
 title: "JULEA"
 url: "https://github.com/julea-io/julea"
 preferred-citation:
