@@ -176,9 +176,11 @@ spack_load_dependencies ()
 
 spack_install_dependencies ()
 {
+	# FIXME does not fail if Git is not installed
 	if spack_clone
 	then
 		spack_cmd config --scope site add 'concretizer:reuse:false'
+		spack_cmd config --scope site add 'config:connect_timeout:60'
 		# FIXME We currently need this for JULEA to find all dependencies
 		spack_cmd config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
 		spack_cmd config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
@@ -198,7 +200,7 @@ spack_install_dependencies ()
 
 		if test -n "${JULEA_SPACK_COMPILER}"
 		then
-			spack_cmd config --scope site add "packages:all:require: \"%${JULEA_SPACK_COMPILER}\""
+			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
 		fi
 
 		spack_cmd mark --implicit --all
