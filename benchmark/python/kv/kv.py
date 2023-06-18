@@ -1,15 +1,15 @@
 from benchmarkrun import BenchmarkRun, append_to_benchmark_list_and_run
 from julea import lib, encode, ffi
 
-def benchmark_kv(benchmarkrun_list, iterations, machine_readable):
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/put", iterations, machine_readable), benchmark_kv_put)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/put_batch", iterations, machine_readable), benchmark_kv_put_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/get", iterations, machine_readable), benchmark_kv_get)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/get-batch", iterations, machine_readable), benchmark_kv_get_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/delete", iterations, machine_readable), benchmark_kv_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/delete-batch", iterations, machine_readable), benchmark_kv_delete_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/unordered_put_delete", iterations, machine_readable), benchmark_kv_unordered_put_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/unordered_put_delete_batch", iterations, machine_readable), benchmark_kv_unordered_put_delete_batch)
+def benchmark_kv(benchmarkrun_list, iterations, machine_readable, op_duration):
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/put", iterations, machine_readable, op_duration), benchmark_kv_put)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/put_batch", iterations, machine_readable, op_duration), benchmark_kv_put_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/get", iterations, machine_readable, op_duration), benchmark_kv_get)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/get-batch", iterations, machine_readable, op_duration), benchmark_kv_get_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/delete", iterations, machine_readable, op_duration), benchmark_kv_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/delete-batch", iterations, machine_readable, op_duration), benchmark_kv_delete_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/unordered_put_delete", iterations, machine_readable, op_duration), benchmark_kv_unordered_put_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/kv/unordered_put_delete_batch", iterations, machine_readable, op_duration), benchmark_kv_unordered_put_delete_batch)
 
 def benchmark_kv_put(run):
     _benchmark_kv_put(run, False)

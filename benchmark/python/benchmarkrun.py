@@ -1,7 +1,7 @@
 from time import perf_counter_ns
 
 class BenchmarkRun:
-    def __init__(self, name, iterations, machine_readable):
+    def __init__(self, name, iterations, machine_readable, op_duration):
         self.name = name
         self.iterations = iterations
         self.timer_started = False
@@ -13,7 +13,7 @@ class BenchmarkRun:
         self.machine_readable = machine_readable
         self.iteration_count = 0
         self.i = -1
-        self.op_duration = 1000 ** 3
+        self.op_duration = 1000 ** 3 * op_duration
         self.batch_send = None
         self.batch_clean = None
         self.batch_setup = None

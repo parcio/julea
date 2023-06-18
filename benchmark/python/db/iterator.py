@@ -2,15 +2,15 @@ from benchmarkrun import BenchmarkRun, append_to_benchmark_list_and_run
 from julea import lib, encode, ffi
 from db.common import _benchmark_db_prepare_scheme, _benchmark_db_insert, _benchmark_db_get_identifier, N, N_GET_DIVIDER, CLASS_MODULUS, CLASS_LIMIT
 
-def benchmark_db_iterator(benchmarkrun_list, iterations, machine_readable):
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple", iterations, machine_readable), benchmark_db_get_simple)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-single", iterations, machine_readable), benchmark_db_get_simple_index_single)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-all", iterations, machine_readable), benchmark_db_get_simple_index_all)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-mixed", iterations, machine_readable), benchmark_db_get_simple_index_mixed)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range", iterations, machine_readable), benchmark_db_get_range)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-single", iterations, machine_readable), benchmark_db_get_range_index_single)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-all", iterations, machine_readable), benchmark_db_get_range_index_all)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-mixed", iterations, machine_readable), benchmark_db_get_range_index_mixed)
+def benchmark_db_iterator(benchmarkrun_list, iterations, machine_readable, op_duration):
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple", iterations, machine_readable, op_duration), benchmark_db_get_simple)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-single", iterations, machine_readable, op_duration), benchmark_db_get_simple_index_single)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-all", iterations, machine_readable, op_duration), benchmark_db_get_simple_index_all)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-simple-index-mixed", iterations, machine_readable, op_duration), benchmark_db_get_simple_index_mixed)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range", iterations, machine_readable, op_duration), benchmark_db_get_range)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-single", iterations, machine_readable, op_duration), benchmark_db_get_range_index_single)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-all", iterations, machine_readable, op_duration), benchmark_db_get_range_index_all)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/db/iterator/get-range-index-mixed", iterations, machine_readable, op_duration), benchmark_db_get_range_index_mixed)
 
 def benchmark_db_get_simple(run):
     _benchmark_db_get_simple(run, "benchmark_get_simple", False, False)

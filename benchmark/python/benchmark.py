@@ -13,21 +13,22 @@ if __name__ == "__main__":
     runs = []
     iterations = 1000
     taregt_time = 1000
+    op_duration = 2
     machine_readable = ("-m" in argv)
     print_header(machine_readable)
 
     # KV Client
-    benchmark_kv(runs, iterations, machine_readable)
+    benchmark_kv(runs, iterations, machine_readable, op_duration)
 
     # Object Client
-    benchmark_distributed_object(runs, iterations, machine_readable)
-    benchmark_object(runs, iterations, machine_readable)
+    benchmark_distributed_object(runs, iterations, machine_readable, op_duration)
+    benchmark_object(runs, iterations, machine_readable, op_duration)
 
     # DB Client
-    benchmark_db_entry(runs, iterations, machine_readable)
-    benchmark_db_iterator(runs, iterations, machine_readable)
-    benchmark_db_schema(runs, iterations, machine_readable)
+    benchmark_db_entry(runs, iterations, machine_readable, op_duration)
+    benchmark_db_iterator(runs, iterations, machine_readable, op_duration)
+    benchmark_db_schema(runs, iterations, machine_readable, op_duration)
 
     # Item Client
-    benchmark_collection(runs, iterations, machine_readable)
-    benchmark_item(runs, iterations, machine_readable)
+    benchmark_collection(runs, iterations, machine_readable, op_duration)
+    benchmark_item(runs, iterations, machine_readable, op_duration)

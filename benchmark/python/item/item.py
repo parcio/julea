@@ -1,21 +1,21 @@
 from benchmarkrun import BenchmarkRun, append_to_benchmark_list_and_run
 from julea import lib, encode, ffi
 
-def benchmark_item(benchmarkrun_list, iterations, machine_readable):
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/create", iterations, machine_readable), benchmark_item_create)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/create-batch", iterations, machine_readable), benchmark_item_create_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete", iterations, machine_readable), benchmark_item_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete-batch", iterations, machine_readable), benchmark_item_delete_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete-batch-without-get", iterations, machine_readable), benchmark_item_delete_batch_without_get)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/get-status", iterations, machine_readable), benchmark_item_get_status)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/get-status-batch", iterations, machine_readable), benchmark_item_get_status_batch)
+def benchmark_item(benchmarkrun_list, iterations, machine_readable, op_duration):
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/create", iterations, machine_readable, op_duration), benchmark_item_create)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/create-batch", iterations, machine_readable, op_duration), benchmark_item_create_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete", iterations, machine_readable, op_duration), benchmark_item_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete-batch", iterations, machine_readable, op_duration), benchmark_item_delete_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/delete-batch-without-get", iterations, machine_readable, op_duration), benchmark_item_delete_batch_without_get)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/get-status", iterations, machine_readable, op_duration), benchmark_item_get_status)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/get-status-batch", iterations, machine_readable, op_duration), benchmark_item_get_status_batch)
     # TODO: benchmark get (also missing in c benchmark)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/read", iterations, machine_readable), benchmark_item_read)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/read-batch", iterations, machine_readable), benchmark_item_read_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/write", iterations, machine_readable), benchmark_item_write)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/write-batch", iterations, machine_readable), benchmark_item_write_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/unordered-create-delete", iterations, machine_readable), benchmark_item_unordered_create_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/unordered-create-delete-batch", iterations, machine_readable), benchmark_item_unordered_create_delete_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/read", iterations, machine_readable, op_duration), benchmark_item_read)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/read-batch", iterations, machine_readable, op_duration), benchmark_item_read_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/write", iterations, machine_readable, op_duration), benchmark_item_write)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/write-batch", iterations, machine_readable, op_duration), benchmark_item_write_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/unordered-create-delete", iterations, machine_readable, op_duration), benchmark_item_unordered_create_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/item/unordered-create-delete-batch", iterations, machine_readable, op_duration), benchmark_item_unordered_create_delete_batch)
 
 def benchmark_item_create(run):
     _benchmark_item_create(run, False)

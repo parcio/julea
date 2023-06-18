@@ -1,14 +1,14 @@
 from benchmarkrun import BenchmarkRun, append_to_benchmark_list_and_run
 from julea import lib, encode, ffi
 
-def benchmark_collection(benchmarkrun_list, iterations, machine_readable):
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/create", iterations, machine_readable), benchmark_collection_create)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/create-batch", iterations, machine_readable), benchmark_collection_create_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete", iterations, machine_readable), benchmark_collection_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete-batch", iterations, machine_readable), benchmark_collection_delete_batch)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete-batch-without-get", iterations, machine_readable), benchmark_collection_delete_batch_without_get)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/unordered-create-delete", iterations, machine_readable), benchmark_collection_unordered_create_delete)
-    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/unordered-create-delete-batch", iterations, machine_readable), benchmark_collection_unordered_create_delete_batch)
+def benchmark_collection(benchmarkrun_list, iterations, machine_readable, op_duration):
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/create", iterations, machine_readable, op_duration), benchmark_collection_create)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/create-batch", iterations, machine_readable, op_duration), benchmark_collection_create_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete", iterations, machine_readable, op_duration), benchmark_collection_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete-batch", iterations, machine_readable, op_duration), benchmark_collection_delete_batch)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/delete-batch-without-get", iterations, machine_readable, op_duration), benchmark_collection_delete_batch_without_get)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/unordered-create-delete", iterations, machine_readable, op_duration), benchmark_collection_unordered_create_delete)
+    append_to_benchmark_list_and_run(benchmarkrun_list, BenchmarkRun("/item/collection/unordered-create-delete-batch", iterations, machine_readable, op_duration), benchmark_collection_unordered_create_delete_batch)
     # TODO: benchmark get (also missing in c benchmark)
 
 def benchmark_collection_create(run):
