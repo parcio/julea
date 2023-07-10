@@ -1117,7 +1117,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_dataset_get(void *obj, H5VL_dataset_get_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1128,18 +1128,21 @@ H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id,
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_DATASET, 1);
 
-	switch (get_type)
+	switch (args->op_type)
 	{
-		case H5VL_DATASET_GET_SPACE:
-			*(va_arg(arguments, hid_t*)) = object->dataset.space->space.hdf5_id;
-			break;
-		case H5VL_DATASET_GET_TYPE:
-			*(va_arg(arguments, hid_t*)) = object->dataset.datatype->datatype.hdf5_id;
-			break;
 		case H5VL_DATASET_GET_DAPL:
+			/// \todo modify when we support different access and create property lists
+			args->args.get_dapl.dapl_id = H5P_DEFAULT;
+			break;
 		case H5VL_DATASET_GET_DCPL:
 			/// \todo modify when we support different access and create property lists
-			*(va_arg(arguments, hid_t*)) = H5P_DEFAULT;
+			args->args.get_dcpl.dcpl_id = H5P_DEFAULT;
+			break;
+		case H5VL_DATASET_GET_SPACE:
+			args->args.get_space.space_id = object->dataset.space->space.hdf5_id;
+			break;
+		case H5VL_DATASET_GET_TYPE:
+			args->args.get_type.type_id = object->dataset.datatype->datatype.hdf5_id;
 			break;
 		case H5VL_DATASET_GET_SPACE_STATUS:
 		case H5VL_DATASET_GET_STORAGE_SIZE:
@@ -1151,16 +1154,15 @@ H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_t get_type, hid_t dxpl_id,
 }
 
 herr_t
-H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_dataset_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)specific_type;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
+	(void)args;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_DATASET, 1);
 
@@ -1169,16 +1171,15 @@ H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_t specific_type,
 }
 
 herr_t
-H5VL_julea_db_dataset_optional(void* obj, H5VL_dataset_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_dataset_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)opt_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_DATASET, 1);
 

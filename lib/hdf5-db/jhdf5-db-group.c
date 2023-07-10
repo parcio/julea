@@ -408,16 +408,15 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_group_get(void *obj, H5VL_group_get_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)get_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
@@ -426,16 +425,16 @@ H5VL_julea_db_group_get(void* obj, H5VL_group_get_t get_type, hid_t dxpl_id, voi
 }
 
 herr_t
-H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_group_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_object_specific_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)specific_type;
+	(void)loc_params;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
@@ -444,16 +443,15 @@ H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_t specific_type, hid
 }
 
 herr_t
-H5VL_julea_db_group_optional(void* obj, H5VL_group_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_group_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)opt_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 

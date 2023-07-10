@@ -509,32 +509,27 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_file_get(void* obj, H5VL_file_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_file_get(void *obj, H5VL_file_get_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)obj;
-	(void)get_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }
 
 static gboolean
-file_accessible(va_list arguments)
+file_accessible(const char* name, hid_t fapl_id, hbool_t* accessible)
 {
 	g_autoptr(JDBSelector) selector = NULL;
 	g_autoptr(JDBIterator) iterator = NULL;
 	g_autoptr(GError) error = NULL;
-	const char* name = NULL;
-	htri_t* accessible = NULL;
 
-	va_arg(arguments, hid_t*); // skip the fapl
-	name = va_arg(arguments, const char*);
-	accessible = va_arg(arguments, htri_t*);
+	(void)fapl_id;
 
 	if (!(selector = j_db_selector_new(julea_db_schema_file, J_DB_SELECTOR_MODE_AND, &error)))
 	{
@@ -576,23 +571,16 @@ _error:
 }
 
 static gboolean
-file_delete(va_list arguments)
+file_delete(const char* name, hid_t fapl_id)
 {
 	g_autoptr(JDBSelector) selector = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(GError) error = NULL;
-	const char* name = NULL;
-	herr_t* ret = NULL;
+	gboolean ret = FALSE;
 	JHDF5Object_t* file = NULL;
 
-	/*
-	From H5Fdelete():
-	H5VL_file_specific(NULL, H5VL_FILE_DELETE, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, fapl_id, filename, &ret_value)
-	*/
-	va_arg(arguments, hid_t*); // skip the fapl
-	name = va_arg(arguments, const char*);
-	ret = va_arg(arguments, herr_t*);
+	(void)fapl_id;
 
 	// this will truncate the file if it exists
 	file = H5VL_julea_db_file_open(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, NULL);
@@ -663,16 +651,15 @@ file_delete(va_list arguments)
 
 		H5VL_julea_db_object_unref(file);
 
-		*ret = 0;
+		ret = TRUE;
 	}
 	else
 	{
 		// deleting a non-existant file should fail
 		g_debug("%s: File to be deleted does not exist!", G_STRFUNC);
-		*ret = -1;
 	}
 
-	return true;
+	return ret;
 
 _error:
 	if (error)
@@ -680,27 +667,22 @@ _error:
 		g_debug("Error: %s\n", error->message);
 	}
 
-	return false;
+	return ret;
 }
 
 static void
-files_equal(JHDF5Object_t* object, va_list arguments)
+files_equal(JHDF5Object_t* object1, JHDF5Object_t* object2, hbool_t* equal)
 {
-	JHDF5Object_t* file2 = NULL;
-	hbool_t* ret = NULL;
 	hbool_t type_check, id_check;
 
-	file2 = va_arg(arguments, void*); // skip the fapl
-	ret = va_arg(arguments, hbool_t*);
+	type_check = (object1->type == object2->type) && (object1->type == J_HDF5_OBJECT_TYPE_FILE);
+	id_check = memcmp(object1->backend_id, object2->backend_id, object1->backend_id_len) == 0;
 
-	type_check = (file2->type == object->type) && (object->type == J_HDF5_OBJECT_TYPE_FILE);
-	id_check = memcmp(file2->backend_id, object->backend_id, object->backend_id_len) == 0;
-
-	*ret = type_check && id_check;
+	*equal = type_check && id_check;
 }
 
 herr_t
-H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_file_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -709,30 +691,28 @@ H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t
 	(void)dxpl_id;
 	(void)req;
 
-	switch (specific_type)
+	switch (args->op_type)
 	{
 		case H5VL_FILE_FLUSH:
 		case H5VL_FILE_REOPEN:
-		case H5VL_FILE_MOUNT:
-		case H5VL_FILE_UNMOUNT:
-			g_warning("%s: Feature number %i is not implemented!", G_STRFUNC, specific_type);
+			g_warning("%s: Feature number %i is not implemented!", G_STRFUNC, args->op_type);
 			break;
 		case H5VL_FILE_IS_ACCESSIBLE:
-			// needed so that HDF5 can determine wether a file is stored in a certain VOL plugin
-			// for example, needed in H5Fdelete()
-			if (!file_accessible(arguments))
+			// needed so that HDF5 can determine whether a file is stored in a certain VOL plugin
+			// H5Fdelete() is an example of that
+			if (!file_accessible(args->args.is_accessible.filename, args->args.is_accessible.fapl_id, args->args.is_accessible.accessible))
 			{
 				j_goto_error();
 			}
 			break;
 		case H5VL_FILE_DELETE:
-			if (!file_delete(arguments))
+			if (!file_delete(args->args.del.filename, args->args.del.fapl_id))
 			{
 				j_goto_error();
 			}
 			break;
 		case H5VL_FILE_IS_EQUAL:
-			files_equal(object, arguments);
+			files_equal(object, args->args.is_equal.obj2, args->args.is_equal.same_file);
 			break;
 		default:
 			g_assert_not_reached();
@@ -744,15 +724,14 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_file_optional(void* obj, H5VL_file_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_file_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)obj;
-	(void)opt_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
