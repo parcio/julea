@@ -28,7 +28,7 @@ spack_clone ()
 	local spack_commit
 
 	# FIXME maybe use release branch instead
-	spack_commit='ed76966a3aa2de9a3462b61b6af49dba99d61c6b'
+	spack_commit='ac3c0a434702d5ce378fd8a826032582297fe79f'
 
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
@@ -130,7 +130,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} libfabric#fabrics=sockets,tcp,udp,verbs,rxd,rxm"
 
 	# Recommended dependencies
-	dependencies="${dependencies} hdf5~mpi@:1.12"
+	dependencies="${dependencies} hdf5~mpi@1.14"
 	dependencies="${dependencies} libfuse~utils"
 	dependencies="${dependencies} lmdb"
 	dependencies="${dependencies} sqlite"
