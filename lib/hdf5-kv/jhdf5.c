@@ -51,6 +51,9 @@
 
 #define JULEA 520
 
+#define H5VL_JULEA_KV_CAP_FLAGS \
+	(H5VL_CAP_FLAG_ATTR_BASIC | H5VL_CAP_FLAG_DATASET_BASIC | H5VL_CAP_FLAG_FILE_BASIC | H5VL_CAP_FLAG_GROUP_BASIC | H5VL_CAP_FLAG_LINK_BASIC | H5VL_CAP_FLAG_STORAGE_SIZE)
+
 enum JHDF5Type
 {
 	J_HDF5_TYPE_FILE,
@@ -568,6 +571,7 @@ H5VL_julea_attr_create(void* obj, const H5VL_loc_params_t* loc_params, const cha
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -648,6 +652,7 @@ H5VL_julea_attr_open(void* obj, const H5VL_loc_params_t* loc_params, const char*
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -747,11 +752,11 @@ H5VL_julea_attr_write(void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_id
  * \return ret_value The error code
  **/
 static herr_t
-H5VL_julea_attr_get(void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_attr_get(void* obj, H5VL_attr_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JHA_t* attribute = attr;
+	JHA_t* attribute = obj;
 
 	g_autoptr(JBatch) batch = NULL;
 
@@ -763,11 +768,11 @@ H5VL_julea_attr_get(void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void** 
 	(void)dxpl_id;
 	(void)req;
 
-	switch (get_type)
+	switch (args->op_type)
 	{
 		case H5VL_ATTR_GET_SPACE:
 		{
-			hid_t* ret_id = va_arg(arguments, hid_t*);
+			hid_t* ret_id = &(args->args.get_space.space_id);
 			void* space;
 
 			batch = j_batch_new(j_hdf5_semantics);
@@ -787,7 +792,7 @@ H5VL_julea_attr_get(void* attr, H5VL_attr_get_t get_type, hid_t dxpl_id, void** 
 		break;
 		case H5VL_ATTR_GET_TYPE:
 		{
-			hid_t* ret_id = va_arg(arguments, hid_t*);
+			hid_t* ret_id = &(args->args.get_type.type_id);
 			void* type;
 
 			batch = j_batch_new(j_hdf5_semantics);
@@ -927,21 +932,18 @@ H5VL_julea_file_open(const char* fname, unsigned flags, hid_t fapl_id, hid_t dxp
 }
 
 static herr_t
-H5VL_julea_file_specific(void* obj, H5VL_file_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_file_specific(void* obj, H5VL_file_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	gint ret = -1;
 
 	(void)obj;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
-	switch (specific_type)
+	switch (args->op_type)
 	{
 		case H5VL_FILE_FLUSH:
 		case H5VL_FILE_REOPEN:
-		case H5VL_FILE_MOUNT:
-		case H5VL_FILE_UNMOUNT:
 		case H5VL_FILE_IS_ACCESSIBLE:
 		case H5VL_FILE_DELETE:
 		case H5VL_FILE_IS_EQUAL:
@@ -1029,6 +1031,7 @@ H5VL_julea_group_create(void* obj, const H5VL_loc_params_t* loc_params, const ch
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -1105,6 +1108,7 @@ H5VL_julea_group_open(void* obj, const H5VL_loc_params_t* loc_params, const char
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -1236,6 +1240,7 @@ H5VL_julea_dataset_create(void* obj, const H5VL_loc_params_t* loc_params, const 
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -1313,6 +1318,7 @@ H5VL_julea_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
 		case H5I_UNINIT:
 		case H5I_VFL:
 		case H5I_VOL:
+		case H5I_EVENTSET:
 		default:
 			g_assert_not_reached();
 			exit(1);
@@ -1343,15 +1349,24 @@ H5VL_julea_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
  * Reads the data from the dataset
  **/
 static herr_t
-H5VL_julea_dataset_read(void* dset, hid_t mem_type_id __attribute__((unused)), hid_t mem_space_id __attribute__((unused)), hid_t file_space_id __attribute__((unused)), hid_t plist_id __attribute__((unused)), void* buf, void** req __attribute__((unused)))
+H5VL_julea_dataset_read(size_t count, void* dset[], hid_t mem_type_id[], hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(JBatch) batch = NULL;
-	JHD_t* d;
 	guint64 bytes_read;
+	/// \todo support multi-read
+	void* buf0 = buf[0];
+	JHD_t* d = (JHD_t*)dset[0];
 
-	d = (JHD_t*)dset;
+	(void)mem_type_id;
+	(void)mem_space_id;
+	(void)file_space_id;
+	(void)dxpl_id;
+	(void)req;
+
+	/// \todo support multi-read
+	g_return_val_if_fail(count == 1, -1);
 
 	batch = j_batch_new(j_hdf5_semantics);
 
@@ -1361,7 +1376,7 @@ H5VL_julea_dataset_read(void* dset, hid_t mem_type_id __attribute__((unused)), h
 
 	g_assert(d->object != NULL);
 
-	j_distributed_object_read(d->object, buf, d->data_size, 0, &bytes_read, batch);
+	j_distributed_object_read(d->object, buf0, d->data_size, 0, &bytes_read, batch);
 
 	if (!j_batch_execute(batch))
 	{
@@ -1377,7 +1392,7 @@ H5VL_julea_dataset_read(void* dset, hid_t mem_type_id __attribute__((unused)), h
  * \return ret_value The error code
  **/
 static herr_t
-H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __attribute__((unused)), void** req __attribute__((unused)), va_list arguments)
+H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1388,17 +1403,16 @@ H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __
 	gpointer value;
 	guint32 len;
 
+	(void)dxpl_id;
+	(void)req;
+
 	d = (JHD_t*)dset;
 
-	switch (get_type)
+	switch (args->op_type)
 	{
-		case H5VL_DATASET_GET_DAPL:
-			break;
-		case H5VL_DATASET_GET_DCPL:
-			break;
 		case H5VL_DATASET_GET_SPACE:
 		{
-			hid_t* ret_id = va_arg(arguments, hid_t*);
+			hid_t* ret_id = &(args->args.get_space.space_id);
 			void* space;
 
 			batch = j_batch_new(j_hdf5_semantics);
@@ -1415,13 +1429,9 @@ H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __
 			}
 		}
 		break;
-		case H5VL_DATASET_GET_SPACE_STATUS:
-			break;
-		case H5VL_DATASET_GET_STORAGE_SIZE:
-			break;
 		case H5VL_DATASET_GET_TYPE:
 		{
-			hid_t* ret_id = va_arg(arguments, hid_t*);
+			hid_t* ret_id = &(args->args.get_type.type_id);
 			void* type;
 
 			batch = j_batch_new(j_hdf5_semantics);
@@ -1438,9 +1448,14 @@ H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __
 			}
 		}
 		break;
+
+		case H5VL_DATASET_GET_SPACE_STATUS:
+		case H5VL_DATASET_GET_STORAGE_SIZE:
+		case H5VL_DATASET_GET_DAPL:
+		case H5VL_DATASET_GET_DCPL:
 		default:
-			printf("ERROR: unsupported type %s:%d\n", __FILE__, __LINE__);
-			exit(1);
+			g_error("unsupported type %s:%d\n", __FILE__, __LINE__);
+			ret_value = -1;
 	}
 
 	return ret_value;
@@ -1450,21 +1465,31 @@ H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_t get_type, hid_t dxpl_id __
  * Writes the data to the dataset
  **/
 static herr_t
-H5VL_julea_dataset_write(void* dset, hid_t mem_type_id __attribute__((unused)), hid_t mem_space_id __attribute__((unused)), hid_t file_space_id __attribute__((unused)), hid_t plist_id __attribute__((unused)), const void* buf, void** req __attribute__((unused)))
+H5VL_julea_dataset_write(size_t count, void* dset[], hid_t mem_type_id[], hid_t mem_space_id[],
+			 hid_t file_space_id[], hid_t dxpl_id, const void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(JBatch) batch = NULL;
-	JHD_t* d;
 	guint64 bytes_written;
+	/// \todo support multi-write
+	JHD_t* d = (JHD_t*)dset[0];
+	const void* buf0 = buf[0];
 
-	d = (JHD_t*)dset;
+	(void)mem_type_id;
+	(void)mem_space_id;
+	(void)file_space_id;
+	(void)dxpl_id;
+	(void)req;
+
+	/// \todo support multi-write
+	g_return_val_if_fail(count == 1, -1);
 
 	batch = j_batch_new(j_hdf5_semantics);
 
 	bytes_written = 0;
 
-	j_distributed_object_write(d->object, buf, d->data_size, 0, &bytes_written, batch);
+	j_distributed_object_write(d->object, buf0, d->data_size, 0, &bytes_written, batch);
 
 	if (!j_batch_execute(batch))
 	{
@@ -1516,13 +1541,15 @@ H5VL_julea_introspect_get_conn_cls(void* obj, H5VL_get_conn_lvl_t lvl, const str
 }
 
 static herr_t
-H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, hbool_t* supported)
+H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, uint64_t* flags)
 {
 	(void)obj;
 	(void)cls;
 	(void)opt_type;
 
-	*supported = FALSE;
+	// defines which optional callbacks are working
+	// see H5VLpublic.h for flags and `H5VL__native_introspect_opt_query` in H5VLnative_introspect.c as a comprehensive example
+	*flags = 0;
 
 	return 0;
 }
@@ -1531,10 +1558,11 @@ H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, hb
  * The class providing the functions to HDF5
  **/
 static const H5VL_class_t H5VL_julea_g = {
-	.version = 0,
+	.version = 3,
 	.value = JULEA,
 	.name = "julea-kv",
-	.cap_flags = 0,
+	.cap_flags = H5VL_JULEA_KV_CAP_FLAGS,
+	.conn_version = 1,
 	.initialize = H5VL_julea_init,
 	.terminate = H5VL_julea_term,
 	.info_cls = {

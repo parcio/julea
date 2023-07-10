@@ -625,7 +625,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -636,16 +636,16 @@ H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void*
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 
-	switch (get_type)
+	switch (args->op_type)
 	{
+		case H5VL_ATTR_GET_ACPL:
+			args->args.get_acpl.acpl_id = H5P_DEFAULT;
+			break;
 		case H5VL_ATTR_GET_SPACE:
-			*(va_arg(arguments, hid_t*)) = object->attr.space->space.hdf5_id;
+			args->args.get_space.space_id = object->attr.space->space.hdf5_id;
 			break;
 		case H5VL_ATTR_GET_TYPE:
-			*(va_arg(arguments, hid_t*)) = object->attr.datatype->datatype.hdf5_id;
-			break;
-		case H5VL_ATTR_GET_ACPL:
-			*(va_arg(arguments, hid_t*)) = H5P_DEFAULT;
+			args->args.get_type.type_id = object->attr.datatype->datatype.hdf5_id;
 			break;
 		case H5VL_ATTR_GET_INFO:
 		case H5VL_ATTR_GET_NAME:
@@ -658,7 +658,7 @@ H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_t get_type, hid_t dxpl_id, void*
 }
 
 herr_t
-H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_attr_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_attr_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -669,27 +669,19 @@ H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 	(void)dxpl_id;
 	(void)req;
 
-	switch (specific_type)
+	switch (args->op_type)
 	{
 		case H5VL_ATTR_ITER:
 		{
-			H5_index_t idx_type;
-			H5_iter_order_t order;
-			hsize_t* idx_p;
-			JHDF5Iterate_Func_t op;
-			void* op_data;
+			H5VL_attr_iterate_args_t* a = &(args->args.iterate);
 
-			idx_type = va_arg(arguments, H5_index_t);
-			order = va_arg(arguments, H5_iter_order_t);
-			idx_p = va_arg(arguments, hsize_t*);
-			op.attr_op = va_arg(arguments, H5A_operator_t);
-			op_data = va_arg(arguments, void*);
-
-			ret = H5VL_julea_db_link_iterate_helper(object, false, true, idx_type, order, idx_p, op, op_data);
+			JHDF5Iterate_Func_t f = { .attr_op = a->op };
+			ret = H5VL_julea_db_link_iterate_helper(object, false, true, a->idx_type, a->order, a->idx, f, a->op_data);
 		}
 		break;
 
 		case H5VL_ATTR_DELETE:
+		case H5VL_ATTR_DELETE_BY_IDX:
 		case H5VL_ATTR_EXISTS:
 		case H5VL_ATTR_RENAME:
 		default:
@@ -700,16 +692,15 @@ H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 }
 
 herr_t
-H5VL_julea_db_attr_optional(void* obj, H5VL_attr_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_attr_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JHDF5Object_t* object = obj;
 
-	(void)opt_type;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 

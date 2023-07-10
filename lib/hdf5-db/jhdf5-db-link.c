@@ -485,18 +485,18 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_create(H5VL_link_create_type_t create_type, void* obj, const H5VL_loc_params_t* loc_params, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void** req, va_list argumenmts)
+H5VL_julea_db_link_create(H5VL_link_create_args_t* args, void* obj, const H5VL_loc_params_t* loc_params,
+			  hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	(void)create_type;
+	(void)args;
 	(void)obj;
 	(void)loc_params;
 	(void)lcpl_id;
 	(void)lapl_id;
 	(void)dxpl_id;
 	(void)req;
-	(void)argumenmts;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
@@ -555,26 +555,20 @@ H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_params_t* 
 }
 
 herr_t
-H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_get_t get_type,
-		       hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_get_args_t* args, hid_t dxpl_id,
+		       void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	H5L_info2_t* info_out;
 	herr_t ret = -1;
 
-	(void)obj;
-	(void)loc_params;
-	(void)get_type;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
-	switch (get_type)
+	switch (args->op_type)
 	{
 		case H5VL_LINK_GET_INFO:
-			info_out = va_arg(arguments, H5L_info2_t*);
-			ret = H5VL_julea_db_link_get_info_helper(obj, loc_params, info_out);
+			ret = H5VL_julea_db_link_get_info_helper(obj, loc_params, args->args.get_info.linfo);
 			break;
 
 		case H5VL_LINK_GET_NAME:
@@ -723,7 +717,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_t* exists)
+H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, hbool_t* exists)
 {
 	g_autoptr(JDBSelector) link_selector = NULL;
 	g_autoptr(JDBIterator) link_iterator = NULL;
@@ -769,26 +763,18 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_t specific_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 	// possible are delete, exists and iterate
 
 	JHDF5Object_t* object = H5VL_julea_db_object_ref((JHDF5Object_t*)obj);
-
-	// arguments for H5VL_LINK_ITER
-	hbool_t recursive; // recursivly follow links to subgroups
-	H5_index_t idx_type; // index type
-	H5_iter_order_t order; // order to iterate over index
-	hsize_t* idx_p; // where to start and return where stopped
-	JHDF5Iterate_Func_t op; // operation on visited objects
-	void* op_data; // arg for operation
 	herr_t ret = -1;
 
 	(void)dxpl_id;
 	(void)req;
 
-	switch (specific_type)
+	switch (args->op_type)
 	{
 		case H5VL_LINK_DELETE:
 			/// \todo implement link delete
@@ -797,34 +783,31 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 
 		case H5VL_LINK_EXISTS:
 		{
-			htri_t* exists;
+			hbool_t* exists = args->args.exists.exists;
 
 			// sanity check
 			g_return_val_if_fail(loc_params->type == H5VL_OBJECT_BY_NAME, -1);
-			exists = va_arg(arguments, htri_t*);
 
 			ret = H5VL_julea_db_link_exists_helper(object, loc_params->loc_data.loc_by_name.name, exists);
 		}
 		break;
 
 		case H5VL_LINK_ITER:
+		{
 			// get all arguments
-			recursive = va_arg(arguments, int);
-			idx_type = va_arg(arguments, H5_index_t);
-			order = va_arg(arguments, H5_iter_order_t);
-			idx_p = va_arg(arguments, hsize_t*);
-			op.iter_op = va_arg(arguments, H5L_iterate2_t);
-			op_data = va_arg(arguments, void*);
+			H5VL_link_iterate_args_t* a = &(args->args.iterate);
 
 			if (object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)
 			{
-				ret = H5VL_julea_db_link_iterate_helper(object, recursive, false, idx_type, order, idx_p, op, op_data);
+				JHDF5Iterate_Func_t f = { .iter_op = a->op };
+				ret = H5VL_julea_db_link_iterate_helper(object, a->recursive, false, a->idx_type, a->order, a->idx_p, f, a->op_data);
 			}
 			else
 			{
 				ret = -1;
 			}
-			break;
+		}
+		break;
 
 		default:
 			ret = -1;
@@ -835,15 +818,15 @@ H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL
 }
 
 herr_t
-H5VL_julea_db_link_optional(void* obj, H5VL_link_optional_t opt_type, hid_t dxpl_id, void** req, va_list arguments)
+H5VL_julea_db_link_optional(void* obj, const H5VL_loc_params_t* loc_params, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	(void)obj;
-	(void)opt_type;
+	(void)loc_params;
+	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	(void)arguments;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
