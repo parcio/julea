@@ -455,7 +455,7 @@ H5VL_julea_db_group_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_i
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_GROUP, 1);
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
-	return -1;
+	return 0;
 }
 
 herr_t

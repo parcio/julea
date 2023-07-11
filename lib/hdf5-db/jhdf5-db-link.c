@@ -829,5 +829,5 @@ H5VL_julea_db_link_optional(void *obj, const H5VL_loc_params_t *loc_params, H5VL
 	(void)req;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
-	return -1;
+	return 0;
 }
