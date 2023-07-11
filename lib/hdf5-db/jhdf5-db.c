@@ -51,6 +51,8 @@ H5VL_julea_db_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	printf("HELLO THERE \n");
+
 	if (H5VL_julea_db_file_init(vipl_id))
 	{
 		G_DEBUG_HERE();
@@ -179,13 +181,13 @@ H5VL_julea_db_introspect_get_conn_cls(void* obj, H5VL_get_conn_lvl_t lvl, const 
 }
 
 static herr_t
-H5VL_julea_db_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, hbool_t* supported)
+H5VL_julea_db_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type, uint64_t *flags)
 {
 	(void)obj;
 	(void)cls;
 	(void)opt_type;
 
-	*supported = FALSE;
+	*flags = H5VL_OPT_QUERY_SUPPORTED;
 
 	return 0;
 }

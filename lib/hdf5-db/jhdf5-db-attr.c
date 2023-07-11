@@ -658,7 +658,7 @@ H5VL_julea_db_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id, voi
 }
 
 herr_t
-H5VL_julea_db_attr_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_attr_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -675,8 +675,8 @@ H5VL_julea_db_attr_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_attr_
 		{
 			H5VL_attr_iterate_args_t* a = &(args->args.iterate);
 			
-			// casting to union type is ok in C: https://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html
-			ret = H5VL_julea_db_link_iterate_helper(object, false, true, a->idx_type, a->order, a->idx, (JHDF5Iterate_Func_t)a->op, a->op_data);
+			JHDF5Iterate_Func_t f = {.attr_op = a->op};
+			ret = H5VL_julea_db_link_iterate_helper(object, false, true, a->idx_type, a->order, a->idx, f, a->op_data);
 		}
 		break;
 

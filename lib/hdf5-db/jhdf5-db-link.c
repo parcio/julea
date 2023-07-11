@@ -485,7 +485,8 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_create(H5VL_link_create_args_t *args, void *obj, H5VL_loc_params_t *loc_params, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_create(H5VL_link_create_args_t *args, void *obj, const H5VL_loc_params_t *loc_params,
+                     hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -554,7 +555,8 @@ H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_params_t* 
 }
 
 herr_t
-H5VL_julea_db_link_get(void *obj, H5VL_loc_params_t *loc_params, H5VL_link_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_get_args_t *args, hid_t dxpl_id,
+                  void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -715,7 +717,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, htri_t* exists)
+H5VL_julea_db_link_exists_helper(JHDF5Object_t* object, const gchar* name, hbool_t* exists)
 {
 	g_autoptr(JDBSelector) link_selector = NULL;
 	g_autoptr(JDBIterator) link_iterator = NULL;
@@ -761,7 +763,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req)
 {
 	J_TRACE_FUNCTION(NULL);
 	// possible are delete, exists and iterate
@@ -781,7 +783,7 @@ H5VL_julea_db_link_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_link_
 
 		case H5VL_LINK_EXISTS:
 		{
-			htri_t* exists = args->args.exists.exists;
+			hbool_t* exists = args->args.exists.exists;
 
 			// sanity check
 			g_return_val_if_fail(loc_params->type == H5VL_OBJECT_BY_NAME, -1);
@@ -791,19 +793,21 @@ H5VL_julea_db_link_specific(void *obj, H5VL_loc_params_t *loc_params, H5VL_link_
 		break;
 
 		case H5VL_LINK_ITER:
+		{
 			// get all arguments
 			H5VL_link_iterate_args_t* a = &(args->args.iterate);
 			
 			if (object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)
 			{
-				// casting to union type is ok in C: https://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html
-				ret = H5VL_julea_db_link_iterate_helper(object, a->recursive, false, a->idx_type, a->order, a->idx_p, (JHDF5Iterate_Func_t)a->op, a->op_data);
+				JHDF5Iterate_Func_t f = {.iter_op = a->op};
+				ret = H5VL_julea_db_link_iterate_helper(object, a->recursive, false, a->idx_type, a->order, a->idx_p, f, a->op_data);
 			}
 			else
 			{
 				ret = -1;
 			}
-			break;
+		}
+		break;
 
 		default:
 			ret = -1;
