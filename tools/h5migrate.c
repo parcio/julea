@@ -381,6 +381,7 @@ handle_copy(hid_t object, const gchar* name, JHDF5CopyParam_t* copy_data)
 		case H5I_ERROR_MSG:
 		case H5I_ERROR_STACK:
 		case H5I_SPACE_SEL_ITER:
+		case H5I_EVENTSET:
 		case H5I_NTYPES:
 		default:
 			g_critical("%s: Encountered an unexpected object while copying!", G_STRLOC);
