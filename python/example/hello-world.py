@@ -1,4 +1,4 @@
-from julea import JBatchResult, JBatch, ffi, lib, encode, read_from_buffer
+from julea import JBatchResult, JBatch, ffi, lib, encode, read_string
 
 if __name__ == "__main__":
     try:

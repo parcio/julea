@@ -35,21 +35,17 @@ def get_additional_compiler_flags(libraries, build_dir):
 def get_include_dirs(flags):
     return [ str.strip("-I") for str in flags if "-I" in str ]
 
-def collect_julea(filename, libraries, build_dir, typedefs, macros, callbacks, debug):
+def collect_julea(filename, libraries, build_dir, typedefs, macros, callbacks, dummy_headers, debug):
     temp_filename = "temp.h"
     create_header(temp_filename, libraries, typedefs, callbacks)
     includes = get_additional_compiler_flags(libraries, build_dir)
     flags = list(filter(lambda entry: not "dependencies" in entry, includes))
     # create dummy headers for files intentionally not included
-    with open("glib.h", "w") as file:
-        file.write("")
-    with open("gmodule.h", "w") as file:
-        file.write("")
-    with open("bson.h", "w") as file:
-        file.write("")
-    system("mkdir -p gio")
-    with open("gio/gio.h", "w") as file:
-        file.write("")
+    for header in dummy_headers:
+        if path := os.path.dirname(header):
+            os.makedirs(path, exist_ok=True)
+        with open(header, "w") as file:
+            file.write("")
     macro_flags = map(lambda x: f"-D'{x}='", macros)
     # let preprocessor collect all declarations
     system(f"cc -E -P {' '.join(macro_flags)} {temp_filename} -I. {' '.join(flags)} -o {filename}")
@@ -88,7 +84,7 @@ def process(build_dir, libs, tempheader, debug=False):
 def copy_main_module(build_dir):
     system(f"cp {dirname(__file__)}/julea.py {build_dir}/julea.py")
 
-def build(build_dir, include_libs, typedefs, macros, callbacks, debug=False):
+def build(build_dir, include_libs, typedefs, macros, callbacks, dummy_headers, debug=False):
     header_name = "header_julea.h"
-    collect_julea(header_name, include_libs, build_dir, typedefs, macros, callbacks, debug)
+    collect_julea(header_name, include_libs, build_dir, typedefs, macros, callbacks, dummy_headers, debug)
     process(build_dir, include_libs, header_name, debug)

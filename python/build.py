@@ -61,6 +61,14 @@ callback_functions = [
     "void cffi_j_batch_async_callback(JBatch*, gboolean, gpointer)",
 ]
 
+# header files which are needed to satisfy includes but to complex to parse
+dummy_headers = [
+    "glib.h",
+    "gmodule.h",
+    "bson.h",
+    "gio/gio.h",
+]
+
 def usage():
     print("Build python bindings for JULEA with cffi.")
     print()
@@ -82,5 +90,5 @@ if __name__ == "__main__":
     if not os.path.isfile(os.path.abspath('.') + "/meson.build"):
         err("The execution directory is apperntly not the JULEA-repo root directory")
     print(build_dir)
-    build(build_dir, libraries, typedefs, macros, callback_functions, debug=True)
+    build(build_dir, libraries, typedefs, macros, callback_functions, dummy_headers, debug=False)
     copy_main_module(build_dir)
