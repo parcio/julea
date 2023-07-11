@@ -732,9 +732,9 @@ H5VL_julea_db_file_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id
 	(void)args;
 	(void)dxpl_id;
 	(void)req;
-
-	g_warning("%s called but not implemented!", G_STRFUNC);
-	return -1;
+	/// \todo somehow this warning causes file creation to fail? does not happen with lower levels like info
+	//g_warning("%s called but not implemented!", G_STRFUNC);
+	return 0;
 }
 
 herr_t
