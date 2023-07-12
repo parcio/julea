@@ -51,6 +51,15 @@
 
 #define JULEA 520
 
+#define H5VL_JULEA_KV_CAP_FLAGS \
+    (H5VL_CAP_FLAG_ATTR_BASIC | \
+     H5VL_CAP_FLAG_DATASET_BASIC | \
+	 H5VL_CAP_FLAG_FILE_BASIC | \
+     H5VL_CAP_FLAG_GROUP_BASIC | \
+     H5VL_CAP_FLAG_LINK_BASIC | \
+     H5VL_CAP_FLAG_STORAGE_SIZE \
+     )
+
 enum JHDF5Type
 {
 	J_HDF5_TYPE_FILE,
@@ -1351,8 +1360,10 @@ H5VL_julea_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t m
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(JBatch) batch = NULL;
-	JHD_t* d;
 	guint64 bytes_read;
+	/// \todo support multi-read
+	void* buf0 = buf[0];
+	JHD_t* d = (JHD_t*)dset[0];
 
 	(void)mem_type_id;
 	(void)mem_space_id;
@@ -1360,9 +1371,8 @@ H5VL_julea_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t m
 	(void)dxpl_id;
 	(void)req;
 
+	/// \todo support multi-read
 	g_return_val_if_fail(count == 1, -1);
-
-	d = (JHD_t*)dset[0];
 
 	batch = j_batch_new(j_hdf5_semantics);
 
@@ -1372,7 +1382,7 @@ H5VL_julea_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t m
 
 	g_assert(d->object != NULL);
 
-	j_distributed_object_read(d->object, buf[0], d->data_size, 0, &bytes_read, batch);
+	j_distributed_object_read(d->object, buf0, d->data_size, 0, &bytes_read, batch);
 
 	if (!j_batch_execute(batch))
 	{
@@ -1467,8 +1477,10 @@ H5VL_julea_dataset_write(size_t count, void *dset[], hid_t mem_type_id[], hid_t 
 	J_TRACE_FUNCTION(NULL);
 
 	g_autoptr(JBatch) batch = NULL;
-	JHD_t* d;
 	guint64 bytes_written;
+	/// \todo support multi-write
+	JHD_t* d = (JHD_t*)dset[0];
+	const void* buf0 = buf[0];
 
 	(void)mem_type_id;
 	(void)mem_space_id;
@@ -1476,15 +1488,14 @@ H5VL_julea_dataset_write(size_t count, void *dset[], hid_t mem_type_id[], hid_t 
 	(void)dxpl_id;
 	(void)req;
 
+	/// \todo support multi-write
 	g_return_val_if_fail(count == 1, -1);
-
-	d = (JHD_t*)dset[0];
 
 	batch = j_batch_new(j_hdf5_semantics);
 
 	bytes_written = 0;
 
-	j_distributed_object_write(d->object, buf[0], d->data_size, 0, &bytes_written, batch);
+	j_distributed_object_write(d->object, buf0, d->data_size, 0, &bytes_written, batch);
 
 	if (!j_batch_execute(batch))
 	{
@@ -1542,7 +1553,9 @@ H5VL_julea_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type, ui
 	(void)cls;
 	(void)opt_type;
 
-	*flags = H5VL_OPT_QUERY_SUPPORTED;
+	// defines which optional callbacks are working
+	// see H5VLpublic.h for flags and `H5VL__native_introspect_opt_query` in H5VLnative_introspect.c as a comprehensive example
+	*flags = 0;
 
 	return 0;
 }
@@ -1551,10 +1564,11 @@ H5VL_julea_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type, ui
  * The class providing the functions to HDF5
  **/
 static const H5VL_class_t H5VL_julea_g = {
-	.version = 0,
+	.version = 3,
 	.value = JULEA,
 	.name = "julea-kv",
-	.cap_flags = 0,
+	.cap_flags = H5VL_JULEA_KV_CAP_FLAGS,
+	.conn_version = 1,
 	.initialize = H5VL_julea_init,
 	.terminate = H5VL_julea_term,
 	.info_cls = {

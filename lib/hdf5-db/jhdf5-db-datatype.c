@@ -603,7 +603,7 @@ H5VL_julea_db_datatype_optional(void *obj, H5VL_optional_args_t *args, hid_t dxp
 	(void)req;
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
-	return 0;
+	return -1;
 }
 
 herr_t

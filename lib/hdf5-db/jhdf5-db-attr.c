@@ -705,7 +705,7 @@ H5VL_julea_db_attr_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id
 	g_return_val_if_fail(object->type == J_HDF5_OBJECT_TYPE_ATTR, 1);
 
 	g_warning("%s called but not implemented!", G_STRFUNC);
-	return 0;
+	return -1;
 }
 
 herr_t

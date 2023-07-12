@@ -46,21 +46,20 @@
 
 #define JULEA_DB 530
 
-#define H5VL_JULEA_CAP_FLAGS \
+#define H5VL_JULEA_DB_CAP_FLAGS \
     (H5VL_CAP_FLAG_ATTR_BASIC | H5VL_CAP_FLAG_ATTR_MORE | \
      H5VL_CAP_FLAG_DATASET_BASIC | H5VL_CAP_FLAG_DATASET_MORE | \
 	 H5VL_CAP_FLAG_FILE_BASIC | H5VL_CAP_FLAG_FILE_MORE | \
      H5VL_CAP_FLAG_GROUP_BASIC | H5VL_CAP_FLAG_GROUP_MORE | \
      H5VL_CAP_FLAG_LINK_BASIC | H5VL_CAP_FLAG_LINK_MORE | \
-     H5VL_CAP_FLAG_ASYNC | H5VL_CAP_FLAG_OBJECT_BASIC | H5VL_CAP_FLAG_ITERATE | H5VL_CAP_FLAG_STORAGE_SIZE \
+     H5VL_CAP_FLAG_OBJECT_BASIC | \
+	 H5VL_CAP_FLAG_ITERATE | H5VL_CAP_FLAG_STORAGE_SIZE \
      )
 
 static herr_t
 H5VL_julea_db_init(hid_t vipl_id)
 {
 	J_TRACE_FUNCTION(NULL);
-
-	printf("HELLO THERE \n");
 
 	if (H5VL_julea_db_file_init(vipl_id))
 	{
@@ -196,7 +195,9 @@ H5VL_julea_db_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type,
 	(void)cls;
 	(void)opt_type;
 
-	*flags = H5VL_OPT_QUERY_SUPPORTED;
+	// defines which optional callbacks are working
+	// see H5VLpublic.h for flags and `H5VL__native_introspect_opt_query` in H5VLnative_introspect.c as a comprehensive example
+	*flags = 0;
 
 	return 0;
 }
@@ -205,7 +206,7 @@ static const H5VL_class_t H5VL_julea_db_g = {
 	.version = 3,
 	.value = JULEA_DB,
 	.name = "julea-db",
-	.cap_flags = H5VL_JULEA_CAP_FLAGS,
+	.cap_flags = H5VL_JULEA_DB_CAP_FLAGS,
 	.conn_version = 1,
 	.initialize = H5VL_julea_db_init,
 	.terminate = H5VL_julea_db_term,
