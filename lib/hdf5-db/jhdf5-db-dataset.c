@@ -914,7 +914,7 @@ calculate_statistics(JHDF5Object_t* object, const void* buf, gsize bytes, hid_t 
 }
 
 herr_t
-H5VL_julea_db_dataset_write(size_t count, void *obj[], hid_t mem_type_id[], hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, const void *buf[], void **req)
+H5VL_julea_db_dataset_write(size_t count, void* obj[], hid_t mem_type_id[], hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, const void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1021,8 +1021,8 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_dataset_read(size_t count, void *obj[], hid_t mem_type_id[], hid_t mem_space_id[],
-                   hid_t file_space_id[], hid_t dxpl_id, void *buf[], void **req)
+H5VL_julea_db_dataset_read(size_t count, void* obj[], hid_t mem_type_id[], hid_t mem_space_id[],
+			   hid_t file_space_id[], hid_t dxpl_id, void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1133,7 +1133,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_dataset_get(void *obj, H5VL_dataset_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_dataset_get(void* obj, H5VL_dataset_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1170,7 +1170,7 @@ H5VL_julea_db_dataset_get(void *obj, H5VL_dataset_get_args_t *args, hid_t dxpl_i
 }
 
 herr_t
-H5VL_julea_db_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_dataset_specific(void* obj, H5VL_dataset_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1187,7 +1187,7 @@ H5VL_julea_db_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args, hi
 }
 
 herr_t
-H5VL_julea_db_dataset_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_dataset_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 

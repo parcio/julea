@@ -625,7 +625,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_attr_get(void* obj, H5VL_attr_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -658,7 +658,7 @@ H5VL_julea_db_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id, voi
 }
 
 herr_t
-H5VL_julea_db_attr_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_attr_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_attr_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -674,8 +674,8 @@ H5VL_julea_db_attr_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL
 		case H5VL_ATTR_ITER:
 		{
 			H5VL_attr_iterate_args_t* a = &(args->args.iterate);
-			
-			JHDF5Iterate_Func_t f = {.attr_op = a->op};
+
+			JHDF5Iterate_Func_t f = { .attr_op = a->op };
 			ret = H5VL_julea_db_link_iterate_helper(object, false, true, a->idx_type, a->order, a->idx, f, a->op_data);
 		}
 		break;
@@ -692,7 +692,7 @@ H5VL_julea_db_attr_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL
 }
 
 herr_t
-H5VL_julea_db_attr_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_attr_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 

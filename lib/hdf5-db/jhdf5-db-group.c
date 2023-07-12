@@ -408,7 +408,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_group_get(void *obj, H5VL_group_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_group_get(void* obj, H5VL_group_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -425,7 +425,7 @@ H5VL_julea_db_group_get(void *obj, H5VL_group_get_args_t *args, hid_t dxpl_id, v
 }
 
 herr_t
-H5VL_julea_db_group_specific(void *obj, H5VL_group_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_group_specific(void* obj, H5VL_group_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -442,7 +442,7 @@ H5VL_julea_db_group_specific(void *obj, H5VL_group_specific_args_t *args, hid_t 
 }
 
 herr_t
-H5VL_julea_db_group_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_group_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 

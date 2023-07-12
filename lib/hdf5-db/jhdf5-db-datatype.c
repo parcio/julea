@@ -565,7 +565,7 @@ H5VL_julea_db_datatype_open(void* obj, const H5VL_loc_params_t* loc_params, cons
 }
 
 herr_t
-H5VL_julea_db_datatype_get(void *obj, H5VL_datatype_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_datatype_get(void* obj, H5VL_datatype_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -579,7 +579,7 @@ H5VL_julea_db_datatype_get(void *obj, H5VL_datatype_get_args_t *args, hid_t dxpl
 }
 
 herr_t
-H5VL_julea_db_datatype_specific(void *obj, H5VL_datatype_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_datatype_specific(void* obj, H5VL_datatype_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -593,7 +593,7 @@ H5VL_julea_db_datatype_specific(void *obj, H5VL_datatype_specific_args_t *args, 
 }
 
 herr_t
-H5VL_julea_db_datatype_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_datatype_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 

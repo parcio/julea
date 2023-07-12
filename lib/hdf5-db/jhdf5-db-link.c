@@ -485,8 +485,8 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_create(H5VL_link_create_args_t *args, void *obj, const H5VL_loc_params_t *loc_params,
-                     hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_create(H5VL_link_create_args_t* args, void* obj, const H5VL_loc_params_t* loc_params,
+			  hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -555,8 +555,8 @@ H5VL_julea_db_link_get_info_helper(JHDF5Object_t* obj, const H5VL_loc_params_t* 
 }
 
 herr_t
-H5VL_julea_db_link_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_get_args_t *args, hid_t dxpl_id,
-                  void **req)
+H5VL_julea_db_link_get(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_get_args_t* args, hid_t dxpl_id,
+		       void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -763,7 +763,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_link_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_specific(void* obj, const H5VL_loc_params_t* loc_params, H5VL_link_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 	// possible are delete, exists and iterate
@@ -796,10 +796,10 @@ H5VL_julea_db_link_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL
 		{
 			// get all arguments
 			H5VL_link_iterate_args_t* a = &(args->args.iterate);
-			
+
 			if (object->type == J_HDF5_OBJECT_TYPE_GROUP || object->type == J_HDF5_OBJECT_TYPE_FILE)
 			{
-				JHDF5Iterate_Func_t f = {.iter_op = a->op};
+				JHDF5Iterate_Func_t f = { .iter_op = a->op };
 				ret = H5VL_julea_db_link_iterate_helper(object, a->recursive, false, a->idx_type, a->order, a->idx_p, f, a->op_data);
 			}
 			else
@@ -818,7 +818,7 @@ H5VL_julea_db_link_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL
 }
 
 herr_t
-H5VL_julea_db_link_optional(void *obj, const H5VL_loc_params_t *loc_params, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_link_optional(void* obj, const H5VL_loc_params_t* loc_params, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 

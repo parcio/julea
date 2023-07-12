@@ -509,7 +509,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_file_get(void *obj, H5VL_file_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_file_get(void* obj, H5VL_file_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -682,7 +682,7 @@ files_equal(JHDF5Object_t* object1, JHDF5Object_t* object2, hbool_t* equal)
 }
 
 herr_t
-H5VL_julea_db_file_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_file_specific(void* obj, H5VL_file_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -724,7 +724,7 @@ _error:
 }
 
 herr_t
-H5VL_julea_db_file_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_db_file_optional(void* obj, H5VL_optional_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -732,7 +732,7 @@ H5VL_julea_db_file_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id
 	(void)args;
 	(void)dxpl_id;
 	(void)req;
-	
+
 	g_warning("%s called but not implemented!", G_STRFUNC);
 	return -1;
 }

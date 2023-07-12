@@ -52,13 +52,7 @@
 #define JULEA 520
 
 #define H5VL_JULEA_KV_CAP_FLAGS \
-    (H5VL_CAP_FLAG_ATTR_BASIC | \
-     H5VL_CAP_FLAG_DATASET_BASIC | \
-	 H5VL_CAP_FLAG_FILE_BASIC | \
-     H5VL_CAP_FLAG_GROUP_BASIC | \
-     H5VL_CAP_FLAG_LINK_BASIC | \
-     H5VL_CAP_FLAG_STORAGE_SIZE \
-     )
+	(H5VL_CAP_FLAG_ATTR_BASIC | H5VL_CAP_FLAG_DATASET_BASIC | H5VL_CAP_FLAG_FILE_BASIC | H5VL_CAP_FLAG_GROUP_BASIC | H5VL_CAP_FLAG_LINK_BASIC | H5VL_CAP_FLAG_STORAGE_SIZE)
 
 enum JHDF5Type
 {
@@ -758,7 +752,7 @@ H5VL_julea_attr_write(void* attr, hid_t dtype_id, const void* buf, hid_t dxpl_id
  * \return ret_value The error code
  **/
 static herr_t
-H5VL_julea_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_attr_get(void* obj, H5VL_attr_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -938,7 +932,7 @@ H5VL_julea_file_open(const char* fname, unsigned flags, hid_t fapl_id, hid_t dxp
 }
 
 static herr_t
-H5VL_julea_file_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_file_specific(void* obj, H5VL_file_specific_args_t* args, hid_t dxpl_id, void** req)
 {
 	gint ret = -1;
 
@@ -1355,7 +1349,7 @@ H5VL_julea_dataset_open(void* obj, const H5VL_loc_params_t* loc_params, const ch
  * Reads the data from the dataset
  **/
 static herr_t
-H5VL_julea_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, void *buf[], void **req)
+H5VL_julea_dataset_read(size_t count, void* dset[], hid_t mem_type_id[], hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1398,7 +1392,7 @@ H5VL_julea_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t m
  * \return ret_value The error code
  **/
 static herr_t
-H5VL_julea_dataset_get(void *dset, H5VL_dataset_get_args_t *args, hid_t dxpl_id, void **req)
+H5VL_julea_dataset_get(void* dset, H5VL_dataset_get_args_t* args, hid_t dxpl_id, void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1471,8 +1465,8 @@ H5VL_julea_dataset_get(void *dset, H5VL_dataset_get_args_t *args, hid_t dxpl_id,
  * Writes the data to the dataset
  **/
 static herr_t
-H5VL_julea_dataset_write(size_t count, void *dset[], hid_t mem_type_id[], hid_t mem_space_id[],
-                    hid_t file_space_id[], hid_t dxpl_id, const void *buf[], void **req)
+H5VL_julea_dataset_write(size_t count, void* dset[], hid_t mem_type_id[], hid_t mem_space_id[],
+			 hid_t file_space_id[], hid_t dxpl_id, const void* buf[], void** req)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -1547,7 +1541,7 @@ H5VL_julea_introspect_get_conn_cls(void* obj, H5VL_get_conn_lvl_t lvl, const str
 }
 
 static herr_t
-H5VL_julea_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type, uint64_t *flags)
+H5VL_julea_introspect_opt_query(void* obj, H5VL_subclass_t cls, int opt_type, uint64_t* flags)
 {
 	(void)obj;
 	(void)cls;
