@@ -17,7 +17,7 @@
 project('julea', 'c',
 	version: '0.5',
 	license: 'LGPLv3+',
-	meson_version: '>= 0.57',
+	meson_version: '>= 0.58',
 	default_options: [
 		'optimization=g',
 		'warning_level=3',
@@ -92,6 +92,7 @@ libfabric_version = '1.11.0'
 # Ubuntu 18.04 has libbson 1.9.2
 libbson_version = '1.9.0'
 
+hdf_version = '1.14.0'
 # Ubuntu 18.04 has LevelDB 1.20
 leveldb_version = '1.20'
 # Ubuntu 18.04 has LMDB 0.9.21
@@ -155,45 +156,14 @@ rados_dep = cc.find_library('rados',
 	required: false,
 )
 
-# FIXME The config-tool variant does not work correctly at the moment (see https://github.com/mesonbuild/meson/pull/8423)
+# FIXME The config-tool variant does not work with CMake-built HDF5 (see https://github.com/HDFGroup/hdf5/issues/1814)
 hdf_dep = dependency('hdf5',
 	language: 'c',
+	version: '>= @0@'.format(hdf_version),
 	required: false,
 	method: 'pkg-config',
 	include_type: 'system',
 )
-
-if not hdf_dep.found()
-	hdf_config = find_program('h5cc',
-		required: false,
-	)
-
-	if hdf_config.found()
-		hdf_cflags_out = run_command(hdf_config, '-show', '-c', check: true).stdout().strip().split()
-		hdf_libs_out = run_command(hdf_config, '-show', '-shlib', check: true).stdout().strip().split()
-
-		hdf_cflags = []
-
-		foreach cflag: hdf_cflags_out
-			if cflag.startswith('-I') or cflag.startswith('-f') or cflag.startswith('-D')
-				hdf_cflags += cflag
-			endif
-		endforeach
-
-		hdf_libs = []
-
-		foreach lib: hdf_libs_out
-			if lib.startswith('-L') or lib.startswith('-l') or lib.startswith('-Wl')
-				hdf_libs += lib
-			endif
-		endforeach
-
-		hdf_dep = declare_dependency(
-			compile_args: hdf_cflags,
-			link_args: hdf_libs,
-		)
-	endif
-endif
 
 fuse_dep = dependency('fuse3',
 	required: false,
