@@ -42,7 +42,7 @@ jobs:
         os:
           - dist: ubuntu-22.04
             compiler: gcc
-            compiler_version: 11.3.0
+            compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
             compiler_version: 14.0.0
@@ -81,7 +81,7 @@ jobs:
           - image: ubuntu:22.04
             registry: docker.io/library
             compiler: gcc
-            compiler_version: 11.3.0
+            compiler_version: 11.4.0
           - image: ubuntu:22.04
             registry: docker.io/library
             compiler: clang
@@ -125,7 +125,7 @@ jobs:
         os:
           - dist: ubuntu-22.04
             compiler: gcc
-            compiler_version: 11.3.0
+            compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
             compiler_version: 14.0.0
@@ -200,7 +200,7 @@ jobs:
         os:
           - dist: ubuntu-22.04
             compiler: gcc
-            compiler_version: 11.3.0
+            compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
             compiler_version: 14.0.0
@@ -406,7 +406,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: dependencies
-          key: ubuntu-22.04-gcc-11.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ubuntu-22.04-gcc-11.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
