@@ -58,7 +58,7 @@ _benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use
 		{
 			JDBType field_type;
 			g_autofree gpointer field_value;
-			gsize field_length;
+			guint64 field_length;
 			g_autoptr(JDBIterator) iterator;
 			g_autofree gchar* string = _benchmark_db_get_identifier(i);
 			g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme, J_DB_SELECTOR_MODE_AND, &b_s_error);
@@ -118,7 +118,7 @@ _benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_
 		{
 			JDBType field_type;
 			g_autofree gpointer field_value;
-			gsize field_length;
+			guint64 field_length;
 
 			gint64 range_begin = (i * (CLASS_MODULUS / N_GET_DIVIDER)) - CLASS_LIMIT;
 			gint64 range_end = ((i + 1) * (CLASS_MODULUS / N_GET_DIVIDER)) - (CLASS_LIMIT + 1);
