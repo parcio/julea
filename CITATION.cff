@@ -1,11 +1,14 @@
 cff-version: 1.2.0
 message: "If you use JULEA, please cite the paper below."
+authors:
+- family-names: "Kuhn"
+  given-names: "Michael"
+title: "JULEA -- A Flexible Storage Framework for HPC"
 preferred-citation:
   type: conference-paper
   authors:
   - family-names: "Kuhn"
     given-names: "Michael"
-    orcid: "https://orcid.org/0000-0001-8167-8574"
   title: "JULEA: A Flexible Storage Framework for HPC"
   doi: "10.1007/978-3-319-67630-2_51"
   collection-title: "High Performance Computing - ISC High Performance 2017 International Workshops, DRBSD, ExaComm, HCPM, HPC-IODC, IWOPH, IXPUG, P^3MA, VHPC, Visualization at Scale, WOPSSS, Revised Selected Papers"
@@ -24,6 +27,4 @@ preferred-citation:
     country: DE
     date-start: "2017-06-18"
     date-end: "2017-06-22"
-  start: 712
-  end: 723
   year: 2017
