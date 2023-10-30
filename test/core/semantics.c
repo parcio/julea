@@ -79,9 +79,39 @@ test_semantics_set_get(JSemantics** semantics, G_GNUC_UNUSED gconstpointer data)
 	J_TEST_TRAP_END;
 }
 
+static void
+test_core_semantics_from_string(void)
+{
+	g_autoptr(JSemantics) semantics = NULL;
+	gint ret;
+	gchar semantics_string[] = "atomicity=operation,consistency=eventual,persistency=network,security=strict";
+
+	J_TEST_TRAP_START;
+
+	semantics = j_semantics_new_from_string(NULL, semantics_string);
+	g_assert_nonnull(semantics);
+	if (g_test_failed())
+		return;
+
+	ret = j_semantics_get(semantics, J_SEMANTICS_ATOMICITY);
+	g_assert_cmpint(ret, ==, J_SEMANTICS_ATOMICITY_OPERATION);
+
+	ret = j_semantics_get(semantics, J_SEMANTICS_CONSISTENCY);
+	g_assert_cmpint(ret, ==, J_SEMANTICS_CONSISTENCY_EVENTUAL);
+
+	ret = j_semantics_get(semantics, J_SEMANTICS_PERSISTENCY);
+	g_assert_cmpint(ret, ==, J_SEMANTICS_PERSISTENCY_NETWORK);
+
+	ret = j_semantics_get(semantics, J_SEMANTICS_SECURITY);
+	g_assert_cmpint(ret, ==, J_SEMANTICS_SECURITY_STRICT);
+
+	J_TEST_TRAP_END;
+}
+
 void
 test_core_semantics(void)
 {
 	g_test_add_func("/core/semantics/new_ref_unref", test_semantics_new_ref_unref);
 	g_test_add("/core/semantics/set_get", JSemantics*, NULL, test_semantics_fixture_setup, test_semantics_set_get, test_semantics_fixture_teardown);
+	g_test_add_func("/core/semantics/from_string", test_core_semantics_from_string);
 }

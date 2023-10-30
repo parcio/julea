@@ -58,6 +58,9 @@ void test_kv_kv_iterator(void);
 void test_kv_parallel(void);
 
 void test_db_db(void);
+void test_db_schema(void);
+void test_db_entry(void);
+void test_db_selector(void);
 
 void test_item_collection(void);
 void test_item_collection_iterator(void);
