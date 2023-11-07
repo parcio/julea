@@ -159,7 +159,7 @@ jobs:
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
           if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
           then
-            sudo apt --yes --no-install-recommends install meson
+            sudo apt --yes --no-install-recommends install meson python3 python3-pip python3-setuptools python3-wheel
           else
             sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
             sudo pip3 install meson
@@ -367,6 +367,22 @@ jobs:
           ./scripts/test.sh -r /hdf5
           sleep 10
           ./scripts/test.sh -r /hdf5
+          ./scripts/setup.sh stop
+      - name: Test julea-h5migrate
+        if: false
+        env:
+          LSAN_OPTIONS: exitcode=0
+        run: |
+          . scripts/environment.sh
+          pip3 -qqq install h5py numpy
+          python3 scripts/gen_hdf5_test_file.py
+          ./scripts/setup.sh start
+          HDF5_VOL_CONNECTOR=julea-db julea-h5migrate testfile.h5 julea-db://imported.h5
+          HDF5_VOL_CONNECTOR=julea-db julea-h5migrate julea-db://imported.h5 exported.h5
+          # tail cuts the filename
+          h5dump testfile.h5 | tail -n+2 > original
+          h5dump exported.h5 | tail -n+2 > exported 
+          diff original exported 
           ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
