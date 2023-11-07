@@ -116,7 +116,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JObject, j_object_unref)
  * \param batch        A batch.
  *
  **/
-void j_object_create(JObject* object, JBatch* batch);
+gboolean j_object_create(JObject* object, JBatch* batch);
 
 /**
  * Deletes an object.
@@ -127,7 +127,7 @@ void j_object_create(JObject* object, JBatch* batch);
  * \param object     An object.
  * \param batch      A batch.
  **/
-void j_object_delete(JObject* object, JBatch* batch);
+gboolean j_object_delete(JObject* object, JBatch* batch);
 
 /**
  * Reads an object.
@@ -142,7 +142,7 @@ void j_object_delete(JObject* object, JBatch* batch);
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
-void j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
+gboolean j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
 
 /**
  * Writes an object.
@@ -160,7 +160,7 @@ void j_object_read(JObject* object, gpointer data, guint64 length, guint64 offse
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/
-void j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
+gboolean j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
 
 /**
  * Get the status of an object.
@@ -173,7 +173,7 @@ void j_object_write(JObject* object, gconstpointer data, guint64 length, guint64
  * \param size              The size of object.
  * \param batch             A batch.
  **/
-void j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatch* batch);
+gboolean j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatch* batch);
 
 /**
  * Sync an object.
@@ -184,7 +184,7 @@ void j_object_status(JObject* object, gint64* modification_time, guint64* size, 
  * \param object    An object.
  * \param batch     A batch.
  **/
-void j_object_sync(JObject* object, JBatch* batch);
+gboolean j_object_sync(JObject* object, JBatch* batch);
 
 /**
  * @}
