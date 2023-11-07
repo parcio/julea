@@ -589,7 +589,7 @@ j_sql_open(gpointer backend_data)
 	return backend_db;
 
 _error:
-	fprintf(stderr, "%s\n", mysql_error(backend_db));
+	g_error("Could not connect: %s\n", mysql_error(backend_db));
 	mysql_close(backend_db);
 
 	return NULL;
@@ -725,12 +725,112 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JMySQLData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	MYSQL_RES* schemas = NULL;
+	MYSQL* conn = j_sql_open(backend_data);
+	MYSQL_ROW schema = NULL;
+	gboolean res = FALSE;
+	gboolean hit = FALSE;
+
+	// The metadata table structure:
+	// "CREATE TABLE IF NOT EXISTS schema_structure ("
+	// "namespace VARCHAR(255),"
+	// "name VARCHAR(255),"
+	// "varname VARCHAR(255),"
+	// "vartype INTEGER )"
+	gchar* schema_query = "SELECT DISTINCT namespace, name FROM schema_structure";
+	gchar* metadata_clear = "DELETE FROM schema_structure";
+
+	// collect all table names and issue drop table on all at once
+	// relevant restriction is the maximum query length
+	// however, its default is 16MB which should be enough
+	// https://dev.mysql.com/doc/refman/8.0/en/packet-too-large.html
+	g_autoptr(GString) schema_delete = g_string_new("DROP TABLE ");
+
+	if (mysql_query(conn, schema_query) != 0)
+	{
+		// table might not exist on before first startup (nothing to do in this case)
+		g_warning("Could not get table information for DB clean. This could be normal on first usage.");
+		return TRUE;
+
+	}
+
+	if (!(schemas = mysql_use_result(conn)))
+	{
+		g_error("Querying schema info for backend_clean failed.\nError: %s", mysql_error(conn));
+		goto _error;
+	}
+
+	while ((schema = mysql_fetch_row(schemas)))
+	{
+		unsigned long* lengths = mysql_fetch_lengths(schemas);
+		g_autoptr(GString) table = g_string_sized_new(lengths[0] + lengths[1] + 5);
+		hit = TRUE;
+
+		// set up namespace_name as table name
+		// g_string_append_printf would be more convinient but also much slower
+		g_string_append_len(table, "`", 1);
+		g_string_append_len(table, schema[0], lengths[0]);
+		g_string_append_len(table, "_", 1);
+		g_string_append_len(table, schema[1], lengths[1]);
+		g_string_append_len(table, "`", 1);
+		g_string_append_len(table, ", ", 2);
+
+		// avoid too many relocates of the query string
+		g_string_append_len(schema_delete, table->str, table->len);
+	}
+
+	// check whether loop terminated due to no more elements or error
+	if (*mysql_error(conn))
+	{
+		g_error("mysql_fetch_row for backend_clean failed.\nError: %s", mysql_error(conn));
+		goto _error;
+	}
+
+	if (hit)
+	{
+		// remove last colon
+		g_string_set_size(schema_delete, schema_delete->len - 2);
+		printf("%s\n", schema_delete->str);
+
+		if (mysql_query(conn, schema_delete->str) != 0)
+		{
+			g_error("Could not clean MySQL backend. Failed to execute DROP TABLE.\nError: %s", mysql_error(conn));
+			goto _error;
+		}
+
+		if (mysql_query(conn, metadata_clear) != 0)
+		{
+			g_error("Could not clean MySQL backend. Failed to clear metadata.\nError: %s", mysql_error(conn));
+			goto _error;
+		}
+	}
+
+	res = TRUE;
+
+_error:
+	if (schemas)
+	{
+		mysql_free_result(schemas);
+	}
+
+	if (conn)
+	{
+		j_sql_close(conn);
+	}
+
+	return res;
+}
+
 static JBackend mysql_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_schema_create = sql_generic_schema_create,
 		.backend_schema_get = sql_generic_schema_get,
 		.backend_schema_delete = sql_generic_schema_delete,

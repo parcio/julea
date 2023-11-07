@@ -162,6 +162,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	{
 		if (tmp_backend->object.backend_init == NULL
 		    || tmp_backend->object.backend_fini == NULL
+		    || tmp_backend->object.backend_clean == NULL
 		    || tmp_backend->object.backend_create == NULL
 		    || tmp_backend->object.backend_delete == NULL
 		    || tmp_backend->object.backend_open == NULL
@@ -182,6 +183,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	{
 		if (tmp_backend->kv.backend_init == NULL
 		    || tmp_backend->kv.backend_fini == NULL
+		    || tmp_backend->kv.backend_clean == NULL
 		    || tmp_backend->kv.backend_batch_start == NULL
 		    || tmp_backend->kv.backend_batch_execute == NULL
 		    || tmp_backend->kv.backend_put == NULL
@@ -199,6 +201,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	{
 		if (tmp_backend->db.backend_init == NULL
 		    || tmp_backend->db.backend_fini == NULL
+		    || tmp_backend->db.backend_clean == NULL
 		    || tmp_backend->db.backend_batch_start == NULL
 		    || tmp_backend->db.backend_batch_execute == NULL
 		    || tmp_backend->db.backend_schema_create == NULL
@@ -308,6 +311,24 @@ j_backend_object_fini(JBackend* backend)
 		J_TRACE("backend_fini", NULL);
 		backend->object.backend_fini(backend->data);
 	}
+}
+
+gboolean
+j_backend_object_clean(JBackend* backend)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
+
+	{
+		J_TRACE("backend_clean", NULL);
+		ret = backend->object.backend_clean(backend->data);
+	}
+
+	return ret;
 }
 
 gboolean
@@ -566,6 +587,24 @@ j_backend_kv_fini(JBackend* backend)
 }
 
 gboolean
+j_backend_kv_clean(JBackend* backend)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_KV, FALSE);
+
+	{
+		J_TRACE("backend_clean", NULL);
+		ret = backend->kv.backend_clean(backend->data);
+	}
+
+	return ret;
+}
+
+gboolean
 j_backend_kv_batch_start(JBackend* backend, gchar const* namespace, JSemantics* semantics, gpointer* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -761,6 +800,24 @@ j_backend_db_fini(JBackend* backend)
 		J_TRACE("backend_fini", NULL);
 		backend->db.backend_fini(backend->data);
 	}
+}
+
+gboolean
+j_backend_db_clean(JBackend* backend)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_DB, FALSE);
+
+	{
+		J_TRACE("backend_clean", NULL);
+		ret = backend->db.backend_clean(backend->data);
+	}
+
+	return ret;
 }
 
 gboolean

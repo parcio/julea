@@ -466,15 +466,21 @@ backend_init(gchar const* _path, gpointer* backend_data)
 	J_TRACE_FUNCTION(NULL);
 
 	JSQLiteData* bd;
+	gboolean ret = TRUE;
 
 	bd = g_slice_new(JSQLiteData);
 	bd->path = g_strdup(_path);
 	bd->db = NULL;
 
+	// Hold an extra reference to the shared in-memory database to make sure it is not freed.
 	if (g_strcmp0(bd->path, ":memory:") == 0)
 	{
-		// Hold an extra reference to the shared in-memory database to make sure it is not freed.
-		sqlite3_open_v2("file:julea-db", &(bd->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int success = sqlite3_open_v2("file:julea-db", &(bd->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_MEMORY | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (success != SQLITE_OK)
+		{
+			g_error("%s", sqlite3_errmsg(bd->db));
+			ret = FALSE;
+		}
 	}
 
 	*backend_data = bd;
@@ -483,7 +489,7 @@ backend_init(gchar const* _path, gpointer* backend_data)
 
 	sql_generic_init(&specifics);
 
-	return TRUE;
+	return ret;
 }
 
 static void
@@ -504,12 +510,36 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JSQLiteData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	gboolean ret = FALSE;
+	sqlite3* conn = j_sql_open(backend_data);
+
+	// see https://www.sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfigresetdatabase
+	sqlite3_db_config(conn, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
+
+	if (sqlite3_exec(conn, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
+	{
+		goto _error;
+	}
+
+	ret = TRUE;
+
+_error:
+	sqlite3_db_config(conn, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+	j_sql_close(conn);
+
+	return ret;
+}
+
 static JBackend sqlite_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_schema_create = sql_generic_schema_create,
 		.backend_schema_get = sql_generic_schema_get,
 		.backend_schema_delete = sql_generic_schema_delete,

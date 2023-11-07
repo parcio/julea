@@ -18,6 +18,9 @@
 
 #include <julea-config.h>
 
+// for nftw usage
+#define _XOPEN_SOURCE 500
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gmodule.h>
@@ -26,6 +29,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <ftw.h>
+#include <errno.h>
+#include <string.h>
 
 #include <julea.h>
 
@@ -524,12 +530,45 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JBackendData, bd);
 }
 
+static int
+remove_entry(const char* path, const struct stat* sb, int typeflag, struct FTW* ftwbuf)
+{
+	(void)sb;
+	(void)typeflag;
+	(void)ftwbuf;
+
+	return remove(path);
+}
+
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	JBackendData* bd = backend_data;
+
+	gboolean ret = TRUE;
+
+	if (nftw(bd->path, remove_entry, 30, FTW_DEPTH | FTW_PHYS))
+	{
+		g_error("Could not clean POSIX backend: %s\n", strerror(errno));
+		ret = FALSE;
+	}
+
+	if (g_mkdir_with_parents(bd->path, 0700))
+	{
+		g_error("Could not create POSIX backend directory: %s\n", strerror(errno));
+		ret = FALSE;
+	}
+
+	return ret;
+}
+
 static JBackend posix_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_create = backend_create,
 		.backend_delete = backend_delete,
 		.backend_open = backend_open,

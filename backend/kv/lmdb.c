@@ -341,12 +341,40 @@ backend_fini(gpointer backend_data)
 	g_slice_free(JLMDBData, bd);
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	MDB_txn* txn;
+	JLMDBData* bd = backend_data;
+	gboolean ret = FALSE;
+
+	if (mdb_txn_begin(bd->env, NULL, 0, &txn) == 0)
+	{
+		// 0 empties the DB which is still open afterwards
+		if (mdb_drop(txn, bd->dbi, 0) != 0)
+		{
+			goto _error;
+		}
+
+		if (mdb_txn_commit(txn) != 0)
+		{
+			goto _error;
+		}
+
+		ret = TRUE;
+	}
+
+_error:
+	return ret;
+}
+
 static JBackend lmdb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_SERVER,
 	.kv = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_batch_start = backend_batch_start,
 		.backend_batch_execute = backend_batch_execute,
 		.backend_put = backend_put,

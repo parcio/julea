@@ -476,12 +476,26 @@ backend_fini(gpointer backend_data)
 	mongoc_cleanup();
 }
 
+static gboolean
+backend_clean(gpointer backend_data)
+{
+	JMongoDBData* bd = backend_data;
+	mongoc_database_t* m_database;
+	gboolean ret;
+
+	m_database = mongoc_client_get_database(bd->connection, bd->database);
+	// the database will be recreated on next insert
+	ret = mongoc_database_drop(m_database, NULL);
+	return ret;
+}
+
 static JBackend mongodb_backend = {
 	.type = J_BACKEND_TYPE_KV,
 	.component = J_BACKEND_COMPONENT_CLIENT,
 	.kv = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
+		.backend_clean = backend_clean,
 		.backend_batch_start = backend_batch_start,
 		.backend_batch_execute = backend_batch_execute,
 		.backend_put = backend_put,
