@@ -35,6 +35,69 @@
 G_BEGIN_DECLS
 
 /**
+ * Execudes a command which returns true on success.
+ * on error a warning is written and jumps to <err_label> in the form:
+ * EXE failed at <File>:<Line>: with
+ * "<format string>", args
+ *
+ * \param cmd command to execute
+ * \param err_label label to jump to, when failed
+ * \param ... warning message in form: <format string>, args
+ **/
+#define EXE(cmd, err_label, ...) \
+	do \
+	{ \
+		if ((cmd) == FALSE) \
+		{ \
+			g_warning("EXE failed at %s:%d with:", __FILE__, __LINE__); \
+			g_warning(__VA_ARGS__); \
+			goto err_label; \
+		} \
+	} while (FALSE)
+
+/**
+ * Checks if <res> is an non negative number, if it negative jumps to <err_label>
+ * and print a warning in the form:
+ * CHECK failed at <File>:<Line> with (<res>):
+ * "<format string>", args
+ *
+ * \param res result value
+ * \param err_label label to jump to at error
+ * \param ... warning message in form: <format string>, args
+ **/
+#define CHECK(res, err_label, ...) \
+	do \
+	{ \
+		if (res < 0) \
+		{ \
+			g_warning("CHECK failed at %s:%d with (%d):", __FILE__, __LINE__, res); \
+			g_warning(__VA_ARGS__); \
+			goto err_label; \
+		} \
+	} while (FALSE)
+
+/**
+ * Check if <error> is an filled GError, if print warning and jumps to <err_label>
+ * warnings has the form:
+ * CHECK failed at <File>:<Line> with:
+ * "<format string>", args
+ *
+ * \param error GError
+ * \param err_label label to jump to at error
+ * \param ... warning message in form: <format sting>, args
+ **/
+#define CHECK_GERROR(error, err_label, ...) \
+	do \
+	{ \
+		if (error != NULL) \
+		{ \
+			g_warning("CHECK failed at %s:%d with:\n\t%s", __FILE__, __LINE__, error->message); \
+			g_error_free(error); \
+			goto err_label; \
+		} \
+	} while (FALSE)
+
+/**
  * \defgroup JHelper Helper
  *
  * Helper data structures and functions.

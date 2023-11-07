@@ -140,6 +140,14 @@ struct JConfiguration
 		gchar* path;
 	} db;
 
+	struct
+	{
+		gchar* policy;
+		gchar const* const* args;
+		gchar* kv_backend;
+		gchar* kv_path;
+		gchar const* log_file;
+	} object_hsm_policy;
 	guint64 max_operation_size;
 	guint64 max_inject_size;
 	guint16 port;
@@ -285,6 +293,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar* db_component;
 	gchar* db_path;
 	g_autofree gchar* key_file_str = NULL;
+	gchar* object_policy_kv_backend;
+	gchar* object_policy_kv_path;
+	gchar* object_policy;
+	gchar** object_policy_args;
 	guint64 max_operation_size;
 	guint64 max_inject_size;
 	guint32 port;
@@ -310,6 +322,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
 	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
+	object_policy_kv_backend = g_key_file_get_string(key_file, "object.hsm-policy", "kv_backend", NULL);
+	object_policy_kv_path = g_key_file_get_string(key_file, "object.hsm-policy", "kv_path", NULL);
+	object_policy = g_key_file_get_string(key_file, "object.hsm-policy", "policy", NULL);
+	object_policy_args = g_key_file_get_string_list(key_file, "object.hsm-policy", "args", NULL, NULL);
 
 	/// \todo check value ranges (max_operation_size, port, max_connections, stripe_size)
 	// configuration->port < 0 || configuration->port > 65535
@@ -339,6 +355,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
 		g_strfreev(servers_db);
+		g_free(object_policy_kv_backend);
+		g_free(object_policy_kv_path);
+		g_free(object_policy);
+		g_strfreev(object_policy_args);
 
 		return NULL;
 	}
@@ -359,6 +379,12 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->db.backend = db_backend;
 	configuration->db.component = db_component;
 	configuration->db.path = db_path;
+
+	configuration->object_hsm_policy.kv_backend = object_policy_kv_backend;
+	configuration->object_hsm_policy.kv_path = object_policy_kv_path;
+	configuration->object_hsm_policy.policy = object_policy;
+	configuration->object_hsm_policy.args = (const char* const*)object_policy_args;
+
 	configuration->max_operation_size = max_operation_size;
 	configuration->port = port;
 	configuration->max_inject_size = max_inject_size;
@@ -439,6 +465,13 @@ j_configuration_unref(JConfiguration* configuration)
 
 		g_free(configuration->checksum);
 
+		g_free(configuration->object_hsm_policy.kv_backend);
+		g_free(configuration->object_hsm_policy.kv_path);
+		g_free(configuration->object_hsm_policy.policy);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+		g_strfreev((gchar**)configuration->object_hsm_policy.args);
+#pragma GCC diagnostic pop
 		g_slice_free(JConfiguration, configuration);
 	}
 }
@@ -616,6 +649,45 @@ j_configuration_get_checksum(JConfiguration* configuration)
 	return configuration->checksum;
 }
 
+gchar const*
+j_configuration_get_object_policy_kv_backend(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->object_hsm_policy.kv_backend;
+}
+
+gchar const*
+j_configuration_get_object_policy_kv_path(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->object_hsm_policy.kv_path;
+}
+
+gchar const*
+j_configuration_get_object_policy(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->object_hsm_policy.policy;
+}
+
+gchar const* const*
+j_configuration_get_object_policy_args(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, NULL);
+
+	return configuration->object_hsm_policy.args;
+}
 /**
  * @}
  **/

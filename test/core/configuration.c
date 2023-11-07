@@ -61,6 +61,9 @@ test_configuration_new_for_data(void)
 	g_key_file_set_string(key_file, "db", "backend", "null");
 	g_key_file_set_string(key_file, "db", "component", "server");
 	g_key_file_set_string(key_file, "db", "path", "");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", "null");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", "null");
+	g_key_file_set_string(key_file, "object.hsm-policy", "policy", "null");
 
 	configuration = j_configuration_new_for_data(key_file);
 	g_assert_true(configuration != NULL);
@@ -93,6 +96,9 @@ test_configuration_get(void)
 	g_key_file_set_string(key_file, "db", "backend", "null3");
 	g_key_file_set_string(key_file, "db", "component", "client");
 	g_key_file_set_string(key_file, "db", "path", "NULL3");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_backend", "NULL4");
+	g_key_file_set_string(key_file, "object.hsm-policy", "kv_path", "NULL5");
+	g_key_file_set_string(key_file, "object.hsm-policy", "policy", "NULL6");
 
 	configuration = j_configuration_new_for_data(key_file);
 	g_assert_true(configuration != NULL);
@@ -119,6 +125,10 @@ test_configuration_get(void)
 	g_assert_cmpstr(j_configuration_get_backend(configuration, J_BACKEND_TYPE_DB), ==, "null3");
 	g_assert_cmpstr(j_configuration_get_backend_component(configuration, J_BACKEND_TYPE_DB), ==, "client");
 	g_assert_cmpstr(j_configuration_get_backend_path(configuration, J_BACKEND_TYPE_DB), ==, "NULL3");
+
+	g_assert_cmpstr(j_configuration_get_object_policy_kv_backend(configuration), ==, "NULL4");
+	g_assert_cmpstr(j_configuration_get_object_policy_kv_path(configuration), ==, "NULL5");
+	g_assert_cmpstr(j_configuration_get_object_policy(configuration), ==, "NULL6");
 
 	j_configuration_unref(configuration);
 

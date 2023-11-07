@@ -36,8 +36,8 @@
 #include <jnetwork.h>
 
 #include <jconfiguration.h>
-#include <jhelper.h>
 #include <jtrace.h>
+#include <jhelper.h>
 
 /**
  * \addtogroup JNetwork Network
@@ -192,37 +192,6 @@ enum JNetworkConnectionEvents
 
 typedef enum JNetworkConnectionEvents JNetworkConnectionEvents;
 
-#define EXE(cmd, ...) \
-	do \
-	{ \
-		if ((cmd) == FALSE) \
-		{ \
-			g_warning(__VA_ARGS__); \
-			goto end; \
-		} \
-	} while (FALSE)
-
-#define CHECK(msg) \
-	do \
-	{ \
-		if (res < 0) \
-		{ \
-			g_warning("%s: " msg "\t(%s:%d)\nDetails:\t%s", "??TODO??", __FILE__, __LINE__, fi_strerror(-res)); \
-			goto end; \
-		} \
-	} while (FALSE)
-
-#define G_CHECK(msg) \
-	do \
-	{ \
-		if (error != NULL) \
-		{ \
-			g_warning(msg "\n\tWith:%s", error->message); \
-			g_error_free(error); \
-			goto end; \
-		} \
-	} while (FALSE)
-
 static void
 free_dangling_infos(struct fi_info* info)
 {
@@ -272,7 +241,7 @@ j_network_connection_sread_event(JNetworkConnection* connection, gint timeout, J
 		do
 		{
 			res = fi_eq_readerr(connection->eq, &error, 0);
-			CHECK("Failed to read error!");
+			CHECK(res, end, "Failed to read error!");
 
 			g_warning("event queue contains following error (%s|c:%p):\n\t%s", fi_strerror(FI_EAVAIL), error.context, fi_eq_strerror(connection->eq, error.prov_errno, error.err_data, NULL, 0));
 		} while (res > 0);
@@ -280,7 +249,7 @@ j_network_connection_sread_event(JNetworkConnection* connection, gint timeout, J
 		goto end;
 	}
 
-	CHECK("Failed to read event of connection!");
+	CHECK(res, end, "Failed to read event of connection!");
 
 	switch (fi_event)
 	{
@@ -395,7 +364,7 @@ j_network_fabric_sread_event(JNetworkFabric* fabric, gint timeout, JNetworkFabri
 		*event = J_FABRIC_EVENT_ERROR;
 
 		res = fi_eq_readerr(fabric->pep_eq, &error, 0);
-		CHECK("Failed to read error!");
+		CHECK(res, end, "Failed to read error!");
 
 		g_warning("event queue contains following error (%s|c:%p):\n\t%s", fi_strerror(FI_EAVAIL), error.context, fi_eq_strerror(fabric->pep_eq, error.prov_errno, error.err_data, NULL, 0));
 
@@ -403,7 +372,7 @@ j_network_fabric_sread_event(JNetworkFabric* fabric, gint timeout, JNetworkFabri
 		goto end;
 	}
 
-	CHECK("failed to read pep event queue!");
+	CHECK(res, end, "failed to read pep event queue!");
 
 	switch (fi_event)
 	{
@@ -450,40 +419,40 @@ j_network_fabric_init_server(JConfiguration* configuration)
 	hints->fabric_attr->prov_name = NULL;
 
 	res = fi_getinfo(FI_VERSION(1, 11), NULL, NULL, 0, hints, &fabric->info);
-	CHECK("Failed to find fabric for server!");
+	CHECK(res, end, "Failed to find fabric for server!");
 
 	free_dangling_infos(fabric->info);
 
 	// no context needed, because we are in sync
 	res = fi_fabric(fabric->info->fabric_attr, &fabric->fabric, NULL);
-	CHECK("Failed to open server fabric!");
+	CHECK(res, end, "Failed to open server fabric!");
 
 	// wait obj defined to use synced actions
 	res = fi_eq_open(fabric->fabric, &(struct fi_eq_attr){ .wait_obj = FI_WAIT_UNSPEC }, &fabric->pep_eq, NULL);
-	CHECK("failed to create eq for fabric!");
+	CHECK(res, end, "failed to create eq for fabric!");
 
 	res = fi_passive_ep(fabric->fabric, fabric->info, &fabric->pep, NULL);
-	CHECK("failed to create pep for fabric!");
+	CHECK(res, end, "failed to create pep for fabric!");
 
 	res = fi_pep_bind(fabric->pep, &fabric->pep_eq->fid, 0);
-	CHECK("failed to bind event queue to pep!");
+	CHECK(res, end, "failed to bind event queue to pep!");
 
 	// initialize addr field!
 	res = fi_getname(&fabric->pep->fid, NULL, &addrlen);
 
 	if (res != -FI_ETOOSMALL)
 	{
-		CHECK("failed to fetch address len from libfabirc!");
+		CHECK(res, end, "failed to fetch address len from libfabirc!");
 	}
 
 	fabric->fabric_addr_network.addr_len = addrlen;
 	fabric->fabric_addr_network.addr = g_malloc(fabric->fabric_addr_network.addr_len);
 
 	res = fi_getname(&fabric->pep->fid, fabric->fabric_addr_network.addr, &addrlen);
-	CHECK("failed to fetch address from libfabric!");
+	CHECK(res, end, "failed to fetch address from libfabric!");
 
 	res = fi_listen(fabric->pep);
-	CHECK("failed to start listening on pep!");
+	CHECK(res, end, "failed to start listening on pep!");
 
 	fabric->fabric_addr_network.addr_len = htonl(fabric->fabric_addr_network.addr_len);
 	fabric->fabric_addr_network.addr_format = htonl(fabric->info->addr_format);
@@ -538,12 +507,12 @@ j_network_fabric_init_client(JConfiguration* configuration, JNetworkFabricAddr* 
 	fabric->hints->dest_addrlen = addr->addr_len;
 
 	res = fi_getinfo(FI_VERSION(1, 11), NULL, NULL, 0, fabric->hints, &fabric->info);
-	CHECK("Failed to find fabric!");
+	CHECK(res, end, "Failed to find fabric!");
 
 	free_dangling_infos(fabric->info);
 
 	res = fi_fabric(fabric->info->fabric_attr, &fabric->fabric, NULL);
-	CHECK("failed to initelize client fabric!");
+	CHECK(res, end, "failed to initelize client fabric!");
 
 	return fabric;
 
@@ -574,16 +543,16 @@ j_network_fabric_fini(JNetworkFabric* fabric)
 	if (fabric->con_side == JF_SERVER)
 	{
 		res = fi_close(&fabric->pep->fid);
-		CHECK("Failed to close PEP!");
+		CHECK(res, end, "Failed to close PEP!");
 		fabric->pep = NULL;
 
 		res = fi_close(&fabric->pep_eq->fid);
-		CHECK("Failed to close EQ for PEP!");
+		CHECK(res, end, "Failed to close EQ for PEP!");
 		fabric->pep_eq = NULL;
 	}
 
 	res = fi_close(&fabric->fabric->fid);
-	CHECK("failed to close fabric!");
+	CHECK(res, end, "failed to close fabric!");
 	fabric->fabric = NULL;
 
 	if (fabric->hints)
@@ -647,7 +616,7 @@ j_network_connection_create_memory_resources(JNetworkConnection* connection)
 		connection->memory.tx_prefix_size = tx_prefix * prefix_size;
 
 		res = fi_mr_reg(connection->domain, connection->memory.buffer, connection->memory.buffer_size, FI_SEND | FI_RECV, 0, 0, 0, &connection->memory.mr, NULL);
-		CHECK("Failed to register memory for msg communication!");
+		CHECK(res, end, "Failed to register memory for msg communication!");
 	}
 	else
 	{
@@ -687,33 +656,33 @@ j_network_connection_init(JNetworkConnection* connection)
 	connection->next_key = KEY_MIN;
 
 	res = fi_eq_open(connection->fabric->fabric, &(struct fi_eq_attr){ .wait_obj = FI_WAIT_UNSPEC }, &connection->eq, NULL);
-	CHECK("Failed to open event queue for connection!");
+	CHECK(res, end, "Failed to open event queue for connection!");
 
 	res = fi_domain(connection->fabric->fabric, connection->info, &connection->domain, NULL);
-	CHECK("Failed to open connection domain!");
+	CHECK(res, end, "Failed to open connection domain!");
 
 	connection->inject_size = connection->fabric->info->tx_attr->inject_size;
 
-	EXE(j_network_connection_create_memory_resources(connection), "Failed to create memory resources for connection!");
+	EXE(j_network_connection_create_memory_resources(connection), end, "Failed to create memory resources for connection!");
 
 	res = fi_cq_open(connection->domain, &(struct fi_cq_attr){ .wait_obj = FI_WAIT_UNSPEC, .format = FI_CQ_FORMAT_CONTEXT, .size = connection->info->tx_attr->size }, &connection->cq.tx, &connection->cq.tx);
 	res = fi_cq_open(connection->domain, &(struct fi_cq_attr){ .wait_obj = FI_WAIT_UNSPEC, .format = FI_CQ_FORMAT_CONTEXT, .size = connection->info->rx_attr->size }, &connection->cq.rx, &connection->cq.rx);
-	CHECK("Failed to create completion queue!");
+	CHECK(res, end, "Failed to create completion queue!");
 
 	res = fi_endpoint(connection->domain, connection->info, &connection->ep, NULL);
-	CHECK("Failed to open endpoint for connection!");
+	CHECK(res, end, "Failed to open endpoint for connection!");
 
 	res = fi_ep_bind(connection->ep, &connection->eq->fid, 0);
-	CHECK("Failed to bind event queue to endpoint!");
+	CHECK(res, end, "Failed to bind event queue to endpoint!");
 
 	res = fi_ep_bind(connection->ep, &connection->cq.tx->fid, FI_TRANSMIT);
-	CHECK("Failed to bind tx completion queue to endpoint!");
+	CHECK(res, end, "Failed to bind tx completion queue to endpoint!");
 
 	res = fi_ep_bind(connection->ep, &connection->cq.rx->fid, FI_RECV);
-	CHECK("Failed to bind rx completion queue to endpoint!");
+	CHECK(res, end, "Failed to bind rx completion queue to endpoint!");
 
 	res = fi_enable(connection->ep);
-	CHECK("Failed to enable connection!");
+	CHECK(res, end, "Failed to enable connection!");
 
 	connection->closed = FALSE;
 
@@ -745,7 +714,7 @@ j_network_connection_init_client(JConfiguration* configuration, JBackendType bac
 	socket_client = g_socket_client_new();
 	server = j_configuration_get_server(configuration, backend, index);
 	socket_connection = g_socket_client_connect_to_host(socket_client, server, j_configuration_get_port(configuration), NULL, &error);
-	G_CHECK("Failed to build gsocket connection to host");
+	CHECK_GERROR(error, end, "Failed to build gsocket connection to host");
 
 	if (socket_connection == NULL)
 	{
@@ -758,22 +727,22 @@ j_network_connection_init_client(JConfiguration* configuration, JBackendType bac
 	input_stream = g_io_stream_get_input_stream(G_IO_STREAM(socket_connection));
 
 	g_input_stream_read(input_stream, &jf_addr.addr_format, sizeof(jf_addr.addr_format), NULL, &error);
-	G_CHECK("Failed to read addr format from socket_connection!");
+	CHECK_GERROR(error, end, "Failed to read addr format from socket_connection!");
 	jf_addr.addr_format = ntohl(jf_addr.addr_format);
 
 	g_input_stream_read(input_stream, &jf_addr.addr_len, sizeof(jf_addr.addr_len), NULL, &error);
-	G_CHECK("Failed to read addr len from socket_connection!");
+	CHECK_GERROR(error, end, "Failed to read addr len from socket_connection!");
 	jf_addr.addr_len = ntohl(jf_addr.addr_len);
 
 	jf_addr.addr = g_malloc(jf_addr.addr_len);
 	g_input_stream_read(input_stream, jf_addr.addr, jf_addr.addr_len, NULL, &error);
-	G_CHECK("Failed to read addr from socket_connection!");
+	CHECK_GERROR(error, end, "Failed to read addr from socket_connection!");
 
 	g_input_stream_close(input_stream, NULL, &error);
-	G_CHECK("Failed to close input stream!");
+	CHECK_GERROR(error, end, "Failed to close input stream!");
 
 	g_io_stream_close(G_IO_STREAM(socket_connection), NULL, &error);
-	G_CHECK("Failed to close gsocket!");
+	CHECK_GERROR(error, end, "Failed to close gsocket!");
 
 	connection->fabric = j_network_fabric_init_client(configuration, &jf_addr);
 
@@ -785,14 +754,14 @@ j_network_connection_init_client(JConfiguration* configuration, JBackendType bac
 
 	connection->info = connection->fabric->info;
 
-	EXE(j_network_connection_init(connection), "Failed to initelze connection!");
+	EXE(j_network_connection_init(connection), end, "Failed to initelze connection!");
 
 	res = fi_connect(connection->ep, jf_addr.addr, NULL, 0);
-	CHECK("Failed to fire connection request!");
+	CHECK(res, end, "Failed to fire connection request!");
 
 	do
 	{
-		EXE(j_network_connection_sread_event(connection, 1, &event), "Failed to read event queue, waiting for CONNECTED signal!");
+		EXE(j_network_connection_sread_event(connection, 1, &event), end, "Failed to read event queue, waiting for CONNECTED signal!");
 	} while (event == J_CONNECTION_EVENT_TIMEOUT);
 
 	if (event != J_CONNECTION_EVENT_CONNECTED)
@@ -829,20 +798,20 @@ j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gcon
 	// send addr
 	output_stream = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
 	g_output_stream_write(output_stream, &addr->addr_format, sizeof(addr->addr_format), NULL, &error);
-	G_CHECK("Failed to write addr_format to stream!");
+	CHECK_GERROR(error, end, "Failed to write addr_format to stream!");
 
 	g_output_stream_write(output_stream, &addr->addr_len, sizeof(addr->addr_len), NULL, &error);
-	G_CHECK("Failed to write addr_len to stream!");
+	CHECK_GERROR(error, end, "Failed to write addr_len to stream!");
 
 	g_output_stream_write(output_stream, addr->addr, ntohl(addr->addr_len), NULL, &error);
-	G_CHECK("Failed to write addr to stream!");
+	CHECK_GERROR(error, end, "Failed to write addr to stream!");
 
 	g_output_stream_close(output_stream, NULL, &error);
-	G_CHECK("Failed to close output stream!");
+	CHECK_GERROR(error, end, "Failed to close output stream!");
 
 	do
 	{
-		EXE(j_network_fabric_sread_event(fabric, 2, &event, &request), "Failed to wait for connection request");
+		EXE(j_network_fabric_sread_event(fabric, 2, &event, &request), end, "Failed to wait for connection request");
 	} while (event == J_FABRIC_EVENT_TIMEOUT);
 
 	if (event != J_FABRIC_EVENT_CONNECTION_REQUEST)
@@ -854,12 +823,12 @@ j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gcon
 	connection->fabric = fabric;
 	connection->info = request.info;
 
-	EXE(j_network_connection_init(connection), "Failed to initelize connection server side!");
+	EXE(j_network_connection_init(connection), end, "Failed to initelize connection server side!");
 
 	res = fi_accept(connection->ep, NULL, 0);
-	CHECK("Failed to accept connection!");
+	CHECK(res, end, "Failed to accept connection!");
 
-	EXE(j_network_connection_sread_event(connection, 2, &con_event), "Failed to verify connection!");
+	EXE(j_network_connection_sread_event(connection, 2, &con_event), end, "Failed to verify connection!");
 
 	if (con_event != J_CONNECTION_EVENT_CONNECTED)
 	{
@@ -894,7 +863,7 @@ j_network_connection_send(JNetworkConnection* connection, gpointer data, gsize d
 			res = fi_inject(connection->ep, data, data_len, 0);
 		} while (res == -FI_EAGAIN);
 
-		CHECK("Failed to inject data!");
+		CHECK(res, end, "Failed to inject data!");
 
 		ret = TRUE;
 		goto end;
@@ -914,7 +883,7 @@ j_network_connection_send(JNetworkConnection* connection, gpointer data, gsize d
 			res = fi_send(connection->ep, segment, size, fi_mr_desc(connection->memory.mr), 0, context);
 		} while (res == -FI_EAGAIN);
 
-		CHECK("Failed to initelize sending!");
+		CHECK(res, end, "Failed to initelize sending!");
 
 		connection->memory.used += size;
 
@@ -958,7 +927,7 @@ j_network_connection_recv(JNetworkConnection* connection, gsize data_len, gpoint
 	size = data_len + connection->memory.rx_prefix_size;
 
 	res = fi_recv(connection->ep, segment, size, connection->memory.active ? fi_mr_desc(connection->memory.mr) : NULL, 0, segment);
-	CHECK("Failed to initelized receiving!");
+	CHECK(res, end, "Failed to initelized receiving!");
 
 	if (connection->memory.active)
 	{
@@ -1037,7 +1006,7 @@ j_network_connection_wait_for_completion(JNetworkConnection* connection)
 			}
 
 			res = fi_cq_readerr(rx ? connection->cq.rx : connection->cq.tx, &err_entry, 0);
-			CHECK("Failed to read error of cq!");
+			CHECK(res, end, "Failed to read error of cq!");
 
 			g_warning("Failed to read completion queue\nWidth:\t%s", fi_cq_strerror(rx ? connection->cq.rx : connection->cq.tx, err_entry.prov_errno, err_entry.err_data, NULL, 0));
 
@@ -1045,7 +1014,7 @@ j_network_connection_wait_for_completion(JNetworkConnection* connection)
 		}
 		else
 		{
-			CHECK("Failed to read completion queue!");
+			CHECK(res, end, "Failed to read completion queue!");
 		}
 
 		for (i = 0; i <= connection->running_actions.msg_len; i++)
@@ -1054,7 +1023,7 @@ j_network_connection_wait_for_completion(JNetworkConnection* connection)
 			{
 				// If there is no match -> it's an rma transafer -> context = memory region
 				res = fi_close(&((struct fid_mr*)entry.op_context)->fid);
-				CHECK("Failed to free receiving memory!");
+				CHECK(res, end, "Failed to free receiving memory!");
 
 				connection->running_actions.rma_len--;
 			}
@@ -1093,7 +1062,7 @@ j_network_connection_rma_register(JNetworkConnection* connection, gconstpointer 
 	gint res;
 
 	res = fi_mr_reg(connection->domain, data, data_len, FI_REMOTE_READ, 0, connection->next_key, 0, &handle->memory_region, NULL);
-	CHECK("Failed to register memory region!");
+	CHECK(res, end, "Failed to register memory region!");
 
 	handle->addr = (connection->info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) ? (guint64)data : 0;
 	handle->size = data_len;
@@ -1115,7 +1084,7 @@ j_network_connection_rma_unregister(JNetworkConnection* connection, JNetworkConn
 	connection->next_key = KEY_MIN;
 
 	res = fi_close(&handle->memory_region->fid);
-	CHECK("Failed to unregistrer rma memory!");
+	CHECK(res, end, "Failed to unregistrer rma memory!");
 
 	return TRUE;
 
@@ -1149,7 +1118,7 @@ j_network_connection_rma_read(JNetworkConnection* connection, const JNetworkConn
 	static unsigned key = 0;
 
 	res = fi_mr_reg(connection->domain, data, memoryID->size, FI_READ, 0, ++key, 0, &mr, 0);
-	CHECK("Failed to register receiving memory!");
+	CHECK(res, end, "Failed to register receiving memory!");
 
 	do
 	{
@@ -1162,7 +1131,7 @@ j_network_connection_rma_read(JNetworkConnection* connection, const JNetworkConn
 		}
 	} while (res == -FI_EAGAIN);
 
-	CHECK("Failed to initiate reading");
+	CHECK(res, end, "Failed to initiate reading");
 
 	connection->running_actions.rma_len++;
 
@@ -1187,29 +1156,29 @@ j_network_connection_fini(JNetworkConnection* connection)
 	gint res;
 
 	res = fi_shutdown(connection->ep, 0);
-	CHECK("failed to send shutdown signal");
+	CHECK(res, end, "failed to send shutdown signal");
 
 	if (connection->memory.active)
 	{
 		res = fi_close(&connection->memory.mr->fid);
-		CHECK("failed to free memory region!");
+		CHECK(res, end, "failed to free memory region!");
 		g_free(connection->memory.buffer);
 	}
 
 	res = fi_close(&connection->ep->fid);
-	CHECK("failed to close endpoint!");
+	CHECK(res, end, "failed to close endpoint!");
 
 	res = fi_close(&connection->cq.tx->fid);
-	CHECK("failed to close tx cq!");
+	CHECK(res, end, "failed to close tx cq!");
 
 	res = fi_close(&connection->cq.rx->fid);
-	CHECK("failed to close rx cq!");
+	CHECK(res, end, "failed to close rx cq!");
 
 	res = fi_close(&connection->eq->fid);
-	CHECK("failed to close event queue!");
+	CHECK(res, end, "failed to close event queue!");
 
 	res = fi_close(&connection->domain->fid);
-	CHECK("failed to close domain!");
+	CHECK(res, end, "failed to close domain!");
 
 	if (connection->fabric->con_side == JF_CLIENT)
 	{

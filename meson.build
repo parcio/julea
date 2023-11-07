@@ -336,6 +336,7 @@ julea_srcs = files([
 	'lib/core/distribution/single-server.c',
 	'lib/core/distribution/weighted.c',
 	'lib/core/jbackend.c',
+    'lib/core/jmanagedbackends.c',
 	'lib/core/jbackend-operation.c',
 	'lib/core/jbackground-operation.c',
 	'lib/core/jbatch.c',
@@ -742,6 +743,7 @@ endif
 julea_client_hdrs = {
 	'core': files([
 		'include/core/jbackend.h',
+        'include/core/jmanagedbackends.h',
 		'include/core/jbackend-operation.h',
 		'include/core/jbackground-operation.h',
 		'include/core/jbatch.h',
