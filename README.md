@@ -1,8 +1,8 @@
 # JULEA
 
-[![CI](https://github.com/julea-io/julea/workflows/CI/badge.svg)](https://github.com/julea-io/julea/actions/workflows/ci.yml)
-[![Dependencies](https://github.com/julea-io/julea/workflows/Dependencies/badge.svg)](https://github.com/julea-io/julea/actions/workflows/dependencies.yml)
-[![Containers](https://github.com/julea-io/julea/workflows/Containers/badge.svg)](https://github.com/julea-io/julea/actions/workflows/containers.yml)
+[![CI](https://github.com/parcio/julea/workflows/CI/badge.svg)](https://github.com/parcio/julea/actions/workflows/ci.yml)
+[![Dependencies](https://github.com/parcio/julea/workflows/Dependencies/badge.svg)](https://github.com/parcio/julea/actions/workflows/dependencies.yml)
+[![Containers](https://github.com/parcio/julea/workflows/Containers/badge.svg)](https://github.com/parcio/julea/actions/workflows/containers.yml)
 
 JULEA is a flexible storage framework that allows offering arbitrary I/O interfaces to applications.
 To be able to rapidly prototype new approaches, it offers object, key-value and database backends.
@@ -13,14 +13,14 @@ It runs completely in user space, which eases development and debugging.
 Its goal is to provide a solid foundation for storage research and teaching.
 
 For more information, please refer to the [documentation](doc/README.md).
-There is also a separate [API documentation](https://julea-io.github.io/julea/) available.
+There is also a separate [API documentation](https://parcio.github.io/julea/) available.
 
 ## Quick Start
 
 To use JULEA, first clone the Git repository and enter the directory.
 
 ```console
-$ git clone https://github.com/julea-io/julea.git
+$ git clone https://github.com/parcio/julea.git
 $ cd julea
 ```
 

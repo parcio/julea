@@ -375,7 +375,7 @@ pkg_config.generate(julea_lib,
 	extra_cflags: sanitize_cflags,
 	subdirs: 'julea',
 	requires_private: [glib_dep, gio_dep, gmodule_dep, gthread_dep, gobject_dep, libbson_dep, libfabric_dep],
-	url: 'https://github.com/julea-io/julea',
+	url: 'https://github.com/parcio/julea',
 )
 
 julea_client_srcs = {
@@ -479,7 +479,7 @@ foreach client: julea_clients
 			extra_cflags: sanitize_cflags,
 			subdirs: 'julea',
 			requires: julea_lib,
-			url: 'https://github.com/julea-io/julea',
+			url: 'https://github.com/parcio/julea',
 		)
 	endif
 endforeach

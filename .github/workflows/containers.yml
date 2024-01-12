@@ -55,4 +55,4 @@ jobs:
           context: containers
           file: containers/ubuntu-22.04-dev
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/julea-io/ubuntu-dev:22.04
+          tags: ghcr.io/parcio/ubuntu-dev:22.04
