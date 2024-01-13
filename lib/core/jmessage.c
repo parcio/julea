@@ -42,23 +42,6 @@
  * @{
  **/
 
-enum JMessageSemantics
-{
-	J_MESSAGE_SEMANTICS_ATOMICITY_BATCH = 1 << 0,
-	J_MESSAGE_SEMANTICS_ATOMICITY_OPERATION = 1 << 1,
-	J_MESSAGE_SEMANTICS_ATOMICITY_NONE = 1 << 2,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_IMMEDIATE = 1 << 3,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_SESSION = 1 << 4,
-	J_MESSAGE_SEMANTICS_CONSISTENCY_EVENTUAL = 1 << 5,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_STORAGE = 1 << 6,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_NETWORK = 1 << 7,
-	J_MESSAGE_SEMANTICS_PERSISTENCY_NONE = 1 << 8,
-	J_MESSAGE_SEMANTICS_SECURITY_STRICT = 1 << 9,
-	J_MESSAGE_SEMANTICS_SECURITY_NONE = 1 << 10
-};
-
-typedef enum JMessageSemantics JMessageSemantics;
-
 /**
  * Additional message data.
  **/
@@ -756,36 +739,9 @@ j_message_set_semantics(JMessage* message, JSemantics* semantics)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	guint32 serialized_semantics = 0;
-
 	g_return_if_fail(message != NULL);
-	g_return_if_fail(semantics != NULL);
 
-#define SERIALIZE_SEMANTICS(type, key) \
-	{ \
-		gint tmp; \
-		tmp = j_semantics_get(semantics, J_SEMANTICS_##type); \
-		if (tmp == J_SEMANTICS_##type##_##key) \
-		{ \
-			serialized_semantics |= J_MESSAGE_SEMANTICS_##type##_##key; \
-		} \
-	}
-
-	SERIALIZE_SEMANTICS(ATOMICITY, BATCH)
-	SERIALIZE_SEMANTICS(ATOMICITY, OPERATION)
-	SERIALIZE_SEMANTICS(ATOMICITY, NONE)
-	SERIALIZE_SEMANTICS(CONSISTENCY, IMMEDIATE)
-	SERIALIZE_SEMANTICS(CONSISTENCY, SESSION)
-	SERIALIZE_SEMANTICS(CONSISTENCY, EVENTUAL)
-	SERIALIZE_SEMANTICS(PERSISTENCY, STORAGE)
-	SERIALIZE_SEMANTICS(PERSISTENCY, NETWORK)
-	SERIALIZE_SEMANTICS(PERSISTENCY, NONE)
-	SERIALIZE_SEMANTICS(SECURITY, STRICT)
-	SERIALIZE_SEMANTICS(SECURITY, NONE)
-
-#undef SERIALIZE_SEMANTICS
-
-	message->header.semantics = GUINT32_TO_LE(serialized_semantics);
+	message->header.semantics = j_semantics_serialize(semantics);
 }
 
 JSemantics*
@@ -793,39 +749,9 @@ j_message_get_semantics(JMessage* message)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	JSemantics* semantics;
-
-	guint32 serialized_semantics;
-
 	g_return_val_if_fail(message != NULL, NULL);
 
-	serialized_semantics = message->header.semantics;
-	serialized_semantics = GUINT32_FROM_LE(serialized_semantics);
-
-	// If serialized_semantics is 0, we will end up with the default semantics.
-	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
-
-#define DESERIALIZE_SEMANTICS(type, key) \
-	if (serialized_semantics & J_MESSAGE_SEMANTICS_##type##_##key) \
-	{ \
-		j_semantics_set(semantics, J_SEMANTICS_##type, J_SEMANTICS_##type##_##key); \
-	}
-
-	DESERIALIZE_SEMANTICS(ATOMICITY, BATCH)
-	DESERIALIZE_SEMANTICS(ATOMICITY, OPERATION)
-	DESERIALIZE_SEMANTICS(ATOMICITY, NONE)
-	DESERIALIZE_SEMANTICS(CONSISTENCY, IMMEDIATE)
-	DESERIALIZE_SEMANTICS(CONSISTENCY, SESSION)
-	DESERIALIZE_SEMANTICS(CONSISTENCY, EVENTUAL)
-	DESERIALIZE_SEMANTICS(PERSISTENCY, STORAGE)
-	DESERIALIZE_SEMANTICS(PERSISTENCY, NETWORK)
-	DESERIALIZE_SEMANTICS(PERSISTENCY, NONE)
-	DESERIALIZE_SEMANTICS(SECURITY, STRICT)
-	DESERIALIZE_SEMANTICS(SECURITY, NONE)
-
-#undef DESERIALIZE_SEMANTICS
-
-	return semantics;
+	return j_semantics_deserialize(message->header.semantics);
 }
 
 /**

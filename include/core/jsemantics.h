@@ -264,7 +264,35 @@ void j_semantics_set(JSemantics* semantics, JSemanticsType key, gint value);
  *
  * \return The aspect's value.
  **/
-gint j_semantics_get(JSemantics* semantics, JSemanticsType key);
+gint j_semantics_get(const JSemantics* semantics, JSemanticsType key);
+
+/**
+ * Encodes semantics in a guint32
+ *
+ * \code
+ * JSemantics* semantics;
+ * ...
+ * guint32 serial_semantics = j_semantics_serialize(semantics);
+ * JSemantics* simular_semantics = j_semantics_deserialize(serial_semantics);
+ * \encode
+ *
+ * \param semnatics The Semantics
+ *
+ * \return serialized semantics as LE encoded guint32
+ * \retval 0 if no semantics are given eg (semantics == NULL)
+ **/
+guint32 j_semantics_serialize(const JSemantics* semantics);
+
+/**
+ * Decode serialized semantics, and create new Semantics
+ *
+ * For a example see j_semantics_serialize()
+ *
+ * \param serial_semantics serialized semantics, created with j_semantics_serialize()
+ *
+ * \return new created JSemantics
+ **/
+JSemantics* j_semantics_deserialize(guint32 serial_semantics);
 
 /**
  * @}

@@ -148,6 +148,7 @@ struct JConfiguration
 	guint64 stripe_size;
 
 	gchar* checksum;
+	guint32 uid;
 
 	/**
 	 * The reference count.
@@ -394,6 +395,12 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		configuration->stripe_size = 4 * 1024 * 1024;
 	}
 
+	{ // uid should be unique per process in one application
+		GRand* rand = g_rand_new();
+		configuration->uid = g_rand_int(rand);
+		g_rand_free(rand);
+	}
+
 	key_file_str = g_key_file_to_data(key_file, NULL, NULL);
 	configuration->checksum = g_compute_checksum_for_string(G_CHECKSUM_SHA512, key_file_str, -1);
 
@@ -614,6 +621,16 @@ j_configuration_get_checksum(JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->checksum;
+}
+
+guint32
+j_configuration_get_uid(JConfiguration* configuration)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->uid;
 }
 
 /**

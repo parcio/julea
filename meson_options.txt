@@ -1,0 +1,1 @@
+option('julea_trace', type: 'boolean', value: false)

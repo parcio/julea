@@ -296,8 +296,13 @@ julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('l
 if get_option('debug')
 	julea_conf.set('_FORTIFY_SOURCE', 2)
 	julea_conf.set('JULEA_DEBUG', 1)
+	julea_conf.set('JULEA_TRACE', 1)
 	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 	#julea_conf.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
+else
+	if get_option('julea_trace')
+		julea_conf.set('JULEA_TRACE', 1)
+	endif
 endif
 
 if hdf_dep.found()
@@ -688,6 +693,12 @@ executable('julea-config', 'tools/config.c',
 )
 
 executable('julea-statistics', 'tools/statistics.c',
+	dependencies: common_deps + [julea_dep],
+	include_directories: julea_incs,
+	install: true,
+)
+
+executable('julea-access-replay', 'tools/access_replay.c',
 	dependencies: common_deps + [julea_dep],
 	include_directories: julea_incs,
 	install: true,
