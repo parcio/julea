@@ -68,6 +68,7 @@ MODE="$1"
 #export G_MESSAGES_DEBUG=JULEA
 
 set_path
+set_python_path
 set_library_path
 set_backend_path
 
