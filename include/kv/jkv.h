@@ -48,7 +48,7 @@ typedef struct JKV JKV;
 /**
  * A callback for j_kv_get_callback.
  *
- * The callback will receive a pointer to the data (must be freed by the caller), the data's length and a pointer to optional user-provided data.
+ * The callback will receive a pointer to the value (must be freed by the caller), the value's length and a pointer to optional user-provided data.
  */
 typedef void (*JKVGetFunc)(gpointer, guint32, gpointer);
 
@@ -158,7 +158,7 @@ void j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch);
  * \endcode
  *
  * \param kv        A key-value pair.
- * \param func      The callback function. Will be called once the KV is received.
+ * \param func      The callback function. Will be called even if no KV is found (with value == NULL and len == 0).
  * \param data      User defined data which will be passed to the callback function.
  * \param batch     A batch.
  **/

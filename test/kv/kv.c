@@ -159,7 +159,7 @@ test_kv_get(void)
 	g_assert_false(ret);
 
 	g_assert_null(get_value);
-	g_assert_cmpuint(get_len, ==, 42);
+	g_assert_cmpuint(get_len, ==, 0);
 
 	j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
 	ret = j_batch_execute(batch);
@@ -178,10 +178,11 @@ test_kv_get(void)
 	J_TEST_TRAP_END;
 }
 
-static guint num_callbacks = 0;
+static guint num_callbacks_exists = 0;
+static guint num_callbacks_not_exists = 0;
 
 static void
-get_callback(gpointer value, guint32 length, gpointer data)
+get_callback_exists(gpointer value, guint32 length, gpointer data)
 {
 	g_assert_cmpstr(value, ==, "kv-value");
 	g_assert_cmpuint(length, ==, strlen("kv-value") + 1);
@@ -189,7 +190,17 @@ get_callback(gpointer value, guint32 length, gpointer data)
 
 	g_free(value);
 
-	num_callbacks++;
+	num_callbacks_exists++;
+}
+
+static void
+get_callback_not_exists(gpointer value, guint32 length, gpointer data)
+{
+	g_assert_cmpstr(value, ==, NULL);
+	g_assert_cmpuint(length, ==, 0);
+	g_assert_null(data);
+
+	num_callbacks_not_exists++;
 }
 
 static void
@@ -207,7 +218,7 @@ test_kv_get_callback(void)
 	kv = j_kv_new("test", "test-kv-get-callback");
 	g_assert_nonnull(kv);
 
-	j_kv_get_callback(kv, get_callback, NULL, batch);
+	j_kv_get_callback(kv, get_callback_not_exists, NULL, batch);
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);
 
@@ -215,7 +226,7 @@ test_kv_get_callback(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	j_kv_get_callback(kv, get_callback, NULL, batch);
+	j_kv_get_callback(kv, get_callback_exists, NULL, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
@@ -223,7 +234,8 @@ test_kv_get_callback(void)
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
 
-	g_assert_cmpuint(num_callbacks, ==, 1);
+	g_assert_cmpuint(num_callbacks_exists, ==, 1);
+	g_assert_cmpuint(num_callbacks_not_exists, ==, 1);
 	J_TEST_TRAP_END;
 }
 

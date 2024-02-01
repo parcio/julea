@@ -192,13 +192,19 @@ j_item_get_callback(gpointer value, guint32 len, gpointer data_)
 	JItemGetData* data = data_;
 	bson_t tmp[1];
 
+	if (value == NULL && len == 0)
+	{
+		goto end;
+	}
+
 	bson_init_static(tmp, value, len);
 	*(data->item) = j_item_new_from_bson(data->collection, tmp);
 
+	g_free(value);
+
+end:
 	j_collection_unref(data->collection);
 	g_slice_free(JItemGetData, data);
-
-	g_free(value);
 }
 
 void

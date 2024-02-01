@@ -136,6 +136,11 @@ j_collection_get_callback(gpointer value, guint32 len, gpointer data)
 	JCollection** collection = data;
 	bson_t tmp[1];
 
+	if (value == NULL && len == 0)
+	{
+		return;
+	}
+
 	bson_init_static(tmp, value, len);
 	*collection = j_collection_new_from_bson(tmp);
 

@@ -481,6 +481,7 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 		while (j_list_iterator_next(iter))
 		{
 			JKVOperation* kop = j_list_iterator_get(iter);
+			gconstpointer data = NULL;
 			guint32 len;
 
 			len = j_message_get_4(reply);
@@ -488,31 +489,30 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 
 			if (len > 0)
 			{
-				gconstpointer data;
-
 				data = j_message_get_n(reply, len);
+			}
 
-				if (kop->get.func != NULL)
-				{
-					gpointer value;
+			// We need to call the callback even if the key is not found
+			if (kop->get.func != NULL)
+			{
+				gpointer value;
 
-					// data belongs to the message, create a copy for the callback
+				// data belongs to the message, create a copy for the callback
 #if GLIB_CHECK_VERSION(2, 68, 0)
-					value = g_memdup2(data, len);
+				value = g_memdup2(data, len);
 #else
-					value = g_memdup(data, len);
+				value = g_memdup(data, len);
 #endif
-					kop->get.func(value, len, kop->get.data);
-				}
-				else
-				{
+				kop->get.func(value, len, kop->get.data);
+			}
+			else
+			{
 #if GLIB_CHECK_VERSION(2, 68, 0)
-					*(kop->get.value) = g_memdup2(data, len);
+				*(kop->get.value) = g_memdup2(data, len);
 #else
-					*(kop->get.value) = g_memdup(data, len);
+				*(kop->get.value) = g_memdup(data, len);
 #endif
-					*(kop->get.value_len) = len;
-				}
+				*(kop->get.value_len) = len;
 			}
 		}
 
