@@ -444,22 +444,21 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
+			gpointer value = NULL;
+			guint32 len = 0;
+
+			// j_backend_kv_get returns a new copy, pass it along
+			ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, &value, &len) && ret;
+
+			// We need to call the callback even if the key is not found
 			if (kop->get.func != NULL)
 			{
-				gpointer value;
-				guint32 len;
-
-				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, &value, &len) && ret;
-
-				if (ret)
-				{
-					// j_backend_kv_get returns a new copy, pass it along
-					kop->get.func(value, len, kop->get.data);
-				}
+				kop->get.func(value, len, kop->get.data);
 			}
 			else
 			{
-				ret = j_backend_kv_get(kv_backend, kv_batch, kop->get.kv->key, kop->get.value, kop->get.value_len) && ret;
+				*(kop->get.value) = value;
+				*(kop->get.value_len) = len;
 			}
 		}
 	}
@@ -481,37 +480,34 @@ j_kv_get_exec(JList* operations, JSemantics* semantics)
 		while (j_list_iterator_next(iter))
 		{
 			JKVOperation* kop = j_list_iterator_get(iter);
-			gconstpointer data = NULL;
 			guint32 len;
+			gpointer value = NULL;
 
 			len = j_message_get_4(reply);
 			ret = (len > 0) && ret;
 
 			if (len > 0)
 			{
+				gconstpointer data;
+
 				data = j_message_get_n(reply, len);
-			}
 
-			// We need to call the callback even if the key is not found
-			if (kop->get.func != NULL)
-			{
-				gpointer value;
-
-				// data belongs to the message, create a copy for the callback
+				// data belongs to the message, create a copy
 #if GLIB_CHECK_VERSION(2, 68, 0)
 				value = g_memdup2(data, len);
 #else
 				value = g_memdup(data, len);
 #endif
+			}
+
+			// We need to call the callback even if the key is not found
+			if (kop->get.func != NULL)
+			{
 				kop->get.func(value, len, kop->get.data);
 			}
 			else
 			{
-#if GLIB_CHECK_VERSION(2, 68, 0)
-				*(kop->get.value) = g_memdup2(data, len);
-#else
-				*(kop->get.value) = g_memdup(data, len);
-#endif
+				*(kop->get.value) = value;
 				*(kop->get.value_len) = len;
 			}
 		}
