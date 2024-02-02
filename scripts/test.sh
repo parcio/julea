@@ -33,9 +33,6 @@ usage ()
 	exit 1
 }
 
-#export G_SLICE=always-malloc
-export G_SLICE=debug-blocks
-
 set_path
 set_library_path
 set_backend_path

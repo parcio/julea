@@ -229,7 +229,7 @@ j_benchmark_run_one(BenchmarkRun* run)
 		g_print("%s%f\n", opt_machine_separator, elapsed_total);
 	}
 
-	if (run->iterations > 1000 * (guint)opt_duration)
+	if (opt_duration > 0 && run->iterations / (guint)opt_duration > 1000)
 	{
 		g_warning("Benchmark %s performed %d iteration(s) in a duration of %d second(s), consider adjusting iteration workload.", run->name, run->iterations, opt_duration);
 	}
@@ -331,9 +331,9 @@ main(int argc, char** argv)
 
 	g_option_context_free(context);
 
-	if (opt_duration <= 0)
+	if (opt_duration < 0)
 	{
-		g_printerr("Error: Duration has to be greater than 0\n");
+		g_printerr("Error: Duration has to be at least 0\n");
 
 		return 1;
 	}

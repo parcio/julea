@@ -30,6 +30,7 @@ pkg_config = import('pkgconfig')
 
 if get_option('debug')
 	args = cc.get_supported_arguments([
+		'-fno-omit-frame-pointer',
 		'-fstack-protector-strong',
 		'-Waggregate-return',
 		'-Wcast-align=strict',
