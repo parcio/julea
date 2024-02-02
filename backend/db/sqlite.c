@@ -467,7 +467,7 @@ backend_init(gchar const* _path, gpointer* backend_data)
 
 	JSQLiteData* bd;
 
-	bd = g_slice_new(JSQLiteData);
+	bd = g_new(JSQLiteData, 1);
 	bd->path = g_strdup(_path);
 	bd->db = NULL;
 
@@ -501,7 +501,7 @@ backend_fini(gpointer backend_data)
 	}
 
 	g_free(bd->path);
-	g_slice_free(JSQLiteData, bd);
+	g_free(bd);
 }
 
 static JBackend sqlite_backend = {

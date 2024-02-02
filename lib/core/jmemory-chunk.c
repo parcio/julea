@@ -66,7 +66,7 @@ j_memory_chunk_new(guint64 size)
 
 	g_return_val_if_fail(size > 0, NULL);
 
-	cache = g_slice_new(JMemoryChunk);
+	cache = g_new(JMemoryChunk, 1);
 	cache->size = size;
 	cache->data = g_malloc(cache->size);
 	cache->current = cache->data;
@@ -86,7 +86,7 @@ j_memory_chunk_free(JMemoryChunk* cache)
 		g_free(cache->data);
 	}
 
-	g_slice_free(JMemoryChunk, cache);
+	g_free(cache);
 }
 
 gpointer

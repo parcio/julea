@@ -41,7 +41,7 @@ j_operation_new(void)
 
 	JOperation* operation;
 
-	operation = g_slice_new(JOperation);
+	operation = g_new(JOperation, 1);
 	operation->key = NULL;
 	operation->data = NULL;
 	operation->exec_func = NULL;
@@ -61,7 +61,7 @@ j_operation_free(JOperation* operation)
 		operation->free_func(operation->data);
 	}
 
-	g_slice_free(JOperation, operation);
+	g_free(operation);
 }
 
 /**

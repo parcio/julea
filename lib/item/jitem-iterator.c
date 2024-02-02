@@ -57,7 +57,7 @@ j_item_iterator_new(JCollection* collection)
 
 	prefix = g_strdup_printf("%s/", j_collection_get_name(collection));
 
-	iterator = g_slice_new(JItemIterator);
+	iterator = g_new(JItemIterator, 1);
 	iterator->collection = j_collection_ref(collection);
 	iterator->iterator = j_kv_iterator_new("items", prefix);
 
@@ -72,7 +72,7 @@ j_item_iterator_free(JItemIterator* iterator)
 	j_kv_iterator_free(iterator->iterator);
 	j_collection_unref(iterator->collection);
 
-	g_slice_free(JItemIterator, iterator);
+	g_free(iterator);
 }
 
 gboolean

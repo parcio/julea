@@ -84,7 +84,7 @@ j_dir_iterator_new(gchar const* path)
 		return NULL;
 	}
 
-	iterator = g_slice_new(JDirIterator);
+	iterator = g_new(JDirIterator, 1);
 	iterator->dirs = g_array_new(FALSE, FALSE, sizeof(GDir*));
 	iterator->paths = g_array_new(FALSE, FALSE, sizeof(gchar*));
 	iterator->current = NULL;
@@ -127,7 +127,7 @@ j_dir_iterator_free(JDirIterator* iterator)
 
 	g_free(iterator->root);
 
-	g_slice_free(JDirIterator, iterator);
+	g_free(iterator);
 }
 
 gboolean

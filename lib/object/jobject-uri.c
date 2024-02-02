@@ -77,7 +77,7 @@ struct JObjectURI
  * \code
  * JObjectURI* uri;
  *
- * uri = g_slice_new(JObjectURI);
+ * uri = g_new(JObjectURI, 1);
  *
  * j_object_uri_parse(uri, "julea://foo/bar");
  * \endcode
@@ -221,7 +221,7 @@ j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme)
 
 	JObjectURI* uri;
 
-	uri = g_slice_new(JObjectURI);
+	uri = g_new(JObjectURI, 1);
 
 	uri->scheme = scheme;
 	uri->index = 0;
@@ -232,7 +232,7 @@ j_object_uri_new(gchar const* uri_, JObjectURIScheme scheme)
 
 	if (!j_object_uri_parse(uri, uri_))
 	{
-		g_slice_free(JObjectURI, uri);
+		g_free(uri);
 
 		return NULL;
 	}
@@ -260,7 +260,7 @@ j_object_uri_free(JObjectURI* uri)
 	g_free(uri->namespace);
 	g_free(uri->name);
 
-	g_slice_free(JObjectURI, uri);
+	g_free(uri);
 }
 
 guint32

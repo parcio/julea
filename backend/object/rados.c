@@ -57,7 +57,7 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 
 	g_return_val_if_fail(ret == 0, FALSE);
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 
 	*backend_object = bo;
@@ -79,7 +79,7 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 
 	g_return_val_if_fail(ret == 0, FALSE);
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 
 	*backend_object = bo;
@@ -99,7 +99,7 @@ backend_delete(gpointer backend_data, gpointer backend_object)
 	j_trace_file_end(bo->path, J_TRACE_FILE_DELETE, 0, 0);
 
 	g_free(bo->path);
-	g_slice_free(JBackendObject, bo);
+	g_free(bo);
 
 	return (ret == 0 ? TRUE : FALSE);
 }
@@ -115,7 +115,7 @@ backend_close(gpointer backend_data, gpointer backend_object)
 	j_trace_file_end(bo->path, J_TRACE_FILE_CLOSE, 0, 0);
 
 	g_free(bo->path);
-	g_slice_free(JBackendObject, bo);
+	g_free(bo);
 
 	return TRUE;
 }
@@ -221,7 +221,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	   e.g.: /etc/ceph/ceph.conf:data */
 	split = g_strsplit(path, ":", 0);
 
-	bd = g_slice_new(JBackendData);
+	bd = g_new(JBackendData, 1);
 	bd->backend_config = g_strdup(split[0]);
 	bd->backend_pool = g_strdup(split[1]);
 	bd->backend_connection = NULL;
@@ -272,7 +272,7 @@ backend_fini(gpointer backend_data)
 	/* Free memory */
 	g_free(bd->backend_config);
 	g_free(bd->backend_pool);
-	g_slice_free(JBackendData, bd);
+	g_free(bd);
 }
 
 static JBackend rados_backend = {

@@ -92,7 +92,7 @@ j_collection_unref(JCollection* collection)
 
 		g_free(collection->name);
 
-		g_slice_free(JCollection, collection);
+		g_free(collection);
 	}
 }
 
@@ -188,7 +188,7 @@ j_collection_new(gchar const* name)
 	: m_initialized(false),
 	*/
 
-	collection = g_slice_new(JCollection);
+	collection = g_new(JCollection, 1);
 	bson_oid_init(&(collection->id), bson_context_get_default());
 	collection->name = g_strdup(name);
 	collection->credentials = j_credentials_new();
@@ -210,7 +210,7 @@ j_collection_new_from_bson(bson_t const* b)
 
 	g_return_val_if_fail(b != NULL, NULL);
 
-	collection = g_slice_new(JCollection);
+	collection = g_new(JCollection, 1);
 	collection->name = NULL;
 	collection->credentials = j_credentials_new();
 	collection->ref_count = 1;

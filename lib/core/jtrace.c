@@ -159,7 +159,7 @@ j_trace_thread_new(GThread* thread)
 		return NULL;
 	}
 
-	trace_thread = g_slice_new(JTraceThread);
+	trace_thread = g_new(JTraceThread, 1);
 	trace_thread->function_depth = 0;
 	trace_thread->stack = g_array_new(FALSE, FALSE, sizeof(JTraceStack));
 
@@ -219,7 +219,7 @@ j_trace_thread_free(JTraceThread* trace_thread)
 
 	g_free(trace_thread->thread_name);
 	g_array_free(trace_thread->stack, TRUE);
-	g_slice_free(JTraceThread, trace_thread);
+	g_free(trace_thread);
 }
 
 /**
@@ -524,7 +524,7 @@ j_trace_enter(gchar const* name, gchar const* format, ...)
 
 	timestamp = g_get_real_time();
 
-	trace = g_slice_new(JTrace);
+	trace = g_new(JTrace, 1);
 	trace->name = g_strdup(name);
 	trace->enter_time = timestamp;
 
@@ -703,7 +703,7 @@ j_trace_leave(JTrace* trace)
 
 end:
 	g_free(trace->name);
-	g_slice_free(JTrace, trace);
+	g_free(trace);
 }
 
 void

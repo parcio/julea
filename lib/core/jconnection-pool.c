@@ -76,7 +76,7 @@ j_connection_pool_init(JConfiguration* configuration)
 
 	g_return_if_fail(j_connection_pool == NULL);
 
-	pool = g_slice_new(JConnectionPool);
+	pool = g_new(JConnectionPool, 1);
 	pool->configuration = j_configuration_ref(configuration);
 	pool->object_len = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	pool->object_queues = g_new(JConnectionPoolQueue, pool->object_len);
@@ -164,7 +164,7 @@ j_connection_pool_fini(void)
 	g_free(pool->kv_queues);
 	g_free(pool->db_queues);
 
-	g_slice_free(JConnectionPool, pool);
+	g_free(pool);
 }
 
 static GSocketConnection*

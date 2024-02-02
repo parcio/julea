@@ -73,7 +73,7 @@ j_list_new(JListFreeFunc free_func)
 
 	JList* list;
 
-	list = g_slice_new(JList);
+	list = g_new(JList, 1);
 	list->head = NULL;
 	list->tail = NULL;
 	list->length = 0;
@@ -106,7 +106,7 @@ j_list_unref(JList* list)
 	{
 		j_list_delete_all(list);
 
-		g_slice_free(JList, list);
+		g_free(list);
 	}
 }
 
@@ -130,7 +130,7 @@ j_list_append(JList* list, gpointer data)
 	g_return_if_fail(list != NULL);
 	g_return_if_fail(data != NULL);
 
-	element = g_slice_new(JListElement);
+	element = g_new(JListElement, 1);
 	element->next = NULL;
 	element->data = data;
 
@@ -159,7 +159,7 @@ j_list_prepend(JList* list, gpointer data)
 	g_return_if_fail(list != NULL);
 	g_return_if_fail(data != NULL);
 
-	element = g_slice_new(JListElement);
+	element = g_new(JListElement, 1);
 	element->next = list->head;
 	element->data = data;
 
@@ -227,7 +227,7 @@ j_list_delete_all(JList* list)
 		}
 
 		next = element->next;
-		g_slice_free(JListElement, element);
+		g_free(element);
 		element = next;
 	}
 

@@ -343,7 +343,7 @@ j_configuration_new_for_data(GKeyFile* key_file)
 		return NULL;
 	}
 
-	configuration = g_slice_new(JConfiguration);
+	configuration = g_new(JConfiguration, 1);
 	configuration->servers.object = servers_object;
 	configuration->servers.kv = servers_kv;
 	configuration->servers.db = servers_db;
@@ -439,7 +439,7 @@ j_configuration_unref(JConfiguration* configuration)
 
 		g_free(configuration->checksum);
 
-		g_slice_free(JConfiguration, configuration);
+		g_free(configuration);
 	}
 }
 

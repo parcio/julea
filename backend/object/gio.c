@@ -72,7 +72,7 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 	bo->stream = stream;
 
@@ -99,7 +99,7 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 	stream = g_file_open_readwrite(file, NULL, NULL);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 	bo->stream = stream;
 
@@ -129,7 +129,7 @@ backend_delete(gpointer backend_data, gpointer backend_object)
 
 	g_object_unref(bo->stream);
 	g_free(bo->path);
-	g_slice_free(JBackendObject, bo);
+	g_free(bo);
 
 	return ret;
 }
@@ -148,7 +148,7 @@ backend_close(gpointer backend_data, gpointer backend_object)
 
 	g_object_unref(bo->stream);
 	g_free(bo->path);
-	g_slice_free(JBackendObject, bo);
+	g_free(bo);
 
 	return ret;
 }
@@ -300,7 +300,7 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JBackendIterator);
+		iterator = g_new(JBackendIterator, 1);
 		iterator->iterator = it;
 		iterator->prefix = NULL;
 		iterator->namespace_len = strlen(full_path) + 1;
@@ -330,7 +330,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JBackendIterator);
+		iterator = g_new(JBackendIterator, 1);
 		iterator->iterator = it;
 		iterator->prefix = g_strdup(prefix);
 		iterator->namespace_len = strlen(full_path) + 1;
@@ -375,7 +375,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 
 	g_free(iterator->prefix);
 	g_object_unref(iterator->iterator);
-	g_slice_free(JBackendIterator, iterator);
+	g_free(iterator);
 
 	return FALSE;
 }
@@ -386,7 +386,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	JBackendData* bd;
 	GFile* file;
 
-	bd = g_slice_new(JBackendData);
+	bd = g_new(JBackendData, 1);
 	bd->path = g_strdup(path);
 
 	file = g_file_new_for_path(path);
@@ -404,7 +404,7 @@ backend_fini(gpointer backend_data)
 	JBackendData* bd = backend_data;
 
 	g_free(bd->path);
-	g_slice_free(JBackendData, bd);
+	g_free(bd);
 }
 
 static JBackend gio_backend = {

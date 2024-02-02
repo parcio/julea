@@ -690,7 +690,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 		return FALSE;
 	}
 
-	bd = g_slice_new(JMySQLData);
+	bd = g_new(JMySQLData, 1);
 	bd->db_host = g_strdup(split[0]);
 	bd->db_database = g_strdup(split[1]);
 	bd->db_user = g_strdup(split[2]);
@@ -722,7 +722,7 @@ backend_fini(gpointer backend_data)
 	g_free(bd->db_database);
 	g_free(bd->db_user);
 	g_free(bd->db_password);
-	g_slice_free(JMySQLData, bd);
+	g_free(bd);
 }
 
 static JBackend mysql_backend = {

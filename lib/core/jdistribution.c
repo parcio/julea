@@ -76,7 +76,7 @@ j_distribution_new_common(JDistributionType type, JConfiguration* configuration)
 	server_count = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	stripe_size = j_configuration_get_stripe_size(configuration);
 
-	distribution = g_slice_new(JDistribution);
+	distribution = g_new(JDistribution, 1);
 	distribution->type = type;
 	distribution->distribution = j_distribution_vtables[type].distribution_new(server_count, stripe_size);
 	distribution->ref_count = 1;
@@ -119,7 +119,7 @@ j_distribution_unref(JDistribution* distribution)
 	{
 		j_distribution_vtables[distribution->type].distribution_free(distribution->distribution);
 
-		g_slice_free(JDistribution, distribution);
+		g_free(distribution);
 	}
 }
 

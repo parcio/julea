@@ -119,7 +119,7 @@ j_kv_iterator_new(gchar const* namespace, gchar const* prefix)
 	/// \todo still necessary?
 	//j_operation_cache_flush();
 
-	iterator = g_slice_new(JKVIterator);
+	iterator = g_new(JKVIterator, 1);
 	iterator->kv_backend = j_kv_get_backend();
 	iterator->cursor = NULL;
 	iterator->key = NULL;
@@ -167,7 +167,7 @@ j_kv_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* 
 	/// \todo still necessary?
 	//j_operation_cache_flush();
 
-	iterator = g_slice_new(JKVIterator);
+	iterator = g_new(JKVIterator, 1);
 	iterator->kv_backend = j_kv_get_backend();
 	iterator->cursor = NULL;
 	iterator->key = NULL;
@@ -222,7 +222,7 @@ j_kv_iterator_free(JKVIterator* iterator)
 
 	g_free(iterator->replies);
 
-	g_slice_free(JKVIterator, iterator);
+	g_free(iterator);
 }
 
 gboolean

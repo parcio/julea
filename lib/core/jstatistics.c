@@ -120,7 +120,7 @@ j_statistics_new(gboolean trace)
 
 	JStatistics* statistics;
 
-	statistics = g_slice_new(JStatistics);
+	statistics = g_new(JStatistics, 1);
 	statistics->trace = trace;
 	statistics->files_created = 0;
 	statistics->files_deleted = 0;
@@ -141,7 +141,7 @@ j_statistics_free(JStatistics* statistics)
 
 	g_return_if_fail(statistics != NULL);
 
-	g_slice_free(JStatistics, statistics);
+	g_free(statistics);
 }
 
 guint64

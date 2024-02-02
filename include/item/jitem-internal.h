@@ -102,7 +102,7 @@ G_GNUC_INTERNAL JCollection* j_item_get_collection(JItem* item);
  * \param item      An item.
  * \param semantics A semantics object.
  *
- * \return A new BSON object. Should be freed with g_slice_free().
+ * \return A new BSON object. Should be freed with bson_destroy().
  **/
 G_GNUC_INTERNAL bson_t* j_item_serialize(JItem* item, JSemantics* semantics);
 

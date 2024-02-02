@@ -56,7 +56,7 @@ j_credentials_new(void)
 
 	JCredentials* credentials;
 
-	credentials = g_slice_new(JCredentials);
+	credentials = g_new(JCredentials, 1);
 	credentials->user = getuid();
 	credentials->group = getgid();
 	credentials->ref_count = 1;
@@ -85,7 +85,7 @@ j_credentials_unref(JCredentials* credentials)
 
 	if (g_atomic_int_dec_and_test(&(credentials->ref_count)))
 	{
-		g_slice_free(JCredentials, credentials);
+		g_free(credentials);
 	}
 }
 

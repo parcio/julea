@@ -111,7 +111,7 @@ j_operation_cache_thread(gpointer data)
 
 		j_batch_unref(cached_batch->batch);
 		j_cache_release(j_operation_cache->cache, cached_batch->data);
-		g_slice_free(JCachedBatch, cached_batch);
+		g_free(cached_batch);
 
 		g_mutex_lock(cache->mutex);
 
@@ -217,7 +217,7 @@ j_operation_cache_init(void)
 
 	g_return_if_fail(j_operation_cache == NULL);
 
-	cache = g_slice_new(JOperationCache);
+	cache = g_new(JOperationCache, 1);
 	cache->cache = j_cache_new(50 * 1024 * 1024);
 	cache->queue = g_async_queue_new_full(NULL);
 	cache->thread = g_thread_new("JOperationCache", j_operation_cache_thread, cache);
@@ -253,7 +253,7 @@ j_operation_cache_fini(void)
 	g_cond_clear(cache->cond);
 	g_mutex_clear(cache->mutex);
 
-	g_slice_free(JOperationCache, cache);
+	g_free(cache);
 }
 
 gboolean
@@ -354,7 +354,7 @@ j_operation_cache_add(JBatch* batch)
 	j_operation_cache->working = TRUE;
 	g_mutex_unlock(j_operation_cache->mutex);
 
-	cached_batch = g_slice_new(JCachedBatch);
+	cached_batch = g_new(JCachedBatch, 1);
 	cached_batch->batch = j_batch_new_from_batch(batch);
 	cached_batch->data = buffer;
 

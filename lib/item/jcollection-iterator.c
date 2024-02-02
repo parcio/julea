@@ -49,7 +49,7 @@ j_collection_iterator_new(void)
 {
 	JCollectionIterator* iterator;
 
-	iterator = g_slice_new(JCollectionIterator);
+	iterator = g_new(JCollectionIterator, 1);
 	iterator->iterator = j_kv_iterator_new("collections", NULL);
 
 	return iterator;
@@ -62,7 +62,7 @@ j_collection_iterator_free(JCollectionIterator* iterator)
 
 	j_kv_iterator_free(iterator->iterator);
 
-	g_slice_free(JCollectionIterator, iterator);
+	g_free(iterator);
 }
 
 gboolean

@@ -176,7 +176,7 @@ j_distributed_object_status_free(gpointer data)
 
 	j_distributed_object_unref(operation->status.object);
 
-	g_slice_free(JDistributedObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -188,7 +188,7 @@ j_distributed_object_sync_free(gpointer data)
 
 	j_distributed_object_unref(operation->sync.object);
 
-	g_slice_free(JDistributedObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -200,7 +200,7 @@ j_distributed_object_read_free(gpointer data)
 
 	j_distributed_object_unref(operation->read.object);
 
-	g_slice_free(JDistributedObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -212,7 +212,7 @@ j_distributed_object_write_free(gpointer data)
 
 	j_distributed_object_unref(operation->write.object);
 
-	g_slice_free(JDistributedObjectOperation, operation);
+	g_free(operation);
 }
 
 /**
@@ -253,7 +253,7 @@ j_distributed_object_create_background_operation(gpointer data)
 	j_message_unref(background_data->message);
 	j_connection_pool_push(J_BACKEND_TYPE_OBJECT, background_data->index, object_connection);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
+	g_free(background_data);
 
 	return NULL;
 }
@@ -506,7 +506,7 @@ j_distributed_object_status_background_operation(gpointer data)
 
 	j_connection_pool_push(J_BACKEND_TYPE_OBJECT, background_data->index, object_connection);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
+	g_free(background_data);
 
 	return NULL;
 }
@@ -547,7 +547,7 @@ j_distributed_object_sync_background_operation(gpointer data)
 	j_message_unref(background_data->message);
 	j_connection_pool_push(J_BACKEND_TYPE_OBJECT, background_data->index, object_connection);
 
-	g_slice_free(JDistributedObjectBackgroundData, background_data);
+	g_free(background_data);
 
 	return NULL;
 }
@@ -642,7 +642,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 		{
 			JDistributedObjectBackgroundData* data;
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
@@ -744,7 +744,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 		{
 			JDistributedObjectBackgroundData* data;
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
@@ -762,7 +762,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 
 			ret = data->ret && ret;
 
-			g_slice_free(JDistributedObjectBackgroundData, data);
+			g_free(data);
 		}
 	}
 
@@ -913,7 +913,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 				continue;
 			}
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
@@ -938,7 +938,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 			data = background_data[i];
 			ret = data->ret && ret;
 
-			g_slice_free(JDistributedObjectBackgroundData, data);
+			g_free(data);
 		}
 	}
 	else
@@ -1104,7 +1104,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 				continue;
 			}
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = NULL;
@@ -1129,7 +1129,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			data = background_data[i];
 			ret = data->ret && ret;
 
-			g_slice_free(JDistributedObjectBackgroundData, data);
+			g_free(data);
 		}
 	}
 	else
@@ -1247,7 +1247,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 		{
 			JDistributedObjectBackgroundData* data;
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = operations;
@@ -1347,7 +1347,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 		{
 			JDistributedObjectBackgroundData* data;
 
-			data = g_slice_new(JDistributedObjectBackgroundData);
+			data = g_new(JDistributedObjectBackgroundData, 1);
 			data->index = i;
 			data->message = messages[i];
 			data->operations = operations;
@@ -1373,7 +1373,7 @@ j_distributed_object_new(gchar const* namespace, gchar const* name, JDistributio
 	g_return_val_if_fail(name != NULL, NULL);
 	g_return_val_if_fail(distribution != NULL, NULL);
 
-	object = g_slice_new(JDistributedObject);
+	object = g_new(JDistributedObject, 1);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
 	object->distribution = j_distribution_ref(distribution);
@@ -1408,7 +1408,7 @@ j_distributed_object_unref(JDistributedObject* object)
 
 		j_distribution_unref(object->distribution);
 
-		g_slice_free(JDistributedObject, object);
+		g_free(object);
 	}
 }
 
@@ -1472,7 +1472,7 @@ j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 len
 
 		chunk_size = MIN(length, max_operation_size);
 
-		iop = g_slice_new(JDistributedObjectOperation);
+		iop = g_new(JDistributedObjectOperation, 1);
 		iop->read.object = j_distributed_object_ref(object);
 		iop->read.data = data;
 		iop->read.length = chunk_size;
@@ -1518,7 +1518,7 @@ j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint
 
 		chunk_size = MIN(length, max_operation_size);
 
-		iop = g_slice_new(JDistributedObjectOperation);
+		iop = g_new(JDistributedObjectOperation, 1);
 		iop->write.object = j_distributed_object_ref(object);
 		iop->write.data = data;
 		iop->write.length = chunk_size;
@@ -1551,7 +1551,7 @@ j_distributed_object_status(JDistributedObject* object, gint64* modification_tim
 
 	g_return_if_fail(object != NULL);
 
-	iop = g_slice_new(JDistributedObjectOperation);
+	iop = g_new(JDistributedObjectOperation, 1);
 	iop->status.object = j_distributed_object_ref(object);
 	iop->status.modification_time = modification_time;
 	iop->status.size = size;
@@ -1575,7 +1575,7 @@ j_distributed_object_sync(JDistributedObject* object, JBatch* batch)
 
 	g_return_if_fail(object != NULL);
 
-	iop = g_slice_new(JDistributedObjectOperation);
+	iop = g_new(JDistributedObjectOperation, 1);
 	iop->sync.object = j_distributed_object_ref(object);
 
 	operation = j_operation_new();

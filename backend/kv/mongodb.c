@@ -119,7 +119,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	bson_destroy(command);
 	bson_destroy(reply);
 
-	batch = g_slice_new(JMongoDBBatch);
+	batch = g_new(JMongoDBBatch, 1);
 	batch->bulk_op = bulk_op;
 	batch->namespace = g_strdup(namespace);
 	batch->is_empty = TRUE;
@@ -163,7 +163,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 
 	mongoc_bulk_operation_destroy(batch->bulk_op);
 	g_free(batch->namespace);
-	g_slice_free(JMongoDBBatch, batch);
+	g_free(batch);
 
 	return ret;
 }
@@ -427,7 +427,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 	split = g_strsplit(path, ":", 0);
 
-	bd = g_slice_new(JMongoDBData);
+	bd = g_new(JMongoDBData, 1);
 	bd->host = g_strdup(split[0]);
 	bd->database = g_strdup(split[1]);
 
@@ -471,7 +471,7 @@ backend_fini(gpointer backend_data)
 	g_free(bd->database);
 	g_free(bd->host);
 
-	g_slice_free(JMongoDBData, bd);
+	g_free(bd);
 
 	mongoc_cleanup();
 }

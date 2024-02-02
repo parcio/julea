@@ -94,7 +94,7 @@ j_batch_background_operation(gpointer data)
 
 	j_batch_unref(async->batch);
 
-	g_slice_free(JBatchAsync, async);
+	g_free(async);
 
 	return NULL;
 }
@@ -108,7 +108,7 @@ j_batch_new(JSemantics* semantics)
 
 	g_return_val_if_fail(semantics != NULL, NULL);
 
-	batch = g_slice_new(JBatch);
+	batch = g_new(JBatch, 1);
 	batch->list = j_list_new((JListFreeFunc)j_operation_free);
 	batch->semantics = j_semantics_ref(semantics);
 	batch->background_operation = NULL;
@@ -174,7 +174,7 @@ j_batch_unref(JBatch* batch)
 
 		j_list_unref(batch->list);
 
-		g_slice_free(JBatch, batch);
+		g_free(batch);
 	}
 }
 
@@ -282,7 +282,7 @@ j_batch_execute_async(JBatch* batch, JBatchAsyncCallback callback, gpointer user
 	g_return_if_fail(batch != NULL);
 	g_return_if_fail(batch->background_operation == NULL);
 
-	async = g_slice_new(JBatchAsync);
+	async = g_new(JBatchAsync, 1);
 	async->batch = j_batch_ref(batch);
 	async->callback = callback;
 	async->user_data = user_data;
@@ -337,7 +337,7 @@ j_batch_new_from_batch(JBatch* old_batch)
 
 	g_return_val_if_fail(old_batch != NULL, NULL);
 
-	batch = g_slice_new(JBatch);
+	batch = g_new(JBatch, 1);
 	batch->list = old_batch->list;
 	batch->semantics = j_semantics_ref(old_batch->semantics);
 	batch->background_operation = NULL;

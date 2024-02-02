@@ -161,7 +161,7 @@ j_kv_put_free(gpointer data)
 		operation->put.value_destroy(operation->put.value);
 	}
 
-	g_slice_free(JKVOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -183,7 +183,7 @@ j_kv_get_free(gpointer data)
 
 	j_kv_unref(operation->get.kv);
 
-	g_slice_free(JKVOperation, operation);
+	g_free(operation);
 }
 
 static gboolean
@@ -533,7 +533,7 @@ j_kv_new(gchar const* namespace, gchar const* key)
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(key != NULL, NULL);
 
-	kv = g_slice_new(JKV);
+	kv = g_new(JKV, 1);
 	kv->index = j_helper_hash(key) % j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV);
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
@@ -554,7 +554,7 @@ j_kv_new_for_index(guint32 index, gchar const* namespace, gchar const* key)
 	g_return_val_if_fail(key != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_KV), NULL);
 
-	kv = g_slice_new(JKV);
+	kv = g_new(JKV, 1);
 	kv->index = index;
 	kv->namespace = g_strdup(namespace);
 	kv->key = g_strdup(key);
@@ -587,7 +587,7 @@ j_kv_unref(JKV* kv)
 		g_free(kv->key);
 		g_free(kv->namespace);
 
-		g_slice_free(JKV, kv);
+		g_free(kv);
 	}
 }
 
@@ -601,7 +601,7 @@ j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destro
 
 	g_return_if_fail(kv != NULL);
 
-	kop = g_slice_new(JKVOperation);
+	kop = g_new(JKVOperation, 1);
 	kop->put.kv = j_kv_ref(kv);
 	kop->put.value = value;
 	kop->put.value_len = value_len;
@@ -645,7 +645,7 @@ j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch)
 
 	g_return_if_fail(kv != NULL);
 
-	kop = g_slice_new(JKVOperation);
+	kop = g_new(JKVOperation, 1);
 	kop->get.kv = j_kv_ref(kv);
 	kop->get.value = value;
 	kop->get.value_len = value_len;
@@ -672,7 +672,7 @@ j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch)
 	g_return_if_fail(kv != NULL);
 	g_return_if_fail(func != NULL);
 
-	kop = g_slice_new(JKVOperation);
+	kop = g_new(JKVOperation, 1);
 	kop->get.kv = j_kv_ref(kv);
 	kop->get.value = NULL;
 	kop->get.value_len = NULL;

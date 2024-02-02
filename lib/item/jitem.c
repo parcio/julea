@@ -145,7 +145,7 @@ j_item_unref(JItem* item)
 
 		g_free(item->name);
 
-		g_slice_free(JItem, item);
+		g_free(item);
 	}
 }
 
@@ -204,7 +204,7 @@ j_item_get_callback(gpointer value, guint32 len, gpointer data_)
 
 end:
 	j_collection_unref(data->collection);
-	g_slice_free(JItemGetData, data);
+	g_free(data);
 }
 
 void
@@ -220,7 +220,7 @@ j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* bat
 	g_return_if_fail(item != NULL);
 	g_return_if_fail(name != NULL);
 
-	data = g_slice_new(JItemGetData);
+	data = g_new(JItemGetData, 1);
 	data->collection = j_collection_ref(collection);
 	data->item = item;
 
@@ -331,7 +331,7 @@ j_item_new(JCollection* collection, gchar const* name, JDistribution* distributi
 		distribution = j_distribution_new(J_DISTRIBUTION_ROUND_ROBIN);
 	}
 
-	item = g_slice_new(JItem);
+	item = g_new(JItem, 1);
 	bson_oid_init(&(item->id), bson_context_get_default());
 	item->name = g_strdup(name);
 	item->credentials = j_credentials_new();
@@ -360,7 +360,7 @@ j_item_new_from_bson(JCollection* collection, bson_t const* b)
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(b != NULL, NULL);
 
-	item = g_slice_new(JItem);
+	item = g_new(JItem, 1);
 	item->name = NULL;
 	item->credentials = j_credentials_new();
 	item->distribution = NULL;

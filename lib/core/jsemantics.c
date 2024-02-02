@@ -75,7 +75,7 @@ j_semantics_new(JSemanticsTemplate template)
 
 	JSemantics* semantics;
 
-	semantics = g_slice_new(JSemantics);
+	semantics = g_new(JSemantics, 1);
 	semantics->atomicity = J_SEMANTICS_ATOMICITY_NONE;
 	semantics->consistency = J_SEMANTICS_CONSISTENCY_IMMEDIATE;
 	semantics->persistency = J_SEMANTICS_PERSISTENCY_NETWORK;
@@ -258,7 +258,7 @@ j_semantics_unref(JSemantics* semantics)
 
 	if (g_atomic_int_dec_and_test(&(semantics->ref_count)))
 	{
-		g_slice_free(JSemantics, semantics);
+		g_free(semantics);
 	}
 }
 

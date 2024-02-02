@@ -113,7 +113,7 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 	//// \todo still necessary?
 	//j_operation_cache_flush();
 
-	iterator = g_slice_new(JObjectIterator);
+	iterator = g_new(JObjectIterator, 1);
 	iterator->object_backend = j_object_get_backend();
 	iterator->cursor = NULL;
 	iterator->name = NULL;
@@ -158,7 +158,7 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	/// \todo still necessary?
 	//j_operation_cache_flush();
 
-	iterator = g_slice_new(JObjectIterator);
+	iterator = g_new(JObjectIterator, 1);
 	iterator->object_backend = j_object_get_backend();
 	iterator->cursor = NULL;
 	iterator->name = NULL;
@@ -202,7 +202,7 @@ j_object_iterator_free(JObjectIterator* iterator)
 
 	g_free(iterator->replies);
 
-	g_slice_free(JObjectIterator, iterator);
+	g_free(iterator);
 }
 
 gboolean

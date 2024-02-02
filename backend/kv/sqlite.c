@@ -51,7 +51,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 
 	if (sqlite3_exec(bd->db, "BEGIN TRANSACTION;", NULL, NULL, NULL) == SQLITE_OK)
 	{
-		batch = g_slice_new(JSQLiteBatch);
+		batch = g_new(JSQLiteBatch, 1);
 
 		batch->namespace = g_strdup(namespace);
 		batch->semantics = j_semantics_ref(semantics);
@@ -81,7 +81,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
-	g_slice_free(JSQLiteBatch, batch);
+	g_free(batch);
 
 	return ret;
 }
@@ -246,7 +246,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
 
-	bd = g_slice_new(JSQLiteData);
+	bd = g_new(JSQLiteData, 1);
 
 	if (sqlite3_open(path, &(bd->db)) != SQLITE_OK)
 	{
@@ -269,7 +269,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 error:
 	sqlite3_close(bd->db);
-	g_slice_free(JSQLiteData, bd);
+	g_free(bd);
 
 	return FALSE;
 }
@@ -284,7 +284,7 @@ backend_fini(gpointer backend_data)
 		sqlite3_close(bd->db);
 	}
 
-	g_slice_free(JSQLiteData, bd);
+	g_free(bd);
 }
 
 static JBackend sqlite_backend = {

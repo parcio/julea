@@ -73,7 +73,7 @@ struct JURI
  * \code
  * JURI* uri;
  *
- * uri = g_slice_new(JURI);
+ * uri = g_new(JURI, 1);
  *
  * j_uri_parse(uri, "julea://foo/bar");
  * \endcode
@@ -164,7 +164,7 @@ j_uri_new(gchar const* uri_)
 {
 	JURI* uri;
 
-	uri = g_slice_new(JURI);
+	uri = g_new(JURI, 1);
 
 	uri->collection_name = NULL;
 	uri->item_name = NULL;
@@ -174,7 +174,7 @@ j_uri_new(gchar const* uri_)
 
 	if (!j_uri_parse(uri, uri_))
 	{
-		g_slice_free(JURI, uri);
+		g_free(uri);
 
 		return NULL;
 	}
@@ -200,7 +200,7 @@ j_uri_free(JURI* uri)
 	g_free(uri->collection_name);
 	g_free(uri->item_name);
 
-	g_slice_free(JURI, uri);
+	g_free(uri);
 }
 
 gchar const*

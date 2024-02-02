@@ -186,7 +186,7 @@ j_message_data_free(gpointer data)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_slice_free(JMessageData, data);
+	g_free(data);
 }
 
 /**
@@ -299,7 +299,7 @@ j_message_new(JMessageType op_type, gsize length)
 	length = MAX(256, length);
 	rand = g_random_int();
 
-	message = g_slice_new(JMessage);
+	message = g_new(JMessage, 1);
 	message->size = length;
 	message->data = g_malloc(message->size);
 	message->current = message->data;
@@ -325,7 +325,7 @@ j_message_new_reply(JMessage* message)
 
 	g_return_val_if_fail(message != NULL, NULL);
 
-	reply = g_slice_new(JMessage);
+	reply = g_new(JMessage, 1);
 	reply->size = 256;
 	reply->data = g_malloc(reply->size);
 	reply->current = reply->data;
@@ -375,7 +375,7 @@ j_message_unref(JMessage* message)
 
 		g_free(message->data);
 
-		g_slice_free(JMessage, message);
+		g_free(message);
 	}
 }
 
@@ -729,7 +729,7 @@ j_message_add_send(JMessage* message, gconstpointer data, guint64 length)
 	g_return_if_fail(data != NULL);
 	g_return_if_fail(length > 0);
 
-	message_data = g_slice_new(JMessageData);
+	message_data = g_new(JMessageData, 1);
 	message_data->data = data;
 	message_data->length = length;
 

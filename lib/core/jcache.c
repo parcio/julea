@@ -62,7 +62,7 @@ j_cache_new(guint64 size)
 
 	g_return_val_if_fail(size > 0, NULL);
 
-	cache = g_slice_new(JCache);
+	cache = g_new(JCache, 1);
 	cache->size = size;
 	cache->buffers = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, NULL);
 	cache->used = 0;
@@ -94,7 +94,7 @@ j_cache_free(JCache* cache)
 
 	g_mutex_clear(cache->mutex);
 
-	g_slice_free(JCache, cache);
+	g_free(cache);
 }
 
 gpointer

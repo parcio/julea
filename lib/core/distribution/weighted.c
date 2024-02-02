@@ -137,7 +137,7 @@ distribution_new(guint server_count, guint64 stripe_size)
 
 	JDistributionWeighted* distribution;
 
-	distribution = g_slice_new(JDistributionWeighted);
+	distribution = g_new(JDistributionWeighted, 1);
 	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
@@ -174,7 +174,7 @@ distribution_free(gpointer data)
 
 	g_free(distribution->weights);
 
-	g_slice_free(JDistributionWeighted, distribution);
+	g_free(distribution);
 }
 
 /**
@@ -229,9 +229,8 @@ distribution_set2(gpointer data, gchar const* key, guint64 value1, guint64 value
  * \code
  * \endcode
  *
- * \param distribution Credentials.
- *
- * \return A new BSON object. Should be freed with g_slice_free().
+ * \param data A distribution.
+ * \param b    A BSON object.
  **/
 static void
 distribution_serialize(gpointer data, bson_t* b)

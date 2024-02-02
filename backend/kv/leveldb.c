@@ -65,7 +65,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	batch = g_slice_new(JLevelDBBatch);
+	batch = g_new(JLevelDBBatch, 1);
 
 	batch->batch = leveldb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
@@ -98,7 +98,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
 	leveldb_writebatch_destroy(batch->batch);
-	g_slice_free(JLevelDBBatch, batch);
+	g_free(batch);
 
 	return (leveldb_error == NULL);
 }
@@ -182,7 +182,7 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JLevelDBIterator);
+		iterator = g_new(JLevelDBIterator, 1);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:", namespace);
@@ -209,7 +209,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JLevelDBIterator);
+		iterator = g_new(JLevelDBIterator, 1);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
@@ -264,7 +264,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 out:
 	g_free(iterator->prefix);
 	leveldb_iter_destroy(iterator->iterator);
-	g_slice_free(JLevelDBIterator, iterator);
+	g_free(iterator);
 
 	return FALSE;
 }
@@ -282,7 +282,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
 
-	bd = g_slice_new(JLevelDBData);
+	bd = g_new(JLevelDBData, 1);
 	bd->read_options = leveldb_readoptions_create();
 	bd->write_options = leveldb_writeoptions_create();
 	bd->write_options_sync = leveldb_writeoptions_create();
@@ -325,7 +325,7 @@ backend_fini(gpointer backend_data)
 		leveldb_close(bd->db);
 	}
 
-	g_slice_free(JLevelDBData, bd);
+	g_free(bd);
 }
 
 static JBackend leveldb_backend = {

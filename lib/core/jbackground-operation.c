@@ -161,7 +161,7 @@ j_background_operation_new(JBackgroundOperationFunc func, gpointer data)
 
 	g_return_val_if_fail(func != NULL, NULL);
 
-	background_operation = g_slice_new(JBackgroundOperation);
+	background_operation = g_new(JBackgroundOperation, 1);
 	background_operation->func = func;
 	background_operation->data = data;
 	background_operation->result = NULL;
@@ -200,7 +200,7 @@ j_background_operation_unref(JBackgroundOperation* background_operation)
 		g_cond_clear(background_operation->cond);
 		g_mutex_clear(background_operation->mutex);
 
-		g_slice_free(JBackgroundOperation, background_operation);
+		g_free(background_operation);
 	}
 }
 

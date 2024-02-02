@@ -189,7 +189,7 @@ j_object_status_free(gpointer data)
 
 	j_object_unref(operation->status.object);
 
-	g_slice_free(JObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -201,7 +201,7 @@ j_object_sync_free(gpointer data)
 
 	j_object_unref(operation->sync.object);
 
-	g_slice_free(JObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -213,7 +213,7 @@ j_object_read_free(gpointer data)
 
 	j_object_unref(operation->read.object);
 
-	g_slice_free(JObjectOperation, operation);
+	g_free(operation);
 }
 
 static void
@@ -225,7 +225,7 @@ j_object_write_free(gpointer data)
 
 	j_object_unref(operation->write.object);
 
-	g_slice_free(JObjectOperation, operation);
+	g_free(operation);
 }
 
 static gboolean
@@ -963,7 +963,7 @@ j_object_new(gchar const* namespace, gchar const* name)
 	g_return_val_if_fail(namespace != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
 
-	object = g_slice_new(JObject);
+	object = g_new(JObject, 1);
 	object->index = j_helper_hash(name) % j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
@@ -984,7 +984,7 @@ j_object_new_for_index(guint32 index, gchar const* namespace, gchar const* name)
 	g_return_val_if_fail(name != NULL, NULL);
 	g_return_val_if_fail(index < j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT), NULL);
 
-	object = g_slice_new(JObject);
+	object = g_new(JObject, 1);
 	object->index = index;
 	object->namespace = g_strdup(namespace);
 	object->name = g_strdup(name);
@@ -1017,7 +1017,7 @@ j_object_unref(JObject* object)
 		g_free(object->name);
 		g_free(object->namespace);
 
-		g_slice_free(JObject, object);
+		g_free(object);
 	}
 }
 
@@ -1081,7 +1081,7 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 
 		chunk_size = MIN(length, max_operation_size);
 
-		iop = g_slice_new(JObjectOperation);
+		iop = g_new(JObjectOperation, 1);
 		iop->read.object = j_object_ref(object);
 		iop->read.data = data;
 		iop->read.length = chunk_size;
@@ -1127,7 +1127,7 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 
 		chunk_size = MIN(length, max_operation_size);
 
-		iop = g_slice_new(JObjectOperation);
+		iop = g_new(JObjectOperation, 1);
 		iop->write.object = j_object_ref(object);
 		iop->write.data = data;
 		iop->write.length = chunk_size;
@@ -1160,7 +1160,7 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 
 	g_return_if_fail(object != NULL);
 
-	iop = g_slice_new(JObjectOperation);
+	iop = g_new(JObjectOperation, 1);
 	iop->status.object = j_object_ref(object);
 	iop->status.modification_time = modification_time;
 	iop->status.size = size;
@@ -1184,7 +1184,7 @@ j_object_sync(JObject* object, JBatch* batch)
 
 	g_return_if_fail(object != NULL);
 
-	iop = g_slice_new(JObjectOperation);
+	iop = g_new(JObjectOperation, 1);
 	iop->sync.object = j_object_ref(object);
 
 	operation = j_operation_new();

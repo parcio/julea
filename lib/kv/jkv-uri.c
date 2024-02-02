@@ -72,7 +72,7 @@ struct JKVURI
  * \code
  * JKVURI* uri;
  *
- * uri = g_slice_new(JKVURI);
+ * uri = g_new(JKVURI, 1);
  *
  * j_kv_uri_parse(uri, "julea://foo/bar");
  * \endcode
@@ -180,7 +180,7 @@ j_kv_uri_new(gchar const* uri_, JKVURIScheme scheme)
 
 	JKVURI* uri;
 
-	uri = g_slice_new(JKVURI);
+	uri = g_new(JKVURI, 1);
 
 	uri->scheme = scheme;
 	uri->index = 0;
@@ -190,7 +190,7 @@ j_kv_uri_new(gchar const* uri_, JKVURIScheme scheme)
 
 	if (!j_kv_uri_parse(uri, uri_))
 	{
-		g_slice_free(JKVURI, uri);
+		g_free(uri);
 
 		return NULL;
 	}
@@ -213,7 +213,7 @@ j_kv_uri_free(JKVURI* uri)
 	g_free(uri->namespace);
 	g_free(uri->name);
 
-	g_slice_free(JKVURI, uri);
+	g_free(uri);
 }
 
 guint32

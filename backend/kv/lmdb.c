@@ -65,7 +65,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 
 	if (mdb_txn_begin(bd->env, NULL, 0, &txn) == 0)
 	{
-		batch = g_slice_new(JLMDBBatch);
+		batch = g_new(JLMDBBatch, 1);
 		batch->txn = txn;
 		batch->namespace = g_strdup(namespace);
 		batch->semantics = j_semantics_ref(semantics);
@@ -98,7 +98,7 @@ backend_batch_execute(gpointer backend_data, gpointer data)
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
-	g_slice_free(JLMDBBatch, batch);
+	g_free(batch);
 
 	return ret;
 }
@@ -191,7 +191,7 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* data)
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	iterator = g_slice_new(JLMDBIterator);
+	iterator = g_new(JLMDBIterator, 1);
 	iterator->first = TRUE;
 	iterator->prefix = g_strdup_printf("%s:", namespace);
 	iterator->namespace_len = strlen(namespace) + 1;
@@ -214,7 +214,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	iterator = g_slice_new(JLMDBIterator);
+	iterator = g_new(JLMDBIterator, 1);
 	iterator->first = TRUE;
 	iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
 	iterator->namespace_len = strlen(namespace) + 1;
@@ -271,7 +271,7 @@ out:
 	mdb_txn_commit(iterator->txn);
 
 	g_free(iterator->prefix);
-	g_slice_free(JLMDBIterator, iterator);
+	g_free(iterator);
 
 	return FALSE;
 }
@@ -286,7 +286,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 	g_mkdir_with_parents(path, 0700);
 
-	bd = g_slice_new(JLMDBData);
+	bd = g_new(JLMDBData, 1);
 
 	if (mdb_env_create(&(bd->env)) == 0)
 	{
@@ -323,7 +323,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 
 error:
 	mdb_env_close(bd->env);
-	g_slice_free(JLMDBData, bd);
+	g_free(bd);
 
 	return FALSE;
 }
@@ -338,7 +338,7 @@ backend_fini(gpointer backend_data)
 		mdb_env_close(bd->env);
 	}
 
-	g_slice_free(JLMDBData, bd);
+	g_free(bd);
 }
 
 static JBackend lmdb_backend = {

@@ -89,7 +89,7 @@ backend_file_unref(gpointer data)
 		j_trace_file_end(bo->path, J_TRACE_FILE_CLOSE, 0, 0);
 
 		g_free(bo->path);
-		g_slice_free(JBackendObject, bo);
+		g_free(bo);
 	}
 
 	G_UNLOCK(jd_backend_file_cache);
@@ -186,7 +186,7 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 		goto end;
 	}
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 	bo->fd = fd;
 	bo->ref_count = 1;
@@ -231,7 +231,7 @@ backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, g
 		goto end;
 	}
 
-	bo = g_slice_new(JBackendObject);
+	bo = g_new(JBackendObject, 1);
 	bo->path = full_path;
 	bo->fd = fd;
 	bo->ref_count = 1;
@@ -420,7 +420,7 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JBackendIterator);
+		iterator = g_new(JBackendIterator, 1);
 		iterator->iterator = it;
 		iterator->prefix = NULL;
 
@@ -447,7 +447,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JBackendIterator);
+		iterator = g_new(JBackendIterator, 1);
 		iterator->iterator = it;
 		iterator->prefix = g_strdup(prefix);
 
@@ -485,7 +485,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 
 	g_free(iterator->prefix);
 	j_dir_iterator_free(iterator->iterator);
-	g_slice_free(JBackendIterator, iterator);
+	g_free(iterator);
 
 	return FALSE;
 }
@@ -495,7 +495,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 {
 	JBackendData* bd;
 
-	bd = g_slice_new(JBackendData);
+	bd = g_new(JBackendData, 1);
 	bd->path = g_strdup(path);
 
 	jd_backend_file_cache = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
@@ -521,7 +521,7 @@ backend_fini(gpointer backend_data)
 	}
 
 	g_free(bd->path);
-	g_slice_free(JBackendData, bd);
+	g_free(bd);
 }
 
 static JBackend posix_backend = {

@@ -134,7 +134,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDistribution, j_distribution_unref)
  *
  * \param distribution A JDistribution.
  *
- * \return A new BSON object. Should be freed with g_slice_free().
+ * \return A new BSON object. Should be freed with bson_destroy().
  **/
 bson_t* j_distribution_serialize(JDistribution* distribution);
 

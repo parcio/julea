@@ -82,7 +82,7 @@ G_GNUC_INTERNAL JCollection* j_collection_new_from_bson(bson_t const* b);
  *
  * \param collection A collection.
  *
- * \return A new BSON object. Should be freed with g_slice_free().
+ * \return A new BSON object. Should be freed with bson_destroy().
  **/
 G_GNUC_INTERNAL bson_t* j_collection_serialize(JCollection* collection);
 

@@ -65,7 +65,7 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	batch = g_slice_new(JRocksDBBatch);
+	batch = g_new(JRocksDBBatch, 1);
 
 	batch->batch = rocksdb_writebatch_create();
 	batch->namespace = g_strdup(namespace);
@@ -98,7 +98,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
 	rocksdb_writebatch_destroy(batch->batch);
-	g_slice_free(JRocksDBBatch, batch);
+	g_free(batch);
 
 	return (rocksdb_error == NULL);
 }
@@ -182,7 +182,7 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JRocksDBIterator);
+		iterator = g_new(JRocksDBIterator, 1);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:", namespace);
@@ -209,7 +209,7 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 
 	if (it != NULL)
 	{
-		iterator = g_slice_new(JRocksDBIterator);
+		iterator = g_new(JRocksDBIterator, 1);
 		iterator->iterator = it;
 		iterator->first = TRUE;
 		iterator->prefix = g_strdup_printf("%s:%s", namespace, prefix);
@@ -265,7 +265,7 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 out:
 	g_free(iterator->prefix);
 	rocksdb_iter_destroy(iterator->iterator);
-	g_slice_free(JRocksDBIterator, iterator);
+	g_free(iterator);
 
 	return FALSE;
 }
@@ -283,7 +283,7 @@ backend_init(gchar const* path, gpointer* backend_data)
 	dirname = g_path_get_dirname(path);
 	g_mkdir_with_parents(dirname, 0700);
 
-	bd = g_slice_new(JRocksDBData);
+	bd = g_new(JRocksDBData, 1);
 	bd->read_options = rocksdb_readoptions_create();
 	bd->write_options = rocksdb_writeoptions_create();
 	bd->write_options_sync = rocksdb_writeoptions_create();
@@ -326,7 +326,7 @@ backend_fini(gpointer backend_data)
 		rocksdb_close(bd->db);
 	}
 
-	g_slice_free(JRocksDBData, bd);
+	g_free(bd);
 }
 
 static JBackend rocksdb_backend = {
