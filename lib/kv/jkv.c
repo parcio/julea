@@ -102,7 +102,6 @@ static void
 j_kv_init(void)
 {
 	gchar const* kv_backend;
-	gchar const* kv_component;
 	gchar const* kv_path;
 
 	if (j_kv_backend != NULL && j_kv_module != NULL)
@@ -111,12 +110,11 @@ j_kv_init(void)
 	}
 
 	kv_backend = j_configuration_get_backend(j_configuration(), J_BACKEND_TYPE_KV);
-	kv_component = j_configuration_get_backend_component(j_configuration(), J_BACKEND_TYPE_KV);
 	kv_path = j_configuration_get_backend_path(j_configuration(), J_BACKEND_TYPE_KV);
 
-	if (j_backend_load_client(kv_backend, kv_component, J_BACKEND_TYPE_KV, &j_kv_module, &j_kv_backend))
+	if (j_backend_load(kv_backend, J_BACKEND_COMPONENT_CLIENT, J_BACKEND_TYPE_KV, &j_kv_module, &j_kv_backend))
 	{
-		if (j_kv_backend == NULL || !j_backend_kv_init(j_kv_backend, kv_path))
+		if (j_kv_backend != NULL && !j_backend_kv_init(j_kv_backend, kv_path))
 		{
 			g_critical("Could not initialize kv backend %s.\n", kv_backend);
 		}

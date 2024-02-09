@@ -115,7 +115,6 @@ static void
 j_object_init(void)
 {
 	gchar const* object_backend;
-	gchar const* object_component;
 	gchar const* object_path;
 
 	if (j_object_backend != NULL && j_object_module != NULL)
@@ -124,12 +123,11 @@ j_object_init(void)
 	}
 
 	object_backend = j_configuration_get_backend(j_configuration(), J_BACKEND_TYPE_OBJECT);
-	object_component = j_configuration_get_backend_component(j_configuration(), J_BACKEND_TYPE_OBJECT);
 	object_path = j_configuration_get_backend_path(j_configuration(), J_BACKEND_TYPE_OBJECT);
 
-	if (j_backend_load_client(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &j_object_module, &j_object_backend))
+	if (j_backend_load(object_backend, J_BACKEND_COMPONENT_CLIENT, J_BACKEND_TYPE_OBJECT, &j_object_module, &j_object_backend))
 	{
-		if (j_object_backend == NULL || !j_backend_object_init(j_object_backend, object_path))
+		if (j_object_backend != NULL && !j_backend_object_init(j_object_backend, object_path))
 		{
 			g_critical("Could not initialize object backend %s.\n", object_backend);
 		}

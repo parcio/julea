@@ -61,20 +61,26 @@ j_backend_sql_error_quark(void)
 	return g_quark_from_static_string("j-backend-sql-error-quark");
 }
 
-static GModule*
-j_backend_load(gchar const* name, JBackendComponent component, JBackendType type, JBackend** backend)
+gboolean
+j_backend_load(gchar const* name, JBackendComponent component, JBackendType type, GModule** module, JBackend** backend)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JBackend* (*module_backend_info)(void) = NULL;
 
 	JBackend* tmp_backend = NULL;
-	GModule* module = NULL;
+	GModule* tmp_module = NULL;
 	// Unused in release builds
 	gchar const* backend_path G_GNUC_UNUSED = NULL;
 	gchar* module_name = NULL;
 	gchar* path = NULL;
 	gchar const* type_str = NULL;
+
+	g_return_val_if_fail(name != NULL, FALSE);
+	g_return_val_if_fail(component == J_BACKEND_COMPONENT_CLIENT || component == J_BACKEND_COMPONENT_SERVER, FALSE);
+	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
+	g_return_val_if_fail(module != NULL, FALSE);
+	g_return_val_if_fail(backend != NULL, FALSE);
 
 	switch (type)
 	{
@@ -100,9 +106,9 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 #else
 		path = g_module_build_path(backend_path, module_name);
 #endif
-		module = g_module_open(path, G_MODULE_BIND_LOCAL);
+		tmp_module = g_module_open(path, G_MODULE_BIND_LOCAL);
 
-		if (module == NULL)
+		if (tmp_module == NULL)
 		{
 			g_warning("Could not load module %s.", path);
 		}
@@ -112,7 +118,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 	}
 #endif
 
-	if (module == NULL)
+	if (tmp_module == NULL)
 	{
 		module_name = g_strdup_printf("%s-%s", type_str, name);
 #if GLIB_CHECK_VERSION(2, 76, 0)
@@ -120,9 +126,9 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 #else
 		path = g_module_build_path(JULEA_BACKEND_PATH, module_name);
 #endif
-		module = g_module_open(path, G_MODULE_BIND_LOCAL);
+		tmp_module = g_module_open(path, G_MODULE_BIND_LOCAL);
 
-		if (module == NULL)
+		if (tmp_module == NULL)
 		{
 			g_warning("Could not load module %s.", path);
 		}
@@ -131,12 +137,12 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 		g_free(module_name);
 	}
 
-	if (module == NULL)
+	if (tmp_module == NULL)
 	{
 		goto error;
 	}
 
-	g_module_symbol(module, "backend_info", (gpointer*)&module_backend_info);
+	g_module_symbol(tmp_module, "backend_info", (gpointer*)&module_backend_info);
 
 	if (module_backend_info == NULL)
 	{
@@ -153,7 +159,7 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 		goto error;
 	}
 
-	if (tmp_backend->type != type || !(tmp_backend->component & component))
+	if (tmp_backend->type != type)
 	{
 		goto error;
 	}
@@ -214,65 +220,38 @@ j_backend_load(gchar const* name, JBackendComponent component, JBackendType type
 		}
 	}
 
+	g_debug("Loaded %s backend %s.", type_str, name);
+
+	if (tmp_backend->component != component)
+	{
+		goto unload;
+	}
+
+	*module = tmp_module;
 	*backend = tmp_backend;
 
-	return module;
+	return TRUE;
+
+unload:
+	g_debug("Unloading %s backend %s as it is not %s-side.", type_str, name, (component == J_BACKEND_COMPONENT_CLIENT) ? "client" : "server");
+
+	g_module_close(tmp_module);
+
+	*module = NULL;
+	*backend = NULL;
+
+	return TRUE;
 
 error:
-	if (module != NULL)
+	g_critical("Could not load %s backend %s.", type_str, name);
+
+	if (tmp_module != NULL)
 	{
-		g_module_close(module);
+		g_module_close(tmp_module);
 	}
-
-	*backend = NULL;
-
-	return NULL;
-}
-
-gboolean
-j_backend_load_client(gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(component != NULL, FALSE);
-	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
-	g_return_val_if_fail(module != NULL, FALSE);
-	g_return_val_if_fail(backend != NULL, FALSE);
 
 	*module = NULL;
 	*backend = NULL;
-
-	if (g_strcmp0(component, "client") == 0)
-	{
-		*module = j_backend_load(name, J_BACKEND_COMPONENT_CLIENT, type, backend);
-
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-gboolean
-j_backend_load_server(gchar const* name, gchar const* component, JBackendType type, GModule** module, JBackend** backend)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(name != NULL, FALSE);
-	g_return_val_if_fail(component != NULL, FALSE);
-	g_return_val_if_fail(type == J_BACKEND_TYPE_OBJECT || type == J_BACKEND_TYPE_KV || type == J_BACKEND_TYPE_DB, FALSE);
-	g_return_val_if_fail(module != NULL, FALSE);
-	g_return_val_if_fail(backend != NULL, FALSE);
-
-	*module = NULL;
-	*backend = NULL;
-
-	if (g_strcmp0(component, "server") == 0)
-	{
-		*module = j_backend_load(name, J_BACKEND_COMPONENT_SERVER, type, backend);
-
-		return TRUE;
-	}
 
 	return FALSE;
 }

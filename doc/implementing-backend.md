@@ -42,7 +42,7 @@ Finally, a `JBackend` structure has to be defined and returned to make the backe
 static
 JBackend null_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
-	.component = J_BACKEND_COMPONENT_CLIENT | J_BACKEND_COMPONENT_SERVER,
+	.component = J_BACKEND_COMPONENT_SERVER,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,

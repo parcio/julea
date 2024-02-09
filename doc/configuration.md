@@ -24,7 +24,7 @@ This can be used to run two servers on the same machine, as sharing backend path
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
 | gio     | ❌     | ✔     | Path to a directory (`/var/storage/gio`) |
-| null    | ✔     | ✔     |  |
+| null    | ❌     | ✔     |  |
 | posix   | ❌     | ✔     | Path to a directory (`/var/storage/posix`) |
 | rados   | ✔     | ❌     | Path to a configuration file and pool name (`/etc/ceph/ceph.conf:data`) |
 
@@ -35,14 +35,14 @@ This can be used to run two servers on the same machine, as sharing backend path
 | leveldb | ❌     | ✔     | Path to a directory (`/var/storage/leveldb`) |
 | lmdb    | ❌     | ✔     | Path to a directory (`/var/storage/lmdb`) |
 | mongodb | ✔     | ❌     | Host and database (`127.0.0.1:julea_db`) |
-| null    | ✔     | ✔     |  |
-| sqlite  | ❌     | ✔     | Path to a file (`/var/storage/sqlite.db`) |
+| null    | ❌     | ✔     |  |
 | rocksdb | ❌     | ✔     | Path to a directory (`/var/storage/rocksdb`) |
+| sqlite  | ❌     | ✔     | Path to a file (`/var/storage/sqlite.db`) |
 
 ## Database Backends
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
-| mysql   | ✔     | ✔     | Host, database, user and password (`127.0.0.1:julea_db:julea_user:julea_pw`) |
-| null    | ✔     | ✔     |  |
+| mysql   | ✔     | ❌     | Host, database, user and password (`127.0.0.1:julea_db:julea_user:julea_pw`) |
+| null    | ❌     | ✔     |  |
 | sqlite  | ❌     | ✔     | Path to a file (`/var/storage/sqlite.db`) or `:memory:` for an in-memory database |

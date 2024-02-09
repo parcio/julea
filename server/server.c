@@ -197,6 +197,66 @@ jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type
 	return FALSE;
 }
 
+static gboolean
+jd_load_and_init_backend (gchar const* host, gint port, JBackendType type, JBackend** backend, GModule** module)
+{
+	gchar const* backend_name;
+	g_autofree gchar* backend_path = NULL;
+	g_autofree gchar* port_str = NULL;
+	gchar const* type_str = NULL;
+
+	gboolean (*backend_init)(JBackend*, gchar const*) = NULL;
+
+	switch (type)
+	{
+		case J_BACKEND_TYPE_OBJECT:
+			type_str = "object";
+			backend_init = j_backend_object_init;
+			break;
+		case J_BACKEND_TYPE_KV:
+			type_str = "kv";
+			backend_init = j_backend_kv_init;
+			break;
+		case J_BACKEND_TYPE_DB:
+			type_str = "db";
+			backend_init = j_backend_db_init;
+			break;
+		default:
+			g_warn_if_reached();
+	}
+
+	port_str = g_strdup_printf("%d", port);
+
+	backend_name = j_configuration_get_backend(jd_configuration, type);
+	backend_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, type), "{PORT}", port_str);
+
+	if (!jd_is_server_for_backend(host, port, type))
+	{
+		return TRUE;
+	}
+
+	if (!j_backend_load(backend_name, J_BACKEND_COMPONENT_SERVER, type, module, backend))
+	{
+		return FALSE;
+	}
+
+	if (*backend == NULL)
+	{
+		return TRUE;
+	}
+
+	if (!backend_init(*backend, backend_path))
+	{
+		g_critical("Could not initialize %s backend %s.", type_str, backend_name);
+
+		return FALSE;
+	}
+
+	g_debug("Initialized %s backend %s.", type_str, backend_name);
+
+	return TRUE;
+}
+
 int
 main(int argc, char** argv)
 {
@@ -214,16 +274,6 @@ main(int argc, char** argv)
 	GModule* db_module = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	g_autoptr(GSocketService) socket_service = NULL;
-	gchar const* object_backend;
-	gchar const* object_component;
-	g_autofree gchar* object_path = NULL;
-	gchar const* kv_backend;
-	gchar const* kv_component;
-	g_autofree gchar* kv_path = NULL;
-	gchar const* db_backend;
-	gchar const* db_component;
-	g_autofree gchar* db_path = NULL;
-	g_autofree gchar* port_str = NULL;
 	guint listen_retries = 0;
 
 	GOptionEntry entries[] = {
@@ -314,54 +364,19 @@ main(int argc, char** argv)
 	jd_kv_backend = NULL;
 	jd_db_backend = NULL;
 
-	port_str = g_strdup_printf("%d", opt_port);
-
-	object_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_OBJECT);
-	object_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_OBJECT);
-	object_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_OBJECT), "{PORT}", port_str);
-
-	kv_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_KV);
-	kv_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_KV);
-	kv_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_KV), "{PORT}", port_str);
-
-	db_backend = j_configuration_get_backend(jd_configuration, J_BACKEND_TYPE_DB);
-	db_component = j_configuration_get_backend_component(jd_configuration, J_BACKEND_TYPE_DB);
-	db_path = j_helper_str_replace(j_configuration_get_backend_path(jd_configuration, J_BACKEND_TYPE_DB), "{PORT}", port_str);
-
-	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_OBJECT)
-	    && j_backend_load_server(object_backend, object_component, J_BACKEND_TYPE_OBJECT, &object_module, &jd_object_backend))
+	if (!jd_load_and_init_backend(opt_host, opt_port, J_BACKEND_TYPE_OBJECT, &jd_object_backend, &object_module))
 	{
-		if (jd_object_backend == NULL || !j_backend_object_init(jd_object_backend, object_path))
-		{
-			g_warning("Could not initialize object backend %s.", object_backend);
-			return 1;
-		}
-
-		g_debug("Initialized object backend %s.", object_backend);
+		return 1;
 	}
 
-	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_KV)
-	    && j_backend_load_server(kv_backend, kv_component, J_BACKEND_TYPE_KV, &kv_module, &jd_kv_backend))
+	if (!jd_load_and_init_backend(opt_host, opt_port, J_BACKEND_TYPE_KV, &jd_kv_backend, &kv_module))
 	{
-		if (jd_kv_backend == NULL || !j_backend_kv_init(jd_kv_backend, kv_path))
-		{
-			g_warning("Could not initialize kv backend %s.", kv_backend);
-			return 1;
-		}
-
-		g_debug("Initialized kv backend %s.", kv_backend);
+		return 1;
 	}
 
-	if (jd_is_server_for_backend(opt_host, opt_port, J_BACKEND_TYPE_DB)
-	    && j_backend_load_server(db_backend, db_component, J_BACKEND_TYPE_DB, &db_module, &jd_db_backend))
+	if (!jd_load_and_init_backend(opt_host, opt_port, J_BACKEND_TYPE_DB, &jd_db_backend, &db_module))
 	{
-		if (jd_db_backend == NULL || !j_backend_db_init(jd_db_backend, db_path))
-		{
-			g_warning("Could not initialize db backend %s.", db_backend);
-			return 1;
-		}
-
-		g_debug("Initialized db backend %s.", db_backend);
+		return 1;
 	}
 
 	jd_statistics = j_statistics_new(FALSE);

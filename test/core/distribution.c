@@ -37,13 +37,10 @@ test_distribution_fixture_setup(JConfiguration** configuration, gconstpointer da
 	g_key_file_set_string_list(key_file, "servers", "kv", servers, 2);
 	g_key_file_set_string_list(key_file, "servers", "db", servers, 2);
 	g_key_file_set_string(key_file, "object", "backend", "null");
-	g_key_file_set_string(key_file, "object", "component", "server");
 	g_key_file_set_string(key_file, "object", "path", "");
 	g_key_file_set_string(key_file, "kv", "backend", "null");
-	g_key_file_set_string(key_file, "kv", "component", "server");
 	g_key_file_set_string(key_file, "kv", "path", "");
 	g_key_file_set_string(key_file, "db", "backend", "null");
-	g_key_file_set_string(key_file, "db", "component", "server");
 	g_key_file_set_string(key_file, "db", "path", "");
 
 	*configuration = j_configuration_new_for_data(key_file);

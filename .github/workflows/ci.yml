@@ -333,15 +333,11 @@ jobs:
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
           . scripts/environment.sh
-          JULEA_KV_COMPONENT='server'
-          if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_COMPONENT='client'; fi
           JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
           if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
-          JULEA_DB_COMPONENT='server'
-          if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_COMPONENT='client'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-component=server --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-component="${JULEA_KV_COMPONENT}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-component="${JULEA_DB_COMPONENT}" --db-path="${JULEA_DB_PATH}"
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
           . scripts/environment.sh
@@ -431,7 +427,7 @@ jobs:
       - name: Create configuration
         run: |
           . scripts/environment.sh
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-component=server --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-component=server --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-component=server --db-path=/tmp/julea/db/sqlite
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
       - name: Tests
         env:
           HDF5_VOL_CONNECTOR: julea-db

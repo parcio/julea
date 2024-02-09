@@ -50,7 +50,6 @@ static void
 j_db_init(void)
 {
 	gchar const* db_backend;
-	gchar const* db_component;
 	gchar const* db_path;
 
 	if (j_db_backend != NULL && j_db_module != NULL)
@@ -59,12 +58,11 @@ j_db_init(void)
 	}
 
 	db_backend = j_configuration_get_backend(j_configuration(), J_BACKEND_TYPE_DB);
-	db_component = j_configuration_get_backend_component(j_configuration(), J_BACKEND_TYPE_DB);
 	db_path = j_configuration_get_backend_path(j_configuration(), J_BACKEND_TYPE_DB);
 
-	if (j_backend_load_client(db_backend, db_component, J_BACKEND_TYPE_DB, &j_db_module, &j_db_backend))
+	if (j_backend_load(db_backend, J_BACKEND_COMPONENT_CLIENT, J_BACKEND_TYPE_DB, &j_db_module, &j_db_backend))
 	{
-		if (j_db_backend == NULL || !j_backend_db_init(j_db_backend, db_path))
+		if (j_db_backend != NULL && !j_backend_db_init(j_db_backend, db_path))
 		{
 			g_critical("Could not initialize db backend %s.\n", db_backend);
 		}

@@ -88,11 +88,6 @@ struct JConfiguration
 		gchar* backend;
 
 		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
 		 * The path.
 		 */
 		gchar* path;
@@ -109,11 +104,6 @@ struct JConfiguration
 		gchar* backend;
 
 		/**
-		 * The component.
-		 */
-		gchar* component;
-
-		/**
 		 * The path.
 		 */
 		gchar* path;
@@ -128,11 +118,6 @@ struct JConfiguration
 		 * The backend.
 		 */
 		gchar* backend;
-
-		/**
-		 * The component.
-		 */
-		gchar* component;
 
 		/**
 		 * The path.
@@ -276,13 +261,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	gchar** servers_kv;
 	gchar** servers_db;
 	gchar* object_backend;
-	gchar* object_component;
 	gchar* object_path;
 	gchar* kv_backend;
-	gchar* kv_component;
 	gchar* kv_path;
 	gchar* db_backend;
-	gchar* db_component;
 	gchar* db_path;
 	g_autofree gchar* key_file_str = NULL;
 	guint64 max_operation_size;
@@ -302,13 +284,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	servers_kv = g_key_file_get_string_list(key_file, "servers", "kv", NULL, NULL);
 	servers_db = g_key_file_get_string_list(key_file, "servers", "db", NULL, NULL);
 	object_backend = g_key_file_get_string(key_file, "object", "backend", NULL);
-	object_component = g_key_file_get_string(key_file, "object", "component", NULL);
 	object_path = g_key_file_get_string(key_file, "object", "path", NULL);
 	kv_backend = g_key_file_get_string(key_file, "kv", "backend", NULL);
-	kv_component = g_key_file_get_string(key_file, "kv", "component", NULL);
 	kv_path = g_key_file_get_string(key_file, "kv", "path", NULL);
 	db_backend = g_key_file_get_string(key_file, "db", "backend", NULL);
-	db_component = g_key_file_get_string(key_file, "db", "component", NULL);
 	db_path = g_key_file_get_string(key_file, "db", "path", NULL);
 
 	/// \todo check value ranges (max_operation_size, port, max_connections, stripe_size)
@@ -318,23 +297,17 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	    || servers_kv == NULL || servers_kv[0] == NULL
 	    || servers_db == NULL || servers_db[0] == NULL
 	    || object_backend == NULL
-	    || object_component == NULL
 	    || object_path == NULL
 	    || kv_backend == NULL
-	    || kv_component == NULL
 	    || kv_path == NULL
 	    || db_backend == NULL
-	    || db_component == NULL
 	    || db_path == NULL)
 	{
 		g_free(db_backend);
-		g_free(db_component);
 		g_free(db_path);
 		g_free(kv_backend);
-		g_free(kv_component);
 		g_free(kv_path);
 		g_free(object_backend);
-		g_free(object_component);
 		g_free(object_path);
 		g_strfreev(servers_object);
 		g_strfreev(servers_kv);
@@ -351,13 +324,10 @@ j_configuration_new_for_data(GKeyFile* key_file)
 	configuration->servers.kv_len = g_strv_length(servers_kv);
 	configuration->servers.db_len = g_strv_length(servers_db);
 	configuration->object.backend = object_backend;
-	configuration->object.component = object_component;
 	configuration->object.path = object_path;
 	configuration->kv.backend = kv_backend;
-	configuration->kv.component = kv_component;
 	configuration->kv.path = kv_path;
 	configuration->db.backend = db_backend;
-	configuration->db.component = db_component;
 	configuration->db.path = db_path;
 	configuration->max_operation_size = max_operation_size;
 	configuration->port = port;
@@ -422,15 +392,12 @@ j_configuration_unref(JConfiguration* configuration)
 	if (g_atomic_int_dec_and_test(&(configuration->ref_count)))
 	{
 		g_free(configuration->db.backend);
-		g_free(configuration->db.component);
 		g_free(configuration->db.path);
 
 		g_free(configuration->kv.backend);
-		g_free(configuration->kv.component);
 		g_free(configuration->kv.path);
 
 		g_free(configuration->object.backend);
-		g_free(configuration->object.component);
 		g_free(configuration->object.path);
 
 		g_strfreev(configuration->servers.object);
@@ -505,28 +472,6 @@ j_configuration_get_backend(JConfiguration* configuration, JBackendType backend)
 			return configuration->kv.backend;
 		case J_BACKEND_TYPE_DB:
 			return configuration->db.backend;
-		default:
-			g_assert_not_reached();
-	}
-
-	return NULL;
-}
-
-gchar const*
-j_configuration_get_backend_component(JConfiguration* configuration, JBackendType backend)
-{
-	J_TRACE_FUNCTION(NULL);
-
-	g_return_val_if_fail(configuration != NULL, NULL);
-
-	switch (backend)
-	{
-		case J_BACKEND_TYPE_OBJECT:
-			return configuration->object.component;
-		case J_BACKEND_TYPE_KV:
-			return configuration->kv.component;
-		case J_BACKEND_TYPE_DB:
-			return configuration->db.component;
 		default:
 			g_assert_not_reached();
 	}

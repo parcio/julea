@@ -115,8 +115,8 @@ typedef enum JBackendType JBackendType;
 
 enum JBackendComponent
 {
-	J_BACKEND_COMPONENT_CLIENT = 1 << 0,
-	J_BACKEND_COMPONENT_SERVER = 1 << 1
+	J_BACKEND_COMPONENT_CLIENT,
+	J_BACKEND_COMPONENT_SERVER
 };
 
 typedef enum JBackendComponent JBackendComponent;
@@ -385,8 +385,7 @@ GQuark j_backend_sql_error_quark(void);
 
 JBackend* backend_info(void);
 
-gboolean j_backend_load_client(gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
-gboolean j_backend_load_server(gchar const*, gchar const*, JBackendType, GModule**, JBackend**);
+gboolean j_backend_load(gchar const*, JBackendComponent, JBackendType, GModule**, JBackend**);
 
 gboolean j_backend_object_init(JBackend*, gchar const*);
 void j_backend_object_fini(JBackend*);
