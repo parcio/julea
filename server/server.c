@@ -198,7 +198,7 @@ jd_is_server_for_backend(gchar const* host, gint port, JBackendType backend_type
 }
 
 static gboolean
-jd_load_and_init_backend (gchar const* host, gint port, JBackendType type, JBackend** backend, GModule** module)
+jd_load_and_init_backend(gchar const* host, gint port, JBackendType type, JBackend** backend, GModule** module)
 {
 	gchar const* backend_name;
 	g_autofree gchar* backend_path = NULL;
