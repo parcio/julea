@@ -36,6 +36,7 @@ typedef struct JSQLiteBatch JSQLiteBatch;
 struct JSQLiteData
 {
 	sqlite3* db;
+	GMutex mutex[1];
 };
 
 typedef struct JSQLiteData JSQLiteData;
@@ -49,7 +50,10 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
-	if (sqlite3_exec(bd->db, "BEGIN TRANSACTION;", NULL, NULL, NULL) == SQLITE_OK)
+	g_mutex_lock(bd->mutex);
+
+	/// \todo Use immediate transaction and check for busy?
+	if (sqlite3_exec(bd->db, "BEGIN;", NULL, NULL, NULL) == SQLITE_OK)
 	{
 		batch = g_new(JSQLiteBatch, 1);
 
@@ -78,6 +82,8 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	{
 		ret = TRUE;
 	}
+
+	g_mutex_unlock(bd->mutex);
 
 	j_semantics_unref(batch->semantics);
 	g_free(batch->namespace);
@@ -179,6 +185,8 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 	g_return_val_if_fail(namespace != NULL, FALSE);
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
+	g_mutex_lock(bd->mutex);
+
 	if (sqlite3_prepare_v2(bd->db, "SELECT key, value FROM julea WHERE namespace = ?;", -1, &stmt, NULL) == SQLITE_OK)
 	{
 		sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
@@ -199,6 +207,8 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 	g_return_val_if_fail(prefix != NULL, FALSE);
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 
+	g_mutex_lock(bd->mutex);
+
 	if (sqlite3_prepare_v2(bd->db, "SELECT key, value FROM julea WHERE namespace = ? AND key LIKE ? || '%';", -1, &stmt, NULL) == SQLITE_OK)
 	{
 		sqlite3_bind_text(stmt, 1, namespace, -1, NULL);
@@ -213,9 +223,8 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 static gboolean
 backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** key, gconstpointer* value, guint32* len)
 {
+	JSQLiteData* bd = backend_data;
 	sqlite3_stmt* stmt = backend_iterator;
-
-	(void)backend_data;
 
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
@@ -231,6 +240,8 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 	}
 
 	sqlite3_finalize(stmt);
+
+	g_mutex_unlock(bd->mutex);
 
 	return FALSE;
 }
@@ -263,6 +274,8 @@ backend_init(gchar const* path, gpointer* backend_data)
 		goto error;
 	}
 
+	g_mutex_init(bd->mutex);
+
 	*backend_data = bd;
 
 	return (bd->db != NULL);
@@ -283,6 +296,8 @@ backend_fini(gpointer backend_data)
 	{
 		sqlite3_close(bd->db);
 	}
+
+	g_mutex_clear(bd->mutex);
 
 	g_free(bd);
 }

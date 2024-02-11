@@ -92,8 +92,6 @@ test_parallel_put_get(void)
 	g_thread_pool_free(thread_pool, FALSE, TRUE);
 	g_assert_cmpuint(g_atomic_int_get(&num_put_gets), ==, n);
 	J_TEST_TRAP_END;
-
-	J_TEST_EXPECT_FAIL("Known issue. See #167");
 }
 
 static gint num_iterator = 0;
