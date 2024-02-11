@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2023 Michael Kuhn
+ * Copyright (C) 2017-2024 Michael Kuhn
  * Copyright (C) 2018-2019 Michael Straßberger
  * Copyright (C) 2019 Benjamin Warnke
  *
