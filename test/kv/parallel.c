@@ -96,8 +96,88 @@ test_parallel_put_get(void)
 	J_TEST_EXPECT_FAIL("Known issue. See #167");
 }
 
+static gint num_iterator = 0;
+
+static void
+test_parallel_iterator_func(gpointer data, gpointer user_data)
+{
+	g_autoptr(JKVIterator) kv_iterator = NULL;
+	guint kvs = 0;
+
+	(void)user_data;
+
+	kv_iterator = j_kv_iterator_new("test", "test-kv-parallel-iterator-");
+
+	while (j_kv_iterator_next(kv_iterator))
+	{
+		gchar const* key;
+		gconstpointer value;
+		guint32 len;
+
+		key = j_kv_iterator_get(kv_iterator, &value, &len);
+		TEST_THREAD_ASSERT(g_str_has_prefix(key, "test-kv-parallel-iterator-"));
+		TEST_THREAD_ASSERT(g_strcmp0(value, "kv-value") == 0);
+		TEST_THREAD_ASSERT(len == strlen("kv-value") + 1);
+		kvs++;
+	}
+
+	TEST_THREAD_ASSERT(kvs == GPOINTER_TO_UINT(data));
+
+	g_atomic_int_inc(&num_iterator);
+}
+
+static void
+test_parallel_iterator(void)
+{
+	guint const n = 100;
+
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JBatch) delete_batch = NULL;
+	g_autofree gchar* value = NULL;
+	gboolean ret;
+
+	GThreadPool* thread_pool;
+
+	J_TEST_TRAP_START;
+	thread_pool = g_thread_pool_new(test_parallel_iterator_func, NULL, j_configuration_get_max_connections(j_configuration()), TRUE, NULL);
+
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	delete_batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	value = g_strdup("kv-value");
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_autoptr(JKV) kv = NULL;
+		g_autofree gchar* key = NULL;
+
+		key = g_strdup_printf("test-kv-parallel-iterator-%d", i);
+		kv = j_kv_new("test", key);
+		g_assert_nonnull(kv);
+
+		j_kv_put(kv, value, strlen(value) + 1, NULL, batch);
+		j_kv_delete(kv, delete_batch);
+	}
+
+	ret = j_batch_execute(batch);
+	g_assert_true(ret);
+
+	for (guint i = 0; i < n; i++)
+	{
+		g_thread_pool_push(thread_pool, GUINT_TO_POINTER(n), NULL);
+	}
+
+	g_thread_pool_free(thread_pool, FALSE, TRUE);
+
+	ret = j_batch_execute(delete_batch);
+	g_assert_true(ret);
+
+	g_assert_cmpuint(g_atomic_int_get(&num_iterator), ==, n);
+	J_TEST_TRAP_END;
+}
+
 void
 test_kv_parallel(void)
 {
 	g_test_add_func("/kv/parallel/put_get", test_parallel_put_get);
+	g_test_add_func("/kv/parallel/iterator", test_parallel_iterator);
 }
