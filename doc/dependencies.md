@@ -101,7 +101,7 @@ Alternatively, Docker can be used.
 ### MongoDB
 
 ```console
-$ podman run --publish 27017:27017 mongo
+$ podman run --publish 27017:27017 docker.io/library/mongo
 ```
 
 ### MariaDB
@@ -112,7 +112,7 @@ $ podman run --publish 3306:3306 \
   --env MARIADB_DATABASE=julea_db \
   --env MARIADB_USER=julea_user \
   --env MARIADB_PASSWORD=julea_pw \
-  mariadb
+  docker.io/library/mariadb
 ```
 
 ### MySQL
@@ -123,5 +123,5 @@ $ podman run --publish 3306:3306 \
   --env MYSQL_DATABASE=julea_db \
   --env MYSQL_USER=julea_user \
   --env MYSQL_PASSWORD=julea_pw \
-  mysql
+  docker.io/library/mysql
 ```

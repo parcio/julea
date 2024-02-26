@@ -40,6 +40,11 @@ struct JMongoDBData
 
 	gchar* host;
 	gchar* database;
+
+	/// \todo Use a mongoc_client_pool_t instead?
+	// We need to be careful to not keep the mutex locked across function boundaries since the backend is loaded client-side.
+	// Otherwise, if a client creates two iterators without iterating them, it could enter backend_get_* twice and deadlock.
+	GMutex mutex[1];
 };
 
 typedef struct JMongoDBData JMongoDBData;
@@ -99,6 +104,8 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 		mongoc_write_concern_set_w(write_concern, MONGOC_WRITE_CONCERN_W_UNACKNOWLEDGED);
 	}
 
+	g_mutex_lock(bd->mutex);
+
 	/// \todo cache
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, namespace);
 	m_database = mongoc_client_get_database(bd->connection, bd->database);
@@ -109,6 +116,8 @@ backend_batch_start(gpointer backend_data, gchar const* namespace, JSemantics* s
 	mongoc_write_concern_append(write_concern, opts);
 
 	bulk_op = mongoc_collection_create_bulk_operation_with_opts(m_collection, opts);
+
+	g_mutex_unlock(bd->mutex);
 
 	bson_destroy(opts);
 
@@ -135,8 +144,7 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	gboolean ret = TRUE;
 
 	JMongoDBBatch* batch = backend_batch;
-
-	(void)backend_data;
+	JMongoDBData* bd = backend_data;
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 
@@ -146,8 +154,12 @@ backend_batch_execute(gpointer backend_data, gpointer backend_batch)
 	{
 		bson_t reply[1];
 
+		g_mutex_lock(bd->mutex);
+
 		ret = mongoc_bulk_operation_execute(batch->bulk_op, reply, NULL);
 		bson_destroy(reply);
+
+		g_mutex_unlock(bd->mutex);
 	}
 
 	/*
@@ -172,10 +184,9 @@ static gboolean
 backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gconstpointer value, guint32 len)
 {
 	JMongoDBBatch* batch = backend_batch;
+	JMongoDBData* bd = backend_data;
 	bson_t document[1];
 	bson_t selector[1];
-
-	(void)backend_data;
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -188,10 +199,14 @@ backend_put(gpointer backend_data, gpointer backend_batch, gchar const* key, gco
 	bson_init(selector);
 	bson_append_utf8(selector, "key", -1, key, -1);
 
+	g_mutex_lock(bd->mutex);
+
 	/// \todo use insert when possible
 	//mongoc_bulk_operation_insert(batch->bulk_op, document);
 	mongoc_bulk_operation_replace_one(batch->bulk_op, selector, document, TRUE);
 	batch->is_empty = FALSE;
+
+	g_mutex_unlock(bd->mutex);
 
 	/*
 	if (!ret)
@@ -214,9 +229,8 @@ static gboolean
 backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 {
 	JMongoDBBatch* batch = backend_batch;
+	JMongoDBData* bd = backend_data;
 	bson_t document[1];
-
-	(void)backend_data;
 
 	g_return_val_if_fail(backend_batch != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
@@ -224,8 +238,12 @@ backend_delete(gpointer backend_data, gpointer backend_batch, gchar const* key)
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
 
+	g_mutex_lock(bd->mutex);
+
 	mongoc_bulk_operation_remove(batch->bulk_op, document);
 	batch->is_empty = FALSE;
+
+	g_mutex_unlock(bd->mutex);
 
 	bson_destroy(document);
 
@@ -257,6 +275,8 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 	bson_init(opts);
 	bson_append_int32(opts, "limit", -1, 1);
 
+	g_mutex_lock(bd->mutex);
+
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, batch->namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, opts, NULL);
 
@@ -283,6 +303,8 @@ backend_get(gpointer backend_data, gpointer backend_batch, gchar const* key, gpo
 		}
 	}
 
+	g_mutex_unlock(bd->mutex);
+
 	bson_destroy(opts);
 	bson_destroy(document);
 
@@ -307,8 +329,12 @@ backend_get_all(gpointer backend_data, gchar const* namespace, gpointer* backend
 
 	bson_init(document);
 
+	g_mutex_lock(bd->mutex);
+
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);
+
+	g_mutex_unlock(bd->mutex);
 
 	if (cursor != NULL)
 	{
@@ -345,8 +371,12 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 	bson_init(document);
 	bson_append_regex(document, "key", -1, regex_prefix, NULL);
 
+	g_mutex_lock(bd->mutex);
+
 	m_collection = mongoc_client_get_collection(bd->connection, bd->database, namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, NULL, NULL);
+
+	g_mutex_unlock(bd->mutex);
 
 	if (cursor != NULL)
 	{
@@ -364,17 +394,19 @@ backend_get_by_prefix(gpointer backend_data, gchar const* namespace, gchar const
 static gboolean
 backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** key, gconstpointer* value, guint32* len)
 {
+	JMongoDBData* bd = backend_data;
+
 	bson_t const* result;
 	bson_iter_t iter;
 	mongoc_cursor_t* cursor = backend_iterator;
 
 	gboolean ret = FALSE;
 
-	(void)backend_data;
-
 	g_return_val_if_fail(backend_iterator != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
+
+	g_mutex_lock(bd->mutex);
 
 	/// \todo
 	if (mongoc_cursor_next(cursor, &result))
@@ -408,6 +440,8 @@ backend_iterate(gpointer backend_data, gpointer backend_iterator, gchar const** 
 		mongoc_cursor_destroy(cursor);
 	}
 
+	g_mutex_unlock(bd->mutex);
+
 	return ret;
 }
 
@@ -430,6 +464,8 @@ backend_init(gchar const* path, gpointer* backend_data)
 	bd = g_new(JMongoDBData, 1);
 	bd->host = g_strdup(split[0]);
 	bd->database = g_strdup(split[1]);
+
+	g_mutex_init(bd->mutex);
 
 	g_return_val_if_fail(bd->host != NULL, FALSE);
 	g_return_val_if_fail(bd->database != NULL, FALSE);
@@ -470,6 +506,8 @@ backend_fini(gpointer backend_data)
 
 	g_free(bd->database);
 	g_free(bd->host);
+
+	g_mutex_clear(bd->mutex);
 
 	g_free(bd);
 

@@ -723,7 +723,7 @@ if fuse_dep.found()
 	])
 
 	executable('julea-fuse', julea_fuse_srcs,
-		dependencies: [glib_dep, libbson_dep, julea_dep, julea_client_deps['object'], julea_client_deps['kv'], fuse_dep],
+		dependencies: common_deps + [julea_dep, julea_client_deps['object'], julea_client_deps['kv'], fuse_dep],
 		include_directories: julea_incs,
 		install: true,
 	)
