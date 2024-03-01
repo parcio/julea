@@ -728,6 +728,7 @@ backend_fini(gpointer backend_data)
 static JBackend mysql_backend = {
 	.type = J_BACKEND_TYPE_DB,
 	.component = J_BACKEND_COMPONENT_CLIENT,
+	.flags = 0,
 	.db = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,

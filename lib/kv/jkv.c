@@ -135,14 +135,15 @@ j_kv_fini(void)
 	if (j_kv_backend != NULL)
 	{
 		j_backend_kv_fini(j_kv_backend);
-		j_kv_backend = NULL;
 	}
 
 	if (j_kv_module != NULL)
 	{
-		g_module_close(j_kv_module);
-		j_kv_module = NULL;
+		j_backend_unload(j_kv_backend, j_kv_module);
 	}
+
+	j_kv_backend = NULL;
+	j_kv_module = NULL;
 }
 
 static void

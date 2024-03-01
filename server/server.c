@@ -415,17 +415,17 @@ main(int argc, char** argv)
 
 	if (db_module != NULL)
 	{
-		g_module_close(db_module);
+		j_backend_unload(jd_db_backend, db_module);
 	}
 
 	if (kv_module != NULL)
 	{
-		g_module_close(kv_module);
+		j_backend_unload(jd_kv_backend, kv_module);
 	}
 
 	if (object_module)
 	{
-		g_module_close(object_module);
+		j_backend_unload(jd_object_backend, object_module);
 	}
 
 	j_configuration_unref(jd_configuration);

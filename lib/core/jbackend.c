@@ -257,6 +257,22 @@ error:
 }
 
 gboolean
+j_backend_unload(JBackend* backend, GModule* module)
+{
+	J_TRACE_FUNCTION(NULL);
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(module != NULL, FALSE);
+
+	if ((backend->flags & J_BACKEND_FLAGS_DO_NOT_UNLOAD) == 0)
+	{
+		g_module_close(module);
+	}
+
+	return TRUE;
+}
+
+gboolean
 j_backend_object_init(JBackend* backend, gchar const* path)
 {
 	J_TRACE_FUNCTION(NULL);

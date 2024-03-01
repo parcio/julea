@@ -148,14 +148,15 @@ j_object_fini(void)
 	if (j_object_backend != NULL)
 	{
 		j_backend_object_fini(j_object_backend);
-		j_object_backend = NULL;
 	}
 
 	if (j_object_module != NULL)
 	{
-		g_module_close(j_object_module);
-		j_object_module = NULL;
+		j_backend_unload(j_object_backend, j_object_module);
 	}
+
+	j_object_backend = NULL;
+	j_object_module = NULL;
 }
 
 static void

@@ -121,10 +121,18 @@ enum JBackendComponent
 
 typedef enum JBackendComponent JBackendComponent;
 
+enum JBackendFlags
+{
+	J_BACKEND_FLAGS_DO_NOT_UNLOAD = 1 << 0
+};
+
+typedef enum JBackendFlags JBackendFlags;
+
 struct JBackend
 {
 	JBackendType type;
 	JBackendComponent component;
+	JBackendFlags flags;
 
 	gpointer data;
 
@@ -386,6 +394,7 @@ GQuark j_backend_sql_error_quark(void);
 JBackend* backend_info(void);
 
 gboolean j_backend_load(gchar const*, JBackendComponent, JBackendType, GModule**, JBackend**);
+gboolean j_backend_unload(JBackend*, GModule*);
 
 gboolean j_backend_object_init(JBackend*, gchar const*);
 void j_backend_object_fini(JBackend*);

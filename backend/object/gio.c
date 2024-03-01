@@ -410,6 +410,7 @@ backend_fini(gpointer backend_data)
 static JBackend gio_backend = {
 	.type = J_BACKEND_TYPE_OBJECT,
 	.component = J_BACKEND_COMPONENT_SERVER,
+	.flags = 0,
 	.object = {
 		.backend_init = backend_init,
 		.backend_fini = backend_fini,
