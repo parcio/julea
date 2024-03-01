@@ -51,7 +51,7 @@ _benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			object = j_object_new("benchmark", name);
+			object = j_object_new(run->namespace, name);
 			j_object_create(object, batch);
 
 			j_object_delete(object, delete_batch);
@@ -110,7 +110,7 @@ _benchmark_object_delete(BenchmarkRun* run, gboolean use_batch)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			object = j_object_new("benchmark", name);
+			object = j_object_new(run->namespace, name);
 			j_object_create(object, batch);
 		}
 
@@ -125,7 +125,7 @@ _benchmark_object_delete(BenchmarkRun* run, gboolean use_batch)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			object = j_object_new("benchmark", name);
+			object = j_object_new(run->namespace, name);
 
 			j_object_delete(object, batch);
 
@@ -178,7 +178,7 @@ _benchmark_object_status(BenchmarkRun* run, gboolean use_batch)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	object = j_object_new("benchmark", "benchmark");
+	object = j_object_new(run->namespace, "benchmark");
 	j_object_create(object, batch);
 	j_object_write(object, dummy, 1, 0, &size, batch);
 
@@ -245,7 +245,7 @@ _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	object = j_object_new("benchmark", "benchmark");
+	object = j_object_new(run->namespace, "benchmark");
 	j_object_create(object, batch);
 
 	for (guint i = 0; i < n; i++)
@@ -320,7 +320,7 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	semantics = j_benchmark_get_semantics();
 	batch = j_batch_new(semantics);
 
-	object = j_object_new("benchmark", "benchmark");
+	object = j_object_new(run->namespace, "benchmark");
 	j_object_create(object, batch);
 	ret = j_batch_execute(batch);
 	g_assert_true(ret);
@@ -393,7 +393,7 @@ _benchmark_object_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
 			g_autofree gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			object = j_object_new("benchmark", name);
+			object = j_object_new(run->namespace, name);
 			j_object_create(object, batch);
 			j_object_delete(object, batch);
 
