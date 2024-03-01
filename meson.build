@@ -171,6 +171,32 @@ fuse_dep = dependency('fuse3',
 	include_type: 'system',
 )
 
+gdbm_prefix = get_option('gdbm_prefix')
+
+if gdbm_prefix != ''
+	gdbm_include = gdbm_prefix / 'include'
+	gdbm_lib = gdbm_prefix / 'lib'
+	gdbm_args = ['-I@0@'.format(gdbm_include)]
+
+	gdbm_dep = cc.find_library('gdbm',
+		has_headers: ['gdbm.h'],
+		required: false,
+		dirs: [gdbm_lib],
+		# FIXME We cannot use header_include_directories since absolute paths within the source directory are not allowed and cause an error
+		header_args: gdbm_args,
+	)
+
+	gdbm_dep = declare_dependency(
+		compile_args: gdbm_args,
+		dependencies: gdbm_dep,
+	)
+else
+	gdbm_dep = cc.find_library('gdbm',
+		has_headers: ['gdbm.h'],
+		required: false,
+	)
+endif
+
 leveldb_dep = dependency('leveldb',
 	version: '>= @0@'.format(leveldb_version),
 	required: false,
@@ -590,6 +616,10 @@ if rados_dep.found()
 	julea_backends += 'object/rados'
 endif
 
+if gdbm_dep.found()
+	julea_backends += 'kv/gdbm'
+endif
+
 if leveldb_dep.found()
 	julea_backends += 'kv/leveldb'
 endif
@@ -624,6 +654,15 @@ foreach backend: julea_backends
 
 	if backend == 'object/rados'
 		extra_deps += rados_dep
+	elif backend == 'kv/gdbm'
+		# gdbm bug
+		if meson.get_compiler('c').get_id() == 'clang'
+			extra_args += '-Wno-incompatible-pointer-types-discards-qualifiers'
+		else
+			extra_args += '-Wno-discarded-qualifiers'
+			extra_args += '-Wno-aggregate-return'
+		endif
+		extra_deps += gdbm_dep
 	elif backend == 'kv/leveldb'
 		extra_deps += leveldb_dep
 	elif backend == 'kv/lmdb'

@@ -160,7 +160,7 @@ jobs:
         if: ${{ matrix.dependencies == 'system' }}
         run: |
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
           if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
           then
             sudo apt --yes --no-install-recommends install meson
@@ -226,6 +226,9 @@ jobs:
             db: sqlite
           # KV backends
           - object: posix
+            kv: gdbm
+            db: sqlite
+          - object: posix
             kv: mongodb
             db: sqlite
           - object: posix
@@ -272,7 +275,7 @@ jobs:
         if: ${{ matrix.dependencies == 'system' }}
         run: |
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
           if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
           then
             sudo apt --yes --no-install-recommends install meson

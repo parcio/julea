@@ -32,6 +32,7 @@ This can be used to run two servers on the same machine, as sharing backend path
 
 | Backend | Client | Server | Path format  |
 |---------|:------:|:------:|--------------|
+| gdbm    | ❌     | ✔     | Path to a file (`/var/storage/gdbm`) |
 | leveldb | ❌     | ✔     | Path to a directory (`/var/storage/leveldb`) |
 | lmdb    | ❌     | ✔     | Path to a directory (`/var/storage/lmdb`) |
 | mongodb | ✔     | ❌     | Host and database (`127.0.0.1:julea_db`) |

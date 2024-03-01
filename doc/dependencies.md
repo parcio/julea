@@ -54,6 +54,11 @@ Most of them should be available within the repositories of Linux distributions.
   - Fedora: `dnf install fuse3-devel`
   - Arch Linux: `pacman -S fuse3`
 
+- GDBM
+  - Debian: `apt install libgdbm-dev`
+  - Fedora: `dnf install gdbm-devel`
+  - Arch Linux: `pacman -S gdbm`
+
 - LevelDB
   - Debian: `apt install libleveldb-dev`
   - Fedora: `dnf install leveldb-devel`

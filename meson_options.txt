@@ -1,0 +1,6 @@
+# FIXME Rename to meson.options once we require Meson >= 1.1
+option('gdbm_prefix',
+	type: 'string',
+	value: '',
+	description: 'Prefix for GDBM',
+)

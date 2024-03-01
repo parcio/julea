@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
 # FIXME psmisc is required for killall (setup.sh)
-RUN apt update && apt --yes --no-install-recommends install build-essential psmisc meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+RUN apt update && apt --yes --no-install-recommends install build-essential psmisc meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
 
 WORKDIR /julea

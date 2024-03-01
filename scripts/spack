@@ -136,6 +136,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} sqlite"
 
 	# Optional dependencies
+	dependencies="${dependencies} gdbm"
 	dependencies="${dependencies} leveldb"
 	dependencies="${dependencies} mariadb-c-client"
 	dependencies="${dependencies} mongo-c-driver"
