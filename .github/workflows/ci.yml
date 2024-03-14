@@ -256,6 +256,11 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
+      - name: Fix mmap_rnd_bits
+        if: ${{ matrix.os.dist == 'ubuntu-22.04' }}
+        # FIXME https://github.com/actions/runner-images/issues/9491
+        run: |
+          sudo sysctl vm.mmap_rnd_bits=28
       - name: Clean up system packages
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         run: |
@@ -395,6 +400,10 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
+      - name: Fix mmap_rnd_bits
+        # FIXME https://github.com/actions/runner-images/issues/9491
+        run: |
+          sudo sysctl vm.mmap_rnd_bits=28
       - name: Cache dependencies
         id: cache
         uses: actions/cache@v4
