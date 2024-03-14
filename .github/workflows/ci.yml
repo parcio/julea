@@ -179,20 +179,11 @@ jobs:
         if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
         run: |
           exit 1
-      - name: Configure
+      - name: Configure, build and install
         env:
           CC: ${{ matrix.os.compiler }}
         run: |
-          . scripts/environment.sh
-          meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
-      - name: Build
-        run: |
-          . scripts/environment.sh
-          ninja -C bld
-      - name: Install
-        run: |
-          . scripts/environment.sh
-          ninja -C bld install
+          ./scripts/ci/build.sh release "${{ matrix.dependencies }}"
   tests:
     name: Tests
     needs: dependencies
@@ -322,21 +313,11 @@ jobs:
           sudo mariadb --execute="CREATE DATABASE juleadb;"
           sudo mariadb --execute="CREATE USER 'julea'@'localhost' IDENTIFIED BY 'aeluj';"
           sudo mariadb --execute="GRANT ALL ON juleadb.* TO 'julea'@'localhost';"
-      - name: Configure
+      - name: Configure and build
         env:
           CC: ${{ matrix.os.compiler }}
         run: |
-          . scripts/environment.sh
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            meson setup -Db_sanitize=address,undefined -Db_lundef=false bld
-          else
-            meson setup -Db_sanitize=address,undefined bld
-          fi
-      - name: Build
-        run: |
-          . scripts/environment.sh
-          ninja -C bld
+          ./scripts/ci/build.sh debug "${{ matrix.dependencies }}"
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
@@ -424,16 +405,11 @@ jobs:
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           exit 1
-      - name: Configure
+      - name: Configure and build
         env:
           CC: gcc
         run: |
-          . scripts/environment.sh
-          meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
-      - name: Build
-        run: |
-          . scripts/environment.sh
-          ninja -C bld
+          ./scripts/ci/build.sh coverage spack
       - name: Create configuration
         run: |
           . scripts/environment.sh

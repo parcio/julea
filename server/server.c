@@ -144,6 +144,7 @@ jd_daemon(void)
 		return FALSE;
 	}
 
+	// FIXME Use sd_journal_stream_fd if available
 	fd = open("/dev/null", O_RDWR);
 
 	if (fd == -1)
