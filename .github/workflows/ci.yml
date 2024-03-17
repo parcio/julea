@@ -241,15 +241,15 @@ jobs:
             db: mysql
             db-server: mariadb
         exclude:
-          # MongoDB is not available on Ubuntu 22.04
-          - os:
-              dist: ubuntu-22.04
-            julea:
-              kv: mongodb
           # libfabric is too old on Ubuntu 20.04
           - os:
               dist: ubuntu-20.04
             dependencies: system
+    services:
+      mongodb:
+        image: ${{ matrix.julea.kv == 'mongodb' && 'docker.io/library/mongo' || '' }}
+        ports:
+          - 27017:27017
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -290,12 +290,6 @@ jobs:
         if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
         run: |
           exit 1
-      - name: Set up MongoDB
-        if: ${{ matrix.julea.kv == 'mongodb' }}
-        run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install mongodb-server
-          sudo systemctl start mongodb.service
       - name: Set up MySQL
         if: ${{ matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql' }}
         run: |
