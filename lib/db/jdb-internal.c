@@ -190,9 +190,7 @@ j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	op->exec_func = j_db_schema_create_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -230,9 +228,7 @@ j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 	op->exec_func = j_db_schema_get_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -269,9 +265,7 @@ j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	op->exec_func = j_db_schema_delete_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -310,9 +304,7 @@ j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 	op->exec_func = j_db_insert_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -353,9 +345,7 @@ j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 	op->exec_func = j_db_update_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -395,9 +385,7 @@ j_db_internal_delete(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 	op->exec_func = j_db_delete_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 static gboolean
@@ -446,9 +434,7 @@ j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBItera
 	op->exec_func = j_db_query_exec;
 	op->free_func = j_backend_db_func_free;
 
-	j_batch_add(batch, op);
-
-	return TRUE;
+	return j_batch_add(batch, op);
 }
 
 gboolean
