@@ -30,6 +30,7 @@ struct BenchmarkRun
 	guint iterations;
 	guint64 operations;
 	guint64 bytes;
+	void* additional_data;
 };
 
 typedef struct BenchmarkRun BenchmarkRun;

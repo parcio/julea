@@ -31,6 +31,12 @@
 
 static const guint BLOCK_SIZE = 4 * 1024;
 
+static const guint NUM_SIZES = 3;
+
+static guint index = 0;
+
+static const guint BLOCK_SIZES[5] = { 1024, 2 * 1024, 4 * 1024 };
+
 static const guint N = 5;
 
 static void
@@ -174,9 +180,6 @@ generate_pattern_zipf(guint* buf, guint len)
 		// always round up to get atleast 1 occurence
 		guint n_occurences = (f * len) + 1;
 
-		printf("H_N = %.4f, f = %.4f\n", HARMONIC, f);
-		printf("Adding '%d' in range %d times at %d\n", template[i], n_occurences, j);
-
 		for (guint k = j; k < min(len, j + n_occurences); k++)
 		{
 			buf[k] = template[i];
@@ -195,15 +198,22 @@ static void
 benchmark_object_read(BenchmarkRun* run, gboolean use_batch, void (*generator)(guint*, guint))
 {
 	guint n = (use_batch) ? 10 * N : N;
+	guint block_size = BLOCK_SIZES[index];
 	g_autofree guint* pattern = g_malloc0(n * sizeof(guint));
+
+	printf("block size: %d\n", block_size);
+	index = (index + 1) % NUM_SIZES;
+
 	(*generator)(pattern, n);
 
+	/*
 	printf("======= Pattern =======\n");
 	for (guint i = 0; i < n; i++)
 	{
 		printf("%d ", pattern[i]);
 	}
 	printf("\n");
+	*/
 
 	_benchmark_object_read(run, use_batch, pattern, BLOCK_SIZE, n);
 }
@@ -244,13 +254,24 @@ benchmark_object_read_zipf_batch(BenchmarkRun* run)
 	benchmark_object_read(run, TRUE, generate_pattern_zipf);
 }
 
+static void
+add_benches(const gchar* path, BenchmarkFunc benchmark)
+{
+	for (guint i = 0; i < NUM_SIZES; i++)
+	{
+		g_autofree gchar* buf = g_malloc0(64 * sizeof(gchar));
+		g_snprintf(buf, 64ul, "%s > %dB", path, BLOCK_SIZES[i]);
+		j_benchmark_add(buf, benchmark);
+	}
+}
+
 void
 benchmark_object_rw(void)
 {
-	j_benchmark_add("/object/object/rw/read-seq", benchmark_object_read_seq);
-	j_benchmark_add("/object/object/rw/read-seq-batch", benchmark_object_read_batch_seq);
-	j_benchmark_add("/object/object/rw/read-rand", benchmark_object_read_rand);
-	j_benchmark_add("/object/object/rw/read-rand-batch", benchmark_object_read_rand_batch);
-	j_benchmark_add("/object/object/rw/read-zipf", benchmark_object_read_zipf);
-	j_benchmark_add("/object/object/rw/read-zipf-batch", benchmark_object_read_zipf_batch);
+	add_benches("/object/object/read-seq", benchmark_object_read_seq);
+	add_benches("/object/object/rw/read-seq-batch", benchmark_object_read_batch_seq);
+	add_benches("/object/object/rw/read-rand", benchmark_object_read_rand);
+	add_benches("/object/object/rw/read-rand-batch", benchmark_object_read_rand_batch);
+	add_benches("/object/object/rw/read-zipf", benchmark_object_read_zipf);
+	add_benches("/object/object/rw/read-zipf-batch", benchmark_object_read_zipf_batch);
 }
