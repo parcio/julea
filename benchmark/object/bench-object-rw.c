@@ -27,17 +27,15 @@
 
 #include "benchmark.h"
 
+#define NUM_SIZES 3
+
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
-
-static const guint BLOCK_SIZE = 4 * 1024;
-
-static const guint NUM_SIZES = 3;
 
 static guint index = 0;
 
-static const guint BLOCK_SIZES[5] = { 1024, 2 * 1024, 4 * 1024 };
+static const guint BLOCK_SIZES[NUM_SIZES] = { 1024, 2 * 1024, 4 * 1024 };
 
-static const guint N = 5;
+static const guint N = 1000;
 
 static void
 _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint* pattern, guint block_size, guint n)
@@ -201,7 +199,6 @@ benchmark_object_read(BenchmarkRun* run, gboolean use_batch, void (*generator)(g
 	guint block_size = BLOCK_SIZES[index];
 	g_autofree guint* pattern = g_malloc0(n * sizeof(guint));
 
-	printf("block size: %d\n", block_size);
 	index = (index + 1) % NUM_SIZES;
 
 	(*generator)(pattern, n);
@@ -215,7 +212,7 @@ benchmark_object_read(BenchmarkRun* run, gboolean use_batch, void (*generator)(g
 	printf("\n");
 	*/
 
-	_benchmark_object_read(run, use_batch, pattern, BLOCK_SIZE, n);
+	_benchmark_object_read(run, use_batch, pattern, block_size, n);
 }
 
 static void
