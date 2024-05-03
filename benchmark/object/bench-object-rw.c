@@ -265,7 +265,7 @@ add_benches(const gchar* path, BenchmarkFunc benchmark)
 void
 benchmark_object_rw(void)
 {
-	add_benches("/object/object/read-seq", benchmark_object_read_seq);
+	add_benches("/object/object/rw/read-seq", benchmark_object_read_seq);
 	add_benches("/object/object/rw/read-seq-batch", benchmark_object_read_batch_seq);
 	add_benches("/object/object/rw/read-rand", benchmark_object_read_rand);
 	add_benches("/object/object/rw/read-rand-batch", benchmark_object_read_rand_batch);
