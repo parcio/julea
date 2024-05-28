@@ -586,6 +586,7 @@ julea_benchmark_srcs = files([
 	'benchmark/object/distributed-object.c',
 	'benchmark/object/object.c',
 	'benchmark/object/bench-object-rw.c',
+	'benchmark/object/cluster-benches.c'
 ])
 
 executable('julea-benchmark', julea_benchmark_srcs,

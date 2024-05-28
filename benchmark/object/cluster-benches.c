@@ -27,7 +27,7 @@
 
 #include "benchmark.h"
 
-#define NUM_SIZES 7
+#define NUM_SIZES 9
 
 #define NUM_RW_RATIOS 5
 
@@ -43,12 +43,14 @@ static guint rw_index = 0;
 
 static const guint BLOCK_SIZES[NUM_SIZES] = {
 	1 * 1024,
-	2 * 1024,
 	4 * 1024,
 	16 * 1024,
 	64 * 1024,
+	128 * 1024,
+	256 * 1024,
 	512 * 1024,
 	1 * 1024 * 1024,
+	4 * 1024 * 1024
 };
 
 static const gdouble RW_RATIOS[NUM_RW_RATIOS] = { 0.0, 0.25, 0.5, 0.75, 1.0 };
@@ -58,6 +60,8 @@ static const guint N = 1000;
 static void
 _benchmark_object_read_write(BenchmarkRun* run, gboolean use_batch, guint* pattern, guint* rw_pattern, guint block_size, guint n)
 {
+	printf("BLock Size: %d\n", block_size);
+
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
@@ -113,60 +117,6 @@ _benchmark_object_read_write(BenchmarkRun* run, gboolean use_batch, guint* patte
 			expected *= block_size;
 			g_assert_true(ret);
 			g_assert_cmpuint(nb, ==, expected);
-		}
-	}
-
-	j_benchmark_timer_stop(run);
-
-	j_object_delete(object, batch);
-	ret = j_batch_execute(batch);
-	g_assert_true(ret);
-
-	run->operations = n;
-	run->bytes = n * block_size;
-}
-
-static void
-_benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint* pattern, guint block_size, guint n)
-{
-	g_autoptr(JObject) object = NULL;
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JSemantics) semantics = NULL;
-	g_autofree gchar* dummy = NULL;
-	guint64 nb = 0;
-	gboolean ret;
-
-	dummy = g_malloc0(block_size);
-
-	semantics = j_benchmark_get_semantics();
-	batch = j_batch_new(semantics);
-
-	object = j_object_new("benchmark", "benchmark");
-	j_object_create(object, batch);
-	ret = j_batch_execute(batch);
-	g_assert_true(ret);
-
-	j_benchmark_timer_start(run);
-
-	while (j_benchmark_iterate(run))
-	{
-		for (guint i = 0; i < n; i++)
-		{
-			j_object_write(object, dummy, block_size, pattern[i] * block_size, &nb, batch);
-
-			if (!use_batch)
-			{
-				ret = j_batch_execute(batch);
-				g_assert_true(ret);
-				g_assert_cmpuint(nb, ==, block_size);
-			}
-		}
-
-		if (use_batch)
-		{
-			ret = j_batch_execute(batch);
-			g_assert_true(ret);
-			g_assert_cmpuint(nb, ==, ((guint64)n) * block_size);
 		}
 	}
 
@@ -317,20 +267,6 @@ generate_pattern_zipf(guint* buf, guint len)
 }
 
 static void
-benchmark_object_write(BenchmarkRun* run, gboolean use_batch, void (*generator)(guint*, guint))
-{
-	guint n = (use_batch) ? 10 * N : N;
-	guint block_size = BLOCK_SIZES[index];
-	g_autofree guint* pattern = g_malloc0(n * sizeof(guint));
-
-	index = (index + 1) % NUM_SIZES;
-
-	(*generator)(pattern, n);
-
-	_benchmark_object_write(run, use_batch, pattern, block_size, n);
-}
-
-static void
 benchmark_object_read_write(BenchmarkRun* run, gboolean use_batch, void (*generator)(guint*, guint))
 {
 	guint n = (use_batch) ? 10 * N : N;
@@ -351,7 +287,39 @@ benchmark_object_read_write(BenchmarkRun* run, gboolean use_batch, void (*genera
 	_benchmark_object_read_write(run, use_batch, pattern, rw_pattern, block_size, n);
 }
 
-// WRITE
+static void
+benchmark_object_read(BenchmarkRun* run, gboolean use_batch, void (*generator)(guint*, guint))
+{
+	guint n = (use_batch) ? 10 * N : N;
+	guint block_size = BLOCK_SIZES[index];
+	g_autofree guint* pattern = g_malloc0(n * sizeof(guint));
+	g_autofree guint* rw_pattern = g_malloc0(n * sizeof(guint));
+
+	index = (index + 1) % NUM_SIZES;
+
+	generate_rw_pattern(rw_pattern, n, 0.0);
+	(*generator)(pattern, n);
+
+	_benchmark_object_read_write(run, use_batch, pattern, rw_pattern, block_size, n);
+}
+
+static void
+benchmark_object_write(BenchmarkRun* run, gboolean use_batch, void (*generator)(guint*, guint))
+{
+	guint n = (use_batch) ? 10 * N : N;
+	guint block_size = BLOCK_SIZES[index];
+	g_autofree guint* pattern = g_malloc0(n * sizeof(guint));
+	g_autofree guint* rw_pattern = g_malloc0(n * sizeof(guint));
+
+	index = (index + 1) % NUM_SIZES;
+
+	generate_rw_pattern(rw_pattern, n, 1.0);
+	(*generator)(pattern, n);
+
+	_benchmark_object_read_write(run, use_batch, pattern, rw_pattern, block_size, n);
+}
+
+// RW
 
 static void
 benchmark_object_write_seq(BenchmarkRun* run)
@@ -360,41 +328,9 @@ benchmark_object_write_seq(BenchmarkRun* run)
 }
 
 static void
-benchmark_object_write_batch_seq(BenchmarkRun* run)
+benchmark_object_read_seq(BenchmarkRun* run)
 {
-	benchmark_object_write(run, TRUE, generate_pattern_seq);
-}
-
-static void
-benchmark_object_write_rand(BenchmarkRun* run)
-{
-	benchmark_object_write(run, FALSE, generate_pattern_rand);
-}
-
-static void
-benchmark_object_write_rand_batch(BenchmarkRun* run)
-{
-	benchmark_object_write(run, TRUE, generate_pattern_rand);
-}
-
-static void
-benchmark_object_write_zipf(BenchmarkRun* run)
-{
-	benchmark_object_write(run, FALSE, generate_pattern_zipf);
-}
-
-static void
-benchmark_object_write_zipf_batch(BenchmarkRun* run)
-{
-	benchmark_object_write(run, TRUE, generate_pattern_zipf);
-}
-
-// RW
-
-static void
-benchmark_object_rw_seq(BenchmarkRun* run)
-{
-	benchmark_object_read_write(run, FALSE, generate_pattern_seq);
+	benchmark_object_read(run, FALSE, generate_pattern_seq);
 }
 
 static void
@@ -404,27 +340,65 @@ benchmark_object_rw_batch_seq(BenchmarkRun* run)
 }
 
 static void
-benchmark_object_rw_rand(BenchmarkRun* run)
+benchmark_object_read_rand_batch(BenchmarkRun* run)
 {
-	benchmark_object_read_write(run, FALSE, generate_pattern_rand);
+	benchmark_object_read(run, TRUE, generate_pattern_rand);
 }
 
 static void
-benchmark_object_rw_rand_batch(BenchmarkRun* run)
+benchmark_object_read_zipf_batch(BenchmarkRun* run)
 {
-	benchmark_object_read_write(run, TRUE, generate_pattern_rand);
+	benchmark_object_read(run, TRUE, generate_pattern_zipf);
 }
 
 static void
-benchmark_object_rw_zipf(BenchmarkRun* run)
+benchmark_object_write_rand_batch(BenchmarkRun* run)
 {
-	benchmark_object_read_write(run, FALSE, generate_pattern_zipf);
+	benchmark_object_write(run, TRUE, generate_pattern_rand);
 }
 
 static void
-benchmark_object_rw_zipf_batch(BenchmarkRun* run)
+benchmark_object_write_zipf_batch(BenchmarkRun* run)
 {
-	benchmark_object_read_write(run, TRUE, generate_pattern_zipf);
+	benchmark_object_write(run, TRUE, generate_pattern_zipf);
+}
+
+static void
+add_write_benches(const gchar* path, BenchmarkFunc benchmark)
+{
+	for (guint i = 0; i < NUM_SIZES; i++)
+	{
+		g_autofree gchar* buf = g_malloc0(64 * sizeof(gchar));
+		if (BLOCK_SIZES[i] >= 1024 * 1024)
+		{
+			g_snprintf(buf, 64ul, "%s <%.2fw> %dMiB", path, (double)1, BLOCK_SIZES[i] / (1024 * 1024));
+		}
+		else
+		{
+			g_snprintf(buf, 64ul, "%s <%.2fw> %dKiB", path, (double)1, BLOCK_SIZES[i] / 1024);
+		}
+
+		j_benchmark_add(buf, benchmark);
+	}
+}
+
+static void
+add_read_benches(const gchar* path, BenchmarkFunc benchmark)
+{
+	for (guint i = 0; i < NUM_SIZES; i++)
+	{
+		g_autofree gchar* buf = g_malloc0(64 * sizeof(gchar));
+		if (BLOCK_SIZES[i] >= 1024 * 1024)
+		{
+			g_snprintf(buf, 64ul, "%s <%.2fw> %dMiB", path, (double)0, BLOCK_SIZES[i] / (1024 * 1024));
+		}
+		else
+		{
+			g_snprintf(buf, 64ul, "%s <%.2fw> %dKiB", path, (double)0, BLOCK_SIZES[i] / 1024);
+		}
+
+		j_benchmark_add(buf, benchmark);
+	}
 }
 
 static void
@@ -449,52 +423,23 @@ add_rw_benches(const gchar* path, BenchmarkFunc benchmark)
 	}
 }
 
-static void
-add_benches(const gchar* path, BenchmarkFunc benchmark)
-{
-	for (guint i = 0; i < NUM_SIZES; i++)
-	{
-		g_autofree gchar* buf = g_malloc0(64 * sizeof(gchar));
-		if (BLOCK_SIZES[i] >= 1024 * 1024)
-		{
-			g_snprintf(buf, 64ul, "%s %dMiB", path, BLOCK_SIZES[i] / (1024 * 1024));
-		}
-		else
-		{
-			g_snprintf(buf, 64ul, "%s %dKiB", path, BLOCK_SIZES[i] / 1024);
-		}
-		j_benchmark_add(buf, benchmark);
-	}
-}
-
-/*
- * The mixed benchmark pre-writes the entire file to guarantee that it can be read from.
- * This has performance implications as the relevant data will be (partially) present in the page cache.
- * Some interfaces are also affected. To illustrate the problem on an example:
- * 1. mmap empty file (assume the application artificially increases the size of the file to N bytes to avoid remapping later on)
- * 2. write N+1 bytes to file
- * - 3a. without pre-writing remapping is required
- * - 3b. with pre-writing the remapping has already occured or has been mmap'ed at the appropriate size to begin with. No remapping is required.
- * 
- * Therefore, the benchmark also includes pure write operations where no pre-writing takes place.
- * This can be used to estimate the impact of pre-writing in the mixed benchmark by comparing the write benchmark with the corresponding mixed benchmark at ratio=1.00.
-*/
 void
-benchmark_object_rw(void)
+benchmark_object_cluster(void)
 {
+	// SINGLE
+	add_read_benches("/object/object/cluster/seq", benchmark_object_read_seq);
+	add_write_benches("/object/object/cluster/seq", benchmark_object_write_seq);
+
+	// BATCH
+
 	// MIXED
-	add_rw_benches("/object/object/rw/seq", benchmark_object_rw_seq);
-	add_rw_benches("/object/object/rw/seq-batch", benchmark_object_rw_batch_seq);
-	add_rw_benches("/object/object/rw/rand", benchmark_object_rw_rand);
-	add_rw_benches("/object/object/rw/rand-batch", benchmark_object_rw_rand_batch);
-	add_rw_benches("/object/object/rw/zipf", benchmark_object_rw_zipf);
-	add_rw_benches("/object/object/rw/zipf-batch", benchmark_object_rw_zipf_batch);
+	add_rw_benches("/object/object/cluster/seq-batch", benchmark_object_rw_batch_seq);
+
+	// READ
+	add_read_benches("/object/object/cluster/rand-batch", benchmark_object_read_rand_batch);
+	add_read_benches("/object/object/cluster/zipf-batch", benchmark_object_read_zipf_batch);
 
 	// WRITE
-	add_benches("/object/object/rw/write-seq", benchmark_object_write_seq);
-	add_benches("/object/object/rw/write-seq-batch", benchmark_object_write_batch_seq);
-	add_benches("/object/object/rw/write-rand", benchmark_object_write_rand);
-	add_benches("/object/object/rw/write-rand-batch", benchmark_object_write_rand_batch);
-	add_benches("/object/object/rw/write-zipf", benchmark_object_write_zipf);
-	add_benches("/object/object/rw/write-zipf-batch", benchmark_object_write_zipf_batch);
+	add_write_benches("/object/object/cluster/rand-batch", benchmark_object_write_rand_batch);
+	add_write_benches("/object/object/cluster/zipf-batch", benchmark_object_write_zipf_batch);
 }
