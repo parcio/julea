@@ -60,8 +60,6 @@ static const guint N = 1000;
 static void
 _benchmark_object_read_write(BenchmarkRun* run, gboolean use_batch, guint* pattern, guint* rw_pattern, guint block_size, guint n)
 {
-	printf("BLock Size: %d\n", block_size);
-
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
 	g_autoptr(JSemantics) semantics = NULL;
@@ -364,11 +362,24 @@ benchmark_object_write_zipf_batch(BenchmarkRun* run)
 }
 
 static void
+benchmark_object_write_rand(BenchmarkRun* run)
+{
+	benchmark_object_write(run, FALSE, generate_pattern_rand);
+}
+
+static void
+benchmark_object_write_zipf(BenchmarkRun* run)
+{
+	benchmark_object_write(run, FALSE, generate_pattern_zipf);
+}
+
+static void
 add_write_benches(const gchar* path, BenchmarkFunc benchmark)
 {
 	for (guint i = 0; i < NUM_SIZES; i++)
 	{
 		g_autofree gchar* buf = g_malloc0(64 * sizeof(gchar));
+
 		if (BLOCK_SIZES[i] >= 1024 * 1024)
 		{
 			g_snprintf(buf, 64ul, "%s <%.2fw> %dMiB", path, (double)1, BLOCK_SIZES[i] / (1024 * 1024));
@@ -429,6 +440,8 @@ benchmark_object_cluster(void)
 	// SINGLE
 	add_read_benches("/object/object/cluster/seq", benchmark_object_read_seq);
 	add_write_benches("/object/object/cluster/seq", benchmark_object_write_seq);
+	add_write_benches("/object/object/custer/rand", benchmark_object_write_rand);
+	add_write_benches("/object/object/cluster/zipf", benchmark_object_write_zipf);
 
 	// BATCH
 
