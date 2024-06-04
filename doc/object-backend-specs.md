@@ -14,7 +14,8 @@ Additional failure conditions are outlined in the sections below.
 
 ### backend_init
 
-JULEA calls this function to allow the backend to initialize itself under the given path. The path consists of an arbitrary number of directories. It's the backend's responsibility to create any missing directories.
+JULEA calls this function to allow the backend to initialize itself under the given path. The path consists of an arbitrary number of directories.
+It’s the backend’s responsibility to create any missing directories.
 
 **Parameters**
 - `path`: The path under which to initialize the backend.
@@ -33,9 +34,7 @@ JULEA calls this function to allow the backend to perform clean-up before shutdo
 
 ### backend_create
 
-This function creates a new object specified by its full path.
-
-Both the namespace and the path can contain an arbitrary number of parent directories. It's the responsibility of the backend to create any missing parent directories.
+This function creates a new object specified by its full path. Both the namespace and the path can contain an arbitrary number of parent directories. It’s the responsibility of the backend to create any missing parent directories.
 
 **Parameters**
 - `backend_data`: The backend in which to create the object.
@@ -43,14 +42,12 @@ Both the namespace and the path can contain an arbitrary number of parent direct
 - `path`: The path used to identify the created object.
 - `backend_object`: Output parameter for the created object.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the full path resolves to an existing object
 
 ### backend_open
 
-This function opens an existing object specified by its full path.
-
-Both the namespace and the path can contain an arbitrary number of parent directories. It's the responsibility of the backend to create any missing parent directories.
+This function opens an existing object specified by its full path. Both the namespace and the path can contain an arbitrary number of parent directories. It’s the responsibility of the backend to create any missing parent directories.
 
 **Parameters**
 - `backend_data`: The backend in which to open the object.
@@ -58,11 +55,11 @@ Both the namespace and the path can contain an arbitrary number of parent direct
 - `path`: The path used to identify the opened object.
 - `backend_object`: Output parameter for the opened object.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the full path does not resolve to an existing object
 
 **Output**
-- a reference to an object handle must be stored in `backend_object`.
+- a reference to an object handle must be stored in backend_object
 
 ### backend_delete
 
@@ -76,21 +73,20 @@ This function deletes an existing object, specified by its handle.
 - the object handle no longer resolves to a valid object
 - the object cannot be reloaded from persistent storage
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object
 
 ### backend_close
 
 This function closes an existing object, specified by its handle.
 
-**Parameters**
 - `backend_data`: The backend containing the object.
 - `backend_object`: The object that is to be closed.
 
 **Postconditions**
 - the object handle no longer resolves to a valid object
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object
 - the object was already closed
 
@@ -107,15 +103,15 @@ This function reads a specified number of bytes at a specified offset from an ob
 - `bytes_read`: Output parameter for the number of bytes that have been read from the object.
 
 **Preconditions**
-- the buffer's size is at least `length`
+- the buffer’s size is at least length
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object.
 - read stops early due to an error (to distinguish from a valid short read)
 
 ### backend_write
 
-This function writes a specified number of bytes from a buffer into an object specified by its handle at the specified offset. The object must be appended, if necessary.
+This function writes a specified number of bytes from a buffer into an object specified by its handle at the specified offset. The backend must try to write the entire buffer to the best of its abilities.
 
 - `backend_data`: The backend containing the object.
 - `backend_object`: The object to write to.
@@ -125,9 +121,9 @@ This function writes a specified number of bytes from a buffer into an object sp
 - `bytes_written`: Output parameter for the number of bytes that have been written to the object.
 
 **Preconditions**
-- the buffer's size is at least `length`
+- the buffer’s size is at least `length`
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object
 - unable to write entire buffer to object (for example because the system ran out of storage space)
 
@@ -138,10 +134,10 @@ This function fetches metadata from an object specified by its handle.
 **Parameters**
 - `backend_data`: The backend containing the object.
 - `backend_object`: The object to acquire metadata from.
-- `modification_time`: Output parameter for the time of the object's most recent modification.
-- `size`: Output parameter for the object's size in bytes.
+- `modification_time`: Output parameter for the time of the object’s most recent modification.
+- `size`: Output parameter for the object’s size in bytes.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object
 
 ### backend_sync
@@ -149,36 +145,36 @@ This function fetches metadata from an object specified by its handle.
 This function flushes an object specified by its handle.
 
 **Parameters**
-- `backend_data`: The backend containing the object.
-- `backend_object`: The object to synchronize.
+- backend_data: The backend containing the object.
+- backend_object: The object to synchronize.
 
 **Post Conditions**
-- no I/O operations on the specified object are in flight
-- the object's state matches the state in persistent storage
+- the backend does not have any I/O operations on the specified object in flight
+- the object’s state matches the state in persistent storage
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the object handle does not resolve to an object
 
 ### backend_get_all
 
-Creates a new iterator that iterates over all objects under a specified path. The path is defined as `${backend_data.path}/${namespace}`.
+Creates a new iterator that iterates over all objects under a specified path.
 
 **Parameters**
 - `backend_data`: The backend containing on which to iterate.
 - `backend_iterator`: Output parameter for the newly created iterator.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the specified path does not resolve to an existing directory
 
 ### backend_get_by_prefix
 
-Creates a new iterator that iterates over all objects under a specified path matching a specified prefix. The path is defined as `${backend_data.path}/${namespace}`.
+Creates a new iterator that iterates over all objects under a specified path matching a specified prefix.
 
 **Parameters**
 - `backend_data`: The backend containing a directory on which to iterate.
 - `backend_iterator`: Output parameter for the newly created iterator.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - the specified path does not resolve to an existing directory
 
 ### backend_iterate
@@ -190,5 +186,5 @@ This function advances the iterator to the next object. If the end of the iterat
 - `backend_iterator`: The backend iterator to advance to the next entry.
 - `name`: Output parameter for the file the iterator advanced to.
 
-**Failure Conditions**
+**Additional Failure Conditions**
 - reached the end of the iterator
