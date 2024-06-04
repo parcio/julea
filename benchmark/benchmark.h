@@ -30,7 +30,6 @@ struct BenchmarkRun
 	guint iterations;
 	guint64 operations;
 	guint64 bytes;
-	void* additional_data;
 };
 
 typedef struct BenchmarkRun BenchmarkRun;
@@ -58,7 +57,6 @@ void benchmark_kv(void);
 void benchmark_distributed_object(void);
 void benchmark_object(void);
 void benchmark_object_rw(void);
-void benchmark_object_cluster(void);
 
 void benchmark_db_entry(void);
 void benchmark_db_iterator(void);
