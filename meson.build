@@ -28,10 +28,13 @@ project('julea', 'c',
 cc = meson.get_compiler('c')
 pkg_config = import('pkgconfig')
 
+cc_args = cc.get_supported_arguments([
+	'-fno-omit-frame-pointer',
+	'-fhardened',
+])
+
 if get_option('debug')
-	args = cc.get_supported_arguments([
-		'-fno-omit-frame-pointer',
-		'-fstack-protector-strong',
+	cc_args += cc.get_supported_arguments([
 		'-Waggregate-return',
 		'-Wcast-align=strict',
 		'-Wcast-qual',
@@ -69,9 +72,9 @@ if get_option('debug')
 		'-Wuninitialized',
 		'-Wwrite-strings',
 	])
-
-	add_project_arguments(args, language: 'c')
 endif
+
+add_project_arguments(cc_args, language: 'c')
 
 sanitize_cflags = ''
 
@@ -321,7 +324,6 @@ julea_conf.set_quoted('G_LOG_DOMAIN', 'JULEA')
 julea_conf.set_quoted('JULEA_BACKEND_PATH', get_option('prefix') / get_option('libdir') / 'julea' / 'backend')
 
 if get_option('debug')
-	julea_conf.set('_FORTIFY_SOURCE', 2)
 	julea_conf.set('JULEA_DEBUG', 1)
 	julea_conf.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
 	#julea_conf.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_@0@'.format(glib_version.underscorify()))
