@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>GCC Code Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="index.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>GCC Code Coverage Report</h1>
+
+      <hr/>
+
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>./</td>
+    </tr>
+    <tr>
+      <th scope="row">File:</th>
+      <td>dependencies/opt/spack/linux-ubuntu22.04-x86_64/gcc-11.4.0/glib-2.78.3-lxjrzhnudxpb53mcjbjqezdsd2qbx3qn/include/glib-2.0/glib/glib-autocleanups.h</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2024-06-30 16:36:44</td>
+    </tr>
+  </table>
+</div>
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>16</td>
+      <td>18</td>
+      <td class="coverage-medium">88.9%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>1</td>
+      <td>1</td>
+      <td class="coverage-high">100.0%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>42</td>
+      <td>88</td>
+      <td class="coverage-low">47.7%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+
+      <hr/>
+    </header>
+
+    <nav>
+<details>
+  <summary>List of functions</summary>
+  <table class="listOfFunctions">
+    <tr>
+      <th>Function</th>
+      <th>Line</th>
+      <th>Call count</th>
+    </tr>
+    <tr>
+      <td>
+        <a href="#l81">glib_autoptr_cleanup_GString</a>
+      </td>
+      <td>
+        <a href="#l81">81</a>
+      </td>
+      <td>
+        <a href="#l81"> called 29535 times</a>
+      </td>
+    </tr>
+  </table>
+</details>
+    </nav>
+
+    <main>
+<div class="file-source">
+  <table>
+    <tr>
+      <th align="right">Line</th>
+      <th align="right">Branch</th>
+      <th align="right">Exec</th>
+      <th align="left">Source</th>
+    </tr>
+
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l1" href="#l1">1</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm">/*</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l2" href="#l2">2</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * Copyright © 2015 Canonical Limited</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l3" href="#l3">3</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> *</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l4" href="#l4">4</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * SPDX-License-Identifier: LGPL-2.1-or-later</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l5" href="#l5">5</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> *</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l6" href="#l6">6</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * This library is free software; you can redistribute it and/or</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l7" href="#l7">7</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * modify it under the terms of the GNU Lesser General Public</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l8" href="#l8">8</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * License as published by the Free Software Foundation; either</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l9" href="#l9">9</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * version 2.1 of the License, or (at your option) any later version.</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l10" href="#l10">10</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> *</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l11" href="#l11">11</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * This library is distributed in the hope that it will be useful,</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l12" href="#l12">12</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * but WITHOUT ANY WARRANTY; without even the implied warranty of</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l13" href="#l13">13</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l14" href="#l14">14</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * Lesser General Public License for more details.</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l15" href="#l15">15</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> *</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l16" href="#l16">16</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * You should have received a copy of the GNU Lesser General Public</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l17" href="#l17">17</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * License along with this library; if not, see &lt;http://www.gnu.org/licenses/&gt;.</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l18" href="#l18">18</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> *</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l19" href="#l19">19</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * Author: Ryan Lortie &lt;desrt@desrt.ca&gt;</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l20" href="#l20">20</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> */</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l21" href="#l21">21</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l22" href="#l22">22</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#if !defined (__GLIB_H_INSIDE__) &amp;&amp; !defined (GLIB_COMPILATION)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l23" href="#l23">23</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#error &quot;Only &lt;glib.h&gt; can be included directly.&quot;</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l24" href="#l24">24</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cp">#endif</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l25" href="#l25">25</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l26" href="#l26">26</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="k">static</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l27" href="#l27">27</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">244719</td>
+      <td class="src coveredLine"><span class="nf">g_autoptr_cleanup_generic_gfree</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l28" href="#l28">28</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l29" href="#l29">29</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">244719</td>
+      <td class="src coveredLine"><span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="o">**</span><span class="n">pp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span><span class="n">p</span><span class="p">;</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l30" href="#l30">30</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">243686</td>
+      <td class="src coveredLine"><span class="w">  </span><span class="n">g_free</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">pp</span><span class="p">);</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l31" href="#l31">31</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">}</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l32" href="#l32">32</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l33" href="#l33">33</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="k">static</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l34" href="#l34">34</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">27424</td>
+      <td class="src coveredLine"><span class="nf">g_autoptr_cleanup_gstring_free</span><span class="w"> </span><span class="p">(</span><span class="n">GString</span><span class="w"> </span><span class="o">*</span><span class="n">string</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l35" href="#l35">35</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="p">{</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l36" href="#l36">36</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">27424</td>
+      <td class="src coveredLine"><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">string</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l37" href="#l37">37</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">27424</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_string_free</span><span class="w"> </span><span class="p">(</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">TRUE</span><span class="p">);</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l38" href="#l38">38</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">27424</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l39" href="#l39">39</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l40" href="#l40">40</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm">/* Ignore deprecations in case we refer to a type which was added in a more</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l41" href="#l41">41</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * recent GLib version than the user’s #GLIB_VERSION_MAX_ALLOWED definition. */</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l42" href="#l42">42</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_GNUC_BEGIN_IGNORE_DEPRECATIONS</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l43" href="#l43">43</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l44" href="#l44">44</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm">/* If adding a cleanup here, please also add a test case to</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l45" href="#l45">45</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> * glib/tests/autoptr.c</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l46" href="#l46">46</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="cm"> */</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l47" href="#l47">47</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GAsyncQueue</span><span class="p">,</span><span class="w"> </span><span class="n">g_async_queue_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l48" href="#l48">48</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GBookmarkFile</span><span class="p">,</span><span class="w"> </span><span class="n">g_bookmark_file_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l49" href="#l49">49</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GBytes</span><span class="p">,</span><span class="w"> </span><span class="n">g_bytes_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l50" href="#l50">50</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GChecksum</span><span class="p">,</span><span class="w"> </span><span class="n">g_checksum_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l51" href="#l51">51</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount uncoveredLine">&cross;</td>
+      <td class="src uncoveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GDateTime</span><span class="p">,</span><span class="w"> </span><span class="n">g_date_time_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l52" href="#l52">52</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GDate</span><span class="p">,</span><span class="w"> </span><span class="n">g_date_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l53" href="#l53">53</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GDir</span><span class="p">,</span><span class="w"> </span><span class="n">g_dir_close</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l54" href="#l54">54</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">14/20</summary>
+        <div class="linebranchContents">
+          <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
+          <div class="takenBranch">&check; Branch 2 taken 2298 times.</div>
+          <div class="takenBranch">&check; Branch 6 taken 3 times.</div>
+          <div class="takenBranch">&check; Branch 7 taken 395 times.</div>
+          <div class="takenBranch">&check; Branch 11 taken 2 times.</div>
+          <div class="takenBranch">&check; Branch 12 taken 282 times.</div>
+          <div class="takenBranch">&check; Branch 16 taken 2 times.</div>
+          <div class="takenBranch">&check; Branch 17 taken 72 times.</div>
+          <div class="takenBranch">&check; Branch 21 taken 1 times.</div>
+          <div class="takenBranch">&check; Branch 22 taken 55 times.</div>
+          <div class="notTakenBranch">&cross; Branch 26 not taken.</div>
+          <div class="takenBranch">&check; Branch 27 taken 19 times.</div>
+          <div class="notTakenBranch">&cross; Branch 31 not taken.</div>
+          <div class="takenBranch">&check; Branch 32 taken 2 times.</div>
+          <div class="notTakenBranch">&cross; Branch 36 not taken.</div>
+          <div class="takenBranch">&check; Branch 37 taken 100000 times.</div>
+          <div class="notTakenBranch">&cross; Branch 41 not taken.</div>
+          <div class="takenBranch">&check; Branch 42 taken 1000 times.</div>
+          <div class="notTakenBranch">&cross; Branch 46 not taken.</div>
+          <div class="takenBranch">&check; Branch 47 taken 100000 times.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">204131</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GError</span><span class="p">,</span><span class="w"> </span><span class="n">g_error_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l55" href="#l55">55</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">7/20</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 1264 times.</div>
+          <div class="takenBranch">&check; Branch 2 taken 1 times.</div>
+          <div class="takenBranch">&check; Branch 6 taken 1846 times.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="takenBranch">&check; Branch 11 taken 1016 times.</div>
+          <div class="notTakenBranch">&cross; Branch 12 not taken.</div>
+          <div class="takenBranch">&check; Branch 15 taken 1016 times.</div>
+          <div class="notTakenBranch">&cross; Branch 16 not taken.</div>
+          <div class="takenBranch">&check; Branch 20 taken 271 times.</div>
+          <div class="notTakenBranch">&cross; Branch 21 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 25 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 26 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 30 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 31 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 35 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 36 not taken.</div>
+          <div class="takenBranch">&check; Branch 40 taken 2076 times.</div>
+          <div class="notTakenBranch">&cross; Branch 41 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 45 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 46 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">6474</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GHashTable</span><span class="p">,</span><span class="w"> </span><span class="n">g_hash_table_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l56" href="#l56">56</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GHmac</span><span class="p">,</span><span class="w"> </span><span class="n">g_hmac_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l57" href="#l57">57</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GIOChannel</span><span class="p">,</span><span class="w"> </span><span class="n">g_io_channel_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l58" href="#l58">58</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 1 times.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GKeyFile</span><span class="p">,</span><span class="w"> </span><span class="n">g_key_file_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l59" href="#l59">59</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GList</span><span class="p">,</span><span class="w"> </span><span class="n">g_list_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l60" href="#l60">60</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">10/22</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 1032 times.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+          <div class="takenBranch">&check; Branch 5 taken 1019 times.</div>
+          <div class="notTakenBranch">&cross; Branch 6 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="takenBranch">&check; Branch 10 taken 121 times.</div>
+          <div class="takenBranch">&check; Branch 11 taken 20 times.</div>
+          <div class="takenBranch">&check; Branch 12 taken 7 times.</div>
+          <div class="takenBranch">&check; Branch 14 taken 103 times.</div>
+          <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
+          <div class="takenBranch">&check; Branch 16 taken 247 times.</div>
+          <div class="notTakenBranch">&cross; Branch 17 not taken.</div>
+          <div class="takenBranch">&check; Branch 20 taken 518 times.</div>
+          <div class="notTakenBranch">&cross; Branch 21 not taken.</div>
+          <div class="takenBranch">&check; Branch 25 taken 1850 times.</div>
+          <div class="notTakenBranch">&cross; Branch 26 not taken.</div>
+          <div class="takenBranch">&check; Branch 29 taken 1850 times.</div>
+          <div class="notTakenBranch">&cross; Branch 30 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 34 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 35 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 38 not taken.</div>
+          <div class="notTakenBranch">&cross; Branch 39 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">3548</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GArray</span><span class="p">,</span><span class="w"> </span><span class="n">g_array_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l61" href="#l61">61</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GPtrArray</span><span class="p">,</span><span class="w"> </span><span class="n">g_ptr_array_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l62" href="#l62">62</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GByteArray</span><span class="p">,</span><span class="w"> </span><span class="n">g_byte_array_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l63" href="#l63">63</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMainContext</span><span class="p">,</span><span class="w"> </span><span class="n">g_main_context_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l64" href="#l64">64</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMainContextPusher</span><span class="p">,</span><span class="w"> </span><span class="n">g_main_context_pusher_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l65" href="#l65">65</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 1 times.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMainLoop</span><span class="p">,</span><span class="w"> </span><span class="n">g_main_loop_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l66" href="#l66">66</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GSource</span><span class="p">,</span><span class="w"> </span><span class="n">g_source_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l67" href="#l67">67</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMappedFile</span><span class="p">,</span><span class="w"> </span><span class="n">g_mapped_file_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l68" href="#l68">68</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMarkupParseContext</span><span class="p">,</span><span class="w"> </span><span class="n">g_markup_parse_context_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l69" href="#l69">69</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GNode</span><span class="p">,</span><span class="w"> </span><span class="n">g_node_destroy</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l70" href="#l70">70</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 2 times.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GOptionContext</span><span class="p">,</span><span class="w"> </span><span class="n">g_option_context_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l71" href="#l71">71</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GOptionGroup</span><span class="p">,</span><span class="w"> </span><span class="n">g_option_group_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l72" href="#l72">72</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GPatternSpec</span><span class="p">,</span><span class="w"> </span><span class="n">g_pattern_spec_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l73" href="#l73">73</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GQueue</span><span class="p">,</span><span class="w"> </span><span class="n">g_queue_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l74" href="#l74">74</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="p">(</span><span class="n">GQueue</span><span class="p">,</span><span class="w"> </span><span class="n">g_queue_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l75" href="#l75">75</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRand</span><span class="p">,</span><span class="w"> </span><span class="n">g_rand_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l76" href="#l76">76</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">1/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 6004 times.</div>
+          <div class="notTakenBranch">&cross; Branch 2 not taken.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">6004</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRegex</span><span class="p">,</span><span class="w"> </span><span class="n">g_regex_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l77" href="#l77">77</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMatchInfo</span><span class="p">,</span><span class="w"> </span><span class="n">g_match_info_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l78" href="#l78">78</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GScanner</span><span class="p">,</span><span class="w"> </span><span class="n">g_scanner_destroy</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l79" href="#l79">79</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GSequence</span><span class="p">,</span><span class="w"> </span><span class="n">g_sequence_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l80" href="#l80">80</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GSList</span><span class="p">,</span><span class="w"> </span><span class="n">g_slist_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l81" href="#l81">81</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">2/2</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 2 taken 27424 times.</div>
+          <div class="takenBranch">&check; Branch 3 taken 2111 times.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">29535</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GString</span><span class="p">,</span><span class="w"> </span><span class="n">g_autoptr_cleanup_gstring_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l82" href="#l82">82</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GStringChunk</span><span class="p">,</span><span class="w"> </span><span class="n">g_string_chunk_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l83" href="#l83">83</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GStrvBuilder</span><span class="p">,</span><span class="w"> </span><span class="n">g_strv_builder_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l84" href="#l84">84</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GThread</span><span class="p">,</span><span class="w"> </span><span class="n">g_thread_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l85" href="#l85">85</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="p">(</span><span class="n">GMutex</span><span class="p">,</span><span class="w"> </span><span class="n">g_mutex_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l86" href="#l86">86</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GMutexLocker</span><span class="p">,</span><span class="w"> </span><span class="n">g_mutex_locker_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l87" href="#l87">87</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRecMutexLocker</span><span class="p">,</span><span class="w"> </span><span class="n">g_rec_mutex_locker_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l88" href="#l88">88</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRWLockWriterLocker</span><span class="p">,</span><span class="w"> </span><span class="n">g_rw_lock_writer_locker_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l89" href="#l89">89</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRWLockReaderLocker</span><span class="p">,</span><span class="w"> </span><span class="n">g_rw_lock_reader_locker_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l90" href="#l90">90</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="p">(</span><span class="n">GCond</span><span class="p">,</span><span class="w"> </span><span class="n">g_cond_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l91" href="#l91">91</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount uncoveredLine">&cross;</td>
+      <td class="src uncoveredLine"><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GTimer</span><span class="p">,</span><span class="w"> </span><span class="n">g_timer_destroy</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l92" href="#l92">92</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GTimeZone</span><span class="p">,</span><span class="w"> </span><span class="n">g_time_zone_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l93" href="#l93">93</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GTree</span><span class="p">,</span><span class="w"> </span><span class="n">g_tree_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l94" href="#l94">94</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GVariant</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l95" href="#l95">95</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GVariantBuilder</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_builder_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l96" href="#l96">96</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="p">(</span><span class="n">GVariantBuilder</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_builder_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l97" href="#l97">97</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GVariantIter</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_iter_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l98" href="#l98">98</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GVariantDict</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_dict_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l99" href="#l99">99</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="p">(</span><span class="n">GVariantDict</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_dict_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l100" href="#l100">100</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GVariantType</span><span class="p">,</span><span class="w"> </span><span class="n">g_variant_type_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l101" href="#l101">101</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+        <summary class="linebranchSummary">5/6</summary>
+        <div class="linebranchContents">
+          <div class="takenBranch">&check; Branch 1 taken 15 times.</div>
+          <div class="takenBranch">&check; Branch 2 taken 5 times.</div>
+          <div class="takenBranch">&check; Branch 6 taken 1 times.</div>
+          <div class="notTakenBranch">&cross; Branch 7 not taken.</div>
+          <div class="takenBranch">&check; Branch 11 taken 1 times.</div>
+          <div class="takenBranch">&check; Branch 12 taken 102 times.</div>
+        </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">122</td>
+      <td class="src coveredLine"><span class="n">G_DEFINE_AUTO_CLEANUP_FREE_FUNC</span><span class="p">(</span><span class="n">GStrv</span><span class="p">,</span><span class="w"> </span><span class="n">g_strfreev</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l102" href="#l102">102</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GRefString</span><span class="p">,</span><span class="w"> </span><span class="n">g_ref_string_release</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l103" href="#l103">103</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="p">(</span><span class="n">GUri</span><span class="p">,</span><span class="w"> </span><span class="n">g_uri_unref</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l104" href="#l104">104</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTOPTR_CLEANUP_FUNC</span><span class="w"> </span><span class="p">(</span><span class="n">GPathBuf</span><span class="p">,</span><span class="w"> </span><span class="n">g_path_buf_free</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l105" href="#l105">105</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC</span><span class="w"> </span><span class="p">(</span><span class="n">GPathBuf</span><span class="p">,</span><span class="w"> </span><span class="n">g_path_buf_clear</span><span class="p">)</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l106" href="#l106">106</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l107" href="#l107">107</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="n">G_GNUC_END_IGNORE_DEPRECATIONS</span></td>
+    </tr>
+
+    <tr class="source-line">
+      <td class="lineno"><a id="l108" href="#l108">108</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+
+  </table>
+</div>
+      <hr/>
+    </main>
+
+    <footer>
+      Generated by: <a href="http://gcovr.com">GCOVR (Version 5.2)</a>
+    </footer>
+  </body>
+</html>
