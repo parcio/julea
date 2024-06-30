@@ -171,7 +171,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -303,7 +303,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -399,7 +399,7 @@ jobs:
           sudo sysctl vm.mmap_rnd_bits=28
       - name: Cache dependencies
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: dependencies
           key: ubuntu-22.04-gcc-11.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
