@@ -19,7 +19,7 @@ on: [push, pull_request]
 jobs:
   style:
     name: Style
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -46,7 +46,7 @@ jobs:
             compiler_version: 13.2.0
           - dist: ubuntu-24.04
             compiler: clang
-            compiler_version: 18.0.0
+            compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
             compiler_version: 11.4.0
@@ -79,13 +79,21 @@ jobs:
           ./scripts/install-dependencies.sh
   dependencies-containers:
     name: Dependencies (Containers)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
         os:
+          - image: ubuntu:24.04
+            registry: docker.io/library
+            compiler: gcc
+            compiler_version: 13.2.0
+          - image: ubuntu:24.04
+            registry: docker.io/library
+            compiler: clang
+            compiler_version: 18.1.3
           - image: ubuntu:22.04
             registry: docker.io/library
             compiler: gcc
@@ -101,7 +109,7 @@ jobs:
           persist-credentials: false
           show-progress: false
       - name: Install packages
-        if: ${{ matrix.os.image == 'ubuntu:22.04' }}
+        if: ${{ matrix.os.image == 'ubuntu:24.04' || matrix.os.image == 'ubuntu:22.04' }}
         run: |
           apt update
           apt --yes --no-install-recommends install build-essential zstd
@@ -132,6 +140,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-24.04
+            compiler: gcc
+            compiler_version: 13.2.0
+          - dist: ubuntu-24.04
+            compiler: clang
+            compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
             compiler_version: 11.4.0
@@ -167,7 +181,7 @@ jobs:
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
+          if test "${{ matrix.os.dist }}" != 'ubuntu-20.04'
           then
             sudo apt --yes --no-install-recommends install meson
           else
@@ -199,6 +213,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-24.04
+            compiler: gcc
+            compiler_version: 13.2.0
+          - dist: ubuntu-24.04
+            compiler: clang
+            compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
             compiler_version: 11.4.0
@@ -299,7 +319,7 @@ jobs:
         run: |
           sudo apt update || true
           sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" = 'ubuntu-22.04'
+          if test "${{ matrix.os.dist }}" != 'ubuntu-20.04'
           then
             sudo apt --yes --no-install-recommends install meson
           else
@@ -366,7 +386,7 @@ jobs:
           ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -391,7 +411,7 @@ jobs:
     # FIXME Increase coverage (currently, only one configuration runs)
     name: Coverage
     needs: dependencies
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - name: Checkout
@@ -408,7 +428,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: dependencies
-          key: ubuntu-22.04-gcc-11.4.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ubuntu-24.04-gcc-13.2.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
@@ -443,7 +463,7 @@ jobs:
   publish:
     name: Publish
     needs: [doxygen, coverage]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     if: ${{ github.ref == 'refs/heads/master' }}
