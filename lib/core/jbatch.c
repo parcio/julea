@@ -99,6 +99,16 @@ j_batch_background_operation(gpointer data)
 	return NULL;
 }
 
+/**
+ * Clang's function sanitizer flags incompatible function pointer casts.
+ * See: https://github.com/systemd/systemd/issues/29972
+ */
+static void
+j_batch_operation_free(gpointer operation)
+{
+	j_operation_free(operation);
+}
+
 JBatch*
 j_batch_new(JSemantics* semantics)
 {
@@ -109,7 +119,7 @@ j_batch_new(JSemantics* semantics)
 	g_return_val_if_fail(semantics != NULL, NULL);
 
 	batch = g_new(JBatch, 1);
-	batch->list = j_list_new((JListFreeFunc)j_operation_free);
+	batch->list = j_list_new(j_batch_operation_free);
 	batch->semantics = j_semantics_ref(semantics);
 	batch->background_operation = NULL;
 	batch->ref_count = 1;
@@ -343,7 +353,7 @@ j_batch_new_from_batch(JBatch* old_batch)
 	batch->background_operation = NULL;
 	batch->ref_count = 1;
 
-	old_batch->list = j_list_new((JListFreeFunc)j_operation_free);
+	old_batch->list = j_list_new(j_batch_operation_free);
 
 	return batch;
 }
