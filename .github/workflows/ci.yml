@@ -41,6 +41,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - dist: ubuntu-24.04
+            compiler: gcc
+            compiler_version: 13.2.0
+          - dist: ubuntu-24.04
+            compiler: clang
+            compiler_version: 18.0.0
           - dist: ubuntu-22.04
             compiler: gcc
             compiler_version: 11.4.0
