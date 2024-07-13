@@ -117,6 +117,11 @@ jobs:
           if test "${{ matrix.os.compiler }}" = 'clang'
           then
             apt --yes --no-install-recommends install clang
+
+            if test "${{ matrix.os.image }}" = 'ubuntu:24.04'
+            then
+              apt --yes --no-install-recommends install libclang-rt-dev
+            fi
           fi
       - name: Cache dependencies
         id: cache
@@ -175,7 +180,7 @@ jobs:
         run: |
           sudo apt --yes purge glib-networking
           sudo apt --yes --purge autoremove
-          sudo aa-remove-unknown
+          sudo aa-remove-unknown || true
       - name: Install dependencies
         if: ${{ matrix.dependencies == 'system' }}
         run: |
@@ -312,7 +317,7 @@ jobs:
         run: |
           sudo apt --yes purge glib-networking mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
           sudo apt --yes --purge autoremove
-          sudo aa-remove-unknown
+          sudo aa-remove-unknown || true
           sudo rm --recursive --force /var/lib/mysql
       - name: Install dependencies
         if: ${{ matrix.dependencies == 'system' }}
