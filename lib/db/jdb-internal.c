@@ -155,6 +155,34 @@ j_backend_db_func_free(gpointer _data)
 	}
 }
 
+/**
+ * Clang's function sanitizer flags incompatible function pointer casts.
+ * See: https://github.com/systemd/systemd/issues/29972
+ */
+static void
+j_db_internal_schema_unref(gpointer schema)
+{
+	j_db_schema_unref(schema);
+}
+
+static void
+j_db_internal_entry_unref(gpointer entry)
+{
+	j_db_entry_unref(entry);
+}
+
+static void
+j_db_internal_selector_unref(gpointer selector)
+{
+	j_db_selector_unref(selector);
+}
+
+static void
+j_db_internal_iterator_unref(gpointer iterator)
+{
+	j_db_iterator_unref(iterator);
+}
+
 static gboolean
 j_db_schema_create_exec(JList* operations, JSemantics* semantics)
 {
@@ -181,7 +209,7 @@ j_db_internal_schema_create(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
+	data->unref_funcs[0] = j_db_internal_schema_unref;
 	data->unref_values[0] = j_db_schema_ref(j_db_schema);
 
 	op = j_operation_new();
@@ -221,7 +249,7 @@ j_db_internal_schema_get(JDBSchema* j_db_schema, JBatch* batch, GError** error)
 	data->out_param[1].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
+	data->unref_funcs[0] = j_db_internal_schema_unref;
 	data->unref_values[0] = j_db_schema_ref(j_db_schema);
 
 	op = j_operation_new();
@@ -260,7 +288,7 @@ j_db_internal_schema_delete(JDBSchema* j_db_schema, JBatch* batch, GError** erro
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
+	data->unref_funcs[0] = j_db_internal_schema_unref;
 	data->unref_values[0] = j_db_schema_ref(j_db_schema);
 
 	op = j_operation_new();
@@ -301,7 +329,7 @@ j_db_internal_insert(JDBEntry* j_db_entry, JBatch* batch, GError** error)
 	data->out_param[1].ptr_const = error;
 
 	data->unref_func_count = 1;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref;
+	data->unref_funcs[0] = j_db_internal_entry_unref;
 	data->unref_values[0] = j_db_entry_ref(j_db_entry);
 
 	op = j_operation_new();
@@ -342,8 +370,8 @@ j_db_internal_update(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 2;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref;
-	data->unref_funcs[1] = (GDestroyNotify)j_db_selector_unref;
+	data->unref_funcs[0] = j_db_internal_entry_unref;
+	data->unref_funcs[1] = j_db_internal_selector_unref;
 	data->unref_values[0] = j_db_entry_ref(j_db_entry);
 	data->unref_values[1] = j_db_selector_ref(j_db_selector);
 
@@ -384,8 +412,8 @@ j_db_internal_delete(JDBEntry* j_db_entry, JDBSelector* j_db_selector, JBatch* b
 	data->out_param[0].ptr_const = error;
 
 	data->unref_func_count = 2;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_entry_unref;
-	data->unref_funcs[1] = (GDestroyNotify)j_db_selector_unref;
+	data->unref_funcs[0] = j_db_internal_entry_unref;
+	data->unref_funcs[1] = j_db_internal_selector_unref;
 	data->unref_values[0] = j_db_entry_ref(j_db_entry);
 	data->unref_values[1] = j_db_selector_ref(j_db_selector);
 
@@ -433,9 +461,9 @@ j_db_internal_query(JDBSchema* j_db_schema, JDBSelector* j_db_selector, JDBItera
 	data->out_param[1].ptr_const = error;
 
 	data->unref_func_count = 3;
-	data->unref_funcs[0] = (GDestroyNotify)j_db_schema_unref;
-	data->unref_funcs[1] = (GDestroyNotify)j_db_selector_unref;
-	data->unref_funcs[2] = (GDestroyNotify)j_db_iterator_unref;
+	data->unref_funcs[0] = j_db_internal_schema_unref;
+	data->unref_funcs[1] = j_db_internal_selector_unref;
+	data->unref_funcs[2] = j_db_internal_iterator_unref;
 	data->unref_values[0] = j_db_schema_ref(j_db_schema);
 	data->unref_values[1] = j_db_selector_ref(j_db_selector);
 	data->unref_values[2] = j_db_iterator_ref(j_db_iterator);
