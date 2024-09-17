@@ -1,0 +1,2 @@
+cffi==1.15.1
+pycparser==2.21
