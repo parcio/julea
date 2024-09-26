@@ -56,8 +56,6 @@ j_db_iterator_new(JDBSchema* schema, JDBSelector* selector, GError** error)
 
 	if (selector)
 	{
-		j_db_selector_finalize(selector, error);
-
 		iterator->selector = j_db_selector_ref(selector);
 
 		if (G_UNLIKELY(!iterator->selector))
