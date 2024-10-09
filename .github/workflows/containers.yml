@@ -16,6 +16,7 @@
 
 name: Containers
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
