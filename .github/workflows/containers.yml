@@ -19,24 +19,18 @@ on:
   push:
     branches:
       - master
-    paths:
-      - '.github/workflows/containers.yml'
-      - 'containers/*'
   pull_request:
     branches:
       - master
-    paths:
-      - '.github/workflows/containers.yml'
-      - 'containers/*'
-  schedule:
-    - cron: '0 0 * * 0'
+#  schedule:
+#    - cron: '0 0 * * 0'
 jobs:
-  ubuntu-dev:
-    name: Ubuntu Development Container
+  julea-prebuild-container:
+    name: JULEA Prebuild Container
     runs-on: ubuntu-24.04
     permissions:
       packages: write
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,7 +47,7 @@ jobs:
       - name: Build and Push to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
-          context: containers
-          file: containers/ubuntu-22.04-dev
+          context: .
+          file: Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/parcio/ubuntu-dev:22.04
+          tags: ghcr.io/parcio/julea-prebuilt:latest
