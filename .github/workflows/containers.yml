@@ -43,6 +43,10 @@ jobs:
       packages: write
     timeout-minutes: 10
     steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
