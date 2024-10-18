@@ -59,7 +59,7 @@ jobs:
           flavor: |
             latest=auto
           images: |
-            {{ env.REGISTRY_IMAGE }}
+            ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
