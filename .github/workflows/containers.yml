@@ -56,18 +56,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          flavor: |
-            latest=auto
           images: |
             ${{ env.REGISTRY_IMAGE }}
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and Push to GitHub Container Registry
         id: build
         uses: docker/build-push-action@v6
         with:
-          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
@@ -107,6 +101,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' }}
