@@ -25,6 +25,10 @@ on:
       - master
 #  schedule:
 #    - cron: '0 0 * * 0'
+
+env:
+  REGISTRY_IMAGE: ghcr.io/finnhering/julea-prebuilt
+
 jobs:
   julea-build-container:
     name: Build Julea Containers
@@ -55,7 +59,7 @@ jobs:
           flavor: |
             latest=auto
           images: |
-            ghcr.io/FinnHering/julea-prebuilt
+            {{ env.REGISTRY_IMAGE }}
           tags: |
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
