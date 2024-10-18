@@ -61,10 +61,8 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and Push to GitHub Container Registry
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          context: .
-          file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
