@@ -1,8 +1,11 @@
-FROM ubuntu:24.04
+ARG BASE_IMAGE=ubuntu:24.04
+FROM $BASE_IMAGE
 LABEL authors="Finn Hering <finn.hering@st.ovgu.de>"
 
 WORKDIR /app
 COPY . /app
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get -y install \
