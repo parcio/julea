@@ -5,19 +5,20 @@ variable "BASE_TAG" {
 }
 
 
+
+
 // Using ubuntu lts version
 target "ci" {
      name="julea-ubuntu-${versions}-04-${platforms}"
      inherits = ["docker-metadata-action"]
      matrix={
          versions=["24", "22"]
-         platforms=["amd64", "arm64"]
      }
      args = {
          BASE_IMAGE = "ubuntu:${versions}.04"
      }
      tags = ["${BASE_TAG}:ubuntu-${versions}.04"]
-     platforms=["linux/${platforms}"]
+     platforms=["linux/arm64", "linux/amd64"]
 }
 
 
