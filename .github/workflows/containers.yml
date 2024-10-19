@@ -39,6 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: List targets
+        id: generate
         uses: docker/bake-action/subaction/list-targets@v4
         with:
           target: ci
