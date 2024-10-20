@@ -1,37 +1,43 @@
-target "docker-metadata-action" {}
+target "docker-metadata-action" {
+  platforms = ["linux/amd64"]
+}
 
 variable "BASE_TAG" {
   default = "ghcr.io/finnhering/julea-prebuilt"
 }
 
-
-
-
-// Using ubuntu lts version
-target "ci" {
-     name="julea-ubuntu-${versions}-04"
-     inherits = ["docker-metadata-action"]
-     matrix={
-         versions=["24", "22"]
-     }
-     args = {
-         BASE_IMAGE = "ubuntu:${versions}.04"
-     }
-     tags = ["${BASE_TAG}:ubuntu-${versions}.04"]
-     platforms=["linux/arm64", "linux/amd64"]
+group "ubuntu" {
+  targets = ["ubuntu-spack", "ubuntu-system"]
 }
 
+target "ubuntu-spack" {
+  name     = "julea-ubuntu-spack-${compilers}-${versions}-04"
+  inherits = ["docker-metadata-action"]
+  matrix = {
+    versions  = ["24", "22"]
+    compilers = ["gcc", "clang"]
+  }
+  args = {
+    UBUNTU_VERSION       = "${versions}.04"
+    JULEA_SPACK_COMPILER = compilers
+    CC                   = compilers
+  }
+  tags   = ["${BASE_TAG}:ubuntu-spack-${compilers}-${versions}.04"]
+  target = "julea_spack"
+}
 
-
-// Using image notation
-// target "ci" {
-//     name="julea-${regex_replace(base_images, "\\W", "-")}"
-//     inherits = ["docker-metadata-action", "platforms"]
-//     matrix={
-//         base_images=["ubuntu:24.04", "ubuntu:22.04"]
-//     }
-//     args = {
-//         BASE_IMAGE = "${base_images}"
-//     }
-//     tags = ["${BASE_TAG}:${replace(base_images, ":", "-")}"]
-// }
+target "ubuntu-system" {
+  name     = "julea-ubuntu-system-${compilers}-${versions}-04"
+  inherits = ["docker-metadata-action"]
+  matrix = {
+    versions  = ["24", "22"]
+    compilers = ["gcc", "clang"]
+  }
+  args = {
+    UBUNTU_VERSION       = "${versions}.04"
+    JULEA_SPACK_COMPILER = compilers
+    CC                   = compilers
+  }
+  tags   = ["${BASE_TAG}:ubuntu-system-${compilers}-${versions}.04"]
+  target = "julea_system"
+}
