@@ -86,7 +86,7 @@ WORKDIR /app
 COPY ./ /app/
 COPY --from=spack_dependencies /app/dependencies /app/dependencies
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install python3 build-essential
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install python3 build-essential clang
 
 RUN CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=release --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
