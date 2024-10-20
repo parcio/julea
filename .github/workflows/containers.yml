@@ -42,7 +42,7 @@ jobs:
         id: generate
         uses: docker/bake-action/subaction/list-targets@v4
         with:
-          target: ci
+          target: ubuntu
 
   build-containesr:
     name: Build Julea Containers
