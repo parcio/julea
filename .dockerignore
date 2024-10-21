@@ -1,3 +1,6 @@
-/dependencies
-Dockerfile*
-docker-bake*
+# Dependencies folder is not needed in the image (it will be rebuild in there)
+dependencies
+
+# Git(-hub) specific
+.git
+.github
