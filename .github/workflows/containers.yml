@@ -69,7 +69,9 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Validate
+      - name: Enable GHA cache
+        uses: crazy-max/ghaction-github-runtime@v1
+      - name: Build and Push
         uses: docker/bake-action@v5
         with:
           targets: ${{ matrix.target }}
