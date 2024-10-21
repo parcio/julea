@@ -70,7 +70,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Enable GHA cache
-        uses: crazy-max/ghaction-github-runtime@v1
+        uses: crazy-max/ghaction-github-runtime@v3
       - name: Build and Push
         uses: docker/bake-action@v5
         with:
