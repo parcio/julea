@@ -27,7 +27,7 @@ on:
 #    - cron: '0 0 * * 0'
 
 env:
-  REGISTRY_IMAGE: ghcr.io/finnhering/julea-prebuilt
+  REGISTRY_CACHE_IMAGE: ghcr.io/finnhering/julea-buildcache
 
 jobs:
 
@@ -75,5 +75,5 @@ jobs:
           targets: ${{ matrix.target }}
           push: true
           set: |
-            *.cache-from=type=registry,ref=${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}
-            *.cache-to=type=registry,ref=${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }},mode=max
+            *.cache-from=type=registry,ref=${{env.REGISTRY_CACHE_IMAGE}}:${{ matrix.target }}
+            *.cache-to=type=registry,ref=${{env.REGISTRY_CACHE_IMAGE}}:${{ matrix.target }},mode=max
