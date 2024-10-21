@@ -45,7 +45,7 @@ RUN if awk "BEGIN {exit !($UBUNTU_VERSION >= 22.04)}" ; then echo "installing wi
 #####################################################
 # Julea build using system dependencies             #
 #####################################################
-FROM julea_dependencies AS julea
+FROM base AS julea
 
 WORKDIR /app
 COPY . /app/
