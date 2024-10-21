@@ -67,9 +67,27 @@ target "ubuntu-latest" {
     UBUNTU_VERSION = "24.04"
     CC             = "gcc"
   }
-  tags       = ["${BASE_TAG}:ubuntu-latest"]
+  tags       = ["${BASE_TAG}:latest"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
+
+  cache-from = [
+    "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
+  ]
+  cache-to = [
+    "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
+  ]
+}
+
+target "ubuntu-dev-container" {
+  inherits = ["docker-metadata-action"]
+  args = {
+    UBUNTU_VERSION = "24.04"
+    CC             = "gcc"
+  }
+  tags       = ["${BASE_TAG}-dev-container:latest"]
+  target     = "julea_dependencies"
+  dockerfile = "Dockerfile.spack"
 
   cache-from = [
     "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
