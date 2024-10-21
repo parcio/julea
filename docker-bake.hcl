@@ -70,7 +70,7 @@ target "ubuntu-latest" {
     CC             = "gcc"
   }
   tags       = ["${BASE_TAG}:ubuntu-latest"]
-  target     = "julea_spack"
+  target     = "julea"
   dockerfile = "Dockerfile.system"
 
   cache-from = [
