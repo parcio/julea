@@ -77,5 +77,5 @@ jobs:
           targets: ${{ matrix.target }}
           push: true
           set: |
-            *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
+            *.cache-from= type=registry,ref=ghcr.io/org/${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}
+            *.cache-to= type=registry,ref=ghcr.io/org/${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}, mode=max
