@@ -4,3 +4,7 @@ dependencies
 # Git(-hub) specific
 .git
 .github
+
+# Ignore Docker related things
+Dockerfile*
+docker-*
