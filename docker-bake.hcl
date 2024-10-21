@@ -11,7 +11,7 @@ group "ubuntu" {
 }
 
 target "ubuntu-spack" {
-  name     = "julea-ubuntu-spack-${compilers}-${versions}-04"
+  name     = "julea-ubuntu-${versions}-04-spack-${compilers}"
   inherits = ["docker-metadata-action"]
   matrix = {
     versions  = ["24", "22"]
@@ -22,12 +22,12 @@ target "ubuntu-spack" {
     JULEA_SPACK_COMPILER = compilers
     CC                   = compilers
   }
-  tags   = ["${BASE_TAG}:ubuntu-spack-${compilers}-${versions}.04"]
+  tags   = ["${BASE_TAG}:ubuntu-${versions}.04-spack-${compilers}"]
   target = "julea_spack"
 }
 
 target "ubuntu-system" {
-  name     = "julea-ubuntu-system-${compilers}-${versions}-04"
+  name     = "julea-ubuntu-${versions}-04-system-${compilers}"
   inherits = ["docker-metadata-action"]
   matrix = {
     versions  = ["24", "22"]
@@ -38,6 +38,6 @@ target "ubuntu-system" {
     JULEA_SPACK_COMPILER = compilers
     CC                   = compilers
   }
-  tags   = ["${BASE_TAG}:ubuntu-system-${compilers}-${versions}.04"]
+  tags   = ["${BASE_TAG}:ubuntu-${versions}.04-system-${compilers}"]
   target = "julea_system"
 }
