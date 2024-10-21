@@ -74,5 +74,6 @@ jobs:
         with:
           targets: ${{ matrix.target }}
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
