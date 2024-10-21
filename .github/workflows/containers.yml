@@ -75,5 +75,5 @@ jobs:
           targets: ${{ matrix.target }}
           push: true
           set: |
-            *.cache-from= type=registry,ref=${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}
-            *.cache-to= type=registry,ref=${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}, mode=max
+            *.cache-from= type=registry,ref="${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}"
+            *.cache-to= type=registry,ref="${{env.REGISTRY_IMAGE}}:buildcache-${{ matrix.target }}", mode=max
