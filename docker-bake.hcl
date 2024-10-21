@@ -22,7 +22,7 @@ target "ubuntu-spack" {
     JULEA_SPACK_COMPILER = compilers
     CC                   = compilers
   }
-  tags   = ["${BASE_TAG}:ubuntu-${versions}.04-spack-${compilers}"]
+  tags   = ["${BASE_TAG}:ubuntu-${versions}-04-spack-${compilers}"]
   target = "julea_spack"
 }
 
@@ -38,6 +38,6 @@ target "ubuntu-system" {
     JULEA_SPACK_COMPILER = compilers
     CC                   = compilers
   }
-  tags   = ["${BASE_TAG}:ubuntu-${versions}.04-system-${compilers}"]
+  tags   = ["${BASE_TAG}:ubuntu-${versions}-04-system-${compilers}"]
   target = "julea_system"
 }
