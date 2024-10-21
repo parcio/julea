@@ -12,12 +12,11 @@ group "ubuntu" {
 
 # Target build docker images with prebuild julea + dependencies using spack method
 target "ubuntu-spack" {
-  name     = "julea-ubuntu-${versions}-04-spack-${compilers}-${targets}"
+  name     = "julea-ubuntu-${versions}-04-spack-${compilers}"
   inherits = ["docker-metadata-action"]
   matrix = {
     versions  = ["24", "22", "20"]
     compilers = ["gcc", "clang"]
-    targets = ["julea", "julea_dependencies"]
   }
   args = {
     UBUNTU_VERSION       = "${versions}.04"
@@ -26,7 +25,7 @@ target "ubuntu-spack" {
   }
 
   # Add -dependencies to the tag if the target is julea_dependencies
-  tags       = ["${BASE_TAG}-spack${targets == "julea_dependencies" ? "-dependencies": ""}:ubuntu-${versions}-04-${compilers}"]
+  tags       = ["${BASE_TAG}-spack:ubuntu-${versions}-04-${compilers}"]
   target     = "julea"
   dockerfile = "Dockerfile.spack"
   cache-from = [
@@ -39,18 +38,17 @@ target "ubuntu-spack" {
 
 # Target build docker images with prebuild julea + dependencies using system method
 target "ubuntu-system" {
-  name     = "julea-ubuntu-${versions}-04-system-${compilers}-${targets}"
+  name     = "julea-ubuntu-${versions}-04-system-${compilers}"
   inherits = ["docker-metadata-action"]
   matrix = {
     versions  = ["24", "22"]
     compilers = ["gcc", "clang"]
-    targets = ["julea", "julea_dependencies"]
   }
   args = {
     UBUNTU_VERSION = "${versions}.04"
     CC             = compilers
   }
-  tags       = ["${BASE_TAG}-system${targets == "julea_dependencies" ? "-dependencies": ""}:ubuntu-${versions}-04-${compilers}"]
+  tags       = ["${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
