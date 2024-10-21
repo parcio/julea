@@ -27,7 +27,7 @@ on:
 #    - cron: '0 0 * * 0'
 
 env:
-  REGISTRY_IMAGE: ghcr.io/finnhering/julea-prebuild
+  REGISTRY_IMAGE: ghcr.io/finnhering/julea-prebuilt
 
 jobs:
 
