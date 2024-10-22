@@ -3,11 +3,11 @@ target "docker-metadata-action" {
 }
 
 variable "BASE_TAG" {
-  default = "ghcr.io/finnhering/julea-prebuilt"
+  default = "ghcr.io/finnhering/julea"
 }
 
 group "ubuntu" {
-  targets = ["ubuntu-spack", "ubuntu-system", "ubuntu-latest"]
+  targets = ["ubuntu-spack", "ubuntu-system", "ubuntu-latest", "ubuntu-dev-container"]
 }
 
 # Target build docker images with prebuild julea + dependencies using spack method
