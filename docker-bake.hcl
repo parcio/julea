@@ -1,5 +1,5 @@
 target "docker-metadata-action" {
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = ["linux/amd64"]
 }
 
 variable "BASE_TAG" {
@@ -92,6 +92,8 @@ target "ubuntu-dev-container" {
   tags       = ["${BASE_TAG}-dev-container:latest"]
   target     = "julea_dependencies"
   dockerfile = "Dockerfile.spack"
+
+  platforms = [ "linux/amd64", "linux/arm64" ]
 
   cache-from = [
     "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
