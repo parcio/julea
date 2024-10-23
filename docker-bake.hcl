@@ -1,5 +1,5 @@
 target "docker-metadata-action" {
-  platforms = ["linux/amd64"]
+  platforms = ["linux/amd64", "linux/arm64"]
 }
 
 variable "BASE_TAG" {
