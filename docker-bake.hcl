@@ -52,12 +52,14 @@ target "ubuntu-system" {
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
-  cache-from = [
-    "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers}"
-  ]
-  cache-to = [
-    "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers},mode=max"
-  ]
+
+  // Dont cache system builds as they build fast enough anyway
+  // cache-from = [
+  //   "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers}"
+  // ]
+  // cache-to = [
+  //   "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers},mode=max"
+  // ]
 }
 
 # Build latest image
@@ -71,12 +73,14 @@ target "ubuntu-latest" {
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
-  cache-from = [
-    "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
-  ]
-  cache-to = [
-    "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
-  ]
+
+  // Dont cache system builds as they build fast enough anyway
+  // cache-from = [
+  //   "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
+  // ]
+  // cache-to = [
+  //   "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
+  // ]
 }
 
 target "ubuntu-dev-container" {
