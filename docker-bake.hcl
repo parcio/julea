@@ -73,7 +73,7 @@ target "ubuntu-latest" {
     UBUNTU_VERSION = "24.04"
     CC             = "gcc"
   }
-  tags = ["${BASE_TAG}:latest", "{BASE_TAG}:latest-${COMMIT_SHA}"]
+  tags = ["${BASE_TAG}:latest", "${BASE_TAG}:latest-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
