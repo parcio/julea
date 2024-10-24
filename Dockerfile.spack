@@ -24,14 +24,16 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
     gnupg \
     patchelf \
     unzip \
-    clang 
+    clang \
+    gcc-aarch64-linux-gnu \
+    binutils-aarch64-linux-gnu
 
 COPY ./scripts/ /app/scripts/
 
 RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependencies" /app/scripts/install-dependencies.sh
 
 
-FROM --platform=$TARGETPLATFORM base AS julea
+FROM base AS julea
 WORKDIR /app
 
 COPY ./ /app/
