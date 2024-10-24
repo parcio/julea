@@ -5,7 +5,7 @@ FROM --platform=${BUILDPLATFORM} ubuntu:${UBUNTU_VERSION} AS base
 SHELL [ "/bin/bash", "-c" ]
 ARG JULEA_SPACK_COMPILER="gcc"
 ARG CC="gcc"
-ARG BUILDARCH
+ARG TARGETARCH
 
 #####################################################
 # Julea build using spack                           #
@@ -39,7 +39,7 @@ COPY --from=julea_dependencies /app/dependencies /app/dependencies
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install python3 build-essential clang
 
-RUN BUILDARCH=${BUILDARCH} CC=${CC} . /app/scripts/environment.sh && \
+RUN TARGETARCH=${TARGETARCH} CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=release --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
     ninja -C bld && \
     ninja -C bld install 
