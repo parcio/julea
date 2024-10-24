@@ -6,6 +6,10 @@ variable "BASE_TAG" {
   default = "ghcr.io/finnhering/julea"
 }
 
+variable "COMMIT_SHA" {
+  default = "UNKNOWN"
+}
+
 group "ubuntu" {
   targets = ["ubuntu-spack", "ubuntu-system", "ubuntu-latest", "ubuntu-dev-container"]
 }
@@ -25,7 +29,7 @@ target "ubuntu-spack" {
   }
 
   # Add -dependencies to the tag if the target is julea_dependencies
-  tags       = ["${BASE_TAG}-spack:ubuntu-${versions}-04-${compilers}"]
+  tags       = ["${BASE_TAG}-spack:ubuntu-${versions}-04-${compilers}", "${BASE_TAG}-spack:ubuntu-${versions}-04-${compilers}-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.spack"
   cache-from = [
@@ -48,7 +52,7 @@ target "ubuntu-system" {
     UBUNTU_VERSION = "${versions}.04"
     CC             = compilers
   }
-  tags       = ["${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}"]
+  tags       = ["${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}", "${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
@@ -69,7 +73,7 @@ target "ubuntu-latest" {
     UBUNTU_VERSION = "24.04"
     CC             = "gcc"
   }
-  tags       = ["${BASE_TAG}:latest"]
+  tags = ["${BASE_TAG}:latest", "{BASE_TAG}:latest-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
 
@@ -89,10 +93,10 @@ target "ubuntu-dev-container" {
     UBUNTU_VERSION = "24.04"
     CC             = "gcc"
   }
-  tags       = ["${BASE_TAG}-dev-container:latest"]
+  tags       = ["${BASE_TAG}-dev-container:latest", "${BASE_TAG}-dev-container:latest-${COMMIT_SHA}"]
   target     = "julea_dependencies"
   dockerfile = "Dockerfile.spack"
-  
+
   cache-from = [
     "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
   ]

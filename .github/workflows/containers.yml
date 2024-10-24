@@ -27,7 +27,7 @@ on:
 #    - cron: '0 0 * * 0'
 
 env:
-  REGISTRY_IMAGE: ghcr.io/finnhering/julea-prebuilt
+  REGISTRY_IMAGE: ghcr.io/finnhering/julea
 
 jobs:
 
@@ -69,8 +69,25 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            REGISTRY_IMAGE
+          tags: |
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
       - name: Build and Push
         uses: docker/bake-action@v5
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          BASE_TAG: ${{ env.BASE_TAG}}
         with:
+
           targets: ${{ matrix.target }}
           push: true
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
