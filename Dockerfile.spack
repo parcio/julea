@@ -24,9 +24,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
     gnupg \
     patchelf \
     unzip \
-    clang \
-    gcc-aarch64-linux-gnu \
-    binutils-aarch64-linux-gnu
+    clang
 
 COPY ./scripts/ /app/scripts/
 
