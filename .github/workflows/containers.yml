@@ -83,7 +83,7 @@ jobs:
         uses: docker/bake-action@v5
         env:
           COMMIT_SHA: ${{ github.sha }}
-          BASE_TAG: ${{ env.BASE_TAG}}
+          BASE_TAG: ${{ env.REGISTRY_IMAGE }}
         with:
 
           targets: ${{ matrix.target }}
