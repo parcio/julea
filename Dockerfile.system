@@ -6,6 +6,7 @@ FROM ubuntu:${UBUNTU_VERSION} AS julea_dependencies
 SHELL [ "/bin/bash", "-c" ]
 ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
+ARG BUILDTYPE="release"
 
 # Some scripts require bash to work properly...
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
@@ -51,6 +52,6 @@ WORKDIR /app
 COPY . /app/
 
 RUN pwd
-RUN CC=${CC} . /app/scripts/environment.sh && meson setup --prefix="/app/julea-install" --buildtype=release --werror bld && \
+RUN CC=${CC} . /app/scripts/environment.sh && meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror bld && \
     ninja -C bld && \
     ninja -C bld install
