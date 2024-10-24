@@ -87,8 +87,7 @@ target "ubuntu-dev-container" {
   inherits = ["docker-metadata-action"]
   args = {
     UBUNTU_VERSION = "24.04"
-    CC             = "clang"
-    JULEA_SPACK_COMPILER = "clang"
+    CC             = "gcc"
   }
   tags       = ["${BASE_TAG}-dev-container:latest"]
   target     = "julea_dependencies"
@@ -97,10 +96,10 @@ target "ubuntu-dev-container" {
   platforms = [ "linux/amd64", "linux/arm64" ]
 
   cache-from = [
-    "type=gha,scope=julea-ubuntu-24-04-spack-clang"
+    "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
   ]
   cache-to = [
-    "type=gha,scope=julea-ubuntu-24-04-spack-clang,mode=max"
+    "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
   ]
 }
 
