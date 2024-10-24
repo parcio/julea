@@ -20,9 +20,10 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
+  # pull_request:
+  #   branches:
+  #     - master
+  workflow_call:
 #  schedule:
 #    - cron: '0 0 * * 0'
 
