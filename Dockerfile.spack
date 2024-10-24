@@ -1,9 +1,13 @@
 ARG UBUNTU_VERSION="24.04"
+ARG BUILDPLATFORM
 
-FROM ubuntu:${UBUNTU_VERSION} AS base
+
+FROM --platform=${BUILDPLATFORM} ubuntu:${UBUNTU_VERSION} AS base
 SHELL [ "/bin/bash", "-c" ]
 ARG JULEA_SPACK_COMPILER="gcc"
 ARG CC="gcc"
+ARG TARGETPLATFORM
+
 #####################################################
 # Julea build using spack                           #
 #####################################################
@@ -36,7 +40,7 @@ COPY --from=julea_dependencies /app/dependencies /app/dependencies
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install python3 build-essential clang
 
-RUN CC=${CC} . /app/scripts/environment.sh && \
+RUN TARGETPLATFORM=${TARGETPLATFORM} CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=release --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
     ninja -C bld && \
     ninja -C bld install 
