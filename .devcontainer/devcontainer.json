@@ -1,0 +1,7 @@
+{
+    "name": "Julea Dev Container",
+    "image": "ghcr.io/finnhering/julea-dev-container:latest",
+    "containerEnv": {
+        "JULEA_SPACK_DIR": "/app/dependencies"
+    }
+}
