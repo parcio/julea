@@ -55,15 +55,6 @@ target "ubuntu-system" {
   tags       = ["${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}", "${BASE_TAG}-system:ubuntu-${versions}-04-${compilers}-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
-
-
-  // Dont cache system builds as they build fast enough anyway
-  // cache-from = [
-  //   "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers}"
-  // ]
-  // cache-to = [
-  //   "type=gha,scope=julea-ubuntu-${versions}-04-spack-${compilers},mode=max"
-  // ]
 }
 
 # Build latest image
@@ -76,15 +67,6 @@ target "ubuntu-latest" {
   tags = ["${BASE_TAG}:latest", "${BASE_TAG}:latest-${COMMIT_SHA}"]
   target     = "julea"
   dockerfile = "Dockerfile.system"
-
-
-  // Dont cache system builds as they build fast enough anyway
-  // cache-from = [
-  //   "type=gha,scope=julea-ubuntu-24-04-spack-gcc"
-  // ]
-  // cache-to = [
-  //   "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
-  // ]
 }
 
 target "ubuntu-dev-container" {
@@ -104,17 +86,3 @@ target "ubuntu-dev-container" {
     "type=gha,scope=julea-ubuntu-24-04-spack-gcc,mode=max"
   ]
 }
-
-// # Build dependencies spack
-// target "ubuntu-dependencies" {
-//   inherits = ["ubuntu-spack"]
-//   target   = "julea_dependencies"
-//   tags     = ["${BASE_TAG}-spack-dependencies:ubuntu-${versions}-04-${compilers}"]
-// }
-
-// # Build dependencies system
-// target "ubuntu-dependencies" {
-//   inherits = ["ubuntu-system"]
-//   target   = "julea_dependencies"
-//   tags     = ["${BASE_TAG}-system-dependencies:ubuntu-${versions}-04-${compilers}"]
-// }

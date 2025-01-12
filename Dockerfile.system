@@ -2,56 +2,50 @@ ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 
 
+# Stage 0
 FROM ubuntu:${UBUNTU_VERSION} AS julea_dependencies
 SHELL [ "/bin/bash", "-c" ]
 ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 ARG BUILDTYPE="release"
 
-# Some scripts require bash to work properly...
-RUN DEBIAN_FRONTEND=noninteractive apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get --yes install \
-    bash \
-    python3 \
-    python3-pip \ 
-    python3-setuptools \ 
-    python3-wheel \
-    build-essential \
-    ninja-build \
-    pkgconf \
-    libglib2.0-dev \
-    libbson-dev \
-    libfabric-dev \
-    libgdbm-dev \
-    liblmdb-dev \
-    libsqlite3-dev \
-    libleveldb-dev \
-    libmongoc-dev \
-    libmariadb-dev \
-    librocksdb-dev \
-    libfuse3-dev \
-    libopen-trace-format-dev \
-    librados-dev \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    clang 
+# Stage 1-2.1b
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
+        bash \
+        python3 \
+        python3-pip \ 
+        python3-setuptools \ 
+        python3-wheel \
+        build-essential \
+        ninja-build \
+        pkgconf \
+        libglib2.0-dev \
+        libbson-dev \
+        libfabric-dev \
+        libgdbm-dev \
+        liblmdb-dev \
+        libsqlite3-dev \
+        libleveldb-dev \
+        libmongoc-dev \
+        libmariadb-dev \
+        librocksdb-dev \
+        libfuse3-dev \
+        libopen-trace-format-dev \
+        librados-dev \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        clang \ 
+        # Install meson with pip if Ubuntu Version is older than 22.04. Otherwise use apt
+    && if awk "BEGIN {exit !($UBUNTU_VERSION >= 22.04)}" ; then echo "installing with apt..." && apt-get --yes install meson ; else pip install meson ; fi
 
-
-RUN echo UBUNTU_VERSION: $UBUNTU_VERSION
-# Install meson from pip if the version is less than 22.04
-RUN if awk "BEGIN {exit !($UBUNTU_VERSION >= 22.04)}" ; then echo "installing with apt..." && apt-get --yes install meson ; else pip install meson ; fi
-
-
-#####################################################
-# Julea build using system dependencies             #
-#####################################################
 FROM julea_dependencies AS julea
 
 WORKDIR /app
 COPY . /app/
 
-RUN pwd
+# Stage 2.3b
 RUN CC=${CC} . /app/scripts/environment.sh && meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror bld && \
     ninja -C bld && \
     ninja -C bld install
