@@ -8,7 +8,7 @@ ARG BUILDTYPE="release"
 #####################################################
 # Julea build using spack                           #
 #####################################################
-FROM base AS julea_build
+FROM base AS julea_dependencies
 WORKDIR /app
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade
@@ -24,9 +24,13 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
     unzip \
     clang 
 
-COPY ./ /app/
+COPY ./scripts/ /app/scripts
 
 RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependencies" /app/scripts/install-dependencies.sh
+
+
+FROM base as julea_build
+COPY ./ /app
 
 RUN CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
@@ -40,4 +44,4 @@ WORKDIR /app
 
 COPY --from=julea_build /app/julea-install /app/julea-install
 COPY --from=julea_build /app/dependencies /app/dependencies
-COPY --from=julea_build /app/scripts/ /app/scripts/
+COPY ./scripts/ /app/scripts/
