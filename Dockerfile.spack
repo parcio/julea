@@ -31,6 +31,7 @@ RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependenc
 
 FROM base as julea_build
 COPY ./ /app
+COPY --from=julea_dependencies /app/dependencies /app/dependencies
 
 RUN CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
