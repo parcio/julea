@@ -11,8 +11,8 @@ ARG BUILDTYPE="release"
 FROM base AS julea_dependencies
 WORKDIR /app
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \ 
+RUN DEBIAN_FRONTEND=noninteractive 
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install \ 
     git \
     python3 \
     build-essential \
@@ -32,6 +32,8 @@ RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependenc
 FROM base as julea_build
 COPY ./ /app
 COPY --from=julea_dependencies /app/dependencies /app/dependencies
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3
 
 RUN CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
