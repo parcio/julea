@@ -44,6 +44,8 @@ RUN CC=${CC} . /app/scripts/environment.sh && \
 FROM base AS julea
 WORKDIR /app
 
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3
+
 COPY --from=julea_build /app/julea-install /app/julea-install
 COPY --from=julea_build /app/dependencies /app/dependencies
 COPY ./scripts/ /app/scripts/
