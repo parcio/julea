@@ -3,13 +3,32 @@ ARG CC="gcc"
 
 
 # Stage 0
-FROM ubuntu:${UBUNTU_VERSION} AS julea_dependencies
+FROM ubuntu:${UBUNTU_VERSION} AS julea_runtime_dependencies
 SHELL [ "/bin/bash", "-c" ]
 ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 ARG BUILDTYPE="release"
 
 # Stage 1-2.1b
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
+    libglib2.0-dev \
+    libbson-dev \
+    libfabric-dev \
+    libgdbm-dev \
+    liblmdb-dev \
+    libsqlite3-dev \
+    libleveldb-dev \
+    libmongoc-dev \
+    libmariadb-dev \
+    librocksdb-dev \
+    libfuse3-dev \
+    libopen-trace-format-dev \
+    librados-dev
+
+
+FROM julea_runtime_dependencies AS julea_dependencies
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
         bash \
@@ -20,32 +39,28 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
         build-essential \
         ninja-build \
         pkgconf \
-        libglib2.0-dev \
-        libbson-dev \
-        libfabric-dev \
-        libgdbm-dev \
-        liblmdb-dev \
-        libsqlite3-dev \
-        libleveldb-dev \
-        libmongoc-dev \
-        libmariadb-dev \
-        librocksdb-dev \
-        libfuse3-dev \
-        libopen-trace-format-dev \
-        librados-dev \
         python3-pip \
         python3-setuptools \
         python3-wheel \
-        clang \ 
+        clang \
         # Install meson with pip if Ubuntu Version is older than 22.04. Otherwise use apt
     && if awk "BEGIN {exit !($UBUNTU_VERSION >= 22.04)}" ; then echo "installing with apt..." && apt-get --yes install meson ; else pip install meson ; fi
 
-FROM julea_dependencies AS julea
 
+FROM julea_dependencies AS julea_build
 WORKDIR /app
 COPY . /app/
 
 # Stage 2.3b
-RUN CC=${CC} . /app/scripts/environment.sh && meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror bld && \
+RUN . /app/scripts/environment.sh && \
+    CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror --prefix="/usr" bld && \
     ninja -C bld && \
-    ninja -C bld install
+    DESTDIR=/app/julea-install/ ninja -C bld install
+
+
+FROM julea_runtime_dependencies AS julea
+WORKDIR /app
+
+COPY --from=julea_build /app/julea-install/ /
+# Required for ld to detect the added libraries
+RUN ldconfig
