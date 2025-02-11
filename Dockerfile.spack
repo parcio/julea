@@ -25,21 +25,20 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && ap
     clang 
 
 COPY ./scripts/ /app/scripts
-
 RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependencies" /app/scripts/install-dependencies.sh
 
 
-FROM base as julea_build
+FROM base AS julea_build
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3 build-essential clang
+
 COPY ./ /app
 COPY --from=julea_dependencies /app/dependencies /app/dependencies
-
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3
 
 RUN CC=${CC} . /app/scripts/environment.sh && \
     meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
     ninja -C bld && \
     ninja -C bld install 
-
 
 
 FROM base AS julea
