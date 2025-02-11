@@ -30,6 +30,7 @@ RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependenc
 FROM base AS julea_build
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3 build-essential clang
+WORKDIR /app
 
 COPY ./ /app
 COPY --from=julea_dependencies /app/dependencies /app/dependencies
