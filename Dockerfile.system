@@ -2,12 +2,14 @@ ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 
 
-# Stage 0
-FROM ubuntu:${UBUNTU_VERSION} AS julea_runtime_dependencies
+FROM ubuntu:${UBUNTU_VERSION} AS base
 SHELL [ "/bin/bash", "-c" ]
 ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 ARG BUILDTYPE="release"
+
+# Stage 0
+FROM base AS julea_runtime_dependencies
 
 # Stage 1-2.1b
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -28,10 +30,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
 
 
 FROM julea_runtime_dependencies AS julea_dependencies
-
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
-        bash \
         python3 \
         python3-pip \ 
         python3-setuptools \ 
@@ -64,3 +64,10 @@ WORKDIR /app
 COPY --from=julea_build /app/julea-install/ /
 # Required for ld to detect the added libraries
 RUN ldconfig
+
+
+FROM julea_dependencies as julea_dev
+    RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    git \
+    gdb 
