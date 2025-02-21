@@ -30,23 +30,19 @@ COPY ./scripts/ /app/scripts
 RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependencies" /app/scripts/install-dependencies.sh
 
 
-FROM base AS julea_build
-
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install python3 build-essential clang
+FROM julea_dependencies AS julea_build
 WORKDIR /app
 
-COPY ./ /app
-COPY --from=julea_dependencies /app/dependencies /app/dependencies
+COPY --exclude=./dependencies ./ /app
 
-RUN CC=${CC} . /app/scripts/environment.sh && \
-    meson setup --prefix="/usr" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
+RUN . /app/scripts/environment.sh && \
+    CC=${CC} meson setup --prefix="/usr/local" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
     ninja -C bld && \
-    ninja -C bld install 
+    DESTDIR=/app/julea-install/ ninja -C bld install 
 
 
 FROM julea_runtime_dependencies AS julea
-
-COPY --from=julea_build /usr/ /usr/
+COPY --from=julea_build /app/julea-install/ /
 COPY --from=julea_build /app/dependencies /app/dependencies
 COPY ./scripts/ /app/scripts/
 

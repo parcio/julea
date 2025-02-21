@@ -1,6 +1,4 @@
 ARG UBUNTU_VERSION="24.04"
-ARG CC="gcc"
-
 
 FROM ubuntu:${UBUNTU_VERSION} AS base
 SHELL [ "/bin/bash", "-c" ]
@@ -8,10 +6,8 @@ ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 ARG BUILDTYPE="release"
 
-# Stage 0
-FROM base AS julea_runtime_dependencies
 
-# Stage 1-2.1b
+FROM base AS julea_runtime_dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
     libglib2.0-dev \
@@ -51,16 +47,12 @@ FROM julea_dependencies AS julea_build
 WORKDIR /app
 COPY . /app/
 
-# Stage 2.3b
-RUN . /app/scripts/environment.sh && \
-    CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror --prefix="/usr" bld && \
-    ninja -C bld && \
-    DESTDIR=/app/julea-install/ ninja -C bld install
+RUN CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror --prefix="/usr/local" bld
+RUN ninja -C bld
+RUN DESTDIR=/app/julea-install/ ninja -C bld install
 
 
 FROM julea_runtime_dependencies AS julea
-WORKDIR /app
-
 COPY --from=julea_build /app/julea-install/ /
 # Required for ld to detect the added libraries
 RUN ldconfig
