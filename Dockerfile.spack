@@ -37,7 +37,8 @@ COPY ./ /app
 
 RUN . /app/scripts/environment.sh && \
     CC=${CC} meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
-    ninja -C bld
+    ninja -C bld && \
+    ninja -C bld install
 
 FROM julea_runtime_dependencies AS julea
 COPY --from=julea_build /app/julea-install/ /app/julea-install/
