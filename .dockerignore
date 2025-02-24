@@ -8,3 +8,5 @@ dependencies
 # Ignore Docker related things
 Dockerfile*
 docker-*
+
+!docker-spack-entrypoint.sh
