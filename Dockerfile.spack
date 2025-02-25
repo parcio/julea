@@ -36,12 +36,11 @@ WORKDIR /app
 COPY ./ /app
 
 RUN . /app/scripts/environment.sh && \
-    CC=${CC} meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
-    ninja -C bld && \
-    ninja -C bld install
+    CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
+    ninja -C bld
 
 FROM julea_runtime_dependencies AS julea
-COPY --from=julea_build /app/julea-install/ /app/julea-install/
+COPY --from=julea_build /app/bld /app/bld
 COPY --from=julea_build /app/dependencies /app/dependencies
 COPY ./scripts/ /app/scripts/
 COPY ./docker-spack-entrypoint.sh /app/docker-spack-entrypoint.sh
