@@ -1,7 +1,11 @@
 #!/bin/bash
 
 export PATH=$PATH:/app/julea-install/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/julea-install/lib
+
+find "$/app/julea-install/lib" -type d | while read -r dir; do
+  export LD_LIBRARY_PATH="$dir:$LD_LIBRARY_PATH"
+done
+
 . /app/scripts/environment.sh
 
 # Run CMD
