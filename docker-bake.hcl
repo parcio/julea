@@ -76,7 +76,7 @@ target "ubuntu-dev-container" {
     CC             = "gcc"
   }
   tags       = ["${BASE_TAG}-dev-container:latest", "${BASE_TAG}-dev-container:latest-${COMMIT_SHA}"]
-  target     = "julea_dependencies"
+  target     = "julea_dev"
   dockerfile = "Dockerfile.spack"
 
   cache-from = [
