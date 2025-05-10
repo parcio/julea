@@ -10,7 +10,8 @@ WORKDIR /app
 
 FROM base AS julea_runtime_dependencies
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update \ 
+&& apt-get -y install \
     python3
 
 FROM julea_runtime_dependencies AS julea_dependencies
@@ -31,7 +32,6 @@ RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependenc
 
 
 FROM julea_dependencies AS julea_build
-WORKDIR /app
 
 COPY ./ /app
 
@@ -41,6 +41,7 @@ RUN . /app/scripts/environment.sh && \
     DESTDIR="/" ninja -C bld install
 
 FROM julea_runtime_dependencies AS julea
+
 COPY --from=julea_build /app/julea-install /app/julea-install
 COPY --from=julea_build /app/dependencies /app/dependencies
 COPY ./scripts/ /app/scripts/
@@ -54,4 +55,3 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
     gdb 
-

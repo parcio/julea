@@ -5,6 +5,7 @@ SHELL [ "/bin/bash", "-c" ]
 ARG UBUNTU_VERSION="24.04"
 ARG CC="gcc"
 ARG BUILDTYPE="release"
+WORKDIR /app
 
 
 FROM base AS julea_runtime_dependencies
@@ -44,7 +45,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
 
 
 FROM julea_dependencies AS julea_build
-WORKDIR /app
 COPY . /app/
 
 RUN CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror --prefix="/usr/local" bld
@@ -58,7 +58,7 @@ COPY --from=julea_build /app/julea-install/ /
 RUN ldconfig
 
 
-FROM julea_dependencies as julea_dev
+FROM julea_dependencies AS julea_dev
     RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
