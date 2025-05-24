@@ -1,6 +1,6 @@
 target "base" { platforms = ["linux/amd64"] }
 
-variable "BASE_IMAGE_NAME" { default = "ghcr.io/finnhering/julea" }
+variable "BASE_IMAGE_NAME" { default = "ghcr.io/parcio/julea" }
 
 variable "COMMIT_SHA" { default = "UNKNOWN"}
 

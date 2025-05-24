@@ -28,7 +28,7 @@ on:
 #    - cron: '0 0 * * 0'
 
 env:
-  REGISTRY_BASE: ghcr.io/finnhering
+  REGISTRY_BASE: ghcr.io/parcio
 
 jobs:
   prepare:
