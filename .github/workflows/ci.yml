@@ -77,65 +77,6 @@ jobs:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
         run: |
           ./scripts/install-dependencies.sh
-  dependencies-containers:
-    name: Dependencies (Containers)
-    runs-on: ubuntu-24.04
-    container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
-    timeout-minutes: 180
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - image: ubuntu:24.04
-            registry: docker.io/library
-            compiler: gcc
-            compiler_version: 13.2.0
-          - image: ubuntu:24.04
-            registry: docker.io/library
-            compiler: clang
-            compiler_version: 18.1.3
-          - image: ubuntu:22.04
-            registry: docker.io/library
-            compiler: gcc
-            compiler_version: 11.4.0
-          - image: ubuntu:22.04
-            registry: docker.io/library
-            compiler: clang
-            compiler_version: 14.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          show-progress: false
-      - name: Install packages
-        if: ${{ matrix.os.image == 'ubuntu:24.04' || matrix.os.image == 'ubuntu:22.04' }}
-        run: |
-          apt update
-          apt --yes --no-install-recommends install build-essential zstd
-          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            apt --yes --no-install-recommends install clang
-
-            if test "${{ matrix.os.image }}" = 'ubuntu:24.04'
-            then
-              apt --yes --no-install-recommends install libclang-rt-dev
-            fi
-          fi
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: /dependencies
-          key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Install dependencies
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
-          JULEA_SPACK_DIR: /dependencies
-        run: |
-          ./scripts/install-dependencies.sh
   build:
     name: Build
     needs: dependencies

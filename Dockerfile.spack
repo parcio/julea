@@ -1,0 +1,60 @@
+ARG UBUNTU_VERSION="24.04"
+
+# Stage 0
+FROM ubuntu:${UBUNTU_VERSION} AS base
+SHELL [ "/bin/bash", "-c" ]
+ARG JULEA_SPACK_COMPILER="gcc"
+ARG CC="gcc"
+ARG BUILDTYPE="release"
+WORKDIR /app
+
+FROM base AS julea_runtime_dependencies
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update \ 
+&& apt-get -y install \
+    python3
+
+FROM julea_runtime_dependencies AS julea_dependencies
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y upgrade && apt-get -y install \ 
+    git \
+    build-essential \
+    zstd \
+    ca-certificates \
+    git \
+    gnupg \
+    patchelf \
+    unzip \
+    clang 
+
+COPY ./scripts/ /app/scripts
+RUN JULEA_SPACK_COMPILER=${JULEA_SPACK_COMPILER} JULEA_SPACK_DIR="/app/dependencies" /app/scripts/install-dependencies.sh
+
+
+FROM julea_dependencies AS julea_build
+
+COPY ./ /app
+
+RUN . /app/scripts/environment.sh && \
+    CC=${CC} meson setup --prefix="/app/julea-install" --buildtype=${BUILDTYPE} --werror "-Dgdbm_prefix=$(spack location --install-dir gdbm)" bld && \
+    ninja -C bld && \
+    DESTDIR="/" ninja -C bld install
+
+FROM julea_runtime_dependencies AS julea
+
+# Set Environment to support X86 emulators like QEMU (See: https://github.com/spack/spack/issues/41639) 
+ENV SPACK_ROOT="/app/dependencies/"
+
+COPY --from=julea_build /app/julea-install /app/julea-install
+COPY --from=julea_build /app/dependencies /app/dependencies
+COPY ./scripts/ /app/scripts/
+COPY ./docker-spack-entrypoint.sh /app/docker-spack-entrypoint.sh
+
+ENTRYPOINT [ "/app/docker-spack-entrypoint.sh" ]
+
+
+FROM julea_dependencies AS julea_dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    git \
+    gdb 

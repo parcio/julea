@@ -1,0 +1,65 @@
+ARG UBUNTU_VERSION="24.04"
+
+FROM ubuntu:${UBUNTU_VERSION} AS base
+SHELL [ "/bin/bash", "-c" ]
+ARG UBUNTU_VERSION="24.04"
+ARG CC="gcc"
+ARG BUILDTYPE="release"
+WORKDIR /app
+
+
+FROM base AS julea_runtime_dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
+    libglib2.0-dev \
+    libbson-dev \
+    libfabric-dev \
+    libgdbm-dev \
+    liblmdb-dev \
+    libsqlite3-dev \
+    libleveldb-dev \
+    libmongoc-dev \
+    libmariadb-dev \
+    librocksdb-dev \
+    libfuse3-dev \
+    libopen-trace-format-dev \
+    librados-dev
+
+
+FROM julea_runtime_dependencies AS julea_dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get --yes install \
+        python3 \
+        python3-pip \ 
+        python3-setuptools \ 
+        python3-wheel \
+        build-essential \
+        ninja-build \
+        pkgconf \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        clang \
+        # Install meson with pip if Ubuntu Version is older than 22.04. Otherwise use apt
+    && if awk "BEGIN {exit !($UBUNTU_VERSION >= 22.04)}" ; then echo "installing with apt..." && apt-get --yes install meson ; else pip install meson ; fi
+
+
+FROM julea_dependencies AS julea_build
+COPY . /app/
+
+RUN CC=${CC} meson setup --buildtype=${BUILDTYPE} --werror --prefix="/usr/local" bld
+RUN ninja -C bld
+RUN DESTDIR=/app/julea-install/ ninja -C bld install
+
+
+FROM julea_runtime_dependencies AS julea
+COPY --from=julea_build /app/julea-install/ /
+# Required for ld to detect the added libraries
+RUN ldconfig
+
+
+FROM julea_dependencies AS julea_dev
+    RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    git \
+    gdb 

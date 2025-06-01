@@ -1,0 +1,12 @@
+# Dependencies folder is not needed in the image (it will be rebuild in there)
+dependencies
+
+# Git(-hub) specific
+.git
+.github
+
+# Ignore Docker related things
+Dockerfile*
+docker-*
+
+!docker-spack-entrypoint.sh
