@@ -1,6 +1,8 @@
+// QUIRK: For running the AMD64 containers on different platforms (eg. ARM64) do: docker pull --platform=linux/amd64 <IMAGE_TAG> before starting the devcontainer. 
+// See: https://github.com/microsoft/vscode-remote-release/issues/8965
 {
     "name": "Julea Dev Container",
-    "image": "ghcr.io/finnhering/julea-dev-container:latest",
+    "image": "ghcr.io/parcio/julea-dev:latest",
     "containerEnv": {
         "JULEA_SPACK_DIR": "/app/dependencies"
     }
