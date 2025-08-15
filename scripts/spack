@@ -25,10 +25,9 @@ spack_set_env ()
 
 spack_clone ()
 {
-	local spack_commit
+	local spack_packages_commit
 
-	# FIXME maybe use release branch instead
-	spack_commit='a26ac1dbcce120e460e24bbb605e1cf764615a0f'
+	spack_packages_commit='9ca712a716ef98dcc39e3a76b5e5b6b1aa89746e'
 
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
@@ -39,14 +38,32 @@ spack_clone ()
 
 	test -d "${JULEA_SPACK_DIR}" || return 1
 
+	if test ! -d "${JULEA_SPACK_DIR}/packages"
+	then
+		git clone --config feature.manyFiles=true https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
+	fi
+
+	test -d "${JULEA_SPACK_DIR}/packages" || return 1
+
 	spack_set_env
 
 	(
 		cd "${JULEA_SPACK_DIR}" || return 1
 
 		git fetch
-		git reset --hard "${spack_commit}"
+		git checkout releases/v1.0
+		git reset --hard origin/releases/v1.0
 	)
+
+	(
+		cd "${JULEA_SPACK_DIR}/packages" || return 1
+
+		git fetch
+		git checkout develop
+		git reset --hard "${spack_packages_commit}"
+	)
+
+	spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
 
 	return 0
 }
@@ -136,7 +153,8 @@ spack_get_dependencies ()
 	dependencies="${dependencies} sqlite"
 
 	# Optional dependencies
-	dependencies="${dependencies} gdbm"
+	# FIXME https://github.com/spack/spack-packages/pull/1109
+	dependencies="${dependencies} gdbm@1.23"
 	dependencies="${dependencies} leveldb"
 	dependencies="${dependencies} mariadb-c-client"
 	dependencies="${dependencies} mongo-c-driver"
