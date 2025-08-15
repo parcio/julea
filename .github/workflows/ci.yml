@@ -43,22 +43,20 @@ jobs:
         os:
           - dist: ubuntu-24.04
             compiler: gcc
-            compiler_version: 13.2.0
+            compiler_spack: gcc
+            compiler_version: 13.3.0
           - dist: ubuntu-24.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
+            compiler_spack: gcc
             compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 14.0.0
-          - dist: ubuntu-20.04
-            compiler: gcc
-            compiler_version: 9.4.0
-          - dist: ubuntu-20.04
-            compiler: clang
-            compiler_version: 11.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,7 +72,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
         run: |
           ./scripts/install-dependencies.sh
   dependencies-containers:
@@ -89,18 +87,22 @@ jobs:
           - image: ubuntu:24.04
             registry: docker.io/library
             compiler: gcc
-            compiler_version: 13.2.0
+            compiler_spack: gcc
+            compiler_version: 13.3.0
           - image: ubuntu:24.04
             registry: docker.io/library
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 18.1.3
           - image: ubuntu:22.04
             registry: docker.io/library
             compiler: gcc
+            compiler_spack: gcc
             compiler_version: 11.4.0
           - image: ubuntu:22.04
             registry: docker.io/library
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 14.0.0
     steps:
       - name: Checkout
@@ -132,7 +134,7 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
           JULEA_SPACK_DIR: /dependencies
         run: |
           ./scripts/install-dependencies.sh
@@ -147,28 +149,21 @@ jobs:
         os:
           - dist: ubuntu-24.04
             compiler: gcc
-            compiler_version: 13.2.0
+            compiler_spack: gcc
+            compiler_version: 13.3.0
           - dist: ubuntu-24.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
+            compiler_spack: gcc
             compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 14.0.0
-          - dist: ubuntu-20.04
-            compiler: gcc
-            compiler_version: 9.4.0
-          - dist: ubuntu-20.04
-            compiler: clang
-            compiler_version: 11.0.0
         dependencies: [system, spack]
-        exclude:
-          # libfabric is too old on Ubuntu 20.04
-          - os:
-              dist: ubuntu-20.04
-            dependencies: system
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -185,14 +180,7 @@ jobs:
         if: ${{ matrix.dependencies == 'system' }}
         run: |
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" != 'ubuntu-20.04'
-          then
-            sudo apt --yes --no-install-recommends install meson
-          else
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
-            sudo pip3 install meson
-          fi
+          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
@@ -220,22 +208,20 @@ jobs:
         os:
           - dist: ubuntu-24.04
             compiler: gcc
-            compiler_version: 13.2.0
+            compiler_spack: gcc
+            compiler_version: 13.3.0
           - dist: ubuntu-24.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
+            compiler_spack: gcc
             compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 14.0.0
-          - dist: ubuntu-20.04
-            compiler: gcc
-            compiler_version: 9.4.0
-          - dist: ubuntu-20.04
-            compiler: clang
-            compiler_version: 11.0.0
         dependencies: [system, spack]
         julea:
           # Default
@@ -271,11 +257,6 @@ jobs:
             kv: lmdb
             db: mysql
             db-server: mariadb
-        exclude:
-          # libfabric is too old on Ubuntu 20.04
-          - os:
-              dist: ubuntu-20.04
-            dependencies: system
     services:
       mariadb:
         image: ${{ matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb' && 'docker.io/library/mariadb' || '' }}
@@ -305,15 +286,10 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Fix mmap_rnd_bits
-        if: ${{ matrix.os.dist == 'ubuntu-22.04' }}
-        # FIXME https://github.com/actions/runner-images/issues/9491
-        run: |
-          sudo sysctl vm.mmap_rnd_bits=28
       - name: Clean up system packages
         # We need to remove glib-network, otherwise libproxy might cause crashes.
         # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
-        # Ubuntu 20.04 and 22.04 have MySQL 8.0
+        # Ubuntu 22.04 and 24.04 have MySQL 8.0
         run: |
           sudo apt --yes purge glib-networking mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
           sudo apt --yes --purge autoremove
@@ -323,14 +299,7 @@ jobs:
         if: ${{ matrix.dependencies == 'system' }}
         run: |
           sudo apt update || true
-          sudo apt --yes --no-install-recommends install ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          if test "${{ matrix.os.dist }}" != 'ubuntu-20.04'
-          then
-            sudo apt --yes --no-install-recommends install meson
-          else
-            sudo apt --yes --no-install-recommends install python3 python3-pip python3-setuptools python3-wheel
-            sudo pip3 install meson
-          fi
+          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
@@ -433,7 +402,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: dependencies
-          key: ubuntu-24.04-gcc-13.2.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |

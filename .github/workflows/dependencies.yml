@@ -29,22 +29,20 @@ jobs:
         os:
           - dist: ubuntu-24.04
             compiler: gcc
-            compiler_version: 13.2.0
+            compiler_spack: gcc
+            compiler_version: 13.3.0
           - dist: ubuntu-24.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 18.1.3
           - dist: ubuntu-22.04
             compiler: gcc
+            compiler_spack: gcc
             compiler_version: 11.4.0
           - dist: ubuntu-22.04
             compiler: clang
+            compiler_spack: llvm
             compiler_version: 14.0.0
-          - dist: ubuntu-20.04
-            compiler: gcc
-            compiler_version: 9.4.0
-          - dist: ubuntu-20.04
-            compiler: clang
-            compiler_version: 11.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,7 +56,7 @@ jobs:
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler }}@${{ matrix.os.compiler_version }}
+          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
         run: |
           rm --recursive --force dependencies
           ./scripts/install-dependencies.sh

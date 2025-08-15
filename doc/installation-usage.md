@@ -45,7 +45,7 @@ JULEA and its dependencies can also be built using specific compilers instead of
 The `install-dependencies.sh` script supports a `JULEA_SPACK_COMPILER` variable that can be used to set the compiler:
 
 ```console
-$ export JULEA_SPACK_COMPILER=clang
+$ export JULEA_SPACK_COMPILER=llvm
 $ ./scripts/install-dependencies.sh
 ```
 
