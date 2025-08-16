@@ -459,7 +459,8 @@ jobs:
         run: |
           mv coverage doxygen/coverage
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        # FIXME https://github.com/actions/upload-pages-artifact/issues/128
+        uses: actions/upload-pages-artifact@v4.0.0
         with:
           path: doxygen
   deploy:
