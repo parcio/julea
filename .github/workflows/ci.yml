@@ -441,17 +441,10 @@ jobs:
     name: Publish
     needs: [doxygen, coverage]
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    if: ${{ github.ref == 'refs/heads/master' }}
     timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: pages
-          show-progress: false
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
       - name: Download doxygen
         uses: actions/download-artifact@v4
         with:
@@ -464,15 +457,24 @@ jobs:
           path: coverage
       - name: Prepare
         run: |
-          rsync --archive --human-readable --verbose --delete --exclude=.git doxygen/. pages
-          mkdir pages/coverage
-          rsync --archive --human-readable --verbose --delete --exclude=.git coverage/. pages/coverage
-          touch pages/.nojekyll
-      - name: Commit
-        run: |
-          cd pages
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add --all .
-          git commit --amend --reset-author --message='Pages for ${{ github.sha }}'
-          git push --force
+          mv coverage doxygen/coverage
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doxygen
+  deploy:
+    name: Deploy
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    if: ${{ github.ref == 'refs/heads/master' }}
+    permissions:
+      id-token: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
