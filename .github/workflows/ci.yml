@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -59,7 +59,7 @@ jobs:
             compiler_version: 14.0.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -106,7 +106,7 @@ jobs:
             compiler_version: 14.0.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -166,7 +166,7 @@ jobs:
         dependencies: [system, spack]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -289,7 +289,7 @@ jobs:
           - 3306:3306
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -371,7 +371,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -396,7 +396,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
@@ -446,12 +446,12 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Download doxygen
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: doxygen
           path: doxygen
       - name: Download coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: coverage
           path: coverage
@@ -459,7 +459,7 @@ jobs:
         run: |
           mv coverage doxygen/coverage
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: doxygen
   deploy:
