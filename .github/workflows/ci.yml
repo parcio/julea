@@ -257,6 +257,13 @@ jobs:
             kv: lmdb
             db: mysql
             db-server: mariadb
+        exclude:
+          # FIXME Ubuntu 24.04's RocksDB triggers asan
+          - os:
+              dist: ubuntu-24.04
+            dependencies: system
+            julea:
+              kv: rocksdb
     services:
       mariadb:
         image: ${{ matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mariadb' && 'docker.io/library/mariadb' || '' }}
@@ -393,10 +400,6 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Fix mmap_rnd_bits
-        # FIXME https://github.com/actions/runner-images/issues/9491
-        run: |
-          sudo sysctl vm.mmap_rnd_bits=28
       - name: Cache dependencies
         id: cache
         uses: actions/cache/restore@v4
