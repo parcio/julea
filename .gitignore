@@ -22,3 +22,6 @@ bld*/
 
 # Visual Studio Code
 .vscode/
+
+# Clion
+.idea/
