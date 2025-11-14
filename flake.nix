@@ -68,11 +68,18 @@
               lmdb
               sqlite
 
+              gdbm
               leveldb
-              mariadb
+              # TODO: This is not the correct dependency.
+              # We need a connector from here: https://downloads.mariadb.com/Connectors/c
+              # As far as i can tell no nixpkgs exists as of now.
+              # mariadb
+              ceph
+
+              # TODO: I think we need otf1 instead - but not nixpkgs exists
+              # otf2
               rocksdb
 
-              gdbm
             ];
 
             # Most hardening flags are enabled by default in nix.
