@@ -9,6 +9,41 @@
 
    # Flake outputs
    outputs = { self, nixpkgs, flake-utils }:
+     let
+       # This is a function the returns all the needed dependencies given the system pkgs.
+       dependencies = pkgs: with pkgs; [
+         # Build basics
+         gcc
+         ninja
+         meson
+         pkg-config
+
+         # Other packages
+         glib
+         libbson
+         # This uses the libfabric-overlay!
+         libfabric
+
+         hdf5
+         fuse3
+         lmdb
+         sqlite
+
+         gdbm
+         leveldb
+         # TODO: This is not the correct dependency.
+         # We need a connector from here: https://downloads.mariadb.com/Connectors/c
+         # As far as i can tell no nixpkgs exists as of now.
+         # mariadb
+
+         # TODO: Is this the correct way to include rados?
+         ceph
+
+         # TODO: I think we need otf1 instead - but no nixpkgs exists
+         # otf2
+         rocksdb
+       ];
+     in
      flake-utils.lib.eachDefaultSystem (system:
        let
          # Import nixpkgs for the specific system with our config
@@ -22,41 +57,7 @@
          # Development environments output by this flake
          devShells.default = pkgs.mkShell {
            # The Nix packages provided in the environment
-           packages = with pkgs; [
-             # Add the flake's formatter to your project's environment
-             self.formatter.${system}
-
-             # Build basics
-             gcc
-             ninja
-             meson
-             pkg-config
-
-             # Other packages
-             glib
-             libbson
-             # This uses the libfabric-overlay!
-             libfabric
-
-             hdf5
-             fuse3
-             lmdb
-             sqlite
-
-             gdbm
-             leveldb
-             # TODO: This is not the correct dependency.
-             # We need a connector from here: https://downloads.mariadb.com/Connectors/c
-             # As far as i can tell no nixpkgs exists as of now.
-             # mariadb
-
-             # TODO: Is this the correct way to include rados?
-             ceph
-
-             # TODO: I think we need otf1 instead - but not nixpkgs exists
-             # otf2
-             rocksdb
-           ];
+           packages = dependencies pkgs;
 
            # Most hardening flags are enabled by default in nix.
            # The only one usually disabled is pie.
