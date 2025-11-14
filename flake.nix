@@ -12,8 +12,8 @@
       supportedSystems = [
         "x86_64-linux" # 64-bit Intel/AMD Linux
         "aarch64-linux" # 64-bit ARM Linux
-        # "x86_64-darwin" # 64-bit Intel macOS - lets not support mac for now
-        # "aarch64-darwin" # 64-bit ARM macOS - same as above
+        "x86_64-darwin" # 64-bit Intel macOS - lets not support mac for now
+        "aarch64-darwin" # 64-bit ARM macOS - same as above
       ];
 
       # Helper for providing system-specific attributes
@@ -71,6 +71,12 @@
               mariadb
               rocksdb
             ];
+
+            # Most hardening flags are enabled by default in nix.
+            # The only one usually disabled is pie.
+            # For more details check here:
+            # https://ryantm.github.io/nixpkgs/stdenv/stdenv/#sec-hardening-in-nixpkgs
+            hardeningEnable = ["pie"];
 
             # Set any environment variables for your development environment
             env = {
