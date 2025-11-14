@@ -96,14 +96,15 @@
 
             # Add any shell logic you want executed when the environment is activated
             # TODO: Is LD_LIBRARY_PATH ok like this? The spack version had a lot more stuff in it.
-            shellHook = let buildDir = "${self}/bld"; in ''
+            shellHook = ''
             echo Welcome to the JULEA nix shell:
 
-            export PATH="$PATH:${buildDir}"
-            export LD_LIBRARY_PATH="${buildDir}"
-            export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${buildDir}/meson-uninstalled/"
-            export JULEA_BACKEND_PATH="${buildDir}"
-            export HDF5_PLUGIN_PATH="${buildDir}"
+            export BUILD_DIR="$PWD/bld"
+            export PATH="$PATH:"$BUILD_DIR
+            export LD_LIBRARY_PATH=""$BUILD_DIR
+            export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/$BUILD_DIRmeson-uninstalled/"
+            export JULEA_BACKEND_PATH=""$BUILD_DIR
+            export HDF5_PLUGIN_PATH=""$BUILD_DIR
             '';
           };
         }
