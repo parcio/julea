@@ -28,6 +28,8 @@
               inherit system;
               # Enable using unfree packages
               config.allowUnfree = true;
+              # Load the overlay.
+              overlays = [ (import ./libfabric_overlay.nix) ];
             };
           }
         );

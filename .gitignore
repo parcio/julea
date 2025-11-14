@@ -1,6 +1,9 @@
 # Dependencies
 dependencies/
 
+# Nix outputs
+result
+
 # Example
 example/hello-world
 
