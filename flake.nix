@@ -78,7 +78,6 @@
 
             # Add any shell logic you want executed when the environment is activated
             # TODO: Is LD_LIBRARY_PATH ok like this? The spack version had a lot more stuff in it.
-            # TODO: Shouldn't it be possible to have this in the env section?
             shellHook = let buildDir = "${self}/bld"; in ''
             echo Welcome to the JULEA nix shell:
 
