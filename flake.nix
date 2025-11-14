@@ -74,6 +74,8 @@
               # We need a connector from here: https://downloads.mariadb.com/Connectors/c
               # As far as i can tell no nixpkgs exists as of now.
               # mariadb
+
+              # TODO: Is this the correct way to include rados?
               ceph
 
               # TODO: I think we need otf1 instead - but not nixpkgs exists

@@ -33,11 +33,6 @@ usage ()
 	exit 1
 }
 
-set_path
-set_library_path
-set_backend_path
-set_hdf_path
-
 run_benchmark ()
 {
 	local ret
@@ -48,12 +43,5 @@ run_benchmark ()
 
 	return ${ret}
 }
-
-if test -z "${JULEA_SPACK_DIR}"
-then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
-fi
-
-spack_load_dependencies
 
 run_benchmark "$@"

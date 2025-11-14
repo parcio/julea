@@ -27,8 +27,6 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/common"
 # shellcheck source=scripts/setup
 . "${SELF_DIR}/setup"
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 usage ()
 {
@@ -67,16 +65,10 @@ MODE="$1"
 
 #export G_MESSAGES_DEBUG=JULEA
 
-set_path
-set_library_path
-set_backend_path
-
 if test -z "${JULEA_SPACK_DIR}"
 then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
-
-spack_load_dependencies
 
 setup_init
 
