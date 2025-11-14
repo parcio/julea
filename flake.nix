@@ -1,124 +1,86 @@
 {
-  description = "A Flexible Storage Framework for HPC";
+   description = "A Flexible Storage Framework for HPC";
 
-  # Flake inputs
-  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0"; # Stable Nixpkgs (use 0.1 for unstable)
+   # Flake inputs
+   inputs = {
+     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0";
+     flake-utils.url = "github:numtide/flake-utils";
+   };
 
-  # Flake outputs
-  outputs =
-    { self, ... }@inputs:
-    let
-      # The systems supported for this flake's outputs
-      supportedSystems = [
-        "x86_64-linux" # 64-bit Intel/AMD Linux
-        "aarch64-linux" # 64-bit ARM Linux
-        "x86_64-darwin" # 64-bit Intel macOS - lets not support mac for now
-        "aarch64-darwin" # 64-bit ARM macOS - same as above
-      ];
+   # Flake outputs
+   outputs = { self, nixpkgs, flake-utils }:
+     flake-utils.lib.eachDefaultSystem (system:
+       let
+         # Import nixpkgs for the specific system with our config
+         pkgs = import nixpkgs {
+           inherit system;
+           config.allowUnfree = true;
+           overlays = [ (import ./libfabric_overlay.nix) ];
+         };
+       in
+       {
+         # Development environments output by this flake
+         devShells.default = pkgs.mkShell {
+           # The Nix packages provided in the environment
+           packages = with pkgs; [
+             # Add the flake's formatter to your project's environment
+             self.formatter.${system}
 
-      # Helper for providing system-specific attributes
-      forEachSupportedSystem =
-        f:
-        inputs.nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          f {
-            inherit system;
-            # Provides a system-specific, configured Nixpkgs
-            pkgs = import inputs.nixpkgs {
-              inherit system;
-              # Enable using unfree packages
-              config.allowUnfree = true;
-              # Load the overlay.
-              overlays = [ (import ./libfabric_overlay.nix) ];
-            };
-          }
-        );
-    in
-    {
-      # Development environments output by this flake
+             # Build basics
+             gcc
+             ninja
+             meson
+             pkg-config
 
-      # To activate the default environment:
-      # nix develop
-      # Or if you use direnv:
-      # direnv allow
-      devShells = forEachSupportedSystem (
-        { pkgs, system }:
-        {
-          # Run `nix develop` to activate this environment or `direnv allow` if you have direnv installed
-          default = pkgs.mkShell {
-            # The Nix packages provided in the environment
-            packages = with pkgs; [
-              # Add the flake's formatter to your project's environment
-              self.formatter.${system}
+             # Other packages
+             glib
+             libbson
+             # This uses the libfabric-overlay!
+             libfabric
 
-              # Build basics
-              gcc
-              ninja
-              meson
-              pkg-config
+             hdf5
+             fuse3
+             lmdb
+             sqlite
 
-              # Other packages
-              glib
-              libbson
-              # This uses the libfabric-overlay!
-              libfabric
+             gdbm
+             leveldb
+             # TODO: This is not the correct dependency.
+             # We need a connector from here: https://downloads.mariadb.com/Connectors/c
+             # As far as i can tell no nixpkgs exists as of now.
+             # mariadb
 
-              hdf5
-              fuse3
-              lmdb
-              sqlite
+             # TODO: Is this the correct way to include rados?
+             ceph
 
-              gdbm
-              leveldb
-              # TODO: This is not the correct dependency.
-              # We need a connector from here: https://downloads.mariadb.com/Connectors/c
-              # As far as i can tell no nixpkgs exists as of now.
-              # mariadb
+             # TODO: I think we need otf1 instead - but not nixpkgs exists
+             # otf2
+             rocksdb
+           ];
 
-              # TODO: Is this the correct way to include rados?
-              ceph
-
-              # TODO: I think we need otf1 instead - but not nixpkgs exists
-              # otf2
-              rocksdb
-
-            ];
-
-            # Most hardening flags are enabled by default in nix.
-            # The only one usually disabled is pie.
-            # For more details check here:
-            # https://ryantm.github.io/nixpkgs/stdenv/stdenv/#sec-hardening-in-nixpkgs
-            hardeningEnable = ["pie"];
+           # Most hardening flags are enabled by default in nix.
+           # The only one usually disabled is pie.
+           # For more details check here:
+           # https://ryantm.github.io/nixpkgs/stdenv/stdenv/#sec-hardening-in-nixpkgs
+           hardeningEnable = [ "pie" ];
 
             # Set any environment variables for your development environment
             env = {
             };
 
-            # Add any shell logic you want executed when the environment is activated
-            # TODO: Is LD_LIBRARY_PATH ok like this? The spack version had a lot more stuff in it.
-            shellHook = ''
-            echo Welcome to the JULEA nix shell:
+           # Add any shell logic you want executed when the environment is activated
+           # TODO: Is LD_LIBRARY_PATH ok like this? The spack version had a lot more stuff in it.
+           shellHook = ''
+             echo "Welcome to the JULEA nix shell:"
 
-            export BUILD_DIR="$PWD/bld"
-            export PATH="$PATH:"$BUILD_DIR
-            export LD_LIBRARY_PATH=""$BUILD_DIR
-            export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/$BUILD_DIRmeson-uninstalled/"
-            export JULEA_BACKEND_PATH=""$BUILD_DIR
-            export HDF5_PLUGIN_PATH=""$BUILD_DIR
-            '';
-          };
-        }
-      );
-
-      # Nix formatter
-
-      # This applies the formatter that follows RFC 166, which defines a standard format:
-      # https://github.com/NixOS/rfcs/pull/166
-
-      # To format all Nix files:
-      # git ls-files -z '*.nix' | xargs -0 -r nix fmt
-      # To check formatting:
-      # git ls-files -z '*.nix' | xargs -0 -r nix develop --command nixfmt --check
-      formatter = forEachSupportedSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);
-    };
-}
+             export BUILD_DIR="$PWD/bld"
+             export PATH="$PATH:$BUILD_DIR"
+             export LD_LIBRARY_PATH="$BUILD_DIR"
+             export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$BUILD_DIR/meson-uninstalled/"
+             export JULEA_BACKEND_PATH="$BUILD_DIR"
+             export HDF5_PLUGIN_PATH="$BUILD_DIR"
+           '';
+         };
+       }
+     );
+ }
