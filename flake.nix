@@ -60,6 +60,7 @@
               # Other packages
               glib
               libbson
+              # This uses the libfabric-overlay!
               libfabric
 
               hdf5
@@ -72,10 +73,21 @@
             ];
 
             # Set any environment variables for your development environment
-            env = { };
+            env = {
+            };
 
             # Add any shell logic you want executed when the environment is activated
-            shellHook = "echo \"Hello where is ponsay\"";
+            # TODO: Is LD_LIBRARY_PATH ok like this? The spack version had a lot more stuff in it.
+            # TODO: Shouldn't it be possible to have this in the env section?
+            shellHook = let buildDir = "${self}/bld"; in ''
+            echo Welcome to the JULEA nix shell:
+
+            export PATH="$PATH:${buildDir}"
+            export LD_LIBRARY_PATH="${buildDir}"
+            export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${buildDir}/meson-uninstalled/"
+            export JULEA_BACKEND_PATH="${buildDir}"
+            export HDF5_PLUGIN_PATH="${buildDir}"
+            '';
           };
         }
       );
