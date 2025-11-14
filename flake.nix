@@ -67,9 +67,12 @@
               fuse3
               lmdb
               sqlite
+
               leveldb
               mariadb
               rocksdb
+
+              gdbm
             ];
 
             # Most hardening flags are enabled by default in nix.

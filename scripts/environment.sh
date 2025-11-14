@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO: Remove all the unneeded .sh scripts like enviornment.sh, setup.sh, spack etc
+
 SELF_ZERO="$0"
 # shellcheck disable=SC2169,SC3028,SC3054
 test -n "${BASH_VERSION}" && SELF_ZERO="${BASH_SOURCE[0]}"
