@@ -141,34 +141,32 @@ jobs:
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enter nix shell
+        uses: nicknovitski/nix-develop@v1
       - name: Configure and build
         run: |
-          ./scripts/ci/build.sh debug
+          meson setup -Db_sanitize=address,undefined bld
+          ninja -C bld
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
-          nix develop
           JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
           if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
-          exit
       - name: Tests
         run: |
-          nix develop
           ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
           ./scripts/test.sh
           ./scripts/setup.sh stop
-          exit
       - name: HDF5 Tests
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
           //
-          . scripts/environment.sh
           ./scripts/setup.sh start
           export HDF5_VOL_CONNECTOR=julea-kv
           ./scripts/test.sh -r /hdf5
@@ -183,7 +181,6 @@ jobs:
       - name: Benchmarks
         if: ${{ matrix.julea.object == 'posix' && matrix.julea.kv == 'lmdb' && matrix.julea.db == 'sqlite' }}
         run: |
-          . scripts/environment.sh
           ./scripts/setup.sh start
           ./scripts/benchmark.sh --duration=0
           sleep 10
@@ -231,7 +228,10 @@ jobs:
         env:
           CC: gcc
         run: |
-          ./scripts/ci/build.sh coverage
+          nix develop
+          meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
+          ninja -C bld
+          exit
       - name: Create configuration
         run: |
           nix develop
