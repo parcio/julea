@@ -101,7 +101,6 @@ jobs:
           # FIXME Ubuntu 24.04's RocksDB triggers asan
           - os:
               dist: ubuntu-24.04
-            dependencies: system
             julea:
               kv: rocksdb
     services:
@@ -133,53 +132,28 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Clean up system packages
-        # We need to remove glib-network, otherwise libproxy might cause crashes.
-        # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
-        # Ubuntu 22.04 and 24.04 have MySQL 8.0
-        run: |
-          sudo apt --yes purge glib-networking mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
-          sudo apt --yes --purge autoremove
-          sudo aa-remove-unknown || true
-          sudo rm --recursive --force /var/lib/mysql
-      - name: Install dependencies
-        if: ${{ matrix.dependencies == 'system' }}
-        run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-      - name: Cache dependencies
-        id: cache
-        if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache/restore@v4
-        with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Check dependencies
-        if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          exit 1
       - name: Configure and build
-        env:
-          CC: ${{ matrix.os.compiler }}
         run: |
           ./scripts/ci/build.sh debug
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
-          . scripts/environment.sh
+          nix develop
           JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
           if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
+          exit
       - name: Tests
         run: |
-          . scripts/environment.sh
+          nix develop
           ./scripts/setup.sh start
           ./scripts/test.sh
           sleep 10
           ./scripts/test.sh
           ./scripts/setup.sh stop
+          exit
       - name: HDF5 Tests
         env:
           LSAN_OPTIONS: exitcode=0

@@ -20,20 +20,18 @@ set -e
 
 MODE="$1"
 
-GDBM_PREFIX=''
-
 case "${MODE}" in
 	debug)
 		# shellcheck disable=SC2086
 		nix develop
-		meson setup -Db_sanitize=address,undefined ${CLANG_LUNDEF} ${GDBM_PREFIX} bld
+		meson setup -Db_sanitize=address,undefined bld
 		ninja -C bld
 		exit
 		;;
 	coverage)
 		# shellcheck disable=SC2086
 		nix develop
-		meson setup -Db_coverage=true -Db_sanitize=address,undefined ${GDBM_PREFIX} bld
+		meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
 		ninja -C bld
 		exit
 		;;
