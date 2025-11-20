@@ -141,12 +141,10 @@ jobs:
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Enter nix shell
-        uses: nicknovitski/nix-develop@v1
       - name: Configure and build
         run: |
-          meson setup -Db_sanitize=address,undefined bld
-          ninja -C bld
+          nix develop --command meson setup -Db_sanitize=address,undefined bld
+          nix develop --command ninja -C bld
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
@@ -154,38 +152,38 @@ jobs:
           if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
+          nix develop --command julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
-          ./scripts/setup.sh start
-          ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/test.sh
           sleep 10
-          ./scripts/test.sh
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh stop
       - name: HDF5 Tests
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
           //
-          ./scripts/setup.sh start
-          export HDF5_VOL_CONNECTOR=julea-kv
-          ./scripts/test.sh -r /hdf5
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command export HDF5_VOL_CONNECTOR=julea-kv
+          nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          ./scripts/test.sh -r /hdf5
+          nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          export HDF5_VOL_CONNECTOR=julea-db
-          ./scripts/test.sh -r /hdf5
+          nix develop --command export HDF5_VOL_CONNECTOR=julea-db
+          nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          ./scripts/test.sh -r /hdf5
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/test.sh -r /hdf5
+          nix develop --command ./scripts/setup.sh stop
       - name: Benchmarks
         if: ${{ matrix.julea.object == 'posix' && matrix.julea.kv == 'lmdb' && matrix.julea.db == 'sqlite' }}
         run: |
-          ./scripts/setup.sh start
-          ./scripts/benchmark.sh --duration=0
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/benchmark.sh --duration=0
           sleep 10
-          ./scripts/benchmark.sh --duration=0
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/benchmark.sh --duration=0
+          nix develop --command ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
     runs-on: ubuntu-24.04
@@ -225,33 +223,23 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure and build
-        env:
-          CC: gcc
         run: |
-          nix develop
-          meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
-          ninja -C bld
-          exit
+          nix develop --command meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
+          nix develop --command ninja -C bld
       - name: Create configuration
         run: |
-          nix develop
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
-          exit
+          nix develop --command julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
       - name: Tests
         env:
           HDF5_VOL_CONNECTOR: julea-db
           LSAN_OPTIONS: exitcode=0
         run: |
-          nix develop
-          ./scripts/setup.sh start
-          ./scripts/test.sh
-          ./scripts/setup.sh stop
-          exit
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh stop
       - name: Generate coverage
         run: |
-          nix develop
-          ninja -C bld coverage
-          exit
+          nix develop --command ninja -C bld coverage
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
