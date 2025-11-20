@@ -136,7 +136,11 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
-          show-progress: false
+          show-progress: fals
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}e
       - name: Configure and build
         run: |
           ./scripts/ci/build.sh debug
@@ -218,39 +222,36 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
-          show-progress: false
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache/restore@v4
+          show-progress: fals
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
         with:
-          path: dependencies
-          key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Check dependencies
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          exit 1
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}e
       - name: Configure and build
         env:
           CC: gcc
         run: |
-          ./scripts/ci/build.sh coverage spack
+          ./scripts/ci/build.sh coverage
       - name: Create configuration
         run: |
-          . scripts/environment.sh
+          nix develop
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
+          exit
       - name: Tests
         env:
           HDF5_VOL_CONNECTOR: julea-db
           LSAN_OPTIONS: exitcode=0
         run: |
-          . scripts/environment.sh
+          nix develop
           ./scripts/setup.sh start
           ./scripts/test.sh
           ./scripts/setup.sh stop
+          exit
       - name: Generate coverage
         run: |
-          . scripts/environment.sh
+          nix develop
           ninja -C bld coverage
+          exit
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
