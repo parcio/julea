@@ -18,6 +18,7 @@
     dependencies = pkgs:
       with pkgs; [
         # Build basics
+        # TODO: Currently the ci/cd pipelines tests for clang and gcc. Is gcc only ok?
         gcc
         ninja
         meson
@@ -57,7 +58,7 @@
         version = "1.0.0";
         src = self;
 
-        mesonBuildType = release;
+        mesonBuildType = "release";
 
         buildInputs = dependencies pkgs;
       };
