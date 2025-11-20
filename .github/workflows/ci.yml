@@ -164,7 +164,6 @@ jobs:
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
-          //
           nix develop --command ./scripts/setup.sh start
           nix develop --command export HDF5_VOL_CONNECTOR=julea-kv
           nix develop --command ./scripts/test.sh -r /hdf5
