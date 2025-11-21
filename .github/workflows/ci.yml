@@ -165,15 +165,13 @@ jobs:
           LSAN_OPTIONS: exitcode=0
         run: |
           nix develop --command ./scripts/setup.sh start
-          nix develop --command export HDF5_VOL_CONNECTOR=julea-kv
-          nix develop --command ./scripts/test.sh -r /hdf5
+          HDF5_VOL_CONNECTOR=julea-kv nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          nix develop --command ./scripts/test.sh -r /hdf5
+          HDF5_VOL_CONNECTOR=julea-kv nix develop --command ./scripts/test.sh -r /hdf5
+
+          HDF5_VOL_CONNECTOR=julea-db nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          nix develop --command export HDF5_VOL_CONNECTOR=julea-db
-          nix develop --command ./scripts/test.sh -r /hdf5
-          sleep 10
-          nix develop --command ./scripts/test.sh -r /hdf5
+          HDF5_VOL_CONNECTOR=julea-db nix develop --command ./scripts/test.sh -r /hdf5
           nix develop --command ./scripts/setup.sh stop
       - name: Benchmarks
         if: ${{ matrix.julea.object == 'posix' && matrix.julea.kv == 'lmdb' && matrix.julea.db == 'sqlite' }}
