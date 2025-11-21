@@ -24,19 +24,12 @@ SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 usage ()
 {
 	echo "Usage: ${SELF_BASE} [arguments]"
 	exit 1
 }
-
-set_path
-set_library_path
-set_backend_path
-set_hdf_path
 
 run_test ()
 {
@@ -58,11 +51,5 @@ run_test ()
 	return ${ret}
 }
 
-if test -z "${JULEA_SPACK_DIR}"
-then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
-fi
-
-spack_load_dependencies
 
 run_test "$@"

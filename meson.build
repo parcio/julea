@@ -30,7 +30,6 @@ pkg_config = import('pkgconfig')
 
 cc_args = cc.get_supported_arguments([
 	'-fno-omit-frame-pointer',
-	'-fhardened',
 ])
 
 if get_option('debug')

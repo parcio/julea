@@ -33,173 +33,32 @@ jobs:
       - name: Check shell scripts
         run: |
           ./scripts/check.sh
-  dependencies:
-    name: Dependencies
-    runs-on: ${{ matrix.os.dist }}
-    timeout-minutes: 180
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - dist: ubuntu-24.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 13.3.0
-          - dist: ubuntu-24.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 18.1.3
-          - dist: ubuntu-22.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 11.4.0
-          - dist: ubuntu-22.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 14.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-          show-progress: false
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Install dependencies
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
-        run: |
-          ./scripts/install-dependencies.sh
-  dependencies-containers:
-    name: Dependencies (Containers)
-    runs-on: ubuntu-24.04
-    container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
-    timeout-minutes: 180
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - image: ubuntu:24.04
-            registry: docker.io/library
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 13.3.0
-          - image: ubuntu:24.04
-            registry: docker.io/library
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 18.1.3
-          - image: ubuntu:22.04
-            registry: docker.io/library
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 11.4.0
-          - image: ubuntu:22.04
-            registry: docker.io/library
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 14.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-          show-progress: false
-      - name: Install packages
-        if: ${{ matrix.os.image == 'ubuntu:24.04' || matrix.os.image == 'ubuntu:22.04' }}
-        run: |
-          apt update
-          apt --yes --no-install-recommends install build-essential zstd
-          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            apt --yes --no-install-recommends install clang
-
-            if test "${{ matrix.os.image }}" = 'ubuntu:24.04'
-            then
-              apt --yes --no-install-recommends install libclang-rt-dev
-            fi
-          fi
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: /dependencies
-          key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Install dependencies
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
-          JULEA_SPACK_DIR: /dependencies
-        run: |
-          ./scripts/install-dependencies.sh
   build:
     name: Build
-    needs: dependencies
-    runs-on: ${{ matrix.os.dist }}
+    # Todo: Remove matrix entirely?
+    runs-on: ${{ matrix.dist }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - dist: ubuntu-24.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 13.3.0
-          - dist: ubuntu-24.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 18.1.3
-          - dist: ubuntu-22.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 11.4.0
-          - dist: ubuntu-22.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 14.0.0
-        dependencies: [system, spack]
+        dist:
+        - ubuntu-24.04
+        - ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           persist-credentials: false
           show-progress: false
-      - name: Clean up system packages
-        # We need to remove glib-network, otherwise libproxy might cause crashes.
-        run: |
-          sudo apt --yes purge glib-networking
-          sudo apt --yes --purge autoremove
-          sudo aa-remove-unknown || true
-      - name: Install dependencies
-        if: ${{ matrix.dependencies == 'system' }}
-        run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-      - name: Cache dependencies
-        id: cache
-        if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache/restore@v4
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
         with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Check dependencies
-        if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
         run: |
-          exit 1
-      - name: Configure, build and install
-        env:
-          CC: ${{ matrix.os.compiler }}
-        run: |
-          ./scripts/ci/build.sh release "${{ matrix.dependencies }}"
+          nix build
   tests:
     name: Tests
-    needs: dependencies
     runs-on: ${{ matrix.os.dist }}
     timeout-minutes: 60
     strategy:
@@ -207,22 +66,8 @@ jobs:
       matrix:
         os:
           - dist: ubuntu-24.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 13.3.0
-          - dist: ubuntu-24.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 18.1.3
           - dist: ubuntu-22.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 11.4.0
-          - dist: ubuntu-22.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 14.0.0
-        dependencies: [system, spack]
+
         julea:
           # Default
           - object: posix
@@ -261,7 +106,6 @@ jobs:
           # FIXME Ubuntu 24.04's RocksDB triggers asan
           - os:
               dist: ubuntu-24.04
-            dependencies: system
             julea:
               kv: rocksdb
     services:
@@ -293,78 +137,50 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Clean up system packages
-        # We need to remove glib-network, otherwise libproxy might cause crashes.
-        # FIXME https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1806263
-        # Ubuntu 22.04 and 24.04 have MySQL 8.0
-        run: |
-          sudo apt --yes purge glib-networking mysql-client mysql-client-8.0 mysql-server mysql-server-8.0
-          sudo apt --yes --purge autoremove
-          sudo aa-remove-unknown || true
-          sudo rm --recursive --force /var/lib/mysql
-      - name: Install dependencies
-        if: ${{ matrix.dependencies == 'system' }}
-        run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-      - name: Cache dependencies
-        id: cache
-        if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache/restore@v4
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
         with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Check dependencies
-        if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          exit 1
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure and build
-        env:
-          CC: ${{ matrix.os.compiler }}
         run: |
-          ./scripts/ci/build.sh debug "${{ matrix.dependencies }}"
+          nix develop --command meson setup -Db_sanitize=address,undefined bld
+          nix develop --command ninja -C bld
       - name: Create configuration
         # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
-          . scripts/environment.sh
           JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
           if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
           if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
+          nix develop --command julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
-          . scripts/environment.sh
-          ./scripts/setup.sh start
-          ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/test.sh
           sleep 10
-          ./scripts/test.sh
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh stop
       - name: HDF5 Tests
         env:
           LSAN_OPTIONS: exitcode=0
         run: |
-          . scripts/environment.sh
-          ./scripts/setup.sh start
-          export HDF5_VOL_CONNECTOR=julea-kv
-          ./scripts/test.sh -r /hdf5
+          nix develop --command ./scripts/setup.sh start
+          HDF5_VOL_CONNECTOR=julea-kv nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          ./scripts/test.sh -r /hdf5
+          HDF5_VOL_CONNECTOR=julea-kv nix develop --command ./scripts/test.sh -r /hdf5
+
+          HDF5_VOL_CONNECTOR=julea-db nix develop --command ./scripts/test.sh -r /hdf5
           sleep 10
-          export HDF5_VOL_CONNECTOR=julea-db
-          ./scripts/test.sh -r /hdf5
-          sleep 10
-          ./scripts/test.sh -r /hdf5
-          ./scripts/setup.sh stop
+          HDF5_VOL_CONNECTOR=julea-db nix develop --command ./scripts/test.sh -r /hdf5
+          nix develop --command ./scripts/setup.sh stop
       - name: Benchmarks
         if: ${{ matrix.julea.object == 'posix' && matrix.julea.kv == 'lmdb' && matrix.julea.db == 'sqlite' }}
         run: |
-          . scripts/environment.sh
-          ./scripts/setup.sh start
-          ./scripts/benchmark.sh --duration=0
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/benchmark.sh --duration=0
           sleep 10
-          ./scripts/benchmark.sh --duration=0
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/benchmark.sh --duration=0
+          nix develop --command ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
     runs-on: ubuntu-24.04
@@ -391,7 +207,6 @@ jobs:
     # FIXME Reduce redundancies
     # FIXME Increase coverage (currently, only one configuration runs)
     name: Coverage
-    needs: dependencies
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -400,38 +215,28 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache/restore@v4
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
         with:
-          path: dependencies
-          key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Check dependencies
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          exit 1
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure and build
-        env:
-          CC: gcc
         run: |
-          ./scripts/ci/build.sh coverage spack
+          nix develop --command meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
+          nix develop --command ninja -C bld
       - name: Create configuration
         run: |
-          . scripts/environment.sh
-          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
+          nix develop --command julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=posix --object-path=/tmp/julea/object/posix --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
       - name: Tests
         env:
           HDF5_VOL_CONNECTOR: julea-db
           LSAN_OPTIONS: exitcode=0
         run: |
-          . scripts/environment.sh
-          ./scripts/setup.sh start
-          ./scripts/test.sh
-          ./scripts/setup.sh stop
+          nix develop --command ./scripts/setup.sh start
+          nix develop --command ./scripts/test.sh
+          nix develop --command ./scripts/setup.sh stop
       - name: Generate coverage
         run: |
-          . scripts/environment.sh
-          ninja -C bld coverage
+          nix develop --command ninja -C bld coverage
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
