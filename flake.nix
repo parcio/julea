@@ -75,7 +75,13 @@
         # Development environments output by this flake
         devShells.default = pkgs.mkShell {
           # The Nix packages provided in the environment
-          packages = dependencies pkgs;
+          # Consists of the usual build dependencies and some dev dependencies.
+          packages = (dependencies pkgs) ++ [
+            # Needed to run coverage tests.
+            pkgs.gcovr
+          ];
+
+
 
           # Most hardening flags are enabled by default in nix.
           # The only one usually disabled is pie.
