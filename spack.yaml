@@ -1,0 +1,31 @@
+# This is a Spack Environment file.
+#
+# It describes a set of packages to be installed, along with
+# configuration settings.
+spack:
+  # add package specs to the `specs` list
+  specs: 
+    - meson
+    - pkgconf
+
+    - glib
+    - libbson 
+    - libfabric fabrics=sockets,tcp,udp,verbs,rxd,rxm
+
+    - hdf5@1.14~mpi
+    - libfuse~utils
+    - lmdb
+    - sqlite
+
+    - gdbm@1.23
+    - leveldb
+    - mariadb-c-client
+    - mongo-c-driver
+    - otf
+    - rocksdb~static
+
+    - py-gcovr
+  
+  view: true
+  concretizer:
+    unify: true

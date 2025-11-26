@@ -22,3 +22,12 @@ bld*/
 
 # Visual Studio Code
 .vscode/
+
+# CLion
+.idea/
+
+# Spack-Env
+.spack-env/
+
+# Nix result 
+result/
