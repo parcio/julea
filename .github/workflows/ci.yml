@@ -74,7 +74,7 @@ jobs:
         env:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
         run: |
-          ./scripts/install-dependencies.sh
+          ./scripts/environment.sh
   dependencies-containers:
     name: Dependencies (Containers)
     runs-on: ubuntu-24.04
@@ -137,7 +137,7 @@ jobs:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
           JULEA_SPACK_DIR: /dependencies
         run: |
-          ./scripts/install-dependencies.sh
+          ./scripts/environment.sh
   build:
     name: Build
     needs: dependencies
@@ -187,7 +187,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/environment.sh') }}
       - name: Check dependencies
         if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
         run: |
