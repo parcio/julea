@@ -27,8 +27,6 @@ SELF_BASE="${SELF_PATH##*/}"
 . "${SELF_DIR}/common"
 # shellcheck source=scripts/setup
 . "${SELF_DIR}/setup"
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 usage ()
 {
