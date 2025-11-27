@@ -24,8 +24,6 @@ SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 usage ()
 {
@@ -63,6 +61,7 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
-spack_load_dependencies
+spack env activate .
+spack install
 
 run_test "$@"

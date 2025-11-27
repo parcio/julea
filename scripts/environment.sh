@@ -25,8 +25,6 @@ SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 JULEA_ENVIRONMENT_SOURCED=1
 
