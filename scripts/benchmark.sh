@@ -52,7 +52,7 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
-spack_cmd env activate .
-spack_cmd install
+./bin/spack env activate .
+./bin/spack install
 
 run_benchmark "$@"
