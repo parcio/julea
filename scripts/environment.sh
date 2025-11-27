@@ -63,7 +63,7 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
-# spack_load_dependencies
+spack env activate .
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH.
 PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
