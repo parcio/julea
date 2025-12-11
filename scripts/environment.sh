@@ -58,7 +58,7 @@ set_hdf_path
 
 if test -z "${JULEA_SPACK_DIR}"
 then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/spack-installation"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
  "${JULEA_SPACK_DIR}/bin/spack" env activate .

@@ -35,7 +35,7 @@ usage ()
 
 if test -z "${JULEA_SPACK_DIR}"
 then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/spack-installation"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
 install_spack
