@@ -58,7 +58,7 @@ run_test ()
 
 if test -z "${JULEA_SPACK_DIR}"
 then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/spack-installation"
 fi
 
 ./bin/spack env activate .

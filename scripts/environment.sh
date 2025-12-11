@@ -58,11 +58,11 @@ set_hdf_path
 
 if test -z "${JULEA_SPACK_DIR}"
 then
-	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
+	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/spack-installation"
 fi
 
-./bin/spack env activate .
-./bin/spack install
+ "${JULEA_SPACK_DIR}/bin/spack" env activate .
+ "${JULEA_SPACK_DIR}/bin/spack" install
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH.
 PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1

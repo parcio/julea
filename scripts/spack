@@ -1,0 +1,134 @@
+# JULEA - Flexible storage framework
+# Copyright (C) 2017-2024 Michael Kuhn
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+spack_set_env ()
+{
+	test -n "${JULEA_SPACK_DIR}" || return 1
+
+	export SPACK_DISABLE_LOCAL_CONFIG=true
+	# FIXME maybe put into /tmp in CI
+	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
+}
+
+spack_clone ()
+{
+	local spack_packages_commit
+
+	spack_packages_commit='9ca712a716ef98dcc39e3a76b5e5b6b1aa89746e'
+
+	test -n "${JULEA_SPACK_DIR}" || return 1
+
+	if test ! -d "${JULEA_SPACK_DIR}"
+	then
+		git clone --config feature.manyFiles=true --depth=2 --branch=releases/v1.0 https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
+	fi
+
+	test -d "${JULEA_SPACK_DIR}" || return 1
+
+	if test ! -d "${JULEA_SPACK_DIR}/packages"
+	then
+		git clone --config feature.manyFiles=true --branch=develop https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
+		echo "Skipping cloning spack-packages"
+	fi
+
+	test -d "${JULEA_SPACK_DIR}/packages" || return 1
+
+	spack_set_env
+
+    (
+        cd "${JULEA_SPACK_DIR}/packages" || return 1
+
+        git reset --hard "${spack_packages_commit}"
+    )
+
+	spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
+
+	return 0
+}
+
+spack_init ()
+{
+	local spack_env
+
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
+
+	spack_set_env
+
+	spack_env="${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
+
+	test -f "${spack_env}" || return 1
+
+	# shellcheck source=/dev/null
+	. "${spack_env}"
+
+	return 0
+}
+
+spack_cmd ()
+{
+	test -n "${JULEA_SPACK_DIR}" || return 1
+	test -d "${JULEA_SPACK_DIR}" || return 1
+
+	(
+		cd "${JULEA_SPACK_DIR}" || return 1
+
+		./bin/spack "$@"
+	)
+}
+
+install_spack ()
+{
+	# FIXME does not fail if Git is not installed
+	if spack_clone
+	then
+		spack_cmd config --scope site add 'concretizer:reuse:false'
+		spack_cmd config --scope site add 'config:connect_timeout:60'
+		# FIXME We currently need this for JULEA to find all dependencies
+		spack_cmd config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
+		spack_cmd config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
+
+		if test -n "${CI}"
+		then
+			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
+			spack_cmd compiler find
+			spack_cmd compiler list
+
+			if test -n "${JULEA_SPACK_COMPILER}"
+			then
+				# This should fail if Spack does not recognize the compiler
+				spack_cmd compiler info "${JULEA_SPACK_COMPILER}"
+			fi
+		fi
+
+        spack_cmd mark --implicit --all
+
+        if spack_init
+        then
+            echo "Installing Spack packages"
+            spack env activate .
+            spack env status
+            spack install
+        fi
+
+        spack_cmd gc --yes-to-all
+
+		if test -n "${JULEA_SPACK_COMPILER}"
+		then
+			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
+		fi
+	fi
+}

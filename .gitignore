@@ -1,5 +1,5 @@
-# Dependencies
-dependencies/
+# Spack Installation
+spack-installation/
 
 # Example
 example/hello-world
@@ -29,5 +29,3 @@ bld*/
 # Spack-Env
 .spack-env/
 
-# Nix result 
-result/
