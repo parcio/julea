@@ -19,8 +19,6 @@ spack_set_env ()
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	export SPACK_DISABLE_LOCAL_CONFIG=true
-	# FIXME maybe put into /tmp in CI
-	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
 }
 
 spack_clone ()
@@ -38,23 +36,7 @@ spack_clone ()
 
 	test -d "${JULEA_SPACK_DIR}" || return 1
 
-	if test ! -d "${JULEA_SPACK_DIR}/packages"
-	then
-		git clone --config feature.manyFiles=true --branch=develop https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
-		echo "Skipping cloning spack-packages"
-	fi
-
-	test -d "${JULEA_SPACK_DIR}/packages" || return 1
-
 	spack_set_env
-
-    (
-        cd "${JULEA_SPACK_DIR}/packages" || return 1
-
-        git reset --hard "${spack_packages_commit}"
-    )
-
-	spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
 
 	return 0
 }
