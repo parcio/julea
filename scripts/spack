@@ -126,11 +126,6 @@ install_dependencies()
         if spack_init
         then
             echo "Installing Spack packages"
-            # TODO: Remove when done.
-            pwd
-            ls
-            echo "SpackDir: ${JULEA_SPACK_DIR}"
-            echo "SpackEnv: ${JULEA_SPACK_ENV}"
             spack env activate "${JULEA_SPACK_ENV}"
             spack env status
             spack install
