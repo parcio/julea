@@ -19,6 +19,8 @@ spack_set_env ()
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	export SPACK_DISABLE_LOCAL_CONFIG=true
+	# FIXME maybe put into /tmp in CI
+	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
 }
 
 spack_clone ()
@@ -72,7 +74,7 @@ spack_cmd ()
 	)
 }
 
-install_spack ()
+install_dependencies()
 {
 	# FIXME does not fail if Git is not installed
 	if spack_clone
@@ -101,7 +103,10 @@ install_spack ()
         if spack_init
         then
             echo "Installing Spack packages"
-            spack env activate .
+            # TODO: Remove when done.
+            echo "${JULEA_SPACK_DIR}"
+            spack repo list
+            spack env activate "${JULEA_SPACK_DIR}"/..
             spack env status
             spack install
         fi

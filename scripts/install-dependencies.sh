@@ -38,4 +38,4 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
-install_spack
+install_dependencies
