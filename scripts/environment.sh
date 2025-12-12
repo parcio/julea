@@ -61,8 +61,12 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
- "${JULEA_SPACK_DIR}/bin/spack" env activate .
- "${JULEA_SPACK_DIR}/bin/spack" install
+# Activate spack shell support.
+# shellcheck source=/dev/null.
+. "${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
+# Activate spack environment.
+spack env activate .
+spack env status
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH.
 PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
