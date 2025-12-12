@@ -116,6 +116,11 @@ install_dependencies()
 			fi
 		fi
 
+		if test -n "${JULEA_SPACK_COMPILER}"
+		then
+			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
+		fi
+
         spack_cmd mark --implicit --all
 
         if spack_init
@@ -131,9 +136,10 @@ install_dependencies()
 
         spack_cmd gc --yes-to-all
 
-		if test -n "${JULEA_SPACK_COMPILER}"
+		if test -n "${CI}"
 		then
-			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
+			spack_cmd clean --downloads
+			spack_cmd find
 		fi
 	fi
 }
