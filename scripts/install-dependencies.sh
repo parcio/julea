@@ -38,4 +38,9 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
+if test -z "${JULEA_SPACK_ENV}"
+then
+	JULEA_SPACK_ENV="$(get_directory "${SELF_DIR}/..")"
+fi
+
 install_dependencies

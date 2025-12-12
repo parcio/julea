@@ -122,9 +122,9 @@ install_dependencies()
         then
             echo "Installing Spack packages"
             # TODO: Remove when done.
-            echo "${JULEA_SPACK_DIR}"
-            spack repo list
-            spack env activate "${JULEA_SPACK_DIR}"/..
+            echo "SpackDir: ${JULEA_SPACK_DIR}"
+            echo "SpackEnv: ${JULEA_SPACK_ENV}"
+            spack env activate "${JULEA_SPACK_ENV}"
             spack env status
             spack install
         fi
