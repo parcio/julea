@@ -62,7 +62,6 @@ then
 fi
 
 # Activate spack shell support.
-# shellcheck source=/dev/null.
 . "${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
 # Activate spack environment.
 spack env activate .

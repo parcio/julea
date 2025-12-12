@@ -59,4 +59,4 @@ jobs:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
         run: |
           rm --recursive --force dependencies
-          ./scripts/environment.sh
+          ./scripts/install-dependencies.sh

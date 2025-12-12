@@ -74,7 +74,7 @@ jobs:
         env:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
         run: |
-          ./scripts/environment.sh
+          ./scripts/install-dependencies.sh
   dependencies-containers:
     name: Dependencies (Containers)
     runs-on: ubuntu-24.04
@@ -137,7 +137,7 @@ jobs:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
           JULEA_SPACK_DIR: /dependencies
         run: |
-          ./scripts/environment.sh
+          ./scripts/install-dependencies.sh
   build:
     name: Build
     needs: dependencies
