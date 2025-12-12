@@ -136,7 +136,7 @@ jobs:
         env:
           JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
           JULEA_SPACK_DIR: /dependencies
-          JULEA_SPACK_ENV: /julea
+          JULEA_SPACK_ENV: /julea/
         run: |
           ./scripts/install-dependencies.sh
   build:
