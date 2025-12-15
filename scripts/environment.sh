@@ -48,7 +48,7 @@ then
 	printf 'Warning: This script should be sourced using ". %s", otherwise changes to the environment will not persist.\n' "${SELF_PATH}" >&2
 fi
 
-JULEA_ENVIRONMENT=1
+export JULEA_ENVIRONMENT=1
 
 set_path
 set_library_path

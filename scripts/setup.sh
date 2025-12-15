@@ -74,7 +74,9 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
-spack_load_dependencies
+
+# shellcheck source=scripts/environment.sh
+. "${SELF_DIR}/environment.sh"
 
 setup_init
 

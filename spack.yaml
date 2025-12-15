@@ -4,6 +4,7 @@
 # configuration settings.
 spack:
   # add package specs to the `specs` list
+  # TODO: py-gcovr is only used for coverage and thus is only needed for CI
   specs: 
     - meson
     - pkgconf
