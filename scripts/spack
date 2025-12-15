@@ -25,8 +25,6 @@ spack_set_env ()
 
 spack_clone ()
 {
-	local spack_packages_commit
-
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	if test ! -d "${JULEA_SPACK_DIR}"

@@ -61,6 +61,7 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
+# shellcheck source=scripts/environment.sh
 . "${SELF_DIR}/environment.sh"
 
 run_test "$@"
