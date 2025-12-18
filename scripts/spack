@@ -115,7 +115,7 @@ spack_install_dependencies()
             echo "Installing Spack packages"
             spack env activate "${JULEA_SPACK_ENV}"
             spack env status
-            spack install
+            spack install --fail-fast --deprecated
         fi
 
         spack_cmd gc --yes-to-all
