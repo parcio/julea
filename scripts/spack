@@ -25,6 +25,10 @@ spack_set_env ()
 
 spack_clone ()
 {
+	local spack_packages_commit
+
+	spack_packages_commit='9ca712a716ef98dcc39e3a76b5e5b6b1aa89746e'
+
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	if test ! -d "${JULEA_SPACK_DIR}"
@@ -36,12 +40,20 @@ spack_clone ()
 
 	if test ! -d "${JULEA_SPACK_DIR}/packages"
 	then
-		git clone --config feature.manyFiles=true --depth=1 --branch=develop https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
+		git clone --config feature.manyFiles=true --branch=develop https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
 	fi
 
 	test -d "${JULEA_SPACK_DIR}/packages" || return 1
 
 	spack_set_env
+
+	(
+		cd "${JULEA_SPACK_DIR}/packages" || return 1
+
+		git fetch
+		git checkout develop
+		git reset --hard "${spack_packages_commit}"
+	)
 
     spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
 
