@@ -28,5 +28,3 @@ bld*/
 
 # Spack-Env
 .spack-env/
-spack.lock
-
