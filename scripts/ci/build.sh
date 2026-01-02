@@ -24,6 +24,7 @@ DEPS="$2"
 . scripts/environment.sh
 
 echo "PATH=${PATH}"
+command -v meson
 
 case "${MODE}" in
 	release)
