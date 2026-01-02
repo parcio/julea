@@ -19,23 +19,13 @@
 set -e
 
 MODE="$1"
-DEPS="$2"
-
-GDBM_PREFIX=''
 
 . scripts/environment.sh
-
-if test "${DEPS}" = 'spack'
-then
-	GDBM_PREFIX="-Dgdbm_prefix=$(spack location --install-dir gdbm)"
-	# TODO: Remove.
-	echo "GDBM_PREFIX: ${GDBM_PREFIX}"
-fi
 
 case "${MODE}" in
 	release)
 		# shellcheck disable=SC2086
-		meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror ${GDBM_PREFIX} bld
+		meson setup --prefix="${GITHUB_WORKSPACE}/julea-install" --buildtype=release --werror bld
 		ninja -C bld
 		ninja -C bld install
 		;;
@@ -46,12 +36,12 @@ case "${MODE}" in
 			CLANG_LUNDEF='-Db_lundef=false'
 		fi
 		# shellcheck disable=SC2086
-		meson setup -Db_sanitize=address,undefined ${CLANG_LUNDEF} ${GDBM_PREFIX} bld
+		meson setup -Db_sanitize=address,undefined ${CLANG_LUNDEF} bld
 		ninja -C bld
 		;;
 	coverage)
 		# shellcheck disable=SC2086
-		meson setup -Db_coverage=true -Db_sanitize=address,undefined ${GDBM_PREFIX} bld
+		meson setup -Db_coverage=true -Db_sanitize=address,undefined bld
 		ninja -C bld
 		;;
 	*)
