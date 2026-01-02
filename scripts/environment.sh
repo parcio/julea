@@ -61,6 +61,10 @@ then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
 
+# shellcheck source=scripts/spack
+. "${SELF_DIR}/spack"
+
+# activate spack if its installed
 if spack_init
 then
   # Activate spack shell support.
