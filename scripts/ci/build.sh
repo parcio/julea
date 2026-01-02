@@ -28,6 +28,8 @@ GDBM_PREFIX=''
 if test "${DEPS}" = 'spack'
 then
 	GDBM_PREFIX="-Dgdbm_prefix=$(spack location --install-dir gdbm)"
+	# TODO: Remove.
+	echo "GDBM_PREFIX: ${GDBM_PREFIX}"
 fi
 
 case "${MODE}" in
