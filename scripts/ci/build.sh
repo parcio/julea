@@ -19,8 +19,14 @@
 set -e
 
 MODE="$1"
+DEPS="$2"
 
 . scripts/environment.sh
+
+if test "${DEPS}" = "spack"
+then
+  spack list
+fi
 
 case "${MODE}" in
 	release)
