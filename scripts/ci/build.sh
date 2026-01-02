@@ -23,10 +23,7 @@ DEPS="$2"
 
 . scripts/environment.sh
 
-if test "${DEPS}" = "spack"
-then
-  spack list
-fi
+echo "PATH=${PATH}"
 
 case "${MODE}" in
 	release)
