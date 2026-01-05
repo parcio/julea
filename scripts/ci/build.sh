@@ -27,8 +27,9 @@ echo "PATH=${PATH}"
 
 spack list | grep meson
 
-echo "Meson is here:"
-command -v meson
+ls /home/runner/work/julea/julea/.spack-env/view/bin
+
+which meson
 
 case "${MODE}" in
 	release)
