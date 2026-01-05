@@ -22,14 +22,8 @@ MODE="$1"
 DEPS="$2"
 
 . scripts/environment.sh
-
-echo "PATH=${PATH}"
-
-spack list | grep meson
-
-ls /home/runner/work/julea/julea/.spack-env/view/bin
-
-which meson
+pwd
+ls ../../
 
 case "${MODE}" in
 	release)
