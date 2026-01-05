@@ -25,6 +25,10 @@ DEPS="$2"
 pwd
 ls -a
 
+ls ./spack-env/view/bin/
+
+echo "$PATH"
+
 case "${MODE}" in
 	release)
 		# shellcheck disable=SC2086
