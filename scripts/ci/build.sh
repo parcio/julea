@@ -24,6 +24,10 @@ DEPS="$2"
 . scripts/environment.sh
 
 echo "PATH=${PATH}"
+
+spack list | grep meson
+
+echo "Meson is here:"
 command -v meson
 
 case "${MODE}" in
