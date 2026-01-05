@@ -22,12 +22,11 @@ MODE="$1"
 DEPS="$2"
 
 . scripts/environment.sh
-pwd
-ls -a
+echo "$PATH"
 
 ls ./spack-env/view/bin/
 
-echo "$PATH"
+exit
 
 case "${MODE}" in
 	release)
