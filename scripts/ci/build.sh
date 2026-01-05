@@ -24,7 +24,7 @@ DEPS="$2"
 . scripts/environment.sh
 echo "$PATH"
 
-ls ./spack-env/view/bin/
+ls .spack-env/view/bin/
 
 exit
 
