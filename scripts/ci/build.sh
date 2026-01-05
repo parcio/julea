@@ -23,7 +23,7 @@ DEPS="$2"
 
 . scripts/environment.sh
 pwd
-ls ../../
+ls -a
 
 case "${MODE}" in
 	release)
