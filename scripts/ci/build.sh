@@ -21,6 +21,7 @@ set -e
 MODE="$1"
 DEPS="$2"
 
+echo "$PATH"
 . scripts/environment.sh
 echo "$PATH"
 
