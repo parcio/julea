@@ -25,9 +25,15 @@ echo "$PATH"
 . scripts/environment.sh
 echo "$PATH"
 
-ls .spack-env/view/bin/
+ls
 
-exit
+spack env status
+
+printf "\n\n"
+ls .spack-env/
+
+printf "\n\n"
+ls .spack-env/view/bin/
 
 case "${MODE}" in
 	release)
