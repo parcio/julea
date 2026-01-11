@@ -19,21 +19,8 @@
 set -e
 
 MODE="$1"
-DEPS="$2"
 
-echo "$PATH"
-. scripts/environment.sh
-echo "$PATH"
-
-ls
-
-spack env status
-
-printf "\n\n"
-ls .spack-env/
-
-printf "\n\n"
-ls .spack-env/view/bin/
+. scripts/enviornment.sh
 
 case "${MODE}" in
 	release)

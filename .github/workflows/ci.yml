@@ -67,7 +67,9 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: dependencies
+          path: |
+            dependencies
+            .spack-env
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -197,7 +199,7 @@ jobs:
         env:
           CC: ${{ matrix.os.compiler }}
         run: |
-          ./scripts/ci/build.sh release "${{ matrix.dependencies }}"
+          ./scripts/ci/build.sh release
   tests:
     name: Tests
     needs: dependencies
