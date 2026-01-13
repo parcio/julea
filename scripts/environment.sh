@@ -72,6 +72,7 @@ then
   # Activate spack environment.
   spack env activate .
   spack env status
+  spack install
 fi
 
 # Do not filter out paths contained in CPATH and LIBRARY_PATH.
