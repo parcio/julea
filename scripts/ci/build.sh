@@ -20,7 +20,13 @@ set -e
 
 MODE="$1"
 
-. scripts/environment.sh
+. scripts/enviornment.sh
+
+ls
+spack env status
+printf "\n\n"
+ls .spack-env/
+printf "\n\n"
 
 case "${MODE}" in
 	release)
