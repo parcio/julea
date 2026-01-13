@@ -27,6 +27,7 @@ GDBM_PREFIX=''
 
 if test "${DEPS}" = 'spack'
 then
+  spack list | grep gdbm
 	GDBM_PREFIX="-Dgdbm_prefix=$(spack location --install-dir gdbm)"
 fi
 
