@@ -13,7 +13,7 @@ spack:
     - libbson 
     - libfabric fabrics=sockets,tcp,udp,verbs,rxd,rxm
 
-    - hdf5@1.14~mpi
+    - hdf5~mpi@1.14
     - libfuse~utils
     - lmdb
     - sqlite
