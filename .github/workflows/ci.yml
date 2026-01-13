@@ -68,8 +68,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            dependencies
-            .spack-env
+            /dependencies
+            /.spack-env
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
