@@ -14,14 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-spack_set_env ()
-{
-	test -n "${JULEA_SPACK_DIR}" || return 1
-
-	export SPACK_DISABLE_LOCAL_CONFIG=true
-	# FIXME maybe put into /tmp in CI
-	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
-}
 
 spack_clone ()
 {
@@ -45,17 +37,13 @@ spack_clone ()
 
 	test -d "${JULEA_SPACK_DIR}/packages" || return 1
 
-	spack_set_env
-
 	(
 		cd "${JULEA_SPACK_DIR}/packages" || return 1
 
 		git fetch
-		git checkout develop
 		git reset --hard "${spack_packages_commit}"
 	)
 
-    spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
 
 	return 0
 }
@@ -67,8 +55,6 @@ spack_init ()
 	test -n "${JULEA_SPACK_DIR}" || return 1
 	test -d "${JULEA_SPACK_DIR}" || return 1
 
-	spack_set_env
-
 	spack_env="${JULEA_SPACK_DIR}/share/spack/setup-env.sh"
 
 	test -f "${spack_env}" || return 1
@@ -79,63 +65,61 @@ spack_init ()
 	return 0
 }
 
-spack_cmd ()
+spack_set_env ()
 {
 	test -n "${JULEA_SPACK_DIR}" || return 1
-	test -d "${JULEA_SPACK_DIR}" || return 1
 
-	(
-		cd "${JULEA_SPACK_DIR}" || return 1
-
-		./bin/spack "$@"
-	)
+	export SPACK_DISABLE_LOCAL_CONFIG=true
+	# FIXME maybe put into /tmp in CI
+	export SPACK_USER_CACHE_PATH="${JULEA_SPACK_DIR}/cache"
 }
 
 spack_install_dependencies()
 {
 	# FIXME does not fail if Git is not installed
-	if spack_clone
+	if spack_clone && spack_init && spack_set_env
 	then
-		spack_cmd config --scope site add 'concretizer:reuse:false'
-		spack_cmd config --scope site add 'config:connect_timeout:60'
+        spack repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
+		spack config --scope site add 'concretizer:reuse:false'
+		spack config --scope site add 'config:connect_timeout:60'
 		# FIXME We currently need this for JULEA to find all dependencies
-		spack_cmd config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
-		spack_cmd config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
+		# TODO Is this still needed?
+		spack config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
+		spack config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
 
 		if test -n "${CI}"
 		then
-			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
-			spack_cmd compiler find
-			spack_cmd compiler list
+			spack config --scope site add 'packages:all:target:[x86_64]'
+			spack compiler find
+			spack compiler list
 
 			if test -n "${JULEA_SPACK_COMPILER}"
 			then
 				# This should fail if Spack does not recognize the compiler
-				spack_cmd compiler info "${JULEA_SPACK_COMPILER}"
+				spack compiler info "${JULEA_SPACK_COMPILER}"
 			fi
 		fi
 
 		if test -n "${JULEA_SPACK_COMPILER}"
 		then
-			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
+			spack config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
 		fi
 
-        spack_cmd mark --implicit --all
+        spack mark --implicit --all
 
-        if spack_init
-        then
-            echo "Installing Spack packages"
-            spack env activate "${JULEA_SPACK_ENV}"
-            spack env status
-            spack install --fail-fast --deprecated
-        fi
+        echo "Installing Spack packages"
+        SELF_PATH="$(readlink --canonicalize-existing -- "$0")"
+        SELF_DIR="${SELF_PATH%/*}"
+        spack env activate "${SELF_DIR}/.."
+        spack env status
+        spack install --fail-fast --deprecated
 
-        spack_cmd gc --yes-to-all
+        spack gc --yes-to-all
 
 		if test -n "${CI}"
 		then
-			spack_cmd clean --downloads
-			spack_cmd find
+			spack clean --downloads
+			spack find
 		fi
 	fi
 }

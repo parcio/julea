@@ -22,12 +22,6 @@ MODE="$1"
 
 . scripts/environment.sh
 
-ls
-spack env status
-printf "\n\n"
-ls .spack-env/
-printf "\n\n"
-
 case "${MODE}" in
 	release)
 		# shellcheck disable=SC2086

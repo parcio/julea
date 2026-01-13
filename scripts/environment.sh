@@ -25,6 +25,8 @@ SELF_BASE="${SELF_PATH##*/}"
 
 # shellcheck source=scripts/common
 . "${SELF_DIR}/common"
+# shellcheck source=scripts/spack
+. "${SELF_DIR}/spack"
 
 JULEA_ENVIRONMENT_SOURCED=1
 
@@ -60,9 +62,6 @@ if test -z "${JULEA_SPACK_DIR}"
 then
 	JULEA_SPACK_DIR="$(get_directory "${SELF_DIR}/..")/dependencies"
 fi
-
-# shellcheck source=scripts/spack
-. "${SELF_DIR}/spack"
 
 # activate spack if its installed
 if spack_init
