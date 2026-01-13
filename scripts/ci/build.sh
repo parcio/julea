@@ -20,7 +20,7 @@ set -e
 
 MODE="$1"
 
-. scripts/enviornment.sh
+. scripts/environment.sh
 
 ls
 spack env status
