@@ -202,7 +202,7 @@ jobs:
         env:
           CC: ${{ matrix.os.compiler }}
         run: |
-          ./scripts/ci/build.sh release
+          ./scripts/ci/build.sh release "${{ matrix.dependencies }}"
   tests:
     name: Tests
     needs: dependencies
