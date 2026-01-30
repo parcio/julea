@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # JULEA - Flexible storage framework
 # Copyright (C) 2024 Michael Kuhn
@@ -44,7 +44,7 @@ case "${MODE}" in
 			CLANG_LUNDEF='-Db_lundef=false'
 		fi
 		# shellcheck disable=SC2086
-		meson setup ${CLANG_LUNDEF} ${GDBM_PREFIX} bld
+		meson setup -Db_sanitize=address,undefined ${CLANG_LUNDEF} ${GDBM_PREFIX} bld
 		ninja -C bld
 		;;
 	coverage)
