@@ -1,0 +1,32 @@
+# This is a Spack Environment file.
+#
+# It describes a set of packages to be installed, along with
+# configuration settings.
+spack:
+  # add package specs to the `specs` list
+  # TODO: py-gcovr is only used for coverage and thus is only needed for CI
+  specs: 
+    - meson
+    - pkgconf
+
+    - glib
+    - libbson 
+    - libfabric fabrics=sockets,tcp,udp,verbs,rxd,rxm
+
+    - hdf5~mpi@1.14
+    - libfuse~utils
+    - lmdb
+    - sqlite
+
+    - gdbm@1.23
+    - leveldb
+    - mariadb-c-client
+    - mongo-c-driver
+    - otf
+    - rocksdb~static
+
+    - py-gcovr
+  
+  view: true
+  concretizer:
+    unify: true

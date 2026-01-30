@@ -160,6 +160,7 @@ setup_start ()
 		host="$(get_host "${server}")"
 		port="$(get_port "${server}")"
 
+        # TODO: These sometimes dont match which causes the script to silently fail. Fix this.
 		if test "${host}" = "${HOSTNAME}"
 		then
 			port_option=''

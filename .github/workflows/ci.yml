@@ -67,8 +67,10 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          path: |
+            dependencies/
+            .spack-env/
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
@@ -129,8 +131,10 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: /dependencies
-          key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          path: |
+            dependencies/
+            .spack-env/
+          key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
@@ -186,8 +190,10 @@ jobs:
         if: ${{ matrix.dependencies == 'spack' }}
         uses: actions/cache/restore@v4
         with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          path: |
+            dependencies/
+            .spack-env/
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
         run: |
@@ -312,8 +318,10 @@ jobs:
         if: ${{ matrix.dependencies == 'spack' }}
         uses: actions/cache/restore@v4
         with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          path: |
+            dependencies/
+            .spack-env/
+          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ matrix.dependencies == 'spack' && steps.cache.outputs.cache-hit != 'true' }}
         run: |
@@ -404,8 +412,10 @@ jobs:
         id: cache
         uses: actions/cache/restore@v4
         with:
-          path: dependencies
-          key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
+          path: |
+            dependencies/
+            .spack-env/
+          key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('spack.yaml', 'scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Check dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
