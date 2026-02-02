@@ -29,15 +29,15 @@ If it is not available on your system, you can install it as an [additional depe
 The following steps set up everything to generate a coverage report:
 
 ```console
-$ . scripts/environment.sh
-$ spack install py-gcovr
-$ spack load py-gcovr
-$ meson setup -Db_coverage=true bld
-$ ninja -C bld
-$ ./scripts/setup.sh start
-$ ./scripts/test.sh
-$ ./scripts/setup.sh stop
-$ ninja -C bld coverage
+. scripts/environment.sh &&
+spack install py-gcovr &&
+spack load py-gcovr &&
+meson setup -Db_coverage=true bld &&
+ninja -C bld &&
+./scripts/setup.sh start &&
+./scripts/test.sh &&
+./scripts/setup.sh stop &&
+ninja -C bld coverage
 ```
 
 ## Tests
