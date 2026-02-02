@@ -10,9 +10,9 @@ JULEA's environment script will set `HDF5_PLUGIN_PATH`, which allows HDF5 to fin
 The VOL plugin to use can be selected using the `HDF5_VOL_CONNECTOR` environment variable:
 
 ```console
-$ . scripts/environment.sh
-$ export HDF5_VOL_CONNECTOR=julea-kv
-$ my-application
+. scripts/environment.sh &&
+export HDF5_VOL_CONNECTOR=julea-kv &&
+my-application 
 ```
 
 ## Example: Enzo
@@ -21,11 +21,11 @@ The be able to test JULEA's HDF5 plugins using real applications, [Enzo](https:/
 The following steps install Enzo via Spack and run one of its examples using JULEA's `julea-db` VOL plugin.
 
 ```console
-$ . scripts/environment.sh
-$ spack install enzo@main
-$ spack load enzo
-$ export HDF5_VOL_CONNECTOR=julea-db
-$ ./scripts/setup.sh start
-$ enzo -d "$(spack location -i enzo)/run/Hydro/Hydro-3D/CollapseTestNonCosmological/CollapseTestNonCosmological.enzo"
-$ ./scripts/setup.sh stop
+. scripts/environment.sh &&
+spack install enzo@main &&
+spack load enzo &&
+export HDF5_VOL_CONNECTOR=julea-db &&
+./scripts/setup.sh start &&
+enzo -d "$(spack location -i enzo)/run/Hydro/Hydro-3D/CollapseTestNonCosmological/CollapseTestNonCosmological.enzo" &&
+./scripts/setup.sh stop 
 ```
