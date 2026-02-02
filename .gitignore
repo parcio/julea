@@ -22,3 +22,10 @@ bld*/
 
 # Visual Studio Code
 .vscode/
+
+# CLion / Jetbrains IDEs
+.idea/
+
+
+
+
