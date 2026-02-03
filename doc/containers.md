@@ -10,7 +10,7 @@ Setting up and using the container looks like the following:
 git clone https://github.com/parcio/julea.git &&
 
 docker pull ghcr.io/parcio/ubuntu-dev:22.04 &&
-docker run -v $PWD/julea:/julea -it ghcr.io/parcio/ubuntu-dev:22.04 &&
+docker run -v $PWD/julea:/julea -it ghcr.io/parcio/ubuntu-dev:22.04
 ```
 
 Continue with the following commands inside the container:
