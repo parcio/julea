@@ -75,6 +75,8 @@ read_config(gchar* path)
 		goto end;
 	}
 
+	g_printerr("Reading configuration from: %s\n", path);
+
 	file = g_file_new_for_commandline_arg(path);
 	ret = g_file_load_contents(file, NULL, &buf, NULL, NULL, NULL);
 
@@ -124,6 +126,8 @@ write_config(gchar* path)
 		g_autoptr(GFile) file = NULL;
 		g_autoptr(GFile) parent = NULL;
 
+		g_printerr("Writing configuration to: %s\n", path);
+
 		file = g_file_new_for_commandline_arg(path);
 		parent = g_file_get_parent(file);
 		g_file_make_directory_with_parents(parent, NULL, NULL);
@@ -148,7 +152,7 @@ main(gint argc, gchar** argv)
 	GOptionEntry entries[] = {
 		{ "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Write user configuration", NULL },
 		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
-		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
+		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Combine with --user or --system to read existing configuration", NULL },
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
 		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2:port" },
 		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "Key-value servers to use", "host1,host2:port" },
