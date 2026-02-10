@@ -25,11 +25,11 @@ julea-config --user \
   --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" \
   --object-backend=posix --object-path="/tmp/julea-$(id -u)/posix" \
   --kv-backend=lmdb --kv-path="/tmp/julea-$(id -u)/lmdb" \
-  --db-backend=sqlite --db-path="/tmp/julea-$(id -u)/sqlite"
+  --db-backend=sqlite --db-path="/tmp/julea-$(id -u)/sqlite" &&
 
 ./scripts/setup.sh start &&
 ./scripts/test.sh &&
-./scripts/setup.sh stop &&
+./scripts/setup.sh stop
 ```
 
 ### Building Container
