@@ -22,3 +22,9 @@ bld*/
 
 # Visual Studio Code
 .vscode/
+
+# Python
+**/__pycache__/
+
+# C/C++ LSP
+.ccls-cache/

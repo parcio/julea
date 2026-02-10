@@ -53,6 +53,7 @@ fi
 JULEA_ENVIRONMENT=1
 
 set_path
+set_python_path
 set_library_path
 set_pkg_config_path
 set_backend_path
