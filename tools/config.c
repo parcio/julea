@@ -128,6 +128,8 @@ write_config(gchar* path)
 		parent = g_file_get_parent(file);
 		g_file_make_directory_with_parents(parent, NULL, NULL);
 		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
+		if (ret)
+			g_print("Successfully wrote config to %s.", path);
 	}
 	else
 	{
@@ -148,7 +150,7 @@ main(gint argc, gchar** argv)
 	GOptionEntry entries[] = {
 		{ "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Write user configuration", NULL },
 		{ "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Write system configuration", NULL },
-		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Read configuration", NULL },
+		{ "read", 0, 0, G_OPTION_ARG_NONE, &opt_read, "Combine with --user or --system to read user or system configuration", NULL },
 		{ "name", 0, 0, G_OPTION_ARG_STRING, &opt_name, "Configuration name", "julea" },
 		{ "object-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_object, "Object servers to use", "host1,host2:port" },
 		{ "kv-servers", 0, 0, G_OPTION_ARG_STRING, &opt_servers_kv, "Key-value servers to use", "host1,host2:port" },
