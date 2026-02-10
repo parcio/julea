@@ -3,7 +3,7 @@
 
   # Flake inputs
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -26,7 +26,7 @@
 
         # Other packages
         glib
-        libbson
+	mongoc # libbson has been moved to mongoc
         # This uses the libfabric-overlay!
         libfabric
 
@@ -80,14 +80,6 @@
             # Needed to run coverage tests.
             pkgs.gcovr
           ];
-
-
-
-          # Most hardening flags are enabled by default in nix.
-          # The only one usually disabled is pie.
-          # For more details check here:
-          # https://ryantm.github.io/nixpkgs/stdenv/stdenv/#sec-hardening-in-nixpkgs
-          hardeningEnable = ["pie"];
 
           # Set any environment variables for your development environment
           env = {
