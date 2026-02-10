@@ -1,0 +1,15 @@
+services:
+        juleaServer:
+                build:
+                        context: ./container/docker/server
+                ports: 
+                        - "9876:9876"
+                image: julea-server-image
+                container_name: julea-server
+        juleaClient:
+                build:
+                        context: ./container/docker/client
+                volumes:
+                        - "./example:/build"
+                image: julea-client-image
+                container_name: julea-client
