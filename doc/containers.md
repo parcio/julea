@@ -16,7 +16,7 @@ docker run -v $PWD/julea:/julea -it ghcr.io/parcio/ubuntu-dev:22.04
 Continue with the following commands inside the container:
 
 ```console
-. scripts/environment.sh
+. scripts/environment.sh &&
 
 meson setup --prefix="/julea/install" -Db_sanitize=address,undefined bld &&
 ninja -C bld &&
