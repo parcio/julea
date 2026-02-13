@@ -14,13 +14,17 @@ Debug prints from `g_debug()` can be enabled by setting the environment variable
 JULEA contains a tracing component that can be used to record information about various aspects of JULEA's behavior.
 The overall tracing can be influenced using the `JULEA_TRACE` environment variable.
 If the variable is set to `echo`, all tracing information will be printed to stderr.
+If the variable is set to `summary`, the runtime and calls are added for each unique call stack.
 If JULEA has been built with OTF support, a value of `otf` will cause JULEA to produce traces via OTF.
 It is also possible to specify multiple values separated by commas.
 
 By default, all functions are traced.
 If this produces too much output, a filter can be set using the `JULEA_TRACE_FUNCTION` environment variable.
-The variable can contain a list of function wildcards that are separated by commas.
+The variable can contain a list of function matcher that are separated by commas.
 The wildcards support `*` and `?`.
+Filterung will remove call stacks from the `summary`,
+to keep the call stack do differ between different kind you can specify `KEEP_STACK` as matcher.
+You can also add matcher for top level functions you are interested in.
 
 ## Coverage
 
