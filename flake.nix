@@ -79,6 +79,8 @@
           packages = (dependencies pkgs) ++ [
             # Needed to run coverage tests.
             pkgs.gcovr
+            # Add interactive bash support.
+            pkgs.bashInteractive
           ];
 
           # Set any environment variables for your development environment
