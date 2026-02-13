@@ -33,14 +33,14 @@ spack_clone ()
 
 	if test ! -d "${JULEA_SPACK_DIR}"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
+		git clone --config feature.manyFiles=true --depth 1 https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
 	fi
 
 	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	if test ! -d "${JULEA_SPACK_DIR}/packages"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
+		git clone --config feature.manyFiles=true --depth 1 https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
 	fi
 
 	test -d "${JULEA_SPACK_DIR}/packages" || return 1
@@ -50,17 +50,17 @@ spack_clone ()
 	(
 		cd "${JULEA_SPACK_DIR}" || return 1
 
-		git fetch
-		git checkout releases/v1.1
-		git reset --hard origin/releases/v1.1
+		git fetch --depth=1 origin releases/v1.1
+		git checkout --detach FETCH_HEAD
+		git reset --hard FETCH_HEAD
 	)
 
 	(
 		cd "${JULEA_SPACK_DIR}/packages" || return 1
 
-		git fetch
-		git checkout develop
-		git reset --hard "${spack_packages_commit}"
+		git fetch --depth=1 origin "${spack_packages_commit}"
+		git checkout --detach FETCH_HEAD
+		git reset --hard FETCH_HEAD
 	)
 
 	spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
