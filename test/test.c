@@ -40,6 +40,8 @@ main(int argc, char** argv)
 	// This is necessary because we call g_test_trap_assert_passed() in J_TEST_TRAP_END
 	g_test_set_nonfatal_assertions();
 
+
+	test_db_db();
 	// Core
 	test_core_background_operation();
 	test_core_batch();
@@ -65,7 +67,6 @@ main(int argc, char** argv)
 	test_kv_parallel();
 
 	// DB client
-	test_db_db();
 
 	// Item client
 	test_item_collection();

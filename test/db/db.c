@@ -303,6 +303,58 @@ schema_create(void)
 	g_assert_true(success);
 }
 
+
+static void
+entry_insert_parallel(void)
+{
+	g_autoptr(GError) error = NULL;
+
+	gboolean success = TRUE;
+	g_autoptr(JDBSchema) schema = NULL;
+	g_autoptr(JDBEntry) entry = NULL;
+	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+
+	gchar const* file = "demo.bp";
+	gchar const* name = "temperature";
+	guint64 dim = 4;
+	gdouble min = 1.0;
+	gdouble max = 42.0;
+
+	schema = j_db_schema_new("adios2", "variables", &error);
+	g_assert_nonnull(schema);
+	g_assert_no_error(error);
+	success = j_db_schema_get(schema, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_batch_execute(batch);
+	g_assert_true(success);
+
+	// parallize this :)
+	entry = j_db_entry_new(schema, &error);
+	g_assert_nonnull(entry);
+	g_assert_no_error(error);
+	success = j_db_entry_set_field(entry, "file", file, strlen(file), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_entry_set_field(entry, "name", name, strlen(name), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_entry_set_field(entry, "dimensions", &dim, sizeof(dim), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_entry_set_field(entry, "min", &min, sizeof(min), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_entry_set_field(entry, "max", &max, sizeof(max), &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_db_entry_insert(entry, batch, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+	success = j_batch_execute(batch);
+	g_assert_true(success);
+}
+
 static void
 entry_insert(void)
 {
@@ -412,7 +464,7 @@ iterator_get(void)
 		entries++;
 	}
 
-	g_assert_cmpuint(entries, ==, 1);
+	g_assert_cmpuint(entries, ==, 2);
 }
 
 static void
@@ -534,8 +586,10 @@ static void
 test_db_all(void)
 {
 	J_TEST_TRAP_START;
+	printf("What 123454123123123\n");
 	schema_create();
 	entry_insert();
+	entry_insert_parallel();
 	iterator_get();
 	entry_update();
 	entry_delete();
