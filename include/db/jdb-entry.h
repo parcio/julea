@@ -114,7 +114,6 @@ gboolean j_db_entry_set_field(JDBEntry* entry, gchar const* name, gconstpointer 
  * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
  * \pre entry has a least 1 value set to not NULL
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
@@ -134,7 +133,6 @@ gboolean j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error);
  * \pre entry has a least 1 value set to not NULL
  * \pre selector != NULL
  * \pre selector matches at least 1 entry
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
@@ -151,7 +149,6 @@ gboolean j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch
  * \param[in] batch the batch to append this operation to
  * \param[out] error  A GError pointer. Will point to a GError object in case of failure.
  * \pre entry != NULL
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/

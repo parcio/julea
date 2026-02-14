@@ -102,7 +102,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JDistributedObject, j_distributed_object_unref)
  *
  * \return A new object. Should be freed with j_distributed_object_unref().
  **/
-void j_distributed_object_create(JDistributedObject* object, JBatch* batch);
+gboolean j_distributed_object_create(JDistributedObject* object, JBatch* batch);
 
 /**
  * Deletes an object.
@@ -113,7 +113,7 @@ void j_distributed_object_create(JDistributedObject* object, JBatch* batch);
  * \param object     An object.
  * \param batch      A batch.
  **/
-void j_distributed_object_delete(JDistributedObject* object, JBatch* batch);
+gboolean j_distributed_object_delete(JDistributedObject* object, JBatch* batch);
 
 /**
  * Reads an object.
@@ -128,7 +128,7 @@ void j_distributed_object_delete(JDistributedObject* object, JBatch* batch);
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
-void j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
+gboolean j_distributed_object_read(JDistributedObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
 
 /**
  * Writes an object.
@@ -146,7 +146,7 @@ void j_distributed_object_read(JDistributedObject* object, gpointer data, guint6
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/
-void j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
+gboolean j_distributed_object_write(JDistributedObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
 
 /**
  * Get the status of an object.
@@ -159,7 +159,7 @@ void j_distributed_object_write(JDistributedObject* object, gconstpointer data, 
  * \param size              The size of object.
  * \param batch             A batch.
  **/
-void j_distributed_object_status(JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch);
+gboolean j_distributed_object_status(JDistributedObject* object, gint64* modification_time, guint64* size, JBatch* batch);
 
 /**
  * Sync an object.
@@ -170,7 +170,7 @@ void j_distributed_object_status(JDistributedObject* object, gint64* modificatio
  * \param object    An object.
  * \param batch     A batch.
  **/
-void j_distributed_object_sync(JDistributedObject* object, JBatch* batch);
+gboolean j_distributed_object_sync(JDistributedObject* object, JBatch* batch);
 
 /**
  * @}

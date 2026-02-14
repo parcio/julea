@@ -176,7 +176,6 @@ j_db_entry_insert(JDBEntry* entry, JBatch* batch, GError** error)
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(entry != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (G_UNLIKELY(!j_db_internal_insert(entry, batch, error)))
@@ -198,7 +197,6 @@ j_db_entry_update(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 	bson_t* bson;
 
 	g_return_val_if_fail(entry != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail(selector != NULL, FALSE);
 	g_return_val_if_fail(selector->schema == entry->schema, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -229,7 +227,6 @@ j_db_entry_delete(JDBEntry* entry, JDBSelector* selector, JBatch* batch, GError*
 	J_TRACE_FUNCTION(NULL);
 
 	g_return_val_if_fail(entry != NULL, FALSE);
-	g_return_val_if_fail(batch != NULL, FALSE);
 	g_return_val_if_fail((selector == NULL) || (selector->schema == entry->schema), FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail(g_hash_table_size(selector->join_schema) < 2, FALSE); // no cross-table deletes

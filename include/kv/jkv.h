@@ -125,7 +125,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JKV, j_kv_unref)
  * \param value_destroy A function to correctly free the stored data.
  * \param batch A batch.
  **/
-void j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch);
+gboolean j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_destroy, JBatch* batch);
 
 /**
  * Deletes a key-value pair.
@@ -136,7 +136,7 @@ void j_kv_put(JKV* kv, gpointer value, guint32 value_len, GDestroyNotify value_d
  * \param kv     A JKV.
  * \param batch  A batch.
  **/
-void j_kv_delete(JKV* kv, JBatch* batch);
+gboolean j_kv_delete(JKV* kv, JBatch* batch);
 
 /**
  * Get a key-value pair.
@@ -149,7 +149,7 @@ void j_kv_delete(JKV* kv, JBatch* batch);
  * \param value_len A pointer to the length of the returned value buffer.
  * \param batch A batch.
  **/
-void j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch);
+gboolean j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch);
 
 /**
  * Get a key-value pair and execute a callback function once the pair is received.
@@ -162,7 +162,7 @@ void j_kv_get(JKV* kv, gpointer* value, guint32* value_len, JBatch* batch);
  * \param data      User defined data which will be passed to the callback function.
  * \param batch     A batch.
  **/
-void j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch);
+gboolean j_kv_get_callback(JKV* kv, JKVGetFunc func, gpointer data, JBatch* batch);
 
 /**
  * @}
