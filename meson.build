@@ -536,6 +536,7 @@ julea_test_srcs = files([
 	'test/core/message.c',
 	'test/core/semantics.c',
 	'test/db/db.c',
+	'test/db/operators.c',
 	'test/hdf5/hdf.c',
 	'test/hdf5/hdf-attribute.c',
 	'test/hdf5/hdf-dataset.c',
