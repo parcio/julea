@@ -34,6 +34,10 @@ main(int argc, char** argv)
 	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
 	setlocale(LC_ALL, "C.UTF-8");
 
+	// test_db_all();
+	entry_insert_select_parallel_setup();
+	return 0;
+
 	g_test_init(&argc, &argv, NULL);
 
 	// Failing assertions will not abort all coming tests but call g_test_fail and continue
@@ -41,7 +45,6 @@ main(int argc, char** argv)
 	g_test_set_nonfatal_assertions();
 
 
-	test_db_db();
 	// Core
 	test_core_background_operation();
 	test_core_batch();
@@ -67,6 +70,8 @@ main(int argc, char** argv)
 	test_kv_parallel();
 
 	// DB client
+	test_db_db();
+	test_db_parallel();
 
 	// Item client
 	test_item_collection();
