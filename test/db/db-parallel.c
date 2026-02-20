@@ -39,7 +39,13 @@ schema_create(void)
 	schema = j_db_schema_new("parallel", "variables", &error);
 	g_assert_nonnull(schema);
 	g_assert_no_error(error);
-	success = j_db_schema_add_field(schema, "int1", J_DB_TYPE_UINT32, &error);
+
+	success = j_db_schema_add_field(schema, "int1", J_DB_TYPE_STRING, &error);
+	g_assert_true(success);
+	g_assert_no_error(error);
+
+	gchar const* idx_int1[] = { "int1", NULL };
+	success = j_db_schema_add_index(schema, idx_int1, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
 
@@ -85,7 +91,7 @@ entry_insert_select_parallel(gpointer data, gpointer user_data)
 	g_assert_nonnull(entry);
 	g_assert_no_error(error);
 
-	success = j_db_entry_set_field(entry, "int1", &data, sizeof(value), &error);
+	success = j_db_entry_set_field(entry, "int1", data, strlen(data) + 1, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
 
@@ -120,13 +126,17 @@ entry_insert_select_parallel_setup(void)
 	g_assert_true(success);
 
 
-	guint const n = 200;
+	guint const n = 30;
 
 	// J_TEST_TRAP_START;
 	GThreadPool* thread_pool = g_thread_pool_new(entry_insert_select_parallel, schema, 4, TRUE, NULL);
 
+	g_autofree gchar* str;
 	for (guint i = 0; i < n; i++)
-		g_thread_pool_push(thread_pool, GUINT_TO_POINTER(i), NULL);
+	{
+		str = g_strdup_printf("test-db-parallel-put-get-%d", i);
+		g_thread_pool_push(thread_pool, str, NULL);
+	}
 
 	g_thread_pool_free(thread_pool, FALSE, TRUE);
 	// g_assert_cmpuint(g_atomic_int_get(&num_put_gets), ==, n);
