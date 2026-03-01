@@ -7,7 +7,7 @@ JULEA's dependencies can either be installed using your operating system's packa
 The `install-dependencies.sh` script installs all dependencies into the `dependencies` subdirectory using [Spack](https://spack.io/).
 
 ```console
-$ ./scripts/install-dependencies.sh
+./scripts/install-dependencies.sh
 ```
 
 ### Additional Dependencies
@@ -15,9 +15,9 @@ $ ./scripts/install-dependencies.sh
 After JULEA's environment has been loaded, the `spack` command can also be used to install and load additional dependencies:
 
 ```console
-$ . scripts/environment.sh
-$ spack install py-gcovr
-$ spack load py-gcovr
+. scripts/environment.sh &&
+spack install py-gcovr &&
+spack load py-gcovr
 ```
 
 ## Manual Installation
@@ -106,13 +106,13 @@ Alternatively, Docker can be used.
 ### MongoDB
 
 ```console
-$ podman run --publish 27017:27017 docker.io/library/mongo
+podman run --publish 27017:27017 docker.io/library/mongo
 ```
 
 ### MariaDB
 
 ```console
-$ podman run --publish 3306:3306 \
+podman run --publish 3306:3306 \
   --env MARIADB_RANDOM_ROOT_PASSWORD=yes \
   --env MARIADB_DATABASE=julea_db \
   --env MARIADB_USER=julea_user \
@@ -123,7 +123,7 @@ $ podman run --publish 3306:3306 \
 ### MySQL
 
 ```console
-$ podman run --publish 3306:3306 \
+podman run --publish 3306:3306 \
   --env MYSQL_RANDOM_ROOT_PASSWORD=yes \
   --env MYSQL_DATABASE=julea_db \
   --env MYSQL_USER=julea_user \

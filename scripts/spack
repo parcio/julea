@@ -27,20 +27,20 @@ spack_clone ()
 {
 	local spack_packages_commit
 
-	spack_packages_commit='9ca712a716ef98dcc39e3a76b5e5b6b1aa89746e'
+	spack_packages_commit='f1fd16e3659a8744a033331c59a491014ed4450e'
 
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
 	if test ! -d "${JULEA_SPACK_DIR}"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
+		git clone --config feature.manyFiles=true --depth 1 https://github.com/spack/spack.git "${JULEA_SPACK_DIR}"
 	fi
 
 	test -d "${JULEA_SPACK_DIR}" || return 1
 
 	if test ! -d "${JULEA_SPACK_DIR}/packages"
 	then
-		git clone --config feature.manyFiles=true https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
+		git clone --config feature.manyFiles=true --depth 1 https://github.com/spack/spack-packages.git "${JULEA_SPACK_DIR}/packages"
 	fi
 
 	test -d "${JULEA_SPACK_DIR}/packages" || return 1
@@ -50,17 +50,17 @@ spack_clone ()
 	(
 		cd "${JULEA_SPACK_DIR}" || return 1
 
-		git fetch
-		git checkout releases/v1.0
-		git reset --hard origin/releases/v1.0
+		git fetch --depth=1 origin releases/v1.1
+		git checkout --detach FETCH_HEAD
+		git reset --hard FETCH_HEAD
 	)
 
 	(
 		cd "${JULEA_SPACK_DIR}/packages" || return 1
 
-		git fetch
-		git checkout develop
-		git reset --hard "${spack_packages_commit}"
+		git fetch --depth=1 origin "${spack_packages_commit}"
+		git checkout --detach FETCH_HEAD
+		git reset --hard FETCH_HEAD
 	)
 
 	spack_cmd repo set --destination "${JULEA_SPACK_DIR}/packages" builtin
@@ -153,8 +153,7 @@ spack_get_dependencies ()
 	dependencies="${dependencies} sqlite"
 
 	# Optional dependencies
-	# FIXME https://github.com/spack/spack-packages/pull/1109
-	dependencies="${dependencies} gdbm@1.23"
+	dependencies="${dependencies} gdbm"
 	dependencies="${dependencies} leveldb"
 	dependencies="${dependencies} mariadb-c-client"
 	dependencies="${dependencies} mongo-c-driver"
@@ -198,15 +197,15 @@ spack_install_dependencies ()
 	# FIXME does not fail if Git is not installed
 	if spack_clone
 	then
-		spack_cmd config --scope site add 'concretizer:reuse:false'
-		spack_cmd config --scope site add 'config:connect_timeout:60'
+		spack_cmd config --scope spack add 'concretizer:reuse:false'
+		spack_cmd config --scope spack add 'config:connect_timeout:60'
 		# FIXME We currently need this for JULEA to find all dependencies
-		spack_cmd config --scope site add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
-		spack_cmd config --scope site add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
+		spack_cmd config --scope spack add 'modules:prefix_inspections:lib:[LD_LIBRARY_PATH]'
+		spack_cmd config --scope spack add 'modules:prefix_inspections:lib64:[LD_LIBRARY_PATH]'
 
 		if test -n "${CI}"
 		then
-			spack_cmd config --scope site add 'packages:all:target:[x86_64]'
+			spack_cmd config --scope spack add 'packages:all:target:[x86_64]'
 			spack_cmd compiler find
 			spack_cmd compiler list
 
@@ -219,7 +218,9 @@ spack_install_dependencies ()
 
 		if test -n "${JULEA_SPACK_COMPILER}"
 		then
-			spack_cmd config --scope site add "packages:all:require:\"%${JULEA_SPACK_COMPILER}\""
+			spack_cmd config --scope spack add "packages:c:prefer:[${JULEA_SPACK_COMPILER}]"
+			spack_cmd config --scope spack add "packages:cxx:prefer:[${JULEA_SPACK_COMPILER}]"
+			spack_cmd config --scope spack add "packages:fortran:prefer:[${JULEA_SPACK_COMPILER}]"
 		fi
 
 		spack_cmd mark --implicit --all

@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
@@ -59,13 +59,13 @@ jobs:
             compiler_version: 14.0.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
       - name: Cache dependencies
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -106,7 +106,7 @@ jobs:
             compiler_version: 14.0.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
@@ -127,7 +127,7 @@ jobs:
           fi
       - name: Cache dependencies
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /dependencies
           key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -166,7 +166,7 @@ jobs:
         dependencies: [system, spack]
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
@@ -184,7 +184,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -289,7 +289,7 @@ jobs:
           - 3306:3306
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
@@ -310,7 +310,7 @@ jobs:
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dependencies
           key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -371,7 +371,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
@@ -383,7 +383,7 @@ jobs:
         run: |
           doxygen
       - name: Upload doxygen
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: doxygen
           path: html
@@ -396,13 +396,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           show-progress: false
       - name: Cache dependencies
         id: cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dependencies
           key: ubuntu-24.04-gcc-13.3.0-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
@@ -433,7 +433,7 @@ jobs:
           . scripts/environment.sh
           ninja -C bld coverage
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage
           path: bld/meson-logs/coveragereport
@@ -446,12 +446,12 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Download doxygen
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: doxygen
           path: doxygen
       - name: Download coverage
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: coverage
           path: coverage
@@ -459,8 +459,7 @@ jobs:
         run: |
           mv coverage doxygen/coverage
       - name: Upload artifact
-        # FIXME https://github.com/actions/upload-pages-artifact/issues/128
-        uses: actions/upload-pages-artifact@v4.0.0
+        uses: actions/upload-pages-artifact@v4
         with:
           path: doxygen
   deploy:
