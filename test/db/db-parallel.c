@@ -97,7 +97,7 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_autofree gchar* name = NULL;
 	guint entries = 0;
 
-	const gchar* string = g_strdup_printf("test-db-parallel-insert-select-%d", GPOINTER_TO_INT(data));
+	g_autofree gchar* string = g_strdup_printf("test-db-parallel-insert-select-%d", GPOINTER_TO_INT(data));
 
 	// Create entry.
 	entry = j_db_entry_new(schema, &error);
