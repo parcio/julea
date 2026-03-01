@@ -30,10 +30,13 @@
 static int num_insert_selects = 0;
 
 static JDBSchema*
-schema_create() {
+schema_create(void)
+{
 	g_autoptr(GError) error = NULL;
 
 	gboolean success = TRUE;
+	gchar const* idx_name[] = { "name", NULL };
+
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
 	JDBSchema* schema = NULL;
@@ -45,7 +48,6 @@ schema_create() {
 	g_assert_true(success);
 	g_assert_no_error(error);
 
-	gchar const* idx_name[] = { "name", NULL };
 	success = j_db_schema_add_index(schema, idx_name, &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
@@ -63,7 +65,7 @@ schema_create() {
 static void
 schema_delete(void)
 {
-	gboolean success;
+	gboolean success = false;
 	g_autoptr(GError) error = NULL;
 	g_autoptr(JDBSchema) schema = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -80,7 +82,6 @@ schema_delete(void)
 	g_assert_true(success);
 }
 
-
 static void
 test_parallel_insert_select(gpointer data, gpointer schema)
 {
@@ -89,14 +90,14 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_autoptr(JDBEntry) entry = NULL;
 	g_autoptr(JBatch) batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 	g_autoptr(JDBSelector) selector = NULL;
+	g_autoptr(JDBIterator) iterator = NULL;
 
 	JDBType type;
 	guint64 len;
 	g_autofree gchar* name = NULL;
 	guint entries = 0;
 
-	g_autofree gchar* string;
-	string = g_strdup_printf("test-db-parallel-insert-select-%d", GPOINTER_TO_INT(data));
+	const gchar* string = g_strdup_printf("test-db-parallel-insert-select-%d", GPOINTER_TO_INT(data));
 
 	// Create entry.
 	entry = j_db_entry_new(schema, &error);
@@ -124,7 +125,7 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_assert_no_error(error);
 
 	// Iterate over found entries. (Should only be one)
-	g_autoptr(JDBIterator) iterator = j_db_iterator_new(schema, selector, &error);
+	iterator = j_db_iterator_new(schema, selector, &error);
 	g_assert_nonnull(iterator);
 	g_assert_no_error(error);
 
@@ -144,7 +145,7 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_atomic_int_inc(&num_insert_selects);
 }
 
-void
+static void
 test_parallel_insert_select_setup(void)
 {
 	guint const num_threads = 1000;
@@ -155,8 +156,8 @@ test_parallel_insert_select_setup(void)
 
 	schema = schema_create();
 
-	 thread_pool = g_thread_pool_new(test_parallel_insert_select, schema, 4, TRUE, NULL);
-
+	thread_pool = g_thread_pool_new(test_parallel_insert_select, schema, 4, TRUE, NULL);
+	// Starts at 1 to avoid 0 getting converted to a null pointer.
 	for (guint i = 1; i <= num_threads; i++)
 	{
 		g_thread_pool_push(thread_pool, GINT_TO_POINTER(i), NULL);

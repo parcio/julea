@@ -40,7 +40,6 @@ main(int argc, char** argv)
 	// This is necessary because we call g_test_trap_assert_passed() in J_TEST_TRAP_END
 	g_test_set_nonfatal_assertions();
 
-
 	// Core
 	test_core_background_operation();
 	test_core_batch();
