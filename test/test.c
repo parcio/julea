@@ -34,10 +34,6 @@ main(int argc, char** argv)
 	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
 	setlocale(LC_ALL, "C.UTF-8");
 
-	// test_db_all();
-	entry_insert_select_parallel_setup();
-	return 0;
-
 	g_test_init(&argc, &argv, NULL);
 
 	// Failing assertions will not abort all coming tests but call g_test_fail and continue
