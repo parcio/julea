@@ -104,7 +104,7 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_assert_nonnull(entry);
 	g_assert_no_error(error);
 
-	success = j_db_entry_set_field(entry, "name", string, strlen(string) + 1, &error);
+	success = j_db_entry_set_field(entry, "name", string, strlen(string), &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
 
@@ -120,7 +120,7 @@ test_parallel_insert_select(gpointer data, gpointer schema)
 	g_assert_nonnull(selector);
 	g_assert_no_error(error);
 
-	success = j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, string, strlen(string) + 1, &error);
+	success = j_db_selector_add_field(selector, "name", J_DB_SELECTOR_OPERATOR_EQ, string, strlen(string), &error);
 	g_assert_true(success);
 	g_assert_no_error(error);
 
