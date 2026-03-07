@@ -156,7 +156,7 @@ test_parallel_insert_select_setup(void)
 
 	schema = schema_create();
 
-	thread_pool = g_thread_pool_new(test_parallel_insert_select, schema, 4, TRUE, NULL);
+	thread_pool = g_thread_pool_new(test_parallel_insert_select, schema, g_get_num_processors(), TRUE, NULL);
 	// Starts at 1 to avoid 0 getting converted to a null pointer.
 	for (guint i = 1; i <= num_threads; i++)
 	{
