@@ -1,7 +1,7 @@
 
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2019 Benjamin Warnke
+ * Copyright (C) 2026 Jan Frase
  * Copyright (C) 2019-2024 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
