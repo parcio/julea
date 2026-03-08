@@ -80,6 +80,7 @@ read_config(gchar* path)
 
 	if (ret)
 	{
+		g_printerr("Successfully read config from %s.\n", path);
 		g_print("%s", buf);
 	}
 
@@ -129,7 +130,7 @@ write_config(gchar* path)
 		g_file_make_directory_with_parents(parent, NULL, NULL);
 		ret = g_file_replace_contents(file, key_file_data, key_file_data_len, NULL, FALSE, G_FILE_CREATE_NONE, NULL, NULL, NULL);
 		if (ret)
-			g_print("Successfully wrote config to %s.", path);
+			g_printerr("Successfully wrote config to %s.\n", path);
 	}
 	else
 	{
