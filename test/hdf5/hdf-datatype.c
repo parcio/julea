@@ -51,6 +51,7 @@ test_hdf_datatype_create_compound(hid_t* file_fixture, gconstpointer udata)
 		int some_int;
 		float some_float;
 		float some_array[4];
+
 		struct
 		{
 			int another_int;

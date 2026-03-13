@@ -138,7 +138,9 @@ _error:
 	g_free(batch);
 
 	if (specs->single_threaded)
+	{
 		G_UNLOCK(sql_backend_lock);
+	}
 
 	return FALSE;
 }
@@ -161,7 +163,9 @@ sql_generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error
 	g_free(batch);
 
 	if (specs->single_threaded)
+	{
 		G_UNLOCK(sql_backend_lock);
+	}
 
 	return TRUE;
 
@@ -170,7 +174,9 @@ _error:
 	g_free(batch);
 
 	if (specs->single_threaded)
+	{
 		G_UNLOCK(sql_backend_lock);
+	}
 
 	return FALSE;
 }

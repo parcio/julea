@@ -244,7 +244,9 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
 	for (int i = 0; i < 999999; ++i)
+	{
 		data[i] = i;
+	}
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -256,7 +258,9 @@ test_hdf_dataset_write_read(hid_t* file_fixture, gconstpointer udata)
 
 	// check data
 	for (int i = 0; i < 999999; ++i)
+	{
 		g_assert_cmpint(data[i], ==, i);
+	}
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -296,7 +300,9 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
 	for (int i = 0; i < 999999; ++i)
+	{
 		data[i] = 9001;
+	}
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -311,7 +317,9 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 
 	write_data = g_malloc(250000 * sizeof(int));
 	for (int i = 0; i < 249999; ++i)
+	{
 		write_data[i] = 42;
+	}
 
 	// space of mem data
 	mem_space = H5Screate_simple(rank, count, count);
@@ -327,7 +335,9 @@ test_hdf_dataset_write_read_selection(hid_t* file_fixture, gconstpointer udata)
 
 	// check data
 	for (int i = 0; i < 249999; ++i)
+	{
 		g_assert_cmpint(read_data[i], ==, 42);
+	}
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -378,7 +388,9 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
 	for (int i = 0; i < 999999; ++i)
+	{
 		data[i] = i;
+	}
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);
@@ -390,7 +402,9 @@ test_hdf_dataset_write_read_chunked(hid_t* file_fixture, gconstpointer udata)
 
 	// check data
 	for (int i = 0; i < 999999; ++i)
+	{
 		g_assert_cmpint(data[i], ==, i);
+	}
 
 	error = H5Dclose(set);
 	g_assert_cmpint(error, >=, 0);
@@ -429,7 +443,9 @@ test_hdf_dataset_write_read_single(hid_t* file_fixture, gconstpointer udata)
 	// generate data
 	data = g_malloc(1000000 * sizeof(int));
 	for (int i = 0; i < 999999; ++i)
+	{
 		data[i] = 9001;
+	}
 
 	// write data
 	error = H5Dwrite(set, H5T_NATIVE_INT, space, space, H5P_DEFAULT, data);

@@ -863,7 +863,7 @@ calculate_statistics(JHDF5Object_t* object, const void* buf, gsize bytes, hid_t 
 	{
 		if (element_size == 4)
 		{
-			calculate_statistics_helper(((gdouble)((const gfloat*)buf)[i]), _f);
+			calculate_statistics_helper((gdouble)((const gfloat*)buf)[i], _f);
 		}
 		else if (element_size == 8)
 		{
@@ -876,19 +876,19 @@ calculate_statistics(JHDF5Object_t* object, const void* buf, gsize bytes, hid_t 
 		{
 			if (element_size == 1)
 			{
-				calculate_statistics_helper(((gint8)((const guint8*)buf)[i]), _i);
+				calculate_statistics_helper((gint8)((const guint8*)buf)[i], _i);
 			}
 			else if (element_size == 2)
 			{
-				calculate_statistics_helper(((gint16)((const guint16*)buf)[i]), _i);
+				calculate_statistics_helper((gint16)((const guint16*)buf)[i], _i);
 			}
 			else if (element_size == 4)
 			{
-				calculate_statistics_helper(((gint32)((const guint32*)buf)[i]), _i);
+				calculate_statistics_helper((gint32)((const guint32*)buf)[i], _i);
 			}
 			else if (element_size == 8)
 			{
-				calculate_statistics_helper(((gint64)((const guint64*)buf)[i]), _i);
+				calculate_statistics_helper((gint64)((const guint64*)buf)[i], _i);
 			}
 		}
 		else

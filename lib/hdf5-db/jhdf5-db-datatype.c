@@ -444,7 +444,7 @@ H5VL_julea_db_datatype_encode(hid_t* type_id)
 		j_goto_error();
 	}
 
-	if ((clazz != H5T_FLOAT))
+	if (clazz != H5T_FLOAT)
 	{
 		i = H5Tget_sign(*type_id);
 
@@ -454,7 +454,7 @@ H5VL_julea_db_datatype_encode(hid_t* type_id)
 		}
 	}
 
-	if ((clazz != H5T_INTEGER))
+	if (clazz != H5T_INTEGER)
 	{
 		i = H5Tget_ebias(*type_id);
 
@@ -464,7 +464,7 @@ H5VL_julea_db_datatype_encode(hid_t* type_id)
 		}
 	}
 
-	if ((clazz != H5T_INTEGER))
+	if (clazz != H5T_INTEGER)
 	{
 		i = H5Tget_norm(*type_id);
 
@@ -474,7 +474,7 @@ H5VL_julea_db_datatype_encode(hid_t* type_id)
 		}
 	}
 
-	if ((clazz != H5T_INTEGER))
+	if (clazz != H5T_INTEGER)
 	{
 		i = H5Tget_inpad(*type_id);
 

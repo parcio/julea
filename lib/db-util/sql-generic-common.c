@@ -180,7 +180,9 @@ j_sql_statement_free(JSqlStatement* ptr)
 	if (ptr)
 	{
 		if (G_UNLIKELY(!(thread_variables = thread_variables_get(specs->backend_data, NULL))))
+		{
 			g_assert_not_reached();
+		}
 
 		if (ptr->out_variables_index)
 		{
