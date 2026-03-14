@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # JULEA - Flexible storage framework
-# Copyright (C) 2013-2024 Michael Kuhn
+# Copyright (C) 2013-2026 Michael Kuhn
 # Copyright (C) 2013 Anna Fuchs
 #
 # This program is free software: you can redistribute it and/or modify
