@@ -27,7 +27,7 @@ spack_clone ()
 {
 	local spack_packages_commit
 
-	spack_packages_commit='f1fd16e3659a8744a033331c59a491014ed4450e'
+	spack_packages_commit='72bee2ad114cde374f8931991045011d106a9c1a'
 
 	test -n "${JULEA_SPACK_DIR}" || return 1
 
