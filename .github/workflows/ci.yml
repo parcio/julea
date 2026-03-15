@@ -158,8 +158,8 @@ jobs:
       - name: Install dependencies
         if: ${{ matrix.dependencies == 'system' && matrix.os.image == 'ubuntu:24.04' }}
         run: |
-          sudo apt update || true
-          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+          apt update
+          apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
