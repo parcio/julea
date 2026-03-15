@@ -31,8 +31,8 @@ on:
   schedule:
     - cron: '0 0 * * 0'
 jobs:
-  ubuntu-dev:
-    name: Ubuntu Development Container
+  ubuntu:
+    name: Ubuntu
     runs-on: ubuntu-24.04
     permissions:
       packages: write
@@ -54,6 +54,8 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: containers
-          file: containers/ubuntu-22.04-dev
+          file: containers/ubuntu-24.04
+          no-cache: true
+          pull: true
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/parcio/ubuntu-dev:22.04
+          tags: ghcr.io/parcio/julea/ubuntu:24.04-base
