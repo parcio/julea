@@ -76,13 +76,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - image: ubuntu:24.04
-            registry: docker.io/library
+          - image: ubuntu:24.04-base
+            registry: ghcr.io/parcio/julea
             compiler: gcc
             compiler_spack: gcc
             compiler_version: 13.3.0
-          - image: ubuntu:24.04
-            registry: docker.io/library
+          - image: ubuntu:24.04-base
+            registry: ghcr.io/parcio/julea
             compiler: clang
             compiler_spack: llvm
             compiler_version: 18.1.3
@@ -92,22 +92,6 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Install packages
-        if: ${{ matrix.os.image == 'ubuntu:24.04' }}
-        run: |
-          apt update
-          apt --yes --no-install-recommends install build-essential zstd
-          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
-
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            apt --yes --no-install-recommends install clang
-
-            if test "${{ matrix.os.image }}" = 'ubuntu:24.04'
-            then
-              apt --yes --no-install-recommends install libclang-rt-dev
-            fi
-          fi
       - name: Cache dependencies
         id: cache
         uses: actions/cache@v5
@@ -131,13 +115,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - image: ubuntu:24.04
-            registry: docker.io/library
+          - image: ubuntu:24.04-base
+            registry: ghcr.io/parcio/julea
             compiler: gcc
             compiler_spack: gcc
             compiler_version: 13.3.0
-          - image: ubuntu:24.04
-            registry: docker.io/library
+          - image: ubuntu:24.04-base
+            registry: ghcr.io/parcio/julea
             compiler: clang
             compiler_spack: llvm
             compiler_version: 18.1.3
@@ -149,21 +133,10 @@ jobs:
           persist-credentials: false
           show-progress: false
       - name: Install dependencies
-        if: ${{ matrix.os.image == 'ubuntu:24.04' }}
+        if: ${{ matrix.dependencies == 'system' }}
         run: |
           apt update
-          apt --yes --no-install-recommends install build-essential zstd
-          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
-
-          if test "${{ matrix.dependencies }}" = 'system'
-          then
-            apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
-          fi
-
-          if test "${{ matrix.os.compiler }}" = 'clang'
-          then
-            apt --yes --no-install-recommends install clang
-          fi
+          apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
