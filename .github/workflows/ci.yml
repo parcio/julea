@@ -106,6 +106,7 @@ jobs:
           apt update
           apt --yes --no-install-recommends install build-essential zstd
           apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
+
           if test "${{ matrix.os.compiler }}" = 'clang'
           then
             apt --yes --no-install-recommends install clang
@@ -156,10 +157,21 @@ jobs:
           persist-credentials: false
           show-progress: false
       - name: Install dependencies
-        if: ${{ matrix.dependencies == 'system' && matrix.os.image == 'ubuntu:24.04' }}
+        if: ${{ matrix.os.image == 'ubuntu:24.04' }}
         run: |
           apt update
-          apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+          apt --yes --no-install-recommends install build-essential zstd
+          apt --yes --no-install-recommends install ca-certificates git gnupg patchelf python3 unzip
+
+          if test "${{ matrix.dependencies }}" = 'system'
+          then
+            apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+          fi
+
+          if test "${{ matrix.os.compiler }}" = 'clang'
+          then
+            apt --yes --no-install-recommends install clang
+          fi
       - name: Cache dependencies
         id: cache
         if: ${{ matrix.dependencies == 'spack' }}
