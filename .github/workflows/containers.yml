@@ -30,6 +30,9 @@ on:
       - 'containers/*'
   schedule:
     - cron: '0 0 * * 0'
+defaults:
+  run:
+    shell: bash
 jobs:
   ubuntu:
     name: Ubuntu

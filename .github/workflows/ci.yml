@@ -16,6 +16,9 @@
 
 name: CI
 on: [push, pull_request]
+defaults:
+  run:
+    shell: bash
 jobs:
   style:
     name: Style

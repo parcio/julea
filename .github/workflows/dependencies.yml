@@ -18,6 +18,9 @@ name: Dependencies
 on:
   schedule:
     - cron: '0 0 * * 0'
+defaults:
+  run:
+    shell: bash
 jobs:
   dependencies:
     name: Dependencies (Containers)
