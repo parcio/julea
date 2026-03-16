@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if test -z "${BASH_VERSION}" && test -z "${ZSH_VERSION}"
+then
+	printf 'Error: This script only works in Bash and Zsh.\n' "${SELF_PATH}" >&2
+	exit 1
+fi
+
 SELF_ZERO="$0"
 # shellcheck disable=SC2169,SC3028,SC3054
 test -n "${BASH_VERSION}" && SELF_ZERO="${BASH_SOURCE[0]}"
