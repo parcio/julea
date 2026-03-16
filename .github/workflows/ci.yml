@@ -182,7 +182,7 @@ jobs:
         exclude:
           # FIXME Ubuntu 24.04's RocksDB triggers asan
           - os:
-              dist: ubuntu-24.04
+              image: ubuntu:24.04-base
             dependencies: system
             julea:
               kv: rocksdb
@@ -194,12 +194,8 @@ jobs:
           MARIADB_DATABASE: juleadb
           MARIADB_USER: julea
           MARIADB_PASSWORD: aeluj
-        ports:
-          - 3306:3306
       mongodb:
         image: ${{ matrix.julea.kv == 'mongodb' && 'docker.io/library/mongo' || '' }}
-        ports:
-          - 27017:27017
       mysql:
         image: ${{ matrix.julea.db == 'mysql' && matrix.julea.db-server == 'mysql' && 'docker.io/library/mysql' || '' }}
         env:
@@ -207,8 +203,6 @@ jobs:
           MYSQL_DATABASE: juleadb
           MYSQL_USER: julea
           MYSQL_PASSWORD: aeluj
-        ports:
-          - 3306:3306
     env:
       JULEA_SPACK_DIR: /julea-dependencies
     steps:
@@ -239,13 +233,12 @@ jobs:
         run: |
           ./scripts/ci/build.sh debug "${{ matrix.dependencies }}"
       - name: Create configuration
-        # FIXME We need to use 127.0.0.1 because localhost tries to use the socket (/tmp/mysql.sock), which does not exist.
         run: |
           . scripts/environment.sh
           JULEA_KV_PATH="/tmp/julea/kv/${{ matrix.julea.kv }}"
-          if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='127.0.0.1:juleadb'; fi
+          if test "${{ matrix.julea.kv }}" = 'mongodb'; then JULEA_KV_PATH='mongodb:juleadb'; fi
           JULEA_DB_PATH="/tmp/julea/db/${{ matrix.julea.db }}"
-          if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='127.0.0.1:juleadb:julea:aeluj'; fi
+          if test "${{ matrix.julea.db }}" = 'mysql'; then JULEA_DB_PATH='${{ matrix.julea.db-server }}:juleadb:julea:aeluj'; fi
           julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend="${{ matrix.julea.object }}" --object-path="/tmp/julea/object/${{ matrix.julea.object }}" --kv-backend="${{ matrix.julea.kv }}" --kv-path="${JULEA_KV_PATH}" --db-backend="${{ matrix.julea.db }}" --db-path="${JULEA_DB_PATH}"
       - name: Tests
         run: |
