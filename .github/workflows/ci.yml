@@ -37,7 +37,7 @@ jobs:
         run: |
           ./scripts/check.sh
   dependencies:
-    name: Dependencies (Containers)
+    name: Dependencies
     runs-on: ubuntu-24.04
     container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
     timeout-minutes: 180

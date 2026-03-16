@@ -16,7 +16,7 @@
 
 if test -z "${BASH_VERSION}" && test -z "${ZSH_VERSION}"
 then
-	printf 'Error: This script only works in Bash and Zsh.\n' "${SELF_PATH}" >&2
+	printf 'Error: This script only works in Bash and Zsh.\n' >&2
 	exit 1
 fi
 
