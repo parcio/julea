@@ -65,6 +65,31 @@ set_path ()
 	export PATH
 }
 
+set_python_path()
+{
+	local build_dir
+	local old_python_path
+
+	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	old_python_path="${PYTHONPATH}"
+
+	if test -n "${JULEA_PREFIX}"
+	then
+		PYTHONPATH="${JULEA_PREFIX}/bin"
+	else
+		test -d "${build_dir}" || error_build_directory_not_found
+
+		PYTHONPATH="${build_dir}"
+	fi
+
+	if test -n "${old_python_path}"
+	then
+		PYTHONPATH="${PYTHONPATH}:${old_python_path}"
+	fi
+
+	export PYTHONPATH
+}
+
 set_library_path ()
 {
 	local build_dir
