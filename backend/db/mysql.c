@@ -568,7 +568,15 @@ j_sql_open(gpointer backend_data)
 	JMySQLData* bd = backend_data;
 	MYSQL* backend_db = NULL;
 
+	my_bool verify = 0;
+
 	if (!(backend_db = mysql_init(NULL)))
+	{
+		goto _error;
+	}
+
+	// See https://github.com/mariadb-corporation/mariadb-connector-c/commit/1287c901dc8515823d28edcebfe4be65e6c5a6b3
+	if (mysql_options(backend_db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify) != 0)
 	{
 		goto _error;
 	}
