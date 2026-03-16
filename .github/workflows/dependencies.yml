@@ -20,39 +20,6 @@ on:
     - cron: '0 0 * * 0'
 jobs:
   dependencies:
-    name: Dependencies
-    runs-on: ${{ matrix.os.dist }}
-    timeout-minutes: 180
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - dist: ubuntu-24.04
-            compiler: gcc
-            compiler_spack: gcc
-            compiler_version: 13.3.0
-          - dist: ubuntu-24.04
-            compiler: clang
-            compiler_spack: llvm
-            compiler_version: 18.1.3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          show-progress: false
-      - name: Cache dependencies
-        uses: actions/cache/restore@v5
-        with:
-          path: dependencies
-          key: ${{ matrix.os.dist }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
-      - name: Install dependencies
-        env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
-        run: |
-          rm --recursive --force dependencies
-          ./scripts/install-dependencies.sh
-  dependencies-containers:
     name: Dependencies (Containers)
     runs-on: ubuntu-24.04
     container: ${{ matrix.os.registry }}/${{ matrix.os.image }}
@@ -71,6 +38,9 @@ jobs:
             compiler: clang
             compiler_spack: llvm
             compiler_version: 18.1.3
+    env:
+      JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
+      JULEA_SPACK_DIR: /julea-dependencies
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -80,12 +50,9 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache/restore@v5
         with:
-          path: /julea-dependencies
+          path: ${{ env.JULEA_SPACK_DIR }}
           key: ${{ matrix.os.image }}-${{ matrix.os.compiler }}-${{ matrix.os.compiler_version }}-${{ hashFiles('scripts/spack', 'scripts/install-dependencies.sh') }}
       - name: Install dependencies
-        env:
-          JULEA_SPACK_COMPILER: ${{ matrix.os.compiler_spack }}@${{ matrix.os.compiler_version }}
-          JULEA_SPACK_DIR: /julea-dependencies
         run: |
           rm --recursive --force /julea-dependencies
           ./scripts/install-dependencies.sh
