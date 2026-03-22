@@ -115,10 +115,10 @@ _benchmark_db_prepare_scheme(gchar const* namespace, gboolean use_batch, gboolea
 		g_assert_true(ret);
 	}
 
-	ret = j_db_schema_create(b_scheme, batch, &b_s_error);
+	ret = j_db_schema_create(b_scheme, batch, NULL);
 	g_assert_null(b_s_error);
 	g_assert_true(ret);
-	ret = j_db_schema_delete(b_scheme, delete_batch, &b_s_error);
+	ret = j_db_schema_delete(b_scheme, delete_batch, NULL);
 	g_assert_null(b_s_error);
 	g_assert_true(ret);
 
