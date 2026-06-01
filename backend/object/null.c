@@ -24,13 +24,13 @@
 #include <julea.h>
 
 static gboolean
-backend_create(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
+backend_create(gpointer backend_data, gchar const* namespace, gchar const* name, gpointer* backend_object)
 {
 	gchar* full_path;
 
 	(void)backend_data;
 
-	full_path = g_build_filename(namespace, path, NULL);
+	full_path = g_build_filename(namespace, name, NULL);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_CREATE);
 	j_trace_file_end(full_path, J_TRACE_FILE_CREATE, 0, 0);
@@ -41,13 +41,13 @@ backend_create(gpointer backend_data, gchar const* namespace, gchar const* path,
 }
 
 static gboolean
-backend_open(gpointer backend_data, gchar const* namespace, gchar const* path, gpointer* backend_object)
+backend_open(gpointer backend_data, gchar const* namespace, gchar const* name, gpointer* backend_object)
 {
 	gchar* full_path;
 
 	(void)backend_data;
 
-	full_path = g_build_filename(namespace, path, NULL);
+	full_path = g_build_filename(namespace, name, NULL);
 
 	j_trace_file_begin(full_path, J_TRACE_FILE_OPEN);
 	j_trace_file_end(full_path, J_TRACE_FILE_OPEN, 0, 0);

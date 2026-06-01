@@ -289,7 +289,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_close(object_backend, object_handle) && ret;
@@ -376,7 +376,7 @@ j_object_delete_exec(JList* operations, JSemantics* semantics)
 		else
 		{
 			gboolean lret = FALSE;
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			if (j_backend_object_open(object_backend, object->namespace, object->name, &object_handle)
 			    && j_backend_object_delete(object_backend, object_handle))
@@ -431,11 +431,11 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
-	JBackend* object_backend;
-	JListIterator* it;
+	JBackend* object_backend = NULL;
+	JListIterator* it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JObject* object;
-	gpointer object_handle;
+	JObject* object = NULL;
+	gpointer object_handle = NULL;
 
 	/// \todo
 	//JLock* lock = NULL;
@@ -452,7 +452,6 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 		g_assert(object != NULL);
 	}
 
-	it = j_list_iterator_new(operations);
 	object_backend = j_object_get_backend();
 
 	if (object_backend == NULL)
@@ -471,6 +470,10 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	else
 	{
 		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+		if (object_handle == NULL)
+		{
+			return FALSE;
+		}
 	}
 
 	/*
@@ -480,6 +483,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	}
 	*/
 
+	it = j_list_iterator_new(operations);
 	while (j_list_iterator_next(it))
 	{
 		JObjectOperation* operation = j_list_iterator_get(it);
@@ -569,7 +573,6 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 		}
 
 		j_list_iterator_free(it);
-
 		j_connection_pool_push(J_BACKEND_TYPE_OBJECT, object->index, object_connection);
 	}
 	else
@@ -586,7 +589,6 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 		j_lock_free(lock);
 	}
 	*/
-
 	return ret;
 }
 
@@ -598,11 +600,11 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	/// \todo check return value for messages
 	gboolean ret = TRUE;
 
-	JBackend* object_backend;
-	JListIterator* it;
+	JBackend* object_backend = NULL;
+	JListIterator* it = NULL;
 	g_autoptr(JMessage) message = NULL;
-	JObject* object;
-	gpointer object_handle;
+	JObject* object = NULL;
+	gpointer object_handle = NULL;
 
 	/// \todo
 	//JLock* lock = NULL;
@@ -619,7 +621,6 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 		g_assert(object != NULL);
 	}
 
-	it = j_list_iterator_new(operations);
 	object_backend = j_object_get_backend();
 
 	if (object_backend == NULL)
@@ -638,6 +639,11 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	else
 	{
 		ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
+		// If the object was not opened, we return.
+		if (object_handle == NULL)
+		{
+			return FALSE;
+		}
 	}
 
 	/*
@@ -646,6 +652,8 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 		lock = j_lock_new("item", path);
 	}
 	*/
+
+	it = j_list_iterator_new(operations);
 
 	while (j_list_iterator_next(it))
 	{
@@ -807,7 +815,7 @@ j_object_status_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
@@ -916,7 +924,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_sync(object_backend, object_handle) && ret;

@@ -41,15 +41,20 @@ struct JObjectIterator
 	JBackend* object_backend;
 
 	/**
-	 * The iterate cursor.
-	 **/
-	gpointer cursor;
-
-	/**
 	 * The current name.
 	 **/
 	gchar const* name;
 
+	// Client backend-specific:
+	// TODO: Union of client and server specific objects?
+	/**
+	 * The iterate cursor.
+	 **/
+	gpointer cursor;
+	GArray* cached_names;
+	guint32 cached_names_cur;
+
+	// Server backend-specific:
 	JMessage** replies;
 	guint32 replies_n;
 	guint32 replies_cur;
@@ -104,6 +109,8 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 {
 	J_TRACE_FUNCTION(NULL);
 
+	const gchar* curr_name = NULL;
+
 	JObjectIterator* iterator;
 
 	JConfiguration* configuration = j_configuration();
@@ -115,28 +122,40 @@ j_object_iterator_new(gchar const* namespace, gchar const* prefix)
 
 	iterator = g_new(JObjectIterator, 1);
 	iterator->object_backend = j_object_get_backend();
-	iterator->cursor = NULL;
 	iterator->name = NULL;
+
+	iterator->cursor = NULL;
+	iterator->cached_names = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	iterator->cached_names_cur = 0;
+
 	iterator->replies_n = j_configuration_get_server_count(configuration, J_BACKEND_TYPE_OBJECT);
 	iterator->replies = g_new0(JMessage*, iterator->replies_n);
 	iterator->replies_cur = 0;
 
 	if (iterator->object_backend == NULL)
 	{
+		// Loop over all servers...
 		for (guint32 i = 0; i < iterator->replies_n; i++)
 		{
+			// ... and each then loops over all their objects and replies with a list of names.
 			iterator->replies[i] = fetch_reply(i, namespace, prefix);
 		}
 	}
 	else
 	{
+		// Create the iterator, either with or without a prefix.
 		if (prefix == NULL)
 		{
-			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+		}
+		// Iterate over the objects until we reach the end and keep all resulting names.
+		while (j_backend_object_iterate(iterator->object_backend, iterator->cursor, &curr_name))
+		{
+			iterator->cached_names = g_array_append_val(iterator->cached_names, curr_name);
 		}
 	}
 
@@ -147,6 +166,8 @@ JObjectIterator*
 j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar const* prefix)
 {
 	J_TRACE_FUNCTION(NULL);
+
+	const gchar* curr_name = NULL;
 
 	JObjectIterator* iterator;
 
@@ -160,8 +181,12 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 
 	iterator = g_new(JObjectIterator, 1);
 	iterator->object_backend = j_object_get_backend();
-	iterator->cursor = NULL;
 	iterator->name = NULL;
+
+	iterator->cursor = NULL;
+	iterator->cached_names = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	iterator->cached_names_cur = 0;
+
 	iterator->replies_n = 1;
 	iterator->replies = g_new0(JMessage*, 1);
 	iterator->replies_cur = 0;
@@ -172,13 +197,19 @@ j_object_iterator_new_for_index(guint32 index, gchar const* namespace, gchar con
 	}
 	else
 	{
+		// Create the iterator, either with or without a prefix.
 		if (prefix == NULL)
 		{
-			/// \todo j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
+			j_backend_object_get_all(iterator->object_backend, namespace, &(iterator->cursor));
 		}
 		else
 		{
-			/// \todo j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+			j_backend_object_get_by_prefix(iterator->object_backend, namespace, prefix, &(iterator->cursor));
+		}
+		// Iterate over the objects until we reach the end and keep all resulting names.
+		while (j_backend_object_iterate(iterator->object_backend, iterator->cursor, &curr_name))
+		{
+			iterator->cached_names = g_array_append_val(iterator->cached_names, curr_name);
 		}
 	}
 
@@ -201,7 +232,16 @@ j_object_iterator_free(JObjectIterator* iterator)
 	}
 
 	g_free(iterator->replies);
-
+	// Free duplicated names stored in cached_names
+	if (iterator->cached_names)
+	{
+		for (guint i = 0; i < iterator->cached_names->len; i++)
+		{
+			gchar* s = g_array_index(iterator->cached_names, gchar*, i);
+			g_free(s);
+		}
+		g_array_free(iterator->cached_names, TRUE);
+	}
 	g_free(iterator);
 }
 
@@ -231,7 +271,12 @@ j_object_iterator_next(JObjectIterator* iterator)
 	}
 	else
 	{
-		/// \todo ret = j_backend_object_iterate(iterator->object_backend, iterator->cursor, &(iterator->key), &(iterator->value), &(iterator->len));
+		if (iterator->cached_names_cur < iterator->cached_names->len)
+		{
+			iterator->name = g_array_index(iterator->cached_names, gchar*, iterator->cached_names_cur);
+			iterator->cached_names_cur++;
+			ret = TRUE;
+		}
 	}
 
 	return ret;

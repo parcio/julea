@@ -306,7 +306,7 @@ j_backend_object_fini(JBackend* backend)
 }
 
 gboolean
-j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* path, gpointer* data)
+j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* name, gpointer* data)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -315,12 +315,12 @@ j_backend_object_create(JBackend* backend, gchar const* namespace, gchar const* 
 	g_return_val_if_fail(backend != NULL, FALSE);
 	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_OBJECT, FALSE);
 	g_return_val_if_fail(namespace != NULL, FALSE);
-	g_return_val_if_fail(path != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
 
 	{
-		J_TRACE("backend_create", "%s, %s, %p", namespace, path, (gpointer)data);
-		ret = backend->object.backend_create(backend->data, namespace, path, data);
+		J_TRACE("backend_create", "%s, %s, %p", namespace, name, (gpointer)data);
+		ret = backend->object.backend_create(backend->data, namespace, name, data);
 	}
 
 	return ret;

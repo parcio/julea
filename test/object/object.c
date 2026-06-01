@@ -169,6 +169,12 @@ test_object_read_write(void)
 	object_noexist = j_object_new("test", "test-object-rw-noexist");
 	g_assert_true(object_noexist != NULL);
 
+	// As the object is never properly created, the following write is expected to fail.
+	// The creation could look like this:
+	// j_object_create(object_noexist, batch);
+	// ret = j_batch_execute(batch);
+	// g_assert_true(ret);
+
 	j_object_write(object_noexist, buffer, 1, 0, &nbytes, batch);
 	ret = j_batch_execute(batch);
 	g_assert_false(ret);

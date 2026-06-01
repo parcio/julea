@@ -273,6 +273,47 @@ jobs:
           sleep 10
           ./scripts/benchmark.sh --duration=0
           ./scripts/setup.sh stop
+  rados:
+    name: Rados
+    needs: dependencies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt --yes --no-install-recommends install meson ninja-build pkgconf libglib2.0-dev libbson-dev libfabric-dev libgdbm-dev liblmdb-dev libsqlite3-dev libleveldb-dev libmongoc-dev libmariadb-dev librocksdb-dev libfuse3-dev libopen-trace-format-dev librados-dev
+
+      - name: Configure and build
+        env:
+          CC: clang
+        run: |
+          ./scripts/ci/build.sh debug-no-sanitize system
+
+      - name: Create configuration
+        run: |
+          . scripts/environment.sh
+          julea-config --user --object-servers="$(hostname)" --kv-servers="$(hostname)" --db-servers="$(hostname)" --object-backend=rados --object-path=/var/snap/microceph/current/conf/ceph.conf:julea --kv-backend=lmdb --kv-path=/tmp/julea/kv/lmdb --db-backend=sqlite --db-path=/tmp/julea/db/sqlite
+
+      - name: Microceph setup
+        run: sudo ./scripts/rados-util.sh bootstrap
+
+      - name: Tests
+        run: |
+          . scripts/environment.sh
+          ./scripts/setup.sh start
+          ./scripts/test.sh
+          # sudo apt --yes --no-install-recommends install valgrind
+          # valgrind --leak-check=full --track-origins=yes julea-test 
+          sleep 10
+          ./scripts/test.sh
+          ./scripts/setup.sh stop
   doxygen:
     name: Doxygen
     runs-on: ubuntu-24.04
