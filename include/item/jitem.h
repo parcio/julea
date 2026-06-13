@@ -129,7 +129,7 @@ JItem* j_item_create(JCollection* collection, gchar const* name, JDistribution* 
  * \param item       An item.
  * \param batch      A batch.
  **/
-void j_item_delete(JItem* item, JBatch* batch);
+gboolean j_item_delete(JItem* item, JBatch* batch);
 
 /**
  * Gets an item from a collection.
@@ -142,7 +142,7 @@ void j_item_delete(JItem* item, JBatch* batch);
  * \param name       A name.
  * \param batch      A batch.
  **/
-void j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* batch);
+gboolean j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* batch);
 
 /**
  * Reads an item.
@@ -157,7 +157,7 @@ void j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch
  * \param bytes_read Number of bytes read.
  * \param batch      A batch.
  **/
-void j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
+gboolean j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch);
 
 /**
  * Writes an item.
@@ -175,7 +175,7 @@ void j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, gui
  * \param bytes_written Number of bytes written.
  * \param batch         A batch.
  **/
-void j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
+gboolean j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch);
 
 /**
  * Get the status of an item.
@@ -186,7 +186,7 @@ void j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offse
  * \param item      An item.
  * \param batch     A batch.
  **/
-void j_item_get_status(JItem* item, JBatch* batch);
+gboolean j_item_get_status(JItem* item, JBatch* batch);
 
 /**
  * Returns an item's size.

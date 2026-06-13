@@ -57,8 +57,11 @@ test_batch_semantics(void)
 	J_TEST_TRAP_START;
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
 
-	g_assert_true(j_batch_get_semantics(batch) != NULL);
+	semantics = j_batch_get_semantics(batch);
 
+	g_assert_true(semantics != NULL);
+
+	j_semantics_unref(semantics);
 	j_batch_unref(batch);
 
 	semantics = j_semantics_new(J_SEMANTICS_TEMPLATE_DEFAULT);
@@ -86,39 +89,46 @@ test_batch_execute_empty(void)
 }
 
 static void
-_test_batch_execute(gboolean async)
+_test_batch_execute(gboolean async, gboolean batch_less)
 {
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
 	g_autoptr(JBatch) batch = NULL;
-	gboolean ret;
+	gboolean ret = TRUE;
 
 	if (async)
 	{
 		g_atomic_int_set(&test_batch_flag, 0);
 	}
 
-	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	if (batch_less)
+	{
+		batch = J_BATCH_SINGLE;
+	}
+	else
+	{
+		batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	}
 
 	collection = j_collection_create("test", batch);
+	g_assert_nonnull(collection);
 	item = j_item_create(collection, "item", NULL, batch);
-	j_item_delete(item, batch);
-	j_collection_delete(collection, batch);
+	g_assert_nonnull(item);
+	ret = j_item_delete(item, batch);
+	g_assert_true(ret);
+	ret = j_collection_delete(collection, batch);
+	g_assert_true(ret);
 
 	if (async)
 	{
 		j_batch_execute_async(batch, on_operation_completed, NULL);
+		j_batch_wait(batch);
+		g_assert_cmpint(g_atomic_int_get(&test_batch_flag), ==, 1);
 	}
-	else
+	else if (!batch_less)
 	{
 		ret = j_batch_execute(batch);
 		g_assert_true(ret);
-	}
-
-	if (async)
-	{
-		j_batch_wait(batch);
-		g_assert_cmpint(g_atomic_int_get(&test_batch_flag), ==, 1);
 	}
 }
 
@@ -126,7 +136,7 @@ static void
 test_batch_execute(void)
 {
 	J_TEST_TRAP_START;
-	_test_batch_execute(FALSE);
+	_test_batch_execute(FALSE, FALSE);
 	J_TEST_TRAP_END;
 }
 
@@ -134,7 +144,15 @@ static void
 test_batch_execute_async(void)
 {
 	J_TEST_TRAP_START;
-	_test_batch_execute(TRUE);
+	_test_batch_execute(TRUE, FALSE);
+	J_TEST_TRAP_END;
+}
+
+static void
+test_batch_execute_batch_less(void)
+{
+	J_TEST_TRAP_START;
+	_test_batch_execute(FALSE, TRUE);
 	J_TEST_TRAP_END;
 }
 
@@ -146,4 +164,5 @@ test_core_batch(void)
 	g_test_add_func("/core/batch/execute_empty", test_batch_execute_empty);
 	g_test_add_func("/core/batch/execute", test_batch_execute);
 	g_test_add_func("/core/batch/execute_async", test_batch_execute_async);
+	g_test_add_func("/core/batch/execute_batch_less", test_batch_execute_batch_less);
 }

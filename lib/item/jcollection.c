@@ -147,25 +147,24 @@ j_collection_get_callback(gpointer value, guint32 len, gpointer data)
 	g_free(value);
 }
 
-void
+gboolean
 j_collection_get(JCollection** collection, gchar const* name, JBatch* batch)
 {
 	g_autoptr(JKV) kv = NULL;
 
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
 
 	kv = j_kv_new("collections", name);
-	j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
+	return j_kv_get_callback(kv, j_collection_get_callback, collection, batch);
 }
 
-void
+gboolean
 j_collection_delete(JCollection* collection, JBatch* batch)
 {
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(batch != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
 
-	j_kv_delete(collection->kv, batch);
+	return j_kv_delete(collection->kv, batch);
 }
 
 /* Internal */

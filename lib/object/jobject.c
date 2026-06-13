@@ -1020,14 +1020,14 @@ j_object_unref(JObject* object)
 	}
 }
 
-void
+gboolean
 j_object_create(JObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	/// \todo key = index + namespace
@@ -1036,17 +1036,17 @@ j_object_create(JObject* object, JBatch* batch)
 	operation->exec_func = j_object_create_exec;
 	operation->free_func = j_object_create_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_object_delete(JObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	operation = j_operation_new();
 	operation->key = object;
@@ -1054,10 +1054,10 @@ j_object_delete(JObject* object, JBatch* batch)
 	operation->exec_func = j_object_delete_exec;
 	operation->free_func = j_object_delete_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1065,11 +1065,12 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 	JObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
+	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_read != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1093,7 +1094,7 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 		operation->exec_func = j_object_read_exec;
 		operation->free_func = j_object_read_free;
 
-		j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar*)data + chunk_size;
 		length -= chunk_size;
@@ -1101,9 +1102,11 @@ j_object_read(JObject* object, gpointer data, guint64 length, guint64 offset, gu
 	}
 
 	*bytes_read = 0;
+
+	return ret;
 }
 
-void
+gboolean
 j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1111,11 +1114,12 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 	JObjectOperation* iop;
 	JOperation* operation;
 	guint64 max_operation_size;
+	gboolean ret = TRUE;
 
-	g_return_if_fail(object != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(length > 0);
-	g_return_if_fail(bytes_written != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(length > 0, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
 	max_operation_size = j_configuration_get_max_operation_size(j_configuration());
 
@@ -1139,7 +1143,7 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 		operation->exec_func = j_object_write_exec;
 		operation->free_func = j_object_write_free;
 
-		j_batch_add(batch, operation);
+		ret = ret && j_batch_add(batch, operation);
 
 		data = (gchar const*)data + chunk_size;
 		length -= chunk_size;
@@ -1147,9 +1151,11 @@ j_object_write(JObject* object, gconstpointer data, guint64 length, guint64 offs
 	}
 
 	*bytes_written = 0;
+
+	return ret;
 }
 
-void
+gboolean
 j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1157,7 +1163,7 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_new(JObjectOperation, 1);
 	iop->status.object = j_object_ref(object);
@@ -1170,10 +1176,10 @@ j_object_status(JObject* object, gint64* modification_time, guint64* size, JBatc
 	operation->exec_func = j_object_status_exec;
 	operation->free_func = j_object_status_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
-void
+gboolean
 j_object_sync(JObject* object, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -1181,7 +1187,7 @@ j_object_sync(JObject* object, JBatch* batch)
 	JObjectOperation* iop;
 	JOperation* operation;
 
-	g_return_if_fail(object != NULL);
+	g_return_val_if_fail(object != NULL, FALSE);
 
 	iop = g_new(JObjectOperation, 1);
 	iop->sync.object = j_object_ref(object);
@@ -1192,7 +1198,7 @@ j_object_sync(JObject* object, JBatch* batch)
 	operation->exec_func = j_object_sync_exec;
 	operation->free_func = j_object_sync_free;
 
-	j_batch_add(batch, operation);
+	return j_batch_add(batch, operation);
 }
 
 /**

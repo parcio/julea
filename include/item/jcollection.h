@@ -112,7 +112,7 @@ JCollection* j_collection_create(gchar const* name, JBatch* batch);
  * \param name       A name.
  * \param batch      A batch.
  **/
-void j_collection_get(JCollection** collection, gchar const* name, JBatch* batch);
+gboolean j_collection_get(JCollection** collection, gchar const* name, JBatch* batch);
 
 /**
  * Deletes a collection.
@@ -123,7 +123,7 @@ void j_collection_get(JCollection** collection, gchar const* name, JBatch* batch
  * \param collection A collection.
  * \param batch      A batch.
  **/
-void j_collection_delete(JCollection* collection, JBatch* batch);
+gboolean j_collection_delete(JCollection* collection, JBatch* batch);
 
 /**
  * @}

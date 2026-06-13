@@ -168,6 +168,7 @@ j_item_create(JCollection* collection, gchar const* name, JDistribution* distrib
 	bson_t* tmp;
 	gpointer value;
 	guint32 len;
+	g_autoptr(JSemantics) semantics = NULL;
 
 	g_return_val_if_fail(collection != NULL, NULL);
 	g_return_val_if_fail(name != NULL, NULL);
@@ -177,13 +178,26 @@ j_item_create(JCollection* collection, gchar const* name, JDistribution* distrib
 		return NULL;
 	}
 
-	tmp = j_item_serialize(item, j_batch_get_semantics(batch));
+	semantics = j_batch_get_semantics(batch);
+
+	tmp = j_item_serialize(item, semantics);
 	value = bson_destroy_with_steal(tmp, TRUE, &len);
 
-	j_distributed_object_create(item->object, batch);
-	j_kv_put(item->kv, value, len, bson_free, batch);
+	if (!j_distributed_object_create(item->object, batch))
+	{
+		goto _error;
+	}
+
+	if (!j_kv_put(item->kv, value, len, bson_free, batch))
+	{
+		goto _error;
+	}
 
 	return item;
+
+_error:
+	j_item_unref(item);
+	return NULL;
 }
 
 static void
@@ -207,7 +221,7 @@ end:
 	g_free(data);
 }
 
-void
+gboolean
 j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
@@ -216,9 +230,9 @@ j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* bat
 	g_autoptr(JKV) kv = NULL;
 	g_autofree gchar* path = NULL;
 
-	g_return_if_fail(collection != NULL);
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(name != NULL);
+	g_return_val_if_fail(collection != NULL, FALSE);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(name != NULL, FALSE);
 
 	data = g_new(JItemGetData, 1);
 	data->collection = j_collection_ref(collection);
@@ -226,56 +240,59 @@ j_item_get(JCollection* collection, JItem** item, gchar const* name, JBatch* bat
 
 	path = g_build_path("/", j_collection_get_name(collection), name, NULL);
 	kv = j_kv_new("items", path);
-	j_kv_get_callback(kv, j_item_get_callback, data, batch);
+	return j_kv_get_callback(kv, j_item_get_callback, data, batch);
 }
 
-void
+gboolean
 j_item_delete(JItem* item, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(batch != NULL);
+	gboolean ret = TRUE;
 
-	j_kv_delete(item->kv, batch);
-	j_distributed_object_delete(item->object, batch);
+	g_return_val_if_fail(item != NULL, FALSE);
+
+	ret = ret && j_kv_delete(item->kv, batch);
+	ret = ret && j_distributed_object_delete(item->object, batch);
+
+	return ret;
 }
 
-void
+gboolean
 j_item_read(JItem* item, gpointer data, guint64 length, guint64 offset, guint64* bytes_read, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(bytes_read != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_read != NULL, FALSE);
 
-	j_distributed_object_read(item->object, data, length, offset, bytes_read, batch);
+	return j_distributed_object_read(item->object, data, length, offset, bytes_read, batch);
 }
 
-void
+gboolean
 j_item_write(JItem* item, gconstpointer data, guint64 length, guint64 offset, guint64* bytes_written, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
-	g_return_if_fail(data != NULL);
-	g_return_if_fail(bytes_written != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(bytes_written != NULL, FALSE);
 
 	/// \todo see j_item_write_exec
 
-	j_distributed_object_write(item->object, data, length, offset, bytes_written, batch);
+	return j_distributed_object_write(item->object, data, length, offset, bytes_written, batch);
 }
 
-void
+gboolean
 j_item_get_status(JItem* item, JBatch* batch)
 {
 	J_TRACE_FUNCTION(NULL);
 
-	g_return_if_fail(item != NULL);
+	g_return_val_if_fail(item != NULL, FALSE);
 
 	/// \todo check j_item_get_status_exec
-	j_distributed_object_status(item->object, &(item->status.modification_time), &(item->status.size), batch);
+	return j_distributed_object_status(item->object, &(item->status.modification_time), &(item->status.size), batch);
 }
 
 guint64

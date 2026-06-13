@@ -39,6 +39,16 @@ G_BEGIN_DECLS
 
 struct JBatch;
 
+/**
+ * Simulate batch-less operations.
+ *
+ * J_BATCH_SINGLE can be passed to operations instead of an actual batch.
+ * The operation will then be executed immediately and is finished after the call returns.
+ * Default semantic settings will be used for execution.
+ *
+ */
+#define J_BATCH_SINGLE NULL
+
 typedef struct JBatch JBatch;
 
 typedef void (*JBatchAsyncCallback)(JBatch*, gboolean, gpointer);
@@ -102,6 +112,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
 /**
  * Returns a batch's semantics.
  *
+ * The returned object must be freed using j_semantic_unref.
+ *
  * \code
  * \endcode
  *
@@ -114,6 +126,8 @@ JSemantics* j_batch_get_semantics(JBatch* batch);
 /**
  * Adds a new operation to the batch.
  *
+ * Passing J_BATCH_SINGLE creates a temporary batch and calls j_batch_execute.
+ *
  * \private
  *
  * \code
@@ -122,7 +136,7 @@ JSemantics* j_batch_get_semantics(JBatch* batch);
  * \param batch     A batch.
  * \param operation An operation.
  **/
-void j_batch_add(JBatch* batch, JOperation* operation);
+gboolean j_batch_add(JBatch* batch, JOperation* operation);
 
 /**
  * Executes the batch.

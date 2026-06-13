@@ -159,7 +159,6 @@ gboolean j_db_schema_add_index(JDBSchema* schema, gchar const** names, GError** 
  *
  * \pre schema != NULL
  * \pre schema contains at least 1 variable
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
@@ -174,7 +173,6 @@ gboolean j_db_schema_create(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \pre schema != NULL
  * \pre schema exists in the backend
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
@@ -189,7 +187,6 @@ gboolean j_db_schema_get(JDBSchema* schema, JBatch* batch, GError** error);
  *
  * \pre schema != NULL
  * \pre schema exists in the backend
- * \pre batch != NULL
  *
  * \return TRUE on success, FALSE otherwise
  **/
