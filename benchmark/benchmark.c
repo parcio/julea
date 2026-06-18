@@ -357,6 +357,8 @@ main(int argc, char** argv)
 	// Object client
 	benchmark_distributed_object();
 	benchmark_object();
+	// additional read-write benches
+	benchmark_object_rw();
 
 	// DB client
 	benchmark_db_entry();
