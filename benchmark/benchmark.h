@@ -30,6 +30,8 @@ struct BenchmarkRun
 	guint iterations;
 	guint64 operations;
 	guint64 bytes;
+
+	gchar* namespace;
 };
 
 typedef struct BenchmarkRun BenchmarkRun;
