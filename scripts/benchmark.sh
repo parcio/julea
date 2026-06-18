@@ -34,6 +34,7 @@ usage ()
 }
 
 set_path
+set_python_path
 set_library_path
 set_backend_path
 set_hdf_path
