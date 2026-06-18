@@ -101,3 +101,9 @@ foreach backend: julea_backends
 
 	...
 ```
+
+## General (Object) Backend Workflow
+
+This section describes an object backend's lifecycle to provide a better understanding regarding the backend's various functions and how they ultimately work together. This is only a surface level overview. For more information, see the [formal object backend specification](./object-backend-specs.md).
+
+The general workflow begins when JULEA initializes the backend by calling `backend_init`. From there, objects can be created and opened using `backend_create` and `backend_open`. For opening existing objects, the iterator functions `backend_get_all`, `backend_get_by_prefix`, and `backend_iterate` can be used to explore the file system. The `backend_open` and `backend_create` functions return a handle for the object. This handle can then be used with the `backend_read`, `backend_write`, `backend_sync`, and `backend_status` functions. Once work on an object has concluded it should be removed from the backend by passing the object handle to `backend_close`. If the object should also be removed from the file system use `backend_delete` instead. Both the close and delete functions consume the object handle, meaning it is no longer valid after passing it to either of these functions. Finally, JULEA will eventually call `backend_fini` to destroy the backend.
