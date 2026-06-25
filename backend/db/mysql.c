@@ -373,12 +373,14 @@ j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBT
 			break;
 		case J_DB_TYPE_STRING:
 			wrapper->is_null[idx] = value->val_string == NULL;
+			// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 			wrapper->bind_in[idx].buffer = value->val_string;
 			wrapper->bind_in[idx].buffer_length = value->val_string != 0 ? strlen(value->val_string) : 0;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
 			break;
 		case J_DB_TYPE_BLOB:
 			wrapper->is_null[idx] = value->val_blob == NULL;
+			// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 			wrapper->bind_in[idx].buffer = value->val_blob;
 			wrapper->bind_in[idx].buffer_length = value->val_blob_length;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
