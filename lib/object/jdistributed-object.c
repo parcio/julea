@@ -754,7 +754,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 
 			background_data[i] = data;
 		}
-			
+
 		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 

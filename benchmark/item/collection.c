@@ -103,10 +103,12 @@ helper_fn_benchmark_collection_delete(BenchmarkRun* run, gboolean use_batch)
 	{
 		for (guint i = 0; i < n; i++)
 		{
+			g_autoptr(JCollection) collection = NULL;
 			g_autofree const gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			j_collection_create(name, batch);
+			// codechecker_false_positive [DeadStores] suppress deadcode
+			collection = j_collection_create(name, batch);
 		}
 
 		ret = j_batch_execute(batch);
