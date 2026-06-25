@@ -74,7 +74,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		}
 	}
 
-	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_execute(backend_data, batch, error)))
 	{
 		//no ddl in transaction - most databases won't support that - continue without any open transaction
 		goto _error;
@@ -360,7 +360,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 		}
 	}
 
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_start(backend_data, batch, error)))
 	{
 		goto _error;
 	}
@@ -368,7 +368,7 @@ sql_generic_schema_create(gpointer backend_data, gpointer _batch, gchar const* n
 	return TRUE;
 
 _error:
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, NULL)))
+	if (G_UNLIKELY(!internal_backend_batch_start(backend_data, batch, NULL)))
 	{
 		goto _error2;
 	}
@@ -426,7 +426,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		}
 	}
 
-	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_execute(backend_data, batch, error)))
 	{
 		//no ddl in transaction - most databases wont support that - continue without any open transaction
 		goto _error;
@@ -456,7 +456,7 @@ sql_generic_schema_delete(gpointer backend_data, gpointer _batch, gchar const* n
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_start(backend_data, batch, error)))
 	{
 		goto _error;
 	}
@@ -469,7 +469,7 @@ _error:
 		g_string_free(table_drop_sql, TRUE);
 	}
 
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, NULL)))
+	if (G_UNLIKELY(!internal_backend_batch_start(backend_data, batch, NULL)))
 	{
 		goto _error2;
 	}

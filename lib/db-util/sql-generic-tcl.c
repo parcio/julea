@@ -22,7 +22,7 @@
 #include "sql-generic-internal.h"
 
 gboolean
-_backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error)
+internal_backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -50,7 +50,7 @@ _error:
 }
 
 gboolean
-_backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error)
+internal_backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -77,7 +77,7 @@ _error:
 }
 
 gboolean
-_backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error)
+internal_backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -126,7 +126,7 @@ sql_generic_batch_start(gpointer backend_data, gchar const* namespace, JSemantic
 	batch->open = FALSE;
 	batch->aborted = FALSE;
 
-	if (G_UNLIKELY(!_backend_batch_start(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_start(backend_data, batch, error)))
 	{
 		goto _error;
 	}
@@ -154,7 +154,7 @@ sql_generic_batch_execute(gpointer backend_data, gpointer _batch, GError** error
 
 	g_return_val_if_fail(batch != NULL, FALSE);
 
-	if (G_UNLIKELY(!_backend_batch_execute(backend_data, batch, error)))
+	if (G_UNLIKELY(!internal_backend_batch_execute(backend_data, batch, error)))
 	{
 		goto _error;
 	}

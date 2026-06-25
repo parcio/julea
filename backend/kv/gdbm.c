@@ -108,6 +108,7 @@ backend_put(gpointer backend_data, gpointer data, gchar const* key, gconstpointe
 
 	g_key.dptr = nskey;
 	g_key.dsize = strlen(nskey) + 1;
+	// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 	g_value.dptr = value;
 	g_value.dsize = len;
 

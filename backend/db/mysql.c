@@ -74,7 +74,7 @@ j_sql_finalize(gpointer backend_db, void* _stmt, GError** error)
 	g_return_val_if_fail(backend_db != NULL, FALSE);
 	g_return_val_if_fail(_stmt != NULL, FALSE);
 
-	if (wrapper->stmt && (status = mysql_stmt_close(wrapper->stmt)))
+	if (wrapper->stmt && (status = (unsigned char)mysql_stmt_close(wrapper->stmt)))
 	{
 		g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_FINALIZE, "sql finalize failed error was  (%d):'%s'", status, mysql_stmt_error(wrapper->stmt));
 		goto _error;
@@ -373,12 +373,14 @@ j_sql_bind_value(gpointer backend_db, void* _stmt, guint idx, JDBType type, JDBT
 			break;
 		case J_DB_TYPE_STRING:
 			wrapper->is_null[idx] = value->val_string == NULL;
+			// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 			wrapper->bind_in[idx].buffer = value->val_string;
 			wrapper->bind_in[idx].buffer_length = value->val_string != 0 ? strlen(value->val_string) : 0;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
 			break;
 		case J_DB_TYPE_BLOB:
 			wrapper->is_null[idx] = value->val_blob == NULL;
+			// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 			wrapper->bind_in[idx].buffer = value->val_blob;
 			wrapper->bind_in[idx].buffer_length = value->val_blob_length;
 			wrapper->length[idx] = wrapper->bind_in[idx].buffer_length;
@@ -477,7 +479,7 @@ j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 	{
 		if (wrapper->param_count_in)
 		{
-			if ((status = mysql_stmt_bind_param(wrapper->stmt, wrapper->bind_in)))
+			if ((status = (unsigned char)mysql_stmt_bind_param(wrapper->stmt, wrapper->bind_in)))
 			{
 				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was  (%d):'%s'", status, mysql_stmt_error(wrapper->stmt));
 				goto _error;
@@ -486,7 +488,7 @@ j_sql_step(gpointer backend_db, void* _stmt, gboolean* found, GError** error)
 
 		if (wrapper->param_count_out)
 		{
-			if ((status = mysql_stmt_bind_result(wrapper->stmt, wrapper->bind_out)))
+			if ((status = (unsigned char)mysql_stmt_bind_result(wrapper->stmt, wrapper->bind_out)))
 			{
 				g_set_error(error, J_BACKEND_SQL_ERROR, J_BACKEND_SQL_ERROR_STEP, "sql step failed error was  (%d):'%s'", status, mysql_stmt_error(wrapper->stmt));
 				goto _error;

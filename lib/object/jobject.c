@@ -289,7 +289,7 @@ j_object_create_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_close(object_backend, object_handle) && ret;
@@ -376,7 +376,7 @@ j_object_delete_exec(JList* operations, JSemantics* semantics)
 		else
 		{
 			gboolean lret = FALSE;
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			if (j_backend_object_open(object_backend, object->namespace, object->name, &object_handle)
 			    && j_backend_object_delete(object_backend, object_handle))
@@ -435,7 +435,7 @@ j_object_read_exec(JList* operations, JSemantics* semantics)
 	JListIterator* it;
 	g_autoptr(JMessage) message = NULL;
 	JObject* object;
-	gpointer object_handle;
+	gpointer object_handle = NULL;
 
 	/// \todo
 	//JLock* lock = NULL;
@@ -602,7 +602,7 @@ j_object_write_exec(JList* operations, JSemantics* semantics)
 	JListIterator* it;
 	g_autoptr(JMessage) message = NULL;
 	JObject* object;
-	gpointer object_handle;
+	gpointer object_handle = NULL;
 
 	/// \todo
 	//JLock* lock = NULL;
@@ -807,7 +807,7 @@ j_object_status_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
@@ -916,7 +916,7 @@ j_object_sync_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_sync(object_backend, object_handle) && ret;

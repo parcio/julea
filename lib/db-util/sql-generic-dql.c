@@ -23,7 +23,7 @@
 #include "sql-generic-internal.h"
 
 gboolean
-_backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* name, bson_t* schema, GError** error)
+internal_backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* name, bson_t* schema, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -198,12 +198,11 @@ get_schema(gpointer backend_data, gchar const* namespace, gchar const* name, GEr
 		bson_iter_t iter;
 		gboolean has_next;
 		JDBTypeValue value;
-		gboolean schema_initialized = FALSE;
 		char const* string_tmp;
 
 		schema_map = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-		if (!(schema_initialized = _backend_schema_get(backend_data, namespace, name, &schema, error)))
+		if (!internal_backend_schema_get(backend_data, namespace, name, &schema, error))
 		{
 			goto _error;
 		}
@@ -292,11 +291,11 @@ sql_generic_schema_get(gpointer backend_data, gpointer _batch, gchar const* name
 	gboolean ret;
 	JSqlBatch* batch = _batch;
 
-	ret = _backend_schema_get(backend_data, batch->namespace, name, schema, error);
+	ret = internal_backend_schema_get(backend_data, batch->namespace, name, schema, error);
 
 	if (!ret)
 	{
-		_backend_batch_abort(backend_data, _batch, NULL);
+		internal_backend_batch_abort(backend_data, _batch, NULL);
 	}
 
 	return ret;
@@ -480,7 +479,7 @@ _error:
 }
 
 static gboolean
-_bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t* iter, JSqlStatement* statement, GHashTable* variable_types, guint64* position, GError** error)
+internal_bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t* iter, JSqlStatement* statement, GHashTable* variable_types, guint64* position, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 
@@ -533,7 +532,7 @@ _bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t*
 				goto _error;
 			}
 
-			if (G_UNLIKELY(!_bind_selector_query(backend_data, namespace, &iterchild, statement, variable_types, position, error)))
+			if (G_UNLIKELY(!internal_bind_selector_query(backend_data, namespace, &iterchild, statement, variable_types, position, error)))
 			{
 				goto _error;
 			}
@@ -598,7 +597,7 @@ bind_selector_query(gpointer backend_data, const gchar* namespace, bson_iter_t* 
 {
 	guint64 pos = 0;
 
-	return _bind_selector_query(backend_data, namespace, iter, statement, schema, &pos, error);
+	return internal_bind_selector_query(backend_data, namespace, iter, statement, schema, &pos, error);
 }
 
 static gboolean
@@ -823,7 +822,7 @@ _error:
 }
 
 gboolean
-_backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error)
+internal_backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error)
 {
 	J_TRACE_FUNCTION(NULL);
 

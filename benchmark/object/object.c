@@ -28,7 +28,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -81,17 +81,17 @@ _benchmark_object_create(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_object_create(BenchmarkRun* run)
 {
-	_benchmark_object_create(run, FALSE);
+	helper_fn_benchmark_object_create(run, FALSE);
 }
 
 static void
 benchmark_object_create_batch(BenchmarkRun* run)
 {
-	_benchmark_object_create(run, TRUE);
+	helper_fn_benchmark_object_create(run, TRUE);
 }
 
 static void
-_benchmark_object_delete(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_object_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -151,17 +151,17 @@ _benchmark_object_delete(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_object_delete(BenchmarkRun* run)
 {
-	_benchmark_object_delete(run, FALSE);
+	helper_fn_benchmark_object_delete(run, FALSE);
 }
 
 static void
 benchmark_object_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_object_delete(run, TRUE);
+	helper_fn_benchmark_object_delete(run, TRUE);
 }
 
 static void
-_benchmark_object_status(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_object_status(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -219,17 +219,17 @@ _benchmark_object_status(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_object_status(BenchmarkRun* run)
 {
-	_benchmark_object_status(run, FALSE);
+	helper_fn_benchmark_object_status(run, FALSE);
 }
 
 static void
 benchmark_object_status_batch(BenchmarkRun* run)
 {
-	_benchmark_object_status(run, TRUE);
+	helper_fn_benchmark_object_status(run, TRUE);
 }
 
 static void
-_benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
+helper_fn_benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -294,17 +294,17 @@ _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 static void
 benchmark_object_read(BenchmarkRun* run)
 {
-	_benchmark_object_read(run, FALSE, 4 * 1024);
+	helper_fn_benchmark_object_read(run, FALSE, 4 * 1024);
 }
 
 static void
 benchmark_object_read_batch(BenchmarkRun* run)
 {
-	_benchmark_object_read(run, TRUE, 4 * 1024);
+	helper_fn_benchmark_object_read(run, TRUE, 4 * 1024);
 }
 
 static void
-_benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
+helper_fn_benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
 	guint const n = (use_batch) ? 10000 : 1000;
 
@@ -349,6 +349,7 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 		}
 	}
 
+	// codechecker_false_positive [Malloc] suppress false leak of `dummy` warning, dummy is freed by g_autofree
 	j_benchmark_timer_stop(run);
 
 	j_object_delete(object, batch);
@@ -362,17 +363,17 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 static void
 benchmark_object_write(BenchmarkRun* run)
 {
-	_benchmark_object_write(run, FALSE, 4 * 1024);
+	helper_fn_benchmark_object_write(run, FALSE, 4 * 1024);
 }
 
 static void
 benchmark_object_write_batch(BenchmarkRun* run)
 {
-	_benchmark_object_write(run, TRUE, 4 * 1024);
+	helper_fn_benchmark_object_write(run, TRUE, 4 * 1024);
 }
 
 static void
-_benchmark_object_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_object_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -419,13 +420,13 @@ _benchmark_object_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_object_unordered_create_delete(BenchmarkRun* run)
 {
-	_benchmark_object_unordered_create_delete(run, FALSE);
+	helper_fn_benchmark_object_unordered_create_delete(run, FALSE);
 }
 
 static void
 benchmark_object_unordered_create_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_object_unordered_create_delete(run, TRUE);
+	helper_fn_benchmark_object_unordered_create_delete(run, TRUE);
 }
 
 void

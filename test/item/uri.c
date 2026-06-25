@@ -28,10 +28,11 @@
 static void
 test_uri_new_free(void)
 {
-	g_autoptr(JURI) uri = NULL;
+	JURI* uri = NULL;
 
 	J_TEST_TRAP_START;
 	uri = j_uri_new("julea://JULEA");
+	j_uri_free(uri);
 	J_TEST_TRAP_END;
 }
 

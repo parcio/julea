@@ -203,7 +203,7 @@ GString* j_sql_get_full_field_name(const gchar* namespace, const gchar* table, c
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* name, bson_t* schema, GError** error);
+gboolean internal_backend_schema_get(gpointer backend_data, gchar const* namespace, gchar const* name, bson_t* schema, GError** error);
 
 /**
  * \brief Get the schema as a HashTable for internal usage.
@@ -263,7 +263,7 @@ gboolean bind_selector_query(gpointer backend_data, const gchar* namespace, bson
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error);
+gboolean internal_backend_query_ids(gpointer backend_data, gpointer _batch, gchar const* name, bson_t const* selector, GArray** matches, GError** error);
 
 // TCL
 
@@ -275,7 +275,7 @@ gboolean _backend_query_ids(gpointer backend_data, gpointer _batch, gchar const*
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error);
+gboolean internal_backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** error);
 
 /**
  * \brief Execute a batch. Commits a transaction in the DB backend.
@@ -285,7 +285,7 @@ gboolean _backend_batch_start(gpointer backend_data, JSqlBatch* batch, GError** 
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error);
+gboolean internal_backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError** error);
 
 /**
  * \brief Abort a batch. Triggers a rollback in the DB backend.
@@ -295,6 +295,6 @@ gboolean _backend_batch_execute(gpointer backend_data, JSqlBatch* batch, GError*
  * \param[out] error An uninitialized GError* for error code passing.
  * \return gboolean TRUE on success, FALSE otherwise.
  */
-gboolean _backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error);
+gboolean internal_backend_batch_abort(gpointer backend_data, JSqlBatch* batch, GError** error);
 
 #endif

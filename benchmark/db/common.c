@@ -38,13 +38,13 @@
 #define FLOAT_FACTOR (3.1415926)
 
 static char*
-_benchmark_db_get_identifier(gint64 i)
+helper_fn_benchmark_db_get_identifier(gint64 i)
 {
 	return g_strdup_printf("%x-benchmark-%ld", (guint32)(i * SIGNED_FACTOR % N_MODULUS), i);
 }
 
 static JDBSchema*
-_benchmark_db_prepare_scheme(gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, JBatch* batch, JBatch* delete_batch)
+helper_fn_benchmark_db_prepare_scheme(gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, JBatch* batch, JBatch* delete_batch)
 {
 	gboolean ret;
 	g_autoptr(GError) b_s_error = NULL;
@@ -132,7 +132,7 @@ _benchmark_db_prepare_scheme(gchar const* namespace, gboolean use_batch, gboolea
 }
 
 static void
-_benchmark_db_insert(BenchmarkRun* run, JDBSchema* scheme, gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, gboolean use_timer)
+helper_fn_benchmark_db_insert(BenchmarkRun* run, JDBSchema* scheme, gchar const* namespace, gboolean use_batch, gboolean use_index_all, gboolean use_index_single, gboolean use_timer)
 {
 	gboolean ret;
 	g_autoptr(JBatch) delete_batch = NULL;
@@ -150,7 +150,7 @@ _benchmark_db_insert(BenchmarkRun* run, JDBSchema* scheme, gchar const* namespac
 		g_assert_null(scheme);
 		g_assert_nonnull(run);
 
-		b_scheme = _benchmark_db_prepare_scheme(namespace, use_batch, use_index_all, use_index_single, batch, delete_batch);
+		b_scheme = helper_fn_benchmark_db_prepare_scheme(namespace, use_batch, use_index_all, use_index_single, batch, delete_batch);
 		g_assert_nonnull(b_scheme);
 
 		j_benchmark_timer_start(run);
@@ -172,7 +172,7 @@ _benchmark_db_insert(BenchmarkRun* run, JDBSchema* scheme, gchar const* namespac
 			gint64 i_signed = ((i * SIGNED_FACTOR) % CLASS_MODULUS) - CLASS_LIMIT;
 			guint64 i_usigned = ((i * USIGNED_FACTOR) % CLASS_MODULUS);
 			gdouble i_float = i_signed * FLOAT_FACTOR;
-			g_autofree gchar* string = _benchmark_db_get_identifier(i);
+			g_autofree gchar* string = helper_fn_benchmark_db_get_identifier(i);
 			g_autoptr(JDBEntry) entry = j_db_entry_new(b_scheme, &b_s_error);
 			g_assert_null(b_s_error);
 

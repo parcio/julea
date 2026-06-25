@@ -86,7 +86,12 @@ main(int argc, char** argv)
 	gint i;
 
 	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
-	setlocale(LC_ALL, "C.UTF-8");
+	g_autofree const char* local_result = setlocale(LC_ALL, "C.UTF-8");
+	if (local_result == NULL)
+	{
+		g_warning("Failed to set locale!");
+		return 1;
+	}
 
 	basename = g_path_get_basename(argv[0]);
 	g_set_prgname(basename);
@@ -134,6 +139,7 @@ main(int argc, char** argv)
 	}
 	else
 	{
+		// codechecker_false_positive [Malloc] suppress false leak of `arguments` warning, it is freed by g_autofree
 		success = FALSE;
 		j_cmd_usage();
 	}

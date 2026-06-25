@@ -27,7 +27,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_message_new(BenchmarkRun* run, gboolean append)
+helper_benchmark_message_new(BenchmarkRun* run, gboolean append)
 {
 	guint const n = 100000;
 	guint const m = 100;
@@ -62,17 +62,17 @@ _benchmark_message_new(BenchmarkRun* run, gboolean append)
 static void
 benchmark_message_new(BenchmarkRun* run)
 {
-	_benchmark_message_new(run, FALSE);
+	helper_benchmark_message_new(run, FALSE);
 }
 
 static void
 benchmark_message_new_append(BenchmarkRun* run)
 {
-	_benchmark_message_new(run, TRUE);
+	helper_benchmark_message_new(run, TRUE);
 }
 
 static void
-_benchmark_message_add_operation(BenchmarkRun* run, gboolean large)
+helper_benchmark_message_add_operation(BenchmarkRun* run, gboolean large)
 {
 	guint const n = (large) ? 100 : 10000;
 	guint const m = (large) ? 10000 : 100;
@@ -105,13 +105,13 @@ _benchmark_message_add_operation(BenchmarkRun* run, gboolean large)
 static void
 benchmark_message_add_operation_small(BenchmarkRun* run)
 {
-	_benchmark_message_add_operation(run, FALSE);
+	helper_benchmark_message_add_operation(run, FALSE);
 }
 
 static void
 benchmark_message_add_operation_large(BenchmarkRun* run)
 {
-	_benchmark_message_add_operation(run, TRUE);
+	helper_benchmark_message_add_operation(run, TRUE);
 }
 
 void

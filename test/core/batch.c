@@ -86,7 +86,7 @@ test_batch_execute_empty(void)
 }
 
 static void
-_test_batch_execute(gboolean async)
+helper_fn_test_batch_execute(gboolean async)
 {
 	g_autoptr(JCollection) collection = NULL;
 	g_autoptr(JItem) item = NULL;
@@ -126,7 +126,7 @@ static void
 test_batch_execute(void)
 {
 	J_TEST_TRAP_START;
-	_test_batch_execute(FALSE);
+	helper_fn_test_batch_execute(FALSE);
 	J_TEST_TRAP_END;
 }
 
@@ -134,7 +134,7 @@ static void
 test_batch_execute_async(void)
 {
 	J_TEST_TRAP_START;
-	_test_batch_execute(TRUE);
+	helper_fn_test_batch_execute(TRUE);
 	J_TEST_TRAP_END;
 }
 

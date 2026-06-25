@@ -32,7 +32,12 @@ main(int argc, char** argv)
 	gint ret;
 
 	// Explicitly enable UTF-8 since functions such as g_format_size might return UTF-8 characters.
-	setlocale(LC_ALL, "C.UTF-8");
+	g_autofree const char* local_result = setlocale(LC_ALL, "C.UTF-8");
+	if (local_result == NULL)
+	{
+		g_warning("Failed to set locale!");
+		return 1;
+	}
 
 	g_test_init(&argc, &argv, NULL);
 

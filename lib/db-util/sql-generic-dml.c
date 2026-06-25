@@ -249,7 +249,7 @@ sql_generic_insert(gpointer backend_data, gpointer _batch, gchar const* name, bs
 
 _error:
 
-	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
+	if (G_UNLIKELY(!internal_backend_batch_abort(backend_data, batch, NULL)))
 	{
 		goto _error2;
 	}
@@ -375,7 +375,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		}
 	}
 
-	if (G_UNLIKELY(!_backend_query_ids(backend_data, batch, name, selector, &matches, error)))
+	if (G_UNLIKELY(!internal_backend_query_ids(backend_data, batch, name, selector, &matches, error)))
 	{
 		goto _error;
 	}
@@ -439,7 +439,7 @@ sql_generic_update(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	return TRUE;
 
 _error:
-	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
+	if (G_UNLIKELY(!internal_backend_batch_abort(backend_data, batch, NULL)))
 	{
 		goto _error2;
 	}
@@ -470,7 +470,7 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 		goto _error;
 	}
 
-	if (G_UNLIKELY(!_backend_query_ids(backend_data, batch, name, selector, &matches, error)))
+	if (G_UNLIKELY(!internal_backend_query_ids(backend_data, batch, name, selector, &matches, error)))
 	{
 		goto _error;
 	}
@@ -520,7 +520,7 @@ sql_generic_delete(gpointer backend_data, gpointer _batch, gchar const* name, bs
 	return TRUE;
 
 _error:
-	if (G_UNLIKELY(!_backend_batch_abort(backend_data, batch, NULL)))
+	if (G_UNLIKELY(!internal_backend_batch_abort(backend_data, batch, NULL)))
 	{
 		goto _error2;
 	}

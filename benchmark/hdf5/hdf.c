@@ -335,7 +335,7 @@ benchmark_hdf_attribute_read(BenchmarkRun* run)
 }
 
 static void
-_benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
+helper_fn_benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 1000;
 
@@ -376,17 +376,17 @@ _benchmark_hdf_dataset_create(BenchmarkRun* run, guint dimensions)
 static void
 benchmark_hdf_dataset_create_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_create(run, 2);
+	helper_fn_benchmark_hdf_dataset_create(run, 2);
 }
 
 static void
 benchmark_hdf_dataset_create_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_create(run, 1);
+	helper_fn_benchmark_hdf_dataset_create(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
+helper_fn_benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 1000;
 
@@ -438,17 +438,17 @@ _benchmark_hdf_dataset_open(BenchmarkRun* run, guint dimensions)
 static void
 benchmark_hdf_dataset_open_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_open(run, 2);
+	helper_fn_benchmark_hdf_dataset_open(run, 2);
 }
 
 static void
 benchmark_hdf_dataset_open_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_open(run, 1);
+	helper_fn_benchmark_hdf_dataset_open(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
+helper_fn_benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 100;
 
@@ -493,17 +493,17 @@ _benchmark_hdf_dataset_write(BenchmarkRun* run, guint dimensions)
 static void
 benchmark_hdf_dataset_write_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_write(run, 2);
+	helper_fn_benchmark_hdf_dataset_write(run, 2);
 }
 
 static void
 benchmark_hdf_dataset_write_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_write(run, 1);
+	helper_fn_benchmark_hdf_dataset_write(run, 1);
 }
 
 static void
-_benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
+helper_fn_benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 {
 	guint const n = 100;
 
@@ -560,13 +560,13 @@ _benchmark_hdf_dataset_read(BenchmarkRun* run, guint dimensions)
 static void
 benchmark_hdf_dataset_read_4m(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_read(run, 2);
+	helper_fn_benchmark_hdf_dataset_read(run, 2);
 }
 
 static void
 benchmark_hdf_dataset_read_4k(BenchmarkRun* run)
 {
-	_benchmark_hdf_dataset_read(run, 1);
+	helper_fn_benchmark_hdf_dataset_read(run, 1);
 }
 
 static void

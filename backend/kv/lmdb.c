@@ -121,6 +121,7 @@ backend_put(gpointer backend_data, gpointer data, gchar const* key, gconstpointe
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 	m_value.mv_size = len;
+	// codechecker_suppress [discards-qualifier] fixing this could only be achieved by making vast sections of the code base non-const
 	m_value.mv_data = value;
 
 	return (mdb_put(batch->txn, bd->dbi, &m_key, &m_value, 0) == 0);

@@ -37,12 +37,6 @@ struct JCollection;
 
 typedef struct JCollection JCollection;
 
-G_END_DECLS
-
-#include <item/jitem.h>
-
-G_BEGIN_DECLS
-
 /**
  * \defgroup JCollection Collection
  *

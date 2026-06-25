@@ -697,6 +697,7 @@ j_network_connection_init(JNetworkConnection* connection)
 	EXE(j_network_connection_create_memory_resources(connection), "Failed to create memory resources for connection!");
 
 	res = fi_cq_open(connection->domain, &(struct fi_cq_attr){ .wait_obj = FI_WAIT_UNSPEC, .format = FI_CQ_FORMAT_CONTEXT, .size = connection->info->tx_attr->size }, &connection->cq.tx, &connection->cq.tx);
+	CHECK("Failed to create completion queue!");
 	res = fi_cq_open(connection->domain, &(struct fi_cq_attr){ .wait_obj = FI_WAIT_UNSPEC, .format = FI_CQ_FORMAT_CONTEXT, .size = connection->info->rx_attr->size }, &connection->cq.rx, &connection->cq.rx);
 	CHECK("Failed to create completion queue!");
 
@@ -745,6 +746,7 @@ j_network_connection_init_client(JConfiguration* configuration, JBackendType bac
 	socket_client = g_socket_client_new();
 	server = j_configuration_get_server(configuration, backend, index);
 	socket_connection = g_socket_client_connect_to_host(socket_client, server, j_configuration_get_port(configuration), NULL, &error);
+	// codechecker_confirmed [Malloc] as per the `todo` at the end of this function, there is no clean up for `connection` currently.
 	G_CHECK("Failed to build gsocket connection to host");
 
 	if (socket_connection == NULL)
@@ -829,6 +831,7 @@ j_network_connection_init_server(JNetworkFabric* fabric, GSocketConnection* gcon
 	// send addr
 	output_stream = g_io_stream_get_output_stream(G_IO_STREAM(gconnection));
 	g_output_stream_write(output_stream, &addr->addr_format, sizeof(addr->addr_format), NULL, &error);
+	// codechecker_confirmed [Malloc] as per the `todo` at the end of this function, there is no clean up for `connection` currently.
 	G_CHECK("Failed to write addr_format to stream!");
 
 	g_output_stream_write(output_stream, &addr->addr_len, sizeof(addr->addr_len), NULL, &error);

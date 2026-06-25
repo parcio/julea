@@ -28,7 +28,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_kv_put(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_kv_put(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -81,17 +81,17 @@ _benchmark_kv_put(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_kv_put(BenchmarkRun* run)
 {
-	_benchmark_kv_put(run, FALSE);
+	helper_fn_benchmark_kv_put(run, FALSE);
 }
 
 static void
 benchmark_kv_put_batch(BenchmarkRun* run)
 {
-	_benchmark_kv_put(run, TRUE);
+	helper_fn_benchmark_kv_put(run, TRUE);
 }
 
 static void
-_benchmark_kv_get_callback(gpointer value, guint32 len, gpointer data)
+helper_fn_benchmark_kv_get_callback(gpointer value, guint32 len, gpointer data)
 {
 	(void)len;
 	(void)data;
@@ -100,7 +100,7 @@ _benchmark_kv_get_callback(gpointer value, guint32 len, gpointer data)
 }
 
 static void
-_benchmark_kv_get(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_kv_get(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -139,7 +139,7 @@ _benchmark_kv_get(BenchmarkRun* run, gboolean use_batch)
 
 			name = g_strdup_printf("benchmark-%d", i);
 			object = j_kv_new("benchmark", name);
-			j_kv_get_callback(object, _benchmark_kv_get_callback, NULL, batch);
+			j_kv_get_callback(object, helper_fn_benchmark_kv_get_callback, NULL, batch);
 
 			if (!use_batch)
 			{
@@ -166,17 +166,17 @@ _benchmark_kv_get(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_kv_get(BenchmarkRun* run)
 {
-	_benchmark_kv_get(run, FALSE);
+	helper_fn_benchmark_kv_get(run, FALSE);
 }
 
 static void
 benchmark_kv_get_batch(BenchmarkRun* run)
 {
-	_benchmark_kv_get(run, TRUE);
+	helper_fn_benchmark_kv_get(run, TRUE);
 }
 
 static void
-_benchmark_kv_delete(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_kv_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -236,17 +236,17 @@ _benchmark_kv_delete(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_kv_delete(BenchmarkRun* run)
 {
-	_benchmark_kv_delete(run, FALSE);
+	helper_fn_benchmark_kv_delete(run, FALSE);
 }
 
 static void
 benchmark_kv_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_kv_delete(run, TRUE);
+	helper_fn_benchmark_kv_delete(run, TRUE);
 }
 
 static void
-_benchmark_kv_unordered_put_delete(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_kv_unordered_put_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 1000;
 
@@ -293,13 +293,13 @@ _benchmark_kv_unordered_put_delete(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_kv_unordered_put_delete(BenchmarkRun* run)
 {
-	_benchmark_kv_unordered_put_delete(run, FALSE);
+	helper_fn_benchmark_kv_unordered_put_delete(run, FALSE);
 }
 
 static void
 benchmark_kv_unordered_put_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_kv_unordered_put_delete(run, TRUE);
+	helper_fn_benchmark_kv_unordered_put_delete(run, TRUE);
 }
 
 void

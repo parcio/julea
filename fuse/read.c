@@ -28,14 +28,12 @@ jfs_read(char const* path, char* buf, size_t size, off_t offset, struct fuse_fil
 	int ret = -ENOENT;
 
 	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JKV) kv = NULL;
 	g_autoptr(JObject) object = NULL;
 	guint64 bytes_read;
 
 	(void)fi;
 
 	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_POSIX);
-	kv = j_kv_new("posix", path);
 	object = j_object_new("posix", path);
 
 	j_object_read(object, buf, size, offset, &bytes_read, batch);

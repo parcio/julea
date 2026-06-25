@@ -29,9 +29,6 @@
 #include <item/jcollection.h>
 #include <item/jcollection-internal.h>
 
-#include <item/jitem.h>
-#include <item/jitem-internal.h>
-
 #include <julea.h>
 #include <julea-kv.h>
 

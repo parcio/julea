@@ -624,7 +624,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_create(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_close(object_backend, object_handle) && ret;
@@ -651,6 +651,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_create_background_operation, background_data, server_count);
 	}
 
@@ -721,7 +722,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 		else
 		{
 			gboolean lret = FALSE;
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			if (j_backend_object_open(object_backend, object->namespace, object->name, &object_handle)
 			    && j_backend_object_delete(object_backend, object_handle))
@@ -754,6 +755,7 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -782,7 +784,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object = NULL;
-	gpointer object_handle;
+	gpointer object_handle = NULL;
 	gsize name_len = 0;
 	gsize namespace_len = 0;
 	guint32 server_count = 0;
@@ -924,6 +926,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` and `br_lists` are autofreed
 		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -972,7 +975,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 	g_autoptr(JListIterator) it = NULL;
 	g_autofree JMessage** messages = NULL;
 	JDistributedObject* object = NULL;
-	gpointer object_handle;
+	gpointer object_handle = NULL;
 	gsize name_len = 0;
 	gsize namespace_len = 0;
 	guint32 server_count = 0;
@@ -1115,6 +1118,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` and `bw_lists` are autofreed
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -1228,7 +1232,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_status(object_backend, object_handle, modification_time, size) && ret;
@@ -1256,6 +1260,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_status_background_operation, background_data, server_count);
 	}
 
@@ -1328,7 +1333,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 		}
 		else
 		{
-			gpointer object_handle;
+			gpointer object_handle = NULL;
 
 			ret = j_backend_object_open(object_backend, object->namespace, object->name, &object_handle) && ret;
 			ret = j_backend_object_sync(object_backend, object_handle) && ret;
@@ -1356,6 +1361,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_sync_background_operation, background_data, server_count);
 	}
 

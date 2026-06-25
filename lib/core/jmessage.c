@@ -259,7 +259,7 @@ j_message_extend(JMessage* message, gsize length)
 
 	if (count > 10)
 	{
-		factor = pow(10, floor(log10(count)));
+		factor = (gsize)pow(10, floor(log10(count)));
 	}
 
 	message->size += length * factor;

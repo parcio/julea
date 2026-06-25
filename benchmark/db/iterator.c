@@ -30,7 +30,7 @@
 #include "common.c"
 
 static void
-_benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
+helper_fn_benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
 {
 	gboolean ret;
 	g_autoptr(JBatch) delete_batch = NULL;
@@ -43,12 +43,12 @@ _benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	b_scheme = _benchmark_db_prepare_scheme(namespace, false, use_index_all, use_index_single, batch, delete_batch);
+	b_scheme = helper_fn_benchmark_db_prepare_scheme(namespace, false, use_index_all, use_index_single, batch, delete_batch);
 
 	g_assert_nonnull(b_scheme);
 	g_assert_nonnull(run);
 
-	_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
+	helper_fn_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
 
 	j_benchmark_timer_start(run);
 
@@ -60,7 +60,7 @@ _benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use
 			g_autofree gpointer field_value;
 			guint64 field_length;
 			g_autoptr(JDBIterator) iterator;
-			g_autofree gchar* string = _benchmark_db_get_identifier(i);
+			g_autofree gchar* string = helper_fn_benchmark_db_get_identifier(i);
 			g_autoptr(JDBSelector) selector = j_db_selector_new(b_scheme, J_DB_SELECTOR_MODE_AND, &b_s_error);
 
 			ret = j_db_selector_add_field(selector, "string", J_DB_SELECTOR_OPERATOR_EQ, string, 0, &b_s_error);
@@ -90,7 +90,7 @@ _benchmark_db_get_simple(BenchmarkRun* run, gchar const* namespace, gboolean use
 }
 
 static void
-_benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
+helper_fn_benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_index_all, gboolean use_index_single)
 {
 	gboolean ret;
 	g_autoptr(JBatch) delete_batch = NULL;
@@ -103,12 +103,12 @@ _benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_
 	delete_batch = j_batch_new(semantics);
 	batch = j_batch_new(semantics);
 
-	b_scheme = _benchmark_db_prepare_scheme(namespace, false, use_index_all, use_index_single, batch, delete_batch);
+	b_scheme = helper_fn_benchmark_db_prepare_scheme(namespace, false, use_index_all, use_index_single, batch, delete_batch);
 
 	g_assert_nonnull(b_scheme);
 	g_assert_nonnull(run);
 
-	_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
+	helper_fn_benchmark_db_insert(NULL, b_scheme, NULL, true, false, false, false);
 
 	j_benchmark_timer_start(run);
 
@@ -159,49 +159,49 @@ _benchmark_db_get_range(BenchmarkRun* run, gchar const* namespace, gboolean use_
 static void
 benchmark_db_get_simple(BenchmarkRun* run)
 {
-	_benchmark_db_get_simple(run, "benchmark_get_simple", false, false);
+	helper_fn_benchmark_db_get_simple(run, "benchmark_get_simple", false, false);
 }
 
 static void
 benchmark_db_get_simple_index_single(BenchmarkRun* run)
 {
-	_benchmark_db_get_simple(run, "benchmark_get_simple_index_single", false, true);
+	helper_fn_benchmark_db_get_simple(run, "benchmark_get_simple_index_single", false, true);
 }
 
 static void
 benchmark_db_get_simple_index_all(BenchmarkRun* run)
 {
-	_benchmark_db_get_simple(run, "benchmark_get_simple_index_all", true, false);
+	helper_fn_benchmark_db_get_simple(run, "benchmark_get_simple_index_all", true, false);
 }
 
 static void
 benchmark_db_get_simple_index_mixed(BenchmarkRun* run)
 {
-	_benchmark_db_get_simple(run, "benchmark_get_simple_index_mixed", true, true);
+	helper_fn_benchmark_db_get_simple(run, "benchmark_get_simple_index_mixed", true, true);
 }
 
 static void
 benchmark_db_get_range(BenchmarkRun* run)
 {
-	_benchmark_db_get_range(run, "benchmark_get_range", false, false);
+	helper_fn_benchmark_db_get_range(run, "benchmark_get_range", false, false);
 }
 
 static void
 benchmark_db_get_range_index_single(BenchmarkRun* run)
 {
-	_benchmark_db_get_range(run, "benchmark_get_range_index_single", false, true);
+	helper_fn_benchmark_db_get_range(run, "benchmark_get_range_index_single", false, true);
 }
 
 static void
 benchmark_db_get_range_index_all(BenchmarkRun* run)
 {
-	_benchmark_db_get_range(run, "benchmark_get_range_index_all", true, false);
+	helper_fn_benchmark_db_get_range(run, "benchmark_get_range_index_all", true, false);
 }
 
 static void
 benchmark_db_get_range_index_mixed(BenchmarkRun* run)
 {
-	_benchmark_db_get_range(run, "benchmark_get_range_index_mixed", true, true);
+	helper_fn_benchmark_db_get_range(run, "benchmark_get_range_index_mixed", true, true);
 }
 
 void

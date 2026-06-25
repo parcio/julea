@@ -729,21 +729,14 @@ j_trace_file_begin(gchar const* path, JTraceFileOperation op)
 #ifdef HAVE_OTF
 	if (j_trace_flags & J_TRACE_OTF)
 	{
-		gpointer value;
-		guint32 file_id;
-
 		G_LOCK(j_trace_otf);
 
-		if ((value = g_hash_table_lookup(otf_file_table, path)) == NULL)
+		if ((g_hash_table_lookup(otf_file_table, path)) == NULL)
 		{
-			file_id = g_atomic_int_add(&otf_file_id, 1);
+			const guint32 file_id = g_atomic_int_add(&otf_file_id, 1);
 
 			OTF_Writer_writeDefFile(otf_writer, 0, file_id, path, 0);
 			g_hash_table_insert(otf_file_table, g_strdup(path), GUINT_TO_POINTER(file_id));
-		}
-		else
-		{
-			file_id = GPOINTER_TO_UINT(value);
 		}
 
 		G_UNLOCK(j_trace_otf);
@@ -751,8 +744,6 @@ j_trace_file_begin(gchar const* path, JTraceFileOperation op)
 		OTF_Writer_writeBeginFileOperation(otf_writer, timestamp, trace_thread->otf.process_id, 1, 0);
 	}
 #endif
-
-	return;
 }
 
 void

@@ -26,7 +26,7 @@
 #include "benchmark.h"
 
 static void
-_benchmark_db_schema_create(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_db_schema_create(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 100;
 
@@ -90,17 +90,17 @@ _benchmark_db_schema_create(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_db_schema_create(BenchmarkRun* run)
 {
-	_benchmark_db_schema_create(run, FALSE);
+	helper_fn_benchmark_db_schema_create(run, FALSE);
 }
 
 static void
 benchmark_db_schema_create_batch(BenchmarkRun* run)
 {
-	_benchmark_db_schema_create(run, TRUE);
+	helper_fn_benchmark_db_schema_create(run, TRUE);
 }
 
 static void
-_benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
+helper_fn_benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
 {
 	guint const n = 100;
 
@@ -172,13 +172,13 @@ _benchmark_db_schema_delete(BenchmarkRun* run, gboolean use_batch)
 static void
 benchmark_db_schema_delete(BenchmarkRun* run)
 {
-	_benchmark_db_schema_delete(run, FALSE);
+	helper_fn_benchmark_db_schema_delete(run, FALSE);
 }
 
 static void
 benchmark_db_schema_delete_batch(BenchmarkRun* run)
 {
-	_benchmark_db_schema_delete(run, TRUE);
+	helper_fn_benchmark_db_schema_delete(run, TRUE);
 }
 
 void
