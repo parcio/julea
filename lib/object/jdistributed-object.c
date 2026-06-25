@@ -651,6 +651,7 @@ j_distributed_object_create_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_create_background_operation, background_data, server_count);
 	}
 
@@ -753,7 +754,8 @@ j_distributed_object_delete_exec(JList* operations, JSemantics* semantics)
 
 			background_data[i] = data;
 		}
-
+			
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_delete_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -924,6 +926,7 @@ j_distributed_object_read_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` and `br_lists` are autofreed
 		j_helper_execute_parallel(j_distributed_object_read_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -1115,6 +1118,7 @@ j_distributed_object_write_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` and `bw_lists` are autofreed
 		j_helper_execute_parallel(j_distributed_object_write_background_operation, background_data, server_count);
 
 		for (guint i = 0; i < server_count; i++)
@@ -1256,6 +1260,7 @@ j_distributed_object_status_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_status_background_operation, background_data, server_count);
 	}
 
@@ -1356,6 +1361,7 @@ j_distributed_object_sync_exec(JList* operations, JSemantics* semantics)
 			background_data[i] = data;
 		}
 
+		// codechecker_false_positive [Malloc] `messages` is autofreed
 		j_helper_execute_parallel(j_distributed_object_sync_background_operation, background_data, server_count);
 	}
 

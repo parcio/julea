@@ -349,6 +349,7 @@ helper_fn_benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint bl
 		}
 	}
 
+	// codechecker_false_positive [Malloc] suppress false leak of `dummy` warning, dummy is freed by g_autofree
 	j_benchmark_timer_stop(run);
 
 	j_object_delete(object, batch);

@@ -139,6 +139,7 @@ main(int argc, char** argv)
 	}
 	else
 	{
+		// codechecker_false_positive [Malloc] suppress false leak of `arguments` warning, it is freed by g_autofree
 		success = FALSE;
 		j_cmd_usage();
 	}
