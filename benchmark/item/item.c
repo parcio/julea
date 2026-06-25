@@ -125,6 +125,7 @@ helper_fn_benchmark_item_delete(BenchmarkRun* run, gboolean use_batch)
 			g_autofree const gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
+			// codechecker_false_positive [DeadStores] suppress deadcode
 			item = j_item_create(collection, name, NULL, batch);
 		}
 
