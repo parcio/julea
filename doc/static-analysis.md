@@ -19,7 +19,7 @@ In summary:
 
 2. Generate a `compile_commands.json` file.
 ```bash
-meson setup -Dis_analysis_build=true bld
+meson setup bld
 ```
 
 3. Run the analysis.
