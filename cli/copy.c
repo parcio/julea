@@ -87,6 +87,8 @@ j_cmd_copy(gchar const** arguments)
 			}
 			else if (i == 1)
 			{
+				g_autoptr(JItem) item = NULL;
+
 				if (j_uri_get(uri[i], &error))
 				{
 					ret = FALSE;
@@ -112,7 +114,7 @@ j_cmd_copy(gchar const** arguments)
 				}
 
 				batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
-				j_item_create(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
+				item = j_item_create(j_uri_get_collection(uri[i]), j_uri_get_item_name(uri[i]), NULL, batch);
 
 				if (!j_batch_execute(batch))
 				{

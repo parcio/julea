@@ -121,10 +121,11 @@ helper_fn_benchmark_item_delete(BenchmarkRun* run, gboolean use_batch)
 	{
 		for (guint i = 0; i < n; i++)
 		{
+			g_autoptr(JItem) item = NULL;
 			g_autofree const gchar* name = NULL;
 
 			name = g_strdup_printf("benchmark-%d", i);
-			j_item_create(collection, name, NULL, batch);
+			item = j_item_create(collection, name, NULL, batch);
 		}
 
 		ret = j_batch_execute(batch);
