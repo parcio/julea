@@ -33,6 +33,27 @@ CodeChecker parse --export html --output ./reports_html ./results  &&
 firefox ./reports_html/index.html
 ```
 
+## Setting the review status
+A static analysis report can be marked as confirmed, false-positive or ignored via a comment above the relevant line.
+A full guide can be found [here](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#review-status-handling).
+
+The source code comment has the following format:
+``` 
+// codechecker_<type> [<checker name>] comment
+```
+
+The type can either be:
+- suppress
+- false_positive
+- intentional
+- confirmed
+
+Example:
+```C
+// codechecker_confirmed [deadcode.DeadStores] suppress deadcode
+x = 1; // warn
+```
+
 ## Potential improvements
 The current setup is quite bare-bones.
 CodeChecker supports running a server to store results of previous analysis runs, tracking reports that have already been marked as known false positives, and automatically calculating a diff between the main branch and the branch to be merged.
