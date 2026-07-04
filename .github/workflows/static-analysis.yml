@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-name: static-analysis.yml
+name: static-analysis
 on: [push, pull_request]
 defaults:
   run:
@@ -28,7 +28,6 @@ jobs:
     timeout-minutes: 60
     env:
       JULEA_SPACK_DIR: /julea-dependencies
-
 
     steps:
       # First, checkout julea.
@@ -67,12 +66,27 @@ jobs:
 
       # Run the analysis.
       - name: Run CodeChecker
-        # Since we already have ~100 warnings, i have disabled the sensitive checks for now.
-        # Should we ever run out of warnings, feel free to enable them again :D
-        run: CodeChecker analyze ./bld/compile_commands.json -o results --ctu || true #--enable sensitive
+        run: CodeChecker analyze ./bld/compile_commands.json -o results --ctu || true
+
+      # All of this only runs if its a PR
+      - name: Calculate the diff 
+        if: github.event_name == 'pull_request'
+        # It checks out the branch to be merged into, generates the compile_commands.json for that branch, and then runs CodeChecker on that branch. 
+        # It then compares the results of the two branches, via CodeChecker cmd diff.
+        # Due to GitHub Actions being generally annoying this comes with some code duplication and assumes that the dependencies work for both branches.
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git checkout FETCH_HEAD
+          . scripts/environment.sh
+          meson setup bld_base
+          CodeChecker analyze ./bld_base/compile_commands.json -o results_base --ctu || true
+          CodeChecker cmd diff --basename ./results_base --newname ./results -o results_diff || true
+          CodeChecker parse --export html --output ./reports_html ./results_diff || true
 
       # Parse the results and generate an HTML report.
+      # Only for pushes 
       - name: Generate HTML report
+        if: github.event_name == 'push'
         run: |
           # The parse command returns with exit code 2 if it finds any bugs.
           # Thus, we ignore the exit code with "|| true", to avoid failing the workflow.
