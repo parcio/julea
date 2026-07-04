@@ -98,9 +98,9 @@ jobs:
           meson setup bld_base
           CodeChecker analyze ./bld_base/compile_commands.json -o results_base --ctu || true
           # Shows all reports that are introduced by the pr!
-          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./new_reports_html --new|| true
+          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./new_reports_html --new || true
           # Shows all reports that are fixed by the pr!
-          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./fixed_reports_html --resolved|| true
+          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./fixed_reports_html --resolved || true
 
       # Lastly, upload the results to the CI.
       - name: Upload results
