@@ -68,6 +68,23 @@ jobs:
       - name: Run CodeChecker
         run: CodeChecker analyze ./bld/compile_commands.json -o results --ctu || true
 
+      # Only for pushes 
+      # Parse the results and generate an HTML report.
+      - name: Generate HTML report
+        if: github.event_name == 'push'
+        run: |
+          # The parse command returns with exit code 2 if it finds any bugs.
+          # Thus, we ignore the exit code with "|| true", to avoid failing the workflow.
+          CodeChecker parse --export html --output ./reports_html ./results || true
+
+      # Lastly, upload the results to the CI.
+      - name: Upload results
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: "CodeChecker Bug Reports"
+          path: ./reports_html
+
       # All of this only runs if its a PR
       - name: Calculate the diff 
         if: github.event_name == 'pull_request'
@@ -85,18 +102,12 @@ jobs:
           # Shows all reports that are fixed by the pr!
           CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./fixed_reports_html --resolved|| true
 
-      # Parse the results and generate an HTML report.
-      # Only for pushes 
-      - name: Generate HTML report
-        if: github.event_name == 'push'
-        run: |
-          # The parse command returns with exit code 2 if it finds any bugs.
-          # Thus, we ignore the exit code with "|| true", to avoid failing the workflow.
-          CodeChecker parse --export html --output ./reports_html ./results || true
-
       # Lastly, upload the results to the CI.
       - name: Upload results
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: "CodeChecker Bug Reports"
-          path: ./reports_html
+          path: |
+            ./new_reports_html
+            ./fixed_reports_html
