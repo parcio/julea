@@ -80,8 +80,10 @@ jobs:
           . scripts/environment.sh
           meson setup bld_base
           CodeChecker analyze ./bld_base/compile_commands.json -o results_base --ctu || true
-          CodeChecker cmd diff --basename ./results_base --newname ./results -o results_diff || true
-          CodeChecker parse --export html --output ./reports_html ./results_diff || true
+          # Shows all reports that are introduced by the pr!
+          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./new_reports_html -- new|| true
+          # Shows all reports that are fixed by the pr!
+          CodeChecker cmd diff --basename ./results_base --newname ./results -o html -e ./fixed_reports_html -- fixed|| true
 
       # Parse the results and generate an HTML report.
       # Only for pushes 
